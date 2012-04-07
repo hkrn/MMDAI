@@ -339,6 +339,12 @@ void Model::setVisible(bool value)
 
 void Model::update()
 {
+    // update local transform matrix
+    const int nbones = m_bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        bone->resetIKLink();
+    }
     // before physics simulation
     const int nBPSBones = m_BPSOrderedBones.count();
     for (int i = 0; i < nBPSBones; i++) {
@@ -354,7 +360,6 @@ void Model::update()
         bone->performInverseKinematics();
     }
     // update local transform matrix
-    const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
         bone->performUpdateLocalTransform();

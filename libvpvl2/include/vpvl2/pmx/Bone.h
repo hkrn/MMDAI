@@ -81,6 +81,7 @@ public:
     void performTransform();
     void performInverseKinematics();
     void performUpdateLocalTransform();
+    void resetIKLink();
     const Vector3 &offset() const;
     const Transform localTransform() const;
 
@@ -128,7 +129,6 @@ private:
     Quaternion m_rotationIKLink;
     Transform m_localTransform;
     Transform m_localToOrigin;
-    Transform m_IKLinkTransform;
     Vector3 m_origin;
     Vector3 m_offset;
     Vector3 m_position;

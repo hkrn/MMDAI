@@ -37,6 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#define IK_DEBUG 0
 #if IK_DEBUG
 #include <QtCore>
 #include <QDebug>
@@ -54,48 +55,12 @@ struct BoneUnit {
 #pragma pack(pop)
 
 using namespace vpvl2;
-
-static inline void SetLowerConstraint(const Scalar &lower,
-                                      const Scalar &upper,
-                                      bool beforeCenter,
-                                      Scalar &output)
-{
-    if (output < lower) {
-        const Scalar &value = 2.0 * lower - output;
-        output = (value <= upper && beforeCenter) ? value : lower;
-    }
-}
-
-static inline void SetUpperConstraint(const Scalar &lower,
-                                      const Scalar &upper,
-                                      bool beforeCenter,
-                                      Scalar &output)
-{
-    if (output > upper) {
-        const Scalar &value = 2.0 * upper - output;
-        output = (value >= lower && beforeCenter) ? value : upper;
-    }
-}
-
-static inline void SetConstraint(const Vector3 &lower,
-                                 const Vector3 &upper,
-                                 bool beforeCenter,
-                                 Scalar &x,
-                                 Scalar &y,
-                                 Scalar &z)
-{
-    SetLowerConstraint(lower.x(), upper.x(), beforeCenter, x);
-    SetUpperConstraint(lower.x(), upper.x(), beforeCenter, x);
-    SetLowerConstraint(lower.y(), upper.y(), beforeCenter, y);
-    SetUpperConstraint(lower.y(), upper.y(), beforeCenter, y);
-    SetLowerConstraint(lower.z(), upper.z(), beforeCenter, z);
-    SetUpperConstraint(lower.z(), upper.z(), beforeCenter, z);
-}
+using namespace vpvl2::pmx;
 
 class BoneOrderPredication
 {
 public:
-    inline bool operator()(const pmx::Bone *left, const pmx::Bone *right) const {
+    inline bool operator()(const Bone *left, const Bone *right) const {
         if (left->isTransformedAfterPhysicsSimulation() == right->isTransformedAfterPhysicsSimulation()) {
             if (left->index() == right->index())
                 return left->id() < right->id();
@@ -104,6 +69,23 @@ public:
         return right->isTransformedAfterPhysicsSimulation();
     }
 };
+
+static void ClampAngle(const Scalar &min,
+                       const Scalar &max,
+                       const Scalar &current,
+                       const Scalar &result,
+                       Scalar &output)
+{
+    if (btFuzzyZero(min) && btFuzzyZero(max)) {
+        output = 0;
+    }
+    else if (result < min) {
+        output = current - min;
+    }
+    else if (result > max) {
+        output = max - current;
+    }
+}
 
 }
 
@@ -132,7 +114,6 @@ Bone::Bone()
       m_rotationIKLink(Quaternion::getIdentity()),
       m_localTransform(Transform::getIdentity()),
       m_localToOrigin(Transform::getIdentity()),
-      m_IKLinkTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_offset(kZeroV3),
       m_position(kZeroV3),
@@ -362,7 +343,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         m_targetBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
         m_nloop = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
-        m_angleConstraint = ((*reinterpret_cast<float *>(ptr)) / 4.0) * kPI;
+        m_angleConstraint = *reinterpret_cast<float *>(ptr);
         ptr += sizeof(float);
         int nlinks = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
@@ -441,7 +422,7 @@ void Bone::performFullTransform()
         }
     }
     rotation *= m_rotation * m_rotationMorph * m_rotationIKLink;
-    //rotation.normalize();
+    rotation.normalize();
     m_localTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
     if (hasPositionInherence()) {
@@ -455,16 +436,21 @@ void Bone::performFullTransform()
     }
     position += m_position + m_positionMorph;
     m_localTransform.setOrigin(m_offset + m_position + m_positionMorph);
-    if (m_parentBone)
+    if (m_parentBone) {
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
+    }
+    //const Quaternion &value = m_localTransform.getRotation();
+    //qDebug("%s(fullTransform): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
 }
 
 void Bone::performTransform()
 {
-    m_localTransform.setRotation(m_rotationIKLink);
-    m_localTransform.setOrigin(m_position);
+    m_localTransform.setRotation(m_rotation);
+    m_localTransform.setOrigin(m_offset + m_position);
     if (m_parentBone)
         m_localTransform = m_parentBone->m_localTransform * m_localTransform;
+    //const Quaternion &value = m_localTransform.getRotation();
+    //qDebug("%s(transform): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
 }
 
 void Bone::performInverseKinematics()
@@ -473,7 +459,7 @@ void Bone::performInverseKinematics()
         return;
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
-    Quaternion rotation;
+    Quaternion rotation, targetRotation = m_targetBone->m_rotation;
     btMatrix3x3 matrix;
     for (int i = 0; i < nloops; i++) {
         for (int j = 0; j < nlinks; j++) {
@@ -491,6 +477,10 @@ void Bone::performInverseKinematics()
 #if IK_DEBUG
             qDebug() << "transo:" << transform.getOrigin().x() << transform.getOrigin().y() << transform.getOrigin().z();
             qDebug() << "transr:" << transform.getRotation().w() << transform.getRotation().x() << transform.getRotation().y() << transform.getRotation().z();
+            qDebug() << "trot:  " << m_targetBone->m_localTransform.getRotation().w()
+                                  << m_targetBone->m_localTransform.getRotation().x()
+                                  << m_targetBone->m_localTransform.getRotation().y()
+                                  << m_targetBone->m_localTransform.getRotation().z();
             qDebug() << "target:" << targetPosition.x() << targetPosition.y() << targetPosition.z();
             qDebug() << "dest:  " << destinationPosition.x() << destinationPosition.y() << destinationPosition.z();
 #endif
@@ -505,6 +495,7 @@ void Bone::performInverseKinematics()
             if (btFuzzyZero(angle))
                 continue;
             rotation.setRotation(rotationAxis, angle);
+            rotation.normalize();
 #if IK_DEBUG
             qDebug("I:J=%d:%d", i, j);
             qDebug("target: %s", m_targetBone->name()->toByteArray());
@@ -532,11 +523,13 @@ void Bone::performInverseKinematics()
                     Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
                     matrix.setRotation(rotation);
                     matrix.getEulerZYX(z1, y1, x1);
-                    matrix.setRotation(bone->m_rotationIKLink);
+                    matrix.setRotation(bone->m_rotation);
                     matrix.getEulerZYX(z2, y2, x2);
                     x3 = x1 + x2; y3 = y1 + y2; z3 = z1 + z2;
-
-#if IK_DEBUG
+                    ClampAngle(lowerLimit.x(), upperLimit.x(), x2, x3, x1);
+                    ClampAngle(lowerLimit.y(), upperLimit.y(), y2, y3, y1);
+                    ClampAngle(lowerLimit.z(), upperLimit.z(), z2, z3, z1);
+ #if IK_DEBUG
                     if (x3 < lowerLimit.x() || x3 > upperLimit.x()) {
                         qDebug() << x3 << x1 << x2;
                     }
@@ -548,24 +541,25 @@ void Bone::performInverseKinematics()
                     qDebug() << "rot:  " << x2 << y2 << z2;
                     */
 #endif
-                    rotation.setEulerZYX(0, 0, x1);
+                    rotation.setEulerZYX(z1, y1, x1);
                 }
 #if IK_DEBUG
                 qDebug() << "rot:   " << rotation.w() << rotation.x() << rotation.y() << rotation.z();
 #endif
-                bone->m_rotationIKLink = rotation * bone->m_rotationIKLink;
+                bone->m_rotation = rotation * bone->m_rotation;
             }
             else {
 #if IK_DEBUG
                 qDebug() << "rot:   " << rotation.w() << rotation.x() << rotation.y() << rotation.z();
 #endif
-                bone->m_rotationIKLink *= rotation;
+                bone->m_rotation *= rotation;
             }
-            //bone->m_rotationIKLink.normalize();
+            bone->m_rotation.normalize();
+            bone->m_rotationIKLink = rotation;
             for (int k = j; k >= 0; k--) {
                 IKLink *ik = m_IKLinks[k];
                 Bone *destinationBone = ik->bone;
-                destinationBone->performFullTransform();
+                destinationBone->performTransform();
 #if IK_DEBUG
                 qDebug("k=%d: %s", k, destinationBone->name()->toByteArray());
                 qDebug() << destinationBone->m_localTransform.getOrigin().x()
@@ -577,9 +571,19 @@ void Bone::performInverseKinematics()
                          << destinationBone->m_localTransform.getRotation().z();
 #endif
             }
-            m_targetBone->performFullTransform();
 #if IK_DEBUG
-            qDebug("target: %s", m_targetBone->name()->toByteArray());
+            qDebug("target1: %s", m_targetBone->name()->toByteArray());
+            qDebug() << m_targetBone->m_localTransform.getOrigin().x()
+                     << m_targetBone->m_localTransform.getOrigin().y()
+                     << m_targetBone->m_localTransform.getOrigin().z();
+            qDebug() << m_targetBone->m_localTransform.getRotation().w()
+                     << m_targetBone->m_localTransform.getRotation().x()
+                     << m_targetBone->m_localTransform.getRotation().y()
+                     << m_targetBone->m_localTransform.getRotation().z();
+#endif
+            m_targetBone->performTransform();
+#if IK_DEBUG
+            qDebug("target2: %s", m_targetBone->name()->toByteArray());
             qDebug() << m_targetBone->m_localTransform.getOrigin().x()
                      << m_targetBone->m_localTransform.getOrigin().y()
                      << m_targetBone->m_localTransform.getOrigin().z();
@@ -590,11 +594,17 @@ void Bone::performInverseKinematics()
 #endif
         }
     }
+    m_targetBone->m_rotation = targetRotation;
 }
 
 void Bone::performUpdateLocalTransform()
 {
     m_localTransform *= m_localToOrigin;
+}
+
+void Bone::resetIKLink()
+{
+    m_rotationIKLink = Quaternion::getIdentity();
 }
 
 const Transform Bone::localTransform() const
@@ -610,6 +620,7 @@ void Bone::setPosition(const Vector3 &value)
 void Bone::setRotation(const Quaternion &value)
 {
     m_rotation = value;
+    //qDebug("%s(rotate): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
 }
 
 } /* namespace pmx */
