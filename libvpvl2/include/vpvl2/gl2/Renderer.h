@@ -64,7 +64,7 @@
 #endif /* __APPLE__ */
 #endif /* VPVL_BUILD_IOS */
 
-class btDynamicsWorld;
+class btDiscreteDynamicsWorld;
 class btIDebugDraw;
 
 namespace vpvl2
@@ -137,7 +137,7 @@ public:
         virtual const std::string toUnicode(const IString *value) = 0;
     };
 
-    Renderer(IDelegate *delegate, int width, int height, int fps);
+    Renderer(IDelegate *delegate);
     virtual ~Renderer();
 
     bool createShaderPrograms();
@@ -159,6 +159,7 @@ public:
     void setProjectionMatrix(const float value[16]);
     void setLightColor(const Vector3 &value);
     void setLightPosition(const Vector3 &value);
+    void setWorld(btDiscreteDynamicsWorld *world);
 
     static bool isAcceleratorSupported();
     bool isAcceleratorAvailable() const;
@@ -171,6 +172,7 @@ protected:
     Array<Asset *> m_assets;
 
 private:
+    btDiscreteDynamicsWorld *m_world;
     Array<pmx::Model *> m_models;
     ModelProgram *m_modelProgram;
     ShadowProgram *m_shadowProgram;

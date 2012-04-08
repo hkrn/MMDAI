@@ -1017,13 +1017,14 @@ private:
     GLuint m_shadowTextureUniformLocation;
 };
 
-Renderer::Renderer(IDelegate *delegate, int width, int height, int fps)
+Renderer::Renderer(IDelegate *delegate)
 #ifdef VPVL2_LINK_QT
     : QGLFunctions(),
       #else
     :
       #endif /* VPVL2_LINK_QT */
       m_delegate(delegate),
+      m_world(0),
       m_modelProgram(0),
       m_shadowProgram(0),
       m_accelerator(0),
@@ -1186,7 +1187,7 @@ void Renderer::deleteModel(pmx::Model *&model)
 void Renderer::updateAllModel()
 {
     const int nmodels = m_models.count();
-    for (size_t i = 0; i < nmodels; i++) {
+    for (int i = 0; i < nmodels; i++) {
         pmx::Model *model = m_models[i];
         if (model->isVisible())
             updateModel(model);
@@ -1323,6 +1324,26 @@ void Renderer::setLightPosition(const Vector3 &value)
     m_lightPosition = value;
 }
 
+void Renderer::setWorld(btDiscreteDynamicsWorld *world)
+{
+    const int nmodels = m_models.count();
+    // Remove rigid bodies and constraints from the current world
+    // before setting the new world
+    if (m_world) {
+        for (int i = 0; i < nmodels; i++) {
+            IModel *model = m_models[i];
+            model->leaveWorld(m_world);
+        }
+    }
+    if (world) {
+        for (int i = 0; i < nmodels; i++) {
+            IModel *model = m_models[i];
+            model->joinWorld(world);
+        }
+    }
+    m_world = world;
+}
+
 #if 0
 void Renderer::renderModelEdge(const pmx::Model *model)
 {
@@ -1383,7 +1404,7 @@ void Renderer::renderProjectiveShadow()
 {
     const int nmodels = m_models.count();
     glCullFace(GL_FRONT);
-    for (size_t i = 0; i < nmodels; i++) {
+    for (int i = 0; i < nmodels; i++) {
         pmx::Model *model = m_models[i];
         if (model->isVisible())
             renderModelShadow(model);

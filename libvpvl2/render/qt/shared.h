@@ -79,7 +79,7 @@ namespace
     static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
     static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders/pmx";
     static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
-    static const std::string kModelDir = "render/res/miku2";
+    static const std::string kModelDir = "render/res/miku";
     static const std::string kStageDir = "render/res/stage";
     static const std::string kMotion = "render/res/motion.vmd";
     static const std::string kCamera = "render/res/camera.vmd.404";
@@ -380,14 +380,14 @@ QDebug operator<<(QDebug debug, const IString *str)
 QDebug operator<<(QDebug debug, const pmx::Bone *bone)
 {
     debug.nospace()
-            << "Bone id=" << bone->id()
+            << "Bone id=" << bone->index()
             << " name=" << bone->name()
             << " english=" << bone->englishName()
             << " origin=" << bone->origin();
     if (bone->parentBone())
         debug << " parent=" << bone->parentBone()->name();
-    debug << " index=" << bone->index() << "\n" << " offset=" << bone->origin();
-    if (bone->hasIKLinks()) {
+    debug << " index=" << bone->layerIndex() << "\n" << " offset=" << bone->origin();
+    if (bone->isIKEnabled()) {
         debug << " targetBone=" << bone->targetBone()->name()
               << " constraintAngle=" << bone->constraintAngle();
     }
@@ -485,7 +485,7 @@ public:
         m_encoding = encoding;
         m_model = new pmx::Model(encoding);
         encoding->m_model = m_model;
-        m_renderer = new Renderer(&m_delegate, kWidth, kHeight, kFPS);
+        m_renderer = new Renderer(&m_delegate);
 #ifndef VPVL_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
         m_world->setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
@@ -579,6 +579,9 @@ protected:
             if (m_motion->isReachedTo(m_motion->maxFrameIndex()))
                 m_motion->reset();
             m_model->update();
+            const int kFPS = 30;
+            const Scalar &sec = 1.0 / kFPS;
+            m_world->stepSimulation(sec, 1, 1.0 / kFPS);
         }
     }
     void wheelEvent(QWheelEvent *event) {
@@ -641,13 +644,8 @@ private:
             return false;
         }
 
-        /*
-        vpvl::Scene *scene = m_renderer->scene();
-        //scene.setCamera(btVector3(0.0f, 50.0f, 0.0f), btVector3(0.0f, 0.0f, 0.0f), 60.0f, 50.0f);
-        scene->setWorld(m_world);
-        */
-
         m_renderer->uploadModel(m_model, kModelDir);
+        m_renderer->setWorld(m_world);
         //m_model->setEdgeOffset(0.5f);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
