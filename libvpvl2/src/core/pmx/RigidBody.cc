@@ -193,7 +193,7 @@ RigidBody::~RigidBody()
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
+    size_t size, boneIndexSize = info.boneIndexSize;
     if (!internal::size32(ptr, rest, size)) {
         return false;
     }
@@ -209,7 +209,7 @@ bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             return false;
         }
-        if (!internal::validateSize(ptr, info.boneIndexSize + sizeof(RigidBodyUnit), rest)) {
+        if (!internal::validateSize(ptr, boneIndexSize + sizeof(RigidBodyUnit), rest)) {
             return false;
         }
     }
@@ -232,7 +232,8 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
             else {
                 btCollisionShape *shape = rigidBody->createShape();
                 Bone *bone = bones[boneIndex];
-                bone->setSimulated(true);
+                if (rigidBody->m_type != 0)
+                    bone->setSimulated(true);
                 rigidBody->m_bone = bone;
                 rigidBody->m_body = rigidBody->createRigidBody(shape);
             }
@@ -369,6 +370,8 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
     info.m_friction = m_friction;
     info.m_additionalDamping = true;
     btRigidBody *body = new btRigidBody(info);
+    if (m_type == 0)
+        body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     body->setActivationState(DISABLE_DEACTIVATION);
     return body;
 }

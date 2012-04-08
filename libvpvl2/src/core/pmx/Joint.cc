@@ -113,7 +113,7 @@ Joint::~Joint()
 
 bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
+    size_t size, rigidBodyIndexSize = info.rigidBodyIndexSize * 2;
     if (!internal::size32(ptr, rest, size)) {
         return false;
     }
@@ -135,7 +135,7 @@ bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         switch (type) {
         case 0:
-            if (!internal::validateSize(ptr, info.rigidBodyIndexSize * 2 + sizeof(JointUnit), rest)) {
+            if (!internal::validateSize(ptr, rigidBodyIndexSize + sizeof(JointUnit), rest)) {
                 return false;
             }
             break;
@@ -298,7 +298,8 @@ btGeneric6DofSpringConstraint *Joint::createConstraint() const
     constraint->setAngularLowerLimit(m_rotationUpperLimit);
 #endif /* VPVL2_COORDINATE_OPENGL */
     for (int i = 0; i < 3; i++) {
-        if (const Scalar &value = m_rotationStiffness[i]) {
+        const Scalar &value = m_rotationStiffness[i];
+        if (!btFuzzyZero(value)) {
             int index = i + 3;
             constraint->enableSpring(index, true);
             constraint->setStiffness(index, value);
