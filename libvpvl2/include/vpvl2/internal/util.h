@@ -305,6 +305,22 @@ static inline size_t estimateSize(const IString *string)
     return sizeof(int) + (string ? string->length() : 0);
 }
 
+static inline void setString(const IString *newValue, IString *&value)
+{
+    if (newValue && newValue != value) {
+        delete value;
+        value = newValue->clone();
+    }
+}
+
+static inline void toggleFlag(int value, bool enable, uint16_t &flags)
+{
+    if (enable)
+        flags |= value;
+    else
+        flags &= ~value;
+}
+
 static inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
 {
     assert(table && size > 0);
