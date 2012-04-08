@@ -133,7 +133,8 @@ Bone::Bone()
       m_nloop(0),
       m_parentBoneBiasIndex(-1),
       m_globalID(0),
-      m_flags(0)
+      m_flags(0),
+      m_simulated(false)
 {
 }
 
@@ -455,7 +456,7 @@ void Bone::performTransform()
 
 void Bone::performInverseKinematics()
 {
-    if (!hasIKLinks())
+    if (!hasIKLinks() || m_simulated)
         return;
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
@@ -626,6 +627,11 @@ void Bone::setRotation(const Quaternion &value)
 void Bone::setLocalTransform(const Transform &value)
 {
     m_localTransform = value;
+}
+
+void Bone::setSimulated(bool value)
+{
+    m_simulated = value;
 }
 
 } /* namespace pmx */

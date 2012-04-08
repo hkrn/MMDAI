@@ -88,6 +88,7 @@ public:
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
     void setLocalTransform(const Transform &value);
+    void setSimulated(bool value);
 
     Bone *parentBone() const { return m_parentBone; }
     Bone *targetBone() const { return m_targetBone; }
@@ -150,6 +151,7 @@ private:
     int m_parentBoneBiasIndex;
     int m_globalID;
     uint16_t m_flags;
+    bool m_simulated;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Bone)
 };
