@@ -314,9 +314,9 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
     m_offset = m_origin;

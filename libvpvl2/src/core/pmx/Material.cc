@@ -197,9 +197,9 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX, textureIndexSize = info.textureIndexSize;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
     const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
     m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2], 0);
     m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
