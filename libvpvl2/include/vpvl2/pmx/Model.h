@@ -75,32 +75,6 @@ public:
     };
     struct SkinnedVertex;
 
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
-    };
     enum StrideType {
         kVertexStride,
         kNormalStride,
@@ -119,6 +93,7 @@ public:
         uint8_t *basePtr;
         uint8_t *namePtr;
         IString::Codec codec;
+        Error error;
         size_t additionalUVSize;
         size_t vertexIndexSize;
         size_t textureIndexSize;

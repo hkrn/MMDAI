@@ -52,6 +52,33 @@ class IMotion;
 class VPVL2_API IModel
 {
 public:
+    /**
+      * Type of parsing errors.
+      */
+    enum Error
+    {
+        kNoError,
+        kInvalidHeaderError,
+        kInvalidSignatureError,
+        kInvalidVersionError,
+        kInvalidFlagSizeError,
+        kInvalidNameSizeError,
+        kInvalidEnglishNameSizeError,
+        kInvalidCommentSizeError,
+        kInvalidEnglishCommentSizeError,
+        kInvalidVerticesError,
+        kInvalidIndicesError,
+        kInvalidTextureSizeError,
+        kInvalidTextureError,
+        kInvalidMaterialsError,
+        kInvalidBonesError,
+        kInvalidMorphsError,
+        kInvalidLabelsError,
+        kInvalidRigidBodiesError,
+        kInvalidJointsError,
+        kMaxErrors
+    };
+
     virtual ~IModel() {}
     virtual const IString *name() const = 0;
     virtual const IString *englishName() const = 0;
