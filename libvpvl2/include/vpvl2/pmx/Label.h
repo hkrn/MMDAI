@@ -57,12 +57,7 @@ namespace pmx
 class VPVL2_API Label
 {
 public:
-    struct Pair {
-        int id;
-        int type;
-        Bone *bone;
-        Morph *morph;
-    };
+    struct Pair;
 
     /**
      * Constructor
@@ -88,10 +83,18 @@ public:
     Morph *morph(int index) const;
     int count() const;
 
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
+    void setSpecial(bool value);
+    void addBone(Bone *value);
+    void addMorph(Morph *value);
+    void removeBone(Bone *value);
+    void removeMorph(Morph *value);
+
 private:
     IString *m_name;
     IString *m_englishName;
-    Array<Pair> m_pairs;
+    Array<Pair *> m_pairs;
     bool m_special;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Label)

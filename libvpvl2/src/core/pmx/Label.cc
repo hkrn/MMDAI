@@ -51,6 +51,13 @@ namespace vpvl2
 namespace pmx
 {
 
+struct Label::Pair {
+    int id;
+    int type;
+    Bone *bone;
+    Morph *morph;
+};
+
 Label::Label()
     : m_name(0),
       m_englishName(0),
@@ -64,6 +71,7 @@ Label::~Label()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_pairs.releaseAll();
 }
 
 bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -119,25 +127,25 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::size8(ptr, rest, nNameSize);
     m_special = nNameSize == 1;
     internal::size32(ptr, rest, nNameSize);
-    Pair pair;
-    pair.bone = 0;
-    pair.morph = 0;
     for (size_t i = 0; i < nNameSize; i++) {
         size_t type;
         internal::size8(ptr, rest, type);
-        pair.type = type;
+        Pair *pair = new Pair();
+        pair->bone = 0;
+        pair->morph = 0;
+        pair->type = type;
         switch (type) {
         case 0:
-            pair.id = internal::readSignedIndex(ptr, info.boneIndexSize);
+            pair->id = internal::readSignedIndex(ptr, info.boneIndexSize);
             break;
         case 1:
-            pair.id = internal::readSignedIndex(ptr, info.morphIndexSize);
+            pair->id = internal::readSignedIndex(ptr, info.morphIndexSize);
             break;
         default:
             assert(0);
@@ -156,15 +164,15 @@ void Label::write(uint8_t *data, const Model::DataInfo &info) const
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_special), sizeof(uint8_t), data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&npairs), sizeof(npairs), data);
     for (int i = 0; i < npairs; i++) {
-        const Pair &pair = m_pairs[i];
-        const uint8_t type = pair.type;
+        const Pair *pair = m_pairs[i];
+        const uint8_t type = pair->type;
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&type), sizeof(type), data);
-        switch (pair.type) {
+        switch (pair->type) {
         case 0:
-            internal::writeSignedIndex(pair.id, info.boneIndexSize, data);
+            internal::writeSignedIndex(pair->id, info.boneIndexSize, data);
             break;
         case 1:
-            internal::writeSignedIndex(pair.id, info.morphIndexSize, data);
+            internal::writeSignedIndex(pair->id, info.morphIndexSize, data);
             break;
         default:
             return;
@@ -179,9 +187,9 @@ size_t Label::estimateSize(const Model::DataInfo &info) const
     size += internal::estimateSize(m_englishName);
     int npairs = m_pairs.count();
     for (int i = 0; i < npairs; i++) {
-        const Pair &pair = m_pairs[i];
+        const Pair *pair = m_pairs[i];
         size += sizeof(uint8_t);
-        switch (pair.type) {
+        switch (pair->type) {
         case 0:
             size += info.boneIndexSize;
             break;
@@ -198,20 +206,85 @@ size_t Label::estimateSize(const Model::DataInfo &info) const
 Bone *Label::bone(int index) const
 {
     if (index >= 0 && index < m_pairs.count())
-        return m_pairs[index].bone;
+        return m_pairs[index]->bone;
     return 0;
 }
 
 Morph *Label::morph(int index) const
 {
     if (index >= 0 && index < m_pairs.count())
-        return m_pairs[index].morph;
+        return m_pairs[index]->morph;
     return 0;
 }
 
 int Label::count() const
 {
     return m_pairs.count();
+}
+
+void Label::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+void Label::setEnglishName(const IString *value)
+{
+    internal::setString(value, m_englishName);
+}
+
+void Label::setSpecial(bool value)
+{
+    m_special = value;
+}
+
+void Label::addBone(Bone *value)
+{
+    if (value) {
+        Pair *pair = new Pair();
+        pair->bone = value;
+        pair->id = value->index();
+        pair->morph = 0;
+        pair->type = 0;
+        m_pairs.add(pair);
+    }
+}
+
+void Label::addMorph(Morph *value)
+{
+    if (value) {
+        Pair *pair = new Pair();
+        pair->bone = 0;
+        pair->id = value->index();
+        pair->morph = value;
+        pair->type = 1;
+        m_pairs.add(pair);
+    }
+}
+
+void Label::removeBone(Bone *value)
+{
+    const int npairs = m_pairs.count();
+    for (int i = 0; i < npairs; i++) {
+        Pair *pair = m_pairs[i];
+        if (pair->bone == value) {
+            m_pairs.remove(pair);
+            delete pair;
+            break;
+        }
+    }
+}
+
+void Label::removeMorph(Morph *value)
+{
+    const int npairs = m_pairs.count();
+    for (int i = 0; i < npairs; i++) {
+        Pair *pair = m_pairs[i];
+        if (pair->morph == value) {
+            m_pairs.remove(pair);
+            delete pair;
+            break;
+        }
+    }
 }
 
 } /* namespace pmx */
