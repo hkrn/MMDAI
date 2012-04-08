@@ -67,10 +67,14 @@ public:
         Color base;
         Vector3 mod;
         Vector3 add;
-        Color3() : base(kZeroC), mod(1.0, 1.0, 1.0), add(kZeroV3) {}
+        Color3() : base(kZeroC), mod(1, 1, 1), add(kZeroV3) {}
         const Color calculate() const {
             const Vector3 &mixed = base * mod + add;
             return Color(mixed.x(), mixed.y(), mixed.z(), base.w());
+        }
+        void reset() {
+            mod.setValue(1, 1, 1);
+            add.setValue(0, 0, 0);
         }
     };
 
@@ -96,6 +100,7 @@ public:
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
     void mergeMorph(Morph::Material *morph, float weight);
+    void resetMorph();
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -109,7 +114,7 @@ public:
     const Color specular() const { return m_specular.calculate(); }
     const Color edgeColor() const { return m_edgeColor.calculate(); }
     float shininess() const { return m_shininess.x() * m_shininess.y() + m_shininess.z(); }
-    float edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_shininess.z(); }
+    float edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_edgeSize.z(); }
     int textureIndex() const { return m_textureIndex; }
     int sphereTextureIndex() const { return m_sphereTextureIndex; }
     int toonTextureIndex() const { return m_toonTextureIndex; }

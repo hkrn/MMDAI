@@ -271,28 +271,45 @@ size_t Material::estimateSize(const Model::DataInfo &info) const
 
 void Material::mergeMorph(Morph::Material *morph, float weight)
 {
-    const Vector3 &ambient = morph->ambient,
-            &diffuse = morph->diffuse,
-            &specular = morph->specular,
-            &edgeColor = morph->edgeColor;
-    switch (morph->operation) {
-    case 0:
-        m_ambient.mod *= ambient * ambient.w() * weight;
-        m_diffuse.mod *= diffuse * diffuse.w() * weight;
-        m_specular.mod *= specular * specular.w() * weight;
-        m_shininess.setY(m_shininess.y() * morph->shininess * weight);
-        m_edgeColor.mod *= edgeColor * edgeColor.w() * weight;
-        m_edgeSize.setY(m_edgeSize.y() * morph->edgeSize * weight);
-        break;
-    case 1:
-        m_ambient.add += ambient * ambient.w() * weight;
-        m_diffuse.add += diffuse * diffuse.w() * weight;
-        m_specular.add += specular * specular.w() * weight;
-        m_shininess.setZ(m_shininess.z() + morph->shininess * weight);
-        m_edgeColor.add += edgeColor * edgeColor.w() * weight;
-        m_edgeSize.setZ(m_edgeSize.z() + morph->edgeSize * weight);
-        break;
+    if (btFuzzyZero(weight)) {
+        resetMorph();
     }
+    else {
+        btClamp(weight, 0.0f, 1.0f);
+        const Vector3 &ambient = morph->ambient,
+                &diffuse = morph->diffuse,
+                &specular = morph->specular,
+                &edgeColor = morph->edgeColor;
+        static const Vector3 kOne(1.0, 1.0, 1.0);
+        switch (morph->operation) {
+        case 0: // modulate
+            m_ambient.mod = kOne - ambient * weight;
+            m_diffuse.mod = kOne - diffuse * diffuse.w() * weight;
+            m_specular.mod = kOne - specular * weight;
+            m_shininess.setY(1.0 - morph->shininess * weight);
+            m_edgeColor.mod = kOne - edgeColor * edgeColor.w() * weight;
+            m_edgeSize.setY(1.0 - morph->edgeSize * weight);
+            break;
+        case 1: // add
+            m_ambient.add = ambient * weight;
+            m_diffuse.add = diffuse * diffuse.w() * weight;
+            m_specular.add = specular * weight;
+            m_shininess.setZ(morph->shininess * weight);
+            m_edgeColor.add = edgeColor * edgeColor.w() * weight;
+            m_edgeSize.setZ(morph->edgeSize * weight);
+            break;
+        }
+    }
+}
+
+void Material::resetMorph()
+{
+    m_ambient.reset();
+    m_diffuse.reset();
+    m_specular.reset();
+    m_shininess.setValue(m_shininess.x(), 1, 0);
+    m_edgeColor.reset();
+    m_edgeSize.setValue(m_edgeSize.x(), 1, 0);
 }
 
 void Material::setName(const IString *value)

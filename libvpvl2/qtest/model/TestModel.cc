@@ -123,22 +123,62 @@ private:
     static void setVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bones);
     static void compareVertex(const Vertex &vertex, const Vertex &vertex2, const Array<Bone *> &bones);
 
+    static void testReadWriteBone(size_t indexSize);
+    static void testReadWriteMaterial(size_t indexSize);
+    static void testReadWriteBoneMorph(size_t indexSize);
+    static void testReadWriteGroupMorph(size_t indexSize);
+    static void testReadWriteMaterialMorph(size_t indexSize);
+    static void testReadWriteUVMorph(size_t indexSize);
+    static void testReadWriteVertexMorph(size_t indexSize);
+    static void testReadWriteVertexBdef1(size_t indexSize);
+    static void testReadWriteVertexBdef2(size_t indexSize);
+    static void testReadWriteVertexBdef4(size_t indexSize);
+    static void testReadWriteVertexSdef(size_t indexSize);
+
 private Q_SLOTS:
-    void parseEmpty();
-    void parseFile();
-    void testBoneDefaultFlags();
-    void parseBone();
-    void parseMaterial();
-    void parseBoneMorph();
-    void parseGroupMorph();
-    void parseMaterialMorph();
-    void parseUVMorph();
-    void parseVertexMorph();
-    void parseVertexBdef1();
-    void parseVertexBdef2();
-    void parseVertexBdef4();
-    void parseVertexSdef();
-    void checkBoundVertex();
+    void parseEmpty() const;
+    void parseFile() const;
+    void testBoneDefaultFlags() const;
+    void testVertexBoundary() const;
+    void testMaterialMorphMergeAmbient() const;
+    void testMaterialMorphMergeDiffuse() const;
+    void testMaterialMorphMergeSpecular() const;
+    void testMaterialMorphMergeShininess() const;
+    void testMaterialMorphMergeEdgeColor() const;
+    void testMaterialMorphMergeEdgeSize() const;
+    void testReadWriteBoneIndexSize1() const { testReadWriteBone(1); }
+    void testReadWriteBoneIndexSize2() const { testReadWriteBone(2); }
+    void testReadWriteBoneIndexSize4() const { testReadWriteBone(4); }
+    void testReadWriteMaterialIndexSize1() const { testReadWriteMaterial(1); }
+    void testReadWriteMaterialIndexSize2() const { testReadWriteMaterial(2); }
+    void testReadWriteMaterialIndexSize4() const { testReadWriteMaterial(4); }
+    void testReadWriteBoneMorphIndexSize1() const { testReadWriteBoneMorph(1); }
+    void testReadWriteBoneMorphIndexSize2() const { testReadWriteBoneMorph(2); }
+    void testReadWriteBoneMorphIndexSize4() const { testReadWriteBoneMorph(4); }
+    void testReadWriteGroupMorphIndexSize1() const { testReadWriteGroupMorph(1); }
+    void testReadWriteGroupMorphIndexSize2() const { testReadWriteGroupMorph(2); }
+    void testReadWriteGroupMorphIndexSize4() const { testReadWriteGroupMorph(4); }
+    void testReadWriteMaterialMorphIndexSize1() const { testReadWriteMaterialMorph(1); }
+    void testReadWriteMaterialMorphIndexSize2() const { testReadWriteMaterialMorph(2); }
+    void testReadWriteMaterialMorphIndexSize4() const { testReadWriteMaterialMorph(4); }
+    void testReadWriteUVMorphIndexSize1() const { testReadWriteUVMorph(1); }
+    void testReadWriteUVMorphIndexSize2() const { testReadWriteUVMorph(2); }
+    void testReadWriteUVMorphIndexSize4() const { testReadWriteUVMorph(4); }
+    void testReadWriteVertexMorphIndexSize1() const { testReadWriteVertexMorph(1); }
+    void testReadWriteVertexMorphIndexSize2() const { testReadWriteVertexMorph(2); }
+    void testReadWriteVertexMorphIndexSize4() const { testReadWriteVertexMorph(4); }
+    void testReadWriteVertexBdef1IndexSize1() const { testReadWriteVertexBdef1(1); }
+    void testReadWriteVertexBdef1IndexSize2() const { testReadWriteVertexBdef1(2); }
+    void testReadWriteVertexBdef1IndexSize4() const { testReadWriteVertexBdef1(4); }
+    void testReadWriteVertexBdef2IndexSize1() const { testReadWriteVertexBdef2(1); }
+    void testReadWriteVertexBdef2IndexSize2() const { testReadWriteVertexBdef2(2); }
+    void testReadWriteVertexBdef2IndexSize4() const { testReadWriteVertexBdef2(4); }
+    void testReadWriteVertexBdef4IndexSize1() const { testReadWriteVertexBdef4(1); }
+    void testReadWriteVertexBdef4IndexSize2() const { testReadWriteVertexBdef4(2); }
+    void testReadWriteVertexBdef4IndexSize4() const { testReadWriteVertexBdef4(4); }
+    void testReadWriteVertexSdefIndexSize1() const { testReadWriteVertexSdef(1); }
+    void testReadWriteVertexSdefIndexSize2() const { testReadWriteVertexSdef(2); }
+    void testReadWriteVertexSdefIndexSize4() const { testReadWriteVertexSdef(4); }
 };
 
 void TestModel::compare(const Vector3 &actual, const Vector3 &expected)
@@ -218,7 +258,7 @@ TestModel::TestModel()
 {
 }
 
-void TestModel::parseEmpty()
+void TestModel::parseEmpty() const
 {
     Encoding encoding;
     Model model(&encoding);
@@ -227,7 +267,7 @@ void TestModel::parseEmpty()
     QCOMPARE(model.error(), Model::kInvalidHeaderError);
 }
 
-void TestModel::parseFile()
+void TestModel::parseFile() const
 {
     Encoding encoding;
     Model model(&encoding);
@@ -277,7 +317,7 @@ void TestModel::parseFile()
 #endif
 }
 
-void TestModel::testBoneDefaultFlags()
+void TestModel::testBoneDefaultFlags() const
 {
     Bone bone;
     QVERIFY(!bone.isMovable());
@@ -293,13 +333,312 @@ void TestModel::testBoneDefaultFlags()
     QVERIFY(!bone.isTransformedByExternalParent());
 }
 
-void TestModel::parseBone()
+void TestModel::testVertexBoundary() const
+{
+    Vertex vertex;
+    Bone *bone = new Bone();
+    vertex.setUV(-1, Vector4(1, 1, 1, 1));
+    vertex.setUV( 4, Vector4(1, 1, 1, 1));
+    vertex.setWeight(-1, 0.1);
+    vertex.setWeight( 4, 0.1);
+    vertex.setBone(-1, bone);
+    vertex.setBone( 4, bone);
+    QCOMPARE(0.0f, vertex.uv(-1).x());
+    QCOMPARE(0.0f, vertex.uv(4).x());
+    QCOMPARE(static_cast<IBone *>(0), vertex.bone(-1));
+    QCOMPARE(static_cast<IBone *>(0), vertex.bone(4));
+    QCOMPARE(0.0f, vertex.weight(-1));
+    QCOMPARE(0.0f, vertex.weight(4));
+}
+
+void TestModel::testMaterialMorphMergeAmbient() const
+{
+    Material material;
+    Morph::Material morph;
+    // mod (1.0)
+    morph.ambient.setValue(1.0, 1.0, 1.0);
+    morph.operation = 0;
+    material.setAmbient(Color(0.8, 0.8, 0.8, 0.8));
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.6, 0.6, 0.6, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.4, 0.4, 0.4, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.2, 0.2, 0.2, 0.8), material.ambient());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(0.0, 0.0, 0.0, 0.8), material.ambient());
+    material.resetMorph();
+    // add (0.2)
+    morph.ambient.setValue(0.2, 0.2, 0.2);
+    morph.operation = 1;
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.85, 0.85, 0.85, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.9, 0.9, 0.9, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.ambient());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.0, 1.0, 1.0, 0.8), material.ambient());
+    material.resetMorph();
+    // add (0.6)
+    morph.ambient.setValue(0.6, 0.6, 0.6);
+    morph.operation = 1;
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(1.1, 1.1, 1.1, 0.8), material.ambient());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(1.25, 1.25, 1.25, 0.8), material.ambient());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.4, 1.4, 1.4, 0.8), material.ambient());
+}
+
+void TestModel::testMaterialMorphMergeDiffuse() const
+{
+    Material material;
+    Morph::Material morph;
+    // mod (1.0)
+    morph.diffuse.setValue(1.0, 1.0, 1.0, 1.0);
+    morph.operation = 0;
+    material.setDiffuse(Color(0.8, 0.8, 0.8, 0.8));
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.6, 0.6, 0.6, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.4, 0.4, 0.4, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.2, 0.2, 0.2, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(0.0, 0.0, 0.0, 0.8), material.diffuse());
+    material.resetMorph();
+    // add (0.2)
+    morph.diffuse.setValue(0.2, 0.2, 0.2, 1.0);
+    morph.operation = 1;
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.85, 0.85, 0.85, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.9, 0.9, 0.9, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.0, 1.0, 1.0, 0.8), material.diffuse());
+    material.resetMorph();
+    // add (0.6)
+    morph.diffuse.setValue(0.6, 0.6, 0.6, 1.0);
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(1.1, 1.1, 1.1, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(1.25, 1.25, 1.25, 0.8), material.diffuse());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.4, 1.4, 1.4, 0.8), material.diffuse());
+}
+
+void TestModel::testMaterialMorphMergeSpecular() const
+{
+    Material material;
+    Morph::Material morph;
+    // mod (1.0)
+    morph.specular.setValue(1.0, 1.0, 1.0);
+    morph.operation = 0;
+    material.setSpecular(Color(0.8, 0.8, 0.8, 0.8));
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.6, 0.6, 0.6, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.4, 0.4, 0.4, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.2, 0.2, 0.2, 0.8), material.specular());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(0.0, 0.0, 0.0, 0.8), material.specular());
+    material.resetMorph();
+    // add (0.2)
+    morph.specular.setValue(0.2, 0.2, 0.2);
+    morph.operation = 1;
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.85, 0.85, 0.85, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.9, 0.9, 0.9, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.specular());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.0, 1.0, 1.0, 0.8), material.specular());
+    material.resetMorph();
+    // add (0.6)
+    morph.specular.setValue(0.6, 0.6, 0.6);
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(1.1, 1.1, 1.1, 0.8), material.specular());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(1.25, 1.25, 1.25, 0.8), material.specular());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.4, 1.4, 1.4, 0.8), material.specular());
+}
+
+void TestModel::testMaterialMorphMergeShininess() const
+{
+    Material material;
+    Morph::Material morph;
+    // mod (1.0)
+    morph.shininess = 1.0;
+    morph.operation = 0;
+    material.setShininess(0.8);
+    material.mergeMorph(&morph, 0.0);
+    QCOMPARE(0.8f, material.shininess());
+    material.mergeMorph(&morph, 0.25);
+    QCOMPARE(0.6f, material.shininess());
+    material.mergeMorph(&morph, 0.5);
+    QCOMPARE(0.4f, material.shininess());
+    material.mergeMorph(&morph, 0.75);
+    QCOMPARE(0.2f, material.shininess());
+    material.mergeMorph(&morph, 1.0);
+    QCOMPARE(0.0f, material.shininess());
+    material.resetMorph();
+    // add (0.2)
+    morph.shininess = 0.2;
+    morph.operation = 1;
+    material.mergeMorph(&morph, 0.0);
+    QCOMPARE(0.8f, material.shininess());
+    material.mergeMorph(&morph, 0.25);
+    QCOMPARE(0.85f, material.shininess());
+    material.mergeMorph(&morph, 0.5);
+    QCOMPARE(0.9f, material.shininess());
+    material.mergeMorph(&morph, 0.75);
+    QCOMPARE(0.95f, material.shininess());
+    material.mergeMorph(&morph, 1.0);
+    QCOMPARE(1.0f, material.shininess());
+    // add (0.6)
+    morph.shininess = 0.6;
+    material.mergeMorph(&morph, 0.0);
+    QCOMPARE(0.8f, material.shininess());
+    material.mergeMorph(&morph, 0.25);
+    QCOMPARE(0.95f, material.shininess());
+    material.mergeMorph(&morph, 0.5);
+    QCOMPARE(1.1f, material.shininess());
+    material.mergeMorph(&morph, 0.75);
+    QCOMPARE(1.25f, material.shininess());
+    material.mergeMorph(&morph, 1.0);
+    QCOMPARE(1.4f, material.shininess());
+}
+
+void TestModel::testMaterialMorphMergeEdgeColor() const
+{
+    Material material;
+    Morph::Material morph;
+    // mod (1.0)
+    morph.edgeColor.setValue(1.0, 1.0, 1.0, 1.0);
+    morph.operation = 0;
+    material.setEdgeColor(Color(0.8, 0.8, 0.8, 0.8));
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.6, 0.6, 0.6, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.4, 0.4, 0.4, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.2, 0.2, 0.2, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(0.0, 0.0, 0.0, 0.8), material.edgeColor());
+    material.resetMorph();
+    // add (0.2)
+    morph.edgeColor.setValue(0.2, 0.2, 0.2, 1.0);
+    morph.operation = 1;
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.85, 0.85, 0.85, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(0.9, 0.9, 0.9, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.0, 1.0, 1.0, 0.8), material.edgeColor());
+    material.resetMorph();
+    // add (0.6)
+    morph.edgeColor.setValue(0.6, 0.6, 0.6, 1.0);
+    material.mergeMorph(&morph, 0.0);
+    compare(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.25);
+    compare(Color(0.95, 0.95, 0.95, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.5);
+    compare(Color(1.1, 1.1, 1.1, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 0.75);
+    compare(Color(1.25, 1.25, 1.25, 0.8), material.edgeColor());
+    material.mergeMorph(&morph, 1.0);
+    compare(Color(1.4, 1.4, 1.4, 0.8), material.edgeColor());
+}
+
+void TestModel::testMaterialMorphMergeEdgeSize() const
+{
+    Material material;
+    Morph::Material morph;
+    // mod (1.0)
+    morph.edgeSize = 1.0;
+    morph.operation = 0;
+    material.setEdgeSize(0.8);
+    material.mergeMorph(&morph, 0.0);
+    QCOMPARE(0.8f, material.edgeSize());
+    material.mergeMorph(&morph, 0.25);
+    QCOMPARE(0.6f, material.edgeSize());
+    material.mergeMorph(&morph, 0.5);
+    QCOMPARE(0.4f, material.edgeSize());
+    material.mergeMorph(&morph, 0.75);
+    QCOMPARE(0.2f, material.edgeSize());
+    material.mergeMorph(&morph, 1.0);
+    QCOMPARE(0.0f, material.edgeSize());
+    material.resetMorph();
+    // add (0.2)
+    morph.edgeSize = 0.2;
+    morph.operation = 1;
+    material.mergeMorph(&morph, 0.0);
+    QCOMPARE(0.8f, material.edgeSize());
+    material.mergeMorph(&morph, 0.25);
+    QCOMPARE(0.85f, material.edgeSize());
+    material.mergeMorph(&morph, 0.5);
+    QCOMPARE(0.9f, material.edgeSize());
+    material.mergeMorph(&morph, 0.75);
+    QCOMPARE(0.95f, material.edgeSize());
+    material.mergeMorph(&morph, 1.0);
+    QCOMPARE(1.0f, material.edgeSize());
+    // add (0.6)
+    morph.edgeSize = 0.6;
+    material.mergeMorph(&morph, 0.0);
+    QCOMPARE(0.8f, material.edgeSize());
+    material.mergeMorph(&morph, 0.25);
+    QCOMPARE(0.95f, material.edgeSize());
+    material.mergeMorph(&morph, 0.5);
+    QCOMPARE(1.1f, material.edgeSize());
+    material.mergeMorph(&morph, 0.75);
+    QCOMPARE(1.25f, material.edgeSize());
+    material.mergeMorph(&morph, 1.0);
+    QCOMPARE(1.4f, material.edgeSize());
+}
+
+void TestModel::testReadWriteBone(size_t indexSize)
 {
     Encoding encoding;
     Bone bone, bone2, parent;
     Model::DataInfo info;
     info.encoding = &encoding;
-    info.boneIndexSize = 4;
+    info.boneIndexSize = indexSize;
     parent.setIndex(0);
     bone.setDestinationOrigin(Vector3(0.01, 0.02, 0.03));
     bone.setOrigin(Vector3(0.11, 0.12, 0.13));
@@ -355,13 +694,13 @@ void TestModel::parseBone()
     QCOMPARE(bone2.targetBone(), &parent);
 }
 
-void TestModel::parseMaterial()
+void TestModel::testReadWriteMaterial(size_t indexSize)
 {
     Encoding encoding;
     Material material, material2;
     Model::DataInfo info;
     info.encoding = &encoding;
-    info.textureIndexSize = 4;
+    info.textureIndexSize = indexSize;
     material.setSphereTextureRenderMode(Material::kSubTexture);
     material.setAmbient(Color(0.01, 0.02, 0.03, 0.0));
     material.setDiffuse(Color(0.11, 0.12, 0.13, 0.14));
@@ -393,13 +732,13 @@ void TestModel::parseMaterial()
     delete[] data;
 }
 
-void TestModel::parseBoneMorph()
+void TestModel::testReadWriteBoneMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
     Morph::Bone bone1, bone2;
     Model::DataInfo info;
-    info.boneIndexSize = 4;
+    info.boneIndexSize = indexSize;
     info.encoding = &encoding;
     bone1.index = 0;
     bone1.position.setValue(0.11, 0.12, 0.13);
@@ -429,13 +768,13 @@ void TestModel::parseBoneMorph()
     delete[] data;
 }
 
-void TestModel::parseGroupMorph()
+void TestModel::testReadWriteGroupMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
     Morph::Group group1, group2;
     Model::DataInfo info;
-    info.morphIndexSize = 4;
+    info.morphIndexSize = indexSize;
     info.encoding = &encoding;
     group1.index = 0;
     group1.weight = 0.1;
@@ -461,13 +800,13 @@ void TestModel::parseGroupMorph()
     delete[] data;
 }
 
-void TestModel::parseMaterialMorph()
+void TestModel::testReadWriteMaterialMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
     Morph::Material material1, material2;
     Model::DataInfo info;
-    info.materialIndexSize = 2;
+    info.materialIndexSize = indexSize;
     info.encoding = &encoding;
     material1.index = 0;
     material1.ambient.setValue(0.01, 0.02, 0.03);
@@ -529,13 +868,13 @@ void TestModel::parseMaterialMorph()
     delete[] data;
 }
 
-void TestModel::parseUVMorph()
+void TestModel::testReadWriteUVMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
     Morph::UV uv1, uv2;
     Model::DataInfo info;
-    info.vertexIndexSize = 4;
+    info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     uv1.index = 0;
     uv1.position.setValue(0.1, 0.2, 0.3, 0.4);
@@ -563,13 +902,13 @@ void TestModel::parseUVMorph()
     delete[] data;
 }
 
-void TestModel::parseVertexMorph()
+void TestModel::testReadWriteVertexMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
     Morph::Vertex vertex1, vertex2;
     Model::DataInfo info;
-    info.vertexIndexSize = 4;
+    info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     vertex1.index = 0;
     vertex1.position.setValue(0.1, 0.2, 0.3);
@@ -595,7 +934,7 @@ void TestModel::parseVertexMorph()
     delete[] data;
 }
 
-void TestModel::parseVertexBdef1()
+void TestModel::testReadWriteVertexBdef1(size_t indexSize)
 {
     Array<Bone *> bones;
     Vertex vertex, vertex2;
@@ -603,8 +942,8 @@ void TestModel::parseVertexBdef1()
     Model::DataInfo info;
     bones.add(&bone1);
     setVertex(vertex, Vertex::kBdef1, bones);
-    info.additionalUVSize = 1;
-    info.boneIndexSize = 1;
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
     size_t size = vertex.estimateSize(info), read;
     uint8_t *data = new uint8_t[size];
     vertex.write(data, info);
@@ -614,7 +953,7 @@ void TestModel::parseVertexBdef1()
     delete[] data;
 }
 
-void TestModel::parseVertexBdef2()
+void TestModel::testReadWriteVertexBdef2(size_t indexSize)
 {
     Array<Bone *> bones;
     Vertex vertex, vertex2;
@@ -623,8 +962,8 @@ void TestModel::parseVertexBdef2()
     bones.add(&bone1);
     bones.add(&bone2);
     setVertex(vertex, Vertex::kBdef2, bones);
-    info.additionalUVSize = 2;
-    info.boneIndexSize = 2;
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
     size_t size = vertex.estimateSize(info), read;
     uint8_t *data = new uint8_t[size];
     vertex.write(data, info);
@@ -634,7 +973,7 @@ void TestModel::parseVertexBdef2()
     delete[] data;
 }
 
-void TestModel::parseVertexBdef4()
+void TestModel::testReadWriteVertexBdef4(size_t indexSize)
 {
     Array<Bone *> bones;
     Vertex vertex, vertex2;
@@ -645,8 +984,8 @@ void TestModel::parseVertexBdef4()
     bones.add(&bone3);
     bones.add(&bone4);
     setVertex(vertex, Vertex::kBdef4, bones);
-    info.additionalUVSize = 4;
-    info.boneIndexSize = 4;
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
     size_t size = vertex.estimateSize(info), read;
     uint8_t *data = new uint8_t[size];
     vertex.write(data, info);
@@ -656,7 +995,7 @@ void TestModel::parseVertexBdef4()
     delete[] data;
 }
 
-void TestModel::parseVertexSdef()
+void TestModel::testReadWriteVertexSdef(size_t indexSize)
 {
     Array<Bone *> bones;
     Vertex vertex, vertex2;
@@ -665,8 +1004,8 @@ void TestModel::parseVertexSdef()
     bones.add(&bone1);
     bones.add(&bone2);
     setVertex(vertex, Vertex::kSdef, bones);
-    info.additionalUVSize = 4;
-    info.boneIndexSize = 4;
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
     size_t size = vertex.estimateSize(info), read;
     uint8_t *data = new uint8_t[size];
     vertex.write(data, info);
@@ -674,24 +1013,6 @@ void TestModel::parseVertexSdef()
     QCOMPARE(read, size);
     compareVertex(vertex, vertex2, bones);
     delete[] data;
-}
-
-void TestModel::checkBoundVertex()
-{
-    Vertex vertex;
-    Bone *bone = new Bone();
-    vertex.setUV(-1, Vector4(1, 1, 1, 1));
-    vertex.setUV( 4, Vector4(1, 1, 1, 1));
-    vertex.setWeight(-1, 0.1);
-    vertex.setWeight( 4, 0.1);
-    vertex.setBone(-1, bone);
-    vertex.setBone( 4, bone);
-    QCOMPARE(0.0f, vertex.uv(-1).x());
-    QCOMPARE(0.0f, vertex.uv(4).x());
-    QCOMPARE(static_cast<IBone *>(0), vertex.bone(-1));
-    QCOMPARE(static_cast<IBone *>(0), vertex.bone(4));
-    QCOMPARE(0.0f, vertex.weight(-1));
-    QCOMPARE(0.0f, vertex.weight(4));
 }
 
 QTEST_APPLESS_MAIN(TestModel)
