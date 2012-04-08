@@ -126,6 +126,8 @@ private:
 private Q_SLOTS:
     void parseEmpty();
     void parseFile();
+    void testBoneDefaultFlags();
+    void parseBone();
     void parseMaterial();
     void parseBoneMorph();
     void parseGroupMorph();
@@ -273,6 +275,84 @@ void TestModel::parseFile()
         qDebug() << "Joint#englishName()" << codec->toUnicode(joint->englishName()->ptr(), joint->englishName()->length());
     }
 #endif
+}
+
+void TestModel::testBoneDefaultFlags()
+{
+    Bone bone;
+    QVERIFY(!bone.isMovable());
+    QVERIFY(!bone.isRotateable());
+    QVERIFY(!bone.isVisible());
+    QVERIFY(!bone.isOperatable());
+    QVERIFY(!bone.isIKEnabled());
+    QVERIFY(!bone.hasPositionInherence());
+    QVERIFY(!bone.hasRotationInherence());
+    QVERIFY(!bone.isAxisFixed());
+    QVERIFY(!bone.hasLocalAxis());
+    QVERIFY(!bone.isTransformedAfterPhysicsSimulation());
+    QVERIFY(!bone.isTransformedByExternalParent());
+}
+
+void TestModel::parseBone()
+{
+    Encoding encoding;
+    Bone bone, bone2, parent;
+    Model::DataInfo info;
+    info.encoding = &encoding;
+    info.boneIndexSize = 4;
+    parent.setIndex(0);
+    bone.setDestinationOrigin(Vector3(0.01, 0.02, 0.03));
+    bone.setOrigin(Vector3(0.11, 0.12, 0.13));
+    bone.setIndex(1);
+    bone.setDestinationOrigin(Vector3(0.21, 0.22, 0.23));
+    bone.setFixedAxis(Vector3(0.31, 0.32, 0.33));
+    bone.setAxisX(Vector3(0.41, 0.42, 0.43));
+    bone.setAxisZ(Vector3(0.51, 0.52, 0.53));
+    bone.setExternalIndex(3);
+    bone.setParentBone(&parent);
+    bone.setParentInherenceBone(&parent, 0.61);
+    bone.setTargetBone(&parent, 3, 0.71);
+    bone.setRotateable(true);
+    bone.setMovable(true);
+    bone.setVisible(true);
+    bone.setOperatable(true);
+    bone.setIKEnable(true);
+    bone.setPositionInherenceEnable(true);
+    bone.setRotationInherenceEnable(true);
+    bone.setAxisFixedEnable(true);
+    bone.setLocalAxisEnable(true);
+    bone.setTransformedAfterPhysicsSimulationEnable(true);
+    bone.setTransformedByExternalParentEnable(true);
+    size_t size = bone.estimateSize(info), read;
+    uint8_t *data = new uint8_t[size];
+    bone.write(data, info);
+    bone2.read(data, info, read);
+    QCOMPARE(read, size);
+    compare(bone2.origin(), bone.origin());
+    compare(bone2.destinationOrigin(), bone.destinationOrigin());
+    compare(bone2.axis(), bone.axis());
+    compare(bone2.axisX(), bone.axisX());
+    compare(bone2.axisZ(), bone.axisZ());
+    QCOMPARE(bone2.layerIndex(), bone.layerIndex());
+    QCOMPARE(bone2.externalIndex(), bone.externalIndex());
+    QVERIFY(bone2.isRotateable());
+    QVERIFY(bone2.isMovable());
+    QVERIFY(bone2.isVisible());
+    QVERIFY(bone2.isOperatable());
+    QVERIFY(bone2.isIKEnabled());
+    QVERIFY(bone2.hasPositionInherence());
+    QVERIFY(bone2.hasRotationInherence());
+    QVERIFY(bone2.isAxisFixed());
+    QVERIFY(bone2.hasLocalAxis());
+    QVERIFY(bone2.isTransformedAfterPhysicsSimulation());
+    QVERIFY(bone2.isTransformedByExternalParent());
+    Array<Bone *> bones, apb, bpb;
+    bones.add(&parent);
+    bones.add(&bone2);
+    Bone::loadBones(bones, bpb, apb);
+    QCOMPARE(bone2.parentBone(), &parent);
+    QCOMPARE(bone2.parentInherenceBone(), &parent);
+    QCOMPARE(bone2.targetBone(), &parent);
 }
 
 void TestModel::parseMaterial()

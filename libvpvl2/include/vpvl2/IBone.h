@@ -48,7 +48,7 @@ class VPVL2_API IBone
 public:
     virtual ~IBone() {}
     virtual const IString *name() const = 0;
-    virtual int id() const = 0;
+    virtual int index() const = 0;
     virtual const Transform &localTransform() const = 0;
     virtual void setPosition(const Vector3 &value) = 0;
     virtual void setRotation(const Quaternion &value) = 0;

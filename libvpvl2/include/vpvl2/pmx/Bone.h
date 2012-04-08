@@ -75,7 +75,8 @@ public:
      * @param data The buffer to read and parse
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
     void mergeMorph(Morph::Bone *morph, float weight);
     void performFullTransform();
     void performTransform();
@@ -93,10 +94,12 @@ public:
     Bone *parentBone() const { return m_parentBone; }
     Bone *targetBone() const { return m_targetBone; }
     Bone *parentInherenceBone() const { return m_parentInherenceBone; }
+    Bone *destinationOriginBone() const { return m_destinationOriginBone; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const Quaternion &rotation() const { return m_rotation; }
     const Vector3 &origin() const { return m_origin; }
+    const Vector3 &destinationOrigin() const { return m_destinationOrigin; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
@@ -104,13 +107,14 @@ public:
     float constraintAngle() const { return m_angleConstraint; }
     float weight() const { return m_weight; }
     int index() const { return m_index; }
-    int id() const { return m_id; }
+    int layerIndex() const { return m_layerIndex; }
+    int externalIndex() const { return m_globalID; }
 
     bool isRotateable() const { return m_flags & 0x0002; }
     bool isMovable() const { return m_flags & 0x0004; }
     bool isVisible() const { return m_flags & 0x0008; }
     bool isOperatable() const { return m_flags & 0x0010; }
-    bool hasIKLinks() const { return m_flags & 0x0020; }
+    bool isIKEnabled() const { return m_flags & 0x0020; }
     bool hasPositionInherence() const { return m_flags & 0x0100; }
     bool hasRotationInherence() const { return m_flags & 0x0200; }
     bool isAxisFixed() const { return m_flags & 0x0400; }
@@ -118,11 +122,38 @@ public:
     bool isTransformedAfterPhysicsSimulation() const { return m_flags & 0x1000; }
     bool isTransformedByExternalParent() const { return m_flags & 0x2000; }
 
+    void setParentBone(Bone *value);
+    void setParentInherenceBone(Bone *value, float weight);
+    void setTargetBone(Bone *target, int nloop, float angleConstraint);
+    void setDestinationOriginBone(Bone *value);
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
+    void setOrigin(const Vector3 &value);
+    void setDestinationOrigin(const Vector3 &value);
+    void setFixedAxis(const Vector3 &value);
+    void setAxisX(const Vector3 &value);
+    void setAxisZ(const Vector3 &value);
+    void setIndex(int value);
+    void setLayerIndex(int value);
+    void setExternalIndex(int value);
+    void setRotateable(bool value);
+    void setMovable(bool value);
+    void setVisible(bool value);
+    void setOperatable(bool value);
+    void setIKEnable(bool value);
+    void setPositionInherenceEnable(bool value);
+    void setRotationInherenceEnable(bool value);
+    void setAxisFixedEnable(bool value);
+    void setLocalAxisEnable(bool value);
+    void setTransformedAfterPhysicsSimulationEnable(bool value);
+    void setTransformedByExternalParentEnable(bool value);
+
 private:
     Array<IKLink *> m_IKLinks;
     Bone *m_parentBone;
     Bone *m_targetBone;
     Bone *m_parentInherenceBone;
+    Bone *m_destinationOriginBone;
     IString *m_name;
     IString *m_englishName;
     Quaternion m_rotation;
@@ -142,13 +173,13 @@ private:
     Vector3 m_axisZ;
     float m_angleConstraint;
     float m_weight;
-    int m_id;
-    int m_parentBoneIndex;
     int m_index;
+    int m_parentBoneIndex;
+    int m_layerIndex;
     int m_destinationOriginBoneIndex;
     int m_targetBoneIndex;
     int m_nloop;
-    int m_parentBoneBiasIndex;
+    int m_parentInherenceBoneIndex;
     int m_globalID;
     uint16_t m_flags;
     bool m_simulated;

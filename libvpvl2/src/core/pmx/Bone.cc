@@ -62,9 +62,9 @@ class BoneOrderPredication
 public:
     inline bool operator()(const Bone *left, const Bone *right) const {
         if (left->isTransformedAfterPhysicsSimulation() == right->isTransformedAfterPhysicsSimulation()) {
-            if (left->index() == right->index())
-                return left->id() < right->id();
-            return left->index() < right->index();
+            if (left->layerIndex() == right->layerIndex())
+                return left->index() < right->index();
+            return left->layerIndex() < right->layerIndex();
         }
         return right->isTransformedAfterPhysicsSimulation();
     }
@@ -125,13 +125,13 @@ Bone::Bone()
       m_axisZ(kZeroV3),
       m_angleConstraint(0.0),
       m_weight(1.0),
-      m_id(-1),
+      m_index(-1),
       m_parentBoneIndex(-1),
-      m_index(0),
+      m_layerIndex(0),
       m_destinationOriginBoneIndex(-1),
       m_targetBoneIndex(-1),
       m_nloop(0),
-      m_parentBoneBiasIndex(-1),
+      m_parentInherenceBoneIndex(-1),
       m_globalID(0),
       m_flags(0),
       m_simulated(false)
@@ -159,22 +159,22 @@ Bone::~Bone()
     m_axisZ.setZero();
     m_weight = 0;
     m_parentBoneIndex = -1;
-    m_index = 0;
+    m_layerIndex = 0;
     m_destinationOriginBoneIndex = -1;
-    m_parentBoneBiasIndex = -1;
+    m_parentInherenceBoneIndex = -1;
     m_globalID = 0;
     m_flags = 0;
 }
 
 bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
+    size_t size, boneIndexSize = info.boneIndexSize;
     if (!internal::size32(ptr, rest, size)) {
         return false;
     }
     info.bonesPtr = ptr;
     /* BoneUnit + boneIndexSize + hierarcy + flags */
-    size_t baseSize = sizeof(BoneUnit) + info.boneIndexSize + sizeof(int) + sizeof(uint16_t);
+    size_t baseSize = sizeof(BoneUnit) + boneIndexSize + sizeof(int) + sizeof(uint16_t);
     for (size_t i = 0; i < size; i++) {
         size_t nNameSize;
         uint8_t *namePtr;
@@ -193,7 +193,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         /* bone has destination relative or absolute */
         bool isRelative = ((flags & 0x0001) == 1);
         if (isRelative) {
-            if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
+            if (!internal::validateSize(ptr, boneIndexSize, rest)) {
                 return false;
             }
         }
@@ -205,13 +205,13 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         /* bone is IK */
         if (flags & 0x0020) {
             /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
-            size_t extraSize = info.boneIndexSize + sizeof(int) + sizeof(float) + sizeof(int);
+            size_t extraSize = boneIndexSize + sizeof(int) + sizeof(float) + sizeof(int);
             if (!internal::validateSize(ptr, extraSize, rest)) {
                 return false;
             }
             int nlinks = *reinterpret_cast<int *>(ptr - sizeof(int));
             for (int i = 0; i < nlinks; i++) {
-                if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
+                if (!internal::validateSize(ptr, boneIndexSize, rest)) {
                     return false;
                 }
                 size_t hasAngleConstraint;
@@ -224,7 +224,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             }
         }
         /* bone has additional bias */
-        if ((flags & 0x0100 || flags & 0x200) && !internal::validateSize(ptr, info.boneIndexSize + sizeof(float), rest)) {
+        if ((flags & 0x0100 || flags & 0x200) && !internal::validateSize(ptr, boneIndexSize + sizeof(float), rest)) {
             return false;
         }
         /* axis of bone is fixed */
@@ -260,12 +260,12 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
                 bone->m_parentBone = parent;
             }
         }
-        const int offsetBoneID = bone->m_destinationOriginBoneIndex;
-        if (offsetBoneID >= 0) {
-            if (offsetBoneID >= nbones)
+        const int destinationOriginBoneID = bone->m_destinationOriginBoneIndex;
+        if (destinationOriginBoneID >= 0) {
+            if (destinationOriginBoneID >= nbones)
                 return false;
             else
-                bone->m_destinationOrigin = bones[offsetBoneID]->m_origin;
+                bone->m_destinationOriginBone = bones[destinationOriginBoneID];
         }
         const int targetBoneID = bone->m_targetBoneIndex;
         if (targetBoneID >= 0) {
@@ -274,14 +274,14 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
             else
                 bone->m_targetBone = bones[targetBoneID];
         }
-        const int parentBoneBiasID = bone->m_parentBoneBiasIndex;
+        const int parentBoneBiasID = bone->m_parentInherenceBoneIndex;
         if (parentBoneBiasID >= 0) {
             if (parentBoneBiasID >= nbones)
                 return false;
             else
                 bone->m_parentInherenceBone = bones[parentBoneBiasID];
         }
-        if (bone->hasIKLinks()) {
+        if (bone->isIKEnabled()) {
             const int nIK = bone->m_IKLinks.count();
             for (int j = 0; j < nIK; j++) {
                 IKLink *ik = bone->m_IKLinks[j];
@@ -294,7 +294,7 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
                 }
             }
         }
-        bone->m_id = i;
+        bone->m_index = i;
     }
     Array<Bone *> ordered;
     ordered.copy(bones);
@@ -312,7 +312,7 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
 void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t nNameSize, rest = SIZE_MAX;
+    size_t nNameSize, rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
@@ -323,15 +323,15 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     m_localTransform.setOrigin(m_origin);
     m_localToOrigin.setOrigin(-m_origin);
     ptr += sizeof(unit);
-    m_parentBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
-    m_index = *reinterpret_cast<int *>(ptr);
-    ptr += sizeof(int);
+    m_parentBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
+    m_layerIndex = *reinterpret_cast<int *>(ptr);
+    ptr += sizeof(m_layerIndex);
     uint16_t flags = m_flags = *reinterpret_cast<uint16_t *>(ptr);
-    ptr += sizeof(uint16_t);
+    ptr += sizeof(m_flags);
     /* bone has destination */
     bool isRelative = ((flags & 0x0001) == 1);
     if (isRelative) {
-        m_destinationOriginBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
+        m_destinationOriginBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
     }
     else {
         const BoneUnit &offset = *reinterpret_cast<const BoneUnit *>(ptr);
@@ -341,16 +341,16 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     /* bone is IK */
     if (flags & 0x0020) {
         /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
-        m_targetBoneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
+        m_targetBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         m_nloop = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(int);
+        ptr += sizeof(m_nloop);
         m_angleConstraint = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(float);
+        ptr += sizeof(m_angleConstraint);
         int nlinks = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(int);
+        ptr += sizeof(nlinks);
         for (int i = 0; i < nlinks; i++) {
             IKLink *ik = new IKLink();
-            ik->boneID = internal::readSignedIndex(ptr, info.boneIndexSize);
+            ik->boneID = internal::readSignedIndex(ptr, boneIndexSize);
             ik->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
             ptr += sizeof(ik->hasAngleConstraint);
             if (ik->hasAngleConstraint) {
@@ -371,18 +371,18 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     }
     /* bone has additional bias */
     if ((flags & 0x0100 || flags & 0x200)) {
-        m_parentBoneBiasIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
+        m_parentInherenceBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         m_weight = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(float);
+        ptr += sizeof(m_weight);
     }
     /* axis of bone is fixed */
-    if ((flags & 0x0400) && !internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
+    if (flags & 0x0400) {
         const BoneUnit &axis = *reinterpret_cast<const BoneUnit *>(ptr);
         internal::setPosition(axis.vector3, m_fixedAxis);
         ptr += sizeof(axis);
     }
     /* axis of bone is local */
-    if ((flags & 0x0800) && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
+    if (flags & 0x0800) {
         const BoneUnit &axisX = *reinterpret_cast<const BoneUnit *>(ptr);
         internal::setPosition(axisX.vector3, m_axisX);
         ptr += sizeof(axisX);
@@ -391,15 +391,106 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         ptr += sizeof(axisZ);
     }
     /* bone is transformed after external parent bone transformation */
-    if ((flags & 0x2000) && !internal::validateSize(ptr, sizeof(int), rest)) {
+    if (flags & 0x2000) {
         m_globalID = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(int);
+        ptr += sizeof(m_globalID);
     }
     size = ptr - start;
 }
 
-void Bone::write(uint8_t * /* data */) const
+void Bone::write(uint8_t *data, const Model::DataInfo &info) const
 {
+    size_t boneIndexSize = info.boneIndexSize;
+    BoneUnit bu;
+    internal::writeString(m_name, data);
+    internal::writeString(m_englishName, data);
+    internal::getPosition(m_origin, &bu.vector3[0]);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+    internal::writeSignedIndex(m_parentBoneIndex, boneIndexSize, data);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_layerIndex), sizeof(m_layerIndex), data);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_flags), sizeof(m_flags), data);
+    if (m_flags & 0x0001) {
+        internal::writeSignedIndex(m_destinationOriginBoneIndex, boneIndexSize, data);
+    }
+    else {
+        internal::getPosition(m_destinationOrigin, &bu.vector3[0]);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+    }
+    if (m_flags & 0x0020) {
+        internal::writeSignedIndex(m_targetBoneIndex, boneIndexSize, data);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_nloop), sizeof(m_nloop), data);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_angleConstraint), sizeof(m_angleConstraint), data);
+        int nlinks = m_IKLinks.count();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&nlinks), sizeof(nlinks), data);
+        for (int i = 0; i < nlinks; i++) {
+            IKLink *link = m_IKLinks[0];
+            internal::writeSignedIndex(link->boneID, boneIndexSize, data);
+            uint8_t hasAngleConstraint = link->hasAngleConstraint ? 1 : 0;
+            internal::writeBytes(reinterpret_cast<const uint8_t *>(hasAngleConstraint), sizeof(hasAngleConstraint), data);
+            if (hasAngleConstraint) {
+                internal::getPosition(link->lowerLimit, &bu.vector3[0]);
+                internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+                internal::getPosition(link->upperLimit, &bu.vector3[0]);
+                internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+            }
+        }
+    }
+    if (m_flags & 0x0100 || m_flags & 0x0200) {
+        internal::writeSignedIndex(m_parentInherenceBoneIndex, boneIndexSize, data);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight), sizeof(m_weight), data);
+    }
+    if (m_flags & 0x0400) {
+        internal::getPosition(m_fixedAxis, &bu.vector3[0]);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+    }
+    if (m_flags & 0x0800) {
+        internal::getPosition(m_axisX, &bu.vector3[0]);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+        internal::getPosition(m_axisZ, &bu.vector3[0]);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+    }
+    if (m_flags & 0x2000) {
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_globalID), sizeof(m_globalID), data);
+    }
+}
+
+size_t Bone::estimateSize(const Model::DataInfo &info) const
+{
+    size_t size = 0, boneIndexSize = info.boneIndexSize;
+    size += internal::estimateSize(m_name);
+    size += internal::estimateSize(m_englishName);
+    size += sizeof(BoneUnit);
+    size += boneIndexSize;
+    size += sizeof(m_layerIndex);
+    size += sizeof(m_flags);
+    size += (m_flags & 0x0001) ? boneIndexSize : sizeof(BoneUnit);
+    if (m_flags & 0x0020) {
+        size += boneIndexSize;
+        size += sizeof(m_angleConstraint);
+        size += sizeof(m_nloop);
+        int nlinks = m_IKLinks.count();
+        size += sizeof(nlinks);
+        for (int i = 0; i < nlinks; i++) {
+            size += boneIndexSize;
+            size += sizeof(uint8_t);
+            if (m_IKLinks[i]->hasAngleConstraint)
+                size += sizeof(BoneUnit) * 2;
+        }
+    }
+    if (m_flags & 0x0100 || m_flags & 0x0200) {
+        size += boneIndexSize;
+        size += sizeof(m_weight);
+    }
+    if (m_flags & 0x0400) {
+        size += sizeof(BoneUnit);
+    }
+    if (m_flags & 0x0800) {
+        size += sizeof(BoneUnit) * 2;
+    }
+    if (m_flags & 0x2000) {
+        size += sizeof(m_globalID);
+    }
+    return size;
 }
 
 void Bone::mergeMorph(Morph::Bone *morph, float weight)
@@ -456,7 +547,7 @@ void Bone::performTransform()
 
 void Bone::performInverseKinematics()
 {
-    if (!hasIKLinks() || m_simulated)
+    if (!isIKEnabled() || m_simulated)
         return;
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
@@ -479,9 +570,9 @@ void Bone::performInverseKinematics()
             qDebug() << "transo:" << transform.getOrigin().x() << transform.getOrigin().y() << transform.getOrigin().z();
             qDebug() << "transr:" << transform.getRotation().w() << transform.getRotation().x() << transform.getRotation().y() << transform.getRotation().z();
             qDebug() << "trot:  " << m_targetBone->m_localTransform.getRotation().w()
-                                  << m_targetBone->m_localTransform.getRotation().x()
-                                  << m_targetBone->m_localTransform.getRotation().y()
-                                  << m_targetBone->m_localTransform.getRotation().z();
+                     << m_targetBone->m_localTransform.getRotation().x()
+                     << m_targetBone->m_localTransform.getRotation().y()
+                     << m_targetBone->m_localTransform.getRotation().z();
             qDebug() << "target:" << targetPosition.x() << targetPosition.y() << targetPosition.z();
             qDebug() << "dest:  " << destinationPosition.x() << destinationPosition.y() << destinationPosition.z();
 #endif
@@ -530,7 +621,7 @@ void Bone::performInverseKinematics()
                     ClampAngle(lowerLimit.x(), upperLimit.x(), x2, x3, x1);
                     ClampAngle(lowerLimit.y(), upperLimit.y(), y2, y3, y1);
                     ClampAngle(lowerLimit.z(), upperLimit.z(), z2, z3, z1);
- #if IK_DEBUG
+#if IK_DEBUG
                     if (x3 < lowerLimit.x() || x3 > upperLimit.x()) {
                         qDebug() << x3 << x1 << x2;
                     }
@@ -632,6 +723,140 @@ void Bone::setLocalTransform(const Transform &value)
 void Bone::setSimulated(bool value)
 {
     m_simulated = value;
+}
+
+void Bone::setParentBone(Bone *value)
+{
+    m_parentBone = value;
+    m_parentBoneIndex = value ? value->index() : -1;
+}
+
+void Bone::setParentInherenceBone(Bone *value, float weight)
+{
+    m_parentInherenceBone = value;
+    m_parentInherenceBoneIndex = value ? value->index() : -1;
+    m_weight = weight;
+}
+
+void Bone::setTargetBone(Bone *target, int nloop, float angleConstraint)
+{
+    m_targetBone = target;
+    m_targetBoneIndex = target ? target->index() : -1;
+    m_nloop = nloop;
+    m_angleConstraint = angleConstraint;
+}
+
+void Bone::setDestinationOriginBone(Bone *value)
+{
+    m_destinationOriginBone = value;
+    m_destinationOriginBoneIndex = value ? value->index() : -1;
+    internal::toggleFlag(0x0001, value ? true : false, m_flags);
+}
+
+void Bone::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+void Bone::setEnglishName(const IString *value)
+{
+    internal::setString(value, m_englishName);
+}
+
+void Bone::setOrigin(const Vector3 &value)
+{
+    m_origin = value;
+}
+
+void Bone::setDestinationOrigin(const Vector3 &value)
+{
+    m_offset = value;
+    internal::toggleFlag(0x0001, false, m_flags);
+}
+
+void Bone::setFixedAxis(const Vector3 &value)
+{
+    m_fixedAxis = value;
+}
+
+void Bone::setAxisX(const Vector3 &value)
+{
+    m_axisX = value;
+}
+
+void Bone::setAxisZ(const Vector3 &value)
+{
+    m_axisZ = value;
+}
+
+void Bone::setIndex(int value)
+{
+    m_index = value;
+}
+
+void Bone::setLayerIndex(int value)
+{
+    m_layerIndex = value;
+}
+
+void Bone::setExternalIndex(int value)
+{
+    m_globalID = value;
+}
+
+void Bone::setRotateable(bool value)
+{
+    internal::toggleFlag(0x0002, value, m_flags);
+}
+
+void Bone::setMovable(bool value)
+{
+    internal::toggleFlag(0x0004, value, m_flags);
+}
+
+void Bone::setVisible(bool value)
+{
+    internal::toggleFlag(0x0008, value, m_flags);
+}
+
+void Bone::setOperatable(bool value)
+{
+    internal::toggleFlag(0x0010, value, m_flags);
+}
+
+void Bone::setIKEnable(bool value)
+{
+    internal::toggleFlag(0x0020, value, m_flags);
+}
+
+void Bone::setPositionInherenceEnable(bool value)
+{
+    internal::toggleFlag(0x0100, value, m_flags);
+}
+
+void Bone::setRotationInherenceEnable(bool value)
+{
+    internal::toggleFlag(0x0200, value, m_flags);
+}
+
+void Bone::setAxisFixedEnable(bool value)
+{
+    internal::toggleFlag(0x0400, value, m_flags);
+}
+
+void Bone::setLocalAxisEnable(bool value)
+{
+    internal::toggleFlag(0x0800, value, m_flags);
+}
+
+void Bone::setTransformedAfterPhysicsSimulationEnable(bool value)
+{
+    internal::toggleFlag(0x1000, value, m_flags);
+}
+
+void Bone::setTransformedByExternalParentEnable(bool value)
+{
+    internal::toggleFlag(0x2000, value, m_flags);
 }
 
 } /* namespace pmx */
