@@ -123,6 +123,7 @@ public:
     const IString *englishName() const { return m_englishName; }
     uint8_t category() const { return m_category; }
     uint8_t type() const { return m_type; }
+    int index() const { return m_index; }
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
@@ -164,6 +165,7 @@ private:
     Array<Group> m_groups;
     IString *m_name;
     IString *m_englishName;
+    int m_index;
     uint8_t m_category;
     uint8_t m_type;
 

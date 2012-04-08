@@ -88,7 +88,10 @@ namespace pmx
 
 Morph::Morph()
     : m_name(0),
-      m_englishName(0)
+      m_englishName(0),
+      m_index(0),
+      m_category(0),
+      m_type(0)
 {
 }
 
@@ -98,6 +101,9 @@ Morph::~Morph()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_index = 0;
+    m_category = 0;
+    m_type = 0;
 }
 
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -206,6 +212,7 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
         default:
             return false;
         }
+        morph->m_index = i;
     }
     return true;
 }
@@ -300,9 +307,9 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
     const MorphUnit &unit = *reinterpret_cast<const MorphUnit *>(ptr);
     m_category = unit.category;
     m_type = unit.type;
