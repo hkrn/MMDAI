@@ -480,7 +480,7 @@ void Vertex::setBone(int index, IBone *value)
 {
     if (index >= 0 && index < 4) {
         m_bones[index] = value;
-        m_boneIndices[index] = value->id();
+        m_boneIndices[index] = value->index();
     }
 }
 
