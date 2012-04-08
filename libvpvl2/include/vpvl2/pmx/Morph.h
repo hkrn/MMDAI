@@ -124,6 +124,8 @@ public:
     uint8_t category() const { return m_category; }
     uint8_t type() const { return m_type; }
 
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
     void addBoneMorph(const Bone &value);
     void addGroupMorph(const Group &value);
     void addMaterialMorph(const Material &value);

@@ -459,6 +459,16 @@ void Morph::setWeight(float value)
     performTransform(value);
 }
 
+void Morph::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+void Morph::setEnglishName(const IString *value)
+{
+    internal::setString(value, m_englishName);
+}
+
 void Morph::addBoneMorph(const Bone &value)
 {
     m_bones.add(value);
