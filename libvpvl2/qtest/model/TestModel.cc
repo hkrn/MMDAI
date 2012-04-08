@@ -467,7 +467,7 @@ void TestModel::parseMaterialMorph()
     Morph morph, morph2;
     Morph::Material material1, material2;
     Model::DataInfo info;
-    info.materialIndexSize = 4;
+    info.materialIndexSize = 2;
     info.encoding = &encoding;
     material1.index = 0;
     material1.ambient.setValue(0.01, 0.02, 0.03);

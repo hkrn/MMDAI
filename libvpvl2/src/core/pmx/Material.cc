@@ -105,12 +105,12 @@ Material::~Material()
 
 bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
+    size_t size, textureIndexSize = info.textureIndexSize;
     if (!internal::size32(ptr, rest, size)) {
         return false;
     }
     info.materialsPtr = ptr;
-    size_t nTextureIndexSize = info.textureIndexSize * 2;
+    size_t nTextureIndexSize = textureIndexSize * 2;
     for (size_t i = 0; i < size; i++) {
         size_t nNameSize;
         uint8_t *namePtr;
@@ -142,7 +142,7 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         /* independent toon texture index */
         else {
-            if (!internal::validateSize(ptr, info.textureIndexSize, rest)) {
+            if (!internal::validateSize(ptr, textureIndexSize, rest)) {
                 return false;
             }
         }
@@ -195,7 +195,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
 void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t nNameSize, rest = SIZE_MAX;
+    size_t nNameSize, rest = SIZE_MAX, textureIndexSize = info.textureIndexSize;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
@@ -209,8 +209,8 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     m_edgeSize.setX(unit.edgeSize);
     m_flags = unit.flags;
     ptr += sizeof(unit);
-    m_textureIndex = internal::readSignedIndex(ptr, info.textureIndexSize);
-    m_sphereTextureIndex = internal::readSignedIndex(ptr, info.textureIndexSize);
+    m_textureIndex = internal::readSignedIndex(ptr, textureIndexSize);
+    m_sphereTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
     internal::size8(ptr, rest, nNameSize);
     m_sphereTextureRenderMode = static_cast<SphereTextureRenderMode>(nNameSize);
     internal::size8(ptr, rest, nNameSize);
@@ -220,7 +220,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
         m_toonTextureIndex = nNameSize;
     }
     else {
-        m_toonTextureIndex = internal::readSignedIndex(ptr, info.textureIndexSize);
+        m_toonTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
     }
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     m_userDataArea = info.encoding->toString(namePtr, nNameSize, info.codec);
@@ -243,27 +243,27 @@ void Material::write(uint8_t *data, const Model::DataInfo &info) const
     mu.flags = m_flags;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
     size_t textureIndexSize = info.textureIndexSize;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_textureIndex), textureIndexSize, data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_sphereTextureIndex), textureIndexSize, data);
+    internal::writeSignedIndex(m_textureIndex, textureIndexSize, data);
+    internal::writeSignedIndex(m_sphereTextureIndex, textureIndexSize, data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_sphereTextureRenderMode), sizeof(uint8_t), data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_useSharedToonTexture), sizeof(uint8_t), data);
     if (m_useSharedToonTexture)
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_toonTextureIndex), sizeof(uint8_t), data);
     else
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_toonTextureIndex), textureIndexSize, data);
+        internal::writeSignedIndex(m_toonTextureIndex, textureIndexSize, data);
     internal::writeString(m_userDataArea, data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_indices), sizeof(int), data);
 }
 
 size_t Material::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0;
+    size_t size = 0, textureIndexSize = info.textureIndexSize;
     size += internal::estimateSize(m_name);
     size += internal::estimateSize(m_englishName);
     size += sizeof(MaterialUnit);
-    size += info.textureIndexSize * 2;
+    size += textureIndexSize * 2;
     size += sizeof(uint16_t);
-    size += m_useSharedToonTexture ? sizeof(uint8_t) : info.textureIndexSize;
+    size += m_useSharedToonTexture ? sizeof(uint8_t) : textureIndexSize;
     size += internal::estimateSize(m_userDataArea);
     size += sizeof(int);
     return size;
@@ -297,50 +297,32 @@ void Material::mergeMorph(Morph::Material *morph, float weight)
 
 void Material::setName(const IString *value)
 {
-    if (value != m_name) {
-        delete m_name;
-        m_name = value->clone();
-    }
+    internal::setString(value, m_name);
 }
 
 void Material::setEnglishName(const IString *value)
 {
-    if (value != m_englishName) {
-        delete m_englishName;
-        m_englishName = value->clone();
-    }
+    internal::setString(value, m_englishName);
 }
 
 void Material::setUserDataArea(const IString *value)
 {
-    if (value != m_userDataArea) {
-        delete m_userDataArea;
-        m_userDataArea = value->clone();
-    }
+    internal::setString(value, m_userDataArea);
 }
 
 void Material::setMainTexture(const IString *value)
 {
-    if (value != m_mainTexture) {
-        delete m_mainTexture;
-        m_mainTexture = value->clone();
-    }
+    internal::setString(value, m_mainTexture);
 }
 
 void Material::setSphereTexture(const IString *value)
 {
-    if (value != m_sphereTexture) {
-        delete m_sphereTexture;
-        m_sphereTexture = value->clone();
-    }
+    internal::setString(value, m_sphereTexture);
 }
 
 void Material::setToonTexture(const IString *value)
 {
-    if (value != m_toonTexture) {
-        delete m_toonTexture;
-        m_toonTexture = value->clone();
-    }
+    internal::setString(value, m_toonTexture);
 }
 
 void Material::setSphereTextureRenderMode(SphereTextureRenderMode value)
