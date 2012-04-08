@@ -200,6 +200,11 @@ public:
     Error error() const { return m_error; }
     bool isVisible() const { return m_visible; }
 
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
+    void setComment(const IString *value);
+    void setEnglishComment(const IString *value);
+
 private:
     void release();
     void parseNamesAndComments(const DataInfo &info);

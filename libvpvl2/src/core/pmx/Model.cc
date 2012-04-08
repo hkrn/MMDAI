@@ -393,6 +393,18 @@ void Model::update()
         bone->performFullTransform();
         bone->performInverseKinematics();
     }
+    for (int i = 0; i < nBPSBones; i++) {
+        Bone *bone = m_BPSOrderedBones[i];
+        bone->performUpdateLocalTransform();
+    }
+    // physics simulation
+    if (m_world) {
+        const int nRigidBodies = m_rigidBodies.count();
+        for (int i = 0; i < nRigidBodies; i++) {
+            RigidBody *rigidBody = m_rigidBodies[i];
+            rigidBody->performTransformBone();
+        }
+    }
     // after physics simulation
     const int nAPSBones = m_APSOrderedBones.count();
     for (int i = 0; i < nAPSBones; i++) {
@@ -400,9 +412,8 @@ void Model::update()
         bone->performFullTransform();
         bone->performInverseKinematics();
     }
-    // update local transform matrix
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
+    for (int i = 0; i < nAPSBones; i++) {
+        Bone *bone = m_APSOrderedBones[i];
         bone->performUpdateLocalTransform();
     }
     // skinning
@@ -430,8 +441,29 @@ const void *Model::indicesPtr() const
     return &m_skinnedIndices[0];
 }
 
+void Model::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+void Model::setEnglishName(const IString *value)
+{
+    internal::setString(value, m_englishName);
+}
+
+void Model::setComment(const IString *value)
+{
+    internal::setString(value, m_comment);
+}
+
+void Model::setEnglishComment(const IString *value)
+{
+    internal::setString(value, m_englishComment);
+}
+
 void Model::release()
 {
+    leaveWorld(m_world);
     m_vertices.releaseAll();
     m_textures.releaseAll();
     m_materials.releaseAll();
@@ -456,10 +488,10 @@ void Model::release()
 
 void Model::parseNamesAndComments(const DataInfo &info)
 {
-    m_name = m_encoding->toString(info.namePtr, info.nameSize, info.codec);
-    m_englishName = m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec);
-    m_comment = m_encoding->toString(info.commentPtr, info.commentSize, info.codec);
-    m_englishComment = m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec);
+    setName(m_encoding->toString(info.namePtr, info.nameSize, info.codec));
+    setEnglishName(m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec));
+    setComment(m_encoding->toString(info.commentPtr, info.commentSize, info.codec));
+    setEnglishComment(m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec));
 }
 
 void Model::parseVertices(const DataInfo &info)
@@ -535,6 +567,8 @@ void Model::parseBones(const DataInfo &info)
     for(int i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
         bone->read(ptr, info, size);
+        bone->performTransform();
+        bone->performUpdateLocalTransform();
         m_bones.add(bone);
         m_name2bones.insert(bone->name()->toHashString(), bone);
         m_name2bones.insert(bone->englishName()->toHashString(), bone);
