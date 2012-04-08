@@ -178,9 +178,9 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::size8(ptr, rest, nNameSize);
     switch (nNameSize) {
     case 0: {
@@ -207,6 +207,56 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 
 void Joint::write(uint8_t * /* data */) const
 {
+}
+
+void Joint::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+void Joint::setEnglishName(const IString *value)
+{
+    internal::setString(value, m_englishName);
+}
+
+void Joint::setPosition(const Vector3 &value)
+{
+    m_position = value;
+}
+
+void Joint::setRotation(const Vector3 &value)
+{
+    m_rotation = value;
+}
+
+void Joint::setPositionLowerLimit(const Vector3 &value)
+{
+    m_positionLowerLimit = value;
+}
+
+void Joint::setPositionUpperLimit(const Vector3 &value)
+{
+    m_positionUpperLimit = value;
+}
+
+void Joint::setRotationLowerLimit(const Vector3 &value)
+{
+    m_rotationLowerLimit = value;
+}
+
+void Joint::setRotationUpperLimit(const Vector3 &value)
+{
+    m_rotationUpperLimit = value;
+}
+
+void Joint::setPositionStiffness(const Vector3 &value)
+{
+    m_positionStiffness = value;
+}
+
+void Joint::setRotationStiffness(const Vector3 &value)
+{
+    m_rotationStiffness = value;
 }
 
 btGeneric6DofSpringConstraint *Joint::createConstraint() const

@@ -75,22 +75,19 @@ using namespace vpvl2::pmx;
 class AlignedMotionState : public btMotionState
 {
 public:
-    AlignedMotionState(const Transform &startTransform, const Transform &boneTransform, Bone *bone)
+    AlignedMotionState(const Transform &startTransform, const Transform &boneTransform, const Bone *bone)
         : m_bone(bone),
           m_boneTransform(boneTransform),
           m_inversedBoneTransform(boneTransform.inverse()),
           m_worldTransform(startTransform)
     {
     }
-    virtual ~AlignedMotionState()
-    {
-    }
-    virtual void getWorldTransform(btTransform &worldTrans) const
-    {
+    ~AlignedMotionState() {}
+
+    void getWorldTransform(btTransform &worldTrans) const {
         worldTrans = m_worldTransform;
     }
-    virtual void setWorldTransform(const btTransform &worldTrans)
-    {
+    void setWorldTransform(const btTransform &worldTrans) {
         m_worldTransform = worldTrans;
         const btMatrix3x3 &matrix = worldTrans.getBasis();
         m_worldTransform.setOrigin(kZeroV3);
@@ -98,35 +95,32 @@ public:
         m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
         m_worldTransform.setBasis(matrix);
     }
+
 private:
-    Bone *m_bone;
-    Transform m_boneTransform;
-    Transform m_inversedBoneTransform;
+    const Bone *m_bone;
+    const Transform m_boneTransform;
+    const Transform m_inversedBoneTransform;
     Transform m_worldTransform;
 };
 
 class KinematicMotionState : public btMotionState
 {
 public:
-    KinematicMotionState(const Transform &boneTransform, Bone *bone)
+    KinematicMotionState(const Transform &boneTransform, const Bone *bone)
         : m_bone(bone),
           m_boneTransform(boneTransform)
     {
     }
-    virtual ~KinematicMotionState()
-    {
-    }
-    virtual void getWorldTransform(btTransform &worldTrans) const
-    {
+    ~KinematicMotionState() {}
+
+    void getWorldTransform(btTransform &worldTrans) const {
         worldTrans = m_bone->localTransform() * m_boneTransform;
     }
-    virtual void setWorldTransform(const btTransform &worldTrans)
-    {
-        (void) worldTrans;
-    }
+    void setWorldTransform(const btTransform & /* worldTrans */) {}
+
 private:
-    Bone *m_bone;
-    Transform m_boneTransform;
+    const Bone *m_bone;
+    const Transform m_boneTransform;
 };
 #endif /* VPVL2_NO_BULLET */
 
@@ -236,8 +230,11 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
             else if (boneIndex >= nbones)
                 return false;
             else {
-                rigidBody->m_bone = bones[boneIndex];
-                rigidBody->m_body = rigidBody->createRigidBody(rigidBody->createShape());
+                btCollisionShape *shape = rigidBody->createShape();
+                Bone *bone = bones[boneIndex];
+                bone->setSimulated(true);
+                rigidBody->m_bone = bone;
+                rigidBody->m_body = rigidBody->createRigidBody(shape);
             }
         }
     }
@@ -249,12 +246,13 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_name = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    m_englishName = info.encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
     m_collisionGroupID = unit.collisionGroupID;
+    m_groupID = 0x0001 << m_collisionGroupID;
     m_groupMask = unit.collsionMask;
     m_shapeType = unit.shapeType;
     m_size.setValue(unit.size[0], unit.size[1], unit.size[2]);
@@ -279,7 +277,8 @@ void RigidBody::performTransformBone()
 #ifndef VPVL2_NO_BULLET
     if (m_type == 0 || !m_bone)
         return;
-    m_bone->setLocalTransform(m_body->getCenterOfMassTransform() * m_invertedTransform);
+    const Transform &transform = m_body->getCenterOfMassTransform() * m_invertedTransform;
+    m_bone->setLocalTransform(transform);
 #endif /* VPVL2_NO_BULLET */
 }
 
@@ -307,19 +306,17 @@ void RigidBody::setKinematic(bool value)
 const Transform RigidBody::createStartTransform(Transform &base) const
 {
     btMatrix3x3 basis;
-    base.setIdentity();
 #ifdef VPVL2_COORDINATE_OPENGL
     btMatrix3x3 mx, my, mz;
     mx.setEulerZYX(-m_rotation[0], 0.0f, 0.0f);
     my.setEulerZYX(0.0f, -m_rotation[1], 0.0f);
     mz.setEulerZYX(0.0f, 0.0f, m_rotation[2]);
     basis = my * mz * mx;
-    base.setOrigin(Vector3(m_position[0], m_position[1], -m_position[2]));
 #else  /* VPVL2_COORDINATE_OPENGL */
     basis.setEulerZYX(m_rotation[0], m_rotation[1], m_rotation[2]);
-    base.setOrigin(m_position);
 #endif /* VPVL2_COORDINATE_OPENGL */
     base.setBasis(basis);
+    base.setOrigin(m_position);
     Transform startTransform = Transform::getIdentity();
     startTransform.setOrigin(m_bone->localTransform().getOrigin());
     startTransform *= base;
@@ -350,6 +347,7 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
             shape->calculateLocalInertia(massValue, localInertia);
     }
     const Transform &startTransform = createStartTransform(m_transform);
+    m_invertedTransform = m_transform.inverse();
     switch (m_type) {
     case 0:
         m_motionState = new KinematicMotionState(m_transform, m_bone);
@@ -370,7 +368,19 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
     info.m_restitution = m_restitution;
     info.m_friction = m_friction;
     info.m_additionalDamping = true;
-    return new btRigidBody(info);
+    btRigidBody *body = new btRigidBody(info);
+    body->setActivationState(DISABLE_DEACTIVATION);
+    return body;
+}
+
+void RigidBody::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+void RigidBody::setEnglishName(const IString *value)
+{
+    internal::setString(value, m_englishName);
 }
 
 } /* namespace pmx */

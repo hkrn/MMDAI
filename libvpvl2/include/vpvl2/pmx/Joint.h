@@ -71,13 +71,32 @@ public:
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data) const;
-    btGeneric6DofSpringConstraint *createConstraint() const;
 
     btGeneric6DofSpringConstraint *constraint() const { return m_constraint; }
     RigidBody *rigidBody1() const { return m_rigidBody1; }
     RigidBody *rigidBody2() const { return m_rigidBody2; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
+    const Vector3 &position() const { return m_position; }
+    const Vector3 &rotation() const { return m_rotation; }
+    const Vector3 &positionLowerLimit() const { return m_positionLowerLimit; }
+    const Vector3 &positionUpperLimit() const { return m_positionUpperLimit; }
+    const Vector3 &rotationLowerLimit() const { return m_rotationLowerLimit; }
+    const Vector3 &rotationUpperLimit() const { return m_rotationUpperLimit; }
+    const Vector3 &positionStiffness() const { return m_positionStiffness; }
+    const Vector3 &rotationStiffness() const { return m_rotationStiffness; }
+
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
+    void setPosition(const Vector3 &value);
+    void setRotation(const Vector3 &value);
+    void setPositionLowerLimit(const Vector3 &value);
+    void setPositionUpperLimit(const Vector3 &value);
+    void setRotationLowerLimit(const Vector3 &value);
+    void setRotationUpperLimit(const Vector3 &value);
+    void setPositionStiffness(const Vector3 &value);
+    void setRotationStiffness(const Vector3 &value);
+    btGeneric6DofSpringConstraint *createConstraint() const;
 
 private:
     btGeneric6DofSpringConstraint *m_constraint;

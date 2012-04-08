@@ -96,6 +96,9 @@ public:
     uint16_t groupID() const { return m_groupID; }
     uint16_t groupMask() const { return m_groupMask; }
 
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
+
 private:
     btRigidBody *m_body;
     btCollisionShape *m_shape;
