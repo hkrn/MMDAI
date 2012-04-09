@@ -108,8 +108,9 @@ Joint::~Joint()
     m_rotationUpperLimit.setZero();
     m_positionStiffness.setZero();
     m_rotationStiffness.setZero();
-    m_rigidBodyIndex1 = 0;
-    m_rigidBodyIndex2 = 0;
+    m_rigidBodyIndex1 = -1;
+    m_rigidBodyIndex2 = -1;
+    m_index = -1;
 }
 
 bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)

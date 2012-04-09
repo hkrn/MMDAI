@@ -430,10 +430,10 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
             << " isEdgeDrawn=" << material->isEdgeDrawn()
                ;
     switch (material->sphereTextureRenderMode()) {
-    case pmx::Material::kAdditive:
+    case pmx::Material::kAddTexture:
         qDebug() << "sphere=add";
         break;
-    case pmx::Material::kModulate:
+    case pmx::Material::kMultTexture:
         qDebug() << "sphere=modulate";
         break;
     case pmx::Material::kNone:

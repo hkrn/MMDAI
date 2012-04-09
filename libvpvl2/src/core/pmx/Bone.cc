@@ -158,12 +158,14 @@ Bone::~Bone()
     m_axisX.setZero();
     m_axisZ.setZero();
     m_weight = 0;
+    m_index = -1;
     m_parentBoneIndex = -1;
     m_layerIndex = 0;
     m_destinationOriginBoneIndex = -1;
     m_parentInherenceBoneIndex = -1;
     m_globalID = 0;
     m_flags = 0;
+    m_simulated = false;
 }
 
 bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)

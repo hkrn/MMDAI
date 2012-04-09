@@ -912,13 +912,13 @@ public:
                 glUniform1i(m_isSPATextureUniformLocation, 0);
                 glUniform1i(m_isSubTextureUniformLocation, 0);
                 break;
-            case pmx::Material::kModulate:
+            case pmx::Material::kMultTexture:
                 glUniform1i(m_hasSphereTextureUniformLocation, 1);
                 glUniform1i(m_isSPHTextureUniformLocation, 1);
                 glUniform1i(m_isSPATextureUniformLocation, 0);
                 glUniform1i(m_isSubTextureUniformLocation, 0);
                 break;
-            case pmx::Material::kAdditive:
+            case pmx::Material::kAddTexture:
                 glUniform1i(m_hasSphereTextureUniformLocation, 1);
                 glUniform1i(m_isSPHTextureUniformLocation, 0);
                 glUniform1i(m_isSPATextureUniformLocation, 1);

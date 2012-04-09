@@ -185,6 +185,7 @@ RigidBody::~RigidBody()
     m_angularDamping = 0;
     m_restitution = 0;
     m_friction = 0;
+    m_index = -1;
     m_groupID = 0;
     m_collisionGroupMask = 0;
     m_collisionGroupID = 0;

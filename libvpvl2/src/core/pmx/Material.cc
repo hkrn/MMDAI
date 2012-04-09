@@ -283,11 +283,11 @@ void Material::mergeMorph(Morph::Material *morph, float weight)
         static const Vector3 kOne(1.0, 1.0, 1.0);
         switch (morph->operation) {
         case 0: // modulate
-            m_ambient.mod = kOne - ambient * weight;
-            m_diffuse.mod = kOne - diffuse * diffuse.w() * weight;
-            m_specular.mod = kOne - specular * weight;
+            m_ambient.mul = kOne - ambient * weight;
+            m_diffuse.mul = kOne - diffuse * diffuse.w() * weight;
+            m_specular.mul = kOne - specular * weight;
             m_shininess.setY(1.0 - morph->shininess * weight);
-            m_edgeColor.mod = kOne - edgeColor * edgeColor.w() * weight;
+            m_edgeColor.mul = kOne - edgeColor * edgeColor.w() * weight;
             m_edgeSize.setY(1.0 - morph->edgeSize * weight);
             break;
         case 1: // add

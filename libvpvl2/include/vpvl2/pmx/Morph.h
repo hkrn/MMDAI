@@ -134,6 +134,7 @@ public:
     void addVertexMorph(const Vertex &value);
     void setCategory(uint8_t value);
     void setType(uint8_t value);
+    void setIndex(int value);
 
     const Array<Bone> &bones() const { return m_bones; }
     const Array<Group> &groups() const { return m_groups; }

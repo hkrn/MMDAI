@@ -89,7 +89,7 @@ namespace pmx
 Morph::Morph()
     : m_name(0),
       m_englishName(0),
-      m_index(0),
+      m_index(-1),
       m_category(0),
       m_type(0)
 {
@@ -101,7 +101,7 @@ Morph::~Morph()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
-    m_index = 0;
+    m_index = -1;
     m_category = 0;
     m_type = 0;
 }
@@ -509,6 +509,11 @@ void Morph::setCategory(uint8_t value)
 void Morph::setType(uint8_t value)
 {
     m_type = value;
+}
+
+void Morph::setIndex(int value)
+{
+    m_index = value;
 }
 
 void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)

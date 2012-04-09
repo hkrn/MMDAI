@@ -59,21 +59,21 @@ class VPVL2_API Material
 public:
     enum SphereTextureRenderMode {
         kNone,
-        kModulate,
-        kAdditive,
+        kMultTexture,
+        kAddTexture,
         kSubTexture
     };
     struct Color3 {
         Color base;
-        Vector3 mod;
+        Vector3 mul;
         Vector3 add;
-        Color3() : base(kZeroC), mod(1, 1, 1), add(kZeroV3) {}
+        Color3() : base(kZeroC), mul(1, 1, 1), add(kZeroV3) {}
         const Color calculate() const {
-            const Vector3 &mixed = base * mod + add;
+            const Vector3 &mixed = base * mul + add;
             return Color(mixed.x(), mixed.y(), mixed.z(), base.w());
         }
         void reset() {
-            mod.setValue(1, 1, 1);
+            mul.setValue(1, 1, 1);
             add.setValue(0, 0, 0);
         }
     };
