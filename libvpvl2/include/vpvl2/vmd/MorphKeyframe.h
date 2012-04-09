@@ -39,7 +39,7 @@
 #ifndef VPVL2_VMD_MORPHKEYFRAME_H_
 #define VPVL2_VMD_MORPHKEYFRAME_H_
 
-#include "vpvl2/vmd/BaseKeyFrame.h"
+#include "vpvl2/vmd/BaseKeyframe.h"
 
 namespace vpvl2
 {

@@ -59,7 +59,7 @@
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
 #include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/CameraKeyFrame.h"
+#include "vpvl2/vmd/CameraKeyframe.h"
 #include "vpvl2/vmd/LightAnimation.h"
 #include "vpvl2/vmd/LightKeyframe.h"
 #include "vpvl2/vmd/MorphAnimation.h"
