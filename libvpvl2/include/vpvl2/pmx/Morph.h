@@ -117,7 +117,6 @@ public:
     size_t estimateSize(const Model::DataInfo &info) const;
 
     void performTransform(float weight);
-    void setWeight(float value);
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }

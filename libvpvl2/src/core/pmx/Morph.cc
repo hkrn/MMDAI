@@ -461,11 +461,6 @@ void Morph::performTransform(float weight)
     }
 }
 
-void Morph::setWeight(float value)
-{
-    performTransform(value);
-}
-
 void Morph::setName(const IString *value)
 {
     internal::setString(value, m_name);
