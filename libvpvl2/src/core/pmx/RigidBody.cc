@@ -150,8 +150,9 @@ RigidBody::RigidBody()
       m_angularDamping(0),
       m_restitution(0),
       m_friction(0),
+      m_index(-1),
       m_groupID(0),
-      m_groupMask(0),
+      m_collisionGroupMask(0),
       m_collisionGroupID(0),
       m_shapeType(0),
       m_type(0)
@@ -185,7 +186,7 @@ RigidBody::~RigidBody()
     m_restitution = 0;
     m_friction = 0;
     m_groupID = 0;
-    m_groupMask = 0;
+    m_collisionGroupMask = 0;
     m_collisionGroupID = 0;
     m_shapeType = 0;
     m_type = 0;
@@ -238,6 +239,7 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
                 rigidBody->m_body = rigidBody->createRigidBody(shape);
             }
         }
+        rigidBody->m_index = i;
     }
     return true;
 }
@@ -254,11 +256,11 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
     m_collisionGroupID = unit.collisionGroupID;
     m_groupID = 0x0001 << m_collisionGroupID;
-    m_groupMask = unit.collsionMask;
+    m_collisionGroupMask = unit.collsionMask;
     m_shapeType = unit.shapeType;
-    m_size.setValue(unit.size[0], unit.size[1], unit.size[2]);
+    internal::setPositionRaw(unit.size, m_size);
     internal::setPosition(unit.position, m_position);
-    m_rotation.setValue(unit.rotation[0], unit.rotation[1], unit.rotation[2]);
+    internal::setPositionRaw(unit.rotation, m_rotation);
     m_mass = unit.mass;
     m_linearDamping = unit.linearDamping;
     m_angularDamping = unit.angularDamping;
@@ -269,8 +271,35 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     size = ptr - start;
 }
 
-void RigidBody::write(uint8_t * /* data */) const
+void RigidBody::write(uint8_t *data, const Model::DataInfo &info) const
 {
+    internal::writeString(m_name, data);
+    internal::writeString(m_englishName, data);
+    internal::writeSignedIndex(m_boneIndex, info.boneIndexSize, data);
+    RigidBodyUnit rbu;
+    rbu.angularDamping = m_angularDamping;
+    rbu.collisionGroupID = m_collisionGroupID;
+    rbu.collsionMask = m_collisionGroupMask;
+    rbu.friction = m_friction;
+    rbu.linearDamping = m_linearDamping;
+    rbu.mass = m_mass;
+    internal::getPosition(m_position, &rbu.position[0]);
+    rbu.restitution = m_restitution;
+    internal::getPositionRaw(m_rotation, &rbu.rotation[0]);
+    rbu.shapeType = m_shapeType;
+    internal::getPositionRaw(m_size, rbu.size);
+    rbu.type = m_type;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&rbu), sizeof(rbu), data);
+}
+
+size_t RigidBody::estimateSize(const Model::DataInfo &info) const
+{
+    size_t size = 0;
+    size += internal::estimateSize(m_name);
+    size += internal::estimateSize(m_englishName);
+    size += info.boneIndexSize;
+    size += sizeof(RigidBodyUnit);
+    return size;
 }
 
 void RigidBody::performTransformBone()
@@ -384,6 +413,77 @@ void RigidBody::setName(const IString *value)
 void RigidBody::setEnglishName(const IString *value)
 {
     internal::setString(value, m_englishName);
+}
+
+void RigidBody::setBone(Bone *value)
+{
+    m_bone = value;
+    m_boneIndex = value ? value->index() : -1;
+}
+
+void RigidBody::setAngularDamping(float value)
+{
+    m_angularDamping = value;
+}
+
+void RigidBody::setCollisionGroupID(uint16_t value)
+{
+    m_collisionGroupID = value;
+}
+
+void RigidBody::setCollisionMask(uint16_t value)
+{
+    m_collisionGroupID = value;
+}
+
+void RigidBody::setFriction(float value)
+{
+    m_friction = value;
+}
+
+void RigidBody::setLinearDamping(float value)
+{
+    m_linearDamping = value;
+}
+
+void RigidBody::setMass(float value)
+{
+    m_mass = value;
+}
+
+void RigidBody::setPosition(const Vector3 &value)
+{
+    m_position = value;
+}
+
+void RigidBody::setRestitution(float value)
+{
+    m_restitution = value;
+}
+
+void RigidBody::setRotation(const Vector3 &value)
+{
+    m_rotation = value;
+}
+
+void RigidBody::setShapeType(uint8_t value)
+{
+    m_shapeType = value;
+}
+
+void RigidBody::setSize(const Vector3 &value)
+{
+    m_size = value;
+}
+
+void RigidBody::setType(uint8_t value)
+{
+    m_type = value;
+}
+
+void RigidBody::setIndex(int value)
+{
+    m_index = value;
 }
 
 } /* namespace pmx */

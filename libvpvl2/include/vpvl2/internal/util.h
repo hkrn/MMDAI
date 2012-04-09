@@ -181,8 +181,13 @@ static void inline setPosition(const float *input, Vector3 &output)
 #ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(input[0], input[1], -input[2]);
 #else
-    output.setValue(input[0], input[1], input[2]);
+    setPositionRaw(input, output);
 #endif
+}
+
+static void inline setPositionRaw(const float *input, Vector3 &output)
+{
+    output.setValue(input[0], input[1], input[2]);
 }
 
 static void inline getPosition(const Vector3 &input, float *output)
@@ -194,6 +199,13 @@ static void inline getPosition(const Vector3 &input, float *output)
 #else
     output[2] = input.z();
 #endif
+}
+
+static void inline getPositionRaw(const Vector3 &input, float *output)
+{
+    output[0] = input.x();
+    output[1] = input.y();
+    output[2] = input.z();
 }
 
 static void inline setRotation(const float *input, Quaternion &output)

@@ -189,7 +189,7 @@ void Model::joinWorld(btDiscreteDynamicsWorld *world)
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
         rigidBody->setKinematic(false);
-        world->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->groupMask());
+        world->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->collisionGroupMask());
     }
     const int njoints = m_joints.count();
     for (int i = 0; i < njoints; i++) {

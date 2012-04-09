@@ -74,7 +74,9 @@ public:
                                 const Array<Bone *> &bones);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
+
     void performTransformBone();
     void setKinematic(bool value);
     const Transform createStartTransform(Transform &base) const;
@@ -83,6 +85,7 @@ public:
 
     btRigidBody *body() const { return m_body; }
     Bone *bone() const { return m_bone; }
+    int boneIndex() const { return m_boneIndex; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const Vector3 &size() const { return m_size; }
@@ -94,10 +97,26 @@ public:
     float restitution() const { return m_restitution; }
     float friction() const { return m_friction; }
     uint16_t groupID() const { return m_groupID; }
-    uint16_t groupMask() const { return m_groupMask; }
+    uint16_t collisionGroupMask() const { return m_collisionGroupMask; }
+    uint8_t collisionGroupID() const { return m_collisionGroupID; }
+    int index() const { return m_index; }
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
+    void setBone(Bone *value);
+    void setAngularDamping(float value);
+    void setCollisionGroupID(uint16_t value);
+    void setCollisionMask(uint16_t value);
+    void setFriction(float value);
+    void setLinearDamping(float value);
+    void setMass(float value);
+    void setPosition(const Vector3 &value);
+    void setRestitution(float value);
+    void setRotation(const Vector3 &value);
+    void setShapeType(uint8_t value);
+    void setSize(const Vector3 &value);
+    void setType(uint8_t value);
+    void setIndex(int value);
 
 private:
     btRigidBody *m_body;
@@ -118,8 +137,9 @@ private:
     float m_angularDamping;
     float m_restitution;
     float m_friction;
+    int m_index;
     uint16_t m_groupID;
-    uint16_t m_groupMask;
+    uint16_t m_collisionGroupMask;
     uint8_t m_collisionGroupID;
     uint8_t m_shapeType;
     uint8_t m_type;

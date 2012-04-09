@@ -70,11 +70,14 @@ public:
                            const Array<RigidBody *> &rigidBodies);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
 
     btGeneric6DofSpringConstraint *constraint() const { return m_constraint; }
     RigidBody *rigidBody1() const { return m_rigidBody1; }
     RigidBody *rigidBody2() const { return m_rigidBody2; }
+    int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
+    int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const Vector3 &position() const { return m_position; }
@@ -86,6 +89,8 @@ public:
     const Vector3 &positionStiffness() const { return m_positionStiffness; }
     const Vector3 &rotationStiffness() const { return m_rotationStiffness; }
 
+    void setRigidBody1(RigidBody *value);
+    void setRigidBody2(RigidBody *value);
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setPosition(const Vector3 &value);
@@ -96,6 +101,7 @@ public:
     void setRotationUpperLimit(const Vector3 &value);
     void setPositionStiffness(const Vector3 &value);
     void setRotationStiffness(const Vector3 &value);
+    void setIndex(int value);
     btGeneric6DofSpringConstraint *createConstraint() const;
 
 private:
@@ -114,6 +120,7 @@ private:
     Vector3 m_rotationStiffness;
     int m_rigidBodyIndex1;
     int m_rigidBodyIndex2;
+    int m_index;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Joint)
 };

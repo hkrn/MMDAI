@@ -85,7 +85,8 @@ Joint::Joint()
       m_positionStiffness(kZeroV3),
       m_rotationStiffness(kZeroV3),
       m_rigidBodyIndex1(0),
-      m_rigidBodyIndex2(0)
+      m_rigidBodyIndex2(0),
+      m_index(-1)
 {
 }
 
@@ -169,6 +170,7 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
         }
         if (joint->m_rigidBody1 && joint->m_rigidBody2)
             joint->m_constraint = joint->createConstraint();
+        joint->m_index = i;
     }
     return true;
 }
@@ -187,14 +189,14 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         m_rigidBodyIndex1 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
         m_rigidBodyIndex2 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
         const JointUnit &unit = *reinterpret_cast<JointUnit *>(ptr);
-        m_position.setValue(unit.position[0], unit.position[1], unit.position[2]);
-        m_rotation.setValue(unit.rotation[0], unit.rotation[1], unit.rotation[2]);
-        m_positionLowerLimit.setValue(unit.positionLowerLimit[0], unit.positionLowerLimit[1], unit.positionLowerLimit[2]);
-        m_rotationLowerLimit.setValue(unit.rotationLowerLimit[0], unit.rotationLowerLimit[1], unit.rotationLowerLimit[2]);
-        m_positionUpperLimit.setValue(unit.positionUpperLimit[0], unit.positionUpperLimit[1], unit.positionUpperLimit[2]);
-        m_rotationUpperLimit.setValue(unit.rotationUpperLimit[0], unit.rotationUpperLimit[1], unit.rotationUpperLimit[2]);
-        m_positionStiffness.setValue(unit.positionStiffness[0], unit.positionStiffness[1], unit.positionStiffness[2]);
-        m_rotationStiffness.setValue(unit.rotationStiffness[0], unit.rotationStiffness[1], unit.rotationStiffness[2]);
+        internal::setPositionRaw(unit.position, m_position);
+        internal::setPositionRaw(unit.rotation, m_rotation);
+        internal::setPositionRaw(unit.positionLowerLimit, m_positionLowerLimit);
+        internal::setPositionRaw(unit.rotationLowerLimit, m_rotationLowerLimit);
+        internal::setPositionRaw(unit.positionUpperLimit, m_positionUpperLimit);
+        internal::setPositionRaw(unit.rotationUpperLimit, m_rotationUpperLimit);
+        internal::setPositionRaw(unit.positionStiffness, m_positionStiffness);
+        internal::setPositionRaw(unit.rotationStiffness, m_rotationStiffness);
         ptr += sizeof(unit);
         break;
     }
@@ -205,8 +207,48 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Joint::write(uint8_t * /* data */) const
+void Joint::write(uint8_t *data, const Model::DataInfo &info) const
 {
+    internal::writeString(m_name, data);
+    internal::writeString(m_englishName, data);
+    uint8_t type = 0;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&type), sizeof(type), data);
+    size_t rigidBodyIndexSize = info.rigidBodyIndexSize;
+    internal::writeSignedIndex(m_rigidBodyIndex1, rigidBodyIndexSize, data);
+    internal::writeSignedIndex(m_rigidBodyIndex2, rigidBodyIndexSize, data);
+    JointUnit ju;
+    internal::getPositionRaw(m_position, ju.position);
+    internal::getPositionRaw(m_rotation, ju.rotation);
+    internal::getPositionRaw(m_positionLowerLimit, ju.positionLowerLimit);
+    internal::getPositionRaw(m_rotationLowerLimit, ju.rotationLowerLimit);
+    internal::getPositionRaw(m_positionUpperLimit, ju.positionUpperLimit);
+    internal::getPositionRaw(m_rotationUpperLimit, ju.rotationUpperLimit);
+    internal::getPositionRaw(m_positionStiffness, ju.positionStiffness);
+    internal::getPositionRaw(m_rotationStiffness, ju.rotationStiffness);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&ju), sizeof(ju), data);
+}
+
+size_t Joint::estimateSize(const Model::DataInfo &info) const
+{
+    size_t size = 0;
+    size += internal::estimateSize(m_name);
+    size += internal::estimateSize(m_englishName);
+    size += sizeof(uint8_t);
+    size += info.rigidBodyIndexSize * 2;
+    size += sizeof(JointUnit);
+    return size;
+}
+
+void Joint::setRigidBody1(RigidBody *value)
+{
+    m_rigidBody1 = value;
+    m_rigidBodyIndex1 = value ? value->index() : -1;
+}
+
+void Joint::setRigidBody2(RigidBody *value)
+{
+    m_rigidBody2 = value;
+    m_rigidBodyIndex2 = value ? value->index() : -1;
 }
 
 void Joint::setName(const IString *value)
@@ -257,6 +299,11 @@ void Joint::setPositionStiffness(const Vector3 &value)
 void Joint::setRotationStiffness(const Vector3 &value)
 {
     m_rotationStiffness = value;
+}
+
+void Joint::setIndex(int value)
+{
+    m_index = value;
 }
 
 btGeneric6DofSpringConstraint *Joint::createConstraint() const
