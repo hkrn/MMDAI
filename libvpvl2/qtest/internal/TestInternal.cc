@@ -4,6 +4,19 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/internal/util.h>
 
+#ifndef INT8_MIN
+#define INT8_MIN -128
+#endif /* INT8_MIN */
+#ifndef UINT8_MAX
+#define UINT8_MAX 255
+#endif /* UINT8_MAX */
+#ifndef INT16_MIN
+#define INT16_MIN -32767
+#endif /* INT16_MIN */
+#ifndef UINT16_MAX
+#define UINT16_MAX 65535
+#endif /* UINT16_MAX */
+
 using namespace vpvl2;
 
 namespace {
