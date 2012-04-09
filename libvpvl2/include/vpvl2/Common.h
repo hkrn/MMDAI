@@ -50,9 +50,9 @@ typedef int int32_t;
 typedef unsigned int uint32_t;
 #else
 #include <stdint.h>
-  /* SIZE_MAX is C99 macro and use alternative if not defined */
+  /* SIZE_MAX is C99 macro and use alternative (32bit) if not defined */
   #ifndef SIZE_MAX
-    #define SIZE_MAX sizeof(void*)
+    #define SIZE_MAX 4294967295U
   #endif
 #endif
 
