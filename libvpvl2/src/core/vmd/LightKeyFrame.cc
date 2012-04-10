@@ -60,11 +60,10 @@ LightKeyframe::LightKeyframe()
       m_color(0.0f, 0.0f, 0.0f),
       m_direction(0.0f, 0.0f, 0.0f)
 {
-    internal::zerofill(m_name, sizeof(m_name));
 }
+
 LightKeyframe::~LightKeyframe()
 {
-    internal::zerofill(m_name, sizeof(m_name));
     m_color.setZero();
     m_direction.setZero();
 }
