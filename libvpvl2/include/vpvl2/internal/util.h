@@ -337,11 +337,11 @@ static inline void buildInterpolationTable(float x1, float x2, float y1, float y
 {
     assert(table && size > 0);
     for (int i = 0; i < size; i++) {
-        const float in = static_cast<const float>(i) / size;
+        const float in = float(i) / size;
         float t = in;
         while (1) {
             const float v = spline1(t, x1, x2) - in;
-            if (btFuzzyZero(btFabs(v)))
+            if (btFabs(v) < 0.0001f)
                 break;
             const float tt = spline2(t, x1, x2);
             if (btFuzzyZero(tt))
