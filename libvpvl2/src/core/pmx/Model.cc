@@ -85,9 +85,9 @@ Model::Model(IEncoding *encoding)
       m_comment(0),
       m_englishComment(0),
       m_userData(0),
-      m_error(kNoError),
       m_visible(false)
 {
+    internal::zerofill(&m_info, sizeof(m_info));
 }
 
 Model::~Model()
@@ -160,15 +160,84 @@ bool Model::load(const uint8_t *data, size_t size)
                 || !Vertex::loadVertices(m_vertices, m_bones)
                 || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
                 || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
-                || !Joint::loadJoints(m_joints, m_rigidBodies))
+                || !Joint::loadJoints(m_joints, m_rigidBodies)) {
+            m_info.error = info.error;
             return false;
+        }
+        m_info = info;
         return true;
+    }
+    else {
+        m_info.error = info.error;
     }
     return false;
 }
 
 void Model::save(uint8_t * /* data */) const
 {
+}
+
+size_t Model::estimateSize() const
+{
+    size_t size = 0;
+    size += sizeof(Header);
+    size += sizeof(uint8_t) + 8;
+    size += internal::estimateSize(m_name);
+    size += internal::estimateSize(m_englishName);
+    size += internal::estimateSize(m_comment);
+    size += internal::estimateSize(m_englishComment);
+    const int nvertices = m_vertices.count();
+    size += sizeof(nvertices);
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = m_vertices[i];
+        size += vertex->estimateSize(m_info);
+    }
+    const int nindices = m_indices.count();
+    size += sizeof(nindices);
+    size += m_info.vertexIndexSize * nindices;
+    const int ntextures = m_textures.count();
+    size += sizeof(ntextures);
+    for (int i = 0; i < ntextures; i++) {
+        IString *texture = m_textures[i];
+        size += internal::estimateSize(texture);
+    }
+    const int nmaterials = m_materials.count();
+    size += sizeof(nmaterials);
+    for (int i = 0; i < nmaterials; i++) {
+        Material *material = m_materials[i];
+        size += material->estimateSize(m_info);
+    }
+    const int nbones = m_bones.count();
+    size += sizeof(nbones);
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        size += bone->estimateSize(m_info);
+    }
+    const int nmorphs = m_morphs.count();
+    size += sizeof(nmorphs);
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_morphs[i];
+        size += morph->estimateSize(m_info);
+    }
+    const int nlabels = m_labels.count();
+    size += sizeof(nlabels);
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = m_labels[i];
+        size += label->estimateSize(m_info);
+    }
+    const int nbodies = m_rigidBodies.count();
+    size += sizeof(nbodies);
+    for (int i = 0; i < nbodies; i++) {
+        RigidBody *body = m_rigidBodies[i];
+        size += body->estimateSize(m_info);
+    }
+    const int njoints = m_joints.count();
+    size += sizeof(njoints);
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = m_joints[i];
+        size += joint->estimateSize(m_info);
+    }
+    return size;
 }
 
 void Model::resetVertices()
@@ -236,7 +305,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     if (!data || sizeof(Header) > rest) {
-        m_error = kInvalidHeaderError;
+        m_info.error = kInvalidHeaderError;
         return false;
     }
     /* header */
@@ -246,13 +315,13 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* Check the signature and version is correct */
     if (memcmp(header->signature, "PMX ", 4) != 0) {
-        m_error = kInvalidSignatureError;
+        m_info.error = kInvalidSignatureError;
         return false;
     }
 
     /* version */
     if (header->version != 2.0) {
-        m_error = kInvalidVersionError;
+        m_info.error = kInvalidVersionError;
         return false;
     }
 
@@ -260,7 +329,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     size_t flagSize;
     internal::readBytes(sizeof(Header), ptr, rest);
     if (!internal::size8(ptr, rest, flagSize) || flagSize != 8) {
-        m_error = kInvalidFlagSizeError;
+        m_info.error = kInvalidFlagSizeError;
         return false;
     }
     info.codec = *reinterpret_cast<uint8_t *>(ptr) == 1 ? IString::kUTF8 : IString::kUTF16;
@@ -275,35 +344,35 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* name in Japanese */
     if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
-        m_error = kInvalidNameSizeError;
+        m_info.error = kInvalidNameSizeError;
         return false;
     }
     /* name in English */
     if (!internal::sizeText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
-        m_error = kInvalidEnglishNameSizeError;
+        m_info.error = kInvalidEnglishNameSizeError;
         return false;
     }
     /* comment in Japanese */
     if (!internal::sizeText(ptr, rest, info.commentPtr, info.commentSize)) {
-        m_error = kInvalidCommentSizeError;
+        m_info.error = kInvalidCommentSizeError;
         return false;
     }
     /* comment in English */
     if (!internal::sizeText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
-        m_error = kInvalidEnglishCommentSizeError;
+        m_info.error = kInvalidEnglishCommentSizeError;
         return false;
     }
 
     /* vertex */
     if (!Vertex::preparse(ptr, rest, info)) {
-        m_error = kInvalidVerticesError;
+        m_info.error = kInvalidVerticesError;
         return false;
     }
 
     /* indices */
     size_t nindices;
     if (!internal::size32(ptr, rest, nindices) || nindices * info.vertexIndexSize > rest) {
-        m_error = kInvalidIndicesError;
+        m_info.error = kInvalidIndicesError;
         return false;
     }
     info.indicesPtr = ptr;
@@ -313,7 +382,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* texture lookup table */
     size_t ntextures;
     if (!internal::size32(ptr, rest, ntextures)) {
-        m_error = kInvalidTextureSizeError;
+        m_info.error = kInvalidTextureSizeError;
         return false;
     }
     info.texturesPtr = ptr;
@@ -321,7 +390,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         size_t nNameSize;
         uint8_t *namePtr;
         if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
-            m_error = kInvalidTextureError;
+            m_info.error = kInvalidTextureError;
             return false;
         }
     }
@@ -329,37 +398,37 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* material */
     if (!Material::preparse(ptr, rest, info)) {
-        m_error = kInvalidMaterialsError;
+        m_info.error = kInvalidMaterialsError;
         return false;
     }
 
     /* bone */
     if (!Bone::preparse(ptr, rest, info)) {
-        m_error = kInvalidBonesError;
+        m_info.error = kInvalidBonesError;
         return false;
     }
 
     /* morph */
     if (!Morph::preparse(ptr, rest, info)) {
-        m_error = kInvalidMorphsError;
+        m_info.error = kInvalidMorphsError;
         return false;
     }
 
     /* display name table */
     if (!Label::preparse(ptr, rest, info)) {
-        m_error = kInvalidLabelsError;
+        m_info.error = kInvalidLabelsError;
         return false;
     }
 
     /* rigid body */
     if (!RigidBody::preparse(ptr, rest, info)) {
-        m_error = kInvalidRigidBodiesError;
+        m_info.error = kInvalidRigidBodiesError;
         return false;
     }
 
     /* constraint */
     if (!Joint::preparse(ptr, rest, info)) {
-        m_error = kInvalidJointsError;
+        m_info.error = kInvalidJointsError;
         return false;
     }
     info.endPtr = ptr;
@@ -464,6 +533,7 @@ void Model::setEnglishComment(const IString *value)
 void Model::release()
 {
     leaveWorld(m_world);
+    internal::zerofill(&m_info, sizeof(m_info));
     m_vertices.releaseAll();
     m_textures.releaseAll();
     m_materials.releaseAll();
@@ -483,7 +553,6 @@ void Model::release()
     m_comment = 0;
     delete m_englishComment;
     m_englishComment = 0;
-    m_error = kNoError;
 }
 
 void Model::parseNamesAndComments(const DataInfo &info)

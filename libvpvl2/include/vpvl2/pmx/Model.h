@@ -145,6 +145,8 @@ public:
      */
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
+    size_t estimateSize() const;
+
     void resetVertices();
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
@@ -172,7 +174,7 @@ public:
     const IString *comment() const { return m_comment; }
     const IString *englishComment() const { return m_englishComment; }
     UserData *userData() const { return m_userData; }
-    Error error() const { return m_error; }
+    Error error() const { return m_info.error; }
     bool isVisible() const { return m_visible; }
 
     void setName(const IString *value);
@@ -215,7 +217,7 @@ private:
     IString *m_comment;
     IString *m_englishComment;
     UserData *m_userData;
-    Error m_error;
+    DataInfo m_info;
     bool m_visible;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
