@@ -1,8 +1,7 @@
-#include <QtCore/QtCore>
 #include <QtTest/QtTest>
-
-#include <vpvl2/Common.h>
 #include <vpvl2/internal/util.h>
+
+#include "../common.h"
 
 #ifndef INT8_MIN
 #define INT8_MIN -128
@@ -16,44 +15,6 @@
 #ifndef UINT16_MAX
 #define UINT16_MAX 65535
 #endif /* UINT16_MAX */
-
-using namespace vpvl2;
-
-namespace {
-
-class String : public IString
-{
-public:
-    explicit String(const QString &s) : m_bytes(s.toUtf8()), m_value(s) {
-    }
-    ~String() {
-    }
-
-    IString *clone() const {
-        return new String(m_value);
-    }
-    const HashString toHashString() const {
-        return HashString(m_bytes.constData());
-    }
-    bool equals(const IString *value) const {
-        return m_value == static_cast<const String *>(value)->value();
-    }
-    const QString &value() const {
-        return m_value;
-    }
-    const uint8_t *toByteArray() const {
-        return reinterpret_cast<const uint8_t *>(m_bytes.constData());
-    }
-    size_t length() const {
-        return m_value.length();
-    }
-
-private:
-    QByteArray m_bytes;
-    QString m_value;
-};
-
-}
 
 class TestInternal : public QObject
 {

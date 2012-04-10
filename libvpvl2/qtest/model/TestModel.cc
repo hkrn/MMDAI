@@ -1,109 +1,10 @@
-#include <QtCore/QtCore>
 #include <QtTest/QtTest>
 #include <btBulletDynamicsCommon.h>
-
-#include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
 
-using namespace vpvl2;
+#include "../common.h"
+
 using namespace vpvl2::pmx;
-
-namespace {
-
-class String : public IString {
-public:
-    explicit String(const QString &s) : m_bytes(s.toUtf8()), m_value(s) {
-    }
-    ~String() {
-    }
-
-    IString *clone() const {
-        return new String(m_value);
-    }
-    const HashString toHashString() const {
-        return HashString(m_bytes.constData());
-    }
-    bool equals(const IString *value) const {
-        return m_value == static_cast<const String *>(value)->value();
-    }
-    const QString &value() const {
-        return m_value;
-    }
-    const uint8_t *toByteArray() const {
-        return reinterpret_cast<const uint8_t *>(m_bytes.constData());
-    }
-    size_t length() const {
-        return m_value.length();
-    }
-
-private:
-    QByteArray m_bytes;
-    QString m_value;
-};
-
-class Encoding : public IEncoding {
-public:
-    Encoding()
-        : m_sjis(QTextCodec::codecForName("Shift-JIS")),
-          m_utf8(QTextCodec::codecForName("UTF-8")),
-          m_utf16(QTextCodec::codecForName("UTF-16"))
-    {
-    }
-    ~Encoding() {
-    }
-
-    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
-        IString *s = 0;
-        const char *str = reinterpret_cast<const char *>(value);
-        switch (codec) {
-        case IString::kShiftJIS:
-            s = new String(m_sjis->toUnicode(str, size));
-            break;
-        case IString::kUTF8:
-            s = new String(m_utf8->toUnicode(str, size));
-            break;
-        case IString::kUTF16:
-            s = new String(m_utf16->toUnicode(str, size));
-            break;
-        }
-        return s;
-    }
-    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const {
-        size_t size = qstrnlen(reinterpret_cast<const char *>(value), maxlen);
-        return toString(value, size, codec);
-    }
-    uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
-        const String *s = static_cast<const String *>(value);
-        QByteArray bytes;
-        switch (codec) {
-        case IString::kShiftJIS:
-            bytes = m_sjis->fromUnicode(s->value());
-            break;
-        case IString::kUTF8:
-            bytes = m_utf8->fromUnicode(s->value());
-            break;
-        case IString::kUTF16:
-            bytes = m_utf16->fromUnicode(s->value());
-            break;
-        }
-        size_t size = bytes.length();
-        uint8_t *data = new uint8_t[size + 1];
-        memcpy(data, bytes.constData(), size);
-        data[size] = 0;
-        return data;
-    }
-    void disposeByteArray(uint8_t *value) const {
-        delete[] value;
-    }
-    pmx::Model *m_model;
-
-private:
-    QTextCodec *m_sjis;
-    QTextCodec *m_utf8;
-    QTextCodec *m_utf16;
-};
-
-}
 
 class TestModel : public QObject
 {
@@ -281,48 +182,52 @@ void TestModel::parseFile() const
     Model model(&encoding);
     Model::DataInfo info;
     QFile file("miku.pmx");
-    file.open(QFile::ReadOnly);
-    const QByteArray &bytes = file.readAll();
-    const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-    const size_t size = file.size();
-    QVERIFY(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
-    model.load(reinterpret_cast<const uint8_t *>(data), size);
+    if (file.open(QFile::ReadOnly)) {
+        const QByteArray &bytes = file.readAll();
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        const size_t size = file.size();
+        QVERIFY(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
+        model.load(reinterpret_cast<const uint8_t *>(data), size);
 #if 0
-    QTextCodec *codec = QTextCodec::codecForName("UTF-16");
-    qDebug() << "Model#name()" << codec->toUnicode(model.name()->ptr(), model.name()->length());
-    qDebug() << "Model#englishName()" << codec->toUnicode(model.englishName()->ptr(), model.englishName()->length());
-    qDebug() << "Model#comment()" << codec->toUnicode(model.comment()->ptr(), model.comment()->length());
-    qDebug() << "Model#englishComment()" << codec->toUnicode(model.englishComment()->ptr(), model.englishComment()->length());
-    const Array<StaticString *> &textures = model.textures();
-    for (int i = 0; i < textures.count(); i++) {
-        StaticString *texture = textures[i];
-        qDebug() << "Texture#name()" << codec->toUnicode(texture->ptr(), texture->length());
-    }
-    const Array<Bone *> &bones = model.bones();
-    for (int i = 0; i < bones.count(); i++) {
-        Bone *bone = bones[i];
-        qDebug() << "Bone#name()" << codec->toUnicode(bone->name()->ptr(), bone->name()->length());
-        qDebug() << "Bone#englishName()" << codec->toUnicode(bone->englishName()->ptr(), bone->englishName()->length());
-    }
-    const Array<Morph *> &morphs = model.morphs();
-    for (int i = 0; i < morphs.count(); i++) {
-        Morph *morph = morphs[i];
-        qDebug() << "Bone#name()" << codec->toUnicode(morph->name()->ptr(), morph->name()->length());
-        qDebug() << "Bone#englishName()" << codec->toUnicode(morph->englishName()->ptr(), morph->englishName()->length());
-    }
-    const Array<RigidBody *> &rigidBodies = model.rigidBodies();
-    for (int i = 0; i < rigidBodies.count(); i++) {
-        RigidBody *rigidBody = rigidBodies[i];
-        qDebug() << "RigidBody#name()" << codec->toUnicode(rigidBody->name()->ptr(), rigidBody->name()->length());
-        qDebug() << "RigidBody#englishName()" << codec->toUnicode(rigidBody->englishName()->ptr(), rigidBody->englishName()->length());
-    }
-    const Array<Joint *> &joints = model.joints();
-    for (int i = 0; i < joints.count(); i++) {
-        Joint *joint = joints[i];
-        qDebug() << "Joint#name()" << codec->toUnicode(joint->name()->ptr(), joint->name()->length());
-        qDebug() << "Joint#englishName()" << codec->toUnicode(joint->englishName()->ptr(), joint->englishName()->length());
-    }
+        QTextCodec *codec = QTextCodec::codecForName("UTF-16");
+        qDebug() << "Model#name()" << codec->toUnicode(model.name()->ptr(), model.name()->length());
+        qDebug() << "Model#englishName()" << codec->toUnicode(model.englishName()->ptr(), model.englishName()->length());
+        qDebug() << "Model#comment()" << codec->toUnicode(model.comment()->ptr(), model.comment()->length());
+        qDebug() << "Model#englishComment()" << codec->toUnicode(model.englishComment()->ptr(), model.englishComment()->length());
+        const Array<StaticString *> &textures = model.textures();
+        for (int i = 0; i < textures.count(); i++) {
+            StaticString *texture = textures[i];
+            qDebug() << "Texture#name()" << codec->toUnicode(texture->ptr(), texture->length());
+        }
+        const Array<Bone *> &bones = model.bones();
+        for (int i = 0; i < bones.count(); i++) {
+            Bone *bone = bones[i];
+            qDebug() << "Bone#name()" << codec->toUnicode(bone->name()->ptr(), bone->name()->length());
+            qDebug() << "Bone#englishName()" << codec->toUnicode(bone->englishName()->ptr(), bone->englishName()->length());
+        }
+        const Array<Morph *> &morphs = model.morphs();
+        for (int i = 0; i < morphs.count(); i++) {
+            Morph *morph = morphs[i];
+            qDebug() << "Bone#name()" << codec->toUnicode(morph->name()->ptr(), morph->name()->length());
+            qDebug() << "Bone#englishName()" << codec->toUnicode(morph->englishName()->ptr(), morph->englishName()->length());
+        }
+        const Array<RigidBody *> &rigidBodies = model.rigidBodies();
+        for (int i = 0; i < rigidBodies.count(); i++) {
+            RigidBody *rigidBody = rigidBodies[i];
+            qDebug() << "RigidBody#name()" << codec->toUnicode(rigidBody->name()->ptr(), rigidBody->name()->length());
+            qDebug() << "RigidBody#englishName()" << codec->toUnicode(rigidBody->englishName()->ptr(), rigidBody->englishName()->length());
+        }
+        const Array<Joint *> &joints = model.joints();
+        for (int i = 0; i < joints.count(); i++) {
+            Joint *joint = joints[i];
+            qDebug() << "Joint#name()" << codec->toUnicode(joint->name()->ptr(), joint->name()->length());
+            qDebug() << "Joint#englishName()" << codec->toUnicode(joint->englishName()->ptr(), joint->englishName()->length());
+        }
 #endif
+    }
+    else {
+        QSKIP("Require a model to test this", SkipSingle);
+    }
 }
 
 void TestModel::testBoneDefaultFlags() const
