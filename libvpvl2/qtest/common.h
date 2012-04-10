@@ -5,7 +5,11 @@ using namespace vpvl2;
 
 class String : public IString {
 public:
-    explicit String(const QString &s) : m_bytes(s.toUtf8()), m_value(s) {
+    explicit String(const QString &s, IString::Codec codec = IString::kUTF8)
+        : m_bytes(s.toUtf8()),
+          m_value(s),
+          m_codec(codec)
+    {
     }
     ~String() {
     }
@@ -26,12 +30,13 @@ public:
         return reinterpret_cast<const uint8_t *>(m_bytes.constData());
     }
     size_t length() const {
-        return m_value.length();
+        return m_bytes.length();
     }
 
 private:
-    QByteArray m_bytes;
-    QString m_value;
+    const QByteArray m_bytes;
+    const QString m_value;
+    const IString::Codec m_codec;
 };
 
 class Encoding : public IEncoding {
@@ -50,13 +55,13 @@ public:
         const char *str = reinterpret_cast<const char *>(value);
         switch (codec) {
         case IString::kShiftJIS:
-            s = new String(m_sjis->toUnicode(str, size));
+            s = new String(m_sjis->toUnicode(str, size), codec);
             break;
         case IString::kUTF8:
-            s = new String(m_utf8->toUnicode(str, size));
+            s = new String(m_utf8->toUnicode(str, size), codec);
             break;
         case IString::kUTF16:
-            s = new String(m_utf16->toUnicode(str, size));
+            s = new String(m_utf16->toUnicode(str, size), codec);
             break;
         }
         return s;
@@ -88,10 +93,9 @@ public:
     void disposeByteArray(uint8_t *value) const {
         delete[] value;
     }
-    pmx::Model *m_model;
 
 private:
-    QTextCodec *m_sjis;
-    QTextCodec *m_utf8;
-    QTextCodec *m_utf16;
+    const QTextCodec *m_sjis;
+    const QTextCodec *m_utf8;
+    const QTextCodec *m_utf16;
 };
