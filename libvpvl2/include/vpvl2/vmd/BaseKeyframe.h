@@ -99,39 +99,28 @@ public:
      *
      * @return name the bone name
      */
-    virtual const IString *name() const {
-        return m_name;
-    }
+    const IString *name() const { return m_name; }
 
     /**
      * Get the frame index of this keyframe.
      *
      * @return A value of frame index
      */
-    float frameIndex() const {
-        return m_frameIndex;
-    }
+    float frameIndex() const { return m_frameIndex; }
 
     /**
      * Set the target bone name of this keyframe.
      *
      * @param value the bone name
      */
-    virtual void setName(const IString *value) {
-        if (m_name != value) {
-            delete m_name;
-            m_name = value->clone();
-        }
-    }
+    virtual void setName(const IString *value) = 0;
 
     /**
      * Set the frame index of this keyframe.
      *
      * @param value A value of frame index
      */
-    void setFrameIndex(float value) {
-        m_frameIndex = value;
-    }
+    void setFrameIndex(float value) { m_frameIndex = value; }
 
 protected:
     IString *m_name;

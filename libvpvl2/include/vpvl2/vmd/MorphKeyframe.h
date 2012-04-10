@@ -63,6 +63,8 @@ public:
     void write(uint8_t *data) const;
     BaseKeyframe *clone() const;
 
+    void setName(const IString *value);
+
     /**
      * Get the face weight of this keyframe.
      *

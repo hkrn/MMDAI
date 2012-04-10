@@ -81,6 +81,8 @@ public:
     void write(uint8_t *data) const;
     BaseKeyframe *clone() const;
 
+    void setName(const IString * /* value */) {}
+
     /**
      * Set the default values of the interpolation parameter.
      */

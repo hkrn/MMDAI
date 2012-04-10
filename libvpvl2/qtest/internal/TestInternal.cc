@@ -346,6 +346,7 @@ void TestInternal::setString()
     internal::setString(&str, value);
     QVERIFY(value != &str);
     QVERIFY(value->equals(&str));
+    delete value;
 }
 
 void TestInternal::toggleFlag()

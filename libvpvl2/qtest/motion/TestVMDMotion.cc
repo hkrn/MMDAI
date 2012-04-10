@@ -127,15 +127,13 @@ void TestVMDMotion::saveBoneKeyframe()
     uint8_t data[BoneKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
-    QCOMPARE(QString(reinterpret_cast<const char *>(newFrame.name())),
-             QString(reinterpret_cast<const char *>(frame.name())));
+    QVERIFY(newFrame.name()->equals(frame.name()));
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
     QVERIFY(newFrame.position() == pos);
     QVERIFY(newFrame.rotation() == rot);
     testBoneInterpolationMatrix(p, frame);
     cloned = static_cast<BoneKeyframe *>(frame.clone());
-    QCOMPARE(QString(reinterpret_cast<const char *>(cloned->name())),
-             QString(reinterpret_cast<const char *>(frame.name())));
+    QVERIFY(cloned->name()->equals(frame.name()));
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->position() == pos);
     QVERIFY(cloned->rotation() == rot);
@@ -201,13 +199,11 @@ void TestVMDMotion::saveMorphKeyframe()
     uint8_t data[MorphKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
-    QCOMPARE(QString(reinterpret_cast<const char *>(newFrame.name())),
-             QString(reinterpret_cast<const char *>(frame.name())));
+    QVERIFY(newFrame.name()->equals(frame.name()));
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
     QCOMPARE(newFrame.weight(), frame.weight());
     cloned = static_cast<MorphKeyframe *>(frame.clone());
-    QCOMPARE(QString(reinterpret_cast<const char *>(cloned->name())),
-             QString(reinterpret_cast<const char *>(frame.name())));
+    QVERIFY(cloned->name()->equals(frame.name()));
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QCOMPARE(cloned->weight(), frame.weight());
     delete cloned;

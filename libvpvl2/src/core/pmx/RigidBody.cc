@@ -236,6 +236,7 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
                 Bone *bone = bones[boneIndex];
                 if (rigidBody->m_type != 0)
                     bone->setSimulated(true);
+                rigidBody->m_shape = shape;
                 rigidBody->m_bone = bone;
                 rigidBody->m_body = rigidBody->createRigidBody(shape);
             }
@@ -249,10 +250,16 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
+    IEncoding *encoding = info.encoding;
+    IString *string = 0;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
+    string = encoding->toString(namePtr, nNameSize, info.codec);
+    setName(string);
+    delete string;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
+    string = encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(string);
+    delete string;
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
     m_collisionGroupID = unit.collisionGroupID;

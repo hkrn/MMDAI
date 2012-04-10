@@ -262,6 +262,7 @@ void TestModel::testVertexBoundary() const
     QCOMPARE(static_cast<IBone *>(0), vertex.bone(4));
     QCOMPARE(0.0f, vertex.weight(-1));
     QCOMPARE(0.0f, vertex.weight(4));
+    delete bone;
 }
 
 void TestModel::testMaterialMorphMergeAmbient() const
@@ -611,6 +612,7 @@ void TestModel::testReadWriteBone(size_t indexSize)
     QCOMPARE(bone2.parentBone(), &parent);
     QCOMPARE(bone2.parentInherenceBone(), &parent);
     QCOMPARE(bone2.targetBone(), &parent);
+    delete[] data;
 }
 
 void TestModel::testReadWriteJoint(size_t indexSize)
@@ -654,6 +656,7 @@ void TestModel::testReadWriteJoint(size_t indexSize)
     QCOMPARE(joint2.rotationStiffness(), joint.rotationStiffness());
     QCOMPARE(joint2.rigidBodyIndex1(), body.index());
     QCOMPARE(joint2.rigidBodyIndex2(), body2.index());
+    delete[] data;
 }
 
 void TestModel::testReadWriteMaterial(size_t indexSize)

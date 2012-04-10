@@ -539,6 +539,7 @@ void Model::release()
     m_materials.releaseAll();
     m_bones.releaseAll();
     m_morphs.releaseAll();
+    m_labels.releaseAll();
     m_rigidBodies.releaseAll();
     m_joints.releaseAll();
     delete[] m_skinnedVertices;
@@ -557,10 +558,20 @@ void Model::release()
 
 void Model::parseNamesAndComments(const DataInfo &info)
 {
-    setName(m_encoding->toString(info.namePtr, info.nameSize, info.codec));
-    setEnglishName(m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec));
-    setComment(m_encoding->toString(info.commentPtr, info.commentSize, info.codec));
-    setEnglishComment(m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec));
+    IEncoding *encoding = info.encoding;
+    IString *string = 0;
+    string = encoding->toString(info.namePtr, info.nameSize, info.codec);
+    setName(string);
+    delete string;
+    string = m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec);
+    setEnglishName(string);
+    delete string;
+    string = m_encoding->toString(info.commentPtr, info.commentSize, info.codec);
+    setComment(string);
+    delete string;
+    string = m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec);
+    setEnglishComment(string);
+    delete string;
 }
 
 void Model::parseVertices(const DataInfo &info)

@@ -144,6 +144,8 @@ public:
         return m_enableIK;
     }
 
+    void setName(const IString *value);
+
     /**
      * Set the position to the target bone of this keyframe.
      *

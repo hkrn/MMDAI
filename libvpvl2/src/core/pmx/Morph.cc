@@ -307,9 +307,15 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
+    IEncoding *encoding = info.encoding;
+    IString *string = 0;
+    string = encoding->toString(namePtr, nNameSize, info.codec);
+    setName(string);
+    delete string;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
+    string = encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(string);
+    delete string;
     const MorphUnit &unit = *reinterpret_cast<const MorphUnit *>(ptr);
     m_category = unit.category;
     m_type = unit.type;

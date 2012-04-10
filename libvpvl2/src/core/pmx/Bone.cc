@@ -140,6 +140,7 @@ Bone::Bone()
 
 Bone::~Bone()
 {
+    m_IKLinks.releaseAll();
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -315,10 +316,16 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
+    IEncoding *encoding = info.encoding;
+    IString *string = 0;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    setName(info.encoding->toString(namePtr, nNameSize, info.codec));
+    string = encoding->toString(namePtr, nNameSize, info.codec);
+    setName(string);
+    delete string;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    setEnglishName(info.encoding->toString(namePtr, nNameSize, info.codec));
+    string = encoding->toString(namePtr, nNameSize, info.codec);
+    setEnglishName(string);
+    delete string;
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
     m_offset = m_origin;

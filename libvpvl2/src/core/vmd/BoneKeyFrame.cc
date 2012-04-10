@@ -123,7 +123,9 @@ void BoneKeyframe::read(const uint8_t *data)
     float *pos = chunk.position;
     float *rot = chunk.rotation;
 #endif
-    setName(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)));
+    IString *name = m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name));
+    setName(name);
+    delete name;
     setFrameIndex(static_cast<float>(chunk.frameIndex));
 #ifdef VPVL2_COORDINATE_OPENGL
     setPosition(Vector3(pos[0], pos[1], -pos[2]));
@@ -172,7 +174,7 @@ void BoneKeyframe::write(uint8_t *data) const
 BaseKeyframe *BoneKeyframe::clone() const
 {
     BoneKeyframe *frame = new BoneKeyframe(m_encoding);
-    frame->setName(m_name->clone());
+    frame->setName(m_name);
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
@@ -255,6 +257,11 @@ QuadWord &BoneKeyframe::getInterpolationParameterInternal(InterpolationType type
         static QuadWord q(0.0f, 0.0f, 0.0f, 0.0f);
         return q;
     }
+}
+
+void BoneKeyframe::setName(const IString *value)
+{
+    internal::setString(value, m_name);
 }
 
 void BoneKeyframe::setPosition(const Vector3 &value)
