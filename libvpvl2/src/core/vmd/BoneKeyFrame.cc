@@ -115,7 +115,6 @@ void BoneKeyframe::read(const uint8_t *data)
 {
     BoneKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    setName(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)));
 #ifdef VPVL2_BUILD_IOS
     float pos[3], rot[4];
     memcpy(pos, &chunk.position, sizeof(pos));
@@ -124,7 +123,7 @@ void BoneKeyframe::read(const uint8_t *data)
     float *pos = chunk.position;
     float *rot = chunk.rotation;
 #endif
-
+    setName(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)));
     setFrameIndex(static_cast<float>(chunk.frameIndex));
 #ifdef VPVL2_COORDINATE_OPENGL
     setPosition(Vector3(pos[0], pos[1], -pos[2]));
