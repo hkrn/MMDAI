@@ -93,6 +93,7 @@ namespace vpvl2
 typedef btQuadWord QuadWord;
 typedef btQuaternion Quaternion;
 typedef btScalar Scalar;
+typedef btMatrix3x3 Matrix3x3;
 typedef btTransform Transform;
 typedef btVector3 Vector3;
 typedef btVector4 Vector4;

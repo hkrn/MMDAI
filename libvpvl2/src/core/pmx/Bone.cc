@@ -561,7 +561,7 @@ void Bone::performInverseKinematics()
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
     Quaternion rotation, targetRotation = m_targetBone->m_rotation;
-    btMatrix3x3 matrix;
+    Matrix3x3 matrix;
     for (int i = 0; i < nloops; i++) {
         for (int j = 0; j < nlinks; j++) {
             IKLink *link = m_IKLinks[j];

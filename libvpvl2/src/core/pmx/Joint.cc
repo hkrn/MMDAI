@@ -317,11 +317,11 @@ btGeneric6DofSpringConstraint *Joint::createConstraint() const
 {
 #ifndef VPVL2_NO_BULLET
     Transform transform = Transform::getIdentity();
-    btMatrix3x3 basis;
+    Matrix3x3 basis;
     const Vector3 &position = m_position;
     const Vector3 &rotation = m_rotation;
 #ifdef VPVL2_COORDINATE_OPENGL
-    btMatrix3x3 mx, my, mz;
+    Matrix3x3 mx, my, mz;
     mx.setEulerZYX(-rotation[0], 0.0f, 0.0f);
     my.setEulerZYX(0.0f, -rotation[1], 0.0f);
     mz.setEulerZYX(0.0f, 0.0f, rotation[2]);

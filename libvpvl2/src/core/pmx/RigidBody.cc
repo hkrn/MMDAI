@@ -89,7 +89,7 @@ public:
     }
     void setWorldTransform(const btTransform &worldTrans) {
         m_worldTransform = worldTrans;
-        const btMatrix3x3 &matrix = worldTrans.getBasis();
+        const Matrix3x3 &matrix = worldTrans.getBasis();
         m_worldTransform.setOrigin(kZeroV3);
         m_worldTransform = m_boneTransform * m_worldTransform;
         m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
@@ -343,9 +343,9 @@ void RigidBody::setKinematic(bool value)
 
 const Transform RigidBody::createStartTransform(Transform &base) const
 {
-    btMatrix3x3 basis;
+    Matrix3x3 basis;
 #ifdef VPVL2_COORDINATE_OPENGL
-    btMatrix3x3 mx, my, mz;
+    Matrix3x3 mx, my, mz;
     mx.setEulerZYX(-m_rotation[0], 0.0f, 0.0f);
     my.setEulerZYX(0.0f, -m_rotation[1], 0.0f);
     mz.setEulerZYX(0.0f, 0.0f, m_rotation[2]);
