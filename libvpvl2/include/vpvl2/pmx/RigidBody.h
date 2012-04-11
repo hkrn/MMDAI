@@ -51,7 +51,6 @@ namespace pmx
 {
 
 class Bone;
-class BoneList;
 
 /**
  * @file

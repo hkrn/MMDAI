@@ -80,7 +80,7 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     if (!internal::size32(ptr, rest, nDisplayNames)) {
         return false;
     }
-    info.displayNamesPtr = ptr;
+    info.labelsPtr = ptr;
     for (size_t i = 0; i < nDisplayNames; i++) {
         size_t nNameSize;
         uint8_t *namePtr;
@@ -118,7 +118,7 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             }
         }
     }
-    info.displayNamesCount = nDisplayNames;
+    info.labelsCount = nDisplayNames;
     return true;
 }
 

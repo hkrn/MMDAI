@@ -90,10 +90,10 @@ public:
     struct DataInfo
     {
         IEncoding *encoding;
-        uint8_t *basePtr;
-        uint8_t *namePtr;
         IString::Codec codec;
         Error error;
+        uint8_t *basePtr;
+        uint8_t *namePtr;
         size_t additionalUVSize;
         size_t vertexIndexSize;
         size_t textureIndexSize;
@@ -120,8 +120,8 @@ public:
         size_t bonesCount;
         uint8_t *morphsPtr;
         size_t morphsCount;
-        uint8_t *displayNamesPtr;
-        size_t displayNamesCount;
+        uint8_t *labelsPtr;
+        size_t labelsCount;
         uint8_t *rigidBodiesPtr;
         size_t rigidBodiesCount;
         uint8_t *jointsPtr;

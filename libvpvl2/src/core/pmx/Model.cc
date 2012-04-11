@@ -43,8 +43,7 @@
 BT_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #endif
 
-namespace
-{
+namespace {
 
 #pragma pack(push, 1)
 
@@ -673,8 +672,8 @@ void Model::parseMorphs(const DataInfo &info)
 
 void Model::parseLabels(const DataInfo &info)
 {
-    const int nlabels = info.displayNamesCount;
-    uint8_t *ptr = info.displayNamesPtr;
+    const int nlabels = info.labelsCount;
+    uint8_t *ptr = info.labelsPtr;
     size_t size;
     for(int i = 0; i < nlabels; i++) {
         Label *label = new Label();
