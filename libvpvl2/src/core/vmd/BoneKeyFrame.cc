@@ -39,7 +39,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/IEncoding.h"
+#include "vpvl2/vmd/BoneKeyframe.h"
 
 namespace vpvl2
 {

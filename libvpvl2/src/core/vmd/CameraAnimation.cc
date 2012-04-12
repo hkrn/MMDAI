@@ -39,6 +39,9 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#include "vpvl2/vmd/CameraAnimation.h"
+#include "vpvl2/vmd/CameraKeyframe.h"
+
 namespace vpvl2
 {
 namespace vmd

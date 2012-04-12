@@ -37,6 +37,9 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#include "vpvl2/pmx/Bone.h"
+#include "vpvl2/pmx/RigidBody.h"
+
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
 #else

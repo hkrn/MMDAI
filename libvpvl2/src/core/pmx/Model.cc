@@ -37,6 +37,15 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#include "vpvl2/pmx/Bone.h"
+#include "vpvl2/pmx/Joint.h"
+#include "vpvl2/pmx/Label.h"
+#include "vpvl2/pmx/Material.h"
+#include "vpvl2/pmx/Model.h"
+#include "vpvl2/pmx/Morph.h"
+#include "vpvl2/pmx/RigidBody.h"
+#include "vpvl2/pmx/Vertex.h"
+
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
 #else

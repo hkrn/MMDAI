@@ -37,6 +37,8 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#include "vpvl2/pmx/Bone.h"
+
 #define IK_DEBUG 0
 #if IK_DEBUG
 #include <QtCore>

@@ -37,6 +37,8 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#include "vpvl2/pmx/Material.h"
+
 namespace
 {
 
