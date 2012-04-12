@@ -22,7 +22,13 @@ set(vpvl2_public_headers
     include/vpvl2/IModel.h
     include/vpvl2/IMorph.h
     include/vpvl2/IMotion.h
+    include/vpvl2/IRenderDelegate.h
+    include/vpvl2/IRenderEngine.h
     include/vpvl2/IString.h
+    include/vpvl2/Scene.h
+)
+set(vpvl2_internal_headers
+    include/vpvl2/internal/util.h
     include/vpvl2/pmx/Bone.h
     include/vpvl2/pmx/Joint.h
     include/vpvl2/pmx/Label.h
@@ -43,13 +49,25 @@ set(vpvl2_public_headers
     include/vpvl2/vmd/MorphKeyframe.h
     include/vpvl2/vmd/Motion.h
 )
-set(vpvl2_internal_headers
-    include/vpvl2/internal/util.h
-)
 
 IF(NOT CMAKE_BUILD_TYPE)
  SET(CMAKE_BUILD_TYPE "Release")
 ENDIF()
+
+# declaration of function
+function(link_vpvl target)
+  get_build_type(LIBVPVL_BUILD_TYPE)
+  set(LIBVPVL_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libvpvl")
+  if(LIBVPVL_BUILD_TYPE STREQUAL "debug")
+    find_library(LIBVPVL_LIB vpvl_debug PATHS "${LIBVPVL_LOCAL_DIR}/${LIBVPVL_BUILD_TYPE}/lib")
+  else()
+    find_library(LIBVPVL_LIB vpvl PATHS "${LIBVPVL_LOCAL_DIR}/${LIBVPVL_BUILD_TYPE}/lib")
+  endif()
+  find_path(LIBVPVL_INCLUDE_DIRS vpvl/vpvl.h PATHS "${LIBVPVL_LOCAL_DIR}/include")
+  find_path(LIBVPVL_CONFIG_INCLUDE_DIRS vpvl/config.h PATHS "${LIBVPVL_LOCAL_DIR}/${LIBVPVL_BUILD_TYPE}/include")
+  target_link_libraries(${target} ${LIBVPVL_LIB})
+  include_directories(${LIBVPVL_INCLUDE_DIRS} ${LIBVPVL_CONFIG_INCLUDE_DIRS})
+endfunction()
 
 # declarations of function
 function(link_bullet target)
@@ -172,7 +190,10 @@ option(VPVL2_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (de
 option(VPVL2_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
 if(VPVL2_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl2_gl_sources)
-  list(APPEND vpvl2_public_headers include/vpvl2/gl2/Renderer.h)
+  list(APPEND vpvl2_public_headers
+      include/vpvl2/gl2/AssetRenderEngine.h
+      include/vpvl2/gl2/PMDRenderEngine.h
+  )
   list(APPEND vpvl2_internal_headers include/vpvl2/internal/gl2.h)
   if(VPVL2_ENABLE_NVIDIA_CG)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg vpvl2_gl_sources)
@@ -188,11 +209,22 @@ if(VPVL2_ENABLE_PROJECT)
   list(APPEND vpvl2_public_headers include/vpvl2/Project.h)
 endif()
 
+# libvpvl sources
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd vpvl2_sources)
+
 add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 
 # project include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# find libvpvl
+link_vpvl(vpvl2)
+list(APPEND vpvl2_public_headers
+  include/vpvl2/pmd/Bone.h
+  include/vpvl2/pmd/Model.h
+  include/vpvl2/pmd/Morph.h
+)
 
 # find Bullet Physics
 link_bullet(vpvl2)

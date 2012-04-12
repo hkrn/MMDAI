@@ -34,69 +34,28 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IMODEL_H_
-#define VPVL2_IMODEL_H_
+#ifndef VPVL2_IRENDERENGINE_H_
+#define VPVL2_IRENDERENGINE_H_
+
+#include <string>
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
-
-class btDiscreteDynamicsWorld;
+#include "vpvl2/IModel.h"
 
 namespace vpvl2
 {
 
-class IBone;
-class IMorph;
-class IMotion;
-
-class VPVL2_API IModel
+class VPVL2_API IRenderEngine
 {
 public:
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
-    };
+    virtual ~IRenderEngine() {}
 
-    virtual ~IModel() {}
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
-    virtual const IString *comment() const = 0;
-    virtual const IString *englishComment() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual Error error() const = 0;
-    virtual bool load(const uint8_t *data, size_t size) = 0;
-    virtual void save(uint8_t *data) const = 0;
-    virtual void resetVertices() = 0;
-    virtual void performUpdate() = 0;
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual IBone *findBone(const IString *value) const = 0;
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    virtual bool upload(const std::string &dir) = 0;
+    virtual void renderModel() = 0;
+    virtual void renderEdge() = 0;
+    virtual void update() = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
-

@@ -34,69 +34,48 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IMODEL_H_
-#define VPVL2_IMODEL_H_
+#ifndef VPVL2_IRENDERDELEGATE_H_
+#define VPVL2_IRENDERDELEGATE_H_
+
+#include <string>
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
-
-class btDiscreteDynamicsWorld;
 
 namespace vpvl2
 {
 
-class IBone;
-class IMorph;
-class IMotion;
-
-class VPVL2_API IModel
+class VPVL2_API IRenderDelegate
 {
 public:
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
+    enum LogLevel {
+        kLogInfo,
+        kLogWarning
+    };
+    enum ShaderType {
+        kEdgeVertexShader,
+        kEdgeFragmentShader,
+        kModelVertexShader,
+        kModelFragmentShader,
+        kAssetVertexShader,
+        kAssetFragmentShader,
+        kShadowVertexShader,
+        kShadowFragmentShader,
+        kZPlotVertexShader,
+        kZPlotFragmentShader
+    };
+    enum KernelType {
+        kModelSkinningKernel
     };
 
-    virtual ~IModel() {}
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
-    virtual const IString *comment() const = 0;
-    virtual const IString *englishComment() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual Error error() const = 0;
-    virtual bool load(const uint8_t *data, size_t size) = 0;
-    virtual void save(uint8_t *data) const = 0;
-    virtual void resetVertices() = 0;
-    virtual void performUpdate() = 0;
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual IBone *findBone(const IString *value) const = 0;
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    virtual ~IRenderDelegate() {}
+    virtual bool uploadTexture(const std::string &path, void *texture, bool isToon) = 0;
+    virtual bool uploadToonTexture(const std::string &name, const std::string &dir, void *texture) = 0;
+    virtual void log(LogLevel level, const char *format, va_list ap) = 0;
+    virtual const std::string loadShader(ShaderType type) = 0;
+    virtual const std::string loadKernel(KernelType type) = 0;
+    virtual const std::string toUnicode(const uint8_t *str) = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
-

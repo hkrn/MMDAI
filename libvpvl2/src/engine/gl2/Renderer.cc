@@ -36,6 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#if 0
+
 #include <vpvl2/internal/gl2.h>
 
 #include <btBulletDynamicsCommon.h>
@@ -1153,7 +1155,7 @@ void Renderer::uploadModel0(pmx::Model::UserData *userData, pmx::Model *model, c
     if (m_accelerator)
         m_accelerator->uploadModel(casted, model);
     model->setUserData(casted);
-    model->update();
+    model->performUpdate();
     model->setVisible(true);
     updateModel(model);
     m_delegate->log(kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
@@ -1439,3 +1441,5 @@ bool Renderer::initializeAccelerator()
 
 }
 }
+
+#endif

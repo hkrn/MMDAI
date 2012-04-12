@@ -36,19 +36,18 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_GL2_RENDERER_H_
-#define VPVL2_GL2_RENDERER_H_
+#ifndef VPVL2_GL2_PMDRENDERENGINE_H_
+#define VPVL2_GL2_PMDRENDERENGINE_H_
+
+#include "vpvl2/Common.h"
+#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderEngine.h"
 
 #include <string>
-#include "vpvl2/Common.h"
-
-#ifdef VPVL2_LINK_ASSIMP
-#include <aiMaterial.h>
-#include <aiScene.h>
-#endif /* VPVL_LINK_ASSIMP */
 
 #ifdef VPVL2_LINK_QT
 #include <QtOpenGL/QtOpenGL>
+#include <QtOpenGL/QGLFunctions>
 #endif /* VPVL_LINK_QT */
 
 #ifdef VPVL2_BUILD_IOS
@@ -64,29 +63,21 @@
 #endif /* __APPLE__ */
 #endif /* VPVL_BUILD_IOS */
 
-class btDiscreteDynamicsWorld;
+class btDynamicsWorld;
 class btIDebugDraw;
 
 namespace vpvl2
 {
 
-class Asset;
+class Scene;
 
-namespace pmx
+namespace pmd
 {
 class Model;
 }
 
 namespace gl2
 {
-
-class Accelerator;
-class AssetProgram;
-class EdgeProgram;
-class ModelProgram;
-class ObjectProgram;
-class ShadowProgram;
-class ZPlotProgram;
 
 /**
  * @file
@@ -98,95 +89,46 @@ class ZPlotProgram;
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-#ifdef VPVL2_LINK_QT
-class VPVL2_API Renderer : protected QGLFunctions
-#else
-class VPVL2_API Renderer
-#endif
+class VPVL2_API PMDRenderEngine : public vpvl2::IRenderEngine
+        #ifdef VPVL2_LINK_QT
+        , protected QGLFunctions
+        #endif
 {
 public:
-    enum LogLevel {
-        kLogInfo,
-        kLogWarning
-    };
-    enum ShaderType {
-        kEdgeVertexShader,
-        kEdgeFragmentShader,
-        kModelVertexShader,
-        kModelFragmentShader,
-        kAssetVertexShader,
-        kAssetFragmentShader,
-        kShadowVertexShader,
-        kShadowFragmentShader,
-        kZPlotVertexShader,
-        kZPlotFragmentShader
-    };
-    enum KernelType {
-        kModelSkinningKernel
-    };
+    class PrivateContext;
 
-    class VPVL2_API IDelegate
-    {
-    public:
-        virtual bool uploadTexture(const std::string &path, const std::string &dir, GLuint &textureID, bool isToon) = 0;
-        virtual bool uploadToonTexture(int sharedTextureIndex, GLuint &textureID) = 0;
-        virtual void log(LogLevel level, const char *format, ...) = 0;
-        virtual const std::string loadShader(ShaderType type) = 0;
-        virtual const std::string loadKernel(KernelType type) = 0;
-        virtual const std::string toUnicode(const uint8_t *value) = 0;
-        virtual const std::string toUnicode(const IString *value) = 0;
-    };
+    PMDRenderEngine(IRenderDelegate *delegate, const Scene *scene, pmd::Model *model);
+    virtual ~PMDRenderEngine();
 
-    Renderer(IDelegate *delegate);
-    virtual ~Renderer();
+    bool upload(const std::string &dir);
+    void deleteModel();
+    void update();
+    void renderModel();
+    void renderEdge();
+    void renderShadow();
+    void renderZPlot();
 
-    bool createShaderPrograms();
-    void initializeSurface();
-    void resize(int width, int height);
-    void uploadModel(pmx::Model *model, const std::string &dir);
-    void deleteModel(pmx::Model *&model);
-    void updateAllModel();
-    void updateModel(pmx::Model *model);
-    void renderModel(const pmx::Model *model);
-    void renderModelEdge(const pmx::Model *model);
-    void renderModelShadow(const pmx::Model *model);
-
-    void clear();
-    void renderAllModels();
-    void renderProjectiveShadow();
-
-    void setModelViewMatrix(const float value[16]);
-    void setProjectionMatrix(const float value[16]);
-    void setLightColor(const Vector3 &value);
-    void setLightPosition(const Vector3 &value);
-    void setWorld(btDiscreteDynamicsWorld *world);
-
-    static bool isAcceleratorSupported();
+    //static bool isAcceleratorSupported();
     bool isAcceleratorAvailable() const;
     bool initializeAccelerator();
 
 protected:
-    void uploadModel0(pmx::Model::UserData *userData, pmx::Model *model, const std::string &dir);
+    void log0(IRenderDelegate::LogLevel level, const char *format ...);
 
-    IDelegate *m_delegate;
-    Array<Asset *> m_assets;
+    IRenderDelegate *m_delegate;
 
 private:
-    btDiscreteDynamicsWorld *m_world;
-    Array<pmx::Model *> m_models;
-    ModelProgram *m_modelProgram;
-    ShadowProgram *m_shadowProgram;
-    Accelerator *m_accelerator;
-    Vector3 m_lightColor;
-    Vector3 m_lightPosition;
-    float m_modelViewMatrix[16];
-    float m_projectionMatrix[16];
+    class Accelerator;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Renderer)
+    const Scene *m_scene;
+    pmd::Model *m_model;
+    PrivateContext *m_context;
+    Accelerator *m_accelerator;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(PMDRenderEngine)
 };
 
-}
-}
+} /* namespace gl2 */
+} /* namespace vpvl2 */
 
 #endif
-

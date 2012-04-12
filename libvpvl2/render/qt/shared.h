@@ -484,7 +484,6 @@ public:
         internal::Encoding *encoding = new internal::Encoding();
         m_encoding = encoding;
         m_model = new pmx::Model(encoding);
-        encoding->m_model = m_model;
         m_renderer = new Renderer(&m_delegate);
 #ifndef VPVL_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
@@ -578,7 +577,7 @@ protected:
             qDebug() << m_currentFrameIndex;
             if (m_motion->isReachedTo(m_motion->maxFrameIndex()))
                 m_motion->reset();
-            m_model->update();
+            m_model->performUpdate();
             const int kFPS = 30;
             const Scalar &sec = 1.0 / kFPS;
             m_world->stepSimulation(sec, 1, 1.0 / kFPS);
@@ -644,7 +643,7 @@ private:
             return false;
         }
 
-        m_renderer->uploadModel(m_model, kModelDir);
+        //m_renderer->uploadModel(m_model, kModelDir);
         m_renderer->setWorld(m_world);
         //m_model->setEdgeOffset(0.5f);
 #ifdef VPVL_LINK_ASSIMP
@@ -654,7 +653,7 @@ private:
         loadAsset(kStageDir, kStage2Name);
 #endif
 
-#if 1
+#if 0
         for (int i = 0; i < m_model->materials().count(); i++)
             qDebug() << m_model->materials().at(i);
         for (int i = 0; i < m_model->bones().count(); i++)
@@ -674,7 +673,7 @@ private:
             qDebug() << "Loaded motion:" << m_motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
             qDebug() << "maxFrameIndex:" << m_motion->maxFrameIndex();
             m_motion->seek(0.0);
-            m_model->update();
+            m_model->performUpdate();
         }
         else {
             m_delegate.log(Renderer::kLogWarning, "Failed parsing the model motion, skipped...");
@@ -719,7 +718,7 @@ private:
     qreal m_distance;
     btDiscreteDynamicsWorld *m_world;
     IEncoding *m_encoding;
-    pmx::Model *m_model;
+    IModel *m_model;
     IMotion *m_motion;
 #ifndef VPVL_NO_BULLET
     btDefaultCollisionConfiguration m_config;

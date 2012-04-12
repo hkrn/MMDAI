@@ -34,69 +34,51 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IMODEL_H_
-#define VPVL2_IMODEL_H_
+#ifndef VPVL2_SCENE_H_
+#define VPVL2_SCENE_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
+#include "vpvl2/IEncoding.h"
+#include "vpvl2/IModel.h"
 
-class btDiscreteDynamicsWorld;
+#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderEngine.h"
 
 namespace vpvl2
 {
 
-class IBone;
-class IMorph;
-class IMotion;
-
-class VPVL2_API IModel
+class VPVL2_API Scene
 {
 public:
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
-    };
+    static bool isAcceleratorSupported();
 
-    virtual ~IModel() {}
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
-    virtual const IString *comment() const = 0;
-    virtual const IString *englishComment() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual Error error() const = 0;
-    virtual bool load(const uint8_t *data, size_t size) = 0;
-    virtual void save(uint8_t *data) const = 0;
-    virtual void resetVertices() = 0;
-    virtual void performUpdate() = 0;
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual IBone *findBone(const IString *value) const = 0;
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    Scene(IEncoding *encoding);
+    ~Scene();
+
+    IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
+    IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model) const;
+
+    void setModelViewProjectionMatrix(const float value[16]);
+    void setModelViewMatrix(const float value[16]);
+    void setProjectionMatrix(const float value[16]);
+    void setLightViewProjectionMatrix(const float value[16]);
+    void setNormalMatrix(const float value[9]);
+    void setLightColor(const Color &value);
+    void setLightPosition(const Vector3 &value);
+
+    const float *modelViewProjectionMatrix() const;
+    const float *modelViewMatrix() const;
+    const float *projectionMatrix() const;
+    const float *lightViewProjectionMatrix() const;
+    const float *normalMatrix() const;
+    const Color &lightColor() const;
+    const Vector3 &lightPosition() const;
+
+private:
+    struct PrivateContext;
+    PrivateContext *m_context;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
-
