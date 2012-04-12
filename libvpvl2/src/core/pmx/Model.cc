@@ -248,6 +248,60 @@ void Model::resetVertices()
     }
 }
 
+
+void Model::performUpdate()
+{
+    // update local transform matrix
+    const int nbones = m_bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        bone->resetIKLink();
+    }
+    // before physics simulation
+    const int nBPSBones = m_BPSOrderedBones.count();
+    for (int i = 0; i < nBPSBones; i++) {
+        Bone *bone = m_BPSOrderedBones[i];
+        bone->performFullTransform();
+        bone->performInverseKinematics();
+    }
+    for (int i = 0; i < nBPSBones; i++) {
+        Bone *bone = m_BPSOrderedBones[i];
+        bone->performUpdateLocalTransform();
+    }
+    // physics simulation
+    if (m_world) {
+        const int nRigidBodies = m_rigidBodies.count();
+        for (int i = 0; i < nRigidBodies; i++) {
+            RigidBody *rigidBody = m_rigidBodies[i];
+            rigidBody->performTransformBone();
+        }
+    }
+    // after physics simulation
+    const int nAPSBones = m_APSOrderedBones.count();
+    for (int i = 0; i < nAPSBones; i++) {
+        Bone *bone = m_APSOrderedBones[i];
+        bone->performFullTransform();
+        bone->performInverseKinematics();
+    }
+    for (int i = 0; i < nAPSBones; i++) {
+        Bone *bone = m_APSOrderedBones[i];
+        bone->performUpdateLocalTransform();
+    }
+    // skinning
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = m_vertices[i];
+        SkinnedVertex &v = m_skinnedVertices[i];
+        v.texcoord = vertex->texcoord();
+        v.uva0 = vertex->uv(0);
+        v.uva1 = vertex->uv(1);
+        v.uva2 = vertex->uv(2);
+        v.uva3 = vertex->uv(3);
+        v.uva4 = vertex->uv(4);
+        vertex->performSkinning(v.position, v.normal);
+    }
+}
+
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
 {
 #ifndef VPVL2_NO_BULLET
@@ -444,59 +498,6 @@ void Model::setUserData(UserData *value)
 void Model::setVisible(bool value)
 {
     m_visible = value;
-}
-
-void Model::update()
-{
-    // update local transform matrix
-    const int nbones = m_bones.count();
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
-        bone->resetIKLink();
-    }
-    // before physics simulation
-    const int nBPSBones = m_BPSOrderedBones.count();
-    for (int i = 0; i < nBPSBones; i++) {
-        Bone *bone = m_BPSOrderedBones[i];
-        bone->performFullTransform();
-        bone->performInverseKinematics();
-    }
-    for (int i = 0; i < nBPSBones; i++) {
-        Bone *bone = m_BPSOrderedBones[i];
-        bone->performUpdateLocalTransform();
-    }
-    // physics simulation
-    if (m_world) {
-        const int nRigidBodies = m_rigidBodies.count();
-        for (int i = 0; i < nRigidBodies; i++) {
-            RigidBody *rigidBody = m_rigidBodies[i];
-            rigidBody->performTransformBone();
-        }
-    }
-    // after physics simulation
-    const int nAPSBones = m_APSOrderedBones.count();
-    for (int i = 0; i < nAPSBones; i++) {
-        Bone *bone = m_APSOrderedBones[i];
-        bone->performFullTransform();
-        bone->performInverseKinematics();
-    }
-    for (int i = 0; i < nAPSBones; i++) {
-        Bone *bone = m_APSOrderedBones[i];
-        bone->performUpdateLocalTransform();
-    }
-    // skinning
-    const int nvertices = m_vertices.count();
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices[i];
-        SkinnedVertex &v = m_skinnedVertices[i];
-        v.texcoord = vertex->texcoord();
-        v.uva0 = vertex->uv(0);
-        v.uva1 = vertex->uv(1);
-        v.uva2 = vertex->uv(2);
-        v.uva3 = vertex->uv(3);
-        v.uva4 = vertex->uv(4);
-        vertex->performSkinning(v.position, v.normal);
-    }
 }
 
 const void *Model::vertexPtr() const

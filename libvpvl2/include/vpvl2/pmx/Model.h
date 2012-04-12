@@ -148,6 +148,7 @@ public:
     size_t estimateSize() const;
 
     void resetVertices();
+    void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
@@ -156,7 +157,6 @@ public:
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setUserData(UserData *value);
     void setVisible(bool value);
-    void update();
 
     const void *vertexPtr() const;
     const void *indicesPtr() const;

@@ -82,9 +82,13 @@ public:
     virtual ~IModel() {}
     virtual const IString *name() const = 0;
     virtual const IString *englishName() const = 0;
+    virtual const IString *comment() const = 0;
+    virtual const IString *englishComment() const = 0;
+    virtual Error error() const = 0;
     virtual bool load(const uint8_t *data, size_t size) = 0;
     virtual void save(uint8_t *data) const = 0;
     virtual void resetVertices() = 0;
+    virtual void performUpdate() = 0;
     virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
     virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
     virtual IBone *findBone(const IString *value) const = 0;
