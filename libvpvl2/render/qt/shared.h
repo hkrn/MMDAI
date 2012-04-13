@@ -74,22 +74,22 @@ using namespace vpvl2;
 
 namespace
 {
-    static const int kWidth = 800;
-    static const int kHeight = 600;
-    static const int kFPS = 60;
+static const int kWidth = 800;
+static const int kHeight = 600;
+static const int kFPS = 60;
 
-    static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
-    static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders/pmx";
-    static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
-    static const std::string kModelDir = "render/res/miku2";
-    static const std::string kStageDir = "render/res/stage";
-    static const std::string kMotion = "render/res/motion.vmd";
-    static const std::string kCamera = "render/res/camera.vmd.404";
-    static const std::string kModelName = "miku.pmx";
-    static const std::string kStageName = "stage.x";
-    static const std::string kStage2Name = "stage2.x";
+static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
+static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders";
+static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
+static const std::string kModelDir = "render/res/miku2";
+static const std::string kStageDir = "render/res/stage";
+static const std::string kMotion = "render/res/motion.vmd";
+static const std::string kCamera = "render/res/camera.vmd.404";
+static const std::string kModelName = "miku.pmx";
+static const std::string kStageName = "stage.x";
+static const std::string kStage2Name = "stage2.x";
 
-    typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
+typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 }
 
 static const std::string UIConcatPath(const std::string &dir, const std::string &name) {
@@ -287,28 +287,28 @@ public:
             file = "asset.fsh";
             break;
         case kEdgeVertexShader:
-            file = m_hardwareSkinning ? "edge_hws.vsh" : "edge.vsh";
+            file = m_hardwareSkinning ? "pmx/edge_hws.vsh" : "pmx/edge.vsh";
             break;
         case kEdgeFragmentShader:
-            file = "edge.fsh";
+            file = "pmx/edge.fsh";
             break;
         case kModelVertexShader:
-            file = m_hardwareSkinning ? "model_hws.vsh" : "model.vsh";
+            file = m_hardwareSkinning ? "pmx/model_hws.vsh" : "pmx/model.vsh";
             break;
         case kModelFragmentShader:
-            file = "model.fsh";
+            file = "pmx/model.fsh";
             break;
         case kShadowVertexShader:
-            file = "shadow.vsh";
+            file = "pmx/shadow.vsh";
             break;
         case kShadowFragmentShader:
-            file = "shadow.fsh";
+            file = "pmx/shadow.fsh";
             break;
         case kZPlotVertexShader:
-            file = "zplot.vsh";
+            file = "pmx/zplot.vsh";
             break;
         case kZPlotFragmentShader:
-            file = "zplot.fsh";
+            file = "pmx/zplot.fsh";
             break;
         }
         QByteArray bytes;
@@ -459,37 +459,39 @@ public:
           m_fovy(30.0),
           m_distance(50.0),
           m_world(0),
+          m_delegate(this),
           m_scene(0),
           m_encoding(0),
-          m_model(0),
-          m_motion(0),
-      #ifndef VPVL_NO_BULLET
+      #ifndef VPVL2_NO_BULLET
           m_dispatcher(&m_config),
           m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
-      #endif /* VPVL_NO_BULLET */
-          m_delegate(this),
-          m_renderer(0),
+      #endif /* VPVL2_NO_BULLET */
           m_prevElapsed(0),
           m_currentFrameIndex(0)
     {
         Encoding *encoding = new Encoding();
         m_scene = new Scene(encoding);
         m_encoding = encoding;
-#ifndef VPVL_NO_BULLET
+#ifndef VPVL2_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
         m_world->setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
         m_world->getSolverInfo().m_numIterations = static_cast<int>(10.0f);
-#endif /* VPVL_NO_BULLET */
+#endif /* VPVL2_NO_BULLET */
     }
     ~UI() {
-#ifdef VPVL_LINK_ASSIMP
+#ifdef VPVL2_LINK_ASSIMP
         Assimp::DefaultLogger::kill();
 #endif
-        delete m_renderer;
+        qDeleteAll(m_motions);
+        QMapIterator<IModel *, IRenderEngine *> it(m_models);
+        while (it.hasNext()) {
+            it.next();
+            delete it.value();
+            delete it.key();
+        }
         delete m_world;
         delete m_scene;
         delete m_encoding;
-        delete m_motion;
     }
 
     void rotate(float x, float y) {
@@ -510,14 +512,6 @@ protected:
         bool shaderSkinning = false;
         m_delegate.setShaderSkinningEnable(shaderSkinning);
         //m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
-#if 0
-        if (m_renderer->initializeAccelerator())
-            m_renderer->scene()->setSoftwareSkinningEnable(false);
-#endif
-#ifdef VPVL2_GL2_RENDERER_H_
-        if (!m_renderer->createShaderPrograms())
-            exit(-1);
-#endif
         if (!loadScene())
             qFatal("Unable to load scene");
 
@@ -536,7 +530,8 @@ protected:
         m_prevElapsed = elapsed;
         if (diff < 0)
             diff = elapsed;
-        m_renderer->update();
+        foreach (IRenderEngine *engine, m_models)
+            engine->update();
         updateGL();
     }
     void mousePressEvent(QMouseEvent *event) {
@@ -556,23 +551,32 @@ protected:
         }
     }
     void keyPressEvent(QKeyEvent *event) {
-        if (m_motion && event->modifiers() & Qt::SHIFT) {
+        if (!m_motions.isEmpty() && event->modifiers() & Qt::SHIFT) {
             switch (event->key()) {
             case Qt::Key_Left:
                 m_currentFrameIndex -= 1.0f;
                 btSetMax(m_currentFrameIndex, 0.0f);
-                m_motion->seek(m_currentFrameIndex);
+                foreach (IMotion *motion, m_motions)
+                    motion->seek(m_currentFrameIndex);
                 break;
             case Qt::Key_Right:
                 m_currentFrameIndex += 1.0;
-                btSetMin(m_currentFrameIndex, m_motion->maxFrameIndex());
-                m_motion->seek(m_currentFrameIndex);
+                foreach (IMotion *motion, m_motions) {
+                    btSetMin(m_currentFrameIndex, motion->maxFrameIndex());
+                    motion->seek(m_currentFrameIndex);
+                }
                 break;
             }
             qDebug() << m_currentFrameIndex;
-            if (m_motion->isReachedTo(m_motion->maxFrameIndex()))
-                m_motion->reset();
-            m_model->performUpdate();
+            foreach (IMotion *motion, m_motions) {
+                if (motion->isReachedTo(motion->maxFrameIndex()))
+                    motion->reset();
+            }
+            QMapIterator<IModel *, IRenderEngine *> it(m_models);
+            while (it.hasNext()) {
+                it.next();
+                it.key()->performUpdate();
+            }
             const int kFPS = 30;
             const Scalar &sec = 1.0 / kFPS;
             m_world->stepSimulation(sec, 1, 1.0 / kFPS);
@@ -604,9 +608,11 @@ protected:
         updateModelViewMatrix();
         updateProjectionMatrix();
         updateModelViewProjectionMatrix();
-        m_renderer->renderModel();
-        m_renderer->renderEdge();
-        m_renderer->renderShadow();
+        foreach (IRenderEngine *engine, m_models) {
+            engine->renderModel();
+            engine->renderEdge();
+            engine->renderShadow();
+        }
     }
 
 private:
@@ -638,28 +644,44 @@ private:
         m_scene->setModelViewProjectionMatrix(matrixf);
     }
     bool loadScene() {
+#ifdef VPVL2_LINK_ASSIMP
+        Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
+        Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
+        addModel(kStageName, kStageDir);
+        //loadAsset(kStageDir, kStageName);
+        //loadAsset(kStageDir, kStage2Name);
+#endif
+        addMotion(kMotion, addModel(kModelName, kModelDir));
+        /*
+        if (!internal::slurpFile(kCamera, bytes) ||
+                !m_camera.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
+            m_delegate.log(Renderer::kLogWarning, "Failed parsing the camera motion, skipped...");
+        else
+            scene->setCameraMotion(&m_camera);
+            */
+
+        return true;
+    }
+    IModel *addModel(const std::string &file, const std::string &dir) {
         QByteArray bytes;
-        if (!UISlurpFile(UIConcatPath(kModelDir, kModelName), bytes)) {
+        if (!UISlurpFile(UIConcatPath(dir, file), bytes)) {
             qWarning("Failed loading the model");
             return false;
         }
+        return addModel(bytes, dir);
+    }
+    IModel *addModel(const QByteArray &bytes, const std::string &dir) {
         bool ok = true;
-        m_model = m_scene->createModel(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), ok);
+        IModel *model = m_scene->createModel(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), ok);
         if (!ok) {
-            qWarning("Failed parsing the model: %d", m_model->error());
-            return false;
+            qWarning("Failed parsing the model: %d", model->error());
+            return 0;
         }
-        m_renderer = m_scene->createRenderEngine(&m_delegate, m_model);
-        m_renderer->upload(kModelDir);
-        m_model->joinWorld(m_world);
-        //m_model->setEdgeOffset(0.5f);
-#ifdef VPVL_LINK_ASSIMP
-        Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
-        Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
-        loadAsset(kStageDir, kStageName);
-        loadAsset(kStageDir, kStage2Name);
-#endif
-
+        //model->setEdgeOffset(0.5f);
+        model->joinWorld(m_world);
+        IRenderEngine *engine = m_scene->createRenderEngine(&m_delegate, model);
+        engine->upload(dir);
+        m_models.insert(model, engine);
 #if 0
         pmx::Model *model = static_cast<pmx::Model*>(m_model);
         for (int i = 0; i < model->materials().count(); i++)
@@ -675,29 +697,21 @@ private:
             qDebug("joint%d: %s", i, m_delegate.toUnicode(m_model->joints()[i]->name()).c_str());
             */
 #endif
-
-#if 0
-        if (UISlurpFile(kMotion, bytes)) {
-            m_motion = new vmd::Motion(m_model, m_encoding);
-            qDebug() << "Loaded motion:" << m_motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
-            qDebug() << "maxFrameIndex:" << m_motion->maxFrameIndex();
-            m_motion->seek(0.0);
-            m_model->performUpdate();
+        return model;
+    }
+    void addMotion(const std::string &path, IModel *model) {
+        QByteArray bytes;
+        if (model && UISlurpFile(path, bytes)) {
+            IMotion *motion = new vmd::Motion(model, m_encoding);
+            qDebug() << "Loaded motion:" << motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
+            qDebug() << "maxFrameIndex:" << motion->maxFrameIndex();
+            motion->seek(0.0);
+            model->performUpdate();
+            m_motions.append(motion);
         }
         else {
             qWarning("Failed parsing the model motion, skipped...");
         }
-#endif
-
-        /*
-        if (!internal::slurpFile(kCamera, bytes) ||
-                !m_camera.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
-            m_delegate.log(Renderer::kLogWarning, "Failed parsing the camera motion, skipped...");
-        else
-            scene->setCameraMotion(&m_camera);
-            */
-
-        return true;
     }
 
     QElapsedTimer m_timer;
@@ -711,18 +725,17 @@ private:
     qreal m_fovy;
     qreal m_distance;
     btDiscreteDynamicsWorld *m_world;
+    Delegate m_delegate;
     Scene *m_scene;
     IEncoding *m_encoding;
-    IModel *m_model;
-    IMotion *m_motion;
-#ifndef VPVL_NO_BULLET
+    QMap<IModel *, IRenderEngine *> m_models;
+    QList<IMotion *> m_motions;
+#ifndef VPVL2_NO_BULLET
     btDefaultCollisionConfiguration m_config;
     btCollisionDispatcher m_dispatcher;
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
-#endif /* VPVL_NO_BULLET */
-    Delegate m_delegate;
-    IRenderEngine *m_renderer;
+#endif /* VPVL2_NO_BULLET */
     //VMDMotion m_camera;
     float m_prevElapsed;
     float m_currentFrameIndex;
