@@ -193,6 +193,7 @@ if(VPVL2_OPENGL_RENDERER)
   list(APPEND vpvl2_public_headers
       include/vpvl2/gl2/AssetRenderEngine.h
       include/vpvl2/gl2/PMDRenderEngine.h
+      include/vpvl2/gl2/PMXRenderEngine.h
   )
   list(APPEND vpvl2_internal_headers include/vpvl2/internal/gl2.h)
   if(VPVL2_ENABLE_NVIDIA_CG)
@@ -210,6 +211,7 @@ if(VPVL2_ENABLE_PROJECT)
 endif()
 
 # libvpvl sources
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/asset vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd vpvl2_sources)
 
 add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
@@ -221,6 +223,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # find libvpvl
 link_vpvl(vpvl2)
 list(APPEND vpvl2_public_headers
+  include/vpvl2/asset/Model.h
   include/vpvl2/pmd/Bone.h
   include/vpvl2/pmd/Model.h
   include/vpvl2/pmd/Morph.h

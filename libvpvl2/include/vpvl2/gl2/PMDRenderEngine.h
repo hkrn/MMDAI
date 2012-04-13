@@ -55,16 +55,11 @@
 #else
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #include <OpenGL/CGLCurrent.h>
 #else
 #include <GL/gl.h>
-#include <GL/glu.h>
 #endif /* __APPLE__ */
 #endif /* VPVL_BUILD_IOS */
-
-class btDynamicsWorld;
-class btIDebugDraw;
 
 namespace vpvl2
 {
@@ -78,16 +73,6 @@ class Model;
 
 namespace gl2
 {
-
-/**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * Bone class represents a bone of a Polygon Model Data object.
- */
 
 class VPVL2_API PMDRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT

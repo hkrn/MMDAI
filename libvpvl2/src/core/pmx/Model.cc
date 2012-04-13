@@ -92,7 +92,6 @@ Model::Model(IEncoding *encoding)
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
-      m_userData(0),
       m_visible(false)
 {
     internal::zerofill(&m_info, sizeof(m_info));
@@ -497,11 +496,6 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.encoding = m_encoding;
 
     return rest == 0;
-}
-
-void Model::setUserData(UserData *value)
-{
-    m_userData = value;
 }
 
 void Model::setVisible(bool value)

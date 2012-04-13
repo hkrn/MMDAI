@@ -57,6 +57,7 @@ public:
     Model(IEncoding *encoding);
     ~Model();
 
+    Type type() const { return kPMD; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const IString *comment() const { return m_comment; }

@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,74 +36,108 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IMODEL_H_
-#define VPVL2_IMODEL_H_
+#ifndef VPVL2_GL2_ASSETRENDERENGINE_H_
+#define VPVL2_GL2_ASSETRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
+#ifdef VPVL2_LINK_ASSIMP
 
-class btDiscreteDynamicsWorld;
+#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderEngine.h"
+
+#include <string>
+
+#ifdef VPVL2_LINK_QT
+#include <QtOpenGL/QtOpenGL>
+#endif /* VPVL_LINK_QT */
+
+#ifdef VPVL2_BUILD_IOS
+#include <OpenGLES/ES2/gl.h>
+#else
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <OpenGL/CGLCurrent.h>
+#else
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif /* __APPLE__ */
+#endif /* VPVL_BUILD_IOS */
+
+#include <assimp.h>
+#include <aiScene.h>
+
+class btDynamicsWorld;
+class btIDebugDraw;
 
 namespace vpvl2
 {
 
-class IBone;
-class IMorph;
+namespace asset
+{
+class Model;
+}
 
-class VPVL2_API IModel
+class Scene;
+
+namespace gl2
+{
+
+/**
+ * @file
+ * @author Nagoya Institute of Technology Department of Computer Science
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Bone class represents a bone of a Polygon Model Data object.
+ */
+
+class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
+        #ifdef VPVL2_LINK_QT
+        , protected QGLFunctions
+        #endif
 {
 public:
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
-    };
-    enum Type {
-        kAsset,
-        kPMD,
-        kPMX
-    };
+    class Program;
+    class PrivateContext;
 
-    virtual ~IModel() {}
-    virtual Type type() const = 0;
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
-    virtual const IString *comment() const = 0;
-    virtual const IString *englishComment() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual Error error() const = 0;
-    virtual bool load(const uint8_t *data, size_t size) = 0;
-    virtual void save(uint8_t *data) const = 0;
-    virtual void resetVertices() = 0;
-    virtual void performUpdate() = 0;
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual IBone *findBone(const IString *value) const = 0;
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, asset::Model *model);
+    virtual ~AssetRenderEngine();
+
+    bool upload(const std::string &dir);
+    void deleteModel();
+    void update();
+    void renderModel();
+    void renderEdge();
+    void renderShadow();
+    void renderZPlot();
+
+    bool isAcceleratorAvailable() const;
+    bool initializeAccelerator();
+
+protected:
+    void log0(IRenderDelegate::LogLevel level, const char *format ...);
+
+    IRenderDelegate *m_delegate;
+
+private:
+    void uploadRecurse(const aiScene *scene, const aiNode *node);
+    void deleteRecurse(const aiScene *scene, const aiNode *node);
+    void renderRecurse(const aiScene *scene, const aiNode *node);
+    void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
+    void setAssetMaterial(const aiMaterial *material, Program *program);
+
+    const Scene *m_scene;
+    asset::Model *m_model;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };
 
+} /* namespace gl2 */
 } /* namespace vpvl2 */
 
+#endif
 #endif
 

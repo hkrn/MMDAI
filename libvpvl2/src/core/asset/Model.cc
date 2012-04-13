@@ -34,74 +34,36 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IMODEL_H_
-#define VPVL2_IMODEL_H_
-
-#include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
-
-class btDiscreteDynamicsWorld;
+#include "vpvl2/asset/Model.h"
 
 namespace vpvl2
 {
-
-class IBone;
-class IMorph;
-
-class VPVL2_API IModel
+namespace asset
 {
-public:
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
-    };
-    enum Type {
-        kAsset,
-        kPMD,
-        kPMX
-    };
 
-    virtual ~IModel() {}
-    virtual Type type() const = 0;
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
-    virtual const IString *comment() const = 0;
-    virtual const IString *englishComment() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual Error error() const = 0;
-    virtual bool load(const uint8_t *data, size_t size) = 0;
-    virtual void save(uint8_t *data) const = 0;
-    virtual void resetVertices() = 0;
-    virtual void performUpdate() = 0;
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual IBone *findBone(const IString *value) const = 0;
-    virtual IMorph *findMorph(const IString *value) const = 0;
-};
+Model::Model(IEncoding *encoding)
+    : m_encoding(encoding),
+      m_name(0)
+{
+}
 
+Model::~Model()
+{
+    delete m_name;
+    m_name = 0;
+    m_encoding = 0;
+}
+
+bool Model::load(const uint8_t *data, size_t size)
+{
+    bool ret = m_asset.load(data, size);
+    if (ret) {
+        const uint8_t *name = reinterpret_cast<const uint8_t *>(m_asset.name());
+        size_t length = strlen(reinterpret_cast<const char *>(name));
+        m_name = m_encoding->toString(name, IString::kShiftJIS, length);
+    }
+    return ret;
+}
+
+} /* namespace asset */
 } /* namespace vpvl2 */
-
-#endif
-

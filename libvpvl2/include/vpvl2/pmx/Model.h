@@ -69,10 +69,6 @@ class Vertex;
 class VPVL2_API Model : public IModel
 {
 public:
-    class UserData {
-    public:
-        virtual ~UserData() {}
-    };
     struct SkinnedVertex;
 
     enum StrideType {
@@ -155,12 +151,12 @@ public:
     IMorph *findMorph(const IString *value) const;
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
-    void setUserData(UserData *value);
     void setVisible(bool value);
 
     const void *vertexPtr() const;
     const void *indicesPtr() const;
 
+    Type type() const { return kPMX; }
     const Array<Vertex *> &vertices() const { return m_vertices; }
     const Array<int> &indices() const { return m_indices; }
     const Array<IString *> &textures() const { return m_textures; }
@@ -173,7 +169,6 @@ public:
     const IString *englishName() const { return m_englishName; }
     const IString *comment() const { return m_comment; }
     const IString *englishComment() const { return m_englishComment; }
-    UserData *userData() const { return m_userData; }
     Error error() const { return m_info.error; }
     bool isVisible() const { return m_visible; }
 
@@ -216,7 +211,6 @@ private:
     IString *m_englishName;
     IString *m_comment;
     IString *m_englishComment;
-    UserData *m_userData;
     DataInfo m_info;
     bool m_visible;
 

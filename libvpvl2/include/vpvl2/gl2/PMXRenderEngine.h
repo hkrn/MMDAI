@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,74 +36,84 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IMODEL_H_
-#define VPVL2_IMODEL_H_
+#ifndef VPVL2_GL2_PMXRENDERENGINE_H_
+#define VPVL2_GL2_PMXRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
+#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderEngine.h"
 
-class btDiscreteDynamicsWorld;
+#include <string>
+
+#ifdef VPVL2_LINK_QT
+#include <QtOpenGL/QtOpenGL>
+#include <QtOpenGL/QGLFunctions>
+#endif /* VPVL_LINK_QT */
+
+#ifdef VPVL2_BUILD_IOS
+#include <OpenGLES/ES2/gl.h>
+#else
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#include <OpenGL/CGLCurrent.h>
+#else
+#include <GL/gl.h>
+#endif /* __APPLE__ */
+#endif /* VPVL_BUILD_IOS */
 
 namespace vpvl2
 {
 
-class IBone;
-class IMorph;
+class Scene;
 
-class VPVL2_API IModel
+namespace pmx
+{
+class Model;
+}
+
+namespace gl2
+{
+
+class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
+        #ifdef VPVL2_LINK_QT
+        , protected QGLFunctions
+        #endif
 {
 public:
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
-    };
-    enum Type {
-        kAsset,
-        kPMD,
-        kPMX
-    };
+    class PrivateContext;
 
-    virtual ~IModel() {}
-    virtual Type type() const = 0;
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
-    virtual const IString *comment() const = 0;
-    virtual const IString *englishComment() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual Error error() const = 0;
-    virtual bool load(const uint8_t *data, size_t size) = 0;
-    virtual void save(uint8_t *data) const = 0;
-    virtual void resetVertices() = 0;
-    virtual void performUpdate() = 0;
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual IBone *findBone(const IString *value) const = 0;
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    PMXRenderEngine(IRenderDelegate *delegate, const Scene *scene, pmx::Model *model);
+    virtual ~PMXRenderEngine();
+
+    bool upload(const std::string &dir);
+    void deleteModel();
+    void update();
+    void renderModel();
+    void renderEdge();
+    void renderShadow();
+    void renderZPlot();
+
+    //static bool isAcceleratorSupported();
+    bool isAcceleratorAvailable() const;
+    bool initializeAccelerator();
+
+protected:
+    void log0(IRenderDelegate::LogLevel level, const char *format ...);
+
+    IRenderDelegate *m_delegate;
+
+private:
+    class Accelerator;
+
+    const Scene *m_scene;
+    pmx::Model *m_model;
+    PrivateContext *m_context;
+    Accelerator *m_accelerator;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };
 
+} /* namespace gl2 */
 } /* namespace vpvl2 */
 
 #endif
-

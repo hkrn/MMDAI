@@ -34,74 +34,56 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IMODEL_H_
-#define VPVL2_IMODEL_H_
+#ifndef VPVL2_ASSET_MODEL_H_
+#define VPVL2_ASSET_MODEL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IBone.h"
+#include "vpvl2/IEncoding.h"
+#include "vpvl2/IModel.h"
+#include "vpvl2/IMorph.h"
 #include "vpvl2/IString.h"
+
+#include "vpvl/Asset.h"
 
 class btDiscreteDynamicsWorld;
 
 namespace vpvl2
 {
+namespace asset
+{
 
-class IBone;
-class IMorph;
-
-class VPVL2_API IModel
+class VPVL2_API Model : public IModel
 {
 public:
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidFlagSizeError,
-        kInvalidNameSizeError,
-        kInvalidEnglishNameSizeError,
-        kInvalidCommentSizeError,
-        kInvalidEnglishCommentSizeError,
-        kInvalidVerticesError,
-        kInvalidIndicesError,
-        kInvalidTextureSizeError,
-        kInvalidTextureError,
-        kInvalidMaterialsError,
-        kInvalidBonesError,
-        kInvalidMorphsError,
-        kInvalidLabelsError,
-        kInvalidRigidBodiesError,
-        kInvalidJointsError,
-        kMaxErrors
-    };
-    enum Type {
-        kAsset,
-        kPMD,
-        kPMX
-    };
+    Model(IEncoding *encoding);
+    ~Model();
 
-    virtual ~IModel() {}
-    virtual Type type() const = 0;
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
-    virtual const IString *comment() const = 0;
-    virtual const IString *englishComment() const = 0;
-    virtual bool isVisible() const = 0;
-    virtual Error error() const = 0;
-    virtual bool load(const uint8_t *data, size_t size) = 0;
-    virtual void save(uint8_t *data) const = 0;
-    virtual void resetVertices() = 0;
-    virtual void performUpdate() = 0;
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
-    virtual IBone *findBone(const IString *value) const = 0;
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    Type type() const { return kAsset; }
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_name; }
+    const IString *comment() const { return m_name; }
+    const IString *englishComment() const { return m_name; }
+    bool isVisible() const { return true; }
+    Error error() const { return kNoError; }
+    bool load(const uint8_t *data, size_t size);
+    void save(uint8_t * /* data */) const {}
+    void resetVertices() {}
+    void performUpdate() {}
+    void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
+    void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
+    IBone *findBone(const IString * /* value */) const { return 0; }
+    IMorph *findMorph(const IString * /* value */) const { return 0; }
+
+    vpvl::Asset *ptr() { return &m_asset; }
+
+private:
+    vpvl::Asset m_asset;
+    IEncoding *m_encoding;
+    IString *m_name;
 };
 
+} /* namespace asset */
 } /* namespace vpvl2 */
 
 #endif
-

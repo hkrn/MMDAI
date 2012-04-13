@@ -35,11 +35,13 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+
+#include "vpvl2/asset/Model.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
-
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMDRenderEngine.h"
+#include "vpvl2/gl2/PMXRenderEngine.h"
 
 namespace vpvl2
 {
@@ -47,8 +49,8 @@ namespace vpvl2
 struct Scene::PrivateContext {
     PrivateContext()
         : encoding(0),
-          lightColor(kZeroC),
-          lightPosition(kZeroV3)
+          lightColor(0.6, 0.6, 0.6, 1.0),
+          lightPosition(0.5, 1.0, 0.5)
     {
     }
     ~PrivateContext() {
@@ -84,10 +86,13 @@ IModel *Scene::createModel(const uint8_t *data, size_t size, bool &ok) const
 {
     IModel *model = 0;
     if (size >= 4 && memcmp(data, "PMX ", 4) == 0) {
-        model = new vpvl2::pmx::Model(m_context->encoding);
+        model = new pmx::Model(m_context->encoding);
     }
     else if (size >= 3 && memcmp(data, "Pmd", 3) == 0) {
-        model = new vpvl2::pmd::Model(m_context->encoding);
+        model = new pmd::Model(m_context->encoding);
+    }
+    else {
+        model = new asset::Model(m_context->encoding);
     }
     ok = model ? model->load(data, size) : false;
     return model;
@@ -101,7 +106,19 @@ void Scene::setModelViewProjectionMatrix(const float value[])
 IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model) const
 {
     IRenderEngine *engine = 0;
-    engine = new gl2::PMDRenderEngine(delegate, this, static_cast<pmd::Model *>(model));
+    switch (model->type()) {
+    case IModel::kAsset:
+        engine = new gl2::AssetRenderEngine(delegate, this, static_cast<asset::Model *>(model));
+        break;
+    case IModel::kPMD:
+        engine = new gl2::PMDRenderEngine(delegate, this, static_cast<pmd::Model *>(model));
+        break;
+    case IModel::kPMX:
+        engine = new gl2::PMXRenderEngine(delegate, this, static_cast<pmx::Model *>(model));
+        break;
+    default:
+        break;
+    }
     return engine;
 }
 

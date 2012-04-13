@@ -40,6 +40,7 @@
 #include <string>
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IString.h"
 
 namespace vpvl2
 {
@@ -68,8 +69,11 @@ public:
     };
 
     virtual ~IRenderDelegate() {}
-    virtual bool uploadTexture(const std::string &path, void *texture, bool isToon) = 0;
+    virtual bool uploadTexture(const std::string &name, const std::string &dir, void *texture, bool isToon) = 0;
+    virtual bool uploadTexture(const IString *name, const std::string &dir, void *texture, bool isToon) = 0;
     virtual bool uploadToonTexture(const std::string &name, const std::string &dir, void *texture) = 0;
+    virtual bool uploadToonTexture(const IString *name, const std::string &dir, void *texture) = 0;
+    virtual bool uploadToonTexture(int index, void *texture) = 0;
     virtual void log(LogLevel level, const char *format, va_list ap) = 0;
     virtual const std::string loadShader(ShaderType type) = 0;
     virtual const std::string loadKernel(KernelType type) = 0;

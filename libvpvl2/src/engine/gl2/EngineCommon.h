@@ -100,7 +100,7 @@ public:
         m_positionAttributeLocation = 0;
     }
 
-#ifdef VPVL_LINK_QT
+#ifdef VPVL2_LINK_QT
     virtual void initializeContext(const QGLContext *context) {
         initializeGLFunctions(context);
     }
@@ -389,16 +389,6 @@ class BaseAccelerator {
 public:
     BaseAccelerator(IRenderDelegate * /* delegate */) {}
     ~BaseAccelerator() {}
-
-    bool isAvailable() const {
-        return false;
-    }
-    bool initializeContext() {
-        return true;
-    }
-    bool createKernelPrograms() {
-        return true;
-    }
 };
 
 #endif
