@@ -270,6 +270,9 @@ void AssetRenderEngine::renderZPlot()
 
 bool AssetRenderEngine::upload(const std::string &dir)
 {
+#ifdef VPVL2_LINK_QT
+    initializeGLFunctions(QGLContext::currentContext());
+#endif /* VPVL2_LINK_QT */
     vpvl::Asset *asset = m_model->ptr();
     const aiScene *scene = asset->getScene();
     const unsigned int nmaterials = scene->mNumMaterials;

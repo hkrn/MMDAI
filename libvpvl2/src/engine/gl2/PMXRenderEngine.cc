@@ -857,6 +857,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate, const Scene *scene, 
       m_context(0),
       m_accelerator(0)
 {
+    m_context = new PrivateContext();
 }
 
 PMXRenderEngine::~PMXRenderEngine()
@@ -878,6 +879,7 @@ bool PMXRenderEngine::upload(const std::string &dir)
     m_context->zplotProgram = new ZPlotProgram(m_delegate);
 #ifdef VPVL2_LINK_QT
     const QGLContext *context = QGLContext::currentContext();
+    initializeGLFunctions(context);
     m_context->initializeContext(context);
     m_context->edgeProgram->initializeContext(context);
     m_context->modelProgram->initializeContext(context);
@@ -1124,6 +1126,10 @@ void PMXRenderEngine::renderEdge()
     glCullFace(GL_BACK);
     m_edgeProgram->unbind();
 #endif
+}
+
+void PMXRenderEngine::renderZPlot()
+{
 }
 
 bool PMXRenderEngine::isAcceleratorAvailable() const

@@ -1,5 +1,4 @@
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
+uniform mat4 modelViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialDiffuse;
 uniform vec3 lightColor;
@@ -39,10 +38,8 @@ vec2 makeSphereMap(vec3 position, vec3 normal) {
 }
 
 void main() {
-    vec4 position = modelViewMatrix * inPosition;
-    vec3 view = normalize(position.xyz);
+    vec3 view = normalize(normalMatrix * inPosition.xyz);
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec4 outPosition = projectionMatrix * position;
     outColor.rgb = max(min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3), kZero3);
     outColor.a = max(min(materialDiffuse.a, kOne), kZero);
     outTexCoord = vec4(inTexCoord, hasSphereTexture ? makeSphereMap(view, normal) : inTexCoord);
@@ -52,6 +49,6 @@ void main() {
     outUVA2 = inUVA2;
     outUVA3 = inUVA3;
     outUVA4 = inUVA4;
-    gl_Position = outPosition;
+    gl_Position = modelViewProjectionMatrix * inPosition;
 }
 

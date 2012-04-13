@@ -82,6 +82,12 @@ Scene::Scene(IEncoding *encoding)
     m_context->encoding = encoding;
 }
 
+Scene::~Scene()
+{
+    delete m_context;
+    m_context = 0;
+}
+
 IModel *Scene::createModel(const uint8_t *data, size_t size, bool &ok) const
 {
     IModel *model = 0;
@@ -96,11 +102,6 @@ IModel *Scene::createModel(const uint8_t *data, size_t size, bool &ok) const
     }
     ok = model ? model->load(data, size) : false;
     return model;
-}
-
-void Scene::setModelViewProjectionMatrix(const float value[])
-{
-    memcpy(m_context->modelViewProjectionMatrix, value, sizeof(m_context->modelViewProjectionMatrix));
 }
 
 IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model) const
@@ -122,9 +123,23 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
     return engine;
 }
 
+void Scene::setModelViewProjectionMatrix(const float value[])
+{
+    memcpy(m_context->modelViewProjectionMatrix, value, sizeof(m_context->modelViewProjectionMatrix));
+}
+
 void Scene::setModelViewMatrix(const float value[16])
 {
     memcpy(m_context->modelViewMatrix, value, sizeof(m_context->modelViewMatrix));
+    m_context->normalMatrix[0] = m_context->modelViewMatrix[0];
+    m_context->normalMatrix[1] = m_context->modelViewMatrix[1];
+    m_context->normalMatrix[2] = m_context->modelViewMatrix[2];
+    m_context->normalMatrix[3] = m_context->modelViewMatrix[4];
+    m_context->normalMatrix[4] = m_context->modelViewMatrix[5];
+    m_context->normalMatrix[5] = m_context->modelViewMatrix[6];
+    m_context->normalMatrix[6] = m_context->modelViewMatrix[8];
+    m_context->normalMatrix[7] = m_context->modelViewMatrix[9];
+    m_context->normalMatrix[8] = m_context->modelViewMatrix[10];
 }
 
 void Scene::setProjectionMatrix(const float value[16])
@@ -135,11 +150,6 @@ void Scene::setProjectionMatrix(const float value[16])
 void Scene::setLightViewProjectionMatrix(const float value[16])
 {
     memcpy(m_context->lightViewProjectionMatrix, value, sizeof(m_context->lightViewProjectionMatrix));
-}
-
-void Scene::setNormalMatrix(const float value[9])
-{
-    memcpy(m_context->normalMatrix, value, sizeof(m_context->normalMatrix));
 }
 
 void Scene::setLightColor(const Color &value)

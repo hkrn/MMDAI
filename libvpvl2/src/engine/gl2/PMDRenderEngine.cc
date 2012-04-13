@@ -815,6 +815,7 @@ bool PMDRenderEngine::upload(const std::string &dir)
     m_context->zplotProgram = new ZPlotProgram(m_delegate);
 #ifdef VPVL2_LINK_QT
     const QGLContext *context = QGLContext::currentContext();
+    initializeGLFunctions(context);
     m_context->initializeContext(context);
     m_context->edgeProgram->initializeContext(context);
     m_context->modelProgram->initializeContext(context);

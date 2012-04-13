@@ -53,6 +53,8 @@ public:
     virtual bool upload(const std::string &dir) = 0;
     virtual void renderModel() = 0;
     virtual void renderEdge() = 0;
+    virtual void renderShadow() = 0;
+    virtual void renderZPlot() = 0;
     virtual void update() = 0;
 };
 

@@ -38,18 +38,6 @@
 
 #include <vpvl2/vpvl2.h>
 
-#if defined(VPVL2_ENABLE_NVIDIA_CG)
-#include <vpvl/cg/Renderer.h>
-using namespace vpvl2::cg;
-#elif defined(VPVL2_ENABLE_GLSL)
-#include <vpvl2/gl2/Renderer.h>
-using namespace vpvl2;
-using namespace vpvl2::gl2;
-#else
-#include <vpvl2/gl2/Renderer.h>
-using namespace vpvl::gl;
-#endif
-
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 #include <QtOpenGL/QtOpenGL>
@@ -69,6 +57,20 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #else
 BT_DECLARE_HANDLE(aiScene);
 #endif
+
+/* internal headers */
+#include "vpvl2/pmx/Bone.h"
+#include "vpvl2/pmx/Joint.h"
+#include "vpvl2/pmx/Label.h"
+#include "vpvl2/pmx/Material.h"
+#include "vpvl2/pmx/Model.h"
+#include "vpvl2/pmx/Morph.h"
+#include "vpvl2/pmx/RigidBody.h"
+#include "vpvl2/pmx/Vertex.h"
+
+#include "vpvl2/vmd/Motion.h"
+
+using namespace vpvl2;
 
 namespace
 {
@@ -90,14 +92,11 @@ namespace
     typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 }
 
-namespace internal
-{
-
-static const std::string concatPath(const std::string &dir, const std::string &name) {
+static const std::string UIConcatPath(const std::string &dir, const std::string &name) {
     return std::string(QDir(dir.c_str()).absoluteFilePath(name.c_str()).toLocal8Bit());
 }
 
-static bool slurpFile(const std::string &path, QByteArray &bytes) {
+static bool UISlurpFile(const std::string &path, QByteArray &bytes) {
     QFile file(path.c_str());
     if (file.open(QFile::ReadOnly)) {
         bytes = file.readAll();
@@ -198,7 +197,6 @@ public:
     void disposeByteArray(uint8_t *value) const {
         delete[] value;
     }
-    pmx::Model *m_model;
 
 private:
     QTextCodec *m_sjis;
@@ -206,7 +204,7 @@ private:
     QTextCodec *m_utf16;
 };
 
-class Delegate : public Renderer::IDelegate
+class Delegate : public IRenderDelegate
 {
 public:
     Delegate(QGLWidget *widget)
@@ -218,14 +216,38 @@ public:
     {
     }
 
-    bool uploadTexture(const std::string &path, const std::string &dir, GLuint &textureID, bool isToon) {
-        const QString &pathString = QString::fromLocal8Bit((dir + "/" + path).c_str());
+    bool uploadTexture(const std::string &name, const std::string &dir, void *texture, bool isToon) {
+        const QString &pathString = QString::fromLocal8Bit((dir + "/" + name).c_str());
+        return uploadTextureInternal(pathString, texture, isToon);
+    }
+    bool uploadTexture(const IString *name, const std::string &dir, void *texture, bool isToon) {
+        const QString &pathString = QString::fromLocal8Bit(dir.c_str()) + "/" + static_cast<const String *>(name)->value();
+        return uploadTextureInternal(pathString, texture, isToon);
+    }
+    bool uploadToonTexture(const std::string &name, const std::string &dir, void *texture) {
+        const QString &pathString = QString::fromLocal8Bit((dir + "/" + name).c_str());
+        return uploadTextureInternal(pathString, texture, true);
+    }
+    bool uploadToonTexture(const IString *name, const std::string &dir, void *texture) {
+        const QString &pathString = QString::fromLocal8Bit(dir.c_str()) + "/" + static_cast<const String *>(name)->value();
+        return uploadTextureInternal(pathString, texture, true);
+    }
+    bool uploadToonTexture(int index, void *texture) {
+        QString format;
+        const QString &pathString = QString::fromStdString(kSystemTexturesDir) + "/" + format.sprintf("toon%02d.bmp", index + 1);
+        return uploadTextureInternal(pathString, texture, true);
+    }
+
+    bool uploadTextureInternal(const QString &pathString, void *texture, bool isToon) {
         const QFileInfo info(pathString);
-        if (info.isDir() || !info.exists())
+        if (info.isDir() || !info.exists()) {
+            qWarning("Cannot loading \"%s\"", qPrintable(pathString));
             return false;
+        }
         const QImage &image = QImage(pathString).rgbSwapped();
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-        textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+        GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+        *static_cast<GLuint *>(texture) = textureID;
         if (!isToon) {
             glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -234,95 +256,65 @@ public:
         return textureID != 0;
     }
 
-    bool uploadToonTexture(int sharedToonTextureIndex, GLuint &textureID) {
-        switch (sharedToonTextureIndex) {
-        case 0:
-            return uploadTexture("toon01.bmp", kSystemTexturesDir, textureID, true);
-        case 1:
-            return uploadTexture("toon02.bmp", kSystemTexturesDir, textureID, true);
-        case 2:
-            return uploadTexture("toon03.bmp", kSystemTexturesDir, textureID, true);
-        case 3:
-            return uploadTexture("toon04.bmp", kSystemTexturesDir, textureID, true);
-        case 4:
-            return uploadTexture("toon05.bmp", kSystemTexturesDir, textureID, true);
-        case 5:
-            return uploadTexture("toon06.bmp", kSystemTexturesDir, textureID, true);
-        case 6:
-            return uploadTexture("toon07.bmp", kSystemTexturesDir, textureID, true);
-        case 7:
-            return uploadTexture("toon08.bmp", kSystemTexturesDir, textureID, true);
-        case 8:
-            return uploadTexture("toon09.bmp", kSystemTexturesDir, textureID, true);
-        case 9:
-            return uploadTexture("toon10.bmp", kSystemTexturesDir, textureID, true);
-        default:
-            return false;
-        }
-    }
-
-    void log(Renderer::LogLevel /* level */, const char *format, ...) {
-        va_list ap;
-        va_start(ap, format);
+    void log(LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
-        va_end(ap);
     }
-    const std::string loadKernel(Renderer::KernelType type) {
+    const std::string loadKernel(KernelType type) {
         std::string file;
         switch (type) {
-        case Renderer::kModelSkinningKernel:
+        case kModelSkinningKernel:
             file = "skinning.cl";
             break;
         }
         QByteArray bytes;
         std::string path = kKernelProgramsDir + "/" + file;
-        if (slurpFile(path, bytes)) {
-            log(Renderer::kLogInfo, "Loaded a kernel: %s", path.c_str());
+        if (UISlurpFile(path, bytes)) {
+            qDebug("Loaded a kernel: %s", path.c_str());
             return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
         }
         else {
             return std::string();
         }
     }
-    const std::string loadShader(Renderer::ShaderType type) {
+    const std::string loadShader(ShaderType type) {
         std::string file;
         switch (type) {
-        case Renderer::kAssetVertexShader:
+        case kAssetVertexShader:
             file = "asset.vsh";
             break;
-        case Renderer::kAssetFragmentShader:
+        case kAssetFragmentShader:
             file = "asset.fsh";
             break;
-        case Renderer::kEdgeVertexShader:
+        case kEdgeVertexShader:
             file = m_hardwareSkinning ? "edge_hws.vsh" : "edge.vsh";
             break;
-        case Renderer::kEdgeFragmentShader:
+        case kEdgeFragmentShader:
             file = "edge.fsh";
             break;
-        case Renderer::kModelVertexShader:
+        case kModelVertexShader:
             file = m_hardwareSkinning ? "model_hws.vsh" : "model.vsh";
             break;
-        case Renderer::kModelFragmentShader:
+        case kModelFragmentShader:
             file = "model.fsh";
             break;
-        case Renderer::kShadowVertexShader:
+        case kShadowVertexShader:
             file = "shadow.vsh";
             break;
-        case Renderer::kShadowFragmentShader:
+        case kShadowFragmentShader:
             file = "shadow.fsh";
             break;
-        case Renderer::kZPlotVertexShader:
+        case kZPlotVertexShader:
             file = "zplot.vsh";
             break;
-        case Renderer::kZPlotFragmentShader:
+        case kZPlotFragmentShader:
             file = "zplot.fsh";
             break;
         }
         QByteArray bytes;
         std::string path = kShaderProgramsDir + "/" + file;
-        if (slurpFile(path, bytes)) {
-            log(Renderer::kLogInfo, "Loaded a shader: %s", path.c_str());
+        if (UISlurpFile(path, bytes)) {
+            qDebug("Loaded a shader: %s", path.c_str());
             return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
         }
         else {
@@ -352,8 +344,6 @@ private:
     bool m_hardwareSkinning;
 };
 
-}
-
 QDebug operator<<(QDebug debug, const Vector3 &v)
 {
     debug.nospace() << "(x=" << v.x() << ", y=" << v.y() << ", z=" << v.z() << ")";
@@ -369,7 +359,7 @@ QDebug operator<<(QDebug debug, const Color &v)
 QDebug operator<<(QDebug debug, const IString *str)
 {
     if (str) {
-        debug.nospace() << reinterpret_cast<const internal::String *>(str)->value();
+        debug.nospace() << reinterpret_cast<const String *>(str)->value();
     }
     else {
         debug.nospace() << "\"\"";
@@ -469,6 +459,7 @@ public:
           m_fovy(30.0),
           m_distance(50.0),
           m_world(0),
+          m_scene(0),
           m_encoding(0),
           m_model(0),
           m_motion(0),
@@ -481,10 +472,9 @@ public:
           m_prevElapsed(0),
           m_currentFrameIndex(0)
     {
-        internal::Encoding *encoding = new internal::Encoding();
+        Encoding *encoding = new Encoding();
+        m_scene = new Scene(encoding);
         m_encoding = encoding;
-        m_model = new pmx::Model(encoding);
-        m_renderer = new Renderer(&m_delegate);
 #ifndef VPVL_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
         m_world->setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
@@ -497,6 +487,7 @@ public:
 #endif
         delete m_renderer;
         delete m_world;
+        delete m_scene;
         delete m_encoding;
         delete m_motion;
     }
@@ -527,7 +518,6 @@ protected:
         if (!m_renderer->createShaderPrograms())
             exit(-1);
 #endif
-        m_renderer->initializeSurface();
         if (!loadScene())
             qFatal("Unable to load scene");
 
@@ -541,7 +531,7 @@ protected:
         m_prevElapsed = elapsed;
         if (diff < 0)
             diff = elapsed;
-        m_renderer->updateAllModel();
+        m_renderer->update();
         updateGL();
     }
     void mousePressEvent(QMouseEvent *event) {
@@ -600,51 +590,63 @@ protected:
         }
     }
     void resizeGL(int w, int h) {
-        m_renderer->resize(w, h);
+        glViewport(0, 0, w, h);
     }
     void paintGL() {
+        glEnable(GL_DEPTH_TEST);
         glClearColor(0, 0, 1, 1);
-        m_renderer->clear();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         updateModelViewMatrix();
         updateProjectionMatrix();
-        m_renderer->renderProjectiveShadow();
-        m_renderer->renderAllModels();
+        updateModelViewProjectionMatrix();
+        m_renderer->renderModel();
+        m_renderer->renderEdge();
+        m_renderer->renderShadow();
     }
 
 private:
     void updateModelViewMatrix() {
         float matrixf[16];
-        m_modelviewMatrix.setIdentity();
-        m_modelviewMatrix.setRotation(m_rotation);
-        Vector3 position = m_modelviewMatrix.getBasis() * -m_position;
+        m_modelViewTransform.setIdentity();
+        m_modelViewTransform.setRotation(m_rotation);
+        Vector3 position = m_modelViewTransform.getBasis() * -m_position;
         position.setZ(position.z() - m_distance);
-        m_modelviewMatrix.setOrigin(position);
-        m_modelviewMatrix.getOpenGLMatrix(matrixf);
-        m_renderer->setModelViewMatrix(matrixf);
+        m_modelViewTransform.setOrigin(position);
+        m_modelViewTransform.getOpenGLMatrix(matrixf);
+        m_scene->setModelViewMatrix(matrixf);
+        for (int i = 0; i < 16; i++)
+            m_modelViewMatrix.data()[i] = matrixf[i];
     }
     void updateProjectionMatrix() {
-        qreal matrixd[16];
         float matrixf[16];
         m_projectionMatrix.setToIdentity();
         m_projectionMatrix.perspective(m_fovy, kWidth / float(kHeight), kCameraNear, kCameraFar);
-        m_projectionMatrix.copyDataTo(matrixd);
         for (int i = 0; i < 16; i++)
-            matrixf[i] = matrixd[i];
-        m_renderer->setProjectionMatrix(matrixf);
+            matrixf[i] = m_projectionMatrix.constData()[i];
+        m_scene->setProjectionMatrix(matrixf);
+    }
+    void updateModelViewProjectionMatrix() {
+        float matrixf[16];
+        const QMatrix4x4 &result = m_projectionMatrix * m_modelViewMatrix;
+        for (int i = 0; i < 16; i++)
+            matrixf[i] = result.constData()[i];
+        m_scene->setModelViewProjectionMatrix(matrixf);
     }
     bool loadScene() {
         QByteArray bytes;
-        if (!internal::slurpFile(internal::concatPath(kModelDir, kModelName), bytes)) {
-            m_delegate.log(Renderer::kLogWarning, "Failed loading the model");
+        if (!UISlurpFile(UIConcatPath(kModelDir, kModelName), bytes)) {
+            qWarning("Failed loading the model");
             return false;
         }
-        if (!m_model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
-            m_delegate.log(Renderer::kLogWarning, "Failed parsing the model: %d", m_model->error());
+        bool ok = true;
+        m_model = m_scene->createModel(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), ok);
+        if (!ok) {
+            qWarning("Failed parsing the model: %d", m_model->error());
             return false;
         }
-
-        //m_renderer->uploadModel(m_model, kModelDir);
-        m_renderer->setWorld(m_world);
+        m_renderer = m_scene->createRenderEngine(&m_delegate, m_model);
+        m_renderer->upload(kModelDir);
+        m_model->joinWorld(m_world);
         //m_model->setEdgeOffset(0.5f);
 #ifdef VPVL_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
@@ -654,12 +656,13 @@ private:
 #endif
 
 #if 0
-        for (int i = 0; i < m_model->materials().count(); i++)
-            qDebug() << m_model->materials().at(i);
-        for (int i = 0; i < m_model->bones().count(); i++)
-            qDebug() << m_model->bones().at(i);
-        for (int i = 0; i < m_model->morphs().count(); i++)
-            qDebug() << m_model->morphs().at(i);
+        pmx::Model *model = static_cast<pmx::Model*>(m_model);
+        for (int i = 0; i < model->materials().count(); i++)
+            qDebug() << model->materials().at(i);
+        for (int i = 0; i < model->bones().count(); i++)
+            qDebug() << model->bones().at(i);
+        for (int i = 0; i < model->morphs().count(); i++)
+            qDebug() << model->morphs().at(i);
         /*
         for (int i = 0; i < m_model->rigidBodies().count(); i++)
             qDebug("rbody%d: %s", i, m_delegate.toUnicode(m_model->rigidBodies()[i]->name()).c_str());
@@ -668,7 +671,8 @@ private:
             */
 #endif
 
-        if (internal::slurpFile(kMotion, bytes)) {
+#if 0
+        if (UISlurpFile(kMotion, bytes)) {
             m_motion = new vmd::Motion(m_model, m_encoding);
             qDebug() << "Loaded motion:" << m_motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
             qDebug() << "maxFrameIndex:" << m_motion->maxFrameIndex();
@@ -676,8 +680,9 @@ private:
             m_model->performUpdate();
         }
         else {
-            m_delegate.log(Renderer::kLogWarning, "Failed parsing the model motion, skipped...");
+            qWarning("Failed parsing the model motion, skipped...");
         }
+#endif
 
         /*
         if (!internal::slurpFile(kCamera, bytes) ||
@@ -686,37 +691,22 @@ private:
         else
             scene->setCameraMotion(&m_camera);
             */
-        m_renderer->updateAllModel();
 
         return true;
     }
-#ifdef VPVL2_LINK_ASSIMP
-    Asset *loadAsset(const std::string &dir, const std::string &name) {
-        vpvl::Asset *asset = new vpvl::Asset();
-        const std::string path = internal::concatPath(dir, name);
-        if (asset->load(path.c_str())) {
-            m_renderer->uploadAsset(asset, dir);
-            return asset;
-        }
-        else {
-            m_delegate.log(Renderer::kLogWarning,
-                           "Failed parsing the asset %s, skipped...",
-                           path.c_str());
-            return 0;
-        }
-    }
-#endif
 
     QElapsedTimer m_timer;
     QPoint m_prevPos;
     QMatrix4x4 m_projectionMatrix;
-    Transform m_modelviewMatrix;
+    QMatrix4x4 m_modelViewMatrix;
+    Transform m_modelViewTransform;
     Quaternion m_rotation;
     Vector3 m_position;
     Vector3 m_angle;
     qreal m_fovy;
     qreal m_distance;
     btDiscreteDynamicsWorld *m_world;
+    Scene *m_scene;
     IEncoding *m_encoding;
     IModel *m_model;
     IMotion *m_motion;
@@ -726,8 +716,8 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
 #endif /* VPVL_NO_BULLET */
-    internal::Delegate m_delegate;
-    Renderer *m_renderer;
+    Delegate m_delegate;
+    IRenderEngine *m_renderer;
     //VMDMotion m_camera;
     float m_prevElapsed;
     float m_currentFrameIndex;

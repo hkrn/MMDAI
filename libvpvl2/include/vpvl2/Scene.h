@@ -62,7 +62,6 @@ public:
     void setModelViewMatrix(const float value[16]);
     void setProjectionMatrix(const float value[16]);
     void setLightViewProjectionMatrix(const float value[16]);
-    void setNormalMatrix(const float value[9]);
     void setLightColor(const Color &value);
     void setLightPosition(const Vector3 &value);
 
