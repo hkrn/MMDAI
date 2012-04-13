@@ -237,6 +237,33 @@ private:
     GLuint m_lightPositionUniformLocation;
 };
 
+class ZPlotProgram : public BaseShaderProgram
+{
+public:
+    ZPlotProgram(IRenderDelegate *delegate)
+        : BaseShaderProgram(delegate),
+          m_transformUniformLocation(0)
+    {
+    }
+    ~ZPlotProgram() {
+        m_transformUniformLocation = 0;
+    }
+
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
+        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource);
+        if (ret) {
+            m_transformUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
+        }
+        return ret;
+    }
+    void setTransformMatrix(const float value[16]) {
+        glUniformMatrix4fv(m_transformUniformLocation, 1, GL_FALSE, value);
+    }
+
+private:
+    GLuint m_transformUniformLocation;
+};
+
 #ifdef VPVL2_ENABLE_OPENCL
 class BaseAccelerator
 {
