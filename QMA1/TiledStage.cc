@@ -38,11 +38,8 @@
 
 #include "TiledStage.h"
 
-#ifndef Q_OS_DARWIN
-#include <GL/glew.h>
-#endif
+#include <QtOpenGL/QtOpenGL>
 
-#include "Delegate.h"
 #include "World.h"
 #include <btBulletDynamicsCommon.h>
 #include <QtCore/QtCore>
@@ -56,9 +53,8 @@ public:
         vpvl::Color color;
     };
 
-    TiledStageInternal(const vpvl::Scene *scene, internal::Delegate *delegate, const QVector3D &normal)
+    TiledStageInternal(const vpvl::Scene *scene, const QVector3D &normal)
         : m_scene(scene),
-          m_delegate(delegate),
           m_listID(0),
           m_textureID(0)
     {
@@ -88,12 +84,12 @@ public:
         deleteList();
         if (m_textureID)
             glDeleteTextures(1, &m_textureID);
-        m_delegate = 0;
         m_listID = 0;
         m_textureID = 0;
     }
     void load(const QString &path) {
-        m_delegate->uploadTexture(path.toStdString(), m_textureID, false);
+        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+        m_textureID = context->bindTexture(path);
     }
     void render(bool cullface, bool hasColor) {
         const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
@@ -166,7 +162,6 @@ private:
     }
 
     const vpvl::Scene *m_scene;
-    internal::Delegate *m_delegate;
     QMatrix3x4 m_matrix;
     vpvl::Array<TileStageVertex> m_vertices;
     uint16_t m_indices[6];
@@ -175,12 +170,11 @@ private:
     GLuint m_textureID;
 };
 
-TiledStage::TiledStage(const vpvl::Scene *scene, internal::Delegate *delegate, internal::World *world)
+TiledStage::TiledStage(const vpvl::Scene *scene, internal::World *world)
     : m_scene(scene),
       m_floor(0),
       m_background(0),
       m_floorRigidBody(0),
-      m_delegate(delegate),
       m_world(world)
 {
 }
@@ -197,7 +191,7 @@ TiledStage::~TiledStage()
 void TiledStage::loadFloor(const QString &path)
 {
     delete m_floor;
-    m_floor = new TiledStageInternal(m_scene, m_delegate, QVector3D(0.0f, 1.0f, 0.0f));
+    m_floor = new TiledStageInternal(m_scene, QVector3D(0.0f, 1.0f, 0.0f));
     m_floor->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }
@@ -205,7 +199,7 @@ void TiledStage::loadFloor(const QString &path)
 void TiledStage::loadBackground(const QString &path)
 {
     delete m_background;
-    m_background = new TiledStageInternal(m_scene, m_delegate, QVector3D(0.0f, 0.0f, 1.0f));
+    m_background = new TiledStageInternal(m_scene, QVector3D(0.0f, 0.0f, 1.0f));
     m_background->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }

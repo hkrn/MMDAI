@@ -58,7 +58,7 @@ class TiledStageInternal;
 class TiledStage
 {
 public:
-    TiledStage(const vpvl::Scene *scene, internal::Delegate *delegate, internal::World *world);
+    TiledStage(const vpvl::Scene *scene, internal::World *world);
     ~TiledStage();
 
     void loadFloor(const QString &path);

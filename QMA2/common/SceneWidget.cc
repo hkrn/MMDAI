@@ -73,11 +73,11 @@ using namespace internal;
 SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_loader(0),
+    m_settings(settings),
     m_debugDrawer(0),
     m_grid(0),
     m_info(0),
     m_handles(0),
-    m_settings(settings),
     m_editMode(kSelect),
     m_totalDelta(0.0f),
     m_lastDistance(0.0f),

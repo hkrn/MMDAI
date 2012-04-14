@@ -40,6 +40,7 @@
 #include "SceneLoader.h"
 #include "Script.h"
 #include "TiledStage.h"
+#include "common/util.h"
 
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
@@ -77,9 +78,10 @@ void ExtendedSceneWidget::clear()
 
 void ExtendedSceneWidget::loadScript()
 {
-    loadScript(openFileDialog("sceneWidget/lastScriptDirectory",
-                              tr("Open script file"),
-                              tr("Script file (*.fst)")));
+    loadScript(internal::openFileDialog("sceneWidget/lastScriptDirectory",
+                                        tr("Open script file"),
+                                        tr("Script file (*.fst)"),
+                                        m_settings));
 }
 
 void ExtendedSceneWidget::loadScript(const QString &filename)
@@ -129,14 +131,15 @@ void ExtendedSceneWidget::initializeGL()
 {
     SceneWidget::initializeGL();
     QStringList arguments = qApp->arguments();
-    m_tiledStage = new TiledStage(scene(), m_delegate, m_world);
+    m_tiledStage = new TiledStage(m_loader->renderEngine()->scene(), m_loader->world());
     setShowModelDialog(false);
     if (arguments.count() == 2)
         loadScript(arguments[1]);
     else
         play();
     /* vpvl::Scene の初期値を変更したため、互換性のために視点を変更する */
-    mutableScene()->setCameraPerspective(scene()->cameraPosition(), scene()->cameraAngle(), 16.0f, 100.0f);
+    vpvl::Scene *scene = m_loader->renderEngine()->scene();
+    scene->setCameraPerspective(scene->cameraPosition(), scene->cameraAngle(), 16.0f, 100.0f);
 }
 
 #ifdef Q_OS_MAC
@@ -149,12 +152,11 @@ void ExtendedSceneWidget::paintGL()
 {
     UISetGLContextTransparent(m_enableTransparent);
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
-    m_renderer->clear();
-    m_renderer->renderProjectiveShadow();
+    vpvl::gl2::Renderer *renderer = m_loader->renderEngine();
+    renderer->clear();
     m_tiledStage->renderBackground();
     m_tiledStage->renderFloor();
-    m_renderer->renderAllAssets();
-    m_renderer->renderAllModels();
+    m_loader->render();
     if (m_script) {
         const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions = m_script->stoppedMotions();
         if (!motions.isEmpty())

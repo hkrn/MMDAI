@@ -180,9 +180,10 @@ void MainWindow::addModel(vpvl::PMDModel *model, const QUuid &uuid)
 
 void MainWindow::deleteModel(vpvl::PMDModel *model, const QUuid &uuid)
 {
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
-    if (model == m_sceneWidget->selectedModel())
-        m_sceneWidget->setSelectedModel(0);
+    if (model == loader->selectedModel())
+        loader->setSelectedModel(0);
     /* 削除されるモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
     const QString &uuidString = uuid.toString();
@@ -272,7 +273,7 @@ void MainWindow::selectNextModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        int index = FindIndexOfActions(loader->selectedModel(), actions);
         if (index == -1 || index == actions.length() - 1)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
         else
@@ -285,7 +286,7 @@ void MainWindow::selectPreviousModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = FindIndexOfActions(m_sceneWidget->selectedModel(), actions);
+        int index = FindIndexOfActions(loader->selectedModel(), actions);
         if (index == -1 || index == 0)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
         else
@@ -333,8 +334,7 @@ void MainWindow::buildMenuBar()
     connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
-    m_actionEnableAcceleration->setEnabled(SceneWidget::isAccelerationSupported());
-    m_actionEnableAcceleration->setChecked(m_sceneWidget->isAccelerationEnabled());
+    m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setAccelerationEnable(bool)));
     m_actionShowModelDialog = new QAction(this);
     m_actionShowModelDialog->setCheckable(true);

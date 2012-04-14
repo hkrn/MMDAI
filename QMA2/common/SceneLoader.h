@@ -140,9 +140,8 @@ public:
     vpvl::Bone *assetParentBone(vpvl::Asset *asset) const;
     void setAssetParentBone(const vpvl::Asset *asset, vpvl::Bone *bone);
 
-    vpvl::gl2::Renderer *renderEngine() const {
-        return m_renderer;
-    }
+    vpvl::gl2::Renderer *renderEngine() const { return m_renderer; }
+    internal::World *world() const;
 
 public slots:
     void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);

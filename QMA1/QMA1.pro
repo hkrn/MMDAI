@@ -95,6 +95,7 @@ macx {
   julius.path = Contents/Resources/Julius
   openjtalk.path = Contents/Resources/OpenJTalk
   QMAKE_BUNDLE_DATA += translations julius openjtalk
+  DEFINES += USE_FILE32API
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -119,6 +120,9 @@ SOURCES += main.cc \
     ../QMA2/common/SceneLoader.cc \
     ../QMA2/common/LoggerWidget.cc \
     ../QMA2/common/Handles.cc \
+    ../QMA2/common/Archive.cc \
+    ../QMA2/unzip/ioapi.c \
+    ../QMA2/unzip/unzip.c \
     LicenseWidget.cc \
     MainWindow.cc \
     Script.cc \
@@ -131,12 +135,11 @@ SOURCES += main.cc \
 OBJECTIVE_SOURCES += Transparent.mm
 macx:LIBS += -framework AppKit
 
-INCLUDEPATH += ../QMA2/common
+INCLUDEPATH += ../QMA2/common ../QMA2
 HEADERS  += \
     ../QMA2/common/SceneWidget.h \
     ../QMA2/common/Handles.h \
     ../QMA2/common/util.h \
-    ../QMA2/common/Delegate.h \
     ../QMA2/common/World.h \
     ../QMA2/common/SceneLoader.h \
     ../QMA2/common/Grid.h \
@@ -145,6 +148,9 @@ HEADERS  += \
     ../QMA2/common/InfoPanel.h \
     ../QMA2/common/DebugDrawer.h \
     ../QMA2/common/LoggerWidget.h \
+    ../QMA2/common/Archive.h \
+    ../QMA2/unzip/ioapi.h \
+    ../QMA2/unzip/unzip.h \
     LicenseWidget.h \
     MainWindow.h \
     Script.h \

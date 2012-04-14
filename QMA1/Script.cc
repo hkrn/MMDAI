@@ -631,7 +631,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         vpvl::Vector4 color;
         parseColor(argv[0], color);
-        m_parent->setLightColor(color);
+        m_parent->sceneLoader()->setLightColor(color);
         Arguments a; a << color.x() << color.y() << color.z() << color.w();
         emit eventDidPost(kLightColorEvent, a);
     }
@@ -643,7 +643,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         vpvl::Vector3 position;
         parsePosition(argv[0], position);
-        m_parent->setLightPosition(position);
+        m_parent->sceneLoader()->setLightPosition(position);
         Arguments a; a << position.x() << position.y() << position.z();
         emit eventDidPost(kLightDirectionEvent, a);
     }

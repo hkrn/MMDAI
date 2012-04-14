@@ -178,6 +178,9 @@ signals:
     void undoDidRequest();
     void redoDidRequest();
 
+protected slots:
+    void setShowModelDialog(bool value) { m_showModelDialog = value; }
+
 protected:
     bool event(QEvent *event);
     void closeEvent(QCloseEvent *event);
@@ -199,6 +202,7 @@ protected:
     void swipeTriggered(QSwipeGesture *event);
 
     SceneLoader *m_loader;
+    QSettings *m_settings;
 
 private slots:
     void addModel();
@@ -227,7 +231,6 @@ private slots:
     void revertSelectedModel() { setSelectedModel(0); }
     void updateSceneMotion() { seekMotion(m_frameIndex, true); }
     void updateMotion() { seekMotion(m_frameIndex, false); }
-    void setShowModelDialog(bool value) { m_showModelDialog = value; }
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
@@ -244,7 +247,6 @@ private:
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
     Handles *m_handles;
-    QSettings *m_settings;
     QList<vpvl::Bone *> m_bones;
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
