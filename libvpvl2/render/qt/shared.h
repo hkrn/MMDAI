@@ -81,7 +81,7 @@ static const int kFPS = 60;
 static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
 static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders";
 static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
-static const std::string kModelDir = "render/res/miku2";
+static const std::string kModelDir = "render/res/lat";
 static const std::string kStageDir = "render/res/stage";
 static const std::string kMotion = "render/res/motion.vmd";
 static const std::string kCamera = "render/res/camera.vmd.404";
@@ -292,10 +292,16 @@ public:
         case kEdgeFragmentShader:
             file = "pmx/edge.fsh";
             break;
-        case kModelVertexShader:
+        case kPMDVertexShader:
+            file = m_hardwareSkinning ? "pmd/model_hws.vsh" : "pmd/model.vsh";
+            break;
+        case kPMDFragmentShader:
+            file = "pmd/model.fsh";
+            break;
+        case kPMXVertexShader:
             file = m_hardwareSkinning ? "pmx/model_hws.vsh" : "pmx/model.vsh";
             break;
-        case kModelFragmentShader:
+        case kPMXFragmentShader:
             file = "pmx/model.fsh";
             break;
         case kShadowVertexShader:

@@ -55,8 +55,10 @@ public:
     enum ShaderType {
         kEdgeVertexShader,
         kEdgeFragmentShader,
-        kModelVertexShader,
-        kModelFragmentShader,
+        kPMDVertexShader,
+        kPMDFragmentShader,
+        kPMXVertexShader,
+        kPMXFragmentShader,
         kAssetVertexShader,
         kAssetFragmentShader,
         kShadowVertexShader,

@@ -828,8 +828,8 @@ bool PMDRenderEngine::upload(const std::string &dir)
     fragmentShader = m_delegate->loadShader(IRenderDelegate::kEdgeFragmentShader);
     if (!m_context->edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kModelVertexShader);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kModelFragmentShader);
+    vertexShader = m_delegate->loadShader(IRenderDelegate::kPMDVertexShader);
+    fragmentShader = m_delegate->loadShader(IRenderDelegate::kPMDFragmentShader);
     if (!m_context->modelProgram->load(vertexShader.c_str(), fragmentShader.c_str()))
         return false;
     vertexShader = m_delegate->loadShader(IRenderDelegate::kShadowVertexShader);
