@@ -89,8 +89,10 @@ static const std::string kModelName = "miku.pmx";
 static const std::string kStageName = "stage.x";
 static const std::string kStage2Name = "stage2.x";
 
+static const qreal kCameraNear = 0.5;
+static const qreal kCameraFar = 10000.0;
+
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
-}
 
 static const std::string UIConcatPath(const std::string &dir, const std::string &name) {
     return std::string(QDir(dir.c_str()).absoluteFilePath(name.c_str()).toLocal8Bit());
@@ -355,6 +357,7 @@ private:
     QGLWidget *m_widget;
     bool m_hardwareSkinning;
 };
+} /* namespace anonymous */
 
 QDebug operator<<(QDebug debug, const Vector3 &v)
 {
@@ -460,9 +463,6 @@ QDebug operator<<(QDebug debug, const pmx::Morph *morph)
 class UI : public QGLWidget
 {
 public:
-    static const qreal kCameraNear = 0.5;
-    static const qreal kCameraFar = 10000.0;
-
     UI()
         : QGLWidget(QGLFormat(QGL::SampleBuffers), 0),
           m_rotation(Quaternion::getIdentity()),
@@ -705,8 +705,8 @@ private:
     void addMotion(const std::string &path, IModel *model) {
         QByteArray bytes;
         if (model && UISlurpFile(path, bytes)) {
-            IMotion *motion = new vmd::Motion(model, m_encoding);
-            qDebug() << "Loaded motion:" << motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
+            bool ok = true;
+            IMotion *motion = m_factory->createMotion(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), model, ok);
             qDebug() << "maxFrameIndex:" << motion->maxFrameIndex();
             motion->seek(0.0);
             m_motions.append(motion);

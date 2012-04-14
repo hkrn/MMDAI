@@ -39,6 +39,7 @@
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/vmd/Motion.h"
 
 namespace vpvl2
 {
@@ -77,6 +78,13 @@ IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
     }
     ok = model ? model->load(data, size) : false;
     return model;
+}
+
+IMotion *Factory::createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const
+{
+    IMotion *motion = new vmd::Motion(model, m_context->encoding);
+    ok = motion->load(data, size);
+    return motion;
 }
 
 }

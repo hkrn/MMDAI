@@ -38,11 +38,13 @@
 #define VPVL2_FACTORY_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IModel.h"
 
 namespace vpvl2
 {
+
+class IEncoding;
+class IModel;
+class IMotion;
 
 class VPVL2_API Factory
 {
@@ -51,6 +53,7 @@ public:
     ~Factory();
 
     IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
+    IMotion *createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const;
 
 private:
     struct PrivateContext;
