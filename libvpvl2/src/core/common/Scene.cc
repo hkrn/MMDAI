@@ -131,15 +131,6 @@ void Scene::setModelViewProjectionMatrix(const float value[])
 void Scene::setModelViewMatrix(const float value[16])
 {
     memcpy(m_context->modelViewMatrix, value, sizeof(m_context->modelViewMatrix));
-    m_context->normalMatrix[0] = m_context->modelViewMatrix[0];
-    m_context->normalMatrix[1] = m_context->modelViewMatrix[1];
-    m_context->normalMatrix[2] = m_context->modelViewMatrix[2];
-    m_context->normalMatrix[3] = m_context->modelViewMatrix[4];
-    m_context->normalMatrix[4] = m_context->modelViewMatrix[5];
-    m_context->normalMatrix[5] = m_context->modelViewMatrix[6];
-    m_context->normalMatrix[6] = m_context->modelViewMatrix[8];
-    m_context->normalMatrix[7] = m_context->modelViewMatrix[9];
-    m_context->normalMatrix[8] = m_context->modelViewMatrix[10];
 }
 
 void Scene::setProjectionMatrix(const float value[16])
@@ -150,6 +141,19 @@ void Scene::setProjectionMatrix(const float value[16])
 void Scene::setLightViewProjectionMatrix(const float value[16])
 {
     memcpy(m_context->lightViewProjectionMatrix, value, sizeof(m_context->lightViewProjectionMatrix));
+}
+
+void Scene::setNormalMatrix(const float value[16])
+{
+    m_context->normalMatrix[0] = value[0];
+    m_context->normalMatrix[1] = value[1];
+    m_context->normalMatrix[2] = value[2];
+    m_context->normalMatrix[3] = value[4];
+    m_context->normalMatrix[4] = value[5];
+    m_context->normalMatrix[5] = value[6];
+    m_context->normalMatrix[6] = value[8];
+    m_context->normalMatrix[7] = value[9];
+    m_context->normalMatrix[8] = value[10];
 }
 
 void Scene::setLightColor(const Color &value)

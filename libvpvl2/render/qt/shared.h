@@ -613,6 +613,7 @@ protected:
         updateProjectionMatrix();
         updateModelViewProjectionMatrix();
         foreach (IRenderEngine *engine, m_models) {
+            engine->update();
             engine->renderModel();
             engine->renderEdge();
             engine->renderShadow();
@@ -631,6 +632,8 @@ private:
         m_scene->setModelViewMatrix(matrixf);
         for (int i = 0; i < 16; i++)
             m_modelViewMatrix.data()[i] = matrixf[i];
+        m_modelViewTransform.getBasis().inverse().transpose().getOpenGLSubMatrix(matrixf);
+        m_scene->setNormalMatrix(matrixf);
     }
     void updateProjectionMatrix() {
         float matrixf[16];
@@ -707,7 +710,6 @@ private:
             qDebug() << "Loaded motion:" << motion->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
             qDebug() << "maxFrameIndex:" << motion->maxFrameIndex();
             motion->seek(0.0);
-            model->performUpdate();
             m_motions.append(motion);
         }
         else {

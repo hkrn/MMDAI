@@ -929,6 +929,8 @@ void PMDRenderEngine::update()
     if (!m_model->isVisible())
         return;
     PMDModel *model = m_model->ptr();
+    model->setLightPosition(m_scene->lightPosition());
+    model->updateImmediate();
     int nvertices = model->vertices().count();
     size_t strideSize = model->strideSize(PMDModel::kVerticesStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
