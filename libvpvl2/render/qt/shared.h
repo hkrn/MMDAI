@@ -81,7 +81,7 @@ static const int kFPS = 60;
 static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
 static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders";
 static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
-static const std::string kModelDir = "render/res/lat";
+static const std::string kModelDir = "render/res/miku2";
 static const std::string kStageDir = "render/res/stage";
 static const std::string kMotion = "render/res/motion.vmd";
 static const std::string kCamera = "render/res/camera.vmd.404";
@@ -472,8 +472,8 @@ public:
           m_distance(50.0),
           m_world(0),
           m_delegate(this),
-          m_scene(0),
           m_encoding(0),
+          m_factory(0),
       #ifndef VPVL2_NO_BULLET
           m_dispatcher(&m_config),
           m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
@@ -482,8 +482,8 @@ public:
           m_currentFrameIndex(0)
     {
         Encoding *encoding = new Encoding();
-        m_scene = new Scene(encoding);
         m_encoding = encoding;
+        m_factory = new Factory(encoding);
 #ifndef VPVL2_NO_BULLET
         m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
         m_world->setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
@@ -497,7 +497,6 @@ public:
         qDeleteAll(m_motions);
         qDeleteAll(m_models);
         delete m_world;
-        delete m_scene;
         delete m_encoding;
     }
 
@@ -629,11 +628,11 @@ private:
         position.setZ(position.z() - m_distance);
         m_modelViewTransform.setOrigin(position);
         m_modelViewTransform.getOpenGLMatrix(matrixf);
-        m_scene->setModelViewMatrix(matrixf);
+        m_scene.setModelViewMatrix(matrixf);
         for (int i = 0; i < 16; i++)
             m_modelViewMatrix.data()[i] = matrixf[i];
         m_modelViewTransform.getBasis().inverse().transpose().getOpenGLSubMatrix(matrixf);
-        m_scene->setNormalMatrix(matrixf);
+        m_scene.setNormalMatrix(matrixf);
     }
     void updateProjectionMatrix() {
         float matrixf[16];
@@ -641,14 +640,14 @@ private:
         m_projectionMatrix.perspective(m_fovy, kWidth / float(kHeight), kCameraNear, kCameraFar);
         for (int i = 0; i < 16; i++)
             matrixf[i] = m_projectionMatrix.constData()[i];
-        m_scene->setProjectionMatrix(matrixf);
+        m_scene.setProjectionMatrix(matrixf);
     }
     void updateModelViewProjectionMatrix() {
         float matrixf[16];
         const QMatrix4x4 &result = m_projectionMatrix * m_modelViewMatrix;
         for (int i = 0; i < 16; i++)
             matrixf[i] = result.constData()[i];
-        m_scene->setModelViewProjectionMatrix(matrixf);
+        m_scene.setModelViewProjectionMatrix(matrixf);
     }
     bool loadScene() {
 #ifdef VPVL2_LINK_ASSIMP
@@ -678,14 +677,14 @@ private:
     }
     IModel *addModel(const QByteArray &bytes, const std::string &dir) {
         bool ok = true;
-        IModel *model = m_scene->createModel(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), ok);
+        IModel *model = m_factory->createModel(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), ok);
         if (!ok) {
             qWarning("Failed parsing the model: %d", model->error());
             return 0;
         }
         //model->setEdgeOffset(0.5f);
         model->joinWorld(m_world);
-        IRenderEngine *engine = m_scene->createRenderEngine(&m_delegate, model);
+        IRenderEngine *engine = m_scene.createRenderEngine(&m_delegate, model);
         engine->upload(dir);
         m_models.append(engine);
 #if 0
@@ -729,8 +728,9 @@ private:
     qreal m_distance;
     btDiscreteDynamicsWorld *m_world;
     Delegate m_delegate;
-    Scene *m_scene;
+    Scene m_scene;
     IEncoding *m_encoding;
+    Factory *m_factory;
     QList<IRenderEngine *> m_models;
     QList<IMotion *> m_motions;
 #ifndef VPVL2_NO_BULLET

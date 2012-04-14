@@ -34,22 +34,29 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_FACTORY_H_
+#define VPVL2_FACTORY_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/Factory.h"
-#include "vpvl2/IBone.h"
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IMotion.h"
-#include "vpvl2/IRenderEngine.h"
-#include "vpvl2/IString.h"
-#include "vpvl2/Scene.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+
+class VPVL2_API Factory
+{
+public:
+    Factory(IEncoding *encoding);
+    ~Factory();
+
+    IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
+
+private:
+    struct PrivateContext;
+    PrivateContext *m_context;
+};
+
+} /* namespace vpvl2 */
+
 #endif
-
-#endif /* vpvl2_vpvl2_H_ */

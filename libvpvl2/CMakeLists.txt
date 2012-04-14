@@ -16,6 +16,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
 set(vpvl2_public_headers
     include/vpvl2/Common.h
+    include/vpvl2/Factory.h
     include/vpvl2/vpvl2.h
     include/vpvl2/IBone.h
     include/vpvl2/IEncoding.h

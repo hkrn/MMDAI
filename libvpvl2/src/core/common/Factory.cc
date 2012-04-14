@@ -34,22 +34,49 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#include "vpvl2/vpvl2.h"
 
-#include "vpvl2/Common.h"
-#include "vpvl2/Factory.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IMotion.h"
-#include "vpvl2/IRenderEngine.h"
-#include "vpvl2/IString.h"
-#include "vpvl2/Scene.h"
+#include "vpvl2/asset/Model.h"
+#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmx/Model.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
-#endif
+namespace vpvl2
+{
 
-#endif /* vpvl2_vpvl2_H_ */
+struct Factory::PrivateContext
+{
+    PrivateContext() : encoding(0) {}
+    ~PrivateContext() {}
+
+    IEncoding *encoding;
+};
+
+Factory::Factory(IEncoding *encoding)
+    : m_context(0)
+{
+    m_context = new PrivateContext();
+    m_context->encoding = encoding;
+}
+
+Factory::~Factory()
+{
+}
+
+
+IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
+{
+    IModel *model = 0;
+    if (size >= 4 && memcmp(data, "PMX ", 4) == 0) {
+        model = new pmx::Model(m_context->encoding);
+    }
+    else if (size >= 3 && memcmp(data, "Pmd", 3) == 0) {
+        model = new pmd::Model(m_context->encoding);
+    }
+    else {
+        model = new asset::Model(m_context->encoding);
+    }
+    ok = model ? model->load(data, size) : false;
+    return model;
+}
+
+}

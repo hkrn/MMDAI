@@ -52,10 +52,9 @@ class VPVL2_API Scene
 public:
     static bool isAcceleratorSupported();
 
-    Scene(IEncoding *encoding);
+    Scene();
     ~Scene();
 
-    IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
     IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model) const;
 
     void setModelViewProjectionMatrix(const float value[16]);

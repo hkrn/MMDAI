@@ -48,15 +48,13 @@ namespace vpvl2
 
 struct Scene::PrivateContext {
     PrivateContext()
-        : encoding(0),
-          lightColor(0.6, 0.6, 0.6, 1.0),
+        : lightColor(0.6, 0.6, 0.6, 1.0),
           lightPosition(0.5, 1.0, 0.5)
     {
     }
     ~PrivateContext() {
     }
 
-    IEncoding *encoding;
     float modelViewProjectionMatrix[16];
     float modelViewMatrix[16];
     float projectionMatrix[16];
@@ -75,33 +73,16 @@ bool Scene::isAcceleratorSupported()
 #endif
 }
 
-Scene::Scene(IEncoding *encoding)
+Scene::Scene()
     : m_context(0)
 {
     m_context = new Scene::PrivateContext();
-    m_context->encoding = encoding;
 }
 
 Scene::~Scene()
 {
     delete m_context;
     m_context = 0;
-}
-
-IModel *Scene::createModel(const uint8_t *data, size_t size, bool &ok) const
-{
-    IModel *model = 0;
-    if (size >= 4 && memcmp(data, "PMX ", 4) == 0) {
-        model = new pmx::Model(m_context->encoding);
-    }
-    else if (size >= 3 && memcmp(data, "Pmd", 3) == 0) {
-        model = new pmd::Model(m_context->encoding);
-    }
-    else {
-        model = new asset::Model(m_context->encoding);
-    }
-    ok = model ? model->load(data, size) : false;
-    return model;
 }
 
 IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model) const
