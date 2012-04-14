@@ -798,17 +798,26 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate, const Scene *scene, 
 
 PMDRenderEngine::~PMDRenderEngine()
 {
-    deleteModel();
+    if (m_context) {
+        m_context->releaseMaterials(m_model->ptr());
+        delete m_context;
+        m_context = 0;
+    }
+    delete m_model;
+    m_model = 0;
     delete m_accelerator;
     m_accelerator = 0;
     m_delegate = 0;
     m_scene = 0;
 }
 
+IModel *PMDRenderEngine::model() const
+{
+    return m_model;
+}
+
 bool PMDRenderEngine::upload(const std::string &dir)
 {
-    if (!m_context)
-        return false;
     m_context->edgeProgram = new EdgeProgram(m_delegate);
     m_context->modelProgram = new ModelProgram(m_delegate);
     m_context->shadowProgram = new ShadowProgram(m_delegate);
@@ -915,19 +924,9 @@ bool PMDRenderEngine::upload(const std::string &dir)
     return true;
 }
 
-void PMDRenderEngine::deleteModel()
-{
-    if (m_context) {
-        m_context->releaseMaterials(m_model->ptr());
-        delete m_context;
-        m_context = 0;
-    }
-    log0(IRenderDelegate::kLogInfo, "Destroyed the model: %s", m_model->name()->toByteArray());
-}
-
 void PMDRenderEngine::update()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model->isVisible())
         return;
     PMDModel *model = m_model->ptr();
     int nvertices = model->vertices().count();
@@ -941,7 +940,7 @@ void PMDRenderEngine::update()
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model->isVisible())
         return;
     PMDModel *model = m_model->ptr();
     ModelProgram *modelProgram = m_context->modelProgram;
@@ -1014,7 +1013,7 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderShadow()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model->isVisible())
         return;
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -1047,7 +1046,7 @@ void PMDRenderEngine::renderShadow()
 
 void PMDRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model->isVisible())
         return;
     ZPlotProgram *zplotProgram = m_context->zplotProgram;
     PMDModel *model = m_model->ptr();
@@ -1066,7 +1065,7 @@ void PMDRenderEngine::renderZPlot()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model->isVisible())
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     PMDModel *model = m_model->ptr();

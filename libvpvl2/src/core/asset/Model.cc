@@ -58,9 +58,9 @@ bool Model::load(const uint8_t *data, size_t size)
 {
     bool ret = m_asset.load(data, size);
     if (ret) {
-        const uint8_t *name = reinterpret_cast<const uint8_t *>(m_asset.name());
-        size_t length = strlen(reinterpret_cast<const char *>(name));
-        m_name = m_encoding->toString(name, IString::kShiftJIS, length);
+        //const uint8_t *name = reinterpret_cast<const uint8_t *>(m_asset.name());
+        //size_t length = strlen(reinterpret_cast<const char *>(name));
+        //m_name = m_encoding->toString(name, IString::kShiftJIS, length);
     }
     return ret;
 }

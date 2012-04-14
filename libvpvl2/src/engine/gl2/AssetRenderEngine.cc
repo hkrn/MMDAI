@@ -235,11 +235,29 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate, const Scene *sce
 
 AssetRenderEngine::~AssetRenderEngine()
 {
+    const aiScene *scene = m_model->ptr()->getScene();
+    const unsigned int nmaterials = scene->mNumMaterials;
+    aiString texturePath;
+    for (unsigned int i = 0; i < nmaterials; i++) {
+        aiMaterial *material = scene->mMaterials[i];
+        aiReturn found = AI_SUCCESS;
+        GLuint textureID;
+        int textureIndex = 0;
+        while (found == AI_SUCCESS) {
+            found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+            textureID = m_context->textures[texturePath.data];
+            glDeleteTextures(1, &textureID);
+            m_context->textures.erase(texturePath.data);
+            textureIndex++;
+        }
+    }
+    deleteRecurse(scene, scene->mRootNode);
     delete m_context;
     m_context = 0;
+    delete m_model;
+    m_model = 0;
     m_delegate = 0;
     m_scene = 0;
-    m_model = 0;
 }
 
 void AssetRenderEngine::renderModel()
@@ -266,6 +284,11 @@ void AssetRenderEngine::renderZPlot()
         return;
     const aiScene *a = asset->getScene();
     renderZPlotRecurse(a, a->mRootNode);
+}
+
+IModel *AssetRenderEngine::model() const
+{
+    return m_model;
 }
 
 bool AssetRenderEngine::upload(const std::string &dir)
@@ -298,27 +321,6 @@ bool AssetRenderEngine::upload(const std::string &dir)
     }
     uploadRecurse(scene, scene->mRootNode);
     return true;
-}
-
-void AssetRenderEngine::deleteModel()
-{
-    const aiScene *scene = m_model->ptr()->getScene();
-    const unsigned int nmaterials = scene->mNumMaterials;
-    aiString texturePath;
-    for (unsigned int i = 0; i < nmaterials; i++) {
-        aiMaterial *material = scene->mMaterials[i];
-        aiReturn found = AI_SUCCESS;
-        GLuint textureID;
-        int textureIndex = 0;
-        while (found == AI_SUCCESS) {
-            found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-            textureID = m_context->textures[texturePath.data];
-            glDeleteTextures(1, &textureID);
-            m_context->textures.erase(texturePath.data);
-            textureIndex++;
-        }
-    }
-    deleteRecurse(scene, scene->mRootNode);
 }
 
 void AssetRenderEngine::update()

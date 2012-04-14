@@ -85,6 +85,7 @@ public:
     PMDRenderEngine(IRenderDelegate *delegate, const Scene *scene, pmd::Model *model);
     virtual ~PMDRenderEngine();
 
+    IModel *model() const;
     bool upload(const std::string &dir);
     void deleteModel();
     void update();

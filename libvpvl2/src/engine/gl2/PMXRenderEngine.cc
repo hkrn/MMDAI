@@ -862,13 +862,26 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate, const Scene *scene, 
 
 PMXRenderEngine::~PMXRenderEngine()
 {
-    deleteModel();
+    if (m_context) {
+        m_context->releaseMaterials(m_model);
+        delete m_context;
+        m_context = 0;
+    }
+    if (m_accelerator)
+        m_accelerator->deleteModel(m_context);
     delete m_accelerator;
     m_accelerator = 0;
+    delete m_model;
+    m_model = 0;
     m_delegate = 0;
     m_scene = 0;
     m_model = 0;
     m_accelerator = 0;
+}
+
+IModel *PMXRenderEngine::model() const
+{
+    return m_model;
 }
 
 bool PMXRenderEngine::upload(const std::string &dir)
@@ -970,18 +983,6 @@ bool PMXRenderEngine::upload(const std::string &dir)
     update();
     log0(IRenderDelegate::kLogInfo, "Created the model: %s", m_model->name()->toByteArray());
     return true;
-}
-
-void PMXRenderEngine::deleteModel()
-{
-    if (m_context) {
-        m_context->releaseMaterials(m_model);
-        delete m_context;
-        m_context = 0;
-    }
-    if (m_accelerator)
-        m_accelerator->deleteModel(m_context);
-    log0(IRenderDelegate::kLogInfo, "Destroyed the model: %s", m_model->name()->toByteArray());
 }
 
 void PMXRenderEngine::update()

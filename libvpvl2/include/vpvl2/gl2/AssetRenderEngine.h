@@ -105,8 +105,8 @@ public:
     AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, asset::Model *model);
     virtual ~AssetRenderEngine();
 
+    IModel *model() const;
     bool upload(const std::string &dir);
-    void deleteModel();
     void update();
     void renderModel();
     void renderEdge();

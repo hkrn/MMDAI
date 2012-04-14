@@ -489,12 +489,7 @@ public:
         Assimp::DefaultLogger::kill();
 #endif
         qDeleteAll(m_motions);
-        QMapIterator<IModel *, IRenderEngine *> it(m_models);
-        while (it.hasNext()) {
-            it.next();
-            delete it.value();
-            delete it.key();
-        }
+        qDeleteAll(m_models);
         delete m_world;
         delete m_scene;
         delete m_encoding;
@@ -578,11 +573,8 @@ protected:
                 if (motion->isReachedTo(motion->maxFrameIndex()))
                     motion->reset();
             }
-            QMapIterator<IModel *, IRenderEngine *> it(m_models);
-            while (it.hasNext()) {
-                it.next();
-                it.key()->performUpdate();
-            }
+            foreach (IRenderEngine *engine, m_models)
+                engine->model()->performUpdate();
             const int kFPS = 30;
             const Scalar &sec = 1.0 / kFPS;
             m_world->stepSimulation(sec, 1, 1.0 / kFPS);
@@ -687,7 +679,7 @@ private:
         model->joinWorld(m_world);
         IRenderEngine *engine = m_scene->createRenderEngine(&m_delegate, model);
         engine->upload(dir);
-        m_models.insert(model, engine);
+        m_models.append(engine);
 #if 0
         pmx::Model *model = static_cast<pmx::Model*>(m_model);
         for (int i = 0; i < model->materials().count(); i++)
@@ -734,7 +726,7 @@ private:
     Delegate m_delegate;
     Scene *m_scene;
     IEncoding *m_encoding;
-    QMap<IModel *, IRenderEngine *> m_models;
+    QList<IRenderEngine *> m_models;
     QList<IMotion *> m_motions;
 #ifndef VPVL2_NO_BULLET
     btDefaultCollisionConfiguration m_config;

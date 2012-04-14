@@ -85,8 +85,8 @@ public:
     PMXRenderEngine(IRenderDelegate *delegate, const Scene *scene, pmx::Model *model);
     virtual ~PMXRenderEngine();
 
+    IModel *model() const;
     bool upload(const std::string &dir);
-    void deleteModel();
     void update();
     void renderModel();
     void renderEdge();
