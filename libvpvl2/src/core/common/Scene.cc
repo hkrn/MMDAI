@@ -90,7 +90,9 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
     IRenderEngine *engine = 0;
     switch (model->type()) {
     case IModel::kAsset:
+#ifdef VPVL2_LINK_ASSIMP
         engine = new gl2::AssetRenderEngine(delegate, this, static_cast<asset::Model *>(model));
+#endif
         break;
     case IModel::kPMD:
         engine = new gl2::PMDRenderEngine(delegate, this, static_cast<pmd::Model *>(model));

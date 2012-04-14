@@ -765,9 +765,9 @@ private:
     cl_kernel m_performSkinningKernel;
 };
 #else
-class Accelerator : public BaseAccelerator {
+class PMDRenderEngine::Accelerator : public BaseAccelerator {
 public:
-    static void initializeUserData(PrivateContext *userData) {}
+    static void initializeUserData(PMDRenderEngine::PrivateContext * /* userData */) {}
 
     Accelerator(IRenderDelegate *delegate) : BaseAccelerator(delegate) {}
     ~Accelerator() {}

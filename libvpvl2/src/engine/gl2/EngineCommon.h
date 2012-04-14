@@ -389,6 +389,10 @@ class BaseAccelerator {
 public:
     BaseAccelerator(IRenderDelegate * /* delegate */) {}
     ~BaseAccelerator() {}
+
+    bool isAvailable() const { return false; }
+    bool initializeContext() const { return false; }
+    virtual bool createKernelPrograms() { return false; }
 };
 
 #endif
