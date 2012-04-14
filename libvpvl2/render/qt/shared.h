@@ -217,43 +217,25 @@ public:
     }
 
     bool uploadTexture(const std::string &name, const std::string &dir, void *texture, bool isToon) {
-        const QString &pathString = QString::fromLocal8Bit((dir + "/" + name).c_str());
-        return uploadTextureInternal(pathString, texture, isToon);
+        return uploadTextureInternal(createPath(dir, name), texture, isToon);
     }
     bool uploadTexture(const IString *name, const std::string &dir, void *texture, bool isToon) {
-        const QString &pathString = QString::fromLocal8Bit(dir.c_str()) + "/" + static_cast<const String *>(name)->value();
-        return uploadTextureInternal(pathString, texture, isToon);
+        return uploadTextureInternal(createPath(dir, name), texture, isToon);
     }
     bool uploadToonTexture(const std::string &name, const std::string &dir, void *texture) {
-        const QString &pathString = QString::fromLocal8Bit((dir + "/" + name).c_str());
-        return uploadTextureInternal(pathString, texture, true);
+        if (!uploadTextureInternal(createPath(dir, name), texture, true))
+            return uploadTextureInternal(createPath(kSystemTexturesDir, name), texture, true);
+        return true;
     }
     bool uploadToonTexture(const IString *name, const std::string &dir, void *texture) {
-        const QString &pathString = QString::fromLocal8Bit(dir.c_str()) + "/" + static_cast<const String *>(name)->value();
-        return uploadTextureInternal(pathString, texture, true);
+        if (!uploadTextureInternal(createPath(dir, name), texture, true))
+            return uploadTextureInternal(createPath(kSystemTexturesDir, name), texture, true);
+        return true;
     }
     bool uploadToonTexture(int index, void *texture) {
         QString format;
         const QString &pathString = QString::fromStdString(kSystemTexturesDir) + "/" + format.sprintf("toon%02d.bmp", index + 1);
         return uploadTextureInternal(pathString, texture, true);
-    }
-
-    bool uploadTextureInternal(const QString &pathString, void *texture, bool isToon) {
-        const QFileInfo info(pathString);
-        if (info.isDir() || !info.exists()) {
-            qWarning("Cannot loading \"%s\"", qPrintable(pathString));
-            return false;
-        }
-        const QImage &image = QImage(pathString).rgbSwapped();
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-        GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
-        *static_cast<GLuint *>(texture) = textureID;
-        if (!isToon) {
-            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
-        return textureID != 0;
     }
 
     void log(LogLevel /* level */, const char *format, va_list ap) {
@@ -346,6 +328,30 @@ public:
     }
 
 private:
+    const QString createPath(const std::string &dir, const std::string &name) const {
+        return QString::fromStdString(dir + "/" + name);
+    }
+    const QString createPath(const std::string &dir, const IString *name) const {
+        return QString::fromStdString(dir) + "/" + static_cast<const String *>(name)->value();
+    }
+    bool uploadTextureInternal(const QString &pathString, void *texture, bool isToon) {
+        const QFileInfo info(pathString);
+        if (info.isDir() || !info.exists()) {
+            qWarning("Cannot loading \"%s\"", qPrintable(pathString));
+            return false;
+        }
+        const QImage &image = QImage(pathString).rgbSwapped();
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+        GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+        *static_cast<GLuint *>(texture) = textureID;
+        if (!isToon) {
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
+        return textureID != 0;
+    }
+
     QGLWidget *m_widget;
     bool m_hardwareSkinning;
 };
@@ -646,8 +652,7 @@ private:
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
         addModel(kStageName, kStageDir);
-        //loadAsset(kStageDir, kStageName);
-        //loadAsset(kStageDir, kStage2Name);
+        // addModel(kStage2Name, kStageDir);
 #endif
         addMotion(kMotion, addModel(kModelName, kModelDir));
         /*
@@ -664,7 +669,7 @@ private:
         QByteArray bytes;
         if (!UISlurpFile(UIConcatPath(dir, file), bytes)) {
             qWarning("Failed loading the model");
-            return false;
+            return 0;
         }
         return addModel(bytes, dir);
     }
@@ -688,12 +693,10 @@ private:
             qDebug() << model->bones().at(i);
         for (int i = 0; i < model->morphs().count(); i++)
             qDebug() << model->morphs().at(i);
-        /*
         for (int i = 0; i < m_model->rigidBodies().count(); i++)
             qDebug("rbody%d: %s", i, m_delegate.toUnicode(m_model->rigidBodies()[i]->name()).c_str());
         for (int i = 0; i < m_model->joints().count(); i++)
             qDebug("joint%d: %s", i, m_delegate.toUnicode(m_model->joints()[i]->name()).c_str());
-            */
 #endif
         return model;
     }
