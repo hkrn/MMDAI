@@ -94,6 +94,7 @@ bool Model::load(const uint8_t *data, size_t size)
         m_comment = m_encoding->toString(m_model.englishName(), IString::kShiftJIS, vpvl::PMDModel::kCommentSize);
         delete m_englishComment;
         m_englishComment = m_encoding->toString(m_model.englishComment(), IString::kShiftJIS, vpvl::PMDModel::kCommentSize);
+        m_model.setVisible(true);
     }
     return ret;
 }
