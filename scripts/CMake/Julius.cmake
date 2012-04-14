@@ -350,6 +350,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libsent/include/sent/config.h.cmake
                ${CMAKE_CURRENT_SOURCE_DIR}/libsent/include/sent/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libjulius/src/version.c.in
                ${CMAKE_CURRENT_SOURCE_DIR}/libjulius/src/version.c)
+list(APPEND libjulius_source ${CMAKE_CURRENT_SOURCE_DIR}}/libjulius/src/version.c)
 #file(REMOVE libjulis/include/julius/config.h.cmake libsent/include/sent/config.h.cmake)
 
 file(GLOB libjulius_headers libjulius/include/julius/*.h)
