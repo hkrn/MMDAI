@@ -44,7 +44,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <QtCore/QtCore>
 
-class TiledStageInternal {
+class TiledStageInternal : protected QGLFunctions {
 public:
     struct TileStageVertex {
         vpvl::Vector3 position;
@@ -72,6 +72,7 @@ public:
         m_vertices.add(vertex);
         const uint16_t indices[] = { 3, 2, 0, 0, 2, 1 };
         memcpy(m_indices, indices, sizeof(indices));
+        initializeGLFunctions(QGLContext::currentContext());
         glGenBuffers(sizeof(m_buffers) / sizeof(GLuint), m_buffers);
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
         glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(TileStageVertex), &m_vertices[0], GL_STATIC_DRAW);
@@ -177,6 +178,7 @@ TiledStage::TiledStage(const vpvl::Scene *scene, internal::World *world)
       m_floorRigidBody(0),
       m_world(world)
 {
+    initializeGLFunctions(QGLContext::currentContext());
 }
 
 TiledStage::~TiledStage()

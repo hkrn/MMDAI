@@ -41,6 +41,7 @@
 
 #include <QtCore/QString>
 #include <QtGui/QMatrix4x4>
+#include <QtOpenGL/QGLFunctions>
 #include <LinearMath/btVector3.h>
 
 namespace vpvl {
@@ -55,7 +56,7 @@ class World;
 class btRigidBody;
 class TiledStageInternal;
 
-class TiledStage
+class TiledStage : protected QGLFunctions
 {
 public:
     TiledStage(const vpvl::Scene *scene, internal::World *world);
