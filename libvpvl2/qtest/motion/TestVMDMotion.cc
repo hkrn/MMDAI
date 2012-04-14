@@ -1,6 +1,17 @@
 #include <QtTest/QtTest>
 #include "../common.h"
 
+#include "vpvl2/pmx/Model.h"
+#include "vpvl2/vmd/BoneAnimation.h"
+#include "vpvl2/vmd/BoneKeyframe.h"
+#include "vpvl2/vmd/CameraAnimation.h"
+#include "vpvl2/vmd/CameraKeyframe.h"
+#include "vpvl2/vmd/LightAnimation.h"
+#include "vpvl2/vmd/LightKeyframe.h"
+#include "vpvl2/vmd/MorphAnimation.h"
+#include "vpvl2/vmd/MorphKeyframe.h"
+#include "vpvl2/vmd/Motion.h"
+
 using namespace vpvl2::pmx;
 using namespace vpvl2::vmd;
 
@@ -60,7 +71,7 @@ void TestVMDMotion::parseEmpty()
 
 void TestVMDMotion::parseMotion()
 {
-    QFile file("../../render/res/motion.vmd");
+    QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
@@ -83,7 +94,7 @@ void TestVMDMotion::parseMotion()
 
 void TestVMDMotion::parseCamera()
 {
-    QFile file("../../render/res/camera.vmd");
+    QFile file("camera.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
@@ -231,7 +242,7 @@ void TestVMDMotion::saveLightKeyframe()
 
 void TestVMDMotion::saveMotion()
 {
-    QFile file("../../render/res/motion.vmd");
+    QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
@@ -243,8 +254,8 @@ void TestVMDMotion::saveMotion()
         size_t newSize = motion.estimateSize();
         uint8_t *newData = new uint8_t[newSize];
         motion.save(newData);
-        QFile file2("motion2.vmd");
-        file2.open(QFile::WriteOnly);
+        QTemporaryFile file2;
+        file2.setAutoRemove(true);
         file2.write(reinterpret_cast<const char *>(newData), newSize);
         delete[] newData;
         QCOMPARE(newSize, size);
