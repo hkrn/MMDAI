@@ -102,9 +102,9 @@ typedef btHashPtr HashPtr;
 typedef Vector4 Color;
 
 static const float kPI = 3.14159265358979323846f;
-static const Vector3 &kZeroV3 = Vector3(0.0f, 0.0f, 0.0f);
-static const Vector4 &kZeroV4 = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
-static const Color &kZeroC = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+static const Vector3 kZeroV3 = Vector3(0.0f, 0.0f, 0.0f);
+static const Vector4 kZeroV4 = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+static const Color kZeroC = Vector4(0.0f, 0.0f, 0.0f, 0.0f);
 
 template<typename T>
 class Array
