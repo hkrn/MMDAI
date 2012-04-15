@@ -43,6 +43,8 @@
 #include <QtCore/QtCore>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 struct LipKeyFrame
 {
     int phone;
@@ -116,11 +118,11 @@ bool LipSync::load(QTextStream &stream)
     return ret;
 }
 
-vpvl::VMDMotion *LipSync::createMotion(const QString &sequence)
+VMDMotion *LipSync::createMotion(const QString &sequence)
 {
     QStringList tokens = sequence.split(',');
     QList<LipKeyFrame> frames, newFrames;
-    vpvl::VMDMotion *motion = 0;
+    VMDMotion *motion = 0;
     LipKeyFrame frame;
     int i = 0, j = 0, k = 0;
     float diff = 0.0f;
@@ -161,15 +163,15 @@ vpvl::VMDMotion *LipSync::createMotion(const QString &sequence)
         }
         newFrames.append(f);
     }
-    motion = new vpvl::VMDMotion();
-    vpvl::FaceAnimation *fa = motion->mutableFaceAnimation();
+    motion = new VMDMotion();
+    FaceAnimation *fa = motion->mutableFaceAnimation();
     int nExpressionNames = m_expressionNames.size();
     int currentFrame = 0;
     for (i = 0; i < nExpressionNames; i++) {
         currentFrame = 0;
         QByteArray bytes = internal::fromQString(m_expressionNames.at(i));
         foreach (LipKeyFrame f, newFrames) {
-            vpvl::FaceKeyframe *ff = new vpvl::FaceKeyframe();
+            FaceKeyframe *ff = new vpvl::FaceKeyframe();
             ff->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
             ff->setFrameIndex(currentFrame);
             ff->setWeight(blendRate(f.phone, i) * f.rate);

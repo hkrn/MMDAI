@@ -45,6 +45,7 @@
 #include <QtGui/QtGui>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
 #ifdef VPVL_ENABLE_GLSL
 #include <vpvl/gl2/Renderer.h>
 using namespace vpvl::gl2;
@@ -108,7 +109,7 @@ void ExtendedSceneWidget::loadScript(const QString &filename)
     }
 }
 
-void ExtendedSceneWidget::setEmptyMotion(vpvl::PMDModel * /* model */)
+void ExtendedSceneWidget::setEmptyMotion(PMDModel * /* model */)
 {
     // emit this
 }
@@ -138,8 +139,8 @@ void ExtendedSceneWidget::initializeGL()
     else
         play();
     /* vpvl::Scene の初期値を変更したため、互換性のために視点を変更する */
-    vpvl::Scene *scene = m_loader->renderEngine()->scene();
-    scene->setCameraPerspective(scene->cameraPosition(), scene->cameraAngle(), 16.0f, 100.0f);
+    Scene *scene = m_loader->renderEngine()->scene();
+    scene->setCameraPerspective(Vector3(0.0f, 13.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
 }
 
 #ifdef Q_OS_MAC
@@ -152,13 +153,13 @@ void ExtendedSceneWidget::paintGL()
 {
     UISetGLContextTransparent(m_enableTransparent);
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
-    vpvl::gl2::Renderer *renderer = m_loader->renderEngine();
+    Renderer *renderer = m_loader->renderEngine();
     renderer->clear();
     m_loader->render();
     m_tiledStage->renderBackground();
     m_tiledStage->renderFloor();
     if (m_script) {
-        const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions = m_script->stoppedMotions();
+        const QMultiMap<PMDModel *, VMDMotion *> &motions = m_script->stoppedMotions();
         if (!motions.isEmpty())
             emit motionDidFinished(motions);
     }

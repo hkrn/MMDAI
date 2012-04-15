@@ -46,6 +46,8 @@
 #include <QtCore/QtCore>
 #include <vpvl/vpvl.h>
 
+using namespace vpvl;
+
 namespace
 {
 /* command names */
@@ -323,22 +325,22 @@ void Script::handleCommand(const QString &type, const QList<QVariant> &arguments
     handleCommand(ScriptArgument(type, strings));
 }
 
-void Script::handleModelDelete(vpvl::PMDModel *model)
+void Script::handleModelDelete(PMDModel *model)
 {
     QString name = m_models.key(model);
     if (!name.isNull())
         m_models.remove(name);
 }
 
-void Script::handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions)
+void Script::handleFinishedMotion(const QMultiMap<PMDModel *, VMDMotion *> &motions)
 {
     /* ループさせる場合を除いてモーションが終了したらそのモーションは削除する */
     Arguments a;
-    QMapIterator<vpvl::PMDModel *, vpvl::VMDMotion *> iterator(motions);
+    QMapIterator<PMDModel *, VMDMotion *> iterator(motions);
     SceneLoader *loader = m_parent->sceneLoader();
     while (iterator.hasNext()) {
         iterator.next();
-        vpvl::VMDMotion *motion = iterator.value();
+        VMDMotion *motion = iterator.value();
         if (m_motionParameters.contains(motion)) {
             const MotionParameter &parameter = m_motionParameters.value(motion);
             if (parameter.isLoopEnabled) {
@@ -404,14 +406,14 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         const QString &path = canonicalizePath(argv[1]);
-        vpvl::PMDModel *model = m_parent->addModel(path);
+        PMDModel *model = m_parent->addModel(path);
         if (model) {
             if (argc >= 3) {
-                vpvl::Vector3 position;
+                Vector3 position;
                 parsePosition(argv[2], position);
                 model->setPositionOffset(position);
                 if (argc >= 4) {
-                    vpvl::Quaternion rotation;
+                    Quaternion rotation;
                     parseRotation(argv[3], rotation);
                     model->setRotationOffset(rotation);
                 }
@@ -420,14 +422,14 @@ void Script::handleCommand(const ScriptArgument &output)
                 model->setPositionOffset(model->rootBone().offset());
             }
             if (argc >= 5) {
-                vpvl::PMDModel *parentModel = m_models.value(argv[4]);
+                PMDModel *parentModel = m_models.value(argv[4]);
                 if (argc >= 6) {
                     const QByteArray &name = internal::fromQString(argv[5]);
-                    vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
+                    Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
                     model->setBaseBone(bone);
                 }
                 else {
-                    vpvl::Bone *bone = vpvl::Bone::centerBone(parentModel->mutableBones());
+                    Bone *bone = Bone::centerBone(parentModel->mutableBones());
                     model->setPositionOffset(parentModel->positionOffset() + bone->position());
                 }
             }
@@ -448,7 +450,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            vpvl::PMDModel *model = m_models.value(modelName);
+            PMDModel *model = m_models.value(modelName);
             const QString &path = canonicalizePath(argv[1]);
             loader->deleteModel(model);
             model = m_parent->addModel(path);
@@ -473,7 +475,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            vpvl::PMDModel *model = m_models.value(modelName);
+            PMDModel *model = m_models.value(modelName);
             /* 処理内容の関係で deleteModel() じゃないと modelWillDelete が呼ばれないのでここで signal を発行 */
             emit modelWillDelete(model);
             loader->deleteModel(model);
@@ -495,8 +497,8 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &motionName = argv[1];
         if (m_models.contains(modelName)) {
             const QString &path = canonicalizePath(argv[2]);
-            vpvl::PMDModel *model = m_models.value(modelName);
-            vpvl::VMDMotion *motion = m_parent->insertMotionToModel(path, model);
+            PMDModel *model = m_models.value(modelName);
+            VMDMotion *motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
                 MotionParameter parameter;
                 bool value = false;
@@ -544,8 +546,8 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &motionName = argv[1];
         const QString &path = canonicalizePath(argv[2]);
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
-            vpvl::PMDModel *model = m_models.value(modelName);
-            vpvl::VMDMotion *motion = m_motions.value(motionName);
+            PMDModel *model = m_models.value(modelName);
+            VMDMotion *motion = m_motions.value(motionName);
             bool isNullFrameEnabled = motion->isNullFrameEnabled();
             bool isLoopEnabled = false;
             if (m_motionParameters.contains(motion)) {
@@ -585,7 +587,7 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &modelName = argv[0];
         const QString &motionName = argv[1];
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
-            vpvl::VMDMotion *motion = m_motions.value(motionName);
+            VMDMotion *motion = m_motions.value(motionName);
             loader->deleteMotion(motion);
             m_motions.remove(motionName);
         }
@@ -613,7 +615,7 @@ void Script::handleCommand(const ScriptArgument &output)
         else {
             loader->deleteModel(m_stage);
             const QString &path = canonicalizePath(argv[0]);
-            vpvl::PMDModel *model = m_parent->addModel(path);
+            PMDModel *model = m_parent->addModel(path);
             if (model) {
                 m_stage = model;
                 emit eventDidPost(kStageEvent, Arguments());
@@ -629,7 +631,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
-        vpvl::Vector4 color;
+        Vector4 color;
         parseColor(argv[0], color);
         m_parent->sceneLoader()->setLightColor(color);
         Arguments a; a << color.x() << color.y() << color.z() << color.w();
@@ -641,7 +643,7 @@ void Script::handleCommand(const ScriptArgument &output)
             qWarning("%s", qPrintable(kInvalidArgumentFixed.arg(type).arg(1).arg(argc)));
             return;
         }
-        vpvl::Vector3 position;
+        Vector3 position;
         parsePosition(argv[0], position);
         m_parent->sceneLoader()->setLightPosition(position);
         Arguments a; a << position.x() << position.y() << position.z();
@@ -675,10 +677,10 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
             const QString &sequence = argv[1];
-            vpvl::PMDModel *model = m_models.value(modelName);
-            vpvl::VMDMotion *newLipSyncMotion = m_globalLipSync.createMotion(sequence);
+            PMDModel *model = m_models.value(modelName);
+            VMDMotion *newLipSyncMotion = m_globalLipSync.createMotion(sequence);
             if (newLipSyncMotion) {
-                vpvl::VMDMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
+                VMDMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
                 //newLipSyncMotion->setFull(false);
                 if (oldLipSyncMotion)
                     loader->deleteMotion(oldLipSyncMotion);
@@ -694,7 +696,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            vpvl::VMDMotion *motion = m_motions.value(kLipSyncName);
+            VMDMotion *motion = m_motions.value(kLipSyncName);
             loader->deleteMotion(motion);
             m_motions.remove(kLipSyncName);
         }
@@ -711,7 +713,7 @@ void Script::handleCommand(const ScriptArgument &output)
                 qWarning("%s", qPrintable(tr("[%1] Failed loading camera motion: %2").arg(type).arg(path)));
         }
         else if (argc == 3 || argc == 4) {
-            vpvl::Vector3 position, angle;
+            Vector3 position, angle;
             parsePosition(argv[0], position);
             parsePosition(argv[1], angle);
             float distance = argv.at(2).toFloat();
@@ -989,7 +991,7 @@ bool Script::parseEnable(const QString &value, const QString &enable, const QStr
     return false;
 }
 
-bool Script::parsePosition(const QString &value, vpvl::Vector3 &v) const
+bool Script::parsePosition(const QString &value, Vector3 &v) const
 {
     /* x,y,z を vpvl::Vector3(x, y, z) にキャストする処理 */
     QStringList xyz = value.split(',');
@@ -1007,7 +1009,7 @@ bool Script::parsePosition(const QString &value, vpvl::Vector3 &v) const
     return false;
 }
 
-bool Script::parseColor(const QString &value, vpvl::Vector4 &v) const
+bool Script::parseColor(const QString &value, Vector4 &v) const
 {
     /* r,g,b,a を vpvl::Color(r,g,b,a) にキャストする処理 */
     QStringList xyz = value.split(',');
@@ -1026,7 +1028,7 @@ bool Script::parseColor(const QString &value, vpvl::Vector4 &v) const
     return false;
 }
 
-bool Script::parseRotation(const QString &value, vpvl::Quaternion &v) const
+bool Script::parseRotation(const QString &value, Quaternion &v) const
 {
     /* x,y,z を vpvl::Quaternion (setEulerZYX 経由で設定する) にキャストする処理 */
     QStringList xyz = value.split(',');
@@ -1044,17 +1046,17 @@ bool Script::parseRotation(const QString &value, vpvl::Quaternion &v) const
     return false;
 }
 
-const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> Script::stoppedMotions() const
+const QMultiMap<PMDModel *, VMDMotion *> Script::stoppedMotions() const
 {
     /* 停止されたモーションを取得 */
     SceneLoader *loader = m_parent->sceneLoader();
-    QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> ret;
-    const QList<vpvl::PMDModel *> &models = loader->allModels();
-    foreach (vpvl::PMDModel *model, models) {
-        const vpvl::Array<vpvl::VMDMotion *> &motions = model->motions();
+    QMultiMap<PMDModel *, VMDMotion *> ret;
+    const QList<PMDModel *> &models = loader->allModels();
+    foreach (PMDModel *model, models) {
+        const Array<VMDMotion *> &motions = model->motions();
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
-            vpvl::VMDMotion *motion = motions[i];
+            VMDMotion *motion = motions[i];
             if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex()))
                 ret.insert(model, motion);
         }
