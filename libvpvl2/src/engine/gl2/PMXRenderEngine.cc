@@ -52,7 +52,6 @@ using namespace vpvl2::gl2;
 enum VertexBufferObjectType
 {
     kModelVertices,
-    kEdgeIndices,
     kModelIndices,
     kVertexBufferObjectMax
 };
@@ -69,49 +68,49 @@ class EdgeProgram : public BaseShaderProgram
 public:
     EdgeProgram(IRenderDelegate *delegate)
         : BaseShaderProgram(delegate),
-          m_boneAttributesAttributeLocation(0),
-          m_edgeAttributeLocation(0),
-          m_boneMatricesUniformLocation(0),
-          m_colorUniformLocation(0)
+          m_normalAttributeLocation(0),
+          m_edgeSizeAttributeLocation(0),
+          m_colorUniformLocation(0),
+          m_sizeUniformLocation(0)
     {
     }
     ~EdgeProgram() {
-        m_boneAttributesAttributeLocation = 0;
-        m_edgeAttributeLocation = 0;
-        m_boneMatricesUniformLocation = 0;
+        m_normalAttributeLocation = 0;
+        m_edgeSizeAttributeLocation = 0;
         m_colorUniformLocation = 0;
+        m_sizeUniformLocation = 0;
     }
 
     bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
         bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource);
         if (ret) {
-            m_boneAttributesAttributeLocation = glGetAttribLocation(m_program, "inBoneAttributes");
-            m_edgeAttributeLocation = glGetAttribLocation(m_program, "inEdgeOffset");
-            m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+            m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
+            m_edgeSizeAttributeLocation = glGetAttribLocation(m_program, "inEdgeSize");
             m_colorUniformLocation = glGetUniformLocation(m_program, "color");
+            m_sizeUniformLocation = glGetUniformLocation(m_program, "size");
         }
         return ret;
     }
-    void setBoneAttributes(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneAttributesAttributeLocation);
-        glVertexAttribPointer(m_boneAttributesAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+    void setNormal(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_normalAttributeLocation);
+        glVertexAttribPointer(m_normalAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setEdge(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_edgeAttributeLocation);
-        glVertexAttribPointer(m_edgeAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
+    void setEdgeSize(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_edgeSizeAttributeLocation);
+        glVertexAttribPointer(m_edgeSizeAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setBoneMatrices(const GLfloat *ptr, GLsizei size) {
-        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, ptr);
-    }
-    void setColor(const Vector3 &value) {
+    void setColor(const Color &value) {
         glUniform4fv(m_colorUniformLocation, 1, value);
+    }
+    void setSize(const Scalar &value) {
+        glUniform1f(m_sizeUniformLocation, value);
     }
 
 private:
-    GLuint m_boneAttributesAttributeLocation;
-    GLuint m_edgeAttributeLocation;
-    GLuint m_boneMatricesUniformLocation;
+    GLuint m_normalAttributeLocation;
+    GLuint m_edgeSizeAttributeLocation;
     GLuint m_colorUniformLocation;
+    GLuint m_sizeUniformLocation;
 };
 
 class ObjectProgram : public BaseShaderProgram
@@ -1003,7 +1002,6 @@ void PMXRenderEngine::renderModel()
 {
     if (!m_model->isVisible() || !m_context)
         return;
-
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -1035,28 +1033,22 @@ void PMXRenderEngine::renderModel()
     modelProgram->setNormalMatrix(m_scene->normalMatrix());
     modelProgram->setLightColor(m_scene->lightColor());
     modelProgram->setLightPosition(m_scene->lightPosition());
-
     const Array<pmx::Material *> &materials = m_model->materials();
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
-    Color ambient, diffuse;
-    GLenum type = GL_UNSIGNED_INT;
-
     offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         const MaterialTextures &materialPrivate = materialPrivates[i];
-        ambient = material->ambient();
-        diffuse = material->diffuse();
-        modelProgram->setMaterialAmbient(ambient);
-        modelProgram->setMaterialDiffuse(diffuse);
+        modelProgram->setMaterialAmbient(material->ambient());
+        modelProgram->setMaterialDiffuse(material->diffuse());
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
         modelProgram->setSphereTexture(materialPrivate.sphereTextureID, material->sphereTextureRenderMode());
         modelProgram->setToonTexture(materialPrivate.toonTextureID);
         material->isCullFaceDisabled() ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
         const int nindices = material->indices();
-        glDrawElements(GL_TRIANGLES, nindices, type, reinterpret_cast<const GLvoid *>(offset));
+        glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * size;
     }
     modelProgram->unbind();
@@ -1094,40 +1086,35 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderEdge()
 {
-#if 0
-    if (model->edgeOffset() == 0.0f)
-        return;
-    const PMXModelUserData *userData = static_cast<PMXModelUserData *>(model->userData());
-    float modelViewMatrix[16], projectionMatrix[16];
-    m_scene->getModelViewMatrix(modelViewMatrix);
-    m_scene->getProjectionMatrix(projectionMatrix);
-    m_edgeProgram->bind();
+    EdgeProgram *edgeProgram = m_context->edgeProgram;
+    edgeProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kEdgeIndices]);
-    m_edgeProgram->setColor(model->edgeColor());
-    m_edgeProgram->setModelViewMatrix(modelViewMatrix);
-    m_edgeProgram->setProjectionMatrix(projectionMatrix);
-    if (!model->isSoftwareSkinningEnabled() && !(m_accelerator && m_accelerator->isAvailable())) {
-        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
-                                   model->strideSize(PMDModel::kVerticesStride));
-        m_edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kNormalsStride)),
-                                 model->strideSize(PMDModel::kNormalsStride));
-        m_edgeProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kBoneAttributesStride)),
-                                         model->strideSize(PMDModel::kBoneAttributesStride));
-        m_edgeProgram->setEdge(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
-                               model->strideSize(PMDModel::kEdgeVerticesStride));
-        // XXX: boneMatricesPointer is removed, we must implement updateBoneMatrices alternative.
-        //m_edgeProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
-    }
-    else {
-        m_edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
-                                   model->strideSize(PMDModel::kEdgeVerticesStride));
-    }
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    size_t offset = pmx::Model::strideOffset(pmx::Model::kVertexStride);
+    size_t size   = pmx::Model::strideSize(pmx::Model::kVertexStride);
+    edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
+    offset = pmx::Model::strideOffset(pmx::Model::kNormalStride);
+    size   = pmx::Model::strideSize(pmx::Model::kNormalStride);
+    edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(offset), size);
+    offset = pmx::Model::strideOffset(pmx::Model::kEdgeSizeStride);
+    size   = pmx::Model::strideSize(pmx::Model::kEdgeSizeStride);
+    edgeProgram->setEdgeSize(reinterpret_cast<const GLvoid *>(offset), size);
+    edgeProgram->setModelViewProjectionMatrix(m_scene->modelViewProjectionMatrix());
     glCullFace(GL_FRONT);
-    glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
+    const Array<pmx::Material *> &materials = m_model->materials();
+    const int nmaterials = materials.count();
+    offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
+    for (int i = 0; i < nmaterials; i++) {
+        const pmx::Material *material = materials[i];
+        const int nindices = material->indices();
+        edgeProgram->setColor(material->edgeColor());
+        edgeProgram->setSize(material->edgeSize());
+        if (material->isEdgeDrawn())
+            glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+        offset += nindices * size;
+    }
     glCullFace(GL_BACK);
-    m_edgeProgram->unbind();
-#endif
+    edgeProgram->unbind();
 }
 
 void PMXRenderEngine::renderZPlot()

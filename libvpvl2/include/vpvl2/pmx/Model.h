@@ -75,6 +75,7 @@ public:
         kVertexStride,
         kNormalStride,
         kTexCoordStride,
+        kEdgeSizeStride,
         kUVA0Stride,
         kUVA1Stride,
         kUVA2Stride,

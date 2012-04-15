@@ -76,6 +76,7 @@ struct Model::SkinnedVertex {
     Vector3 position;
     Vector3 normal;
     Vector3 texcoord;
+    Vector3 edge;
     Vector4 uva0;
     Vector4 uva1;
     Vector4 uva2;
@@ -104,7 +105,7 @@ Model::~Model()
 
 size_t Model::strideOffset(StrideType type)
 {
-    const SkinnedVertex v;
+    static const SkinnedVertex v;
     switch (type) {
     case kVertexStride:
         return reinterpret_cast<const uint8_t *>(&v.position) - reinterpret_cast<const uint8_t *>(&v.position);
@@ -112,6 +113,8 @@ size_t Model::strideOffset(StrideType type)
         return reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
     case kTexCoordStride:
         return reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position);
+    case kEdgeSizeStride:
+        return reinterpret_cast<const uint8_t *>(&v.edge) - reinterpret_cast<const uint8_t *>(&v.position);
     case kUVA0Stride:
         return reinterpret_cast<const uint8_t *>(&v.uva0) - reinterpret_cast<const uint8_t *>(&v.position);
     case kUVA1Stride:
@@ -133,6 +136,7 @@ size_t Model::strideSize(StrideType type)
     case kVertexStride:
     case kNormalStride:
     case kTexCoordStride:
+    case kEdgeSizeStride:
     case kUVA0Stride:
     case kUVA1Stride:
     case kUVA2Stride:
@@ -300,13 +304,14 @@ void Model::performUpdate()
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = m_vertices[i];
         SkinnedVertex &v = m_skinnedVertices[i];
+        vertex->performSkinning(v.position, v.normal);
         v.texcoord = vertex->texcoord();
+        v.edge.setValue(vertex->edgeSize(), 0, 0);
         v.uva0 = vertex->uv(0);
         v.uva1 = vertex->uv(1);
         v.uva2 = vertex->uv(2);
         v.uva3 = vertex->uv(3);
         v.uva4 = vertex->uv(4);
-        vertex->performSkinning(v.position, v.normal);
     }
 }
 
