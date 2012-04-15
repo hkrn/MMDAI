@@ -154,9 +154,9 @@ void ExtendedSceneWidget::paintGL()
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
     vpvl::gl2::Renderer *renderer = m_loader->renderEngine();
     renderer->clear();
+    m_loader->render();
     m_tiledStage->renderBackground();
     m_tiledStage->renderFloor();
-    m_loader->render();
     if (m_script) {
         const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions = m_script->stoppedMotions();
         if (!motions.isEmpty())

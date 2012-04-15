@@ -44,141 +44,149 @@
 #include <btBulletDynamicsCommon.h>
 #include <QtCore/QtCore>
 
-class TiledStageInternal : protected QGLFunctions {
+using namespace vpvl;
+
+class TiledStage::PrivateContext : protected QGLFunctions {
 public:
-    struct TileStageVertex {
-        vpvl::Vector3 position;
-        vpvl::Vector3 normal;
-        vpvl::Vector3 texcoord;
-        vpvl::Color color;
+    struct Vertex {
+        QVector3D position;
+        QVector3D normal;
+        QVector2D texcoord;
     };
 
-    TiledStageInternal(const vpvl::Scene *scene, const QVector3D &normal)
+    PrivateContext(const Scene *scene, const QVector3D &normal, bool hasColor, bool cullFace = false)
         : m_scene(scene),
-          m_listID(0),
-          m_textureID(0)
+          m_textureID(0),
+          m_cullFace(cullFace),
+          m_hasColor(hasColor)
     {
-        TileStageVertex vertex;
-        vertex.position.setZero();
-        vertex.normal.setValue(normal.x(), normal.y(), normal.z());
-        vertex.color.setValue(0.1f, 0.1f, 0.1f, 0.6f);
-        vertex.texcoord.setValue(0.0f, 1.0f, 0.0f);
+        Vertex vertex;
+        vertex.normal = normal;
+        vertex.texcoord.setX(0.0f);
+        vertex.texcoord.setY(1.0f);
         m_vertices.add(vertex);
-        vertex.texcoord.setValue(1.0f, 1.0f, 0.0f);
+        vertex.texcoord.setX(1.0f);
+        vertex.texcoord.setY(1.0f);
         m_vertices.add(vertex);
-        vertex.texcoord.setValue(1.0f, 0.0f, 0.0f);
+        vertex.texcoord.setX(1.0f);
+        vertex.texcoord.setY(0.0f);
         m_vertices.add(vertex);
-        vertex.texcoord.setValue(0.0f, 0.0f, 0.0f);
+        vertex.texcoord.setX(0.0f);
+        vertex.texcoord.setY(0.0f);
         m_vertices.add(vertex);
         const uint16_t indices[] = { 3, 2, 0, 0, 2, 1 };
         memcpy(m_indices, indices, sizeof(indices));
-        initializeGLFunctions(QGLContext::currentContext());
-        glGenBuffers(sizeof(m_buffers) / sizeof(GLuint), m_buffers);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
-        glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(TileStageVertex), &m_vertices[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(m_indices), m_indices, GL_STATIC_DRAW);
         m_matrix.setToIdentity();
+        initializeGLFunctions(QGLContext::currentContext());
     }
-    ~TiledStageInternal() {
+    ~PrivateContext() {
         glDeleteBuffers(sizeof(m_buffers) / sizeof(GLuint), m_buffers);
-        deleteList();
         if (m_textureID)
             glDeleteTextures(1, &m_textureID);
-        m_listID = 0;
         m_textureID = 0;
     }
+
     void load(const QString &path) {
+        glGenBuffers(sizeof(m_buffers) / sizeof(GLuint), m_buffers);
+        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
+        glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(Vertex), &m_vertices[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(m_indices), m_indices, GL_STATIC_DRAW);
+        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/stage.vsh");
+        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/stage.fsh");
+        m_program.link();
         QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-        m_textureID = context->bindTexture(path);
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+        m_textureID = context->bindTexture(QImage(path), GL_TEXTURE_2D, GL_RGBA, options);
     }
-    void render(bool cullface, bool hasColor) {
-        const float color[] = { 0.65f, 0.65f, 0.65f, 1.0f };
-        float matrix[16];
-        m_scene->getProjectionMatrix(matrix);
-        glMatrixMode(GL_PROJECTION);
-        glLoadMatrixf(matrix);
-        m_scene->getModelViewMatrix(matrix);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(matrix);
-        if (m_listID) {
-            glCallList(m_listID);
+    void render() {
+        if (!m_program.isLinked())
+            return;
+        if (!m_cullFace)
+            glDisable(GL_CULL_FACE);
+        QMatrix4x4 modelView4x4, projection4x4;
+        float modelViewMatrixf[16], projectionMatrixf[16], normalMatrix[9];
+        m_scene->getModelViewMatrix(modelViewMatrixf);
+        m_scene->getProjectionMatrix(projectionMatrixf);
+        for (int i = 0; i < 16; i++) {
+            modelView4x4.data()[i] = modelViewMatrixf[i];
+            projection4x4.data()[i] = projectionMatrixf[i];
         }
-        else {
-            static TileStageVertex v;
-            m_listID = glGenLists(1);
-            glNewList(m_listID, GL_COMPILE_AND_EXECUTE);
-            if (!cullface)
-                glDisable(GL_CULL_FACE);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-            glDisable(GL_LIGHTING);
-            glActiveTexture(GL_TEXTURE0);
-            glClientActiveTexture(GL_TEXTURE0);
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, m_textureID);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_NORMAL_ARRAY);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
-            glVertexPointer(3, GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(0));
-            size_t offset = reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
-            glNormalPointer(GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(offset));
-            if (hasColor) {
-                offset = reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
-                glColorPointer(4, GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(offset));
-            }
-            offset = reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position);
-            glTexCoordPointer(2, GL_FLOAT, sizeof(v), reinterpret_cast<const GLvoid *>(offset));
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glDisableClientState(GL_NORMAL_ARRAY);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glDisable(GL_TEXTURE_2D);
-            if (!cullface)
-                glEnable(GL_CULL_FACE);
-            glEndList();
-        }
+        const QMatrix4x4 &modelViewProjection4x4 = projection4x4 * modelView4x4;
+        m_program.bind();
+        m_program.setUniformValue("modelViewProjectionMatrix", modelViewProjection4x4);
+        m_scene->getNormalMatrix(normalMatrix);
+        glUniformMatrix3fv(m_program.uniformLocation("normalMatrix"), 1, GL_FALSE, normalMatrix);
+        static const Vertex v;
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_textureID);
+        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
+        m_program.setUniformValue("mainTexture", 0);
+        m_program.setUniformValue("lightPosition", toQVector3D(m_scene->lightPosition()));
+        int inPosition = m_program.attributeLocation("inPosition");
+        glEnableVertexAttribArray(inPosition);
+        glVertexAttribPointer(inPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
+        size_t offset = reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
+        int inNormal = m_program.attributeLocation("inNormal");
+        glEnableVertexAttribArray(inNormal);
+        glVertexAttribPointer(inNormal, 3, GL_FLOAT, GL_FALSE, sizeof(v), reinterpret_cast<const void *>(offset));
+        offset = reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position);
+        int inTexCoord = m_program.attributeLocation("inTexCoord");
+        glEnableVertexAttribArray(inTexCoord);
+        glVertexAttribPointer(inTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(v), reinterpret_cast<const void *>(offset));
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        if (!m_cullFace)
+            glEnable(GL_CULL_FACE);
+        m_program.release();
     }
     const QMatrix3x4 &vertices() const {
         return m_matrix;
     }
     void setVertices(const QMatrix3x4 &vertices) {
-        for (int i = 0; i < 4; i++)
-            m_vertices[i].position.setValue(vertices(i, 0), vertices(i, 1), vertices(i, 2));
+        for (int i = 0; i < 4; i++) {
+            QVector3D &position = m_vertices[i].position;
+            position.setX(vertices(i, 0));
+            position.setY(vertices(i, 1));
+            position.setZ(vertices(i, 2));
+        }
         glDeleteBuffers(1, &m_buffers[0]);
         glGenBuffers(1, &m_buffers[0]);
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
-        glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(TileStageVertex), &m_vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(Vertex), &m_vertices[0], GL_STATIC_DRAW);
         m_matrix = vertices;
     }
 
 private:
-    void deleteList() {
-        if (m_listID) {
-            glDeleteLists(m_listID, 1);
-            m_listID = 0;
-        }
+    static const inline QVector3D toQVector3D(const Vector3 &value) {
+        QVector3D v;
+        v.setX(value.x());
+        v.setY(value.y());
+        v.setZ(value.z());
+        return v;
     }
 
-    const vpvl::Scene *m_scene;
+    const Scene *m_scene;
     QMatrix3x4 m_matrix;
-    vpvl::Array<TileStageVertex> m_vertices;
+    Array<Vertex> m_vertices;
     uint16_t m_indices[6];
-    GLuint m_listID;
+    QGLShaderProgram m_program;
     GLuint m_buffers[2];
     GLuint m_textureID;
+    const bool m_cullFace;
+    const bool m_hasColor;
 };
 
-TiledStage::TiledStage(const vpvl::Scene *scene, internal::World *world)
+TiledStage::TiledStage(const Scene *scene, internal::World *world)
     : m_scene(scene),
       m_floor(0),
       m_background(0),
       m_floorRigidBody(0),
       m_world(world)
 {
-    initializeGLFunctions(QGLContext::currentContext());
 }
 
 TiledStage::~TiledStage()
@@ -193,7 +201,7 @@ TiledStage::~TiledStage()
 void TiledStage::loadFloor(const QString &path)
 {
     delete m_floor;
-    m_floor = new TiledStageInternal(m_scene, QVector3D(0.0f, 1.0f, 0.0f));
+    m_floor = new PrivateContext(m_scene, QVector3D(0.0f, 1.0f, 0.0f), true);
     m_floor->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }
@@ -201,7 +209,7 @@ void TiledStage::loadFloor(const QString &path)
 void TiledStage::loadBackground(const QString &path)
 {
     delete m_background;
-    m_background = new TiledStageInternal(m_scene, QVector3D(0.0f, 0.0f, 1.0f));
+    m_background = new PrivateContext(m_scene, QVector3D(0.0f, 0.0f, 1.0f), false);
     m_background->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }
@@ -209,13 +217,13 @@ void TiledStage::loadBackground(const QString &path)
 void TiledStage::renderFloor()
 {
     if (m_floor)
-        m_floor->render(false, true);
+        m_floor->render();
 }
 
 void TiledStage::renderBackground()
 {
     if (m_background)
-        m_background->render(false, false);
+        m_background->render();
 }
 
 void TiledStage::setSize(float width, float height, float depth)

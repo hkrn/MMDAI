@@ -14,4 +14,8 @@
     <qresource prefix="/lipsync">
         <file alias="global">global.lip</file>
     </qresource>
+    <qresource prefix="/shaders">
+        <file alias="stage.fsh">shaders/stage.fsh</file>
+        <file alias="stage.vsh">shaders/stage.vsh</file>
+    </qresource>
 </RCC>

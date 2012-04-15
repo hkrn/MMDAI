@@ -335,7 +335,6 @@ void MainWindow::buildMenuBar()
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
     m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
-    connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), m_sceneWidget, SLOT(setAccelerationEnable(bool)));
     m_actionShowModelDialog = new QAction(this);
     m_actionShowModelDialog->setCheckable(true);
     m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
@@ -489,7 +488,6 @@ void MainWindow::buildMenuBar()
 
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), this, SLOT(addRecentFile(QString)));
     connect(m_sceneWidget, SIGNAL(fpsDidUpdate(int)), this, SLOT(updateFPS(int)));
-    connect(m_sceneWidget, SIGNAL(modelDidSelect(vpvl::PMDModel*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
     connect(m_sceneWidget, SIGNAL(scriptDidLoaded(QString)), this, SLOT(disableAcceleration()));
 
     retranslate();
@@ -502,6 +500,8 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
     connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(addAsset(vpvl::Asset*,QUuid)));
     connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
+    connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
 }
 
 void MainWindow::disableAcceleration()

@@ -54,11 +54,12 @@ class World;
 }
 
 class btRigidBody;
-class TiledStageInternal;
 
-class TiledStage : protected QGLFunctions
+class TiledStage
 {
 public:
+    class PrivateContext;
+
     TiledStage(const vpvl::Scene *scene, internal::World *world);
     ~TiledStage();
 
@@ -73,8 +74,8 @@ private:
     void destroyFloor();
 
     const vpvl::Scene *m_scene;
-    TiledStageInternal *m_floor;
-    TiledStageInternal *m_background;
+    PrivateContext *m_floor;
+    PrivateContext *m_background;
     btRigidBody *m_floorRigidBody;
     internal::Delegate *m_delegate;
     internal::World *m_world;
