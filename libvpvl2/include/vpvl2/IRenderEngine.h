@@ -40,10 +40,11 @@
 #include <string>
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IModel.h"
 
 namespace vpvl2
 {
+
+class IString;
 
 class VPVL2_API IRenderEngine
 {

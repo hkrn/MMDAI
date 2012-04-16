@@ -39,6 +39,7 @@
 #ifndef VPVL2_VMD_MORPHKEYFRAME_H_
 #define VPVL2_VMD_MORPHKEYFRAME_H_
 
+#include "vpvl2/IMorphKeyframe.h"
 #include "vpvl2/vmd/BaseKeyframe.h"
 
 namespace vpvl2
@@ -48,7 +49,7 @@ class IEncoding;
 namespace vmd
 {
 
-class VPVL2_API MorphKeyframe : public BaseKeyframe
+class VPVL2_API MorphKeyframe : public BaseKeyframe, public IMorphKeyframe
 {
 public:
     MorphKeyframe(IEncoding *encoding);
@@ -80,6 +81,8 @@ public:
      * @param A value of weight of the face
      */
     void setWeight(float value);
+
+    Type type() const { return IKeyframe::kMorph; }
 
 private:
     IEncoding *m_encoding;

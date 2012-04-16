@@ -69,7 +69,6 @@ public:
     void seek(float frameAt);
     void takeSnap(const Vector3 &center);
     void reset();
-    void refresh();
 
     /**
      * Get a camera key frame associated with index.

@@ -40,14 +40,14 @@
 #define VPVL2_VMD_BASEKEYFRAME_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
 namespace vmd
 {
 
-class VPVL2_API BaseKeyframe
+class VPVL2_API BaseKeyframe : public virtual IKeyframe
 {
 public:
     BaseKeyframe()
@@ -86,15 +86,6 @@ public:
     virtual void write(uint8_t *data) const = 0;
 
     /**
-     * Clone a key frame
-     *
-     * You must manage a copied keyframe and free it at destruction.
-     *
-     * @return copied key frame
-     */
-    virtual BaseKeyframe *clone() const = 0;
-
-    /**
      * Get the target bone name of this keyframe.
      *
      * @return name the bone name
@@ -107,13 +98,6 @@ public:
      * @return A value of frame index
      */
     float frameIndex() const { return m_frameIndex; }
-
-    /**
-     * Set the target bone name of this keyframe.
-     *
-     * @param value the bone name
-     */
-    virtual void setName(const IString *value) = 0;
 
     /**
      * Set the frame index of this keyframe.
@@ -133,4 +117,3 @@ protected:
 }
 
 #endif
-

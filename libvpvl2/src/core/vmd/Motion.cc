@@ -163,24 +163,6 @@ bool Motion::load(const uint8_t *data, size_t size)
     return false;
 }
 
-size_t Motion::estimateSize()
-{
-    /*
-     * header[30]
-     * name[20]
-     * bone size
-     * morph size
-     * camera size
-     * light size (empty)
-     * selfshadow size (empty)
-     */
-    return kSignatureSize + kNameSize + sizeof(int) * 5
-            + m_boneMotion.countKeyframes() * BoneKeyframe::strideSize()
-            + m_morphMotion.countKeyframes() * MorphKeyframe::strideSize()
-            + m_cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
-            + m_lightMotion.countKeyframes() * LightKeyframe::strideSize();
-}
-
 void Motion::save(uint8_t *data) const
 {
     internal::writeBytes(kSignature, kSignatureSize, data);
@@ -220,6 +202,30 @@ void Motion::save(uint8_t *data) const
     internal::writeBytes(reinterpret_cast<uint8_t *>(&empty), sizeof(empty), data);
 }
 
+size_t Motion::estimateSize() const
+{
+    /*
+     * header[30]
+     * name[20]
+     * bone size
+     * morph size
+     * camera size
+     * light size (empty)
+     * selfshadow size (empty)
+     */
+    return kSignatureSize + kNameSize + sizeof(int) * 5
+            + m_boneMotion.countKeyframes() * BoneKeyframe::strideSize()
+            + m_morphMotion.countKeyframes() * MorphKeyframe::strideSize()
+            + m_cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
+            + m_lightMotion.countKeyframes() * LightKeyframe::strideSize();
+}
+
+void Motion::setParentModel(IModel *model)
+{
+    m_boneMotion.setParentModel(model);
+    m_morphMotion.setParentModel(model);
+}
+
 void Motion::seek(float frameIndex)
 {
     m_boneMotion.seek(frameIndex);
@@ -246,8 +252,9 @@ void Motion::advance(float delta)
 
 void Motion::reload()
 {
-    m_boneMotion.refresh();
-    m_morphMotion.refresh();
+    /* rebuild internal keyframe nodes */
+    m_boneMotion.setParentModel(m_model);
+    m_morphMotion.setParentModel(m_model);
     reset();
 }
 
@@ -280,6 +287,46 @@ void Motion::setNullFrameEnable(bool value)
 {
     m_boneMotion.setNullFrameEnable(value);
     m_morphMotion.setNullFrameEnable(value);
+}
+
+void Motion::addKeyframe(IKeyframe *value)
+{
+    switch (value->type()) {
+    case IKeyframe::kBone:
+        m_boneMotion.addKeyframe(value);
+        break;
+    case IKeyframe::kCamera:
+        m_cameraMotion.addKeyframe(value);
+        break;
+    case IKeyframe::kLight:
+        m_lightMotion.addKeyframe(value);
+        break;
+    case IKeyframe::kMorph:
+        m_morphMotion.addKeyframe(value);
+        break;
+    default:
+        break;
+    }
+}
+
+void Motion::deleteKeyframe(IKeyframe *value)
+{
+    switch (value->type()) {
+    case IKeyframe::kBone:
+        m_boneMotion.deleteKeyframe(value->frameIndex(), value->name());
+        break;
+    case IKeyframe::kCamera:
+        m_cameraMotion.deleteKeyframe(value->frameIndex(), value->name());
+        break;
+    case IKeyframe::kLight:
+        m_lightMotion.deleteKeyframe(value->frameIndex(), value->name());
+        break;
+    case IKeyframe::kMorph:
+        m_morphMotion.deleteKeyframe(value->frameIndex(), value->name());
+        break;
+    default:
+        break;
+    }
 }
 
 void Motion::parseHeader(const DataInfo &info)

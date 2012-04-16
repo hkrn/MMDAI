@@ -80,21 +80,10 @@ public:
      * If you modified frames of this animation, you should call
      * refresh method to rebuild internal states.
      *
-     * This method has no effect if you have already called it.
-     *
      * @param model A model to attach the motion
      * @see refresh
      */
     void setParentModel(IModel *model);
-
-    /**
-     * Rebuild internal states to animate.
-     *
-     * This method has no effect if you haven't call attachModel.
-     *
-     * @see attachModel
-     */
-    void refresh();
 
     /**
      * Reset the last frame index of all frames.

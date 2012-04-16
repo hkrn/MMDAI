@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/IRenderDelegate.h>
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
@@ -465,19 +466,19 @@ class UI : public QGLWidget
 public:
     UI()
         : QGLWidget(QGLFormat(QGL::SampleBuffers), 0),
+      #ifndef VPVL2_NO_BULLET
+          m_dispatcher(&m_config),
+          m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
+          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
+      #endif /* VPVL2_NO_BULLET */
           m_rotation(Quaternion::getIdentity()),
           m_position(0.0, 10.0, 0.0),
           m_angle(kZeroV3),
           m_fovy(30.0),
           m_distance(50.0),
-          m_world(0),
           m_delegate(this),
           m_encoding(0),
           m_factory(0),
-      #ifndef VPVL2_NO_BULLET
-          m_dispatcher(&m_config),
-          m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
-      #endif /* VPVL2_NO_BULLET */
           m_prevElapsed(0),
           m_currentFrameIndex(0)
     {
@@ -485,18 +486,14 @@ public:
         m_encoding = encoding;
         m_factory = new Factory(encoding);
 #ifndef VPVL2_NO_BULLET
-        m_world = new btDiscreteDynamicsWorld(&m_dispatcher, &m_broadphase, &m_solver, &m_config);
-        m_world->setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
-        m_world->getSolverInfo().m_numIterations = static_cast<int>(10.0f);
+        m_world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
+        m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f);
 #endif /* VPVL2_NO_BULLET */
     }
     ~UI() {
 #ifdef VPVL2_LINK_ASSIMP
         Assimp::DefaultLogger::kill();
 #endif
-        qDeleteAll(m_motions);
-        qDeleteAll(m_models);
-        delete m_world;
         delete m_encoding;
     }
 
@@ -536,8 +533,10 @@ protected:
         m_prevElapsed = elapsed;
         if (diff < 0)
             diff = elapsed;
-        foreach (IRenderEngine *engine, m_models)
-            engine->update();
+        const Array<IRenderEngine *> &engines = m_scene.renderEngines();
+        const int nengines = engines.count();
+        for (int i = 0; i < nengines; i++)
+            engines[i]->update();
         updateGL();
     }
     void mousePressEvent(QMouseEvent *event) {
@@ -557,32 +556,34 @@ protected:
         }
     }
     void keyPressEvent(QKeyEvent *event) {
-        if (!m_motions.isEmpty() && event->modifiers() & Qt::SHIFT) {
+        const Array<IMotion *> &motions = m_scene.motions();
+        const int nmotions = motions.count();
+        if (nmotions > 0 && event->modifiers() & Qt::SHIFT) {
             switch (event->key()) {
             case Qt::Key_Left:
                 m_currentFrameIndex -= 1.0f;
                 btSetMax(m_currentFrameIndex, 0.0f);
-                foreach (IMotion *motion, m_motions)
-                    motion->seek(m_currentFrameIndex);
+                for (int i = 0; i < nmotions; i++)
+                    motions[i]->seek(m_currentFrameIndex);
                 break;
             case Qt::Key_Right:
                 m_currentFrameIndex += 1.0;
-                foreach (IMotion *motion, m_motions) {
+                for (int i = 0; i < nmotions; i++) {
+                    IMotion *motion = motions[i];
                     btSetMin(m_currentFrameIndex, motion->maxFrameIndex());
                     motion->seek(m_currentFrameIndex);
                 }
                 break;
             }
             qDebug() << m_currentFrameIndex;
-            foreach (IMotion *motion, m_motions) {
+            for (int i = 0; i < nmotions; i++) {
+                IMotion *motion = motions[i];
                 if (motion->isReachedTo(motion->maxFrameIndex()))
                     motion->reset();
             }
-            foreach (IRenderEngine *engine, m_models)
-                engine->model()->performUpdate();
             const int kFPS = 30;
             const Scalar &sec = 1.0 / kFPS;
-            m_world->stepSimulation(sec, 1, 1.0 / kFPS);
+            m_world.stepSimulation(sec, 1, 1.0 / kFPS);
         }
     }
     void wheelEvent(QWheelEvent *event) {
@@ -611,7 +612,10 @@ protected:
         updateModelViewMatrix();
         updateProjectionMatrix();
         updateModelViewProjectionMatrix();
-        foreach (IRenderEngine *engine, m_models) {
+        const Array<IRenderEngine *> &engines = m_scene.renderEngines();
+        const int nengines = engines.count();
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
             engine->update();
             engine->renderModel();
             engine->renderEdge();
@@ -683,10 +687,10 @@ private:
             return 0;
         }
         //model->setEdgeOffset(0.5f);
-        model->joinWorld(m_world);
+        model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(&m_delegate, model);
         engine->upload(dir);
-        m_models.append(engine);
+        m_scene.addModel(model, engine);
 #if 0
         pmx::Model *model = static_cast<pmx::Model*>(m_model);
         for (int i = 0; i < model->materials().count(); i++)
@@ -709,13 +713,20 @@ private:
             IMotion *motion = m_factory->createMotion(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), model, ok);
             qDebug() << "maxFrameIndex:" << motion->maxFrameIndex();
             motion->seek(0.0);
-            m_motions.append(motion);
+            m_scene.addMotion(motion);
         }
         else {
             qWarning("Failed parsing the model motion, skipped...");
         }
     }
 
+#ifndef VPVL2_NO_BULLET
+    btDefaultCollisionConfiguration m_config;
+    btCollisionDispatcher m_dispatcher;
+    btAxisSweep3 m_broadphase;
+    btSequentialImpulseConstraintSolver m_solver;
+    btDiscreteDynamicsWorld m_world;
+#endif /* VPVL2_NO_BULLET */
     QElapsedTimer m_timer;
     QPoint m_prevPos;
     QMatrix4x4 m_projectionMatrix;
@@ -726,19 +737,10 @@ private:
     Vector3 m_angle;
     qreal m_fovy;
     qreal m_distance;
-    btDiscreteDynamicsWorld *m_world;
     Delegate m_delegate;
     Scene m_scene;
     IEncoding *m_encoding;
     Factory *m_factory;
-    QList<IRenderEngine *> m_models;
-    QList<IMotion *> m_motions;
-#ifndef VPVL2_NO_BULLET
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher m_dispatcher;
-    btAxisSweep3 m_broadphase;
-    btSequentialImpulseConstraintSolver m_solver;
-#endif /* VPVL2_NO_BULLET */
     //VMDMotion m_camera;
     float m_prevElapsed;
     float m_currentFrameIndex;

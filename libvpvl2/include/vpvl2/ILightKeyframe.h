@@ -34,26 +34,24 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IBONE_H_
-#define VPVL2_IBONE_H_
+#ifndef VPVL2_ILIGHTKEYFRAME_H_
+#define VPVL2_ILIGHTKEYFRAME_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
 
-class IString;
-
-class VPVL2_API IBone
+class VPVL2_API ILightKeyframe : public virtual IKeyframe
 {
 public:
-    virtual ~IBone() {}
+    virtual ~ILightKeyframe() {}
 
-    virtual const IString *name() const = 0;
-    virtual int index() const = 0;
-    virtual const Transform &localTransform() const = 0;
-    virtual void setPosition(const Vector3 &value) = 0;
-    virtual void setRotation(const Quaternion &value) = 0;
+    virtual ILightKeyframe *clone() const = 0;
+    virtual const Vector3 &color() const = 0;
+    virtual const Vector3 &direction() const = 0;
+    virtual void setColor(const Vector3 &value) = 0;
+    virtual void setDirection(const Vector3 &value) = 0;
 };
 
 }

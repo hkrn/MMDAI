@@ -38,14 +38,15 @@
 #define VPVL2_SCENE_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IModel.h"
-
-#include "vpvl2/IRenderDelegate.h"
-#include "vpvl2/IRenderEngine.h"
 
 namespace vpvl2
 {
+
+class IEncoding;
+class IModel;
+class IMotion;
+class IRenderDelegate;
+class IRenderEngine;
 
 class VPVL2_API Scene
 {
@@ -53,9 +54,17 @@ public:
     static bool isAcceleratorSupported();
 
     Scene();
-    ~Scene();
+    virtual ~Scene();
 
     IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model) const;
+    void addModel(IModel *model, IRenderEngine *engine);
+    void addMotion(IMotion *motion);
+    void removeModel(IModel *model);
+    void removeMotion(IMotion *motion);
+    const Array<IModel *> &models() const;
+    const Array<IMotion *> &motions() const;
+    const Array<IRenderEngine *> &renderEngines() const;
+    IRenderEngine *renderEngine(IModel *model) const;
 
     void setModelViewProjectionMatrix(const float value[16]);
     void setModelViewMatrix(const float value[16]);

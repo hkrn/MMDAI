@@ -38,24 +38,30 @@
 #define VPVL2_IMOTION_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
 
 namespace vpvl2
 {
 
+class IKeyframe;
 class IModel;
+class IString;
 
 class VPVL2_API IMotion
 {
 public:
     virtual ~IMotion() {}
+
     virtual bool load(const uint8_t *data, size_t size) = 0;
     virtual void save(uint8_t *data) const = 0;
+    virtual size_t estimateSize() const = 0;
+    virtual void setParentModel(IModel *model) = 0;
     virtual void seek(float frameIndex) = 0;
     virtual void advance(float delta) = 0;
     virtual void reset() = 0;
     virtual float maxFrameIndex() const = 0;
     virtual bool isReachedTo(float frameIndex) const = 0;
+    virtual void addKeyframe(IKeyframe *value) = 0;
+    virtual void deleteKeyframe(IKeyframe *value) = 0;
 };
 
 }

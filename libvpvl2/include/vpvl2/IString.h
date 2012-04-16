@@ -50,6 +50,7 @@ public:
         kUTF16
     };
     virtual ~IString() {}
+
     virtual IString *clone() const = 0;
     virtual const HashString toHashString() const = 0;
     virtual bool equals(const IString *value) const = 0;

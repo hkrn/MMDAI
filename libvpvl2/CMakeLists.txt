@@ -19,9 +19,14 @@ set(vpvl2_public_headers
     include/vpvl2/Factory.h
     include/vpvl2/vpvl2.h
     include/vpvl2/IBone.h
+    include/vpvl2/IBoneKeyframe.h
+    include/vpvl2/ICameraKeyframe.h
     include/vpvl2/IEncoding.h
+    include/vpvl2/IKeyframe.h
+    include/vpvl2/ILightKeyframe.h
     include/vpvl2/IModel.h
     include/vpvl2/IMorph.h
+    include/vpvl2/IMorphKeyframe.h
     include/vpvl2/IMotion.h
     include/vpvl2/IRenderDelegate.h
     include/vpvl2/IRenderEngine.h
@@ -207,7 +212,7 @@ endif()
 
 option(VPVL2_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
 if(VPVL2_ENABLE_PROJECT)
-  list(APPEND vpvl2_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/project/Project.cc)
+  list(APPEND vpvl2_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/core/project/Project.cc)
   list(APPEND vpvl2_public_headers include/vpvl2/Project.h)
 endif()
 

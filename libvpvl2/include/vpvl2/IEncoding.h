@@ -47,6 +47,7 @@ class VPVL2_API IEncoding
 {
 public:
     virtual ~IEncoding() {}
+
     virtual IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const = 0;
     virtual IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const = 0;
     virtual uint8_t *toByteArray(const IString *value, IString::Codec codec) const = 0;

@@ -49,7 +49,6 @@ class IEncoding;
 
 namespace vmd
 {
-
 class BoneKeyframe;
 
 /**
@@ -74,7 +73,6 @@ public:
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
     void reset();
-    void refresh();
 
     /**
      * Attach this to the model.
@@ -82,8 +80,6 @@ public:
      * After calling this method, internal states to animate are built.
      * If you modified frames of this animation, you should call
      * refresh method to rebuild internal states.
-     *
-     * This method has no effect if you have already called it.
      *
      * @param model A model to attach the motion
      * @see refresh

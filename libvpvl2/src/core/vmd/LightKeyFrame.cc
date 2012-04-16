@@ -119,7 +119,7 @@ void LightKeyframe::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
-BaseKeyframe *LightKeyframe::clone() const
+ILightKeyframe *LightKeyframe::clone() const
 {
     LightKeyframe *frame = new LightKeyframe();
     frame->setFrameIndex(m_frameIndex);

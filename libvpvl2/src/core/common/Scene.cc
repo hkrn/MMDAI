@@ -53,8 +53,14 @@ struct Scene::PrivateContext {
     {
     }
     ~PrivateContext() {
+        engines.releaseAll();
+        motions.releaseAll();
     }
 
+    Hash<HashPtr, IRenderEngine *> model2engine;
+    Array<IModel *> models;
+    Array<IMotion *> motions;
+    Array<IRenderEngine *> engines;
     float modelViewProjectionMatrix[16];
     float modelViewMatrix[16];
     float projectionMatrix[16];
@@ -104,6 +110,55 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
         break;
     }
     return engine;
+}
+
+void Scene::addModel(IModel *model, IRenderEngine *engine)
+{
+    m_context->models.add(model);
+    m_context->engines.add(engine);
+    m_context->model2engine.insert(HashPtr(model), engine);
+}
+
+void Scene::addMotion(IMotion *motion)
+{
+    m_context->motions.add(motion);
+}
+
+void Scene::removeModel(IModel *model)
+{
+    const HashPtr key(model);
+    m_context->models.remove(model);
+    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(key));
+    if (engine) {
+        m_context->model2engine.remove(key);
+        m_context->engines.remove(*engine);
+    }
+}
+
+void Scene::removeMotion(IMotion *motion)
+{
+    m_context->motions.remove(motion);
+}
+
+const Array<IModel *> &Scene::models() const
+{
+    return m_context->models;
+}
+
+const Array<IMotion *> &Scene::motions() const
+{
+    return m_context->motions;
+}
+
+const Array<IRenderEngine *> &Scene::renderEngines() const
+{
+    return m_context->engines;
+}
+
+IRenderEngine *Scene::renderEngine(IModel *model) const
+{
+    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(HashPtr(model)));
+    return engine ? *engine : 0;
 }
 
 void Scene::setModelViewProjectionMatrix(const float value[])

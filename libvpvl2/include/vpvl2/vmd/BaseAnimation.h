@@ -40,13 +40,12 @@
 #define VPVL2_VMD_BASEANIMATION_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
 namespace vmd
 {
-
-class BaseKeyframe;
 
 /**
  * @file
@@ -105,21 +104,11 @@ public:
     void reset();
 
     /**
-     * Rebuild internal states to animate.
-     *
-     * This method has no effect if you haven't call attachModel.
-     * In CameraAnimation class, this method does nothing.
-     *
-     * @see attachModel
-     */
-    virtual void refresh() = 0;
-
-    /**
      * Add a key frame.
      *
      * @param frame A key frame to be added
      */
-    void addKeyframe(BaseKeyframe *frame);
+    void addKeyframe(IKeyframe *frame);
 
     /**
      * Replace a key frame.
@@ -129,7 +118,7 @@ public:
      *
      * @param frame A key frame to be replaced (or add)
      */
-    void replaceKeyframe(BaseKeyframe *frame);
+    void replaceKeyframe(IKeyframe *frame);
 
     /**
      * Count all of key frames.
@@ -188,31 +177,12 @@ public:
         return m_maxFrame;
     }
 
-    /**
-     * Get whether calls refresh method automatically after modifying key frames.
-     *
-     * @return True if calling refresh automatically
-     */
-    bool isAutomaticRefreshEnabled() const {
-        return m_enableAutomaticRefresh;
-    }
-
-    /**
-     * Set calling refresh method automatically after modifying key frames.
-     *
-     * @param value True if calling refresh automatically
-     */
-    void setAutomaticRefreshEnable(bool value) {
-        m_enableAutomaticRefresh = value;
-    }
-
 protected:
-    Array<BaseKeyframe *> m_frames;
+    Array<IKeyframe *> m_frames;
     int m_lastIndex;
     float m_maxFrame;
     float m_currentFrame;
     float m_previousFrame;
-    bool m_enableAutomaticRefresh;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

@@ -40,10 +40,11 @@
 #include <string>
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
 
 namespace vpvl2
 {
+
+class IString;
 
 class VPVL2_API IRenderDelegate
 {
@@ -69,8 +70,8 @@ public:
     enum KernelType {
         kModelSkinningKernel
     };
-
     virtual ~IRenderDelegate() {}
+
     virtual bool uploadTexture(const std::string &name, const std::string &dir, void *texture, bool isToon) = 0;
     virtual bool uploadTexture(const IString *name, const std::string &dir, void *texture, bool isToon) = 0;
     virtual bool uploadToonTexture(const std::string &name, const std::string &dir, void *texture) = 0;

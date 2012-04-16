@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IBONE_H_
-#define VPVL2_IBONE_H_
+#ifndef VPVL2_IKEYFRAME_H_
+#define VPVL2_IKEYFRAME_H_
 
 #include "vpvl2/Common.h"
 
@@ -44,16 +44,22 @@ namespace vpvl2
 
 class IString;
 
-class VPVL2_API IBone
+class VPVL2_API IKeyframe
 {
 public:
-    virtual ~IBone() {}
+    enum Type {
+        kBone,
+        kCamera,
+        kLight,
+        kMorph
+    };
+    virtual ~IKeyframe() {}
 
     virtual const IString *name() const = 0;
-    virtual int index() const = 0;
-    virtual const Transform &localTransform() const = 0;
-    virtual void setPosition(const Vector3 &value) = 0;
-    virtual void setRotation(const Quaternion &value) = 0;
+    virtual float frameIndex() const = 0;
+    virtual void setName(const IString *value) = 0;
+    virtual void setFrameIndex(float value) = 0;
+    virtual Type type() const = 0;
 };
 
 }

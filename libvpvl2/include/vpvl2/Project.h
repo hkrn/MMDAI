@@ -34,29 +34,95 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IBONE_H_
-#define VPVL2_IBONE_H_
+#ifndef VPVL2_PROJECT_H_
+#define VPVL2_PROJECT_H_
 
-#include "vpvl2/Common.h"
+#include <libxml/SAX2.h>
+#include <string>
+#include <vector>
+
+#include "vpvl2/Scene.h"
+
+typedef struct _xmlTextWriter* xmlTextWriterPtr;
 
 namespace vpvl2
 {
 
 class IString;
+class Factory;
 
-class VPVL2_API IBone
+/**
+ * @file
+ * @author hkrn
+ *
+ * @section DESCRIPTION
+ *
+ * Project class represents a project file (*.vpvx)
+ */
+
+class VPVL2_API Project : public Scene
 {
 public:
-    virtual ~IBone() {}
+    class IDelegate
+    {
+    public:
+        virtual ~IDelegate() {}
+        virtual const IString *fromUnicode(const std::string &value) const = 0;
+        virtual const IString *toUnicode(const std::string &value) const = 0;
+        virtual void error(const char *format, va_list ap) = 0;
+        virtual void warning(const char *format, va_list ap) = 0;
+    };
+    typedef std::string UUID;
+    typedef std::vector<UUID> UUIDList;
+    class PrivateContext;
 
-    virtual const IString *name() const = 0;
-    virtual int index() const = 0;
-    virtual const Transform &localTransform() const = 0;
-    virtual void setPosition(const Vector3 &value) = 0;
-    virtual void setRotation(const Quaternion &value) = 0;
+    static const UUID kNullUUID;
+    static const std::string kSettingNameKey;
+    static const std::string kSettingURIKey;
+
+    static bool isReservedSettingKey(const std::string &key);
+
+    Project(IDelegate *delegate, Factory *factory);
+    ~Project();
+
+    bool load(const char *path);
+    bool load(const uint8_t *data, size_t size);
+    bool save(const char *path);
+    bool save(xmlBufferPtr &buffer);
+
+    const std::string &version() const;
+    const std::string &globalSetting(const std::string &key) const;
+    const std::string &modelSetting(const IModel *model, const std::string &key) const;
+    const UUIDList modelUUIDs() const;
+    const UUIDList motionUUIDs() const;
+    const UUID &modelUUID(const IModel *model) const;
+    const UUID &motionUUID(const IMotion *motion) const;
+    IModel *model(const UUID &uuid) const;
+    IMotion *motion(const UUID &uuid) const;
+    bool containsModel(const IModel *model) const;
+    bool containsMotion(const IMotion *motion) const;
+    bool isDirty() const { return m_dirty; }
+    void setDirty(bool value);
+
+    void addModel(IModel *model, IRenderEngine *engine, const UUID &uuid);
+    void addMotion(IMotion *motion, const UUID &uuid);
+    void removeModel(IModel *model);
+    void removeMotion(IMotion *motion);
+
+    void setGlobalSetting(const std::string &key, const std::string &value);
+    void setModelSetting(const IModel *model, const std::string &key, const std::string &value);
+
+private:
+    bool save0(xmlTextWriterPtr ptr);
+    bool validate(bool result);
+
+    PrivateContext *m_context;
+    xmlSAXHandler m_sax;
+    bool m_dirty;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Project)
 };
 
-}
+} /* namespace vpvl */
 
 #endif
-

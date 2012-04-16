@@ -50,7 +50,7 @@ namespace vmd
 class LightAnimationKeyFramePredication
 {
 public:
-    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
+    bool operator()(const IKeyframe *left, const IKeyframe *right) {
         return left->frameIndex() < right->frameIndex();
     }
 };
@@ -87,7 +87,7 @@ void LightAnimation::read(const uint8_t *data, int size)
 void LightAnimation::seek(float frameAt)
 {
     const int nframes = m_frames.count();
-    LightKeyframe *lastKeyFrame = static_cast<LightKeyframe *>(m_frames[nframes - 1]);
+    LightKeyframe *lastKeyFrame = reinterpret_cast<LightKeyframe *>(m_frames[nframes - 1]);
     float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
@@ -136,13 +136,9 @@ void LightAnimation::reset()
     BaseAnimation::reset();
 }
 
-void LightAnimation::refresh()
-{
-}
-
 LightKeyframe *LightAnimation::frameAt(int i) const
 {
-    return static_cast<LightKeyframe *>(m_frames[i]);
+    return reinterpret_cast<LightKeyframe *>(m_frames[i]);
 }
 
 }

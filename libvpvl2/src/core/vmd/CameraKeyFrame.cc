@@ -181,7 +181,7 @@ void CameraKeyframe::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
-BaseKeyframe *CameraKeyframe::clone() const
+ICameraKeyframe *CameraKeyframe::clone() const
 {
     CameraKeyframe *frame = new CameraKeyframe();
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),

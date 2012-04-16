@@ -114,26 +114,17 @@ void MorphAnimation::seek(float frameAt)
 
 void MorphAnimation::setParentModel(IModel *model)
 {
-    if (!m_model) {
-        buildInternalNodes(model);
-        m_model = model;
-    }
-}
-
-void MorphAnimation::refresh()
-{
-    if (m_model) {
-        m_name2keyframes.releaseAll();
-        buildInternalNodes(m_model);
-    }
+    buildInternalNodes(model);
+    m_model = model;
 }
 
 void MorphAnimation::buildInternalNodes(IModel *model)
 {
     const int nframes = m_frames.count();
+    m_name2keyframes.releaseAll();
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
-        MorphKeyframe *frame = static_cast<MorphKeyframe *>(m_frames.at(i));
+        MorphKeyframe *frame = reinterpret_cast<MorphKeyframe *>(m_frames.at(i));
         const IString *name = frame->name();
         const HashString &key = name->toHashString();
         InternalMorphKeyFrameList **ptr = m_name2keyframes[key], *node;
@@ -175,7 +166,7 @@ void MorphAnimation::reset()
 
 MorphKeyframe *MorphAnimation::frameAt(int i) const
 {
-    return static_cast<MorphKeyframe *>(m_frames[i]);
+    return reinterpret_cast<MorphKeyframe *>(m_frames[i]);
 }
 
 void MorphAnimation::calculateFrames(float frameAt, InternalMorphKeyFrameList *keyframes)

@@ -47,6 +47,7 @@ class VPVL2_API IMorph
 {
 public:
     virtual ~IMorph() {}
+
     virtual const IString *name() const = 0;
     virtual void performTransform(float value) = 0;
 };

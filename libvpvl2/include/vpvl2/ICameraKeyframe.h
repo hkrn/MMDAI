@@ -34,26 +34,42 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IBONE_H_
-#define VPVL2_IBONE_H_
+#ifndef VPVL2_ICAMERAKEYFRAME_H_
+#define VPVL2_ICAMERAKEYFRAME_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
 
-class IString;
-
-class VPVL2_API IBone
+class VPVL2_API ICameraKeyframe : public virtual IKeyframe
 {
 public:
-    virtual ~IBone() {}
+    enum InterpolationType
+    {
+        kX = 0,
+        kY,
+        kZ,
+        kRotation,
+        kDistance,
+        kFovy,
+        kMax
+    };
+    virtual ~ICameraKeyframe() {}
 
-    virtual const IString *name() const = 0;
-    virtual int index() const = 0;
-    virtual const Transform &localTransform() const = 0;
+    virtual ICameraKeyframe *clone() const = 0;
+    virtual void setDefaultInterpolationParameter() = 0;
+    virtual void getInterpolationParameter(InterpolationType type, QuadWord &value) const = 0;
+    virtual const Vector3 &position() const = 0;
+    virtual const Vector3 &angle() const = 0;
+    virtual float distance() const = 0;
+    virtual float fovy() const = 0;
+    virtual bool isPerspective() const = 0;
     virtual void setPosition(const Vector3 &value) = 0;
-    virtual void setRotation(const Quaternion &value) = 0;
+    virtual void setAngle(const Vector3 &value) = 0;
+    virtual void setDistance(float value) = 0;
+    virtual void setFovy(float value) = 0;
+    virtual void setPerspective(bool value) = 0;
 };
 
 }

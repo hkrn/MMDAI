@@ -39,6 +39,7 @@
 #ifndef VPVL2_VMD_CAMERAKEYFRAME_H_
 #define VPVL2_VMD_CAMERAKEYFRAME_H_
 
+#include "vpvl2/ICameraKeyframe.h"
 #include "vpvl2/vmd/BaseKeyframe.h"
 
 namespace vpvl2
@@ -46,19 +47,9 @@ namespace vpvl2
 namespace vmd
 {
 
-class VPVL2_API CameraKeyframe : public BaseKeyframe
+class VPVL2_API CameraKeyframe : public BaseKeyframe, public ICameraKeyframe
 {
 public:
-    enum InterpolationType
-    {
-        kX = 0,
-        kY,
-        kZ,
-        kRotation,
-        kDistance,
-        kFovy,
-        kMax
-    };
     struct InterpolationParameter
     {
         QuadWord x;
@@ -79,7 +70,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    BaseKeyframe *clone() const;
+    ICameraKeyframe *clone() const;
 
     void setName(const IString * /* value */) {}
 
@@ -201,6 +192,8 @@ public:
      * @return True if perspective
      */
     void setPerspective(bool value);
+
+    Type type() const { return IKeyframe::kCamera; }
 
 private:
     void setInterpolationTable(const int8_t *table);

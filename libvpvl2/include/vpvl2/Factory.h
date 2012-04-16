@@ -38,10 +38,15 @@
 #define VPVL2_FACTORY_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IModel.h"
 
 namespace vpvl2
 {
 
+class IBoneKeyframe;
+class ICameraKeyframe;
+class ILightKeyframe;
+class IMorphKeyframe;
 class IEncoding;
 class IModel;
 class IMotion;
@@ -52,8 +57,14 @@ public:
     Factory(IEncoding *encoding);
     ~Factory();
 
+    IModel *createModel(IModel::Type type) const;
     IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
+    IMotion *createMotion() const;
     IMotion *createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const;
+    IBoneKeyframe *createBoneKeyframe() const;
+    ICameraKeyframe *createCameraKeyframe() const;
+    ILightKeyframe *createLightKeyframe() const;
+    IMorphKeyframe *createMorphKeyframe() const;
 
 private:
     struct PrivateContext;

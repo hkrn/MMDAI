@@ -39,6 +39,7 @@
 #ifndef VPVL2_VMD_LIGHTKEYFRAME_H_
 #define VPVL2_VMD_LIGHTKEYFRAME_H_
 
+#include "vpvl2/ILightKeyframe.h"
 #include "vpvl2/vmd/BaseKeyframe.h"
 
 namespace vpvl2
@@ -46,7 +47,7 @@ namespace vpvl2
 namespace vmd
 {
 
-class VPVL2_API LightKeyframe : public BaseKeyframe
+class VPVL2_API LightKeyframe : public BaseKeyframe, public ILightKeyframe
 {
 public:
     LightKeyframe();
@@ -57,7 +58,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    BaseKeyframe *clone() const;
+    ILightKeyframe *clone() const;
 
     void setName(const IString * /* value */) {}
 
@@ -92,6 +93,8 @@ public:
      * @param A value of light direction
      */
     void setDirection(const Vector3 &value);
+
+    Type type() const { return IKeyframe::kLight; }
 
 private:
     Vector3 m_color;

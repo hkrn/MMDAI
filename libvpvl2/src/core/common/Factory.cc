@@ -39,6 +39,10 @@
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/vmd/BoneKeyframe.h"
+#include "vpvl2/vmd/CameraKeyframe.h"
+#include "vpvl2/vmd/LightKeyframe.h"
+#include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
 
 namespace vpvl2
@@ -46,7 +50,7 @@ namespace vpvl2
 
 struct Factory::PrivateContext
 {
-    PrivateContext() : encoding(0) {}
+    PrivateContext(IEncoding *encoding) : encoding(encoding) {}
     ~PrivateContext() {}
 
     IEncoding *encoding;
@@ -55,14 +59,28 @@ struct Factory::PrivateContext
 Factory::Factory(IEncoding *encoding)
     : m_context(0)
 {
-    m_context = new PrivateContext();
-    m_context->encoding = encoding;
+    m_context = new PrivateContext(encoding);
 }
 
 Factory::~Factory()
 {
+    delete m_context;
+    m_context = 0;
 }
 
+IModel *Factory::createModel(IModel::Type type) const
+{
+    switch (type) {
+    case IModel::kAsset:
+        return new asset::Model(m_context->encoding);
+    case IModel::kPMD:
+        return new pmd::Model(m_context->encoding);
+    case IModel::kPMX:
+        return new pmx::Model(m_context->encoding);
+    default:
+        return 0;
+    }
+}
 
 IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
 {
@@ -80,11 +98,36 @@ IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
     return model;
 }
 
+IMotion *Factory::createMotion() const
+{
+    return new vmd::Motion(0, m_context->encoding);
+}
+
 IMotion *Factory::createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const
 {
     IMotion *motion = new vmd::Motion(model, m_context->encoding);
     ok = motion->load(data, size);
     return motion;
+}
+
+IBoneKeyframe *Factory::createBoneKeyframe() const
+{
+    return new vmd::BoneKeyframe(m_context->encoding);
+}
+
+ICameraKeyframe *Factory::createCameraKeyframe() const
+{
+    return new vmd::CameraKeyframe();
+}
+
+ILightKeyframe *Factory::createLightKeyframe() const
+{
+    return new vmd::LightKeyframe();
+}
+
+IMorphKeyframe *Factory::createMorphKeyframe() const
+{
+    return new vmd::MorphKeyframe(m_context->encoding);
 }
 
 }

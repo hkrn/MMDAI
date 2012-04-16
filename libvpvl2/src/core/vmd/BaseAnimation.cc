@@ -51,8 +51,7 @@ BaseAnimation::BaseAnimation()
     : m_lastIndex(0),
       m_maxFrame(0.0f),
       m_currentFrame(0.0f),
-      m_previousFrame(0.0f),
-      m_enableAutomaticRefresh(true)
+      m_previousFrame(0.0f)
 {
 }
 
@@ -63,7 +62,6 @@ BaseAnimation::~BaseAnimation()
     m_maxFrame = 0.0f;
     m_currentFrame = 0.0f;
     m_previousFrame = 0.0f;
-    m_enableAutomaticRefresh = true;
 }
 
 void BaseAnimation::advance(float deltaFrame)
@@ -84,14 +82,12 @@ void BaseAnimation::reset()
     m_previousFrame = 0.0f;
 }
 
-void BaseAnimation::addKeyframe(BaseKeyframe *frame)
+void BaseAnimation::addKeyframe(IKeyframe *frame)
 {
     m_frames.add(frame);
-    if (m_enableAutomaticRefresh)
-        refresh();
 }
 
-void BaseAnimation::replaceKeyframe(BaseKeyframe *frame)
+void BaseAnimation::replaceKeyframe(IKeyframe *frame)
 {
     deleteKeyframe(frame->frameIndex(), frame->name());
     addKeyframe(frame);
@@ -100,9 +96,9 @@ void BaseAnimation::replaceKeyframe(BaseKeyframe *frame)
 void BaseAnimation::deleteKeyframe(float frameIndex, const IString *value)
 {
     const int nframes = m_frames.count();
-    BaseKeyframe *frameToRemove = 0;
+    IKeyframe *frameToRemove = 0;
     for (int i = 0; i < nframes; i++) {
-        BaseKeyframe *frame = m_frames[i];
+        IKeyframe *frame = m_frames[i];
         if (frame->frameIndex() == frameIndex && value->equals(frame->name())) {
             frameToRemove = frame;
             break;
@@ -111,29 +107,25 @@ void BaseAnimation::deleteKeyframe(float frameIndex, const IString *value)
     if (frameToRemove) {
         m_frames.remove(frameToRemove);
         delete frameToRemove;
-        if (m_enableAutomaticRefresh)
-            refresh();
     }
 }
 
 void BaseAnimation::deleteKeyframes(float frameIndex)
 {
     const int nframes = m_frames.count();
-    Array<BaseKeyframe *> framesToRemove;
+    Array<IKeyframe *> framesToRemove;
     for (int i = 0; i < nframes; i++) {
-        BaseKeyframe *frame = m_frames[i];
+        IKeyframe *frame = m_frames[i];
         if (frame->frameIndex() == frameIndex)
             framesToRemove.add(frame);
     }
     const int nFramesToRemove = framesToRemove.count();
     if (nFramesToRemove) {
         for (int i = 0; i < nFramesToRemove; i++) {
-            BaseKeyframe *frame = framesToRemove[i];
+            IKeyframe *frame = framesToRemove[i];
             m_frames.remove(frame);
             delete frame;
         }
-        if (m_enableAutomaticRefresh)
-            refresh();
     }
 }
 

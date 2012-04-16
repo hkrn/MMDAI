@@ -39,6 +39,7 @@
 #ifndef VPVL2_VMD_BONEKEYFRAME_H_
 #define VPVL2_VMD_BONEKEYFRAME_H_
 
+#include "vpvl2/IBoneKeyframe.h"
 #include "vpvl2/vmd/BaseKeyframe.h"
 
 namespace vpvl2
@@ -50,17 +51,9 @@ namespace vmd
 
 class Bone;
 
-class VPVL2_API BoneKeyframe : public BaseKeyframe
+class VPVL2_API BoneKeyframe : public BaseKeyframe, public IBoneKeyframe
 {
 public:
-    enum InterpolationType
-    {
-        kX = 0,
-        kY,
-        kZ,
-        kRotation,
-        kMax
-    };
     struct InterpolationParameter
     {
         QuadWord x;
@@ -81,7 +74,7 @@ public:
     size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
-    BaseKeyframe *clone() const;
+    IBoneKeyframe *clone() const;
 
     /**
      * Set the default values of the interpolation parameter.
@@ -161,6 +154,8 @@ public:
     void setRotation(const Quaternion &value);
 
     void setIKEnable(bool value);
+
+    Type type() const { return IKeyframe::kBone; }
 
 private:
     void setInterpolationTable(const int8_t *table);

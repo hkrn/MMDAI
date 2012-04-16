@@ -50,7 +50,7 @@ namespace vmd
 class CameraAnimationKeyFramePredication
 {
 public:
-    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
+    bool operator()(const IKeyframe *left, const IKeyframe *right) {
         return left->frameIndex() < right->frameIndex();
     }
 };
@@ -116,7 +116,7 @@ void CameraAnimation::read(const uint8_t *data, int size)
 void CameraAnimation::seek(float frameAt)
 {
     const int nframes = m_frames.count();
-    CameraKeyframe *lastKeyFrame = static_cast<CameraKeyframe *>(m_frames[nframes - 1]);
+    CameraKeyframe *lastKeyFrame = reinterpret_cast<CameraKeyframe *>(m_frames[nframes - 1]);
     float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
@@ -213,13 +213,9 @@ void CameraAnimation::reset()
     BaseAnimation::reset();
 }
 
-void CameraAnimation::refresh()
-{
-}
-
 CameraKeyframe *CameraAnimation::frameAt(int i) const
 {
-    return static_cast<CameraKeyframe *>(m_frames[i]);
+    return reinterpret_cast<CameraKeyframe *>(m_frames[i]);
 }
 
 }

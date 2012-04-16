@@ -38,7 +38,6 @@
 #define VPVL2_IMODEL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IString.h"
 
 class btDiscreteDynamicsWorld;
 
@@ -47,6 +46,7 @@ namespace vpvl2
 
 class IBone;
 class IMorph;
+class IString;
 
 class VPVL2_API IModel
 {
@@ -82,8 +82,8 @@ public:
         kPMD,
         kPMX
     };
-
     virtual ~IModel() {}
+
     virtual Type type() const = 0;
     virtual const IString *name() const = 0;
     virtual const IString *englishName() const = 0;

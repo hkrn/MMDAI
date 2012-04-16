@@ -34,24 +34,33 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IBONE_H_
-#define VPVL2_IBONE_H_
+#ifndef VPVL2_IBONEKEYFRAME_H_
+#define VPVL2_IBONEKEYFRAME_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
 
-class IString;
-
-class VPVL2_API IBone
+class VPVL2_API IBoneKeyframe : public virtual IKeyframe
 {
 public:
-    virtual ~IBone() {}
+    enum InterpolationType
+    {
+        kX = 0,
+        kY,
+        kZ,
+        kRotation,
+        kMax
+    };
+    virtual ~IBoneKeyframe() {}
 
-    virtual const IString *name() const = 0;
-    virtual int index() const = 0;
-    virtual const Transform &localTransform() const = 0;
+    virtual IBoneKeyframe *clone() const = 0;
+    virtual void setDefaultInterpolationParameter() = 0;
+    virtual void setInterpolationParameter(InterpolationType type, const QuadWord &value) = 0;
+    virtual void getInterpolationParameter(InterpolationType type, QuadWord &value) const = 0;
+    virtual const Vector3 &position() const = 0;
+    virtual const Quaternion &rotation() const = 0;
     virtual void setPosition(const Vector3 &value) = 0;
     virtual void setRotation(const Quaternion &value) = 0;
 };

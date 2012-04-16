@@ -109,8 +109,9 @@ public:
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     bool load(const uint8_t *data, size_t size);
-    size_t estimateSize();
     void save(uint8_t *data) const;
+    size_t estimateSize() const;
+    void setParentModel(IModel *model);
     void seek(float frameIndex);
     void advance(float delta);
     void reload();
@@ -119,6 +120,9 @@ public:
     bool isReachedTo(float frameIndex) const;
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);
+
+    void addKeyframe(IKeyframe *value);
+    void deleteKeyframe(IKeyframe *value);
 
     const IString *name() const {
         return m_name;

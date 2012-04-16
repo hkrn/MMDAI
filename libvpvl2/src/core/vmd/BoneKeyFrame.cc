@@ -171,7 +171,7 @@ void BoneKeyframe::write(uint8_t *data) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 
-BaseKeyframe *BoneKeyframe::clone() const
+IBoneKeyframe *BoneKeyframe::clone() const
 {
     BoneKeyframe *frame = new BoneKeyframe(m_encoding);
     frame->setName(m_name);

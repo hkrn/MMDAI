@@ -119,7 +119,7 @@ void TestVMDMotion::saveBoneKeyframe()
 {
     Encoding encoding;
     String str(kTestString);
-    BoneKeyframe frame(&encoding), newFrame(&encoding), *cloned;
+    BoneKeyframe frame(&encoding), newFrame(&encoding);
     Vector3 pos(1, 2, 3);
     Quaternion rot(4, 5, 6, 7);
     frame.setFrameIndex(42);
@@ -143,18 +143,18 @@ void TestVMDMotion::saveBoneKeyframe()
     QVERIFY(newFrame.position() == pos);
     QVERIFY(newFrame.rotation() == rot);
     testBoneInterpolationMatrix(p, frame);
-    cloned = static_cast<BoneKeyframe *>(frame.clone());
+    IBoneKeyframe *cloned = reinterpret_cast<IBoneKeyframe *>(frame.clone());
     QVERIFY(cloned->name()->equals(frame.name()));
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->position() == pos);
     QVERIFY(cloned->rotation() == rot);
-    testBoneInterpolationMatrix(p, *cloned);
+    testBoneInterpolationMatrix(p, *static_cast<BoneKeyframe *>(cloned));
     delete cloned;
 }
 
 void TestVMDMotion::saveCameraKeyframe()
 {
-    CameraKeyframe frame, newFrame, *cloned;
+    CameraKeyframe frame, newFrame;
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
     frame.setFrameIndex(42);
     frame.setPosition(pos);
@@ -186,7 +186,7 @@ void TestVMDMotion::saveCameraKeyframe()
     QVERIFY(newFrame.distance() == frame.distance());
     QVERIFY(newFrame.fovy() == frame.fovy());
     testCameraInterpolationMatrix(p, frame);
-    cloned = static_cast<CameraKeyframe *>(frame.clone());
+    ICameraKeyframe *cloned = reinterpret_cast<ICameraKeyframe *>(frame.clone());
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->position() == frame.position());
     // for radian and degree calculation
@@ -195,7 +195,7 @@ void TestVMDMotion::saveCameraKeyframe()
     QVERIFY(qFuzzyCompare(cloned->angle().z(), frame.angle().z()));
     QVERIFY(cloned->distance() == frame.distance());
     QVERIFY(cloned->fovy() == frame.fovy());
-    testCameraInterpolationMatrix(p, *cloned);
+    testCameraInterpolationMatrix(p, *static_cast<CameraKeyframe *>(cloned));
     delete cloned;
 }
 
@@ -222,7 +222,7 @@ void TestVMDMotion::saveMorphKeyframe()
 
 void TestVMDMotion::saveLightKeyframe()
 {
-    LightKeyframe frame, newFrame, *cloned;
+    LightKeyframe frame, newFrame;
     Vector3 color(0.1, 0.2, 0.3), direction(4, 5, 6);
     frame.setFrameIndex(42);
     frame.setColor(color);
@@ -233,7 +233,7 @@ void TestVMDMotion::saveLightKeyframe()
     QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
     QVERIFY(newFrame.color() == frame.color());
     QVERIFY(newFrame.direction() == frame.direction());
-    cloned = static_cast<LightKeyframe *>(frame.clone());
+    ILightKeyframe *cloned = reinterpret_cast<ILightKeyframe *>(frame.clone());
     QCOMPARE(cloned->frameIndex(), frame.frameIndex());
     QVERIFY(cloned->color() == frame.color());
     QVERIFY(cloned->direction() == frame.direction());
