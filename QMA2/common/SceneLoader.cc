@@ -87,9 +87,9 @@ public:
     bool uploadTexture(const std::string &path, GLuint &textureID, bool isToon) {
         QImage image;
         QString pathString = QString::fromLocal8Bit(path.c_str());
+        pathString.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
         QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
         QFileInfo info(pathString);
-        pathString.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
         /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
         if (m_archive && !pathString.startsWith(":/")) {
             QByteArray suffix = info.suffix().toLower().toUtf8();
