@@ -44,15 +44,71 @@ namespace vpvl2
 
 class IString;
 
+/**
+ * モデルのボーンをあらわすインターフェースです。
+ *
+ */
 class VPVL2_API IBone
 {
 public:
     virtual ~IBone() {}
 
+    /**
+     * ボーン名を返します。
+     *
+     * @return IString
+     */
     virtual const IString *name() const = 0;
+
+    /**
+     * ボーンの ID を返します。
+     *
+     * 常にユニークでなければなりません。
+     *
+     * @return int
+     */
     virtual int index() const = 0;
+
+    /**
+     * ローカル行列を返します。
+     *
+     * これはスキニング処理で使われます。
+     * ボーンの位置を求めるにはこれが返す値の Transform::getOrigin によって求めることが出来ます。
+     *
+     * @return Transform
+     */
     virtual const Transform &localTransform() const = 0;
+
+    /**
+     * 現在のボーンの移動量を返します。
+     *
+     * 初期状態は vpvl2::kZeroV3 と同等です。
+     *
+     * @return Vector3
+     */
+    virtual const Vector3 &position() const = 0;
+
+    /**
+     * 現在のボーンの回転量を返します。
+     *
+     * 初期状態は Quaternion::getIdentity() と同等です。
+     *
+     * @return Quaternion
+     */
+    virtual const Quaternion &rotation() const = 0;
+
+    /**
+     * ボーンの移動量を設定します。
+     *
+     * @param Vector3
+     */
     virtual void setPosition(const Vector3 &value) = 0;
+
+    /**
+     * ボーンの回転量を設定します。
+     *
+     * @param Quaternion
+     */
     virtual void setRotation(const Quaternion &value) = 0;
 };
 

@@ -58,6 +58,8 @@ public:
     const IString *name() const;
     int index() const;
     const Transform &localTransform() const;
+    const Vector3 &position() const;
+    const Quaternion &rotation() const;
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
 

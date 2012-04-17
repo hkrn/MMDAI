@@ -135,11 +135,6 @@ public:
     static size_t strideOffset(StrideType type);
     static size_t strideSize(StrideType type);
 
-    /**
-     * Read and parse the buffer with id and sets it's result to the class.
-     *
-     * @param data The buffer to read and parse
-     */
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
     size_t estimateSize() const;

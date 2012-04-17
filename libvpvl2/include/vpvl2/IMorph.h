@@ -43,16 +43,32 @@
 namespace vpvl2
 {
 
+/**
+ * モデルのモーフをあらわすインターフェースです。
+ *
+ */
 class VPVL2_API IMorph
 {
 public:
     virtual ~IMorph() {}
 
+    /**
+     * モーフの名前を返します。
+     *
+     * @return IString
+     */
     virtual const IString *name() const = 0;
+
+    /**
+     * 係数 value に基づいて変形を行います。
+     *
+     * value は 0.0 以上 1.0 以下でなければなりません。
+     *
+     * @param float
+     */
     virtual void performTransform(float value) = 0;
 };
 
 }
 
 #endif
-

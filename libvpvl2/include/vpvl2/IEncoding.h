@@ -43,18 +43,68 @@
 namespace vpvl2
 {
 
+/**
+ * 文字コード変換を担当し、IString のインスタンスを生成するためのインターフェースです。
+ *
+ * このインターフェースは libvpvl2 側では実装しないため、利用する側で実装する必要があります。
+ * IEncoding は以下の文字コードを変換する実装が必要です。
+ *
+ * - Shift_JIS
+ * - UTF-8
+ * - UTF-16
+ *
+ */
 class VPVL2_API IEncoding
 {
 public:
     virtual ~IEncoding() {}
 
+    /**
+     * 長さ size を持つ bytes 文字列を codec に基づいて変換し、IString として返します。
+     *
+     * libvpvl2 側で delete を呼ぶため、スタック上ではなくヒープ上で作成してください。
+     *
+     * @param value
+     * @param size
+     * @param codec
+     * @return IString
+     */
     virtual IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const = 0;
+
+    /**
+     * 最大長 maxlen であることが保証されている bytes 文字列を codec に基づいて変換し、IString として返します。
+     *
+     * 文字列の長さは strnlen などを使って文字列の長さを知る必要があります。
+     * libvpvl2 側で delete を呼ぶため、スタック上ではなくヒープ上で作成してください。
+     *
+     * @param value
+     * @param codec
+     * @param maxlen
+     * @return IString
+     */
     virtual IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const = 0;
+
+    /**
+     * value を codec に基づいて変換し、バッファとして返します。
+     *
+     * libvpvl2 側で disposeByteArray を呼ぶため、スタック上ではなくヒープ上で作成してください。
+     *
+     * @param value
+     * @param codec
+     * @return uint8_t
+     */
     virtual uint8_t *toByteArray(const IString *value, IString::Codec codec) const = 0;
+
+    /**
+     * value をメモリ上から解放します。
+     *
+     * value は必ず toByteArray から呼ばれたものが渡されます。
+     *
+     * @param value
+     */
     virtual void disposeByteArray(uint8_t *value) const = 0;
 };
 
 }
 
 #endif
-

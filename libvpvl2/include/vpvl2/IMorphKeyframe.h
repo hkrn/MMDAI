@@ -42,12 +42,31 @@
 namespace vpvl2
 {
 
+/**
+ * モーフのキーフレームをあらわすインターフェースです。
+ *
+ */
 class VPVL2_API IMorphKeyframe : public virtual IKeyframe
 {
 public:
     virtual ~IMorphKeyframe() {}
 
+    /**
+     * 変形係数を返します。
+     *
+     * 返す値は 0.0 以上 1.0 以下になります。
+     *
+     * @return float
+     */
     virtual float weight() const = 0;
+
+    /**
+     * 変形係数を設定します。
+     *
+     * 設定する値は 0.0 以上 1.0 以下でなければなりません。
+     *
+     * @param float
+     */
     virtual void setWeight(float value) = 0;
 };
 

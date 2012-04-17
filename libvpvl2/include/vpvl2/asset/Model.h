@@ -68,6 +68,7 @@ public:
     Error error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}
+    size_t estimateSize() const { return 1; }
     void resetVertices() {}
     void performUpdate() {}
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}

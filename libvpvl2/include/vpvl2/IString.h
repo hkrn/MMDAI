@@ -42,6 +42,12 @@
 namespace vpvl2
 {
 
+/**
+ * 文字列をあらわすインターフェースです。
+ *
+ * このインターフェースは libvpvl2 側では実装しないため、利用する側で実装する必要があります。
+ *
+ */
 class VPVL2_API IString {
 public:
     enum Codec {
@@ -51,10 +57,46 @@ public:
     };
     virtual ~IString() {}
 
+    /**
+     * IString の完全なコピーを返します。
+     *
+     * @return IString
+     */
     virtual IString *clone() const = 0;
+
+    /**
+     * IString のハッシュ値 (HashString) を返します。
+     *
+     * @return HashString
+     */
     virtual const HashString toHashString() const = 0;
+
+    /**
+     * IString のインスタンスが value と同じであるかを比較します。
+     *
+     * 等しい場合は true を、等しくない場合は false を返します。
+     *
+     * @return bool
+     */
     virtual bool equals(const IString *value) const = 0;
+
+    /**
+     * 文字列のバイト単位の長さを返します。
+     *
+     * 文字単位の長さではなく、バイト単位の長さである必要があります。
+     *
+     * @return size_t
+     */
     virtual size_t length() const = 0;
+
+    /**
+     * 文字列のバイト文字列を返します。
+     *
+     * これが返すデータは解放されないため、メモリ上に確保して返してはいけません。
+     * メモリリークの原因になってしまいます。
+     *
+     * @return uint8_t
+     */
     virtual const uint8_t *toByteArray() const = 0;
 };
 

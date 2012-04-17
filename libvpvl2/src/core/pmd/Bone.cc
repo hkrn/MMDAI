@@ -73,6 +73,16 @@ const Transform &Bone::localTransform() const
     return m_bone->localTransform();
 }
 
+const Vector3 &Bone::position() const
+{
+    return m_bone->position();
+}
+
+const Quaternion &Bone::rotation() const
+{
+    return m_bone->rotation();
+}
+
 void Bone::setPosition(const Vector3 &value)
 {
     m_bone->setPosition(value);

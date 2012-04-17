@@ -69,11 +69,6 @@ public:
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones);
 
-    /**
-     * Read and parse the buffer with id and sets it's result to the class.
-     *
-     * @param data The buffer to read and parse
-     */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;

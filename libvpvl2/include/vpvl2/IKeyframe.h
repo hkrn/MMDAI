@@ -44,6 +44,10 @@ namespace vpvl2
 
 class IString;
 
+/**
+ * 全ての種類のキーフレームが実装するインターフェースです。
+ *
+ */
 class VPVL2_API IKeyframe
 {
 public:
@@ -55,10 +59,47 @@ public:
     };
     virtual ~IKeyframe() {}
 
+    /**
+     * キーフレームの動作対象となる名前を返します。
+     *
+     * これはモデルに依存するボーンと表情のキーフレームで意味を持ちます。
+     * モデルに依存しないカメラと照明のキーフレームでは null を返します。
+     *
+     * @return IString
+     */
     virtual const IString *name() const = 0;
+
+    /**
+     * キーフレームのフレーム番号を返します。
+     *
+     * 返す値の型は float ですが、小数点はつきません。
+     *
+     * @return float
+     */
     virtual float frameIndex() const = 0;
+
+    /**
+     * キーフレームの動作対象となる名前を設定します。
+     *
+     * ボーンと表情のキーフレームでのみ機能します。
+     * カメラと照明のキーフレームでは何もしません。
+     *
+     * @param IString
+     */
     virtual void setName(const IString *value) = 0;
+
+    /**
+     * キーフレームのフレーム番号を設定します。
+     *
+     * @param float
+     */
     virtual void setFrameIndex(float value) = 0;
+
+    /**
+     * キーフレームの型を返します。
+     *
+     * @return Type
+     */
     virtual Type type() const = 0;
 };
 

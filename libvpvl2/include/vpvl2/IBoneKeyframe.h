@@ -42,6 +42,10 @@
 namespace vpvl2
 {
 
+/**
+ * ボーンのキーフレームをあらわすインターフェースです。
+ *
+ */
 class VPVL2_API IBoneKeyframe : public virtual IKeyframe
 {
 public:
@@ -55,13 +59,70 @@ public:
     };
     virtual ~IBoneKeyframe() {}
 
+    /**
+     * IBoneKeyframe のインスタンスの完全なコピーを返します。
+     *
+     * @return IBoneKeyframe
+     */
     virtual IBoneKeyframe *clone() const = 0;
+
+    /**
+     * 補間パラメータを初期状態に設定します。
+     *
+     */
     virtual void setDefaultInterpolationParameter() = 0;
+
+    /**
+     * 指定された型の補間パラメータを設定します。
+     *
+     * 第２引数は以下で解釈されます。第２引数の値はそれぞれ 0 以上かつ 128 未満でなければなりません。
+     *
+     * - x = x1
+     * - y = y1
+     * - z = x2
+     * - w = y2
+     *
+     * @param InterpolationType
+     * @param QuadWord
+     */
     virtual void setInterpolationParameter(InterpolationType type, const QuadWord &value) = 0;
+
+    /**
+     * 指定された型の補間パラメータを第二引数にコピーします。
+     *
+     * 第２引数にコピーされる値の設定順は setInterpolationParameter と同じです。
+     *
+     * @param InterpolationType
+     * @param QuadWord
+     */
     virtual void getInterpolationParameter(InterpolationType type, QuadWord &value) const = 0;
+
+    /**
+     * 移動量を返します。
+     *
+     * @return Vector3
+     */
     virtual const Vector3 &position() const = 0;
+
+    /**
+     * 回転量を返します。
+     *
+     * @return Quaternion
+     */
     virtual const Quaternion &rotation() const = 0;
+
+    /**
+     * 移動量を設定します。
+     *
+     * @param Vector3
+     */
     virtual void setPosition(const Vector3 &value) = 0;
+
+    /**
+     * 回転量を設定します。
+     *
+     * @param Quaternion
+     */
     virtual void setRotation(const Quaternion &value) = 0;
 };
 

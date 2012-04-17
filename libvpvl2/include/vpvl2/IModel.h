@@ -48,6 +48,10 @@ class IBone;
 class IMorph;
 class IString;
 
+/**
+ * モデルをあらわすインターフェースです。
+ *
+ */
 class VPVL2_API IModel
 {
 public:
@@ -84,24 +88,150 @@ public:
     };
     virtual ~IModel() {}
 
+    /**
+     * モデルの型を返します。
+     *
+     * @return Type
+     */
     virtual Type type() const = 0;
+
+    /**
+     * モデル名(日本語)を返します。
+     *
+     * @return IString
+     */
     virtual const IString *name() const = 0;
+
+    /**
+     * モデル名(英語)を返します。
+     *
+     * @return IString
+     */
     virtual const IString *englishName() const = 0;
+
+    /**
+     * モデルの説明(日本語)を返します。
+     *
+     * @return IString
+     */
     virtual const IString *comment() const = 0;
+
+    /**
+     * モデルの説明(英語)を返します。
+     *
+     * @return IString
+     */
     virtual const IString *englishComment() const = 0;
+
+    /**
+     * モデルが可視であるかどうかを返します。
+     *
+     * @return bool
+     */
     virtual bool isVisible() const = 0;
+
+    /**
+     * エラーを返します。
+     *
+     * IModel::load(data, size) が false を返した場合、error は kNoError 以外の値を返します。
+     * true を返した場合は常に error は kNoError を返します。
+     *
+     * @return Error
+     */
     virtual Error error() const = 0;
+
+    /**
+     * オンメモリ上にある data とその長さ size に基づいてモデルを構築します。
+     *
+     * モデルの読み込みに成功した場合は true を、失敗した場合は false を返し、
+     * IModel::error() が kNoError 以外の値を返すようになります。
+     *
+     * load は複数回呼んでも IModel では正しく処理されますが、IRenderEngine が
+     * 正常に動作しなくなるため、IRenderEngine を利用している場合は複数回呼んではいけません。
+     *
+     * @param data
+     * @param size
+     * @return bool
+     */
     virtual bool load(const uint8_t *data, size_t size) = 0;
+
+    /**
+     * オンメモリ上にある data に IModel のインスタンスに基づいてデータを書き込みます。
+     *
+     * data の長さは IModel::estimateSize() が返す値を利用してください。
+     * type が kPMD または kPMX の場合は完全なモデルデータを構築します。kAsset の場合は何もしません。
+     *
+     * @param data
+     */
     virtual void save(uint8_t *data) const = 0;
+
+    /**
+     * IModel::save(data) に必要なデータの長さを返します。
+     *
+     * これは save を呼ぶ前に save に渡すデータをメモリ上に確保する量を求めるときに使います。
+     * save と併せて使用する必要があります。
+     *
+     * @return size_t
+     */
+    virtual size_t estimateSize() const = 0;
+
+    /**
+     * モデルの全ての頂点の位置を初期状態にリセットします。
+     *
+     */
     virtual void resetVertices() = 0;
+
+    /**
+     * モデルの変形を実行します。
+     *
+     */
     virtual void performUpdate() = 0;
+
+    /**
+     * モデルの物理演算を有効にします。
+     *
+     * すでに joinWorld が呼ばれていて leaveWorld していない場合は何もしません。
+     *
+     * @param btDiscreteDynamicsWorld
+     */
     virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
+
+    /**
+     * モデルの物理演算を無効にします。
+     *
+     * モデルインスタンスの破壊前に leaveWorld を呼ばなかった場合は自動的に leaveWorld が呼ばれます。
+     * そのため、モデルインスタンスを破壊する前に btDiscreteDynamicsWorld のインスタンスを解放し、
+     * かつ leaveWorld していない場合モデルインスタンス破壊時にクラッシュします。
+     *
+     * すでに leaveWorld が呼ばれていて joinWorld していない場合は何もしません。
+     *
+     * @param btDiscreteDynamicsWorld
+     */
     virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
+
+    /**
+     * ボーン名から IBone のインスタンスを返します。
+     *
+     * 該当するボーン名の IBone インスタンスが見つかった場合はそれを返します。
+     * 見つからなかった場合は null を返します。
+     *
+     * @param IString
+     * @return IBone
+     */
     virtual IBone *findBone(const IString *value) const = 0;
+
+    /**
+     * ボーン名から IMorph のインスタンスを返します。
+     *
+     * 該当するボーン名の IMorph インスタンスが見つかった場合はそれを返します。
+     * 見つからなかった場合は null を返します。
+     *
+     * @param IString
+     * @return IMorph
+     */
     virtual IMorph *findMorph(const IString *value) const = 0;
 };
 
 } /* namespace vpvl2 */
 
 #endif
-

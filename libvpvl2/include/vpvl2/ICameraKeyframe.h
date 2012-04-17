@@ -42,6 +42,10 @@
 namespace vpvl2
 {
 
+/**
+ * カメラのキーフレームをあらわすインターフェースです。
+ *
+ */
 class VPVL2_API ICameraKeyframe : public virtual IKeyframe
 {
 public:
@@ -57,18 +61,111 @@ public:
     };
     virtual ~ICameraKeyframe() {}
 
+    /**
+     * ICameraKeyframe のインスタンスの完全なコピーを返します。
+     *
+     * @return ICameraKeyframe
+     */
     virtual ICameraKeyframe *clone() const = 0;
+
+    /**
+     * 補間パラメータを初期状態に設定します。
+     *
+     */
     virtual void setDefaultInterpolationParameter() = 0;
+
+    /**
+     * 指定された型の補間パラメータを設定します。
+     *
+     * 第２引数は以下で解釈されます。第２引数の値はそれぞれ 0 以上かつ 128 未満でなければなりません。
+     * - x = x1
+     * - y = y1
+     * - z = x2
+     * - w = y2
+     *
+     * @param InterpolationType
+     * @param QuadWord
+     */
+    virtual void setInterpolationParameter(InterpolationType type, const QuadWord &value) = 0;
+
+    /**
+     * 指定された型の補間パラメータを第二引数にコピーします。
+     *
+     * 第２引数にコピーされる値の設定順は setInterpolationParameter と同じです。
+     *
+     * @param InterpolationType
+     * @param QuadWord
+     */
     virtual void getInterpolationParameter(InterpolationType type, QuadWord &value) const = 0;
+
+    /**
+     * カメラの注視点を返します。
+     *
+     * @return Vector3
+     */
     virtual const Vector3 &position() const = 0;
+
+    /**
+     * カメラのアングル（オイラー角）を返します。
+     *
+     * @return Vector3
+     */
     virtual const Vector3 &angle() const = 0;
+
+    /**
+     * カメラの視野距離を返します。
+     *
+     * @return float
+     */
     virtual float distance() const = 0;
+
+    /**
+     * カメラの視野角を返します。
+     *
+     * @return float
+     */
     virtual float fovy() const = 0;
+
+    /**
+     * カメラが透視であるかを返します。
+     *
+     * @return bool
+     */
     virtual bool isPerspective() const = 0;
+
+    /**
+     * カメラの注視点を設定します。
+     *
+     * @param Vector3
+     */
     virtual void setPosition(const Vector3 &value) = 0;
+
+    /**
+     * カメラのアングル（オイラー角）を設定します。
+     *
+     * @param Vector3
+     */
     virtual void setAngle(const Vector3 &value) = 0;
+
+    /**
+     * カメラの視野距離を設定します。
+     *
+     * @param Vector3
+     */
     virtual void setDistance(float value) = 0;
+
+    /**
+     * カメラの視野角を設定します。
+     *
+     * @param Vector3
+     */
     virtual void setFovy(float value) = 0;
+
+    /**
+     * 透視にするかを設定します。
+     *
+     * @param bool
+     */
     virtual void setPerspective(bool value) = 0;
 };
 

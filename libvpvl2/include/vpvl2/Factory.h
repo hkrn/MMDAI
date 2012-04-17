@@ -51,19 +51,90 @@ class IEncoding;
 class IModel;
 class IMotion;
 
+/**
+ * モデルやモーション、キーフレームのインスタンスを作成するファクトリパターンに基づいたクラスです。
+ * いずれのメソッドも指定されたインターフェースを継承するインスタンスを返します。
+ *
+ */
 class VPVL2_API Factory
 {
 public:
     Factory(IEncoding *encoding);
     ~Factory();
 
+    /**
+     * type (IModel::Type) に基づいた空の Model インスタンスを作成します。
+     *
+     * IModel::Type 以外の値を指定した場合は null を返します。
+     *
+     * @param type
+     * @return IModel
+     */
     IModel *createModel(IModel::Type type) const;
+
+    /**
+     * オンメモリ上にあるデータとその長さを元に読み込み済みの Model インスタンスを作成します。
+     *
+     * 読み込みに成功した場合第３引数の ok が true に、失敗した場合は false にセットされます。
+     * 読み込みの成功可否にかかわらず IModel インスタンスを返します。
+     *
+     * @param data
+     * @param size
+     * @param ok
+     * @return IModel
+     */
     IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
+
+    /**
+     * 空の Motion インスタンスを返します。
+     *
+     * @return IMotion
+     */
     IMotion *createMotion() const;
+
+    /**
+     * オンメモリ上にあるデータとその長さを元に読み込み済みの Motion インスタンスを作成します。
+     *
+     * 読み込みに成功した場合第４引数の ok が true に、失敗した場合は false にセットされます。
+     * 読み込みの成功可否にかかわらず IMotion インスタンスを返します。
+     *
+     * 第３引数は通常モーションの動作対象となる IModel インスタンスを指定しますが、
+     * カメラまたは照明といったモデル非依存のモーションの場合は null を設定してください。
+     *
+     * @param data
+     * @param size
+     * @param model
+     * @param ok
+     * @return IMotion
+     */
     IMotion *createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const;
+
+    /**
+     * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します。
+     *
+     * @return IBoneKeyframe
+     */
     IBoneKeyframe *createBoneKeyframe() const;
+
+    /**
+     * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します。
+     *
+     * @return ICameraKeyframe
+     */
     ICameraKeyframe *createCameraKeyframe() const;
+
+    /**
+     * ILightKeyframe (照明のキーフレーム) のインスタンスを返します。
+     *
+     * @return ILightKeyframe
+     */
     ILightKeyframe *createLightKeyframe() const;
+
+    /**
+     * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します。
+     *
+     * @return IMorphKeyframe
+     */
     IMorphKeyframe *createMorphKeyframe() const;
 
 private:

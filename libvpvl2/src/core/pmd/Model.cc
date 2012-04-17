@@ -104,6 +104,11 @@ void Model::save(uint8_t *data) const
     m_model.save(data);
 }
 
+size_t Model::estimateSize() const
+{
+    return m_model.estimateSize();
+}
+
 void Model::resetVertices()
 {
 }
