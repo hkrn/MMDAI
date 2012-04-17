@@ -45,8 +45,17 @@ namespace pmd
 Bone::Bone(vpvl::Bone *bone, IEncoding *encoding)
     : m_encoding(encoding),
       m_name(0),
+      m_parentBone(0),
+      m_childBone(0),
       m_bone(bone)
 {
+    vpvl::Bone *bone2 = 0;
+    bone2 = const_cast<vpvl::Bone *>(bone->parent());
+    if (bone2)
+        m_parentBone = new Bone(bone, encoding);
+    bone2 = const_cast<vpvl::Bone *>(bone->child());
+    if (bone2)
+        m_childBone = new Bone(bone, encoding);
     m_name = m_encoding->toString(m_bone->name(), IString::kShiftJIS, vpvl::Bone::kNameSize);
 }
 
@@ -54,6 +63,10 @@ Bone::~Bone()
 {
     delete m_name;
     m_name = 0;
+    delete m_parentBone;
+    m_parentBone = 0;
+    delete m_childBone;
+    m_childBone = 0;
     m_encoding = 0;
     m_bone = 0;
 }
@@ -71,6 +84,11 @@ int Bone::index() const
 const Transform &Bone::localTransform() const
 {
     return m_bone->localTransform();
+}
+
+const Vector3 &Bone::origin() const
+{
+    return m_bone->originPosition();
 }
 
 const Vector3 &Bone::position() const
@@ -91,6 +109,16 @@ void Bone::setPosition(const Vector3 &value)
 void Bone::setRotation(const Quaternion &value)
 {
     m_bone->setRotation(value);
+}
+
+bool Bone::isMovable() const
+{
+    return m_bone->isMovable();
+}
+
+bool Bone::isRotateable() const
+{
+    return m_bone->isRotateable();
 }
 
 }

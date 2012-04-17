@@ -75,6 +75,8 @@ public:
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
     IBone *findBone(const IString * /* value */) const { return 0; }
     IMorph *findMorph(const IString * /* value */) const { return 0; }
+    void getBones(Array<IBone *> & /* value */) const {}
+    void getMorphs(Array<IMorph *> & /* value */) const {}
 
     vpvl::Asset *ptr() { return &m_asset; }
 
@@ -82,6 +84,8 @@ private:
     vpvl::Asset m_asset;
     IEncoding *m_encoding;
     IString *m_name;
+    Array<IBone *> m_bones;
+    Array<IMorph *> m_morphs;
 };
 
 } /* namespace asset */

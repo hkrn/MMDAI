@@ -69,6 +69,10 @@ public:
      */
     virtual int index() const = 0;
 
+    virtual IBone *parentBone() const = 0;
+
+    virtual IBone *childBone() const = 0;
+
     /**
      * ローカル行列を返します。
      *
@@ -78,6 +82,8 @@ public:
      * @return Transform
      */
     virtual const Transform &localTransform() const = 0;
+
+    virtual const Vector3 &origin() const = 0;
 
     /**
      * 現在のボーンの移動量を返します。
@@ -110,6 +116,10 @@ public:
      * @param Quaternion
      */
     virtual void setRotation(const Quaternion &value) = 0;
+
+    virtual bool isMovable() const = 0;
+
+    virtual bool isRotateable() const = 0;
 };
 
 }

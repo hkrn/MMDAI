@@ -73,6 +73,8 @@ public:
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
+    void getBones(Array<IBone *> &value) const { value.copy(m_bones); }
+    void getMorphs(Array<IMorph *> &value) const { value.copy(m_morphs); }
 
     vpvl::PMDModel *ptr() { return &m_model; }
 

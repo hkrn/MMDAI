@@ -57,15 +57,22 @@ public:
 
     const IString *name() const;
     int index() const;
+    IBone *parentBone() const { return m_parentBone; }
+    IBone *childBone() const { return m_childBone; }
     const Transform &localTransform() const;
+    const Vector3 &origin() const;
     const Vector3 &position() const;
     const Quaternion &rotation() const;
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
+    bool isMovable() const;
+    bool isRotateable() const;
 
 private:
     IEncoding *m_encoding;
     IString *m_name;
+    IBone *m_parentBone;
+    IBone *m_childBone;
     vpvl::Bone *m_bone;
 };
 

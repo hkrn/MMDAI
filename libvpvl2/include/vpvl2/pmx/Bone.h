@@ -87,6 +87,7 @@ public:
     void setSimulated(bool value);
 
     Bone *parentBone() const { return m_parentBone; }
+    Bone *childBone() const { return m_childBone; }
     Bone *targetBone() const { return m_targetBone; }
     Bone *parentInherenceBone() const { return m_parentInherenceBone; }
     Bone *destinationOriginBone() const { return m_destinationOriginBone; }
@@ -146,6 +147,7 @@ public:
 private:
     Array<IKLink *> m_IKLinks;
     Bone *m_parentBone;
+    Bone *m_childBone;
     Bone *m_targetBone;
     Bone *m_parentInherenceBone;
     Bone *m_destinationOriginBone;

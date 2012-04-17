@@ -230,6 +230,9 @@ public:
      * @return IMorph
      */
     virtual IMorph *findMorph(const IString *value) const = 0;
+
+    virtual void getBones(Array<IBone *> &value) const = 0;
+    virtual void getMorphs(Array<IMorph *> &value) const = 0;
 };
 
 } /* namespace vpvl2 */

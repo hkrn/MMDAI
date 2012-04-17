@@ -366,6 +366,24 @@ IMorph *Model::findMorph(const IString *value) const
     return morph ? *morph : 0;
 }
 
+void Model::getBones(Array<IBone *> &value) const
+{
+    const int nbones = m_bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_bones[i];
+        value.add(bone);
+    }
+}
+
+void Model::getMorphs(Array<IMorph *> &value) const
+{
+    const int nmorphs = m_morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_morphs[i];
+        value.add(morph);
+    }
+}
+
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
