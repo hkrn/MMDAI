@@ -27,26 +27,26 @@ win32:LIBS += -L$${MMDA_PATH}/Library_hts_engine_API/lib -L$${MMDA_PATH}/Library
 unix:LIBS += -lOpenJTalk -lHTSEngine -ljulius -lportaudio -lxml2
 
 # VPVL and others configuration
-INCLUDEPATH += ../libvpvl/include ../bullet/src $${MMDA_PATH}/Library_Julius/include \
+INCLUDEPATH += ../libvpvl2/include ../bullet/src $${MMDA_PATH}/Library_Julius/include \
        $${MMDA_PATH}/Library_Open_JTalk/include $${MMDA_PATH}/Library_hts_engine_API/include \
        $${MMDA_PATH}/Library_PortAudio/include
-win32:INCLUDEPATH += ../libvpvl/msvc-build/include $${MMDA_PATH}
+win32:INCLUDEPATH += ../libvpvl2/msvc-build/include $${MMDA_PATH}
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  win32:LIBS       += -L../libvpvl/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug \
+  win32:LIBS       += -L../libvpvl2/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug \
                       -lvpvl -lPortAudio_D -lhts_engine_API_D -lJulius_D -lOpen_JTalk_D -lws2_32
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
-  unix:INCLUDEPATH += ../libvpvl/debug/include
+  unix:LIBS        += -L../libvpvl2/debug/lib -L../bullet/debug/lib -lvpvl_debug
+  unix:INCLUDEPATH += ../libvpvl2/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
 }
 CONFIG(release, debug|release) {
-  win32:LIBS       += -L../libvpvl/msvc-build/lib/release -L../bullet/msvc-build/lib/release \
+  win32:LIBS       += -L../libvpvl2/msvc-build/lib/release -L../bullet/msvc-build/lib/release \
                       -lvpvl -lPortAudio -lhts_engine_API -lJulius -lOpen_JTalk -lws2_32
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl
-  unix:INCLUDEPATH += ../libvpvl/release/include
+  unix:LIBS        += -L../libvpvl2/release/lib -L../bullet/release/lib -lvpvl
+  unix:INCLUDEPATH += ../libvpvl2/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
 }
 
