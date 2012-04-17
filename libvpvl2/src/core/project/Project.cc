@@ -89,6 +89,7 @@ public:
     PrivateContext(Project::IDelegate *delegate, Factory *factory)
         : delegate(delegate),
           factory(factory),
+          currentString(0),
           currentModel(0),
           currentMotion(0),
           state(kInitial),
@@ -107,6 +108,8 @@ public:
         for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++)
             delete (*it).second;
         motions.clear();
+        delete currentString;
+        currentString = 0;
         delete currentModel;
         currentModel = 0;
         delete currentMotion;
@@ -186,21 +189,29 @@ public:
         }
         return Project::kNullUUID;
     }
-    void removeModel(const IModel *model) {
+    bool removeModel(const IModel *model) {
+        for (ModelMap::iterator it = assets.begin(); it != assets.end(); it++) {
+            if ((*it).second == model) {
+                assets.erase(it);
+                return true;
+            }
+        }
         for (ModelMap::iterator it = models.begin(); it != models.end(); it++) {
             if ((*it).second == model) {
                 models.erase(it);
-                break;
+                return true;
             }
         }
+        return false;
     }
-    void removeMotion(const IMotion *motion) {
+    bool removeMotion(const IMotion *motion) {
         for (MotionMap::iterator it = motions.begin(); it != motions.end(); it++) {
             if ((*it).second == motion) {
                 motions.erase(it);
-                break;
+                return true;
             }
         }
+        return false;
     }
     bool writeStringMap(const xmlChar *prefix, const StringMap &map, xmlTextWriterPtr &writer) {
         for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
@@ -267,8 +278,9 @@ public:
             nframes = ba.countKeyframes();
             for (int j = 0; j < nframes; j++) {
                 const vmd::BoneKeyframe *frame = static_cast<vmd::BoneKeyframe *>(ba.frameAt(j));
+                const std::string &name = delegate->toStdFromString(frame->name());
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(frame->name())));
+                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
                 const Vector3 &position = frame->position();
@@ -303,8 +315,9 @@ public:
             nframes = fa.countKeyframes();
             for (int j = 0; j < nframes; j++) {
                 const vmd::MorphKeyframe *frame = static_cast<vmd::MorphKeyframe *>(fa.frameAt(j));
+                const std::string &name = delegate->toStdFromString(frame->name());
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(frame->name()->toByteArray())));
+                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
                 internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
                 internal::snprintf(buffer, sizeof(buffer), "%.4f", frame->weight());
@@ -632,7 +645,9 @@ public:
                     }
                     else if (strncmp(attributeName, "name", 4) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setName(self->delegate->fromUnicode(value));
+                        delete self->currentString;
+                        self->currentString = self->delegate->toStringFromStd(value);
+                        keyframe->setName(self->currentString);
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
@@ -685,7 +700,9 @@ public:
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "name", 4) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setName(self->delegate->fromUnicode(value));
+                        delete self->currentString;
+                        self->currentString = self->delegate->toStringFromStd(value);
+                        keyframe->setName(self->currentString);
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
@@ -968,6 +985,7 @@ public:
     std::string key;
     std::string parentModel;
     Project::UUID uuid;
+    const IString *currentString;
     IModel *currentAsset;
     IModel *currentModel;
     IMotion *currentMotion;
@@ -1040,7 +1058,15 @@ const std::string &Project::globalSetting(const std::string &key) const
 
 const std::string &Project::modelSetting(const IModel *model, const std::string &key) const
 {
-    return containsModel(model) ? m_context->localModelSettings[model][key] : PrivateContext::kEmpty;
+    switch (model->type()) {
+    case IModel::kAsset:
+        return containsModel(model) ? m_context->localAssetSettings[model][key] : PrivateContext::kEmpty;
+    case IModel::kPMD:
+    case IModel::kPMX:
+        return containsModel(model) ? m_context->localModelSettings[model][key] : PrivateContext::kEmpty;
+    default:
+        return PrivateContext::kEmpty;
+    }
 }
 
 const Project::UUIDList Project::modelUUIDs() const
@@ -1129,16 +1155,18 @@ void Project::addMotion(IMotion *motion, const UUID &uuid)
 
 void Project::removeModel(IModel *model)
 {
-    m_context->removeModel(model);
-    Scene::removeModel(model);
-    setDirty(true);
+    if (m_context->removeModel(model)) {
+        Scene::removeModel(model);
+        setDirty(true);
+    }
 }
 
 void Project::removeMotion(IMotion *motion)
 {
-    m_context->removeMotion(motion);
-    Scene::removeMotion(motion);
-    setDirty(true);
+    if (m_context->removeMotion(motion)) {
+        Scene::removeMotion(motion);
+        setDirty(true);
+    }
 }
 
 void Project::setGlobalSetting(const std::string &key, const std::string &value)

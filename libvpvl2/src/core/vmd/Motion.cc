@@ -224,6 +224,7 @@ void Motion::setParentModel(IModel *model)
 {
     m_boneMotion.setParentModel(model);
     m_morphMotion.setParentModel(model);
+    m_model = model;
 }
 
 void Motion::seek(float frameIndex)

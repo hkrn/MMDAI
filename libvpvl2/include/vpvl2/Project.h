@@ -67,8 +67,8 @@ public:
     {
     public:
         virtual ~IDelegate() {}
-        virtual const IString *fromUnicode(const std::string &value) const = 0;
-        virtual const IString *toUnicode(const std::string &value) const = 0;
+        virtual const std::string toStdFromString(const IString *value) const = 0;
+        virtual const IString *toStringFromStd(const std::string &value) const = 0;
         virtual void error(const char *format, va_list ap) = 0;
         virtual void warning(const char *format, va_list ap) = 0;
     };
