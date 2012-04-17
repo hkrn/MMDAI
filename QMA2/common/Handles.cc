@@ -43,11 +43,10 @@
 #include "World.h"
 #include "util.h"
 
-#include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl2/vpvl2.h>
 #include <aiScene.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 class Handles::StaticWorld {
 public:
@@ -499,7 +498,7 @@ const Transform Handles::modelHandleTransform() const
             transform = m_bone->localTransform();
         }
         else if (mode == 'V') {
-            vpvl::Scene *scene = m_loader->renderEngine()->scene();
+            vpvl2::Scene *scene = m_loader->renderEngine()->scene();
             const btMatrix3x3 &basis = scene->modelViewTransform().getBasis();
             btMatrix3x3 newBasis;
             newBasis[0] = basis * Vector3(1, 0, 0);
@@ -542,7 +541,7 @@ float Handles::diffAngle(float value) const
     return value - m_prevAngle;
 }
 
-void Handles::setBone(Bone *value)
+void Handles::setBone(IBone *value)
 {
     m_bone = value;
     updateBone();

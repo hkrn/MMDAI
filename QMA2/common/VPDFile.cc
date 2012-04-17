@@ -198,7 +198,7 @@ void VPDFile::save(QTextStream &stream)
     }
 }
 
-void VPDFile::makePose(PMDModel *model)
+void VPDFile::makePose(IModel *model)
 {
     QByteArray bytes;
     QTextCodec *codec = internal::getTextCodec();

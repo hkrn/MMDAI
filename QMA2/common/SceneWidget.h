@@ -44,21 +44,13 @@
 #include <QtOpenGL/QtOpenGL>
 #include "VPDFile.h"
 
-#include <vpvl/Bone.h>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
-namespace vpvl {
-#ifdef VPVL_ENABLE_GLSL
-namespace gl2 {
-#else
-namespace gl {
-#endif
-class Renderer;
-}
-class Asset;
-class PMDModel;
+namespace vpvl2 {
+class IBone;
+class IModel;
+class IMotion;
 class Scene;
-class VMDMotion;
 }
 
 namespace internal {
@@ -94,8 +86,8 @@ public:
     ~SceneWidget();
 
     SceneLoader *sceneLoader() const;
-    void setSelectedModel(vpvl::PMDModel *value);
-    void setWorldGravity(const vpvl::Vector3 &value);
+    void setSelectedModel(vpvl2::IModel *value);
+    void setWorldGravity(const vpvl2::Vector3 &value);
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);
@@ -107,18 +99,18 @@ public:
     void loadProject(const QString &filename);
     void saveProject(const QString &filename);
 
-    vpvl::PMDModel *addModel(const QString &path, bool skipDialog = false);
-    vpvl::VMDMotion *insertMotionToAllModels(const QString &path);
-    vpvl::VMDMotion *insertMotionToSelectedModel(const QString &path);
-    vpvl::VMDMotion *insertMotionToModel(const QString &path, vpvl::PMDModel *model);
-    vpvl::Asset *addAsset(const QString &path);
-    vpvl::Asset *addAssetFromMetadata(const QString &path);
-    VPDFilePtr insertPoseToSelectedModel(const QString &filename, vpvl::PMDModel *model);
-    vpvl::VMDMotion *setCamera(const QString &path);
-    void makeRay(const QPointF &input, vpvl::Vector3 &rayFrom, vpvl::Vector3 &rayTo) const;
+    vpvl2::IModel *addModel(const QString &path, bool skipDialog = false);
+    vpvl2::IMotion *insertMotionToAllModels(const QString &path);
+    vpvl2::IMotion *insertMotionToSelectedModel(const QString &path);
+    vpvl2::IMotion *insertMotionToModel(const QString &path, vpvl2::IModel *model);
+    vpvl2::IModel *addAsset(const QString &path);
+    vpvl2::IModel *addAssetFromMetadata(const QString &path);
+    VPDFilePtr insertPoseToSelectedModel(const QString &filename, vpvl2::IModel *model);
+    vpvl2::IMotion *setCamera(const QString &path);
+    void makeRay(const QPointF &input, vpvl2::Vector3 &rayFrom, vpvl2::Vector3 &rayTo) const;
     Handles *handles() const { return m_handles; }
     EditMode editMode() const { return m_editMode; }
-    const QList<vpvl::Bone *> &selectedBones() const { return m_bones; }
+    const QList<vpvl2::IBone *> &selectedBones() const { return m_bones; }
     float currentFrameIndex() const { return m_frameIndex; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
@@ -137,43 +129,43 @@ public slots:
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
     void loadFile(const QString &file);
-    void setEmptyMotion(vpvl::PMDModel *model);
-    void saveMetadataFromAsset(vpvl::Asset *asset);
-    void rotateScene(const vpvl::Vector3 &delta);
-    void rotateModel(const vpvl::Quaternion &delta);
-    void rotateModel(vpvl::PMDModel *model, const vpvl::Quaternion &delta);
-    void translateScene(const vpvl::Vector3 &delta);
-    void translateModel(const vpvl::Vector3 &delta);
-    void translateModel(vpvl::PMDModel *model, const vpvl::Vector3 &delta);
+    void setEmptyMotion(vpvl2::IModel *model);
+    void saveMetadataFromAsset(vpvl2::IModel *asset);
+    void rotateScene(const vpvl2::Vector3 &delta);
+    void rotateModel(const vpvl2::Quaternion &delta);
+    void rotateModel(vpvl2::IModel *model, const vpvl2::Quaternion &delta);
+    void translateScene(const vpvl2::Vector3 &delta);
+    void translateModel(const vpvl2::Vector3 &delta);
+    void translateModel(vpvl2::IModel *model, const vpvl2::Vector3 &delta);
     void advanceMotion(float frameIndex);
     void seekMotion(float frameIndex, bool force = false);
     void resetMotion();
-    void setCameraPerspective(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
+    void setCameraPerspective(vpvl2::Vector3 *pos, vpvl2::Vector3 *angle, float *fovy, float *distance);
     void setModelEdgeOffset(double value);
     void setModelEdgeColor(const QColor &color);
-    void setModelPositionOffset(const vpvl::Vector3 &value);
-    void setModelRotationOffset(const vpvl::Vector3 &value);
+    void setModelPositionOffset(const vpvl2::Vector3 &value);
+    void setModelRotationOffset(const vpvl2::Vector3 &value);
     void setModelProjectiveShadowEnable(bool value);
-    void selectBones(const QList<vpvl::Bone *> &bones);
+    void selectBones(const QList<vpvl2::IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
 
 signals:
     void initailizeGLContextDidDone();
     void fileDidLoad(const QString &filename);
-    void newMotionDidSet(vpvl::PMDModel *model);
-    void modelDidMove(const vpvl::Vector3 &lastPosition);
-    void modelDidRotate(const vpvl::Quaternion &lastRotation);
-    void cameraPerspectiveDidSet(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
+    void newMotionDidSet(vpvl2::IModel *model);
+    void modelDidMove(const vpvl2::Vector3 &lastPosition);
+    void modelDidRotate(const vpvl2::Quaternion &lastRotation);
+    void cameraPerspectiveDidSet(const vpvl2::Vector3 &pos, const vpvl2::Vector3 &angle, float fovy, float distance);
     void fpsDidUpdate(int fps);
     void sceneDidPlay();
     void sceneDidPause();
     void sceneDidStop();
     void handleDidGrab();
     void handleDidRelease();
-    void handleDidMoveAbsolute(const vpvl::Vector3 &position, vpvl::Bone *bone, int mode);
-    void handleDidMoveRelative(const vpvl::Vector3 &position, vpvl::Bone *bone, int mode);
-    void handleDidRotate(const vpvl::Scalar &angle, vpvl::Bone *bone, int mode);
-    void boneDidSelect(const QList<vpvl::Bone *> &bones);
+    void handleDidMoveAbsolute(const vpvl2::Vector3 &position, vpvl2::IBone *bone, int mode);
+    void handleDidMoveRelative(const vpvl2::Vector3 &position, vpvl2::IBone *bone, int mode);
+    void handleDidRotate(const vpvl2::Scalar &angle, vpvl2::IBone *bone, int mode);
+    void boneDidSelect(const QList<vpvl2::IBone *> &bones);
     void motionDidSeek(float frameIndex);
     void undoDidRequest();
     void redoDidRequest();
@@ -216,18 +208,18 @@ private slots:
     void openErrorDialogIfFailed(bool loadingProjectFailed);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
-    void rotateUp() { rotateScene(vpvl::Vector3(10.0f, 0.0f, 0.0f)); }
-    void rotateDown() { rotateScene(vpvl::Vector3(-10.0f, 0.0f, 0.0f)); }
-    void rotateLeft() { rotateScene(vpvl::Vector3(0.0f, 10.0f, 0.0f)); }
-    void rotateRight() { rotateScene(vpvl::Vector3(0.0f, -10.0f, 0.0f)); }
-    void translateUp() { translateScene(vpvl::Vector3(0.0f, 1.0f, 0.0f)); }
-    void translateDown() { translateScene(vpvl::Vector3(0.0f, -1.0f, 0.0f)); }
-    void translateLeft() { translateScene(vpvl::Vector3(-1.0f, 0.0f, 0.0f)); }
-    void translateRight() { translateScene(vpvl::Vector3(1.0f, 0.0f, 0.0f)); }
-    void translateModelUp() { translateModel(vpvl::Vector3(0.0f, 0.5f, 0.0f)); }
-    void translateModelDown() { translateModel(vpvl::Vector3(0.0f, -0.5f, 0.0f)); }
-    void translateModelLeft() { translateModel(vpvl::Vector3(-0.5f, 0.0f, 0.0f)); }
-    void translateModelRight() { translateModel(vpvl::Vector3(0.5f, 0.0f, 0.0f)); }
+    void rotateUp() { rotateScene(vpvl2::Vector3(10.0f, 0.0f, 0.0f)); }
+    void rotateDown() { rotateScene(vpvl2::Vector3(-10.0f, 0.0f, 0.0f)); }
+    void rotateLeft() { rotateScene(vpvl2::Vector3(0.0f, 10.0f, 0.0f)); }
+    void rotateRight() { rotateScene(vpvl2::Vector3(0.0f, -10.0f, 0.0f)); }
+    void translateUp() { translateScene(vpvl2::Vector3(0.0f, 1.0f, 0.0f)); }
+    void translateDown() { translateScene(vpvl2::Vector3(0.0f, -1.0f, 0.0f)); }
+    void translateLeft() { translateScene(vpvl2::Vector3(-1.0f, 0.0f, 0.0f)); }
+    void translateRight() { translateScene(vpvl2::Vector3(1.0f, 0.0f, 0.0f)); }
+    void translateModelUp() { translateModel(vpvl2::Vector3(0.0f, 0.5f, 0.0f)); }
+    void translateModelDown() { translateModel(vpvl2::Vector3(0.0f, -0.5f, 0.0f)); }
+    void translateModelLeft() { translateModel(vpvl2::Vector3(-0.5f, 0.0f, 0.0f)); }
+    void translateModelRight() { translateModel(vpvl2::Vector3(0.5f, 0.0f, 0.0f)); }
     void revertSelectedModel() { setSelectedModel(0); }
     void updateSceneMotion() { seekMotion(m_frameIndex, true); }
     void updateMotion() { seekMotion(m_frameIndex, false); }
@@ -237,21 +229,21 @@ private slots:
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 private:
-    bool acceptAddingModel(vpvl::PMDModel *model);
+    bool acceptAddingModel(vpvl2::IModel *model);
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();
-    void grabImageHandle(const vpvl::Scalar &deltaValue);
+    void grabImageHandle(const vpvl2::Scalar &deltaValue);
     void grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags);
 
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
     Handles *m_handles;
-    QList<vpvl::Bone *> m_bones;
+    QList<vpvl2::IBone *> m_bones;
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
     EditMode m_editMode;
-    vpvl::Scalar m_totalDelta;
+    vpvl2::Scalar m_totalDelta;
     float m_lastDistance;
     float m_prevElapsed;
     float m_frameIndex;

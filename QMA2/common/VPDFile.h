@@ -41,11 +41,11 @@
 #include <QtCore/QSharedPointer>
 #include <QtCore/QString>
 #include <QtCore/QTextStream>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
-namespace vpvl {
-class Bone;
-class PMDModel;
+namespace vpvl2 {
+class IBone;
+class IModel;
 }
 
 class VPDFile
@@ -54,8 +54,8 @@ public:
     struct Bone
     {
         QString name;
-        vpvl::Vector3 position;
-        vpvl::Vector4 rotation;
+        vpvl2::Vector3 position;
+        vpvl2::Vector4 rotation;
     };
     typedef QList<Bone *> BoneList;
 
@@ -79,7 +79,7 @@ public:
 
     bool load(QTextStream &stream);
     void save(QTextStream &stream);
-    void makePose(vpvl::PMDModel *model);
+    void makePose(vpvl2::IModel *model);
     VPDFile *clone();
 
     const BoneList &bones() const { return m_bones; }

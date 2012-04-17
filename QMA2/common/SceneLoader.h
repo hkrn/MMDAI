@@ -46,24 +46,18 @@
 
 #include "VPDFile.h"
 
-#include <vpvl/Common.h>
-#include <vpvl/Project.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl2/Common.h>
+#include <vpvl2/Project.h>
 
 namespace internal {
 class World;
 }
 
-namespace vpvl
-{
-namespace gl2
-{
-class Renderer;
-}
-class Asset;
-class Bone;
-class PMDModel;
-class VMDMotion;
+namespace vpvl2 {
+class IModel;
+class IMotion;
+class IRenderDelegate;
+class Project;
 }
 
 class SceneLoader : public QObject
@@ -76,23 +70,22 @@ public:
     explicit SceneLoader(int width, int height, int fps);
     ~SceneLoader();
 
-    QList<vpvl::PMDModel *> allModels() const;
-    vpvl::Asset *findAsset(const QUuid &uuid) const;
-    vpvl::PMDModel *findModel(const QUuid &uuid) const;
-    vpvl::VMDMotion *findMotion(const QUuid &uuid) const;
-    const QUuid findUUID(vpvl::Asset *asset) const;
-    const QUuid findUUID(vpvl::PMDModel *model) const;
+    QList<vpvl2::IModel *> allModels() const;
+    vpvl2::IModel *findAsset(const QUuid &uuid) const;
+    vpvl2::IModel *findModel(const QUuid &uuid) const;
+    vpvl2::IMotion *findMotion(const QUuid &uuid) const;
+    const QUuid findUUID(vpvl2::IModel *model) const;
     bool isProjectModified() const;
-    bool loadAsset(const QString &filename, QUuid &uuid, vpvl::Asset *&asset);
-    vpvl::Asset *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
-    vpvl::VMDMotion *loadCameraMotion(const QString &path);
-    bool loadModel(const QString &filename, vpvl::PMDModel *&model);
-    vpvl::VMDMotion *loadModelMotion(const QString &path);
-    vpvl::VMDMotion *loadModelMotion(const QString &path, QList<vpvl::PMDModel *> &models);
-    vpvl::VMDMotion *loadModelMotion(const QString &path, vpvl::PMDModel *model);
-    VPDFilePtr loadModelPose(const QString &path, vpvl::PMDModel *model);
-    vpvl::VMDMotion *newCameraMotion() const;
-    vpvl::VMDMotion *newModelMotion(vpvl::PMDModel *model) const;
+    bool loadAsset(const QString &filename, QUuid &uuid, vpvl2::IModel *&asset);
+    vpvl2::IModel *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
+    vpvl2::IMotion *loadCameraMotion(const QString &path);
+    bool loadModel(const QString &filename, vpvl2::IModel *&model);
+    vpvl2::IMotion *loadModelMotion(const QString &path);
+    vpvl2::IMotion *loadModelMotion(const QString &path, QList<vpvl2::IModel *> &models);
+    vpvl2::IMotion *loadModelMotion(const QString &path, vpvl2::IModel *model);
+    VPDFilePtr loadModelPose(const QString &path, vpvl2::IModel *model);
+    vpvl2::IMotion *newCameraMotion() const;
+    vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
     void release();
     void render();
     const QList<QUuid> renderOrderList() const;
@@ -101,7 +94,7 @@ public:
     bool isPhysicsEnabled() const;
     bool isAccelerationEnabled() const;
     bool isBlackBackgroundEnabled() const;
-    const vpvl::Vector3 worldGravity() const;
+    const vpvl2::Vector3 worldGravity() const;
     const QColor screenColor() const;
     int frameIndexPlayFrom() const;
     int frameIndexPlayTo() const;
@@ -115,50 +108,49 @@ public:
     bool isGridIncluded() const;
     const QString backgroundAudio() const;
 
-    bool isProjectiveShadowEnabled(const vpvl::PMDModel *model) const;
-    void setProjectiveShadowEnable(const vpvl::PMDModel *model, bool value);
-    vpvl::PMDModel *selectedModel() const;
-    bool isModelSelected(const vpvl::PMDModel *value) const;
-    void setModelEdgeColor(vpvl::PMDModel *model, const QColor &value);
-    void setModelEdgeOffset(vpvl::PMDModel *model, float value);
-    void setModelPosition(vpvl::PMDModel *model, const vpvl::Vector3 &value);
-    const vpvl::Vector3 modelRotation(vpvl::PMDModel *value) const;
-    void setModelRotation(vpvl::PMDModel *model, const vpvl::Vector3 &value);
+    bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
+    void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
+    vpvl2::IModel *selectedModel() const;
+    bool isModelSelected(const vpvl2::IModel *value) const;
+    void setModelEdgeColor(vpvl2::IModel *model, const QColor &value);
+    void setModelEdgeOffset(vpvl2::IModel *model, float value);
+    void setModelPosition(vpvl2::IModel *model, const vpvl2::Vector3 &value);
+    const vpvl2::Vector3 modelRotation(vpvl2::IModel *value) const;
+    void setModelRotation(vpvl2::IModel *model, const vpvl2::Vector3 &value);
 
-    const vpvl::Vector3 assetPosition(const vpvl::Asset *asset);
-    void setAssetPosition(const vpvl::Asset *asset, const vpvl::Vector3 &value);
-    const vpvl::Quaternion assetRotation(const vpvl::Asset *asset);
-    void setAssetRotation(const vpvl::Asset *asset, const vpvl::Quaternion &value);
-    float assetOpacity(const vpvl::Asset *asset);
-    void setAssetOpacity(const vpvl::Asset *asset, float value);
-    float assetScaleFactor(const vpvl::Asset *asset);
-    void setAssetScaleFactor(const vpvl::Asset *asset, float value);
-    vpvl::Asset *selectedAsset() const;
-    bool isAssetSelected(const vpvl::Asset *value) const;
-    vpvl::PMDModel *assetParentModel(vpvl::Asset *asset) const;
-    void setAssetParentModel(const vpvl::Asset *asset, vpvl::PMDModel *model);
-    vpvl::Bone *assetParentBone(vpvl::Asset *asset) const;
-    void setAssetParentBone(const vpvl::Asset *asset, vpvl::Bone *bone);
+    const vpvl2::Vector3 assetPosition(const vpvl2::IModel *asset);
+    void setAssetPosition(const vpvl2::IModel *asset, const vpvl2::Vector3 &value);
+    const vpvl2::Quaternion assetRotation(const vpvl2::IModel *asset);
+    void setAssetRotation(const vpvl2::IModel *asset, const vpvl2::Quaternion &value);
+    float assetOpacity(const vpvl2::IModel *asset);
+    void setAssetOpacity(const vpvl2::IModel *asset, float value);
+    float assetScaleFactor(const vpvl2::IModel *asset);
+    void setAssetScaleFactor(const vpvl2::IModel *asset, float value);
+    vpvl2::IModel *selectedAsset() const;
+    bool isAssetSelected(const vpvl2::IModel *value) const;
+    vpvl2::IModel *assetParentModel(vpvl2::IModel *asset) const;
+    void setAssetParentModel(const vpvl2::IModel *asset, vpvl2::IModel *model);
+    vpvl2::IBone *assetParentBone(vpvl2::IModel *asset) const;
+    void setAssetParentBone(const vpvl2::IModel *asset, vpvl2::IBone *bone);
 
-    vpvl::gl2::Renderer *renderEngine() const { return m_renderer; }
     internal::World *world() const;
 
 public slots:
-    void addModel(vpvl::PMDModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
+    void addModel(vpvl2::IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
     void createProject();
-    void deleteAsset(vpvl::Asset *asset);
+    void deleteAsset(vpvl2::IModel *asset);
     void deleteCameraMotion();
-    void deleteModel(vpvl::PMDModel *&model);
-    void deleteMotion(vpvl::VMDMotion *&motion);
+    void deleteModel(vpvl2::IModel *&model);
+    void deleteMotion(vpvl2::IMotion *&motion);
     void loadProject(const QString &path);
-    void saveMetadataFromAsset(const QString &path, vpvl::Asset *asset);
+    void saveMetadataFromAsset(const QString &path, vpvl2::IModel *asset);
     void saveProject(const QString &path);
-    void setCameraMotion(vpvl::VMDMotion *motion);
-    void setLightColor(const vpvl::Color &color);
-    void setLightPosition(const vpvl::Vector3 &position);
-    void setModelMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void setCameraMotion(vpvl2::IMotion *motion);
+    void setLightColor(const vpvl2::Color &color);
+    void setLightPosition(const vpvl2::Vector3 &position);
+    void setModelMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void setRenderOrderList(const QList<QUuid> &value);
-    void setWorldGravity(const vpvl::Vector3 &value);
+    void setWorldGravity(const vpvl2::Vector3 &value);
     void sort(bool useOrderAttr = false);
     void startPhysicsSimulation();
     void stopPhysicsSimulation();
@@ -176,8 +168,8 @@ public slots:
     void setSceneHeight(int value);
     void setLoop(bool value);
     void setGridIncluded(bool value);
-    void setSelectedModel(vpvl::PMDModel *value);
-    void setSelectedAsset(vpvl::Asset *value);
+    void setSelectedModel(vpvl2::IModel *value);
+    void setSelectedAsset(vpvl2::IModel *value);
     void setBackgroundAudioPath(const QString &value);
     void setPreferredFPS(int value);
     void setScreenColor(const QColor &value);
@@ -187,36 +179,35 @@ signals:
     void projectDidProceed(int value);
     void projectDidLoad(bool loaded);
     void projectDidSave();
-    void modelDidSelect(vpvl::PMDModel *model, SceneLoader *loader);
-    void modelDidAdd(vpvl::PMDModel *model, const QUuid &uuid);
-    void modelWillDelete(vpvl::PMDModel *model, const QUuid &uuid);
-    void modelDidMakePose(VPDFilePtr pose, vpvl::PMDModel *model);
-    void motionDidAdd(vpvl::VMDMotion *motion, vpvl::PMDModel *model, const QUuid &uuid);
-    void motionWillDelete(vpvl::VMDMotion *motion, const QUuid &uuid);
-    void assetDidSelect(vpvl::Asset *asset, SceneLoader *loader);
-    void assetDidAdd(vpvl::Asset *asset, const QUuid &uuid);
-    void assetWillDelete(vpvl::Asset *asset, const QUuid &uuid);
-    void cameraMotionDidSet(vpvl::VMDMotion *motion, const QUuid &uuid);
-    void lightColorDidSet(const vpvl::Color &color);
-    void lightPositionDidSet(const vpvl::Vector3 &position);
+    void modelDidSelect(vpvl2::IModel *model, SceneLoader *loader);
+    void modelDidAdd(vpvl2::IModel *model, const QUuid &uuid);
+    void modelWillDelete(vpvl2::IModel *model, const QUuid &uuid);
+    void modelDidMakePose(VPDFilePtr pose, vpvl2::IModel *model);
+    void motionDidAdd(vpvl2::IMotion *motion, vpvl2::IModel *model, const QUuid &uuid);
+    void motionWillDelete(vpvl2::IMotion *motion, const QUuid &uuid);
+    void assetDidSelect(vpvl2::IModel *asset, SceneLoader *loader);
+    void assetDidAdd(vpvl2::IModel *asset, const QUuid &uuid);
+    void assetWillDelete(vpvl2::IModel *asset, const QUuid &uuid);
+    void cameraMotionDidSet(vpvl2::IMotion *motion, const QUuid &uuid);
+    void lightColorDidSet(const vpvl2::Color &color);
+    void lightPositionDidSet(const vpvl2::Vector3 &position);
 
 private:
-    void insertModel(vpvl::PMDModel *model, const QString &name);
-    void insertMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
+    void insertModel(vpvl2::IModel *model, const QString &name);
+    void insertMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void commitAssetProperties();
     bool globalSetting(const char *key, bool def) const;
     int globalSetting(const char *key, int def) const;
 
     internal::World *m_world;
-    vpvl::gl2::Renderer *m_renderer;
-    vpvl::gl2::Renderer::IDelegate *m_renderDelegate;
-    QMap<QString, vpvl::Asset*> m_name2assets;
-    vpvl::Project *m_project;
-    vpvl::Project::IDelegate *m_projectDelegate;
-    vpvl::PMDModel *m_model;
-    vpvl::Asset *m_asset;
-    vpvl::VMDMotion *m_camera;
-    vpvl::Array<QUuid> m_renderOrderList;
+    vpvl2::IRenderDelegate *m_renderDelegate;
+    QMap<QString, vpvl2::IModel*> m_name2assets;
+    vpvl2::Project *m_project;
+    vpvl2::Project::IDelegate *m_projectDelegate;
+    vpvl2::IModel *m_model;
+    vpvl2::IModel *m_asset;
+    vpvl2::IMotion *m_camera;
+    vpvl2::Array<QUuid> m_renderOrderList;
 
     Q_DISABLE_COPY(SceneLoader)
 };

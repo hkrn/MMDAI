@@ -52,7 +52,8 @@ public:
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
         setGravity(btVector3(0.0f, -9.8f, 0.0f));
-        setPreferredFPS(vpvl::Scene::kFPS);
+        setPreferredFPS(30);
+        // setPreferredFPS(vpvl::Scene::kFPS);
     }
     ~World()
     {

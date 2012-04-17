@@ -41,15 +41,15 @@
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
 
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
 namespace internal {
 class TextureDrawHelper;
 }
 
-namespace vpvl {
-class Asset;
-class Bone;
+namespace vpvl2 {
+class IBone;
+class IModel;
 }
 
 class btBvhTriangleMeshShape;
@@ -75,16 +75,16 @@ public:
         Texture disableRotate;
     };
     struct Vertex {
-        vpvl::Vector3 position;
-        vpvl::Vector3 normal;
+        vpvl2::Vector3 position;
+        vpvl2::Vector3 normal;
     };
     struct Model {
-        vpvl::Array<Vertex> vertices;
-        vpvl::Array<uint16_t> indices;
+        vpvl2::Array<Vertex> vertices;
+        vpvl2::Array<uint16_t> indices;
         btRigidBody *body;
     };
     struct RotationHandle {
-        vpvl::Asset *asset;
+        vpvl2::IModel *asset;
         Model x;
         Model y;
         Model z;
@@ -123,11 +123,11 @@ public:
 
     void load();
     void resize(const QSize &size);
-    bool testHitModel(const vpvl::Vector3 &rayFrom,
-                      const vpvl::Vector3 &rayTo,
+    bool testHitModel(const vpvl2::Vector3 &rayFrom,
+                      const vpvl2::Vector3 &rayTo,
                       bool setTracked,
                       int &flags,
-                      vpvl::Vector3 &pick);
+                      vpvl2::Vector3 &pick);
     bool testHitImage(const QPointF &p,
                       bool movable,
                       bool rotateable,
@@ -136,24 +136,24 @@ public:
     void drawImageHandles(bool movable, bool rotateable);
     void drawRotationHandle();
     void drawMoveHandle();
-    btScalar angle(const vpvl::Vector3 &pos) const;
+    btScalar angle(const vpvl2::Vector3 &pos) const;
 
-    void setPoint3D(const vpvl::Vector3 &value);
+    void setPoint3D(const vpvl2::Vector3 &value);
     void setPoint2D(const QPointF &value);
     void setAngle(float value);
     void setRotateDirection(bool value);
-    const vpvl::Vector3 diffPoint3D(const vpvl::Vector3 &value) const;
+    const vpvl2::Vector3 diffPoint3D(const vpvl2::Vector3 &value) const;
     const QPointF diffPoint2D(const QPointF &value) const;
     float diffAngle(float value) const;
-    vpvl::Bone *currentBone() const { return m_bone; }
+    vpvl2::IBone *currentBone() const { return m_bone; }
     bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
     bool isAngleZero() const { return m_prevAngle == 0.0f; }
     Flags constraint() const { return m_constraint; }
     int modeFromConstraint() const;
-    const vpvl::Transform modelHandleTransform() const;
+    const vpvl2::Transform modelHandleTransform() const;
 
     void setState(Flags value);
-    void setBone(vpvl::Bone *value);
+    void setBone(vpvl2::IBone *value);
     void setLocal(bool value);
     void setVisible(bool value);
     void setVisibilityFlags(int value);
@@ -169,7 +169,7 @@ private:
     void loadModelHandles();
 
     internal::TextureDrawHelper *m_helper;
-    vpvl::Bone *m_bone;
+    vpvl2::IBone *m_bone;
     StaticWorld *m_world;
     SceneLoader *m_loader;
     QGLShaderProgram m_program;
@@ -183,7 +183,7 @@ private:
     Texture m_local;
     Texture m_view;
     Flags m_constraint;
-    vpvl::Vector3 m_prevPos3D;
+    vpvl2::Vector3 m_prevPos3D;
     QPointF m_prevPos2D;
     float m_prevAngle;
     int m_visibilityFlags;

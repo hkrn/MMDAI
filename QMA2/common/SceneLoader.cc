@@ -43,10 +43,9 @@
 
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
-using namespace vpvl::gl2;
+using namespace vpvl2;
 
 /*
  * Renderer と Project の二重管理を行うため、メモリ解放にまつわる実装がややこしいことになっている。
@@ -542,7 +541,7 @@ void SceneLoader::addModel(PMDModel *model, const QString &baseName, const QDir 
     emit modelDidAdd(model, uuid);
 }
 
-QList<PMDModel *> SceneLoader::allModels() const
+QList<IModel *> SceneLoader::allModels() const
 {
     const Project::UUIDList &uuids = m_project->modelUUIDs();
     QList<PMDModel *> models;
@@ -635,27 +634,22 @@ void SceneLoader::deleteMotion(VMDMotion *&motion)
     m_project->deleteMotion(motion, motion->parentModel());
 }
 
-Asset *SceneLoader::findAsset(const QUuid &uuid) const
+IModel *SceneLoader::findAsset(const QUuid &uuid) const
 {
     return m_project->asset(uuid.toString().toStdString());
 }
 
-PMDModel *SceneLoader::findModel(const QUuid &uuid) const
+IModel *SceneLoader::findModel(const QUuid &uuid) const
 {
     return m_project->model(uuid.toString().toStdString());
 }
 
-VMDMotion *SceneLoader::findMotion(const QUuid &uuid) const
+IMotion *SceneLoader::findMotion(const QUuid &uuid) const
 {
     return m_project->motion(uuid.toString().toStdString());
 }
 
-const QUuid SceneLoader::findUUID(Asset *asset) const
-{
-    return QUuid(m_project->assetUUID(asset).c_str());
-}
-
-const QUuid SceneLoader::findUUID(PMDModel *model) const
+const QUuid SceneLoader::findUUID(IModel *model) const
 {
     return QUuid(m_project->modelUUID(model).c_str());
 }
@@ -707,7 +701,7 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, Asset *&asset)
     return !isNullData && asset != 0;
 }
 
-Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid)
+IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid)
 {
     QFile file(dir.absoluteFilePath(baseName));
     /* VAC 形式からアクセサリを読み込む。VAC は Shift_JIS で読み込む必要がある */
@@ -766,7 +760,7 @@ Asset *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &d
     }
 }
 
-VMDMotion *SceneLoader::loadCameraMotion(const QString &path)
+IMotion *SceneLoader::loadCameraMotion(const QString &path)
 {
     /* カメラモーションをファイルから読み込み、場面オブジェクトに設定する */
     QFile file(path);
@@ -813,7 +807,7 @@ bool SceneLoader::loadModel(const QString &filename, PMDModel *&model)
     return !isNullData && model != 0;
 }
 
-VMDMotion *SceneLoader::loadModelMotion(const QString &path)
+IMotion *SceneLoader::loadModelMotion(const QString &path)
 {
     /* モーションをファイルから読み込む。モデルへの追加は setModelMotion を使う必要がある */
     QFile file(path);
@@ -829,7 +823,7 @@ VMDMotion *SceneLoader::loadModelMotion(const QString &path)
     return motion;
 }
 
-VMDMotion *SceneLoader::loadModelMotion(const QString &path, QList<PMDModel *> &models)
+IMotion *SceneLoader::loadModelMotion(const QString &path, QList<IModel *> &models)
 {
     /* モーションをファイルから読み込み、対象の全てのモデルに対してモーションを適用する */
     VMDMotion *motion = loadModelMotion(path);
@@ -845,7 +839,7 @@ VMDMotion *SceneLoader::loadModelMotion(const QString &path, QList<PMDModel *> &
     return motion;
 }
 
-VMDMotion *SceneLoader::loadModelMotion(const QString &path, PMDModel *model)
+IMotion *SceneLoader::loadModelMotion(const QString &path, IModel *model)
 {
     /* loadModelMotion に setModelMotion の追加が入ったショートカット的なメソッド */
     VMDMotion *motion = loadModelMotion(path);
@@ -1001,7 +995,7 @@ void SceneLoader::loadProject(const QString &path)
     }
 }
 
-VMDMotion *SceneLoader::newCameraMotion() const
+IMotion *SceneLoader::newCameraMotion() const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
     VMDMotion *newCameraMotion = new VMDMotion();
@@ -1017,7 +1011,7 @@ VMDMotion *SceneLoader::newCameraMotion() const
     return newCameraMotion;
 }
 
-VMDMotion *SceneLoader::newModelMotion(PMDModel *model) const
+IMotion *SceneLoader::newModelMotion(IModel *model) const
 {
     /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
     VMDMotion *newModelMotion = 0;
@@ -1304,7 +1298,7 @@ void SceneLoader::setProjectiveShadowEnable(const PMDModel *model, bool value)
         m_project->setModelSetting(model, "shadow.projective", value ? "true" : "false");
 }
 
-PMDModel *SceneLoader::selectedModel() const
+IModel *SceneLoader::selectedModel() const
 {
     return m_model;
 }

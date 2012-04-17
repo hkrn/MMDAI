@@ -40,16 +40,17 @@
 #include <QtGlobal>
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
-
-#include <vpvl/Scene.h>
+#include <vpvl2/Common.h>
 
 namespace internal {
+
+using namespace vpvl2;
 
 class Grid {
 public:
     struct Vertex {
-        vpvl::Vector3 position;
-        vpvl::Vector3 color;
+        Vector3 position;
+        Vector3 color;
     };
 
     Grid()
@@ -81,18 +82,18 @@ public:
 
     void load() {
         // draw black grid
-        vpvl::Scalar width = m_size.x(), height = m_size.y(), depth = m_size.z(), gridSize = m_size.w();
+        Scalar width = m_size.x(), height = m_size.y(), depth = m_size.z(), gridSize = m_size.w();
         uint8_t index = 0;
-        for (vpvl::Scalar x = -width; x <= width; x += gridSize)
-            addLine(vpvl::Vector3(x, 0.0, -width), vpvl::Vector3(x, 0.0, x == 0 ? 0.0 : width), m_lineColor, index);
-        for (vpvl::Scalar z = -height; z <= height; z += gridSize)
-            addLine(vpvl::Vector3(-height, 0.0f, z), vpvl::Vector3(z == 0 ? 0.0f : height, 0.0f, z), m_lineColor, index);
+        for (Scalar x = -width; x <= width; x += gridSize)
+            addLine(Vector3(x, 0.0, -width), Vector3(x, 0.0, x == 0 ? 0.0 : width), m_lineColor, index);
+        for (Scalar z = -height; z <= height; z += gridSize)
+            addLine(Vector3(-height, 0.0f, z), Vector3(z == 0 ? 0.0f : height, 0.0f, z), m_lineColor, index);
         // X coordinate (red)
-        addLine(vpvl::kZeroV, vpvl::Vector3(width, 0.0f, 0.0f), m_axisXColor, index);
+        addLine(kZeroV3, Vector3(width, 0.0f, 0.0f), m_axisXColor, index);
         // Y coordinate (green)
-        addLine(vpvl::kZeroV, vpvl::Vector3(0.0f, height, 0.0f), m_axisYColor, index);
+        addLine(kZeroV3, Vector3(0.0f, height, 0.0f), m_axisYColor, index);
         // Z coordinate (blue)
-        addLine(vpvl::kZeroV, vpvl::Vector3(0.0f, 0.0f, depth), m_axisZColor, index);
+        addLine(kZeroV3, Vector3(0.0f, 0.0f, depth), m_axisZColor, index);
         QGLFunctions func(QGLContext::currentContext());
         func.glGenBuffers(1, &m_vbo);
         func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -105,7 +106,7 @@ public:
         m_program.link();
     }
 
-    void draw(vpvl::Scene *scene, bool visible) {
+    void draw(Scene *scene, bool visible) {
         if (visible && m_program.isLinked()) {
             float matrix[16];
             m_program.bind();
@@ -123,7 +124,7 @@ public:
             m_program.setAttributeBuffer(inPosition, GL_FLOAT, 0, 3, sizeof(Vertex));
             int inColor = m_program.attributeLocation("inColor");
             m_program.enableAttributeArray(inColor);
-            m_program.setAttributeBuffer(inColor, GL_FLOAT, sizeof(vpvl::Vector3), 3, sizeof(Vertex));
+            m_program.setAttributeBuffer(inColor, GL_FLOAT, sizeof(Vector3), 3, sizeof(Vertex));
             glDrawElements(GL_LINES, m_indices.count(), GL_UNSIGNED_BYTE, 0);
             func.glBindBuffer(GL_ARRAY_BUFFER, 0);
             func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -131,14 +132,14 @@ public:
         }
     }
 
-    void setGridSize(const vpvl::Vector4 &value) { m_size = value; }
-    void setLineColor(const vpvl::Vector3 &value) { m_lineColor = value; }
-    void setAxisXColor(const vpvl::Vector3 &value) { m_axisXColor = value; }
-    void setAxisYColor(const vpvl::Vector3 &value) { m_axisYColor = value; }
-    void setAxisZColor(const vpvl::Vector3 &value) { m_axisZColor = value; }
+    void setGridSize(const Vector4 &value) { m_size = value; }
+    void setLineColor(const Vector3 &value) { m_lineColor = value; }
+    void setAxisXColor(const Vector3 &value) { m_axisXColor = value; }
+    void setAxisYColor(const Vector3 &value) { m_axisYColor = value; }
+    void setAxisZColor(const Vector3 &value) { m_axisZColor = value; }
 
 private:
-    void addLine(const vpvl::Vector3 &from, const vpvl::Vector3 &to, const vpvl::Vector3 &color, uint8_t &index) {
+    void addLine(const Vector3 &from, const Vector3 &to, const Vector3 &color, uint8_t &index) {
         Vertex f, t;
         f.position = from;
         f.color = color;
@@ -151,13 +152,13 @@ private:
     }
 
     QGLShaderProgram m_program;
-    vpvl::Array<Vertex> m_vertices;
-    vpvl::Array<uint8_t> m_indices;
-    vpvl::Vector4 m_size;
-    vpvl::Vector3 m_lineColor;
-    vpvl::Vector3 m_axisXColor;
-    vpvl::Vector3 m_axisYColor;
-    vpvl::Vector3 m_axisZColor;
+    Array<Vertex> m_vertices;
+    Array<uint8_t> m_indices;
+    Vector4 m_size;
+    Vector3 m_lineColor;
+    Vector3 m_axisXColor;
+    Vector3 m_axisYColor;
+    Vector3 m_axisZColor;
     GLuint m_vbo;
     GLuint m_ibo;
     GLuint m_list;

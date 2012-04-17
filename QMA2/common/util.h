@@ -38,12 +38,14 @@
 #define UTIL_H
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
 namespace internal
 {
 
-const static vpvl::Vector3 kWorldAabbSize(vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar, vpvl::Scene::kFrustumFar);
+using namespace vpvl2;
+
+const static Vector3 kWorldAabbSize(10000, 10000, 10000);
 
 static inline QTextCodec *getTextCodec()
 {
@@ -62,76 +64,86 @@ static inline const QByteArray fromQString(const QString &value)
     return getTextCodec()->fromUnicode(value);
 }
 
+static inline const QString toQString(const IString *value)
+{
+    Q_UNUSED(value)
+    return QString("");
+}
+
 static inline const QString toQString(const uint8_t *value)
 {
     return getTextCodec()->toUnicode(reinterpret_cast<const char *>(value));
 }
 
-static inline const QString toQString(const vpvl::Asset *value)
-{
-    return value ? QString(value->name()) : noneString();
-}
-
-static inline const QString toQString(const vpvl::PMDModel *value)
+static inline const QString toQString(const IModel *value)
 {
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::Bone *value)
+static inline const QString toQString(const IBone *value)
 {
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::Face *value)
+static inline const QString toQString(const IMorph *value)
 {
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::BoneKeyframe *value)
+static inline const QString toQString(const IBoneKeyframe *value)
 {
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline const QString toQString(const vpvl::FaceKeyframe *value)
+static inline const QString toQString(const IMorphKeyframe *value)
 {
     return value ? toQString(value->name()) : noneString();
 }
 
-static inline bool hasOwnLocalAxis(const vpvl::Bone *bone)
+static inline bool hasOwnLocalAxis(const IBone *bone)
 {
     const QString &name = toQString(bone);
     return name.indexOf("指") != -1 || name.endsWith("腕") || name.endsWith("ひじ") || name.endsWith("手首");
 }
 
-static inline void getOwnLocalAxis(const vpvl::Bone *bone,
-                                   const vpvl::Bone *child,
-                                   vpvl::Vector3 &axisX,
-                                   vpvl::Vector3 &axisY,
-                                   vpvl::Vector3 &axisZ)
+static inline void getOwnLocalAxis(const IBone *bone,
+                                   const IBone *child,
+                                   Vector3 &axisX,
+                                   Vector3 &axisY,
+                                   Vector3 &axisZ)
 {
+#if QMA2_TBD
     /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-    const vpvl::Vector3 &boneOrigin = bone->originPosition();
-    const vpvl::Vector3 &childOrigin = child->originPosition();
+    const Vector3 &boneOrigin = bone->originPosition();
+    const Vector3 &childOrigin = child->originPosition();
     /* 外積を使ってそれぞれの軸を求める */
     axisX = (childOrigin - boneOrigin).normalized();
-    vpvl::Vector3 tmp1 = axisX;
+    Vector3 tmp1 = axisX;
     const QString &name = toQString(bone);
     name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
     axisZ = axisX.cross(tmp1).normalized();
-    vpvl::Vector3 tmp2 = axisX;
+    Vector3 tmp2 = axisX;
     tmp2.setZ(-axisZ.z());
     axisY = tmp2.cross(-axisX).normalized();
+#else
+    Q_UNUSED(bone)
+    Q_UNUSED(child)
+    Q_UNUSED(axisX)
+    Q_UNUSED(axisY)
+    Q_UNUSED(axisZ)
+#endif
 }
 
-static inline void dumpBones(vpvl::PMDModel *model)
+static inline void dumpBones(IModel *model)
 {
-    const vpvl::BoneList &bones = model->bones();
+    Array<IBone *> bones;
+    model->getBones(bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
-        vpvl::Bone *bone = bones[i];
-        const vpvl::Transform &transform = bone->localTransform();
-        const vpvl::Vector3 &p = transform.getOrigin();
-        const vpvl::Quaternion &q = transform.getRotation();
+        IBone *bone = bones[i];
+        const Transform &transform = bone->localTransform();
+        const Vector3 &p = transform.getOrigin();
+        const Quaternion &q = transform.getRotation();
         qDebug().nospace() << "index=" << i
                            << " name=" << internal::toQString(bone)
                            << " position=" << QVector3D(p.x(), p.y(), p.z())
@@ -139,10 +151,10 @@ static inline void dumpBones(vpvl::PMDModel *model)
     }
 }
 
-static inline void dumpBoneKeyFrame(const vpvl::BoneKeyframe *frame, int index = 0)
+static inline void dumpBoneKeyFrame(const IBoneKeyframe *frame, int index = 0)
 {
-    const vpvl::Vector3 &p = frame->position();
-    const vpvl::Quaternion &q = frame->rotation();
+    const Vector3 &p = frame->position();
+    const Quaternion &q = frame->rotation();
     qDebug().nospace() << "index=" << index
                        << " frameIndex=" << frame->frameIndex()
                        << " name=" << internal::toQString(frame)
@@ -150,20 +162,21 @@ static inline void dumpBoneKeyFrame(const vpvl::BoneKeyframe *frame, int index =
                        << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
 }
 
-static inline void dumpBoneAnimation(const vpvl::BoneAnimation &animation)
+#if QMA2_TBD
+static inline void dumpBoneAnimation(const BoneAnimation &animation)
 {
     const int nframes = animation.countKeyframes();
     for (int i = 0; i < nframes; i++)
-        dumpBoneKeyFrame(static_cast<vpvl::BoneKeyframe *>(animation.frameAt(i)), i);
+        dumpBoneKeyFrame(static_cast<BoneKeyframe *>(animation.frameAt(i)), i);
 }
 
-static inline void dumpBoneKeyFrames(const vpvl::BaseKeyFrameList &frames)
+static inline void dumpBoneKeyFrames(const BaseKeyFrameList &frames)
 {
     const int nframes = frames.count();
     for (int i = 0; i < nframes; i++)
-        dumpBoneKeyFrame(static_cast<vpvl::BoneKeyframe *>(frames[i]), i);
+        dumpBoneKeyFrame(static_cast<BoneKeyframe *>(frames[i]), i);
 }
-
+#endif
 
 static inline const QMatrix4x4 toMatrix4x4(float matrixf[16])
 {
