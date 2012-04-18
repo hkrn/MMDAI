@@ -94,6 +94,10 @@ public:
     void setColor(const Vector3 &value) { m_color = value; }
     void setDirection(const Vector3 &value) { m_direction = value; }
     void setMotion(IMotion *value) { m_motion = value; }
+    void copyFrom(ILight *value) {
+        setColor(value->color());
+        setDirection(value->direction());
+    }
     void resetDefault() {
         setColor(Vector3(0.6, 0.6, 0.6));
         setDirection(Vector3(0.5, 1.0, 0.5));
@@ -120,7 +124,7 @@ public:
     {
     }
 
-    const Transform &transform() const { return m_transform; }
+    const Transform &modelViewTransform() const { return m_transform; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &angle() const { return m_angle; }
     Scalar fovy() const { return m_fovy; }
@@ -131,6 +135,12 @@ public:
     void setFovy(float value) { m_fovy = value; }
     void setDistance(float value) { m_distance = value; }
     void setMotion(IMotion *value) { m_motion = value; }
+    void copyFrom(ICamera *value) {
+        setPosition(value->position());
+        setAngle(value->angle());
+        setFovy(value->fovy());
+        setDistance(value->distance());
+    }
     void resetDefault() {
         setPosition(Vector3(0, 10, 0));
         setFovy(30);
@@ -200,6 +210,12 @@ bool Scene::isAcceleratorSupported()
 #else
     return false;
 #endif
+}
+
+const Scalar &Scene::defaultFPS()
+{
+    static const Scalar kDefaultFPS = 30;
+    return kDefaultFPS;
 }
 
 Scene::Scene()

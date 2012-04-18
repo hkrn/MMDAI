@@ -78,12 +78,14 @@ public:
         virtual void setColor(const Vector3 &value) = 0;
         virtual void setDirection(const Vector3 &value) = 0;
         virtual void setMotion(IMotion *value) = 0;
+        virtual void copyFrom(ILight *value) = 0;
         virtual void resetDefault() = 0;
     };
     class ICamera {
     public:
         virtual ~ICamera() {}
 
+        virtual const Transform &modelViewTransform() const = 0;
         virtual const Vector3 &position() const = 0;
         virtual const Vector3 &angle() const = 0;
         virtual Scalar fovy() const = 0;
@@ -94,10 +96,12 @@ public:
         virtual void setFovy(float value) = 0;
         virtual void setDistance(float value) = 0;
         virtual void setMotion(IMotion *value) = 0;
+        virtual void copyFrom(ICamera *value) = 0;
         virtual void resetDefault() = 0;
     };
 
     static bool isAcceleratorSupported();
+    static const Scalar &defaultFPS();
 
     Scene();
     virtual ~Scene();
