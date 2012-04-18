@@ -64,6 +64,11 @@ static inline const QByteArray fromQString(const QString &value)
     return getTextCodec()->fromUnicode(value);
 }
 
+static inline const IString *createString(const QString &value)
+{
+    return 0;
+}
+
 static inline const QString toQString(const IString *value)
 {
     Q_UNUSED(value)

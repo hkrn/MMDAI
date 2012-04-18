@@ -36,10 +36,10 @@
 
 #include "VPDFile.h"
 #include "util.h"
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 #include <QtCore/QtCore>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 enum InternalParseState
 {
@@ -200,14 +200,13 @@ void VPDFile::save(QTextStream &stream)
 
 void VPDFile::makePose(IModel *model)
 {
-    QByteArray bytes;
-    QTextCodec *codec = internal::getTextCodec();
     foreach (Bone *b, m_bones) {
-        bytes = codec->fromUnicode(b->name);
-        vpvl::Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        const IString *s = internal::createString(b->name);
+        IBone *bone = model->findBone(s);
+        delete s;
         if (bone) {
-            Vector3 pos = b->position;
-            Vector4 rot = b->rotation;
+            const Vector3 &pos = b->position;
+            const Vector4 &rot = b->rotation;
             const Quaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
             bone->setPosition(pos);
             bone->setRotation(rotation);

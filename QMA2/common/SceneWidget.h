@@ -45,6 +45,7 @@
 #include "VPDFile.h"
 
 #include <vpvl2/Common.h>
+#include <vpvl2/Scene.h>
 
 namespace vpvl2 {
 class IBone;
@@ -140,7 +141,7 @@ public slots:
     void advanceMotion(float delta);
     void seekMotion(float frameIndex, bool force = false);
     void resetMotion();
-    void setCameraPerspective(vpvl2::Vector3 *pos, vpvl2::Vector3 *angle, float *fovy, float *distance);
+    void setCameraPerspective(vpvl2::Scene::ICamera *camera);
     void setModelEdgeOffset(double value);
     void setModelEdgeColor(const QColor &color);
     void setModelPositionOffset(const vpvl2::Vector3 &value);
@@ -155,7 +156,7 @@ signals:
     void newMotionDidSet(vpvl2::IModel *model);
     void modelDidMove(const vpvl2::Vector3 &lastPosition);
     void modelDidRotate(const vpvl2::Quaternion &lastRotation);
-    void cameraPerspectiveDidSet(const vpvl2::Vector3 &pos, const vpvl2::Vector3 &angle, float fovy, float distance);
+    void cameraPerspectiveDidSet(const vpvl2::Scene::ICamera *camera);
     void fpsDidUpdate(int fps);
     void sceneDidPlay();
     void sceneDidPause();

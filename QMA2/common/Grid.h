@@ -41,6 +41,7 @@
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
 #include <vpvl2/Common.h>
+#include <vpvl2/Scene.h>
 
 namespace internal {
 
@@ -113,10 +114,11 @@ public:
             QGLFunctions func(QGLContext::currentContext());
             func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
             func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-            scene->getModelViewMatrix(matrix);
+            const Scene::IMatrices *matrices = scene->matrices();
+            matrices->getModelView(matrix);
             int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
             func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-            scene->getProjectionMatrix(matrix);
+            matrices->getProjection(matrix);
             int projectionMatrix = m_program.uniformLocation("projectionMatrix");
             func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
             int inPosition = m_program.attributeLocation("inPosition");

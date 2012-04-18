@@ -47,6 +47,7 @@
 #include "VPDFile.h"
 
 #include <vpvl2/Common.h>
+#include <vpvl2/Factory.h>
 #include <vpvl2/Project.h>
 
 namespace internal {
@@ -65,9 +66,7 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
-    static bool isAccelerationSupported();
-
-    explicit SceneLoader(int width, int height, int fps);
+    explicit SceneLoader();
     ~SceneLoader();
 
     QList<vpvl2::IModel *> allModels() const;
@@ -88,6 +87,7 @@ public:
     vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
     void release();
     void render();
+    void updateMatrices();
     const QList<QUuid> renderOrderList() const;
 
     bool isGridVisible() const;
@@ -135,6 +135,7 @@ public:
 
     vpvl2::Scene *scene() const;
     internal::World *world() const;
+    int maxFrameIndex() const;
 
 public slots:
     void addModel(vpvl2::IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -203,6 +204,7 @@ private:
     internal::World *m_world;
     vpvl2::IRenderDelegate *m_renderDelegate;
     QMap<QString, vpvl2::IModel*> m_name2assets;
+    vpvl2::Factory m_factory;
     vpvl2::Project *m_project;
     vpvl2::Project::IDelegate *m_projectDelegate;
     vpvl2::IModel *m_model;

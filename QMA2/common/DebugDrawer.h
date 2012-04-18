@@ -121,16 +121,19 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         m_program.bind();
-        m_scene->getModelViewMatrix(matrix);
+        const Scene::IMatrices *matrices = m_scene->matrices();
+        matrices->getModelView(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
         func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-        m_scene->getProjectionMatrix(matrix);
+        matrices->getProjection(matrix);
         int projectionMatrix = m_program.uniformLocation("projectionMatrix");
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
         QSet<IBone *> linkedIKBones, targetBones, destinationBones;
-#if 0
+        Q_UNUSED(targetBones)
+        Q_UNUSED(destinationBones)
+#if QMA2_TBD
         /* IK ボーンを収集 */
         const IKList &IKs = model->IKs();
         const int nIKs = IKs.count();
@@ -151,7 +154,7 @@ public:
             if (!bone->isMovable() && !bone->isRotateable())
                 continue;
             /* 子ボーンが「全ての親」の場合はスキップしておく */
-            if (child->origin() == kZeroV)
+            if (child->origin() == kZeroV3)
                 continue;
             drawBone(bone, child, selectedBones, linkedIKBones);
         }
@@ -166,10 +169,11 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         m_program.bind();
-        m_scene->getModelViewMatrix(matrix);
+        const Scene::IMatrices *matrices = m_scene->matrices();
+        matrices->getModelView(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
         func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-        m_scene->getProjectionMatrix(matrix);
+        matrices->getProjection(matrix);
         int projectionMatrix = m_program.uniformLocation("projectionMatrix");
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
@@ -189,7 +193,7 @@ public:
         if (mode == 'V') {
             /* モデルビュー行列を元に軸表示 */
             const Transform &transform = bone->localTransform();
-            const btMatrix3x3 &modelView = m_scene->modelViewTransform().getBasis();
+            const btMatrix3x3 &modelView = m_scene->camera()->modelViewTransform().getBasis();
             const Vector3 &origin = bone->localTransform().getOrigin();
             drawLine(origin, transform * (modelView.getRow(0) * kLength), kRed);
             drawLine(origin, transform * (modelView.getRow(1) * kLength), kGreen);
