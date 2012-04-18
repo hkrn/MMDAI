@@ -321,12 +321,12 @@ public:
         }
     }
 
-    const std::string toUnicode(const uint8_t *value) {
+    const std::string toUnicode(const uint8_t *value) const {
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         QString s = codec->toUnicode(reinterpret_cast<const char *>(value));
         return std::string(s.toUtf8());
     }
-    const std::string toUnicode(const IString *value) {
+    const std::string toUnicode(const IString *value) const {
         if (value) {
             const QString &s = static_cast<const String *>(value)->value();
             return std::string(s.toUtf8());

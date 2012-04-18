@@ -83,7 +83,7 @@ public:
     virtual void log(void *context, LogLevel level, const char *format, va_list ap) = 0;
     virtual const std::string loadShader(ShaderType type, void *context) = 0;
     virtual const std::string loadKernel(KernelType type, void *context) = 0;
-    virtual const std::string toUnicode(const uint8_t *str) = 0;
+    virtual const std::string toUnicode(const uint8_t *str) const = 0;
 };
 
 } /* namespace vpvl2 */
