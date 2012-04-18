@@ -219,33 +219,41 @@ public:
     {
     }
 
-    bool uploadTexture(const std::string &name, const std::string &dir, void *texture, bool isToon) {
+    void allocateContext(const IModel *model, void *& /* context */) {
+        const IString *name = model->name();
+        qDebug("Allocated the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
+    }
+    void releaseContext(const IModel *model, void *& /* context */) {
+        const IString *name = model->name();
+        qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
+    }
+    bool uploadTexture(void * /* context */, const std::string &name, const std::string &dir, void *texture, bool isToon) {
         return uploadTextureInternal(createPath(dir, name), texture, isToon);
     }
-    bool uploadTexture(const IString *name, const std::string &dir, void *texture, bool isToon) {
+    bool uploadTexture(void * /* context */, const IString *name, const std::string &dir, void *texture, bool isToon) {
         return uploadTextureInternal(createPath(dir, name), texture, isToon);
     }
-    bool uploadToonTexture(const std::string &name, const std::string &dir, void *texture) {
+    bool uploadToonTexture(void * /* context */, const std::string &name, const std::string &dir, void *texture) {
         if (!uploadTextureInternal(createPath(dir, name), texture, true))
             return uploadTextureInternal(createPath(kSystemTexturesDir, name), texture, true);
         return true;
     }
-    bool uploadToonTexture(const IString *name, const std::string &dir, void *texture) {
+    bool uploadToonTexture(void * /* context */, const IString *name, const std::string &dir, void *texture) {
         if (!uploadTextureInternal(createPath(dir, name), texture, true))
             return uploadTextureInternal(createPath(kSystemTexturesDir, name), texture, true);
         return true;
     }
-    bool uploadToonTexture(int index, void *texture) {
+    bool uploadToonTexture(void * /* context */, int index, void *texture) {
         QString format;
         const QString &pathString = QString::fromStdString(kSystemTexturesDir) + "/" + format.sprintf("toon%02d.bmp", index + 1);
         return uploadTextureInternal(pathString, texture, true);
     }
 
-    void log(LogLevel /* level */, const char *format, va_list ap) {
+    void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
     }
-    const std::string loadKernel(KernelType type) {
+    const std::string loadKernel(KernelType type, void * /* context */) {
         std::string file;
         switch (type) {
         case kModelSkinningKernel:
@@ -262,7 +270,7 @@ public:
             return std::string();
         }
     }
-    const std::string loadShader(ShaderType type) {
+    const std::string loadShader(ShaderType type, void * /* context */) {
         std::string file;
         switch (type) {
         case kAssetVertexShader:

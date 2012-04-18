@@ -117,12 +117,12 @@ public:
     bool initializeAccelerator();
 
 protected:
-    void log0(IRenderDelegate::LogLevel level, const char *format ...);
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
     IRenderDelegate *m_delegate;
 
 private:
-    void uploadRecurse(const aiScene *scene, const aiNode *node);
+    void uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);

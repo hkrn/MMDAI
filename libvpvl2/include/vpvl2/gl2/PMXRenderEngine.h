@@ -98,7 +98,7 @@ public:
     bool initializeAccelerator();
 
 protected:
-    void log0(IRenderDelegate::LogLevel level, const char *format ...);
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
     IRenderDelegate *m_delegate;
 

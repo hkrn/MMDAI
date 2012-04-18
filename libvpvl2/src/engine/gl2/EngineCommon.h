@@ -106,9 +106,9 @@ public:
     }
 #endif
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        GLuint vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
-        GLuint fragmentShader = compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+        GLuint vertexShader = compileShader(context, vertexShaderSource, GL_VERTEX_SHADER);
+        GLuint fragmentShader = compileShader(context, fragmentShaderSource, GL_FRAGMENT_SHADER);
         if (vertexShader && fragmentShader) {
             GLuint program = glCreateProgram();
             glAttachShader(program, vertexShader);
@@ -126,7 +126,7 @@ public:
                     delete[] m_message;
                     m_message = new char[len];
                     glGetProgramInfoLog(program, len, NULL, m_message);
-                    log0(IRenderDelegate::kLogWarning, "%s", m_message);
+                    log0(context, IRenderDelegate::kLogWarning, "%s", m_message);
                 }
                 glDeleteProgram(program);
                 return false;
@@ -134,7 +134,7 @@ public:
             m_modelViewProjectionUniformLocation = glGetUniformLocation(program, "modelViewProjectionMatrix");
             m_positionAttributeLocation = glGetAttribLocation(program, "inPosition");
             m_program = program;
-            log0(IRenderDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
+            log0(context, IRenderDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
             return true;
         }
         else {
@@ -158,17 +158,17 @@ public:
     }
 
 protected:
-    void log0(IRenderDelegate::LogLevel level, const char *format...) {
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
         va_list ap;
         va_start(ap, format);
-        m_delegate->log(level, format, ap);
+        m_delegate->log(context, level, format, ap);
         va_end(ap);
     }
 
     GLuint m_program;
 
 private:
-    GLuint compileShader(const char *source, GLenum type) {
+    GLuint compileShader(void *context, const char *source, GLenum type) {
         GLuint shader = glCreateShader(type);
         glShaderSource(shader, 1, &source, NULL);
         glCompileShader(shader);
@@ -181,7 +181,7 @@ private:
                 delete[] m_message;
                 m_message = new char[len];
                 glGetShaderInfoLog(shader, len, NULL, m_message);
-                log0(IRenderDelegate::kLogWarning, "%s", m_message);
+                log0(context, IRenderDelegate::kLogWarning, "%s", m_message);
             }
             glDeleteShader(shader);
             return 0;
@@ -211,8 +211,8 @@ public:
         m_lightPositionUniformLocation = 0;
     }
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource);
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
             m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
@@ -249,8 +249,8 @@ public:
         m_transformUniformLocation = 0;
     }
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource);
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_transformUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
         }
@@ -295,29 +295,29 @@ public:
         cl_uint nplatforms;
         err = clGetPlatformIDs(0, 0, &nplatforms);
         if (err != CL_SUCCESS) {
-            log0(IRenderDelegate::kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
+            log0(0, IRenderDelegate::kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
             return false;
         }
         cl_platform_id *platforms = new cl_platform_id[nplatforms];
         err = clGetPlatformIDs(nplatforms, platforms, 0);
         if (err != CL_SUCCESS) {
-            log0(IRenderDelegate::kLogWarning, "Failed getting OpenCL platforms: %d", err);
+            log0(0, IRenderDelegate::kLogWarning, "Failed getting OpenCL platforms: %d", err);
             delete[] platforms;
             return false;
         }
         for (cl_uint i = 0; i < nplatforms; i++) {
             cl_char buffer[BUFSIZ];
             clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);
+            log0(0, IRenderDelegate::kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);
             clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_PLATFORM_NAME: %s", buffer);
+            log0(0, IRenderDelegate::kLogInfo, "CL_PLATFORM_NAME: %s", buffer);
             clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
+            log0(0, IRenderDelegate::kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
         }
         cl_platform_id firstPlatform = platforms[0];
         err = clGetDeviceIDs(firstPlatform, CL_DEVICE_TYPE_ALL, 1, &m_device, 0);
         if (err != CL_SUCCESS) {
-            log0(IRenderDelegate::kLogWarning, "Failed getting a OpenCL device: %d", err);
+            log0(0, IRenderDelegate::kLogWarning, "Failed getting a OpenCL device: %d", err);
             delete[] platforms;
             return false;
         }
@@ -326,19 +326,19 @@ public:
             cl_uint frequency, addressBits;
             cl_device_type type;
             clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
+            log0(0, IRenderDelegate::kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
             clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_DEVICE_NAME: %s", buffer);
+            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_NAME: %s", buffer);
             clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
+            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
             clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_DEVICE_TYPE: %d", type);
+            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_TYPE: %d", type);
             clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
+            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
             clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
+            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
             clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
-            log0(IRenderDelegate::kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
+            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
         }
         cl_context_properties props[] = {
             CL_CONTEXT_PLATFORM,
@@ -352,14 +352,14 @@ public:
         clReleaseContext(m_context);
         m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
         if (err != CL_SUCCESS) {
-            log0(IRenderDelegate::kLogWarning, "Failed initialize a OpenCL context: %d", err);
+            log0(0, IRenderDelegate::kLogWarning, "Failed initialize a OpenCL context: %d", err);
             delete[] platforms;
             return false;
         }
         clReleaseCommandQueue(m_queue);
         m_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
         if (err != CL_SUCCESS) {
-            log0(IRenderDelegate::kLogWarning, "Failed initialize a OpenCL command queue: %d", err);
+            log0(0, IRenderDelegate::kLogWarning, "Failed initialize a OpenCL command queue: %d", err);
             delete[] platforms;
             return false;
         }
@@ -371,10 +371,10 @@ public:
     }
 
 protected:
-    void log0(IRenderDelegate::LogLevel level, const char *format...) {
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
         va_list ap;
         va_start(ap, format);
-        m_delegate->log(level, format, ap);
+        m_delegate->log(context, level, format, ap);
         va_end(ap);
     }
 

@@ -89,8 +89,8 @@ public:
         m_opacityUniformLocation = 0;
     }
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource) {
-        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource);
+    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
@@ -299,8 +299,10 @@ bool AssetRenderEngine::upload(const std::string &dir)
     vpvl::Asset *asset = m_model->ptr();
     const aiScene *scene = asset->getScene();
     const unsigned int nmaterials = scene->mNumMaterials;
+    void *context = 0;
     aiString texturePath;
     std::string path, canonicalized;
+    m_delegate->allocateContext(m_model, context);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -311,15 +313,16 @@ bool AssetRenderEngine::upload(const std::string &dir)
             path = texturePath.data;
             if (m_context->textures[path] == 0) {
                 canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
-                if (m_delegate->uploadTexture(canonicalized, dir, &textureID, false)) {
+                if (m_delegate->uploadTexture(context, canonicalized, dir, &textureID, false)) {
                     m_context->textures[path] = textureID;
-                    log0(IRenderDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
+                    log0(context, IRenderDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
                 }
             }
             textureIndex++;
         }
     }
-    uploadRecurse(scene, scene->mRootNode);
+    uploadRecurse(scene, scene->mRootNode, context);
+    m_delegate->releaseContext(m_model, context);
     return true;
 }
 
@@ -327,7 +330,7 @@ void AssetRenderEngine::update()
 {
 }
 
-void AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node)
+void AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
 {
     const unsigned int nmeshes = node->mNumMeshes;
     AssetVertex assetVertex;
@@ -337,10 +340,12 @@ void AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node)
     assetProgram->initializeContext(QGLContext::currentContext());
     zplotProgram->initializeContext(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
-    assetProgram->load(m_delegate->loadShader(IRenderDelegate::kAssetVertexShader).c_str(),
-                       m_delegate->loadShader(IRenderDelegate::kAssetFragmentShader).c_str());
-    zplotProgram->load(m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader).c_str(),
-                       m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader).c_str());
+    assetProgram->load(m_delegate->loadShader(IRenderDelegate::kAssetVertexShader, context).c_str(),
+                       m_delegate->loadShader(IRenderDelegate::kAssetFragmentShader, context).c_str(),
+                       context);
+    zplotProgram->load(m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, context).c_str(),
+                       m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, context).c_str(),
+                       context);
     m_context->assetPrograms[node] = assetProgram;
     m_context->zplotPrograms[node] = zplotProgram;
     for (unsigned int i = 0; i < nmeshes; i++) {
@@ -401,7 +406,7 @@ void AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node)
     }
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
-        uploadRecurse(scene, node->mChildren[i]);
+        uploadRecurse(scene, node->mChildren[i], context);
 }
 
 void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
@@ -591,11 +596,11 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         renderZPlotRecurse(scene, node->mChildren[i]);
 }
 
-void AssetRenderEngine::log0(IRenderDelegate::LogLevel level, const char *format...)
+void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)
 {
     va_list ap;
     va_start(ap, format);
-    m_delegate->log(level, format, ap);
+    m_delegate->log(context, level, format, ap);
     va_end(ap);
 }
 
