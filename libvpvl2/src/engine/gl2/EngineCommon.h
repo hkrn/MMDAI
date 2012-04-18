@@ -220,10 +220,10 @@ public:
         }
         return ret;
     }
-    void setLightColor(const Color &value) {
+    void setLightColor(const Vector3 &value) {
         glUniform3fv(m_lightColorUniformLocation, 1, value);
     }
-    void setLightPosition(const Vector3 &value) {
+    void setLightDirection(const Vector3 &value) {
         glUniform3fv(m_lightPositionUniformLocation, 1, value);
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {

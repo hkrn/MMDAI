@@ -133,6 +133,7 @@ public:
     vpvl2::IBone *assetParentBone(vpvl2::IModel *asset) const;
     void setAssetParentBone(const vpvl2::IModel *asset, vpvl2::IBone *bone);
 
+    vpvl2::Scene *scene() const;
     internal::World *world() const;
 
 public slots:

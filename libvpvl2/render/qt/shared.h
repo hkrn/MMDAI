@@ -471,11 +471,6 @@ public:
           m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
       #endif /* VPVL2_NO_BULLET */
-          m_rotation(Quaternion::getIdentity()),
-          m_position(0.0, 10.0, 0.0),
-          m_angle(kZeroV3),
-          m_fovy(30.0),
-          m_distance(50.0),
           m_delegate(this),
           m_encoding(0),
           m_factory(0),
@@ -498,16 +493,18 @@ public:
     }
 
     void rotate(float x, float y) {
-        m_angle.setX(m_angle.x() + x);
-        m_angle.setY(m_angle.y() + y);
-        const Quaternion rx(Vector3(1.0, 0.0, 0.0), btRadians(m_angle.x())),
-                ry(Vector3(0.0, 1.0, 0.0), btRadians(m_angle.y())),
-                rz(Vector3(0.0, 0.0, 1.0), btRadians(m_angle.z()));
-        m_rotation = rz * rx * ry;
+        Scene::ICamera *camera = m_scene.camera();
+        Vector3 angle = camera->angle();
+        angle.setX(angle.x() + x);
+        angle.setY(angle.y() + y);
+        camera->setAngle(angle);
     }
     void translate(float x, float y) {
-        m_position.setX(m_position.x() + x);
-        m_position.setY(m_position.y() + y);
+        Scene::ICamera *camera = m_scene.camera();
+        Vector3 position = camera->position();
+        position.setX(position.x() + x);
+        position.setY(position.y() + y);
+        camera->setPosition(position);
     }
 
 protected:
@@ -588,18 +585,19 @@ protected:
     }
     void wheelEvent(QWheelEvent *event) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
+        Scene::ICamera *camera = m_scene.camera();
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-            const qreal fovyStep = 1.0;
-            m_fovy = qMax(event->delta() > 0 ? m_fovy - fovyStep : m_fovy + fovyStep, 0.0);
+            const qreal step = 1.0;
+            camera->setFovy(qMax(event->delta() > 0 ? camera->fovy() - step : camera->fovy() + step, 0.0));
         }
         else {
-            qreal distanceStep = 4.0;
+            qreal step = 4.0;
             if (modifiers & Qt::ControlModifier)
-                distanceStep *= 5.0f;
+                step *= 5.0f;
             else if (modifiers & Qt::ShiftModifier)
-                distanceStep *= 0.2f;
-            if (distanceStep != 0.0f)
-                m_distance = event->delta() > 0 ? m_distance - distanceStep : m_distance + distanceStep;
+                step *= 0.2f;
+            if (step != 0.0f)
+                camera->setDistance(event->delta() > 0 ? camera->distance() - step : camera->distance() + step);
         }
     }
     void resizeGL(int w, int h) {
@@ -609,6 +607,7 @@ protected:
         glEnable(GL_DEPTH_TEST);
         glClearColor(0, 0, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        m_scene.advance(0.0f);
         updateModelViewMatrix();
         updateProjectionMatrix();
         updateModelViewProjectionMatrix();
@@ -626,32 +625,24 @@ protected:
 private:
     void updateModelViewMatrix() {
         float matrixf[16];
-        m_modelViewTransform.setIdentity();
-        m_modelViewTransform.setRotation(m_rotation);
-        Vector3 position = m_modelViewTransform.getBasis() * -m_position;
-        position.setZ(position.z() - m_distance);
-        m_modelViewTransform.setOrigin(position);
-        m_modelViewTransform.getOpenGLMatrix(matrixf);
-        m_scene.setModelViewMatrix(matrixf);
+        m_scene.matrices()->getModelView(matrixf);
         for (int i = 0; i < 16; i++)
             m_modelViewMatrix.data()[i] = matrixf[i];
-        m_modelViewTransform.getBasis().inverse().transpose().getOpenGLSubMatrix(matrixf);
-        m_scene.setNormalMatrix(matrixf);
     }
     void updateProjectionMatrix() {
         float matrixf[16];
         m_projectionMatrix.setToIdentity();
-        m_projectionMatrix.perspective(m_fovy, kWidth / float(kHeight), kCameraNear, kCameraFar);
+        m_projectionMatrix.perspective(m_scene.camera()->fovy(), kWidth / float(kHeight), kCameraNear, kCameraFar);
         for (int i = 0; i < 16; i++)
             matrixf[i] = m_projectionMatrix.constData()[i];
-        m_scene.setProjectionMatrix(matrixf);
+        m_scene.matrices()->setProjection(matrixf);
     }
     void updateModelViewProjectionMatrix() {
         float matrixf[16];
         const QMatrix4x4 &result = m_projectionMatrix * m_modelViewMatrix;
         for (int i = 0; i < 16; i++)
             matrixf[i] = result.constData()[i];
-        m_scene.setModelViewProjectionMatrix(matrixf);
+        m_scene.matrices()->setModelViewProjection(matrixf);
     }
     bool loadScene() {
 #ifdef VPVL2_LINK_ASSIMP
@@ -731,12 +722,6 @@ private:
     QPoint m_prevPos;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;
-    Transform m_modelViewTransform;
-    Quaternion m_rotation;
-    Vector3 m_position;
-    Vector3 m_angle;
-    qreal m_fovy;
-    qreal m_distance;
     Delegate m_delegate;
     Scene m_scene;
     IEncoding *m_encoding;

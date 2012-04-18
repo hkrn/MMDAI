@@ -137,7 +137,7 @@ public slots:
     void translateScene(const vpvl2::Vector3 &delta);
     void translateModel(const vpvl2::Vector3 &delta);
     void translateModel(vpvl2::IModel *model, const vpvl2::Vector3 &delta);
-    void advanceMotion(float frameIndex);
+    void advanceMotion(float delta);
     void seekMotion(float frameIndex, bool force = false);
     void resetMotion();
     void setCameraPerspective(vpvl2::Vector3 *pos, vpvl2::Vector3 *angle, float *fovy, float *distance);
@@ -229,6 +229,7 @@ private slots:
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 private:
+    void updateModels();
     bool acceptAddingModel(vpvl2::IModel *model);
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();

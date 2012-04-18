@@ -516,15 +516,19 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     const unsigned int nmeshes = node->mNumMeshes;
     const size_t stride = sizeof(AssetVertex);
     float matrix4x4[16];
-    transform.getOpenGLMatrix(matrix4x4);
     Program *program = m_context->assetPrograms[node];
     program->bind();
-    program->setModelViewProjectionMatrix(m_scene->modelViewProjectionMatrix());
-    program->setLightViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
-    program->setNormalMatrix(m_scene->normalMatrix());
+    const Scene::IMatrices *matrices = m_scene->matrices();
+    matrices->getModelViewProjection(matrix4x4);
+    program->setModelViewProjectionMatrix(matrix4x4);
+    // program->setLightViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
+    matrices->getNormal(matrix4x4);
+    program->setNormalMatrix(matrix4x4);
+    transform.getOpenGLMatrix(matrix4x4);
     program->setTransformMatrix(matrix4x4);
-    program->setLightColor(m_scene->lightColor());
-    program->setLightPosition(m_scene->lightPosition());
+    const Scene::ILight *light = m_scene->light();
+    program->setLightColor(light->color());
+    program->setLightDirection(light->direction());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = m_context->vbo[mesh];
@@ -568,7 +572,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     transform.getOpenGLMatrix(matrix4x4);
     ZPlotProgram *program = m_context->zplotPrograms[node];
     program->bind();
-    program->setModelViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
+    // program->setModelViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
     program->setTransformMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {

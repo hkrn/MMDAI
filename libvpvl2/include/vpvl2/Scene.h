@@ -51,6 +51,52 @@ class IRenderEngine;
 class VPVL2_API Scene
 {
 public:
+    class IMatrices {
+    public:
+        virtual ~IMatrices() {}
+
+        virtual void getModel(float value[16]) const = 0;
+        virtual void getView(float value[16]) const = 0;
+        virtual void getProjection(float value[16]) const = 0;
+        virtual void getModelView(float value[16]) const = 0;
+        virtual void getModelViewProjection(float value[16]) const = 0;
+        virtual void getNormal(float value[16]) const = 0;
+        virtual void setModel(float value[16]) = 0;
+        virtual void setView(float value[16]) = 0;
+        virtual void setProjection(float value[16]) = 0;
+        virtual void setModelView(float value[16]) = 0;
+        virtual void setModelViewProjection(float value[16]) = 0;
+        virtual void setNormal(float value[9]) = 0;
+    };
+    class ILight {
+    public:
+        virtual ~ILight() {}
+
+        virtual const Vector3 &color() const = 0;
+        virtual const Vector3 &direction() const = 0;
+        virtual IMotion *motion() const = 0;
+        virtual void setColor(const Vector3 &value) = 0;
+        virtual void setDirection(const Vector3 &value) = 0;
+        virtual void setMotion(IMotion *value) = 0;
+        virtual void resetDefault() = 0;
+    };
+    class ICamera {
+    public:
+        virtual ~ICamera() {}
+
+        virtual const Vector3 &position() const = 0;
+        virtual const Vector3 &angle() const = 0;
+        virtual Scalar fovy() const = 0;
+        virtual Scalar distance() const = 0;
+        virtual IMotion *motion() const = 0;
+        virtual void setPosition(const Vector3 &value) = 0;
+        virtual void setAngle(const Vector3 &value) = 0;
+        virtual void setFovy(float value) = 0;
+        virtual void setDistance(float value) = 0;
+        virtual void setMotion(IMotion *value) = 0;
+        virtual void resetDefault() = 0;
+    };
+
     static bool isAcceleratorSupported();
 
     Scene();
@@ -61,26 +107,15 @@ public:
     void addMotion(IMotion *motion);
     void removeModel(IModel *model);
     void removeMotion(IMotion *motion);
+    void advance(float delta);
+    void seek(float frameIndex);
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;
     const Array<IRenderEngine *> &renderEngines() const;
     IRenderEngine *renderEngine(IModel *model) const;
-
-    void setModelViewProjectionMatrix(const float value[16]);
-    void setModelViewMatrix(const float value[16]);
-    void setProjectionMatrix(const float value[16]);
-    void setLightViewProjectionMatrix(const float value[16]);
-    void setNormalMatrix(const float value[16]);
-    void setLightColor(const Color &value);
-    void setLightPosition(const Vector3 &value);
-
-    const float *modelViewProjectionMatrix() const;
-    const float *modelViewMatrix() const;
-    const float *projectionMatrix() const;
-    const float *lightViewProjectionMatrix() const;
-    const float *normalMatrix() const;
-    const Color &lightColor() const;
-    const Vector3 &lightPosition() const;
+    IMatrices *matrices() const;
+    ILight *light() const;
+    ICamera *camera() const;
 
 private:
     struct PrivateContext;

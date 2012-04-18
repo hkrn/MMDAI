@@ -138,7 +138,7 @@ public:
     void setLightColor(const Vector3 &value) {
         glUniform3fv(m_lightColorUniformLocation, 1, value);
     }
-    void setLightPosition(const Vector3 &value) {
+    void setLightDirection(const Vector3 &value) {
         glUniform3fv(m_lightPositionUniformLocation, 1, value);
     }
 
@@ -297,10 +297,10 @@ public:
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
-    void setLightPosition(const Vector3 &value) {
+    void setLightDirection(const Vector3 &value) {
         float matrix[16];
         glUniformMatrix4fv(m_lightViewMatrixUniformLocation, 1, GL_FALSE, matrix);
-        ObjectProgram::setLightPosition(value);
+        ObjectProgram::setLightDirection(value);
     }
     void setMainTexture(GLuint value) {
         if (value) {
@@ -1029,10 +1029,15 @@ void PMXRenderEngine::renderModel()
     offset = pmx::Model::strideOffset(pmx::Model::kUVA4Stride);
     size   = pmx::Model::strideSize(pmx::Model::kUVA4Stride);
     modelProgram->setUVA4(reinterpret_cast<const GLvoid *>(offset), size);
-    modelProgram->setModelViewProjectionMatrix(m_scene->modelViewProjectionMatrix());
-    modelProgram->setNormalMatrix(m_scene->normalMatrix());
-    modelProgram->setLightColor(m_scene->lightColor());
-    modelProgram->setLightPosition(m_scene->lightPosition());
+    const Scene::IMatrices *matrices = m_scene->matrices();
+    float matrix4x4[16];
+    matrices->getModelViewProjection(matrix4x4);
+    modelProgram->setModelViewProjectionMatrix(matrix4x4);
+    matrices->getNormal(matrix4x4);
+    modelProgram->setNormalMatrix(matrix4x4);
+    const Scene::ILight *light = m_scene->light();
+    modelProgram->setLightColor(light->color());
+    modelProgram->setLightDirection(light->direction());
     const Array<pmx::Material *> &materials = m_model->materials();
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
@@ -1058,25 +1063,29 @@ void PMXRenderEngine::renderModel()
 void PMXRenderEngine::renderShadow()
 {
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
-    const Vector3 &lightPosition = m_scene->lightPosition();
-    const Scalar dot = plane.dot(lightPosition);
+    const Scene::ILight *light = m_scene->light();
+    const Vector3 &lightDirection = light->direction();
+    const Scalar dot = plane.dot(lightDirection);
     float shadowMatrix[16];
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             int index = (i << 2) + j;
-            shadowMatrix[index] = -plane[i] * lightPosition[j];
+            shadowMatrix[index] = -plane[i] * lightDirection[j];
             if (i == j)
                 shadowMatrix[index] += dot;
         }
     }
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     shadowProgram->bind();
-    shadowProgram->setModelViewProjectionMatrix(m_scene->modelViewProjectionMatrix());
+    const Scene::IMatrices *matrices = m_scene->matrices();
+    float matrix4x4[16];
+    matrices->getModelViewProjection(matrix4x4);
+    shadowProgram->setModelViewProjectionMatrix(matrix4x4);
     shadowProgram->setShadowMatrix(shadowMatrix);
-    shadowProgram->setLightColor(m_scene->lightColor());
-    shadowProgram->setLightPosition(m_scene->lightPosition());
+    shadowProgram->setLightColor(light->color());
+    shadowProgram->setLightDirection(light->direction());
     size_t offset = pmx::Model::strideOffset(pmx::Model::kVertexStride);
     size_t size = pmx::Model::strideSize(pmx::Model::kVertexStride);
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
@@ -1099,7 +1108,9 @@ void PMXRenderEngine::renderEdge()
     offset = pmx::Model::strideOffset(pmx::Model::kEdgeSizeStride);
     size   = pmx::Model::strideSize(pmx::Model::kEdgeSizeStride);
     edgeProgram->setEdgeSize(reinterpret_cast<const GLvoid *>(offset), size);
-    edgeProgram->setModelViewProjectionMatrix(m_scene->modelViewProjectionMatrix());
+    float matrix4x4[16];
+    m_scene->matrices()->getModelViewProjection(matrix4x4);
+    edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     const Array<pmx::Material *> &materials = m_model->materials();
     const int nmaterials = materials.count();

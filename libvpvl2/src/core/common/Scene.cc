@@ -35,21 +35,147 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/vmd/Motion.h"
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
+
+namespace
+{
+
+using namespace vpvl2;
+
+class Matrices : public Scene::IMatrices {
+public:
+    Matrices() {}
+    ~Matrices() {}
+
+    void getModel(float value[16]) const { memcpy(value, m_model, sizeof(m_model)); }
+    void getView(float value[16]) const { memcpy(value, m_view, sizeof(m_view)); }
+    void getProjection(float value[16]) const { memcpy(value, m_projection, sizeof(m_projection)); }
+    void getModelView(float value[16]) const { memcpy(value, m_modelView, sizeof(m_modelView)); }
+    void getModelViewProjection(float value[16]) const { memcpy(value, m_modelViewProjection, sizeof(m_modelViewProjection)); }
+    void getNormal(float value[9]) const { memcpy(value, m_normal, sizeof(m_normal)); }
+    void setModel(float value[16]) { memcpy(m_model, value, sizeof(m_model)); }
+    void setView(float value[16]) { memcpy(m_view, value, sizeof(m_view)); }
+    void setProjection(float value[16]) { memcpy(m_projection, value, sizeof(m_projection)); }
+    void setModelView(float value[16]) { memcpy(m_modelView, value, sizeof(m_modelView)); }
+    void setModelViewProjection(float value[16]) { memcpy(m_modelViewProjection, value, sizeof(m_modelViewProjection)); }
+    void setNormal(float value[9]) { memcpy(m_normal, value, sizeof(m_normal)); }
+
+private:
+    float m_model[16];
+    float m_view[16];
+    float m_projection[16];
+    float m_modelView[16];
+    float m_modelViewProjection[16];
+    float m_normal[9];
+};
+class Light : public Scene::ILight {
+public:
+    Light() :
+        m_motion(0),
+        m_color(kZeroV3),
+        m_direction(kZeroV3)
+    {
+        resetDefault();
+    }
+    ~Light() {
+    }
+
+    const Vector3 &color() const { return m_color; }
+    const Vector3 &direction() const { return m_direction; }
+    IMotion *motion() const { return m_motion; }
+    void setColor(const Vector3 &value) { m_color = value; }
+    void setDirection(const Vector3 &value) { m_direction = value; }
+    void setMotion(IMotion *value) { m_motion = value; }
+    void resetDefault() {
+        setColor(Vector3(0.6, 0.6, 0.6));
+        setDirection(Vector3(0.5, 1.0, 0.5));
+    }
+
+private:
+    IMotion *m_motion;
+    Vector3 m_color;
+    Vector3 m_direction;
+};
+class Camera : public Scene::ICamera {
+public:
+    Camera()
+        : m_motion(0),
+          m_transform(Transform::getIdentity()),
+          m_position(kZeroV3),
+          m_angle(kZeroV3),
+          m_fovy(0),
+          m_distance(0)
+    {
+        resetDefault();
+    }
+    ~Camera()
+    {
+    }
+
+    const Transform &transform() const { return m_transform; }
+    const Vector3 &position() const { return m_position; }
+    const Vector3 &angle() const { return m_angle; }
+    Scalar fovy() const { return m_fovy; }
+    Scalar distance() const { return m_distance; }
+    IMotion *motion() const { return m_motion; }
+    void setPosition(const Vector3 &value) { m_position = value; }
+    void setAngle(const Vector3 &value) { m_angle = value; }
+    void setFovy(float value) { m_fovy = value; }
+    void setDistance(float value) { m_distance = value; }
+    void setMotion(IMotion *value) { m_motion = value; }
+    void resetDefault() {
+        setPosition(Vector3(0, 10, 0));
+        setFovy(30);
+        setDistance(50);
+        updateTransform();
+    }
+
+    void updateTransform() {
+        static const Vector3 kUnitX(1, 0, 0), kUnitY(0, 1, 0), kUnitZ(0, 0, 1);
+        const Quaternion rotationX(kUnitX, vpvl2::radian(m_angle.x())),
+                rotationY(kUnitY, vpvl2::radian(m_angle.y())),
+                rotationZ(kUnitZ, vpvl2::radian(m_angle.z()));
+        m_transform.setIdentity();
+        m_transform.setRotation(rotationZ * rotationX * rotationY);
+        m_transform.setOrigin(m_transform * -m_position - Vector3(0, 0, m_distance));
+    }
+    void updateMatrices(Matrices &matrices) const {
+        float matrix4x4[16], v[12], matrix3x3[9];
+        m_transform.getOpenGLMatrix(matrix4x4);
+        matrices.setView(matrix4x4);
+        matrices.setModelView(matrix4x4);
+        m_transform.getBasis().inverse().transpose().getOpenGLSubMatrix(v);
+        matrix3x3[0] = v[0]; matrix3x3[1] = v[1]; matrix3x3[2] = v[2];
+        matrix3x3[3] = v[4]; matrix3x3[4] = v[5]; matrix3x3[5] = v[6];
+        matrix3x3[6] = v[8]; matrix3x3[7] = v[9]; matrix3x3[8] = v[10];
+        matrices.setNormal(matrix3x3);
+    }
+
+private:
+    IMotion *m_motion;
+    Transform m_transform;
+    Quaternion m_rotation;
+    Vector3 m_position;
+    Vector3 m_angle;
+    float m_fovy;
+    float m_distance;
+};
+
+}
 
 namespace vpvl2
 {
 
 struct Scene::PrivateContext {
     PrivateContext()
-        : lightColor(0.6, 0.6, 0.6, 1.0),
-          lightPosition(0.5, 1.0, 0.5)
     {
     }
     ~PrivateContext() {
@@ -61,13 +187,10 @@ struct Scene::PrivateContext {
     Array<IModel *> models;
     Array<IMotion *> motions;
     Array<IRenderEngine *> engines;
-    float modelViewProjectionMatrix[16];
-    float modelViewMatrix[16];
-    float projectionMatrix[16];
-    float lightViewProjectionMatrix[16];
-    float normalMatrix[9];
+    Matrices matrices;
+    Light light;
+    Camera camera;
     Color lightColor;
-    Vector3 lightPosition;
 };
 
 bool Scene::isAcceleratorSupported()
@@ -140,6 +263,62 @@ void Scene::removeMotion(IMotion *motion)
     m_context->motions.remove(motion);
 }
 
+void Scene::seek(float frameIndex)
+{
+    Camera &camera = m_context->camera;
+    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
+    if (cameraMotion) {
+        const vmd::CameraAnimation &animation = cameraMotion->cameraAnimation();
+        if (animation.countKeyframes() > 0) {
+            cameraMotion->seek(frameIndex);
+            camera.setPosition(animation.position());
+            camera.setAngle(animation.angle());
+            camera.setFovy(animation.fovy());
+            camera.setDistance(animation.distance());
+        }
+    }
+    Light &light = m_context->light;
+    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(camera.motion());
+    if (lightMotion) {
+        const vmd::LightAnimation &animation = lightMotion->lightAnimation();
+        if (animation.countKeyframes() > 0) {
+            lightMotion->seek(frameIndex);
+            light.setColor(animation.color());
+            light.setDirection(animation.direction());
+        }
+    }
+    camera.updateTransform();
+    camera.updateMatrices(m_context->matrices);
+}
+
+void Scene::advance(float delta)
+{
+    Camera &camera = m_context->camera;
+    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
+    if (cameraMotion) {
+        const vmd::CameraAnimation &animation = cameraMotion->cameraAnimation();
+        if (animation.countKeyframes() > 0) {
+            cameraMotion->advance(delta);
+            camera.setPosition(animation.position());
+            camera.setAngle(animation.angle());
+            camera.setFovy(animation.fovy());
+            camera.setDistance(animation.distance());
+        }
+    }
+    Light &light = m_context->light;
+    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(m_context->light.motion());
+    if (lightMotion) {
+        const vmd::LightAnimation &animation = lightMotion->lightAnimation();
+        if (animation.countKeyframes() > 0) {
+            lightMotion->advance(delta);
+            light.setColor(animation.color());
+            light.setDirection(animation.direction());
+        }
+    }
+    camera.updateTransform();
+    camera.updateMatrices(m_context->matrices);
+}
+
 const Array<IModel *> &Scene::models() const
 {
     return m_context->models;
@@ -161,82 +340,19 @@ IRenderEngine *Scene::renderEngine(IModel *model) const
     return engine ? *engine : 0;
 }
 
-void Scene::setModelViewProjectionMatrix(const float value[])
+Scene::IMatrices *Scene::matrices() const
 {
-    memcpy(m_context->modelViewProjectionMatrix, value, sizeof(m_context->modelViewProjectionMatrix));
+    return &m_context->matrices;
 }
 
-void Scene::setModelViewMatrix(const float value[16])
+Scene::ILight *Scene::light() const
 {
-    memcpy(m_context->modelViewMatrix, value, sizeof(m_context->modelViewMatrix));
+    return &m_context->light;
 }
 
-void Scene::setProjectionMatrix(const float value[16])
+Scene::ICamera *Scene::camera() const
 {
-    memcpy(m_context->projectionMatrix, value, sizeof(m_context->projectionMatrix));
-}
-
-void Scene::setLightViewProjectionMatrix(const float value[16])
-{
-    memcpy(m_context->lightViewProjectionMatrix, value, sizeof(m_context->lightViewProjectionMatrix));
-}
-
-void Scene::setNormalMatrix(const float value[16])
-{
-    m_context->normalMatrix[0] = value[0];
-    m_context->normalMatrix[1] = value[1];
-    m_context->normalMatrix[2] = value[2];
-    m_context->normalMatrix[3] = value[4];
-    m_context->normalMatrix[4] = value[5];
-    m_context->normalMatrix[5] = value[6];
-    m_context->normalMatrix[6] = value[8];
-    m_context->normalMatrix[7] = value[9];
-    m_context->normalMatrix[8] = value[10];
-}
-
-void Scene::setLightColor(const Color &value)
-{
-    m_context->lightColor = value;
-}
-
-void Scene::setLightPosition(const Vector3 &value)
-{
-    m_context->lightPosition = value;
-}
-
-const float *Scene::modelViewProjectionMatrix() const
-{
-    return m_context->modelViewProjectionMatrix;
-}
-
-const float *Scene::modelViewMatrix() const
-{
-    return m_context->modelViewMatrix;
-}
-
-const float *Scene::projectionMatrix() const
-{
-    return m_context->projectionMatrix;
-}
-
-const float *Scene::lightViewProjectionMatrix() const
-{
-    return m_context->lightViewProjectionMatrix;
-}
-
-const float *Scene::normalMatrix() const
-{
-    return m_context->normalMatrix;
-}
-
-const Color &Scene::lightColor() const
-{
-    return m_context->lightColor;
-}
-
-const Vector3 &Scene::lightPosition() const
-{
-    return m_context->lightPosition;
+    return &m_context->camera;
 }
 
 }

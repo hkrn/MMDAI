@@ -144,7 +144,7 @@ void SceneWidget::stop()
     m_playing = false;
     m_info->setFPS(0);
     m_info->update();
-    m_loader->renderEngine()->scene()->resetMotion();
+    resetMotion();
     emit sceneDidStop();
 }
 
@@ -473,27 +473,28 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
     return ptr;
 }
 
-void SceneWidget::advanceMotion(float frameIndex)
+void SceneWidget::advanceMotion(float delta)
 {
-    if (frameIndex <= 0)
+    if (delta <= 0)
         return;
-    Scene *scene = m_loader->renderEngine()->scene();
-    scene->updateModelView();
-    scene->updateProjection();
-    scene->advanceMotion(frameIndex);
-    m_loader->renderEngine()->updateAllModel();
+    Scene *scene = m_loader->scene();
+    const Array<IMotion *> &motions = scene->motions();
+    const int nmotions = motions.count();
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        motion->advance(delta);
+    }
+    updateModels();
     updateGL();
     emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
 }
 
 void SceneWidget::seekMotion(float frameIndex, bool force)
 {
-    /* advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある */
-    Renderer *renderEngine = m_loader->renderEngine();
-    Scene *scene = renderEngine->scene();
-    scene->updateModelView();
-    scene->updateProjection();
-    /* 同じフレームインデックスにシークする場合はカメラと照明は動かさないようにする。force で強制的に動かすことが出来る */
+    /*
+       advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある
+       同じフレームインデックスにシークする場合はカメラと照明は動かさないようにする。force で強制的に動かすことが出来る
+     */
     if (m_frameIndex == frameIndex && !force) {
         IMotion *cameraMotion = scene->cameraMotion();
         IMotion *lightMotion = scene->lightMotion();
@@ -504,10 +505,15 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
         scene->setLightMotion(lightMotion);
     }
     else {
-        scene->seekMotion(frameIndex);
+        const Array<IMotion *> &motions = m_loader->scene()->motions();
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *motion = motions[i];
+            motion->seek(frameIndex);
+        }
         m_frameIndex = frameIndex;
     }
-    renderEngine->updateAllModel();
+    updateModels();
     updateGL();
     emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
     emit motionDidSeek(frameIndex);
@@ -515,14 +521,14 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
 
 void SceneWidget::resetMotion()
 {
-    /* resetMotion のラッパー */
-    Renderer *renderEngine = m_loader->renderEngine();
-    Scene *scene = renderEngine->scene();
-    scene->resetMotion();
-    scene->updateModelView();
-    scene->updateProjection();
-    renderEngine->updateAllModel();
+    const Array<IMotion *> &motions = m_loader->scene()->motions();
+    const int nmotions = motions.count();
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        motion->reset();
+    }
     m_frameIndex = 0;
+    updateModels();
     updateGL();
     emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
     emit motionDidSeek(0.0f);
@@ -571,7 +577,7 @@ void SceneWidget::deleteSelectedModel()
 
 void SceneWidget::resetCamera()
 {
-    Scene *scene = m_loader->renderEngine()->scene();
+    Scene *scene = m_loader->scene();
     scene->resetCamera();
     emit cameraPerspectiveDidSet(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
 }
@@ -579,7 +585,7 @@ void SceneWidget::resetCamera()
 void SceneWidget::setCameraPerspective(Vector3 *pos, Vector3 *angle, float *fovy, float *distance)
 {
     /* 変更しないことを示す NULL かどうかを判定するために引数をポインタに設定している */
-    Scene *scene = m_loader->renderEngine()->scene();
+    Scene *scene = m_loader->scene();
     Vector3 posValue, angleValue;
     float fovyValue, distanceValue;
     posValue = !pos ? scene->cameraPosition() : *pos;
@@ -594,7 +600,7 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 {
     // This implementation based on the below page.
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
-    Scene *scene = m_loader->renderEngine()->scene();
+    Scene *scene = m_loader->scene();
     float modelviewMatrixf[16], projectionMatrixf[16];
     GLdouble modelviewMatrixd[16], projectionMatrixd[16];
     const GLint viewport[4] = { 0, 0, width(), height() };
@@ -621,7 +627,7 @@ void SceneWidget::selectBones(const QList<IBone *> &bones)
 
 void SceneWidget::rotateScene(const Vector3 &delta)
 {
-    Scene *scene = m_loader->renderEngine()->scene();
+    Scene *scene = m_loader->scene();
     Vector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
     float fovy = scene->fovy(), distance = scene->cameraDistance();
     angle += delta;
@@ -650,7 +656,7 @@ void SceneWidget::rotateModel(IModel *model, const Quaternion &delta)
 
 void SceneWidget::translateScene(const Vector3 &delta)
 {
-    Scene *scene = m_loader->renderEngine()->scene();
+    Scene *scene = m_loader->scene();
     Vector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
     float fovy = scene->fovy(), distance = scene->cameraDistance();
     pos += delta;
@@ -744,7 +750,7 @@ void SceneWidget::setEditMode(SceneWidget::EditMode value)
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
-    Scene *scene = m_loader->renderEngine()->scene();
+    Scene *scene = m_loader->scene();
     Vector3 pos = scene->cameraPosition(), angle = scene->cameraAngle();
     float fovy = scene->fovy(), distance = scene->cameraDistance();
     float fovyStep = 1.0f, distanceStep = 4.0f;
@@ -816,13 +822,18 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
+    /* アルファブレンドとカリングを初期状態から有効にする */
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     const QSize &s = size();
     m_loader = new SceneLoader(s.width(), s.height(), 30); // Scene::kFPS);
     connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
-    m_debugDrawer = new DebugDrawer(m_loader->renderEngine()->scene());
+    m_debugDrawer = new DebugDrawer(m_loader->scene());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
     /* 物理演算に必要な World が initializeGL でインスタンスを生成するため、setPhysicsEnable はここで有効にする */
@@ -837,7 +848,6 @@ void SceneWidget::initializeGL()
     m_info->setFPS(0.0f);
     m_info->update();
     m_debugDrawer->initialize();
-    m_loader->renderEngine()->initializeSurface();
     m_timer.start();
     startAutomaticRendering();
     emit initailizeGLContextDidDone();
@@ -962,12 +972,13 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-            Scene *scene = m_loader->renderEngine()->scene();
+            Scene *scene = m_loader->scene();
             Vector3 position = scene->lightPosition();
             Quaternion rx(0.0f, diff.y() * radian(0.1f), 0.0f),
                     ry(0.0f, diff.x() * radian(0.1f), 0.0f);
             position = position * btMatrix3x3(rx * ry);
-            scene->setLightSource(scene->lightColor(), position);
+            scene->setLightColor(scene->lightColor());
+            scene->setLightPosition(position);
         }
         /* 場面の移動 */
         else if (modifiers & Qt::ShiftModifier) {
@@ -1026,8 +1037,9 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
     qglClearColor(m_loader->screenColor());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     m_loader->render();
-    m_grid->draw(m_loader->renderEngine()->scene(), m_loader->isGridVisible());
+    m_grid->draw(m_loader->scene(), m_loader->isGridVisible());
     IBone *bone = 0;
     if (!m_bones.isEmpty())
         bone = m_bones.first();
@@ -1055,7 +1067,7 @@ void SceneWidget::paintGL()
 
 void SceneWidget::resizeGL(int w, int h)
 {
-    m_loader->renderEngine()->resize(w, h);
+    glViewport(0, 0, w, h);
     const QSize s(w, h);
     m_handles->resize(s);
     m_info->resize(s);
@@ -1063,13 +1075,8 @@ void SceneWidget::resizeGL(int w, int h)
 
 void SceneWidget::timerEvent(QTimerEvent *event)
 {
-    /* タイマーが生きている => 描写命令を出す */
+    /* モーション再生のタイマーが生きている => 描写命令を出す */
     if (event->timerId() == m_internalTimerID) {
-        Renderer *renderEngine = m_loader->renderEngine();
-        Scene *scene = renderEngine->scene();
-        scene->updateModelView();
-        scene->updateProjection();
-        renderEngine->updateAllModel();
         if (m_playing) {
             /* タイマーの仕様上一定ではないため、差分をここで吸収する */
             float elapsed = m_timer.elapsed() / static_cast<float>(Scene::kFPS);
@@ -1077,10 +1084,12 @@ void SceneWidget::timerEvent(QTimerEvent *event)
             m_prevElapsed = elapsed;
             if (diff < 0)
                 diff = elapsed;
-            scene->advanceMotion(diff);
+            advanceMotion(diff);
             updateFPS();
         }
-        updateGL();
+        else {
+            updateModels();
+        }
     }
 }
 
@@ -1143,7 +1152,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
 {
     const Qt::GestureState state = event->state();
     QPinchGesture::ChangeFlags flags = event->changeFlags();
-    Scene *scene = m_loader->renderEngine()->scene();
+    Scene *scene = m_loader->scene();
     const Vector3 &pos = scene->cameraPosition(), &angle = scene->cameraAngle();
     float distance = scene->cameraDistance(), fovy = scene->fovy();
     /* 回転ジェスチャー */
@@ -1252,6 +1261,16 @@ void SceneWidget::updateFPS()
     m_frameCount++;
 }
 
+void SceneWidget::updateModels()
+{
+    const Array<IRenderEngine *> &renderEngines = m_loader->scene()->renderEngines();
+    const int nRenderEngines = renderEngines.count();
+    for (int i = 0; i < nRenderEngines; i++) {
+        IRenderEngine *engine = renderEngines[i];
+        engine->update();
+    }
+}
+
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)
 {
     int flags = m_handleFlags;
@@ -1294,7 +1313,7 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &di
     /* モデルのハンドルに当たっている場合のみモデルを動かす */
     if (flags & Handles::kMove) {
         /* カメラ距離で移動量を変化させる。分母値は適当気味 */
-        const Scalar &d = m_loader->renderEngine()->scene()->modelViewTransform().getOrigin().z() / -1000.0f;
+        const Scalar &d = m_loader->scene()->modelViewTransform().getOrigin().z() / -1000.0f;
         const QPointF &diff2 = diff * d;
         /* 移動ハンドルである(矢印の先端) */
         if (flags & Handles::kX) {

@@ -1682,6 +1682,11 @@ int SceneLoader::globalSetting(const char *key, int def) const
     return def;
 }
 
+Scene *SceneLoader::scene() const
+{
+    return m_project;
+}
+
 internal::World *SceneLoader::world() const
 {
     return m_world;
