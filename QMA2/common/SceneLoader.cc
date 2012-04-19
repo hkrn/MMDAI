@@ -687,16 +687,16 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
         if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             QFileInfo fileInfo(filename);
-            const QByteArray &assetName = fileInfo.baseName().toUtf8();
-            asset->setName(assetName.constData());
+            // const QByteArray &assetName = fileInfo.baseName().toUtf8();
+            // asset->setName(assetName.constData());
             // const std::string &name = std::string(fileInfo.absolutePath().toLocal8Bit());
             IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, asset);
             // delegate->setArchive(0);
             uuid = QUuid::createUuid();
-            m_project->addAsset(asset, engine, uuid.toString().toStdString());
-            m_project->setAssetSetting(asset, Project::kSettingNameKey, fileInfo.baseName().toStdString());
-            m_project->setAssetSetting(asset, Project::kSettingURIKey, filename.toStdString());
-            m_project->setAssetSetting(asset, "selected", "false");
+            m_project->addModel(asset, engine, uuid.toString().toStdString());
+            m_project->setModelSetting(asset, Project::kSettingNameKey, fileInfo.baseName().toStdString());
+            m_project->setModelSetting(asset, Project::kSettingURIKey, filename.toStdString());
+            m_project->setModelSetting(asset, "selected", "false");
             m_renderOrderList.add(uuid);
             setAssetPosition(asset, asset->position());
             setAssetRotation(asset, asset->rotation());
@@ -735,10 +735,12 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
         bool enableShadow = stream.readLine().toInt() == 1;
         IModel *asset = m_factory.createModel(IModel::kAsset);
         if (loadAsset(dir.absoluteFilePath(filename), uuid, asset)) {
+            /*
             if (!name.isEmpty()) {
                 const QByteArray &bytes = internal::fromQString(name);
                 asset->setName(bytes.constData());
             }
+            */
             if (!filename.isEmpty()) {
                 m_name2assets.insert(filename, asset);
             }
@@ -780,7 +782,7 @@ IMotion *SceneLoader::loadCameraMotion(const QString &path)
         const QByteArray &data = file.readAll();
         motion = m_factory.createMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
-                && motion->cameraAnimation().countKeyframes() > 0) {
+                && motion->countKeyframes(IKeyframe::kCamera) > 0) {
             setCameraMotion(motion);
             m_project->addMotion(motion, QUuid::createUuid().toString().toStdString());
         }

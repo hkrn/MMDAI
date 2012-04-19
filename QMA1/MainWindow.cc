@@ -44,9 +44,9 @@
 #include "util.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 namespace
 {
@@ -60,7 +60,7 @@ void ConstructScriptArguments(const QString &input, QString &command, QList<QVar
         arguments << string;
 }
 
-static int FindIndexOfActions(PMDModel *model, const QList<QAction *> &actions)
+static int FindIndexOfActions(IModel *model, const QList<QAction *> &actions)
 {
     const QString &name = internal::toQString(model);
     int i = 0, found = -1;
@@ -157,18 +157,18 @@ void MainWindow::selectCurrentModel()
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
         const QUuid uuid(action->data().toString());
-        PMDModel *model = m_sceneWidget->sceneLoader()->findModel(uuid);
+        IModel *model = m_sceneWidget->sceneLoader()->findModel(uuid);
         m_sceneWidget->setSelectedModel(model);
     }
 }
 
-void MainWindow::setCurrentModel(PMDModel *value)
+void MainWindow::setCurrentModel(IModel *value)
 {
     m_model = value;
     updateInformation();
 }
 
-void MainWindow::addModel(PMDModel *model, const QUuid &uuid)
+void MainWindow::addModel(IModel *model, const QUuid &uuid)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
     QString name = internal::toQString(model);
@@ -180,7 +180,7 @@ void MainWindow::addModel(PMDModel *model, const QUuid &uuid)
     m_sceneWidget->setSelectedModel(model);
 }
 
-void MainWindow::deleteModel(PMDModel *model, const QUuid &uuid)
+void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
@@ -199,7 +199,7 @@ void MainWindow::deleteModel(PMDModel *model, const QUuid &uuid)
         m_menuRetainModels->removeAction(actionToRemove);
 }
 
-void MainWindow::addAsset(Asset *asset, const QUuid &uuid)
+void MainWindow::addAsset(IModel *asset, const QUuid &uuid)
 {
     /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
     QString name = internal::toQString(asset);
@@ -210,7 +210,7 @@ void MainWindow::addAsset(Asset *asset, const QUuid &uuid)
     m_menuRetainAssets->addAction(action);
 }
 
-void MainWindow::deleteAsset(Asset * /* asset */, const QUuid &uuid)
+void MainWindow::deleteAsset(IModel * /* asset */, const QUuid &uuid)
 {
     /* 削除されたアクセサリをアクセサリ選択のメニューから削除する */
     QAction *actionToRemove = 0;
@@ -336,7 +336,7 @@ void MainWindow::buildMenuBar()
     connect(m_actionStop, SIGNAL(triggered()), m_sceneWidget, SLOT(stop()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
-    m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
+    m_actionEnableAcceleration->setEnabled(Scene::isAcceleratorSupported());
     m_actionShowModelDialog = new QAction(this);
     m_actionShowModelDialog->setCheckable(true);
     m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
@@ -467,7 +467,7 @@ void MainWindow::buildMenuBar()
     m_menuRetainModels = new QMenu(this);
     m_menuModel->addMenu(m_menuRetainModels);
     m_menuRetainAssets = new QMenu(this);
-    if (Asset::isSupported())
+    // if (Asset::isSupported())
         m_menuScene->addMenu(m_menuRetainAssets);
     m_menuModel->addAction(m_actionSelectNextModel);
     m_menuModel->addAction(m_actionSelectPreviousModel);
@@ -538,7 +538,7 @@ void MainWindow::retranslate()
     m_actionAddAsset->setText(tr("Add asset"));
     m_actionAddAsset->setToolTip(tr("Add an asset to the scene."));
     m_actionAddAsset->setShortcut(tr("Ctrl+Shift+A"));
-    m_actionAddAsset->setEnabled(Asset::isSupported());
+    // m_actionAddAsset->setEnabled(Asset::isSupported());
     m_actionInsertToAllModels->setText(tr("Insert to all models"));
     m_actionInsertToAllModels->setToolTip(tr("Insert a motion to the all models."));
     m_actionInsertToAllModels->setShortcut(tr("Ctrl+Shift+V"));

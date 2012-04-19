@@ -204,10 +204,11 @@ static void UIInitializeRenderingModel(const Scene *scene,
 {
     QGLFunctions func(QGLContext::currentContext());
     float matrix[16];
-    scene->getModelViewMatrix(matrix);
+    const Scene::IMatrices *matrices = scene->matrices();
+    matrices->getModelView(matrix);
     int modelViewMatrix = program->uniformLocation("modelViewMatrix");
     func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-    scene->getProjectionMatrix(matrix);
+    matrices->getProjection(matrix);
     int projectionMatrix = program->uniformLocation("projectionMatrix");
     func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
     int boneMatrix = program->uniformLocation("boneMatrix");
@@ -498,8 +499,7 @@ const Transform Handles::modelHandleTransform() const
             transform = m_bone->localTransform();
         }
         else if (mode == 'V') {
-            vpvl2::Scene *scene = m_loader->renderEngine()->scene();
-            const btMatrix3x3 &basis = scene->modelViewTransform().getBasis();
+            const Matrix3x3 &basis = m_loader->scene()->camera()->modelViewTransform().getBasis();
             btMatrix3x3 newBasis;
             newBasis[0] = basis * Vector3(1, 0, 0);
             newBasis[1] = basis * Vector3(0, 1, 0);
@@ -649,7 +649,7 @@ void Handles::drawRotationHandle()
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader->renderEngine()->scene(), modelHandleTransform(), &m_program);
+    UIInitializeRenderingModel(m_loader->scene(), modelHandleTransform(), &m_program);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
@@ -665,7 +665,7 @@ void Handles::drawMoveHandle()
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader->renderEngine()->scene(), modelHandleTransform(), &m_program);
+    UIInitializeRenderingModel(m_loader->scene(), modelHandleTransform(), &m_program);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);
@@ -747,6 +747,7 @@ void Handles::loadImageHandles()
 
 void Handles::loadModelHandles()
 {
+#if QMA2_TBD
     /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
     QFile rotationHandleFile(":models/rotation.3ds");
     if (rotationHandleFile.open(QFile::ReadOnly)) {
@@ -774,4 +775,5 @@ void Handles::loadModelHandles()
         UILoadStaticModel(meshes[4], m_translationHandle.axisZ);
         m_translationHandle.asset = asset;
     }
+#endif
 }

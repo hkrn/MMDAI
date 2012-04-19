@@ -43,8 +43,9 @@
 #include "World.h"
 #include <btBulletDynamicsCommon.h>
 #include <QtCore/QtCore>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 class TiledStage::PrivateContext : protected QGLFunctions {
 public:
@@ -106,8 +107,9 @@ public:
             glDisable(GL_CULL_FACE);
         QMatrix4x4 modelView4x4, projection4x4;
         float modelViewMatrixf[16], projectionMatrixf[16], normalMatrix[9];
-        m_scene->getModelViewMatrix(modelViewMatrixf);
-        m_scene->getProjectionMatrix(projectionMatrixf);
+        const Scene::IMatrices *matrices = m_scene->matrices();
+        matrices->getModelView(modelViewMatrixf);
+        matrices->getProjection(projectionMatrixf);
         for (int i = 0; i < 16; i++) {
             modelView4x4.data()[i] = modelViewMatrixf[i];
             projection4x4.data()[i] = projectionMatrixf[i];
@@ -115,7 +117,7 @@ public:
         const QMatrix4x4 &modelViewProjection4x4 = projection4x4 * modelView4x4;
         m_program.bind();
         m_program.setUniformValue("modelViewProjectionMatrix", modelViewProjection4x4);
-        m_scene->getNormalMatrix(normalMatrix);
+        matrices->getNormal(normalMatrix);
         glUniformMatrix3fv(m_program.uniformLocation("normalMatrix"), 1, GL_FALSE, normalMatrix);
         static const Vertex v;
         glActiveTexture(GL_TEXTURE0);
@@ -123,7 +125,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
         m_program.setUniformValue("mainTexture", 0);
-        m_program.setUniformValue("lightPosition", toQVector3D(m_scene->lightPosition()));
+        m_program.setUniformValue("lightPosition", toQVector3D(m_scene->light()->direction()));
         int inPosition = m_program.attributeLocation("inPosition");
         glEnableVertexAttribArray(inPosition);
         glVertexAttribPointer(inPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);

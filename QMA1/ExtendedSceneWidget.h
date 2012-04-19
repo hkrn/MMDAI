@@ -60,12 +60,12 @@ public slots:
     void clear();
     void loadScript();
     void loadScript(const QString &filename);
-    void setEmptyMotion(vpvl::PMDModel *model);
+    void setEmptyMotion(vpvl2::IModel *model);
     void setTransparentEnable(bool value) { m_enableTransparent = value; }
 
 signals:
     void scriptDidLoaded(const QString &filename);
-    void motionDidFinished(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
+    void motionDidFinished(const QMultiMap<vpvl2::IModel *, vpvl2::IMotion *> &motions);
 
 protected:
     void dropEvent(QDropEvent *event);

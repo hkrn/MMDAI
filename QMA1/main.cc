@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 #include "Application.h"
 #include "LoggerWidget.h"
 #include "MainWindow.h"
@@ -116,12 +116,12 @@ int main(int argc, char *argv[])
     LoadTranslations(a, appTranslator, qtTranslator);
 
     int result = -1;
-    if (!vpvl::isLibraryVersionCorrect(VPVL_VERSION)) {
+    if (!vpvl2::isLibraryVersionCorrect(VPVL2_VERSION)) {
         QMessageBox::warning(&fake,
                              QApplication::tr("libvpvl version mismatch"),
                              QApplication::tr("libvpvl's version is incorrect (expected: %1 actual: %2).\n"
                                   "Please replace libvpvl to correct version or reinstall MMDAI.")
-                             .arg(VPVL_VERSION_STRING).arg(vpvl::libraryVersionString()));
+                             .arg(VPVL2_VERSION_STRING).arg(vpvl2::libraryVersionString()));
         return result;
     }
 

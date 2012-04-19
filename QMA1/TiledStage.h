@@ -44,7 +44,7 @@
 #include <QtOpenGL/QGLFunctions>
 #include <LinearMath/btVector3.h>
 
-namespace vpvl {
+namespace vpvl2 {
 class Scene;
 }
 
@@ -60,7 +60,7 @@ class TiledStage
 public:
     class PrivateContext;
 
-    TiledStage(const vpvl::Scene *scene, internal::World *world);
+    TiledStage(const vpvl2::Scene *scene, internal::World *world);
     ~TiledStage();
 
     void loadFloor(const QString &path);
@@ -73,7 +73,7 @@ private:
     void buildFloor(float width, float height);
     void destroyFloor();
 
-    const vpvl::Scene *m_scene;
+    const vpvl2::Scene *m_scene;
     PrivateContext *m_floor;
     PrivateContext *m_background;
     btRigidBody *m_floorRigidBody;

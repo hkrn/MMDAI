@@ -57,10 +57,10 @@
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btVector3.h>
 
-namespace vpvl
+namespace vpvl2
 {
-class PMDModel;
-class VMDMotion;
+class IModel;
+class IMotion;
 }
 
 struct ScriptArgument {
@@ -108,7 +108,7 @@ public:
     void loadSpeechRecognitionEngine(const QDir &dir, const QString &baseName);
     void start();
     void stop();
-    const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> stoppedMotions() const;
+    const QMultiMap<vpvl2::IModel *, vpvl2::IMotion *> stoppedMotions() const;
 
     void setDir(const QDir &value) { m_dir = value; }
 
@@ -118,15 +118,15 @@ public slots:
 
 signals:
     void eventDidPost(const QString &type, const QList<QVariant> &arguments);
-    void modelWillDelete(vpvl::PMDModel *model);
+    void modelWillDelete(vpvl2::IModel *model);
 
 protected:
     void timerEvent(QTimerEvent *event);
 
 private slots:
     void execute();
-    void handleModelDelete(vpvl::PMDModel *model);
-    void handleFinishedMotion(const QMultiMap<vpvl::PMDModel *, vpvl::VMDMotion *> &motions);
+    void handleModelDelete(vpvl2::IModel *model);
+    void handleFinishedMotion(const QMultiMap<vpvl2::IModel *, vpvl2::IMotion *> &motions);
 
 private:
     void addScriptArc(int from,
@@ -150,14 +150,14 @@ private:
     OpenJTalkSpeechEngine m_speech;
     LipSync m_globalLipSync;
     QHash<QString, float> m_values;
-    QMap<QString, vpvl::PMDModel *> m_models;
-    QMap<QString, vpvl::VMDMotion *> m_motions;
+    QMap<QString, vpvl2::IModel *> m_models;
+    QMap<QString, vpvl2::IMotion *> m_motions;
     QMap<QString, QBasicTimer *> m_timers;
-    QHash<vpvl::VMDMotion *, MotionParameter> m_motionParameters;
+    QHash<vpvl2::IMotion *, MotionParameter> m_motionParameters;
     QQueue<ScriptArgument> m_queue;
     QTimer m_timer;
     QDir m_dir;
-    vpvl::PMDModel *m_stage;
+    vpvl2::IModel *m_stage;
 
     Q_DISABLE_COPY(Script)
 };

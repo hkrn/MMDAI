@@ -41,9 +41,9 @@
 #include <QtCore/QUuid>
 #include <QtGui/QMainWindow>
 
-namespace vpvl {
-class Asset;
-class PMDModel;
+namespace vpvl2 {
+class IModel;
+class IMotion;
 }
 
 class ExtendedSceneWidget;
@@ -69,11 +69,11 @@ private slots:
     void updateRecentFiles();
     void clearRecentFiles();
     void selectCurrentModel();
-    void setCurrentModel(vpvl::PMDModel *value);
-    void addModel(vpvl::PMDModel *model, const QUuid &uuid);
-    void deleteModel(vpvl::PMDModel *model, const QUuid &uuid);
-    void addAsset(vpvl::Asset *asset, const QUuid &uuid);
-    void deleteAsset(vpvl::Asset *asset, const QUuid &uuid);
+    void setCurrentModel(vpvl2::IModel *value);
+    void addModel(vpvl2::IModel *model, const QUuid &uuid);
+    void deleteModel(vpvl2::IModel *model, const QUuid &uuid);
+    void addAsset(vpvl2::IModel *asset, const QUuid &uuid);
+    void deleteAsset(vpvl2::IModel *asset, const QUuid &uuid);
     void updateFPS(int fps);
     void executeCommand();
     void executeEvent();
@@ -97,7 +97,7 @@ private:
     LicenseWidget *m_licenseWidget;
     LoggerWidget *m_loggerWidget;
     ExtendedSceneWidget *m_sceneWidget;
-    vpvl::PMDModel *m_model;
+    vpvl2::IModel *m_model;
     int m_currentFPS;
 
     QAction *m_actionRecentFiles[kMaxRecentFiles];

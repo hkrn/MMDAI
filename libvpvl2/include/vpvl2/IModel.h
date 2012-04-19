@@ -233,6 +233,19 @@ public:
 
     virtual void getBones(Array<IBone *> &value) const = 0;
     virtual void getMorphs(Array<IMorph *> &value) const = 0;
+
+    virtual const Vector3 &position() const = 0;
+    virtual const Quaternion &rotation() const = 0;
+    virtual const Scalar &opacity() const = 0;
+    virtual const Scalar &scaleFactor() const = 0;
+    virtual IModel *parentModel() const = 0;
+    virtual IBone *parentBone() const = 0;
+    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setRotation(const Quaternion &value) = 0;
+    virtual void setOpacity(const Scalar &value) = 0;
+    virtual void setScaleFactor(const Scalar &value) = 0;
+    virtual void setParentModel(IModel *value) = 0;
+    virtual void setParentBone(IBone *value) = 0;
 };
 
 } /* namespace vpvl2 */

@@ -92,6 +92,10 @@ Model::Model(IEncoding *encoding)
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
+      m_position(kZeroV3),
+      m_rotation(Quaternion::getIdentity()),
+      m_opacity(1),
+      m_scaleFactor(1),
       m_visible(false)
 {
     internal::zerofill(&m_info, sizeof(m_info));
@@ -579,6 +583,10 @@ void Model::release()
     m_comment = 0;
     delete m_englishComment;
     m_englishComment = 0;
+    m_position.setZero();
+    m_rotation.setValue(0, 0, 0, 1);
+    m_opacity = 1;
+    m_scaleFactor = 1;
 }
 
 void Model::parseNamesAndComments(const DataInfo &info)

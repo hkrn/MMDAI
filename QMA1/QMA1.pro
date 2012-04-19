@@ -37,7 +37,7 @@ CONFIG(debug, debug|release) {
   win32:LIBS       += -L../libvpvl2/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug \
                       -lvpvl -lPortAudio_D -lhts_engine_API_D -lJulius_D -lOpen_JTalk_D -lws2_32
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L../libvpvl2/debug/lib -L../bullet/debug/lib -lvpvl_debug
+  unix:LIBS        += -L../libvpvl2/debug/lib -L../bullet/debug/lib -lvpvl2_debug
   unix:INCLUDEPATH += ../libvpvl2/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
 }
@@ -45,7 +45,7 @@ CONFIG(release, debug|release) {
   win32:LIBS       += -L../libvpvl2/msvc-build/lib/release -L../bullet/msvc-build/lib/release \
                       -lvpvl -lPortAudio -lhts_engine_API -lJulius -lOpen_JTalk -lws2_32
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L../libvpvl2/release/lib -L../bullet/release/lib -lvpvl
+  unix:LIBS        += -L../libvpvl2/release/lib -L../bullet/release/lib -lvpvl2
   unix:INCLUDEPATH += ../libvpvl2/release/include
   exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
 }

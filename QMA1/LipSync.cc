@@ -41,9 +41,9 @@
 #include "util.h"
 
 #include <QtCore/QtCore>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 struct LipKeyFrame
 {
@@ -54,7 +54,8 @@ struct LipKeyFrame
 
 const float LipSync::kInterpolationRate = 0.8f;
 
-LipSync::LipSync()
+LipSync::LipSync(Factory *factory)
+    : m_factory(factory)
 {
 }
 
@@ -118,11 +119,11 @@ bool LipSync::load(QTextStream &stream)
     return ret;
 }
 
-VMDMotion *LipSync::createMotion(const QString &sequence)
+IMotion *LipSync::createMotion(const QString &sequence)
 {
     QStringList tokens = sequence.split(',');
     QList<LipKeyFrame> frames, newFrames;
-    VMDMotion *motion = 0;
+    IMotion *motion = 0;
     LipKeyFrame frame;
     int i = 0, j = 0, k = 0;
     float diff = 0.0f;
@@ -163,19 +164,19 @@ VMDMotion *LipSync::createMotion(const QString &sequence)
         }
         newFrames.append(f);
     }
-    motion = new VMDMotion();
-    FaceAnimation *fa = motion->mutableFaceAnimation();
+    motion = m_factory->createMotion();
     int nExpressionNames = m_expressionNames.size();
     int currentFrame = 0;
     for (i = 0; i < nExpressionNames; i++) {
         currentFrame = 0;
         QByteArray bytes = internal::fromQString(m_expressionNames.at(i));
         foreach (LipKeyFrame f, newFrames) {
-            FaceKeyframe *ff = new vpvl::FaceKeyframe();
-            ff->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            IMorphKeyframe *ff = m_factory->createMorphKeyframe();
+            // FIXME
+            ff->setName(0); // reinterpret_cast<const uint8_t *>(bytes.constData()));
             ff->setFrameIndex(currentFrame);
             ff->setWeight(blendRate(f.phone, i) * f.rate);
-            fa->addKeyframe(ff);
+            motion->addKeyframe(ff);
             currentFrame += f.duration;
         }
     }

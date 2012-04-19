@@ -38,11 +38,11 @@
 #define VPVL2_IMOTION_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
 
-class IKeyframe;
 class IModel;
 class IString;
 
@@ -153,6 +153,8 @@ public:
      * @param IKeyframe
      */
     virtual void addKeyframe(IKeyframe *value) = 0;
+
+    virtual int countKeyframes(IKeyframe::Type) const = 0;
 
     /**
      * キーフレームを削除します。

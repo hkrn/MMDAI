@@ -75,6 +75,18 @@ public:
     IMorph *findMorph(const IString *value) const;
     void getBones(Array<IBone *> &value) const { value.copy(m_bones); }
     void getMorphs(Array<IMorph *> &value) const { value.copy(m_morphs); }
+    const Vector3 &position() const { return m_model.positionOffset(); }
+    const Quaternion &rotation() const { return m_model.rotationOffset(); }
+    const Scalar &opacity() const { return m_opacity; }
+    const Scalar &scaleFactor() const { return m_scaleFactor; }
+    IModel *parentModel() const { return 0; }
+    IBone *parentBone() const { return 0; }
+    void setPosition(const Vector3 &value) { m_model.setPositionOffset(value); }
+    void setRotation(const Quaternion &value) { m_model.setRotationOffset(value); }
+    void setOpacity(const Scalar &value) { m_opacity = value; }
+    void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
+    void setParentModel(IModel * /* value */) {}
+    void setParentBone(IBone * /* value */) {}
 
     vpvl::PMDModel *ptr() { return &m_model; }
 
@@ -89,6 +101,8 @@ private:
     Array<IMorph *> m_morphs;
     Hash<HashString, IBone *> m_name2bones;
     Hash<HashString, IMorph *> m_name2morphs;
+    Scalar m_opacity;
+    Scalar m_scaleFactor;
 };
 
 }

@@ -43,16 +43,9 @@
 #include "common/util.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
-#ifdef VPVL_ENABLE_GLSL
-#include <vpvl/gl2/Renderer.h>
-using namespace vpvl::gl2;
-#else
-#include <vpvl/gl/Renderer.h>
-using namespace vpvl::gl;
-#endif /* VPVL_USE_GLSL */
+using namespace vpvl2;
 using namespace internal;
 
 ExtendedSceneWidget::ExtendedSceneWidget(QSettings *settings, QWidget *parent)
@@ -109,7 +102,7 @@ void ExtendedSceneWidget::loadScript(const QString &filename)
     }
 }
 
-void ExtendedSceneWidget::setEmptyMotion(PMDModel * /* model */)
+void ExtendedSceneWidget::setEmptyMotion(IModel * /* model */)
 {
     // emit this
 }
@@ -132,15 +125,15 @@ void ExtendedSceneWidget::initializeGL()
 {
     SceneWidget::initializeGL();
     QStringList arguments = qApp->arguments();
-    m_tiledStage = new TiledStage(m_loader->renderEngine()->scene(), m_loader->world());
+    m_tiledStage = new TiledStage(m_loader->scene(), m_loader->world());
     setShowModelDialog(false);
     if (arguments.count() == 2)
         loadScript(arguments[1]);
     else
         play();
     /* vpvl::Scene の初期値を変更したため、互換性のために視点を変更する */
-    Scene *scene = m_loader->renderEngine()->scene();
-    scene->setCameraPerspective(Vector3(0.0f, 13.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
+    // Scene *scene = m_loader->renderEngine()->scene();
+    // scene->setCameraPerspective(Vector3(0.0f, 13.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
 }
 
 #ifdef Q_OS_MAC
@@ -153,13 +146,11 @@ void ExtendedSceneWidget::paintGL()
 {
     UISetGLContextTransparent(m_enableTransparent);
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
-    Renderer *renderer = m_loader->renderEngine();
-    renderer->clear();
     m_loader->render();
     m_tiledStage->renderBackground();
     m_tiledStage->renderFloor();
     if (m_script) {
-        const QMultiMap<PMDModel *, VMDMotion *> &motions = m_script->stoppedMotions();
+        const QMultiMap<IModel *, IMotion *> &motions = m_script->stoppedMotions();
         if (!motions.isEmpty())
             emit motionDidFinished(motions);
     }

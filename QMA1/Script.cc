@@ -44,9 +44,9 @@
 #include "util.h"
 
 #include <QtCore/QtCore>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 namespace
 {
@@ -164,15 +164,16 @@ const QString Script::kLipSyncName = "LipSync";
 Script::Script(ExtendedSceneWidget *parent)
     : QObject(parent),
       m_parent(parent),
+      m_globalLipSync(0),
       m_currentState(0),
       m_stage(0)
 {
     SceneLoader *loader = parent->sceneLoader();
     loader->createProject();
     connect(this, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(handleModelDelete(vpvl::PMDModel*)));
-    connect(parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)),
-            this, SLOT(handleFinishedMotion(QMultiMap<vpvl::PMDModel*,vpvl::VMDMotion*>)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl::IModel*,QUuid)), this, SLOT(handleModelDelete(vpvl::IModel*)));
+    connect(parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::IModel*,vpvl::IMotion*>)),
+            this, SLOT(handleFinishedMotion(QMultiMap<vpvl::IModel*,vpvl::IMotion*>)));
     connect(&m_recog, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
     connect(&m_speech, SIGNAL(commandDidPost(QString,QList<QVariant>)), this, SLOT(handleCommand(QString,QList<QVariant>)));
     connect(&m_speech, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
@@ -325,22 +326,22 @@ void Script::handleCommand(const QString &type, const QList<QVariant> &arguments
     handleCommand(ScriptArgument(type, strings));
 }
 
-void Script::handleModelDelete(PMDModel *model)
+void Script::handleModelDelete(IModel *model)
 {
     QString name = m_models.key(model);
     if (!name.isNull())
         m_models.remove(name);
 }
 
-void Script::handleFinishedMotion(const QMultiMap<PMDModel *, VMDMotion *> &motions)
+void Script::handleFinishedMotion(const QMultiMap<IModel *, IMotion *> &motions)
 {
     /* ループさせる場合を除いてモーションが終了したらそのモーションは削除する */
     Arguments a;
-    QMapIterator<PMDModel *, VMDMotion *> iterator(motions);
+    QMapIterator<IModel *, IMotion *> iterator(motions);
     SceneLoader *loader = m_parent->sceneLoader();
     while (iterator.hasNext()) {
         iterator.next();
-        VMDMotion *motion = iterator.value();
+        IMotion *motion = iterator.value();
         if (m_motionParameters.contains(motion)) {
             const MotionParameter &parameter = m_motionParameters.value(motion);
             if (parameter.isLoopEnabled) {
@@ -406,34 +407,38 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         const QString &path = canonicalizePath(argv[1]);
-        PMDModel *model = m_parent->addModel(path);
+        IModel *model = m_parent->addModel(path);
         if (model) {
             if (argc >= 3) {
                 Vector3 position;
                 parsePosition(argv[2], position);
-                model->setPositionOffset(position);
+                model->setPosition(position);
                 if (argc >= 4) {
                     Quaternion rotation;
                     parseRotation(argv[3], rotation);
-                    model->setRotationOffset(rotation);
+                    model->setRotation(rotation);
                 }
             }
             else {
-                model->setPositionOffset(model->rootBone().offset());
+                // FIXME
+                // model->setPosition(model->rootBone().offset());
             }
+            /*
+              FIXME
             if (argc >= 5) {
-                PMDModel *parentModel = m_models.value(argv[4]);
+                IModel *parentModel = m_models.value(argv[4]);
                 if (argc >= 6) {
                     const QByteArray &name = internal::fromQString(argv[5]);
-                    Bone *bone = model->findBone(reinterpret_cast<const uint8_t *>(name.constData()));
+                    IBone *bone = model->findBone(0); // reinterpret_cast<const uint8_t *>(name.constData()));
                     model->setBaseBone(bone);
                 }
                 else {
-                    Bone *bone = Bone::centerBone(parentModel->mutableBones());
+                    IBone *bone = Bone::centerBone(parentModel->mutableBones());
                     model->setPositionOffset(parentModel->positionOffset() + bone->position());
                 }
             }
-            model->updateImmediate();
+            */
+            model->performUpdate();
             m_models.insert(modelName, model);
             Arguments a; a << modelName;
             emit eventDidPost(kModelAddEvent, a);
@@ -450,7 +455,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            PMDModel *model = m_models.value(modelName);
+            IModel *model = m_models.value(modelName);
             const QString &path = canonicalizePath(argv[1]);
             loader->deleteModel(model);
             model = m_parent->addModel(path);
@@ -475,7 +480,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            PMDModel *model = m_models.value(modelName);
+            IModel *model = m_models.value(modelName);
             /* 処理内容の関係で deleteModel() じゃないと modelWillDelete が呼ばれないのでここで signal を発行 */
             emit modelWillDelete(model);
             loader->deleteModel(model);
@@ -497,15 +502,16 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &motionName = argv[1];
         if (m_models.contains(modelName)) {
             const QString &path = canonicalizePath(argv[2]);
-            PMDModel *model = m_models.value(modelName);
-            VMDMotion *motion = m_parent->insertMotionToModel(path, model);
+            IModel *model = m_models.value(modelName);
+            IMotion *motion = m_parent->insertMotionToModel(path, model);
             if (motion) {
                 MotionParameter parameter;
                 bool value = false;
                 parameter.isLoopEnabled = false;
                 if (argc >= 4) {
                     parseEnable(argv[3], "PART", "FULL", value);
-                    motion->setNullFrameEnable(value);
+                    // FIXME
+                    // motion->setNullFrameEnable(value);
                 }
                 if (argc >= 5) {
                     parseEnable(argv[4], "LOOP", "ONCE", value);
@@ -546,9 +552,10 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &motionName = argv[1];
         const QString &path = canonicalizePath(argv[2]);
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
-            PMDModel *model = m_models.value(modelName);
-            VMDMotion *motion = m_motions.value(motionName);
-            bool isNullFrameEnabled = motion->isNullFrameEnabled();
+            IModel *model = m_models.value(modelName);
+            IMotion *motion = m_motions.value(motionName);
+            // FIXME
+            // bool isNullFrameEnabled = motion->isNullFrameEnabled();
             bool isLoopEnabled = false;
             if (m_motionParameters.contains(motion)) {
                 const MotionParameter &parameter = m_motionParameters.value(motion);
@@ -561,7 +568,8 @@ void Script::handleCommand(const ScriptArgument &output)
             if (motion) {
                 MotionParameter parameter;
                 parameter.isLoopEnabled = isLoopEnabled;
-                motion->setNullFrameEnable(isNullFrameEnabled);
+                // FIXME
+                //motion->setNullFrameEnable(isNullFrameEnabled);
                 //motion->setEnableSmooth(enableSmooth);
                 //motion->setEnableRelocation(enableRelocation);
                 m_motions.remove(motionName);
@@ -587,7 +595,7 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &modelName = argv[0];
         const QString &motionName = argv[1];
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
-            VMDMotion *motion = m_motions.value(motionName);
+            IMotion *motion = m_motions.value(motionName);
             loader->deleteMotion(motion);
             m_motions.remove(motionName);
         }
@@ -615,7 +623,7 @@ void Script::handleCommand(const ScriptArgument &output)
         else {
             loader->deleteModel(m_stage);
             const QString &path = canonicalizePath(argv[0]);
-            PMDModel *model = m_parent->addModel(path);
+            IModel *model = m_parent->addModel(path);
             if (model) {
                 m_stage = model;
                 emit eventDidPost(kStageEvent, Arguments());
@@ -677,10 +685,10 @@ void Script::handleCommand(const ScriptArgument &output)
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
             const QString &sequence = argv[1];
-            PMDModel *model = m_models.value(modelName);
-            VMDMotion *newLipSyncMotion = m_globalLipSync.createMotion(sequence);
+            IModel *model = m_models.value(modelName);
+            IMotion *newLipSyncMotion = m_globalLipSync.createMotion(sequence);
             if (newLipSyncMotion) {
-                VMDMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
+                IMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
                 //newLipSyncMotion->setFull(false);
                 if (oldLipSyncMotion)
                     loader->deleteMotion(oldLipSyncMotion);
@@ -696,7 +704,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         const QString &modelName = argv[0];
         if (m_models.contains(modelName)) {
-            VMDMotion *motion = m_motions.value(kLipSyncName);
+            IMotion *motion = m_motions.value(kLipSyncName);
             loader->deleteMotion(motion);
             m_motions.remove(kLipSyncName);
         }
@@ -720,7 +728,8 @@ void Script::handleCommand(const ScriptArgument &output)
             float fovy = 0;
             if (argc >= 4)
                 fovy = argv.at(3).toFloat();
-            m_parent->setCameraPerspective(&position, &angle, fovy > 0 ? &fovy : 0, &distance);
+            // FIXME
+            // m_parent->setCameraPerspective(&position, &angle, fovy > 0 ? &fovy : 0, &distance);
         }
         else {
             qWarning("%s", qPrintable(kInvalidArgumentVariant.arg(type).arg(1).arg(3).arg(4).arg(argc)));
@@ -1033,9 +1042,9 @@ bool Script::parseRotation(const QString &value, Quaternion &v) const
     /* x,y,z を vpvl::Quaternion (setEulerZYX 経由で設定する) にキャストする処理 */
     QStringList xyz = value.split(',');
     if (xyz.count() == 3) {
-        float z = vpvl::radian(xyz.at(2).toFloat());
-        float y = vpvl::radian(xyz.at(1).toFloat());
-        float x = vpvl::radian(xyz.at(0).toFloat());
+        float z = vpvl2::radian(xyz.at(2).toFloat());
+        float y = vpvl2::radian(xyz.at(1).toFloat());
+        float x = vpvl2::radian(xyz.at(0).toFloat());
         v.setEulerZYX(z, y, x);
         return true;
     }
@@ -1046,20 +1055,23 @@ bool Script::parseRotation(const QString &value, Quaternion &v) const
     return false;
 }
 
-const QMultiMap<PMDModel *, VMDMotion *> Script::stoppedMotions() const
+const QMultiMap<IModel *, IMotion *> Script::stoppedMotions() const
 {
     /* 停止されたモーションを取得 */
+    QMultiMap<IModel *, IMotion *> ret;
+    /*
+      FIXME
     SceneLoader *loader = m_parent->sceneLoader();
-    QMultiMap<PMDModel *, VMDMotion *> ret;
-    const QList<PMDModel *> &models = loader->allModels();
-    foreach (PMDModel *model, models) {
-        const Array<VMDMotion *> &motions = model->motions();
+    const QList<IModel *> &models = loader->allModels();
+    foreach (IModel *model, models) {
+        const Array<IMotion *> &motions = model->motions();
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
-            VMDMotion *motion = motions[i];
+            IMotion *motion = motions[i];
             if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex()))
                 ret.insert(model, motion);
         }
     }
+    */
     return ret;
 }

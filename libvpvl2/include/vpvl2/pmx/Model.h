@@ -175,6 +175,19 @@ public:
     void setComment(const IString *value);
     void setEnglishComment(const IString *value);
 
+    const Vector3 &position() const { return m_position; }
+    const Quaternion &rotation() const { return m_rotation; }
+    const Scalar &opacity() const { return m_opacity; }
+    const Scalar &scaleFactor() const { return m_scaleFactor; }
+    IModel *parentModel() const { return 0; }
+    IBone *parentBone() const { return 0; }
+    void setPosition(const Vector3 &value) { m_position = value; }
+    void setRotation(const Quaternion &value) { m_rotation = value; }
+    void setOpacity(const Scalar &value) { m_opacity = value; }
+    void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
+    void setParentModel(IModel * /* value */) {}
+    void setParentBone(IBone * /* value */) {}
+
 private:
     void release();
     void parseNamesAndComments(const DataInfo &info);
@@ -209,6 +222,10 @@ private:
     IString *m_englishName;
     IString *m_comment;
     IString *m_englishComment;
+    Vector3 m_position;
+    Quaternion m_rotation;
+    Scalar m_opacity;
+    Scalar m_scaleFactor;
     DataInfo m_info;
     bool m_visible;
 

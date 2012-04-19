@@ -43,9 +43,10 @@
 #include <QtCore/QStringList>
 #include <QtCore/QTextStream>
 
-namespace vpvl
+namespace vpvl2
 {
-class VMDMotion;
+class Factory;
+class IMotion;
 }
 
 class LipSync
@@ -54,16 +55,17 @@ public:
     static const int kInterpolationMargin = 2;
     static const float kInterpolationRate;
 
-    LipSync();
+    LipSync(vpvl2::Factory *factory);
     ~LipSync();
 
     bool load(QTextStream &stream);
-    vpvl::VMDMotion *createMotion(const QString &sequence);
+    vpvl2::IMotion *createMotion(const QString &sequence);
 
 private:
     float blendRate(int i, int j);
     void release();
 
+    vpvl2::Factory *m_factory;
     QStringList m_expressionNames;
     QStringList m_phoneNames;
     QList<float> m_interpolation;

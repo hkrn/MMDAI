@@ -310,6 +310,22 @@ void Motion::addKeyframe(IKeyframe *value)
     }
 }
 
+void Motion::countKeyframes(IKeyframe::Type) const
+{
+    switch (value->type()) {
+    case IKeyframe::kBone:
+        return m_boneMotion.countKeyframes();
+    case IKeyframe::kCamera:
+        return m_cameraMotion.countKeyframes();
+    case IKeyframe::kLight:
+        return m_lightMotion.countKeyframes();
+    case IKeyframe::kMorph:
+        return m_morphMotion.countKeyframes();
+    default:
+        return 0;
+    }
+}
+
 void Motion::deleteKeyframe(IKeyframe *value)
 {
     switch (value->type()) {

@@ -77,6 +77,18 @@ public:
     IMorph *findMorph(const IString * /* value */) const { return 0; }
     void getBones(Array<IBone *> & /* value */) const {}
     void getMorphs(Array<IMorph *> & /* value */) const {}
+    const Vector3 &position() const { return m_asset.position(); }
+    const Quaternion &rotation() const { return m_asset.rotation(); }
+    const Scalar &opacity() const { return m_asset.opacity(); }
+    const Scalar &scaleFactor() const { return m_asset.scaleFactor(); }
+    IModel *parentModel() const { return m_parentModel; }
+    IBone *parentBone() const { return m_parentBone; }
+    void setPosition(const Vector3 &value) { m_asset.setPosition(value); }
+    void setRotation(const Quaternion &value) { m_asset.setRotation(value); }
+    void setOpacity(const Scalar &value) { m_asset.setOpacity(value); }
+    void setScaleFactor(const Scalar &value) { m_asset.setScaleFactor(value); }
+    void setParentModel(IModel *value) { m_parentModel = value; }
+    void setParentBone(IBone *value) { m_parentBone = value; }
 
     vpvl::Asset *ptr() { return &m_asset; }
 
@@ -86,6 +98,8 @@ private:
     IString *m_name;
     Array<IBone *> m_bones;
     Array<IMorph *> m_morphs;
+    IModel *m_parentModel;
+    IBone *m_parentBone;
 };
 
 } /* namespace asset */
