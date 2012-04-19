@@ -598,7 +598,7 @@ void Bone::performInverseKinematics()
 #endif
             Vector3 rotationAxis = v1.cross(v2);
             const Scalar &angle = btClamped(btAcos(v1.dot(v2)), -m_angleConstraint, m_angleConstraint);
-            if (btFuzzyZero(angle))
+            if (btFuzzyZero(rotationAxis.length()) || btFuzzyZero(angle))
                 continue;
             rotation.setRotation(rotationAxis, angle);
             rotation.normalize();
