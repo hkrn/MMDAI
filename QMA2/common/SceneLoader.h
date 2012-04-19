@@ -47,10 +47,10 @@
 #include "VPDFile.h"
 
 #include <vpvl2/Common.h>
-#include <vpvl2/Factory.h>
 #include <vpvl2/Project.h>
 
 namespace internal {
+class Encoding;
 class World;
 }
 
@@ -202,9 +202,10 @@ private:
     int globalSetting(const char *key, int def) const;
 
     internal::World *m_world;
+    internal::Encoding *m_encoding;
     vpvl2::IRenderDelegate *m_renderDelegate;
     QMap<QString, vpvl2::IModel*> m_name2assets;
-    vpvl2::Factory m_factory;
+    vpvl2::Factory *m_factory;
     vpvl2::Project *m_project;
     vpvl2::Project::IDelegate *m_projectDelegate;
     vpvl2::IModel *m_model;

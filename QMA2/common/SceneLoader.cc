@@ -73,6 +73,10 @@ static const QRegExp &kModelExtensions = QRegExp(".pmd$");
 class UIDelegate : public Project::IDelegate, public IRenderDelegate
 {
 public:
+    struct PrivateContext {
+        const IModel *model;
+    };
+
     UIDelegate()
         : m_archive(0),
           m_codec(0)
@@ -84,137 +88,82 @@ public:
         delete m_archive;
     }
 
-    void allocateContext(const IModel * /* model */, void *& /* context */) {
+    void allocateContext(const IModel *model, void *&context) {
+        PrivateContext *c = new PrivateContext();
+        c->model = model;
+        context = c;
+        qDebug("Allocated a context object: %s", model->name()->toByteArray());
     }
-    void releaseContext(const IModel * /* model */, void *& /* context */) {
+    void releaseContext(const IModel *model, void *&context) {
+        delete static_cast<PrivateContext *>(context);
+        context = 0;
+        qDebug("Released a context object: %s", model->name()->toByteArray());
     }
 
-    bool uploadTexture(void * /* context */, const std::string &name, const std::string &dir, void *textureID, bool isToon) {
-        QImage image;
-        const std::string path = dir + "/" + name;
-        QString pathString = QString::fromLocal8Bit(path.c_str());
-        pathString.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
-        QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
-        QFileInfo info(pathString);
-        /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
-        if (m_archive && !pathString.startsWith(":/")) {
-            QByteArray suffix = info.suffix().toLower().toUtf8();
-            if (suffix == "sph" || suffix == "spa")
-                suffix.setRawData("bmp", 3);
-            const QByteArray &bytes = m_archive->data(pathString);
-            image.loadFromData(bytes, suffix.constData());
-            if (image.isNull() && suffix == "tga" && bytes.length() > 18) {
-                image = loadTGA(bytes, ptr);
-            }
-            else {
-                image = image.rgbSwapped();
-            }
-            if (image.isNull()) {
-                qWarning("Loading texture %s (zipped) cannot decode", qPrintable(info.fileName()));
-                return false;
-            }
-        }
-        /* 通常の読み込み */
-        else {
-            if (info.isDir()) {
-                /* ディレクトリの場合は警告は出さない */
-                return false;
-            }
-            else if (!info.exists()) {
-                qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
-                return false;
-            }
-            if (image.isNull() && info.suffix().toLower() == "tga") {
-                image = loadTGA(pathString, ptr);
-            }
-            else {
-                image = QImage(pathString).rgbSwapped();
-            }
-            if (image.isNull()) {
-                qWarning("Loading texture %s cannot decode", qPrintable(info.absoluteFilePath()));
-                return false;
-            }
-        }
-        /* スフィアテクスチャの場合一旦反転する */
-        if (pathString.endsWith(".sph") || pathString.endsWith(".spa")) {
-            QTransform transform;
-            transform.scale(1, -1);
-            image = image.transformed(transform);
-        }
-        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-        GLuint *id = reinterpret_cast<GLuint *>(textureID);
-        *id = context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
-        if (!isToon) {
-            glTexParameteri(*id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(*id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        qDebug("Loaded a texture (ID=%d): \"%s\"", *id,
-               m_archive ? qPrintable(info.fileName()) : qPrintable(pathString));
-        return textureID != 0;
+    bool uploadTexture(void *context, const std::string &name, const std::string &dir, void *texture, bool isToon) {
+        const QDir d(QString::fromStdString(dir));
+        return uploadTexture0(context, d.absoluteFilePath(QString::fromStdString(name)), texture, isToon);
     }
     bool uploadTexture(void *context, const IString *name, const std::string &dir, void *texture, bool isToon) {
-        return false;
+        const QDir d(QString::fromStdString(dir));
+        const QString &s = static_cast<const internal::String *>(name)->value();
+        return uploadTexture0(context, d.absoluteFilePath(s), texture, isToon);
     }
-    bool uploadToonTexture(void *context, const std::string &name, const std::string &dir, void *textureID) {
-        const QString &filename = QString::fromLocal8Bit(name.c_str());
-        QString path = QString::fromLocal8Bit(dir.c_str()) + "/" + filename;
-        path.replace("\\", "/");
-        /* アーカイブ内にある場合はシステム側のテクスチャ処理とごっちゃにならないように uploadTexture に流して返す */
-        if (m_archive && !m_archive->data(path).isEmpty())
-            return uploadTexture(context, std::string(path.toLocal8Bit()), dir, textureID, true);
-        /* ファイルが存在しない場合はシステム側のテクスチャと仮定 */
-        if (!QFile::exists(path))
-            path = QString(":/textures/%1").arg(filename);
-        return uploadTexture(context, std::string(path.toLocal8Bit()), dir, textureID, true);
+    bool uploadToonTexture(void *context, const std::string &name, const std::string &dir, void *texture) {
+        const QDir d(QString::fromStdString(dir));
+        return uploadToonTexture0(context, QString::fromStdString(name), d, texture);
     }
-    bool uploadToonTexture(void * /* context */, const IString *name, const std::string &dir, void *texture) {
-        return false;
+    bool uploadToonTexture(void *context, const IString *name, const std::string &dir, void *texture) {
+        const QDir d(QString::fromStdString(dir));
+        const QString &s = static_cast<const internal::String *>(name)->value();
+        return uploadToonTexture0(context, s, d, texture);
     }
-    bool uploadToonTexture(void * /* context */, int index, void *texture) {
-        return false;
+    bool uploadToonTexture(void *context, int index, void *texture) {
+        QString format;
+        const QString &pathString = format.sprintf("toon%02d.bmp", index + 1);
+        return uploadToonTexture0(context, pathString, QDir(), texture);
     }
-    const std::string loadShader(IRenderDelegate::ShaderType type, void * /* context */) {
+    const std::string loadShader(IRenderDelegate::ShaderType type, const IModel *model, void *context) {
         QString filename;
-        switch (type) {
-        case IRenderDelegate::kAssetVertexShader:
-            filename = "asset.vsh";
+        PrivateContext *pc = static_cast<PrivateContext *>(context);
+        switch (pc->model->type()) {
+        case IModel::kAsset:
+            filename += "asset.";
             break;
-        case IRenderDelegate::kAssetFragmentShader:
-            filename = "asset.fsh";
+        case IModel::kPMD:
+            filename += "pmd.";
             break;
-        case IRenderDelegate::kEdgeVertexShader:
-            filename = "edge.vsh";
-            break;
-        case IRenderDelegate::kEdgeFragmentShader:
-            filename = "edge.fsh";
-            break;
-        case IRenderDelegate::kPMDVertexShader:
-            filename = "model.vsh";
-            break;
-        case IRenderDelegate::kPMDFragmentShader:
-            filename = "model.fsh";
-            break;
-        case IRenderDelegate::kPMXVertexShader:
-            filename = "model.vsh";
-            break;
-        case IRenderDelegate::kPMXFragmentShader:
-            filename = "model.fsh";
-            break;
-        case IRenderDelegate::kShadowVertexShader:
-            filename = "shadow.vsh";
-            break;
-        case IRenderDelegate::kShadowFragmentShader:
-            filename = "shadow.fsh";
-            break;
-        case IRenderDelegate::kZPlotVertexShader:
-            filename = "zplot.vsh";
-            break;
-        case IRenderDelegate::kZPlotFragmentShader:
-            filename = "zplot.fsh";
+        case IModel::kPMX:
+            filename += "pmx.";
             break;
         }
-        const QString path = QString(":/shaders/%1").arg(filename);
+        switch (type) {
+        case IRenderDelegate::kEdgeVertexShader:
+            filename += "edge.vsh";
+            break;
+        case IRenderDelegate::kEdgeFragmentShader:
+            filename += "edge.fsh";
+            break;
+        case IRenderDelegate::kModelVertexShader:
+            filename += "model.vsh";
+            break;
+        case IRenderDelegate::kModelFragmentShader:
+            filename += "model.fsh";
+            break;
+        case IRenderDelegate::kShadowVertexShader:
+            filename += "shadow.vsh";
+            break;
+        case IRenderDelegate::kShadowFragmentShader:
+            filename += "shadow.fsh";
+            break;
+        case IRenderDelegate::kZPlotVertexShader:
+            filename += "zplot.vsh";
+            break;
+        case IRenderDelegate::kZPlotFragmentShader:
+            filename += "zplot.fsh";
+            break;
+        }
+        const QString &path = QString(":/shaders/%1").arg(filename);
         QFile file(path);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
@@ -234,7 +183,7 @@ public:
             filename = "skinning.cl";
             break;
         }
-        const QString path = QString(":/kernels/%1").arg(filename);
+        const QString &path = QString(":/kernels/%1").arg(filename);
         QFile file(path);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
@@ -261,10 +210,10 @@ public:
         }
     }
     const std::string toStdFromString(const IString *value) const {
-        return "";
+        return static_cast<const internal::String *>(value)->value().toStdString();
     }
     const IString *toStringFromStd(const std::string &value) const {
-        return 0;
+        return new internal::String(QString::fromStdString(value));
     }
     const std::string toUnicode(const std::string &value) const {
         return m_codec->toUnicode(value.c_str()).toStdString();
@@ -289,6 +238,83 @@ public:
     }
 
 private:
+    bool uploadTexture0(void *context, const QString &path, void *textureID, bool isToon) {
+        Q_UNUSED(context)
+        QImage image;
+        QString mutablePath = path;
+        mutablePath.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
+        QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
+        QFileInfo info(mutablePath);
+        /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
+        if (m_archive && !mutablePath.startsWith(":/")) {
+            QByteArray suffix = info.suffix().toLower().toUtf8();
+            if (suffix == "sph" || suffix == "spa")
+                suffix.setRawData("bmp", 3);
+            const QByteArray &bytes = m_archive->data(mutablePath);
+            image.loadFromData(bytes, suffix.constData());
+            if (image.isNull() && suffix == "tga" && bytes.length() > 18) {
+                image = loadTGA(bytes, ptr);
+            }
+            else {
+                image = image.rgbSwapped();
+            }
+            if (image.isNull()) {
+                qWarning("Loading texture %s (zipped) cannot decode", qPrintable(info.fileName()));
+                return false;
+            }
+        }
+        /* 通常の読み込み */
+        else {
+            if (info.isDir()) {
+                /* ディレクトリの場合は警告は出さない */
+                return false;
+            }
+            else if (!info.exists()) {
+                qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
+                return false;
+            }
+            if (image.isNull() && info.suffix().toLower() == "tga") {
+                image = loadTGA(mutablePath, ptr);
+            }
+            else {
+                image = QImage(mutablePath).rgbSwapped();
+            }
+            if (image.isNull()) {
+                qWarning("Loading texture %s cannot decode", qPrintable(info.absoluteFilePath()));
+                return false;
+            }
+        }
+        /* スフィアテクスチャの場合一旦反転する */
+        if (mutablePath.endsWith(".sph") || mutablePath.endsWith(".spa")) {
+            QTransform transform;
+            transform.scale(1, -1);
+            image = image.transformed(transform);
+        }
+        QGLContext *glcontext = const_cast<QGLContext *>(QGLContext::currentContext());
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+        GLuint *id = reinterpret_cast<GLuint *>(textureID);
+        *id = glcontext->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+        if (!isToon) {
+            glTexParameteri(*id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(*id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        qDebug("Loaded a texture (ID=%d): \"%s\"", *id,
+               m_archive ? qPrintable(info.fileName()) : qPrintable(mutablePath));
+        return textureID != 0;
+    }
+    bool uploadToonTexture0(void *context, const QString &name, const QDir &dir, void *texture) {
+        QString mutableName = name;
+        mutableName.replace("\\", "/");
+        /* アーカイブ内にある場合はシステム側のテクスチャ処理とごっちゃにならないように uploadTexture に流して返す */
+        const QString &path = dir.absoluteFilePath(mutableName);
+        if (m_archive && !m_archive->data(path).isEmpty())
+            return uploadTexture0(context, path, texture, true);
+        /* ファイルが存在しない場合はシステム側のテクスチャと仮定 */
+        if (!QFile::exists(dir.absoluteFilePath(name)))
+            return uploadTexture0(context, QString(":/textures/%1").arg(name), texture, true);
+        else
+            return uploadTexture0(context, path, texture, true);
+    }
     QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr) {
         QFile file(path);
         if (file.open(QFile::ReadOnly) && file.size() > 18) {
@@ -496,6 +522,7 @@ const QByteArray UILoadFile(const QString &filename,
 SceneLoader::SceneLoader()
     : QObject(),
       m_world(0),
+      m_encoding(0),
       m_renderDelegate(0),
       m_factory(0),
       m_project(0),
@@ -504,19 +531,27 @@ SceneLoader::SceneLoader()
       m_asset(0),
       m_camera(0)
 {
+    m_encoding = new internal::Encoding();
     m_world = new internal::World();
     m_renderDelegate = new UIDelegate();
     m_projectDelegate = new UIDelegate();
+    m_factory = new Factory(m_encoding);
     createProject();
 }
 
 SceneLoader::~SceneLoader()
 {
     release();
+    delete m_factory;
+    m_factory = 0;
     delete m_renderDelegate;
     m_renderDelegate = 0;
     delete m_projectDelegate;
     m_projectDelegate = 0;
+    delete m_world;
+    m_world = 0;
+    delete m_encoding;
+    m_encoding = 0;
 }
 
 void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid)
@@ -574,7 +609,7 @@ void SceneLoader::commitAssetProperties()
 void SceneLoader::createProject()
 {
     if (!m_project) {
-        m_project = new Project(m_projectDelegate, &m_factory);
+        m_project = new Project(m_projectDelegate, m_factory);
         /*
          * デフォルトではグリッド表示と物理演算を有効にするため、設定後強制的に dirty フラグを無効にする
          * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
@@ -681,7 +716,7 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
     if (!isNullData) {
         bool allocated = false;
         if (!asset) {
-            asset = m_factory.createModel(IModel::kAsset);
+            asset = m_factory->createModel(IModel::kAsset);
             allocated = true;
         }
         if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
@@ -733,14 +768,14 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
         const QString &bone = stream.readLine();
         /* 7行目: 影をつけるかどうか(未実装) */
         bool enableShadow = stream.readLine().toInt() == 1;
-        IModel *asset = m_factory.createModel(IModel::kAsset);
+        IModel *asset = m_factory->createModel(IModel::kAsset);
         if (loadAsset(dir.absoluteFilePath(filename), uuid, asset)) {
-            /*
+#if QMA2_TBD
             if (!name.isEmpty()) {
                 const QByteArray &bytes = internal::fromQString(name);
                 asset->setName(bytes.constData());
             }
-            */
+#endif
             if (!filename.isEmpty()) {
                 m_name2assets.insert(filename, asset);
             }
@@ -759,8 +794,8 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
                 asset->setRotation(Quaternion(x, y, z));
             }
             if (!bone.isEmpty() && m_model) {
-                // const QByteArray &bytes = internal::fromQString(name);
-                IBone *bone = m_model->findBone(0); // reinterpret_cast<const uint8_t *>(bytes.constData()));
+                internal::String s(name);
+                IBone *bone = m_model->findBone(&s);
                 asset->setParentBone(bone);
             }
             Q_UNUSED(enableShadow);
@@ -780,7 +815,7 @@ IMotion *SceneLoader::loadCameraMotion(const QString &path)
     IMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        motion = m_factory.createMotion();
+        motion = m_factory->createMotion();
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
                 && motion->countKeyframes(IKeyframe::kCamera) > 0) {
             setCameraMotion(motion);
@@ -806,7 +841,7 @@ bool SceneLoader::loadModel(const QString &filename, IModel *&model)
     if (!isNullData) {
         bool allocated = false;
         if (!model) {
-            model = m_factory.createModel(bytes.startsWith("PMX ") ? IModel::kPMX : IModel::kPMD);
+            model = m_factory->createModel(filename.endsWith(".pmx") ? IModel::kPMX : IModel::kPMD);
             allocated = true;
         }
         if (!model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
@@ -827,7 +862,7 @@ IMotion *SceneLoader::loadModelMotion(const QString &path)
     IMotion *motion = 0;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        motion = m_factory.createMotion();
+        motion = m_factory->createMotion();
         if (!motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
             delete motion;
             motion = 0;
@@ -947,8 +982,10 @@ void SceneLoader::loadProject(const QString &path)
                     continue;
                 }
                 else if (model->type() == IModel::kAsset) {
-                    // const QByteArray &baseName = fileInfo.baseName().toUtf8();
-                    // asset->setName(baseName.constData());
+#if QMA2_TBD
+                    const QByteArray &baseName = fileInfo.baseName().toUtf8();
+                    asset->setName(baseName.constData());
+#endif
                     // delegate->setArchive(0);
                     const QUuid assetUUID(modelUUIDString.c_str());
                     m_renderOrderList.add(assetUUID);
@@ -995,9 +1032,9 @@ void SceneLoader::loadProject(const QString &path)
 IMotion *SceneLoader::newCameraMotion() const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
-    IMotion *newCameraMotion = m_factory.createMotion();
+    IMotion *newCameraMotion = m_factory->createMotion();
     // CameraAnimation *cameraAnimation = newCameraMotion->mutableCameraAnimation();
-    ICameraKeyframe *frame = m_factory.createCameraKeyframe();
+    ICameraKeyframe *frame = m_factory->createCameraKeyframe();
     Scene::ICamera *camera = m_project->camera();
     frame->setDefaultInterpolationParameter();
     frame->setPosition(camera->position());
@@ -1014,7 +1051,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
     /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
     IMotion *newModelMotion = 0;
     if (model) {
-        newModelMotion = m_factory.createMotion();
+        newModelMotion = m_factory->createMotion();
         Array<IBone *> bones;
         model->getBones(bones);
         const int nbones = bones.count();
@@ -1022,7 +1059,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
-                IBoneKeyframe *frame = m_factory.createBoneKeyframe();
+                IBoneKeyframe *frame = m_factory->createBoneKeyframe();
                 frame->setDefaultInterpolationParameter();
                 frame->setName(bone->name());
                 newModelMotion->addKeyframe(frame);
@@ -1035,7 +1072,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
         // FaceAnimation *faceAnimation = newModelMotion->mutableFaceAnimation();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
-            IMorphKeyframe *frame = m_factory.createMorphKeyframe();
+            IMorphKeyframe *frame = m_factory->createMorphKeyframe();
             frame->setName(morph->name());
             newModelMotion->addKeyframe(frame);
             // faceAnimation->addKeyframe(frame);
@@ -1609,9 +1646,9 @@ IBone *SceneLoader::assetParentBone(IModel *asset) const
 {
     IModel *model = 0;
     if (m_project && (model = assetParentModel(asset))) {
-        // const QString &name = QString::fromStdString(m_project->assetSetting(asset, "parent.bone"));
-        //const QByteArray &bytes = internal::fromQString(name);
-        return model->findBone(0); //reinterpret_cast<const uint8_t *>(bytes.constData()));
+        const QString &name = QString::fromStdString(m_project->modelSetting(asset, "parent.bone"));
+        internal::String s(name);
+        return model->findBone(&s);
     }
     return 0;
 }

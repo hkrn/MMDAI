@@ -498,11 +498,11 @@ void MainWindow::buildMenuBar()
 void MainWindow::connectSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
-    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), this, SLOT(addModel(vpvl::PMDModel*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), this, SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
-    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), this, SLOT(addAsset(vpvl::Asset*,QUuid)));
-    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), this, SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), this, SLOT(setCurrentModel(vpvl::PMDModel*)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), this, SLOT(addModel(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), this, SLOT(deleteModel(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(assetDidAdd(vpvl2::IModel*,QUuid)), this, SLOT(addAsset(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), this, SLOT(deleteAsset(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), this, SLOT(setCurrentModel(vpvl2::IModel*)));
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
 }
 

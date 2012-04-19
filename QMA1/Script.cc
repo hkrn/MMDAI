@@ -164,8 +164,8 @@ const QString Script::kLipSyncName = "LipSync";
 Script::Script(ExtendedSceneWidget *parent)
     : QObject(parent),
       m_parent(parent),
-      m_globalLipSync(0),
       m_currentState(0),
+      m_globalLipSync(0),
       m_stage(0)
 {
     SceneLoader *loader = parent->sceneLoader();
@@ -420,24 +420,24 @@ void Script::handleCommand(const ScriptArgument &output)
                 }
             }
             else {
-                // FIXME
-                // model->setPosition(model->rootBone().offset());
+#if QMA_TBD
+                model->setPosition(model->rootBone().offset());
+#endif
             }
-            /*
-              FIXME
+#if QMA_TBD
             if (argc >= 5) {
                 IModel *parentModel = m_models.value(argv[4]);
                 if (argc >= 6) {
-                    const QByteArray &name = internal::fromQString(argv[5]);
-                    IBone *bone = model->findBone(0); // reinterpret_cast<const uint8_t *>(name.constData()));
+                    internal::String s(argv[5]);
+                    IBone *bone = model->findBone(&s);
                     model->setBaseBone(bone);
                 }
                 else {
-                    IBone *bone = Bone::centerBone(parentModel->mutableBones());
-                    model->setPositionOffset(parentModel->positionOffset() + bone->position());
+                    // IBone *bone = Bone::centerBone(parentModel->mutableBones());
+                    model->setPositionOffset(parentModel->positionOffset()); // + bone->position());
                 }
             }
-            */
+#endif
             model->performUpdate();
             m_models.insert(modelName, model);
             Arguments a; a << modelName;
@@ -724,12 +724,13 @@ void Script::handleCommand(const ScriptArgument &output)
             Vector3 position, angle;
             parsePosition(argv[0], position);
             parsePosition(argv[1], angle);
-            float distance = argv.at(2).toFloat();
+            //float distance = argv.at(2).toFloat();
             float fovy = 0;
             if (argc >= 4)
                 fovy = argv.at(3).toFloat();
-            // FIXME
-            // m_parent->setCameraPerspective(&position, &angle, fovy > 0 ? &fovy : 0, &distance);
+#if QMA_TBD
+            m_parent->setCameraPerspective(&position, &angle, fovy > 0 ? &fovy : 0, &distance);
+#endif
         }
         else {
             qWarning("%s", qPrintable(kInvalidArgumentVariant.arg(type).arg(1).arg(3).arg(4).arg(argc)));
@@ -1059,19 +1060,13 @@ const QMultiMap<IModel *, IMotion *> Script::stoppedMotions() const
 {
     /* 停止されたモーションを取得 */
     QMultiMap<IModel *, IMotion *> ret;
-    /*
-      FIXME
     SceneLoader *loader = m_parent->sceneLoader();
-    const QList<IModel *> &models = loader->allModels();
-    foreach (IModel *model, models) {
-        const Array<IMotion *> &motions = model->motions();
-        const int nmotions = motions.count();
-        for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = motions[i];
-            if (!motion->isActive() && motion->isReachedTo(motion->maxFrameIndex()))
-                ret.insert(model, motion);
-        }
+    const Array<IMotion *> &motions = loader->scene()->motions();
+    const int nmotions = motions.count();
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        if (motion->isReachedTo(motion->maxFrameIndex()))
+            ret.insert(motion->parentModel(), motion);
     }
-    */
     return ret;
 }

@@ -45,6 +45,7 @@
 
 namespace vpvl2 {
 class IBone;
+class IEncoding;
 class IModel;
 }
 

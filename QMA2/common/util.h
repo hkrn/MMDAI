@@ -47,6 +47,103 @@ using namespace vpvl2;
 
 const static Vector3 kWorldAabbSize(10000, 10000, 10000);
 
+class String : public IString {
+public:
+    explicit String(const QString &s, IString::Codec codec = IString::kUTF8)
+        : m_bytes(s.toUtf8()),
+          m_value(s),
+          m_codec(codec)
+    {
+    }
+    ~String() {
+    }
+
+    IString *clone() const {
+        return new String(m_value);
+    }
+    const HashString toHashString() const {
+        return HashString(m_bytes.constData());
+    }
+    bool equals(const IString *value) const {
+        return m_value == static_cast<const String *>(value)->value();
+    }
+    const QString &value() const {
+        return m_value;
+    }
+    const uint8_t *toByteArray() const {
+        return reinterpret_cast<const uint8_t *>(m_bytes.constData());
+    }
+    size_t length() const {
+        return m_bytes.length();
+    }
+
+private:
+    const QByteArray m_bytes;
+    const QString m_value;
+    const IString::Codec m_codec;
+};
+
+class Encoding : public IEncoding {
+public:
+    Encoding()
+        : m_sjis(QTextCodec::codecForName("Shift-JIS")),
+          m_utf8(QTextCodec::codecForName("UTF-8")),
+          m_utf16(QTextCodec::codecForName("UTF-16"))
+    {
+    }
+    ~Encoding() {
+    }
+
+    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
+        IString *s = 0;
+        const char *str = reinterpret_cast<const char *>(value);
+        switch (codec) {
+        case IString::kShiftJIS:
+            s = new String(m_sjis->toUnicode(str, size), codec);
+            break;
+        case IString::kUTF8:
+            s = new String(m_utf8->toUnicode(str, size), codec);
+            break;
+        case IString::kUTF16:
+            s = new String(m_utf16->toUnicode(str, size), codec);
+            break;
+        }
+        return s;
+    }
+    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const {
+        size_t size = qstrnlen(reinterpret_cast<const char *>(value), maxlen);
+        return toString(value, size, codec);
+    }
+    uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
+        const String *s = static_cast<const String *>(value);
+        QByteArray bytes;
+        switch (codec) {
+        case IString::kShiftJIS:
+            bytes = m_sjis->fromUnicode(s->value());
+            break;
+        case IString::kUTF8:
+            bytes = m_utf8->fromUnicode(s->value());
+            break;
+        case IString::kUTF16:
+            bytes = m_utf16->fromUnicode(s->value());
+            break;
+        }
+        size_t size = bytes.length();
+        uint8_t *data = new uint8_t[size + 1];
+        memcpy(data, bytes.constData(), size);
+        data[size] = 0;
+        return data;
+    }
+    void disposeByteArray(uint8_t *value) const {
+        delete[] value;
+    }
+
+private:
+    const QTextCodec *m_sjis;
+    const QTextCodec *m_utf8;
+    const QTextCodec *m_utf16;
+};
+
 static inline QTextCodec *getTextCodec()
 {
     static QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
@@ -64,45 +161,39 @@ static inline const QByteArray fromQString(const QString &value)
     return getTextCodec()->fromUnicode(value);
 }
 
-static inline const IString *createString(const QString &value)
-{
-    return 0;
-}
-
-static inline const QString toQString(const IString *value)
-{
-    Q_UNUSED(value)
-    return QString("");
-}
-
 static inline const QString toQString(const uint8_t *value)
 {
     return getTextCodec()->toUnicode(reinterpret_cast<const char *>(value));
 }
 
+static inline const QString toQString(const IString *value)
+{
+    return value ? static_cast<const internal::String *>(value)->value() : noneString();
+}
+
 static inline const QString toQString(const IModel *value)
 {
-    return value ? toQString(value->name()) : noneString();
+    return value ? internal::toQString(value->name()) : noneString();
 }
 
 static inline const QString toQString(const IBone *value)
 {
-    return value ? toQString(value->name()) : noneString();
+    return value ? internal::toQString(value->name()) : noneString();
 }
 
 static inline const QString toQString(const IMorph *value)
 {
-    return value ? toQString(value->name()) : noneString();
+    return value ? internal::toQString(value->name()) : noneString();
 }
 
 static inline const QString toQString(const IBoneKeyframe *value)
 {
-    return value ? toQString(value->name()) : noneString();
+    return value ? internal::toQString(value->name()) : noneString();
 }
 
 static inline const QString toQString(const IMorphKeyframe *value)
 {
-    return value ? toQString(value->name()) : noneString();
+    return value ? internal::toQString(value->name()) : noneString();
 }
 
 static inline bool hasOwnLocalAxis(const IBone *bone)

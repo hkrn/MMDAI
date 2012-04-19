@@ -201,9 +201,8 @@ void VPDFile::save(QTextStream &stream)
 void VPDFile::makePose(IModel *model)
 {
     foreach (Bone *b, m_bones) {
-        const IString *s = internal::createString(b->name);
-        IBone *bone = model->findBone(s);
-        delete s;
+        internal::String s(b->name);
+        IBone *bone = model->findBone(&s);
         if (bone) {
             const Vector3 &pos = b->position;
             const Vector4 &rot = b->rotation;

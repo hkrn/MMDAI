@@ -146,6 +146,7 @@ void ExtendedSceneWidget::paintGL()
 {
     UISetGLContextTransparent(m_enableTransparent);
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     m_loader->render();
     m_tiledStage->renderBackground();
     m_tiledStage->renderFloor();

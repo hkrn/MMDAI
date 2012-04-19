@@ -39,7 +39,7 @@
 #include "OpenJTalkSpeechEngine.h"
 
 #include <QtCore/QtCore>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 #include <portaudio.h>
 
 #include <HTS_engine.h>

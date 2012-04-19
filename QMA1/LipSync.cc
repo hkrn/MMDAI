@@ -169,11 +169,10 @@ IMotion *LipSync::createMotion(const QString &sequence)
     int currentFrame = 0;
     for (i = 0; i < nExpressionNames; i++) {
         currentFrame = 0;
-        QByteArray bytes = internal::fromQString(m_expressionNames.at(i));
+        internal::String s(m_expressionNames.at(i));
         foreach (LipKeyFrame f, newFrames) {
             IMorphKeyframe *ff = m_factory->createMorphKeyframe();
-            // FIXME
-            ff->setName(0); // reinterpret_cast<const uint8_t *>(bytes.constData()));
+            ff->setName(&s);
             ff->setFrameIndex(currentFrame);
             ff->setWeight(blendRate(f.phone, i) * f.rate);
             motion->addKeyframe(ff);

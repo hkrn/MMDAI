@@ -259,8 +259,8 @@ void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
     IModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
-                                              tr("Open PMD file"),
-                                              tr("PMD file (*.pmd *.zip)"),
+                                              tr("Open PMD/PMX file"),
+                                              tr("PMD/PMX file (*.pmd *.pmx *.zip)"),
                                               m_settings));
     if (model && !m_playing) {
         setEmptyMotion(model);
@@ -692,7 +692,7 @@ void SceneWidget::loadFile(const QString &file)
     /* モデルファイル */
     QFileInfo fileInfo(file);
     const QString &extension = fileInfo.suffix().toLower();
-    if (extension == "pmd" || extension == "zip") {
+    if (extension == "pmd" || extension == "pmx" || extension == "zip") {
         IModel *model = addModel(file);
         if (model && !m_playing) {
             setEmptyMotion(model);
