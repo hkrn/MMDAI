@@ -50,6 +50,7 @@ using namespace vpvl2;
 class TiledStage::PrivateContext : protected QGLFunctions {
 public:
     struct Vertex {
+        Vertex() {}
         QVector3D position;
         QVector3D normal;
         QVector2D texcoord;
