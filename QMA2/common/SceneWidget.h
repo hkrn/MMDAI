@@ -95,8 +95,6 @@ public:
     void setBoneWireFramesVisible(bool value);
     void startAutomaticRendering();
     void stopAutomaticRendering();
-    void startPhysicsSimulation();
-    void stopPhysicsSimulation();
     void loadProject(const QString &filename);
     void saveProject(const QString &filename);
 
@@ -230,7 +228,7 @@ private slots:
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 private:
-    void updateModels();
+    void updateRenderEngines();
     bool acceptAddingModel(vpvl2::IModel *model);
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();

@@ -483,8 +483,8 @@ void SceneWidget::advanceMotion(float delta)
         IMotion *motion = motions[i];
         motion->advance(delta);
     }
-    updateModels();
-    updateGL();
+    scene->advance(delta);
+    updateRenderEngines();
     emit cameraPerspectiveDidSet(scene->camera());
 }
 
@@ -513,10 +513,10 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
             IMotion *motion = motions[i];
             motion->seek(frameIndex);
         }
+        scene->seek(frameIndex);
         m_frameIndex = frameIndex;
     }
-    updateModels();
-    updateGL();
+    updateRenderEngines();
     emit cameraPerspectiveDidSet(scene->camera());
     emit motionDidSeek(frameIndex);
 }
@@ -531,8 +531,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_frameIndex = 0;
-    updateModels();
-    updateGL();
+    updateRenderEngines();
     emit cameraPerspectiveDidSet(scene->camera());
     emit motionDidSeek(0.0f);
 }
@@ -825,9 +824,6 @@ void SceneWidget::initializeGL()
     m_debugDrawer = new DebugDrawer(m_loader->scene());
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
-    /* 物理演算に必要な World が initializeGL でインスタンスを生成するため、setPhysicsEnable はここで有効にする */
-    //if (m_playing || m_enablePhysics)
-    //    setPhysicsEnable(true);
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->load();
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
@@ -1075,7 +1071,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
             updateFPS();
         }
         else {
-            updateModels();
+            updateRenderEngines();
         }
     }
 }
@@ -1246,15 +1242,16 @@ void SceneWidget::updateFPS()
     m_frameCount++;
 }
 
-void SceneWidget::updateModels()
+void SceneWidget::updateRenderEngines()
 {
-    m_loader->updateMatrices();
+    m_loader->updateMatrices(QSizeF(size()));
     const Array<IRenderEngine *> &renderEngines = m_loader->scene()->renderEngines();
     const int nRenderEngines = renderEngines.count();
     for (int i = 0; i < nRenderEngines; i++) {
         IRenderEngine *engine = renderEngines[i];
         engine->update();
     }
+    updateGL();
 }
 
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)

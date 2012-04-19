@@ -1126,21 +1126,23 @@ void SceneLoader::render()
     }
 }
 
-void SceneLoader::updateMatrices()
+void SceneLoader::updateMatrices(const QSizeF &size)
 {
     /* モデル行列とビュー行列の乗算を QMatrix4x4 を用いて行う */
     QMatrix4x4 modelView4x4, projection4x4;
     float modelViewMatrixf[16], projectionMatrixf[16];
     Scene::IMatrices *matrices = m_project->matrices();
     matrices->getModelView(modelViewMatrixf);
-    matrices->getProjection(projectionMatrixf);
+    projection4x4.setToIdentity();
+    projection4x4.perspective(m_project->camera()->fovy(), size.width() / size.height(), 0.1, 10000);
     for (int i = 0; i < 16; i++) {
         modelView4x4.data()[i] = modelViewMatrixf[i];
-        projection4x4.data()[i] = projectionMatrixf[i];
+        projectionMatrixf[i] = projection4x4.constData()[i];
     }
     const QMatrix4x4 &modelViewProjection4x4 = projection4x4 * modelView4x4;
     for (int i = 0; i < 16; i++)
         modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
+    matrices->setProjection(projectionMatrixf);
     matrices->setModelViewProjection(modelViewMatrixf);
 }
 

@@ -87,7 +87,7 @@ public:
     vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
     void release();
     void render();
-    void updateMatrices();
+    void updateMatrices(const QSizeF &size);
     const QList<QUuid> renderOrderList() const;
 
     bool isGridVisible() const;
