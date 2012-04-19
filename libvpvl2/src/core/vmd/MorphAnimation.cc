@@ -120,6 +120,8 @@ void MorphAnimation::setParentModel(IModel *model)
 
 void MorphAnimation::buildInternalNodes(IModel *model)
 {
+    if (!model)
+        return;
     const int nframes = m_frames.count();
     m_name2keyframes.releaseAll();
     // Build internal node to find by name, not frame index
