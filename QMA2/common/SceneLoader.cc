@@ -577,6 +577,8 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
     m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
     m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
     m_project->setModelSetting(model, "selected", "false");
+    if (isPhysicsEnabled())
+        model->joinWorld(m_world->mutableWorld());
     m_renderOrderList.add(uuid);
     static_cast<UIDelegate *>(m_renderDelegate)->setArchive(0);
     emit modelDidAdd(model, uuid);
@@ -726,7 +728,7 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
             // asset->setName(assetName.constData());
             // const std::string &name = std::string(fileInfo.absolutePath().toLocal8Bit());
             IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, asset);
-            // delegate->setArchive(0);
+            delegate->setArchive(0);
             uuid = QUuid::createUuid();
             m_project->addModel(asset, engine, uuid.toString().toStdString());
             m_project->setModelSetting(asset, Project::kSettingNameKey, fileInfo.baseName().toStdString());
@@ -849,7 +851,7 @@ bool SceneLoader::loadModel(const QString &filename, IModel *&model)
                 delete model;
                 model = 0;
             }
-            // delegate->setArchive(0);
+            delegate->setArchive(0);
         }
     }
     return !isNullData && model != 0;
@@ -939,6 +941,7 @@ void SceneLoader::loadProject(const QString &path)
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
         Quaternion rotation;
+        UIDelegate *delegate = static_cast<UIDelegate *>(m_renderDelegate);
         for (int i = 0; i < nmodels; i++) {
             const Project::UUID &modelUUIDString = modelUUIDs[i];
             IModel *model = m_project->model(modelUUIDString);
@@ -951,7 +954,7 @@ void SceneLoader::loadProject(const QString &path)
                 engine->upload(fileInfo.dir().absolutePath().toStdString());
                 scene()->addModel(model, engine);
                 if (model->type() == IModel::kPMD) {
-                    //delegate->setArchive(0);
+                    delegate->setArchive(0);
                     /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
                     // const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
                     // model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
@@ -986,7 +989,7 @@ void SceneLoader::loadProject(const QString &path)
                     const QByteArray &baseName = fileInfo.baseName().toUtf8();
                     asset->setName(baseName.constData());
 #endif
-                    // delegate->setArchive(0);
+                    delegate->setArchive(0);
                     const QUuid assetUUID(modelUUIDString.c_str());
                     m_renderOrderList.add(assetUUID);
                     emit assetDidAdd(model, assetUUID);

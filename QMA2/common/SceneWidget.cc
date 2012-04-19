@@ -483,6 +483,10 @@ void SceneWidget::advanceMotion(float delta)
         IMotion *motion = motions[i];
         motion->advance(delta);
     }
+    if (m_loader->isPhysicsEnabled()) {
+        const Scalar &step = delta / Scene::defaultFPS();
+        m_loader->world()->mutableWorld()->stepSimulation(step);
+    }
     scene->advance(delta);
     updateRenderEngines();
     emit cameraPerspectiveDidSet(scene->camera());

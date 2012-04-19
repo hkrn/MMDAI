@@ -126,14 +126,19 @@ void ExtendedSceneWidget::initializeGL()
     SceneWidget::initializeGL();
     QStringList arguments = qApp->arguments();
     m_tiledStage = new TiledStage(m_loader->scene(), m_loader->world());
+    m_loader->setPhysicsEnabled(true);
+    m_loader->startPhysicsSimulation();
     setShowModelDialog(false);
     if (arguments.count() == 2)
         loadScript(arguments[1]);
     else
         play();
     /* vpvl::Scene の初期値を変更したため、互換性のために視点を変更する */
-    // Scene *scene = m_loader->renderEngine()->scene();
-    // scene->setCameraPerspective(Vector3(0.0f, 13.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 16.0f, 100.0f);
+    Scene::ICamera *camera = m_loader->scene()->camera();
+    camera->setPosition(Vector3(0, 13, 0));
+    camera->setFovy(16);
+    camera->setDistance(100);
+    emit cameraPerspectiveDidSet(camera);
 }
 
 #ifdef Q_OS_MAC
@@ -145,11 +150,12 @@ extern void UISetGLContextTransparent(bool value);
 void ExtendedSceneWidget::paintGL()
 {
     UISetGLContextTransparent(m_enableTransparent);
+    glEnable(GL_DEPTH_TEST);
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    m_loader->render();
     m_tiledStage->renderBackground();
     m_tiledStage->renderFloor();
+    m_loader->render();
     if (m_script) {
         const QMultiMap<IModel *, IMotion *> &motions = m_script->stoppedMotions();
         if (!motions.isEmpty())
