@@ -122,7 +122,7 @@ public:
     void setNullFrameEnable(bool value);
 
     void addKeyframe(IKeyframe *value);
-    void countKeyframes(IKeyframe::Type) const;
+    int countKeyframes(IKeyframe::Type value) const;
     void deleteKeyframe(IKeyframe *value);
 
     const IString *name() const {

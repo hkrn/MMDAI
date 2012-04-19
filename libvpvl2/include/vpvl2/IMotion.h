@@ -154,7 +154,7 @@ public:
      */
     virtual void addKeyframe(IKeyframe *value) = 0;
 
-    virtual int countKeyframes(IKeyframe::Type) const = 0;
+    virtual int countKeyframes(IKeyframe::Type value) const = 0;
 
     /**
      * キーフレームを削除します。

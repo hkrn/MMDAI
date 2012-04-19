@@ -835,20 +835,20 @@ bool PMDRenderEngine::upload(const std::string &dir)
 #endif /* VPVL2_LINK_QT */
     std::string vertexShader;
     std::string fragmentShader;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kEdgeVertexShader, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kEdgeFragmentShader, context);
+    vertexShader = m_delegate->loadShader(IRenderDelegate::kEdgeVertexShader, m_model, context);
+    fragmentShader = m_delegate->loadShader(IRenderDelegate::kEdgeFragmentShader, m_model, context);
     if (!m_context->edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
         return false;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kPMDVertexShader, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kPMDFragmentShader, context);
+    vertexShader = m_delegate->loadShader(IRenderDelegate::kModelVertexShader, m_model, context);
+    fragmentShader = m_delegate->loadShader(IRenderDelegate::kModelFragmentShader, m_model, context);
     if (!m_context->modelProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
         return false;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kShadowVertexShader, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kShadowFragmentShader, context);
+    vertexShader = m_delegate->loadShader(IRenderDelegate::kShadowVertexShader, m_model, context);
+    fragmentShader = m_delegate->loadShader(IRenderDelegate::kShadowFragmentShader, m_model, context);
     if (!m_context->shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
         return false;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, context);
+    vertexShader = m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, m_model, context);
+    fragmentShader = m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, m_model, context);
     if (!m_context->zplotProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
         return false;
     PMDModel *model = m_model->ptr();

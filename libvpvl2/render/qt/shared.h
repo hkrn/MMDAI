@@ -211,8 +211,7 @@ class Delegate : public IRenderDelegate
 {
 public:
     Delegate(QGLWidget *widget)
-        : m_widget(widget),
-          m_hardwareSkinning(false)
+        : m_widget(widget)
     {
     }
     ~Delegate()
@@ -270,44 +269,43 @@ public:
             return std::string();
         }
     }
-    const std::string loadShader(ShaderType type, void * /* context */) {
+    const std::string loadShader(ShaderType type, const IModel *model, void * /* context */) {
         std::string file;
+        switch (model->type()) {
+        case IModel::kAsset:
+            file += "asset/";
+            break;
+        case IModel::kPMD:
+            file += "pmd/";
+            break;
+        case IModel::kPMX:
+            file += "pmx/";
+            break;
+        }
         switch (type) {
-        case kAssetVertexShader:
-            file = "asset.vsh";
-            break;
-        case kAssetFragmentShader:
-            file = "asset.fsh";
-            break;
         case kEdgeVertexShader:
-            file = m_hardwareSkinning ? "pmx/edge_hws.vsh" : "pmx/edge.vsh";
+            file += "edge.vsh";
             break;
         case kEdgeFragmentShader:
-            file = "pmx/edge.fsh";
+            file += "edge.fsh";
             break;
-        case kPMDVertexShader:
-            file = m_hardwareSkinning ? "pmd/model_hws.vsh" : "pmd/model.vsh";
+        case kModelVertexShader:
+            file += "model.vsh";
             break;
-        case kPMDFragmentShader:
-            file = "pmd/model.fsh";
-            break;
-        case kPMXVertexShader:
-            file = m_hardwareSkinning ? "pmx/model_hws.vsh" : "pmx/model.vsh";
-            break;
-        case kPMXFragmentShader:
-            file = "pmx/model.fsh";
+        case kModelFragmentShader:
+            file += "model.fsh";
             break;
         case kShadowVertexShader:
-            file = "pmx/shadow.vsh";
+            file += "shadow.vsh";
             break;
         case kShadowFragmentShader:
-            file = "pmx/shadow.fsh";
+            file += "shadow.fsh";
             break;
         case kZPlotVertexShader:
-            file = "pmx/zplot.vsh";
+            file += "zplot.vsh";
             break;
         case kZPlotFragmentShader:
-            file = "pmx/zplot.fsh";
+            file += "zplot.fsh";
             break;
         }
         QByteArray bytes;
@@ -332,10 +330,6 @@ public:
             return std::string(s.toUtf8());
         }
         return "";
-    }
-
-    void setShaderSkinningEnable(bool value) {
-        m_hardwareSkinning = value;
     }
 
 private:
@@ -364,7 +358,6 @@ private:
     }
 
     QGLWidget *m_widget;
-    bool m_hardwareSkinning;
 };
 } /* namespace anonymous */
 
@@ -518,7 +511,6 @@ public:
 protected:
     void initializeGL() {
         bool shaderSkinning = false;
-        m_delegate.setShaderSkinningEnable(shaderSkinning);
         //m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
         if (!loadScene())
             qFatal("Unable to load scene");
