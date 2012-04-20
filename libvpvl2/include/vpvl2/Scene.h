@@ -109,7 +109,7 @@ public:
     IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model) const;
     void addModel(IModel *model, IRenderEngine *engine);
     void addMotion(IMotion *motion);
-    void removeModel(IModel *model);
+    void deleteModel(vpvl2::IModel *&model);
     void removeMotion(IMotion *motion);
     void advance(float delta);
     void seek(float frameIndex);

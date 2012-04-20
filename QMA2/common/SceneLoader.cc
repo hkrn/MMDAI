@@ -680,8 +680,8 @@ void SceneLoader::deleteModel(IModel *&model)
             }
         }
         m_project->removeModel(model);
+        m_project->deleteModel(model);
         m_renderOrderList.remove(uuid);
-        delete model;
         m_model = 0;
     }
 }

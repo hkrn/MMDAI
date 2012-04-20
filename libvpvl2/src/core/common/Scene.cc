@@ -263,14 +263,16 @@ void Scene::addMotion(IMotion *motion)
     m_context->motions.add(motion);
 }
 
-void Scene::removeModel(IModel *model)
+void Scene::deleteModel(IModel *&model)
 {
     const HashPtr key(model);
-    m_context->models.remove(model);
     IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(key));
     if (engine) {
-        m_context->model2engine.remove(key);
+        m_context->models.remove(model);
         m_context->engines.remove(*engine);
+        m_context->model2engine.remove(key);
+        delete *engine;
+        model = 0;
     }
 }
 

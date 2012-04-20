@@ -1155,10 +1155,8 @@ void Project::addMotion(IMotion *motion, const UUID &uuid)
 
 void Project::removeModel(IModel *model)
 {
-    if (m_context->removeModel(model)) {
-        Scene::removeModel(model);
+    if (m_context->removeModel(model))
         setDirty(true);
-    }
 }
 
 void Project::removeMotion(IMotion *motion)
