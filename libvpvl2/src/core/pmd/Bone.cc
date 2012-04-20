@@ -49,13 +49,6 @@ Bone::Bone(vpvl::Bone *bone, IEncoding *encoding)
       m_childBone(0),
       m_bone(bone)
 {
-    vpvl::Bone *bone2 = 0;
-    bone2 = const_cast<vpvl::Bone *>(bone->parent());
-    if (bone2)
-        m_parentBone = new Bone(bone, encoding);
-    bone2 = const_cast<vpvl::Bone *>(bone->child());
-    if (bone2)
-        m_childBone = new Bone(bone, encoding);
     m_name = m_encoding->toString(m_bone->name(), IString::kShiftJIS, vpvl::Bone::kNameSize);
 }
 
@@ -119,6 +112,18 @@ bool Bone::isMovable() const
 bool Bone::isRotateable() const
 {
     return m_bone->isRotateable();
+}
+
+void Bone::setParentBone(vpvl::Bone *value)
+{
+    if (value)
+        m_parentBone = new Bone(const_cast<vpvl::Bone *>(value->parent()), m_encoding);
+}
+
+void Bone::setChildBone(vpvl::Bone *value)
+{
+    if (value)
+        m_childBone = new Bone(const_cast<vpvl::Bone *>(value->child()), m_encoding);
 }
 
 }

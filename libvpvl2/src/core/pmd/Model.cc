@@ -75,14 +75,17 @@ bool Model::load(const uint8_t *data, size_t size)
         const vpvl::Array<vpvl::Bone *> &bones = m_model.bones();
         const int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
-            IBone *bone = new Bone(bones[i], m_encoding);
+            vpvl::Bone *b = bones[i];
+            Bone *bone = new Bone(b, m_encoding);
+            bone->setParentBone(b);
+            bone->setChildBone(b);
             m_bones.add(bone);
             m_name2bones.insert(bone->name()->toHashString(), bone);
         }
         const vpvl::Array<vpvl::Face *> &morphs = m_model.faces();
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
-            IMorph *morph = new Morph(morphs[i], m_encoding);
+            Morph *morph = new Morph(morphs[i], m_encoding);
             m_morphs.add(morph);
             m_name2morphs.insert(morph->name()->toHashString(), morph);
         }

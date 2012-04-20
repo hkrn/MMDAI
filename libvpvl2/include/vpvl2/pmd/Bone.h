@@ -68,6 +68,9 @@ public:
     bool isMovable() const;
     bool isRotateable() const;
 
+    void setParentBone(vpvl::Bone * value);
+    void setChildBone(vpvl::Bone *value);
+
 private:
     IEncoding *m_encoding;
     IString *m_name;
