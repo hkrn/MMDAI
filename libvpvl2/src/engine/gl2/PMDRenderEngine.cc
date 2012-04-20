@@ -873,23 +873,21 @@ bool PMDRenderEngine::upload(const IString *dir)
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
-        const std::string &primary = m_delegate->toUnicode(material->mainTextureName());
-        const std::string &second = m_delegate->toUnicode(material->subTextureName());
+        IString *primary = m_delegate->toUnicode(material->mainTextureName());
+        IString *second = m_delegate->toUnicode(material->subTextureName());
         PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.mainTextureID = 0;
         materialPrivate.subTextureID = 0;
-        if (!primary.empty()) {
-            if (m_delegate->uploadTexture(context, primary, dir, &textureID, false)) {
-                materialPrivate.mainTextureID = textureID;
-                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
-            }
+        if (m_delegate->uploadTexture(context, primary, dir, &textureID, false)) {
+            materialPrivate.mainTextureID = textureID;
+            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
-        if (!second.empty()) {
-            if (m_delegate->uploadTexture(context, second, dir, &textureID, false)) {
-                materialPrivate.subTextureID = textureID;
-                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
-            }
+        if (m_delegate->uploadTexture(context, second, dir, &textureID, false)) {
+            materialPrivate.subTextureID = textureID;
+            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
+        delete primary;
+        delete second;
         hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
         hasMultipleSphere |= material->isSubSphereAdd();
     }
@@ -936,7 +934,9 @@ bool PMDRenderEngine::upload(const IString *dir)
         m_accelerator->uploadModel(m_context, model, context);
     model->updateImmediate();
     update();
-    log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
+    IString *modelName = m_delegate->toUnicode(model->name());
+    log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", modelName->toByteArray());
+    delete modelName;
     m_delegate->releaseContext(m_model, context);
     return ret;
 }

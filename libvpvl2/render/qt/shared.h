@@ -324,10 +324,10 @@ public:
         }
     }
 
-    const std::string toUnicode(const uint8_t *value) const {
+    IString *toUnicode(const uint8_t *value) const {
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-        QString s = codec->toUnicode(reinterpret_cast<const char *>(value));
-        return std::string(s.toUtf8());
+        const QString &s = codec->toUnicode(reinterpret_cast<const char *>(value));
+        return new String(s);
     }
     const std::string toUnicode(const IString *value) const {
         if (value) {

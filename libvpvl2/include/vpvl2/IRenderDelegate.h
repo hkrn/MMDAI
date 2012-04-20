@@ -37,8 +37,6 @@
 #ifndef VPVL2_IRENDERDELEGATE_H_
 #define VPVL2_IRENDERDELEGATE_H_
 
-#include <string>
-
 #include "vpvl2/Common.h"
 
 namespace vpvl2
@@ -71,7 +69,6 @@ public:
 
     virtual void allocateContext(const IModel *model, void *&context) = 0;
     virtual void releaseContext(const IModel *model, void *&context) = 0;
-    virtual bool uploadTexture(void *context, const std::string &name, const IString *dir, void *texture, bool isToon) = 0;
     virtual bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) = 0;
     virtual bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) = 0;
     virtual bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) = 0;
@@ -79,7 +76,7 @@ public:
     virtual void log(void *context, LogLevel level, const char *format, va_list ap) = 0;
     virtual IString *loadShader(ShaderType type, const IModel *model, void *context) = 0;
     virtual IString *loadKernel(KernelType type, void *context) = 0;
-    virtual const std::string toUnicode(const uint8_t *str) const = 0;
+    virtual IString *toUnicode(const uint8_t *str) const = 0;
 };
 
 } /* namespace vpvl2 */

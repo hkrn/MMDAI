@@ -302,7 +302,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     const unsigned int nmaterials = scene->mNumMaterials;
     void *context = 0;
     aiString texturePath;
-    std::string path, canonicalized;
+    std::string path;
     m_delegate->allocateContext(m_model, context);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
@@ -313,11 +313,12 @@ bool AssetRenderEngine::upload(const IString *dir)
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             path = texturePath.data;
             if (m_context->textures[path] == 0) {
-                canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
+                IString *canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
                 if (m_delegate->uploadTexture(context, canonicalized, dir, &textureID, false)) {
                     m_context->textures[path] = textureID;
-                    log0(context, IRenderDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized.c_str(), textureID);
+                    log0(context, IRenderDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized->toByteArray(), textureID);
                 }
+                delete canonicalized;
             }
             textureIndex++;
         }
