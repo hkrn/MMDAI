@@ -45,8 +45,6 @@
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
 
-#include <string>
-
 #ifdef VPVL2_LINK_QT
 #include <QtOpenGL/QtOpenGL>
 #endif /* VPVL_LINK_QT */
@@ -106,7 +104,7 @@ public:
     virtual ~AssetRenderEngine();
 
     IModel *model() const;
-    bool upload(const std::string &dir);
+    bool upload(const IString *dir);
     void update();
     void renderModel();
     void renderEdge();
@@ -122,7 +120,7 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    void uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
+    bool uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
@@ -138,6 +136,6 @@ private:
 } /* namespace gl2 */
 } /* namespace vpvl2 */
 
-#endif
+#endif /* VPVL2_LINK_ASSIMP */
 #endif
 

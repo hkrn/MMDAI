@@ -43,8 +43,6 @@
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
 
-#include <string>
-
 #ifdef VPVL2_LINK_QT
 #include <QtOpenGL/QtOpenGL>
 #include <QtOpenGL/QGLFunctions>
@@ -86,7 +84,7 @@ public:
     virtual ~PMDRenderEngine();
 
     IModel *model() const;
-    bool upload(const std::string &dir);
+    bool upload(const IString *dir);
     void deleteModel();
     void update();
     void renderModel();

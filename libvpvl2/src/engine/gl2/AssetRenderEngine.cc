@@ -89,7 +89,7 @@ public:
         m_opacityUniformLocation = 0;
     }
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
@@ -291,8 +291,9 @@ IModel *AssetRenderEngine::model() const
     return m_model;
 }
 
-bool AssetRenderEngine::upload(const std::string &dir)
+bool AssetRenderEngine::upload(const IString *dir)
 {
+    bool ret = true;
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
@@ -321,17 +322,18 @@ bool AssetRenderEngine::upload(const std::string &dir)
             textureIndex++;
         }
     }
-    uploadRecurse(scene, scene->mRootNode, context);
+    ret = uploadRecurse(scene, scene->mRootNode, context);
     m_delegate->releaseContext(m_model, context);
-    return true;
+    return ret;
 }
 
 void AssetRenderEngine::update()
 {
 }
 
-void AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
+bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
 {
+    bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
     AssetVertex assetVertex;
     Program *assetProgram = new Program(m_delegate);
@@ -340,12 +342,21 @@ void AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     assetProgram->initializeContext(QGLContext::currentContext());
     zplotProgram->initializeContext(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
-    assetProgram->load(m_delegate->loadShader(IRenderDelegate::kModelVertexShader, m_model, context).c_str(),
-                       m_delegate->loadShader(IRenderDelegate::kModelFragmentShader, m_model, context).c_str(),
-                       context);
-    zplotProgram->load(m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, m_model, context).c_str(),
-                       m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, m_model, context).c_str(),
-                       context);
+    IString *vertexShaderSource = 0, *fragmentShaderSource = 0;
+    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kModelVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kModelFragmentShader, m_model, context);
+    ret = assetProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    delete vertexShaderSource;
+    delete fragmentShaderSource;
+    if (!ret)
+        return ret;
+    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, m_model, context);
+    ret = zplotProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    delete vertexShaderSource;
+    delete fragmentShaderSource;
+    if (!ret)
+        return ret;
     m_context->assetPrograms[node] = assetProgram;
     m_context->zplotPrograms[node] = zplotProgram;
     for (unsigned int i = 0; i < nmeshes; i++) {
@@ -405,8 +416,12 @@ void AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
     }
     const unsigned int nChildNodes = node->mNumChildren;
-    for (unsigned int i = 0; i < nChildNodes; i++)
-        uploadRecurse(scene, node->mChildren[i], context);
+    for (unsigned int i = 0; i < nChildNodes; i++) {
+        ret = uploadRecurse(scene, node->mChildren[i], context);
+        if (!ret)
+            return ret;
+    }
+    return ret;
 }
 
 void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)

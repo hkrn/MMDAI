@@ -37,8 +37,6 @@
 #ifndef VPVL2_IRENDERENGINE_H_
 #define VPVL2_IRENDERENGINE_H_
 
-#include <string>
-
 #include "vpvl2/Common.h"
 
 namespace vpvl2
@@ -52,7 +50,7 @@ public:
     virtual ~IRenderEngine() {}
 
     virtual IModel *model() const = 0;
-    virtual bool upload(const std::string &dir) = 0;
+    virtual bool upload(const IString *dir) = 0;
     virtual void renderModel() = 0;
     virtual void renderEdge() = 0;
     virtual void renderShadow() = 0;

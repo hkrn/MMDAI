@@ -226,25 +226,30 @@ public:
         const IString *name = model->name();
         qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
-    bool uploadTexture(void * /* context */, const std::string &name, const std::string &dir, void *texture, bool isToon) {
+    bool uploadTexture(void * /* context */, const std::string &name, const IString *dir, void *texture, bool isToon) {
         return uploadTextureInternal(createPath(dir, name), texture, isToon);
     }
-    bool uploadTexture(void * /* context */, const IString *name, const std::string &dir, void *texture, bool isToon) {
+    bool uploadTexture(void * /* context */, const IString *name, const IString *dir, void *texture, bool isToon) {
         return uploadTextureInternal(createPath(dir, name), texture, isToon);
     }
-    bool uploadToonTexture(void * /* context */, const std::string &name, const std::string &dir, void *texture) {
-        if (!uploadTextureInternal(createPath(dir, name), texture, true))
-            return uploadTextureInternal(createPath(kSystemTexturesDir, name), texture, true);
+    bool uploadToonTexture(void * /* context */, const char *name, const IString *dir, void *texture) {
+        if (!uploadTextureInternal(createPath(dir, name), texture, true)) {
+            String s(QString::fromStdString(kSystemTexturesDir));
+            return uploadTextureInternal(createPath(&s, name), texture, true);
+        }
         return true;
     }
-    bool uploadToonTexture(void * /* context */, const IString *name, const std::string &dir, void *texture) {
-        if (!uploadTextureInternal(createPath(dir, name), texture, true))
-            return uploadTextureInternal(createPath(kSystemTexturesDir, name), texture, true);
+    bool uploadToonTexture(void * /* context */, const IString *name, const IString *dir, void *texture) {
+        if (!uploadTextureInternal(createPath(dir, name), texture, true)) {
+            String s(QString::fromStdString(kSystemTexturesDir));
+            return uploadTextureInternal(createPath(&s, name), texture, true);
+        }
         return true;
     }
     bool uploadToonTexture(void * /* context */, int index, void *texture) {
         QString format;
-        const QString &pathString = QString::fromStdString(kSystemTexturesDir) + "/" + format.sprintf("toon%02d.bmp", index + 1);
+        QDir dir(QString::fromStdString(kSystemTexturesDir));
+        const QString &pathString = dir.absoluteFilePath(format.sprintf("toon%02d.bmp", index + 1));
         return uploadTextureInternal(pathString, texture, true);
     }
 
@@ -252,7 +257,7 @@ public:
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
     }
-    const std::string loadKernel(KernelType type, void * /* context */) {
+    IString *loadKernel(KernelType type, void * /* context */) {
         std::string file;
         switch (type) {
         case kModelSkinningKernel:
@@ -263,13 +268,13 @@ public:
         std::string path = kKernelProgramsDir + "/" + file;
         if (UISlurpFile(path, bytes)) {
             qDebug("Loaded a kernel: %s", path.c_str());
-            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+            return new String(bytes);
         }
         else {
-            return std::string();
+            return 0;
         }
     }
-    const std::string loadShader(ShaderType type, const IModel *model, void * /* context */) {
+    IString *loadShader(ShaderType type, const IModel *model, void * /* context */) {
         std::string file;
         switch (model->type()) {
         case IModel::kAsset:
@@ -312,10 +317,10 @@ public:
         std::string path = kShaderProgramsDir + "/" + file;
         if (UISlurpFile(path, bytes)) {
             qDebug("Loaded a shader: %s", path.c_str());
-            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+            return new String(bytes);
         }
         else {
-            return std::string();
+            return 0;
         }
     }
 
@@ -333,11 +338,16 @@ public:
     }
 
 private:
-    const QString createPath(const std::string &dir, const std::string &name) const {
-        return QString::fromStdString(dir + "/" + name);
+    const QString createPath(const IString *dir, const char *name) const {
+        return createPath(dir, std::string(name));
     }
-    const QString createPath(const std::string &dir, const IString *name) const {
-        return QString::fromStdString(dir) + "/" + static_cast<const String *>(name)->value();
+    const QString createPath(const IString *dir, const std::string &name) const {
+        const QDir d(static_cast<const String *>(dir)->value());
+        return d.absoluteFilePath(QString::fromStdString(name));
+    }
+    const QString createPath(const IString *dir, const IString *name) const {
+        const QDir d(static_cast<const String *>(dir)->value());
+        return d.absoluteFilePath(static_cast<const String *>(name)->value());
     }
     bool uploadTextureInternal(const QString &pathString, void *texture, bool isToon) {
         const QFileInfo info(pathString);
@@ -510,8 +520,6 @@ public:
 
 protected:
     void initializeGL() {
-        bool shaderSkinning = false;
-        //m_renderer->scene()->setSoftwareSkinningEnable(!shaderSkinning);
         if (!loadScene())
             qFatal("Unable to load scene");
 
@@ -680,7 +688,8 @@ private:
         //model->setEdgeOffset(0.5f);
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(&m_delegate, model);
-        engine->upload(dir);
+        String s(QString::fromStdString(dir));
+        engine->upload(&s);
         m_scene.addModel(model, engine);
 #if 0
         pmx::Model *model = static_cast<pmx::Model*>(m_model);

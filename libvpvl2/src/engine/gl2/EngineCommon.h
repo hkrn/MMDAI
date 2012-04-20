@@ -106,7 +106,11 @@ public:
     }
 #endif
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
+        if (!vertexShaderSource || !fragmentShaderSource) {
+            log0(context, IRenderDelegate::kLogWarning, "Empty shader source found!");
+            return false;
+        }
         GLuint vertexShader = compileShader(context, vertexShaderSource, GL_VERTEX_SHADER);
         GLuint fragmentShader = compileShader(context, fragmentShaderSource, GL_FRAGMENT_SHADER);
         if (vertexShader && fragmentShader) {
@@ -168,8 +172,9 @@ protected:
     GLuint m_program;
 
 private:
-    GLuint compileShader(void *context, const char *source, GLenum type) {
+    GLuint compileShader(void *context, const IString *s, GLenum type) {
         GLuint shader = glCreateShader(type);
+        const char *source = reinterpret_cast<const char *>(s->toByteArray());
         glShaderSource(shader, 1, &source, NULL);
         glCompileShader(shader);
         GLint compiled;
@@ -211,7 +216,7 @@ public:
         m_lightPositionUniformLocation = 0;
     }
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
@@ -249,7 +254,7 @@ public:
         m_transformUniformLocation = 0;
     }
 
-    virtual bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_transformUniformLocation = glGetUniformLocation(m_program, "transformMatrix");

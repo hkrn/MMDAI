@@ -69,7 +69,7 @@ public:
         m_colorUniformLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+    bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
@@ -119,7 +119,7 @@ public:
         m_shadowMatrixUniformLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+    bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_shadowMatrixUniformLocation = glGetUniformLocation(m_program, "shadowMatrix");
@@ -182,7 +182,7 @@ public:
         m_depthTextureUniformLocation = 0;
     }
 
-    bool load(const char *vertexShaderSource, const char *fragmentShaderSource, void *context) {
+    bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
@@ -477,11 +477,12 @@ public:
         if (!m_context)
             return false;
         cl_int err;
-        const std::string &source = m_delegate->loadKernel(IRenderDelegate::kModelSkinningKernel, 0);
-        const char *sourceText = source.c_str();
-        const size_t sourceSize = source.size();
+        const IString *source = m_delegate->loadKernel(IRenderDelegate::kModelSkinningKernel, 0);
+        const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
+        const size_t sourceSize = source->length();
         clReleaseProgram(m_program);
         m_program = clCreateProgramWithSource(m_context, 1, &sourceText, &sourceSize, &err);
+        delete source;
         if (err != CL_SUCCESS) {
             log0(0, IRenderDelegate::kLogWarning, "Failed creating an OpenCL program: %d", err);
             return false;
@@ -816,8 +817,9 @@ IModel *PMDRenderEngine::model() const
     return m_model;
 }
 
-bool PMDRenderEngine::upload(const std::string &dir)
+bool PMDRenderEngine::upload(const IString *dir)
 {
+    bool ret = true;
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
     m_context->edgeProgram = new EdgeProgram(m_delegate);
@@ -833,24 +835,36 @@ bool PMDRenderEngine::upload(const std::string &dir)
     m_context->shadowProgram->initializeContext(glContext);
     m_context->zplotProgram->initializeContext(glContext);
 #endif /* VPVL2_LINK_QT */
-    std::string vertexShader;
-    std::string fragmentShader;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kEdgeVertexShader, m_model, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kEdgeFragmentShader, m_model, context);
-    if (!m_context->edgeProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
-        return false;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kModelVertexShader, m_model, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kModelFragmentShader, m_model, context);
-    if (!m_context->modelProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
-        return false;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kShadowVertexShader, m_model, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kShadowFragmentShader, m_model, context);
-    if (!m_context->shadowProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
-        return false;
-    vertexShader = m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, m_model, context);
-    fragmentShader = m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, m_model, context);
-    if (!m_context->zplotProgram->load(vertexShader.c_str(), fragmentShader.c_str(), context))
-        return false;
+    IString *vertexShaderSource = 0;
+    IString *fragmentShaderSource = 0;
+    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kEdgeVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kEdgeFragmentShader, m_model, context);
+    ret = m_context->edgeProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    delete vertexShaderSource;
+    delete fragmentShaderSource;
+    if (!ret)
+        return ret;
+    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kModelVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kModelFragmentShader, m_model, context);
+    ret = m_context->modelProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    delete vertexShaderSource;
+    delete fragmentShaderSource;
+    if (!ret)
+        return ret;
+    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kShadowVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kShadowFragmentShader, m_model, context);
+    ret = m_context->shadowProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    delete vertexShaderSource;
+    delete fragmentShaderSource;
+    if (!ret)
+        return ret;
+    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, m_model, context);
+    ret = m_context->zplotProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    delete vertexShaderSource;
+    delete fragmentShaderSource;
+    if (!ret)
+        return ret;
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
@@ -924,7 +938,7 @@ bool PMDRenderEngine::upload(const std::string &dir)
     update();
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_delegate->toUnicode(model->name()).c_str());
     m_delegate->releaseContext(m_model, context);
-    return true;
+    return ret;
 }
 
 void PMDRenderEngine::update()
