@@ -67,8 +67,8 @@ typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayP
 
 static const QRegExp &kAssetLoadable = QRegExp(".(bmp|jpe?g|png|sp[ah]|tga|x)$");
 static const QRegExp &kAssetExtensions = QRegExp(".x$");
-static const QRegExp &kModelLoadable = QRegExp(".(bmp|jpe?g|pmd|png|sp[ah]|tga)$");
-static const QRegExp &kModelExtensions = QRegExp(".pmd$");
+static const QRegExp &kModelLoadable = QRegExp(".(bmp|jpe?g|pm[dx]|png|sp[ah]|tga)$");
+static const QRegExp &kModelExtensions = QRegExp(".pm[dx]$");
 
 class UIDelegate : public Project::IDelegate, public IRenderDelegate
 {
@@ -76,7 +76,6 @@ public:
     struct PrivateContext {
         const IModel *model;
     };
-
     UIDelegate()
         : m_archive(0),
           m_codec(0)
@@ -100,21 +99,21 @@ public:
         qDebug("Released a context object: %s", model->name()->toByteArray());
     }
 
-    bool uploadTexture(void *context, const std::string &name, const std::string &dir, void *texture, bool isToon) {
-        const QDir d(QString::fromStdString(dir));
+    bool uploadTexture(void *context, const char *name, const IString *dir, void *texture, bool isToon) {
+        const QDir d(static_cast<const internal::String *>(dir)->value());
         return uploadTexture0(context, d.absoluteFilePath(QString::fromStdString(name)), texture, isToon);
     }
-    bool uploadTexture(void *context, const IString *name, const std::string &dir, void *texture, bool isToon) {
-        const QDir d(QString::fromStdString(dir));
+    bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) {
+        const QDir d(static_cast<const internal::String *>(dir)->value());
         const QString &s = static_cast<const internal::String *>(name)->value();
         return uploadTexture0(context, d.absoluteFilePath(s), texture, isToon);
     }
-    bool uploadToonTexture(void *context, const std::string &name, const std::string &dir, void *texture) {
-        const QDir d(QString::fromStdString(dir));
+    bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) {
+        const QDir d(static_cast<const internal::String *>(dir)->value());
         return uploadToonTexture0(context, QString::fromStdString(name), d, texture);
     }
-    bool uploadToonTexture(void *context, const IString *name, const std::string &dir, void *texture) {
-        const QDir d(QString::fromStdString(dir));
+    bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) {
+        const QDir d(static_cast<const internal::String *>(dir)->value());
         const QString &s = static_cast<const internal::String *>(name)->value();
         return uploadToonTexture0(context, s, d, texture);
     }
@@ -123,10 +122,10 @@ public:
         const QString &pathString = format.sprintf("toon%02d.bmp", index + 1);
         return uploadToonTexture0(context, pathString, QDir(), texture);
     }
-    const std::string loadShader(IRenderDelegate::ShaderType type, const IModel *model, void *context) {
+    IString *loadShader(IRenderDelegate::ShaderType type, const IModel *model, void *context) {
+        Q_UNUSED(context)
         QString filename;
-        PrivateContext *pc = static_cast<PrivateContext *>(context);
-        switch (pc->model->type()) {
+        switch (model->type()) {
         case IModel::kAsset:
             filename += "asset.";
             break;
@@ -169,14 +168,14 @@ public:
             const QByteArray &bytes = file.readAll();
             file.close();
             qDebug("Loaded a shader: %s", qPrintable(path));
-            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+            return new internal::String(bytes);
         }
         else {
             qWarning("Failed loading a shader: %s", qPrintable(path));
-            return std::string();
+            return 0;
         }
     }
-    const std::string loadKernel(IRenderDelegate::KernelType type, void * /* context */) {
+    IString *loadKernel(IRenderDelegate::KernelType type, void * /* context */) {
         QString filename;
         switch (type) {
         case IRenderDelegate::kModelSkinningKernel:
@@ -189,11 +188,11 @@ public:
             const QByteArray &bytes = file.readAll();
             file.close();
             qDebug("Loaded a kernel: %s", qPrintable(path));
-            return std::string(reinterpret_cast<const char *>(bytes.constData()), bytes.size());
+            return new internal::String(bytes);
         }
         else {
             qWarning("Failed loading a kernel: %s", qPrintable(path));
-            return std::string();
+            return 0;
         }
     }
     void log(void * /* context */, IRenderDelegate::LogLevel level, const char *format, va_list ap) {
@@ -218,8 +217,8 @@ public:
     const std::string toUnicode(const std::string &value) const {
         return m_codec->toUnicode(value.c_str()).toStdString();
     }
-    const std::string toUnicode(const uint8_t *value) const {
-        return std::string(internal::toQString(value).toUtf8());
+    IString *toUnicode(const uint8_t *value) const {
+        return new internal::String(internal::toQString(value));
     }
     const std::string fromUnicode(const std::string &value) const {
         const QByteArray &bytes = m_codec->fromUnicode(value.c_str());
@@ -486,9 +485,20 @@ private:
  * ZIP またはファイルを読み込む。複数のファイルが入る ZIP の場合 extensions に
  * 該当するもので一番先に見つかったファイルのみを読み込む
  */
+void UISetModelType(const QString &filename, IModel::Type &type)
+{
+    if (filename.endsWith(".pmx"))
+        type = IModel::kPMX;
+    else if (filename.endsWith(".pmd"))
+        type = IModel::kPMD;
+    else
+        type = IModel::kAsset;
+}
+
 const QByteArray UILoadFile(const QString &filename,
                             const QRegExp &loadable,
                             const QRegExp &extensions,
+                            IModel::Type &type,
                             UIDelegate *delegate)
 {
     QByteArray bytes;
@@ -505,6 +515,7 @@ const QByteArray UILoadFile(const QString &filename,
                     QFileInfo fileToLoadInfo(filenameToLoad), fileInfo(filename);
                     archive->replaceFilePath(fileToLoadInfo.path(), fileInfo.path() + "/");
                     delegate->setArchive(archive);
+                    UISetModelType(filenameToLoad, type);
                 }
             }
         }
@@ -513,6 +524,7 @@ const QByteArray UILoadFile(const QString &filename,
         QFile file(filename);
         if (file.open(QFile::ReadOnly))
             bytes = file.readAll();
+        UISetModelType(filename, type);
     }
     return bytes;
 }
@@ -569,7 +581,8 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
     IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
-    engine->upload(std::string(dir.absolutePath().toLocal8Bit()));
+    internal::String d(dir.absolutePath());
+    engine->upload(&d);
     /* モデルを SceneLoader にヒモ付けする */
     const QString &path = dir.absoluteFilePath(baseName);
     uuid = QUuid::createUuid();
@@ -710,7 +723,8 @@ bool SceneLoader::isProjectModified() const
 bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset)
 {
     UIDelegate *delegate = static_cast<UIDelegate *>(m_renderDelegate);
-    const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, delegate);
+    IModel::Type type; /* unused */
+    const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, type, delegate);
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
@@ -838,12 +852,13 @@ bool SceneLoader::loadModel(const QString &filename, IModel *&model)
      * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
      */
     UIDelegate *delegate = static_cast<UIDelegate *>(m_renderDelegate);
-    const QByteArray &bytes = UILoadFile(filename, kModelLoadable, kModelExtensions, delegate);
+    IModel::Type type;
+    const QByteArray &bytes = UILoadFile(filename, kModelLoadable, kModelExtensions, type, delegate);
     bool isNullData = bytes.isNull();
     if (!isNullData) {
         bool allocated = false;
         if (!model) {
-            model = m_factory->createModel(filename.endsWith(".pmx") ? IModel::kPMX : IModel::kPMD);
+            model = m_factory->createModel(type);
             allocated = true;
         }
         if (!model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
@@ -950,8 +965,9 @@ void SceneLoader::loadProject(const QString &path)
             const QString &filename = QString::fromStdString(uri);
             if (loadModel(filename, model)) {
                 const QFileInfo fileInfo(filename);
+                internal::String d(fileInfo.absolutePath());
                 IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
-                engine->upload(fileInfo.dir().absolutePath().toStdString());
+                engine->upload(&d);
                 scene()->addModel(model, engine);
                 if (model->type() == IModel::kPMD) {
                     delegate->setArchive(0);
