@@ -257,7 +257,7 @@ public:
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
     }
-    IString *loadKernel(KernelType type, void * /* context */) {
+    IString *loadKernelSource(KernelType type, void * /* context */) {
         QString file;
         switch (type) {
         case kModelSkinningKernel:
@@ -274,7 +274,7 @@ public:
             return 0;
         }
     }
-    IString *loadShader(ShaderType type, const IModel *model, void * /* context */) {
+    IString *loadShaderSource(ShaderType type, const IModel *model, void * /* context */) {
         QString file;
         switch (model->type()) {
         case IModel::kAsset:

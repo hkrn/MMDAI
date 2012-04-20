@@ -344,15 +344,15 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     zplotProgram->initializeContext(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
     IString *vertexShaderSource = 0, *fragmentShaderSource = 0;
-    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kModelVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kModelFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, context);
     ret = assetProgram->load(vertexShaderSource, fragmentShaderSource, context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
-    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, context);
     ret = zplotProgram->load(vertexShaderSource, fragmentShaderSource, context);
     delete vertexShaderSource;
     delete fragmentShaderSource;

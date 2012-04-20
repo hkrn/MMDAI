@@ -477,7 +477,7 @@ public:
         if (!m_context)
             return false;
         cl_int err;
-        const IString *source = m_delegate->loadKernel(IRenderDelegate::kModelSkinningKernel, 0);
+        const IString *source = m_delegate->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
         const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
         const size_t sourceSize = source->length();
         clReleaseProgram(m_program);
@@ -837,29 +837,29 @@ bool PMDRenderEngine::upload(const IString *dir)
 #endif /* VPVL2_LINK_QT */
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
-    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kEdgeVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kEdgeFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeFragmentShader, m_model, context);
     ret = m_context->edgeProgram->load(vertexShaderSource, fragmentShaderSource, context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
-    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kModelVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kModelFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, context);
     ret = m_context->modelProgram->load(vertexShaderSource, fragmentShaderSource, context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
-    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kShadowVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kShadowFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowFragmentShader, m_model, context);
     ret = m_context->shadowProgram->load(vertexShaderSource, fragmentShaderSource, context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
-    vertexShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShader(IRenderDelegate::kZPlotFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, context);
     ret = m_context->zplotProgram->load(vertexShaderSource, fragmentShaderSource, context);
     delete vertexShaderSource;
     delete fragmentShaderSource;

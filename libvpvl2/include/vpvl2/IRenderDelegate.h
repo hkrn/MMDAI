@@ -178,7 +178,7 @@ public:
      * @param context
      * @return IString
      */
-    virtual IString *loadShader(ShaderType type, const IModel *model, void *context) = 0;
+    virtual IString *loadShaderSource(ShaderType type, const IModel *model, void *context) = 0;
 
     /**
      * 指定された形式の (OpenCL の) カーネルのソースを読み込みます。
@@ -190,7 +190,7 @@ public:
      * @param context
      * @return IString
      */
-    virtual IString *loadKernel(KernelType type, void *context) = 0;
+    virtual IString *loadKernelSource(KernelType type, void *context) = 0;
 
     /**
      * 指定された文字列を IString に変換します。

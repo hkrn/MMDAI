@@ -121,7 +121,7 @@ public:
         const QString &pathString = format.sprintf("toon%02d.bmp", index + 1);
         return uploadToonTexture0(context, pathString, QDir(), texture);
     }
-    IString *loadShader(IRenderDelegate::ShaderType type, const IModel *model, void *context) {
+    IString *loadShaderSource(IRenderDelegate::ShaderType type, const IModel *model, void *context) {
         Q_UNUSED(context)
         QString filename;
         switch (model->type()) {
@@ -174,7 +174,7 @@ public:
             return 0;
         }
     }
-    IString *loadKernel(IRenderDelegate::KernelType type, void * /* context */) {
+    IString *loadKernelSource(IRenderDelegate::KernelType type, void * /* context */) {
         QString filename;
         switch (type) {
         case IRenderDelegate::kModelSkinningKernel:
