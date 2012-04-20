@@ -79,35 +79,31 @@ static const int kWidth = 800;
 static const int kHeight = 600;
 static const int kFPS = 60;
 
-static const std::string kSystemTexturesDir = "../../QMA2/resources/images";
-static const std::string kShaderProgramsDir = "../../QMA2/resources/shaders";
-static const std::string kKernelProgramsDir = "../../QMA2/resources/kernels";
-static const std::string kModelDir = "render/res/miku2";
-static const std::string kStageDir = "render/res/stage";
-static const std::string kMotion = "render/res/motion.vmd";
-static const std::string kCamera = "render/res/camera.vmd.404";
-static const std::string kModelName = "miku.pmx";
-static const std::string kStageName = "stage.x";
-static const std::string kStage2Name = "stage2.x";
+static const QString kSystemTexturesDir = "../../QMA2/resources/images";
+static const QString kShaderProgramsDir = "../../QMA2/resources/shaders";
+static const QString kKernelProgramsDir = "../../QMA2/resources/kernels";
+static const QString kModelDir = "render/res/miku2";
+static const QString kStageDir = "render/res/stage";
+static const QString kMotion = "render/res/motion.vmd";
+static const QString kCamera = "render/res/camera.vmd";
+static const QString kModelName = "miku.pmx";
+static const QString kStageName = "stage.x";
+static const QString kStage2Name = "stage2.x";
 
 static const qreal kCameraNear = 0.5;
 static const qreal kCameraFar = 10000.0;
 
 typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
 
-static const std::string UIConcatPath(const std::string &dir, const std::string &name) {
-    return std::string(QDir(dir.c_str()).absoluteFilePath(name.c_str()).toLocal8Bit());
-}
-
-static bool UISlurpFile(const std::string &path, QByteArray &bytes) {
-    QFile file(path.c_str());
+static bool UISlurpFile(const QString &path, QByteArray &bytes) {
+    QFile file(path);
     if (file.open(QFile::ReadOnly)) {
         bytes = file.readAll();
         file.close();
         return true;
     }
     else {
-        qWarning("slurpFile error at %s: %s", path.c_str(), qPrintable(file.errorString()));
+        qWarning("slurpFile error at %s: %s", qPrintable(path), qPrintable(file.errorString()));
         return false;
     }
 }
@@ -226,29 +222,26 @@ public:
         const IString *name = model->name();
         qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
-    bool uploadTexture(void * /* context */, const std::string &name, const IString *dir, void *texture, bool isToon) {
-        return uploadTextureInternal(createPath(dir, name), texture, isToon);
-    }
     bool uploadTexture(void * /* context */, const IString *name, const IString *dir, void *texture, bool isToon) {
         return uploadTextureInternal(createPath(dir, name), texture, isToon);
     }
     bool uploadToonTexture(void * /* context */, const char *name, const IString *dir, void *texture) {
         if (!uploadTextureInternal(createPath(dir, name), texture, true)) {
-            String s(QString::fromStdString(kSystemTexturesDir));
+            String s(kSystemTexturesDir);
             return uploadTextureInternal(createPath(&s, name), texture, true);
         }
         return true;
     }
     bool uploadToonTexture(void * /* context */, const IString *name, const IString *dir, void *texture) {
         if (!uploadTextureInternal(createPath(dir, name), texture, true)) {
-            String s(QString::fromStdString(kSystemTexturesDir));
+            String s(kSystemTexturesDir);
             return uploadTextureInternal(createPath(&s, name), texture, true);
         }
         return true;
     }
     bool uploadToonTexture(void * /* context */, int index, void *texture) {
         QString format;
-        QDir dir(QString::fromStdString(kSystemTexturesDir));
+        QDir dir(kSystemTexturesDir);
         const QString &pathString = dir.absoluteFilePath(format.sprintf("toon%02d.bmp", index + 1));
         return uploadTextureInternal(pathString, texture, true);
     }
@@ -258,16 +251,16 @@ public:
         fprintf(stderr, "%s", "\n");
     }
     IString *loadKernel(KernelType type, void * /* context */) {
-        std::string file;
+        QString file;
         switch (type) {
         case kModelSkinningKernel:
             file = "skinning.cl";
             break;
         }
         QByteArray bytes;
-        std::string path = kKernelProgramsDir + "/" + file;
+        QString path = kKernelProgramsDir + "/" + file;
         if (UISlurpFile(path, bytes)) {
-            qDebug("Loaded a kernel: %s", path.c_str());
+            qDebug("Loaded a kernel: %s", qPrintable(path));
             return new String(bytes);
         }
         else {
@@ -275,7 +268,7 @@ public:
         }
     }
     IString *loadShader(ShaderType type, const IModel *model, void * /* context */) {
-        std::string file;
+        QString file;
         switch (model->type()) {
         case IModel::kAsset:
             file += "asset/";
@@ -314,9 +307,9 @@ public:
             break;
         }
         QByteArray bytes;
-        std::string path = kShaderProgramsDir + "/" + file;
+        QString path = kShaderProgramsDir + "/" + file;
         if (UISlurpFile(path, bytes)) {
-            qDebug("Loaded a shader: %s", path.c_str());
+            qDebug("Loaded a shader: %s", qPrintable(path));
             return new String(bytes);
         }
         else {
@@ -329,21 +322,14 @@ public:
         const QString &s = codec->toUnicode(reinterpret_cast<const char *>(value));
         return new String(s);
     }
-    const std::string toUnicode(const IString *value) const {
-        if (value) {
-            const QString &s = static_cast<const String *>(value)->value();
-            return std::string(s.toUtf8());
-        }
-        return "";
-    }
 
 private:
     const QString createPath(const IString *dir, const char *name) const {
-        return createPath(dir, std::string(name));
+        return createPath(dir, QString(name));
     }
-    const QString createPath(const IString *dir, const std::string &name) const {
+    const QString createPath(const IString *dir, const QString &name) const {
         const QDir d(static_cast<const String *>(dir)->value());
-        return d.absoluteFilePath(QString::fromStdString(name));
+        return d.absoluteFilePath(name);
     }
     const QString createPath(const IString *dir, const IString *name) const {
         const QDir d(static_cast<const String *>(dir)->value());
@@ -483,8 +469,8 @@ public:
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
       #endif /* VPVL2_NO_BULLET */
           m_delegate(this),
-          m_encoding(0),
           m_factory(0),
+          m_encoding(0),
           m_prevElapsed(0),
           m_currentFrameIndex(0)
     {
@@ -500,6 +486,7 @@ public:
 #ifdef VPVL2_LINK_ASSIMP
         Assimp::DefaultLogger::kill();
 #endif
+        delete m_factory;
         delete m_encoding;
     }
 
@@ -656,39 +643,41 @@ private:
 #ifdef VPVL2_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
-        addModel(kStageName, kStageDir);
+        addModel(QDir(kStageDir).absoluteFilePath(kStageName));
         // addModel(kStage2Name, kStageDir);
 #endif
-        addMotion(kMotion, addModel(kModelName, kModelDir));
-        /*
-        if (!internal::slurpFile(kCamera, bytes) ||
-                !m_camera.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
-            m_delegate.log(Renderer::kLogWarning, "Failed parsing the camera motion, skipped...");
-        else
-            scene->setCameraMotion(&m_camera);
-            */
-
+        addMotion(kMotion, addModel(QDir(kModelDir).absoluteFilePath(kModelName)));
+        // addMotion(kMotion, addModel(QString("miku.pmx"), "render/res/lat"));
+        QByteArray bytes;
+        if (UISlurpFile(kCamera, bytes)) {
+            bool ok = true;
+            const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+            IMotion *motion = m_factory->createMotion(data, bytes.size(), 0, ok);
+            qDebug() << "maxFrameIndex(camera):" << motion->maxFrameIndex();
+            motion->seek(0);
+            m_scene.camera()->setMotion(motion);
+        }
         return true;
     }
-    IModel *addModel(const std::string &file, const std::string &dir) {
+    IModel *addModel(const QString &path) {
         QByteArray bytes;
-        if (!UISlurpFile(UIConcatPath(dir, file), bytes)) {
+        if (!UISlurpFile(path, bytes)) {
             qWarning("Failed loading the model");
             return 0;
         }
-        return addModel(bytes, dir);
+        return addModel(bytes, QFileInfo(path).absoluteDir().path());
     }
-    IModel *addModel(const QByteArray &bytes, const std::string &dir) {
+    IModel *addModel(const QByteArray &bytes, const QString &dir) {
         bool ok = true;
-        IModel *model = m_factory->createModel(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), ok);
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        IModel *model = m_factory->createModel(data, bytes.size(), ok);
         if (!ok) {
             qWarning("Failed parsing the model: %d", model->error());
             return 0;
         }
-        //model->setEdgeOffset(0.5f);
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(&m_delegate, model);
-        String s(QString::fromStdString(dir));
+        String s(dir);
         engine->upload(&s);
         m_scene.addModel(model, engine);
 #if 0
@@ -706,13 +695,13 @@ private:
 #endif
         return model;
     }
-    void addMotion(const std::string &path, IModel *model) {
+    void addMotion(const QString &path, IModel *model) {
         QByteArray bytes;
         if (model && UISlurpFile(path, bytes)) {
             bool ok = true;
             IMotion *motion = m_factory->createMotion(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), model, ok);
-            qDebug() << "maxFrameIndex:" << motion->maxFrameIndex();
-            motion->seek(0.0);
+            qDebug() << "maxFrameIndex(model):" << motion->maxFrameIndex();
+            motion->seek(0);
             m_scene.addMotion(motion);
         }
         else {
@@ -733,9 +722,8 @@ private:
     QMatrix4x4 m_modelViewMatrix;
     Delegate m_delegate;
     Scene m_scene;
-    IEncoding *m_encoding;
     Factory *m_factory;
-    //VMDMotion m_camera;
+    IEncoding *m_encoding;
     float m_prevElapsed;
     float m_currentFrameIndex;
 };
