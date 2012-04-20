@@ -76,7 +76,6 @@ public:
         kNormalStride,
         kTexCoordStride,
         kEdgeSizeStride,
-        kUVA0Stride,
         kUVA1Stride,
         kUVA2Stride,
         kUVA3Stride,

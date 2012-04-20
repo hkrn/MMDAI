@@ -15,7 +15,6 @@ uniform sampler2D sphereTexture;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec2 outToonTexCoord;
-varying vec4 outUVA0;
 varying vec4 outUVA1;
 varying vec4 outUVA2;
 varying vec4 outUVA3;
@@ -36,7 +35,7 @@ void main() {
         else if (isSPATexture)
             color.rgb += texture2D(sphereTexture, outTexCoord.zw).rgb;
         else if (isSubTexture)
-            color.rgb *= texture2D(sphereTexture, outUVA0.xy).rgb;
+            color.rgb *= texture2D(sphereTexture, outUVA1.xy).rgb;
     }
     if (hasToonTexture) {
         color.rgb *= texture2D(toonTexture, outToonTexCoord).rgb;

@@ -9,7 +9,6 @@ uniform bool hasSphereTexture;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
-attribute vec4 inUVA0;
 attribute vec4 inUVA1;
 attribute vec4 inUVA2;
 attribute vec4 inUVA3;
@@ -44,7 +43,6 @@ void main() {
     outColor.a = max(min(materialDiffuse.a, kOne), kZero);
     outTexCoord = vec4(inTexCoord, hasSphereTexture ? makeSphereMap(view, normal) : inTexCoord);
     outToonTexCoord = vec2(0, 0.5 + dot(-lightPosition, normal) * 0.5);
-    outUVA0 = inUVA0;
     outUVA1 = inUVA1;
     outUVA2 = inUVA2;
     outUVA3 = inUVA3;

@@ -182,7 +182,6 @@ public:
           m_normalAttributeLocation(0),
           m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
-          m_uva0AttributeLocation(0),
           m_uva1AttributeLocation(0),
           m_uva2AttributeLocation(0),
           m_uva3AttributeLocation(0),
@@ -206,7 +205,6 @@ public:
         m_normalAttributeLocation = 0;
         m_texCoordAttributeLocation = 0;
         m_toonTexCoordAttributeLocation = 0;
-        m_uva0AttributeLocation = 0;
         m_uva1AttributeLocation = 0;
         m_uva2AttributeLocation = 0;
         m_uva3AttributeLocation = 0;
@@ -232,7 +230,6 @@ public:
             m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
-            m_uva0AttributeLocation = glGetAttribLocation(m_program, "inUVA0");
             m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
             m_uva2AttributeLocation = glGetAttribLocation(m_program, "inUVA2");
             m_uva3AttributeLocation = glGetAttribLocation(m_program, "inUVA3");
@@ -267,10 +264,6 @@ public:
     void setToonTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
         glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setUVA0(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_uva0AttributeLocation);
-        glVertexAttribPointer(m_uva0AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setUVA1(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_uva1AttributeLocation);
@@ -365,7 +358,6 @@ private:
     GLuint m_normalAttributeLocation;
     GLuint m_texCoordAttributeLocation;
     GLuint m_toonTexCoordAttributeLocation;
-    GLuint m_uva0AttributeLocation;
     GLuint m_uva1AttributeLocation;
     GLuint m_uva2AttributeLocation;
     GLuint m_uva3AttributeLocation;
@@ -1031,9 +1023,6 @@ void PMXRenderEngine::renderModel()
     offset = pmx::Model::strideOffset(pmx::Model::kTexCoordStride);
     size   = pmx::Model::strideSize(pmx::Model::kTexCoordStride);
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = pmx::Model::strideOffset(pmx::Model::kUVA0Stride);
-    size   = pmx::Model::strideSize(pmx::Model::kUVA0Stride);
-    modelProgram->setUVA0(reinterpret_cast<const GLvoid *>(offset), size);
     offset = pmx::Model::strideOffset(pmx::Model::kUVA1Stride);
     size   = pmx::Model::strideSize(pmx::Model::kUVA1Stride);
     modelProgram->setUVA1(reinterpret_cast<const GLvoid *>(offset), size);
