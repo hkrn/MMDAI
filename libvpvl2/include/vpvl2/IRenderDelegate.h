@@ -67,15 +67,139 @@ public:
     };
     virtual ~IRenderDelegate() {}
 
+    /**
+     * モデルのアップロード時のみに有効な局所的なオブジェクトを作成します。
+     *
+     * 作成したオブジェクトは context に格納する必要があります。
+     * 何も格納する必要がない場合は処理をスキップすることが出来ます。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     *
+     * @sa releaseContext
+     * @param model
+     * @param context
+     */
     virtual void allocateContext(const IModel *model, void *&context) = 0;
+
+    /**
+     * allocateContext で作成したオブジェクトを破棄します。
+     *
+     * context にデータが格納されているため、delete 等で破棄してください。
+     * 破棄したら可能であれば context を 0 にセットしてください。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     *
+     * @sa allocateContext
+     * @param model
+     * @param context
+     */
     virtual void releaseContext(const IModel *model, void *&context) = 0;
+
+    /**
+     * モデルのテクスチャをサーバ (GPU) にアップロードします。
+     *
+     * アップロードしたテクスチャの識別子を texture に格納してください。
+     * OpenGL の場合は GLuint の値をセットします。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     *
+     * @param context
+     * @param name
+     * @param dir
+     * @param texture
+     * @param isToon
+     * @return bool
+     */
     virtual bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) = 0;
+
+    /**
+     * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
+     *
+     * 基本的な処理戦略は uploadTexture と同じです。
+     *
+     * @sa uploadTexture
+     * @param context
+     * @param name
+     * @param dir
+     * @param texture
+     * @return bool
+     */
     virtual bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) = 0;
+
+    /**
+     * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
+     *
+     * 基本的な処理戦略は uploadTexture と同じです。
+     *
+     * @sa uploadTexture
+     * @param context
+     * @param name
+     * @param dir
+     * @param texture
+     * @return bool
+     */
     virtual bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) = 0;
+
+    /**
+     * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
+     *
+     * 基本的な実装戦略は uploadTexture と同じですが、
+     * システム全体におけるトゥーンテクスチャ番号しか渡されないため、
+     * アプリケーションにトゥーンテクスチャをリソースとして含め、
+     * それをアップロードする必要があります。
+     *
+     * @sa uploadTexture
+     * @param context
+     * @param int
+     * @param texture
+     * @return bool
+     */
     virtual bool uploadToonTexture(void *context, int index, void *texture) = 0;
+
+    /**
+     * 指定されたフォーマットと可変引数を用いてロギングを行います。
+     *
+     * ロギングは任意の出力先に書き出しを行います。この処理は無視することが出来ます。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     *
+     * @param context
+     * @param level
+     * @param format
+     * @param ap
+     */
     virtual void log(void *context, LogLevel level, const char *format, va_list ap) = 0;
+
+    /**
+     * 指定された形式の (OpenGL の) シェーダのソースを読み込みます。
+     *
+     * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
+     * model の type メソッドを用いて読み込むシェーダの切り替えを行います。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     *
+     * @param type
+     * @param model
+     * @param context
+     * @return IString
+     */
     virtual IString *loadShader(ShaderType type, const IModel *model, void *context) = 0;
+
+    /**
+     * 指定された形式の (OpenCL の) カーネルのソースを読み込みます。
+     *
+     * カーネルのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     *
+     * @param type
+     * @param context
+     * @return IString
+     */
     virtual IString *loadKernel(KernelType type, void *context) = 0;
+
+    /**
+     * 指定された文字列を IString に変換します。
+     *
+     * 処理中は例外を投げないように処理を行う必要があります。
+     *
+     * @param str
+     * @return IString
+     */
     virtual IString *toUnicode(const uint8_t *str) const = 0;
 };
 
