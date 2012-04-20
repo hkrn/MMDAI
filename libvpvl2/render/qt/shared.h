@@ -219,7 +219,7 @@ public:
 
     void allocateContext(const IModel *model, void *&context) {
         const IString *name = model->name();
-        PrivateContext *ctx = new PrivateContext();
+        PrivateContext *ctx = new(std::nothrow) PrivateContext();
         context = ctx;
         qDebug("Allocated the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
@@ -268,7 +268,7 @@ public:
         QString path = kKernelProgramsDir + "/" + file;
         if (UISlurpFile(path, bytes)) {
             qDebug("Loaded a kernel: %s", qPrintable(path));
-            return new String(bytes);
+            return new(std::nothrow) String(bytes);
         }
         else {
             return 0;
@@ -317,7 +317,7 @@ public:
         QString path = kShaderProgramsDir + "/" + file;
         if (UISlurpFile(path, bytes)) {
             qDebug("Loaded a shader: %s", qPrintable(path));
-            return new String(bytes);
+            return new(std::nothrow) String(bytes);
         }
         else {
             return 0;
@@ -326,7 +326,7 @@ public:
     IString *toUnicode(const uint8_t *value) const {
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         const QString &s = codec->toUnicode(reinterpret_cast<const char *>(value));
-        return new String(s);
+        return new(std::nothrow) String(s);
     }
 
 private:

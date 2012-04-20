@@ -88,7 +88,7 @@ public:
     }
 
     void allocateContext(const IModel *model, void *&context) {
-        PrivateContext *c = new PrivateContext();
+        PrivateContext *c = new(std::nothrow) PrivateContext();
         context = c;
         qDebug("Allocated a context object: %s", model->name()->toByteArray());
     }
@@ -167,7 +167,7 @@ public:
             const QByteArray &bytes = file.readAll();
             file.close();
             qDebug("Loaded a shader: %s", qPrintable(path));
-            return new internal::String(bytes);
+            return new(std::nothrow) internal::String(bytes);
         }
         else {
             qWarning("Failed loading a shader: %s", qPrintable(path));
@@ -187,7 +187,7 @@ public:
             const QByteArray &bytes = file.readAll();
             file.close();
             qDebug("Loaded a kernel: %s", qPrintable(path));
-            return new internal::String(bytes);
+            return new(std::nothrow) internal::String(bytes);
         }
         else {
             qWarning("Failed loading a kernel: %s", qPrintable(path));
@@ -211,10 +211,10 @@ public:
         return static_cast<const internal::String *>(value)->value().toStdString();
     }
     const IString *toStringFromStd(const std::string &value) const {
-        return new internal::String(QString::fromStdString(value));
+        return new(std::nothrow) internal::String(QString::fromStdString(value));
     }
     IString *toUnicode(const uint8_t *value) const {
-        return new internal::String(internal::toQString(value));
+        return new(std::nothrow) internal::String(internal::toQString(value));
     }
     void error(const char *format, va_list ap) {
         qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
