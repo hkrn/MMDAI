@@ -206,6 +206,9 @@ private:
 class Delegate : public IRenderDelegate
 {
 public:
+    struct PrivateContext {
+        QHash<QString, GLuint> textureCache;
+    };
     Delegate(QGLWidget *widget)
         : m_widget(widget)
     {
@@ -214,36 +217,40 @@ public:
     {
     }
 
-    void allocateContext(const IModel *model, void *& /* context */) {
+    void allocateContext(const IModel *model, void *&context) {
         const IString *name = model->name();
+        PrivateContext *ctx = new PrivateContext();
+        context = ctx;
         qDebug("Allocated the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
-    void releaseContext(const IModel *model, void *& /* context */) {
+    void releaseContext(const IModel *model, void *&context) {
         const IString *name = model->name();
+        delete static_cast<PrivateContext *>(context);
+        context = 0;
         qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
-    bool uploadTexture(void * /* context */, const IString *name, const IString *dir, void *texture, bool isToon) {
-        return uploadTextureInternal(createPath(dir, name), texture, isToon);
+    bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) {
+        return uploadTextureInternal(createPath(dir, name), texture, isToon, context);
     }
-    bool uploadToonTexture(void * /* context */, const char *name, const IString *dir, void *texture) {
-        if (!uploadTextureInternal(createPath(dir, name), texture, true)) {
+    bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) {
+        if (!uploadTextureInternal(createPath(dir, name), texture, true, context)) {
             String s(kSystemTexturesDir);
-            return uploadTextureInternal(createPath(&s, name), texture, true);
+            return uploadTextureInternal(createPath(&s, name), texture, true, context);
         }
         return true;
     }
-    bool uploadToonTexture(void * /* context */, const IString *name, const IString *dir, void *texture) {
-        if (!uploadTextureInternal(createPath(dir, name), texture, true)) {
+    bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) {
+        if (!uploadTextureInternal(createPath(dir, name), texture, true, context)) {
             String s(kSystemTexturesDir);
-            return uploadTextureInternal(createPath(&s, name), texture, true);
+            return uploadTextureInternal(createPath(&s, name), texture, true, context);
         }
         return true;
     }
-    bool uploadToonTexture(void * /* context */, int index, void *texture) {
+    bool uploadToonTexture(void *context, int index, void *texture) {
         QString format;
         QDir dir(kSystemTexturesDir);
         const QString &pathString = dir.absoluteFilePath(format.sprintf("toon%02d.bmp", index + 1));
-        return uploadTextureInternal(pathString, texture, true);
+        return uploadTextureInternal(pathString, texture, true, context);
     }
 
     void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
@@ -316,7 +323,6 @@ public:
             return 0;
         }
     }
-
     IString *toUnicode(const uint8_t *value) const {
         QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
         const QString &s = codec->toUnicode(reinterpret_cast<const char *>(value));
@@ -324,32 +330,41 @@ public:
     }
 
 private:
-    const QString createPath(const IString *dir, const char *name) const {
+    static const QString createPath(const IString *dir, const char *name) {
         return createPath(dir, QString(name));
     }
-    const QString createPath(const IString *dir, const QString &name) const {
+    static const QString createPath(const IString *dir, const QString &name) {
         const QDir d(static_cast<const String *>(dir)->value());
         return d.absoluteFilePath(name);
     }
-    const QString createPath(const IString *dir, const IString *name) const {
+    static const QString createPath(const IString *dir, const IString *name) {
         const QDir d(static_cast<const String *>(dir)->value());
         return d.absoluteFilePath(static_cast<const String *>(name)->value());
     }
-    bool uploadTextureInternal(const QString &pathString, void *texture, bool isToon) {
-        const QFileInfo info(pathString);
-        if (info.isDir() || !info.exists()) {
-            qWarning("Cannot loading \"%s\"", qPrintable(pathString));
-            return false;
-        }
-        const QImage &image = QImage(pathString).rgbSwapped();
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-        GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+    static void setTextureID(GLuint textureID, bool isToon, void *texture) {
         *static_cast<GLuint *>(texture) = textureID;
         if (!isToon) {
             glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
-        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(pathString));
+    }
+    bool uploadTextureInternal(const QString &path, void *texture, bool isToon, void *context) {
+        const QFileInfo info(path);
+        if (info.isDir() || !info.exists()) {
+            qWarning("Cannot loading \"%s\"", qPrintable(path));
+            return false;
+        }
+        PrivateContext *ctx = static_cast<PrivateContext *>(context);
+        if (ctx->textureCache.contains(path)) {
+            setTextureID(ctx->textureCache[path], isToon, texture);
+            return true;
+        }
+        const QImage &image = QImage(path).rgbSwapped();
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+        GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+        setTextureID(textureID, isToon, texture);
+        ctx->textureCache.insert(path, textureID);
+        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(path));
         return textureID != 0;
     }
 

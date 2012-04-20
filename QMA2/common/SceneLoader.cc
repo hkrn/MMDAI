@@ -74,7 +74,7 @@ class UIDelegate : public Project::IDelegate, public IRenderDelegate
 {
 public:
     struct PrivateContext {
-        const IModel *model;
+        QHash<QString, GLuint> textureCache;
     };
     UIDelegate()
         : m_archive(0),
@@ -89,7 +89,6 @@ public:
 
     void allocateContext(const IModel *model, void *&context) {
         PrivateContext *c = new PrivateContext();
-        c->model = model;
         context = c;
         qDebug("Allocated a context object: %s", model->name()->toByteArray());
     }
@@ -214,15 +213,8 @@ public:
     const IString *toStringFromStd(const std::string &value) const {
         return new internal::String(QString::fromStdString(value));
     }
-    const std::string toUnicode(const std::string &value) const {
-        return m_codec->toUnicode(value.c_str()).toStdString();
-    }
     IString *toUnicode(const uint8_t *value) const {
         return new internal::String(internal::toQString(value));
-    }
-    const std::string fromUnicode(const std::string &value) const {
-        const QByteArray &bytes = m_codec->fromUnicode(value.c_str());
-        return std::string(bytes.constData(), bytes.length());
     }
     void error(const char *format, va_list ap) {
         qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
@@ -237,11 +229,23 @@ public:
     }
 
 private:
-    bool uploadTexture0(void *context, const QString &path, void *textureID, bool isToon) {
-        Q_UNUSED(context)
+    static void setTextureID(GLuint textureID, bool isToon, void *texture) {
+        *static_cast<GLuint *>(texture) = textureID;
+        if (!isToon) {
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+    }
+    bool uploadTexture0(void *context, const QString &path, void *texture, bool isToon) {
         QImage image;
         QString mutablePath = path;
         mutablePath.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
+        /* 読み込み済みのキャッシュを検索し、あったらそれを利用する */
+        PrivateContext *ctx = static_cast<PrivateContext *>(context);
+        if (ctx->textureCache.contains(path)) {
+            setTextureID(ctx->textureCache[path], isToon, texture);
+            return true;
+        }
         QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
         QFileInfo info(mutablePath);
         /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
@@ -291,13 +295,10 @@ private:
         }
         QGLContext *glcontext = const_cast<QGLContext *>(QGLContext::currentContext());
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-        GLuint *id = reinterpret_cast<GLuint *>(textureID);
-        *id = glcontext->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
-        if (!isToon) {
-            glTexParameteri(*id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(*id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        qDebug("Loaded a texture (ID=%d): \"%s\"", *id,
+        GLuint textureID = glcontext->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+        setTextureID(textureID, isToon, texture);
+        ctx->textureCache.insert(path, textureID);
+        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID,
                m_archive ? qPrintable(info.fileName()) : qPrintable(mutablePath));
         return textureID != 0;
     }
