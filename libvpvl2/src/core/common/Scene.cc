@@ -284,23 +284,23 @@ void Scene::seek(float frameIndex)
     Camera &camera = m_context->camera;
     vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
     if (cameraMotion) {
-        const vmd::CameraAnimation &animation = cameraMotion->cameraAnimation();
-        if (animation.countKeyframes() > 0) {
-            cameraMotion->seek(frameIndex);
-            camera.setPosition(animation.position());
-            camera.setAngle(animation.angle());
-            camera.setFovy(animation.fovy());
-            camera.setDistance(animation.distance());
+        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
+        if (animation->countKeyframes() > 0) {
+            animation->seek(frameIndex);
+            camera.setPosition(animation->position());
+            camera.setAngle(animation->angle());
+            camera.setFovy(animation->fovy());
+            camera.setDistance(animation->distance());
         }
     }
     Light &light = m_context->light;
     vmd::Motion *lightMotion = static_cast<vmd::Motion *>(camera.motion());
     if (lightMotion) {
-        const vmd::LightAnimation &animation = lightMotion->lightAnimation();
-        if (animation.countKeyframes() > 0) {
-            lightMotion->seek(frameIndex);
-            light.setColor(animation.color());
-            light.setDirection(animation.direction());
+        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
+        if (animation->countKeyframes() > 0) {
+            animation->seek(frameIndex);
+            light.setColor(animation->color());
+            light.setDirection(animation->direction());
         }
     }
     camera.updateTransform();
@@ -312,23 +312,23 @@ void Scene::advance(float delta)
     Camera &camera = m_context->camera;
     vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
     if (cameraMotion) {
-        const vmd::CameraAnimation &animation = cameraMotion->cameraAnimation();
-        if (animation.countKeyframes() > 0) {
-            cameraMotion->advance(delta);
-            camera.setPosition(animation.position());
-            camera.setAngle(animation.angle());
-            camera.setFovy(animation.fovy());
-            camera.setDistance(animation.distance());
+        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
+        if (animation->countKeyframes() > 0) {
+            animation->advance(delta);
+            camera.setPosition(animation->position());
+            camera.setAngle(animation->angle());
+            camera.setFovy(animation->fovy());
+            camera.setDistance(animation->distance());
         }
     }
     Light &light = m_context->light;
     vmd::Motion *lightMotion = static_cast<vmd::Motion *>(m_context->light.motion());
     if (lightMotion) {
-        const vmd::LightAnimation &animation = lightMotion->lightAnimation();
-        if (animation.countKeyframes() > 0) {
-            lightMotion->advance(delta);
-            light.setColor(animation.color());
-            light.setDirection(animation.direction());
+        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
+        if (animation->countKeyframes() > 0) {
+            animation->seek(delta);
+            light.setColor(animation->color());
+            light.setDirection(animation->direction());
         }
     }
     camera.updateTransform();

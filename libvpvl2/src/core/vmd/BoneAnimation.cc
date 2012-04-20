@@ -126,6 +126,8 @@ void BoneAnimation::read(const uint8_t *data, int size)
 
 void BoneAnimation::seek(float frameAt)
 {
+    if (!m_model)
+        return;
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
         InternalBoneKeyFrameList *keyframes = *m_name2keyframes.value(i);

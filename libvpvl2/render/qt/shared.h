@@ -567,6 +567,7 @@ protected:
                 }
                 break;
             }
+            m_scene.seek(m_currentFrameIndex);
             qDebug() << m_currentFrameIndex;
             for (int i = 0; i < nmotions; i++) {
                 IMotion *motion = motions[i];
@@ -602,7 +603,6 @@ protected:
         glEnable(GL_DEPTH_TEST);
         glClearColor(0, 0, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        m_scene.advance(0.0f);
         updateModelViewMatrix();
         updateProjectionMatrix();
         updateModelViewProjectionMatrix();
@@ -654,9 +654,9 @@ private:
             const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
             IMotion *motion = m_factory->createMotion(data, bytes.size(), 0, ok);
             qDebug() << "maxFrameIndex(camera):" << motion->maxFrameIndex();
-            motion->seek(0);
             m_scene.camera()->setMotion(motion);
         }
+        m_scene.seek(0);
         return true;
     }
     IModel *addModel(const QString &path) {
