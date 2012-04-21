@@ -34,7 +34,7 @@ rm -rf designer
 rm -rf iconengines
 rm -rf sqldrivers
 cd ..
-mv ${app_name} lib locales plugins ${package_name}
+mv ${app_name} lib locales plugins resources ${package_name}
 find ${package_name} -exec touch -t `date +%Y%m%d0000` {} \;
 zip -r ${app_name}.zip ${package_name}
 
