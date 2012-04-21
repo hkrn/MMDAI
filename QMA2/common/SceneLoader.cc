@@ -90,12 +90,14 @@ public:
     void allocateContext(const IModel *model, void *&context) {
         PrivateContext *c = new(std::nothrow) PrivateContext();
         context = c;
-        qDebug("Allocated a context object: %s", model->name()->toByteArray());
+        if (const IString *name = model->name())
+            qDebug("Allocated a context object: %s", name->toByteArray() );
     }
     void releaseContext(const IModel *model, void *&context) {
         delete static_cast<PrivateContext *>(context);
         context = 0;
-        qDebug("Released a context object: %s", model->name()->toByteArray());
+        if (const IString *name = model->name())
+            qDebug("Released a context object: %s", name->toByteArray());
     }
 
     bool uploadTexture(void *context, const char *name, const IString *dir, void *texture, bool isToon) {
@@ -248,6 +250,10 @@ private:
         }
         QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
         QFileInfo info(mutablePath);
+        if (info.isDir()) {
+            /* ディレクトリの場合は警告は出さず強制的に読み込み失敗に設定する */
+            return false;
+        }
         /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
         if (m_archive && !mutablePath.startsWith(":/")) {
             QByteArray suffix = info.suffix().toLower().toUtf8();
@@ -268,11 +274,7 @@ private:
         }
         /* 通常の読み込み */
         else {
-            if (info.isDir()) {
-                /* ディレクトリの場合は警告は出さない */
-                return false;
-            }
-            else if (!info.exists()) {
+            if (!info.exists()) {
                 qWarning("Loading texture %s doesn't exists", qPrintable(info.absoluteFilePath()));
                 return false;
             }
@@ -315,7 +317,7 @@ private:
         else
             return uploadTexture0(context, path, texture, true);
     }
-    QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr) {
+    static QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr) {
         QFile file(path);
         if (file.open(QFile::ReadOnly) && file.size() > 18) {
             return loadTGA(file.readAll(), dataPtr);
@@ -325,7 +327,7 @@ private:
             return QImage();
         }
     }
-    QImage loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr) {
+    static QImage loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr) {
         uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
         uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
         uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
@@ -743,6 +745,8 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
             // asset->setName(assetName.constData());
             // const std::string &name = std::string(fileInfo.absolutePath().toLocal8Bit());
             IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, asset);
+            internal::String s(fileInfo.absoluteDir().path());
+            engine->upload(&s);
             delegate->setArchive(0);
             uuid = QUuid::createUuid();
             m_project->addModel(asset, engine, uuid.toString().toStdString());
@@ -1027,9 +1031,9 @@ void SceneLoader::loadProject(const QString &path)
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
         int nmotions = motionUUIDs.size();
         for (int i = 0; i < nmotions; i++) {
-            // IMotion *motion = m_project->motion(motionUUIDs[i]);
-            // if (!motion->parentModel() && motion->cameraAnimation().countKeyframes() > 1)
-            //     setCameraMotion(motion);
+            IMotion *motion = m_project->motion(motionUUIDs[i]);
+            if (!motion->parentModel() && motion->countKeyframes(IKeyframe::kCamera) > 1)
+                m_project->camera()->setMotion(motion);
         }
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
         foreach (IModel *model, lostModels) {
@@ -1127,7 +1131,6 @@ void SceneLoader::release()
 void SceneLoader::render()
 {
     UIEnableMultisample();
-    glEnable(GL_DEPTH_TEST);
     /* 順番にそってレンダリング開始 */
     const int nobjects = m_renderOrderList.count();
     for (int i = 0; i < nobjects; i++) {
@@ -1140,8 +1143,8 @@ void SceneLoader::render()
                 engine->renderShadow();
                 glCullFace(GL_BACK);
             }
-            engine->renderEdge();
             engine->renderModel();
+            engine->renderEdge();
         }
     }
 }
@@ -1164,6 +1167,12 @@ void SceneLoader::updateMatrices(const QSizeF &size)
         modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
     matrices->setProjection(projectionMatrixf);
     matrices->setModelViewProjection(modelViewMatrixf);
+    const Array<IRenderEngine *> &renderEngines = m_project->renderEngines();
+    const int nRenderEngines = renderEngines.count();
+    for (int i = 0; i < nRenderEngines; i++) {
+        IRenderEngine *engine = renderEngines[i];
+        engine->update();
+    }
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const
@@ -1243,8 +1252,8 @@ void SceneLoader::setLightPosition(const Vector3 &position)
 void SceneLoader::setModelMotion(IMotion *motion, IModel *model)
 {
     const QUuid &uuid = QUuid::createUuid();
-#ifndef QMA_ENABLE_MULTIPLE_MOTION
-    const Array<IMotion *> &motions = model->motions();
+#ifdef IS_QMA2
+    const Array<IMotion *> &motions = m_project->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         /* 先にプロジェクトからモーションを論理削除した後にモデルから物理削除する */
