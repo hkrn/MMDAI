@@ -72,7 +72,7 @@
 #include <OpenJTalk/njd_set_long_vowel.h>
 #endif
 
-class OpenJTalkSpeechEngineInternal : public QObject
+class OpenJTalkSpeechEngine::PrivateContext : public QObject
 {
 public:
     static const float kMinLF0Val;
@@ -92,14 +92,14 @@ public:
     static const int kMaxFPeriod = 48000;
     static const int kMinFPeriod = 1;
 
-    explicit OpenJTalkSpeechEngineInternal(QObject *parent = 0);
-    ~OpenJTalkSpeechEngineInternal();
+    explicit PrivateContext(QObject *parent = 0);
+    ~PrivateContext();
 
     void loadSetting(const QString &path, const QString &config);
     void loadDictionary(const QString &mecab);
     void setText(const QString &text);
     void setStyle(const QString &style);
-    const int getDuration() const;
+    int getDuration() const;
     const QString getPhonemeSequence();
     QByteArray finalize(bool withHeader);
 
@@ -113,22 +113,22 @@ public:
     int m_duration;
     double m_f0Shift;
 
-    Q_DISABLE_COPY(OpenJTalkSpeechEngineInternal)
+    Q_DISABLE_COPY(PrivateContext)
 };
 
-const float OpenJTalkSpeechEngineInternal::kMinLF0Val = log(10.0);
-const float OpenJTalkSpeechEngineInternal::kHanfTone = 0.0;
-const float OpenJTalkSpeechEngineInternal::kMaxHanfTone = 24.0;
-const float OpenJTalkSpeechEngineInternal::kMinHanfTone = -24.0;
-const float OpenJTalkSpeechEngineInternal::kAlpha = 0.55;
-const float OpenJTalkSpeechEngineInternal::kMaxAlpha = 1.0;
-const float OpenJTalkSpeechEngineInternal::kMinAlpha = 0.0;
-const float OpenJTalkSpeechEngineInternal::kVolume = 1.0;
-const float OpenJTalkSpeechEngineInternal::kMaxVolume = 10.0;
-const float OpenJTalkSpeechEngineInternal::kMinVolume = 0.0;
-const bool OpenJTalkSpeechEngineInternal::kLogGain = false;
+const float OpenJTalkSpeechEngine::PrivateContext::kMinLF0Val = log(10.0);
+const float OpenJTalkSpeechEngine::PrivateContext::kHanfTone = 0.0;
+const float OpenJTalkSpeechEngine::PrivateContext::kMaxHanfTone = 24.0;
+const float OpenJTalkSpeechEngine::PrivateContext::kMinHanfTone = -24.0;
+const float OpenJTalkSpeechEngine::PrivateContext::kAlpha = 0.55;
+const float OpenJTalkSpeechEngine::PrivateContext::kMaxAlpha = 1.0;
+const float OpenJTalkSpeechEngine::PrivateContext::kMinAlpha = 0.0;
+const float OpenJTalkSpeechEngine::PrivateContext::kVolume = 1.0;
+const float OpenJTalkSpeechEngine::PrivateContext::kMaxVolume = 10.0;
+const float OpenJTalkSpeechEngine::PrivateContext::kMinVolume = 0.0;
+const bool OpenJTalkSpeechEngine::PrivateContext::kLogGain = false;
 
-static int OpenJTalkSpeechEngineInternalGetCount(QTextStream &stream) {
+static int OpenJTalkSpeechGetCount(QTextStream &stream) {
     QString line = stream.readLine();
     int count = line.toInt();
     if (count == 0) {
@@ -142,7 +142,7 @@ static int OpenJTalkSpeechEngineInternalGetCount(QTextStream &stream) {
     return count;
 }
 
-OpenJTalkSpeechEngineInternal::OpenJTalkSpeechEngineInternal(QObject *parent) :
+OpenJTalkSpeechEngine::PrivateContext::PrivateContext(QObject *parent) :
     QObject(parent),
     m_f0Shift(0.0)
 {
@@ -160,7 +160,7 @@ OpenJTalkSpeechEngineInternal::OpenJTalkSpeechEngineInternal(QObject *parent) :
     m_f0Shift = kHanfTone;
 }
 
-OpenJTalkSpeechEngineInternal::~OpenJTalkSpeechEngineInternal()
+OpenJTalkSpeechEngine::PrivateContext::~PrivateContext()
 {
     Mecab_clear(&m_mecab);
     NJD_clear(&m_njd);
@@ -168,13 +168,13 @@ OpenJTalkSpeechEngineInternal::~OpenJTalkSpeechEngineInternal()
     HTS_Engine_clear(&m_engine);
 }
 
-void OpenJTalkSpeechEngineInternal::loadSetting(const QString &path, const QString &config)
+void OpenJTalkSpeechEngine::PrivateContext::loadSetting(const QString &path, const QString &config)
 {
     QFile file(config);
     if (file.open(QFile::ReadOnly)) {
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
-        int nmodels = OpenJTalkSpeechEngineInternalGetCount(stream);
+        int nmodels = OpenJTalkSpeechGetCount(stream);
         for (int i = 0; i < nmodels; i++) {
             QString model = stream.readLine();
             if (model.isEmpty())
@@ -187,7 +187,7 @@ void OpenJTalkSpeechEngineInternal::loadSetting(const QString &path, const QStri
             model.replace(QChar(0xa5), QChar('/')).replace(QChar('\\'), QChar('/'));
             m_models.append(path + "/" + model);
         }
-        int nstyles = OpenJTalkSpeechEngineInternalGetCount(stream);
+        int nstyles = OpenJTalkSpeechGetCount(stream);
         for (int i = 0; i < nstyles; i++) {
             QString style = stream.readLine();
             if (style.isEmpty())
@@ -213,7 +213,7 @@ void OpenJTalkSpeechEngineInternal::loadSetting(const QString &path, const QStri
     }
 }
 
-void OpenJTalkSpeechEngineInternal::loadDictionary(const QString &mecab)
+void OpenJTalkSpeechEngine::PrivateContext::loadDictionary(const QString &mecab)
 {
     int nmodels = m_models.count();
     if (nmodels == 0)
@@ -332,7 +332,7 @@ void OpenJTalkSpeechEngineInternal::loadDictionary(const QString &mecab)
     free(fn_ms_gvl);
 }
 
-QByteArray OpenJTalkSpeechEngineInternal::finalize(bool withHeader)
+QByteArray OpenJTalkSpeechEngine::PrivateContext::finalize(bool withHeader)
 {
     QByteArray ret;
     if (JPCommon_get_label_size(&m_jpcommon) > 2) {
@@ -385,7 +385,7 @@ QByteArray OpenJTalkSpeechEngineInternal::finalize(bool withHeader)
     return ret;
 }
 
-void OpenJTalkSpeechEngineInternal::setText(const QString &text)
+void OpenJTalkSpeechEngine::PrivateContext::setText(const QString &text)
 {
     HTS_Engine_set_stop_flag(&m_engine, false);
 
@@ -435,12 +435,12 @@ void OpenJTalkSpeechEngineInternal::setText(const QString &text)
     }
 }
 
-const int OpenJTalkSpeechEngineInternal::getDuration() const
+int OpenJTalkSpeechEngine::PrivateContext::getDuration() const
 {
     return m_duration;
 }
 
-const QString OpenJTalkSpeechEngineInternal::getPhonemeSequence()
+const QString OpenJTalkSpeechEngine::PrivateContext::getPhonemeSequence()
 {
     QString ret;
     int size = JPCommon_get_label_size(&m_jpcommon);
@@ -478,7 +478,7 @@ const QString OpenJTalkSpeechEngineInternal::getPhonemeSequence()
     return ret;
 }
 
-void OpenJTalkSpeechEngineInternal::setStyle(const QString &style)
+void OpenJTalkSpeechEngine::PrivateContext::setStyle(const QString &style)
 {
     if (!m_styles.contains(style))
         return;
@@ -581,12 +581,12 @@ void OpenJTalkSpeechEngine::speech(const QString &name, const QString &style, co
 
 void OpenJTalkSpeechEngine::run(const QString &name, const QString &style, const QString &text)
 {
-    OpenJTalkSpeechEngineInternal *model;
+    OpenJTalkSpeechEngine::PrivateContext *model;
     if (m_models.contains(name)) {
         model = m_models[name];
     }
     else {
-        model = new OpenJTalkSpeechEngineInternal(this);
+        model = new OpenJTalkSpeechEngine::PrivateContext(this);
         model->loadSetting(m_base, m_config);
         model->loadDictionary(m_dir);
         m_models[name] = model;
@@ -615,7 +615,7 @@ void OpenJTalkSpeechEngine::run(const QString &name, const QString &style, const
     output.sampleFormat = paInt16;
     output.suggestedLatency = Pa_GetDeviceInfo(output.device)->defaultLowOutputLatency;
     output.hostApiSpecificStreamInfo = NULL;
-    err = Pa_OpenStream(&stream, NULL, &output, OpenJTalkSpeechEngineInternal::kSamplingRate, 1024, paClipOff, NULL, NULL);
+    err = Pa_OpenStream(&stream, NULL, &output, OpenJTalkSpeechEngine::PrivateContext::kSamplingRate, 1024, paClipOff, NULL, NULL);
     if (err != paNoError) {
         qWarning("Pa_OpenStream failed: %s", Pa_GetErrorText(err));
         goto final;

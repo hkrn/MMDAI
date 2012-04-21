@@ -44,13 +44,13 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 
-class OpenJTalkSpeechEngineInternal;
-
 class OpenJTalkSpeechEngine : public QObject
 {
     Q_OBJECT
 
 public:
+    class PrivateContext;
+
     static const QString kSynthStartCommand;
     static const QString kSynthStopCommand;
     static const QString kSynthStartEvent;
@@ -71,7 +71,7 @@ signals:
 private:
     void run(const QString &name, const QString &style, const QString &text);
 
-    QHash<QString, OpenJTalkSpeechEngineInternal *> m_models;
+    QHash<QString, PrivateContext *> m_models;
     QTimer m_timer;
     QString m_base;
     QString m_dir;
