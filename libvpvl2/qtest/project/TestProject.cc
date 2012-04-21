@@ -173,7 +173,7 @@ void TestProject::handleAssets()
     project.setDirty(false);
     project.removeModel(ptr);
     QVERIFY(!project.isDirty());
-    delete asset;
+    project.deleteModel(asset);
 }
 
 void TestProject::handleModels()
@@ -200,7 +200,7 @@ void TestProject::handleModels()
     project.setDirty(false);
     project.removeModel(ptr);
     QVERIFY(!project.isDirty());
-    delete model;
+    project.deleteModel(model);
 }
 
 void TestProject::handleMotions()
@@ -236,13 +236,13 @@ void TestProject::handleNullUUID()
     QCOMPARE(project.modelUUIDs().size(), size_t(1));
     project.removeModel(asset);
     QCOMPARE(project.modelUUIDs().size(), size_t(0));
-    delete asset;
+    project.deleteModel(asset);
     IModel *model = factory.createModel(IModel::kPMD);
     project.addModel(model, 0, Project::kNullUUID);
     QCOMPARE(project.modelUUIDs().size(), size_t(1));
     project.removeModel(model);
     QCOMPARE(project.modelUUIDs().size(), size_t(0));
-    delete model;
+    project.deleteModel(model);
     IMotion *motion = factory.createMotion();
     project.addMotion(motion, Project::kNullUUID);
     QCOMPARE(project.motionUUIDs().size(), size_t(1));
@@ -256,7 +256,7 @@ void TestProject::handleNullUUID()
     project.removeMotion(motion2);
     QCOMPARE(project.motionUUIDs().size(), size_t(0));
     project.removeModel(model2);
-    delete model2;
+    project.deleteModel(model2);
     delete motion2;
 }
 
