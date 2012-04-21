@@ -53,6 +53,11 @@ namespace
 struct BoneUnit {
     float vector3[3];
 };
+struct IKUnit {
+    int nloop;
+    float angleConstraint;
+    int nlinks;
+};
 
 #pragma pack(pop)
 
@@ -212,12 +217,13 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         /* bone is IK */
         if (flags & 0x0020) {
             /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
-            size_t extraSize = boneIndexSize + sizeof(int) + sizeof(float) + sizeof(int);
+            size_t extraSize = boneIndexSize + sizeof(IKUnit);
+            const IKUnit &unit = *reinterpret_cast<const IKUnit *>(ptr + boneIndexSize);
             if (!internal::validateSize(ptr, extraSize, rest)) {
                 return false;
             }
-            int nlinks = *reinterpret_cast<int *>(ptr - sizeof(int));
-            for (int i = 0; i < nlinks; i++) {
+            int nlinks = unit.nlinks;
+            for (int j = 0; j < nlinks; j++) {
                 if (!internal::validateSize(ptr, boneIndexSize, rest)) {
                     return false;
                 }
@@ -356,12 +362,11 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     if (flags & 0x0020) {
         /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
         m_targetBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-        m_nloop = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(m_nloop);
-        m_angleConstraint = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(m_angleConstraint);
-        int nlinks = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(nlinks);
+        const IKUnit &iu = *reinterpret_cast<const IKUnit *>(ptr);
+        m_nloop = iu.nloop;
+        m_angleConstraint = iu.angleConstraint;
+        int nlinks = iu.nlinks;
+        ptr += sizeof(iu);
         for (int i = 0; i < nlinks; i++) {
             IKLink *ik = new IKLink();
             ik->boneID = internal::readSignedIndex(ptr, boneIndexSize);
@@ -480,10 +485,8 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     size += (m_flags & 0x0001) ? boneIndexSize : sizeof(BoneUnit);
     if (m_flags & 0x0020) {
         size += boneIndexSize;
-        size += sizeof(m_angleConstraint);
-        size += sizeof(m_nloop);
+        size += sizeof(IKUnit);
         int nlinks = m_IKLinks.count();
-        size += sizeof(nlinks);
         for (int i = 0; i < nlinks; i++) {
             size += boneIndexSize;
             size += sizeof(uint8_t);
