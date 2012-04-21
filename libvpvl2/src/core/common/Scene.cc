@@ -284,8 +284,48 @@ void Scene::removeMotion(IMotion *motion)
     m_context->motions.remove(motion);
 }
 
+void Scene::advance(float delta)
+{
+    const Array<IMotion *> &motions = m_context->motions;
+    const int nmotions = motions.count();
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        motion->advance(delta);
+    }
+    Camera &camera = m_context->camera;
+    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
+    if (cameraMotion) {
+        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
+        if (animation->countKeyframes() > 0) {
+            animation->advance(delta);
+            camera.setPosition(animation->position());
+            camera.setAngle(animation->angle());
+            camera.setFovy(animation->fovy());
+            camera.setDistance(animation->distance());
+        }
+    }
+    Light &light = m_context->light;
+    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(m_context->light.motion());
+    if (lightMotion) {
+        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
+        if (animation->countKeyframes() > 0) {
+            animation->seek(delta);
+            light.setColor(animation->color());
+            light.setDirection(animation->direction());
+        }
+    }
+    camera.updateTransform();
+    camera.updateMatrices(m_context->matrices);
+}
+
 void Scene::seek(float frameIndex)
 {
+    const Array<IMotion *> &motions = m_context->motions;
+    const int nmotions = motions.count();
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        motion->seek(frameIndex);
+    }
     Camera &camera = m_context->camera;
     vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
     if (cameraMotion) {
@@ -312,32 +352,14 @@ void Scene::seek(float frameIndex)
     camera.updateMatrices(m_context->matrices);
 }
 
-void Scene::advance(float delta)
+void Scene::update()
 {
-    Camera &camera = m_context->camera;
-    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
-    if (cameraMotion) {
-        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->advance(delta);
-            camera.setPosition(animation->position());
-            camera.setAngle(animation->angle());
-            camera.setFovy(animation->fovy());
-            camera.setDistance(animation->distance());
-        }
+    const Array<IRenderEngine *> &renderEngines = m_context->engines;
+    const int nRenderEngines = renderEngines.count();
+    for (int i = 0; i < nRenderEngines; i++) {
+        IRenderEngine *engine = renderEngines[i];
+        engine->update();
     }
-    Light &light = m_context->light;
-    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(m_context->light.motion());
-    if (lightMotion) {
-        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->seek(delta);
-            light.setColor(animation->color());
-            light.setDirection(animation->direction());
-        }
-    }
-    camera.updateTransform();
-    camera.updateMatrices(m_context->matrices);
 }
 
 float Scene::maxFrameIndex() const

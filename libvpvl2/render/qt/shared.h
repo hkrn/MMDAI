@@ -541,10 +541,7 @@ protected:
         updateModelViewMatrix();
         updateProjectionMatrix();
         updateModelViewProjectionMatrix();
-        const Array<IRenderEngine *> &engines = m_scene.renderEngines();
-        const int nengines = engines.count();
-        for (int i = 0; i < nengines; i++)
-            engines[i]->update();
+        m_scene.update();
         updateGL();
     }
     void mousePressEvent(QMouseEvent *event) {
@@ -569,26 +566,21 @@ protected:
         if (nmotions > 0 && event->modifiers() & Qt::SHIFT) {
             switch (event->key()) {
             case Qt::Key_Left:
-                m_currentFrameIndex -= 1.0f;
+                m_currentFrameIndex -= 1;
                 btSetMax(m_currentFrameIndex, 0.0f);
-                for (int i = 0; i < nmotions; i++)
-                    motions[i]->seek(m_currentFrameIndex);
                 break;
             case Qt::Key_Right:
-                m_currentFrameIndex += 1.0;
-                for (int i = 0; i < nmotions; i++) {
-                    IMotion *motion = motions[i];
-                    btSetMin(m_currentFrameIndex, motion->maxFrameIndex());
-                    motion->seek(m_currentFrameIndex);
-                }
+                m_currentFrameIndex += 1;
                 break;
             }
             m_scene.seek(m_currentFrameIndex);
             qDebug() << m_currentFrameIndex;
             for (int i = 0; i < nmotions; i++) {
                 IMotion *motion = motions[i];
-                if (motion->isReachedTo(motion->maxFrameIndex()))
+                if (motion->isReachedTo(motion->maxFrameIndex())) {
                     motion->reset();
+                    m_currentFrameIndex = 0;
+                }
             }
             const int kFPS = 30;
             const Scalar &sec = 1.0 / kFPS;
