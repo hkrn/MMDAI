@@ -125,7 +125,7 @@ void ExtendedSceneWidget::initializeGL()
 {
     SceneWidget::initializeGL();
     QStringList arguments = qApp->arguments();
-    m_tiledStage = new TiledStage(m_loader->scene(), m_loader->world());
+    m_tiledStage = new TiledStage(m_loader->world());
     m_loader->setPhysicsEnabled(true);
     m_loader->startPhysicsSimulation();
     setShowModelDialog(false);
@@ -153,8 +153,9 @@ void ExtendedSceneWidget::paintGL()
     glEnable(GL_DEPTH_TEST);
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    //m_tiledStage->renderBackground();
-    //m_tiledStage->renderFloor();
+    Scene *scene = m_loader->scene();
+    m_tiledStage->renderBackground(scene);
+    m_tiledStage->renderFloor(scene);
     m_loader->render();
     if (m_script) {
         const QList<IMotion *> &motions = m_script->stoppedMotions();

@@ -56,9 +56,8 @@ public:
         QVector2D texcoord;
     };
 
-    PrivateContext(const Scene *scene, const QVector3D &normal, bool hasColor, bool cullFace = false)
-        : m_scene(scene),
-          m_textureID(0),
+    PrivateContext(const QVector3D &normal, bool hasColor, bool cullFace = false)
+        : m_textureID(0),
           m_cullFace(cullFace),
           m_hasColor(hasColor)
     {
@@ -101,14 +100,14 @@ public:
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
         m_textureID = context->bindTexture(QImage(path), GL_TEXTURE_2D, GL_RGBA, options);
     }
-    void render() {
+    void render(const vpvl2::Scene *scene) {
         if (!m_program.isLinked())
             return;
         if (!m_cullFace)
             glDisable(GL_CULL_FACE);
         QMatrix4x4 modelView4x4, projection4x4;
         float modelViewMatrixf[16], projectionMatrixf[16], normalMatrix[9];
-        const Scene::IMatrices *matrices = m_scene->matrices();
+        const vpvl2::Scene::IMatrices *matrices = scene->matrices();
         matrices->getModelView(modelViewMatrixf);
         matrices->getProjection(projectionMatrixf);
         for (int i = 0; i < 16; i++) {
@@ -126,7 +125,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[0]);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffers[1]);
         m_program.setUniformValue("mainTexture", 0);
-        m_program.setUniformValue("lightPosition", toQVector3D(m_scene->light()->direction()));
+        m_program.setUniformValue("lightPosition", toQVector3D(scene->light()->direction()));
         int inPosition = m_program.attributeLocation("inPosition");
         glEnableVertexAttribArray(inPosition);
         glVertexAttribPointer(inPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
@@ -172,7 +171,6 @@ private:
         return v;
     }
 
-    const Scene *m_scene;
     QMatrix3x4 m_matrix;
     Array<Vertex> m_vertices;
     uint16_t m_indices[6];
@@ -183,9 +181,8 @@ private:
     const bool m_hasColor;
 };
 
-TiledStage::TiledStage(const Scene *scene, internal::World *world)
-    : m_scene(scene),
-      m_floor(0),
+TiledStage::TiledStage(internal::World *world)
+    : m_floor(0),
       m_background(0),
       m_floorRigidBody(0),
       m_world(world)
@@ -204,7 +201,7 @@ TiledStage::~TiledStage()
 void TiledStage::loadFloor(const QString &path)
 {
     delete m_floor;
-    m_floor = new PrivateContext(m_scene, QVector3D(0.0f, 1.0f, 0.0f), true);
+    m_floor = new PrivateContext(QVector3D(0.0f, 1.0f, 0.0f), true);
     m_floor->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }
@@ -212,21 +209,21 @@ void TiledStage::loadFloor(const QString &path)
 void TiledStage::loadBackground(const QString &path)
 {
     delete m_background;
-    m_background = new PrivateContext(m_scene, QVector3D(0.0f, 0.0f, 1.0f), false);
+    m_background = new PrivateContext(QVector3D(0.0f, 0.0f, 1.0f), false);
     m_background->load(path);
     setSize(25.0f, 40.0f, 25.0f);
 }
 
-void TiledStage::renderFloor()
+void TiledStage::renderFloor(const Scene *scene)
 {
     if (m_floor)
-        m_floor->render();
+        m_floor->render(scene);
 }
 
-void TiledStage::renderBackground()
+void TiledStage::renderBackground(const Scene *scene)
 {
     if (m_background)
-        m_background->render();
+        m_background->render(scene);
 }
 
 void TiledStage::setSize(float width, float height, float depth)

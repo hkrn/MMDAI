@@ -43,6 +43,7 @@
 #include <QtGui/QMatrix4x4>
 #include <QtOpenGL/QGLFunctions>
 #include <LinearMath/btVector3.h>
+#include <vpvl2/Scene.h>
 
 namespace vpvl2 {
 class Scene;
@@ -60,24 +61,22 @@ class TiledStage
 public:
     class PrivateContext;
 
-    TiledStage(const vpvl2::Scene *scene, internal::World *world);
+    TiledStage(internal::World *world);
     ~TiledStage();
 
     void loadFloor(const QString &path);
     void loadBackground(const QString &path);
-    void renderFloor();
-    void renderBackground();
+    void renderFloor(const vpvl2::Scene *scene);
+    void renderBackground(const vpvl2::Scene *scene);
     void setSize(float width, float height, float depth);
 
 private:
     void buildFloor(float width, float height);
     void destroyFloor();
 
-    const vpvl2::Scene *m_scene;
     PrivateContext *m_floor;
     PrivateContext *m_background;
     btRigidBody *m_floorRigidBody;
-    internal::Delegate *m_delegate;
     internal::World *m_world;
 
     Q_DISABLE_COPY(TiledStage)
