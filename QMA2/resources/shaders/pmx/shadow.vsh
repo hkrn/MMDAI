@@ -1,3 +1,4 @@
+/* pmx/shadow.vsh */
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 shadowMatrix;
 attribute vec4 inPosition;

@@ -1,3 +1,4 @@
+/* asset/model.vsh */
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 transformMatrix;
 uniform mat3 normalMatrix;

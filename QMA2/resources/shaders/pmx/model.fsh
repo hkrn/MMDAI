@@ -1,3 +1,4 @@
+/* pmx/model.fsh */
 #ifdef GL_ES
 precision highp float;
 #endif
@@ -11,7 +12,6 @@ uniform bool isSubTexture;
 uniform sampler2D mainTexture;
 uniform sampler2D toonTexture;
 uniform sampler2D sphereTexture;
-
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec2 outToonTexCoord;
@@ -19,7 +19,6 @@ varying vec4 outUVA1;
 varying vec4 outUVA2;
 varying vec4 outUVA3;
 varying vec4 outUVA4;
-
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);

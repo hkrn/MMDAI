@@ -1,3 +1,4 @@
+/* pmx/shadow.fsh */
 uniform vec3 lightColor;
 
 void main() {

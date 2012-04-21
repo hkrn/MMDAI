@@ -1,3 +1,4 @@
+/* pmx/model.vsh */
 uniform mat4 modelViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialDiffuse;
@@ -5,7 +6,6 @@ uniform vec3 lightColor;
 uniform vec3 lightPosition;
 uniform vec3 materialAmbient;
 uniform bool hasSphereTexture;
-
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
@@ -13,16 +13,13 @@ attribute vec4 inUVA1;
 attribute vec4 inUVA2;
 attribute vec4 inUVA3;
 attribute vec4 inUVA4;
-
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec2 outToonTexCoord;
-varying vec4 outUVA0;
 varying vec4 outUVA1;
 varying vec4 outUVA2;
 varying vec4 outUVA3;
 varying vec4 outUVA4;
-
 const float kTwo = 2.0;
 const float kOne = 1.0;
 const float kHalf = 0.5;

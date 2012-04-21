@@ -1,3 +1,4 @@
+/* asset/model.fsh */
 #ifdef GL_ES
 precision highp float;
 #endif

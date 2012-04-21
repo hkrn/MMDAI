@@ -1,3 +1,4 @@
+/* pmx/edge.vsh */
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
 attribute vec4 inPosition;

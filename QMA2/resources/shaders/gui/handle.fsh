@@ -1,3 +1,4 @@
+/* gui/handle.fsh */
 uniform vec4 color;
 
 void main() {

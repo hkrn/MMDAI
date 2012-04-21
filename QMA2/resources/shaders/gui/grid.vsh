@@ -1,3 +1,4 @@
+/* gui/grid.vsh */
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 attribute vec3 inPosition;

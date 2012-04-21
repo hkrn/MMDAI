@@ -1,3 +1,4 @@
+/* gui/texture.fsh */
 uniform sampler2D mainTexture;
 varying vec2 outTexCoord;
 

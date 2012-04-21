@@ -1,3 +1,4 @@
+/* asset/zplot.vsh */
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 transformMatrix;
 attribute vec4 inPosition;

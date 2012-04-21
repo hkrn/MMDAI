@@ -1,3 +1,4 @@
+/* gui/texture.vsh */
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 attribute vec2 inPosition;

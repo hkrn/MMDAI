@@ -1,3 +1,4 @@
+/* gui/grid.fsh */
 varying vec3 outColor;
 
 void main() {
