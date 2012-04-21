@@ -524,12 +524,10 @@ protected:
     void initializeGL() {
         if (!loadScene())
             qFatal("Unable to load scene");
-
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         resize(kWidth, kHeight);
         startTimer(1000.0f / 60.0f);
         m_timer.start();
@@ -540,6 +538,9 @@ protected:
         m_prevElapsed = elapsed;
         if (diff < 0)
             diff = elapsed;
+        updateModelViewMatrix();
+        updateProjectionMatrix();
+        updateModelViewProjectionMatrix();
         const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const int nengines = engines.count();
         for (int i = 0; i < nengines; i++)
@@ -618,14 +619,10 @@ protected:
         glEnable(GL_DEPTH_TEST);
         glClearColor(0, 0, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        updateModelViewMatrix();
-        updateProjectionMatrix();
-        updateModelViewProjectionMatrix();
         const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const int nengines = engines.count();
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
-            engine->update();
             engine->renderModel();
             engine->renderEdge();
             engine->renderShadow();
