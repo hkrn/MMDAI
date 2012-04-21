@@ -837,9 +837,9 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     int flags;
     m_lockTouchEvent = true;
     m_clickOrigin = pos;
+    m_handles->setPoint2D(pos);
 #ifdef IS_QMA2
     QRectF rect;
-    m_handles->setPoint2D(pos);
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     bool movable = false, rotateable = false;
     if (!m_bones.isEmpty()) {
