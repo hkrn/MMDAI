@@ -214,7 +214,6 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     const VertexUnit &vertex = *reinterpret_cast<VertexUnit *>(ptr);
     internal::setPosition(vertex.position, m_origin);
     internal::setPosition(vertex.normal, m_normal);
-    m_morphPosition = m_origin;
     m_texcoord.setValue(vertex.texcoord[0], vertex.texcoord[1], 0);
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
