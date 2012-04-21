@@ -59,6 +59,8 @@
 
 namespace vpvl2
 {
+class Factory;
+class IEncoding;
 class IModel;
 class IMotion;
 }
@@ -148,7 +150,9 @@ private:
     State *m_currentState;
     JuliusSpeechRecognitionEngine m_recog;
     OpenJTalkSpeechEngine m_speech;
-    LipSync m_globalLipSync;
+    vpvl2::IEncoding *m_encoding;
+    vpvl2::Factory *m_factory;
+    LipSync *m_globalLipSync;
     QHash<QString, float> m_values;
     QMap<QString, vpvl2::IModel *> m_models;
     QMap<QString, vpvl2::IMotion *> m_motions;

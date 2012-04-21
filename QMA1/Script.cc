@@ -165,10 +165,15 @@ Script::Script(ExtendedSceneWidget *parent)
     : QObject(parent),
       m_parent(parent),
       m_currentState(0),
+      m_encoding(0),
+      m_factory(0),
       m_globalLipSync(0),
       m_stage(0)
 {
     SceneLoader *loader = parent->sceneLoader();
+    m_encoding = new internal::Encoding();
+    m_factory = new vpvl2::Factory(m_encoding);
+    m_globalLipSync = new LipSync(m_factory);
     loader->createProject();
     connect(this, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
     connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), this, SLOT(handleModelDelete(vpvl2::IModel*)));
@@ -183,6 +188,9 @@ Script::~Script()
     stop();
     qDeleteAll(m_states);
     qDeleteAll(m_timers);
+    delete m_encoding;
+    delete m_factory;
+    delete m_globalLipSync;
     m_parent = 0;
     m_currentState = 0;
 }
@@ -205,7 +213,7 @@ bool Script::load(QTextStream &stream)
 
 void Script::loadGlobalLipSync(QTextStream &stream)
 {
-    m_globalLipSync.load(stream);
+    m_globalLipSync->load(stream);
 }
 
 bool Script::loadScript(QTextStream &stream)
@@ -415,25 +423,17 @@ void Script::handleCommand(const ScriptArgument &output)
                     model->setRotation(rotation);
                 }
             }
-            else {
-#if QMA_TBD
-                model->setPosition(model->rootBone().offset());
-#endif
-            }
-#if QMA_TBD
             if (argc >= 5) {
                 IModel *parentModel = m_models.value(argv[4]);
                 if (argc >= 6) {
                     internal::String s(argv[5]);
-                    IBone *bone = model->findBone(&s);
-                    model->setBaseBone(bone);
+                    if (IBone *bone = model->findBone(&s))
+                        model->setPosition(bone->localTransform().getOrigin());
                 }
-                else {
-                    // IBone *bone = Bone::centerBone(parentModel->mutableBones());
-                    model->setPositionOffset(parentModel->positionOffset()); // + bone->position());
+                else if (parentModel) {
+                    model->setPosition(parentModel->position());
                 }
             }
-#endif
             model->performUpdate();
             m_models.insert(modelName, model);
             Arguments a; a << modelName;
@@ -679,7 +679,7 @@ void Script::handleCommand(const ScriptArgument &output)
         if (m_models.contains(modelName)) {
             const QString &sequence = argv[1];
             IModel *model = m_models.value(modelName);
-            IMotion *newLipSyncMotion = m_globalLipSync.createMotion(sequence);
+            IMotion *newLipSyncMotion = m_globalLipSync->createMotion(sequence);
             if (newLipSyncMotion) {
                 IMotion *oldLipSyncMotion = m_motions.value(kLipSyncName);
                 //newLipSyncMotion->setFull(false);
