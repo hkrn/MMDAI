@@ -340,6 +340,18 @@ void Scene::advance(float delta)
     camera.updateMatrices(m_context->matrices);
 }
 
+float Scene::maxFrameIndex() const
+{
+    const Array<IMotion *> &motions = m_context->motions;
+    const int nmotions = motions.count();
+    float maxFrameIndex = 0;
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        btSetMax(maxFrameIndex, motion->maxFrameIndex());
+    }
+    return maxFrameIndex;
+}
+
 const Array<IModel *> &Scene::models() const
 {
     return m_context->models;
