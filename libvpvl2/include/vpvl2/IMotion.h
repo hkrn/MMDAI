@@ -164,6 +164,8 @@ public:
      * @param IKeyframe
      */
     virtual void deleteKeyframe(IKeyframe *value) = 0;
+
+    virtual const IString *name() const = 0;
 };
 
 }
