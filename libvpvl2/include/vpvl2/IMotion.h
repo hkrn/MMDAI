@@ -165,6 +165,10 @@ public:
      */
     virtual void deleteKeyframe(IKeyframe *value) = 0;
 
+    virtual bool isNullFrameEnabled() const = 0;
+
+    virtual void setNullFrameEnable(bool value) = 0;
+
     virtual const IString *name() const = 0;
 };
 

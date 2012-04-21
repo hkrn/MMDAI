@@ -510,8 +510,7 @@ void Script::handleCommand(const ScriptArgument &output)
                 parameter.isLoopEnabled = false;
                 if (argc >= 4) {
                     parseEnable(argv[3], "PART", "FULL", value);
-                    // FIXME
-                    // motion->setNullFrameEnable(value);
+                    motion->setNullFrameEnable(value);
                 }
                 if (argc >= 5) {
                     parseEnable(argv[4], "LOOP", "ONCE", value);
@@ -554,8 +553,7 @@ void Script::handleCommand(const ScriptArgument &output)
         if (m_models.contains(modelName) && m_motions.contains(motionName)) {
             IModel *model = m_models.value(modelName);
             IMotion *motion = m_motions.value(motionName);
-            // FIXME
-            // bool isNullFrameEnabled = motion->isNullFrameEnabled();
+            bool isNullFrameEnabled = motion->isNullFrameEnabled();
             bool isLoopEnabled = false;
             if (m_motionParameters.contains(motion)) {
                 const MotionParameter &parameter = m_motionParameters.value(motion);
@@ -568,8 +566,7 @@ void Script::handleCommand(const ScriptArgument &output)
             if (motion) {
                 MotionParameter parameter;
                 parameter.isLoopEnabled = isLoopEnabled;
-                // FIXME
-                //motion->setNullFrameEnable(isNullFrameEnabled);
+                motion->setNullFrameEnable(isNullFrameEnabled);
                 //motion->setEnableSmooth(enableSmooth);
                 //motion->setEnableRelocation(enableRelocation);
                 m_motions.remove(motionName);
