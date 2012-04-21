@@ -804,10 +804,9 @@ PMDRenderEngine::~PMDRenderEngine()
         delete m_context;
         m_context = 0;
     }
-    delete m_model;
-    m_model = 0;
     delete m_accelerator;
     m_accelerator = 0;
+    m_model = 0;
     m_delegate = 0;
     m_scene = 0;
 }

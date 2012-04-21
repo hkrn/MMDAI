@@ -863,8 +863,6 @@ PMXRenderEngine::~PMXRenderEngine()
         m_accelerator->deleteModel(m_context);
     delete m_accelerator;
     m_accelerator = 0;
-    delete m_model;
-    m_model = 0;
     m_delegate = 0;
     m_scene = 0;
     m_model = 0;

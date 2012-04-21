@@ -189,8 +189,9 @@ struct Scene::PrivateContext {
     {
     }
     ~PrivateContext() {
-        engines.releaseAll();
         motions.releaseAll();
+        engines.releaseAll();
+        models.releaseAll();
     }
 
     Hash<HashPtr, IRenderEngine *> model2engine;
@@ -272,6 +273,7 @@ void Scene::deleteModel(IModel *&model)
         m_context->engines.remove(*engine);
         m_context->model2engine.remove(key);
         delete *engine;
+        delete model;
         model = 0;
     }
 }

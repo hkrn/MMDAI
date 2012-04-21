@@ -254,7 +254,6 @@ AssetRenderEngine::~AssetRenderEngine()
     deleteRecurse(scene, scene->mRootNode);
     delete m_context;
     m_context = 0;
-    delete m_model;
     m_model = 0;
     m_delegate = 0;
     m_scene = 0;
