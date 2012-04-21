@@ -101,7 +101,7 @@ public:
         m_flags = debugMode;
     }
 
-    void initialize() {
+    void load() {
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
         m_program.link();

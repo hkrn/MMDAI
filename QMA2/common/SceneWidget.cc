@@ -259,9 +259,9 @@ void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
     IModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
-                                              tr("Open PMD/PMX file"),
-                                              tr("PMD/PMX file (*.pmd *.pmx *.zip)"),
-                                              m_settings));
+                                            tr("Open PMD/PMX file"),
+                                            tr("PMD/PMX file (*.pmd *.pmx *.zip)"),
+                                            m_settings));
     if (model && !m_playing) {
         setEmptyMotion(model);
         emit newMotionDidSet(model);
@@ -296,9 +296,9 @@ void SceneWidget::insertMotionToAllModels()
 {
     /* モーションを追加したら即座に反映させるために advanceMotion(0.0f) を呼んでおく */
     IMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                               tr("Open VMD (for model) file"),
-                                                               tr("VMD file (*.vmd)"),
-                                                               m_settings));
+                                                             tr("Open VMD (for model) file"),
+                                                             tr("VMD file (*.vmd)"),
+                                                             m_settings));
     IModel *selected = m_loader->selectedModel();
     if (motion && selected)
         motion->advance(0.0f);
@@ -326,9 +326,9 @@ void SceneWidget::insertMotionToSelectedModel()
     IModel *model = m_loader->selectedModel();
     if (model) {
         IMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                                       tr("Open VMD (for model) file"),
-                                                                       tr("VMD file (*.vmd)"),
-                                                                       m_settings));
+                                                                     tr("Open VMD (for model) file"),
+                                                                     tr("VMD file (*.vmd)"),
+                                                                     m_settings));
         if (motion)
             advanceMotion(0.0f);
     }
@@ -488,7 +488,7 @@ void SceneWidget::advanceMotion(float delta)
         m_loader->world()->mutableWorld()->stepSimulation(step);
     }
     scene->advance(delta);
-    updateRenderEngines();
+    updateScene();
     emit cameraPerspectiveDidSet(scene->camera());
 }
 
@@ -520,7 +520,7 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
         scene->seek(frameIndex);
         m_frameIndex = frameIndex;
     }
-    updateRenderEngines();
+    updateScene();
     emit cameraPerspectiveDidSet(scene->camera());
     emit motionDidSeek(frameIndex);
 }
@@ -535,7 +535,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_frameIndex = 0;
-    updateRenderEngines();
+    updateScene();
     emit cameraPerspectiveDidSet(scene->camera());
     emit motionDidSeek(0.0f);
 }
@@ -543,9 +543,9 @@ void SceneWidget::resetMotion()
 void SceneWidget::setCamera()
 {
     IMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
-                                                 tr("Open VMD (for camera) file"),
-                                                 tr("VMD file (*.vmd)"),
-                                                 m_settings));
+                                               tr("Open VMD (for camera) file"),
+                                               tr("VMD file (*.vmd)"),
+                                               m_settings));
     if (motion)
         advanceMotion(0.0f);
 }
@@ -638,16 +638,11 @@ void SceneWidget::rotateModel(const Quaternion &delta)
 
 void SceneWidget::rotateModel(IModel *model, const Quaternion &delta)
 {
-    Q_UNUSED(model)
-    Q_UNUSED(delta)
-#if QMA2_TBD
     if (model) {
-        const Quaternion &rotation = model->rotationOffset();
-        model->setRotationOffset(rotation * delta);
-        model->updateImmediate();
+        const Quaternion &rotation = model->rotation();
+        model->setRotation(rotation * delta);
         emit modelDidRotate(rotation);
     }
-#endif
 }
 
 void SceneWidget::translateScene(const Vector3 &delta)
@@ -664,30 +659,21 @@ void SceneWidget::translateModel(const Vector3 &delta)
 
 void SceneWidget::translateModel(IModel *model, const Vector3 &delta)
 {
-#if QMA2_TBD
     if (model) {
-        const Vector3 &position = model->positionOffset();
-        model->setPositionOffset(position + delta);
-        model->updateImmediate();
+        const Vector3 &position = model->position();
+        model->setPosition(position + delta);
         emit modelDidMove(position);
     }
-#else
-    Q_UNUSED(model)
-    Q_UNUSED(delta)
-#endif
 }
 
 void SceneWidget::resetModelPosition()
 {
-#if QMA2_TBD
     IModel *model = m_loader->selectedModel();
     if (model) {
-        const Vector3 &position = model->positionOffset();
-        model->setPositionOffset(Vector3(0.0f, 0.0f, 0.0f));
-        model->updateImmediate();
+        const Vector3 &position = model->position();
+        model->setPosition(kZeroV3);
         emit modelDidMove(position);
     }
-#endif
 }
 
 void SceneWidget::loadFile(const QString &file)
@@ -820,23 +806,26 @@ void SceneWidget::initializeGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
-    const QSize &s = size();
     m_loader = new SceneLoader();
     connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
+    const QSize &s = size();
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
     m_debugDrawer = new DebugDrawer(m_loader->scene());
+#ifdef IS_QMA2
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->load();
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();
+    /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
+    m_debugDrawer->load();
+#endif
     m_info->setModel(0);
     m_info->setBones(QList<IBone *>(), "");
     m_info->setFPS(0.0f);
     m_info->update();
-    m_debugDrawer->initialize();
     m_timer.start();
     startAutomaticRendering();
     emit initailizeGLContextDidDone();
@@ -845,11 +834,12 @@ void SceneWidget::initializeGL()
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
     const QPointF &pos = event->posF();
-    QRectF rect;
     int flags;
     m_lockTouchEvent = true;
-    m_handles->setPoint2D(pos);
     m_clickOrigin = pos;
+#ifdef IS_QMA2
+    QRectF rect;
+    m_handles->setPoint2D(pos);
     /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
     bool movable = false, rotateable = false;
     if (!m_bones.isEmpty()) {
@@ -893,6 +883,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             return;
         }
     }
+#endif
     /* モデルが選択状態にある */
     if (IModel *model = m_loader->selectedModel()) {
         /* ボーン選択モードである */
@@ -1023,6 +1014,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
+#ifdef IS_QMA2
     qglClearColor(m_loader->screenColor());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     m_loader->render();
@@ -1050,6 +1042,7 @@ void SceneWidget::paintGL()
         m_handles->drawMoveHandle();
         break;
     }
+#endif
 }
 
 void SceneWidget::resizeGL(int w, int h)
@@ -1075,7 +1068,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
             updateFPS();
         }
         else {
-            updateRenderEngines();
+            updateScene();
         }
     }
 }
@@ -1246,15 +1239,9 @@ void SceneWidget::updateFPS()
     m_frameCount++;
 }
 
-void SceneWidget::updateRenderEngines()
+void SceneWidget::updateScene()
 {
     m_loader->updateMatrices(QSizeF(size()));
-    const Array<IRenderEngine *> &renderEngines = m_loader->scene()->renderEngines();
-    const int nRenderEngines = renderEngines.count();
-    for (int i = 0; i < nRenderEngines; i++) {
-        IRenderEngine *engine = renderEngines[i];
-        engine->update();
-    }
     updateGL();
 }
 

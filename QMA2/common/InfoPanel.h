@@ -72,6 +72,8 @@ public:
         m_helper->load();
     }
     void update() {
+        if (!m_helper->isAvailable())
+            return;
         int height = m_fontMetrics.height();
         m_texture.fill(0);
         QPainter painter(&m_texture);

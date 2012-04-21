@@ -176,6 +176,11 @@ static inline const QString toQString(const IModel *value)
     return value ? internal::toQString(value->name()) : noneString();
 }
 
+static inline const QString toQString(const IMotion *value)
+{
+    return value ? internal::toQString(value->name()) : noneString();
+}
+
 static inline const QString toQString(const IBone *value)
 {
     return value ? internal::toQString(value->name()) : noneString();
