@@ -14,39 +14,82 @@ exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
-# assimp
-exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
-exists(../assimp/include):INCLUDEPATH += ../assimp/include
+# libvpvl and base libraries (MMDAgent for win32)
+ASSIMP_PATH = ../assimp
+BULLET_PATH = ../bullet
+VPVL_PATH = ../libvpvl
+VPVL2_PATH = ../libvpvl2
+MMDA_PATH = ../../MMDAgent/MMDAgent
 
-# Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
-win32:MMDA_PATH = ../../MMDAgent/MMDAgent
-win32:LIBS += -L$${MMDA_PATH}/Library_hts_engine_API/lib -L$${MMDA_PATH}/Library_Julius/lib \
-      -L$${MMDA_PATH}/Library_Open_JTalk/lib -L$${MMDA_PATH}/Library_PortAudio/lib -lglew32 -ldsound
-unix:LIBS += -lOpenJTalk -lHTSEngine -ljulius -lportaudio -lxml2
+# Required libraries
+LIBS += -L$${ASSIMP_PATH}/lib \
+        -lassimp \
+        -lBulletCollision \
+        -lBulletDynamics \
+        -lBulletSoftBody \
+        -lLinearMath \
+
+unix:LIBS += -lOpenJTalk \
+             -lHTSEngine \
+             -ljulius \
+             -lportaudio \
+             -lxml2
+
+win32:LIBS += -L$${MMDA_PATH}/Library_hts_engine_API/lib \
+      -L$${MMDA_PATH}/Library_Julius/lib \
+      -L$${MMDA_PATH}/Library_Open_JTalk/lib \
+      -L$${MMDA_PATH}/Library_PortAudio/lib \
+      -lglew32 \-ldsound
 
 # VPVL and others configuration
-INCLUDEPATH += ../libvpvl2/include ../bullet/src $${MMDA_PATH}/Library_Julius/include \
-       $${MMDA_PATH}/Library_Open_JTalk/include $${MMDA_PATH}/Library_hts_engine_API/include \
-       $${MMDA_PATH}/Library_PortAudio/include
-win32:INCLUDEPATH += ../libvpvl2/msvc-build/include $${MMDA_PATH}
+INCLUDEPATH +=  $${VPVL_PATH}/include \
+                $${VPVL2_PATH}/include \
+                $${ASSIMP_PATH}/include \
+                $${BULLET_PATH}/src
+
+win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
+                     $${MMDA_PATH} \
+                     $${MMDA_PATH}/Library_Julius/include \
+                     $${MMDA_PATH}/Library_Open_JTalk/include \
+                     $${MMDA_PATH}/Library_hts_engine_API/include \
+                     $${MMDA_PATH}/Library_PortAudio/include
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  win32:LIBS       += -L../libvpvl2/msvc-build/lib/debug -L../bullet/msvc-build/lib/debug \
-                      -lvpvl -lPortAudio_D -lhts_engine_API_D -lJulius_D -lOpen_JTalk_D -lws2_32
+  win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
+                      -L$${BULLET_PATH}/msvc-build/lib/debug \
+                      -lPortAudio_D \
+                      -lhts_engine_API_D \
+                      -lJulius_D \
+                      -lOpen_JTalk_D \
+                      -lws2_32
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L../libvpvl2/debug/lib -L../bullet/debug/lib -lvpvl2_debug
-  unix:INCLUDEPATH += ../libvpvl/include ../libvpvl/debug/include ../libvpvl2/debug/include
-  exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
+  unix:LIBS        += -L$${BULLET_PATH}/debug/lib \
+                      -L$${VPVL_PATH}/debug/lib \
+                      -L$${VPVL2_PATH}/debug/lib
+  unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
+                      $${VPVL2_PATH}/debug/include
+  LIBS             += -lvpvl_debug -lvpvl2_debug
+  exists($${ASSIMP_PATH}/debug):LIBS += -L$${ASSIMP_PATH}/code/debug -lassimp
 }
 CONFIG(release, debug|release) {
-  win32:LIBS       += -L../libvpvl2/msvc-build/lib/release -L../bullet/msvc-build/lib/release \
-                      -lvpvl -lPortAudio -lhts_engine_API -lJulius -lOpen_JTalk -lws2_32
+  win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
+                      -L$${BULLET_PATH}/msvc-build/lib/release \
+                      -lPortAudio \
+                      -lhts_engine_API \
+                      -lJulius \
+                      -lOpen_JTalk \
+                      -lws2_32 \
+                      -lvpvl \
+                      -lvpvl2
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L../libvpvl2/release/lib -L../bullet/release/lib -lvpvl2
-  unix:INCLUDEPATH += ../libvpvl2/release/include
-  exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
+  unix:LIBS        += -L$${BULLET_PATH}/release/lib \
+                      -L$${VPVL_PATH}/release/lib \
+                      -L$${VPVL2_PATH}/release/lib
+  LIBS             += -lvpvl -lvpvl2
+  unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
+                      $${VPVL2_PATH}release/include
+  exists($${ASSIMP_PATH}/release):LIBS += -L$${ASSIMP_PATH}/release -lassimp
 }
 
 # based on QtCreator's qmake spec
