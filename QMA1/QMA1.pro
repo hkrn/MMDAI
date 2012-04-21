@@ -144,7 +144,7 @@ macx {
 }
 linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN
-  QMAKE_RPATHDIR += \$\$ORIGIN/..
+  QMAKE_RPATHDIR += \$\$ORIGIN/lib
   QMA_RPATH = $$join(QMAKE_RPATHDIR, ":")
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
