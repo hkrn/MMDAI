@@ -40,6 +40,30 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+#if !defined(NDEBUG) && !defined(QMA_DEBUG)
+#include <vpvl2/pmd/Bone.h>
+#include <vpvl2/pmd/Model.h>
+#include <vpvl2/pmd/Morph.h>
+#include <vpvl2/pmx/Bone.h>
+#include <vpvl2/pmx/Joint.h>
+#include <vpvl2/pmx/Label.h>
+#include <vpvl2/pmx/Material.h>
+#include <vpvl2/pmx/Model.h>
+#include <vpvl2/pmx/Morph.h>
+#include <vpvl2/pmx/RigidBody.h>
+#include <vpvl2/pmx/Vertex.h>
+#include <vpvl2/vmd/BoneAnimation.h>
+#include <vpvl2/vmd/BoneKeyframe.h>
+#include <vpvl2/vmd/CameraAnimation.h>
+#include <vpvl2/vmd/CameraKeyframe.h>
+#include <vpvl2/vmd/LightAnimation.h>
+#include <vpvl2/vmd/LightKeyframe.h>
+#include <vpvl2/vmd/MorphAnimation.h>
+#include <vpvl2/vmd/MorphKeyframe.h>
+#include <vpvl2/vmd/Motion.h>
+#define QMA_DEBUG
+#endif
+
 namespace internal
 {
 
