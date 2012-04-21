@@ -65,7 +65,7 @@ public slots:
 
 signals:
     void scriptDidLoaded(const QString &filename);
-    void motionDidFinished(const QMultiMap<vpvl2::IModel *, vpvl2::IMotion *> &motions);
+    void motionDidFinished(const QList<vpvl2::IMotion *> &motions);
 
 protected:
     void dropEvent(QDropEvent *event);

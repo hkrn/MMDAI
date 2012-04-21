@@ -153,11 +153,11 @@ void ExtendedSceneWidget::paintGL()
     glEnable(GL_DEPTH_TEST);
     qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    m_tiledStage->renderBackground();
-    m_tiledStage->renderFloor();
+    //m_tiledStage->renderBackground();
+    //m_tiledStage->renderFloor();
     m_loader->render();
     if (m_script) {
-        const QMultiMap<IModel *, IMotion *> &motions = m_script->stoppedMotions();
+        const QList<IMotion *> &motions = m_script->stoppedMotions();
         if (!motions.isEmpty())
             emit motionDidFinished(motions);
     }

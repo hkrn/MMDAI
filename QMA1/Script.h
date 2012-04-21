@@ -108,7 +108,7 @@ public:
     void loadSpeechRecognitionEngine(const QDir &dir, const QString &baseName);
     void start();
     void stop();
-    const QMultiMap<vpvl2::IModel *, vpvl2::IMotion *> stoppedMotions() const;
+    const QList<vpvl2::IMotion *> stoppedMotions() const;
 
     void setDir(const QDir &value) { m_dir = value; }
 
@@ -126,7 +126,7 @@ protected:
 private slots:
     void execute();
     void handleModelDelete(vpvl2::IModel *model);
-    void handleFinishedMotion(const QMultiMap<vpvl2::IModel *, vpvl2::IMotion *> &motions);
+    void handleFinishedMotion(const QList<vpvl2::IMotion *> &motions);
 
 private:
     void addScriptArc(int from,

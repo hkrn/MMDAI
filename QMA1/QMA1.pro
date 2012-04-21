@@ -37,7 +37,7 @@ CONFIG(debug, debug|release) {
                       -lvpvl -lPortAudio_D -lhts_engine_API_D -lJulius_D -lOpen_JTalk_D -lws2_32
   macx:LIBS        += -framework OpenCL
   unix:LIBS        += -L../libvpvl2/debug/lib -L../bullet/debug/lib -lvpvl2_debug
-  unix:INCLUDEPATH += ../libvpvl2/debug/include
+  unix:INCLUDEPATH += ../libvpvl/include ../libvpvl/debug/include ../libvpvl2/debug/include
   exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
 }
 CONFIG(release, debug|release) {

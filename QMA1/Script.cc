@@ -171,9 +171,8 @@ Script::Script(ExtendedSceneWidget *parent)
     SceneLoader *loader = parent->sceneLoader();
     loader->createProject();
     connect(this, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::IModel*,QUuid)), this, SLOT(handleModelDelete(vpvl::IModel*)));
-    connect(parent, SIGNAL(motionDidFinished(QMultiMap<vpvl::IModel*,vpvl::IMotion*>)),
-            this, SLOT(handleFinishedMotion(QMultiMap<vpvl::IModel*,vpvl::IMotion*>)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), this, SLOT(handleModelDelete(vpvl2::IModel*)));
+    connect(parent, SIGNAL(motionDidFinished(QList<vpvl2::IMotion*>)), this, SLOT(handleFinishedMotion(QList<vpvl2::IMotion*>)));
     connect(&m_recog, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
     connect(&m_speech, SIGNAL(commandDidPost(QString,QList<QVariant>)), this, SLOT(handleCommand(QString,QList<QVariant>)));
     connect(&m_speech, SIGNAL(eventDidPost(QString,QList<QVariant>)), this, SLOT(handleEvent(QString,QList<QVariant>)));
@@ -333,15 +332,12 @@ void Script::handleModelDelete(IModel *model)
         m_models.remove(name);
 }
 
-void Script::handleFinishedMotion(const QMultiMap<IModel *, IMotion *> &motions)
+void Script::handleFinishedMotion(const QList<IMotion *> &motions)
 {
     /* ループさせる場合を除いてモーションが終了したらそのモーションは削除する */
     Arguments a;
-    QMapIterator<IModel *, IMotion *> iterator(motions);
     SceneLoader *loader = m_parent->sceneLoader();
-    while (iterator.hasNext()) {
-        iterator.next();
-        IMotion *motion = iterator.value();
+    foreach (IMotion *motion, motions) {
         if (m_motionParameters.contains(motion)) {
             const MotionParameter &parameter = m_motionParameters.value(motion);
             if (parameter.isLoopEnabled) {
@@ -1053,17 +1049,17 @@ bool Script::parseRotation(const QString &value, Quaternion &v) const
     return false;
 }
 
-const QMultiMap<IModel *, IMotion *> Script::stoppedMotions() const
+const QList<IMotion *> Script::stoppedMotions() const
 {
     /* 停止されたモーションを取得 */
-    QMultiMap<IModel *, IMotion *> ret;
+    QList<IMotion *> ret;
     SceneLoader *loader = m_parent->sceneLoader();
     const Array<IMotion *> &motions = loader->scene()->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
         if (motion->isReachedTo(motion->maxFrameIndex()))
-            ret.insert(motion->parentModel(), motion);
+            ret.append(motion);
     }
     return ret;
 }
