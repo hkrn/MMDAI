@@ -48,18 +48,6 @@
 
 using namespace vpvl2;
 
-/*
- * Renderer と Project の二重管理を行うため、メモリ解放にまつわる実装がややこしいことになっている。
- * 解放手順として以下を必ず行うようにする ( Asset と Model のみ)。
- *
- * 1. Project#remove*() を呼び出す
- * 2. Renderer#delete*() を呼び出す
- *
- * このようにするのは Renderer が独自のデータを保持しているため。Project は独自のデータを持たないので、
- * remove*() を呼び出して論理削除しても問題ないが、Renderer は上記の理由により delete*() しか呼び出せない。
- * また、delete*() は引数のポインタを解放後 0 にするという特性を持つため、先に remove*() を呼び出す理由になっている。
- */
-
 namespace
 {
 
@@ -513,6 +501,7 @@ const QByteArray UILoadFile(const QString &filename,
             if (!filtered.isEmpty() && archive->uncompress(filtered)) {
                 const QStringList &target = files.filter(extensions);
                 if (!target.isEmpty()) {
+                    /* ここではパスを置換して uploadTexture で読み込めるようにする */
                     const QString &filenameToLoad = target.first();
                     bytes = archive->data(filenameToLoad);
                     QFileInfo fileToLoadInfo(filenameToLoad), fileInfo(filename);
@@ -664,22 +653,21 @@ void SceneLoader::deleteCameraMotion()
 
 void SceneLoader::deleteModel(IModel *&model)
 {
-    /*
-     * メモリ解放に関しては最初の部分を参照
-     *
-     * Project にひもづけられるモーションの削除の観点を忘れていたので、
-     * モデルに属するモーションを Project から解除するように変更
-     */
     if (m_project->containsModel(model)) {
         const QUuid uuid(m_project->modelUUID(model).c_str());
         emit modelWillDelete(model, uuid);
-        const Array<IMotion *> &motions = m_project->motions();
-        int nmotions = motions.count();
+        /*
+         * motionWillDelete を発行するため、削除対象のモデルに所属するモーションを削除する。
+         * なお、データの物理削除を伴うため、配列に削除前のモーション配列をコピーしてから処理する必要がある。
+         * そうしないと削除したモーションデータを参照してクラッシュしてしまう。
+         */
+        Array<IMotion *> motions;
+        motions.copy(m_project->motions());
+        const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             IMotion *motion = motions[i];
             if (motion->parentModel() == model) {
-                m_project->removeMotion(motion);
-                delete motion;
+                deleteMotion(motion);
             }
         }
         m_project->removeModel(model);
@@ -1079,7 +1067,6 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
         Array<IBone *> bones;
         model->getBones(bones);
         const int nbones = bones.count();
-        // BoneAnimation *boneAnimation = newModelMotion->mutableBoneAnimation();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
@@ -1087,19 +1074,16 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
                 frame->setDefaultInterpolationParameter();
                 frame->setName(bone->name());
                 newModelMotion->addKeyframe(frame);
-                // boneAnimation->addKeyframe(frame);
             }
         }
         Array<IMorph *> morphs;
         model->getMorphs(morphs);
         const int nmorphs = morphs.count();
-        // FaceAnimation *faceAnimation = newModelMotion->mutableFaceAnimation();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
             IMorphKeyframe *frame = m_factory->createMorphKeyframe();
             frame->setName(morph->name());
             newModelMotion->addKeyframe(frame);
-            // faceAnimation->addKeyframe(frame);
         }
     }
     return newModelMotion;
@@ -1167,12 +1151,7 @@ void SceneLoader::updateMatrices(const QSizeF &size)
         modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
     matrices->setProjection(projectionMatrixf);
     matrices->setModelViewProjection(modelViewMatrixf);
-    const Array<IRenderEngine *> &renderEngines = m_project->renderEngines();
-    const int nRenderEngines = renderEngines.count();
-    for (int i = 0; i < nRenderEngines; i++) {
-        IRenderEngine *engine = renderEngines[i];
-        engine->update();
-    }
+    m_project->update();
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const
@@ -1490,7 +1469,7 @@ void SceneLoader::setFrameIndexPlayFrom(int value)
 
 int SceneLoader::frameIndexPlayTo() const
 {
-    return globalSetting("play.frame_index.to", maxFrameIndex());
+    return globalSetting("play.frame_index.to", int(m_project->maxFrameIndex()));
 }
 
 void SceneLoader::setFrameIndexPlayTo(int value)
@@ -1523,7 +1502,7 @@ void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
 
 int SceneLoader::frameIndexEncodeVideoTo() const
 {
-    return globalSetting("video.frame_index.to", maxFrameIndex());
+    return globalSetting("video.frame_index.to", int(m_project->maxFrameIndex()));
 }
 
 void SceneLoader::setFrameIndexEncodeVideoTo(int value)
@@ -1748,16 +1727,4 @@ Scene *SceneLoader::scene() const
 internal::World *SceneLoader::world() const
 {
     return m_world;
-}
-
-int SceneLoader::maxFrameIndex() const
-{
-    const Array<IMotion *> &motions = m_project->motions();
-    const int nmotions = motions.count();
-    float maxFrameIndex = 0;
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
-        btSetMax(maxFrameIndex, motion->maxFrameIndex());
-    }
-    return int(maxFrameIndex);
 }

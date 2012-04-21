@@ -477,17 +477,11 @@ void SceneWidget::advanceMotion(float delta)
     if (delta <= 0)
         return;
     Scene *scene = m_loader->scene();
-    const Array<IMotion *> &motions = scene->motions();
-    const int nmotions = motions.count();
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
-        motion->advance(delta);
-    }
+    scene->advance(delta);
     if (m_loader->isPhysicsEnabled()) {
         const Scalar &step = delta / Scene::defaultFPS();
         m_loader->world()->mutableWorld()->stepSimulation(step);
     }
-    scene->advance(delta);
     updateScene();
     emit cameraPerspectiveDidSet(scene->camera());
 }
@@ -511,12 +505,6 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
         light->setMotion(lightMotion);
     }
     else {
-        const Array<IMotion *> &motions = scene->motions();
-        const int nmotions = motions.count();
-        for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = motions[i];
-            motion->seek(frameIndex);
-        }
         scene->seek(frameIndex);
         m_frameIndex = frameIndex;
     }
