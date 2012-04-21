@@ -1,7 +1,6 @@
 QT += core gui opengl
 TARGET = MMDAI
 TEMPLATE = app
-DEFINES += QMA_ENABLE_MULTIPLE_MOTION
 
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += $$(CMAKE_PREFIX_PATH)/include
