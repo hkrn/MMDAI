@@ -28,7 +28,7 @@
      <key>NSHumanReadableCopyright</key>
      <string>(C) 2010-2011 hkrn</string>
      <key>CFBundleIconFile</key>
-     <string>MMDAI.icns</string>
+     <string>app.icns</string>
      <key>CFBundlePackageType</key>
      <string>APPL</string>
      <key>CFBundleSignature</key>

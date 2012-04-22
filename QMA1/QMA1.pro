@@ -88,7 +88,7 @@ CONFIG(release, debug|release) {
                       -L$${VPVL2_PATH}/release/lib
   LIBS             += -lvpvl -lvpvl2
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
-                      $${VPVL2_PATH}release/include
+                      $${VPVL2_PATH}/release/include
   exists($${ASSIMP_PATH}/release):LIBS += -L$${ASSIMP_PATH}/release -lassimp
 }
 
@@ -131,15 +131,15 @@ macx {
   QMAKE_INFO_PLIST = resources/Info.plist
   QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
   LIBS += -framework CoreAudio -framework CoreServices -framework AudioToolbox -framework AudioUnit
-  ICON = ../obsoletes/QMA/res/MMDAI.icns
+  ICON = ../QMA2/resources/icons/app.icns
   QMAKE_INFO_PLIST = resources/Info.plist
   translations.path = Contents/Resources
   julius.path = Contents/Resources/Julius
   openjtalk.path = Contents/Resources/OpenJTalk
   QMAKE_BUNDLE_DATA += translations julius openjtalk
   DEFINES += USE_FILE32API
-  CONFIG(debug, debug|release) {
-    CONFIG += x86_64
+  CONFIG(release, debug|release) {
+    CONFIG += x86_64 x86
   }
 }
 linux-* {
