@@ -749,6 +749,7 @@ void Script::handleCommand(const ScriptArgument &output)
             float max = argc == 3 ? argv.at(2).toFloat() : 0.0f;
             if (max < min)
                 qSwap(max, min);
+            qsrand(uint(QDateTime::currentMSecsSinceEpoch()));
             const float random = min + (max - min) * qrand() * (1.0f / RAND_MAX);
             m_values[key] = random;
         }
