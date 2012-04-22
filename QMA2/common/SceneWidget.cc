@@ -784,7 +784,7 @@ void SceneWidget::dropEvent(QDropEvent *event)
 void SceneWidget::initializeGL()
 {
     initializeGLFunctions(context());
-    qDebug("VPVL version: %s (%d)", VPVL2_VERSION_STRING, VPVL2_VERSION);
+    qDebug("VPVL2 version: %s (%d)", VPVL2_VERSION_STRING, VPVL2_VERSION);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));

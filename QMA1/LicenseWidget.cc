@@ -95,7 +95,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     addLibrary("Open Asset Import Library", "New BSD", "http://assimp.sf.net", "Assimp");
     addLibrary("BulletPhysics", "zlib", "http://bulletphysics.org/wordpress/", "Bullet");
     addLibrary("MMDAgent", "New BSD", "http://mmdagent.jp", "MMDAgent");
-    addLibrary("libvpvl", "New BSD", "https://github.com/hkrn/MMDAI/", "libvpvl");
+    addLibrary("libvpvl2", "New BSD", "https://github.com/hkrn/MMDAI/", "libvpvl");
 }
 
 LicenseWidget::~LicenseWidget()
