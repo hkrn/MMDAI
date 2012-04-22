@@ -454,14 +454,11 @@ public:
             if (lok && rok && m_useOrderAttr) {
                 return lorder < rorder;
             }
-            /*
             else {
-                IBone *lcenter = Bone::centerBone(&lmodel->bones()), *rcenter = Bone::centerBone(&rmodel->bones());
-                const Vector3 &positionLeft = m_modelViewTransform * lcenter->localTransform().getOrigin();
-                const Vector3 &positionRight = m_modelViewTransform * rcenter->localTransform().getOrigin();
+                const Vector3 &positionLeft = m_modelViewTransform * lmodel->position();
+                const Vector3 &positionRight = m_modelViewTransform * rmodel->position();
                 return positionLeft.z() < positionRight.z();
             }
-            */
         }
         return false;
     }
@@ -968,7 +965,7 @@ void SceneLoader::loadProject(const QString &path)
                     // const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
                     // model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
                     // model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
-                    // model->setPositionOffset(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
+                    model->setPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
                     /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
                     const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV3);
                     rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
@@ -1045,7 +1042,6 @@ IMotion *SceneLoader::newCameraMotion() const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
     IMotion *newCameraMotion = m_factory->createMotion();
-    // CameraAnimation *cameraAnimation = newCameraMotion->mutableCameraAnimation();
     ICameraKeyframe *frame = m_factory->createCameraKeyframe();
     Scene::ICamera *camera = m_project->camera();
     frame->setDefaultInterpolationParameter();
@@ -1054,7 +1050,6 @@ IMotion *SceneLoader::newCameraMotion() const
     frame->setFovy(camera->fovy());
     frame->setDistance(camera->distance());
     newCameraMotion->addKeyframe(frame);
-    // cameraAnimation->addKeyframe(frame);
     return newCameraMotion;
 }
 
@@ -1122,7 +1117,11 @@ void SceneLoader::render()
         const Project::UUID &uuidString = uuid.toString().toStdString();
         if (IModel *model = m_project->model(uuidString)) {
             IRenderEngine *engine = m_project->renderEngine(model);
+#ifdef IS_QMA2
             if (isProjectiveShadowEnabled(model)) {
+#else
+            if (true) {
+#endif
                 glCullFace(GL_FRONT);
                 engine->renderShadow();
                 glCullFace(GL_BACK);
@@ -1365,7 +1364,7 @@ void SceneLoader::setModelPosition(IModel *model, const Vector3 &value)
     if (m_project && model) {
         QString str;
         str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
-        // model->setPositionOffset(value);
+        model->setPosition(value);
         m_project->setModelSetting(model, "offset.position", str.toStdString());
     }
 }
@@ -1383,7 +1382,7 @@ void SceneLoader::setModelRotation(IModel *model, const Vector3 &value)
         m_project->setModelSetting(model, "offset.rotation", str.toStdString());
         Quaternion rotation;
         rotation.setEulerZYX(radian(value.x()), radian(value.y()), radian(value.z()));
-        // model->setRotationOffset(rotation);
+        model->setRotation(rotation);
     }
 }
 
