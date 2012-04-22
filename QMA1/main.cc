@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     QWidget fake;
     QTranslator appTranslator, qtTranslator;
     a.setApplicationName("MMDAI");
-    a.setApplicationVersion("2.2.0");
+    a.setApplicationVersion("3.0.0");
     a.setOrganizationDomain("mmdai.github.com");
     a.setOrganizationName("MMDAI");
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
