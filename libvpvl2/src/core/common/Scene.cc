@@ -86,6 +86,10 @@ public:
         resetDefault();
     }
     ~Light() {
+        delete m_motion;
+        m_motion = 0;
+        m_color.setZero();
+        m_direction.setZero();
     }
 
     const Vector3 &color() const { return m_color; }
@@ -116,12 +120,23 @@ public:
           m_position(kZeroV3),
           m_angle(kZeroV3),
           m_fovy(0),
-          m_distance(0)
+          m_distance(0),
+          m_znear(0.1),
+          m_zfar(10000)
     {
         resetDefault();
     }
     ~Camera()
     {
+        delete m_motion;
+        m_motion = 0;
+        m_transform.setIdentity();
+        m_position.setZero();
+        m_angle.setZero();
+        m_fovy = 0;
+        m_distance = 0;
+        m_znear = 0;
+        m_zfar = 0;
     }
 
     const Transform &modelViewTransform() const { return m_transform; }
@@ -129,17 +144,23 @@ public:
     const Vector3 &angle() const { return m_angle; }
     Scalar fovy() const { return m_fovy; }
     Scalar distance() const { return m_distance; }
+    Scalar znear() const { return m_znear; }
+    Scalar zfar() const { return m_zfar; }
     IMotion *motion() const { return m_motion; }
     void setPosition(const Vector3 &value) { m_position = value; }
     void setAngle(const Vector3 &value) { m_angle = value; }
-    void setFovy(float value) { m_fovy = value; }
-    void setDistance(float value) { m_distance = value; }
+    void setFovy(Scalar value) { m_fovy = value; }
+    void setDistance(Scalar value) { m_distance = value; }
+    void setZNear(Scalar value) { m_znear = value; }
+    void setZFar(Scalar value) { m_zfar = value; }
     void setMotion(IMotion *value) { m_motion = value; }
     void copyFrom(ICamera *value) {
         setPosition(value->position());
         setAngle(value->angle());
         setFovy(value->fovy());
         setDistance(value->distance());
+        setZNear(value->znear());
+        setZFar(value->zfar());
     }
     void resetDefault() {
         setPosition(Vector3(0, 10, 0));
@@ -175,8 +196,10 @@ private:
     Quaternion m_rotation;
     Vector3 m_position;
     Vector3 m_angle;
-    float m_fovy;
-    float m_distance;
+    Scalar m_fovy;
+    Scalar m_distance;
+    Scalar m_znear;
+    Scalar m_zfar;
 };
 
 }

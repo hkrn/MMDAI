@@ -90,11 +90,15 @@ public:
         virtual const Vector3 &angle() const = 0;
         virtual Scalar fovy() const = 0;
         virtual Scalar distance() const = 0;
+        virtual Scalar znear() const = 0;
+        virtual Scalar zfar() const = 0;
         virtual IMotion *motion() const = 0;
         virtual void setPosition(const Vector3 &value) = 0;
         virtual void setAngle(const Vector3 &value) = 0;
-        virtual void setFovy(float value) = 0;
-        virtual void setDistance(float value) = 0;
+        virtual void setFovy(Scalar value) = 0;
+        virtual void setDistance(Scalar value) = 0;
+        virtual void setZNear(Scalar value) = 0;
+        virtual void setZFar(Scalar value) = 0;
         virtual void setMotion(IMotion *value) = 0;
         virtual void copyFrom(ICamera *value) = 0;
         virtual void resetDefault() = 0;
