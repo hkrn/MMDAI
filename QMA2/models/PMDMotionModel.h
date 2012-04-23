@@ -41,10 +41,10 @@
 
 #include <QtCore/QString>
 #include <QtGui/QAbstractItemView>
-#include <vpvl/PMDModel.h>
 
-namespace vpvl {
-class VMDMotion;
+namespace vpvl2 {
+class IModel;
+class IMotion;
 }
 
 class QUndoCommand;
@@ -75,37 +75,36 @@ public:
     int maxFrameCount() const;
     int maxFrameIndex() const;
 
-    vpvl::PMDModel *selectedModel() const { return m_model; }
+    vpvl2::IModel *selectedModel() const { return m_model; }
     const Keys keys() const { return m_keys[m_model]; }
 
 public slots:
-    virtual void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model) = 0;
-    virtual void setPMDModel(vpvl::PMDModel *model) = 0;
+    virtual void loadMotion(vpvl2::IMotion *motion, vpvl2::IModel *model) = 0;
+    virtual void setPMDModel(vpvl2::IModel *model) = 0;
     virtual void removeModel() = 0;
-    void markAsNew(vpvl::PMDModel *model);
+    void markAsNew(vpvl2::IModel *model);
 
 signals:
-    void modelDidChange(vpvl::PMDModel *model);
-    void motionDidUpdate(vpvl::PMDModel *model);
+    void modelDidChange(vpvl2::IModel *model);
+    void motionDidUpdate(vpvl2::IModel *model);
 
 protected:
-    void removePMDModel(vpvl::PMDModel *model);
-    void removePMDMotion(vpvl::PMDModel *model);
-    void addPMDModel(vpvl::PMDModel *model, const RootPtr &root, const Keys &keys);
-    bool hasPMDModel(vpvl::PMDModel *model) const { return m_roots.contains(model); }
+    void removePMDModel(vpvl2::IModel *model);
+    void removePMDMotion(vpvl2::IModel *model);
+    void addPMDModel(vpvl2::IModel *model, const RootPtr &root, const Keys &keys);
+    bool hasPMDModel(vpvl2::IModel *model) const { return m_roots.contains(model); }
     const Values values() const { return m_values[m_model]; }
     RootPtr rootPtr() const { return rootPtr(m_model); }
-    RootPtr rootPtr(vpvl::PMDModel *model) const { return m_roots[model]; }
+    RootPtr rootPtr(vpvl2::IModel *model) const { return m_roots[model]; }
     virtual ITreeItem *root() const { return rootPtr().data(); }
 
-    vpvl::PMDModel *m_model;
+    vpvl2::IModel *m_model;
 
 private:
-    vpvl::PMDModel::State *m_state;
-    QHash<vpvl::PMDModel *, Keys> m_keys;
-    QHash<vpvl::PMDModel *, Values> m_values;
-    QHash<vpvl::PMDModel *, RootPtr> m_roots;
-    QHash<vpvl::PMDModel *, UndoStackPtr> m_stacks;
+    QHash<vpvl2::IModel *, Keys> m_keys;
+    QHash<vpvl2::IModel *, Values> m_values;
+    QHash<vpvl2::IModel *, RootPtr> m_roots;
+    QHash<vpvl2::IModel *, UndoStackPtr> m_stacks;
 
     Q_DISABLE_COPY(PMDMotionModel)
 };

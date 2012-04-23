@@ -41,8 +41,11 @@
 
 #include <vpvl/BaseAnimation.h>
 
-namespace vpvl {
-class FaceKeyframe;
+namespace vpvl2 {
+class Factory;
+class IModel;
+class IMorph;
+class IMorphKeyframe;
 }
 
 class MorphMotionModel : public PMDMotionModel
@@ -50,28 +53,29 @@ class MorphMotionModel : public PMDMotionModel
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl::FaceKeyframe> KeyFramePtr;
+    typedef QSharedPointer<vpvl2::IMorphKeyframe> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    explicit MorphMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    explicit MorphMotionModel(vpvl2::Factory *factory, QUndoGroup *undo = 0, QObject *parent = 0);
     ~MorphMotionModel();
 
-    void saveMotion(vpvl::VMDMotion *motion);
+    void saveMotion(vpvl2::IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframesByFrameIndex(int frameIndex);
     void saveTransform();
     void commitTransform();
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
-    const QByteArray nameFromModelIndex(const QModelIndex &index) const;
+    const QString nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
     void resetAllFaces();
-    vpvl::Face *findFace(const QString &name);
+    vpvl2::IMorph *findFace(const QString &name);
     void setWeight(float value);
-    void setWeight(float value, vpvl::Face *face);
-    vpvl::Face *selectedFace() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
-    bool isFaceSelected() const { return m_model != 0 && selectedFace() != 0; }
+    void setWeight(float value, vpvl2::IMorph *face);
+    vpvl2::IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
+    bool isFaceSelected() const { return m_model != 0 && selectedMorph() != 0; }
+    vpvl2::Factory *factory() const { return m_factory; }
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
@@ -79,17 +83,17 @@ public slots:
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();
-    void setPMDModel(vpvl::PMDModel *model);
-    void loadMotion(vpvl::VMDMotion *motion, vpvl::PMDModel *model);
-    void selectFaces(const QList<vpvl::Face *> &faces);
+    void setPMDModel(vpvl2::IModel *model);
+    void loadMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
+    void selectFaces(const QList<vpvl2::IMorph *> &faces);
 
 signals:
     void facesDidSelect(const QList<vpvl::Face *> &faces);
 
 private:
-    QList<vpvl::Face *> m_selectedMorphs;
+    vpvl2::Factory *m_factory;
+    QList<vpvl2::IMorph *> m_selectedMorphs;
     KeyFramePairList m_copiedKeyframes;
-    vpvl::PMDModel::State *m_state;
 
     Q_DISABLE_COPY(MorphMotionModel)
 };

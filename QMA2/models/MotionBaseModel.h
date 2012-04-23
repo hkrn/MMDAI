@@ -43,8 +43,8 @@
 #include <QtGui/QUndoStack>
 #include <QtGui/QUndoGroup>
 
-namespace vpvl {
-class VMDMotion;
+namespace vpvl2 {
+class IMotion;
 }
 
 class MotionBaseModel : public QAbstractTableModel
@@ -147,14 +147,14 @@ public:
     }
 
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const = 0;
-    virtual const QByteArray nameFromModelIndex(const QModelIndex &index) const = 0;
-    virtual void saveMotion(vpvl::VMDMotion *motion) = 0;
+    virtual const QString nameFromModelIndex(const QModelIndex &index) const = 0;
+    virtual void saveMotion(vpvl2::IMotion *motion) = 0;
     virtual void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex) = 0;
     virtual void pasteKeyframesByFrameIndex(int frameIndex) = 0;
     virtual int maxFrameCount() const = 0;
     virtual int maxFrameIndex() const = 0;
 
-    vpvl::VMDMotion *currentMotion() const { return m_motion; }
+    vpvl2::IMotion *currentMotion() const { return m_motion; }
     void setFrameIndex(float newIndex) {
         float oldIndex = m_frameIndex;
         m_frameIndex = newIndex;
@@ -185,7 +185,7 @@ protected:
             activeStack->push(command);
     }
 
-    vpvl::VMDMotion *m_motion;
+    vpvl2::IMotion *m_motion;
     QUndoGroup *m_undo;
     float m_frameIndex;
     bool m_modified;

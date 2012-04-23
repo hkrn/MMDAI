@@ -39,10 +39,12 @@
 
 #include "models/MotionBaseModel.h"
 
-#include <vpvl/CameraKeyFrame.h>
+#include <vpvl2/ICameraKeyFrame.h>
 
-namespace vpvl {
-class PMDModel;
+namespace vpvl2 {
+class Factory;
+class IKeyframe;
+class IModel;
 class Scene;
 }
 
@@ -53,11 +55,14 @@ class SceneMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl::BaseKeyframe> KeyFramePtr;
+    typedef QSharedPointer<vpvl2::IKeyframe> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    explicit SceneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent = 0);
+    explicit SceneMotionModel(vpvl2::Factory *factory,
+                              QUndoGroup *undo,
+                              const SceneWidget *sceneWidget,
+                              QObject *parent = 0);
     ~SceneMotionModel();
 
     virtual QVariant data(const QModelIndex &index, int role) const;
@@ -67,19 +72,20 @@ public:
     virtual int maxFrameIndex() const;
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
-    void saveMotion(vpvl::VMDMotion *motion);
+    void saveMotion(vpvl2::IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframesByFrameIndex(int frameIndex);
-    const QByteArray nameFromModelIndex(const QModelIndex &index) const;
+    const QString nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
     void refreshScene();
-    const vpvl::CameraKeyframe::InterpolationParameter &cameraInterpolationParameter() const {
+    const vpvl2::ICameraKeyframe::InterpolationParameter &cameraInterpolationParameter() const {
         return m_cameraInterpolationParameter;
     }
-    void setCameraInterpolationParameter(const vpvl::CameraKeyframe::InterpolationParameter &value) {
+    void setCameraInterpolationParameter(const vpvl2::ICameraKeyframe::InterpolationParameter &value) {
         m_cameraInterpolationParameter = value;
     }
+    vpvl2::Factory *factory() const { return m_factory; }
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
@@ -87,12 +93,12 @@ public slots:
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void removeMotion();
-    void loadMotion(vpvl::VMDMotion *motion);
+    void loadMotion(vpvl2::IMotion *motion);
     void markAsNew() { setModified(false); }
 
 signals:
     void keyframesDidSelect(const QList<SceneMotionModel::KeyFramePtr> &cameraFrames);
-    void motionDidUpdate(vpvl::PMDModel *model);
+    void motionDidUpdate(vpvl2::IModel *model);
 
 protected:
     virtual ITreeItem *root() const { return m_rootTreeItem; }
@@ -102,7 +108,8 @@ private:
     QModelIndex m_cameraIndex;
     Values m_cameraData;
     Values m_lightData;
-    vpvl::CameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
+    vpvl2::Factory *m_factory;
+    vpvl2::ICameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
     ITreeItem *m_rootTreeItem;
     ITreeItem *m_cameraTreeItem;
     ITreeItem *m_lightTreeItem;

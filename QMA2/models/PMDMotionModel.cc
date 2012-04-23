@@ -38,14 +38,13 @@
 #include "models/PMDMotionModel.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
-    m_model(0),
-    m_state(0)
+    m_model(0)
 {
     /* 空のモデルのデータを予め入れておく */
     m_roots.insert(0, RootPtr(0));
@@ -57,8 +56,6 @@ PMDMotionModel::~PMDMotionModel()
 {
     if (m_model)
         m_model->discardState(m_state);
-    if (m_state)
-        qWarning("It seems memory leak occured: m_state");
 }
 
 QVariant PMDMotionModel::data(const QModelIndex &index, int role) const
@@ -121,17 +118,23 @@ void PMDMotionModel::saveState()
 void PMDMotionModel::restoreState()
 {
     /* 復元とモデル状態の更新、現在の状態を破棄する機能がついた restoreState のラッパー */
+#if 0
+    // FIXME: this
     if (m_model) {
         m_model->restoreState(m_state);
         m_model->updateImmediate();
         m_model->discardState(m_state);
     }
+#endif
 }
 
 void PMDMotionModel::discardState()
 {
+#if 0
+    // FIXME: this
     if (m_model)
         m_model->discardState(m_state);
+#endif
 }
 
 int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
@@ -140,7 +143,7 @@ int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
     return m_model ? maxFrameCount() + 2 : 1;
 }
 
-void PMDMotionModel::markAsNew(PMDModel *model)
+void PMDMotionModel::markAsNew(IModel *model)
 {
     if (model == m_model)
         setModified(false);
@@ -167,12 +170,12 @@ int PMDMotionModel::maxFrameIndex() const
 void PMDMotionModel::updateModel()
 {
     if (m_model) {
-        m_model->seekMotion(m_frameIndex);
-        m_model->updateImmediate();
+        m_model->performUpdate();
+        emit frameIndexDidChange(m_frameIndex, m_frameIndex);
     }
 }
 
-void PMDMotionModel::addPMDModel(PMDModel *model, const RootPtr &root, const Keys &keys)
+void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys &keys)
 {
     /* モデルが新規の場合はそのモデルの巻き戻しスタックを作成し、そうでない場合は該当のモデルの巻戻しスタックを有効にする */
     if (!m_stacks.contains(model)) {
@@ -193,7 +196,7 @@ void PMDMotionModel::addPMDModel(PMDModel *model, const RootPtr &root, const Key
         m_values.insert(model, Values());
 }
 
-void PMDMotionModel::removePMDModel(PMDModel *model)
+void PMDMotionModel::removePMDModel(IModel *model)
 {
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
     m_model = 0;
@@ -204,7 +207,7 @@ void PMDMotionModel::removePMDModel(PMDModel *model)
     m_roots.remove(model);
 }
 
-void PMDMotionModel::removePMDMotion(PMDModel *model)
+void PMDMotionModel::removePMDMotion(IModel *model)
 {
     /* テーブルのモデルのデータの破棄と巻き戻しスタックの破棄を行う。モーションは削除されない */
     if (m_values.contains(model))

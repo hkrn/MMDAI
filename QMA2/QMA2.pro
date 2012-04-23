@@ -14,38 +14,70 @@ exists(/usr/local/include):INCLUDEPATH += /usr/local/include
 exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
-# assimp
-exists(../assimp/lib):LIBS += -L../assimp/lib -lassimp
-exists(../assimp/include):INCLUDEPATH += ../assimp/include
-
 # PortAudio
 exists(../portaudio/build/scons/posix):LIBS += -L../portaudio/build/scons/posix
 exists(../portaudio/build/scons/darwin):LIBS += -L../portaudio/build/scons/darwin
 exists(../portaudio/include):INCLUDEPATH += ../portaudio/include
-LIBS += -lportaudio
+
+# libxml2
+exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
+exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
+
+# libvpvl and base libraries (MMDAgent for win32)
+ASSIMP_PATH = ../assimp
+BULLET_PATH = ../bullet
+VPVL_PATH = ../libvpvl
+VPVL2_PATH = ../libvpvl2
+MMDA_PATH = ../../MMDAgent/MMDAgent
+
+# Required libraries
+LIBS += -L$${ASSIMP_PATH}/lib \
+        -lassimp \
+        -lBulletCollision \
+        -lBulletDynamics \
+        -lBulletSoftBody \
+        -lLinearMath \
+        -lportaudio \
+        -lxml2
 
 # VPVL and others configuration
-INCLUDEPATH += ../libvpvl/include ../bullet/src
+INCLUDEPATH +=  $${VPVL_PATH}/include \
+                $${VPVL2_PATH}/include \
+                $${ASSIMP_PATH}/include \
+                $${BULLET_PATH}/src
+
+win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
+                     $${MMDA_PATH} \
+                     $${MMDA_PATH}/Library_Julius/include \
+                     $${MMDA_PATH}/Library_Open_JTalk/include \
+                     $${MMDA_PATH}/Library_hts_engine_API/include \
+                     $${MMDA_PATH}/Library_PortAudio/include
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  LIBS        += -L../libvpvl/debug/lib -L../bullet/debug/lib -lvpvl_debug
-  INCLUDEPATH += ../libvpvl/debug/include
-  macx:LIBS   += -framework Cg
-  exists(../assimp/code/debug):LIBS += -L../assimp/code/debug -lassimp
+  win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
+                      -L$${BULLET_PATH}/msvc-build/lib/debug
+  macx:LIBS        += -framework OpenCL
+  unix:LIBS        += -L$${BULLET_PATH}/debug/lib \
+                      -L$${VPVL_PATH}/debug/lib \
+                      -L$${VPVL2_PATH}/debug/lib
+  unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
+                      $${VPVL2_PATH}/debug/include
+  LIBS             += -lvpvl_debug -lvpvl2_debug
 }
 CONFIG(release, debug|release) {
-  LIBS        += -L../libvpvl/release/lib -L../bullet/release/lib -lvpvl -lxml2
-  INCLUDEPATH += ../libvpvl/release/include
-  exists(../assimp/code/release):LIBS += -L../assimp/code/release -lassimp
+  win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
+                      -L$${BULLET_PATH}/msvc-build/lib/release
+  macx:LIBS        += -framework OpenCL
+  unix:LIBS        += -L$${BULLET_PATH}/release/lib \
+                      -L$${VPVL_PATH}/release/lib \
+                      -L$${VPVL2_PATH}/release/lib
+  LIBS             += -lvpvl -lvpvl2
+  unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
+                      $${VPVL2_PATH}/release/include
 }
 macx:LIBS += -framework OpenCL -framework CoreServices -framework OpenCL -framework CoreAudio -framework AudioToolbox -framework AudioUnit
 linux-*:LIBS += -lGLU
-
-# Basic Configuration
-LIBS += -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lavcodec -lavformat -lavutil -lswscale
-unix:LIBS += -lxml2
-win32:LIBS += -llibxml2
 
 # based on QtCreator's qmake spec
 DEFINES += QT_NO_CAST_TO_ASCII

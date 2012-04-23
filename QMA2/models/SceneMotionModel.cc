@@ -39,10 +39,9 @@
 #include "models/SceneMotionModel.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 namespace {
 
@@ -192,51 +191,52 @@ public:
     }
 
     virtual void undo() {
-        CameraAnimation *animation = m_smm->currentMotion()->mutableCameraAnimation();
+        IMotion *motion = m_smm->currentMotion();
         foreach (int frameIndex, m_frameIndices) {
-            animation->deleteKeyframes(frameIndex);
+            motion->deleteKeyframes(frameIndex, IKeyframe::kCamera);
             const QModelIndex &index = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
             m_smm->setData(index, QVariant());
         }
+        Factory *factory = m_smm->factory();
+        QScopedPointer<ICameraKeyframe> newCameraKeyframe;
         foreach (const QModelIndex &index, m_indices) {
             const QByteArray &bytes = index.data(SceneMotionModel::kBinaryDataRole).toByteArray();
             m_smm->setData(index, bytes, Qt::EditRole);
-            CameraKeyframe *frame = new CameraKeyframe();
-            frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->replaceKeyframe(frame);
+            newCameraKeyframe.reset(factory->createCameraKeyframe());
+            newCameraKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            motion->replaceKeyframe(newCameraKeyframe.take());
         }
-        animation->refresh();
         m_smm->refreshScene();
     }
     virtual void redo() {
-        CameraAnimation *animation = m_smm->currentMotion()->mutableCameraAnimation();
+        QScopedPointer<ICameraKeyframe> newCameraKeyframe;
+        IMotion *motion = m_smm->currentMotion();
         foreach (const SceneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
             SceneMotionModel::KeyFramePtr ptr = pair.second;
-            CameraKeyframe *frame = static_cast<CameraKeyframe *>(ptr.data());
+            ICameraKeyframe *cameraKeyframe = static_cast<ICameraKeyframe *>(ptr.data());
             const QModelIndex &modelIndex = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
-            if (frame->frameIndex() >= 0) {
-                QByteArray bytes(CameraKeyframe::strideSize(), '0');
-                CameraKeyframe *newFrame = static_cast<CameraKeyframe *>(frame->clone());
-                newFrame->setInterpolationParameter(CameraKeyframe::kX, m_parameter.x);
-                newFrame->setInterpolationParameter(CameraKeyframe::kY, m_parameter.y);
-                newFrame->setInterpolationParameter(CameraKeyframe::kZ, m_parameter.z);
-                newFrame->setInterpolationParameter(CameraKeyframe::kRotation, m_parameter.rotation);
-                newFrame->setInterpolationParameter(CameraKeyframe::kFovy, m_parameter.fovy);
-                newFrame->setInterpolationParameter(CameraKeyframe::kDistance, m_parameter.distance);
-                newFrame->setFrameIndex(frameIndex);
-                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                animation->replaceKeyframe(newFrame);
+            if (cameraKeyframe->frameIndex() >= 0) {
+                QByteArray bytes(cameraKeyframe->estimateSize(), '0');
+                newCameraKeyframe.reset(cameraKeyframe->clone());
+                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kX, m_parameter.x);
+                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kY, m_parameter.y);
+                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kZ, m_parameter.z);
+                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kRotation, m_parameter.rotation);
+                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kFovy, m_parameter.fovy);
+                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kDistance, m_parameter.distance);
+                newCameraKeyframe->setFrameIndex(frameIndex);
+                newCameraKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                motion->replaceKeyframe(newCameraKeyframe.take());
                 m_smm->setData(modelIndex, bytes);
             }
             else {
                 /* 元フレームのインデックスが 0 未満の時は削除 */
-                BaseKeyframe *frameToDelete = animation->findKeyframe(frameIndex, frame->name());
-                animation->deleteKeyframe(frameToDelete);
+                IKeyframe *frameToDelete = motion->findCameraKeyframe(frameIndex);
+                motion->deleteKeyframe(frameToDelete);
                 m_smm->setData(modelIndex, QVariant());
             }
         }
-        animation->refresh();
         m_smm->refreshScene();
     }
 
@@ -246,14 +246,18 @@ private:
     SceneMotionModel::KeyFramePairList m_frames;
     SceneMotionModel *m_smm;
     SceneMotionModel::ITreeItem *m_cameraTreeItem;
-    CameraKeyframe::InterpolationParameter m_parameter;
+    ICameraKeyframe::InterpolationParameter m_parameter;
 };
 
 }
 
-SceneMotionModel::SceneMotionModel(QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent)
+SceneMotionModel::SceneMotionModel(Factory *factory,
+                                   QUndoGroup *undo,
+                                   const SceneWidget *sceneWidget,
+                                   QObject *parent)
     : MotionBaseModel(undo, parent),
       m_sceneWidget(sceneWidget),
+      m_factory(factory),
       m_rootTreeItem(0),
       m_cameraTreeItem(0),
       m_lightTreeItem(0)
@@ -356,16 +360,16 @@ const QModelIndex SceneMotionModel::frameIndexToModelIndex(ITreeItem *item, int 
     return modelIndex;
 }
 
-void SceneMotionModel::saveMotion(VMDMotion *motion)
+void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
 {
     /* 照明データ未対応 */
-    CameraAnimation *animation = motion->mutableCameraAnimation();
     if (m_cameraData.size() > 1) {
+        QScopedPointer<ICameraKeyframe> newFrame;
         foreach (const QVariant &value, m_cameraData) {
-            CameraKeyframe *newFrame = new CameraKeyframe();
             const QByteArray &bytes = value.toByteArray();
+            newFrame.reset(m_factory->createCameraKeyframe());
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            animation->addKeyframe(newFrame);
+            motion->addKeyframe(newFrame.take());
         }
     }
     setModified(false);
@@ -374,27 +378,28 @@ void SceneMotionModel::saveMotion(VMDMotion *motion)
 void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList sceneFrames;
+    QScopedPointer<ICameraKeyframe> cameraKeyframe;
+    QScopedPointer<ILightKeyframe> lightKeyframe;
     foreach (const QModelIndex &index, indices) {
         ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
         int frameIndex = toFrameIndex(index);
         if (frameIndex >= 0 && item->isCategory()) {
             if (index.row() == m_cameraTreeItem->rowIndex()) {
-                CameraKeyframe *frame = new CameraKeyframe();
-                const Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
-                frame->setDefaultInterpolationParameter();
-                frame->setPosition(scene->cameraPosition());
-                frame->setAngle(scene->cameraAngle());
-                frame->setFovy(scene->fovy());
-                frame->setDistance(scene->cameraDistance());
-                sceneFrames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+                const Scene::ICamera *camera = m_sceneWidget->sceneLoader()->scene()->camera();
+                cameraKeyframe.reset(m_factory->createCameraKeyframe());
+                cameraKeyframe->setDefaultInterpolationParameter();
+                cameraKeyframe->setPosition(camera->position());
+                cameraKeyframe->setAngle(camera->angle());
+                cameraKeyframe->setFovy(camera->fovy());
+                cameraKeyframe->setDistance(camera->distance());
+                sceneFrames.append(KeyFramePair(frameIndex, KeyFramePtr(cameraKeyframe.take())));
             }
             else if (index.row() == m_lightTreeItem->rowIndex()) {
-                LightKeyframe *frame = new LightKeyframe();
-                const Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
-                const vpvl::Color &color = scene->lightColor();
-                frame->setColor(Vector3(color.x(), color.y(), color.z()));
-                frame->setDirection(scene->lightPosition());
-                sceneFrames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+                const Scene::ILight *light = m_sceneWidget->sceneLoader()->scene()->light();
+                lightKeyframe.reset(m_factory->createLightKeyframe());
+                lightKeyframe->setColor(light->color());
+                lightKeyframe->setDirection(light->direction());
+                sceneFrames.append(KeyFramePair(frameIndex, KeyFramePtr(lightKeyframe.take())));
             }
         }
     }
@@ -414,9 +419,9 @@ void SceneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
             KeyFramePairList frames;
-            CameraKeyframe *frame = new CameraKeyframe();
+            QScopedPointer<ICameraKeyframe> frame(m_factory->createCameraKeyframe());
             frame->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame)));
+            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame.take())));
             addUndoCommand(new SetFramesCommand(this, frames, m_cameraTreeItem));
         }
     }
@@ -426,13 +431,14 @@ void SceneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indi
 {
     /* 照明データ未対応 */
     QList<KeyFramePtr> frames;
+    QScopedPointer<ICameraKeyframe> frame;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid()) {
             const QVariant &data = index.data(kBinaryDataRole);
             if (data.canConvert(QVariant::ByteArray)) {
-                CameraKeyframe *frame = new CameraKeyframe();
+                frame.reset(m_factory->createCameraKeyframe());
                 frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
-                frames.append(KeyFramePtr(frame));
+                frames.append(KeyFramePtr(frame.take()));
             }
         }
     }
@@ -440,51 +446,38 @@ void SceneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indi
         keyframesDidSelect(frames);
 }
 
-const QByteArray SceneMotionModel::nameFromModelIndex(const QModelIndex & /* index */) const
+const QString SceneMotionModel::nameFromModelIndex(const QModelIndex & /* index */) const
 {
-    return QByteArray();
+    return QString();
 }
 
-void SceneMotionModel::loadMotion(VMDMotion *motion)
+void SceneMotionModel::loadMotion(IMotion *motion)
 {
     m_cameraData.clear();
     if (motion) {
         /* カメラのキーフレームをテーブルのモデルデータにコピーする */
-        const CameraAnimation &ca = motion->cameraAnimation();
-        const int nCameraFrames = ca.countKeyframes();
+        QScopedPointer<ICameraKeyframe> newCameraKeyframe;
+        const int nCameraFrames = motion->countKeyframes(IKeyframe::kCamera);
         for (int i = 0; i < nCameraFrames; i++) {
-            const CameraKeyframe *frame = ca.frameAt(i);
-            int frameIndex = static_cast<int>(frame->frameIndex());
-            QByteArray bytes(CameraKeyframe::strideSize(), '0');
+            const ICameraKeyframe *cameraKeyframe = motion->findCameraKeyframeAt(i);
+            int frameIndex = static_cast<int>(cameraKeyframe->frameIndex());
+            QByteArray bytes(cameraKeyframe->estimateSize(), '0');
             const QModelIndex &modelIndex = frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
-            // It seems to use CameraKeyFrame#clone()
-            CameraKeyframe newFrame;
-            newFrame.setPosition(frame->position());
-            newFrame.setAngle(frame->angle());
-            newFrame.setFovy(frame->fovy());
-            newFrame.setDistance(frame->distance());
-            newFrame.setFrameIndex(frameIndex);
-            QuadWord v;
-            for (int i = 0; i < CameraKeyframe::kMax; i++) {
-                CameraKeyframe::InterpolationType type = static_cast<CameraKeyframe::InterpolationType>(i);
-                frame->getInterpolationParameter(type, v);
-                newFrame.setInterpolationParameter(type, v);
-            }
-            newFrame.write(reinterpret_cast<uint8_t *>(bytes.data()));
+            newCameraKeyframe.reset(cameraKeyframe->clone());
+            newCameraKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
             setData(modelIndex, bytes);
         }
         /* 照明のキーフレームをテーブルのモデルデータにコピーする */
-        const LightAnimation &la = motion->lightAnimation();
-        const int nLightFrames = la.countKeyframes();
+        QScopedPointer<ILightKeyframe> newLightKeyframe;
+        const int nLightFrames = motion->countKeyframes(IKeyframe::kLight);
         for (int i = 0; i < nLightFrames; i++) {
-            const LightKeyframe *frame = la.frameAt(i);
-            int frameIndex = static_cast<int>(frame->frameIndex());
-            QByteArray bytes(LightKeyframe::strideSize(), '0');
+            const ILightKeyframe *lightKeyframe = motion->findLightKeyframeAt(i);
+            int frameIndex = static_cast<int>(lightKeyframe->frameIndex());
+            QByteArray bytes(lightKeyframe->estimateSize(), '0');
             const QModelIndex &modelIndex = frameIndexToModelIndex(m_lightTreeItem, frameIndex);
-            LightKeyframe *newFrame = static_cast<LightKeyframe *>(frame->clone());
-            newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+            newLightKeyframe.reset(lightKeyframe->clone());
+            newLightKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
             setData(modelIndex, bytes);
-            delete newFrame;
         }
         m_motion = motion;
     }
@@ -516,25 +509,27 @@ void SceneMotionModel::removeMotion()
 void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
     /* 照明データ未対応 */
-    static const uint8_t *kNoName = reinterpret_cast<const uint8_t *>("");
     KeyFramePairList frames;
-    const CameraAnimation &ca = m_motion->cameraAnimation();
-    const LightAnimation &la = m_motion->lightAnimation();
+    QScopedPointer<ICameraKeyframe> clonedCameraKeyframe;
+    QScopedPointer<ILightKeyframe> clonedLightKeyframe;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
             if (item->isCategory()) {
-                BaseKeyframe *frameToDelete;
                 if (index.row() == m_cameraTreeItem->rowIndex()) {
-                    frameToDelete = ca.findKeyframe(toFrameIndex(index), kNoName);
+                    ICameraKeyframe *frameToDelete = m_motion->findCameraKeyframe(toFrameIndex(index));
+                    clonedCameraKeyframe.reset(frameToDelete->clone());
+                    /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
+                    clonedCameraKeyframe->setFrameIndex(-1);
+                    frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedCameraKeyframe.take())));
                 }
                 else if (index.row() == m_lightTreeItem->rowIndex()) {
-                    frameToDelete = la.findKeyframe(toFrameIndex(index), kNoName);
+                    ILightKeyframe *frameToDelete = m_motion->findLightKeyframe(toFrameIndex(index));
+                    clonedLightKeyframe.reset(frameToDelete->clone());
+                    /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
+                    clonedLightKeyframe->setFrameIndex(-1);
+                    frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedLightKeyframe.take())));
                 }
-                BaseKeyframe *clonedFrame = frameToDelete->clone();
-                /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
-                clonedFrame->setFrameIndex(-1);
-                frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame)));
             }
         }
     }
