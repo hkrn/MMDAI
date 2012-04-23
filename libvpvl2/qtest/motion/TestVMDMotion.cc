@@ -39,6 +39,10 @@ private Q_SLOTS:
     void saveMotion();
     void boneInterpolation();
     void cameraInterpolation();
+    void mutateBoneKeyframes() const;
+    void mutateCameraKeyframes() const;
+    void mutateLightKeyframes() const;
+    void mutateMorphKeyframes() const;
 
 private:
     void testBoneInterpolationMatrix(const QuadWord p[4], const BoneKeyframe &frame);
@@ -407,6 +411,116 @@ void TestVMDMotion::cameraInterpolation()
     frame.setInterpolationParameter(CameraKeyframe::kDistance, pd);
     frame.setInterpolationParameter(CameraKeyframe::kFovy, pf);
     testCameraInterpolationMatrix(p, frame);
+}
+
+void TestVMDMotion::mutateBoneKeyframes() const
+{
+    QSKIP("this need mock", SkipSingle);
+    Encoding encoding;
+    String s("bone"), s2("bone2");
+    Model model(&encoding);
+    Motion motion(&model, &encoding);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kBone), 0);
+    QScopedPointer<IBoneKeyframe> frame(new BoneKeyframe(&encoding));
+    frame->setFrameIndex(42);
+    frame->setName(&s);
+    motion.addKeyframe(frame.data());
+    motion.update(IKeyframe::kBone);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kBone), 1);
+    QCOMPARE(motion.findBoneKeyframe(42, &s), frame.take());
+    QScopedPointer<IBoneKeyframe> frame2(new BoneKeyframe(&encoding));
+    frame2->setFrameIndex(42);
+    frame2->setName(&s2);
+    motion.replaceKeyframe(frame2.data());
+    QCOMPARE(motion.countKeyframes(IKeyframe::kBone), 1);
+    QCOMPARE(motion.findBoneKeyframe(42, &s), static_cast<IBoneKeyframe *>(0));
+    QCOMPARE(motion.findBoneKeyframe(42, &s2), frame2.data());
+    IKeyframe *keyframeToDelete = frame2.take();
+    motion.deleteKeyframe(keyframeToDelete);
+    motion.update(IKeyframe::kBone);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kBone), 0);
+    QCOMPARE(motion.findBoneKeyframe(42, &s2), static_cast<IBoneKeyframe *>(0));
+    QCOMPARE(keyframeToDelete, static_cast<IKeyframe *>(0));
+}
+
+void TestVMDMotion::mutateCameraKeyframes() const
+{
+    Encoding encoding;
+    Model model(&encoding);
+    Motion motion(&model, &encoding);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 0);
+    QScopedPointer<ICameraKeyframe> frame(new CameraKeyframe());
+    frame->setFrameIndex(42);
+    frame->setDistance(42);
+    motion.addKeyframe(frame.data());
+    QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 1);
+    QCOMPARE(motion.findCameraKeyframe(42), frame.take());
+    QScopedPointer<ICameraKeyframe> frame2(new CameraKeyframe());
+    frame2->setFrameIndex(42);
+    frame2->setDistance(84);
+    motion.replaceKeyframe(frame2.data());
+    QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 1);
+    QCOMPARE(motion.findCameraKeyframe(42)->distance(), 84.0f);
+    IKeyframe *keyframeToDelete = frame2.take();
+    motion.deleteKeyframe(keyframeToDelete);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 0);
+    QCOMPARE(motion.findCameraKeyframe(42), static_cast<ICameraKeyframe *>(0));
+    QCOMPARE(keyframeToDelete, static_cast<IKeyframe *>(0));
+}
+
+void TestVMDMotion::mutateLightKeyframes() const
+{
+    Encoding encoding;
+    Model model(&encoding);
+    Motion motion(&model, &encoding);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 0);
+    QScopedPointer<ILightKeyframe> frame(new LightKeyframe());
+    frame->setFrameIndex(42);
+    frame->setColor(Vector3(1, 0, 0));
+    motion.addKeyframe(frame.data());
+    QCOMPARE(motion.countKeyframes(IKeyframe::kLight), 1);
+    QCOMPARE(motion.findLightKeyframe(42), frame.take());
+    QScopedPointer<ILightKeyframe> frame2(new LightKeyframe());
+    frame2->setFrameIndex(42);
+    frame2->setColor(Vector3(0, 0, 1));
+    motion.replaceKeyframe(frame2.data());
+    QCOMPARE(motion.countKeyframes(IKeyframe::kLight), 1);
+    QCOMPARE(motion.findLightKeyframe(42)->color().z(), 1.0f);
+    IKeyframe *keyframeToDelete = frame2.take();
+    motion.deleteKeyframe(keyframeToDelete);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kLight), 0);
+    QCOMPARE(motion.findLightKeyframe(42), static_cast<ILightKeyframe *>(0));
+    QCOMPARE(keyframeToDelete, static_cast<IKeyframe *>(0));
+}
+
+void TestVMDMotion::mutateMorphKeyframes() const
+{
+    QSKIP("this need mock", SkipSingle);
+    Encoding encoding;
+    String s("morph"), s2("morph2");
+    Model model(&encoding);
+    Motion motion(&model, &encoding);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kMorph), 0);
+    QScopedPointer<IMorphKeyframe> frame(new MorphKeyframe(&encoding));
+    frame->setFrameIndex(42);
+    frame->setName(&s);
+    motion.addKeyframe(frame.data());
+    motion.update(IKeyframe::kMorph);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kMorph), 1);
+    QCOMPARE(motion.findMorphKeyframe(42, &s), frame.take());
+    QScopedPointer<IMorphKeyframe> frame2(new MorphKeyframe(&encoding));
+    frame2->setFrameIndex(42);
+    frame2->setName(&s2);
+    motion.replaceKeyframe(frame2.data());
+    QCOMPARE(motion.countKeyframes(IKeyframe::kMorph), 1);
+    QCOMPARE(motion.findMorphKeyframe(42, &s), static_cast<IMorphKeyframe *>(0));
+    QCOMPARE(motion.findMorphKeyframe(42, &s2), frame2.data());
+    IKeyframe *keyframeToDelete = frame2.take();
+    motion.deleteKeyframe(keyframeToDelete);
+    motion.update(IKeyframe::kMorph);
+    QCOMPARE(motion.countKeyframes(IKeyframe::kMorph), 0);
+    QCOMPARE(motion.findMorphKeyframe(42, &s2), static_cast<IMorphKeyframe *>(0));
+    QCOMPARE(keyframeToDelete, static_cast<IKeyframe *>(0));
 }
 
 void TestVMDMotion::testBoneInterpolationMatrix(const QuadWord p[], const BoneKeyframe &frame)
