@@ -48,7 +48,7 @@ namespace vmd
 
 #pragma pack(push, 1)
 
-struct FaceKeyFrameChunk
+struct MorphKeyFrameChunk
 {
     uint8_t name[MorphKeyframe::kNameSize];
     int frameIndex;
@@ -56,6 +56,11 @@ struct FaceKeyFrameChunk
 };
 
 #pragma pack(pop)
+
+size_t MorphKeyframe::strideSize()
+{
+    return sizeof(MorphKeyFrameChunk);
+}
 
 MorphKeyframe::MorphKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
@@ -68,19 +73,9 @@ MorphKeyframe::~MorphKeyframe()
 {
 }
 
-size_t MorphKeyframe::strideSize()
-{
-    return sizeof(FaceKeyFrameChunk);
-}
-
-size_t MorphKeyframe::stride() const
-{
-    return strideSize();
-}
-
 void MorphKeyframe::read(const uint8_t *data)
 {
-    FaceKeyFrameChunk chunk;
+    MorphKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     IString *name = m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name));
     setName(name);
@@ -97,13 +92,18 @@ void MorphKeyframe::read(const uint8_t *data)
 
 void MorphKeyframe::write(uint8_t *data) const
 {
-    FaceKeyFrameChunk chunk;
+    MorphKeyFrameChunk chunk;
     uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
     m_encoding->disposeByteArray(name);
     chunk.frameIndex = static_cast<int>(m_frameIndex);
     chunk.weight = m_weight;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+size_t MorphKeyframe::estimateSize() const
+{
+    return strideSize();
 }
 
 BaseKeyframe *MorphKeyframe::clone() const

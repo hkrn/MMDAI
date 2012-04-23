@@ -70,6 +70,11 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
     v.setW(btMax(table[i + 12], zero)); // y2
 }
 
+size_t BoneKeyframe::strideSize()
+{
+    return sizeof(BoneKeyFrameChunk);
+}
+
 BoneKeyframe::BoneKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
       m_encoding(encoding),
@@ -93,16 +98,6 @@ BoneKeyframe::~BoneKeyframe()
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));
     internal::zerofill(&m_parameter, sizeof(m_parameter));
-}
-
-size_t BoneKeyframe::strideSize()
-{
-    return sizeof(BoneKeyFrameChunk);
-}
-
-size_t BoneKeyframe::stride() const
-{
-    return strideSize();
 }
 
 void BoneKeyframe::setDefaultInterpolationParameter()
@@ -169,6 +164,11 @@ void BoneKeyframe::write(uint8_t *data) const
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+size_t BoneKeyframe::estimateSize() const
+{
+    return strideSize();
 }
 
 IBoneKeyframe *BoneKeyframe::clone() const

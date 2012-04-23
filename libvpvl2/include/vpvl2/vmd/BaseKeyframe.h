@@ -62,30 +62,6 @@ public:
     }
 
     /**
-     * Stride length of a keyframe structure.
-     *
-     * @return Stride length
-     */
-    virtual size_t stride() const = 0;
-
-    /**
-     * Read and parse the buffer and sets it's result to the class.
-     *
-     * @param data The buffer to read and parse
-     */
-    virtual void read(const uint8_t *data) = 0;
-
-    /**
-     * Write the current value to the buffer.
-     *
-     * You should allocate the buffer size with stride.
-     *
-     * @param data The buffer to write
-     * @see stride
-     */
-    virtual void write(uint8_t *data) const = 0;
-
-    /**
      * Get the target bone name of this keyframe.
      *
      * @return name the bone name

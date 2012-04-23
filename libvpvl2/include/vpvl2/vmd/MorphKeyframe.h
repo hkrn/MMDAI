@@ -52,16 +52,16 @@ namespace vmd
 class VPVL2_API MorphKeyframe : public BaseKeyframe, public IMorphKeyframe
 {
 public:
+    static size_t strideSize();
+
     MorphKeyframe(IEncoding *encoding);
     ~MorphKeyframe();
 
     static const int kNameSize = 15;
 
-    static size_t strideSize();
-
-    size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
+    size_t estimateSize() const;
     BaseKeyframe *clone() const;
 
     void setName(const IString *value);

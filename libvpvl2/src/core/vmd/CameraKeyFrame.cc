@@ -72,6 +72,11 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
     v.setW(btMax(table[i + 18], zero)); // y2
 }
 
+size_t CameraKeyframe::strideSize()
+{
+    return sizeof(CameraKeyFrameChunk);
+}
+
 CameraKeyframe::CameraKeyframe()
     : BaseKeyframe(),
       m_distance(0.0f),
@@ -101,16 +106,6 @@ CameraKeyframe::~CameraKeyframe()
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
     internal::zerofill(m_rawInterpolationTable, sizeof(m_rawInterpolationTable));
     internal::zerofill(&m_parameter, sizeof(m_parameter));
-}
-
-size_t CameraKeyframe::strideSize()
-{
-    return sizeof(CameraKeyFrameChunk);
-}
-
-size_t CameraKeyframe::stride() const
-{
-    return strideSize();
 }
 
 void CameraKeyframe::setDefaultInterpolationParameter()
@@ -179,6 +174,11 @@ void CameraKeyframe::write(uint8_t *data) const
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+size_t CameraKeyframe::estimateSize() const
+{
+    return strideSize();
 }
 
 ICameraKeyframe *CameraKeyframe::clone() const

@@ -59,6 +59,7 @@ public:
         QuadWord distance;
         QuadWord fovy;
     };
+    static size_t strideSize();
 
     CameraKeyframe();
     ~CameraKeyframe();
@@ -66,10 +67,9 @@ public:
     static const int kTableSize = 24;
     static const QuadWord kDefaultInterpolationParameterValue;
 
-    static size_t strideSize();
-    size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
+    size_t estimateSize() const;
     ICameraKeyframe *clone() const;
 
     void setName(const IString * /* value */) {}

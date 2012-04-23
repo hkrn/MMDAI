@@ -59,6 +59,12 @@ public:
     };
     virtual ~IKeyframe() {}
 
+    virtual void read(const uint8_t *data) = 0;
+
+    virtual void write(uint8_t *data) const = 0;
+
+    virtual size_t estimateSize() const = 0;
+
     /**
      * キーフレームの動作対象となる名前を返します。
      *

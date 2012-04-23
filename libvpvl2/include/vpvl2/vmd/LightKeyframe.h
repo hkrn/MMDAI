@@ -50,14 +50,14 @@ namespace vmd
 class VPVL2_API LightKeyframe : public BaseKeyframe, public ILightKeyframe
 {
 public:
+    static size_t strideSize();
+
     LightKeyframe();
     ~LightKeyframe();
 
-    static size_t strideSize();
-
-    size_t stride() const;
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
+    size_t estimateSize() const;
     ILightKeyframe *clone() const;
 
     void setName(const IString * /* value */) {}

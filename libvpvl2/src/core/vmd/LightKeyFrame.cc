@@ -57,6 +57,11 @@ struct LightKeyFrameChunk
 
 #pragma pack(pop)
 
+size_t LightKeyframe::strideSize()
+{
+    return sizeof(LightKeyFrameChunk);
+}
+
 LightKeyframe::LightKeyframe()
     : BaseKeyframe(),
       m_color(0.0f, 0.0f, 0.0f),
@@ -68,16 +73,6 @@ LightKeyframe::~LightKeyframe()
 {
     m_color.setZero();
     m_direction.setZero();
-}
-
-size_t LightKeyframe::strideSize()
-{
-    return sizeof(LightKeyFrameChunk);
-}
-
-size_t LightKeyframe::stride() const
-{
-    return strideSize();
 }
 
 void LightKeyframe::read(const uint8_t *data)
@@ -117,6 +112,11 @@ void LightKeyframe::write(uint8_t *data) const
 #endif
     chunk.direction[2] = m_direction.z();
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+}
+
+size_t LightKeyframe::estimateSize() const
+{
+    return strideSize();
 }
 
 ILightKeyframe *LightKeyframe::clone() const

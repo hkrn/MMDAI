@@ -76,7 +76,7 @@ void LightAnimation::read(const uint8_t *data, int size)
         for (int i = 0; i < size; i++) {
             LightKeyframe *frame = new LightKeyframe();
             frame->read(ptr);
-            ptr += frame->stride();
+            ptr += frame->estimateSize();
             m_frames.add(frame);
         }
         m_frames.sort(LightAnimationKeyFramePredication());
