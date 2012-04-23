@@ -77,9 +77,7 @@ void MorphKeyframe::read(const uint8_t *data)
 {
     MorphKeyFrameChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    IString *name = m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name));
-    setName(name);
-    delete name;
+    internal::setStringDirect(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
     setFrameIndex(static_cast<float>(chunk.frameIndex));
 #ifdef VPVL2_BUILD_IOS
     float weight;

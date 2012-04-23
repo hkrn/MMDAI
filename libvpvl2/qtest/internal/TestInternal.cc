@@ -50,6 +50,7 @@ private Q_SLOTS:
     void writeNotNullString();
     void estimateSize();
     void setString();
+    void setStringDirect();
     void toggleFlag();
 };
 
@@ -347,6 +348,17 @@ void TestInternal::setString()
     QVERIFY(value != &str);
     QVERIFY(value->equals(&str));
     delete value;
+}
+
+void TestInternal::setStringDirect()
+{
+    IString *value = 0;
+    internal::setStringDirect(0, value);
+    QCOMPARE(static_cast<IString*>(0), value);
+    String str("Hello World");
+    internal::setStringDirect(&str, value);
+    QVERIFY(value == &str);
+    QVERIFY(value->equals(&str));
 }
 
 void TestInternal::toggleFlag()

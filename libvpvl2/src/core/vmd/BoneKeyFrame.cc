@@ -123,9 +123,7 @@ void BoneKeyframe::read(const uint8_t *data)
     float *pos = chunk.position;
     float *rot = chunk.rotation;
 #endif
-    IString *name = m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name));
-    setName(name);
-    delete name;
+    internal::setStringDirect(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
     setFrameIndex(static_cast<float>(chunk.frameIndex));
 #ifdef VPVL2_COORDINATE_OPENGL
     setPosition(Vector3(pos[0], pos[1], -pos[2]));

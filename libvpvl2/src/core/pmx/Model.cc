@@ -587,19 +587,10 @@ void Model::release()
 void Model::parseNamesAndComments(const DataInfo &info)
 {
     IEncoding *encoding = info.encoding;
-    IString *string = 0;
-    string = encoding->toString(info.namePtr, info.nameSize, info.codec);
-    setName(string);
-    delete string;
-    string = m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec);
-    setEnglishName(string);
-    delete string;
-    string = m_encoding->toString(info.commentPtr, info.commentSize, info.codec);
-    setComment(string);
-    delete string;
-    string = m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec);
-    setEnglishComment(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), m_name);
+    internal::setStringDirect(m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec), m_englishName);
+    internal::setStringDirect(m_encoding->toString(info.commentPtr, info.commentSize, info.codec), m_comment);
+    internal::setStringDirect(m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), m_englishComment);
 }
 
 void Model::parseVertices(const DataInfo &info)

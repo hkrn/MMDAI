@@ -199,15 +199,10 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX, textureIndexSize = info.textureIndexSize;
     IEncoding *encoding = info.encoding;
-    IString *string = 0;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    string = encoding->toString(namePtr, nNameSize, info.codec);
-    setName(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    string = encoding->toString(namePtr, nNameSize, info.codec);
-    setEnglishName(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
     m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2], 0);
     m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
@@ -231,9 +226,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
         m_toonTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
     }
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    string = encoding->toString(namePtr, nNameSize, info.codec);
-    setUserDataArea(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_userDataArea);
     internal::size32(ptr, rest, nNameSize);
     m_indices = nNameSize;
     size = ptr - start;

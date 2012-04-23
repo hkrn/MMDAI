@@ -325,6 +325,14 @@ static inline void setString(const IString *newValue, IString *&value)
     }
 }
 
+static inline void setStringDirect(IString *newValue, IString *&value)
+{
+    if (newValue && newValue != value) {
+        delete value;
+        value = newValue;
+    }
+}
+
 static inline void toggleFlag(int value, bool enable, uint16_t &flags)
 {
     if (enable)

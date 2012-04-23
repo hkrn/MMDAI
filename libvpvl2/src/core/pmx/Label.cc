@@ -131,15 +131,10 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX;
     IEncoding *encoding = info.encoding;
-    IString *string = 0;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    string = encoding->toString(namePtr, nNameSize, info.codec);
-    setName(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    string = encoding->toString(namePtr, nNameSize, info.codec);
-    setEnglishName(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     internal::size8(ptr, rest, nNameSize);
     m_special = nNameSize == 1;
     internal::size32(ptr, rest, nNameSize);

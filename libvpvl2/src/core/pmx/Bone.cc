@@ -328,15 +328,10 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t nNameSize, rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
     IEncoding *encoding = info.encoding;
-    IString *string = 0;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    string = encoding->toString(namePtr, nNameSize, info.codec);
-    setName(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
-    string = encoding->toString(namePtr, nNameSize, info.codec);
-    setEnglishName(string);
-    delete string;
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
     m_offset = m_origin;
