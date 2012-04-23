@@ -118,9 +118,9 @@ void BoneAnimation::read(const uint8_t *data, int size)
     m_frames.reserve(size);
     for (int i = 0; i < size; i++) {
         BoneKeyframe *frame = new BoneKeyframe(m_encoding);
+        m_frames.add(frame);
         frame->read(ptr);
         ptr += frame->estimateSize();
-        m_frames.add(frame);
     }
 }
 

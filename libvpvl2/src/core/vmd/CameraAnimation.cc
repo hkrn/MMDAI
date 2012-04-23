@@ -104,9 +104,9 @@ void CameraAnimation::read(const uint8_t *data, int size)
         m_frames.reserve(size);
         for (int i = 0; i < size; i++) {
             CameraKeyframe *frame = new CameraKeyframe();
+            m_frames.add(frame);
             frame->read(ptr);
             ptr += frame->estimateSize();
-            m_frames.add(frame);
         }
         m_frames.sort(CameraAnimationKeyFramePredication());
         m_maxFrame = m_frames[size - 1]->frameIndex();

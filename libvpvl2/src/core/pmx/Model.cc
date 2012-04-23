@@ -611,8 +611,8 @@ void Model::parseVertices(const DataInfo &info)
     m_skinnedVertices = new SkinnedVertex[nvertices];
     for(int i = 0; i < nvertices; i++) {
         Vertex *vertex = new Vertex();
-        vertex->read(ptr, info, size);
         m_vertices.add(vertex);
+        vertex->read(ptr, info, size);
         ptr += size;
     }
 }
@@ -661,8 +661,8 @@ void Model::parseMaterials(const DataInfo &info)
     size_t size;
     for(int i = 0; i < nmaterials; i++) {
         Material *material = new Material();
-        material->read(ptr, info, size);
         m_materials.add(material);
+        material->read(ptr, info, size);
         ptr += size;
     }
 }
@@ -674,10 +674,10 @@ void Model::parseBones(const DataInfo &info)
     size_t size;
     for(int i = 0; i < nbones; i++) {
         Bone *bone = new Bone();
+        m_bones.add(bone);
         bone->read(ptr, info, size);
         bone->performTransform();
         bone->performUpdateLocalTransform();
-        m_bones.add(bone);
         m_name2bones.insert(bone->name()->toHashString(), bone);
         m_name2bones.insert(bone->englishName()->toHashString(), bone);
         ptr += size;
@@ -691,8 +691,8 @@ void Model::parseMorphs(const DataInfo &info)
     size_t size;
     for(int i = 0; i < nmorphs; i++) {
         Morph *morph = new Morph();
-        morph->read(ptr, info, size);
         m_morphs.add(morph);
+        morph->read(ptr, info, size);
         m_name2morphs.insert(morph->name()->toHashString(), morph);
         m_name2morphs.insert(morph->englishName()->toHashString(), morph);
         ptr += size;
@@ -706,8 +706,8 @@ void Model::parseLabels(const DataInfo &info)
     size_t size;
     for(int i = 0; i < nlabels; i++) {
         Label *label = new Label();
-        label->read(ptr, info, size);
         m_labels.add(label);
+        label->read(ptr, info, size);
         ptr += size;
     }
 }
@@ -719,8 +719,8 @@ void Model::parseRigidBodies(const DataInfo &info)
     size_t size;
     for(int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = new RigidBody();
-        rigidBody->read(ptr, info, size);
         m_rigidBodies.add(rigidBody);
+        rigidBody->read(ptr, info, size);
         ptr += size;
     }
 }
@@ -732,8 +732,8 @@ void Model::parseJoints(const DataInfo &info)
     size_t size;
     for(int i = 0; i < nJoints; i++) {
         Joint *joint = new Joint();
-        joint->read(ptr, info, size);
         m_joints.add(joint);
+        joint->read(ptr, info, size);
         ptr += size;
     }
 }

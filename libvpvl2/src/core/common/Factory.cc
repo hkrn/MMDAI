@@ -50,10 +50,18 @@ namespace vpvl2
 
 struct Factory::PrivateContext
 {
-    PrivateContext(IEncoding *encoding) : encoding(encoding) {}
-    ~PrivateContext() {}
+    PrivateContext(IEncoding *encoding)
+        : encoding(encoding),
+          motion(0)
+    {
+    }
+    ~PrivateContext() {
+        delete motion;
+        motion = 0;
+    }
 
     IEncoding *encoding;
+    IMotion *motion;
 };
 
 Factory::Factory(IEncoding *encoding)
@@ -105,8 +113,9 @@ IMotion *Factory::createMotion() const
 
 IMotion *Factory::createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const
 {
-    IMotion *motion = new vmd::Motion(model, m_context->encoding);
+    IMotion *motion = m_context->motion = new vmd::Motion(model, m_context->encoding);
     ok = motion->load(data, size);
+    m_context->motion = 0;
     return motion;
 }
 

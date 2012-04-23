@@ -79,6 +79,7 @@ size_t CameraKeyframe::strideSize()
 
 CameraKeyframe::CameraKeyframe()
     : BaseKeyframe(),
+      m_ptr(0),
       m_distance(0.0f),
       m_fovy(0.0f),
       m_position(0.0f, 0.0f, 0.0f),
@@ -98,6 +99,8 @@ CameraKeyframe::~CameraKeyframe()
     m_position.setZero();
     m_angle.setZero();
     m_noPerspective = false;
+    delete m_ptr;
+    m_ptr = 0;
     for (int i = 0; i < kMax; i++) {
         delete[] m_interpolationTable[i];
         m_interpolationTable[i] = 0;
@@ -183,7 +186,7 @@ size_t CameraKeyframe::estimateSize() const
 
 ICameraKeyframe *CameraKeyframe::clone() const
 {
-    CameraKeyframe *frame = new CameraKeyframe();
+    CameraKeyframe *frame = m_ptr = new CameraKeyframe();
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
@@ -195,6 +198,7 @@ ICameraKeyframe *CameraKeyframe::clone() const
     frame->m_noPerspective = m_noPerspective;
     frame->m_parameter = m_parameter;
     frame->setInterpolationTable(m_rawInterpolationTable);
+    m_ptr = 0;
     return frame;
 }
 

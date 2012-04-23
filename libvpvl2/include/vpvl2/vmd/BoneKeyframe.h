@@ -161,6 +161,7 @@ private:
     void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
+    mutable BoneKeyframe *m_ptr;
     IEncoding *m_encoding;
     Vector3 m_position;
     Quaternion m_rotation;

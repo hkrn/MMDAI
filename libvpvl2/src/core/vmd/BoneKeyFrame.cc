@@ -77,6 +77,7 @@ size_t BoneKeyframe::strideSize()
 
 BoneKeyframe::BoneKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
+      m_ptr(0),
       m_encoding(encoding),
       m_position(0.0f, 0.0f, 0.0f),
       m_rotation(Quaternion::getIdentity()),
@@ -90,8 +91,12 @@ BoneKeyframe::BoneKeyframe(IEncoding *encoding)
 
 BoneKeyframe::~BoneKeyframe()
 {
+    m_encoding = 0;
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+    m_enableIK = false;
+    delete m_ptr;
+    m_ptr = 0;
     for (int i = 0; i < kMax; i++)
         delete[] m_interpolationTable[i];
     internal::zerofill(m_linear, sizeof(m_linear));
@@ -173,7 +178,7 @@ size_t BoneKeyframe::estimateSize() const
 
 IBoneKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyframe *frame = new BoneKeyframe(m_encoding);
+    BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_encoding);
     frame->setName(m_name);
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
@@ -183,6 +188,7 @@ IBoneKeyframe *BoneKeyframe::clone() const
     frame->setRotation(m_rotation);
     frame->m_parameter = m_parameter;
     frame->setInterpolationTable(m_rawInterpolationTable);
+    m_ptr = 0;
     return frame;
 }
 

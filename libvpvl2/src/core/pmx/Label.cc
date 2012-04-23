@@ -147,6 +147,7 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         size_t type;
         internal::size8(ptr, rest, type);
         Pair *pair = new Pair();
+        m_pairs.add(pair);
         pair->bone = 0;
         pair->morph = 0;
         pair->type = type;
@@ -161,7 +162,6 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
             assert(0);
             return;
         }
-        m_pairs.add(pair);
     }
     size = ptr - start;
 }

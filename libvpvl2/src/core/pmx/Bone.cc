@@ -369,6 +369,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         ptr += sizeof(iu);
         for (int i = 0; i < nlinks; i++) {
             IKLink *ik = new IKLink();
+            m_IKLinks.add(ik);
             ik->boneID = internal::readSignedIndex(ptr, boneIndexSize);
             ik->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
             ptr += sizeof(ik->hasAngleConstraint);
@@ -385,7 +386,6 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
                 ik->upperLimit.setValue(upper.vector3[0], upper.vector3[1], upper.vector3[2]);
 #endif
             }
-            m_IKLinks.add(ik);
         }
     }
     /* bone has additional bias */

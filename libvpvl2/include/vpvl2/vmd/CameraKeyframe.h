@@ -200,6 +200,7 @@ private:
     void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
+    mutable CameraKeyframe *m_ptr;
     float m_distance;
     float m_fovy;
     Vector3 m_position;
