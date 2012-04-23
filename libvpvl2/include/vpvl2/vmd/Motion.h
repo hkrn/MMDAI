@@ -124,9 +124,13 @@ public:
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
     IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const;
+    IBoneKeyframe *findBoneKeyframeAt(int index) const;
     ICameraKeyframe *findCameraKeyframe(int frameIndex) const;
+    ICameraKeyframe *findCameraKeyframeAt(int index) const;
     ILightKeyframe *findLightKeyframe(int frameIndex) const;
+    ILightKeyframe *findLightKeyframeAt(int index) const;
     IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const;
+    IMorphKeyframe *findMorphKeyframeAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(int frameIndex, IKeyframe::Type type);

@@ -50,15 +50,6 @@ namespace vmd
 class VPVL2_API CameraKeyframe : public BaseKeyframe, public ICameraKeyframe
 {
 public:
-    struct InterpolationParameter
-    {
-        QuadWord x;
-        QuadWord y;
-        QuadWord z;
-        QuadWord rotation;
-        QuadWord distance;
-        QuadWord fovy;
-    };
     static size_t strideSize();
 
     CameraKeyframe();

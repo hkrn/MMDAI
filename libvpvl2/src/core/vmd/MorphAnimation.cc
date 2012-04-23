@@ -170,7 +170,7 @@ void MorphAnimation::reset()
 
 MorphKeyframe *MorphAnimation::frameAt(int i) const
 {
-    return reinterpret_cast<MorphKeyframe *>(m_keyframes[i]);
+    return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<MorphKeyframe *>(m_keyframes[i]) : 0;
 }
 
 MorphKeyframe *MorphAnimation::findKeyframe(int frameIndex, const IString *name) const

@@ -168,11 +168,19 @@ public:
 
     virtual IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const = 0;
 
+    virtual IBoneKeyframe *findBoneKeyframeAt(int index) const = 0;
+
     virtual ICameraKeyframe *findCameraKeyframe(int frameIndex) const = 0;
+
+    virtual ICameraKeyframe *findCameraKeyframeAt(int index) const = 0;
 
     virtual ILightKeyframe *findLightKeyframe(int frameIndex) const = 0;
 
+    virtual ILightKeyframe *findLightKeyframeAt(int index) const = 0;
+
     virtual IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const = 0;
+
+    virtual IMorphKeyframe *findMorphKeyframeAt(int index) const = 0;
 
     virtual void replaceKeyframe(IKeyframe *value) = 0;
 

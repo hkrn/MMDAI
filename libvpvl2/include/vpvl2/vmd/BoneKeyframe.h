@@ -52,13 +52,6 @@ namespace vmd
 class VPVL2_API BoneKeyframe : public BaseKeyframe, public IBoneKeyframe
 {
 public:
-    struct InterpolationParameter
-    {
-        QuadWord x;
-        QuadWord y;
-        QuadWord z;
-        QuadWord rotation;
-    };
     static size_t strideSize();
 
     BoneKeyframe(IEncoding *encoding);

@@ -49,6 +49,13 @@ namespace vpvl2
 class VPVL2_API IBoneKeyframe : public virtual IKeyframe
 {
 public:
+    struct InterpolationParameter
+    {
+        QuadWord x;
+        QuadWord y;
+        QuadWord z;
+        QuadWord rotation;
+    };
     enum InterpolationType
     {
         kX = 0,

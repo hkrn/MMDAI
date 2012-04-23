@@ -375,9 +375,19 @@ IBoneKeyframe *Motion::findBoneKeyframe(int frameIndex, const IString *name) con
     return m_boneMotion.findKeyframe(frameIndex, name);
 }
 
+IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
+{
+    return m_boneMotion.frameAt(index);
+}
+
 ICameraKeyframe *Motion::findCameraKeyframe(int frameIndex) const
 {
     return m_cameraMotion.findKeyframe(frameIndex);
+}
+
+ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
+{
+    return m_cameraMotion.frameAt(index);
 }
 
 ILightKeyframe *Motion::findLightKeyframe(int frameIndex) const
@@ -385,9 +395,19 @@ ILightKeyframe *Motion::findLightKeyframe(int frameIndex) const
     return m_lightMotion.findKeyframe(frameIndex);
 }
 
+ILightKeyframe *Motion::findLightKeyframeAt(int index) const
+{
+    return m_lightMotion.frameAt(index);
+}
+
 IMorphKeyframe *Motion::findMorphKeyframe(int frameIndex, const IString *name) const
 {
     return m_morphMotion.findKeyframe(frameIndex, name);
+}
+
+IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
+{
+    return m_morphMotion.frameAt(index);
 }
 
 void Motion::deleteKeyframe(IKeyframe *&value)
