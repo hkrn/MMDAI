@@ -773,7 +773,7 @@ public:
     Accelerator(IRenderDelegate *delegate) : BaseAccelerator(delegate) {}
     ~Accelerator() {}
 
-    void uploadModel(PrivateContext * /* userData */, const PMDModel * /* model */, void *context) {
+    void uploadModel(PrivateContext * /* userData */, const PMDModel * /* model */, void * /* context */) {
     }
     void deleteModel(PrivateContext * /* userData */) {
     }
