@@ -115,53 +115,53 @@ public:
     ~Array() {
     }
 
-    void add(const T &item) {
+    inline void add(const T &item) {
         m_values.push_back(item);
     }
-    const T &at(int i) const {
+    inline const T &at(int i) const {
         return m_values.at(i);
     }
-    T &at(int i) {
+    inline T &at(int i) {
         return m_values.at(i);
     }
-    void clear() {
+    inline void clear() {
         m_values.clear();
     }
-    void copy(const Array &items) {
+    inline void copy(const Array &items) {
         m_values.copyFromArray(items.m_values);
     }
-    int count() const {
+    inline int count() const {
         return m_values.size();
     }
-    void releaseAll() {
+    inline void releaseAll() {
         const int size = m_values.size();
         for (int i = 0; i < size; i++)
             delete m_values[i];
         m_values.clear();
     }
-    void releaseArrayAll() {
+    inline void releaseArrayAll() {
         const int size = m_values.size();
         for (int i = 0; i < size; i++)
             delete[] m_values[i];
         m_values.clear();
     }
-    void remove(const T &item) {
+    inline void remove(const T &item) {
         m_values.remove(item);
     }
-    void reserve(int size) {
+    inline void reserve(int size) {
         m_values.reserve(size);
     }
-    void resize(int size) {
+    inline void resize(int size) {
         m_values.resize(size);
     }
     template <typename Comparable>
-    void sort(Comparable comparable) {
+    inline void sort(Comparable comparable) {
         m_values.quickSort(comparable);
     }
-    const T &operator[](int i) const {
+    inline const T &operator[](int i) const {
         return m_values[i];
     }
-    T &operator[](int i) {
+    inline T &operator[](int i) {
         return m_values[i];
     }
 
@@ -179,31 +179,31 @@ public:
     ~Hash() {
     }
 
-    void clear() {
+    inline void clear() {
         m_values.clear();
     }
-    int count() const {
+    inline int count() const {
         return m_values.size();
     }
-    const V *find(const K &key) const {
+    inline const V *find(const K &key) const {
         return m_values.find(key);
     }
-    void insert(const K &key, const V &value) {
+    inline void insert(const K &key, const V &value) {
         m_values.insert(key, value);
     }
-    void releaseAll() {
+    inline void releaseAll() {
         const int nNodes = m_values.size();
         for (int i = 0; i < nNodes; i++)
             delete *m_values.getAtIndex(i);
         m_values.clear();
     }
-    void remove(const K &key) {
+    inline void remove(const K &key) {
         m_values.remove(key);
     }
-    const V *value(int index) const {
+    inline const V *value(int index) const {
         return m_values.getAtIndex(index);
     }
-    V *operator[](const K &key) {
+    inline V *operator[](const K &key) {
         return m_values[key];
     }
 
