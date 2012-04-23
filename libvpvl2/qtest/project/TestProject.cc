@@ -156,24 +156,27 @@ void TestProject::handleAssets()
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
-    IModel *asset = factory.createModel(IModel::kAsset), *ptr = asset;
+    QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
+    IModel *ptr = asset.data();
     QVERIFY(!project.containsModel(ptr));
     QCOMPARE(project.modelUUID(0), Project::kNullUUID);
-    project.addModel(asset, 0, uuid.toStdString());
+    project.addModel(ptr, 0, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsModel(ptr));
     QCOMPARE(project.modelUUIDs().size(), size_t(1));
-    QCOMPARE(project.modelUUID(asset), uuid.toStdString());
-    QCOMPARE(project.model(uuid.toStdString()), asset);
+    QCOMPARE(project.modelUUID(ptr), uuid.toStdString());
+    QCOMPARE(project.model(uuid.toStdString()), ptr);
     QCOMPARE(project.model(Project::kNullUUID), static_cast<IModel*>(0));
-    project.removeModel(asset);
+    project.removeModel(ptr);
     QVERIFY(!project.containsModel(ptr));
     QCOMPARE(project.modelUUIDs().size(), size_t(0));
     QVERIFY(project.isDirty());
     project.setDirty(false);
     project.removeModel(ptr);
     QVERIFY(!project.isDirty());
-    project.deleteModel(asset);
+    ptr = asset.take();
+    project.deleteModel(ptr);
+    QVERIFY(!ptr);
 }
 
 void TestProject::handleModels()
@@ -183,24 +186,27 @@ void TestProject::handleModels()
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
-    IModel *model = factory.createModel(IModel::kPMD), *ptr = model;
+    QScopedPointer<IModel> model(factory.createModel(IModel::kPMD));
+    IModel *ptr = model.data();
     QVERIFY(!project.containsModel(ptr));
     QCOMPARE(project.modelUUID(0), Project::kNullUUID);
-    project.addModel(model, 0, uuid.toStdString());
+    project.addModel(ptr, 0, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsModel(ptr));
     QCOMPARE(project.modelUUIDs().size(), size_t(1));
-    QCOMPARE(project.modelUUID(model), uuid.toStdString());
-    QCOMPARE(project.model(uuid.toStdString()), model);
+    QCOMPARE(project.modelUUID(ptr), uuid.toStdString());
+    QCOMPARE(project.model(uuid.toStdString()), ptr);
     QCOMPARE(project.model(Project::kNullUUID), static_cast<IModel*>(0));
-    project.removeModel(model);
+    project.removeModel(ptr);
     QVERIFY(!project.containsModel(ptr));
     QCOMPARE(project.modelUUIDs().size(), size_t(0));
     QVERIFY(project.isDirty());
     project.setDirty(false);
     project.removeModel(ptr);
     QVERIFY(!project.isDirty());
-    project.deleteModel(model);
+    ptr = model.take();
+    project.deleteModel(ptr);
+    QVERIFY(!ptr);
 }
 
 void TestProject::handleMotions()
@@ -210,19 +216,19 @@ void TestProject::handleMotions()
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
-    IMotion *motion = factory.createMotion(), *ptr = motion;
+    QScopedPointer<IMotion> motion(factory.createMotion());
+    IMotion *ptr = motion.data();
     QVERIFY(!project.containsMotion(ptr));
     QCOMPARE(project.motionUUID(0), Project::kNullUUID);
-    project.addMotion(motion, uuid.toStdString());
+    project.addMotion(ptr, uuid.toStdString());
     QVERIFY(project.isDirty());
     QVERIFY(project.containsMotion(ptr));
-    QCOMPARE(project.motion(uuid.toStdString()), motion);
+    QCOMPARE(project.motion(uuid.toStdString()), ptr);
     QCOMPARE(project.motion(Project::kNullUUID), static_cast<IMotion*>(0));
     project.setDirty(false);
-    project.removeMotion(motion);
+    project.removeMotion(ptr);
     QVERIFY(!project.containsMotion(ptr));
     QVERIFY(project.isDirty());
-    delete motion;
 }
 
 void TestProject::handleNullUUID()
@@ -231,33 +237,42 @@ void TestProject::handleNullUUID()
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
-    IModel *asset = factory.createModel(IModel::kAsset);
-    project.addModel(asset, 0, Project::kNullUUID);
+    QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
+    IModel *ptr = asset.data();
+    project.addModel(ptr, 0, Project::kNullUUID);
     QCOMPARE(project.modelUUIDs().size(), size_t(1));
-    project.removeModel(asset);
+    project.removeModel(ptr);
     QCOMPARE(project.modelUUIDs().size(), size_t(0));
-    project.deleteModel(asset);
-    IModel *model = factory.createModel(IModel::kPMD);
-    project.addModel(model, 0, Project::kNullUUID);
+    ptr = asset.take();
+    project.deleteModel(ptr);
+    QVERIFY(!ptr);
+    QScopedPointer<IModel> model(factory.createModel(IModel::kPMD));
+    ptr = model.data();
+    project.addModel(ptr, 0, Project::kNullUUID);
     QCOMPARE(project.modelUUIDs().size(), size_t(1));
-    project.removeModel(model);
+    project.removeModel(ptr);
     QCOMPARE(project.modelUUIDs().size(), size_t(0));
-    project.deleteModel(model);
-    IMotion *motion = factory.createMotion();
-    project.addMotion(motion, Project::kNullUUID);
+    ptr = model.take();
+    project.deleteModel(ptr);
+    QVERIFY(!ptr);
+    QScopedPointer<IMotion> motion(factory.createMotion());
+    IMotion *ptr2 = motion.data();
+    project.addMotion(ptr2, Project::kNullUUID);
     QCOMPARE(project.motionUUIDs().size(), size_t(1));
-    project.removeMotion(motion);
+    project.removeMotion(ptr2);
     QCOMPARE(project.motionUUIDs().size(), size_t(0));
-    delete motion;
-    IModel *model2 = factory.createModel(IModel::kPMD);
-    IMotion *motion2 = factory.createMotion();
-    project.addModel(model2, 0, Project::kNullUUID);
-    project.addMotion(motion2, Project::kNullUUID);
-    project.removeMotion(motion2);
+    model.reset(factory.createModel(IModel::kPMD));
+    ptr = model.data();
+    motion.reset(factory.createMotion());
+    ptr2 = motion.data();
+    project.addModel(ptr, 0, Project::kNullUUID);
+    project.addMotion(ptr2, Project::kNullUUID);
+    project.removeMotion(ptr2);
     QCOMPARE(project.motionUUIDs().size(), size_t(0));
-    project.removeModel(model2);
-    project.deleteModel(model2);
-    delete motion2;
+    project.removeModel(ptr);
+    ptr = model.take();
+    project.deleteModel(ptr);
+    QVERIFY(!ptr);
 }
 
 void TestProject::testGlobalSettings(const Project &project)

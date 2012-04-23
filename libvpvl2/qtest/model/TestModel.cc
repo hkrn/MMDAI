@@ -590,9 +590,9 @@ void TestModel::testReadWriteBone(size_t indexSize)
     bone.setTransformedAfterPhysicsSimulationEnable(true);
     bone.setTransformedByExternalParentEnable(true);
     size_t size = bone.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    bone.write(data, info);
-    bone2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    bone.write(data.data(), info);
+    bone2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(bone2.name()->equals(bone.name()));
     QVERIFY(bone2.englishName()->equals(bone.englishName()));
@@ -621,7 +621,6 @@ void TestModel::testReadWriteBone(size_t indexSize)
     QCOMPARE(bone2.parentBone(), &parent);
     QCOMPARE(bone2.parentInherenceBone(), &parent);
     QCOMPARE(bone2.targetBone(), &parent);
-    delete[] data;
 }
 
 void TestModel::testReadWriteJoint(size_t indexSize)
@@ -649,9 +648,9 @@ void TestModel::testReadWriteJoint(size_t indexSize)
     joint.setPositionStiffness(Vector3(0.61, 0.62, 0.63));
     joint.setRotationStiffness(Vector3(0.71, 0.72, 0.73));
     size_t size = joint.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    joint.write(data, info);
-    joint2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    joint.write(data.data(), info);
+    joint2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(joint2.name()->equals(joint.name()));
     QVERIFY(joint2.englishName()->equals(joint.englishName()));
@@ -665,7 +664,6 @@ void TestModel::testReadWriteJoint(size_t indexSize)
     QCOMPARE(joint2.rotationStiffness(), joint.rotationStiffness());
     QCOMPARE(joint2.rigidBodyIndex1(), body.index());
     QCOMPARE(joint2.rigidBodyIndex2(), body2.index());
-    delete[] data;
 }
 
 void TestModel::testReadWriteMaterial(size_t indexSize)
@@ -692,9 +690,9 @@ void TestModel::testReadWriteMaterial(size_t indexSize)
     material.setIndices(4);
     material.setFlags(5);
     size_t size = material.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    material.write(data, info);
-    material2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    material.write(data.data(), info);
+    material2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(material2.name()->equals(material.name()));
     QVERIFY(material2.englishName()->equals(material.englishName()));
@@ -709,7 +707,6 @@ void TestModel::testReadWriteMaterial(size_t indexSize)
     QCOMPARE(material2.sphereTextureIndex(), material.sphereTextureIndex());
     QCOMPARE(material2.toonTextureIndex(), material.toonTextureIndex());
     QCOMPARE(material2.indices(), material.indices());
-    delete[] data;
 }
 
 void TestModel::testReadWriteBoneMorph(size_t indexSize)
@@ -737,9 +734,9 @@ void TestModel::testReadWriteBoneMorph(size_t indexSize)
     morph.setCategory(1);
     morph.setType(2);
     size_t size = morph.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    morph.write(data, info);
-    morph2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    morph.write(data.data(), info);
+    morph2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(morph2.name()->equals(morph.name()));
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
@@ -753,7 +750,6 @@ void TestModel::testReadWriteBoneMorph(size_t indexSize)
     compare(bones[1].position, bone2.position);
     compare(bones[1].rotation, bone2.rotation);
     QCOMPARE(bones[1].index, bone2.index);
-    delete[] data;
 }
 
 void TestModel::testReadWriteGroupMorph(size_t indexSize)
@@ -779,9 +775,9 @@ void TestModel::testReadWriteGroupMorph(size_t indexSize)
     morph.setCategory(1);
     morph.setType(0);
     size_t size = morph.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    morph.write(data, info);
-    morph2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    morph.write(data.data(), info);
+    morph2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(morph2.name()->equals(morph.name()));
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
@@ -793,7 +789,6 @@ void TestModel::testReadWriteGroupMorph(size_t indexSize)
     QCOMPARE(groups[0].index, group1.index);
     QCOMPARE(groups[1].weight, group2.weight);
     QCOMPARE(groups[1].index, group2.index);
-    delete[] data;
 }
 
 void TestModel::testReadWriteMaterialMorph(size_t indexSize)
@@ -837,9 +832,9 @@ void TestModel::testReadWriteMaterialMorph(size_t indexSize)
     morph.setCategory(1);
     morph.setType(8);
     size_t size = morph.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    morph.write(data, info);
-    morph2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    morph.write(data.data(), info);
+    morph2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(morph2.name()->equals(morph.name()));
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
@@ -869,7 +864,6 @@ void TestModel::testReadWriteMaterialMorph(size_t indexSize)
     QCOMPARE(materials[1].shininess, material2.shininess);
     QCOMPARE(materials[1].operation, material2.operation);
     QCOMPARE(materials[1].index, material2.index);
-    delete[] data;
 }
 
 void TestModel::testReadWriteRigidBody(size_t indexSize)
@@ -899,9 +893,9 @@ void TestModel::testReadWriteRigidBody(size_t indexSize)
     body.setSize(Vector3(0.71, 0.72, 0.73));
     body.setType(5);
     size_t size = body.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    body.write(data, info);
-    body2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    body.write(data.data(), info);
+    body2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(body2.name()->equals(body.name()));
     QVERIFY(body2.englishName()->equals(body.englishName()));
@@ -917,7 +911,6 @@ void TestModel::testReadWriteRigidBody(size_t indexSize)
     QCOMPARE(body2.rotation(), body.rotation());
     QCOMPARE(body2.size(), body.size());
     QCOMPARE(body2.boneIndex(), bone.index());
-    delete[] data;
 }
 
 void TestModel::testReadWriteUVMorph(size_t indexSize)
@@ -943,9 +936,9 @@ void TestModel::testReadWriteUVMorph(size_t indexSize)
     morph.setCategory(1);
     morph.setType(7);
     size_t size = morph.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    morph.write(data, info);
-    morph2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    morph.write(data.data(), info);
+    morph2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(morph2.name()->equals(morph.name()));
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
@@ -959,7 +952,6 @@ void TestModel::testReadWriteUVMorph(size_t indexSize)
     compare(uvs[1].position, uv2.position);
     QCOMPARE(uvs[1].offset, 4);
     QCOMPARE(uvs[1].index, uv2.index);
-    delete[] data;
 }
 
 void TestModel::testReadWriteVertexMorph(size_t indexSize)
@@ -985,9 +977,9 @@ void TestModel::testReadWriteVertexMorph(size_t indexSize)
     morph.setCategory(1);
     morph.setType(1);
     size_t size = morph.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    morph.write(data, info);
-    morph2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    morph.write(data.data(), info);
+    morph2.read(data.data(), info, read);
     QCOMPARE(read, size);
     QVERIFY(morph2.name()->equals(morph.name()));
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
@@ -999,7 +991,6 @@ void TestModel::testReadWriteVertexMorph(size_t indexSize)
     QCOMPARE(vertices[0].index, vertex1.index);
     compare(vertices[1].position, vertex2.position);
     QCOMPARE(vertices[1].index, vertex2.index);
-    delete[] data;
 }
 
 void TestModel::testReadWriteVertexBdef1(size_t indexSize)
@@ -1013,12 +1004,11 @@ void TestModel::testReadWriteVertexBdef1(size_t indexSize)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     size_t size = vertex.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    vertex.write(data, info);
-    vertex2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    vertex.write(data.data(), info);
+    vertex2.read(data.data(), info, read);
     QCOMPARE(read, size);
     compareVertex(vertex, vertex2, bones);
-    delete[] data;
 }
 
 void TestModel::testReadWriteVertexBdef2(size_t indexSize)
@@ -1033,12 +1023,11 @@ void TestModel::testReadWriteVertexBdef2(size_t indexSize)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     size_t size = vertex.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    vertex.write(data, info);
-    vertex2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    vertex.write(data.data(), info);
+    vertex2.read(data.data(), info, read);
     QCOMPARE(read, size);
     compareVertex(vertex, vertex2, bones);
-    delete[] data;
 }
 
 void TestModel::testReadWriteVertexBdef4(size_t indexSize)
@@ -1075,12 +1064,11 @@ void TestModel::testReadWriteVertexSdef(size_t indexSize)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     size_t size = vertex.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    vertex.write(data, info);
-    vertex2.read(data, info, read);
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    vertex.write(data.data(), info);
+    vertex2.read(data.data(), info, read);
     QCOMPARE(read, size);
     compareVertex(vertex, vertex2, bones);
-    delete[] data;
 }
 
 QTEST_APPLESS_MAIN(TestModel)

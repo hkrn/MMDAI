@@ -252,12 +252,11 @@ void TestVMDMotion::saveMotion()
         Motion motion(&model, &encoding);
         motion.load(data, size);
         size_t newSize = motion.estimateSize();
-        uint8_t *newData = new uint8_t[newSize];
-        motion.save(newData);
+        QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
+        motion.save(newData.data());
         QTemporaryFile file2;
         file2.setAutoRemove(true);
-        file2.write(reinterpret_cast<const char *>(newData), newSize);
-        delete[] newData;
+        file2.write(reinterpret_cast<const char *>(newData.data()), newSize);
         QCOMPARE(newSize, size);
     }
     else {
