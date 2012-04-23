@@ -336,8 +336,8 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
     AssetVertex assetVertex;
-    Program *assetProgram = new Program(m_delegate);
-    ZPlotProgram *zplotProgram = new ZPlotProgram(m_delegate);
+    Program *assetProgram = m_context->assetPrograms[node] = new Program(m_delegate);
+    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram(m_delegate);
 #ifdef VPVL2_LINK_QT
     assetProgram->initializeContext(QGLContext::currentContext());
     zplotProgram->initializeContext(QGLContext::currentContext());
@@ -357,8 +357,6 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     delete fragmentShaderSource;
     if (!ret)
         return ret;
-    m_context->assetPrograms[node] = assetProgram;
-    m_context->zplotPrograms[node] = zplotProgram;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;

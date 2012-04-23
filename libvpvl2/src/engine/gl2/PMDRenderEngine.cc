@@ -868,7 +868,7 @@ bool PMDRenderEngine::upload(const IString *dir)
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
-    PMDModelMaterialPrivate *materialPrivates = new PMDModelMaterialPrivate[nmaterials];
+    PMDModelMaterialPrivate *materialPrivates = m_context->materials = new PMDModelMaterialPrivate[nmaterials];
     bool hasSingleSphere = false, hasMultipleSphere = false;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
@@ -926,7 +926,6 @@ bool PMDRenderEngine::upload(const IString *dir)
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
-    m_context->materials = materialPrivates;
     //model->setLightPosition(m_scene->lightPosition());
     //model->setSoftwareSkinningEnable(m_scene->isSoftwareSkinningEnabled());
     if (m_accelerator)

@@ -925,7 +925,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     const Array<pmx::Material *> &materials = m_model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
-    MaterialTextures *materialPrivates = new MaterialTextures[nmaterials];
+    MaterialTextures *materialPrivates = m_context->materials = new MaterialTextures[nmaterials];
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         MaterialTextures &materialPrivate = materialPrivates[i];
@@ -958,14 +958,6 @@ bool PMXRenderEngine::upload(const IString *dir)
         }
     }
     glGenBuffers(kVertexBufferObjectMax, m_context->vertexBufferObjects);
-    /*
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, casted->vertexBufferObjects[kEdgeIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * pmx::Model::strideSize(pmx::Model::kEdgeIndicesStride),
-                 model->edgeIndicesPointer(), GL_STATIC_DRAW);
-    log0(context, kLogInfo,
-                    "Binding edge indices to the vertex buffer object (ID=%d)",
-                    casted->vertexBufferObjects[kEdgeIndices]);
-                    */
     size_t size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_model->indices().count() * size, m_model->indicesPtr(), GL_STATIC_DRAW);
@@ -978,7 +970,6 @@ bool PMXRenderEngine::upload(const IString *dir)
     log0(context, IRenderDelegate::kLogInfo,
                     "Binding model vertices to the vertex buffer object (ID=%d)",
                     m_context->vertexBufferObjects[kModelVertices]);
-    m_context->materials = materialPrivates;
     //model->setSoftwareSkinningEnable(m_scene->isSoftwareSkinningEnabled());
     Accelerator::initializeUserData(m_context);
     if (m_accelerator)
