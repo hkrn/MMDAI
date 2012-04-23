@@ -65,7 +65,7 @@ class BoneKeyframe;
 class VPVL2_API BoneAnimation : public BaseAnimation
 {
 public:
-    typedef struct InternalBoneKeyFrameList InternalBoneKeyFarmeList;
+    struct InternalBoneKeyFrameList;
 
     BoneAnimation(IEncoding *encoding);
     ~BoneAnimation();
@@ -73,34 +73,12 @@ public:
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
     void reset();
-
-    /**
-     * Attach this to the model.
-     *
-     * After calling this method, internal states to animate are built.
-     * If you modified frames of this animation, you should call
-     * refresh method to rebuild internal states.
-     *
-     * @param model A model to attach the motion
-     * @see refresh
-     */
     void setParentModel(IModel *model);
-
-    /**
-     * Get a bone key frame associated with index.
-     *
-     * @param i A frame index to get key frame
-     * @return A bone key frame associated with index
-     */
     BoneKeyframe *frameAt(int i) const;
+    BoneKeyframe *findKeyframe(int frameIndex, const IString *name) const;
 
-    bool isNullFrameEnabled() const {
-        return m_enableNullFrame;
-    }
-
-    void setNullFrameEnable(bool value) {
-        m_enableNullFrame = value;
-    }
+    bool isNullFrameEnabled() const { return m_enableNullFrame; }
+    void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
     static float weightValue(const BoneKeyframe *keyFrame,

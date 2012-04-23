@@ -43,7 +43,11 @@
 namespace vpvl2
 {
 
+class IBoneKeyframe;
+class ICameraKeyframe;
+class ILightKeyframe;
 class IModel;
+class IMorphKeyframe;
 class IString;
 
 /**
@@ -154,16 +158,50 @@ public:
      */
     virtual void addKeyframe(IKeyframe *value) = 0;
 
+    /**
+     * 指定されたキーフレームの型にあるキーフレームの数を返します。
+     *
+     * @param IKeyframe::Type
+     * @return int
+     */
     virtual int countKeyframes(IKeyframe::Type value) const = 0;
 
+    virtual IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const = 0;
+
+    virtual ICameraKeyframe *findCameraKeyframe(int frameIndex) const = 0;
+
+    virtual ILightKeyframe *findLightKeyframe(int frameIndex) const = 0;
+
+    virtual IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const = 0;
+
+    virtual void replaceKeyframe(IKeyframe *value) = 0;
+
     /**
-     * キーフレームを削除します。
+     * 指定されたキーフレームを削除します。
      *
      * キーフレームを物理的に削除するため、呼び出し後引数の値は無効になります。
      *
      * @param IKeyframe
      */
-    virtual void deleteKeyframe(IKeyframe *value) = 0;
+    virtual void deleteKeyframe(IKeyframe *&value) = 0;
+
+    /**
+     * 指定されたキーフレームのインデックスにあるキーフレームを全て削除します。
+     *
+     * @param int
+     * @param IKeyframe::Type
+     */
+    virtual void deleteKeyframes(int frameIndex, IKeyframe::Type type) = 0;
+
+    /**
+     * 指定されたキーフレームの型の情報を更新します。
+     *
+     * このメソッドは引数が kBone または kMorph の時のみ有効です。
+     * それ以外の引数を指定された場合は何もしません。
+     *
+     * @param IKeyframe::Type
+     */
+    virtual void update(IKeyframe::Type type) = 0;
 
     virtual bool isNullFrameEnabled() const = 0;
 

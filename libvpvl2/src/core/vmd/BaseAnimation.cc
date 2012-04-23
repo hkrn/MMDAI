@@ -49,73 +49,57 @@ namespace vmd
 
 BaseAnimation::BaseAnimation()
     : m_lastIndex(0),
-      m_maxFrame(0.0f),
-      m_currentFrame(0.0f),
-      m_previousFrame(0.0f)
+      m_maxFrameIndex(0.0f),
+      m_currentFrameIndex(0.0f),
+      m_previousFrameIndex(0.0f)
 {
 }
 
 BaseAnimation::~BaseAnimation()
 {
-    m_frames.releaseAll();
+    m_keyframes.releaseAll();
     m_lastIndex = 0;
-    m_maxFrame = 0.0f;
-    m_currentFrame = 0.0f;
-    m_previousFrame = 0.0f;
+    m_maxFrameIndex = 0.0f;
+    m_currentFrameIndex = 0.0f;
+    m_previousFrameIndex = 0.0f;
 }
 
 void BaseAnimation::advance(float deltaFrame)
 {
-    seek(m_currentFrame);
-    m_currentFrame += deltaFrame;
+    seek(m_currentFrameIndex);
+    m_currentFrameIndex += deltaFrame;
 }
 
 void BaseAnimation::rewind(float target, float deltaFrame)
 {
-    m_currentFrame = m_previousFrame + deltaFrame - m_maxFrame + target;
-    m_previousFrame = target;
+    m_currentFrameIndex = m_previousFrameIndex + deltaFrame - m_maxFrameIndex + target;
+    m_previousFrameIndex = target;
 }
 
 void BaseAnimation::reset()
 {
-    m_currentFrame = 0.0f;
-    m_previousFrame = 0.0f;
+    m_currentFrameIndex = 0.0f;
+    m_previousFrameIndex = 0.0f;
 }
 
 void BaseAnimation::addKeyframe(IKeyframe *frame)
 {
-    m_frames.add(frame);
+    m_keyframes.add(frame);
 }
 
-void BaseAnimation::replaceKeyframe(IKeyframe *frame)
+void BaseAnimation::deleteKeyframe(IKeyframe *&frame)
 {
-    deleteKeyframe(frame->frameIndex(), frame->name());
-    addKeyframe(frame);
+    m_keyframes.remove(frame);
+    delete frame;
+    frame = 0;
 }
 
-void BaseAnimation::deleteKeyframe(float frameIndex, const IString *value)
+void BaseAnimation::deleteKeyframes(int frameIndex)
 {
-    const int nframes = m_frames.count();
-    IKeyframe *frameToRemove = 0;
-    for (int i = 0; i < nframes; i++) {
-        IKeyframe *frame = m_frames[i];
-        if (frame->frameIndex() == frameIndex && value->equals(frame->name())) {
-            frameToRemove = frame;
-            break;
-        }
-    }
-    if (frameToRemove) {
-        m_frames.remove(frameToRemove);
-        delete frameToRemove;
-    }
-}
-
-void BaseAnimation::deleteKeyframes(float frameIndex)
-{
-    const int nframes = m_frames.count();
+    const int nframes = m_keyframes.count();
     Array<IKeyframe *> framesToRemove;
     for (int i = 0; i < nframes; i++) {
-        IKeyframe *frame = m_frames[i];
+        IKeyframe *frame = m_keyframes[i];
         if (frame->frameIndex() == frameIndex)
             framesToRemove.add(frame);
     }
@@ -123,7 +107,7 @@ void BaseAnimation::deleteKeyframes(float frameIndex)
     if (nFramesToRemove) {
         for (int i = 0; i < nFramesToRemove; i++) {
             IKeyframe *frame = framesToRemove[i];
-            m_frames.remove(frame);
+            m_keyframes.remove(frame);
             delete frame;
         }
     }

@@ -61,39 +61,11 @@ public:
     ILightKeyframe *clone() const;
 
     void setName(const IString * /* value */) {}
-
-    /**
-     * Returns light color of this keyframe.
-     *
-     * @return A value of light color
-     */
-    const Vector3 &color() const {
-        return m_color;
-    }
-
-    /**
-     * Returns light direction of this keyframe.
-     *
-     * @return A value of light direction
-     */
-    const Vector3 &direction() const {
-        return m_direction;
-    }
-
-    /**
-     * Set light color of this keyframe.
-     *
-     * @param A value of light color
-     */
     void setColor(const Vector3 &value);
-
-    /**
-     * Set light direction of this keyframe.
-     *
-     * @param A value of light direction
-     */
     void setDirection(const Vector3 &value);
 
+    const Vector3 &color() const { return m_color; }
+    const Vector3 &direction() const { return m_direction; }
     Type type() const { return IKeyframe::kLight; }
 
 private:

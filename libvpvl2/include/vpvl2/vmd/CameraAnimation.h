@@ -67,52 +67,13 @@ public:
 
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
-    void takeSnap(const Vector3 &center);
     void reset();
-
-    /**
-     * Get a camera key frame associated with index.
-     *
-     * @param i A frame index to get key frame
-     * @return A camera key frame associated with index
-     */
     CameraKeyframe *frameAt(int i) const;
 
-    /**
-     * Get a position of camera work.
-     *
-     * @return A position (X, Y, Z)
-     */
-    const Vector3 &position() const {
-        return m_position;
-    }
-
-    /**
-     * Get an angle of camera work.
-     *
-     * @return An angle (X, Y, Z) in degree
-     */
-    const Vector3 &angle() const {
-        return m_angle;
-    }
-
-    /**
-     * Get distance of camera work.
-     *
-     * @return A value of distance
-     */
-    float distance() const {
-        return m_distance;
-    }
-
-    /**
-     * Get fovy of camera work.
-     *
-     * @return A value of fovy
-     */
-    float fovy() const {
-        return m_fovy;
-    }
+    const Vector3 &position() const { return m_position; }
+    const Vector3 &angle() const { return m_angle; }
+    float distance() const { return m_distance; }
+    float fovy() const { return m_fovy; }
 
 private:
     static float weightValue(const CameraKeyframe *keyFrame,

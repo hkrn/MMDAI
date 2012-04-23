@@ -61,25 +61,8 @@ public:
         m_frameIndex = 0;
     }
 
-    /**
-     * Get the target bone name of this keyframe.
-     *
-     * @return name the bone name
-     */
     const IString *name() const { return m_name; }
-
-    /**
-     * Get the frame index of this keyframe.
-     *
-     * @return A value of frame index
-     */
     float frameIndex() const { return m_frameIndex; }
-
-    /**
-     * Set the frame index of this keyframe.
-     *
-     * @param value A value of frame index
-     */
     void setFrameIndex(float value) { m_frameIndex = value; }
 
 protected:

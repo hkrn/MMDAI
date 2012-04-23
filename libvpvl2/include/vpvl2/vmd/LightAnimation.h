@@ -67,34 +67,11 @@ public:
 
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
-    void takeSnap(const Vector3 &center);
     void reset();
-
-    /**
-     * Get a light key frame associated with index.
-     *
-     * @param i A frame index to get key frame
-     * @return A light key frame associated with index
-     */
     LightKeyframe *frameAt(int i) const;
 
-    /**
-     * Returns light color.
-     *
-     * @return A color value (R, G, B)
-     */
-    const Vector3 &color() const {
-        return m_color;
-    }
-
-    /**
-     * Returns light direction.
-     *
-     * @return A direction value (X, Y, Z)
-     */
-    const Vector3 &direction() const {
-        return m_direction;
-    }
+    const Vector3 &color() const { return m_color; }
+    const Vector3 &direction() const { return m_direction; }
 
 private:
     Vector3 m_color;

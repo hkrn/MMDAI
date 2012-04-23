@@ -49,8 +49,6 @@ class IEncoding;
 namespace vmd
 {
 
-class Bone;
-
 class VPVL2_API BoneKeyframe : public BaseKeyframe, public IBoneKeyframe
 {
 public:
@@ -74,87 +72,21 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     IBoneKeyframe *clone() const;
-
-    /**
-     * Set the default values of the interpolation parameter.
-     */
     void setDefaultInterpolationParameter();
-
-    /**
-     * Returns the interpolation values with the type.
-     *
-     * @param type An interpolation type
-     * @param An interpolation parameter to be get
-     */
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
-
-    /**
-     * Set the interpolation values with the type.
-     *
-     * @param An interpolation type
-     * @param An interpolation parameter to set
-     */
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
-    /**
-     * Returns the position to the target bone of this keyframe.
-     *
-     * @return A value of position value
-     */
-    const Vector3 &position() const {
-        return m_position;
-    }
-
-    /**
-     * Returns the rotation to the target bone of this keyframe.
-     *
-     * @return A value of rotation value
-     */
-    const Quaternion &rotation() const {
-        return m_rotation;
-    }
-
-    /**
-     * Returns whether this keyframe is linear.
-     *
-     * @return True if this keyframe is linear
-     */
-    const bool *linear() const {
-        return m_linear;
-    }
-
-    /**
-     * Returns the interpolation values of this keyframe.
-     *
-     * @return An array of interpolation values
-     */
-    const float *const *interpolationTable() const {
-        return m_interpolationTable;
-    }
-
-    bool isIKEnabled() const {
-        return m_enableIK;
-    }
+    const Vector3 &position() const { return m_position; }
+    const Quaternion &rotation() const { return m_rotation; }
+    const bool *linear() const { return m_linear; }
+    const float *const *interpolationTable() const { return m_interpolationTable; }
+    bool isIKEnabled() const { return m_enableIK; }
+    Type type() const { return IKeyframe::kBone; }
 
     void setName(const IString *value);
-
-    /**
-     * Set the position to the target bone of this keyframe.
-     *
-     * @param value A value of position value
-     */
     void setPosition(const Vector3 &value);
-
-    /**
-     * Set the rotation to the target bone of this keyframe.
-     *
-     * @param value A value of rotation value
-     */
     void setRotation(const Quaternion &value);
-
     void setIKEnable(bool value);
-
-    Type type() const { return IKeyframe::kBone; }
 
 private:
     void setInterpolationTable(const int8_t *table);

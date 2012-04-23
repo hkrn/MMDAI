@@ -73,127 +73,24 @@ public:
     ICameraKeyframe *clone() const;
 
     void setName(const IString * /* value */) {}
-
-    /**
-     * Set the default values of the interpolation parameter.
-     */
     void setDefaultInterpolationParameter();
-
-    /**
-     * Returns the interpolation values with the type.
-     *
-     * @param type An interpolation type
-     * @param An interpolation parameter to be get
-     */
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
-
-    /**
-     * Set the interpolation values with the type.
-     *
-     * @param An interpolation type
-     * @param An interpolation parameter to set
-     */
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
-    /**
-     * Returns the distance of this keyframe.
-     *
-     * @return A value of distance value
-     */
-    float distance() const {
-        return m_distance;
-    }
-
-    /**
-     * Returns the fovy of this keyframe.
-     *
-     * @return A value of fovy value
-     */
-    float fovy() const {
-        return m_fovy;
-    }
-
-    /**
-     * Returns the position of this keyframe.
-     *
-     * @return A value of position value
-     */
-    const Vector3 &position() const {
-        return m_position;
-    }
-
-    /**
-     * Returns the angle of this keyframe.
-     *
-     * @return A value of angle value
-     */
-    const Vector3 &angle() const {
-        return m_angle;
-    }
-
-    /**
-     * Returns if this keyframe is perspective.
-     *
-     * @return True if perspective
-     */
-    bool isPerspective() const {
-        return !m_noPerspective;
-    }
-
-    /**
-     * Returns whether this keyframe is linear.
-     *
-     * @return True if this keyframe is linear
-     */
-    const bool *linear() const {
-        return m_linear;
-    }
-
-    /**
-     * Returns the interpolation values of this keyframe.
-     *
-     * @return An array of interpolation values
-     */
-    const float *const *interpolationTable() const {
-        return m_interpolationTable;
-    }
-
-    /**
-     * Set the distance of this keyframe.
-     *
-     * @param value A value of distance
-     */
-    void setDistance(float value);
-
-    /**
-     * Set the fovy of this keyframe.
-     *
-     * @param value A value of fovy
-     */
-    void setFovy(float value);
-
-    /**
-     * Set the position of this keyframe.
-     *
-     * @param value A value of position
-     */
-    void setPosition(const Vector3 &value);
-
-    /**
-     * Set the angle of this keyframe.
-     *
-     * @param value A value of angle
-     */
-    void setAngle(const Vector3 &value);
-
-    /**
-     * Set boolean this keyframe is perspective.
-     *
-     * @return True if perspective
-     */
-    void setPerspective(bool value);
-
+    float distance() const { return m_distance; }
+    float fovy() const { return m_fovy; }
+    const Vector3 &position() const { return m_position; }
+    const Vector3 &angle() const { return m_angle; }
+    bool isPerspective() const { return !m_noPerspective; }
+    const bool *linear() const { return m_linear; }
+    const float *const *interpolationTable() const { return m_interpolationTable; }
     Type type() const { return IKeyframe::kCamera; }
+
+    void setDistance(float value);
+    void setFovy(float value);
+    void setPosition(const Vector3 &value);
+    void setAngle(const Vector3 &value);
+    void setPerspective(bool value);
 
 private:
     void setInterpolationTable(const int8_t *table);

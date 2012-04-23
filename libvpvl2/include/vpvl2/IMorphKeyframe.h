@@ -52,6 +52,13 @@ public:
     virtual ~IMorphKeyframe() {}
 
     /**
+     * IMorphKeyframe のインスタンスの完全なコピーを返します。
+     *
+     * @return IBoneKeyframe
+     */
+    virtual IMorphKeyframe *clone() const = 0;
+
+    /**
      * 変形係数を返します。
      *
      * 返す値は 0.0 以上 1.0 以下になります。

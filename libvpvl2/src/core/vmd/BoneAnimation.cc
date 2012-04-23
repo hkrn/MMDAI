@@ -48,7 +48,7 @@ namespace vpvl2
 namespace vmd
 {
 
-struct InternalBoneKeyFrameList {
+struct BoneAnimation::InternalBoneKeyFrameList {
     IBone *bone;
     Array<BoneKeyframe *> keyframes;
     Vector3 position;
@@ -115,10 +115,10 @@ BoneAnimation::~BoneAnimation()
 void BoneAnimation::read(const uint8_t *data, int size)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    m_frames.reserve(size);
+    m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
         BoneKeyframe *frame = new BoneKeyframe(m_encoding);
-        m_frames.add(frame);
+        m_keyframes.add(frame);
         frame->read(ptr);
         ptr += frame->estimateSize();
     }
@@ -138,8 +138,8 @@ void BoneAnimation::seek(float frameAt)
         bone->setPosition(keyframes->position);
         bone->setRotation(keyframes->rotation);
     }
-    m_previousFrame = m_currentFrame;
-    m_currentFrame = frameAt;
+    m_previousFrameIndex = m_currentFrameIndex;
+    m_currentFrameIndex = frameAt;
 }
 
 void BoneAnimation::setParentModel(IModel *model)
@@ -150,18 +150,35 @@ void BoneAnimation::setParentModel(IModel *model)
 
 BoneKeyframe *BoneAnimation::frameAt(int i) const
 {
-    return reinterpret_cast<BoneKeyframe *>(m_frames[i]);
+    return reinterpret_cast<BoneKeyframe *>(m_keyframes[i]);
+}
+
+BoneKeyframe *BoneAnimation::findKeyframe(int frameIndex, const IString *name) const
+{
+    const HashString &key = name->toHashString();
+    InternalBoneKeyFrameList *const *ptr = m_name2keyframes.find(key);
+    if (ptr) {
+        const InternalBoneKeyFrameList *node = *ptr;
+        const Array<BoneKeyframe *> &frames = node->keyframes;
+        const int nframes = frames.count();
+        for (int i = 0; i < nframes; i++) {
+            BoneKeyframe *frame = frames[i];
+            if (frame->frameIndex() == frameIndex)
+                return frame;
+        }
+    }
+    return 0;
 }
 
 void BoneAnimation::buildInternalKeyFrameList(IModel *model)
 {
     if (!model)
         return;
-    const int nframes = m_frames.count();
+    const int nframes = m_keyframes.count();
     m_name2keyframes.releaseAll();
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
-        BoneKeyframe *frame = reinterpret_cast<BoneKeyframe *>(m_frames.at(i));
+        BoneKeyframe *frame = reinterpret_cast<BoneKeyframe *>(m_keyframes.at(i));
         const IString *name = frame->name();
         const HashString &key = name->toHashString();
         InternalBoneKeyFrameList **ptr = m_name2keyframes[key], *node;
@@ -188,7 +205,7 @@ void BoneAnimation::buildInternalKeyFrameList(IModel *model)
         InternalBoneKeyFrameList *node = *m_name2keyframes.value(i);
         Array<BoneKeyframe *> &frames = node->keyframes;
         frames.sort(BoneAnimationKeyFramePredication());
-        btSetMax(m_maxFrame, frames[frames.count() - 1]->frameIndex());
+        btSetMax(m_maxFrameIndex, frames[frames.count() - 1]->frameIndex());
     }
 }
 

@@ -87,10 +87,10 @@ MorphAnimation::~MorphAnimation()
 void MorphAnimation::read(const uint8_t *data, int size)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    m_frames.reserve(size);
+    m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
         MorphKeyframe *frame = new MorphKeyframe(m_encoding);
-        m_frames.add(frame);
+        m_keyframes.add(frame);
         frame->read(ptr);
         ptr += frame->estimateSize();
     }
@@ -110,8 +110,8 @@ void MorphAnimation::seek(float frameAt)
         IMorph *morph = frames->morph;
         morph->performTransform(frames->weight);
     }
-    m_previousFrame = m_currentFrame;
-    m_currentFrame = frameAt;
+    m_previousFrameIndex = m_currentFrameIndex;
+    m_currentFrameIndex = frameAt;
 }
 
 void MorphAnimation::setParentModel(IModel *model)
@@ -124,11 +124,11 @@ void MorphAnimation::buildInternalNodes(IModel *model)
 {
     if (!model)
         return;
-    const int nframes = m_frames.count();
+    const int nframes = m_keyframes.count();
     m_name2keyframes.releaseAll();
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nframes; i++) {
-        MorphKeyframe *frame = reinterpret_cast<MorphKeyframe *>(m_frames.at(i));
+        MorphKeyframe *frame = reinterpret_cast<MorphKeyframe *>(m_keyframes.at(i));
         const IString *name = frame->name();
         const HashString &key = name->toHashString();
         InternalMorphKeyFrameList **ptr = m_name2keyframes[key], *node;
@@ -154,7 +154,7 @@ void MorphAnimation::buildInternalNodes(IModel *model)
         InternalMorphKeyFrameList *keyframes = *m_name2keyframes.value(i);
         Array<MorphKeyframe *> &frames = keyframes->keyframes;
         frames.sort(MorphAnimationKeyFramePredication());
-        btSetMax(m_maxFrame, frames[frames.count() - 1]->frameIndex());
+        btSetMax(m_maxFrameIndex, frames[frames.count() - 1]->frameIndex());
     }
 }
 
@@ -170,7 +170,24 @@ void MorphAnimation::reset()
 
 MorphKeyframe *MorphAnimation::frameAt(int i) const
 {
-    return reinterpret_cast<MorphKeyframe *>(m_frames[i]);
+    return reinterpret_cast<MorphKeyframe *>(m_keyframes[i]);
+}
+
+MorphKeyframe *MorphAnimation::findKeyframe(int frameIndex, const IString *name) const
+{
+    const HashString &key = name->toHashString();
+    InternalMorphKeyFrameList *const *ptr = m_name2keyframes.find(key);
+    if (ptr) {
+        const InternalMorphKeyFrameList *node = *ptr;
+        const Array<MorphKeyframe *> &frames = node->keyframes;
+        const int nframes = frames.count();
+        for (int i = 0; i < nframes; i++) {
+            MorphKeyframe *frame = frames[i];
+            if (frame->frameIndex() == frameIndex)
+                return frame;
+        }
+    }
+    return 0;
 }
 
 void MorphAnimation::calculateFrames(float frameAt, InternalMorphKeyFrameList *keyframes)
@@ -191,7 +208,7 @@ void MorphAnimation::calculateFrames(float frameAt, InternalMorphKeyFrameList *k
     }
     else {
         for (int i = 0; i <= lastIndex && i < nframes; i++) {
-            if (currentFrame <= m_frames.at(i)->frameIndex()) {
+            if (currentFrame <= m_keyframes.at(i)->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -215,8 +232,8 @@ void MorphAnimation::calculateFrames(float frameAt, InternalMorphKeyFrameList *k
     else {
         keyframes->weight = weightFrom;
     }
-    m_previousFrame = m_currentFrame;
-    m_currentFrame = frameAt;
+    m_previousFrameIndex = m_currentFrameIndex;
+    m_currentFrameIndex = frameAt;
 }
 
 }

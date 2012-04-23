@@ -72,28 +72,28 @@ void LightAnimation::read(const uint8_t *data, int size)
 {
     if (size > 0) {
         uint8_t *ptr = const_cast<uint8_t *>(data);
-        m_frames.reserve(size);
+        m_keyframes.reserve(size);
         for (int i = 0; i < size; i++) {
             LightKeyframe *frame = new LightKeyframe();
-            m_frames.add(frame);
+            m_keyframes.add(frame);
             frame->read(ptr);
             ptr += frame->estimateSize();
         }
-        m_frames.sort(LightAnimationKeyFramePredication());
-        m_maxFrame = m_frames[size - 1]->frameIndex();
+        m_keyframes.sort(LightAnimationKeyFramePredication());
+        m_maxFrameIndex = m_keyframes[size - 1]->frameIndex();
     }
 }
 
 void LightAnimation::seek(float frameAt)
 {
-    const int nframes = m_frames.count();
-    LightKeyframe *lastKeyFrame = reinterpret_cast<LightKeyframe *>(m_frames[nframes - 1]);
+    const int nframes = m_keyframes.count();
+    LightKeyframe *lastKeyFrame = reinterpret_cast<LightKeyframe *>(m_keyframes[nframes - 1]);
     float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
-    if (currentFrame >= m_frames[m_lastIndex]->frameIndex()) {
+    if (currentFrame >= m_keyframes[m_lastIndex]->frameIndex()) {
         for (int i = m_lastIndex; i < nframes; i++) {
-            if (currentFrame <= m_frames[i]->frameIndex()) {
+            if (currentFrame <= m_keyframes[i]->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -101,7 +101,7 @@ void LightAnimation::seek(float frameAt)
     }
     else {
         for (int i = 0; i <= m_lastIndex && i < nframes; i++) {
-            if (currentFrame <= m_frames[i]->frameIndex()) {
+            if (currentFrame <= m_keyframes[i]->frameIndex()) {
                 k2 = i;
                 break;
             }
@@ -127,8 +127,8 @@ void LightAnimation::seek(float frameAt)
         m_color = colorFrom;
         m_direction = directionFrom;
     }
-    m_previousFrame = m_currentFrame;
-    m_currentFrame = frameAt;
+    m_previousFrameIndex = m_currentFrameIndex;
+    m_currentFrameIndex = frameAt;
 }
 
 void LightAnimation::reset()
@@ -138,7 +138,7 @@ void LightAnimation::reset()
 
 LightKeyframe *LightAnimation::frameAt(int i) const
 {
-    return reinterpret_cast<LightKeyframe *>(m_frames[i]);
+    return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<LightKeyframe *>(m_keyframes[i]) : 0;
 }
 
 }

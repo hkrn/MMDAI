@@ -62,27 +62,13 @@ public:
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
-    BaseKeyframe *clone() const;
+    IMorphKeyframe *clone() const;
+
+    float weight() const {  return m_weight; }
+    Type type() const { return IKeyframe::kMorph; }
 
     void setName(const IString *value);
-
-    /**
-     * Get the face weight of this keyframe.
-     *
-     * @return A value of face weight
-     */
-    float weight() const {
-        return m_weight;
-    }
-
-    /**
-     * Set weight of the face of this keyframe.
-     *
-     * @param A value of weight of the face
-     */
     void setWeight(float value);
-
-    Type type() const { return IKeyframe::kMorph; }
 
 private:
     IEncoding *m_encoding;

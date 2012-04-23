@@ -123,7 +123,14 @@ public:
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
-    void deleteKeyframe(IKeyframe *value);
+    IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const;
+    ICameraKeyframe *findCameraKeyframe(int frameIndex) const;
+    ILightKeyframe *findLightKeyframe(int frameIndex) const;
+    IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const;
+    void replaceKeyframe(IKeyframe *value);
+    void deleteKeyframe(IKeyframe *&value);
+    void deleteKeyframes(int frameIndex, IKeyframe::Type type);
+    void update(IKeyframe::Type type);
 
     const IString *name() const {
         return m_name;

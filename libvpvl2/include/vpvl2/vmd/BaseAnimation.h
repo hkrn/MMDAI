@@ -61,128 +61,29 @@ class VPVL2_API BaseAnimation
 {
 public:
 
-    /**
-     * Constructor
-     */
-    explicit BaseAnimation();
-
+    BaseAnimation();
     virtual ~BaseAnimation();
 
-    /**
-     * Read and parse the buffer with size and sets it's result to the class.
-     *
-     * @param data The buffer to read and parse
-     * @param size Size of the buffer
-     */
     virtual void read(const uint8_t *data, int size) = 0;
-
-    /**
-     * Seek the Animation to the given value index.
-     *
-     * @param frameAt A frame index to seek
-     */
     virtual void seek(float frameAt) = 0;
-
-    /**
-     * Seek from the previous to the next frame with delta.
-     *
-     * @param deltaFrame A delta frame index to seek the next frame
-     */
     void advance(float deltaFrame);
-
-    /**
-     * Rewind the Animation.
-     *
-     * @param target A frame index to rewind
-     * @param deltaFrame A delta frame indx to rewind
-     */
     void rewind(float target, float deltaFrame);
-
-    /**
-     * Reset all states and last frame index.
-     */
     void reset();
-
-    /**
-     * Add a key frame.
-     *
-     * @param frame A key frame to be added
-     */
     void addKeyframe(IKeyframe *frame);
+    void deleteKeyframe(IKeyframe *&frame);
+    void deleteKeyframes(int frameIndex);
 
-    /**
-     * Replace a key frame.
-     *
-     * If a key frame name and index are same is found,
-     * replace it (delete and add). Otherwise same as addKeyFrame.
-     *
-     * @param frame A key frame to be replaced (or add)
-     */
-    void replaceKeyframe(IKeyframe *frame);
-
-    /**
-     * Count all of key frames.
-     *
-     * @return size of all key frames
-     */
-    int countKeyframes() const {
-        return m_frames.count();
-    }
-
-    /**
-     * Delete a key frame associated with an index and a name.
-     *
-     * This method automatically calls refresh after deleting the frame.
-     * No refresh is called if no frame to remove is found.
-     *
-     * @param frameIndex A frame index to delete
-     * @param name A name to delete
-     */
-    void deleteKeyframe(float frameIndex, const IString *name);
-
-    /**
-     * Delete key frames associated with an index.
-     *
-     * This method automatically calls refresh after deleting the frame.
-     * No refresh is called if no frame to remove is found.
-     *
-     * @param frameIndex A frame index to delete
-     */
-    void deleteKeyframes(float frameIndex);
-
-    /**
-     * Get the previous frame index.
-     *
-     * @return The previous frame index
-     */
-    float previousIndex() const {
-        return m_previousFrame;
-    }
-
-    /**
-     * Get the current frame index.
-     *
-     * @return The current frame index
-     */
-    float currentIndex() const {
-        return m_currentFrame;
-    }
-
-    /**
-     * Get the max frame index.
-     *
-     * @return The max frame index
-     */
-    float maxIndex() const {
-        return m_maxFrame;
-    }
+    int countKeyframes() const { return m_keyframes.count(); }
+    float previousIndex() const { return m_previousFrameIndex; }
+    float currentIndex() const { return m_currentFrameIndex; }
+    float maxIndex() const { return m_maxFrameIndex; }
 
 protected:
-    Array<IKeyframe *> m_frames;
+    Array<IKeyframe *> m_keyframes;
     int m_lastIndex;
-    float m_maxFrame;
-    float m_currentFrame;
-    float m_previousFrame;
+    float m_maxFrameIndex;
+    float m_currentFrameIndex;
+    float m_previousFrameIndex;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

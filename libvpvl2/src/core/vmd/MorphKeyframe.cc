@@ -104,7 +104,7 @@ size_t MorphKeyframe::estimateSize() const
     return strideSize();
 }
 
-BaseKeyframe *MorphKeyframe::clone() const
+IMorphKeyframe *MorphKeyframe::clone() const
 {
     MorphKeyframe *frame = new MorphKeyframe(m_encoding);
     frame->setName(m_name);
