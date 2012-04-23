@@ -175,6 +175,8 @@ MorphKeyframe *MorphAnimation::frameAt(int i) const
 
 MorphKeyframe *MorphAnimation::findKeyframe(int frameIndex, const IString *name) const
 {
+    if (!name)
+        return 0;
     const HashString &key = name->toHashString();
     InternalMorphKeyFrameList *const *ptr = m_name2keyframes.find(key);
     if (ptr) {

@@ -68,6 +68,7 @@ public:
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
     void reset();
+    LightKeyframe *findKeyframe(int frameIndex) const;
     LightKeyframe *frameAt(int i) const;
 
     const Vector3 &color() const { return m_color; }

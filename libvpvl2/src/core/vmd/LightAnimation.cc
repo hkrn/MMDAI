@@ -136,6 +136,17 @@ void LightAnimation::reset()
     BaseAnimation::reset();
 }
 
+LightKeyframe *LightAnimation::findKeyframe(int frameIndex) const
+{
+    const int nkeyframes = m_keyframes.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        LightKeyframe *keyframe = reinterpret_cast<LightKeyframe *>(m_keyframes[i]);
+        if (keyframe->frameIndex() == frameIndex)
+            return keyframe;
+    }
+    return 0;
+}
+
 LightKeyframe *LightAnimation::frameAt(int i) const
 {
     return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<LightKeyframe *>(m_keyframes[i]) : 0;

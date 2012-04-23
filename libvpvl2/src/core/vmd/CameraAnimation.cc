@@ -213,6 +213,17 @@ void CameraAnimation::reset()
     BaseAnimation::reset();
 }
 
+CameraKeyframe *CameraAnimation::findKeyframe(int frameIndex) const
+{
+    const int nkeyframes = m_keyframes.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        CameraKeyframe *keyframe = reinterpret_cast<CameraKeyframe *>(m_keyframes[i]);
+        if (keyframe->frameIndex() == frameIndex)
+            return keyframe;
+    }
+    return 0;
+}
+
 CameraKeyframe *CameraAnimation::frameAt(int i) const
 {
     return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<CameraKeyframe *>(m_keyframes[i]) : 0;

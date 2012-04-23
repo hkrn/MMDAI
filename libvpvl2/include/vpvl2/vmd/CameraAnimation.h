@@ -68,6 +68,7 @@ public:
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
     void reset();
+    CameraKeyframe *findKeyframe(int frameIndex) const;
     CameraKeyframe *frameAt(int i) const;
 
     const Vector3 &position() const { return m_position; }

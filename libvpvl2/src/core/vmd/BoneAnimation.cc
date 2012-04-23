@@ -155,6 +155,8 @@ BoneKeyframe *BoneAnimation::frameAt(int i) const
 
 BoneKeyframe *BoneAnimation::findKeyframe(int frameIndex, const IString *name) const
 {
+    if (!name)
+        return 0;
     const HashString &key = name->toHashString();
     InternalBoneKeyFrameList *const *ptr = m_name2keyframes.find(key);
     if (ptr) {
