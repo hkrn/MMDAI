@@ -168,15 +168,15 @@ void SceneWidget::stopAutomaticRendering()
 
 void SceneWidget::loadProject(const QString &filename)
 {
-    QProgressDialog *dialog = new QProgressDialog();
-    connect(m_loader, SIGNAL(projectDidLoad(bool)), dialog, SLOT(close()));
-    connect(m_loader, SIGNAL(projectDidCount(int)), dialog, SLOT(setMaximum(int)));
-    connect(m_loader, SIGNAL(projectDidProceed(int)), dialog, SLOT(setValue(int)));
+    QScopedPointer<QProgressDialog> dialog(new QProgressDialog());
+    QProgressDialog *ptr = dialog.data();
+    connect(m_loader, SIGNAL(projectDidLoad(bool)), ptr, SLOT(close()));
+    connect(m_loader, SIGNAL(projectDidCount(int)), ptr, SLOT(setMaximum(int)));
+    connect(m_loader, SIGNAL(projectDidProceed(int)), ptr, SLOT(setValue(int)));
     dialog->setLabelText(tr("Loading a project %1...").arg(QFileInfo(filename).fileName()));
     dialog->setWindowModality(Qt::WindowModal);
     dialog->setCancelButton(0);
     m_loader->loadProject(filename);
-    delete dialog;
 }
 
 void SceneWidget::saveProject(const QString &filename)

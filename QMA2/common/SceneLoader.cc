@@ -1041,47 +1041,49 @@ void SceneLoader::loadProject(const QString &path)
 IMotion *SceneLoader::newCameraMotion() const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
-    IMotion *newCameraMotion = m_factory->createMotion();
-    ICameraKeyframe *frame = m_factory->createCameraKeyframe();
+    QScopedPointer<IMotion> newCameraMotion(m_factory->createMotion());
+    QScopedPointer<ICameraKeyframe> frame(m_factory->createCameraKeyframe());
     Scene::ICamera *camera = m_project->camera();
     frame->setDefaultInterpolationParameter();
     frame->setPosition(camera->position());
     frame->setAngle(camera->angle());
     frame->setFovy(camera->fovy());
     frame->setDistance(camera->distance());
-    newCameraMotion->addKeyframe(frame);
-    return newCameraMotion;
+    newCameraMotion->addKeyframe(frame.take());
+    return newCameraMotion.take();
 }
 
 IMotion *SceneLoader::newModelMotion(IModel *model) const
 {
     /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
-    IMotion *newModelMotion = 0;
+    QScopedPointer<IMotion> newModelMotion;
     if (model) {
-        newModelMotion = m_factory->createMotion();
+        newModelMotion.reset(m_factory->createMotion());
         Array<IBone *> bones;
         model->getBones(bones);
         const int nbones = bones.count();
+        QScopedPointer<IBoneKeyframe> boneKeyframe;
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
-                IBoneKeyframe *frame = m_factory->createBoneKeyframe();
-                frame->setDefaultInterpolationParameter();
-                frame->setName(bone->name());
-                newModelMotion->addKeyframe(frame);
+                boneKeyframe.reset(m_factory->createBoneKeyframe());
+                boneKeyframe->setDefaultInterpolationParameter();
+                boneKeyframe->setName(bone->name());
+                newModelMotion->addKeyframe(boneKeyframe.take());
             }
         }
         Array<IMorph *> morphs;
         model->getMorphs(morphs);
         const int nmorphs = morphs.count();
+        QScopedPointer<IMorphKeyframe> morphKeyframe;
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
-            IMorphKeyframe *frame = m_factory->createMorphKeyframe();
-            frame->setName(morph->name());
-            newModelMotion->addKeyframe(frame);
+            morphKeyframe.reset(m_factory->createMorphKeyframe());
+            morphKeyframe->setName(morph->name());
+            newModelMotion->addKeyframe(morphKeyframe.take());
         }
     }
-    return newModelMotion;
+    return newModelMotion.take();
 }
 
 void SceneLoader::release()

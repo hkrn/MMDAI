@@ -215,7 +215,7 @@ void VPDFile::makePose(IModel *model)
 
 VPDFile *VPDFile::clone()
 {
-    VPDFile *newPose = new VPDFile();
+    QScopedPointer<VPDFile> newPose(new VPDFile());
     VPDFile::BoneList newBones;
     foreach (Bone *bone, m_bones) {
         VPDFile::Bone *newBone = new VPDFile::Bone();
@@ -226,5 +226,5 @@ VPDFile *VPDFile::clone()
     }
     newPose->m_bones = newBones;
     newPose->m_error = m_error;
-    return newPose;
+    return newPose.take();
 }

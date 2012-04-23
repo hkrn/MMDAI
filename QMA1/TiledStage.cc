@@ -266,17 +266,15 @@ void TiledStage::buildFloor(float width, float height)
 {
     btVector3 localIneteria(0.0f, 0.0f, 0.0f);
     btScalar mass = 0.0f;
-    btCollisionShape *shape = 0;
     btTransform startTransform;
-    btDefaultMotionState *state = 0;
     destroyFloor();
-    shape = new btBoxShape(btVector3(width, 10.0f, height));
+    QScopedPointer<btCollisionShape> shape(new btBoxShape(btVector3(width, 10.0f, height)));
     if (mass != 0.0f)
         shape->calculateLocalInertia(mass, localIneteria);
     startTransform.setIdentity();
     startTransform.setOrigin(btVector3(0.0f, -9.99f, 0.0f));
-    state = new btDefaultMotionState(startTransform);
-    btRigidBody::btRigidBodyConstructionInfo builder(mass, state, shape, localIneteria);
+    QScopedPointer<btDefaultMotionState> state(new btDefaultMotionState(startTransform));
+    btRigidBody::btRigidBodyConstructionInfo builder(mass, state.take(), shape.take(), localIneteria);
     builder.m_linearDamping = 0.5f;
     builder.m_angularDamping = 0.5f;
     builder.m_restitution = 0.8f;

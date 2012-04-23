@@ -173,7 +173,7 @@ static void UILoadTrackableModel(const aiMesh *mesh,
 {
     /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
     UILoadStaticModel(mesh, model);
-    btTriangleMesh *triangleMesh = new btTriangleMesh();
+    QScopedPointer<btTriangleMesh> triangleMesh(new btTriangleMesh());
     const Array<Handles::Vertex> &vertices = model.vertices;
     const int nfaces = vertices.count() / 3;
     for (int i = 0; i < nfaces; i++) {
@@ -184,9 +184,9 @@ static void UILoadTrackableModel(const aiMesh *mesh,
     }
     const btScalar &mass = 0.0f;
     const btVector3 localInertia(0.0f, 0.0f, 0.0f);
-    btBvhTriangleMeshShape *shape = new btBvhTriangleMeshShape(triangleMesh, true);
-    btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape, localInertia);
-    btRigidBody *body = new btRigidBody(info);
+    QScopedPointer<btBvhTriangleMeshShape> shape(new btBvhTriangleMeshShape(triangleMesh.take(), true));
+    btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape.take(), localInertia);
+    QScopedPointer<btRigidBody> body(new btRigidBody(info));
     /*
      * Bone の位置情報を元に動かす静的なオブジェクトであるため KinematicObject として処理する
      * これを行わないと stepSimulation で進めても MotionState で Bone の位置情報を引いて更新する処理が行われない
@@ -194,8 +194,8 @@ static void UILoadTrackableModel(const aiMesh *mesh,
     body->setActivationState(DISABLE_DEACTIVATION);
     body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
     body->setUserPointer(&model);
-    world->addRigidBody(body);
-    model.body = body;
+    world->addRigidBody(body.data());
+    model.body = body.take();
 }
 
 static void UIInitializeRenderingModel(const Scene *scene,
