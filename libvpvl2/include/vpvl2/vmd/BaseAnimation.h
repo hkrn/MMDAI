@@ -79,6 +79,22 @@ public:
     float maxIndex() const { return m_maxFrameIndex; }
 
 protected:
+    template<typename T>
+    static int findKeyframeIndex(int key, const Array<T *> &keyframes) {
+        int first = 0;
+        int last = keyframes.count();
+        while (first <= last) {
+            int mid = (first + last) / 2;
+            if (key > keyframes[mid]->frameIndex())
+                first = mid + 1;
+            else if (key < keyframes[mid]->frameIndex())
+                last = mid - 1;
+            else
+                return mid;
+        }
+        return -1;
+    }
+
     Array<IKeyframe *> m_keyframes;
     int m_lastIndex;
     float m_maxFrameIndex;

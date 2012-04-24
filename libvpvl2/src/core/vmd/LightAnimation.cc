@@ -42,10 +42,11 @@
 #include "vpvl2/vmd/LightAnimation.h"
 #include "vpvl2/vmd/LightKeyframe.h"
 
-namespace vpvl2
+namespace
 {
-namespace vmd
-{
+
+using namespace vpvl2;
+using namespace vpvl2::vmd;
 
 class LightAnimationKeyFramePredication
 {
@@ -54,6 +55,13 @@ public:
         return left->frameIndex() < right->frameIndex();
     }
 };
+
+}
+
+namespace vpvl2
+{
+namespace vmd
+{
 
 LightAnimation::LightAnimation()
     : BaseAnimation(),
@@ -79,8 +87,7 @@ void LightAnimation::read(const uint8_t *data, int size)
             frame->read(ptr);
             ptr += frame->estimateSize();
         }
-        m_keyframes.sort(LightAnimationKeyFramePredication());
-        m_maxFrameIndex = m_keyframes[size - 1]->frameIndex();
+        update();
     }
 }
 
@@ -131,20 +138,22 @@ void LightAnimation::seek(float frameAt)
     m_currentFrameIndex = frameAt;
 }
 
-void LightAnimation::reset()
+void LightAnimation::update()
 {
-    BaseAnimation::reset();
+    int nkeyframes = m_keyframes.count();
+    if (nkeyframes > 0) {
+        m_keyframes.sort(LightAnimationKeyFramePredication());
+        m_maxFrameIndex = m_keyframes[m_keyframes.count() - 1]->frameIndex();
+    }
+    else {
+        m_maxFrameIndex = 0;
+    }
 }
 
 LightKeyframe *LightAnimation::findKeyframe(int frameIndex) const
 {
-    const int nkeyframes = m_keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        LightKeyframe *keyframe = reinterpret_cast<LightKeyframe *>(m_keyframes[i]);
-        if (keyframe->frameIndex() == frameIndex)
-            return keyframe;
-    }
-    return 0;
+    int index = findKeyframeIndex(frameIndex, m_keyframes);
+    return index != -1 ? reinterpret_cast<LightKeyframe *>(m_keyframes[index]) : 0;
 }
 
 LightKeyframe *LightAnimation::frameAt(int i) const

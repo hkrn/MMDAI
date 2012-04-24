@@ -204,9 +204,6 @@ public:
     /**
      * 指定されたキーフレームの型の情報を更新します。
      *
-     * このメソッドは引数が kBone または kMorph の時のみ有効です。
-     * それ以外の引数を指定された場合は何もしません。
-     *
      * @param IKeyframe::Type
      */
     virtual void update(IKeyframe::Type type) = 0;

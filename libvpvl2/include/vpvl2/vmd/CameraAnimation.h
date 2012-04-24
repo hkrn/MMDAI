@@ -67,7 +67,7 @@ public:
 
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
-    void reset();
+    void update();
     CameraKeyframe *findKeyframe(int frameIndex) const;
     CameraKeyframe *frameAt(int i) const;
 

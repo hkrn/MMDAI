@@ -43,6 +43,22 @@
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
 
+namespace
+{
+
+using namespace vpvl2;
+using namespace vpvl2::vmd;
+
+class BoneAnimationKeyframePredication
+{
+public:
+    bool operator()(const IBoneKeyframe *left, const IBoneKeyframe *right) {
+        return left->frameIndex() < right->frameIndex();
+    }
+};
+
+}
+
 namespace vpvl2
 {
 namespace vmd
@@ -62,14 +78,6 @@ struct BoneAnimation::InternalBoneKeyFrameList {
                     keyFrame->rotation() == Quaternion::getIdentity();
         }
         return false;
-    }
-};
-
-class BoneAnimationKeyFramePredication
-{
-public:
-    bool operator()(const IBoneKeyframe *left, const IBoneKeyframe *right) {
-        return left->frameIndex() < right->frameIndex();
     }
 };
 
@@ -162,12 +170,8 @@ BoneKeyframe *BoneAnimation::findKeyframe(int frameIndex, const IString *name) c
     if (ptr) {
         const InternalBoneKeyFrameList *node = *ptr;
         const Array<BoneKeyframe *> &frames = node->keyframes;
-        const int nframes = frames.count();
-        for (int i = 0; i < nframes; i++) {
-            BoneKeyframe *frame = frames[i];
-            if (frame->frameIndex() == frameIndex)
-                return frame;
-        }
+        int index = findKeyframeIndex(frameIndex, frames);
+        return index != -1 ? frames[index] : 0;
     }
     return 0;
 }
@@ -206,7 +210,7 @@ void BoneAnimation::buildInternalKeyFrameList(IModel *model)
     for (int i = 0; i < nnodes; i++) {
         InternalBoneKeyFrameList *node = *m_name2keyframes.value(i);
         Array<BoneKeyframe *> &frames = node->keyframes;
-        frames.sort(BoneAnimationKeyFramePredication());
+        frames.sort(BoneAnimationKeyframePredication());
         btSetMax(m_maxFrameIndex, frames[frames.count() - 1]->frameIndex());
     }
 }

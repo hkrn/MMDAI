@@ -67,7 +67,7 @@ public:
 
     void read(const uint8_t *data, int size);
     void seek(float frameAt);
-    void reset();
+    void update();
     LightKeyframe *findKeyframe(int frameIndex) const;
     LightKeyframe *frameAt(int i) const;
 

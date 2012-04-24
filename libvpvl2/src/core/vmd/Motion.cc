@@ -462,11 +462,15 @@ void Motion::update(IKeyframe::Type type)
     case IKeyframe::kBone:
         m_boneMotion.setParentModel(m_model);
         break;
+    case IKeyframe::kCamera:
+        m_cameraMotion.update();
+        break;
+    case IKeyframe::kLight:
+        m_lightMotion.update();
+        break;
     case IKeyframe::kMorph:
         m_morphMotion.setParentModel(m_model);
         break;
-    case IKeyframe::kCamera:
-    case IKeyframe::kLight:
     default:
         break;
     }

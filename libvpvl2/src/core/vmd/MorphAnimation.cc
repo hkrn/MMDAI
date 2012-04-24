@@ -42,6 +42,22 @@
 #include "vpvl2/vmd/MorphAnimation.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 
+namespace
+{
+
+using namespace vpvl2;
+using namespace vpvl2::vmd;
+
+class MorphAnimationKeyframePredication
+{
+public:
+    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
+        return left->frameIndex() < right->frameIndex();
+    }
+};
+
+}
+
 namespace vpvl2
 {
 namespace vmd
@@ -59,14 +75,6 @@ struct InternalMorphKeyFrameList {
             return keyFrame->weight() == 0.0f;
         }
         return false;
-    }
-};
-
-class MorphAnimationKeyFramePredication
-{
-public:
-    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
-        return left->frameIndex() < right->frameIndex();
     }
 };
 
@@ -153,7 +161,7 @@ void MorphAnimation::buildInternalNodes(IModel *model)
     for (int i = 0; i < nnodes; i++) {
         InternalMorphKeyFrameList *keyframes = *m_name2keyframes.value(i);
         Array<MorphKeyframe *> &frames = keyframes->keyframes;
-        frames.sort(MorphAnimationKeyFramePredication());
+        frames.sort(MorphAnimationKeyframePredication());
         btSetMax(m_maxFrameIndex, frames[frames.count() - 1]->frameIndex());
     }
 }
@@ -182,12 +190,8 @@ MorphKeyframe *MorphAnimation::findKeyframe(int frameIndex, const IString *name)
     if (ptr) {
         const InternalMorphKeyFrameList *node = *ptr;
         const Array<MorphKeyframe *> &frames = node->keyframes;
-        const int nframes = frames.count();
-        for (int i = 0; i < nframes; i++) {
-            MorphKeyframe *frame = frames[i];
-            if (frame->frameIndex() == frameIndex)
-                return frame;
-        }
+        int index = findKeyframeIndex(frameIndex, frames);
+        return index != -1 ? frames[index] : 0;
     }
     return 0;
 }

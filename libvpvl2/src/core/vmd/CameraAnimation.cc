@@ -42,10 +42,11 @@
 #include "vpvl2/vmd/CameraAnimation.h"
 #include "vpvl2/vmd/CameraKeyframe.h"
 
-namespace vpvl2
+namespace
 {
-namespace vmd
-{
+
+using namespace vpvl2;
+using namespace vpvl2::vmd;
 
 class CameraAnimationKeyFramePredication
 {
@@ -54,6 +55,13 @@ public:
         return left->frameIndex() < right->frameIndex();
     }
 };
+
+}
+
+namespace vpvl2
+{
+namespace vmd
+{
 
 float CameraAnimation::weightValue(const CameraKeyframe *keyFrame, float w, int at)
 {
@@ -108,8 +116,7 @@ void CameraAnimation::read(const uint8_t *data, int size)
             frame->read(ptr);
             ptr += frame->estimateSize();
         }
-        m_keyframes.sort(CameraAnimationKeyFramePredication());
-        m_maxFrameIndex = m_keyframes[size - 1]->frameIndex();
+        update();
     }
 }
 
@@ -208,20 +215,22 @@ void CameraAnimation::seek(float frameAt)
     m_currentFrameIndex = frameAt;
 }
 
-void CameraAnimation::reset()
+void CameraAnimation::update()
 {
-    BaseAnimation::reset();
+    int nkeyframes = m_keyframes.count();
+    if (nkeyframes > 0) {
+        m_keyframes.sort(CameraAnimationKeyFramePredication());
+        m_maxFrameIndex = m_keyframes[m_keyframes.count() - 1]->frameIndex();
+    }
+    else {
+        m_maxFrameIndex = 0;
+    }
 }
 
 CameraKeyframe *CameraAnimation::findKeyframe(int frameIndex) const
 {
-    const int nkeyframes = m_keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        CameraKeyframe *keyframe = reinterpret_cast<CameraKeyframe *>(m_keyframes[i]);
-        if (keyframe->frameIndex() == frameIndex)
-            return keyframe;
-    }
-    return 0;
+    int index = findKeyframeIndex(frameIndex, m_keyframes);
+    return index != -1 ? reinterpret_cast<CameraKeyframe *>(m_keyframes[index]) : 0;
 }
 
 CameraKeyframe *CameraAnimation::frameAt(int i) const

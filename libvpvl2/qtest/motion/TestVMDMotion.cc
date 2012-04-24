@@ -441,7 +441,7 @@ void TestVMDMotion::mutateBoneKeyframes() const
     QScopedPointer<IBoneKeyframe> frame(new BoneKeyframe(&encoding));
     frame->setFrameIndex(42);
     frame->setName(&s);
-    // add a bone keyframe
+    // add a bone keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
     motion.update(IKeyframe::kBone);
     QCOMPARE(motion.countKeyframes(IKeyframe::kBone), 1);
@@ -454,8 +454,9 @@ void TestVMDMotion::mutateBoneKeyframes() const
     QScopedPointer<IBoneKeyframe> frame2(new BoneKeyframe(&encoding));
     frame2->setFrameIndex(42);
     frame2->setName(&s2);
-    // replaced bone frame should be one keyframe
+    // replaced bone frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());
+    motion.update(IKeyframe::kBone);
     QCOMPARE(motion.countKeyframes(IKeyframe::kBone), 1);
     // no longer be find previous bone keyframe
     QCOMPARE(motion.findBoneKeyframe(42, &s), static_cast<IBoneKeyframe *>(0));
@@ -479,8 +480,9 @@ void TestVMDMotion::mutateCameraKeyframes() const
     QScopedPointer<ICameraKeyframe> frame(new CameraKeyframe());
     frame->setFrameIndex(42);
     frame->setDistance(42);
-    // add a camera keyframe
+    // add a camera keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
+    motion.update(IKeyframe::kCamera);
     QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 1);
     // boudary check of findCameraKeyframeAt
     QCOMPARE(motion.findCameraKeyframeAt(-1), static_cast<ICameraKeyframe *>(0));
@@ -491,14 +493,16 @@ void TestVMDMotion::mutateCameraKeyframes() const
     QScopedPointer<ICameraKeyframe> frame2(new CameraKeyframe());
     frame2->setFrameIndex(42);
     frame2->setDistance(84);
-    // replaced camera frame should be one keyframe
+    // replaced camera frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());
+    motion.update(IKeyframe::kCamera);
     QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 1);
     // no longer be find previous camera keyframe
     QCOMPARE(motion.findCameraKeyframe(42)->distance(), 84.0f);
     IKeyframe *keyframeToDelete = frame2.take();
-    // delete camera keyframe and set it null
+    // delete camera keyframe and set it null (don't forget updating motion!)
     motion.deleteKeyframe(keyframeToDelete);
+    motion.update(IKeyframe::kCamera);
     // camera keyframes should be empty
     QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 0);
     QCOMPARE(motion.findCameraKeyframe(42), static_cast<ICameraKeyframe *>(0));
@@ -514,8 +518,9 @@ void TestVMDMotion::mutateLightKeyframes() const
     QScopedPointer<ILightKeyframe> frame(new LightKeyframe());
     frame->setFrameIndex(42);
     frame->setColor(Vector3(1, 0, 0));
-    // add a light keyframe
+    // add a light keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
+    motion.update(IKeyframe::kLight);
     QCOMPARE(motion.countKeyframes(IKeyframe::kLight), 1);
     // boudary check of findLightKeyframeAt
     QCOMPARE(motion.findLightKeyframeAt(-1), static_cast<ILightKeyframe *>(0));
@@ -526,14 +531,16 @@ void TestVMDMotion::mutateLightKeyframes() const
     QScopedPointer<ILightKeyframe> frame2(new LightKeyframe());
     frame2->setFrameIndex(42);
     frame2->setColor(Vector3(0, 0, 1));
-    // replaced light frame should be one keyframe
+    // replaced light frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());
+    motion.update(IKeyframe::kLight);
     QCOMPARE(motion.countKeyframes(IKeyframe::kLight), 1);
     // no longer be find previous light keyframe
     QCOMPARE(motion.findLightKeyframe(42)->color().z(), 1.0f);
     IKeyframe *keyframeToDelete = frame2.take();
-    // delete light keyframe and set it null
+    // delete light keyframe and set it null (don't forget updating motion!)
     motion.deleteKeyframe(keyframeToDelete);
+    motion.update(IKeyframe::kLight);
     // light keyframes should be empty
     QCOMPARE(motion.countKeyframes(IKeyframe::kLight), 0);
     QCOMPARE(motion.findLightKeyframe(42), static_cast<ILightKeyframe *>(0));
@@ -551,7 +558,7 @@ void TestVMDMotion::mutateMorphKeyframes() const
     QScopedPointer<IMorphKeyframe> frame(new MorphKeyframe(&encoding));
     frame->setFrameIndex(42);
     frame->setName(&s);
-    // add a morph keyframe
+    // add a morph keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
     motion.update(IKeyframe::kMorph);
     QCOMPARE(motion.countKeyframes(IKeyframe::kMorph), 1);
@@ -563,8 +570,9 @@ void TestVMDMotion::mutateMorphKeyframes() const
     QScopedPointer<IMorphKeyframe> frame2(new MorphKeyframe(&encoding));
     frame2->setFrameIndex(42);
     frame2->setName(&s2);
-    // replaced morph frame should be one keyframe
+    // replaced morph frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());
+    motion.update(IKeyframe::kMorph);
     QCOMPARE(motion.countKeyframes(IKeyframe::kMorph), 1);
     // no longer be find previous morph keyframe
     QCOMPARE(motion.findMorphKeyframe(42, &s), static_cast<IMorphKeyframe *>(0));
