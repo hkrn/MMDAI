@@ -56,7 +56,7 @@ Morph::~Morph()
     m_name = 0;
 }
 
-void Morph::performTransform(float value)
+void Morph::setWeight(const Scalar &value)
 {
     m_morph->setWeight(value);
 }

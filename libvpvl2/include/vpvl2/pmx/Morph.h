@@ -116,7 +116,8 @@ public:
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
-    void performTransform(float weight);
+    const Scalar &weight() const { return m_weight; }
+    void setWeight(const Scalar &value);
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -165,6 +166,7 @@ private:
     Array<Group> m_groups;
     IString *m_name;
     IString *m_englishName;
+    Scalar m_weight;
     int m_index;
     uint8_t m_category;
     uint8_t m_type;

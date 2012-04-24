@@ -116,7 +116,7 @@ void MorphAnimation::seek(float frameAt)
             continue;
         calculateFrames(frameAt, frames);
         IMorph *morph = frames->morph;
-        morph->performTransform(frames->weight);
+        morph->setWeight(frames->weight);
     }
     m_previousFrameIndex = m_currentFrameIndex;
     m_currentFrameIndex = frameAt;

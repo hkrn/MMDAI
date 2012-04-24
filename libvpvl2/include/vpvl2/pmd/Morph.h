@@ -56,11 +56,13 @@ public:
     ~Morph();
 
     const IString *name() const { return m_name; }
-    void performTransform(float value);
+    const Scalar &weight() const { return m_weight; }
+    void setWeight(const Scalar &value);
 
     IEncoding *m_encoding;
     IString *m_name;
     vpvl::Face *m_morph;
+    Scalar m_weight;
 };
 
 }

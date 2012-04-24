@@ -60,13 +60,20 @@ public:
     virtual const IString *name() const = 0;
 
     /**
+     * 係数を返します。
+     *
+     * @return float
+     */
+    virtual const Scalar &weight() const = 0;
+
+    /**
      * 係数 value に基づいて変形を行います。
      *
      * value は 0.0 以上 1.0 以下でなければなりません。
      *
      * @param float
      */
-    virtual void performTransform(float value) = 0;
+    virtual void setWeight(const Scalar &value) = 0;
 };
 
 }

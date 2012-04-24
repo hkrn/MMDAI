@@ -94,6 +94,7 @@ namespace pmx
 Morph::Morph()
     : m_name(0),
       m_englishName(0),
+      m_weight(0),
       m_index(-1),
       m_category(0),
       m_type(0)
@@ -421,9 +422,10 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Morph::performTransform(float weight)
+void Morph::setWeight(const Scalar &value)
 {
-    if (btFuzzyZero(weight))
+    m_weight = value;
+    if (btFuzzyZero(value))
         return;
     int nmorphs;
     switch (m_type) {
@@ -434,14 +436,14 @@ void Morph::performTransform(float weight)
         nmorphs = m_vertices.count();
         for (int i = 0; i < nmorphs; i++) {
             Vertex &v = m_vertices[i];
-            v.vertex->mergeMorph(&v, weight);
+            v.vertex->mergeMorph(&v, value);
         }
         break;
     case 2: /* bone */
         nmorphs = m_bones.count();
         for (int i = 0; i < nmorphs; i++) {
             Bone &v = m_bones[i];
-            v.bone->mergeMorph(&v, weight);
+            v.bone->mergeMorph(&v, value);
         }
         break;
     case 3: /* UV */
@@ -452,14 +454,14 @@ void Morph::performTransform(float weight)
         nmorphs = m_uvs.count();
         for (int i = 0; i < nmorphs; i++) {
             UV &v = m_uvs[i];
-            v.vertex->mergeMorph(&v, weight);
+            v.vertex->mergeMorph(&v, value);
         }
         break;
     case 8: /* material */
         nmorphs = m_materials.count();
         for (int i = 0; i < nmorphs; i++) {
             Material &v = m_materials.at(0);
-            v.material->mergeMorph(&v, weight);
+            v.material->mergeMorph(&v, value);
         }
         break;
     default:
