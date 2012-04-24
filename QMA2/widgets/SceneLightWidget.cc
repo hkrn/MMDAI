@@ -38,6 +38,8 @@
 
 #include <QtGui/QtGui>
 
+using namespace vpvl2;
+
 SceneLightWidget::SceneLightWidget(QWidget *parent) :
     QWidget(parent)
 {
@@ -78,7 +80,7 @@ SceneLightWidget::~SceneLightWidget()
 {
 }
 
-void SceneLightWidget::setColor(const vpvl::Color &value)
+void SceneLightWidget::setColor(const Vector3 &value)
 {
     disconnect(m_r, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
     disconnect(m_g, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
@@ -91,7 +93,7 @@ void SceneLightWidget::setColor(const vpvl::Color &value)
     connect(m_b, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
 }
 
-void SceneLightWidget::setPosition(const vpvl::Vector3 &value)
+void SceneLightWidget::setDirection(const Vector3 &value)
 {
     disconnect(m_x, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
     disconnect(m_y, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
@@ -113,7 +115,7 @@ void SceneLightWidget::retranslate()
 
 void SceneLightWidget::updateColor()
 {
-    vpvl::Color color;
+    Color color;
     color.setX(m_r->value() / float(m_r->maximum()));
     color.setY(m_g->value() / float(m_g->maximum()));
     color.setZ(m_b->value() / float(m_b->maximum()));
@@ -123,8 +125,8 @@ void SceneLightWidget::updateColor()
 
 void SceneLightWidget::updatePosition()
 {
-    const vpvl::Vector3 position(m_x->value(), m_y->value(), m_z->value());
-    emit lightPositionDidSet(position);
+    const Vector3 position(m_x->value(), m_y->value(), m_z->value());
+    emit lightDirectionDidSet(position);
 }
 
 void SceneLightWidget::openColorDialog()
@@ -138,7 +140,7 @@ void SceneLightWidget::openColorDialog()
 
 void SceneLightWidget::setQColor(const QColor &value)
 {
-    setColor(vpvl::Color(value.redF(), value.blueF(), value.greenF(), 1.0));
+    setColor(Color(value.redF(), value.blueF(), value.greenF(), 1.0));
     updateColor();
 }
 

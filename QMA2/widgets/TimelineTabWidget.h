@@ -42,11 +42,10 @@
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
 
-namespace vpvl {
-class Bone;
-class Face;
-class PMDModel;
-class VPDPose;
+namespace vpvl2 {
+class IBone;
+class IModel;
+class IMorph;
 }
 
 class QAbstractButton;
@@ -90,8 +89,8 @@ public:
 
 public slots:
     void addKeyFramesFromSelectedIndices();
-    void loadPose(VPDFilePtr pose, vpvl::PMDModel *model);
-    void savePose(VPDFile *pose, vpvl::PMDModel *model);
+    void loadPose(VPDFilePtr pose, vpvl2::IModel *model);
+    void savePose(VPDFile *pose, vpvl2::IModel *model);
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
@@ -100,8 +99,8 @@ signals:
 
 private slots:
     void retranslate();
-    void addBoneKeyFrameAtCurrentFrameIndex(vpvl::Bone *bone);
-    void addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face *face);
+    void addBoneKeyFrameAtCurrentFrameIndex(vpvl2::IBone *bone);
+    void addFaceKeyFrameAtCurrentFrameIndex(vpvl2::IMorph *face);
     void setCurrentFrameIndex(int value);
     void setCurrentFrameIndexZero();
     void insertFrame();
@@ -114,9 +113,9 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
-    void toggleBoneEnable(vpvl::PMDModel *model);
-    void toggleFaceEnable(vpvl::PMDModel *model);
-    void toggleBoneButtonsByBone(const QList<vpvl::Bone *> &bones);
+    void toggleBoneEnable(vpvl2::IModel *model);
+    void toggleFaceEnable(vpvl2::IModel *model);
+    void toggleBoneButtonsByBone(const QList<vpvl2::IBone *> &bones);
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();

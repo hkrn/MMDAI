@@ -41,10 +41,9 @@
 #include "dialogs/PlaySettingDialog.h"
 #include "video/AudioPlayer.h"
 
-#include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
     : QObject(),
@@ -82,9 +81,9 @@ void ScenePlayer::start()
         return;
     int sceneFPS = m_dialog->sceneFPS();
     m_selected = m_sceneWidget->sceneLoader()->selectedModel();
-    m_prevSceneFPS = m_sceneWidget->sceneLoader()->renderEngine()->scene()->preferredFPS();
+    m_prevSceneFPS = 30; // FIXME: m_sceneWidget->sceneLoader()->scene()->preferredFPS();
     m_prevFrameIndex = m_sceneWidget->currentFrameIndex();
-    m_frameStep = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS));
+    m_frameStep = 1.0f / (sceneFPS / Scene::defaultFPS());
     m_totalStep = 0.0f;
     m_audioFrameIndex = 0.0f;
     m_prevAudioFrameIndex = 0.0f;
@@ -188,7 +187,7 @@ void ScenePlayer::renderSceneFrameVariant()
 void ScenePlayer::advanceAudioFrame(float step)
 {
     if (step >= 0)
-        m_audioFrameIndex += step * Scene::kFPS;
+        m_audioFrameIndex += step * Scene::defaultFPS();
 }
 
 void ScenePlayer::renderSceneFrame0(float step)
@@ -199,8 +198,8 @@ void ScenePlayer::renderSceneFrame0(float step)
         m_elapsed.restart();
     }
     m_countForFPS++;
-    Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
-    bool isReached = scene->isMotionReachedTo(m_dialog->toIndex());
+    Scene *scene = m_sceneWidget->sceneLoader()->scene();
+    bool isReached = true; // FIXME: bool isReached = scene->isMotionReachedTo(m_dialog->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
     if ((!m_dialog->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
         stop();

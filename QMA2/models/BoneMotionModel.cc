@@ -328,65 +328,52 @@ class ResetAllCommand : public QUndoCommand
 public:
     ResetAllCommand(IModel *model)
         : QUndoCommand(),
-          m_model(model)
+          m_state(model)
     {
         /* 全てのボーンの情報を保存しておく */
-        m_state = model->saveState();
+        m_state.save();
     }
     virtual ~ResetAllCommand() {
-        /* discardState は必ず呼び出すこと */
-        m_model->discardState(m_state);
     }
 
     void undo() {
         /* コンストラクタで保存したボーン情報を復元し、シークせずにモデルを更新しておく */
-        m_model->restoreState(m_state);
-        m_model->performUpdate();
+        m_state.restore();
     }
     void redo() {
         /* 全てのボーンをリセットし、シークせずにモデルを更新しておく */
-        m_model->resetAllBones();
-        m_model->performUpdate();
+        m_state.resetBones();
     }
 
 private:
-    IModel *m_model;
-    IModel::State *m_state;
+    PMDMotionModel::State m_state;
 };
 
 class SetBoneCommand : public QUndoCommand
 {
 public:
-    SetBoneCommand(IModel *model, IModel::State *state)
+    SetBoneCommand(IModel *model, const PMDMotionModel::State &state)
         : QUndoCommand(),
-          m_model(model),
-          m_newState(0),
-          m_oldState(state)
+          m_oldState(0),
+          m_newState(model)
     {
+        m_oldState.copyFrom(state);
         /* 前と後の全てのボーンの情報を保存しておく */
-        m_newState = m_model->saveState();
-    }
-    virtual ~SetBoneCommand() {
-        /* コンストラクタで saveState が呼ばれる前提なので両方解放しておく */
-        m_model->discardState(m_newState);
-        m_model->discardState(m_oldState);
+        m_newState.save();
     }
 
     void undo() {
         /* コンストラクタで呼ばれる前のボーン情報を復元し、シークせずにモデルを更新しておく */
-        m_model->restoreState(m_oldState);
-        m_model->performUpdate();
+        m_oldState.restore();
     }
     void redo() {
         /* コンストラクタで呼ばれた時点のボーン情報を復元し、シークせずにモデルを更新しておく */
-        m_model->restoreState(m_newState);
-        m_model->performUpdate();
+        m_newState.restore();
     }
 
 private:
-    IModel *m_model;
-    IModel::State *m_newState;
-    IModel::State *m_oldState;
+    PMDMotionModel::State m_oldState;
+    PMDMotionModel::State m_newState;
 };
 
 static IBone *UIBoneFromModelIndex(const QModelIndex &index, IModel *model)
@@ -483,9 +470,9 @@ BoneMotionModel::BoneMotionModel(Factory *factory,
                                  const SceneWidget *sceneWidget,
                                  QObject *parent) :
     PMDMotionModel(undo, parent),
-    m_factory(factory),
     m_sceneWidget(sceneWidget),
-    m_state(0)
+    m_state(0),
+    m_factory(factory)
 {
 }
 
@@ -631,11 +618,10 @@ void BoneMotionModel::saveTransform()
 {
     if (m_model) {
         /*
-         * TODO: discardState/saveState を消す
          * モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく
          */
-        m_model->discardState(m_state);
-        m_state = m_model->saveState();
+        m_state.setModel(m_model);
+        m_state.save();
         Array<IBone *> bones;
         m_model->getBones(bones);
         int nbones = bones.count();
@@ -648,14 +634,13 @@ void BoneMotionModel::saveTransform()
 
 void BoneMotionModel::commitTransform()
 {
-    if (m_model && m_state) {
+    if (m_model) {
         /*
          * startTransform で保存したモデルの状態を SetBoneCommand に渡す
          * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
          */
         addUndoCommand(new SetBoneCommand(m_model, m_state));
         m_boneTransformStates.clear();
-        m_state = 0;
     }
 }
 
@@ -698,7 +683,7 @@ void BoneMotionModel::loadPose(VPDFilePtr pose, IModel *model, int frameIndex)
     }
 }
 
-void BoneMotionModel::savePose(VPDFile *pose, PMDModel *model, int frameIndex)
+void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int frameIndex)
 {
     if (model == m_model) {
         VPDFile::BoneList bones;
@@ -711,8 +696,8 @@ void BoneMotionModel::savePose(VPDFile *pose, PMDModel *model, int frameIndex)
                 VPDFile::Bone *bone = new VPDFile::Bone();
                 boneKeyframe.reset(m_factory->createBoneKeyframe());
                 boneKeyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-                const Quaternion &q = frame.rotation();
-                bone->name = internal::toQString(boneKeyframe->name);
+                const Quaternion &q = boneKeyframe->rotation();
+                bone->name = internal::toQString(boneKeyframe->name());
                 bone->position = boneKeyframe->position();
                 bone->rotation = Vector4(q.x(), q.y(), q.z(), q.w());
                 bones.append(bone);
@@ -879,7 +864,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, IModel *model)
                 newBoneKeyframe->setRotation(frame->rotation());
                 newBoneKeyframe->setFrameIndex(frameIndex);
                 QuadWord v;
-                for (int i = 0; i < BoneKeyframe::kMax; i++) {
+                for (int i = 0; i < IBoneKeyframe::kMax; i++) {
                     IBoneKeyframe::InterpolationType type = static_cast<IBoneKeyframe::InterpolationType>(i);
                     frame->getInterpolationParameter(type, v);
                     newBoneKeyframe->setInterpolationParameter(type, v);
@@ -993,7 +978,7 @@ void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
 
 void BoneMotionModel::resetBone(ResetType type)
 {
-    foreach (Bone *selected, m_selectedBones) {
+    foreach (IBone *selected, m_selectedBones) {
         Vector3 pos = selected->position();
         Quaternion rot = selected->rotation();
         switch (type) {
@@ -1030,7 +1015,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
 {
     if (!isBoneSelected())
         return;
-    foreach (Bone *selected, m_selectedBones) {
+    foreach (IBone *selected, m_selectedBones) {
         const Vector3 &lastPosition = selected->position();
         Vector3 position = lastPosition;
         switch (coordinate) {
@@ -1050,7 +1035,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
         selected->setPosition(position);
-        m_model->updateImmediate();
+        m_model->performUpdate();
         emit positionDidChange(selected, lastPosition);
     }
 }
@@ -1059,7 +1044,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
 {
     if (!isBoneSelected())
         return;
-    Bone *selected = m_selectedBones.last();
+    IBone *selected = m_selectedBones.last();
     const Quaternion &lastRotation = selected->rotation();
     Quaternion rotation = lastRotation;
     switch (coordinate) {
@@ -1079,11 +1064,11 @@ void BoneMotionModel::setRotation(int coordinate, float value)
         qFatal("Unexpected coordinate value: %c", coordinate);
     }
     selected->setRotation(rotation);
-    m_model->updateImmediate();
+    m_model->performUpdate();
     emit rotationDidChange(selected, lastRotation);
 }
 
-void BoneMotionModel::translateDelta(const Vector3 &delta, Bone *bone, int flags)
+void BoneMotionModel::translateDelta(const Vector3 &delta, IBone *bone, int flags)
 {
     /* ボーン指定がない場合は BoneMotionModel が持ってる選択状態のボーンにする */
     if (!bone) {
@@ -1106,7 +1091,7 @@ void BoneMotionModel::translateTo(const Vector3 &position, IBone *bone, int flag
             return;
     }
     /* 絶対値による更新 */
-    Vector3 lastPosition = kZeroV;
+    Vector3 lastPosition = kZeroV3;
     if (m_boneTransformStates.contains(bone))
         lastPosition = m_boneTransformStates[bone].first;
     translateInternal(lastPosition, position, bone, flags);
@@ -1138,7 +1123,7 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
-    m_model->updateImmediate();
+    m_model->performUpdate();
     emit rotationDidChange(bone, lastRotation);
 }
 
@@ -1153,7 +1138,7 @@ IBone *BoneMotionModel::findBone(const QString &name) const
     /* QString を扱っていること以外 PMDModel#findBone と同じ */
     const internal::String s(name);
     foreach (ITreeItem *item, keys()) {
-        const IBone *bone = static_cast<TreeItem *>(item)->bone();
+        IBone *bone = static_cast<TreeItem *>(item)->bone();
         if (bone->name()->equals(&s))
             return bone;
     }

@@ -41,9 +41,12 @@
 
 #include <QtCore/QString>
 #include <QtGui/QAbstractItemView>
+#include <vpvl2/Common.h>
 
 namespace vpvl2 {
+class IBone;
 class IModel;
+class IMorph;
 class IMotion;
 }
 
@@ -56,6 +59,28 @@ class PMDMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
+    class State {
+    public:
+        State(vpvl2::IModel *model);
+        ~State();
+        void restore() const;
+        void save();
+        void discard();
+        void copyFrom(const State &value);
+        void resetBones();
+        void resetMorphs();
+        vpvl2::IModel *model() const { return m_model; }
+        void setModel(vpvl2::IModel *value) { m_model = value; }
+    private:
+        typedef QPair<vpvl2::Vector3, vpvl2::Quaternion> Transform;
+        typedef QPair<vpvl2::IBone *, Transform> Bone;
+        typedef QPair<vpvl2::IMorph *, vpvl2::Scalar> Morph;
+        vpvl2::IModel *m_model;
+        QList<Bone> m_bones;
+        QList<Morph> m_morphs;
+        Q_DISABLE_COPY(State)
+    };
+
     explicit PMDMotionModel(QUndoGroup *undo, QObject *parent = 0);
     virtual ~PMDMotionModel();
 
@@ -67,9 +92,6 @@ public:
     virtual void commitTransform() = 0;
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    void saveState();
-    void restoreState();
-    void discardState();
     void updateModel();
     void refreshModel();
     int maxFrameCount() const;

@@ -47,9 +47,9 @@
 #include "widgets/TimelineWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
@@ -120,7 +120,7 @@ void TimelineTabWidget::addKeyFramesFromSelectedIndices()
     currentSelectedTimelineWidget()->treeView()->addKeyframesBySelectedIndices();
 }
 
-void TimelineTabWidget::loadPose(VPDFilePtr pose, PMDModel *model)
+void TimelineTabWidget::loadPose(VPDFilePtr pose, IModel *model)
 {
     BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
     m->loadPose(pose, model, m_boneTimeline->frameIndex());
@@ -138,44 +138,48 @@ void TimelineTabWidget::retranslate()
     setWindowTitle(tr("Motion Timeline"));
 }
 
-void TimelineTabWidget::savePose(VPDFile *pose, PMDModel *model)
+void TimelineTabWidget::savePose(VPDFile *pose, IModel *model)
 {
     BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
     m->savePose(pose, model, m_boneTimeline->frameIndex());
 }
 
-void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(Bone *bone)
+void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(IBone *bone)
 {
     /*
      * 渡されたボーンの名前と位置と回転情報を元に新しいボーンのキーフレームとして登録する処理
      * (BoneKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
     if (bone) {
+        BoneMotionModel *model = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
         BoneMotionModel::KeyFramePairList keyframes;
-        BoneKeyframe *keyframe = new BoneKeyframe();
+        QScopedPointer<IBoneKeyframe> keyframe;
+        int frameIndex = m_boneTimeline->frameIndex();
+        keyframe.reset(model->factory()->createBoneKeyframe());
         keyframe->setDefaultInterpolationParameter();
         keyframe->setName(bone->name());
         keyframe->setPosition(bone->position());
         keyframe->setRotation(bone->rotation());
-        keyframes.append(BoneMotionModel::KeyFramePair(m_boneTimeline->frameIndex(), BoneMotionModel::KeyFramePtr(keyframe)));
-        BoneMotionModel *model = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+        keyframes.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(keyframe.take())));
         model->setFrames(keyframes);
     }
 }
 
-void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(Face *face)
+void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(IMorph *face)
 {
     /*
      * 渡された頂点モーフの名前と重み係数を元に新しい頂点モーフのキーフレームとして登録する処理
      * (FaceKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
     if (face) {
+        MorphMotionModel *model = static_cast<MorphMotionModel *>(m_morphTimeline->treeView()->model());
         MorphMotionModel::KeyFramePairList keyframes;
-        FaceKeyframe *keyframe = new FaceKeyframe();
+        QScopedPointer<IMorphKeyframe> keyframe;
+        int frameIndex = m_morphTimeline->frameIndex();
+        keyframe.reset(model->factory()->createMorphKeyframe());
         keyframe->setName(face->name());
         keyframe->setWeight(face->weight());
-        keyframes.append(MorphMotionModel::KeyFramePair(m_morphTimeline->frameIndex(), MorphMotionModel::KeyFramePtr(keyframe)));
-        MorphMotionModel *model = static_cast<MorphMotionModel *>(m_morphTimeline->treeView()->model());
+        keyframes.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
         model->setFrames(keyframes);
     }
 }
@@ -205,16 +209,19 @@ void TimelineTabWidget::insertFrame()
     case kBoneTabIndex:
     {
         TimelineTreeView *view = m_boneTimeline->treeView();
-        BoneMotionModel *model = static_cast<BoneMotionModel *>(view->model());
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
+        BoneMotionModel *model = static_cast<BoneMotionModel *>(view->model());
+        Factory *factory = model->factory();
         BoneMotionModel::KeyFramePairList boneFrames;
+        QScopedPointer<IBoneKeyframe> frame;
         foreach (const QModelIndex &index, indices) {
-            BoneKeyframe *frame = new BoneKeyframe();
-            QByteArray name = model->nameFromModelIndex(index);
+            const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toFrameIndex(index);
-            frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
+            internal::String s(name);
+            frame.reset(factory->createBoneKeyframe());
+            frame->setName(&s);
             frame->setDefaultInterpolationParameter();
-            boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame)));
+            boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame.take())));
         }
         model->setFrames(boneFrames);
         break;
@@ -222,16 +229,19 @@ void TimelineTabWidget::insertFrame()
     case kMorphTabIndex:
     {
         TimelineTreeView *view = m_morphTimeline->treeView();
-        MorphMotionModel *model = static_cast<MorphMotionModel *>(view->model());
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
+        MorphMotionModel *model = static_cast<MorphMotionModel *>(view->model());
+        Factory *factory = model->factory();
         MorphMotionModel::KeyFramePairList faceFrames;
+        QScopedPointer<IMorphKeyframe> frame;
         foreach (const QModelIndex &index, indices) {
-            FaceKeyframe *frame = new FaceKeyframe();
-            QByteArray name = model->nameFromModelIndex(index);
+            const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toFrameIndex(index);
-            frame->setName(reinterpret_cast<const uint8_t *>(name.constData()));
+            internal::String s(name);
+            frame.reset(factory->createMorphKeyframe());
+            frame->setName(&s);
             frame->setWeight(0);
-            faceFrames.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(frame)));
+            faceFrames.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(frame.take())));
         }
         model->setFrames(faceFrames);
         break;
@@ -313,7 +323,7 @@ void TimelineTabWidget::notifyCurrentTabIndex()
     setCurrentTabIndex(m_tabWidget->currentIndex());
 }
 
-void TimelineTabWidget::toggleBoneEnable(PMDModel *model)
+void TimelineTabWidget::toggleBoneEnable(IModel *model)
 {
     bool value = model ? true : false;
     m_boneTimeline->setEnableFrameIndexSpinBox(value);
@@ -323,15 +333,15 @@ void TimelineTabWidget::toggleBoneEnable(PMDModel *model)
     m_boneMoveButton->setEnabled(false);
 }
 
-void TimelineTabWidget::toggleFaceEnable(PMDModel *model)
+void TimelineTabWidget::toggleFaceEnable(IModel *model)
 {
     m_morphTimeline->setEnableFrameIndexSpinBox(model ? true : false);
 }
 
-void TimelineTabWidget::toggleBoneButtonsByBone(const QList<Bone *> &bones)
+void TimelineTabWidget::toggleBoneButtonsByBone(const QList<IBone *> &bones)
 {
     if (!bones.isEmpty()) {
-        Bone *bone = bones.first();
+        IBone *bone = bones.first();
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
         m_boneRotateButton->setCheckable(rotateable);
         m_boneRotateButton->setEnabled(rotateable);

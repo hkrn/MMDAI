@@ -41,8 +41,8 @@
 #include <QtCore/QTimer>
 #include <QtGui/QProgressDialog>
 
-namespace vpvl {
-class PMDModel;
+namespace vpvl2 {
+class IModel;
 }
 
 class AudioPlayer;
@@ -88,7 +88,7 @@ private:
     QString m_format;
     QByteArray m_buffer;
     AudioPlayer *m_player;
-    vpvl::PMDModel *m_selected;
+    vpvl2::IModel *m_selected;
     float m_prevFrameIndex;
     float m_frameStep;
     float m_totalStep;

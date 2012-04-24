@@ -68,14 +68,13 @@
 #include "widgets/TimelineTabWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 namespace {
 
-static int UIFindIndexOfActions(PMDModel *model, const QList<QAction *> &actions)
+static int UIFindIndexOfActions(IModel *model, const QList<QAction *> &actions)
 {
     const QString &name = internal::toQString(model);
     int i = 0, found = -1;
@@ -121,6 +120,8 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
+    m_encoding(0),
+    m_factory(0),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
     m_undo(0),
     m_licenseWidget(0),
@@ -146,12 +147,14 @@ MainWindow::MainWindow(QWidget *parent) :
     m_distance(0.0f),
     m_currentFPS(-1)
 {
+    m_encoding = new internal::Encoding();
+    m_factory = new vpvl2::Factory(m_encoding);
     m_undo = new QUndoGroup(this);
-    m_sceneWidget = new SceneWidget(&m_settings);
+    m_sceneWidget = new SceneWidget(m_encoding, m_factory, &m_settings);
     /* SceneWidget で渡しているのは Scene が initializeGL で初期化されるという特性のため */
-    m_boneMotionModel = new BoneMotionModel(m_undo, m_sceneWidget, this);
-    m_morphMotionModel = new MorphMotionModel(m_undo, this);
-    m_sceneMotionModel = new SceneMotionModel(m_undo, m_sceneWidget, this);
+    m_boneMotionModel = new BoneMotionModel(m_factory, m_undo, m_sceneWidget, this);
+    m_morphMotionModel = new MorphMotionModel(m_factory, m_undo, this);
+    m_sceneMotionModel = new SceneMotionModel(m_factory, m_undo, m_sceneWidget, this);
     m_sceneTabWidget = new TabWidget(&m_settings);
     m_modelTabWidget = new ModelTabWidget(&m_settings, m_morphMotionModel, this);
     m_timelineTabWidget = new TimelineTabWidget(&m_settings, m_boneMotionModel, m_morphMotionModel, m_sceneMotionModel);
@@ -245,7 +248,7 @@ void MainWindow::selectModel()
     }
 }
 
-void MainWindow::setCurrentModel(PMDModel *model)
+void MainWindow::setCurrentModel(IModel *model)
 {
     m_model = model;
 }
@@ -367,7 +370,7 @@ void MainWindow::clearRecentFiles()
     updateRecentFiles();
 }
 
-void MainWindow::addModel(PMDModel *model, const QUuid &uuid)
+void MainWindow::addModel(IModel *model, const QUuid &uuid)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
     QString name = internal::toQString(model);
@@ -379,7 +382,7 @@ void MainWindow::addModel(PMDModel *model, const QUuid &uuid)
     m_sceneWidget->setSelectedModel(model);
 }
 
-void MainWindow::deleteModel(PMDModel *model, const QUuid &uuid)
+void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
 {
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
     if (model == m_sceneWidget->sceneLoader()->selectedModel())
@@ -397,7 +400,7 @@ void MainWindow::deleteModel(PMDModel *model, const QUuid &uuid)
         m_menuRetainModels->removeAction(actionToRemove);
 }
 
-void MainWindow::addAsset(Asset *asset, const QUuid &uuid)
+void MainWindow::addAsset(IModel *asset, const QUuid &uuid)
 {
     /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
     QString name = internal::toQString(asset);
@@ -408,7 +411,7 @@ void MainWindow::addAsset(Asset *asset, const QUuid &uuid)
     m_menuRetainAssets->addAction(action);
 }
 
-void MainWindow::deleteAsset(Asset * /* asset */, const QUuid &uuid)
+void MainWindow::deleteAsset(IModel * /* asset */, const QUuid &uuid)
 {
     /* 削除されたアクセサリをアクセサリ選択のメニューから削除する */
     QAction *actionToRemove = 0;
@@ -446,21 +449,23 @@ void MainWindow::saveCameraMotionAs()
                                                        tr("VMD file (*.vmd)"),
                                                        tr("untitiled_camera_motion.vmd"),
                                                        &m_settings);
-    VMDMotion motion;
-    m_sceneMotionModel->saveMotion(&motion);
-    saveMotionFile(filename, &motion);
+    QScopedPointer<IMotion> motion(m_factory->createMotion());
+    IMotion *motionPtr = motion.data();
+    m_sceneMotionModel->saveMotion(motionPtr);
+    saveMotionFile(filename, motionPtr);
 }
 
 bool MainWindow::saveMotionFile(const QString &filename)
 {
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
-    VMDMotion motion;
-    m_boneMotionModel->saveMotion(&motion);
-    m_morphMotionModel->saveMotion(&motion);
-    return saveMotionFile(filename, &motion);
+    QScopedPointer<IMotion> motion(m_factory->createMotion());
+    IMotion *motionPtr = motion.data();
+    m_boneMotionModel->saveMotion(motionPtr);
+    m_morphMotionModel->saveMotion(motionPtr);
+    return saveMotionFile(filename, motionPtr);
 }
 
-bool MainWindow::saveMotionFile(const QString &filename, VMDMotion *motion)
+bool MainWindow::saveMotionFile(const QString &filename, IMotion *motion)
 {
     typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
     size_t size = motion->estimateSize();
@@ -651,7 +656,7 @@ void MainWindow::buildUI()
     connect(m_actionOpenScreenColorDialog, SIGNAL(triggered()), SLOT(openScreenColorDialog()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
-    m_actionEnableAcceleration->setEnabled(SceneLoader::isAccelerationSupported());
+    m_actionEnableAcceleration->setEnabled(Scene::isAcceleratorSupported());
     m_actionEnablePhysics = new QAction(this);
     m_actionEnablePhysics->setCheckable(true);
     m_actionEnablePhysics->setChecked(true);
@@ -833,7 +838,7 @@ void MainWindow::buildUI()
     m_menuRetainModels = new QMenu(this);
     m_menuModel->addMenu(m_menuRetainModels);
     m_menuRetainAssets = new QMenu(this);
-    if (Asset::isSupported())
+    //if (Asset::isSupported())
         m_menuScene->addMenu(m_menuRetainAssets);
     m_menuModel->addAction(m_actionSelectNextModel);
     m_menuModel->addAction(m_actionSelectPreviousModel);
@@ -1004,7 +1009,7 @@ void MainWindow::retranslate()
     m_actionAddModel->setStatusTip(tr("Add a model to the scene."));
     m_actionAddAsset->setText(tr("Add asset"));
     m_actionAddAsset->setStatusTip(tr("Add an asset to the scene."));
-    m_actionAddAsset->setEnabled(Asset::isSupported());
+    // m_actionAddAsset->setEnabled(Asset::isSupported());
     m_actionInsertToAllModels->setText(tr("Insert motion to all models"));
     m_actionInsertToAllModels->setStatusTip(tr("Insert a motion to the all models."));
     m_actionInsertToSelectedModel->setText(tr("Insert motion to selected model"));
@@ -1213,17 +1218,19 @@ void MainWindow::connectSceneLoader()
     connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
-    Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
-    cameraWidget->setCameraPerspective(scene->cameraPosition(), scene->cameraAngle(), scene->fovy(), scene->cameraDistance());
+    Scene *scene = m_sceneWidget->sceneLoader()->scene();
+    Scene::ICamera *camera = scene->camera();
+    cameraWidget->setCameraPerspective(camera->position(), camera->angle(), camera->fovy(), camera->distance());
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
-    lightWidget->setColor(scene->lightColor());
-    lightWidget->setPosition(scene->lightPosition());
+    Scene::ILight *light = scene->light();
+    lightWidget->setColor(light->color());
+    lightWidget->setDirection(light->direction());
     connect(loader, SIGNAL(lightColorDidSet(vpvl::Color)), lightWidget, SLOT(setColor(vpvl::Color)));
     connect(loader, SIGNAL(lightPositionDidSet(vpvl::Vector3)), lightWidget, SLOT(setPosition(vpvl::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl::Color)), loader, SLOT(setLightColor(vpvl::Color)));
@@ -1342,7 +1349,7 @@ void MainWindow::exportVideo()
 {
     if (VideoEncoder::isSupported()) {
         SceneLoader *loader = m_sceneWidget->sceneLoader();
-        if (loader->renderEngine()->scene()->maxFrameIndex() > 0) {
+        if (loader->scene()->maxFrameIndex() > 0) {
             if (!m_exportingVideoDialog) {
                 const QSize min(160, 160);
                 const QSize &max = m_sceneWidget->maximumSize();
@@ -1385,7 +1392,7 @@ void MainWindow::invokeVideoEncoder()
         QProgressDialog *progress = new QProgressDialog(this);
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::ApplicationModal);
-        int fps = m_sceneWidget->sceneLoader()->renderEngine()->scene()->preferredFPS();
+        int fps = 30; // FIXME: m_sceneWidget->sceneLoader()->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
         int frameIndex = m_sceneWidget->currentFrameIndex();
@@ -1418,7 +1425,6 @@ void MainWindow::invokeVideoEncoder()
         connect(m_audioDecoder, SIGNAL(audioDidDecode(QByteArray)), m_videoEncoder, SLOT(enqueueAudioBuffer(QByteArray)));
         connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder, SLOT(enqueueImage(QImage)));
         m_sceneWidget->setPreferredFPS(sceneFPS);
-        const Scene *scene = m_sceneWidget->sceneLoader()->renderEngine()->scene();
         const QString &exportingFormat = tr("Exporting frame %1 of %2...");
         int maxRangeIndex = toIndex - fromIndex;
         progress->setRange(0, maxRangeIndex);
@@ -1458,9 +1464,12 @@ void MainWindow::invokeVideoEncoder()
         m_videoEncoder->start();
         if (canOpenAudio)
             m_audioDecoder->start();
-        float advanceSecond = 1.0f / (sceneFPS / static_cast<float>(Scene::kFPS)), totalAdvanced = 0.0f;
+        float advanceSecond = 1.0f / (sceneFPS / Scene::defaultFPS()), totalAdvanced = 0.0f;
         /* 全てのモーションが終了するまでエンコード処理 */
-        while (!scene->isMotionReachedTo(toIndex)) {
+        const Scene *scene = m_sceneWidget->sceneLoader()->scene();
+        Q_UNUSED(scene)
+        while (false) {
+        // FIXME: while (!scene->isMotionReachedTo(toIndex)) {
             if (progress->wasCanceled())
                 break;
             const QImage &image = m_sceneWidget->grabFrameBuffer();
@@ -1534,10 +1543,9 @@ void MainWindow::invokeVideoEncoder()
 void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
-        PMDModel *model = m_sceneWidget->sceneLoader()->selectedModel();
-        VMDMotion *motion = m_boneMotionModel->currentMotion();
+        IModel *model = m_sceneWidget->sceneLoader()->selectedModel();
+        IMotion *motion = m_boneMotionModel->currentMotion();
         if (model && motion) {
-            model->deleteMotion(motion);
             m_boneMotionModel->removeMotion();
             m_morphMotionModel->removeMotion();
             m_sceneMotionModel->removeMotion();
@@ -1551,7 +1559,7 @@ void MainWindow::addNewMotion()
 
 void MainWindow::invokePlayer()
 {
-    if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoader()->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         /*
@@ -1569,7 +1577,7 @@ void MainWindow::invokePlayer()
 
 void MainWindow::openPlaySettingDialog()
 {
-    if (m_sceneWidget->sceneLoader()->renderEngine()->scene()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoader()->scene()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         m_playSettingDialog->show();

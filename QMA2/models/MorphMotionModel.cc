@@ -227,62 +227,53 @@ class ResetAllCommand : public QUndoCommand
 public:
     ResetAllCommand(IModel *model)
         : QUndoCommand(),
-          m_model(model)
+          m_state(model)
     {
         /* 全ての頂点モーフの情報を保存しておく */
-        m_state = model->saveState();
-    }
-    virtual ~ResetAllCommand() {
-        /* discardState は必ず呼び出すこと */
-        m_model->discardState(m_state);
+        m_state.save();
     }
 
     void undo() {
         /* コンストラクタで保存したボーン情報を復元し、シークせずにモデルを更新しておく */
-        m_model->restoreState(m_state);
-        m_model->performUpdate();
+        m_state.restore();
     }
     void redo() {
         /* 全てのボーンをリセットし、シークせずにモデルを更新しておく */
-        m_model->resetAllFaces();
-        m_model->performUpdate();
+        m_state.resetMorphs();
     }
 
 private:
-    IModel *m_model;
+    PMDMotionModel::State m_state;
 };
 
-class SetFaceCommand : public QUndoCommand
+class SetMorphCommand : public QUndoCommand
 {
 public:
-    SetFaceCommand(IModel *model)
+    SetMorphCommand(IModel *model, const PMDMotionModel::State &oldState)
         : QUndoCommand(),
-          m_model(model),
-          m_newState(0),
-          m_oldState(state)
+          m_oldState(0),
+          m_newState(model)
     {
+        m_oldState.copyFrom(oldState);
         /* 前と後の全ての頂点モーフの情報を保存しておく */
-        m_newState = m_model->saveState();
+        m_newState.save();
     }
-    virtual ~SetFaceCommand() {
-        /* コンストラクタで saveState が呼ばれる前提なので両方解放しておく */
-        m_model->discardState(m_newState);
-        m_model->discardState(m_oldState);
+    virtual ~SetMorphCommand() {
     }
 
     void undo() {
         /* コンストラクタで呼ばれる前の頂点モーフ情報を復元し、シークせずにモデルを更新しておく */
-        m_model->restoreState(m_oldState);
-        m_model->performUpdate();
+        m_oldState.restore();
     }
     void redo() {
         /* コンストラクタで呼ばれた時点の頂点モーフ情報を復元し、シークせずにモデルを更新しておく */
-        m_model->restoreState(m_newState);
-        m_model->performUpdate();
+        m_newState.restore();
     }
 
 private:
     IModel *m_model;
+    PMDMotionModel::State m_oldState;
+    PMDMotionModel::State m_newState;
 };
 
 static IMorph *UIMorphFromModelIndex(const QModelIndex &index, IModel *model)
@@ -290,14 +281,15 @@ static IMorph *UIMorphFromModelIndex(const QModelIndex &index, IModel *model)
     /* QModelIndex -> TreeIndex -> ByteArray -> Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     const internal::String s(item->name());
-    return model->findFace(&s);
+    return model->findMorph(&s);
 }
 
 }
 
 MorphMotionModel::MorphMotionModel(Factory *factory, QUndoGroup *undo, QObject *parent)
     : PMDMotionModel(undo, parent),
-      m_factory(factory)
+      m_factory(factory),
+      m_state(0)
 {
 }
 
@@ -330,7 +322,7 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
     foreach (const QModelIndex &index, indices) {
         int frameIndex = toFrameIndex(index);
         if (frameIndex >= 0) {
-            const QByteArray &name = nameFromModelIndex(index);
+            const QString &name = nameFromModelIndex(index);
             internal::String s(name);
             IMorph *morph = model->findMorph(&s);
             if (morph) {
@@ -379,23 +371,21 @@ void MorphMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
 
 void MorphMotionModel::saveTransform()
 {
+    /* モデルの状態を保存しておく */
     if (m_model) {
-        /* モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく */
-        m_model->discardState(m_state);
-        m_state = m_model->saveState();
+        m_state.setModel(m_model);
+        m_state.save();
     }
 }
 
 void MorphMotionModel::commitTransform()
 {
-    if (m_model && m_state) {
-        /*
-         * startTransform で保存したモデルの状態を SetBoneCommand に渡す
-         * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
-         */
-        addUndoCommand(new SetFaceCommand(m_model, m_state));
-        m_state = 0;
-    }
+    /*
+     * startTransform で保存したモデルの状態を SetBoneCommand に渡す
+     * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
+     */
+    if (m_model)
+        addUndoCommand(new SetMorphCommand(m_model, m_state));
 }
 
 void MorphMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
@@ -410,7 +400,7 @@ void MorphMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indi
             }
         }
         if (!morphs.isEmpty())
-            selectFaces(morphs);
+            selectMorphs(morphs);
     }
 }
 
@@ -431,7 +421,7 @@ void MorphMotionModel::setFrames(const KeyFramePairList &frames)
     }
 }
 
-void MorphMotionModel::resetAllFaces()
+void MorphMotionModel::resetAllMorphs()
 {
     if (m_model)
         addUndoCommand(new ResetAllCommand(m_model));
@@ -457,7 +447,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
             const int nmorphs = morphs.count();
             Keys keys;
             for (int i = 0; i < nmorphs; i++) {
-                Face *morph = morphs[i];
+                IMorph *morph = morphs[i];
                 const QString &name = internal::toQString(morph);
                 TreeItem *child, *parent = 0;
                 /* カテゴリ毎に頂点モーフを追加して整理する */
@@ -513,13 +503,13 @@ void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
         const int nMorphFrames = motion->countKeyframes(IKeyframe::kMorph);
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nMorphFrames; i++) {
-            IMorphKeyframe *frame = animation.frameAt(i);
+            IMorphKeyframe *frame = motion->findMorphKeyframeAt(i);
             const IString *name = frame->name();
             const QString &key = internal::toQString(name);
             const Keys &keys = this->keys();
             if (keys.contains(key)) {
                 int frameIndex = static_cast<int>(frame->frameIndex());
-                QByteArray bytes(BoneKeyframe::strideSize(), '0');
+                QByteArray bytes(frame->estimateSize(), '0');
                 ITreeItem *item = keys[key];
                 /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
@@ -566,18 +556,19 @@ void MorphMotionModel::removeModel()
 
 void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    const FaceAnimation &animation = m_motion->morphAnimation();
     KeyFramePairList frames;
+    QScopedPointer<IMorphKeyframe> clonedFrame;
     /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (IMorph *morph = item->morph()) {
-                if (BaseKeyframe *frameToDelete = animation.findKeyframe(toFrameIndex(index), morph->name())) {
-                    FaceKeyframe *clonedFrame = static_cast<FaceKeyframe *>(frameToDelete->clone());
+                IMorphKeyframe *frameToDelete = m_motion->findMorphKeyframe(toFrameIndex(index), morph->name());
+                if (frameToDelete) {
+                    clonedFrame.reset(frameToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
                     clonedFrame->setFrameIndex(-1);
-                    frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame)));
+                    frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame.take())));
                 }
             }
         }
@@ -589,29 +580,30 @@ void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
 void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
 {
     KeyFramePairList keyframes;
+    QScopedPointer<IMorphKeyframe> keyframe;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid()) {
             /* QModelIndex からキーフレームを取得し、その中に入っている値を補正する */
             const QVariant &variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 const QByteArray &bytes = variant.toByteArray();
-                IMorphKeyframe *keyframe = m_factory->createMorphKeyframe();
+                keyframe.reset(m_factory->createMorphKeyframe());
                 keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                 keyframe->setWeight(keyframe->weight() * value);
-                keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe)));
+                keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe.take())));
             }
         }
     }
     setFrames(keyframes);
 }
 
-void MorphMotionModel::selectFaces(const QList<Face *> &morphs)
+void MorphMotionModel::selectMorphs(const QList<IMorph *> &morphs)
 {
     m_selectedMorphs = morphs;
     emit morphsDidSelect(morphs);
 }
 
-IMorph *MorphMotionModel::findFace(const QString &name)
+IMorph *MorphMotionModel::findMorph(const QString &name)
 {
     /* QString を扱っていること以外 PMDModel#findFace と同じ */
     internal::String s(name);
@@ -632,7 +624,7 @@ void MorphMotionModel::setWeight(float value)
 void MorphMotionModel::setWeight(float value, IMorph *morph)
 {
     if (morph) {
-        morph->performTransform(value);
+        morph->setWeight(value);
         m_model->performUpdate();
     }
 }

@@ -39,9 +39,9 @@
 #include "widgets/MorphWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QWidget(parent),
@@ -129,7 +129,7 @@ void MorphWidget::retranslate()
     m_otherGroup->setTitle(tr("Other"));
 }
 
-void MorphWidget::setPMDModel(PMDModel *model)
+void MorphWidget::setPMDModel(IModel *model)
 {
     m_eyes->clear();
     m_lips->clear();
@@ -210,7 +210,7 @@ void MorphWidget::registerBase(const QComboBox *comboBox)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        Face *face = m_morphMotionModel->findFace(comboBox->itemText(index));
+        IMorph *face = m_morphMotionModel->findMorph(comboBox->itemText(index));
         if (face)
             emit morphDidRegister(face);
     }
@@ -229,7 +229,7 @@ void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        Face *face = m_morphMotionModel->findFace(comboBox->itemText(index));
+        IMorph *face = m_morphMotionModel->findMorph(comboBox->itemText(index));
         if (face)
             slider->setValue(face->weight() * 100.0f);
     }
@@ -239,7 +239,7 @@ void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        Face *face = m_morphMotionModel->findFace(comboBox->itemText(index));
+        IMorph *face = m_morphMotionModel->findMorph(comboBox->itemText(index));
         if (face) {
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
             float weight = value / static_cast<float>(kSliderMaximumValue);

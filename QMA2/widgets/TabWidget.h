@@ -38,6 +38,7 @@
 #define TABWIDGET_H
 
 #include <QtGui/QTabWidget>
+#include <vpvl2/Scene.h>
 
 class AssetWidget;
 class CameraPerspectiveWidget;
@@ -49,8 +50,7 @@ class TabWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit TabWidget(QSettings *settings,
-                       QWidget *parent = 0);
+    explicit TabWidget(QSettings *settings, QWidget *parent = 0);
     ~TabWidget();
 
     AssetWidget *assetWidget() const { return m_asset; }

@@ -214,7 +214,7 @@ public:
         foreach (const SceneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
             SceneMotionModel::KeyFramePtr ptr = pair.second;
-            ICameraKeyframe *cameraKeyframe = static_cast<ICameraKeyframe *>(ptr.data());
+            ICameraKeyframe *cameraKeyframe = reinterpret_cast<ICameraKeyframe *>(ptr.data());
             const QModelIndex &modelIndex = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
             if (cameraKeyframe->frameIndex() >= 0) {
                 QByteArray bytes(cameraKeyframe->estimateSize(), '0');

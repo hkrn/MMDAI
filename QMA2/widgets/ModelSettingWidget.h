@@ -38,10 +38,10 @@
 #define MODELSETTINGWIDGET_H
 
 #include <QtGui/QWidget>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
-namespace vpvl {
-class PMDModel;
+namespace vpvl2 {
+class IModel;
 }
 
 class QCheckBox;
@@ -63,15 +63,15 @@ public:
 signals:
     void edgeOffsetDidChange(double value);
     void edgeColorDidChange(const QColor &color);
-    void positionOffsetDidChange(const vpvl::Vector3 &value);
-    void rotationOffsetDidChange(const vpvl::Vector3 &value);
+    void positionOffsetDidChange(const vpvl2::Vector3 &value);
+    void rotationOffsetDidChange(const vpvl2::Vector3 &value);
     void projectiveShadowDidChange(bool value);
 
 private slots:
     void retranslate();
     void openEdgeColorDialog();
-    void setModel(vpvl::PMDModel *model, SceneLoader *loader);
-    void setPositionOffset(const vpvl::Vector3 &position);
+    void setModel(vpvl2::IModel *model, SceneLoader *loader);
+    void setPositionOffset(const vpvl2::Vector3 &position);
     void updatePosition();
     void updateRotation();
 

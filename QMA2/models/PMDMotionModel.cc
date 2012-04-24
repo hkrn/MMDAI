@@ -42,6 +42,65 @@
 
 using namespace vpvl2;
 
+PMDMotionModel::State::State(IModel *model)
+    : m_model(model)
+{
+}
+
+PMDMotionModel::State::~State()
+{
+    m_model = 0;
+}
+
+void PMDMotionModel::State::restore() const
+{
+    foreach (const Bone &bone, m_bones) {
+        IBone *b = bone.first;
+        const Transform &tr = bone.second;
+        b->setPosition(tr.first);
+        b->setRotation(tr.second);
+    }
+    foreach (const Morph &morph, m_morphs) {
+        IMorph *m = morph.first;
+        m->setWeight(morph.second);
+    }
+    m_model->performUpdate();
+}
+
+void PMDMotionModel::State::save()
+{
+    Array<IBone *> bones;
+    m_model->getBones(bones);
+    m_bones.clear();
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
+        IBone *bone = bones[i];
+        Transform tr(bone->position(), bone->rotation());
+        m_bones.append(Bone(bone, tr));
+    }
+    Array<IMorph *> morphs;
+    m_model->getMorphs(morphs);
+    m_morphs.clear();
+    const int nmorphs = morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        IMorph *morph = morphs[i];
+        m_morphs.append(Morph(morph, morph->weight()));
+    }
+}
+
+void PMDMotionModel::State::discard()
+{
+    m_bones.clear();
+    m_morphs.clear();
+}
+
+void PMDMotionModel::State::copyFrom(const State &value)
+{
+    m_bones = value.m_bones;
+    m_morphs = value.m_morphs;
+    m_model = value.m_model;
+}
+
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
     m_model(0)
@@ -54,8 +113,6 @@ PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
 
 PMDMotionModel::~PMDMotionModel()
 {
-    if (m_model)
-        m_model->discardState(m_state);
 }
 
 QVariant PMDMotionModel::data(const QModelIndex &index, int role) const
@@ -104,37 +161,6 @@ const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int fr
     if (!modelIndex.isValid())
         createIndex(rowIndex, frameIndex, item);
     return modelIndex;
-}
-
-void PMDMotionModel::saveState()
-{
-    /* 前の状態を破棄する機能がついた saveState のラッパー */
-    if (m_model) {
-        m_model->discardState(m_state);
-        m_state = m_model->saveState();
-    }
-}
-
-void PMDMotionModel::restoreState()
-{
-    /* 復元とモデル状態の更新、現在の状態を破棄する機能がついた restoreState のラッパー */
-#if 0
-    // FIXME: this
-    if (m_model) {
-        m_model->restoreState(m_state);
-        m_model->updateImmediate();
-        m_model->discardState(m_state);
-    }
-#endif
-}
-
-void PMDMotionModel::discardState()
-{
-#if 0
-    // FIXME: this
-    if (m_model)
-        m_model->discardState(m_state);
-#endif
 }
 
 int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const

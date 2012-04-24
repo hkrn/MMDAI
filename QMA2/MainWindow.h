@@ -41,17 +41,18 @@
 #include <QtCore/QUuid>
 #include <QtGui/QDialog>
 #include <QtGui/QMainWindow>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
 namespace internal {
 class Player;
 }
 
-namespace vpvl {
-class Asset;
-class Bone;
-class PMDModel;
-class VMDMotion;
+namespace vpvl2 {
+class Factory;
+class IBone;
+class IEncoding;
+class IModel;
+class IMotion;
 }
 
 class AudioDecoder;
@@ -104,16 +105,16 @@ private slots:
     void saveProject();
     void saveProjectAs();
     void selectModel();
-    void setCurrentModel(vpvl::PMDModel *model);
+    void setCurrentModel(vpvl2::IModel *model);
     void revertSelectedModel();
     void openRecentFile();
     void addRecentFile(const QString &filename);
     void updateRecentFiles();
     void clearRecentFiles();
-    void addModel(vpvl::PMDModel *model, const QUuid &uuid);
-    void deleteModel(vpvl::PMDModel *model, const QUuid &uuid);
-    void addAsset(vpvl::Asset *asset, const QUuid &uuid);
-    void deleteAsset(vpvl::Asset *asset, const QUuid &uuid);
+    void addModel(vpvl2::IModel *model, const QUuid &uuid);
+    void deleteModel(vpvl2::IModel *model, const QUuid &uuid);
+    void addAsset(vpvl2::IModel *asset, const QUuid &uuid);
+    void deleteAsset(vpvl2::IModel *asset, const QUuid &uuid);
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
@@ -136,7 +137,7 @@ private slots:
 private:
     bool saveMotionAs(QString &filename);
     bool saveMotionFile(const QString &filename);
-    bool saveMotionFile(const QString &filename, vpvl::VMDMotion *motion);
+    bool saveMotionFile(const QString &filename, vpvl2::IMotion *motion);
     bool saveProjectAs(QString &filename);
     bool saveProjectFile(const QString &filename);
     bool maybeSaveMotion();
@@ -149,6 +150,8 @@ private:
     void updateInformation();
     void updateWindowTitle();
 
+    vpvl2::IEncoding *m_encoding;
+    vpvl2::Factory *m_factory;
     QSettings m_settings;
     QUndoGroup *m_undo;
     LicenseWidget *m_licenseWidget;
@@ -169,10 +172,10 @@ private:
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
 
-    vpvl::PMDModel *m_model;
-    vpvl::Bone *m_bone;
-    vpvl::Vector3 m_position;
-    vpvl::Vector3 m_angle;
+    vpvl2::IModel *m_model;
+    vpvl2::IBone *m_bone;
+    vpvl2::Vector3 m_position;
+    vpvl2::Vector3 m_angle;
     float m_fovy;
     float m_distance;
     int m_currentFPS;

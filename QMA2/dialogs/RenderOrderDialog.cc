@@ -39,10 +39,10 @@
 #include "common/util.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
-#include <vpvl/Project.h>
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/Project.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
     : QDialog(parent)
@@ -142,10 +142,8 @@ void RenderOrderDialog::buildOriginFromRenderOrder(const SceneLoader *loader)
 {
     const QList<QUuid> &list = loader->renderOrderList();
     foreach (const QUuid &uuid, list) {
-        if (PMDModel *model = loader->findModel(uuid))
+        if (IModel *model = loader->findModel(uuid))
             m_origin.append(NameUUID(internal::toQString(model), uuid));
-        else if (Asset *asset = loader->findAsset(uuid))
-            m_origin.append(NameUUID(internal::toQString(asset), uuid));
     }
 }
 

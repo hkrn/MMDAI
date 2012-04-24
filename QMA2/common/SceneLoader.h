@@ -66,7 +66,7 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
-    explicit SceneLoader();
+    explicit SceneLoader(vpvl2::IEncoding *encoding, vpvl2::Factory *factory);
     ~SceneLoader();
 
     QList<vpvl2::IModel *> allModels() const;
@@ -202,9 +202,9 @@ private:
     int globalSetting(const char *key, int def) const;
 
     internal::World *m_world;
-    internal::Encoding *m_encoding;
-    vpvl2::IRenderDelegate *m_renderDelegate;
     QMap<QString, vpvl2::IModel*> m_name2assets;
+    vpvl2::IEncoding *m_encoding;
+    vpvl2::IRenderDelegate *m_renderDelegate;
     vpvl2::Factory *m_factory;
     vpvl2::Project *m_project;
     vpvl2::Project::IDelegate *m_projectDelegate;

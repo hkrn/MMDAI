@@ -38,7 +38,7 @@
 #define SCENELIGHTWIDGET_H
 
 #include <QtGui/QWidget>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
 class QDoubleSpinBox;
 class QGroupBox;
@@ -54,12 +54,12 @@ public:
     ~SceneLightWidget();
 
 public slots:
-    void setColor(const vpvl::Color &value);
-    void setPosition(const vpvl::Vector3 &value);
+    void setColor(const vpvl2::Vector3 &value);
+    void setDirection(const vpvl2::Vector3 &value);
 
 signals:
-    void lightColorDidSet(const vpvl::Color &value);
-    void lightPositionDidSet(const vpvl::Vector3 &value);
+    void lightColorDidSet(const vpvl2::Color &value);
+    void lightDirectionDidSet(const vpvl2::Vector3 &value);
 
 private slots:
     void retranslate();

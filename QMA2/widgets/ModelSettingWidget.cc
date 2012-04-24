@@ -38,9 +38,9 @@
 #include "common/SceneLoader.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     QWidget(parent),
@@ -60,12 +60,13 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     connect(m_projectiveShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidChange(bool)));
     m_projectiveShadowCheckbox->setEnabled(false);
     /* モデルの位置(X,Y,Z) */
+    const Scalar &zfar = 10000;
     QFormLayout *formLayout = new QFormLayout();
-    m_px = createSpinBox(SLOT(updatePosition()), -Scene::kFrustumFar, Scene::kFrustumFar);
+    m_px = createSpinBox(SLOT(updatePosition()), -zfar, zfar);
     formLayout->addRow("X", m_px);
-    m_py = createSpinBox(SLOT(updatePosition()), -Scene::kFrustumFar, Scene::kFrustumFar);
+    m_py = createSpinBox(SLOT(updatePosition()), -zfar, zfar);
     formLayout->addRow("Y", m_py);
-    m_pz = createSpinBox(SLOT(updatePosition()), -Scene::kFrustumFar, Scene::kFrustumFar);
+    m_pz = createSpinBox(SLOT(updatePosition()), -zfar, zfar);
     formLayout->addRow("Z", m_pz);
     m_positionGroup = new QGroupBox();
     m_positionGroup->setLayout(formLayout);
@@ -116,16 +117,16 @@ void ModelSettingWidget::openEdgeColorDialog()
     m_edgeColorDialog->show();
 }
 
-void ModelSettingWidget::setModel(PMDModel *model, SceneLoader *loader)
+void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
 {
     /* 予期せぬ値変更を伴うシグナル発行防止のため、一時的に無効にする */
     disableSignals();
     if (model) {
         createEdgeColorDialog();
-        m_edgeOffsetSpinBox->setValue(model->edgeOffset());
+        // FIXME: m_edgeOffsetSpinBox->setValue(model->edgeOffset());
         m_edgeOffsetSpinBox->setEnabled(true);
         m_projectiveShadowCheckbox->setEnabled(true);
-        const Vector3 &color = model->edgeColor();
+        const Vector3 &color = kZeroC; // FIXME: model->edgeColor();
         QColor c;
         c.setRedF(color.x());
         c.setGreenF(color.y());
@@ -138,12 +139,12 @@ void ModelSettingWidget::setModel(PMDModel *model, SceneLoader *loader)
         else {
             m_projectiveShadowCheckbox->setChecked(false);
         }
-        const Vector3 &position = model->positionOffset();
+        const Vector3 &position = model->position();
         m_px->setValue(position.x());
         m_py->setValue(position.y());
         m_pz->setValue(position.z());
         if (loader) {
-            const vpvl::Vector3 &angle = loader->modelRotation(model);
+            const Vector3 &angle = loader->modelRotation(model);
             m_rx->setValue(angle.x());
             m_ry->setValue(angle.y());
             m_rz->setValue(angle.z());
@@ -188,13 +189,13 @@ void ModelSettingWidget::createEdgeColorDialog()
 
 void ModelSettingWidget::updatePosition()
 {
-    const vpvl::Vector3 position(m_px->value(), m_py->value(), m_pz->value());
+    const Vector3 position(m_px->value(), m_py->value(), m_pz->value());
     emit positionOffsetDidChange(position);
 }
 
 void ModelSettingWidget::updateRotation()
 {
-    const vpvl::Vector3 rotation(m_rx->value(), m_ry->value(), m_rz->value());
+    const Vector3 rotation(m_rx->value(), m_ry->value(), m_rz->value());
     emit rotationOffsetDidChange(rotation);
 }
 

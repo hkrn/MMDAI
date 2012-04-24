@@ -41,10 +41,9 @@
 #include <QtCore/QUuid>
 #include <QtGui/QWidget>
 
-namespace vpvl {
-class Asset;
-class Bone;
-class PMDModel;
+namespace vpvl2 {
+class IBone;
+class IModel;
 }
 
 class QComboBox;
@@ -62,24 +61,24 @@ public:
     explicit AssetWidget(QWidget *parent = 0);
     ~AssetWidget();
 
-    vpvl::Asset *currentAsset() const { return m_currentAsset; }
-    vpvl::PMDModel *currentModel() const { return m_currentModel; }
+    vpvl2::IModel *currentAsset() const { return m_currentAsset; }
+    vpvl2::IModel *currentModel() const { return m_currentModel; }
 
 public slots:
-    void addAsset(vpvl::Asset *asset);
-    void removeAsset(vpvl::Asset *asset);
-    void addModel(vpvl::PMDModel *model);
-    void removeModel(vpvl::PMDModel *model);
+    void addAsset(vpvl2::IModel *asset);
+    void removeAsset(vpvl2::IModel *asset);
+    void addModel(vpvl2::IModel *model);
+    void removeModel(vpvl2::IModel *model);
     void retranslate();
 
 signals:
-    void assetDidSelect(vpvl::Asset *asset);
-    void assetDidRemove(vpvl::Asset *asset);
+    void assetDidSelect(vpvl2::IModel *asset);
+    void assetDidRemove(vpvl2::IModel *asset);
 
 private slots:
     void removeAsset();
     void changeCurrentAsset(int index);
-    void changeCurrentAsset(vpvl::Asset *asset);
+    void changeCurrentAsset(vpvl2::IModel *asset);
     void changeCurrentModel(int index);
     void changeParentBone(int index);
     void updatePositionX(double value);
@@ -90,12 +89,12 @@ private slots:
     void updateRotationZ(double value);
     void updateScaleFactor(double value);
     void updateOpacity(double value);
-    void setAssetProperties(vpvl::Asset *asset, SceneLoader *loader);
+    void setAssetProperties(vpvl2::IModel *asset, SceneLoader *loader);
 
 private:
     void setEnable(bool value);
-    void updateModelBoneComboBox(vpvl::PMDModel *model);
-    int modelIndexOf(vpvl::PMDModel *model);
+    void updateModelBoneComboBox(vpvl2::IModel *model);
+    int modelIndexOf(vpvl2::IModel *model);
 
     QGroupBox *m_assetGroup;
     QGroupBox *m_assignGroup;
@@ -115,10 +114,10 @@ private:
     QDoubleSpinBox *m_opacity;
     QLabel *m_scaleLabel;
     QLabel *m_opacityLabel;
-    QList<vpvl::Asset *> m_assets;
-    QList<vpvl::PMDModel *> m_models;
-    vpvl::Asset *m_currentAsset;
-    vpvl::PMDModel *m_currentModel;
+    QList<vpvl2::IModel *> m_assets;
+    QList<vpvl2::IModel *> m_models;
+    vpvl2::IModel *m_currentAsset;
+    vpvl2::IModel *m_currentModel;
 
     Q_DISABLE_COPY(AssetWidget)
 };

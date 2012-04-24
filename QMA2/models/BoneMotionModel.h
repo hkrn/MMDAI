@@ -88,6 +88,7 @@ public:
     vpvl2::IBone *findBone(const QString &name) const;
     vpvl2::IBone *selectedBone() const { return m_selectedBones.isEmpty() ? 0 : m_selectedBones.first(); }
     vpvl2::Factory *factory() const { return m_factory; }
+    PMDMotionModel::State *mutableState() { return &m_state; }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
     const vpvl2::IBoneKeyframe::InterpolationParameter &interpolationParameter() const { return m_interpolationParameter; }
     void setInterpolationParameter(const vpvl2::IBoneKeyframe::InterpolationParameter &value) { m_interpolationParameter = value; }
@@ -118,6 +119,7 @@ private:
     void translateInternal(const vpvl2::Vector3 &position, const vpvl2::Vector3 &delta, vpvl2::IBone *bone, int flags);
 
     const SceneWidget *m_sceneWidget;
+    PMDMotionModel::State m_state;
     KeyFramePairList m_copiedKeyframes;
     QList<vpvl2::IBone *> m_selectedBones;
     vpvl2::Factory *m_factory;

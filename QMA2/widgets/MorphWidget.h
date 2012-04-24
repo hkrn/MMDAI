@@ -39,9 +39,9 @@
 
 #include <QtGui/QWidget>
 
-namespace vpvl {
-class PMDModel;
-class Face;
+namespace vpvl2 {
+class IModel;
+class IMorph;
 }
 
 class MorphMotionModel;
@@ -60,11 +60,11 @@ public:
     explicit MorphWidget(MorphMotionModel *fmm, QWidget *parent = 0);
 
 signals:
-    void morphDidRegister(vpvl::Face *face);
+    void morphDidRegister(vpvl2::IMorph *face);
 
 private slots:
     void retranslate();
-    void setPMDModel(vpvl::PMDModel *model);
+    void setPMDModel(vpvl2::IModel *model);
     void setEyeWeight(int value);
     void setLipWeight(int value);
     void setEyeblowWeight(int value);
@@ -79,7 +79,7 @@ private:
     void setMorphWeight(const QComboBox *comboBox, int value);
     void registerBase(const QComboBox *comboBox);
     void updateMorphWeight(const QComboBox *comboBox, QSlider *slider);
-    vpvl::Face *findMorph(const QString &name);
+    vpvl2::IMorph *findMorph(const QString &name);
     QSlider *createSlider();
 
     QGroupBox *m_eyeGroup;

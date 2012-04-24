@@ -39,15 +39,15 @@
 #include "models/BoneMotionModel.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 namespace {
 
 static void UISetPositionSpinBoxRange(QDoubleSpinBox *spinbox)
 {
-    spinbox->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
+    spinbox->setRange(-10000, 10000);
     spinbox->setSingleStep(0.1);
 }
 
@@ -59,12 +59,11 @@ static void UISetAngleSpinBoxRange(QDoubleSpinBox *spinbox)
 
 }
 
-BoneDialog::BoneDialog(BoneMotionModel *bmm,
-                       QWidget *parent) :
+BoneDialog::BoneDialog(BoneMotionModel *bmm, QWidget *parent) :
     QDialog(parent),
     m_boneMotionModel(bmm)
 {
-    Bone *bone = m_boneMotionModel->selectedBone();
+    IBone *bone = m_boneMotionModel->selectedBone();
     m_xPositionLabel = new QLabel();
     m_yPositionLabel = new QLabel();
     m_zPositionLabel = new QLabel();
@@ -114,7 +113,7 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm,
     setPosition(bone->position());
     setRotation(bone->rotation());
     retranslate();
-    m_boneMotionModel->saveState();
+    m_boneMotionModel->mutableState()->save();
 }
 
 BoneDialog::~BoneDialog()
@@ -178,12 +177,12 @@ void BoneDialog::setZAngle(double value)
 
 void BoneDialog::dialogAccepted()
 {
-    m_boneMotionModel->discardState();
+    m_boneMotionModel->mutableState()->discard();
     close();
 }
 
 void BoneDialog::dialogRejected()
 {
-    m_boneMotionModel->restoreState();
+    m_boneMotionModel->mutableState()->restore();
     close();
 }

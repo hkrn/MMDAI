@@ -38,7 +38,7 @@
 #define BONEDIALOG_H
 
 #include <QtGui/QDialog>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
 class BoneMotionModel;
 class QDoubleSpinBox;
@@ -54,8 +54,8 @@ public:
 
 private slots:
     void retranslate();
-    void setPosition(const vpvl::Vector3 &position);
-    void setRotation(const vpvl::Quaternion &rotation);
+    void setPosition(const vpvl2::Vector3 &position);
+    void setRotation(const vpvl2::Quaternion &rotation);
     void setXPosition(double value);
     void setYPosition(double value);
     void setZPosition(double value);

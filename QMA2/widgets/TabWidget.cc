@@ -43,8 +43,9 @@
 
 #include <QtGui/QtGui>
 
-TabWidget::TabWidget(QSettings *settings,
-                     QWidget *parent) :
+using namespace vpvl2;
+
+TabWidget::TabWidget(QSettings *settings, QWidget *parent) :
     QWidget(parent),
     m_settings(settings),
     m_asset(0),

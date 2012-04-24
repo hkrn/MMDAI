@@ -48,7 +48,9 @@
 #include <vpvl2/Scene.h>
 
 namespace vpvl2 {
+class Factory;
 class IBone;
+class IEncoding;
 class IModel;
 class IMotion;
 class Scene;
@@ -83,7 +85,7 @@ public:
         kMove
     };
 
-    explicit SceneWidget(QSettings *settings, QWidget *parent = 0);
+    explicit SceneWidget(vpvl2::IEncoding *encoding, vpvl2::Factory *factory, QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
     SceneLoader *sceneLoader() const;
@@ -235,6 +237,8 @@ private:
     void grabImageHandle(const vpvl2::Scalar &deltaValue);
     void grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags);
 
+    vpvl2::IEncoding *m_encoding;
+    vpvl2::Factory *m_factory;
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;

@@ -62,10 +62,12 @@
 using namespace vpvl2;
 using namespace internal;
 
-SceneWidget::SceneWidget(QSettings *settings, QWidget *parent) :
+SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_loader(0),
     m_settings(settings),
+    m_encoding(encoding),
+    m_factory(factory),
     m_debugDrawer(0),
     m_grid(0),
     m_info(0),
@@ -794,7 +796,7 @@ void SceneWidget::initializeGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
-    m_loader = new SceneLoader();
+    m_loader = new SceneLoader(m_encoding, m_factory);
     connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     const QSize &s = size();
     m_handles = new Handles(m_loader, s);

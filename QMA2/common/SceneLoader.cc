@@ -520,23 +520,21 @@ const QByteArray UILoadFile(const QString &filename,
 
 }
 
-SceneLoader::SceneLoader()
+SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory)
     : QObject(),
       m_world(0),
-      m_encoding(0),
+      m_encoding(encoding),
       m_renderDelegate(0),
-      m_factory(0),
+      m_factory(factory),
       m_project(0),
       m_projectDelegate(0),
       m_model(0),
       m_asset(0),
       m_camera(0)
 {
-    m_encoding = new internal::Encoding();
     m_world = new internal::World();
     m_renderDelegate = new UIDelegate();
     m_projectDelegate = new UIDelegate();
-    m_factory = new Factory(m_encoding);
     createProject();
 }
 

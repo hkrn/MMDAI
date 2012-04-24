@@ -41,8 +41,8 @@
 #include "models/SceneMotionModel.h"
 
 #include <QtGui/QWidget>
-#include <vpvl/BoneKeyFrame.h>
-#include <vpvl/CameraKeyFrame.h>
+#include <vpvl2/IBoneKeyFrame.h>
+#include <vpvl2/ICameraKeyframe.h>
 
 class QComboBox;
 class QHBoxLayout;
@@ -91,13 +91,13 @@ private slots:
 
 private:
     void updateValues(bool import);
-    void setValue(vpvl::QuadWord &q, bool import);
-    void setDefault(vpvl::QuadWord &q);
+    void setValue(vpvl2::QuadWord &q, bool import);
+    void setDefault(vpvl2::QuadWord &q);
 
     BoneMotionModel *m_boneMotionModel;
     SceneMotionModel *m_sceneMotionModel;
-    vpvl::BoneKeyframe::InterpolationParameter m_boneIP;
-    vpvl::CameraKeyframe::InterpolationParameter m_cameraIP;
+    vpvl2::IBoneKeyframe::InterpolationParameter m_boneIP;
+    vpvl2::ICameraKeyframe::InterpolationParameter m_cameraIP;
     QPoint m_p1;
     QPoint m_p2;
     Type m_type;

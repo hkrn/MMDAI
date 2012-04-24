@@ -40,9 +40,9 @@
 #include "widgets/TimelineTabWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
     : QWidget(parent),
@@ -76,11 +76,11 @@ void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::Key
 {
     bool enabled = false;
     if (frames.count() == 1) {
-        BoneKeyframe *frame = frames.first().data();
-        frame->getInterpolationParameter(BoneKeyframe::kX, m_boneIP.x);
-        frame->getInterpolationParameter(BoneKeyframe::kY, m_boneIP.y);
-        frame->getInterpolationParameter(BoneKeyframe::kZ, m_boneIP.z);
-        frame->getInterpolationParameter(BoneKeyframe::kRotation, m_boneIP.rotation);
+        IBoneKeyframe *frame = frames.first().data();
+        frame->getInterpolationParameter(IBoneKeyframe::kX, m_boneIP.x);
+        frame->getInterpolationParameter(IBoneKeyframe::kY, m_boneIP.y);
+        frame->getInterpolationParameter(IBoneKeyframe::kZ, m_boneIP.z);
+        frame->getInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
         updateValues(true);
         enabled = true;
     }
@@ -89,13 +89,13 @@ void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::Key
 
 void InterpolationGraphWidget::setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames)
 {
-    CameraKeyframe *frame = static_cast<CameraKeyframe *>(frames.last().data());
-    frame->getInterpolationParameter(CameraKeyframe::kX, m_cameraIP.x);
-    frame->getInterpolationParameter(CameraKeyframe::kY, m_cameraIP.y);
-    frame->getInterpolationParameter(CameraKeyframe::kZ, m_cameraIP.z);
-    frame->getInterpolationParameter(CameraKeyframe::kRotation, m_cameraIP.rotation);
-    frame->getInterpolationParameter(CameraKeyframe::kFovy, m_cameraIP.fovy);
-    frame->getInterpolationParameter(CameraKeyframe::kDistance, m_cameraIP.distance);
+    ICameraKeyframe *frame = reinterpret_cast<ICameraKeyframe *>(frames.last().data());
+    frame->getInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
+    frame->getInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
+    frame->getInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
+    frame->getInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
+    frame->getInterpolationParameter(ICameraKeyframe::kFovy, m_cameraIP.fovy);
+    frame->getInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
     updateValues(true);
 }
 

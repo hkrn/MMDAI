@@ -65,14 +65,14 @@ private slots:
     void emitMorphWeightSignal();
 
 signals:
-    void boneWeightDidSet(const vpvl::Vector3 &position, const vpvl::Vector3 &rotation);
+    void boneWeightDidSet(const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
     void morphKeyframeWeightDidSet(float weight);
 
 private:
     QDoubleSpinBox *createSpinBox(const char *slot);
 
-    vpvl::Vector3 m_position;
-    vpvl::Vector3 m_rotation;
+    vpvl2::Vector3 m_position;
+    vpvl2::Vector3 m_rotation;
     float m_morphWeight;
 
     Q_DISABLE_COPY(FrameWeightDialog)
