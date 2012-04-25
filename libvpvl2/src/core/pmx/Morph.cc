@@ -95,8 +95,8 @@ Morph::Morph()
     : m_name(0),
       m_englishName(0),
       m_weight(0),
+      m_category(kReserved),
       m_index(-1),
-      m_category(0),
       m_type(0)
 {
 }
@@ -107,8 +107,8 @@ Morph::~Morph()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_category = kReserved;
     m_index = -1;
-    m_category = 0;
     m_type = 0;
 }
 
@@ -318,7 +318,7 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     const MorphUnit &unit = *reinterpret_cast<const MorphUnit *>(ptr);
-    m_category = unit.category;
+    m_category = static_cast<Category>(unit.category);
     m_type = unit.type;
     ptr += sizeof(unit);
     switch (m_type) {
@@ -504,7 +504,7 @@ void Morph::addVertexMorph(const Vertex &value)
     m_vertices.add(value);
 }
 
-void Morph::setCategory(uint8_t value)
+void Morph::setCategory(Category value)
 {
     m_category = value;
 }

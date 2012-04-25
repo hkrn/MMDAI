@@ -121,7 +121,7 @@ public:
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
-    uint8_t category() const { return m_category; }
+    Category category() const { return m_category; }
     uint8_t type() const { return m_type; }
     int index() const { return m_index; }
 
@@ -132,7 +132,7 @@ public:
     void addMaterialMorph(const Material &value);
     void addUVMorph(const UV &value);
     void addVertexMorph(const Vertex &value);
-    void setCategory(uint8_t value);
+    void setCategory(Category value);
     void setType(uint8_t value);
     void setIndex(int value);
 
@@ -167,8 +167,8 @@ private:
     IString *m_name;
     IString *m_englishName;
     Scalar m_weight;
+    Category m_category;
     int m_index;
-    uint8_t m_category;
     uint8_t m_type;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Morph)

@@ -50,6 +50,14 @@ namespace vpvl2
 class VPVL2_API IMorph
 {
 public:
+    enum Category {
+        kReserved,
+        kEyeblow,
+        kEye,
+        kLip,
+        kOther
+    };
+
     virtual ~IMorph() {}
 
     /**
@@ -67,6 +75,13 @@ public:
      * @return int
      */
     virtual int index() const = 0;
+
+    /**
+     * モーフのカテゴリを返します。
+     *
+     * @return Category
+     */
+    virtual Category category() const = 0;
 
     /**
      * 係数を返します。

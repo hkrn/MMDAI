@@ -85,10 +85,13 @@ bool Model::load(const uint8_t *data, size_t size)
         const vpvl::Array<vpvl::Face *> &morphs = m_model.faces();
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
-            Morph *morph = new Morph(morphs[i], m_encoding);
-            morph->setIndex(i);
-            m_morphs.add(morph);
-            m_name2morphs.insert(morph->name()->toHashString(), morph);
+            vpvl::Face *face = morphs[i];
+            if (face->type() != vpvl::Face::kBase) {
+                Morph *morph = new Morph(face, m_encoding);
+                morph->setIndex(i);
+                m_morphs.add(morph);
+                m_name2morphs.insert(morph->name()->toHashString(), morph);
+            }
         }
         delete m_name;
         m_name = m_encoding->toString(m_model.name(), IString::kShiftJIS, vpvl::PMDModel::kNameSize);

@@ -46,6 +46,7 @@ Morph::Morph(vpvl::Face *morph, IEncoding *encoding)
     : m_encoding(encoding),
       m_name(0),
       m_morph(morph),
+      m_category(kReserved),
       m_weight(0),
       m_index(-1)
 {
@@ -57,8 +58,26 @@ Morph::~Morph()
     delete m_name;
     m_name = 0;
     m_morph = 0;
+    m_category = kReserved;
     m_weight = 0;
     m_index = -1;
+}
+
+IMorph::Category Morph::category() const
+{
+    switch (m_morph->type()) {
+    case vpvl::Face::kEye:
+        return kEye;
+    case vpvl::Face::kEyeblow:
+        return kEyeblow;
+    case vpvl::Face::kLip:
+        return kLip;
+    case vpvl::Face::kOther:
+        return kOther;
+    case vpvl::Face::kBase:
+    default:
+        return kReserved;
+    }
 }
 
 void Morph::setWeight(const Scalar &value)
