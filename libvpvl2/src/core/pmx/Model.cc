@@ -169,6 +169,7 @@ bool Model::load(const uint8_t *data, size_t size)
                 || !Material::loadMaterials(m_materials, m_textures, m_indices.count())
                 || !Vertex::loadVertices(m_vertices, m_bones)
                 || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
+                || !Label::loadLabels(m_labels, m_bones, m_morphs)
                 || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
                 || !Joint::loadJoints(m_joints, m_rigidBodies)) {
             m_info.error = info.error;

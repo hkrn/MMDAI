@@ -66,6 +66,9 @@ public:
     ~Label();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadLabels(const Array<Label *> &labels,
+                           const Array<Bone *> &bones,
+                           const Array<Morph *> &morphs);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

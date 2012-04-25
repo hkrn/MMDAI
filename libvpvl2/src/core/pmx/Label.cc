@@ -126,6 +126,47 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
+bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones, const Array<Morph *> &morphs)
+{
+    const int nlabels = labels.count();
+    const int nbones = bones.count();
+    const int nmorphs = morphs.count();
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        const Array<Pair *> &pairs = label->m_pairs;
+        const int npairs = pairs.count();
+        for (int j = 0; j < npairs; j++) {
+            Pair *pair = pairs[j];
+            switch (pair->type) {
+            case 0: {
+                const int boneIndex = pair->id;
+                if (boneIndex >= 0) {
+                    if (boneIndex >= nbones)
+                        return false;
+                    else
+                        pair->bone = bones[boneIndex];
+                }
+                break;
+            }
+            case 1: {
+                const int morphIndex = pair->id;
+                if (morphIndex >= 0) {
+                    if (morphIndex >= nmorphs)
+                        return false;
+                    else
+                        pair->morph = morphs[morphIndex];
+                }
+                break;
+            }
+            default:
+                assert(0);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
