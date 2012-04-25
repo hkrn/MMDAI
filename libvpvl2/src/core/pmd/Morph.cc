@@ -45,7 +45,9 @@ namespace pmd
 Morph::Morph(vpvl::Face *morph, IEncoding *encoding)
     : m_encoding(encoding),
       m_name(0),
-      m_morph(morph)
+      m_morph(morph),
+      m_weight(0),
+      m_index(-1)
 {
     m_name = encoding->toString(morph->name(), IString::kShiftJIS, vpvl::Face::kNameSize);
 }
@@ -54,11 +56,19 @@ Morph::~Morph()
 {
     delete m_name;
     m_name = 0;
+    m_morph = 0;
+    m_weight = 0;
+    m_index = -1;
 }
 
 void Morph::setWeight(const Scalar &value)
 {
     m_morph->setWeight(value);
+}
+
+void Morph::setIndex(int value)
+{
+    m_index = value;
 }
 
 }

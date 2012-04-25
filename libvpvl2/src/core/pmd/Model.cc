@@ -86,6 +86,7 @@ bool Model::load(const uint8_t *data, size_t size)
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             Morph *morph = new Morph(morphs[i], m_encoding);
+            morph->setIndex(i);
             m_morphs.add(morph);
             m_name2morphs.insert(morph->name()->toHashString(), morph);
         }

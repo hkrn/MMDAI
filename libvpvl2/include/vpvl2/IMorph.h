@@ -60,6 +60,15 @@ public:
     virtual const IString *name() const = 0;
 
     /**
+     * モーフの ID を返します。
+     *
+     * 常にユニークでなければなりません。
+     *
+     * @return int
+     */
+    virtual int index() const = 0;
+
+    /**
      * 係数を返します。
      *
      * @return float

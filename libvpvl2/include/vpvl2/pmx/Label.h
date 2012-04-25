@@ -79,17 +79,17 @@ public:
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     bool isSpecial() const { return m_special; }
-    Bone *bone(int index) const;
-    Morph *morph(int index) const;
+    IBone *bone(int index) const;
+    IMorph *morph(int index) const;
     int count() const;
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setSpecial(bool value);
-    void addBone(Bone *value);
-    void addMorph(Morph *value);
-    void removeBone(Bone *value);
-    void removeMorph(Morph *value);
+    void addBone(IBone *value);
+    void addMorph(IMorph *value);
+    void removeBone(IBone *value);
+    void removeMorph(IMorph *value);
 
 private:
     IString *m_name;

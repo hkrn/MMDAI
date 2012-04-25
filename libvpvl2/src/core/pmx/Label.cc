@@ -58,8 +58,8 @@ namespace pmx
 struct Label::Pair {
     int id;
     int type;
-    Bone *bone;
-    Morph *morph;
+    IBone *bone;
+    IMorph *morph;
 };
 
 Label::Label()
@@ -208,14 +208,14 @@ size_t Label::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-Bone *Label::bone(int index) const
+IBone *Label::bone(int index) const
 {
     if (index >= 0 && index < m_pairs.count())
         return m_pairs[index]->bone;
     return 0;
 }
 
-Morph *Label::morph(int index) const
+IMorph *Label::morph(int index) const
 {
     if (index >= 0 && index < m_pairs.count())
         return m_pairs[index]->morph;
@@ -242,7 +242,7 @@ void Label::setSpecial(bool value)
     m_special = value;
 }
 
-void Label::addBone(Bone *value)
+void Label::addBone(IBone *value)
 {
     if (value) {
         Pair *pair = new Pair();
@@ -254,7 +254,7 @@ void Label::addBone(Bone *value)
     }
 }
 
-void Label::addMorph(Morph *value)
+void Label::addMorph(IMorph *value)
 {
     if (value) {
         Pair *pair = new Pair();
@@ -266,7 +266,7 @@ void Label::addMorph(Morph *value)
     }
 }
 
-void Label::removeBone(Bone *value)
+void Label::removeBone(IBone *value)
 {
     const int npairs = m_pairs.count();
     for (int i = 0; i < npairs; i++) {
@@ -279,7 +279,7 @@ void Label::removeBone(Bone *value)
     }
 }
 
-void Label::removeMorph(Morph *value)
+void Label::removeMorph(IMorph *value)
 {
     const int npairs = m_pairs.count();
     for (int i = 0; i < npairs; i++) {

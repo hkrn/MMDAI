@@ -160,6 +160,7 @@ public:
     const Array<Material *> &materials() const { return m_materials; }
     const Array<Bone *> &bones() const { return m_bones; }
     const Array<Morph *> &morphs() const { return m_morphs; }
+    const Array<Label *> &labels() const { return m_labels;  }
     const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
     const Array<Joint *> &joints() const { return m_joints; }
     const IString *name() const { return m_name; }
