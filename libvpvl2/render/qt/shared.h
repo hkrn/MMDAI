@@ -387,89 +387,245 @@ QDebug operator<<(QDebug debug, const Color &v)
 QDebug operator<<(QDebug debug, const IString *str)
 {
     if (str) {
-        debug.nospace() << reinterpret_cast<const String *>(str)->value();
+        debug.nospace() << static_cast<const String *>(str)->value();
     }
     else {
-        debug.nospace() << "\"\"";
+        debug.nospace() << "(null)";
     }
     return debug;
 }
 
 QDebug operator<<(QDebug debug, const pmx::Bone *bone)
 {
-    debug.nospace()
-            << "Bone id=" << bone->index()
-            << " name=" << bone->name()
-            << " english=" << bone->englishName()
-            << " origin=" << bone->origin();
-    if (bone->parentBone())
-        debug << " parent=" << bone->parentBone()->name();
-    debug << " index=" << bone->layerIndex() << "\n" << " offset=" << bone->origin();
+    if (!bone) {
+        debug.nospace() << "Bone is null";
+        return debug.space();
+    }
+    debug.nospace();
+    debug << "Bone id                          = " << bone->index();
+    debug << "\n";
+    debug << "     name                        = " << bone->name();
+    debug << "\n";
+    debug << "     english                     = " << bone->englishName();
+    debug << "\n";
+    debug << "     origin                      = " << bone->origin();
+    debug << "\n";
+    if (bone->parentBone()) {
+        debug << "     parent                      = " << bone->parentBone()->name();
+        debug << "\n";
+    }
+    debug << "     index                       = " << bone->layerIndex();
+    debug << "\n";
+    debug << "     offset                      = " << bone->origin();
+    debug << "\n";
     if (bone->isIKEnabled()) {
-        debug << " targetBone=" << bone->targetBone()->name()
-              << " constraintAngle=" << bone->constraintAngle();
+        debug << "     targetBone                  = " << bone->targetBone()->name();
+        debug << "\n";
+        debug << "     constraintAngle             = " << bone->constraintAngle();
+        debug << "\n";
     }
     if (bone->hasPositionInherence()) {
-        debug << " parentPositionInherenceBone=" << bone->parentInherenceBone()->name()
-              << " weight=" << bone->weight();
+        debug << "     parentPositionInherenceBone = " << bone->parentInherenceBone()->name();
+        debug << "\n";
+        debug << "     weight                      = " << bone->weight();
+        debug << "\n";
     }
     if (bone->hasRotationInherence()) {
-        debug << " parentRotationInherenceBone=" << bone->parentInherenceBone()->name()
-              << " weight=" << bone->weight();
+        debug << "     parentRotationInherenceBone = " << bone->parentInherenceBone()->name();
+        debug << "\n";
+        debug << "     weight                      = " << bone->weight();
+        debug << "\n";
     }
-    if (bone->isAxisFixed())
-        debug << " axis=" << bone->axis();
-    if (bone->hasLocalAxis())
-        debug << " axisX=" << bone->axisX() << " axisZ=" << bone->axisZ();
+    if (bone->isAxisFixed()) {
+        debug << "     axis                        = " << bone->axis();
+        debug << "\n";
+    }
+    if (bone->hasLocalAxis()) {
+        debug << "     axisX                       = " << bone->axisX();
+        debug << "\n";
+        debug << "     axisZ                       = " << bone->axisZ();
+        debug << "\n";
+    }
     return debug.space();
 }
 
 QDebug operator<<(QDebug debug, const pmx::Material *material)
 {
-    debug.nospace()
-            << "Material name=" << material->name()
-            << " english=" << material->englishName()
-            << " mainTexture=" << material->mainTexture()
-            << " sphereTexture=" << material->sphereTexture()
-            << " toonTexture=" << material->toonTexture()
-            << "\n"
-            << " ambient=" << material->ambient()
-            << " diffuse=" << material->diffuse()
-            << " specular=" << material->specular()
-            << " edgeColor=" << material->edgeColor()
-            << "\n"
-            << " shininess=" << material->shininess()
-            << " edgeSize=" << material->edgeSize()
-            << " indices=" << material->indices()
-            << " isSharedToonTextureUsed=" << material->isSharedToonTextureUsed()
-            << " isCullDisabled=" << material->isCullFaceDisabled()
-            << " hasShadow=" << material->hasShadow()
-            << " isShadowMapDrawin=" << material->isShadowMapDrawn()
-            << " isEdgeDrawn=" << material->isEdgeDrawn()
-               ;
+    if (!material) {
+        debug.nospace() << "Material is null";
+        return debug.space();
+    }
+    debug.nospace();
+    debug << "Material id                      = " << 0;
+    debug << "\n";
+    debug << "         name                    = " << material->name();
+    debug << "\n";
+    debug << "         english                 = " << material->englishName();
+    debug << "\n";
+    debug << "         mainTexture             = " << material->mainTexture();
+    debug << "\n";
+    debug << "         sphereTexture           = " << material->sphereTexture();
+    debug << "\n";
+    debug << "         toonTexture             = " << material->toonTexture();
+    debug << "\n";
+    debug << "         ambient                 = " << material->ambient();
+    debug << "\n";
+    debug << "         diffuse                 = " << material->diffuse();
+    debug << "\n";
+    debug << "         specular                = " << material->specular();
+    debug << "\n";
+    debug << "         edgeColor               = " << material->edgeColor();
+    debug << "\n";
+    debug << "         shininess               = " << material->shininess();
+    debug << "\n";
+    debug << "         edgeSize                = " << material->edgeSize();
+    debug << "\n";
+    debug << "         indices                 = " << material->indices();
+    debug << "\n";
+    debug << "         isSharedToonTextureUsed = " << material->isSharedToonTextureUsed();
+    debug << "\n";
+    debug << "         isCullDisabled          = " << material->isCullFaceDisabled();
+    debug << "\n";
+    debug << "         hasShadow               = " << material->hasShadow();
+    debug << "\n";
+    debug << "         isShadowMapDrawin       = " << material->isShadowMapDrawn();
+    debug << "\n";
+    debug << "         isEdgeDrawn             = " << material->isEdgeDrawn();
+    debug << "\n";
     switch (material->sphereTextureRenderMode()) {
     case pmx::Material::kAddTexture:
-        qDebug() << "sphere=add";
+        debug << "         sphere                  = add";
         break;
     case pmx::Material::kMultTexture:
-        qDebug() << "sphere=modulate";
+        debug << "         sphere                  = modulate";
         break;
     case pmx::Material::kNone:
-        qDebug() << "sphere=none";
+        debug << "         sphere                  = none";
         break;
     case pmx::Material::kSubTexture:
-        qDebug() << "sphere=sub";
+        debug << "         sphere                  = subtexture";
         break;
     }
+    debug << "\n";
     return debug.space();
 }
 
 QDebug operator<<(QDebug debug, const pmx::Morph *morph)
 {
-    debug.nospace()
-            << "Morph name=" << morph->name()
-            << " english=" << morph->englishName()
-               ;
+    if (!morph) {
+        debug.nospace() << "Morph is null";
+        return debug.space();
+    }
+    debug.nospace();
+    debug << "Morph id      = " << morph->index();
+    debug << "\n";
+    debug << "      name    = " << morph->name();
+    debug << "\n";
+    debug << "      english = " << morph->englishName();
+    debug << "\n";
+    debug << "      weight  = " << morph->weight();
+    debug << "\n";
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const pmx::Label *label)
+{
+    if (!label) {
+        debug.nospace() << "Label is null";
+        return debug.space();
+    }
+    debug.nospace();
+    debug << "Label name      = " << label->name();
+    debug << "\n";
+    debug << "      english   = " << label->englishName();
+    debug << "\n";
+    debug << "      isSpecial = " << label->isSpecial();
+    debug << "\n";
+    debug << "      count     = " << label->count();
+    debug << "\n";
+    for (int i = 0; i < label->count(); i++) {
+        if (IBone *bone = label->bone(i))
+            debug << "      bone      = " << bone->name();
+        else if (IMorph *morph = label->morph(i))
+            debug << "      morph     = " << morph->name();
+        debug << "\n";
+    }
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const pmx::RigidBody *body)
+{
+    if (!body) {
+        debug.nospace() << "RigidBody is null";
+        return debug.space();
+    }
+    debug.nospace();
+    debug << "RigidBody id                 = " << body->index();
+    debug << "\n";
+    debug << "          name               = " << body->name();
+    debug << "\n";
+    debug << "          english            = " << body->englishName();
+    debug << "\n";
+    debug << "          size               = " << body->size();
+    debug << "\n";
+    debug << "          position           = " << body->position();
+    debug << "\n";
+    debug << "          rotation           = " << body->rotation();
+    debug << "\n";
+    debug << "          mass               = " << body->mass();
+    debug << "\n";
+    debug << "          linearDamping      = " << body->linearDamping();
+    debug << "\n";
+    debug << "          angularDamping     = " << body->angularDamping();
+    debug << "\n";
+    debug << "          restitution        = " << body->restitution();
+    debug << "\n";
+    debug << "          friction           = " << body->friction();
+    debug << "\n";
+    debug << "          groupID            = " << body->groupID();
+    debug << "\n";
+    debug << "          collisionGroupMask = " << body->collisionGroupMask();
+    debug << "\n";
+    debug << "          collisionGroupID   = " << body->collisionGroupID();
+    debug << "\n";
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const pmx::Joint *joint)
+{
+    if (!joint) {
+        debug.nospace() << "Joint is null";
+        return debug.space();
+    }
+    debug.nospace();
+    debug << "Joint name               = " << joint->name();
+    debug << "\n";
+    debug << "      english            = " << joint->englishName();
+    debug << "\n";
+    debug << "      position           = " << joint->position();
+    debug << "\n";
+    debug << "      rotation           = " << joint->rotation();
+    debug << "\n";
+    debug << "      positionLowerLimit = " << joint->positionLowerLimit();
+    debug << "\n";
+    debug << "      positionUpperLimit = " << joint->positionUpperLimit();
+    debug << "\n";
+    debug << "      rotationLowerLimit = " << joint->rotationLowerLimit();
+    debug << "\n";
+    debug << "      rotationUpperLimit = " << joint->rotationUpperLimit();
+    debug << "\n";
+    debug << "      positionStiffness  = " << joint->positionStiffness();
+    debug << "\n";
+    debug << "      rotationStiffness  = " << joint->rotationStiffness();
+    debug << "\n";
+    if (joint->rigidBody1()) {
+        debug << "      rigidBody1         = " << joint->rigidBody1()->name();
+        debug << "\n";
+    }
+    if (joint->rigidBody2()) {
+        debug << "      rigidBody2         = " << joint->rigidBody2()->name();
+        debug << "\n";
+    }
     return debug.space();
 }
 
@@ -685,17 +841,33 @@ private:
         engine->upload(&s);
         m_scene.addModel(model, engine);
 #if 0
-        pmx::Model *model = static_cast<pmx::Model*>(m_model);
-        for (int i = 0; i < model->materials().count(); i++)
-            qDebug() << model->materials().at(i);
-        for (int i = 0; i < model->bones().count(); i++)
-            qDebug() << model->bones().at(i);
-        for (int i = 0; i < model->morphs().count(); i++)
-            qDebug() << model->morphs().at(i);
-        for (int i = 0; i < m_model->rigidBodies().count(); i++)
-            qDebug("rbody%d: %s", i, m_delegate.toUnicode(m_model->rigidBodies()[i]->name()).c_str());
-        for (int i = 0; i < m_model->joints().count(); i++)
-            qDebug("joint%d: %s", i, m_delegate.toUnicode(m_model->joints()[i]->name()).c_str());
+        pmx::Model *pmx = dynamic_cast<pmx::Model*>(model);
+        if (pmx) {
+            const Array<pmx::Material *> &materials = pmx->materials();
+            const int nmaterials = materials.count();
+            for (int i = 0; i < nmaterials; i++)
+                qDebug() << materials[i];
+            const Array<pmx::Bone *> &bones = pmx->bones();
+            const int nbones = bones.count();
+            for (int i = 0; i < nbones; i++)
+                qDebug() << bones[i];
+            const Array<pmx::Morph *> &morphs = pmx->morphs();
+            const int nmorphs = morphs.count();
+            for (int i = 0; i < nmorphs; i++)
+                qDebug() << morphs.at(i);
+            const Array<pmx::Label *> &labels = pmx->labels();
+            const int nlabels = labels.count();
+            for (int i = 0; i < nlabels; i++)
+                qDebug() << labels.at(i);
+            const Array<pmx::RigidBody *> &bodies = pmx->rigidBodies();
+            const int nbodies = bodies.count();
+            for (int i = 0; i < nbodies; i++)
+                qDebug() << bodies.at(i);
+            const Array<pmx::Joint *> &joints = pmx->joints();
+            const int njoints = joints.count();
+            for (int i = 0; i < njoints; i++)
+                qDebug() << joints.at(i);
+        }
 #endif
         return model;
     }
