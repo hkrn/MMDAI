@@ -731,7 +731,7 @@ void TestModel::testReadWriteBoneMorph(size_t indexSize)
     morph.addBoneMorph(bone2);
     morph.setName(&name);
     morph.setEnglishName(&englishName);
-    morph.setCategory(1);
+    morph.setCategory(IMorph::kEyeblow);
     morph.setType(2);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
@@ -772,7 +772,7 @@ void TestModel::testReadWriteGroupMorph(size_t indexSize)
     morph.addGroupMorph(group2);
     morph.setName(&name);
     morph.setEnglishName(&englishName);
-    morph.setCategory(1);
+    morph.setCategory(IMorph::kEye);
     morph.setType(0);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
@@ -829,7 +829,7 @@ void TestModel::testReadWriteMaterialMorph(size_t indexSize)
     morph.addMaterialMorph(material2);
     morph.setName(&name);
     morph.setEnglishName(&englishName);
-    morph.setCategory(1);
+    morph.setCategory(IMorph::kLip);
     morph.setType(8);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
@@ -933,7 +933,7 @@ void TestModel::testReadWriteUVMorph(size_t indexSize)
     morph.addUVMorph(uv2);
     morph.setName(&name);
     morph.setEnglishName(&englishName);
-    morph.setCategory(1);
+    morph.setCategory(IMorph::kOther);
     morph.setType(7);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
@@ -974,7 +974,7 @@ void TestModel::testReadWriteVertexMorph(size_t indexSize)
     morph.addVertexMorph(vertex2);
     morph.setName(&name);
     morph.setEnglishName(&englishName);
-    morph.setCategory(1);
+    morph.setCategory(IMorph::kOther);
     morph.setType(1);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
