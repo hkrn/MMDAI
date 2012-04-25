@@ -437,30 +437,14 @@ void MorphMotionModel::setPMDModel(IModel *model)
         if (!hasPMDModel(model)) {
             /* ルートを作成 */
             RootPtr ptr(new TreeItem("", 0, true, false, 0));
-#if !QMA2_TBD
-            TreeItem *r = static_cast<TreeItem *>(ptr.data());
-            TreeItem *parent = new TreeItem(tr("Root"), 0, false, true, static_cast<TreeItem *>(r));
-            Keys keys;
-            Array<IMorph *> morphs;
-            model->getMorphs(morphs);
-            const int nmorphs = morphs.count();
-            for (int i = 0; i < nmorphs; i++) {
-                IMorph *morph = morphs[i];
-                const QString &name = internal::toQString(morph);
-                TreeItem *child = new TreeItem(name, morph, false, false, parent);
-                parent->addChild(child);
-                keys.insert(name, child);
-            }
-            /* カテゴリアイテムをルートに追加する */
-            r->addChild(parent);
-#else
             /* 予め決められたカテゴリのアイテムを作成する */
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
             TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, true, static_cast<TreeItem *>(r));
             TreeItem *eye = new TreeItem(tr("Eye"), 0, false, true, static_cast<TreeItem *>(r));
             TreeItem *lip = new TreeItem(tr("Lip"), 0, false, true, static_cast<TreeItem *>(r));
             TreeItem *other = new TreeItem(tr("Other"), 0, false, true, static_cast<TreeItem *>(r));
-            const FaceList &morphs = model->morphsForUI();
+            Array<IMorph *> morphs;
+            model->getMorphs(morphs);
             const int nmorphs = morphs.count();
             Keys keys;
             for (int i = 0; i < nmorphs; i++) {
@@ -468,17 +452,17 @@ void MorphMotionModel::setPMDModel(IModel *model)
                 const QString &name = internal::toQString(morph);
                 TreeItem *child, *parent = 0;
                 /* カテゴリ毎に頂点モーフを追加して整理する */
-                switch (morph->type()) {
-                case Face::kEyeblow:
+                switch (morph->category()) {
+                case IMorph::kEyeblow:
                     parent = eyeblow;
                     break;
-                case Face::kEye:
+                case IMorph::kEye:
                     parent = eye;
                     break;
-                case Face::kLip:
+                case IMorph::kLip:
                     parent = lip;
                     break;
-                case Face::kOther:
+                case IMorph::kOther:
                     parent = other;
                     break;
                 default:
@@ -496,7 +480,6 @@ void MorphMotionModel::setPMDModel(IModel *model)
             r->addChild(eye);
             r->addChild(lip);
             r->addChild(other);
-#endif
             addPMDModel(model, ptr, keys);
         }
         else {

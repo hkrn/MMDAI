@@ -136,31 +136,29 @@ void MorphWidget::setPMDModel(IModel *model)
     m_eyeblows->clear();
     m_others->clear();
     if (model) {
-#if 0
-        const FaceList &faces = m_morphMotionModel->selectedModel()->facesForUI();
-        const int nfaces = faces.count();
-        for (int i = 0; i < nfaces; i++) {
-            Face *face = faces[i];
-            const uint8_t *name = face->name();
-            const QString &utf8Name = internal::toQString(face);
-            switch (face->type()) {
-            case Face::kEye:
-                m_eyes->addItem(utf8Name, name);
+        Array<IMorph *> morphs;
+        m_morphMotionModel->selectedModel()->getMorphs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            IMorph *morph = morphs[i];
+            const QString &name = internal::toQString(morph->name());
+            switch (morph->category()) {
+            case IMorph::kEye:
+                m_eyes->addItem(name, name);
                 break;
-            case Face::kLip:
-                m_lips->addItem(utf8Name, name);
+            case IMorph::kLip:
+                m_lips->addItem(name, name);
                 break;
-            case Face::kEyeblow:
-                m_eyeblows->addItem(utf8Name, name);
+            case IMorph::kEyeblow:
+                m_eyeblows->addItem(name, name);
                 break;
-            case Face::kOther:
-                m_others->addItem(utf8Name, name);
+            case IMorph::kOther:
+                m_others->addItem(name, name);
                 break;
             default:
                 break;
             }
         }
-#endif
         setEnabled(true);
     }
     else {
