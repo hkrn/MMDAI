@@ -1205,9 +1205,9 @@ void SceneLoader::setCameraMotion(IMotion *motion)
     emit cameraMotionDidSet(motion, uuid);
 }
 
-void SceneLoader::setLightColor(const Color &color)
+void SceneLoader::setLightColor(const Vector3 &color)
 {
-    m_project->light()->setColor(Vector3(color.x(), color.y(), color.z()));
+    m_project->light()->setColor(color);
     if (m_project) {
         QString str;
         str.sprintf("%.5f,%.5f,%.5f", color.x(), color.y(), color.z());
@@ -1224,7 +1224,7 @@ void SceneLoader::setLightPosition(const Vector3 &position)
         str.sprintf("%.5f,%.5f,%.5f", position.x(), position.y(), position.z());
         m_project->setGlobalSetting("light.position", str.toStdString());
     }
-    emit lightPositionDidSet(position);
+    emit lightDirectionDidSet(position);
 }
 
 void SceneLoader::setModelMotion(IMotion *motion, IModel *model)

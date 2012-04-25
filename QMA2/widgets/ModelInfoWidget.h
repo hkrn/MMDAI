@@ -40,8 +40,8 @@
 #include <QtGui/QWidget>
 #include <vpvl/Common.h>
 
-namespace vpvl {
-class PMDModel;
+namespace vpvl2 {
+class IModel;
 }
 
 class QLabel;
@@ -59,7 +59,7 @@ public:
 
 private slots:
     void retranslate();
-    void setModel(vpvl::PMDModel *model);
+    void setModel(vpvl2::IModel *model);
 
 private:
     QLabel *m_nameLabel;

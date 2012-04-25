@@ -1,6 +1,7 @@
 QT += core gui opengl
 TARGET = MMDAI2
 TEMPLATE = app
+DEFINES += IS_QMA2
 
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
@@ -38,6 +39,10 @@ LIBS += -L$${ASSIMP_PATH}/lib \
         -lBulletSoftBody \
         -lLinearMath \
         -lportaudio \
+        -lavcodec \
+        -lavformat \
+        -lavutil \
+        -lswscale \
         -lxml2
 
 # VPVL and others configuration

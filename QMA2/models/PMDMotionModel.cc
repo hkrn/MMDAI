@@ -101,6 +101,29 @@ void PMDMotionModel::State::copyFrom(const State &value)
     m_model = value.m_model;
 }
 
+void PMDMotionModel::State::resetBones()
+{
+    Array<IBone *> bones;
+    m_model->getBones(bones);
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
+        IBone *bone = bones[i];
+        bone->setPosition(kZeroV3);
+        bone->setRotation(Quaternion::getIdentity());
+    }
+}
+
+void PMDMotionModel::State::resetMorphs()
+{
+    Array<IMorph *> morphs;
+    m_model->getMorphs(morphs);
+    const int nmorphs = morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        IMorph *morph = morphs[i];
+        morph->setWeight(0);
+    }
+}
+
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
     m_model(0)
@@ -153,7 +176,7 @@ const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int fr
     const QModelIndex &parentIndex = index(item->parent()->rowIndex(), 0);
     const ITreeItem *parentItem = static_cast<ITreeItem *>(parentIndex.internalPointer());
     QModelIndex modelIndex;
-    if (parentItem->isCategory()) {
+    if (parentItem && parentItem->isCategory()) {
         /* ボーン名または頂点モーフ名を含むアイテム */
         modelIndex = index(rowIndex, toModelIndex(frameIndex), parentIndex);
     }

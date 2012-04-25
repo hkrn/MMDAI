@@ -726,11 +726,25 @@ void BoneMotionModel::setPMDModel(IModel *model)
     if (model) {
         /* PMD の二重登録防止 */
         IBone *boneToBeSelected = 0;
-#if QMA2_TBD
         if (!hasPMDModel(model)) {
             /* ルートを作成 */
             RootPtr ptr(new TreeItem("", 0, true, false, 0));
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
+#if !QMA2_TBD
+            Array<IBone *> bones;
+            Keys keys;
+            TreeItem *parent = new TreeItem(tr("Root"), 0, false, true, static_cast<TreeItem *>(r));
+            model->getBones(bones);
+            const int nbones = bones.count();
+            for (int i = 0; i < nbones; i++) {
+                IBone *bone = bones[i];
+                const QString &name = internal::toQString(bone);
+                TreeItem *child = new TreeItem(name, bone, false, false, parent);
+                parent->addChild(child);
+                keys.insert(name, child);
+            }
+            r->addChild(parent);
+#else
             QSet<Bone *> bonesInCategorySet;
             Keys keys;
             Array<BoneList *> allBones;
@@ -815,13 +829,13 @@ void BoneMotionModel::setPMDModel(IModel *model)
                 /* カテゴリアイテムをルートアイテムに追加 */
                 r->addChild(parent);
             }
+#endif
             addPMDModel(model, ptr, keys);
         }
         else {
             /* キーリストが空でもモデルが存在し、スキップされるので実害なし */
             addPMDModel(model, rootPtr(model), Keys());
         }
-#endif
         m_model = model;
         emit modelDidChange(model);
         /* 「全ての親」または「センター」のカテゴリを作成した場合いずれかを最初から選択状態にする */

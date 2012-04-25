@@ -113,7 +113,7 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     retranslate();
     setLayout(mainLayout);
     setEnabled(false);
-    connect(m_morphMotionModel, SIGNAL(modelDidChange(vpvl::PMDModel*)), SLOT(setPMDModel(vpvl::PMDModel*)));
+    connect(m_morphMotionModel, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(setPMDModel(vpvl2::IModel*)));
 }
 
 void MorphWidget::retranslate()
@@ -136,6 +136,7 @@ void MorphWidget::setPMDModel(IModel *model)
     m_eyeblows->clear();
     m_others->clear();
     if (model) {
+#if 0
         const FaceList &faces = m_morphMotionModel->selectedModel()->facesForUI();
         const int nfaces = faces.count();
         for (int i = 0; i < nfaces; i++) {
@@ -159,6 +160,7 @@ void MorphWidget::setPMDModel(IModel *model)
                 break;
             }
         }
+#endif
         setEnabled(true);
     }
     else {

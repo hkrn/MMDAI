@@ -58,7 +58,7 @@ public slots:
     void setDirection(const vpvl2::Vector3 &value);
 
 signals:
-    void lightColorDidSet(const vpvl2::Color &value);
+    void lightColorDidSet(const vpvl2::Vector3 &value);
     void lightDirectionDidSet(const vpvl2::Vector3 &value);
 
 private slots:

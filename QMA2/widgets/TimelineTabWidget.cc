@@ -101,9 +101,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
     connect(m_morphTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
     connect(m_sceneTimeline, SIGNAL(motionDidSeek(float)), SIGNAL(motionDidSeek(float)));
-    connect(bmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), SLOT(toggleBoneEnable(vpvl::PMDModel*)));
-    connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), SLOT(toggleBoneButtonsByBone(QList<vpvl::Bone*>)));
-    connect(mmm, SIGNAL(modelDidChange(vpvl::PMDModel*)), SLOT(toggleFaceEnable(vpvl::PMDModel*)));
+    connect(bmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleBoneEnable(vpvl2::IModel*)));
+    connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), SLOT(toggleBoneButtonsByBone(QList<vpvl2::IBone*>)));
+    connect(mmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleFaceEnable(vpvl2::IModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();

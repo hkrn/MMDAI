@@ -154,7 +154,7 @@ public:
             if (!bone->isMovable() && !bone->isRotateable())
                 continue;
             /* 子ボーンが「全ての親」の場合はスキップしておく */
-            if (child->origin() == kZeroV3)
+            if (child && child->origin() == kZeroV3)
                 continue;
             drawBone(bone, child, selectedBones, linkedIKBones);
         }
@@ -235,6 +235,8 @@ private:
                   const QSet<IBone *> &selectedBones,
                   const QSet<IBone *> &linkedIKBones)
     {
+        if (!bone || !child)
+            return;
         Transform tr = Transform::getIdentity();
         Array<Vector3> vertices;
         static const int indices[] = {

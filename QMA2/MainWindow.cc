@@ -1182,79 +1182,79 @@ void MainWindow::connectSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidget();
-    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), SLOT(addModel(vpvl::PMDModel*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), SLOT(deleteModel(vpvl::PMDModel*,QUuid)));
-    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), SLOT(deleteAsset(vpvl::Asset*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
-    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,vpvl::PMDModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFilePtr,vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
-    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(vpvl::VMDMotion*,vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), m_timelineTabWidget->interpolationWidget(), SLOT(disable()));
-    connect(loader, SIGNAL(assetDidAdd(vpvl::Asset*,QUuid)), assetWidget, SLOT(addAsset(vpvl::Asset*)));
-    connect(loader, SIGNAL(assetWillDelete(vpvl::Asset*,QUuid)), assetWidget, SLOT(removeAsset(vpvl::Asset*)));
-    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), assetWidget, SLOT(addModel(vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl::PMDModel*,QUuid)), assetWidget, SLOT(removeModel(vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidAdd(vpvl::PMDModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
-    connect(loader, SIGNAL(motionDidAdd(vpvl::VMDMotion*,vpvl::PMDModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
-    connect(loader, SIGNAL(cameraMotionDidSet(vpvl::VMDMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl::VMDMotion*)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), SLOT(addModel(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), SLOT(deleteModel(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(assetDidAdd(vpvl2::IModel*,QUuid)), SLOT(deleteAsset(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), SLOT(deleteAsset(vpvl2::IModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,vpvl2::IModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl2::IMotion*,vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,vpvl2::IModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFilePtr,vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,vpvl2::IModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(vpvl2::IMotion*,vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_timelineTabWidget->interpolationWidget(), SLOT(disable()));
+    connect(loader, SIGNAL(assetDidAdd(vpvl2::IModel*,QUuid)), assetWidget, SLOT(addAsset(vpvl2::IModel*)));
+    connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), assetWidget, SLOT(removeAsset(vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), assetWidget, SLOT(addModel(vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), assetWidget, SLOT(removeModel(vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
+    connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,vpvl2::IModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
+    connect(loader, SIGNAL(cameraMotionDidSet(vpvl2::IMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget, SLOT(updateSceneMotion()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel, SLOT(markAsNew()));
-    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_morphMotionModel, SLOT(setPMDModel(vpvl::PMDModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl::PMDModel*)));
-    connect(loader ,SIGNAL(modelDidSelect(vpvl::PMDModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(vpvl::PMDModel*,SceneLoader*)));
-    connect(loader, SIGNAL(assetDidSelect(vpvl::Asset*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl::Asset*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_morphMotionModel, SLOT(setPMDModel(vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl2::IModel*)));
+    connect(loader ,SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(vpvl2::IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(assetDidSelect(vpvl2::IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl2::IModel*,SceneLoader*)));
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionShowGrid, SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
-    connect(assetWidget, SIGNAL(assetDidRemove(vpvl::Asset*)), loader, SLOT(deleteAsset(vpvl::Asset*)));
-    connect(assetWidget, SIGNAL(assetDidSelect(vpvl::Asset*)), loader, SLOT(setSelectedAsset(vpvl::Asset*)));
+    connect(assetWidget, SIGNAL(assetDidRemove(vpvl2::IModel*)), loader, SLOT(deleteAsset(vpvl2::IModel*)));
+    connect(assetWidget, SIGNAL(assetDidSelect(vpvl2::IModel*)), loader, SLOT(setSelectedAsset(vpvl2::IModel*)));
     Handles *handles = m_sceneWidget->handles();
-    connect(m_boneMotionModel, SIGNAL(positionDidChange(vpvl::Bone*,vpvl::Vector3)), handles, SLOT(updateBone()));
-    connect(m_boneMotionModel, SIGNAL(rotationDidChange(vpvl::Bone*,vpvl::Quaternion)), handles, SLOT(updateBone()));
+    connect(m_boneMotionModel, SIGNAL(positionDidChange(vpvl2::IBone*,vpvl2::Vector3)), handles, SLOT(updateBone()));
+    connect(m_boneMotionModel, SIGNAL(rotationDidChange(vpvl2::IBone*,vpvl2::Quaternion)), handles, SLOT(updateBone()));
     connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl::Quaternion)), handles, SLOT(updateBone()));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), handles, SLOT(updateBone()));
+    connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl2::Quaternion)), handles, SLOT(updateBone()));
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     Scene *scene = m_sceneWidget->sceneLoader()->scene();
     Scene::ICamera *camera = scene->camera();
     cameraWidget->setCameraPerspective(camera->position(), camera->angle(), camera->fovy(), camera->distance());
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl::Vector3*,vpvl::Vector3*,float*,float*)));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl2::Vector3*,vpvl2::Vector3*,float*,float*)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl::Vector3,vpvl::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl::Vector3,vpvl::Vector3,float,float)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl2::Vector3,vpvl2::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl2::Vector3,vpvl2::Vector3,float,float)));
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
     Scene::ILight *light = scene->light();
     lightWidget->setColor(light->color());
     lightWidget->setDirection(light->direction());
-    connect(loader, SIGNAL(lightColorDidSet(vpvl::Color)), lightWidget, SLOT(setColor(vpvl::Color)));
-    connect(loader, SIGNAL(lightPositionDidSet(vpvl::Vector3)), lightWidget, SLOT(setPosition(vpvl::Vector3)));
-    connect(lightWidget, SIGNAL(lightColorDidSet(vpvl::Color)), loader, SLOT(setLightColor(vpvl::Color)));
-    connect(lightWidget, SIGNAL(lightPositionDidSet(vpvl::Vector3)), loader, SLOT(setLightPosition(vpvl::Vector3)));
+    connect(loader, SIGNAL(lightColorDidSet(vpvl2::Vector3)), lightWidget, SLOT(setColor(vpvl2::Vector3)));
+    connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
+    connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));
+    connect(lightWidget, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), loader, SLOT(setLightPosition(vpvl2::Vector3)));
 }
 
 void MainWindow::connectWidgets()
 {
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
-    connect(m_sceneWidget, SIGNAL(handleDidMoveAbsolute(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translateTo(vpvl::Vector3,vpvl::Bone*,int)));
-    connect(m_sceneWidget, SIGNAL(handleDidMoveRelative(vpvl::Vector3,vpvl::Bone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl::Vector3,vpvl::Bone*,int)));
-    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl::Scalar,vpvl::Bone*,int)), m_boneMotionModel, SLOT(rotateAngle(vpvl::Scalar,vpvl::Bone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidMoveAbsolute(vpvl2::Vector3,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(translateTo(vpvl2::Vector3,vpvl2::IBone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidMoveRelative(vpvl2::Vector3,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl2::Vector3,vpvl2::IBone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl2::Scalar,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(rotateAngle(vpvl2::Scalar,vpvl2::IBone*,int)));
     connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_morphMotionModel, SLOT(markAsNew(vpvl::PMDModel*)));
-    connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
-    connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), m_sceneWidget, SLOT(updateMotion()));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
-    connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl::Bone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl::Bone*>)));
-    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl::Face*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl::Face*)));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl::PMDModel*)), m_sceneMotionModel, SLOT(markAsNew()));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl2::IModel*)));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_morphMotionModel, SLOT(markAsNew(vpvl2::IModel*)));
+    connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(updateMotion()));
+    connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(updateMotion()));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
+    connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl2::IBone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl2::IBone*>)));
+    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl2::IMorph*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl2::IMorph*)));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
     connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
@@ -1265,9 +1265,9 @@ void MainWindow::connectWidgets()
     connect(modelSettingWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
     connect(modelSettingWidget, SIGNAL(projectiveShadowDidChange(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
-    connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(vpvl::Vector3)), m_sceneWidget, SLOT(setModelPositionOffset(vpvl::Vector3)));
-    connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(vpvl::Vector3)), m_sceneWidget, SLOT(setModelRotationOffset(vpvl::Vector3)));
-    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl::Vector3)), modelSettingWidget, SLOT(setPositionOffset(vpvl::Vector3)));
+    connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(vpvl2::Vector3)), m_sceneWidget, SLOT(setModelPositionOffset(vpvl2::Vector3)));
+    connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(vpvl2::Vector3)), m_sceneWidget, SLOT(setModelRotationOffset(vpvl2::Vector3)));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), modelSettingWidget, SLOT(setPositionOffset(vpvl2::Vector3)));
     makeBonesSelectable();
 }
 
@@ -1566,7 +1566,7 @@ void MainWindow::invokePlayer()
          * 再生中はボーンが全選択になるのでワイヤーフレーム表示のオプションの関係からシグナルを一時的に解除する。
          * 停止後に makeBonesSelectable 経由でシグナルを復活させる
          */
-        disconnect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
+        disconnect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
         m_player->start();
     }
     else {
@@ -1663,5 +1663,5 @@ void MainWindow::updateWindowTitle()
 
 void MainWindow::makeBonesSelectable()
 {
-    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl::Bone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl::Bone*>)));
+    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
 }

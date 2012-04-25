@@ -88,7 +88,7 @@ public slots:
     void selectMorphs(const QList<vpvl2::IMorph *> &morphs);
 
 signals:
-    void morphDidSelect(const QList<vpvl2::IMorph *> &morphs);
+    void morphsDidSelect(const QList<vpvl2::IMorph *> &morphs);
 
 private:
     vpvl2::Factory *m_factory;

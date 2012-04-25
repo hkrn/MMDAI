@@ -150,8 +150,8 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QItemSelectionModel *sm = treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentColumnIndex(QModelIndex)));
     /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
-    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), SLOT(reexpand()));
-    connect(base, SIGNAL(motionDidUpdate(vpvl::PMDModel*)), SLOT(setCurrentFrameIndexBySpinBox()));
+    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(reexpand()));
+    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(setCurrentFrameIndexBySpinBox()));
     retranslate();
     setLayout(mainLayout);
     m_treeView = treeView;

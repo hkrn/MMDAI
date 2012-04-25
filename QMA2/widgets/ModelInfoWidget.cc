@@ -39,9 +39,9 @@
 #include "common/util.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
     QWidget(parent)
@@ -142,8 +142,9 @@ void ModelInfoWidget::retranslate()
     m_constrantsCountLabel->setText(tr("Number of constraints:"));
 }
 
-void ModelInfoWidget::setModel(PMDModel *model)
+void ModelInfoWidget::setModel(IModel *model)
 {
+#if QMA2_TBD
     if (model) {
         m_nameValueLabel->setText(internal::toQString(model->name()));
         m_commentValueLabel->setText(internal::toQString(model->comment()));
@@ -155,6 +156,10 @@ void ModelInfoWidget::setModel(PMDModel *model)
         m_morphsCountValueLabel->setText(QString().sprintf("%d", model->faces().count()));
         m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->rigidBodies().count()));
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->constraints().count()));
+#else
+    Q_UNUSED(model)
+    if (false) {
+#endif
     }
     else {
         m_nameValueLabel->setText("N/A");

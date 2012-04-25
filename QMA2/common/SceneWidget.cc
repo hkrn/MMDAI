@@ -1049,8 +1049,8 @@ void SceneWidget::timerEvent(QTimerEvent *event)
     if (event->timerId() == m_internalTimerID) {
         if (m_playing) {
             /* タイマーの仕様上一定ではないため、差分をここで吸収する */
-            float elapsed = m_timer.elapsed() / Scene::defaultFPS();
-            float diff = elapsed - m_prevElapsed;
+            Scalar elapsed = m_timer.elapsed() / Scene::defaultFPS();
+            Scalar diff = elapsed - m_prevElapsed;
             m_prevElapsed = elapsed;
             if (diff < 0)
                 diff = elapsed;
@@ -1058,7 +1058,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
             updateFPS();
         }
         else {
-            updateScene();
+            updateMotion();
         }
     }
 }

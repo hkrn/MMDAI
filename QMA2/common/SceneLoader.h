@@ -148,7 +148,7 @@ public slots:
     void saveMetadataFromAsset(const QString &path, vpvl2::IModel *asset);
     void saveProject(const QString &path);
     void setCameraMotion(vpvl2::IMotion *motion);
-    void setLightColor(const vpvl2::Color &color);
+    void setLightColor(const vpvl2::Vector3 &color);
     void setLightPosition(const vpvl2::Vector3 &position);
     void setModelMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void setRenderOrderList(const QList<QUuid> &value);
@@ -191,8 +191,8 @@ signals:
     void assetDidAdd(vpvl2::IModel *asset, const QUuid &uuid);
     void assetWillDelete(vpvl2::IModel *asset, const QUuid &uuid);
     void cameraMotionDidSet(vpvl2::IMotion *motion, const QUuid &uuid);
-    void lightColorDidSet(const vpvl2::Color &color);
-    void lightPositionDidSet(const vpvl2::Vector3 &position);
+    void lightColorDidSet(const vpvl2::Vector3 &color);
+    void lightDirectionDidSet(const vpvl2::Vector3 &position);
 
 private:
     void insertModel(vpvl2::IModel *model, const QString &name);
