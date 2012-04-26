@@ -249,8 +249,8 @@ void TestModel::testBoneDefaultFlags() const
     QVERIFY(!bone.isIKEnabled());
     QVERIFY(!bone.hasPositionInherence());
     QVERIFY(!bone.hasRotationInherence());
-    QVERIFY(!bone.isAxisFixed());
-    QVERIFY(!bone.hasLocalAxis());
+    QVERIFY(!bone.hasFixedAxes());
+    QVERIFY(!bone.hasLocalAxes());
     QVERIFY(!bone.isTransformedAfterPhysicsSimulation());
     QVERIFY(!bone.isTransformedByExternalParent());
 }
@@ -610,8 +610,8 @@ void TestModel::testReadWriteBone(size_t indexSize)
     QVERIFY(bone2.isIKEnabled());
     QVERIFY(bone2.hasPositionInherence());
     QVERIFY(bone2.hasRotationInherence());
-    QVERIFY(bone2.isAxisFixed());
-    QVERIFY(bone2.hasLocalAxis());
+    QVERIFY(bone2.hasFixedAxes());
+    QVERIFY(bone2.hasLocalAxes());
     QVERIFY(bone2.isTransformedAfterPhysicsSimulation());
     QVERIFY(bone2.isTransformedByExternalParent());
     Array<Bone *> bones, apb, bpb;
