@@ -71,8 +71,6 @@ public:
 
     virtual IBone *parentBone() const = 0;
 
-    virtual IBone *childBone() const = 0;
-
     /**
      * ローカル行列を返します。
      *
@@ -84,6 +82,8 @@ public:
     virtual const Transform &localTransform() const = 0;
 
     virtual const Vector3 &origin() const = 0;
+
+    virtual const Vector3 destinationOrigin() const = 0;
 
     /**
      * 現在のボーンの移動量を返します。

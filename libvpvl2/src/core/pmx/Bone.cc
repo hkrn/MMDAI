@@ -111,9 +111,9 @@ struct Bone::IKLink {
 
 Bone::Bone()
     : m_parentBone(0),
-      m_childBone(0),
       m_targetBone(0),
       m_parentInherenceBone(0),
+      m_destinationOriginBone(0),
       m_name(0),
       m_englishName(0),
       m_rotation(Quaternion::getIdentity()),
@@ -154,7 +154,6 @@ Bone::~Bone()
     delete m_englishName;
     m_englishName = 0;
     m_parentBone = 0;
-    m_childBone = 0;
     m_targetBone = 0;
     m_parentInherenceBone = 0;
     m_origin.setZero();
@@ -271,7 +270,6 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
                 Bone *parent = bones[parentBoneID];
                 bone->m_offset -= parent->m_origin;
                 bone->m_parentBone = parent;
-                parent->m_childBone = bone;
             }
         }
         const int destinationOriginBoneID = bone->m_destinationOriginBoneIndex;
@@ -725,6 +723,14 @@ void Bone::setRotation(const Quaternion &value)
 {
     m_rotation = value;
     //qDebug("%s(rotate): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
+}
+
+const Vector3 Bone::destinationOrigin() const
+{
+    if (m_destinationOriginBone)
+        return m_destinationOriginBone->m_localTransform.getOrigin();
+    else
+        return m_localTransform.getOrigin() + m_localTransform.getBasis() * m_destinationOrigin;
 }
 
 void Bone::getFixedAxes(Matrix3x3 &value) const

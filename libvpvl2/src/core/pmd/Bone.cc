@@ -84,6 +84,11 @@ const Vector3 &Bone::origin() const
     return m_bone->originPosition();
 }
 
+const Vector3 Bone::destinationOrigin() const
+{
+    return m_bone->child()->localTransform().getOrigin();
+}
+
 const Vector3 &Bone::position() const
 {
     return m_bone->position();

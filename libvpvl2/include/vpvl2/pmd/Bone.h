@@ -58,9 +58,9 @@ public:
     const IString *name() const;
     int index() const;
     IBone *parentBone() const { return m_parentBone; }
-    IBone *childBone() const { return m_childBone; }
     const Transform &localTransform() const;
     const Vector3 &origin() const;
+    const Vector3 destinationOrigin() const;
     const Vector3 &position() const;
     const Quaternion &rotation() const;
     void setPosition(const Vector3 &value);

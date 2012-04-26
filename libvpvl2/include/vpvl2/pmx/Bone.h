@@ -89,7 +89,6 @@ public:
     void setSimulated(bool value);
 
     Bone *parentBone() const { return m_parentBone; }
-    Bone *childBone() const { return m_childBone; }
     Bone *targetBone() const { return m_targetBone; }
     Bone *parentInherenceBone() const { return m_parentInherenceBone; }
     Bone *destinationOriginBone() const { return m_destinationOriginBone; }
@@ -97,7 +96,7 @@ public:
     const IString *englishName() const { return m_englishName; }
     const Quaternion &rotation() const { return m_rotation; }
     const Vector3 &origin() const { return m_origin; }
-    const Vector3 &destinationOrigin() const { return m_destinationOrigin; }
+    const Vector3 destinationOrigin() const;
     const Vector3 &position() const { return m_position; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
@@ -149,7 +148,6 @@ public:
 private:
     Array<IKLink *> m_IKLinks;
     Bone *m_parentBone;
-    Bone *m_childBone;
     Bone *m_targetBone;
     Bone *m_parentInherenceBone;
     Bone *m_destinationOriginBone;
