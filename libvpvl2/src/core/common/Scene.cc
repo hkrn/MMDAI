@@ -337,8 +337,7 @@ void Scene::advance(float delta)
             light.setDirection(animation->direction());
         }
     }
-    camera.updateTransform();
-    camera.updateMatrices(m_context->matrices);
+    updateCamera();
 }
 
 void Scene::seek(float frameIndex)
@@ -371,11 +370,10 @@ void Scene::seek(float frameIndex)
             light.setDirection(animation->direction());
         }
     }
-    camera.updateTransform();
-    camera.updateMatrices(m_context->matrices);
+    updateCamera();
 }
 
-void Scene::update()
+void Scene::updateModels()
 {
     const Array<IRenderEngine *> &renderEngines = m_context->engines;
     const int nRenderEngines = renderEngines.count();
@@ -383,6 +381,13 @@ void Scene::update()
         IRenderEngine *engine = renderEngines[i];
         engine->update();
     }
+}
+
+void Scene::updateCamera()
+{
+    Camera &camera = m_context->camera;
+    camera.updateTransform();
+    camera.updateMatrices(m_context->matrices);
 }
 
 float Scene::maxFrameIndex() const

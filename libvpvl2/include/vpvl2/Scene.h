@@ -117,7 +117,8 @@ public:
     void removeMotion(IMotion *motion);
     void advance(float delta);
     void seek(float frameIndex);
-    void update();
+    void updateModels();
+    void updateCamera();
     float maxFrameIndex() const;
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;
