@@ -622,9 +622,10 @@ void MorphMotionModel::setWeight(float value)
         setWeight(value, m_selectedMorphs.last());
 }
 
-void MorphMotionModel::setWeight(float value, IMorph *morph)
+void MorphMotionModel::setWeight(const Scalar &value, IMorph *morph)
 {
     if (morph) {
+        m_model->resetVertices();
         morph->setWeight(value);
         m_model->performUpdate();
     }

@@ -72,7 +72,7 @@ public:
     void resetAllMorphs();
     vpvl2::IMorph *findMorph(const QString &name);
     void setWeight(float value);
-    void setWeight(float value, vpvl2::IMorph *morph);
+    void setWeight(const vpvl2::Scalar &value, vpvl2::IMorph *morph);
     vpvl2::IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
     bool isMorphSelected() const { return m_model != 0 && selectedMorph() != 0; }
     vpvl2::Factory *factory() const { return m_factory; }
