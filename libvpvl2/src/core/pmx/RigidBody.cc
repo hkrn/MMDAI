@@ -95,7 +95,7 @@ public:
         const Matrix3x3 &matrix = worldTrans.getBasis();
         m_worldTransform.setOrigin(kZeroV3);
         m_worldTransform = m_boneTransform * m_worldTransform;
-        m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
+        m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->skinningTransform().getOrigin());
         m_worldTransform.setBasis(matrix);
     }
 
@@ -117,7 +117,7 @@ public:
     ~KinematicMotionState() {}
 
     void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans = m_bone->localTransform() * m_boneTransform;
+        worldTrans = m_bone->skinningTransform() * m_boneTransform;
     }
     void setWorldTransform(const btTransform & /* worldTrans */) {}
 
@@ -354,7 +354,7 @@ const Transform RigidBody::createStartTransform(Transform &base) const
     base.setBasis(basis);
     base.setOrigin(m_position);
     Transform startTransform = Transform::getIdentity();
-    startTransform.setOrigin(m_bone->localTransform().getOrigin());
+    startTransform.setOrigin(m_bone->skinningTransform().getOrigin());
     startTransform *= base;
     return startTransform;
 }

@@ -100,7 +100,7 @@ public:
     Type type() const { return m_type; }
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
-    IBone *bone(int index) const;
+    Bone *bone(int index) const;
     const Vector3 &sdefC() const { return m_c; }
     const Vector3 &sdefR0() const { return m_r0; }
     const Vector3 &sdefR1() const { return m_r1; }
@@ -112,13 +112,13 @@ public:
     void setType(Type value);
     void setEdgeSize(float value);
     void setWeight(int index, float weight);
-    void setBone(int index, IBone *value);
+    void setBone(int index, Bone *value);
     void setSdefC(const Vector3 &value);
     void setSdefR0(const Vector3 &value);
     void setSdefR1(const Vector3 &value);
 
 private:
-    IBone *m_bones[4];
+    Bone *m_bones[4];
     Vector4 m_originUVs[4];
     Vector4 m_morphUVs[4];
     Vector3 m_origin;

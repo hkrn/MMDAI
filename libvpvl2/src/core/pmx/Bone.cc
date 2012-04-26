@@ -121,7 +121,7 @@ Bone::Bone()
       m_rotationMorph(Quaternion::getIdentity()),
       m_rotationIKLink(Quaternion::getIdentity()),
       m_localTransform(Transform::getIdentity()),
-      m_localToOrigin(Transform::getIdentity()),
+      m_originalLocalTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_offset(kZeroV3),
       m_position(kZeroV3),
@@ -161,7 +161,7 @@ Bone::~Bone()
     m_position.setZero();
     m_positionMorph.setZero();
     m_localTransform.setIdentity();
-    m_localToOrigin.setIdentity();
+    m_originalLocalTransform.setIdentity();
     m_destinationOrigin.setZero();
     m_fixedAxis.setZero();
     m_axisX.setZero();
@@ -334,7 +334,6 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::setPosition(unit.vector3, m_origin);
     m_offset = m_origin;
     m_localTransform.setOrigin(m_origin);
-    m_localToOrigin.setOrigin(-m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
     m_layerIndex = *reinterpret_cast<int *>(ptr);
@@ -701,17 +700,15 @@ void Bone::performInverseKinematics()
 
 void Bone::performUpdateLocalTransform()
 {
-    m_localTransform *= m_localToOrigin;
+    static Transform localToOrigin = Transform::getIdentity();
+    localToOrigin.setOrigin(-m_origin);
+    m_originalLocalTransform = m_localTransform;
+    m_localTransform *= localToOrigin;
 }
 
 void Bone::resetIKLink()
 {
     m_rotationIKLink = Quaternion::getIdentity();
-}
-
-const Transform &Bone::localTransform() const
-{
-    return m_localTransform;
 }
 
 void Bone::setPosition(const Vector3 &value)
@@ -728,9 +725,9 @@ void Bone::setRotation(const Quaternion &value)
 const Vector3 Bone::destinationOrigin() const
 {
     if (m_destinationOriginBone)
-        return m_destinationOriginBone->m_localTransform.getOrigin();
+        return m_destinationOriginBone->m_originalLocalTransform.getOrigin();
     else
-        return m_localTransform.getOrigin() + m_localTransform.getBasis() * m_destinationOrigin;
+        return m_originalLocalTransform.getOrigin() + m_originalLocalTransform.getBasis() * m_destinationOrigin;
 }
 
 void Bone::getFixedAxes(Matrix3x3 &value) const

@@ -79,7 +79,8 @@ public:
     void performUpdateLocalTransform();
     void resetIKLink();
     const Vector3 &offset() const;
-    const Transform &localTransform() const;
+    const Transform &localTransform() const { return m_originalLocalTransform; }
+    const Transform &skinningTransform() const { return m_localTransform; }
 
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
@@ -158,7 +159,7 @@ private:
     Quaternion m_rotationMorph;
     Quaternion m_rotationIKLink;
     Transform m_localTransform;
-    Transform m_localToOrigin;
+    Transform m_originalLocalTransform;
     Vector3 m_origin;
     Vector3 m_offset;
     Vector3 m_position;
