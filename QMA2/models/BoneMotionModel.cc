@@ -405,17 +405,17 @@ static const Quaternion UIRotateGlobalAxisAngle(const Scalar &value, int flags)
 static const Vector3 UITranslateFromView(const SceneWidget *sceneWidget, const vpvl::Vector3 &delta)
 {
     const Transform &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform();
-    const btMatrix3x3 &matrix = transform.getBasis();
+    const Matrix3x3 &matrix = transform.getBasis();
     Vector3 value = kZeroV3;
-    value += matrix.getRow(0) * delta.x();
-    value += matrix.getRow(1) * delta.y();
-    value += matrix.getRow(2) * delta.z();
+    value += matrix[0] * delta.x();
+    value += matrix[1] * delta.y();
+    value += matrix[2] * delta.z();
     return value;
 }
 
 static const Quaternion UIRotateViewAxisAngle(const SceneWidget *sceneWidget, const Scalar &value, int flags)
 {
-    const btMatrix3x3 &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform().getBasis();
+    const Matrix3x3 &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform().getBasis();
     Quaternion rot = Quaternion::getIdentity();
     /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
     switch ((flags & 0xff00) >> 8) {
@@ -435,18 +435,21 @@ static const Quaternion UIRotateViewAxisAngle(const SceneWidget *sceneWidget, co
 static const Quaternion UIRotateLocalAxisAngle(const IBone *bone, const Quaternion &rotation, const Scalar &value, int flags)
 {
     /* 座標系の関係でX軸とY軸は値を反転させる */
-    const IBone *child = bone->childBone();
     Quaternion rot = Quaternion::getIdentity();
     Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
-    /* ボーン名によって特別扱いする必要がある */
-    if (child && internal::hasOwnLocalAxis(bone)) {
-        internal::getOwnLocalAxis(bone, child, axisX, axisY, axisZ);
+    /* ボーンにローカル軸を持っているか？ */
+    if (bone->hasLocalAxes()) {
+        Matrix3x3 axes = Matrix3x3::getIdentity();
+        bone->getLocalAxes(axes);
+        axisX = axes[0];
+        axisY = axes[1];
+        axisZ = axes[2];
     }
     else {
-        btMatrix3x3 matrix(rotation);
-        axisX = matrix.getRow(0) * axisX;
-        axisY = matrix.getRow(1) * axisY;
-        axisZ = matrix.getRow(2) * axisZ;
+        Matrix3x3 matrix(rotation);
+        axisX = matrix[0] * axisX;
+        axisY = matrix[1] * axisY;
+        axisZ = matrix[2] * axisZ;
     }
     /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
     switch ((flags & 0xff00) >> 8) {

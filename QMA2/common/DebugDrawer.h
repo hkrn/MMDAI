@@ -110,8 +110,8 @@ public:
         m_visible = value;
     }
 
-    void drawModelBones(const IModel *model, const QSet<IBone *> &selectedBones) {
-        if (!m_visible || !model || !m_program.isLinked())
+    void drawModelBones(IModel *model, const QSet<IBone *> &selectedBones) {
+        if (!model || !m_visible || !m_program.isLinked())
             return;
         Array<IBone *> bones;
         model->getBones(bones);
@@ -150,13 +150,11 @@ public:
         }
 #endif
         for (int i = 0; i < nbones; i++) {
-            const IBone *bone = bones[i], *child = bone->childBone();
+            IBone *bone = bones[i];
             if (!bone->isMovable() && !bone->isRotateable())
                 continue;
             /* 子ボーンが「全ての親」の場合はスキップしておく */
-            if (child && child->origin() == kZeroV3)
-                continue;
-            drawBone(bone, child, selectedBones, linkedIKBones);
+            drawBone(bone, selectedBones, linkedIKBones);
         }
         m_program.release();
         glEnable(GL_DEPTH_TEST);
@@ -178,13 +176,10 @@ public:
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
-        const IBone *child = bone->childBone();
         /* ボーン表示 */
-        if (child) {
-            QSet<IBone *> selectedBones, linkedBones;
-            selectedBones.insert(bone);
-            drawBone(bone, child, selectedBones, linkedBones);
-        }
+        QSet<IBone *> selectedBones, linkedBones;
+        selectedBones.insert(bone);
+        drawBone(bone, selectedBones, linkedBones);
         /* 軸表示 */
         static const Scalar kLength = 2.0;
         static const Vector3 kRed   = Vector3(1, 0, 0);
@@ -200,15 +195,15 @@ public:
             drawLine(origin, transform * (modelView.getRow(2) * kLength), kBlue);
         }
         else if (mode == 'L') {
-            if (child && hasOwnLocalAxis(bone)) {
+            if (bone->hasLocalAxes()) {
                 /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
                 const Transform &transform = bone->localTransform();
                 const Vector3 &origin = transform.getOrigin();
-                Vector3 axisX, axisY, axisZ;
-                getOwnLocalAxis(bone, child, axisX, axisY, axisZ);
-                drawLine(origin, transform * (axisX * kLength), kRed);
-                drawLine(origin, transform * (axisY * kLength), kGreen);
-                drawLine(origin, transform * (axisZ * kLength), kBlue);
+                Matrix3x3 axes = Matrix3x3::getIdentity();
+                bone->getLocalAxes(axes);
+                drawLine(origin, transform * (axes[0] * kLength), kRed);
+                drawLine(origin, transform * (axes[1] * kLength), kGreen);
+                drawLine(origin, transform * (axes[2] * kLength), kBlue);
             }
             else {
                 /* 現在のボーン位置と回転量を乗算した軸を表示 */
@@ -231,12 +226,12 @@ public:
     }
 
 private:
-    void drawBone(const IBone *bone,
-                  const IBone *child,
+    void drawBone(IBone *bone,
                   const QSet<IBone *> &selectedBones,
                   const QSet<IBone *> &linkedIKBones)
     {
-        if (!bone || !child)
+        const Vector3 &dest = bone->destinationOrigin();
+        if (!bone || !bone->isVisible() || dest.isZero())
             return;
         Transform tr = Transform::getIdentity();
         Array<Vector3> vertices;
@@ -246,27 +241,24 @@ private:
         static const QColor kColorRed = QColor::fromRgbF(1.0, 0.0, 0.0);
         static const QColor kColorOrange = QColor::fromRgbF(1.0, 0.75, 0.0);
         static const QColor kColorBlue = QColor::fromRgbF(0.0, 0.0, 1.0);
-        const Transform &boneTransform = bone->localTransform(),
-                &childTransform = child->localTransform();
-        const Vector3 &origin = boneTransform.getOrigin(),
-                &childOrigin = childTransform.getOrigin();
+        const Vector3 &origin = bone->localTransform().getOrigin();
         const Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
         const Scalar &sphereRadius = 0.2f;
         /* ボーン接続を表示するための頂点設定 */
         tr.setOrigin(Vector3(coneRadius, 0.0f, 0.0f));
         vertices.add(tr * origin);
-        vertices.add(childOrigin);
+        vertices.add(dest);
         tr.setOrigin(Vector3(-coneRadius, 0.0f, 0.0f));
         vertices.add(tr * origin);
-        vertices.add(childOrigin);
-        IBone *mutableBone = const_cast<IBone *>(bone);
+        vertices.add(dest);
+        //qDebug() << internal::toQString(bone);
         /* 選択中の場合は赤色で表示 */
-        if (selectedBones.contains(mutableBone)) {
+        if (selectedBones.contains(bone)) {
             drawSphere(origin, sphereRadius, Vector3(1.0f, 0.0f, 0.0f));
             m_program.setUniformValue("color", kColorRed);
         }
         /* IK ボーンの場合は橙色で表示 */
-        else if (linkedIKBones.contains(mutableBone)) {
+        else if (linkedIKBones.contains(bone)) {
             drawSphere(origin, sphereRadius, Vector3(1.0f, 0.75f, 0.0f));
             m_program.setUniformValue("color", kColorOrange);
         }
