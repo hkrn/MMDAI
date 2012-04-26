@@ -366,6 +366,45 @@ IMorph *Model::findMorph(const IString *value) const
     return morph ? *morph : 0;
 }
 
+int Model::count(Object value) const
+{
+    switch (value) {
+    case kBone: {
+        return m_bones.count();
+    }
+    case kIK: {
+        const int nbones = m_bones.count();
+        int nIK = 0;
+        for (int i = 0; i < nbones; i++) {
+            Bone *bone = static_cast<Bone *>(m_bones[i]);
+            if (bone->isIKEnabled())
+                nIK++;
+        }
+        return nIK;
+    }
+    case kIndex: {
+        return m_indices.count();
+    }
+    case kJoint: {
+        return m_joints.count();
+    }
+    case kMaterial: {
+        return m_materials.count();
+    }
+    case kMorph: {
+        return m_morphs.count();
+    }
+    case kRigidBody: {
+        return m_rigidBodies.count();
+    }
+    case kVertex: {
+        return m_vertices.count();
+    }
+    default:
+        return 0;
+    }
+}
+
 void Model::getBones(Array<IBone *> &value) const
 {
     const int nbones = m_bones.count();

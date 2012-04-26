@@ -147,5 +147,29 @@ IMorph *Model::findMorph(const IString *value) const
     return morph ? *morph : 0;
 }
 
+int Model::count(Object value) const
+{
+    switch (value) {
+    case kBone:
+        return m_model.bones().count();
+    case kIK:
+        return m_model.IKs().count();
+    case kIndex:
+        return m_model.indices().count();
+    case kJoint:
+        return m_model.constraints().count();
+    case kMaterial:
+        return m_model.materials().count();
+    case kMorph:
+        return m_model.faces().count();
+    case kRigidBody:
+        return m_model.rigidBodies().count();
+    case kVertex:
+        return m_model.vertices().count();
+    default:
+        return 0;
+    }
+}
+
 }
 }

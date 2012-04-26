@@ -81,6 +81,16 @@ public:
         kInvalidJointsError,
         kMaxErrors
     };
+    enum Object {
+        kBone,
+        kIK,
+        kIndex,
+        kJoint,
+        kMaterial,
+        kMorph,
+        kRigidBody,
+        kVertex
+    };
     enum Type {
         kAsset,
         kPMD,
@@ -231,6 +241,7 @@ public:
      */
     virtual IMorph *findMorph(const IString *value) const = 0;
 
+    virtual int count(Object value) const = 0;
     virtual void getBones(Array<IBone *> &value) const = 0;
     virtual void getMorphs(Array<IMorph *> &value) const = 0;
 

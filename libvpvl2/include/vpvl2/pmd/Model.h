@@ -73,6 +73,7 @@ public:
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
+    int count(Object value) const;
     void getBones(Array<IBone *> &value) const { value.copy(m_bones); }
     void getMorphs(Array<IMorph *> &value) const { value.copy(m_morphs); }
     const Vector3 &position() const { return m_model.positionOffset(); }

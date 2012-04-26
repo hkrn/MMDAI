@@ -75,6 +75,7 @@ public:
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
     IBone *findBone(const IString * /* value */) const { return 0; }
     IMorph *findMorph(const IString * /* value */) const { return 0; }
+    int count(Object /* value */) const { return 0; }
     void getBones(Array<IBone *> & /* value */) const {}
     void getMorphs(Array<IMorph *> & /* value */) const {}
     const Vector3 &position() const { return m_asset.position(); }
