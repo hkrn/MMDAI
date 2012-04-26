@@ -1007,16 +1007,13 @@ void SceneWidget::paintGL()
 #ifdef IS_QMA2
     qglClearColor(m_loader->screenColor());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    m_loader->render();
     m_grid->draw(m_loader->scene(), m_loader->isGridVisible());
+    m_loader->render();
     IBone *bone = 0;
     if (!m_bones.isEmpty())
         bone = m_bones.first();
     /* ハンドルのレンダリングに問題があるようで一旦このレンダリング順になっている */
-    if (bone)
-        m_handles->drawImageHandles(bone->isMovable(), bone->isRotateable());
-    else
-        m_handles->drawImageHandles(false, false);
+    m_handles->drawImageHandles(bone);
     m_info->draw();
     switch (m_editMode) {
     case kSelect:
