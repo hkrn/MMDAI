@@ -206,6 +206,11 @@ public:
             newCameraKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->replaceKeyframe(newCameraKeyframe.take());
         }
+        /*
+         * replaceKeyframe (内部的には addKeyframe を呼んでいる) によって変更が必要になる
+         * 内部インデックスの更新を行うため、update をかけておく
+         */
+        motion->update(IKeyframe::kCamera);
         m_smm->refreshScene();
     }
     virtual void redo() {
@@ -237,6 +242,8 @@ public:
                 m_smm->setData(modelIndex, QVariant());
             }
         }
+        /* #undo と同じため、説明省略 */
+        motion->update(IKeyframe::kCamera);
         m_smm->refreshScene();
     }
 
@@ -371,6 +378,8 @@ void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->addKeyframe(newFrame.take());
         }
+        /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
+        motion->update(IKeyframe::kCamera);
     }
     setModified(false);
 }

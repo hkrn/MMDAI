@@ -146,8 +146,8 @@ public:
             motion->replaceKeyframe(boneKeyframe.take());
         }
         /*
-         * BoneAnimation の内部データの更新も忘れずに。モデルをリセットした上で、
-         * モーションを更新するために PMD を現在のフレームに強制シークしておく
+         * replaceKeyframe (内部的には addKeyframe を呼んでいる) によって変更が必要になる
+         * 内部インデックスの更新を行うため、update をかけておく
          */
         motion->update(IKeyframe::kBone);
         m_bmm->refreshModel();
@@ -491,6 +491,7 @@ void BoneMotionModel::saveMotion(IMotion *motion)
             newBoneKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->addKeyframe(newBoneKeyframe.take());
         }
+        motion->update(IKeyframe::kBone);
         setModified(false);
     }
     else {

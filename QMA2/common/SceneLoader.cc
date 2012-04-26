@@ -1048,6 +1048,7 @@ IMotion *SceneLoader::newCameraMotion() const
     frame->setFovy(camera->fovy());
     frame->setDistance(camera->distance());
     newCameraMotion->addKeyframe(frame.take());
+    newCameraMotion->update(IKeyframe::kCamera);
     return newCameraMotion.take();
 }
 
@@ -1070,6 +1071,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
                 newModelMotion->addKeyframe(boneKeyframe.take());
             }
         }
+        newModelMotion->update(IKeyframe::kBone);
         Array<IMorph *> morphs;
         model->getMorphs(morphs);
         const int nmorphs = morphs.count();
@@ -1080,6 +1082,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
             morphKeyframe->setName(morph->name());
             newModelMotion->addKeyframe(morphKeyframe.take());
         }
+        newModelMotion->update(IKeyframe::kMorph);
     }
     return newModelMotion.take();
 }

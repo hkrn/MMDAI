@@ -149,10 +149,7 @@ public:
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->addKeyframe(frame.take());
         }
-        /*
-         * FaceAnimation の内部データの更新も忘れずに。モデルをリセットした上で、
-         * モーションを更新するために PMD を現在のフレームに強制シークしておく
-         */
+        /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
         motion->update(IKeyframe::kMorph);
         m_fmm->refreshModel();
     }
