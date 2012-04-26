@@ -81,8 +81,9 @@ public:
 protected:
     template<typename T>
     static int findKeyframeIndex(int key, const Array<T *> &keyframes) {
-        int first = 0;
-        int last = keyframes.count();
+        int first = 0, last = keyframes.count();
+        if (last <= key)
+            return -1;
         while (first <= last) {
             int mid = (first + last) / 2;
             if (key > keyframes[mid]->frameIndex())
