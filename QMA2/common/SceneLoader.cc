@@ -577,8 +577,10 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
     m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
     m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
     m_project->setModelSetting(model, "selected", "false");
+#ifndef IS_QMA2
     if (isPhysicsEnabled())
         model->joinWorld(m_world->mutableWorld());
+#endif
     m_renderOrderList.add(uuid);
     static_cast<UIDelegate *>(m_renderDelegate)->setArchive(0);
     emit modelDidAdd(model, uuid);
@@ -1129,8 +1131,8 @@ void SceneLoader::render()
                 engine->renderShadow();
                 glCullFace(GL_BACK);
             }
-            engine->renderModel();
             engine->renderEdge();
+            engine->renderModel();
         }
     }
 }
