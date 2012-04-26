@@ -296,14 +296,14 @@ IModel *SceneWidget::addModel(const QString &path, bool skipDialog)
 
 void SceneWidget::insertMotionToAllModels()
 {
-    /* モーションを追加したら即座に反映させるために advanceMotion(0.0f) を呼んでおく */
+    /* モーションを追加したら即座に反映させるために updateMotion を呼んでおく */
     IMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                              tr("Open VMD (for model) file"),
                                                              tr("VMD file (*.vmd)"),
                                                              m_settings));
     IModel *selected = m_loader->selectedModel();
     if (motion && selected)
-        motion->advance(0.0f);
+        updateMotion();
 }
 
 IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
@@ -332,7 +332,7 @@ void SceneWidget::insertMotionToSelectedModel()
                                                                      tr("VMD file (*.vmd)"),
                                                                      m_settings));
         if (motion)
-            advanceMotion(0.0f);
+            updateMotion();
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."),
@@ -537,7 +537,7 @@ void SceneWidget::setCamera()
                                                tr("VMD file (*.vmd)"),
                                                m_settings));
     if (motion)
-        advanceMotion(0.0f);
+        updateSceneMotion();
 }
 
 IMotion *SceneWidget::setCamera(const QString &path)
@@ -682,7 +682,7 @@ void SceneWidget::loadFile(const QString &file)
     else if (extension == "vmd") {
         IMotion *motion = insertMotionToModel(file, m_loader->selectedModel());
         if (motion)
-            advanceMotion(0.0f);
+            updateMotion();
     }
     /* アクセサリファイル */
     else if (extension == "x") {
@@ -1058,7 +1058,11 @@ void SceneWidget::timerEvent(QTimerEvent *event)
             updateFPS();
         }
         else {
-            updateMotion();
+            /* 非再生中(編集中)はモーションを一切動かさず、カメラの更新だけ行う */
+            Scene *scene = m_loader->scene();
+            scene->updateCamera();
+            updateScene();
+            emit cameraPerspectiveDidSet(scene->camera());
         }
     }
 }

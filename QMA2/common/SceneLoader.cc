@@ -1150,7 +1150,7 @@ void SceneLoader::updateMatrices(const QSizeF &size)
         modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
     matrices->setProjection(projectionMatrixf);
     matrices->setModelViewProjection(modelViewMatrixf);
-    m_project->update();
+    m_project->updateModels();
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const
