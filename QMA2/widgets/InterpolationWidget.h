@@ -41,7 +41,7 @@
 #include "models/SceneMotionModel.h"
 
 #include <QtGui/QWidget>
-#include <vpvl2/IBoneKeyFrame.h>
+#include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/ICameraKeyframe.h>
 
 class QComboBox;

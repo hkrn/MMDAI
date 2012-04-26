@@ -39,7 +39,7 @@
 
 #include "models/MotionBaseModel.h"
 
-#include <vpvl2/ICameraKeyFrame.h>
+#include <vpvl2/ICameraKeyframe.h>
 
 namespace vpvl2 {
 class Factory;
