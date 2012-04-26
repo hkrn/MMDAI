@@ -42,6 +42,7 @@
 #include <QtCore/QSize>
 
 #include <vpvl2/Common.h>
+#include <assimp.hpp>
 
 namespace internal {
 class TextureDrawHelper;
@@ -84,7 +85,7 @@ public:
         btRigidBody *body;
     };
     struct RotationHandle {
-        vpvl2::IModel *asset;
+        Assimp::Importer importer;
         Model x;
         Model y;
         Model z;
@@ -133,7 +134,7 @@ public:
                       bool rotateable,
                       int &flags,
                       QRectF &rect);
-    void drawImageHandles(bool movable, bool rotateable);
+    void drawImageHandles(vpvl2::IBone *bone);
     void drawRotationHandle();
     void drawMoveHandle();
     btScalar angle(const vpvl2::Vector3 &pos) const;

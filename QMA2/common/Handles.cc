@@ -44,6 +44,7 @@
 #include "util.h"
 
 #include <vpvl2/vpvl2.h>
+#include <aiPostProcess.h>
 #include <aiScene.h>
 
 using namespace vpvl2;
@@ -233,8 +234,6 @@ Handles::Handles(SceneLoader *loader, const QSize &size)
 {
     m_helper = new internal::TextureDrawHelper(size);
     m_world = new Handles::StaticWorld();
-    m_rotationHandle.asset = 0;
-    m_translationHandle.asset = 0;
 }
 
 bool Handles::hasOperationFlag(int value)
@@ -262,8 +261,6 @@ Handles::~Handles()
     context->deleteTexture(m_view.textureID);
     delete m_helper;
     delete m_world;
-    delete m_rotationHandle.asset;
-    delete m_translationHandle.asset;
 }
 
 void Handles::load()
@@ -590,12 +587,12 @@ void Handles::updateBone()
     m_world->world()->stepSimulation(1);
 }
 
-void Handles::drawImageHandles(bool movable, bool rotateable)
+void Handles::drawImageHandles(IBone *bone)
 {
     if (!m_visible)
         return;
     glDisable(GL_DEPTH_TEST);
-    if (movable) {
+    if (bone && bone->isMovable()) {
         m_helper->draw(m_x.enableMove.rect, m_x.enableMove.textureID);
         m_helper->draw(m_y.enableMove.rect, m_y.enableMove.textureID);
         m_helper->draw(m_z.enableMove.rect, m_z.enableMove.textureID);
@@ -605,7 +602,7 @@ void Handles::drawImageHandles(bool movable, bool rotateable)
         m_helper->draw(m_y.disableMove.rect, m_y.disableMove.textureID);
         m_helper->draw(m_z.disableMove.rect, m_z.disableMove.textureID);
     }
-    if (rotateable) {
+    if (bone && bone->isRotateable()) {
         m_helper->draw(m_x.enableRotate.rect, m_x.enableRotate.textureID);
         m_helper->draw(m_y.enableRotate.rect, m_y.enableRotate.textureID);
         m_helper->draw(m_z.enableRotate.rect, m_z.enableRotate.textureID);
@@ -747,33 +744,31 @@ void Handles::loadImageHandles()
 
 void Handles::loadModelHandles()
 {
-#if QMA2_TBD
     /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
     QFile rotationHandleFile(":models/rotation.3ds");
     if (rotationHandleFile.open(QFile::ReadOnly)) {
         const QByteArray &rotationHandleBytes = rotationHandleFile.readAll();
-        Asset *asset = new Asset();
-        asset->load(reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData()), rotationHandleBytes.size());
-        aiMesh **meshes = asset->getScene()->mMeshes;
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData());
+        size_t size =  rotationHandleBytes.size();
+        const aiScene *scene = m_rotationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_Fast);
+        aiMesh **meshes = scene->mMeshes;
         UILoadTrackableModel(meshes[1], m_world, new BoneHandleMotionState(this), m_rotationHandle.x);
         UILoadTrackableModel(meshes[0], m_world, new BoneHandleMotionState(this), m_rotationHandle.y);
         UILoadTrackableModel(meshes[2], m_world, new BoneHandleMotionState(this), m_rotationHandle.z);
-        m_rotationHandle.asset = asset;
     }
     /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
     QFile translationHandleFile(":models/translation.3ds");
     if (translationHandleFile.open(QFile::ReadOnly)) {
         const QByteArray &translationHandleBytes = translationHandleFile.readAll();
-        Asset *asset = new Asset();
-        asset->load(reinterpret_cast<const uint8_t *>(translationHandleBytes.constData()), translationHandleBytes.size());
-        aiMesh **meshes = asset->getScene()->mMeshes;
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(translationHandleBytes.constData());
+        size_t size =  translationHandleBytes.size();
+        const aiScene *scene = m_translationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_Fast);
+        aiMesh **meshes = scene->mMeshes;
         UILoadTrackableModel(meshes[0], m_world, new BoneHandleMotionState(this), m_translationHandle.x);
         UILoadTrackableModel(meshes[2], m_world, new BoneHandleMotionState(this), m_translationHandle.y);
         UILoadTrackableModel(meshes[1], m_world, new BoneHandleMotionState(this), m_translationHandle.z);
         UILoadStaticModel(meshes[3], m_translationHandle.axisX);
         UILoadStaticModel(meshes[5], m_translationHandle.axisY);
         UILoadStaticModel(meshes[4], m_translationHandle.axisZ);
-        m_translationHandle.asset = asset;
     }
-#endif
 }
