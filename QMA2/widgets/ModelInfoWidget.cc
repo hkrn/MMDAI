@@ -144,22 +144,17 @@ void ModelInfoWidget::retranslate()
 
 void ModelInfoWidget::setModel(IModel *model)
 {
-#if QMA2_TBD
     if (model) {
         m_nameValueLabel->setText(internal::toQString(model->name()));
         m_commentValueLabel->setText(internal::toQString(model->comment()));
-        m_verticesCountValueLabel->setText(QString().sprintf("%d", model->vertices().count()));
-        m_indicesCountValueLabel->setText(QString().sprintf("%d", model->indices().count()));
-        m_materialsCountValueLabel->setText(QString().sprintf("%d", model->materials().count()));
-        m_bonesCountValueLabel->setText(QString().sprintf("%d", model->bones().count()));
-        m_IKsCountValueLabel->setText(QString().sprintf("%d", model->IKs().count()));
-        m_morphsCountValueLabel->setText(QString().sprintf("%d", model->faces().count()));
-        m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->rigidBodies().count()));
-        m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->constraints().count()));
-#else
-    Q_UNUSED(model)
-    if (false) {
-#endif
+        m_verticesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kVertex)));
+        m_indicesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kIndex)));
+        m_materialsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMaterial)));
+        m_bonesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kBone)));
+        m_IKsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kIK)));
+        m_morphsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMorph)));
+        m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kRigidBody)));
+        m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kJoint)));
     }
     else {
         m_nameValueLabel->setText("N/A");
