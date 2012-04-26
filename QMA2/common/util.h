@@ -287,21 +287,12 @@ static inline void dumpBoneKeyFrame(const IBoneKeyframe *frame, int index = 0)
                        << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
 }
 
-#if QMA2_TBD
-static inline void dumpBoneAnimation(const BoneAnimation &animation)
+static inline void dumpBoneKeyFrames(const IMotion *motion)
 {
-    const int nframes = animation.countKeyframes();
+    const int nframes = motion->countKeyframes(IKeyframe::kBone);
     for (int i = 0; i < nframes; i++)
-        dumpBoneKeyFrame(static_cast<BoneKeyframe *>(animation.frameAt(i)), i);
+        dumpBoneKeyFrame(motion->findBoneKeyframeAt(i), i);
 }
-
-static inline void dumpBoneKeyFrames(const BaseKeyFrameList &frames)
-{
-    const int nframes = frames.count();
-    for (int i = 0; i < nframes; i++)
-        dumpBoneKeyFrame(static_cast<BoneKeyframe *>(frames[i]), i);
-}
-#endif
 
 static inline const QMatrix4x4 toMatrix4x4(float matrixf[16])
 {
