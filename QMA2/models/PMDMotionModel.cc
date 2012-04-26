@@ -75,8 +75,10 @@ void PMDMotionModel::State::save()
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        Transform tr(bone->position(), bone->rotation());
-        m_bones.append(Bone(bone, tr));
+        if (!bone->position().isZero() && bone->rotation() != Quaternion::getIdentity()) {
+            Transform tr(bone->position(), bone->rotation());
+            m_bones.append(Bone(bone, tr));
+        }
     }
     Array<IMorph *> morphs;
     m_model->getMorphs(morphs);
@@ -84,7 +86,9 @@ void PMDMotionModel::State::save()
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = morphs[i];
-        m_morphs.append(Morph(morph, morph->weight()));
+        const Scalar &weight = morph->weight();
+        if (!btFuzzyZero(weight))
+            m_morphs.append(Morph(morph, weight));
     }
 }
 
