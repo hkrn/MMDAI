@@ -226,6 +226,7 @@ public:
             drawLine(origin, origin + Vector3(0, kLength, 0), kGreen);
             drawLine(origin, origin + Vector3(0, 0, kLength), kBlue);
         }
+        glEnable(GL_DEPTH_TEST);
         m_program.release();
     }
 
