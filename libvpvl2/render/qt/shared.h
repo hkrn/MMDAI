@@ -436,11 +436,11 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
         debug << "     weight                      = " << bone->weight();
         debug << "\n";
     }
-    if (bone->isAxisFixed()) {
+    if (bone->hasFixedAxes()) {
         debug << "     axis                        = " << bone->axis();
         debug << "\n";
     }
-    if (bone->hasLocalAxis()) {
+    if (bone->hasLocalAxes()) {
         debug << "     axisX                       = " << bone->axisX();
         debug << "\n";
         debug << "     axisZ                       = " << bone->axisZ();

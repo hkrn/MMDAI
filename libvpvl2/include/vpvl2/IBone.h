@@ -120,6 +120,16 @@ public:
     virtual bool isMovable() const = 0;
 
     virtual bool isRotateable() const = 0;
+
+    virtual bool isVisible() const = 0;
+
+    virtual bool hasFixedAxes() const = 0;
+
+    virtual bool hasLocalAxes() const = 0;
+
+    virtual void getFixedAxes(Matrix3x3 &value) const = 0;
+
+    virtual void getLocalAxes(Matrix3x3 &value) const = 0;
 };
 
 }

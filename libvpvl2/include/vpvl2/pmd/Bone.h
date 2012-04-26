@@ -67,6 +67,11 @@ public:
     void setRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
+    bool isVisible() const;
+    bool hasFixedAxes() const;
+    bool hasLocalAxes() const;
+    void getFixedAxes(Matrix3x3 &value) const;
+    void getLocalAxes(Matrix3x3 &value) const;
 
     void setParentBone(vpvl::Bone * value);
     void setChildBone(vpvl::Bone *value);

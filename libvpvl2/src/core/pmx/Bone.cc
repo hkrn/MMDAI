@@ -727,6 +727,31 @@ void Bone::setRotation(const Quaternion &value)
     //qDebug("%s(rotate): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
 }
 
+void Bone::getFixedAxes(Matrix3x3 &value) const
+{
+    // FIXME: implement this
+    if (hasFixedAxes()) {
+        value[0] = m_fixedAxis;
+    }
+    else {
+        value.setIdentity();
+    }
+}
+
+void Bone::getLocalAxes(Matrix3x3 &value) const
+{
+    if (hasLocalAxes()) {
+        const Vector3 &axisY = m_axisZ.cross(m_axisX);
+        const Vector3 &axisZ = m_axisX.cross(axisY);
+        value[0] = m_axisX;
+        value[1] = axisY;
+        value[2] = axisZ;
+    }
+    else {
+        value.setIdentity();
+    }
+}
+
 void Bone::setLocalTransform(const Transform &value)
 {
     m_localTransform = value;

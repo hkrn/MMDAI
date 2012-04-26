@@ -83,6 +83,8 @@ public:
 
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
+    void getFixedAxes(Matrix3x3 &value) const;
+    void getLocalAxes(Matrix3x3 &value) const;
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);
 
@@ -113,8 +115,8 @@ public:
     bool isIKEnabled() const { return m_flags & 0x0020; }
     bool hasPositionInherence() const { return m_flags & 0x0100; }
     bool hasRotationInherence() const { return m_flags & 0x0200; }
-    bool isAxisFixed() const { return m_flags & 0x0400; }
-    bool hasLocalAxis() const { return m_flags & 0x0800; }
+    bool hasFixedAxes() const { return m_flags & 0x0400; }
+    bool hasLocalAxes() const { return m_flags & 0x0800; }
     bool isTransformedAfterPhysicsSimulation() const { return m_flags & 0x1000; }
     bool isTransformedByExternalParent() const { return m_flags & 0x2000; }
 
