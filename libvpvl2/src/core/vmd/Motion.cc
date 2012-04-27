@@ -125,11 +125,17 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.cameraKeyframePtr = ptr;
-    if (!internal::validateSize(ptr, CameraKeyframe::strideSize(), nCameraKeyFrames, rest)) {
+
+    size_t cameraKeyframeStrideSize = CameraKeyframe::strideSize();
+    if (!internal::validateSize(ptr, cameraKeyframeStrideSize, nCameraKeyFrames, rest)) {
         m_error = kCameraKeyFramesError;
         return false;
     }
     info.cameraKeyframeCount = nCameraKeyFrames;
+
+    // workaround for no camera keyframe
+    if (nCameraKeyFrames == 0 && rest > cameraKeyframeStrideSize)
+        internal::validateSize(ptr, cameraKeyframeStrideSize, 1, rest);
 
     // Light key frame
     if (!internal::size32(ptr, rest, nLightKeyFrames)) {
