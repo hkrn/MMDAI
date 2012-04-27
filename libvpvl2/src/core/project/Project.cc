@@ -826,6 +826,13 @@ public:
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
+            if (self->key == kSettingURIKey && value.find(".pmx") != std::string::npos) {
+                StringMap values = self->localModelSettings[self->currentModel];
+                self->localModelSettings.erase(self->currentModel);
+                delete self->currentModel;
+                self->currentModel = self->factory->createModel(IModel::kPMX);
+                self->localModelSettings[self->currentModel] = values;
+            }
             self->localModelSettings[self->currentModel][self->key] = value;
         }
         else if (self->state == kAsset) {
