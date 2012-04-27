@@ -251,6 +251,10 @@ public:
     virtual const Scalar &scaleFactor() const = 0;
     virtual IModel *parentModel() const = 0;
     virtual IBone *parentBone() const = 0;
+    virtual void setName(const IString *value) = 0;
+    virtual void setEnglishName(const IString *value) = 0;
+    virtual void setComment(const IString *value) = 0;
+    virtual void setEnglishComment(const IString *value) = 0;
     virtual void setPosition(const Vector3 &value) = 0;
     virtual void setRotation(const Quaternion &value) = 0;
     virtual void setOpacity(const Scalar &value) = 0;

@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 #include "vpvl2/pmd/Bone.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Morph.h"
@@ -169,6 +170,58 @@ int Model::count(Object value) const
     default:
         return 0;
     }
+}
+
+void Model::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+    uint8_t *bytes = m_encoding->toByteArray(value, IString::kShiftJIS);
+    m_model.setName(bytes);
+    m_encoding->disposeByteArray(bytes);
+}
+
+void Model::setEnglishName(const IString *value)
+{
+    internal::setString(value, m_englishName);
+    uint8_t *bytes = m_encoding->toByteArray(value, IString::kShiftJIS);
+    m_model.setEnglishName(bytes);
+    m_encoding->disposeByteArray(bytes);
+}
+
+void Model::setComment(const IString *value)
+{
+    internal::setString(value, m_comment);
+    uint8_t *bytes = m_encoding->toByteArray(value, IString::kShiftJIS);
+    m_model.setComment(bytes);
+    m_encoding->disposeByteArray(bytes);
+}
+
+void Model::setEnglishComment(const IString *value)
+{
+    internal::setString(value, m_englishComment);
+    uint8_t *bytes = m_encoding->toByteArray(value, IString::kShiftJIS);
+    m_model.setEnglishComment(bytes);
+    m_encoding->disposeByteArray(bytes);
+}
+
+void Model::setPosition(const Vector3 &value)
+{
+    m_model.setPositionOffset(value);
+}
+
+void Model::setRotation(const Quaternion &value)
+{
+    m_model.setRotationOffset(value);
+}
+
+void Model::setOpacity(const Scalar &value)
+{
+    m_opacity = value;
+}
+
+void Model::setScaleFactor(const Scalar &value)
+{
+    m_scaleFactor = value;
 }
 
 }

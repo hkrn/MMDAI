@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/asset/Model.h"
+#include "vpvl2/internal/util.h"
 
 namespace vpvl2
 {
@@ -43,26 +44,37 @@ namespace asset
 
 Model::Model(IEncoding *encoding)
     : m_encoding(encoding),
-      m_name(0)
+      m_name(0),
+      m_comment(0),
+      m_parentModel(0),
+      m_parentBone(0)
 {
 }
 
 Model::~Model()
 {
+    delete m_comment;
+    m_comment = 0;
     delete m_name;
     m_name = 0;
+    m_parentBone = 0;
+    m_parentModel = 0;
     m_encoding = 0;
 }
 
 bool Model::load(const uint8_t *data, size_t size)
 {
-    bool ret = m_asset.load(data, size);
-    if (ret) {
-        //const uint8_t *name = reinterpret_cast<const uint8_t *>(m_asset.name());
-        //size_t length = strlen(reinterpret_cast<const char *>(name));
-        //m_name = m_encoding->toString(name, IString::kShiftJIS, length);
-    }
-    return ret;
+    return m_asset.load(data, size);
+}
+
+void Model::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+void Model::setComment(const IString *value)
+{
+    internal::setString(value, m_comment);
 }
 
 } /* namespace asset */

@@ -82,10 +82,14 @@ public:
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
-    void setPosition(const Vector3 &value) { m_model.setPositionOffset(value); }
-    void setRotation(const Quaternion &value) { m_model.setRotationOffset(value); }
-    void setOpacity(const Scalar &value) { m_opacity = value; }
-    void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
+    void setName(const IString *value);
+    void setEnglishName(const IString *value);
+    void setComment(const IString *value);
+    void setEnglishComment(const IString *value);
+    void setPosition(const Vector3 &value);
+    void setRotation(const Quaternion &value);
+    void setOpacity(const Scalar &value);
+    void setScaleFactor(const Scalar &value);
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 

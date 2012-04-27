@@ -84,6 +84,10 @@ public:
     const Scalar &scaleFactor() const { return m_asset.scaleFactor(); }
     IModel *parentModel() const { return m_parentModel; }
     IBone *parentBone() const { return m_parentBone; }
+    void setName(const IString *value);
+    void setEnglishName(const IString *value) { setName(value); }
+    void setComment(const IString *value);
+    void setEnglishComment(const IString *value) { setComment(value); }
     void setPosition(const Vector3 &value) { m_asset.setPosition(value); }
     void setRotation(const Quaternion &value) { m_asset.setRotation(value); }
     void setOpacity(const Scalar &value) { m_asset.setOpacity(value); }
@@ -97,6 +101,7 @@ private:
     vpvl::Asset m_asset;
     IEncoding *m_encoding;
     IString *m_name;
+    IString *m_comment;
     Array<IBone *> m_bones;
     Array<IMorph *> m_morphs;
     IModel *m_parentModel;
