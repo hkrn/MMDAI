@@ -87,6 +87,7 @@ public:
      * 係数を返します。
      *
      * @return float
+     * @sa setWeight
      */
     virtual const Scalar &weight() const = 0;
 
@@ -96,6 +97,7 @@ public:
      * value は 0.0 以上 1.0 以下でなければなりません。
      *
      * @param float
+     * @sa weight
      */
     virtual void setWeight(const Scalar &value) = 0;
 };

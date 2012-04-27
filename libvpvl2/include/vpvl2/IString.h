@@ -57,10 +57,28 @@ public:
     };
     virtual ~IString() {}
 
+    /**
+     * 文字列が始端と一致するかどうかを返します。
+     *
+     * @param IString
+     * @return bool
+     */
     virtual bool startsWith(const IString *value) const = 0;
 
+    /**
+     * 文字列が含まれているかどうかを返します。
+     *
+     * @param IString
+     * @return bool
+     */
     virtual bool contains(const IString *value) const = 0;
 
+    /**
+     * 文字列が終端と一致するかどうかを返します。
+     *
+     * @param IString
+     * @return bool
+     */
     virtual bool endsWith(const IString *value) const = 0;
 
     /**

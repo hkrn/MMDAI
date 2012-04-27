@@ -96,11 +96,12 @@ public:
     /**
      * value を codec に基づいて変換し、バッファとして返します。
      *
-     * libvpvl2 側で disposeByteArray を呼ぶため、スタック上ではなくヒープ上で作成してください。
+     * libvpvl2 側で toByteArray が呼ばれた後領域を使用後必ず disposeByteArray を呼びます。
      *
      * @param value
      * @param codec
      * @return uint8_t
+     * @sa disposeByteArray
      */
     virtual uint8_t *toByteArray(const IString *value, IString::Codec codec) const = 0;
 
@@ -110,9 +111,18 @@ public:
      * value は必ず toByteArray から呼ばれたものが渡されます。
      *
      * @param value
+     * @sa toByteArray
      */
     virtual void disposeByteArray(uint8_t *value) const = 0;
 
+    /**
+     * 指定された定数から不変の文字列を返します。
+     *
+     * 返す文字列は IEncoding を継承するクラスがスタックとして保持するか、あるいはヒープ上で管理していることを想定しています。
+     * そのため、new してそのまま返さないようにしてください。メモリリークの原因となってしまいます。
+     *
+     * @return IString
+     */
     virtual const IString *stringConstant(ConstantType value) const = 0;
 };
 

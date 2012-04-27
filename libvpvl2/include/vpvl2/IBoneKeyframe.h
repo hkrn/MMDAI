@@ -76,6 +76,8 @@ public:
     /**
      * 補間パラメータを初期状態に設定します。
      *
+     * @sa setInterpolationParameter
+     * @sa getInterpolationParameter
      */
     virtual void setDefaultInterpolationParameter() = 0;
 
@@ -91,6 +93,8 @@ public:
      *
      * @param InterpolationType
      * @param QuadWord
+     * @sa setDefaultInterpolationParameter
+     * @sa getInterpolationParameter
      */
     virtual void setInterpolationParameter(InterpolationType type, const QuadWord &value) = 0;
 
@@ -101,6 +105,8 @@ public:
      *
      * @param InterpolationType
      * @param QuadWord
+     * @sa setDefaultInterpolationParameter
+     * @sa setInterpolationParameter
      */
     virtual void getInterpolationParameter(InterpolationType type, QuadWord &value) const = 0;
 
@@ -108,6 +114,7 @@ public:
      * 移動量を返します。
      *
      * @return Vector3
+     * @sa setPosition
      */
     virtual const Vector3 &position() const = 0;
 
@@ -115,6 +122,7 @@ public:
      * 回転量を返します。
      *
      * @return Quaternion
+     * @sa setRotation
      */
     virtual const Quaternion &rotation() const = 0;
 
@@ -122,6 +130,7 @@ public:
      * 移動量を設定します。
      *
      * @param Vector3
+     * @sa position
      */
     virtual void setPosition(const Vector3 &value) = 0;
 
@@ -129,6 +138,7 @@ public:
      * 回転量を設定します。
      *
      * @param Quaternion
+     * @sa rotation
      */
     virtual void setRotation(const Quaternion &value) = 0;
 };

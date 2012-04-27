@@ -71,6 +71,8 @@ public:
      * @param data
      * @param size
      * @return bool
+     * @sa save
+     * @sa estimateSize
      */
     virtual bool load(const uint8_t *data, size_t size) = 0;
 
@@ -80,6 +82,8 @@ public:
      * data の長さは IMotion::estimateSize() が返す値を利用してください。
      *
      * @param data
+     * @sa load
+     * @sa estimateSize
      */
     virtual void save(uint8_t *data) const = 0;
 
@@ -90,6 +94,8 @@ public:
      * save と併せて使用する必要があります。
      *
      * @return size_t
+     * @sa load
+     * @sa save
      */
     virtual size_t estimateSize() const = 0;
 
@@ -100,6 +106,7 @@ public:
      * カメラと照明のモーションはモデルに依存しないため、null を返します。
      *
      * @return IModel
+     * @sa setParentModel
      */
     virtual IModel *parentModel() const = 0;
 
@@ -109,6 +116,7 @@ public:
      * null の設定も可能です。
      *
      * @param IModel
+     * @sa parentModel
      */
     virtual void setParentModel(IModel *model) = 0;
 
@@ -118,6 +126,7 @@ public:
      * 内部的にはフレームの位置が保存されています。
      *
      * @param float
+     * @sa advance
      */
     virtual void seek(float frameIndex) = 0;
 
@@ -128,6 +137,7 @@ public:
      * 内部的には IMotion::seek() を呼び出しています。
      *
      * @param float
+     * @sa seek
      */
     virtual void advance(float delta) = 0;
 
@@ -141,6 +151,7 @@ public:
      * モーションの一番後ろのフレームの位置を返します。
      *
      * @return float
+     * @sa isReachedTo
      */
     virtual float maxFrameIndex() const = 0;
 
@@ -148,13 +159,19 @@ public:
      * モーションが指定されたフレームの位置まで進んでいるかを返します。
      *
      * @return bool
+     * @sa maxFrameIndex
      */
     virtual bool isReachedTo(float frameIndex) const = 0;
 
     /**
      * キーフレームを追加します。
      *
+     * キーフレームを追加したら必ず update を行う必要があります。
+     * そうしないと find* 系が正しい値を返さなくなってしまいます。
+     *
      * @param IKeyframe
+     * @sa replaceKeyframe
+     * @sa update
      */
     virtual void addKeyframe(IKeyframe *value) = 0;
 
@@ -166,22 +183,106 @@ public:
      */
     virtual int countKeyframes(IKeyframe::Type value) const = 0;
 
+    /**
+     * キーフレームの位置と名前からボーンのキーフレームを返します。
+     *
+     * 見つかった場合は IBoneKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param frameIndex
+     * @param name
+     * @return IBoneKeyframe
+     * @sa findBoneKeyframeAt
+     */
     virtual IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const = 0;
 
+    /**
+     * キーフレームの配列の添字からボーン該当するキーフレームの全てを返します。
+     *
+     * 見つかった場合は IBoneKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param index
+     * @return IBoneKeyframe
+     * @sa findBoneKeyframe
+     */
     virtual IBoneKeyframe *findBoneKeyframeAt(int index) const = 0;
 
+    /**
+     * キーフレームの位置からカメラのキーフレームを返します。
+     *
+     * 見つかった場合は ICameraKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param frameIndex
+     * @return IBoneKeyframe
+     * @sa findCameraKeyframeAt
+     */
     virtual ICameraKeyframe *findCameraKeyframe(int frameIndex) const = 0;
 
+    /**
+     * キーフレームの配列の添字からカメラのキーフレームを返します。
+     *
+     * 見つかった場合は ICameraKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param index
+     * @return ICameraKeyframe
+     * @sa findCameraKeyframe
+     */
     virtual ICameraKeyframe *findCameraKeyframeAt(int index) const = 0;
 
+    /**
+     * キーフレームの位置から照明のキーフレームを返します。
+     *
+     * 見つかった場合は ILightKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param frameIndex
+     * @return ILightKeyframe
+     * @sa findLightKeyframeAt
+     */
     virtual ILightKeyframe *findLightKeyframe(int frameIndex) const = 0;
 
+    /**
+     * キーフレームの配列の位置から照明のキーフレームを返します。
+     *
+     * 見つかった場合は ILightKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param index
+     * @return ILightKeyframe
+     * @sa findLightKeyframe
+     */
     virtual ILightKeyframe *findLightKeyframeAt(int index) const = 0;
 
+    /**
+     * キーフレームの位置と名前からモーフのキーフレームを返します。
+     *
+     * 見つかった場合は IMorphKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param frameIndex
+     * @param name
+     * @return IMorphKeyframe
+     * @sa findMorphKeyframeAt
+     */
     virtual IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const = 0;
 
+    /**
+     * キーフレームの配列の添字からモーフのキーフレームを返します。
+     *
+     * 見つかった場合は IMorphKeyframe インスタンスを、見つからない場合は 0 を返します。
+     *
+     * @param index
+     * @return IMorphKeyframe
+     * @sa findMorphKeyframe
+     */
     virtual IMorphKeyframe *findMorphKeyframeAt(int index) const = 0;
 
+    /**
+     * キーフレームを置換します
+     *
+     * キーフレームは内部的に削除してから追加されるため、addKeyframe 同様
+     * update を呼び出す必要があります。
+     *
+     * @param IKeyframe
+     * @sa addKeyframe
+     * @sa update
+     */
     virtual void replaceKeyframe(IKeyframe *value) = 0;
 
     /**
@@ -208,10 +309,27 @@ public:
      */
     virtual void update(IKeyframe::Type type) = 0;
 
+    /**
+     * キーフレーム数が1つしかない場合でも反映させるかを指定します
+     *
+     * @return bool
+     * @sa setNullFrameEnable
+     */
     virtual bool isNullFrameEnabled() const = 0;
 
+    /**
+     * キーフレーム数が1つしかない場合でも反映させるかを設定します
+     *
+     * @param bool
+     * @sa isNullFrameEnabled
+     */
     virtual void setNullFrameEnable(bool value) = 0;
 
+    /**
+     * モーション名を返します。
+     *
+     * @return IString
+     */
     virtual const IString *name() const = 0;
 };
 

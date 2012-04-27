@@ -59,10 +59,36 @@ public:
     };
     virtual ~IKeyframe() {}
 
+    /**
+     * オンメモリ上のデータからキーフレームを構築します。
+     *
+     * データは estimateSize が返す値以上の領域を確保しなければなりません。
+     *
+     * @param data
+     * @sa write
+     * @sa estimateSize
+     */
     virtual void read(const uint8_t *data) = 0;
 
+    /**
+     * キーフレームをオンメモリ上にのデータに書き出します。
+     *
+     * データは estimateSize が返す値以上の領域を確保しなければなりません。
+     * 呼び出し後 data にはキーフレームのデータが書き込まれます。
+     *
+     * @param data
+     * @sa read
+     * @sa estimateSize
+     */
     virtual void write(uint8_t *data) const = 0;
 
+    /**
+     * read/write で必要なデータ領域の大きさを返します。
+     *
+     * @sa read
+     * @sa write
+     * @return size_t
+     */
     virtual size_t estimateSize() const = 0;
 
     /**
@@ -72,6 +98,7 @@ public:
      * モデルに依存しないカメラと照明のキーフレームでは null を返します。
      *
      * @return IString
+     * @sa setName
      */
     virtual const IString *name() const = 0;
 
@@ -81,6 +108,7 @@ public:
      * 返す値の型は float ですが、小数点はつきません。
      *
      * @return float
+     * @sa setFrameIndex
      */
     virtual float frameIndex() const = 0;
 
@@ -91,6 +119,7 @@ public:
      * カメラと照明のキーフレームでは何もしません。
      *
      * @param IString
+     * @sa name
      */
     virtual void setName(const IString *value) = 0;
 
@@ -98,6 +127,7 @@ public:
      * キーフレームのフレーム番号を設定します。
      *
      * @param float
+     * @sa frameIndex
      */
     virtual void setFrameIndex(float value) = 0;
 

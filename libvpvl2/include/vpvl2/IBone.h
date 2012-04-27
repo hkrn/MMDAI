@@ -69,18 +69,33 @@ public:
      */
     virtual int index() const = 0;
 
+    /**
+     * 親ボーンのインスタンスを返します。
+     *
+     * @return IBone
+     */
     virtual IBone *parentBone() const = 0;
 
     /**
-     * ローカル行列を返します。
+     * ボーンのローカル行列を返します。
      *
-     * これはスキニング処理で使われます。
      * ボーンの位置を求めるにはこれが返す値の Transform::getOrigin によって求めることが出来ます。
+     * ボーンの初期位置を求めたい場合は origin を使用してください。
      *
      * @return Transform
+     * @sa origin
      */
     virtual const Transform &localTransform() const = 0;
 
+    /**
+     * ボーンの初期位置を返します。
+     *
+     * 返す値はボーン変形関係なく常に不変です。そのため、ボーン変形によって生じた値を
+     * 求めたい場合は localTransform を使用してください。
+     *
+     * @return Vector3
+     * @sa localTransform
+     */
     virtual const Vector3 &origin() const = 0;
 
     virtual const Vector3 destinationOrigin() const = 0;
@@ -91,6 +106,7 @@ public:
      * 初期状態は vpvl2::kZeroV3 と同等です。
      *
      * @return Vector3
+     * @sa setPosition
      */
     virtual const Vector3 &position() const = 0;
 
@@ -100,6 +116,7 @@ public:
      * 初期状態は Quaternion::getIdentity() と同等です。
      *
      * @return Quaternion
+     * @sa setRotation
      */
     virtual const Quaternion &rotation() const = 0;
 
@@ -107,6 +124,7 @@ public:
      * ボーンの移動量を設定します。
      *
      * @param Vector3
+     * @sa position
      */
     virtual void setPosition(const Vector3 &value) = 0;
 
@@ -114,25 +132,68 @@ public:
      * ボーンの回転量を設定します。
      *
      * @param Quaternion
+     * @sa rotation
      */
     virtual void setRotation(const Quaternion &value) = 0;
 
+    /**
+     * ボーンが移動可能かを返します。
+     *
+     * @return bool
+     */
     virtual bool isMovable() const = 0;
 
+    /**
+     * ボーンが回転可能かを返します。
+     *
+     * @return bool
+     */
     virtual bool isRotateable() const = 0;
 
+    /**
+     * ボーンが表示可能かを返します。
+     *
+     * @return
+     */
     virtual bool isVisible() const = 0;
 
+    /**
+     * ボーンが固定軸を持っているかを返します。
+     *
+     * @return bool
+     */
     virtual bool hasFixedAxes() const = 0;
 
+    /**
+     * ボーンがローカル軸を持っているかを返します。
+     *
+     * @return bool
+     */
     virtual bool hasLocalAxes() const = 0;
 
+    /**
+     * ボーンの固定軸の行列を返します。
+     *
+     * 返す行列は X,Y,Z の軸ベクトルで構成されます。
+     * hasFixedAxes() が false の時は単位行列を返します。
+     *
+     * @param Matrix3x3
+     * @sa getLocalAxes
+     */
     virtual void getFixedAxes(Matrix3x3 &value) const = 0;
 
+    /**
+     * ボーンのローカル軸の行列を返します。
+     *
+     * 返す行列は X,Y,Z の軸ベクトルで構成されます。
+     * hasLocalAxes() が false の時は単位行列を返します。
+     *
+     * @param Matrix3x3
+     * @sa getFixedAxes
+     */
     virtual void getLocalAxes(Matrix3x3 &value) const = 0;
 };
 
 }
 
 #endif
-

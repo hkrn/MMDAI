@@ -80,6 +80,8 @@ public:
     /**
      * 補間パラメータを初期状態に設定します。
      *
+     * @sa setInterpolationParameter
+     * @sa getInterpolationParameter
      */
     virtual void setDefaultInterpolationParameter() = 0;
 
@@ -94,6 +96,7 @@ public:
      *
      * @param InterpolationType
      * @param QuadWord
+     * @sa getInterpolationParameter
      */
     virtual void setInterpolationParameter(InterpolationType type, const QuadWord &value) = 0;
 
@@ -104,6 +107,7 @@ public:
      *
      * @param InterpolationType
      * @param QuadWord
+     * @sa setInterpolationParameter
      */
     virtual void getInterpolationParameter(InterpolationType type, QuadWord &value) const = 0;
 
@@ -111,6 +115,7 @@ public:
      * カメラの注視点を返します。
      *
      * @return Vector3
+     * @sa setPosition
      */
     virtual const Vector3 &position() const = 0;
 
@@ -118,6 +123,7 @@ public:
      * カメラのアングル（オイラー角）を返します。
      *
      * @return Vector3
+     * @sa setAngle
      */
     virtual const Vector3 &angle() const = 0;
 
@@ -125,6 +131,7 @@ public:
      * カメラの視野距離を返します。
      *
      * @return float
+     * @sa setDistance
      */
     virtual float distance() const = 0;
 
@@ -132,6 +139,7 @@ public:
      * カメラの視野角を返します。
      *
      * @return float
+     * @sa setFovy
      */
     virtual float fovy() const = 0;
 
@@ -139,6 +147,7 @@ public:
      * カメラが透視であるかを返します。
      *
      * @return bool
+     * @sa setPerspective
      */
     virtual bool isPerspective() const = 0;
 
@@ -146,6 +155,7 @@ public:
      * カメラの注視点を設定します。
      *
      * @param Vector3
+     * @sa position
      */
     virtual void setPosition(const Vector3 &value) = 0;
 
@@ -153,6 +163,7 @@ public:
      * カメラのアングル（オイラー角）を設定します。
      *
      * @param Vector3
+     * @sa angle
      */
     virtual void setAngle(const Vector3 &value) = 0;
 
@@ -160,6 +171,7 @@ public:
      * カメラの視野距離を設定します。
      *
      * @param Vector3
+     * @sa distance
      */
     virtual void setDistance(float value) = 0;
 
@@ -167,6 +179,7 @@ public:
      * カメラの視野角を設定します。
      *
      * @param Vector3
+     * @sa fovy
      */
     virtual void setFovy(float value) = 0;
 
@@ -174,6 +187,7 @@ public:
      * 透視にするかを設定します。
      *
      * @param bool
+     * @sa isPerspective
      */
     virtual void setPerspective(bool value) = 0;
 };

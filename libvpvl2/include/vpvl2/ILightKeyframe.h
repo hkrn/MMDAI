@@ -62,6 +62,7 @@ public:
      * 照明の色を返します。
      *
      * @return Vector3
+     * @sa setColor
      */
     virtual const Vector3 &color() const = 0;
 
@@ -69,6 +70,7 @@ public:
      * 照明の方向を返します。
      *
      * @return Vector3
+     * @sa setDirection
      */
     virtual const Vector3 &direction() const = 0;
 
@@ -78,6 +80,7 @@ public:
      * それぞれの値は 0.0 以上 1.0 以下でなければなりません。
      *
      * @param Vector3
+     * @sa setColor
      */
     virtual void setColor(const Vector3 &value) = 0;
 
@@ -87,6 +90,7 @@ public:
      * それぞれの値は -1.0 以上 1.0 以下でなければなりません。
      *
      * @param Vector3
+     * @sa setDirection
      */
     virtual void setDirection(const Vector3 &value) = 0;
 };
