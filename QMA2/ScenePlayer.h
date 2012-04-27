@@ -41,6 +41,8 @@
 #include <QtCore/QTimer>
 #include <QtGui/QProgressDialog>
 
+#include <vpvl2/Common.h>
+
 namespace vpvl2 {
 class IModel;
 }
@@ -89,14 +91,14 @@ private:
     QByteArray m_buffer;
     AudioPlayer *m_player;
     vpvl2::IModel *m_selected;
+    vpvl2::Scalar m_currentFPS;
+    vpvl2::Scalar m_prevSceneFPS;
     float m_prevFrameIndex;
     float m_frameStep;
     float m_totalStep;
     float m_audioFrameIndex;
     float m_prevAudioFrameIndex;
     int m_countForFPS;
-    int m_currentFPS;
-    int m_prevSceneFPS;
     bool m_restoreState;
 };
 

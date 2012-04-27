@@ -53,14 +53,14 @@ ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
       m_format(QApplication::tr("Playing scene frame %1 of %2...")),
       m_player(0),
       m_selected(0),
-      m_prevFrameIndex(0.0f),
-      m_frameStep(0.0f),
-      m_totalStep(0.0f),
-      m_audioFrameIndex(0.0f),
-      m_prevAudioFrameIndex(0.0f),
-      m_countForFPS(0),
       m_currentFPS(0),
       m_prevSceneFPS(0),
+      m_prevFrameIndex(0),
+      m_frameStep(0),
+      m_totalStep(0),
+      m_audioFrameIndex(0),
+      m_prevAudioFrameIndex(0),
+      m_countForFPS(0),
       m_restoreState(false)
 {
     m_renderTimer.setSingleShot(false);
@@ -81,12 +81,12 @@ void ScenePlayer::start()
         return;
     int sceneFPS = m_dialog->sceneFPS();
     m_selected = m_sceneWidget->sceneLoader()->selectedModel();
-    m_prevSceneFPS = 30; // FIXME: m_sceneWidget->sceneLoader()->scene()->preferredFPS();
+    m_prevSceneFPS = m_sceneWidget->sceneLoader()->scene()->preferredFPS();
     m_prevFrameIndex = m_sceneWidget->currentFrameIndex();
-    m_frameStep = 1.0f / (sceneFPS / Scene::defaultFPS());
-    m_totalStep = 0.0f;
-    m_audioFrameIndex = 0.0f;
-    m_prevAudioFrameIndex = 0.0f;
+    m_frameStep = 1.0 / (sceneFPS / Scene::defaultFPS());
+    m_totalStep = 0;
+    m_audioFrameIndex = 0;
+    m_prevAudioFrameIndex = 0;
     m_sceneWidget->stop();
     /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
     m_sceneWidget->stopAutomaticRendering();
@@ -107,7 +107,7 @@ void ScenePlayer::start()
     int maxRangeIndex = m_dialog->toIndex() - m_dialog->fromIndex();
     m_progress->setRange(0, maxRangeIndex);
     m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
-    float renderTimerInterval = 1000.0f / sceneFPS;
+    float renderTimerInterval = 1000.0 / sceneFPS;
     /* 音声出力準備 */
     m_player->setFilename(m_sceneWidget->sceneLoader()->backgroundAudio());
     if (m_player->initalize()) {
@@ -151,9 +151,9 @@ void ScenePlayer::stop()
     m_sceneWidget->seekMotion(m_prevFrameIndex, true);
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidget->startAutomaticRendering();
-    m_totalStep = 0.0f;
-    m_audioFrameIndex = 0.0f;
-    m_prevAudioFrameIndex = 0.0f;
+    m_totalStep = 0;
+    m_audioFrameIndex = 0;
+    m_prevAudioFrameIndex = 0;
     if (m_restoreState) {
         m_restoreState = false;
         emit renderFrameDidStopAndRestoreState();
@@ -199,7 +199,7 @@ void ScenePlayer::renderSceneFrame0(float step)
     }
     m_countForFPS++;
     Scene *scene = m_sceneWidget->sceneLoader()->scene();
-    bool isReached = true; // FIXME: bool isReached = scene->isMotionReachedTo(m_dialog->toIndex());
+    bool isReached = scene->isReachedTo(m_dialog->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
     if ((!m_dialog->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
         stop();
@@ -225,7 +225,7 @@ void ScenePlayer::renderSceneFrame0(float step)
         m_progress->setValue(value);
         m_progress->setLabelText(m_format.arg(value).arg(m_dialog->toIndex() - m_dialog->fromIndex()));
         if (m_currentFPS > 0)
-            m_progress->setWindowTitle(tr("Current FPS: %1").arg(m_currentFPS));
+            m_progress->setWindowTitle(tr("Current FPS: %1").arg(int(m_currentFPS)));
         else
             m_progress->setWindowTitle(tr("Current FPS: N/A"));
         if (m_dialog->isModelSelected())

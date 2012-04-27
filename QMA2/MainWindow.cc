@@ -1392,7 +1392,7 @@ void MainWindow::invokeVideoEncoder()
         QProgressDialog *progress = new QProgressDialog(this);
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::ApplicationModal);
-        int fps = 30; // FIXME: m_sceneWidget->sceneLoader()->scene()->preferredFPS();
+        const Scalar &fps = m_sceneWidget->sceneLoader()->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
         int frameIndex = m_sceneWidget->currentFrameIndex();
@@ -1468,8 +1468,7 @@ void MainWindow::invokeVideoEncoder()
         /* 全てのモーションが終了するまでエンコード処理 */
         const Scene *scene = m_sceneWidget->sceneLoader()->scene();
         Q_UNUSED(scene)
-        while (false) {
-        // FIXME: while (!scene->isMotionReachedTo(toIndex)) {
+        while (!scene->isReachedTo(toIndex)) {
             if (progress->wasCanceled())
                 break;
             const QImage &image = m_sceneWidget->grabFrameBuffer();

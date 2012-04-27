@@ -209,6 +209,7 @@ namespace vpvl2
 
 struct Scene::PrivateContext {
     PrivateContext()
+        : preferredFPS(Scene::defaultFPS())
     {
     }
     ~PrivateContext() {
@@ -225,6 +226,7 @@ struct Scene::PrivateContext {
     Light light;
     Camera camera;
     Color lightColor;
+    Scalar preferredFPS;
 };
 
 bool Scene::isAcceleratorSupported()
@@ -390,6 +392,23 @@ void Scene::updateCamera()
     camera.updateMatrices(m_context->matrices);
 }
 
+void Scene::setPreferredFPS(const Scalar &value)
+{
+    m_context->preferredFPS = value;
+}
+
+bool Scene::isReachedTo(float frameIndex) const
+{
+    const Array<IMotion *> &motions = m_context->motions;
+    const int nmotions = motions.count();
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        if (!motion->isReachedTo(frameIndex))
+            return false;
+    }
+    return true;
+}
+
 float Scene::maxFrameIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
@@ -436,6 +455,11 @@ Scene::ILight *Scene::light() const
 Scene::ICamera *Scene::camera() const
 {
     return &m_context->camera;
+}
+
+const Scalar &Scene::preferredFPS() const
+{
+    return m_context->preferredFPS;
 }
 
 }

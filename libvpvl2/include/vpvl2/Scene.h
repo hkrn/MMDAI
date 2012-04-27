@@ -119,6 +119,8 @@ public:
     void seek(float frameIndex);
     void updateModels();
     void updateCamera();
+    void setPreferredFPS(const Scalar &value);
+    bool isReachedTo(float frameIndex) const;
     float maxFrameIndex() const;
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;
@@ -127,6 +129,7 @@ public:
     IMatrices *matrices() const;
     ILight *light() const;
     ICamera *camera() const;
+    const Scalar &preferredFPS() const;
 
 private:
     struct PrivateContext;
