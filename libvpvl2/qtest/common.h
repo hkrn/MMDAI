@@ -14,6 +14,15 @@ public:
     ~String() {
     }
 
+    bool startsWith(const IString *value) const {
+        return m_value.startsWith(static_cast<const String *>(value)->m_value);
+    }
+    bool contains(const IString *value) const {
+        return m_value.contains(static_cast<const String *>(value)->m_value);
+    }
+    bool endsWith(const IString *value) const {
+        return m_value.endsWith(static_cast<const String *>(value)->m_value);
+    }
     IString *clone() const {
         return new String(m_value);
     }
@@ -50,6 +59,38 @@ public:
     ~Encoding() {
     }
 
+    const IString *stringConstant(ConstantType value) const {
+        switch (value) {
+        case kLeft: {
+            static const String s("左");
+            return &s;
+        }
+        case kRight: {
+            static const String s("右");
+            return &s;
+        }
+        case kFinger: {
+            static const String s("指");
+            return &s;
+        }
+        case kElbow: {
+            static const String s("ひじ");
+            return &s;
+        }
+        case kArm: {
+            static const String s("腕");
+            return &s;
+        }
+        case kWrist: {
+            static const String s("手首");
+            return &s;
+        }
+        default: {
+            static const String s("");
+            return &s;
+        }
+        }
+    }
     IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
         IString *s = 0;
         const char *str = reinterpret_cast<const char *>(value);
