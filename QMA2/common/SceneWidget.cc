@@ -801,7 +801,7 @@ void SceneWidget::initializeGL()
     const QSize &s = size();
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
-    m_debugDrawer = new DebugDrawer(m_loader->scene());
+    m_debugDrawer = new DebugDrawer();
 #ifdef IS_QMA2
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
@@ -1007,7 +1007,8 @@ void SceneWidget::paintGL()
 #ifdef IS_QMA2
     qglClearColor(m_loader->screenColor());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    m_grid->draw(m_loader->scene(), m_loader->isGridVisible());
+    Scene *scene = m_loader->scene();
+    m_grid->draw(scene, m_loader->isGridVisible());
     m_loader->render();
     IBone *bone = 0;
     if (!m_bones.isEmpty())
@@ -1018,9 +1019,9 @@ void SceneWidget::paintGL()
     switch (m_editMode) {
     case kSelect:
         if (!(m_handleFlags & Handles::kEnable))
-            m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_bones.toSet());
+            m_debugDrawer->drawModelBones(m_loader->selectedModel(), scene, m_bones.toSet());
         if (m_isImageHandleRectIntersect)
-            m_debugDrawer->drawBoneTransform(bone, m_handles->modeFromConstraint());
+            m_debugDrawer->drawBoneTransform(bone, scene, m_handles->modeFromConstraint());
         break;
     case kRotate:
         m_handles->drawRotationHandle();

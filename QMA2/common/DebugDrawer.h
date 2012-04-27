@@ -52,9 +52,8 @@ using namespace vpvl2;
 class DebugDrawer : public btIDebugDraw
 {
 public:
-    DebugDrawer(Scene *scene)
-        : m_scene(scene),
-          m_flags(0),
+    DebugDrawer()
+        : m_flags(0),
           m_visible(true)
     {}
     virtual ~DebugDrawer() {}
@@ -110,7 +109,7 @@ public:
         m_visible = value;
     }
 
-    void drawModelBones(IModel *model, const QSet<IBone *> &selectedBones) {
+    void drawModelBones(IModel *model, Scene *scene, const QSet<IBone *> &selectedBones) {
         if (!model || !m_visible || !m_program.isLinked())
             return;
         Array<IBone *> bones;
@@ -121,7 +120,7 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         m_program.bind();
-        const Scene::IMatrices *matrices = m_scene->matrices();
+        const Scene::IMatrices *matrices = scene->matrices();
         matrices->getModelView(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
         func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
@@ -159,7 +158,7 @@ public:
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawBoneTransform(IBone *bone, int mode) {
+    void drawBoneTransform(IBone *bone, Scene *scene, int mode) {
         if (!m_visible || !bone || !m_program.isLinked())
             return;
         float matrix[16];
@@ -167,7 +166,7 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         m_program.bind();
-        const Scene::IMatrices *matrices = m_scene->matrices();
+        const Scene::IMatrices *matrices = scene->matrices();
         matrices->getModelView(matrix);
         int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
         func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
@@ -188,7 +187,7 @@ public:
         if (mode == 'V') {
             /* モデルビュー行列を元に軸表示 */
             const Transform &transform = bone->localTransform();
-            const btMatrix3x3 &modelView = m_scene->camera()->modelViewTransform().getBasis();
+            const btMatrix3x3 &modelView = scene->camera()->modelViewTransform().getBasis();
             const Vector3 &origin = bone->localTransform().getOrigin();
             drawLine(origin, transform * (modelView.getRow(0) * kLength), kRed);
             drawLine(origin, transform * (modelView.getRow(1) * kLength), kGreen);
@@ -276,7 +275,6 @@ private:
     }
 
     QGLShaderProgram m_program;
-    Scene *m_scene;
     int m_flags;
     bool m_visible;
 

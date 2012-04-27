@@ -954,7 +954,8 @@ void SceneLoader::loadProject(const QString &path)
                 IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
                 engine->upload(&d);
                 scene()->addModel(model, engine);
-                if (model->type() == IModel::kPMD) {
+                IModel::Type type = model->type();
+                if (type == IModel::kPMD || type == IModel::kPMX) {
                     delegate->setArchive(0);
                     /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
                     // const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
@@ -985,7 +986,7 @@ void SceneLoader::loadProject(const QString &path)
                     emit projectDidProceed(++progress);
                     continue;
                 }
-                else if (model->type() == IModel::kAsset) {
+                else if (type == IModel::kAsset) {
                     internal::String s(fileInfo.baseName().toUtf8());
                     model->setName(&s);
                     delegate->setArchive(0);
