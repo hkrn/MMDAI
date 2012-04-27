@@ -1017,7 +1017,7 @@ void SceneLoader::loadProject(const QString &path)
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
         foreach (IModel *model, lostModels) {
             m_project->removeModel(model);
-            delete model;
+            m_project->deleteModel(model);
         }
         sort(true);
         m_project->setDirty(false);
