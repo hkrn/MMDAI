@@ -131,9 +131,11 @@ bool Bone::hasFixedAxes() const
 
 bool Bone::hasLocalAxes() const
 {
-    // const QString &name = toQString(bone);
-    // return name.indexOf("指") != -1 || name.endsWith("腕") || name.endsWith("ひじ") || name.endsWith("手首");
-    return false;
+    bool finger = m_name->contains(m_encoding->stringConstant(IEncoding::kFinger));
+    bool arm = m_name->endsWith(m_encoding->stringConstant(IEncoding::kArm));
+    bool elbow = m_name->endsWith(m_encoding->stringConstant(IEncoding::kElbow));
+    bool wrist = m_name->endsWith(m_encoding->stringConstant(IEncoding::kWrist));
+    return finger || arm || elbow || wrist;
 }
 
 void Bone::getFixedAxes(Matrix3x3 &value) const
@@ -150,8 +152,10 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     if (hasLocalAxes()) {
         const Vector3 &axisX = (m_childBone->origin() - m_bone->originPosition()).normalized();
         Vector3 tmp1 = axisX;
-        //const QString &name = toQString(bone);
-        //name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
+        if (m_name->startsWith(m_encoding->stringConstant(IEncoding::kLeft)))
+            tmp1.setY(-axisX.y());
+        else
+            tmp1.setX(-axisX.x());
         const Vector3 &axisZ = axisX.cross(tmp1).normalized();
         Vector3 tmp2 = axisX;
         tmp2.setZ(-axisZ.z());

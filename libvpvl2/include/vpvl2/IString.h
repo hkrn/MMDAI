@@ -57,6 +57,12 @@ public:
     };
     virtual ~IString() {}
 
+    virtual bool startsWith(const IString *value) const = 0;
+
+    virtual bool contains(const IString *value) const = 0;
+
+    virtual bool endsWith(const IString *value) const = 0;
+
     /**
      * IString の完全なコピーを返します。
      *

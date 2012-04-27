@@ -57,6 +57,15 @@ namespace vpvl2
 class VPVL2_API IEncoding
 {
 public:
+    enum ConstantType {
+        kLeft,
+        kRight,
+        kFinger,
+        kElbow,
+        kArm,
+        kWrist
+    };
+
     virtual ~IEncoding() {}
 
     /**
@@ -103,6 +112,8 @@ public:
      * @param value
      */
     virtual void disposeByteArray(uint8_t *value) const = 0;
+
+    virtual const IString *stringConstant(ConstantType value) const = 0;
 };
 
 }

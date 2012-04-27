@@ -82,6 +82,15 @@ public:
     ~String() {
     }
 
+    bool startsWith(const IString *value) const {
+        return m_value.startsWith(static_cast<const String *>(value)->m_value);
+    }
+    bool contains(const IString *value) const {
+        return m_value.contains(static_cast<const String *>(value)->m_value);
+    }
+    bool endsWith(const IString *value) const {
+        return m_value.endsWith(static_cast<const String *>(value)->m_value);
+    }
     IString *clone() const {
         return new String(m_value);
     }
@@ -118,6 +127,38 @@ public:
     ~Encoding() {
     }
 
+    const IString *stringConstant(ConstantType value) const {
+        switch (value) {
+        case kLeft: {
+            static const String s("左");
+            return &s;
+        }
+        case kRight: {
+            static const String s("右");
+            return &s;
+        }
+        case kFinger: {
+            static const String s("指");
+            return &s;
+        }
+        case kElbow: {
+            static const String s("ひじ");
+            return &s;
+        }
+        case kArm: {
+            static const String s("腕");
+            return &s;
+        }
+        case kWrist: {
+            static const String s("手首");
+            return &s;
+        }
+        default: {
+            static const String s("");
+            return &s;
+        }
+        }
+    }
     IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
         IString *s = 0;
         const char *str = reinterpret_cast<const char *>(value);
@@ -223,40 +264,6 @@ static inline const QString toQString(const IBoneKeyframe *value)
 static inline const QString toQString(const IMorphKeyframe *value)
 {
     return value ? internal::toQString(value->name()) : noneString();
-}
-
-static inline bool hasOwnLocalAxis(const IBone *bone)
-{
-    const QString &name = toQString(bone);
-    return name.indexOf("指") != -1 || name.endsWith("腕") || name.endsWith("ひじ") || name.endsWith("手首");
-}
-
-static inline void getOwnLocalAxis(const IBone *bone,
-                                   const IBone *child,
-                                   Vector3 &axisX,
-                                   Vector3 &axisY,
-                                   Vector3 &axisZ)
-{
-#if QMA2_TBD
-    /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-    const Vector3 &boneOrigin = bone->originPosition();
-    const Vector3 &childOrigin = child->originPosition();
-    /* 外積を使ってそれぞれの軸を求める */
-    axisX = (childOrigin - boneOrigin).normalized();
-    Vector3 tmp1 = axisX;
-    const QString &name = toQString(bone);
-    name.startsWith("左") ? tmp1.setY(-axisX.y()) : tmp1.setX(-axisX.x());
-    axisZ = axisX.cross(tmp1).normalized();
-    Vector3 tmp2 = axisX;
-    tmp2.setZ(-axisZ.z());
-    axisY = tmp2.cross(-axisX).normalized();
-#else
-    Q_UNUSED(bone)
-    Q_UNUSED(child)
-    Q_UNUSED(axisX)
-    Q_UNUSED(axisY)
-    Q_UNUSED(axisZ)
-#endif
 }
 
 static inline void dumpBones(IModel *model)
