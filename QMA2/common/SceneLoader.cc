@@ -557,12 +557,10 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
 {
     /* モデル名が空っぽの場合はファイル名から補完しておく */
     const QString &key = internal::toQString(model).trimmed();
-#if QMA2_TBD
     if (key.isEmpty()) {
-        const QByteArray &bytes = internal::fromQString(baseName);
-        model->setName(reinterpret_cast<const uint8_t *>(bytes.constData()));
+        internal::String s(key);
+        model->setName(&s);
     }
-#endif
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
@@ -726,9 +724,8 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
         if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             QFileInfo fileInfo(filename);
-            // const QByteArray &assetName = fileInfo.baseName().toUtf8();
-            // asset->setName(assetName.constData());
-            // const std::string &name = std::string(fileInfo.absolutePath().toLocal8Bit());
+            internal::String name(fileInfo.baseName());
+            asset->setName(&name);
             IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, asset);
             internal::String s(fileInfo.absoluteDir().path());
             engine->upload(&s);
@@ -776,12 +773,10 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
         bool enableShadow = stream.readLine().toInt() == 1;
         IModel *asset = m_factory->createModel(IModel::kAsset);
         if (loadAsset(dir.absoluteFilePath(filename), uuid, asset)) {
-#if QMA2_TBD
             if (!name.isEmpty()) {
-                const QByteArray &bytes = internal::fromQString(name);
-                asset->setName(bytes.constData());
+                internal::String s(name);
+                asset->setName(&s);
             }
-#endif
             if (!filename.isEmpty()) {
                 m_name2assets.insert(filename, asset);
             }
@@ -991,10 +986,8 @@ void SceneLoader::loadProject(const QString &path)
                     continue;
                 }
                 else if (model->type() == IModel::kAsset) {
-#if QMA2_TBD
-                    const QByteArray &baseName = fileInfo.baseName().toUtf8();
-                    asset->setName(baseName.constData());
-#endif
+                    internal::String s(fileInfo.baseName().toUtf8());
+                    model->setName(&s);
                     delegate->setArchive(0);
                     const QUuid assetUUID(modelUUIDString.c_str());
                     m_renderOrderList.add(assetUUID);
