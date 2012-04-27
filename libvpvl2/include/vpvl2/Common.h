@@ -250,25 +250,6 @@ VPVL2_API inline float degree(float value)
     return value * static_cast<float>(180.0f / kPI);
 }
 
-/**
- * Copy string with terminated character like strlcpy.
- *
- * This function aims to copy stack based string from pointer based string.
- *
- * @param dst A value of string to be copied
- * @param src A value of string to copy
- * @param max A length of string to copy
- * @return A pointer of string to be copied
- */
-VPVL2_API inline uint8_t *copyBytesSafe(uint8_t *dst, const uint8_t *src, size_t max)
-{
-    assert(dst != NULL && src != NULL && max > 0);
-    size_t len = max - 1;
-    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, len));
-    dst[len] = '\0';
-    return ptr;
-}
-
 }
 
 #endif
