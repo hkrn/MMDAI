@@ -325,34 +325,34 @@ void Motion::replaceKeyframe(IKeyframe *value)
     switch (value->type()) {
     case IKeyframe::kBone: {
         IKeyframe *keyframeToDelete = m_boneMotion.findKeyframe(value->frameIndex(), value->name());
-        if (keyframeToDelete) {
+        if (keyframeToDelete)
             m_boneMotion.deleteKeyframe(keyframeToDelete);
-            m_boneMotion.addKeyframe(value);
-        }
+        m_boneMotion.addKeyframe(value);
+        update(IKeyframe::kBone);
         break;
     }
     case IKeyframe::kCamera: {
         IKeyframe *keyframeToDelete = m_cameraMotion.findKeyframe(value->frameIndex());
-        if (keyframeToDelete) {
+        if (keyframeToDelete)
             m_cameraMotion.deleteKeyframe(keyframeToDelete);
-            m_cameraMotion.addKeyframe(value);
-        }
+        m_cameraMotion.addKeyframe(value);
+        update(IKeyframe::kCamera);
         break;
     }
     case IKeyframe::kLight: {
         IKeyframe *keyframeToDelete = m_lightMotion.findKeyframe(value->frameIndex());
-        if (keyframeToDelete) {
+        if (keyframeToDelete)
             m_lightMotion.deleteKeyframe(keyframeToDelete);
-            m_lightMotion.addKeyframe(value);
-        }
+        m_lightMotion.addKeyframe(value);
+        update(IKeyframe::kLight);
         break;
     }
     case IKeyframe::kMorph: {
         IKeyframe *keyframeToDelete = m_morphMotion.findKeyframe(value->frameIndex(), value->name());
-        if (keyframeToDelete) {
+        if (keyframeToDelete)
             m_morphMotion.deleteKeyframe(keyframeToDelete);
-            m_morphMotion.addKeyframe(value);
-        }
+        m_morphMotion.addKeyframe(value);
+        update(IKeyframe::kMorph);
         break;
     }
     default:
