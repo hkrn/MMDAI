@@ -180,18 +180,20 @@ public:
         return toString(value, size, codec);
     }
     uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
-        const String *s = static_cast<const String *>(value);
         QByteArray bytes;
-        switch (codec) {
-        case IString::kShiftJIS:
-            bytes = m_sjis->fromUnicode(s->value());
-            break;
-        case IString::kUTF8:
-            bytes = m_utf8->fromUnicode(s->value());
-            break;
-        case IString::kUTF16:
-            bytes = m_utf16->fromUnicode(s->value());
-            break;
+        if (value) {
+            const String *s = static_cast<const String *>(value);
+            switch (codec) {
+            case IString::kShiftJIS:
+                bytes = m_sjis->fromUnicode(s->value());
+                break;
+            case IString::kUTF8:
+                bytes = m_utf8->fromUnicode(s->value());
+                break;
+            case IString::kUTF16:
+                bytes = m_utf16->fromUnicode(s->value());
+                break;
+            }
         }
         size_t size = bytes.length();
         uint8_t *data = new uint8_t[size + 1];
