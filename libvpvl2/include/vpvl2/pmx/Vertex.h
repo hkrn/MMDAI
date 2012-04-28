@@ -120,7 +120,7 @@ public:
 private:
     Bone *m_bones[4];
     Vector4 m_originUVs[4];
-    Vector4 m_morphUVs[4];
+    Vector4 m_morphUVs[5]; /* TexCoord + UVA1-4 */
     Vector3 m_origin;
     Vector3 m_morphPosition;
     Vector3 m_normal;

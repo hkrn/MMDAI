@@ -97,10 +97,28 @@ Vertex::Vertex()
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
     }
+    m_morphUVs[4].setZero();
 }
 
 Vertex::~Vertex()
 {
+    m_origin.setZero();
+    m_morphPosition.setZero();
+    m_normal.setZero();
+    m_texcoord.setZero();
+    m_c.setZero();
+    m_r0.setZero();
+    m_r1.setZero();
+    m_type = kBdef1;
+    m_edgeSize = 0;
+    for (int i = 0; i < 4; i++) {
+        m_originUVs[i].setZero();
+        m_morphUVs[i].setZero();
+        m_bones[i] = 0;
+        m_weight[i] = 0;
+        m_boneIndices[i] = -1;
+    }
+    m_morphUVs[4].setZero();
 }
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -234,7 +252,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         const Bdef2Unit &unit = *reinterpret_cast<Bdef2Unit *>(ptr);
         m_weight[0] = unit.weight;
-        ptr += sizeof(Bdef2Unit);
+        ptr += sizeof(unit);
         break;
     }
     case kBdef4: { /* BDEF4 */
@@ -243,7 +261,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         const Bdef4Unit &unit = *reinterpret_cast<Bdef4Unit *>(ptr);
         for (int i = 0; i < 4; i++)
             m_weight[i] = unit.weight[i];
-        ptr += sizeof(Bdef4Unit);
+        ptr += sizeof(unit);
         break;
     }
     case kSdef: { /* SDEF */
@@ -254,7 +272,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);
         m_r1.setValue(unit.r1[0], unit.r1[1], unit.r1[2]);
         m_weight[0] = unit.weight;
-        ptr += sizeof(SdefUnit);
+        ptr += sizeof(unit);
         break;
     }
     default: /* unexpected value */
@@ -365,7 +383,7 @@ void Vertex::reset()
 void Vertex::mergeMorph(Morph::UV *morph, float weight)
 {
     int offset = morph->offset;
-    if (offset >= 0 && offset < 4) {
+    if (offset >= 0 && offset <= 4) {
         const Vector4 &m = morph->position, &o = m_morphUVs[offset];
         Vector4 v(o.x() + m.x() * weight,
                   o.y() + m.y() * weight,
@@ -428,7 +446,7 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
 
 const Vector4 &Vertex::uv(int index) const
 {
-    return index >= 0 && index < 4 ? m_morphUVs[index] : kZeroV4;
+    return index >= 0 && index <= 4 ? m_morphUVs[index] : kZeroV4;
 }
 
 float Vertex::weight(int index) const
