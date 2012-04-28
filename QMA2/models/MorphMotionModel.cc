@@ -101,13 +101,21 @@ class SetFramesCommand : public QUndoCommand
 public:
     typedef QPair<QModelIndex, QByteArray> ModelIndex;
 
-    SetFramesCommand(MorphMotionModel *bmm, const MorphMotionModel::KeyFramePairList &frames)
+    /*
+     * MorphMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
+     * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
+     */
+    SetFramesCommand(MorphMotionModel *fmm, const MorphMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
-          m_fmm(bmm)
+          m_keys(fmm->keys()),
+          m_fmm(fmm),
+          m_model(fmm->selectedModel()),
+          m_motion(fmm->currentMotion()),
+          m_morph(fmm->selectedMorph())
     {
         QSet<int> indexProceeded;
         /* 現在選択中のモデルにある全ての頂点モーフを取り出す */
-        const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
+        const PMDMotionModel::TreeItemList &items = m_keys.values();
         /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
         foreach (const MorphMotionModel::KeyFramePair &frame, frames) {
             int frameIndex = frame.first;
@@ -126,15 +134,14 @@ public:
         m_frames = frames;
         m_frameIndices = indexProceeded.toList();
     }
-    virtual ~SetFramesCommand() {
+    ~SetFramesCommand() {
     }
 
-    virtual void undo() {
+    void undo() {
         /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
-        const PMDMotionModel::TreeItemList &items = m_fmm->keys().values();
-        IMotion *motion = m_fmm->currentMotion();
+        const PMDMotionModel::TreeItemList &items = m_keys.values();
         foreach (int frameIndex, m_frameIndices) {
-            motion->deleteKeyframes(frameIndex, IKeyframe::kMorph);
+            m_motion->deleteKeyframes(frameIndex, IKeyframe::kMorph);
             foreach (PMDMotionModel::ITreeItem *item, items) {
                 const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                 m_fmm->setData(index, QVariant());
@@ -142,22 +149,20 @@ public:
         }
         /* コンストラクタで保存したキーフレームの生データから頂点モーフのキーフレームに復元して置換する */
         Factory *factory = m_fmm->factory();
+        QScopedPointer<IMorphKeyframe> frame;
         foreach (const ModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.second;
             m_fmm->setData(index.first, bytes, Qt::EditRole);
-            QScopedPointer<IMorphKeyframe> frame(factory->createMorphKeyframe());
+            frame.reset(factory->createMorphKeyframe());
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-            motion->addKeyframe(frame.take());
+            m_motion->addKeyframe(frame.take());
         }
         /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
-        motion->update(IKeyframe::kMorph);
-        m_fmm->refreshModel();
+        m_motion->update(IKeyframe::kMorph);
+        m_fmm->refreshModel(m_model);
     }
     virtual void redo() {
-        const MorphMotionModel::Keys &keys = m_fmm->keys();
         QScopedPointer<IMorphKeyframe> newMorphKeyframe;
-        IMotion *motion = m_fmm->currentMotion();
-        IMorph *selected = m_fmm->selectedMorph();
         QString key;
         /* すべてのキーフレーム情報を登録する */
         foreach (const MorphMotionModel::KeyFramePair &pair, m_frames) {
@@ -168,34 +173,34 @@ public:
             if (morphKeyframe) {
                 key = internal::toQString(morphKeyframe);
             }
-            else if (selected) {
-                key = internal::toQString(selected);
+            else if (m_morph) {
+                key = internal::toQString(m_morph);
             }
             else {
                 qWarning("No bone is selected or null");
                 continue;
             }
             /* モデルに頂点モーフ名が存在するかを確認する */
-            if (keys.contains(key)) {
+            if (m_keys.contains(key)) {
                 /*
                  * キーフレームをコピーし、モデルにデータを登録した上で現在登録されているキーフレームを置換する
                  * (前のキーフレームの情報が入ってる可能性があるので、置換することで重複が発生することを防ぐ)
                  *
                  * ※ 置換の現実装は find => delete => add なので find の探索コストがネックになるため多いと時間がかかる
                  */
-                const QModelIndex &modelIndex = m_fmm->frameIndexToModelIndex(keys[key], frameIndex);
+                const QModelIndex &modelIndex = m_fmm->frameIndexToModelIndex(m_keys[key], frameIndex);
                 if (morphKeyframe->frameIndex() >= 0) {
                     QByteArray bytes(morphKeyframe->estimateSize(), '0');
                     newMorphKeyframe.reset(morphKeyframe->clone());
                     newMorphKeyframe->setFrameIndex(frameIndex);
                     newMorphKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
-                    motion->replaceKeyframe(newMorphKeyframe.take());
+                    m_motion->replaceKeyframe(newMorphKeyframe.take());
                     m_fmm->setData(modelIndex, bytes, Qt::EditRole);
                 }
                 else {
                     /* 元フレームのインデックスが 0 未満の時は削除 */
-                    IKeyframe *frameToDelete = motion->findMorphKeyframe(frameIndex, morphKeyframe->name());
-                    motion->deleteKeyframe(frameToDelete);
+                    IKeyframe *frameToDelete = m_motion->findMorphKeyframe(frameIndex, morphKeyframe->name());
+                    m_motion->deleteKeyframe(frameToDelete);
                     m_fmm->setData(modelIndex, QVariant());
                 }
             }
@@ -205,11 +210,12 @@ public:
             }
         }
         /* SetFramesCommand#undo の通りのため、省略 */
-        motion->update(IKeyframe::kMorph);
-        m_fmm->refreshModel();
+        m_motion->update(IKeyframe::kMorph);
+        m_fmm->refreshModel(m_model);
     }
 
 private:
+    const MorphMotionModel::Keys m_keys;
     /* undo で復元する対象のキーフレームの番号 */
     QList<int> m_frameIndices;
     /* m_frameIndices に加えて undo で復元する用のキーフレームの集合 */
@@ -217,6 +223,9 @@ private:
     /* 実際に登録する用のキーフレームの集合 */
     MorphMotionModel::KeyFramePairList m_frames;
     MorphMotionModel *m_fmm;
+    IModel *m_model;
+    IMotion *m_motion;
+    IMorph *m_morph;
 };
 
 class ResetAllCommand : public QUndoCommand
@@ -521,7 +530,7 @@ void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
         }
         /* 読み込まれたモーションを現在のモーションとして登録する。あとは SetFramesCommand#undo と同じ */
         m_motion = motion;
-        refreshModel();
+        refreshModel(m_model);
         setModified(false);
         qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(internal::toQString(model)));
     }

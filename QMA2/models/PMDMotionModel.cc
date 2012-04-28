@@ -202,12 +202,22 @@ void PMDMotionModel::markAsNew(IModel *model)
         setModified(false);
 }
 
-void PMDMotionModel::refreshModel()
+void PMDMotionModel::updateModel(IModel *model)
 {
-    /* モデルのフレーム移動なしの更新とテーブルモデルの更新両方を含む */
-    updateModel();
-    reset();
-    emit motionDidUpdate(m_model);
+    if (model) {
+        model->performUpdate();
+        emit frameIndexDidChange(m_frameIndex, m_frameIndex);
+    }
+}
+
+void PMDMotionModel::refreshModel(IModel *model)
+{
+    if (model) {
+        /* モデルのフレーム移動なしの更新とテーブルモデルの更新両方を含む */
+        updateModel(model);
+        reset();
+        emit motionDidUpdate(model);
+    }
 }
 
 int PMDMotionModel::maxFrameCount() const
@@ -218,14 +228,6 @@ int PMDMotionModel::maxFrameCount() const
 int PMDMotionModel::maxFrameIndex() const
 {
     return m_motion ? m_motion->maxFrameIndex() : 0;
-}
-
-void PMDMotionModel::updateModel()
-{
-    if (m_model) {
-        m_model->performUpdate();
-        emit frameIndexDidChange(m_frameIndex, m_frameIndex);
-    }
 }
 
 void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys &keys)

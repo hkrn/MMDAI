@@ -92,8 +92,8 @@ public:
     virtual void commitTransform() = 0;
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    void updateModel();
-    void refreshModel();
+    void updateModel(vpvl2::IModel *model);
+    void refreshModel(vpvl2::IModel *model);
     int maxFrameCount() const;
     int maxFrameIndex() const;
 
