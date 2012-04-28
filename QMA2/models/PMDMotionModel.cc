@@ -54,6 +54,7 @@ PMDMotionModel::State::~State()
 
 void PMDMotionModel::State::restore() const
 {
+    m_model->resetVertices();
     foreach (const Bone &bone, m_bones) {
         IBone *b = bone.first;
         const Transform &tr = bone.second;
@@ -87,7 +88,7 @@ void PMDMotionModel::State::save()
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = morphs[i];
         const Scalar &weight = morph->weight();
-        if (!btFuzzyZero(weight))
+        if (!btFuzzyZero(weight) && !morph->hasParent())
             m_morphs.append(Morph(morph, weight));
     }
 }
