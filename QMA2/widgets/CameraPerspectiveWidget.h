@@ -38,7 +38,7 @@
 #define PERSPECTIONWIDGET_H
 
 #include <QtGui/QWidget>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
 class QDoubleSpinBox;
 class QGroupBox;
@@ -53,10 +53,10 @@ public:
     explicit CameraPerspectiveWidget(QWidget *parent = 0);
 
 public slots:
-    void setCameraPerspective(const vpvl::Vector3 &pos, const vpvl::Vector3 &angle, float fovy, float distance);
+    void setCameraPerspective(const vpvl2::Vector3 &pos, const vpvl2::Vector3 &angle, float fovy, float distance);
 
 signals:
-    void cameraPerspectiveDidChange(vpvl::Vector3 *pos, vpvl::Vector3 *angle, float *fovy, float *distance);
+    void cameraPerspectiveDidChange(vpvl2::Vector3 *pos, vpvl2::Vector3 *angle, float *fovy, float *distance);
     void cameraPerspectiveDidReset();
 
 private slots:
@@ -76,8 +76,8 @@ private slots:
     void updateDistance(double value);
 
 private:
-    vpvl::Vector3 m_currentPosition;
-    vpvl::Vector3 m_currentAngle;
+    vpvl2::Vector3 m_currentPosition;
+    vpvl2::Vector3 m_currentAngle;
     QGroupBox *m_presetGroup;
     QGroupBox *m_positionGroup;
     QGroupBox *m_rotationGroup;

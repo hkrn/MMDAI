@@ -52,8 +52,7 @@ public:
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
         setGravity(btVector3(0.0f, -9.8f, 0.0f));
-        setPreferredFPS(30);
-        // setPreferredFPS(vpvl::Scene::kFPS);
+        setPreferredFPS(Scene::defaultFPS());
     }
     ~World()
     {
@@ -68,8 +67,8 @@ public:
     void setGravity(const btVector3 &value) {
         m_world.setGravity(value);
     }
-    void setPreferredFPS(int value) {
-        m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f * 60.0f / value);
+    void setPreferredFPS(const Scalar &value) {
+        m_world.getSolverInfo().m_numIterations = static_cast<int>(10 * 60 / value);
     }
 
 private:

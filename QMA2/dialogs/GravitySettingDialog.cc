@@ -38,9 +38,9 @@
 #include "common/SceneLoader.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent) :
     QDialog(parent)
@@ -62,7 +62,7 @@ GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent)
     connect(button, SIGNAL(accepted()), SLOT(accept()));
     connect(button, SIGNAL(rejected()), SLOT(reject()));
     connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
-    connect(this, SIGNAL(worldGravityDidSet(vpvl::Vector3)), loader, SLOT(setWorldGravity(vpvl::Vector3)));
+    connect(this, SIGNAL(worldGravityDidSet(vpvl2::Vector3)), loader, SLOT(setWorldGravity(vpvl2::Vector3)));
     mainLayout->addWidget(button);
     setWindowTitle(tr("Gravity setting"));
     setLayout(mainLayout);

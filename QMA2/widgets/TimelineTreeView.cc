@@ -102,8 +102,8 @@ void TimelineTreeView::deleteKeyframesBySelectedIndices()
     m->deleteKeyframesByModelIndices(selectionModel()->selectedIndexes());
 }
 
-void TimelineTreeView::setBoneKeyframesWeightBySelectedIndices(const vpvl::Vector3 &position,
-                                                               const vpvl::Vector3 &rotation)
+void TimelineTreeView::setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position,
+                                                               const vpvl2::Vector3 &rotation)
 {
     if (BoneMotionModel *m = qobject_cast<BoneMotionModel *>(model()))
         m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), position, rotation);

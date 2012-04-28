@@ -379,8 +379,8 @@ void TimelineTabWidget::openFrameWeightDialog()
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex: {
         FrameWeightDialog dialog(kBone);
-        connect(&dialog, SIGNAL(boneWeightDidSet(vpvl::Vector3,vpvl::Vector3)),
-                m_boneTimeline->treeView(), SLOT(setBoneKeyframesWeightBySelectedIndices(vpvl::Vector3,vpvl::Vector3)));
+        connect(&dialog, SIGNAL(boneWeightDidSet(vpvl2::Vector3,vpvl2::Vector3)),
+                m_boneTimeline->treeView(), SLOT(setBoneKeyframesWeightBySelectedIndices(vpvl2::Vector3,vpvl2::Vector3)));
         dialog.exec();
         break;
     }

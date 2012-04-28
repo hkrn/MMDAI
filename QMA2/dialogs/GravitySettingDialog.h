@@ -38,7 +38,7 @@
 #define GRAVITYSETTINGDIALOG_H
 
 #include <QtGui/QDialog>
-#include <vpvl/Common.h>
+#include <vpvl2/Common.h>
 
 class QDoubleSpinBox;
 class QLabel;
@@ -53,7 +53,7 @@ public:
     ~GravitySettingDialog();
 
 signals:
-    void worldGravityDidSet(const vpvl::Vector3 &value);
+    void worldGravityDidSet(const vpvl2::Vector3 &value);
 
 private slots:
     void emitSignal();

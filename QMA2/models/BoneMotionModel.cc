@@ -402,7 +402,7 @@ static const Quaternion UIRotateGlobalAxisAngle(const Scalar &value, int flags)
     return rot;
 }
 
-static const Vector3 UITranslateFromView(const SceneWidget *sceneWidget, const vpvl::Vector3 &delta)
+static const Vector3 UITranslateFromView(const SceneWidget *sceneWidget, const Vector3 &delta)
 {
     const Transform &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform();
     const Matrix3x3 &matrix = transform.getBasis();

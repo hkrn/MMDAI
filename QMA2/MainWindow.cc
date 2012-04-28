@@ -1223,7 +1223,7 @@ void MainWindow::connectSceneLoader()
     Scene *scene = m_sceneWidget->sceneLoader()->scene();
     Scene::ICamera *camera = scene->camera();
     cameraWidget->setCameraPerspective(camera->position(), camera->angle(), camera->fovy(), camera->distance());
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl::Vector3*,vpvl::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl2::Vector3*,vpvl2::Vector3*,float*,float*)));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl2::Vector3*,vpvl2::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl2::Vector3*,vpvl2::Vector3*,float*,float*)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl2::Vector3,vpvl2::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl2::Vector3,vpvl2::Vector3,float,float)));
     /* 光源の初期値を設定。シグナル発行前に行う */

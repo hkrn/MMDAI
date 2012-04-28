@@ -37,9 +37,9 @@
 #include "widgets/CameraPerspectiveWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-using namespace vpvl;
+using namespace vpvl2;
 
 CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     QWidget(parent),
@@ -79,16 +79,17 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     mainLayout->addWidget(m_presetGroup);
     /* 位置(X,Y,Z) */
     QFormLayout *formLayout = new QFormLayout();
+    const Scalar &zfar = 10000;
     m_px = new QDoubleSpinBox();
-    m_px->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
+    m_px->setRange(-zfar, zfar);
     connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
     formLayout->addRow("X", m_px);
     m_py = new QDoubleSpinBox();
-    m_py->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
+    m_py->setRange(-zfar, zfar);
     connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
     formLayout->addRow("Y", m_py);
     m_pz = new QDoubleSpinBox();
-    m_pz->setRange(-Scene::kFrustumFar, Scene::kFrustumFar);
+    m_pz->setRange(-zfar, zfar);
     connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
     formLayout->addRow("Z", m_pz);
     m_positionGroup = new QGroupBox();
@@ -130,7 +131,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     subLayout->addWidget(m_distanceLabel);
     m_distance = new QDoubleSpinBox();
     m_distance->setSingleStep(1.0);
-    m_distance->setRange(0.01, Scene::kFrustumFar);
+    m_distance->setRange(0.01, zfar);
     connect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
     subLayout->addWidget(m_distance);
     mainLayout->addLayout(subLayout);
