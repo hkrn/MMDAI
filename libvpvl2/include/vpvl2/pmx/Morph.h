@@ -57,6 +57,18 @@ namespace pmx
 class VPVL2_API Morph : public IMorph
 {
 public:
+    enum Type {
+        kUnknown = -1,
+        kGroup,
+        kVertex,
+        kBone,
+        kTexCoord,
+        kUVA1,
+        kUVA2,
+        kUVA3,
+        kUVA4,
+        kMaterial
+    };
     struct Bone {
         pmx::Bone *bone;
         Vector3 position;
@@ -133,7 +145,7 @@ public:
     void addUVMorph(const UV &value);
     void addVertexMorph(const Vertex &value);
     void setCategory(Category value);
-    void setType(uint8_t value);
+    void setType(Type value);
     void setIndex(int value);
 
     const Array<Bone> &bones() const { return m_bones; }
@@ -169,7 +181,7 @@ private:
     Scalar m_weight;
     Category m_category;
     int m_index;
-    uint8_t m_type;
+    Type m_type;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Morph)
 };

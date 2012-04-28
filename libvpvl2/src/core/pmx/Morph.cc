@@ -97,7 +97,7 @@ Morph::Morph()
       m_weight(0),
       m_category(kReserved),
       m_index(-1),
-      m_type(0)
+      m_type(kUnknown)
 {
 }
 
@@ -109,7 +109,7 @@ Morph::~Morph()
     m_englishName = 0;
     m_category = kReserved;
     m_index = -1;
-    m_type = 0;
+    m_type = kUnknown;
 }
 
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -137,24 +137,24 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         internal::readBytes(sizeof(MorphUnit), ptr, rest);
         int nmorphs = morph->size;
         size_t extraSize;
-        switch (morph->type) {
-        case 0: /* group */
+        switch (static_cast<Type>(morph->type)) {
+        case kGroup: /* group */
             extraSize = info.morphIndexSize + sizeof(GroupMorph);
             break;
-        case 1: /* vertex */
+        case kVertex: /* vertex */
             extraSize = info.vertexIndexSize + sizeof(VertexMorph);
             break;
-        case 2: /* bone */
+        case kBone: /* bone */
             extraSize = info.boneIndexSize + sizeof(BoneMorph);
             break;
-        case 3: /* UV */
-        case 4: /* UV1 */
-        case 5: /* UV2 */
-        case 6: /* UV3 */
-        case 7: /* UV4 */
+        case kTexCoord: /* UV */
+        case kUVA1: /* UV1 */
+        case kUVA2: /* UV2 */
+        case kUVA3: /* UV3 */
+        case kUVA4: /* UV4 */
             extraSize = info.vertexIndexSize + sizeof(UVMorph);
             break;
-        case 8: /* material */
+        case kMaterial: /* material */
             extraSize = info.materialIndexSize + sizeof(MaterialMorph);
             break;
         default:
@@ -179,39 +179,39 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         switch (morph->m_type) {
-        case 0: /* group */
+        case kGroup: /* group */
             if (!loadGroups(morphs, morph))
                 return false;
             break;
-        case 1: /* vertex */
+        case kVertex: /* vertex */
             if (!loadVertices(vertices, morph))
                 return false;
             break;
-        case 2: /* bone */
+        case kBone: /* bone */
             if (!loadBones(bones, morph))
                 return false;
             break;
-        case 3: /* UV */
+        case kTexCoord: /* UV */
             if (!loadUVs(vertices, 0, morph))
                 return false;
             break;
-        case 4: /* UV1 */
+        case kUVA1: /* UV1 */
             if (!loadUVs(vertices, 1, morph))
                 return false;
             break;
-        case 5: /* UV2 */
+        case kUVA2: /* UV2 */
             if (!loadUVs(vertices, 2, morph))
                 return false;
             break;
-        case 6: /* UV3 */
+        case kUVA3: /* UV3 */
             if (!loadUVs(vertices, 3, morph))
                 return false;
             break;
-        case 7: /* UV4 */
+        case kUVA4: /* UV4 */
             if (!loadUVs(vertices, 4, morph))
                 return false;
             break;
-        case 8: /* material */
+        case kMaterial: /* material */
             if (!loadMaterials(materials, morph))
                 return false;
             break;
@@ -319,24 +319,24 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     const MorphUnit &unit = *reinterpret_cast<const MorphUnit *>(ptr);
     m_category = static_cast<Category>(unit.category);
-    m_type = unit.type;
+    m_type = static_cast<Type>(unit.type);
     ptr += sizeof(unit);
     switch (m_type) {
-    case 0: /* group */
+    case kGroup: /* group */
         readGroups(info, unit.size, ptr);
         break;
-    case 1: /* vertex */
+    case kVertex: /* vertex */
         readVertices(info, unit.size, ptr);
         break;
-    case 2: /* bone */
+    case kBone: /* bone */
         readBones(info, unit.size, ptr);
         break;
-    case 3: /* UV0 */
-    case 4: /* UV1 */
-    case 5: /* UV2 */
-    case 6: /* UV3 */
-    case 7: /* UV4 */
-        readUVs(info, unit.size, m_type - 3, ptr);
+    case kTexCoord: /* UV0 */
+    case kUVA1: /* UV1 */
+    case kUVA2: /* UV2 */
+    case kUVA3: /* UV3 */
+    case kUVA4: /* UV4 */
+        readUVs(info, unit.size, m_type - kTexCoord, ptr);
         break;
     case 8: /* material */
         readMaterials(info, unit.size, ptr);
@@ -355,31 +355,31 @@ void Morph::write(uint8_t *data, const Model::DataInfo &info) const
     mu.category = m_category;
     mu.type = m_type;
     switch (m_type) {
-    case 0: /* group */
+    case kGroup: /* group */
         mu.size = m_groups.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeGroups(info, data);
         break;
-    case 1: /* vertex */
+    case kVertex: /* vertex */
         mu.size = m_vertices.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeVertices(info, data);
         break;
-    case 2: /* bone */
+    case kBone: /* bone */
         mu.size = m_bones.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeBones(info, data);
         break;
-    case 3: /* UV0 */
-    case 4: /* UV1 */
-    case 5: /* UV2 */
-    case 6: /* UV3 */
-    case 7: /* UV4 */
+    case kTexCoord: /* UV0 */
+    case kUVA1: /* UV1 */
+    case kUVA2: /* UV2 */
+    case kUVA3: /* UV3 */
+    case kUVA4: /* UV4 */
         mu.size = m_uvs.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeUVs(info, data);
         break;
-    case 8: /* material */
+    case kMaterial: /* material */
         mu.size = m_materials.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeMaterials(info, data);
@@ -396,23 +396,23 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
     size += internal::estimateSize(m_englishName);
     size += sizeof(MorphUnit);
     switch (m_type) {
-    case 0:
+    case kGroup:
         size += m_groups.count() * (sizeof(GroupMorph) + info.morphIndexSize);
         break;
-    case 1:
+    case kVertex:
         size += m_vertices.count() * (sizeof(VertexMorph) + info.vertexIndexSize);
         break;
-    case 2:
+    case kBone:
         size += m_bones.count() * (sizeof(BoneMorph) + info.boneIndexSize);
         break;
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
+    case kTexCoord:
+    case kUVA1:
+    case kUVA2:
+    case kUVA3:
+    case kUVA4:
         size += m_uvs.count() * (sizeof(UVMorph) + info.vertexIndexSize);
         break;
-    case 8:
+    case kMaterial:
         size += m_materials.count() * (sizeof(MaterialMorph) + info.materialIndexSize);
         break;
     default:
@@ -429,35 +429,35 @@ void Morph::setWeight(const Scalar &value)
         return;
     int nmorphs;
     switch (m_type) {
-    case 0: /* group */
+    case kGroup: /* group */
         nmorphs = m_groups.count();
         break;
-    case 1: /* vertex */
+    case kVertex: /* vertex */
         nmorphs = m_vertices.count();
         for (int i = 0; i < nmorphs; i++) {
             Vertex &v = m_vertices[i];
             v.vertex->mergeMorph(&v, value);
         }
         break;
-    case 2: /* bone */
+    case kBone: /* bone */
         nmorphs = m_bones.count();
         for (int i = 0; i < nmorphs; i++) {
             Bone &v = m_bones[i];
             v.bone->mergeMorph(&v, value);
         }
         break;
-    case 3: /* UV */
-    case 4: /* UV1 */
-    case 5: /* UV2 */
-    case 6: /* UV3 */
-    case 7: /* UV4 */
+    case kTexCoord: /* UV */
+    case kUVA1: /* UV1 */
+    case kUVA2: /* UV2 */
+    case kUVA3: /* UV3 */
+    case kUVA4: /* UV4 */
         nmorphs = m_uvs.count();
         for (int i = 0; i < nmorphs; i++) {
             UV &v = m_uvs[i];
             v.vertex->mergeMorph(&v, value);
         }
         break;
-    case 8: /* material */
+    case kMaterial: /* material */
         nmorphs = m_materials.count();
         for (int i = 0; i < nmorphs; i++) {
             Material &v = m_materials.at(0);
@@ -509,7 +509,7 @@ void Morph::setCategory(Category value)
     m_category = value;
 }
 
-void Morph::setType(uint8_t value)
+void Morph::setType(Type value)
 {
     m_type = value;
 }

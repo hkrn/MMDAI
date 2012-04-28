@@ -39,7 +39,7 @@ private:
     static void testReadWriteBoneMorph(size_t indexSize);
     static void testReadWriteGroupMorph(size_t indexSize);
     static void testReadWriteMaterialMorph(size_t indexSize);
-    static void testReadWriteUVMorph(size_t indexSize);
+    static void testReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type);
     static void testReadWriteRigidBody(size_t indexSize);
     static void testReadWriteVertexMorph(size_t indexSize);
     static void testReadWriteVertexBdef1(size_t indexSize);
@@ -79,9 +79,21 @@ private Q_SLOTS:
     void testReadWriteRigidBodyIndexSize1() const { testReadWriteRigidBody(1); }
     void testReadWriteRigidBodyIndexSize2() const { testReadWriteRigidBody(2); }
     void testReadWriteRigidBodyIndexSize4() const { testReadWriteRigidBody(4); }
-    void testReadWriteUVMorphIndexSize1() const { testReadWriteUVMorph(1); }
-    void testReadWriteUVMorphIndexSize2() const { testReadWriteUVMorph(2); }
-    void testReadWriteUVMorphIndexSize4() const { testReadWriteUVMorph(4); }
+    void testReadWriteTexCoordMorphIndexSize1() const { testReadWriteUVMorph(1, pmx::Morph::kTexCoord); }
+    void testReadWriteTexCoordMorphIndexSize2() const { testReadWriteUVMorph(2, pmx::Morph::kTexCoord); }
+    void testReadWriteTexCoordMorphIndexSize4() const { testReadWriteUVMorph(4, pmx::Morph::kTexCoord); }
+    void testReadWriteUVA1MorphIndexSize1() const { testReadWriteUVMorph(1, pmx::Morph::kUVA1); }
+    void testReadWriteUVA1MorphIndexSize2() const { testReadWriteUVMorph(2, pmx::Morph::kUVA1); }
+    void testReadWriteUVA1MorphIndexSize4() const { testReadWriteUVMorph(4, pmx::Morph::kUVA1); }
+    void testReadWriteUVA2MorphIndexSize1() const { testReadWriteUVMorph(1, pmx::Morph::kUVA2); }
+    void testReadWriteUVA2MorphIndexSize2() const { testReadWriteUVMorph(2, pmx::Morph::kUVA2); }
+    void testReadWriteUVA2MorphIndexSize4() const { testReadWriteUVMorph(4, pmx::Morph::kUVA2); }
+    void testReadWriteUVA3MorphIndexSize1() const { testReadWriteUVMorph(1, pmx::Morph::kUVA3); }
+    void testReadWriteUVA3MorphIndexSize2() const { testReadWriteUVMorph(2, pmx::Morph::kUVA3); }
+    void testReadWriteUVA3MorphIndexSize4() const { testReadWriteUVMorph(4, pmx::Morph::kUVA3); }
+    void testReadWriteUVA4MorphIndexSize1() const { testReadWriteUVMorph(1, pmx::Morph::kUVA4); }
+    void testReadWriteUVA4MorphIndexSize2() const { testReadWriteUVMorph(2, pmx::Morph::kUVA4); }
+    void testReadWriteUVA4MorphIndexSize4() const { testReadWriteUVMorph(4, pmx::Morph::kUVA4); }
     void testReadWriteVertexMorphIndexSize1() const { testReadWriteVertexMorph(1); }
     void testReadWriteVertexMorphIndexSize2() const { testReadWriteVertexMorph(2); }
     void testReadWriteVertexMorphIndexSize4() const { testReadWriteVertexMorph(4); }
@@ -732,7 +744,7 @@ void TestModel::testReadWriteBoneMorph(size_t indexSize)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kEyeblow);
-    morph.setType(2);
+    morph.setType(pmx::Morph::kBone);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -773,7 +785,7 @@ void TestModel::testReadWriteGroupMorph(size_t indexSize)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kEye);
-    morph.setType(0);
+    morph.setType(pmx::Morph::kGroup);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -830,7 +842,7 @@ void TestModel::testReadWriteMaterialMorph(size_t indexSize)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kLip);
-    morph.setType(8);
+    morph.setType(pmx::Morph::kMaterial);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -913,7 +925,7 @@ void TestModel::testReadWriteRigidBody(size_t indexSize)
     QCOMPARE(body2.boneIndex(), bone.index());
 }
 
-void TestModel::testReadWriteUVMorph(size_t indexSize)
+void TestModel::testReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
 {
     Encoding encoding;
     Morph morph, morph2;
@@ -934,7 +946,7 @@ void TestModel::testReadWriteUVMorph(size_t indexSize)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kOther);
-    morph.setType(7);
+    morph.setType(type);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -947,10 +959,10 @@ void TestModel::testReadWriteUVMorph(size_t indexSize)
     const Array<Morph::UV> &uvs = morph2.uvs();
     QCOMPARE(2, uvs.count());
     compare(uvs[0].position, uv1.position);
-    QCOMPARE(uvs[0].offset, 4);
+    QCOMPARE(uvs[0].offset, type - pmx::Morph::kTexCoord);
     QCOMPARE(uvs[0].index, uv1.index);
     compare(uvs[1].position, uv2.position);
-    QCOMPARE(uvs[1].offset, 4);
+    QCOMPARE(uvs[1].offset, type - pmx::Morph::kTexCoord);
     QCOMPARE(uvs[1].index, uv2.index);
 }
 
@@ -975,7 +987,7 @@ void TestModel::testReadWriteVertexMorph(size_t indexSize)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kOther);
-    morph.setType(1);
+    morph.setType(pmx::Morph::kVertex);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
