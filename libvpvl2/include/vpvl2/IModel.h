@@ -45,6 +45,7 @@ namespace vpvl2
 {
 
 class IBone;
+class ILabel;
 class IMorph;
 class IString;
 
@@ -244,6 +245,7 @@ public:
     virtual int count(Object value) const = 0;
     virtual void getBones(Array<IBone *> &value) const = 0;
     virtual void getMorphs(Array<IMorph *> &value) const = 0;
+    virtual void getLabels(Array<ILabel *> &value) const = 0;
 
     virtual const Vector3 &position() const = 0;
     virtual const Quaternion &rotation() const = 0;

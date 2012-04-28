@@ -147,6 +147,7 @@ public:
     int count(Object value) const;
     void getBones(Array<IBone *> &value) const;
     void getMorphs(Array<IMorph *> &value) const;
+    void getLabels(Array<ILabel *> &value) const;
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);

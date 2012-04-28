@@ -23,6 +23,7 @@ set(vpvl2_public_headers
     include/vpvl2/ICameraKeyframe.h
     include/vpvl2/IEncoding.h
     include/vpvl2/IKeyframe.h
+    include/vpvl2/ILabel.h
     include/vpvl2/ILightKeyframe.h
     include/vpvl2/IModel.h
     include/vpvl2/IMorph.h
@@ -231,6 +232,7 @@ link_vpvl(vpvl2)
 list(APPEND vpvl2_public_headers
   include/vpvl2/asset/Model.h
   include/vpvl2/pmd/Bone.h
+  include/vpvl2/pmd/Label.h
   include/vpvl2/pmd/Model.h
   include/vpvl2/pmd/Morph.h
 )

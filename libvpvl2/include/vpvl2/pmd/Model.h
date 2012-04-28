@@ -38,9 +38,7 @@
 #define VPVL2_PMD_MODEL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IEncoding.h"
 #include "vpvl2/IModel.h"
-#include "vpvl2/IString.h"
 
 #include "vpvl/PMDModel.h"
 
@@ -48,6 +46,10 @@ class btDiscreteDynamicsWorld;
 
 namespace vpvl2
 {
+
+class IEncoding;
+class IString;
+
 namespace pmd
 {
 
@@ -76,6 +78,7 @@ public:
     int count(Object value) const;
     void getBones(Array<IBone *> &value) const { value.copy(m_bones); }
     void getMorphs(Array<IMorph *> &value) const { value.copy(m_morphs); }
+    void getLabels(Array<ILabel *> &value) const { value.copy(m_labels); }
     const Vector3 &position() const { return m_model.positionOffset(); }
     const Quaternion &rotation() const { return m_model.rotationOffset(); }
     const Scalar &opacity() const { return m_opacity; }
@@ -104,6 +107,7 @@ private:
     vpvl::PMDModel m_model;
     Array<IBone *> m_bones;
     Array<IMorph *> m_morphs;
+    Array<ILabel *> m_labels;
     Hash<HashString, IBone *> m_name2bones;
     Hash<HashString, IMorph *> m_name2morphs;
     Scalar m_opacity;

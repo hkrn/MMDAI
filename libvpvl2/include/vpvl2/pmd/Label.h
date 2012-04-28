@@ -34,28 +34,43 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_PMD_LABEL_H_
+#define VPVL2_PMD_LABEL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/Factory.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/IBoneKeyframe.h"
-#include "vpvl2/ICameraKeyframe.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IKeyframe.h"
 #include "vpvl2/ILabel.h"
-#include "vpvl2/ILightKeyframe.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IMorphKeyframe.h"
-#include "vpvl2/IMotion.h"
-#include "vpvl2/IRenderEngine.h"
-#include "vpvl2/IString.h"
-#include "vpvl2/Scene.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+#include "vpvl/Face.h"
+
+namespace vpvl2
+{
+
+class IEncoding;
+class IString;
+
+namespace pmd
+{
+
+class VPVL2_API Label : public ILabel
+{
+public:
+    Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special);
+    ~Label();
+
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_name; }
+    bool isSpecial() const { return m_special; }
+    int count() const { return m_bones.count(); }
+    IBone *bone(int index) const { return m_bones.at(index); }
+    IMorph *morph(int /* index */) const { return 0; }
+
+    IEncoding *m_encoding;
+    IString *m_name;
+    Array<IBone *> m_bones;
+    bool m_special;
+};
+
+}
+}
+
 #endif
-
-#endif /* vpvl2_vpvl2_H_ */

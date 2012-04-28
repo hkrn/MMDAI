@@ -38,14 +38,16 @@
 #define VPVL2_PMD_MORPH_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IEncoding.h"
 #include "vpvl2/IMorph.h"
-#include "vpvl2/IString.h"
 
 #include "vpvl/Face.h"
 
 namespace vpvl2
 {
+
+class IEncoding;
+class IString;
+
 namespace pmd
 {
 

@@ -37,6 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 #include "vpvl2/pmd/Bone.h"
+#include "vpvl2/pmd/Label.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Morph.h"
 
@@ -73,8 +74,10 @@ bool Model::load(const uint8_t *data, size_t size)
 {
     bool ret = m_model.load(data, size);
     if (ret) {
-        const vpvl::Array<vpvl::Bone *> &bones = m_model.bones();
+        /* convert bones (vpvl::Bone => vpvl2::IBone) */
+        const vpvl::BoneList &bones = m_model.bones();
         const int nbones = bones.count();
+        Hash<HashPtr, IBone *> b2b;
         for (int i = 0; i < nbones; i++) {
             vpvl::Bone *b = bones[i];
             Bone *bone = new Bone(b, m_encoding);
@@ -82,8 +85,36 @@ bool Model::load(const uint8_t *data, size_t size)
             bone->setChildBone(b);
             m_bones.add(bone);
             m_name2bones.insert(bone->name()->toHashString(), bone);
+            HashPtr key(b);
+            b2b.insert(key, bone);
         }
-        const vpvl::Array<vpvl::Face *> &morphs = m_model.faces();
+        /* build first bone label (this is special label) */
+        Array<IBone *> bones2, firstBone;
+        firstBone.add(m_bones[0]);
+        Label *label = new Label(reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encoding, true);
+        m_labels.add(label);
+        /* other bone labels */
+        const vpvl::Array<vpvl::BoneList *> &bonesForUI = m_model.bonesForUI();
+        const vpvl::Array<uint8_t *> &categories = m_model.boneCategoryNames();
+        const int ncategories = categories.count();
+        for (int i = 0; i < ncategories; i++) {
+            const vpvl::BoneList *bonesInCategory = bonesForUI[i];
+            const int nBonesInCategory = bonesInCategory->count();
+            const uint8_t *name = categories[i];
+            bones2.clear();
+            for (int j = 0; j < nBonesInCategory; j++) {
+                vpvl::Bone *bone = bonesInCategory->at(j);
+                IBone **valuePtr = const_cast<IBone **>(b2b.find(bone));
+                if (valuePtr) {
+                    IBone *value = *valuePtr;
+                    bones2.add(value);
+                }
+            }
+            label = new Label(name, bones2, m_encoding, false);
+            m_labels.add(label);
+        }
+        /* convert morphs (vpvl::Face => vpvl2::IMorph) */
+        const vpvl::FaceList &morphs = m_model.faces();
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             vpvl::Face *face = morphs[i];

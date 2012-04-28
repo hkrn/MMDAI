@@ -423,6 +423,15 @@ void Model::getMorphs(Array<IMorph *> &value) const
     }
 }
 
+void Model::getLabels(Array<ILabel *> &value) const
+{
+    const int nlabels = m_labels.count();
+    for (int i = 0; i < nlabels; i++) {
+        ILabel *label = m_labels[i];
+        value.add(label);
+    }
+}
+
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;

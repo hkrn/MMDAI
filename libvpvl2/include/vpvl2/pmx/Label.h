@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_LABEL_H_
 #define VPVL2_PMX_LABEL_H_
 
+#include "vpvl2/ILabel.h"
 #include "vpvl2/IString.h"
 #include "vpvl2/pmx/Model.h"
 
@@ -54,7 +55,7 @@ namespace pmx
  * Label class represents a label of a Polygon Model Extended object.
  */
 
-class VPVL2_API Label
+class VPVL2_API Label : public ILabel
 {
 public:
     struct Pair;

@@ -39,13 +39,15 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IBone.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IString.h"
 
 #include "vpvl/Bone.h"
 
 namespace vpvl2
 {
+
+class IEncoding;
+class IString;
+
 namespace pmd
 {
 

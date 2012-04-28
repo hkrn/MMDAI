@@ -34,28 +34,30 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/pmd/Label.h"
 
-#include "vpvl2/Common.h"
-#include "vpvl2/Factory.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/IBoneKeyframe.h"
-#include "vpvl2/ICameraKeyframe.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IKeyframe.h"
-#include "vpvl2/ILabel.h"
-#include "vpvl2/ILightKeyframe.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IMorphKeyframe.h"
-#include "vpvl2/IMotion.h"
-#include "vpvl2/IRenderEngine.h"
-#include "vpvl2/IString.h"
-#include "vpvl2/Scene.h"
+namespace vpvl2
+{
+namespace pmd
+{
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
-#endif
+Label::Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)
+    : m_encoding(encoding),
+      m_name(0),
+      m_special(special)
+{
+    m_name = m_encoding->toString(name, IString::kShiftJIS, 50);
+    m_bones.copy(bones);
+}
 
-#endif /* vpvl2_vpvl2_H_ */
+Label::~Label()
+{
+    delete m_name;
+    m_name = 0;
+    m_encoding = 0;
+    m_special = false;
+}
+
+}
+}

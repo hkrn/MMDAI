@@ -34,28 +34,51 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef vpvl2_vpvl2_H_
-#define vpvl2_vpvl2_H_
+#ifndef VPVL2_ILABEL_H_
+#define VPVL2_ILABEL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/Factory.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/IBoneKeyframe.h"
-#include "vpvl2/ICameraKeyframe.h"
-#include "vpvl2/IEncoding.h"
-#include "vpvl2/IKeyframe.h"
-#include "vpvl2/ILabel.h"
-#include "vpvl2/ILightKeyframe.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IMorphKeyframe.h"
-#include "vpvl2/IMotion.h"
-#include "vpvl2/IRenderEngine.h"
-#include "vpvl2/IString.h"
-#include "vpvl2/Scene.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
+namespace vpvl2
+{
+
+class IBone;
+class IMorph;
+class IString;
+
+/**
+ * モデルのラベル（表示枠）をあらわすインターフェースです。
+ *
+ */
+class VPVL2_API ILabel
+{
+public:
+    virtual ~ILabel() {}
+
+    /**
+     * ラベルの名前を返します。
+     *
+     * @return IString
+     */
+    virtual const IString *name() const = 0;
+
+    /**
+     * ラベルの英名を返します。
+     *
+     * @return IString
+     */
+    virtual const IString *englishName() const = 0;
+
+    virtual bool isSpecial() const = 0;
+
+    virtual int count() const = 0;
+
+    virtual IBone *bone(int index) const = 0;
+
+    virtual IMorph *morph(int index) const = 0;
+};
+
+}
+
 #endif
 
-#endif /* vpvl2_vpvl2_H_ */
