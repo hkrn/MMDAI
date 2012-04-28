@@ -1084,7 +1084,18 @@ void PMXRenderEngine::renderShadow()
     size_t offset = pmx::Model::strideOffset(pmx::Model::kVertexStride);
     size_t size = pmx::Model::strideSize(pmx::Model::kVertexStride);
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
-    glDrawElements(GL_TRIANGLES, m_model->indices().count(), GL_UNSIGNED_INT, 0);
+    glCullFace(GL_FRONT);
+    const Array<pmx::Material *> &materials = m_model->materials();
+    const int nmaterials = materials.count();
+    offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
+    for (int i = 0; i < nmaterials; i++) {
+        const pmx::Material *material = materials[i];
+        const int nindices = material->indices();
+        if (material->hasShadow())
+            glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+        offset += nindices * size;
+    }
+    glCullFace(GL_BACK);
     shadowProgram->unbind();
 }
 
