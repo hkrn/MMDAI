@@ -734,106 +734,47 @@ void BoneMotionModel::setPMDModel(IModel *model)
             /* ルートを作成 */
             RootPtr ptr(new TreeItem("", 0, true, false, 0));
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
-#if !QMA2_TBD
-            Array<IBone *> bones;
+            Array<ILabel *> labels;
             Keys keys;
-            TreeItem *parent = new TreeItem(tr("Root"), 0, false, true, static_cast<TreeItem *>(r));
-            model->getBones(bones);
-            const int nbones = bones.count();
-            for (int i = 0; i < nbones; i++) {
-                IBone *bone = bones[i];
-                const QString &name = internal::toQString(bone);
-                TreeItem *child = new TreeItem(name, bone, false, false, parent);
-                parent->addChild(child);
-                keys.insert(name, child);
-            }
-            r->addChild(parent);
-#else
-            QSet<Bone *> bonesInCategorySet;
-            Keys keys;
-            Array<BoneList *> allBones;
-            Array<uint8_t *> names;
-            allBones.copy(model->bonesForUI());
-            names.copy(model->boneCategoryNames());
-            /*
-             * 別のカテゴリ内に「センター」または「全ての親」ボーンが含まれるかを確認するための QSet を作成
-             * (個人的にはこれ結構冗長度が高いのではないだろうかと思ってる)
-             */
-            const int nBoneCategoryNames = names.count();
-            for (int i = 0; i < nBoneCategoryNames; i++) {
-                BoneList *bonesInCategory = allBones[i];
-                int nBonesInCategory = bonesInCategory->count();
-                for (int j = 0; j < nBonesInCategory; j++) {
-                    Bone *bone = bonesInCategory->at(j);
-                    bonesInCategorySet.insert(bone);
-                }
-            }
-            /* 「全ての親」と「センター」ボーンを探すための連想配列を作成 */
-            QHash<QString, Bone *> boneHash;
-            const BoneList &bones = model->bones();
-            int nbones = bones.count();
-            for (int i = 0; i < nbones; i++) {
-                Bone *bone = bones[i];
-                boneHash.insert(internal::toQString(bone), bone);
-            }
-            /*
-             * 「全ての親」専用のカテゴリを作成する
-             * 特殊な扱いのボーンで専用にカテゴリを作成する理由は下の「センターボーン」を参照のこと
-             *
-             * 1. 特殊な扱いのボーンは現状「全ての親」と「センター」の２つ
-             * 2. 別カテゴリに特殊な扱いのボーンがあれば専用にカテゴリを作らず別カテゴリにあるものを使う
-             * 3. 「センター」より先に「全ての親」があれば「全ての親」を選択状態にする
-             */
-            const QString &rootBoneName = internal::toQString(Bone::rootBoneName());
-            if (boneHash.contains(rootBoneName)) {
-                Bone *rootBone = boneHash[rootBoneName];
-                /* 別のカテゴリ内に入っていないことを確認する */
-                if (!bonesInCategorySet.contains(rootBone)) {
-                    TreeItem *category = new TreeItem(rootBoneName, 0, false, true, r);
-                    TreeItem *item = new TreeItem(rootBoneName, rootBone, false, false, category);
-                    keys.insert(rootBoneName, item);
-                    category->addChild(item);
-                    r->addChild(category);
-                    boneToBeSelected = rootBone;
-                }
-            }
-            /*
-             * センターボーンはセンターボーン専用でカテゴリをつける。以前はカテゴリではないが表示上カテゴリに位置していたが、
-             * モーションを読み込んだ時モデルのインデックス作成において処理速度が大幅に落ちてしまったことが 0.9.0 で判明したため、
-             * このような扱いにしている
-             */
-            const QString &centerBoneName = internal::toQString(Bone::centerBoneName());
-            if (boneHash.contains(centerBoneName)) {
-                Bone *centerBone = boneHash[centerBoneName];
-                /* 別のカテゴリ内に入っていないことを確認する */
-                if (!bonesInCategorySet.contains(centerBone)) {
-                    TreeItem *category = new TreeItem(centerBoneName, 0, false, true, r);
-                    TreeItem *item = new TreeItem(centerBoneName, centerBone, false, false, category);
-                    keys.insert(centerBoneName, item);
-                    category->addChild(item);
-                    r->addChild(category);
-                    if (!boneToBeSelected)
-                        boneToBeSelected = centerBone;
-                }
-            }
+            model->getLabels(labels);
             /* ボーンのカテゴリからルートの子供であるカテゴリアイテムを作成する */
-            for (int i = 0; i < nBoneCategoryNames; i++) {
-                const QString &category = internal::toQString(names[i]).trimmed();
-                const BoneList *bones = allBones[i];
-                const int bonesCount = bones->count();
-                TreeItem *parent = new TreeItem(category, 0, false, true, r);
+            const int nlabels = labels.count();
+            for (int i = 0; i < nlabels; i++) {
+                const ILabel *label = labels[i];
+                const int nchildren = label->count();
+                TreeItem *parent = 0;
+                /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
+                if (label->isSpecial()) {
+                    /* 特殊枠でかつ先頭ボーンかどうか */
+                    static const internal::String kRoot("Root");
+                    if (nchildren > 0 && label->name()->equals(&kRoot)) {
+                        const IBone *bone = label->bone(0);
+                        if (bone) {
+                            const QString &category = internal::toQString(bone->name()).trimmed();
+                            parent = new TreeItem(category, 0, false, true, r);
+                        }
+                    }
+                    /* 表情ラベルはスキップする */
+                    if (!parent)
+                        continue;
+                }
+                else {
+                    const QString &category = internal::toQString(label->name()).trimmed();
+                    parent = new TreeItem(category, 0, false, true, r);
+                }
                 /* カテゴリに属するボーン名を求めてカテゴリアイテムに追加する。また、ボーン名をキー名として追加 */
-                for (int j = 0; j < bonesCount; j++) {
-                    Bone *bone = bones->at(j);
-                    const QString &name = internal::toQString(bone);
-                    TreeItem *child = new TreeItem(name, bone, false, false, parent);
-                    parent->addChild(child);
-                    keys.insert(name, child);
+                for (int j = 0; j < nchildren; j++) {
+                    IBone *bone = label->bone(j);
+                    if (bone) {
+                        const QString &name = internal::toQString(bone);
+                        TreeItem *child = new TreeItem(name, bone, false, false, parent);
+                        parent->addChild(child);
+                        keys.insert(name, child);
+                    }
                 }
                 /* カテゴリアイテムをルートアイテムに追加 */
                 r->addChild(parent);
             }
-#endif
             addPMDModel(model, ptr, keys);
         }
         else {
