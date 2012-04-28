@@ -96,8 +96,9 @@ Morph::Morph()
       m_englishName(0),
       m_weight(0),
       m_category(kReserved),
+      m_type(kUnknown),
       m_index(-1),
-      m_type(kUnknown)
+      m_hasParent(false)
 {
 }
 
@@ -108,8 +109,9 @@ Morph::~Morph()
     delete m_englishName;
     m_englishName = 0;
     m_category = kReserved;
-    m_index = -1;
     m_type = kUnknown;
+    m_index = -1;
+    m_hasParent = false;
 }
 
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -248,10 +250,19 @@ bool Morph::loadGroups(const Array<Morph *> &morphs, Morph *morph)
         Group &group = morph->m_groups[i];
         int groupIndex = group.index;
         if (groupIndex >= 0) {
-            if (groupIndex >= nmorphs)
+            if (groupIndex >= nmorphs) {
                 return false;
-            else
-                group.morph = &morph[groupIndex];
+            }
+            else {
+                Morph *morph = morphs[groupIndex];
+                if (morph->m_type == kGroup) {
+                    return false;
+                }
+                else {
+                    group.morph = morph;
+                    morph->m_hasParent = true;
+                }
+            }
         }
     }
     return true;
@@ -274,18 +285,21 @@ bool Morph::loadMaterials(const Array<pmx::Material *> &materials, Morph *morph)
     return true;
 }
 
-bool Morph::loadUVs(const Array<pmx::Vertex *> &uv, int /* offset */, Morph *morph)
+bool Morph::loadUVs(const Array<pmx::Vertex *> &vertices, int offset, Morph *morph)
 {
-    const int nMorphVertices = morph->m_vertices.count();
-    const int nvertices = uv.count();
-    for (int i = 0; i < nMorphVertices; i++) {
-        Vertex &vertex = morph->m_vertices[i];
-        int vertexIndex = vertex.index;
+    const int nMorphUVs = morph->m_uvs.count();
+    const int nvertices = vertices.count();
+    for (int i = 0; i < nMorphUVs; i++) {
+        UV &uv = morph->m_uvs[i];
+        int vertexIndex = uv.index;
         if (vertexIndex >= 0) {
-            if (vertexIndex >= nvertices)
+            if (vertexIndex >= nvertices) {
                 return false;
-            else
-                vertex.vertex = uv[vertexIndex];
+            }
+            else {
+                uv.vertex = vertices[vertexIndex];
+                uv.offset = offset;
+            }
         }
     }
     return true;
@@ -431,6 +445,11 @@ void Morph::setWeight(const Scalar &value)
     switch (m_type) {
     case kGroup: /* group */
         nmorphs = m_groups.count();
+        for (int i = 0; i < nmorphs; i++) {
+            Group &v = m_groups[i];
+            Morph *morph = v.morph;
+            morph->setWeight(v.weight * value);
+        }
         break;
     case kVertex: /* vertex */
         nmorphs = m_vertices.count();

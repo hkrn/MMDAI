@@ -136,6 +136,7 @@ public:
     Category category() const { return m_category; }
     uint8_t type() const { return m_type; }
     int index() const { return m_index; }
+    bool hasParent() const { return m_hasParent; }
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
@@ -158,7 +159,7 @@ private:
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);
     static bool loadGroups(const Array<Morph *> &morphs, Morph *morph);
     static bool loadMaterials(const Array<pmx::Material *> &materials, Morph *morph);
-    static bool loadUVs(const Array<pmx::Vertex *> &uv, int offset, Morph *morph);
+    static bool loadUVs(const Array<pmx::Vertex *> &vertices, int offset, Morph *morph);
     static bool loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph);
     void readBones(const Model::DataInfo &info, int count, uint8_t *&ptr);
     void readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr);
@@ -180,8 +181,9 @@ private:
     IString *m_englishName;
     Scalar m_weight;
     Category m_category;
-    int m_index;
     Type m_type;
+    int m_index;
+    bool m_hasParent;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Morph)
 };

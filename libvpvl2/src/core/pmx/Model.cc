@@ -306,11 +306,11 @@ void Model::performUpdate()
         SkinnedVertex &v = m_skinnedVertices[i];
         vertex->performSkinning(v.position, v.normal);
         v.normal[3] = vertex->edgeSize();
-        v.texcoord = vertex->texcoord();
-        v.uva1 = vertex->uv(0);
-        v.uva2 = vertex->uv(1);
-        v.uva3 = vertex->uv(2);
-        v.uva4 = vertex->uv(3);
+        v.texcoord = vertex->texcoord() + vertex->uv(0);
+        v.uva1 = vertex->uv(1);
+        v.uva2 = vertex->uv(2);
+        v.uva3 = vertex->uv(3);
+        v.uva4 = vertex->uv(4);
     }
 }
 

@@ -85,6 +85,13 @@ public:
     virtual Category category() const = 0;
 
     /**
+     * グループモーフに所属しているかを返します。
+     *
+     * @return bool
+     */
+    virtual bool hasParent() const = 0;
+
+    /**
      * 係数を返します。
      *
      * @return float
