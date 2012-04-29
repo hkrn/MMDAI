@@ -104,6 +104,8 @@ public:
         virtual void resetDefault() = 0;
     };
 
+    static ICamera *createCamera();
+    static ILight *createLight();
     static bool isAcceleratorSupported();
     static const Scalar &defaultFPS();
 

@@ -229,6 +229,16 @@ struct Scene::PrivateContext {
     Scalar preferredFPS;
 };
 
+Scene::ICamera *Scene::createCamera()
+{
+    return new Camera();
+}
+
+Scene::ILight *Scene::createLight()
+{
+    return new Light();
+}
+
 bool Scene::isAcceleratorSupported()
 {
 #ifdef VPVL2_ENABLE_OPENCL
