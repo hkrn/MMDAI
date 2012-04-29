@@ -1149,6 +1149,10 @@ void SceneLoader::updateMatrices(const QSizeF &size)
         modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
     matrices->setProjection(projectionMatrixf);
     matrices->setModelViewProjection(modelViewMatrixf);
+}
+
+void SceneLoader::updateModels()
+{
     m_project->updateModels();
 }
 

@@ -484,8 +484,7 @@ void SceneWidget::advanceMotion(float delta)
         const Scalar &step = delta / Scene::defaultFPS();
         m_loader->world()->mutableWorld()->stepSimulation(step);
     }
-    updateScene();
-    emit cameraPerspectiveDidSet(scene->camera());
+    updateMotions();
 }
 
 void SceneWidget::seekMotion(float frameIndex, bool force)
@@ -510,8 +509,7 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
         scene->seek(frameIndex);
         m_frameIndex = frameIndex;
     }
-    updateScene();
-    emit cameraPerspectiveDidSet(scene->camera());
+    updateMotions();
     emit motionDidSeek(frameIndex);
 }
 
@@ -525,8 +523,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_frameIndex = 0;
-    updateScene();
-    emit cameraPerspectiveDidSet(scene->camera());
+    updateMotions();
     emit motionDidSeek(0.0f);
 }
 
@@ -537,7 +534,7 @@ void SceneWidget::setCamera()
                                                tr("VMD file (*.vmd)"),
                                                m_settings));
     if (motion)
-        updateSceneMotion();
+        updateMotions();
 }
 
 IMotion *SceneWidget::setCamera(const QString &path)
@@ -1065,10 +1062,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         }
         else {
             /* 非再生中(編集中)はモーションを一切動かさず、カメラの更新だけ行う */
-            Scene *scene = m_loader->scene();
-            scene->updateCamera();
-            updateScene();
-            emit cameraPerspectiveDidSet(scene->camera());
+            updateCamera();
         }
     }
 }
@@ -1239,10 +1233,21 @@ void SceneWidget::updateFPS()
     m_frameCount++;
 }
 
-void SceneWidget::updateScene()
+void SceneWidget::updateCamera()
 {
+    Scene *scene = m_loader->scene();
+    scene->updateCamera();
     m_loader->updateMatrices(QSizeF(size()));
     updateGL();
+    emit cameraPerspectiveDidSet(scene->camera());
+}
+
+void SceneWidget::updateMotions()
+{
+    m_loader->updateMatrices(QSizeF(size()));
+    m_loader->updateModels();
+    updateGL();
+    emit cameraPerspectiveDidSet(m_loader->scene()->camera());
 }
 
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)

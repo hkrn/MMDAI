@@ -88,6 +88,7 @@ public:
     void release();
     void render();
     void updateMatrices(const QSizeF &size);
+    void updateModels();
     const QList<QUuid> renderOrderList() const;
 
     bool isGridVisible() const;
