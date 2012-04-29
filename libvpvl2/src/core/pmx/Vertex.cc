@@ -43,6 +43,10 @@
 namespace
 {
 
+using namespace vpvl2::pmx;
+
+static Bone kNullBone;
+
 #pragma pack(push, 1)
 
 struct VertexUnit {
@@ -178,6 +182,9 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 else
                     vertex->m_bones[0] = bones[boneIndex];
             }
+            else {
+                vertex->m_bones[0] = &kNullBone;
+            }
             break;
         }
         case kBdef2: {
@@ -188,6 +195,9 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                         return false;
                     else
                         vertex->m_bones[j] = bones[boneIndex];
+                }
+                else {
+                    vertex->m_bones[j] = &kNullBone;
                 }
             }
             break;
@@ -200,6 +210,9 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                         return false;
                     else
                         vertex->m_bones[j] = bones[boneIndex];
+                }
+                else {
+                    vertex->m_bones[j] = &kNullBone;
                 }
             }
             break;
