@@ -86,27 +86,35 @@ public:
     typedef std::map<Project::UUID, IModel *> ModelMap;
     typedef std::map<Project::UUID, IMotion *> MotionMap;
 
-    PrivateContext(Project::IDelegate *delegate, Factory *factory)
+    PrivateContext(Scene *parent, Project::IDelegate *delegate, Factory *factory)
         : delegate(delegate),
           factory(factory),
           currentString(0),
           currentModel(0),
           currentMotion(0),
           state(kInitial),
-          depth(0)
+          depth(0),
+          m_parent(parent)
     {
     }
     ~PrivateContext() {
         state = kInitial;
         depth = 0;
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++)
-            delete (*it).second;
+        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            IModel *model = (*it).second;
+            m_parent->deleteModel(model);
+        }
         assets.clear();
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++)
-            delete (*it).second;
+        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            IModel *model = (*it).second;
+            m_parent->deleteModel(model);
+        }
         models.clear();
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++)
-            delete (*it).second;
+        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            IMotion *motion = (*it).second;
+            m_parent->removeMotion(motion);
+            delete motion;
+        }
         motions.clear();
         delete currentString;
         currentString = 0;
@@ -998,6 +1006,9 @@ public:
     IMotion *currentMotion;
     State state;
     int depth;
+
+private:
+    Scene *m_parent;
 };
 
 const std::string Project::PrivateContext::kEmpty = "";
@@ -1016,7 +1027,7 @@ Project::Project(IDelegate *delegate, Factory *factory)
       m_dirty(false)
 {
     internal::zerofill(&m_sax, sizeof(m_sax));
-    m_context = new PrivateContext(delegate, factory);
+    m_context = new PrivateContext(this, delegate, factory);
     m_sax.initialized = XML_SAX2_MAGIC;
     m_sax.startElementNs = &PrivateContext::startElement;
     m_sax.endElementNs = &PrivateContext::endElement;
