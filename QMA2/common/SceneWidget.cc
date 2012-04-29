@@ -1013,20 +1013,27 @@ void SceneWidget::paintGL()
     IBone *bone = 0;
     if (!m_bones.isEmpty())
         bone = m_bones.first();
-    /* ハンドルのレンダリングに問題があるようで一旦このレンダリング順になっている */
-    m_handles->drawImageHandles(bone);
-    m_info->draw();
     switch (m_editMode) {
     case kSelect:
+        /* モデルのボーンの接続部分をレンダリング */
         if (!(m_handleFlags & Handles::kEnable))
             m_debugDrawer->drawModelBones(m_loader->selectedModel(), scene, m_bones.toSet());
+        /* 右下のハンドルが領域に入ってる場合は軸を表示する */
         if (m_isImageHandleRectIntersect)
             m_debugDrawer->drawBoneTransform(bone, scene, m_handles->modeFromConstraint());
+        /* 情報パネルと右下のハンドルを最後にレンダリング(表示上最上位に持っていく) */
+        m_handles->drawImageHandles(bone);
+        m_info->draw();
         break;
     case kRotate:
+        /* kRotate と kMove の場合はレンダリングがうまくいかない関係でモデルのハンドルを最後に持ってく */
+        m_handles->drawImageHandles(bone);
+        m_info->draw();
         m_handles->drawRotationHandle();
         break;
     case kMove:
+        m_handles->drawImageHandles(bone);
+        m_info->draw();
         m_handles->drawMoveHandle();
         break;
     }
