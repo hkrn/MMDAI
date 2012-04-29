@@ -72,7 +72,7 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
-    void mergeMorph(Morph::Bone *morph, float weight);
+    void mergeMorph(const Morph::Bone *morph, float weight);
     void performFullTransform();
     void performTransform();
     void performInverseKinematics();

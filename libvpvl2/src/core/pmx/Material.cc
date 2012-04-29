@@ -272,7 +272,7 @@ size_t Material::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Material::mergeMorph(Morph::Material *morph, float weight)
+void Material::mergeMorph(const Morph::Material *morph, float weight)
 {
     if (btFuzzyZero(weight)) {
         resetMorph();

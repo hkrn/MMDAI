@@ -70,18 +70,41 @@ public:
         kMaterial
     };
     struct Bone {
+        Bone()
+            : bone(0),
+              index(-1)
+        {
+        }
         pmx::Bone *bone;
         Vector3 position;
         Quaternion rotation;
         int index;
     };
     struct Group {
+        Group()
+            : morph(0),
+              weight(0),
+              index(-1)
+        {
+        }
         Morph *morph;
         float weight;
         int index;
     };
     struct Material {
-        pmx::Material *material;
+        Material()
+            : materials(0),
+              shininess(0),
+              edgeSize(0),
+              index(-1),
+              operation(0)
+        {
+        }
+        ~Material() {
+            delete materials;
+            materials = 0;
+        }
+        Array<pmx::Material *> *materials;
         Vector3 ambient;
         Vector4 diffuse;
         Vector3 specular;
@@ -95,21 +118,28 @@ public:
         uint8_t operation;
     };
     struct UV {
+        UV()
+            : vertex(0),
+              index(-1),
+              offset(0)
+        {
+        }
         pmx::Vertex *vertex;
         Vector4 position;
         uint32_t index;
         int offset;
     };
     struct Vertex {
+        Vertex()
+            : vertex(0),
+              index(-1)
+        {
+        }
         pmx::Vertex *vertex;
         Vector3 position;
         uint32_t index;
     };
 
-
-    /**
-     * Constructor
-     */
     Morph();
     ~Morph();
 
@@ -140,20 +170,20 @@ public:
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
-    void addBoneMorph(const Bone &value);
-    void addGroupMorph(const Group &value);
-    void addMaterialMorph(const Material &value);
-    void addUVMorph(const UV &value);
-    void addVertexMorph(const Vertex &value);
+    void addBoneMorph(Bone *value);
+    void addGroupMorph(Group *value);
+    void addMaterialMorph(Material *value);
+    void addUVMorph(UV *value);
+    void addVertexMorph(Vertex *value);
     void setCategory(Category value);
     void setType(Type value);
     void setIndex(int value);
 
-    const Array<Bone> &bones() const { return m_bones; }
-    const Array<Group> &groups() const { return m_groups; }
-    const Array<Material> &materials() const { return m_materials; }
-    const Array<UV> &uvs() const { return m_uvs; }
-    const Array<Vertex> &vertices() const { return m_vertices; }
+    const Array<Bone *> &bones() const { return m_bones; }
+    const Array<Group *> &groups() const { return m_groups; }
+    const Array<Material *> &materials() const { return m_materials; }
+    const Array<UV *> &uvs() const { return m_uvs; }
+    const Array<Vertex *> &vertices() const { return m_vertices; }
 
 private:
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);
@@ -172,11 +202,11 @@ private:
     void writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const;
     void writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const;
 
-    Array<Vertex> m_vertices;
-    Array<UV> m_uvs;
-    Array<Bone> m_bones;
-    Array<Material> m_materials;
-    Array<Group> m_groups;
+    Array<Vertex *> m_vertices;
+    Array<UV *> m_uvs;
+    Array<Bone *> m_bones;
+    Array<Material *> m_materials;
+    Array<Group *> m_groups;
     IString *m_name;
     IString *m_englishName;
     Scalar m_weight;

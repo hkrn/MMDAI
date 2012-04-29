@@ -502,7 +502,7 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Bone::mergeMorph(Morph::Bone *morph, float weight)
+void Bone::mergeMorph(const Morph::Bone *morph, float weight)
 {
     m_positionMorph = morph->position * weight;
     m_rotationMorph = morph->rotation * weight;
