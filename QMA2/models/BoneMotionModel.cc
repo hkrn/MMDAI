@@ -744,7 +744,6 @@ void BoneMotionModel::setPMDModel(IModel *model)
         return;
     if (model) {
         /* PMD の二重登録防止 */
-        IBone *boneToBeSelected = 0;
         if (!hasPMDModel(model)) {
             /* ルートを作成 */
             RootPtr ptr(new TreeItem("", 0, true, false, 0));
@@ -798,10 +797,13 @@ void BoneMotionModel::setPMDModel(IModel *model)
         }
         m_model = model;
         emit modelDidChange(model);
-        /* 「全ての親」または「センター」のカテゴリを作成した場合いずれかを最初から選択状態にする */
-        if (boneToBeSelected) {
-            QList<IBone *> bones; bones.append(boneToBeSelected);
-            selectBones(bones);
+        /* ボーン選択(最初のボーンを選択状態にする) */
+        Array<IBone *> bones;
+        model->getBones(bones);
+        if (bones.count() > 0) {
+            QList<IBone *> selectedBones;
+            selectedBones.append(bones[0]);
+            selectBones(selectedBones);
         }
         qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQString(model)));
     }
