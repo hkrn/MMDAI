@@ -771,14 +771,15 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
         const QString &bone = stream.readLine();
         /* 7行目: 影をつけるかどうか(未実装) */
         bool enableShadow = stream.readLine().toInt() == 1;
-        IModel *asset = m_factory->createModel(IModel::kAsset);
-        if (loadAsset(dir.absoluteFilePath(filename), uuid, asset)) {
+        QScopedPointer<IModel> asset(m_factory->createModel(IModel::kAsset));
+        IModel *assetPtr = asset.data();
+        if (loadAsset(dir.absoluteFilePath(filename), uuid, assetPtr)) {
             if (!name.isEmpty()) {
                 internal::String s(name);
                 asset->setName(&s);
             }
             if (!filename.isEmpty()) {
-                m_name2assets.insert(filename, asset);
+                m_name2assets.insert(filename, assetPtr);
             }
             if (scaleFactor > 0)
                 asset->setScaleFactor(scaleFactor);
@@ -801,7 +802,7 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
             }
             Q_UNUSED(enableShadow);
         }
-        return asset;
+        return asset.take();
     }
     else {
         qWarning("Cannot load %s: %s", qPrintable(baseName), qPrintable(file.errorString()));
@@ -813,21 +814,20 @@ IMotion *SceneLoader::loadCameraMotion(const QString &path)
 {
     /* カメラモーションをファイルから読み込み、場面オブジェクトに設定する */
     QFile file(path);
-    IMotion *motion = 0;
+    QScopedPointer<IMotion> motion;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        motion = m_factory->createMotion();
+        motion.reset(m_factory->createMotion());
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
                 && motion->countKeyframes(IKeyframe::kCamera) > 0) {
-            setCameraMotion(motion);
-            m_project->addMotion(motion, QUuid::createUuid().toString().toStdString());
+            setCameraMotion(motion.data());
+            m_project->addMotion(motion.data(), QUuid::createUuid().toString().toStdString());
         }
         else {
-            delete motion;
-            motion = 0;
+            motion.reset(0);
         }
     }
-    return motion;
+    return motion.take();
 }
 
 bool SceneLoader::loadModel(const QString &filename, IModel *&model)
@@ -861,16 +861,14 @@ IMotion *SceneLoader::loadModelMotion(const QString &path)
 {
     /* モーションをファイルから読み込む。モデルへの追加は setModelMotion を使う必要がある */
     QFile file(path);
-    IMotion *motion = 0;
+    QScopedPointer<IMotion> motion;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        motion = m_factory->createMotion();
-        if (!motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
-            delete motion;
-            motion = 0;
-        }
+        motion.reset(m_factory->createMotion());
+        if (!motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size()))
+            motion.reset(0);
     }
-    return motion;
+    return motion.take();
 }
 
 IMotion *SceneLoader::loadModelMotion(const QString &path, QList<IModel *> &models)
@@ -1089,13 +1087,15 @@ void SceneLoader::release()
     const Project::UUIDList &motionUUIDs = m_project->motionUUIDs();
     for (Project::UUIDList::const_iterator it = motionUUIDs.begin(); it != motionUUIDs.end(); it++) {
         const Project::UUID &motionUUID = *it;
-        if (IMotion *motion = m_project->motion(motionUUID))
+        IMotion *motion = m_project->motion(motionUUID);
+        if (motion)
             emit motionWillDelete(motion, QUuid(motionUUID.c_str()));
     }
     const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
     for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         const Project::UUID &modelUUID = *it;
-        if (IModel *model = m_project->model(modelUUID))
+        IModel *model = m_project->model(modelUUID);
+        if (model)
             emit modelWillDelete(model, QUuid(modelUUID.c_str()));
     }
     m_renderOrderList.clear();
@@ -1235,8 +1235,10 @@ void SceneLoader::setModelMotion(IMotion *motion, IModel *model)
     for (int i = 0; i < nmotions; i++) {
         /* 先にプロジェクトからモーションを論理削除した後にモデルから物理削除する */
         IMotion *motion = motions[i];
-        if (motion->parentModel() == model)
+        if (motion->parentModel() == model) {
             m_project->removeMotion(motion);
+            delete motion;
+        }
     }
 #endif
     motion->setParentModel(model);

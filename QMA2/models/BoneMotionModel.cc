@@ -754,10 +754,10 @@ void BoneMotionModel::setPMDModel(IModel *model)
             model->getLabels(labels);
             /* ボーンのカテゴリからルートの子供であるカテゴリアイテムを作成する */
             const int nlabels = labels.count();
+            QScopedPointer<TreeItem> parent, child;
             for (int i = 0; i < nlabels; i++) {
                 const ILabel *label = labels[i];
                 const int nchildren = label->count();
-                TreeItem *parent = 0;
                 /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
                 if (label->isSpecial()) {
                     /* 特殊枠でかつ先頭ボーンかどうか */
@@ -766,29 +766,29 @@ void BoneMotionModel::setPMDModel(IModel *model)
                         const IBone *bone = label->bone(0);
                         if (bone) {
                             const QString &category = internal::toQString(bone->name()).trimmed();
-                            parent = new TreeItem(category, 0, false, true, r);
+                            parent.reset(new TreeItem(category, 0, false, true, r));
                         }
                     }
                     /* 表情ラベルはスキップする */
-                    if (!parent)
+                    if (parent.isNull())
                         continue;
                 }
                 else {
                     const QString &category = internal::toQString(label->name()).trimmed();
-                    parent = new TreeItem(category, 0, false, true, r);
+                    parent.reset(new TreeItem(category, 0, false, true, r));
                 }
                 /* カテゴリに属するボーン名を求めてカテゴリアイテムに追加する。また、ボーン名をキー名として追加 */
                 for (int j = 0; j < nchildren; j++) {
                     IBone *bone = label->bone(j);
                     if (bone) {
                         const QString &name = internal::toQString(bone);
-                        TreeItem *child = new TreeItem(name, bone, false, false, parent);
-                        parent->addChild(child);
-                        keys.insert(name, child);
+                        child.reset(new TreeItem(name, bone, false, false, parent.data()));
+                        parent->addChild(child.data());
+                        keys.insert(name, child.take());
                     }
                 }
                 /* カテゴリアイテムをルートアイテムに追加 */
-                r->addChild(parent);
+                r->addChild(parent.take());
             }
             addPMDModel(model, ptr, keys);
         }

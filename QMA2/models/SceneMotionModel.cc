@@ -269,14 +269,12 @@ SceneMotionModel::SceneMotionModel(Factory *factory,
       m_cameraTreeItem(0),
       m_lightTreeItem(0)
 {
-    RootTreeItem *root = new RootTreeItem();
-    CameraTreeItem *camera = new CameraTreeItem(root);
-    LightTreeItem *light = new LightTreeItem(root);
-    root->addChild(camera);
+    QScopedPointer<RootTreeItem> rootTreeItem(new RootTreeItem());
+    m_cameraTreeItem = new CameraTreeItem(rootTreeItem.data());
+    m_lightTreeItem = new LightTreeItem(rootTreeItem.data());
+    m_rootTreeItem = rootTreeItem.take();
+    m_rootTreeItem->addChild(m_cameraTreeItem);
     //root->addChild(light);
-    m_rootTreeItem = root;
-    m_cameraTreeItem = camera;
-    m_lightTreeItem = light;
 }
 
 SceneMotionModel::~SceneMotionModel()

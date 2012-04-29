@@ -442,13 +442,13 @@ void MorphMotionModel::setPMDModel(IModel *model)
         /* PMD の二重登録防止 */
         if (!hasPMDModel(model)) {
             /* ルートを作成 */
-            RootPtr ptr(new TreeItem("", 0, true, false, 0));
+            RootPtr rootItemPtr(new TreeItem("", 0, true, false, 0));
+            TreeItem *rootItem = static_cast<TreeItem *>(rootItemPtr.data());
             /* 予め決められたカテゴリのアイテムを作成する */
-            TreeItem *r = static_cast<TreeItem *>(ptr.data());
-            TreeItem *eyeblow = new TreeItem(tr("Eyeblow"), 0, false, true, static_cast<TreeItem *>(r));
-            TreeItem *eye = new TreeItem(tr("Eye"), 0, false, true, static_cast<TreeItem *>(r));
-            TreeItem *lip = new TreeItem(tr("Lip"), 0, false, true, static_cast<TreeItem *>(r));
-            TreeItem *other = new TreeItem(tr("Other"), 0, false, true, static_cast<TreeItem *>(r));
+            QScopedPointer<TreeItem> eyeblow(new TreeItem(tr("Eyeblow"), 0, false, true, rootItem));
+            QScopedPointer<TreeItem> eye(new TreeItem(tr("Eye"), 0, false, true, rootItem));
+            QScopedPointer<TreeItem> lip(new TreeItem(tr("Lip"), 0, false, true, rootItem));
+            QScopedPointer<TreeItem> other(new TreeItem(tr("Other"), 0, false, true, rootItem));
             Array<IMorph *> morphs;
             model->getMorphs(morphs);
             const int nmorphs = morphs.count();
@@ -460,16 +460,16 @@ void MorphMotionModel::setPMDModel(IModel *model)
                 /* カテゴリ毎に頂点モーフを追加して整理する */
                 switch (morph->category()) {
                 case IMorph::kEyeblow:
-                    parent = eyeblow;
+                    parent = eyeblow.data();
                     break;
                 case IMorph::kEye:
-                    parent = eye;
+                    parent = eye.data();
                     break;
                 case IMorph::kLip:
-                    parent = lip;
+                    parent = lip.data();
                     break;
                 case IMorph::kOther:
-                    parent = other;
+                    parent = other.data();
                     break;
                 default:
                     break;
@@ -482,11 +482,11 @@ void MorphMotionModel::setPMDModel(IModel *model)
                 }
             }
             /* カテゴリアイテムをルートに追加する */
-            r->addChild(eyeblow);
-            r->addChild(eye);
-            r->addChild(lip);
-            r->addChild(other);
-            addPMDModel(model, ptr, keys);
+            rootItemPtr->addChild(eyeblow.take());
+            rootItemPtr->addChild(eye.take());
+            rootItemPtr->addChild(lip.take());
+            rootItemPtr->addChild(other.take());
+            addPMDModel(model, rootItemPtr, keys);
         }
         else {
             addPMDModel(model, rootPtr(model), Keys());

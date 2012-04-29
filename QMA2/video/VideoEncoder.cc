@@ -134,7 +134,7 @@ void VideoEncoder::run()
     AVStream *videoStream = 0;
     AVFrame *videoFrame = 0, *tmpFrame = 0;
     struct SwsContext *scaleContext = 0;
-    uint8_t *encodedAudioFrameBuffer = 0, *encodedVideoFrameBuffer = 0;
+    QScopedArrayPointer<uint8_t> encodedAudioFrameBuffer, encodedVideoFrameBuffer;
     try {
         /* 動画と音声のフォーマット(AVFormatContext)をまず先に作成し、それからコーデック(AVCodecContext)を作成する */
         videoOutputFormat = CreateVideoFormat(m_filename);
@@ -161,11 +161,11 @@ void VideoEncoder::run()
                     * audioCodec->frame_size
                     * audioCodec->channels
                     * av_get_bytes_per_sample(audioCodec->sample_fmt);
-            encodedAudioFrameBuffer = new uint8_t[encodedAudioFrameBufferSize];
+            encodedAudioFrameBuffer.reset(new uint8_t[encodedAudioFrameBufferSize]);
         }
         int width = m_size.width(), height = m_size.height();
         int encodedVideoFrameBufferSize = width * height * 4;
-        encodedVideoFrameBuffer = new uint8_t[encodedVideoFrameBufferSize];
+        encodedVideoFrameBuffer.reset(new uint8_t[encodedVideoFrameBufferSize]);
         /* 書き出し準備を行う。ファイルなので常に true になる */
         if (!(videoOutputFormat->flags & AVFMT_NOFILE)) {
             if (avio_open(&videoFormatContext->pb, m_filename.toLocal8Bit().constData(), AVIO_FLAG_WRITE) < 0)
@@ -196,7 +196,7 @@ void VideoEncoder::run()
                 WriteAudioFrame(videoFormatContext,
                                 audioStream,
                                 reinterpret_cast<const int16_t *>(bytes.constData()),
-                                encodedAudioFrameBuffer,
+                                encodedAudioFrameBuffer.data(),
                                 encodedAudioFrameBufferSize);
             }
             /* 画像キューが残っている */
@@ -233,7 +233,7 @@ void VideoEncoder::run()
                 WriteVideoFrame(videoFormatContext,
                                 videoStream,
                                 scaleContext ? videoFrame : tmpFrame,
-                                encodedVideoFrameBuffer,
+                                encodedVideoFrameBuffer.data(),
                                 encodedVideoFrameBufferSize);
             }
         }
@@ -244,8 +244,6 @@ void VideoEncoder::run()
         qWarning() << e.what();
     }
     /* メモリの解放処理 */
-    delete[] encodedAudioFrameBuffer;
-    delete[] encodedVideoFrameBuffer;
     if (videoFrame) {
         avpicture_free(reinterpret_cast<AVPicture *>(videoFrame));
         av_free(videoFrame);

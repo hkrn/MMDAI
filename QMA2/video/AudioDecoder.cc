@@ -113,14 +113,12 @@ void AudioDecoder::run()
     AVFormatContext *formatContext = 0;
     AVCodecContext *audioContext = 0;
     AVStream *stream = 0;
-    int16_t *samples = 0;
+    QScopedArrayPointer<int16_t> samples;
     AVPacket packet;
     av_init_packet(&packet);
     try {
         UIOpenAudio(m_filename, formatContext, audioContext, stream);
-        samples = new int16_t[AVCODEC_MAX_AUDIO_FRAME_SIZE];
-        if (!samples)
-            throw std::bad_alloc();
+        samples.reset(new int16_t[AVCODEC_MAX_AUDIO_FRAME_SIZE]);
         float sampleRate = audioContext->sample_rate;
         /* フォーマットからパケット単位で読み取り、その音声パケットをデコードするの繰り返しを行う */
         m_running = true;
@@ -128,10 +126,10 @@ void AudioDecoder::run()
             int size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
             if (av_read_frame(formatContext, &packet) < 0)
                 break;
-            int len = avcodec_decode_audio3(audioContext, samples, &size, &packet);
+            int len = avcodec_decode_audio3(audioContext, samples.data(), &size, &packet);
             if (len < 0)
                 break;
-            const QByteArray bytes(reinterpret_cast<const char *>(samples), size);
+            const QByteArray bytes(reinterpret_cast<const char *>(samples.data()), size);
             float position = packet.pts / sampleRate;
             decodeBuffer(bytes, position, audioContext->channels);
         }
@@ -141,8 +139,6 @@ void AudioDecoder::run()
         qWarning() << e.what();
         emit audioDidDecodeError();
     }
-    if (samples)
-        delete[] samples;
     UICloseAudio(formatContext, audioContext);
 }
 
