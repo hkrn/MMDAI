@@ -257,8 +257,8 @@ void TestModel::testBoneDefaultFlags() const
     QVERIFY(!bone.isMovable());
     QVERIFY(!bone.isRotateable());
     QVERIFY(!bone.isVisible());
-    QVERIFY(!bone.isOperatable());
-    QVERIFY(!bone.isIKEnabled());
+    QVERIFY(!bone.isInteractive());
+    QVERIFY(!bone.hasInverseKinematics());
     QVERIFY(!bone.hasPositionInherence());
     QVERIFY(!bone.hasRotationInherence());
     QVERIFY(!bone.hasFixedAxes());
@@ -618,8 +618,8 @@ void TestModel::testReadWriteBone(size_t indexSize)
     QVERIFY(bone2.isRotateable());
     QVERIFY(bone2.isMovable());
     QVERIFY(bone2.isVisible());
-    QVERIFY(bone2.isOperatable());
-    QVERIFY(bone2.isIKEnabled());
+    QVERIFY(bone2.isInteractive());
+    QVERIFY(bone2.hasInverseKinematics());
     QVERIFY(bone2.hasPositionInherence());
     QVERIFY(bone2.hasRotationInherence());
     QVERIFY(bone2.hasFixedAxes());
