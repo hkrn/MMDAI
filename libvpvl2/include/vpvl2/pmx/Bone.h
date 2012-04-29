@@ -81,6 +81,7 @@ public:
     const Vector3 &offset() const;
     const Transform &localTransform() const { return m_originalLocalTransform; }
     const Transform &skinningTransform() const { return m_localTransform; }
+    void getLinkedBones(Array<IBone *> &value) const;
 
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
@@ -111,8 +112,8 @@ public:
     bool isRotateable() const { return m_flags & 0x0002; }
     bool isMovable() const { return m_flags & 0x0004; }
     bool isVisible() const { return m_flags & 0x0008; }
-    bool isOperatable() const { return m_flags & 0x0010; }
-    bool isIKEnabled() const { return m_flags & 0x0020; }
+    bool isInteractive() const { return m_flags & 0x0010; }
+    bool hasInverseKinematics() const { return m_flags & 0x0020; }
     bool hasPositionInherence() const { return m_flags & 0x0100; }
     bool hasRotationInherence() const { return m_flags & 0x0200; }
     bool hasFixedAxes() const { return m_flags & 0x0400; }

@@ -41,6 +41,7 @@
 #include "vpvl2/IBone.h"
 
 #include "vpvl/Bone.h"
+#include "vpvl/IK.h"
 
 namespace vpvl2
 {
@@ -60,16 +61,20 @@ public:
     const IString *name() const;
     int index() const;
     IBone *parentBone() const { return m_parentBone; }
+    IBone *targetBone() const { return m_targetBone; }
     const Transform &localTransform() const;
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
     const Vector3 &position() const;
     const Quaternion &rotation() const;
+    void getLinkedBones(Array<IBone *> &value) const;
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
     bool isVisible() const;
+    bool isInteractive() const;
+    bool hasInverseKinematics() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
     void getFixedAxes(Matrix3x3 &value) const;
@@ -77,13 +82,16 @@ public:
 
     void setParentBone(vpvl::Bone * value);
     void setChildBone(vpvl::Bone *value);
+    void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
 
 private:
     IEncoding *m_encoding;
     IString *m_name;
     IBone *m_parentBone;
+    IBone *m_targetBone;
     IBone *m_childBone;
     vpvl::Bone *m_bone;
+    Array<IBone *> m_IKLinks;
 };
 
 }

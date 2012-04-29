@@ -293,7 +293,7 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
             else
                 bone->m_parentInherenceBone = bones[parentBoneBiasID];
         }
-        if (bone->isIKEnabled()) {
+        if (bone->hasInverseKinematics()) {
             const int nIK = bone->m_IKLinks.count();
             for (int j = 0; j < nIK; j++) {
                 IKLink *ik = bone->m_IKLinks[j];
@@ -556,7 +556,7 @@ void Bone::performTransform()
 
 void Bone::performInverseKinematics()
 {
-    if (!isIKEnabled() || m_simulated)
+    if (!hasInverseKinematics() || m_simulated)
         return;
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
@@ -709,6 +709,15 @@ void Bone::performUpdateLocalTransform()
 void Bone::resetIKLink()
 {
     m_rotationIKLink = Quaternion::getIdentity();
+}
+
+void Bone::getLinkedBones(Array<IBone *> &value) const
+{
+    const int nlinks = m_IKLinks.count();
+    for (int i = 0; i < nlinks; i++) {
+        IBone *bone = m_IKLinks[i]->bone;
+        value.add(bone);
+    }
 }
 
 void Bone::setPosition(const Vector3 &value)

@@ -459,7 +459,7 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug << "\n";
     debug << "     offset                      = " << bone->origin();
     debug << "\n";
-    if (bone->isIKEnabled()) {
+    if (bone->hasInverseKinematics()) {
         debug << "     targetBone                  = " << bone->targetBone()->name();
         debug << "\n";
         debug << "     constraintAngle             = " << bone->constraintAngle();

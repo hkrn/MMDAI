@@ -77,7 +77,7 @@ bool Model::load(const uint8_t *data, size_t size)
         /* convert bones (vpvl::Bone => vpvl2::IBone) */
         const vpvl::BoneList &bones = m_model.bones();
         const int nbones = bones.count();
-        Hash<HashPtr, IBone *> b2b;
+        Hash<HashPtr, Bone *> b2b;
         for (int i = 0; i < nbones; i++) {
             vpvl::Bone *b = bones[i];
             Bone *bone = new Bone(b, m_encoding);
@@ -87,6 +87,17 @@ bool Model::load(const uint8_t *data, size_t size)
             m_name2bones.insert(bone->name()->toHashString(), bone);
             HashPtr key(b);
             b2b.insert(key, bone);
+        }
+        /* set IK */
+        const vpvl::IKList &IKs = m_model.IKs();
+        const int nIKs = IKs.count();
+        for (int i = 0; i < nIKs; i++) {
+            vpvl::IK *ik = IKs[i];
+            Bone **valuePtr = const_cast<Bone **>(b2b.find(ik->destinationBone()));
+            if (valuePtr) {
+                Bone *value = *valuePtr;
+                value->setIK(ik, b2b);
+            }
         }
         /* build first bone label (this is special label) */
         Array<IBone *> bones2, firstBone;
@@ -104,9 +115,9 @@ bool Model::load(const uint8_t *data, size_t size)
             bones2.clear();
             for (int j = 0; j < nBonesInCategory; j++) {
                 vpvl::Bone *bone = bonesInCategory->at(j);
-                IBone **valuePtr = const_cast<IBone **>(b2b.find(bone));
+                Bone **valuePtr = const_cast<Bone **>(b2b.find(bone));
                 if (valuePtr) {
-                    IBone *value = *valuePtr;
+                    Bone *value = *valuePtr;
                     bones2.add(value);
                 }
             }

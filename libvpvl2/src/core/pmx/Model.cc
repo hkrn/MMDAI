@@ -377,7 +377,7 @@ int Model::count(Object value) const
         int nIK = 0;
         for (int i = 0; i < nbones; i++) {
             Bone *bone = static_cast<Bone *>(m_bones[i]);
-            if (bone->isIKEnabled())
+            if (bone->hasInverseKinematics())
                 nIK++;
         }
         return nIK;

@@ -46,6 +46,7 @@ Bone::Bone(vpvl::Bone *bone, IEncoding *encoding)
     : m_encoding(encoding),
       m_name(0),
       m_parentBone(0),
+      m_targetBone(0),
       m_childBone(0),
       m_bone(bone)
 {
@@ -60,6 +61,7 @@ Bone::~Bone()
     m_parentBone = 0;
     delete m_childBone;
     m_childBone = 0;
+    m_targetBone = 0;
     m_encoding = 0;
     m_bone = 0;
 }
@@ -94,6 +96,15 @@ const Vector3 &Bone::position() const
     return m_bone->position();
 }
 
+void Bone::getLinkedBones(Array<IBone *> &value) const
+{
+    const int nlinks = m_IKLinks.count();
+    for (int i = 0; i < nlinks; i++) {
+        IBone *bone = m_IKLinks[i];
+        value.add(bone);
+    }
+}
+
 const Quaternion &Bone::rotation() const
 {
     return m_bone->rotation();
@@ -124,9 +135,19 @@ bool Bone::isVisible() const
     return m_bone->isVisible();
 }
 
+bool Bone::isInteractive() const
+{
+    return m_bone->isVisible();
+}
+
+bool Bone::hasInverseKinematics() const
+{
+    return m_targetBone && m_IKLinks.count() > 0;
+}
+
 bool Bone::hasFixedAxes() const
 {
-    return false;
+    return m_bone->type() == vpvl::Bone::kTwist;
 }
 
 bool Bone::hasLocalAxes() const
@@ -179,6 +200,26 @@ void Bone::setChildBone(vpvl::Bone *value)
 {
     if (value)
         m_childBone = new Bone(const_cast<vpvl::Bone *>(value->child()), m_encoding);
+}
+
+void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
+{
+    vpvl::Bone *targetBone = ik->targetBone();
+    Bone **valuePtr = const_cast<Bone **>(b2b.find(targetBone));
+    if (valuePtr) {
+        Bone *value = *valuePtr;
+        m_targetBone = value;
+    }
+    const vpvl::BoneList &bones = ik->linkedBones();
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
+        vpvl::Bone *bone = bones[i];
+        valuePtr = const_cast<Bone **>(b2b.find(bone));
+        if (valuePtr) {
+            Bone *value = *valuePtr;
+            m_IKLinks.add(value);
+        }
+    }
 }
 
 }

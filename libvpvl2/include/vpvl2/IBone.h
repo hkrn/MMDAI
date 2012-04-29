@@ -63,7 +63,7 @@ public:
     /**
      * ボーンの ID を返します。
      *
-     * 常にユニークでなければなりません。
+     * ボーン毎にそれぞれ独立し、かつ重複しない値を返します。
      *
      * @return int
      */
@@ -72,9 +72,21 @@ public:
     /**
      * 親ボーンのインスタンスを返します。
      *
+     * 「センター」または「全ての親」のように親ボーンが存在しない場合は 0 を返します。
+     *
      * @return IBone
      */
     virtual IBone *parentBone() const = 0;
+
+    /**
+     * ボーンの接続元のインスタンスを返します。
+     *
+     * hasInverseKinematics が true の時のみ有効です。false の場合は常に 0 を返します。
+     *
+     * @return IBone
+     * @sa hasInverseKinematics
+     */
+    virtual IBone *targetBone() const = 0;
 
     /**
      * ボーンのローカル行列を返します。
@@ -98,6 +110,13 @@ public:
      */
     virtual const Vector3 &origin() const = 0;
 
+    /**
+     * ボーンの接続先の位置を返します。
+     *
+     * 名前が origin とありますが、返す値は変形すると変化します。
+     *
+     * @return Vector3
+     */
     virtual const Vector3 destinationOrigin() const = 0;
 
     /**
@@ -119,6 +138,16 @@ public:
      * @sa setRotation
      */
     virtual const Quaternion &rotation() const = 0;
+
+    /**
+     * リンクするボーンの配列を引数に対して格納します。
+     *
+     * hasInverseKinematics が true の時のみ有効です。false の場合は何もしません。
+     *
+     * @param Array<IBone>
+     * @sa hasInverseKinematics
+     */
+    virtual void getLinkedBones(Array<IBone *> &value) const = 0;
 
     /**
      * ボーンの移動量を設定します。
@@ -153,9 +182,23 @@ public:
     /**
      * ボーンが表示可能かを返します。
      *
-     * @return
+     * @return bool
      */
     virtual bool isVisible() const = 0;
+
+    /**
+     * ユーザが操作可能かを返します。
+     *
+     * @return bool
+     */
+    virtual bool isInteractive() const = 0;
+
+    /**
+     * IK を持っているかを返します。
+     *
+     * @return bool
+     */
+    virtual bool hasInverseKinematics() const = 0;
 
     /**
      * ボーンが固定軸を持っているかを返します。
