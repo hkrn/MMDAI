@@ -140,12 +140,20 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     setLayout(mainLayout);
 }
 
-void CameraPerspectiveWidget::setCameraPerspective(const Vector3 &pos, const Vector3 &angle, float fovy, float distance)
+void CameraPerspectiveWidget::setCameraPerspective(const Scene::ICamera *camera)
 {
-    m_currentPosition = pos;
-    m_currentAngle = angle;
-    m_currentFovy = fovy;
-    m_currentDistance = distance;
+    disconnect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
+    disconnect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
+    disconnect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
+    disconnect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
+    disconnect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
+    disconnect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
+    disconnect(m_fovy, SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
+    disconnect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
+    m_currentPosition = camera->position();
+    m_currentAngle = camera->angle();
+    m_currentFovy = camera->fovy();
+    m_currentDistance = camera->distance();
     m_px->setValue(m_currentPosition.x());
     m_py->setValue(m_currentPosition.y());
     m_pz->setValue(m_currentPosition.z());
@@ -154,6 +162,14 @@ void CameraPerspectiveWidget::setCameraPerspective(const Vector3 &pos, const Vec
     m_rz->setValue(m_currentAngle.z());
     m_fovy->setValue(m_currentFovy);
     m_distance->setValue(m_currentDistance);
+    connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
+    connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
+    connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
+    connect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
+    connect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
+    connect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
+    connect(m_fovy, SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
+    connect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
 }
 
 void CameraPerspectiveWidget::retranslate()
@@ -173,78 +189,90 @@ void CameraPerspectiveWidget::retranslate()
 
 void CameraPerspectiveWidget::setCameraPerspectiveFront()
 {
-    Vector3 angle(0, 0, 0);
-    emit cameraPerspectiveDidChange(0, &angle, 0, 0);
+    m_currentAngle = kZeroV3;
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveBack()
 {
-    Vector3 angle(0, 180, 0);
-    emit cameraPerspectiveDidChange(0, &angle, 0, 0);
+    m_currentAngle = Vector3(0, 180, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveTop()
 {
-    Vector3 angle(90, 0, 0);
-    emit cameraPerspectiveDidChange(0, &angle, 0, 0);
+    m_currentAngle = Vector3(90, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveLeft()
 {
-    Vector3 angle(0, -90, 0);
-    emit cameraPerspectiveDidChange(0, &angle, 0, 0);
+    m_currentAngle = Vector3(0, -90, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveRight()
 {
-    Vector3 angle(0, 90, 0);
-    emit cameraPerspectiveDidChange(0, &angle, 0, 0);
+    m_currentAngle = Vector3(0, 90, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updatePositionX(double value)
 {
     m_currentPosition.setX(value);
-    emit cameraPerspectiveDidChange(&m_currentPosition, 0, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updatePositionY(double value)
 {
     m_currentPosition.setY(value);
-    emit cameraPerspectiveDidChange(&m_currentPosition, 0, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updatePositionZ(double value)
 {
     m_currentPosition.setZ(value);
-    emit cameraPerspectiveDidChange(&m_currentPosition, 0, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updateRotationX(double value)
 {
     m_currentAngle.setX(value);
-    emit cameraPerspectiveDidChange(0, &m_currentAngle, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updateRotationY(double value)
 {
     m_currentAngle.setY(value);
-    emit cameraPerspectiveDidChange(0, &m_currentAngle, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updateRotationZ(double value)
 {
     m_currentAngle.setZ(value);
-    emit cameraPerspectiveDidChange(0, &m_currentAngle, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updateFovy(double value)
 {
     float fovy = static_cast<float>(value);
-    emit cameraPerspectiveDidChange(0, 0, &fovy, 0);
+    m_currentFovy = fovy;
+    emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updateDistance(double value)
 {
     float distance = static_cast<float>(value);
-    emit cameraPerspectiveDidChange(0, 0, 0, &distance);
+    m_currentDistance = distance;
+    emit cameraPerspectiveDidChange(createCamera());
+}
+
+QSharedPointer<Scene::ICamera> CameraPerspectiveWidget::createCamera() const
+{
+    QSharedPointer<Scene::ICamera> camera(Scene::createCamera());
+    camera->setAngle(m_currentAngle);
+    camera->setPosition(m_currentPosition);
+    camera->setFovy(m_currentFovy);
+    camera->setDistance(m_currentDistance);
+    return camera;
 }

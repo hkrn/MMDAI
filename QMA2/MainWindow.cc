@@ -1222,10 +1222,12 @@ void MainWindow::connectSceneLoader()
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     Scene *scene = m_sceneWidget->sceneLoader()->scene();
     Scene::ICamera *camera = scene->camera();
-    cameraWidget->setCameraPerspective(camera->position(), camera->angle(), camera->fovy(), camera->distance());
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(vpvl2::Vector3*,vpvl2::Vector3*,float*,float*)), m_sceneWidget, SLOT(setCameraPerspective(vpvl2::Vector3*,vpvl2::Vector3*,float*,float*)));
+    cameraWidget->setCameraPerspective(camera);
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<vpvl2::Scene::ICamera>)),
+            m_sceneWidget, SLOT(setCameraPerspective(QSharedPointer<vpvl2::Scene::ICamera>)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(vpvl2::Vector3,vpvl2::Vector3,float,float)), cameraWidget, SLOT(setCameraPerspective(vpvl2::Vector3,vpvl2::Vector3,float,float)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
+            cameraWidget, SLOT(setCameraPerspective(const vpvl2::Scene::ICamera*)));
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
     Scene::ILight *light = scene->light();

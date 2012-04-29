@@ -578,10 +578,11 @@ void SceneWidget::resetCamera()
     emit cameraPerspectiveDidSet(camera);
 }
 
-void SceneWidget::setCameraPerspective(Scene::ICamera *camera)
+void SceneWidget::setCameraPerspective(const QSharedPointer<Scene::ICamera> &camera)
 {
-    m_loader->scene()->camera()->copyFrom(camera);
-    emit cameraPerspectiveDidSet(camera);
+    Scene::ICamera *c1 = camera.data(), *c2 = m_loader->scene()->camera();
+    c2->copyFrom(c1);
+    emit cameraPerspectiveDidSet(c2);
 }
 
 void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo) const

@@ -141,7 +141,7 @@ public slots:
     void advanceMotion(float delta);
     void seekMotion(float frameIndex, bool force = false);
     void resetMotion();
-    void setCameraPerspective(vpvl2::Scene::ICamera *camera);
+    void setCameraPerspective(const QSharedPointer<vpvl2::Scene::ICamera> &camera);
     void setModelEdgeOffset(double value);
     void setModelEdgeColor(const QColor &color);
     void setModelPositionOffset(const vpvl2::Vector3 &value);
