@@ -77,7 +77,7 @@ public:
     bool hasInverseKinematics() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
-    void getFixedAxes(Matrix3x3 &value) const;
+    const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
 
     void setParentBone(vpvl::Bone * value);
@@ -92,6 +92,7 @@ private:
     IBone *m_childBone;
     vpvl::Bone *m_bone;
     Array<IBone *> m_IKLinks;
+    Vector3 m_fixedAxis;
 };
 
 }

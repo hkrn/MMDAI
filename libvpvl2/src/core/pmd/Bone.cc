@@ -48,7 +48,8 @@ Bone::Bone(vpvl::Bone *bone, IEncoding *encoding)
       m_parentBone(0),
       m_targetBone(0),
       m_childBone(0),
-      m_bone(bone)
+      m_bone(bone),
+      m_fixedAxis(kZeroV3)
 {
     m_name = m_encoding->toString(m_bone->name(), IString::kShiftJIS, vpvl::Bone::kNameSize);
 }
@@ -64,6 +65,7 @@ Bone::~Bone()
     m_targetBone = 0;
     m_encoding = 0;
     m_bone = 0;
+    m_fixedAxis.setZero();
 }
 
 const IString *Bone::name() const
@@ -159,13 +161,9 @@ bool Bone::hasLocalAxes() const
     return finger || arm || elbow || wrist;
 }
 
-void Bone::getFixedAxes(Matrix3x3 &value) const
+const Vector3 &Bone::fixedAxis() const
 {
-    if (hasFixedAxes()) {
-    }
-    else {
-        value.setIdentity();
-    }
+    return m_fixedAxis;
 }
 
 void Bone::getLocalAxes(Matrix3x3 &value) const
@@ -198,8 +196,12 @@ void Bone::setParentBone(vpvl::Bone *value)
 
 void Bone::setChildBone(vpvl::Bone *value)
 {
-    if (value)
-        m_childBone = new Bone(const_cast<vpvl::Bone *>(value->child()), m_encoding);
+    if (value) {
+        const vpvl::Bone *child = value->child();
+        m_childBone = new Bone(const_cast<vpvl::Bone *>(child), m_encoding);
+        if (hasFixedAxes())
+            m_fixedAxis = (child->originPosition() - m_bone->originPosition()).normalized();
+    }
 }
 
 void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)

@@ -85,7 +85,7 @@ public:
 
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
-    void getFixedAxes(Matrix3x3 &value) const;
+    const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);

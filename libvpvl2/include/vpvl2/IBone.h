@@ -215,15 +215,14 @@ public:
     virtual bool hasLocalAxes() const = 0;
 
     /**
-     * ボーンの固定軸の行列を返します。
+     * ボーンの固定軸を返します。
      *
-     * 返す行列は X,Y,Z の軸ベクトルで構成されます。
-     * hasFixedAxes() が false の時は単位行列を返します。
+     * hasFixedAxes() が false の時は kZeroV3 を返します。
      *
      * @param Matrix3x3
      * @sa getLocalAxes
      */
-    virtual void getFixedAxes(Matrix3x3 &value) const = 0;
+    virtual const Vector3 &fixedAxis() const = 0;
 
     /**
      * ボーンのローカル軸の行列を返します。

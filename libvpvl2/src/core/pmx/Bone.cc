@@ -739,15 +739,9 @@ const Vector3 Bone::destinationOrigin() const
         return m_originalLocalTransform.getOrigin() + m_originalLocalTransform.getBasis() * m_destinationOrigin;
 }
 
-void Bone::getFixedAxes(Matrix3x3 &value) const
+const Vector3 &Bone::fixedAxis() const
 {
-    // FIXME: implement this
-    if (hasFixedAxes()) {
-        value[0] = m_fixedAxis;
-    }
-    else {
-        value.setIdentity();
-    }
+    return m_fixedAxis;
 }
 
 void Bone::getLocalAxes(Matrix3x3 &value) const
