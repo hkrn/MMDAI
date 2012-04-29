@@ -1199,7 +1199,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
     connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,vpvl2::IModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
     connect(loader, SIGNAL(cameraMotionDidSet(vpvl2::IMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
-    connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget, SLOT(updateSceneMotion()));
+    connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget, SLOT(refreshScene()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl2::IModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl2::IModel*)));
@@ -1225,7 +1225,7 @@ void MainWindow::connectSceneLoader()
     cameraWidget->setCameraPerspective(camera);
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<vpvl2::Scene::ICamera>)),
             m_sceneWidget, SLOT(setCameraPerspective(QSharedPointer<vpvl2::Scene::ICamera>)));
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(updateSceneMotion()));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(refreshScene()));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
             cameraWidget, SLOT(setCameraPerspective(const vpvl2::Scene::ICamera*)));
     /* 光源の初期値を設定。シグナル発行前に行う */
@@ -1251,8 +1251,8 @@ void MainWindow::connectWidgets()
     connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl2::IModel*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_morphMotionModel, SLOT(markAsNew(vpvl2::IModel*)));
-    connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(updateMotion()));
-    connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(updateMotion()));
+    connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(refreshMotions()));
+    connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(refreshMotions()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(boneDidSelect(QList<vpvl2::IBone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl2::IBone*>)));
     connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl2::IMorph*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl2::IMorph*)));

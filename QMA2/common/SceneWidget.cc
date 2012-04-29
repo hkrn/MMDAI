@@ -211,35 +211,35 @@ void SceneWidget::setModelEdgeOffset(double value)
 {
     if (IModel *model = m_loader->selectedModel())
         m_loader->setModelEdgeOffset(model, static_cast<float>(value));
-    updateMotion();
+    refreshMotions();
 }
 
 void SceneWidget::setModelEdgeColor(const QColor &color)
 {
     if (IModel *model = m_loader->selectedModel())
         m_loader->setModelEdgeColor(model, color);
-    updateMotion();
+    refreshMotions();
 }
 
 void SceneWidget::setModelPositionOffset(const Vector3 &value)
 {
     if (IModel *model = m_loader->selectedModel())
         m_loader->setModelPosition(model, value);
-    updateMotion();
+    refreshMotions();
 }
 
 void SceneWidget::setModelRotationOffset(const Vector3 &value)
 {
     if (IModel *model = m_loader->selectedModel())
         m_loader->setModelRotation(model, value);
-    updateMotion();
+    refreshMotions();
 }
 
 void SceneWidget::setModelProjectiveShadowEnable(bool value)
 {
     if (IModel *model = m_loader->selectedModel())
         m_loader->setProjectiveShadowEnable(model, value);
-    updateMotion();
+    refreshMotions();
 }
 
 void SceneWidget::setHandlesVisible(bool value)
@@ -303,7 +303,7 @@ void SceneWidget::insertMotionToAllModels()
                                                              m_settings));
     IModel *selected = m_loader->selectedModel();
     if (motion && selected)
-        updateMotion();
+        refreshMotions();
 }
 
 IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
@@ -332,7 +332,7 @@ void SceneWidget::insertMotionToSelectedModel()
                                                                      tr("VMD file (*.vmd)"),
                                                                      m_settings));
         if (motion)
-            updateMotion();
+            refreshMotions();
     }
     else {
         QMessageBox::warning(this, tr("The model is not selected."),
@@ -484,7 +484,7 @@ void SceneWidget::advanceMotion(float delta)
         const Scalar &step = delta / Scene::defaultFPS();
         m_loader->world()->mutableWorld()->stepSimulation(step);
     }
-    updateMotions();
+    updateModels();
 }
 
 void SceneWidget::seekMotion(float frameIndex, bool force)
@@ -509,7 +509,7 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
         scene->seek(frameIndex);
         m_frameIndex = frameIndex;
     }
-    updateMotions();
+    updateModels();
     emit motionDidSeek(frameIndex);
 }
 
@@ -523,7 +523,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_frameIndex = 0;
-    updateMotions();
+    updateModels();
     emit motionDidSeek(0.0f);
 }
 
@@ -534,7 +534,7 @@ void SceneWidget::setCamera()
                                                tr("VMD file (*.vmd)"),
                                                m_settings));
     if (motion)
-        updateMotions();
+        refreshScene();
 }
 
 IMotion *SceneWidget::setCamera(const QString &path)
@@ -680,7 +680,7 @@ void SceneWidget::loadFile(const QString &file)
     else if (extension == "vmd") {
         IMotion *motion = insertMotionToModel(file, m_loader->selectedModel());
         if (motion)
-            updateMotion();
+            refreshMotions();
     }
     /* アクセサリファイル */
     else if (extension == "x") {
@@ -1242,7 +1242,7 @@ void SceneWidget::updateCamera()
     emit cameraPerspectiveDidSet(scene->camera());
 }
 
-void SceneWidget::updateMotions()
+void SceneWidget::updateModels()
 {
     m_loader->updateMatrices(QSizeF(size()));
     m_loader->updateModels();

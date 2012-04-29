@@ -222,8 +222,8 @@ private slots:
     void translateModelLeft() { translateModel(vpvl2::Vector3(-0.5f, 0.0f, 0.0f)); }
     void translateModelRight() { translateModel(vpvl2::Vector3(0.5f, 0.0f, 0.0f)); }
     void revertSelectedModel() { setSelectedModel(0); }
-    void updateSceneMotion() { seekMotion(m_frameIndex, true); }
-    void updateMotion() { seekMotion(m_frameIndex, false); }
+    void refreshScene() { seekMotion(m_frameIndex, true); }
+    void refreshMotions() { seekMotion(m_frameIndex, false); }
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
@@ -231,7 +231,7 @@ private slots:
 
 private:
     void updateCamera();
-    void updateMotions();
+    void updateModels();
     bool acceptAddingModel(vpvl2::IModel *model);
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();
