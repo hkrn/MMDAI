@@ -1230,14 +1230,15 @@ void SceneLoader::setModelMotion(IMotion *motion, IModel *model)
 {
     const QUuid &uuid = QUuid::createUuid();
 #ifdef IS_QMA2
-    const Array<IMotion *> &motions = m_project->motions();
+    /* 物理削除を伴うので、まず配列のコピーを用意してそこにコピーしてから削除。そうしないと SEGV が起きる */
+    Array<IMotion *> motions;
+    motions.copy(m_project->motions());
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
-        /* 先にプロジェクトからモーションを論理削除した後にモデルから物理削除する */
-        IMotion *motion = motions[i];
-        if (motion->parentModel() == model) {
-            m_project->removeMotion(motion);
-            delete motion;
+        IMotion *m = motions[i];
+        if (m->parentModel() == model) {
+            m_project->removeMotion(m);
+            delete m;
         }
     }
 #endif
