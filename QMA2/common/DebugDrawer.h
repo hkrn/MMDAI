@@ -160,7 +160,8 @@ public:
         glEnable(GL_DEPTH_TEST);
     }
     void drawBoneTransform(IBone *bone, Scene *scene, int mode) {
-        if (!m_visible || !bone || !m_program.isLinked())
+        /* 固定軸がある場合は軸表示なし */
+        if (!m_visible || !bone || !m_program.isLinked() || bone->hasFixedAxes())
             return;
         float matrix[16];
         QGLFunctions func(QGLContext::currentContext());
@@ -252,6 +253,11 @@ private:
         if (selected.contains(bone)) {
             drawSphere(origin, sphereRadius, Vector3(1.0f, 0.0f, 0.0f));
             m_program.setUniformValue("color", kColorRed);
+        }
+        /* 固定軸(例:捻り)ありのボーンの場合は球体のみ紫色、接続部分を青で表示 */
+        else if (bone->hasFixedAxes()) {
+            drawSphere(origin, sphereRadius, Vector3(1.0, 0.0, 1.0f));
+            m_program.setUniformValue("color", kColorBlue);
         }
         /* IK ボーンの場合は橙色で表示 */
         else if (IK.contains(bone)) {

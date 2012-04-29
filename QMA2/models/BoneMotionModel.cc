@@ -399,20 +399,29 @@ static IBone *UIBoneFromModelIndex(const QModelIndex &index, IModel *model)
     return model->findBone(&s);
 }
 
-static const Quaternion UIRotateGlobalAxisAngle(const Scalar &value, int flags)
+static const Quaternion UIRotateGlobalAxisAngle(const IBone *bone, const Scalar &value, int flags)
 {
     Quaternion rot = Quaternion::getIdentity();
-    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
-    switch ((flags & 0xff00) >> 8) {
-    case 'X':
-        rot.setRotation(Vector3(1, 0, 0), -radian(value));
-        break;
-    case 'Y':
-        rot.setRotation(Vector3(0, 1, 0), -radian(value));
-        break;
-    case 'Z':
-        rot.setRotation(Vector3(0, 0, 1), radian(value));
-        break;
+    /* 固定軸の場合は固定軸をそのまま使って変形させる */
+    if (bone->hasFixedAxes()) {
+        rot.setRotation(bone->fixedAxis(), radian(value));
+    }
+    else {
+        /*
+         * 0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる
+         * また、座標系の関係でX軸とY軸は値を反転させる
+         */
+        switch ((flags & 0xff00) >> 8) {
+        case 'X':
+            rot.setRotation(Vector3(1, 0, 0), -radian(value));
+            break;
+        case 'Y':
+            rot.setRotation(Vector3(0, 1, 0), -radian(value));
+            break;
+        case 'Z':
+            rot.setRotation(Vector3(0, 0, 1), radian(value));
+            break;
+        }
     }
     return rot;
 }
@@ -428,55 +437,72 @@ static const Vector3 UITranslateFromView(const SceneWidget *sceneWidget, const V
     return value;
 }
 
-static const Quaternion UIRotateViewAxisAngle(const SceneWidget *sceneWidget, const Scalar &value, int flags)
+static const Quaternion UIRotateViewAxisAngle(const IBone *bone, const Scalar &value, int flags, const SceneWidget *sceneWidget)
 {
-    const Matrix3x3 &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform().getBasis();
     Quaternion rot = Quaternion::getIdentity();
-    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
-    switch ((flags & 0xff00) >> 8) {
-    case 'X':
-        rot.setRotation(transform.getRow(0), -radian(value));
-        break;
-    case 'Y':
-        rot.setRotation(transform.getRow(1), -radian(value));
-        break;
-    case 'Z':
-        rot.setRotation(transform.getRow(2), radian(value));
-        break;
+    /* 固定軸の場合は固定軸をそのまま使って変形させる */
+    if (bone->hasFixedAxes()) {
+        rot.setRotation(bone->fixedAxis(), radian(value));
+    }
+    else {
+        const Matrix3x3 &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform().getBasis();
+        /*
+         * 0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる
+         * また、座標系の関係でX軸とY軸は値を反転させる
+         */
+        switch ((flags & 0xff00) >> 8) {
+        case 'X':
+            rot.setRotation(transform.getRow(0), -radian(value));
+            break;
+        case 'Y':
+            rot.setRotation(transform.getRow(1), -radian(value));
+            break;
+        case 'Z':
+            rot.setRotation(transform.getRow(2), radian(value));
+            break;
+        }
     }
     return rot;
 }
 
-static const Quaternion UIRotateLocalAxisAngle(const IBone *bone, const Quaternion &rotation, const Scalar &value, int flags)
+static const Quaternion UIRotateLocalAxisAngle(const IBone *bone, const Scalar &value, int flags, const Quaternion &rotation)
 {
-    /* 座標系の関係でX軸とY軸は値を反転させる */
     Quaternion rot = Quaternion::getIdentity();
-    Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
-    /* ボーンにローカル軸を持っているか？ */
-    if (bone->hasLocalAxes()) {
-        Matrix3x3 axes = Matrix3x3::getIdentity();
-        bone->getLocalAxes(axes);
-        axisX = axes[0];
-        axisY = axes[1];
-        axisZ = axes[2];
+    /* 固定軸の場合は固定軸をそのまま使って変形させる */
+    if (bone->hasFixedAxes()) {
+        rot.setRotation(bone->fixedAxis(), radian(value));
     }
     else {
-        Matrix3x3 matrix(rotation);
-        axisX = matrix[0] * axisX;
-        axisY = matrix[1] * axisY;
-        axisZ = matrix[2] * axisZ;
-    }
-    /*  0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる */
-    switch ((flags & 0xff00) >> 8) {
-    case 'X':
-        rot.setRotation(axisX, -radian(value));
-        break;
-    case 'Y':
-        rot.setRotation(axisY, -radian(value));
-        break;
-    case 'Z':
-        rot.setRotation(axisZ, radian(value));
-        break;
+        Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
+        /* ボーンにローカル軸を持っているか？ */
+        if (bone->hasLocalAxes()) {
+            Matrix3x3 axes = Matrix3x3::getIdentity();
+            bone->getLocalAxes(axes);
+            axisX = axes[0];
+            axisY = axes[1];
+            axisZ = axes[2];
+        }
+        else {
+            Matrix3x3 matrix(rotation);
+            axisX = matrix[0] * axisX;
+            axisY = matrix[1] * axisY;
+            axisZ = matrix[2] * axisZ;
+        }
+        /*
+         * 0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる
+         * また、座標系の関係でX軸とY軸は値を反転させる
+         */
+        switch ((flags & 0xff00) >> 8) {
+        case 'X':
+            rot.setRotation(axisX, -radian(value));
+            break;
+        case 'Y':
+            rot.setRotation(axisY, -radian(value));
+            break;
+        case 'Z':
+            rot.setRotation(axisZ, radian(value));
+            break;
+        }
     }
     return rot;
 }
@@ -1084,16 +1110,17 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
     Quaternion lastRotation = Quaternion::getIdentity();
     if (m_boneTransformStates.contains(bone))
         lastRotation = m_boneTransformStates[bone].second;
+    /* 固定軸がある場合は変形方法に関係なく常に固定軸を使って変形されます */
     switch (flags & 0xff) {
     case 'V': { /* ビュー変形 (カメラ視点) */
-        bone->setRotation(lastRotation * UIRotateViewAxisAngle(m_sceneWidget, value, flags));
+        bone->setRotation(lastRotation * UIRotateViewAxisAngle(bone, value, flags, m_sceneWidget));
         break;
     }
     case 'L': /* ローカル変形 */
-        bone->setRotation(lastRotation * UIRotateLocalAxisAngle(bone, lastRotation, value, flags));
+        bone->setRotation(lastRotation * UIRotateLocalAxisAngle(bone, value, flags, lastRotation));
         break;
     case 'G': /* グローバル変形 */
-        bone->setRotation(lastRotation * UIRotateGlobalAxisAngle(value, flags));
+        bone->setRotation(lastRotation * UIRotateGlobalAxisAngle(bone, value, flags));
         break;
     default:
         qFatal("Unexpected mode: %c", flags & 0xff);
