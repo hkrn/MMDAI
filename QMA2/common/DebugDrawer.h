@@ -52,6 +52,8 @@ using namespace vpvl2;
 class DebugDrawer : public btIDebugDraw
 {
 public:
+    typedef QSet<IBone *> BoneSet;
+
     DebugDrawer()
         : m_flags(0),
           m_visible(true)
@@ -109,7 +111,7 @@ public:
         m_visible = value;
     }
 
-    void drawModelBones(IModel *model, Scene *scene, const QSet<IBone *> &selectedBones) {
+    void drawModelBones(IModel *model, Scene *scene, const BoneSet &selectedBones) {
         if (!model || !m_visible || !m_program.isLinked())
             return;
         Array<IBone *> bones;
@@ -129,31 +131,30 @@ public:
         func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
-        QSet<IBone *> linkedIKBones, targetBones, destinationBones;
-        Q_UNUSED(targetBones)
-        Q_UNUSED(destinationBones)
-#if QMA2_TBD
-        /* IK ボーンを収集 */
-        const IKList &IKs = model->IKs();
-        const int nIKs = IKs.count();
-        for (int i = 0; i < nIKs; i++) {
-            IK *ik = IKs[i];
-            const BoneList &bones = ik->linkedBones();
-            int nbones = bones.count();
-            targetBones.insert(ik->targetBone());
-            destinationBones.insert(ik->destinationBone());
-            for (int j = 0; j < nbones; j++) {
-                Bone *bone = bones[j];
-                linkedIKBones.insert(bone);
-            }
-        }
-#endif
+        /* IK ボーンの収集 */
+        BoneSet bonesForIK;
+        Array<IBone *> linkedBones;
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
-            if (!bone->isMovable() && !bone->isRotateable())
+            if (bone->hasInverseKinematics()) {
+                linkedBones.clear();
+                bonesForIK.insert(bone);
+                bonesForIK.insert(bone->targetBone());
+                bone->getLinkedBones(linkedBones);
+                const int nlinks = linkedBones.count();
+                for (int j = 0; j < nlinks; j++) {
+                    IBone *linkedBone = linkedBones[j];
+                    bonesForIK.insert(linkedBone);
+                }
+            }
+        }
+        /* ボーンの表示(レンダリング) */
+        for (int i = 0; i < nbones; i++) {
+            IBone *bone = bones[i];
+            /* 操作不可能の場合はスキップ */
+            if (!bone->isInteractive())
                 continue;
-            /* 子ボーンが「全ての親」の場合はスキップしておく */
-            drawBone(bone, selectedBones, linkedIKBones);
+            drawBone(bone, selectedBones, bonesForIK);
         }
         m_program.release();
         glEnable(GL_DEPTH_TEST);
@@ -176,9 +177,9 @@ public:
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
         /* ボーン表示 */
-        QSet<IBone *> selectedBones, linkedBones;
+        BoneSet selectedBones;
         selectedBones.insert(bone);
-        drawBone(bone, selectedBones, linkedBones);
+        drawBone(bone, selectedBones, BoneSet());
         /* 軸表示 */
         static const Scalar kLength = 2.0;
         static const Vector3 kRed   = Vector3(1, 0, 0);
@@ -225,10 +226,7 @@ public:
     }
 
 private:
-    void drawBone(IBone *bone,
-                  const QSet<IBone *> &selectedBones,
-                  const QSet<IBone *> &linkedIKBones)
-    {
+    void drawBone(IBone *bone, const BoneSet &selected, const BoneSet &IK) {
         const Vector3 &dest = bone->destinationOrigin();
         if (!bone || !bone->isVisible() || dest.isZero())
             return;
@@ -250,14 +248,13 @@ private:
         tr.setOrigin(Vector3(-coneRadius, 0.0f, 0.0f));
         vertices.add(tr * origin);
         vertices.add(dest);
-        //qDebug() << internal::toQString(bone);
         /* 選択中の場合は赤色で表示 */
-        if (selectedBones.contains(bone)) {
+        if (selected.contains(bone)) {
             drawSphere(origin, sphereRadius, Vector3(1.0f, 0.0f, 0.0f));
             m_program.setUniformValue("color", kColorRed);
         }
         /* IK ボーンの場合は橙色で表示 */
-        else if (linkedIKBones.contains(bone)) {
+        else if (IK.contains(bone)) {
             drawSphere(origin, sphereRadius, Vector3(1.0f, 0.75f, 0.0f));
             m_program.setUniformValue("color", kColorOrange);
         }
