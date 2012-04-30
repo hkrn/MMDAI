@@ -76,10 +76,8 @@ void PMDMotionModel::State::save()
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        if (!bone->position().isZero() && bone->rotation() != Quaternion::getIdentity()) {
-            Transform tr(bone->position(), bone->rotation());
-            m_bones.append(Bone(bone, tr));
-        }
+        Transform tr(bone->position(), bone->rotation());
+        m_bones.append(Bone(bone, tr));
     }
     Array<IMorph *> morphs;
     m_model->getMorphs(morphs);
@@ -88,8 +86,30 @@ void PMDMotionModel::State::save()
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = morphs[i];
         const Scalar &weight = morph->weight();
-        if (!btFuzzyZero(weight) && !morph->hasParent())
+        if (!morph->hasParent())
             m_morphs.append(Morph(morph, weight));
+    }
+}
+
+void PMDMotionModel::State::compact()
+{
+    QMutableListIterator<Bone> bones(m_bones);
+    while (bones.hasNext()) {
+        bones.next();
+        const Bone &value = bones.value();
+        const IBone *bone = value.first;
+        const Transform &transform = value.second;
+        if (bone->position() == transform.first && bone->rotation() == transform.second)
+            bones.remove();
+    }
+    QMutableListIterator<Morph> morphs(m_morphs);
+    while (morphs.hasNext()) {
+        morphs.next();
+        const Morph &value = morphs.value();
+        const IMorph *morph = value.first;
+        const Scalar &weight = value.second;
+        if (morph->weight() == weight)
+            morphs.remove();
     }
 }
 
