@@ -138,6 +138,8 @@ public:
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, m_frameIndex);
             m_bmm->setData(index, QVariant());
         }
+        /* 削除後のインデックス更新を忘れなく行う */
+        m_motion->update(IKeyframe::kBone);
         /*
          * コンストラクタで保存したボーン情報を復元して置換する。注意点として replaceKeyFrame でメモリの所有者が
          * BoneAnimation に移動するのでこちらで管理する必要がなくなる
@@ -252,6 +254,8 @@ public:
                 m_bmm->setData(index, QVariant());
             }
         }
+        /* 削除後のインデックス更新を忘れなく行う */
+        m_motion->update(IKeyframe::kBone);
         /* コンストラクタで保存したキーフレームの生データからボーンのキーフレームに復元して置換する */
         Factory *factory = m_bmm->factory();
         QScopedPointer<IBoneKeyframe> frame;
@@ -684,6 +688,7 @@ void BoneMotionModel::commitTransform()
          * startTransform で保存したモデルの状態を SetBoneCommand に渡す
          * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
          */
+        m_state.compact();
         addUndoCommand(new SetBoneCommand(m_model, m_state));
         m_boneTransformStates.clear();
     }

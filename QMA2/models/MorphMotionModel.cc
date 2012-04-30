@@ -147,6 +147,8 @@ public:
                 m_fmm->setData(index, QVariant());
             }
         }
+        /* 削除後のインデックス更新を忘れなく行う */
+        m_motion->update(IKeyframe::kMorph);
         /* コンストラクタで保存したキーフレームの生データから頂点モーフのキーフレームに復元して置換する */
         Factory *factory = m_fmm->factory();
         QScopedPointer<IMorphKeyframe> frame;
@@ -390,8 +392,10 @@ void MorphMotionModel::commitTransform()
      * startTransform で保存したモデルの状態を SetBoneCommand に渡す
      * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
      */
-    if (m_model)
+    if (m_model) {
+        m_state.compact();
         addUndoCommand(new SetMorphCommand(m_model, m_state));
+    }
 }
 
 void MorphMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
