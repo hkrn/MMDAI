@@ -992,12 +992,21 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
     /* 状態をリセットする */
     setEditMode(m_editMode);
     m_totalDelta = 0.0f;
+    /* handleDidRelease を発行するかどうかを判定するためフラグの状態を保存する */
+    int flags = m_handleFlags;
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
     m_handles->setPoint3D(Vector3(0.0f, 0.0f, 0.0f));
     m_handles->setVisibilityFlags(Handles::kVisibleAll);
     m_lockTouchEvent = false;
-    emit handleDidRelease();
+    /*
+     * ハンドルを使って操作した場合のみ handleDidRelease を発行する
+     * (そうしないと commitTransform が呼ばれて余計な UndoCommand が追加されてしまうため)
+     */
+    bool isModelHandle = flags & Handles::kModel;
+    bool isImageHandle = flags & Handles::kEnable && !Handles::hasOperationFlag(flags);
+    if (isModelHandle || isImageHandle)
+        emit handleDidRelease();
 }
 
 void SceneWidget::paintGL()
