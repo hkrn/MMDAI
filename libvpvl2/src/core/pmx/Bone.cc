@@ -202,16 +202,34 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         uint16_t flags = *reinterpret_cast<uint16_t *>(ptr - 2);
         /* bone has destination relative or absolute */
-        bool isRelative = ((flags & 0x0001) == 1);
-        if (isRelative) {
+        bool hasDestinationOriginBone = ((flags & 0x0001) == 1);
+        BoneUnit p;
+        if (hasDestinationOriginBone) {
             if (!internal::validateSize(ptr, boneIndexSize, rest)) {
                 return false;
             }
         }
         else {
+            p = *reinterpret_cast<const BoneUnit *>(ptr);
             if (!internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
                 return false;
             }
+        }
+        /* bone has additional bias */
+        if ((flags & 0x0100 || flags & 0x200) && !internal::validateSize(ptr, boneIndexSize + sizeof(float), rest)) {
+            return false;
+        }
+        /* axis of bone is fixed */
+        if ((flags & 0x0400) && !internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
+            return false;
+        }
+        /* axis of bone is local */
+        if ((flags & 0x0800) && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
+            return false;
+        }
+        /* bone is transformed after external parent bone transformation */
+        if ((flags & 0x2000) && !internal::validateSize(ptr, sizeof(int), rest)) {
+            return false;
         }
         /* bone is IK */
         if (flags & 0x0020) {
@@ -234,22 +252,6 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
                     return false;
                 }
             }
-        }
-        /* bone has additional bias */
-        if ((flags & 0x0100 || flags & 0x200) && !internal::validateSize(ptr, boneIndexSize + sizeof(float), rest)) {
-            return false;
-        }
-        /* axis of bone is fixed */
-        if ((flags & 0x0400) && !internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
-            return false;
-        }
-        /* axis of bone is local */
-        if ((flags & 0x0800) && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
-            return false;
-        }
-        /* bone is transformed after external parent bone transformation */
-        if ((flags & 0x2000) && !internal::validateSize(ptr, sizeof(int), rest)) {
-            return false;
         }
     }
     info.bonesCount = size;
@@ -341,14 +343,40 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint16_t flags = m_flags = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(m_flags);
     /* bone has destination */
-    bool isRelative = ((flags & 0x0001) == 1);
-    if (isRelative) {
+    bool hasDestinationOriginBone = ((flags & 0x0001) == 1);
+    if (hasDestinationOriginBone) {
         m_destinationOriginBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
     }
     else {
         const BoneUnit &offset = *reinterpret_cast<const BoneUnit *>(ptr);
         internal::setPosition(offset.vector3, m_destinationOrigin);
         ptr += sizeof(offset);
+    }
+    /* bone has additional bias */
+    if ((flags & 0x0100 || flags & 0x200)) {
+        m_parentInherenceBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
+        m_weight = *reinterpret_cast<float *>(ptr);
+        ptr += sizeof(m_weight);
+    }
+    /* axis of bone is fixed */
+    if (flags & 0x0400) {
+        const BoneUnit &axis = *reinterpret_cast<const BoneUnit *>(ptr);
+        internal::setPosition(axis.vector3, m_fixedAxis);
+        ptr += sizeof(axis);
+    }
+    /* axis of bone is local */
+    if (flags & 0x0800) {
+        const BoneUnit &axisX = *reinterpret_cast<const BoneUnit *>(ptr);
+        internal::setPosition(axisX.vector3, m_axisX);
+        ptr += sizeof(axisX);
+        const BoneUnit &axisZ = *reinterpret_cast<const BoneUnit *>(ptr);
+        internal::setPosition(axisZ.vector3, m_axisZ);
+        ptr += sizeof(axisZ);
+    }
+    /* bone is transformed after external parent bone transformation */
+    if (flags & 0x2000) {
+        m_globalID = *reinterpret_cast<int *>(ptr);
+        ptr += sizeof(m_globalID);
     }
     /* bone is IK */
     if (flags & 0x0020) {
@@ -379,32 +407,6 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 #endif
             }
         }
-    }
-    /* bone has additional bias */
-    if ((flags & 0x0100 || flags & 0x200)) {
-        m_parentInherenceBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-        m_weight = *reinterpret_cast<float *>(ptr);
-        ptr += sizeof(m_weight);
-    }
-    /* axis of bone is fixed */
-    if (flags & 0x0400) {
-        const BoneUnit &axis = *reinterpret_cast<const BoneUnit *>(ptr);
-        internal::setPosition(axis.vector3, m_fixedAxis);
-        ptr += sizeof(axis);
-    }
-    /* axis of bone is local */
-    if (flags & 0x0800) {
-        const BoneUnit &axisX = *reinterpret_cast<const BoneUnit *>(ptr);
-        internal::setPosition(axisX.vector3, m_axisX);
-        ptr += sizeof(axisX);
-        const BoneUnit &axisZ = *reinterpret_cast<const BoneUnit *>(ptr);
-        internal::setPosition(axisZ.vector3, m_axisZ);
-        ptr += sizeof(axisZ);
-    }
-    /* bone is transformed after external parent bone transformation */
-    if (flags & 0x2000) {
-        m_globalID = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(m_globalID);
     }
     size = ptr - start;
 }
