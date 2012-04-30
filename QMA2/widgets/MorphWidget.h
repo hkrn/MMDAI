@@ -61,6 +61,8 @@ public:
     explicit MorphWidget(MorphMotionModel *fmm, QWidget *parent = 0);
 
 signals:
+    void morphWillChange();
+    void morphDidChange();
     void morphDidRegister(vpvl2::IMorph *morph);
 
 private slots:
@@ -81,7 +83,7 @@ private:
     void registerBase(const QComboBox *comboBox);
     void updateMorphWeight(const QComboBox *comboBox, QSlider *slider);
     vpvl2::IMorph *findMorph(const QString &name);
-    QSlider *createSlider();
+    QSlider *createSlider() const;
 
     QGroupBox *m_eyeGroup;
     QGroupBox *m_lipGroup;

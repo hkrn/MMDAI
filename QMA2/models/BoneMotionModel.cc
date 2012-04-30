@@ -684,12 +684,9 @@ void BoneMotionModel::saveTransform()
 void BoneMotionModel::commitTransform()
 {
     if (m_model) {
-        /*
-         * startTransform で保存したモデルの状態を SetBoneCommand に渡す
-         * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
-         */
-        m_state.compact();
-        addUndoCommand(new SetBoneCommand(m_model, m_state));
+        /* 状態を圧縮し、ボーン変形があれば SetBoneCommand を作成して UndoStack に追加 */
+        if (m_state.compact())
+            addUndoCommand(new SetBoneCommand(m_model, m_state));
         m_boneTransformStates.clear();
     }
 }

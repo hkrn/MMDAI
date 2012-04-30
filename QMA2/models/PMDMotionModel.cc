@@ -91,7 +91,7 @@ void PMDMotionModel::State::save()
     }
 }
 
-void PMDMotionModel::State::compact()
+bool PMDMotionModel::State::compact()
 {
     QMutableListIterator<Bone> bones(m_bones);
     while (bones.hasNext()) {
@@ -108,9 +108,10 @@ void PMDMotionModel::State::compact()
         const Morph &value = morphs.value();
         const IMorph *morph = value.first;
         const Scalar &weight = value.second;
-        if (morph->weight() == weight)
+        if (btFuzzyZero(morph->weight() - weight))
             morphs.remove();
     }
+    return m_bones.size() > 0 || m_morphs.size() > 0;
 }
 
 void PMDMotionModel::State::discard()

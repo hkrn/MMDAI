@@ -1270,6 +1270,9 @@ void MainWindow::connectWidgets()
     connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(vpvl2::Vector3)), m_sceneWidget, SLOT(setModelPositionOffset(vpvl2::Vector3)));
     connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(vpvl2::Vector3)), m_sceneWidget, SLOT(setModelRotationOffset(vpvl2::Vector3)));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), modelSettingWidget, SLOT(setPositionOffset(vpvl2::Vector3)));
+    MorphWidget *morphWidget = m_modelTabWidget->morphWidget();
+    connect(morphWidget, SIGNAL(morphWillChange()), m_morphMotionModel, SLOT(saveTransform()));
+    connect(morphWidget, SIGNAL(morphDidChange()), m_morphMotionModel, SLOT(commitTransform()));
     makeBonesSelectable();
 }
 

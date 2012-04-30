@@ -388,14 +388,9 @@ void MorphMotionModel::saveTransform()
 
 void MorphMotionModel::commitTransform()
 {
-    /*
-     * startTransform で保存したモデルの状態を SetBoneCommand に渡す
-     * メモリ管理はそちらに移動するので m_state は 0 にして無効にしておく
-     */
-    if (m_model) {
-        m_state.compact();
+    /* 状態を圧縮し、モーフ変形があれば SetMorphCommand を作成して UndoStack に追加 */
+    if (m_model && m_state.compact())
         addUndoCommand(new SetMorphCommand(m_model, m_state));
-    }
 }
 
 void MorphMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)

@@ -63,8 +63,6 @@ public:
     void saveMotion(vpvl2::IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframesByFrameIndex(int frameIndex);
-    void saveTransform();
-    void commitTransform();
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     const QString nameFromModelIndex(const QModelIndex &index) const;
 
@@ -86,6 +84,8 @@ public slots:
     void setPMDModel(vpvl2::IModel *model);
     void loadMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void selectMorphs(const QList<vpvl2::IMorph *> &morphs);
+    void saveTransform();
+    void commitTransform();
 
 signals:
     void morphsDidSelect(const QList<vpvl2::IMorph *> &morphs);

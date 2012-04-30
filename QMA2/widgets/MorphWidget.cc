@@ -249,9 +249,11 @@ void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
     }
 }
 
-QSlider *MorphWidget::createSlider()
+QSlider *MorphWidget::createSlider() const
 {
     QSlider *slider = new QSlider(Qt::Horizontal);
+    connect(slider, SIGNAL(sliderPressed()), SIGNAL(morphWillChange()));
+    connect(slider, SIGNAL(sliderReleased()), SIGNAL(morphDidChange()));
     slider->setTickInterval(20);
     slider->setMinimum(0);
     slider->setMaximum(kSliderMaximumValue);

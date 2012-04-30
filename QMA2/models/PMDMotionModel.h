@@ -65,7 +65,7 @@ public:
         ~State();
         void restore() const;
         void save();
-        void compact();
+        bool compact();
         void discard();
         void copyFrom(const State &value);
         void resetBones();
