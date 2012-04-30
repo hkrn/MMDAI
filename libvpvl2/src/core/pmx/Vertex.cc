@@ -187,7 +187,9 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
             }
             break;
         }
-        case kBdef2: {
+        case kBdef2:
+        case kSdef:
+        {
             for (int j = 0; j < 2; j++) {
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
@@ -213,21 +215,6 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 }
                 else {
                     vertex->m_bones[j] = &kNullBone;
-                }
-            }
-            break;
-        }
-        case kSdef: {
-            int boneIndex1 = vertex->m_boneIndices[0];
-            int boneIndex2 = vertex->m_boneIndices[1];
-            if (boneIndex1 >= 0 && boneIndex2 >= 0) {
-                if (boneIndex1 >= nbones || boneIndex2 >= nbones) {
-                    return false;
-                }
-                Bone *bone1 = bones[boneIndex1], *bone2 = bones[boneIndex2];
-                {
-                    vertex->m_bones[0] = bone1;
-                    vertex->m_bones[1] = bone2;
                 }
             }
             break;

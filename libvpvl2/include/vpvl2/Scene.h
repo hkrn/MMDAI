@@ -120,6 +120,7 @@ public:
     void advance(float delta);
     void seek(float frameIndex);
     void updateModels();
+    void updateRenderEngines();
     void updateCamera();
     void setPreferredFPS(const Scalar &value);
     bool isReachedTo(float frameIndex) const;

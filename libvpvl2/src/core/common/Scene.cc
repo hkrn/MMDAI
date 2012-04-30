@@ -327,6 +327,8 @@ void Scene::advance(float delta)
         IMotion *motion = motions[i];
         motion->advance(delta);
     }
+    updateModels();
+    updateRenderEngines();
     Camera &camera = m_context->camera;
     vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
     if (cameraMotion) {
@@ -360,6 +362,8 @@ void Scene::seek(float frameIndex)
         IMotion *motion = motions[i];
         motion->seek(frameIndex);
     }
+    updateModels();
+    updateRenderEngines();
     Camera &camera = m_context->camera;
     vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
     if (cameraMotion) {
@@ -386,6 +390,16 @@ void Scene::seek(float frameIndex)
 }
 
 void Scene::updateModels()
+{
+    const Array<IModel *> &models = m_context->models;
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
+        IModel *model = models[i];
+        model->performUpdate();
+    }
+}
+
+void Scene::updateRenderEngines()
 {
     const Array<IRenderEngine *> &renderEngines = m_context->engines;
     const int nRenderEngines = renderEngines.count();

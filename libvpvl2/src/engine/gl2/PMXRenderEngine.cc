@@ -986,7 +986,6 @@ void PMXRenderEngine::update()
 {
     if (!m_context)
         return;
-    m_model->performUpdate();
     size_t size = pmx::Model::strideSize(pmx::Model::kVertexStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBufferSubData(GL_ARRAY_BUFFER, 0, m_model->vertices().count() * size, m_model->vertexPtr());
