@@ -738,7 +738,7 @@ protected:
         updateModelViewMatrix();
         updateProjectionMatrix();
         updateModelViewProjectionMatrix();
-        m_scene.updateModels();
+        m_scene.updateRenderEngines();
         updateGL();
     }
     void mousePressEvent(QMouseEvent *event) {
