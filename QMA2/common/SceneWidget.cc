@@ -484,7 +484,7 @@ void SceneWidget::advanceMotion(float delta)
         const Scalar &step = delta / Scene::defaultFPS();
         m_loader->world()->mutableWorld()->stepSimulation(step);
     }
-    updateModels();
+    updateScene();
 }
 
 void SceneWidget::seekMotion(float frameIndex, bool force)
@@ -509,7 +509,7 @@ void SceneWidget::seekMotion(float frameIndex, bool force)
         scene->seek(frameIndex);
         m_frameIndex = frameIndex;
     }
-    updateModels();
+    updateScene();
     emit motionDidSeek(frameIndex);
 }
 
@@ -523,7 +523,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_frameIndex = 0;
-    updateModels();
+    updateScene();
     emit motionDidSeek(0.0f);
 }
 
@@ -1062,7 +1062,9 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         }
         else {
             /* 非再生中(編集中)はモーションを一切動かさず、カメラの更新だけ行う */
-            updateCamera();
+            Scene *scene = m_loader->scene();
+            scene->updateCamera();
+            updateScene();
         }
     }
 }
@@ -1233,19 +1235,10 @@ void SceneWidget::updateFPS()
     m_frameCount++;
 }
 
-void SceneWidget::updateCamera()
-{
-    Scene *scene = m_loader->scene();
-    scene->updateCamera();
-    m_loader->updateMatrices(QSizeF(size()));
-    updateGL();
-    emit cameraPerspectiveDidSet(scene->camera());
-}
-
-void SceneWidget::updateModels()
+void SceneWidget::updateScene()
 {
     m_loader->updateMatrices(QSizeF(size()));
-    m_loader->updateModels();
+    m_loader->scene()->updateRenderEngines();
     updateGL();
     emit cameraPerspectiveDidSet(m_loader->scene()->camera());
 }

@@ -210,9 +210,9 @@ void MorphWidget::registerBase(const QComboBox *comboBox)
 {
     int index = comboBox->currentIndex();
     if (index >= 0) {
-        IMorph *face = m_morphMotionModel->findMorph(comboBox->itemText(index));
-        if (face)
-            emit morphDidRegister(face);
+        IMorph *morph = m_morphMotionModel->findMorph(comboBox->itemText(index));
+        if (morph)
+            emit morphDidRegister(morph);
     }
 }
 
@@ -242,8 +242,9 @@ void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
         IMorph *morph = m_morphMotionModel->findMorph(comboBox->itemText(index));
         if (morph) {
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
-            const Scalar &weight = value / static_cast<Scalar>(kSliderMaximumValue);
-            m_morphMotionModel->setWeight(weight, morph);
+            const Scalar &newWeight = value / static_cast<Scalar>(kSliderMaximumValue);
+            m_morphMotionModel->setWeight(newWeight, morph);
+            m_morphMotionModel->updateModel(m_morphMotionModel->selectedModel());
         }
     }
 }

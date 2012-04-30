@@ -1151,11 +1151,6 @@ void SceneLoader::updateMatrices(const QSizeF &size)
     matrices->setModelViewProjection(modelViewMatrixf);
 }
 
-void SceneLoader::updateModels()
-{
-    m_project->updateModels();
-}
-
 const QList<QUuid> SceneLoader::renderOrderList() const
 {
     QList<QUuid> r;

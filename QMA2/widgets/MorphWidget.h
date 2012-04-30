@@ -38,6 +38,7 @@
 #define MORPHWIDGET_H
 
 #include <QtGui/QWidget>
+#include <vpvl2/Common.h>
 
 namespace vpvl2 {
 class IModel;
@@ -60,7 +61,7 @@ public:
     explicit MorphWidget(MorphMotionModel *fmm, QWidget *parent = 0);
 
 signals:
-    void morphDidRegister(vpvl2::IMorph *face);
+    void morphDidRegister(vpvl2::IMorph *morph);
 
 private slots:
     void retranslate();
