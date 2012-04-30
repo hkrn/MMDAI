@@ -117,7 +117,7 @@ public:
         kVisibleAll    = kMove   | kRotate | kX | kY | kZ | kModel
     };
 
-    static bool hasOperationFlag(int value);
+    static bool isToggleButton(int value);
 
     Handles(SceneLoader *loader, const QSize &size);
     ~Handles();

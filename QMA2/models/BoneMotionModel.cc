@@ -719,6 +719,20 @@ const QString BoneMotionModel::nameFromModelIndex(const QModelIndex &index) cons
     return static_cast<TreeItem *>(index.internalPointer())->name();
 }
 
+const QModelIndexList BoneMotionModel::modelIndicesFromBones(const QList<IBone *> &bones, int frameIndex) const
+{
+    const QSet<IBone *> &boneSet = bones.toSet();
+    QModelIndexList indices;
+    foreach (PMDMotionModel::ITreeItem *item, keys().values()) {
+        TreeItem *treeItem = static_cast<TreeItem *>(item);
+        if (boneSet.contains(treeItem->bone())) {
+            const QModelIndex &index = frameIndexToModelIndex(item, frameIndex);
+            indices.append(index);
+        }
+    }
+    return indices;
+}
+
 void BoneMotionModel::loadPose(VPDFilePtr pose, IModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
@@ -1134,8 +1148,11 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
 
 void BoneMotionModel::selectBones(const QList<IBone *> &bones)
 {
-    m_selectedBones = bones;
-    emit bonesDidSelect(bones);
+    /* signal/slot による循環参照防止 */
+    if (bones != m_selectedBones) {
+        m_selectedBones = bones;
+        emit bonesDidSelect(bones);
+    }
 }
 
 IBone *BoneMotionModel::findBone(const QString &name) const

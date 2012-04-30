@@ -76,6 +76,7 @@ public:
     void pasteReversedFrame(int frameIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
     const QString nameFromModelIndex(const QModelIndex &index) const;
+    const QModelIndexList modelIndicesFromBones(const QList<vpvl2::IBone *> &bones, int frameIndex) const;
 
     void loadPose(VPDFilePtr pose, vpvl2::IModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl2::IModel *model, int frameIndex);

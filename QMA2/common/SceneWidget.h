@@ -166,7 +166,7 @@ signals:
     void handleDidMoveAbsolute(const vpvl2::Vector3 &position, vpvl2::IBone *bone, int mode);
     void handleDidMoveRelative(const vpvl2::Vector3 &position, vpvl2::IBone *bone, int mode);
     void handleDidRotate(const vpvl2::Scalar &angle, vpvl2::IBone *bone, int mode);
-    void boneDidSelect(const QList<vpvl2::IBone *> &bones);
+    void bonesDidSelect(const QList<vpvl2::IBone *> &bones);
     void motionDidSeek(float frameIndex);
     void undoDidRequest();
     void redoDidRequest();

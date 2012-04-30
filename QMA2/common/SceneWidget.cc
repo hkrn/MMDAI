@@ -606,10 +606,14 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 
 void SceneWidget::selectBones(const QList<IBone *> &bones)
 {
-    m_info->setBones(bones, tr("(multiple)"));
-    m_info->update();
-    m_handles->setBone(bones.isEmpty() ? 0 : bones.first());
-    m_bones = bones;
+    /* signal/slot による循環参照防止 */
+    if (m_bones != bones) {
+        m_info->setBones(bones, tr("(multiple)"));
+        m_info->update();
+        m_handles->setBone(bones.isEmpty() ? 0 : bones.first());
+        m_bones = bones;
+        emit bonesDidSelect(bones);
+    }
 }
 
 void SceneWidget::rotateScene(const Vector3 &delta)
@@ -828,18 +832,21 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_handles->setPoint2D(pos);
 #ifdef IS_QMA2
     QRectF rect;
-    /* モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する */
+    /*
+     * モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する。
+     * また、右下のハンドル処理はひとつ以上ボーンが選択されていなければならない。
+     */
     bool movable = false, rotateable = false;
     if (!m_bones.isEmpty()) {
         IBone *bone = m_bones.last();
         movable = bone->isMovable();
         rotateable = bone->isRotateable();
+        /* 右下のハンドルを掴まれた */
         if (m_handles->testHitImage(pos, movable, rotateable, flags, rect)) {
-            /*
-             * kView => kLocal => kGlobal => kView の順番で切り替えを行う
-             */
+            /* 事前にカーソル消去用のビットマップを作成する */
             QPixmap npixmap(32, 32);
             npixmap.fill(Qt::transparent);
+            /* kView => kLocal => kGlobal => kView の順番で切り替えを行う */
             switch (flags) {
             case Handles::kView:
                 m_handles->setState(Handles::kLocal);
@@ -850,6 +857,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             case Handles::kGlobal:
                 m_handles->setState(Handles::kView);
                 break;
+                /* ハンドルを掴まれたらカーソルを消去する */
             case Handles::kNone:
             case Handles::kEnable:
             case Handles::kDisable:
@@ -902,13 +910,17 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                 if (event->modifiers() & Qt::CTRL)
                     bones.append(m_bones);
                 bones.append(nearestBone);
-                emit boneDidSelect(bones);
+                emit bonesDidSelect(bones);
             }
         }
-        /* 回転または移動モードの場合モデルがクリックされたかどうかで操作判定を行う */
+        /*
+         * 回転モードまたは移動モードでかつモデルハンドルにカーソルがあっている場合 handleDidGrab を発行する。
+         * 回転モードの場合は該当する部分 (例えば X なら X のサークル) のみを表示する。
+         */
         else if (m_editMode == kRotate || m_editMode == kMove) {
             Vector3 rayFrom, rayTo, pick;
             makeRay(pos, rayFrom, rayTo);
+            /* モデルハンドルにカーソルが入ってる */
             if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
                 m_handleFlags = flags;
                 if (m_editMode == kRotate)
@@ -932,7 +944,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             grabModelHandleByRaycast(pos, diff, m_handleFlags);
         }
         /* 有効な右下のハンドルがクリックされた (かつ操作切り替えボタンではないこと) */
-        else if (m_handleFlags & Handles::kEnable && !Handles::hasOperationFlag(m_handleFlags)) {
+        else if (m_handleFlags & Handles::kEnable && !Handles::isToggleButton(m_handleFlags)) {
             m_isImageHandleRectIntersect = true;
             m_totalDelta = m_totalDelta + (pos.y() - m_clickOrigin.y()) * 0.1f;
             grabImageHandle(m_totalDelta);
@@ -963,12 +975,14 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
         /* 操作ハンドル(右下の画像)にマウスカーソルが入ってるか? */
         m_isImageHandleRectIntersect = m_handles->testHitImage(pos, movable, rotateable, flags, rect);
-        /* ハンドル操作中ではない場合のみ */
+        /* ハンドル操作中ではない場合のみ (m_handleFlags は mousePressEvent で設定される) */
         if (m_handleFlags == Handles::kNone) {
             if (m_isImageHandleRectIntersect) {
-                if (Handles::hasOperationFlag(flags))
+                /* 切り替えボタン */
+                if (Handles::isToggleButton(flags))
                     setCursor(Qt::PointingHandCursor);
-                else
+                /* 有効な回転または移動ハンドル。無効の場合は何もしない */
+                else if (flags & Handles::kEnable)
                     setCursor(Qt::SizeVerCursor);
             }
             /* 回転モードの場合は回転ハンドルに入っているか? */
@@ -1004,7 +1018,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
      * (そうしないと commitTransform が呼ばれて余計な UndoCommand が追加されてしまうため)
      */
     bool isModelHandle = flags & Handles::kModel;
-    bool isImageHandle = flags & Handles::kEnable && !Handles::hasOperationFlag(flags);
+    bool isImageHandle = flags & Handles::kEnable && !Handles::isToggleButton(flags);
     if (isModelHandle || isImageHandle)
         emit handleDidRelease();
 }
@@ -1028,8 +1042,12 @@ void SceneWidget::paintGL()
         /* 右下のハンドルが領域に入ってる場合は軸を表示する */
         if (m_isImageHandleRectIntersect)
             m_debugDrawer->drawBoneTransform(bone, scene, m_handles->modeFromConstraint());
-        /* 情報パネルと右下のハンドルを最後にレンダリング(表示上最上位に持っていく) */
-        m_handles->drawImageHandles(bone);
+        /*
+         * 情報パネルと右下のハンドルを最後にレンダリング(表示上最上位に持っていく)
+         * 右下の操作ハンドルはモデルが選択されていない場合は非表示にするように変更
+         */
+        if (m_loader->selectedModel())
+            m_handles->drawImageHandles(bone);
         m_info->draw();
         break;
     case kRotate:

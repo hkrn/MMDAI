@@ -236,7 +236,7 @@ Handles::Handles(SceneLoader *loader, const QSize &size)
     m_world = new Handles::StaticWorld();
 }
 
-bool Handles::hasOperationFlag(int value)
+bool Handles::isToggleButton(int value)
 {
     return value & kGlobal || value & kLocal || value & kView;
 }

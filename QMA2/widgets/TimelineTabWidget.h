@@ -103,8 +103,8 @@ private slots:
     void addFaceKeyFrameAtCurrentFrameIndex(vpvl2::IMorph *face);
     void setCurrentFrameIndex(int value);
     void setCurrentFrameIndexZero();
-    void insertFrame();
-    void deleteFrame();
+    void insertKeyframesBySelectedIndices();
+    void deleteKeyframesBySelectedIndices();
     void copyKeyframes();
     void cutKeyframes();
     void pasteKeyframes();
@@ -119,6 +119,7 @@ private slots:
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();
+    void selectBones(const QList<vpvl2::IBone *> &bones);
 
 signals:
     void editModeDidSet(SceneWidget::EditMode mode);
