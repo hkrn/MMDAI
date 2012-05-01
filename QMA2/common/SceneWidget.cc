@@ -903,19 +903,23 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                 IBone *bone = bones[i];
                 const Vector3 &o = bone->localTransform().getOrigin(),
                         min = o - size, max = o + size;
-                if (btRayAabb(znear, zfar, min, max, hitLambda, normal)
-                        && (bone->isMovable() || bone->isRotateable())) {
+                if (btRayAabb(znear, zfar, min, max, hitLambda, normal) && bone->isInteractive()) {
                     nearestBone = bone;
                     break;
                 }
             }
             /* 操作可能で最も近いボーンを選択状態にする */
             if (nearestBone) {
-                QList<IBone *> bones;
+                QList<IBone *> selectedBones;
+                /* CTRL が押されている場合は前回の選択状態を引き継ぐ */
                 if (event->modifiers() & Qt::CTRL)
-                    bones.append(m_bones);
-                bones.append(nearestBone);
-                emit bonesDidSelect(bones);
+                    selectedBones.append(m_bones);
+                /* すでにボーンが選択済みの場合は選択状態を外す */
+                if (selectedBones.contains(nearestBone))
+                    selectedBones.removeOne(nearestBone);
+                else
+                    selectedBones.append(nearestBone);
+                selectBones(selectedBones);
             }
         }
         /*
