@@ -86,7 +86,6 @@ public:
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
 
-    vpvl2::IBone *findBone(const QString &name) const;
     vpvl2::IBone *selectedBone() const { return m_selectedBones.isEmpty() ? 0 : m_selectedBones.first(); }
     vpvl2::Factory *factory() const { return m_factory; }
     PMDMotionModel::State *mutableState() { return &m_state; }

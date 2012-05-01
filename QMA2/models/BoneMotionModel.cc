@@ -60,6 +60,10 @@ public:
     }
     ~TreeItem() {
         qDeleteAll(m_children);
+        m_parent = 0;
+        m_bone = 0;
+        m_isRoot = false;
+        m_isCategory = false;
     }
 
     void addChild(ITreeItem *item) {
@@ -1153,18 +1157,6 @@ void BoneMotionModel::selectBones(const QList<IBone *> &bones)
         m_selectedBones = bones;
         emit bonesDidSelect(bones);
     }
-}
-
-IBone *BoneMotionModel::findBone(const QString &name) const
-{
-    /* QString を扱っていること以外 PMDModel#findBone と同じ */
-    const internal::String s(name);
-    foreach (ITreeItem *item, keys()) {
-        IBone *bone = static_cast<TreeItem *>(item)->bone();
-        if (bone->name()->equals(&s))
-            return bone;
-    }
-    return 0;
 }
 
 void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &delta, IBone *bone, int flags)

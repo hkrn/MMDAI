@@ -68,7 +68,6 @@ public:
 
     void setFrames(const KeyFramePairList &frames);
     void resetAllMorphs();
-    vpvl2::IMorph *findMorph(const QString &name);
     void setWeight(float value);
     void setWeight(const vpvl2::Scalar &value, vpvl2::IMorph *morph);
     vpvl2::IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }

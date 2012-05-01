@@ -56,6 +56,10 @@ public:
     }
     ~TreeItem() {
         qDeleteAll(m_children);
+        m_parent = 0;
+        m_morph = 0;
+        m_isRoot = false;
+        m_isCategory = false;
     }
 
     void addChild(ITreeItem *item) {
@@ -607,18 +611,6 @@ void MorphMotionModel::selectMorphs(const QList<IMorph *> &morphs)
 {
     m_selectedMorphs = morphs;
     emit morphsDidSelect(morphs);
-}
-
-IMorph *MorphMotionModel::findMorph(const QString &name)
-{
-    /* QString を扱っていること以外 PMDModel#findFace と同じ */
-    internal::String s(name);
-    foreach (ITreeItem *item, keys()) {
-        IMorph *morph = static_cast<TreeItem *>(item)->morph();
-        if (morph->name()->equals(&s))
-            return morph;
-    }
-    return 0;
 }
 
 void MorphMotionModel::setWeight(float value)

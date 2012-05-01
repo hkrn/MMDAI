@@ -208,9 +208,11 @@ void MorphWidget::registerOther()
 
 void MorphWidget::registerBase(const QComboBox *comboBox)
 {
+    IModel *model = m_morphMotionModel->selectedModel();
     int index = comboBox->currentIndex();
-    if (index >= 0) {
-        IMorph *morph = m_morphMotionModel->findMorph(comboBox->itemText(index));
+    if (model && index >= 0) {
+        const internal::String s(comboBox->itemText(index));
+        IMorph *morph = model->findMorph(&s);
         if (morph)
             emit morphDidRegister(morph);
     }
@@ -227,9 +229,11 @@ void MorphWidget::updateMorphWeightValues()
 
 void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 {
+    IModel *model = m_morphMotionModel->selectedModel();
     int index = comboBox->currentIndex();
-    if (index >= 0) {
-        IMorph *morph = m_morphMotionModel->findMorph(comboBox->itemText(index));
+    if (model && index >= 0) {
+        const internal::String s(comboBox->itemText(index));
+        IMorph *morph = model->findMorph(&s);
         if (morph)
             slider->setValue(morph->weight() * kSliderMaximumValue);
     }
@@ -237,9 +241,11 @@ void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 
 void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
 {
+    IModel *model = m_morphMotionModel->selectedModel();
     int index = comboBox->currentIndex();
-    if (index >= 0) {
-        IMorph *morph = m_morphMotionModel->findMorph(comboBox->itemText(index));
+    if (model && index >= 0) {
+        const internal::String s(comboBox->itemText(index));
+        IMorph *morph = model->findMorph(&s);
         if (morph) {
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
             const Scalar &newWeight = value / static_cast<Scalar>(kSliderMaximumValue);
