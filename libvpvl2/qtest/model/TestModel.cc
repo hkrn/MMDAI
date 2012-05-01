@@ -152,19 +152,19 @@ void TestModel::setVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *>
     vertex.setSdefR1(Vector3(0.61, 0.62, 0.63));
 }
 
-void TestModel::compareVertex(const Vertex &vertex, const Vertex &vertex2, const Array<Bone *> &bones)
+void TestModel::compareVertex(const Vertex &expected, const Vertex &vertex2, const Array<Bone *> &bones)
 {
-    compare(vertex2.origin(), vertex.origin());
-    compare(vertex2.normal(), vertex.normal());
-    compare(vertex2.texcoord(), vertex.texcoord());
-    compare(vertex2.uv(0), vertex.uv(0));
-    compare(kZeroV4, vertex.uv(1));
-    QCOMPARE(vertex2.type(), vertex.type());
-    QCOMPARE(vertex2.edgeSize(), vertex.edgeSize());
-    if (vertex.type() == Vertex::kSdef) {
-        compare(vertex2.sdefC(), vertex.sdefC());
-        compare(vertex2.sdefR0(), vertex.sdefR0());
-        compare(vertex2.sdefR1(), vertex.sdefR1());
+    compare(vertex2.origin(), expected.origin());
+    compare(vertex2.normal(), expected.normal());
+    compare(vertex2.texcoord(), expected.texcoord());
+    compare(vertex2.uv(0), expected.uv(0));
+    compare(kZeroV4, expected.uv(1));
+    QCOMPARE(vertex2.type(), expected.type());
+    QCOMPARE(vertex2.edgeSize(), expected.edgeSize());
+    if (expected.type() == Vertex::kSdef) {
+        compare(vertex2.sdefC(), expected.sdefC());
+        compare(vertex2.sdefR0(), expected.sdefR0());
+        compare(vertex2.sdefR1(), expected.sdefR1());
     }
     else {
         compare(kZeroV3, vertex2.sdefC());
@@ -172,11 +172,12 @@ void TestModel::compareVertex(const Vertex &vertex, const Vertex &vertex2, const
         compare(kZeroV3, vertex2.sdefR1());
     }
     Array<Vertex *> vertices;
-    vertices.add(const_cast<Vertex *>(&vertex));
+    vertices.add(const_cast<Vertex *>(&expected));
     Vertex::loadVertices(vertices, bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
-        QCOMPARE(bones[i], vertex.bone(i));
+        QCOMPARE(bones[i], expected.bone(i));
+        QVERIFY(bones[i]->index() != -1);
         if (nbones == 4)
             QCOMPARE(0.2f + 0.1f * i, vertex2.weight(i));
     }
@@ -208,43 +209,7 @@ void TestModel::parseFile() const
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         const size_t size = file.size();
         QVERIFY(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
-        model.load(reinterpret_cast<const uint8_t *>(data), size);
-#if 0
-        QTextCodec *codec = QTextCodec::codecForName("UTF-16");
-        qDebug() << "Model#name()" << codec->toUnicode(model.name()->ptr(), model.name()->length());
-        qDebug() << "Model#englishName()" << codec->toUnicode(model.englishName()->ptr(), model.englishName()->length());
-        qDebug() << "Model#comment()" << codec->toUnicode(model.comment()->ptr(), model.comment()->length());
-        qDebug() << "Model#englishComment()" << codec->toUnicode(model.englishComment()->ptr(), model.englishComment()->length());
-        const Array<StaticString *> &textures = model.textures();
-        for (int i = 0; i < textures.count(); i++) {
-            StaticString *texture = textures[i];
-            qDebug() << "Texture#name()" << codec->toUnicode(texture->ptr(), texture->length());
-        }
-        const Array<Bone *> &bones = model.bones();
-        for (int i = 0; i < bones.count(); i++) {
-            Bone *bone = bones[i];
-            qDebug() << "Bone#name()" << codec->toUnicode(bone->name()->ptr(), bone->name()->length());
-            qDebug() << "Bone#englishName()" << codec->toUnicode(bone->englishName()->ptr(), bone->englishName()->length());
-        }
-        const Array<Morph *> &morphs = model.morphs();
-        for (int i = 0; i < morphs.count(); i++) {
-            Morph *morph = morphs[i];
-            qDebug() << "Bone#name()" << codec->toUnicode(morph->name()->ptr(), morph->name()->length());
-            qDebug() << "Bone#englishName()" << codec->toUnicode(morph->englishName()->ptr(), morph->englishName()->length());
-        }
-        const Array<RigidBody *> &rigidBodies = model.rigidBodies();
-        for (int i = 0; i < rigidBodies.count(); i++) {
-            RigidBody *rigidBody = rigidBodies[i];
-            qDebug() << "RigidBody#name()" << codec->toUnicode(rigidBody->name()->ptr(), rigidBody->name()->length());
-            qDebug() << "RigidBody#englishName()" << codec->toUnicode(rigidBody->englishName()->ptr(), rigidBody->englishName()->length());
-        }
-        const Array<Joint *> &joints = model.joints();
-        for (int i = 0; i < joints.count(); i++) {
-            Joint *joint = joints[i];
-            qDebug() << "Joint#name()" << codec->toUnicode(joint->name()->ptr(), joint->name()->length());
-            qDebug() << "Joint#englishName()" << codec->toUnicode(joint->englishName()->ptr(), joint->englishName()->length());
-        }
-#endif
+        QVERIFY(model.load(reinterpret_cast<const uint8_t *>(data), size));
     }
     else {
         QSKIP("Require a model to test this", SkipSingle);
@@ -576,6 +541,7 @@ void TestModel::testReadWriteBone(size_t indexSize)
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
+    // construct bone
     parent.setIndex(0);
     bone.setName(&name);
     bone.setEnglishName(&englishName);
@@ -601,10 +567,12 @@ void TestModel::testReadWriteBone(size_t indexSize)
     bone.setLocalAxisEnable(true);
     bone.setTransformedAfterPhysicsSimulationEnable(true);
     bone.setTransformedByExternalParentEnable(true);
+    // write constructed bone and read it
     size_t size = bone.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     bone.write(data.data(), info);
     bone2.read(data.data(), info, read);
+    // compare read bone
     QCOMPARE(read, size);
     QVERIFY(bone2.name()->equals(bone.name()));
     QVERIFY(bone2.englishName()->equals(bone.englishName()));
@@ -645,6 +613,7 @@ void TestModel::testReadWriteJoint(size_t indexSize)
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.rigidBodyIndexSize = indexSize;
+    // construct joint
     body.setIndex(0);
     body2.setIndex(1);
     joint.setName(&name);
@@ -659,11 +628,13 @@ void TestModel::testReadWriteJoint(size_t indexSize)
     joint.setRotationUpperLimit(Vector3(0.51, 0.52, 0.53));
     joint.setPositionStiffness(Vector3(0.61, 0.62, 0.63));
     joint.setRotationStiffness(Vector3(0.71, 0.72, 0.73));
+    // write constructed joint and read it
     size_t size = joint.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     joint.write(data.data(), info);
     joint2.read(data.data(), info, read);
     QCOMPARE(read, size);
+    // compare read joint
     QVERIFY(joint2.name()->equals(joint.name()));
     QVERIFY(joint2.englishName()->equals(joint.englishName()));
     QCOMPARE(joint2.position(), joint.position());
@@ -687,6 +658,7 @@ void TestModel::testReadWriteMaterial(size_t indexSize)
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.textureIndexSize = indexSize;
+    // construct material
     material.setName(&name);
     material.setEnglishName(&englishName);
     material.setSphereTextureRenderMode(Material::kSubTexture);
@@ -701,10 +673,12 @@ void TestModel::testReadWriteMaterial(size_t indexSize)
     material.setToonTextureIndex(3);
     material.setIndices(4);
     material.setFlags(5);
+    // write contructed material and read it
     size_t size = material.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     material.write(data.data(), info);
     material2.read(data.data(), info, read);
+    // compare read material
     QCOMPARE(read, size);
     QVERIFY(material2.name()->equals(material.name()));
     QVERIFY(material2.englishName()->equals(material.englishName()));
@@ -725,22 +699,22 @@ void TestModel::testReadWriteBoneMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
-    Morph::Bone bone1, bone2;
+    QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.boneIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // bone morph1
-    bone1.index = 0;
-    bone1.position.setValue(0.11, 0.12, 0.13);
-    bone1.rotation.setValue(0.21, 0.22, 0.23, 0.24);
-    morph.addBoneMorph(bone1);
+    bone1->index = 0;
+    bone1->position.setValue(0.11, 0.12, 0.13);
+    bone1->rotation.setValue(0.21, 0.22, 0.23, 0.24);
+    morph.addBoneMorph(bone1.data());
     // bone morph2
-    bone2.index = 1;
-    bone2.position.setValue(0.31, 0.32, 0.33);
-    bone2.rotation.setValue(0.41, 0.42, 0.43, 0.44);
-    morph.addBoneMorph(bone2);
+    bone2->index = 1;
+    bone2->position.setValue(0.31, 0.32, 0.33);
+    bone2->rotation.setValue(0.41, 0.42, 0.43, 0.44);
+    morph.addBoneMorph(bone2.data());
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kEyeblow);
@@ -754,34 +728,37 @@ void TestModel::testReadWriteBoneMorph(size_t indexSize)
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
     QCOMPARE(morph2.category(), morph.category());
     QCOMPARE(morph2.type(), morph.type());
-    const Array<Morph::Bone> &bones = morph2.bones();
+    const Array<Morph::Bone *> &bones = morph2.bones();
     QCOMPARE(2, bones.count());
-    compare(bones[0].position, bone1.position);
-    compare(bones[0].rotation, bone1.rotation);
-    QCOMPARE(bones[0].index, bone1.index);
-    compare(bones[1].position, bone2.position);
-    compare(bones[1].rotation, bone2.rotation);
-    QCOMPARE(bones[1].index, bone2.index);
+    compare(bones[0]->position, bone1->position);
+    compare(bones[0]->rotation, bone1->rotation);
+    QCOMPARE(bones[0]->index, bone1->index);
+    compare(bones[1]->position, bone2->position);
+    compare(bones[1]->rotation, bone2->rotation);
+    QCOMPARE(bones[1]->index, bone2->index);
+    // delete bone1 and bone2 at Morph destructor
+    bone1.take();
+    bone2.take();
 }
 
 void TestModel::testReadWriteGroupMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
-    Morph::Group group1, group2;
+    QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.morphIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // group morph1
-    group1.index = 0;
-    group1.weight = 0.1;
-    morph.addGroupMorph(group1);
+    group1->index = 0;
+    group1->weight = 0.1;
+    morph.addGroupMorph(group1.data());
     // group morph2
-    group2.index = 1;
-    group2.weight = 0.2;
-    morph.addGroupMorph(group2);
+    group2->index = 1;
+    group2->weight = 0.2;
+    morph.addGroupMorph(group2.data());
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kEye);
@@ -795,50 +772,53 @@ void TestModel::testReadWriteGroupMorph(size_t indexSize)
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
     QCOMPARE(morph2.category(), morph.category());
     QCOMPARE(morph2.type(), morph.type());
-    const Array<Morph::Group> &groups = morph2.groups();
+    const Array<Morph::Group *> &groups = morph2.groups();
     QCOMPARE(2, groups.count());
-    QCOMPARE(groups[0].weight, group1.weight);
-    QCOMPARE(groups[0].index, group1.index);
-    QCOMPARE(groups[1].weight, group2.weight);
-    QCOMPARE(groups[1].index, group2.index);
+    QCOMPARE(groups[0]->weight, group1->weight);
+    QCOMPARE(groups[0]->index, group1->index);
+    QCOMPARE(groups[1]->weight, group2->weight);
+    QCOMPARE(groups[1]->index, group2->index);
+    // delete group1 and group2 at Morph destructor
+    group1.take();
+    group2.take();
 }
 
 void TestModel::testReadWriteMaterialMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
-    Morph::Material material1, material2;
+    QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.materialIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // material morph1
-    material1.index = 0;
-    material1.ambient.setValue(0.01, 0.02, 0.03);
-    material1.diffuse.setValue(0.11, 0.12, 0.13, 0.14);
-    material1.specular.setValue(0.21, 0.22, 0.23);
-    material1.edgeColor.setValue(0.31, 0.32, 0.33, 0.34);
-    material1.sphereTextureWeight.setValue(0.41, 0.42, 0.43, 0.44);
-    material1.textureWeight.setValue(0.51, 0.52, 0.53, 0.54);
-    material1.toonTextureWeight.setValue(0.61, 0.62, 0.63, 0.64);
-    material1.edgeSize = 0.1;
-    material1.shininess = 0.2;
-    material1.operation = 1;
+    material1->index = 0;
+    material1->ambient.setValue(0.01, 0.02, 0.03);
+    material1->diffuse.setValue(0.11, 0.12, 0.13, 0.14);
+    material1->specular.setValue(0.21, 0.22, 0.23);
+    material1->edgeColor.setValue(0.31, 0.32, 0.33, 0.34);
+    material1->sphereTextureWeight.setValue(0.41, 0.42, 0.43, 0.44);
+    material1->textureWeight.setValue(0.51, 0.52, 0.53, 0.54);
+    material1->toonTextureWeight.setValue(0.61, 0.62, 0.63, 0.64);
+    material1->edgeSize = 0.1;
+    material1->shininess = 0.2;
+    material1->operation = 1;
     // material morph2
-    morph.addMaterialMorph(material1);
-    material2.index = 1;
-    material2.ambient.setValue(0.61, 0.62, 0.63);
-    material2.diffuse.setValue(0.51, 0.52, 0.53, 0.54);
-    material2.specular.setValue(0.41, 0.42, 0.43);
-    material2.edgeColor.setValue(0.31, 0.32, 0.33, 0.34);
-    material2.sphereTextureWeight.setValue(0.21, 0.22, 0.23, 0.24);
-    material2.textureWeight.setValue(0.11, 0.12, 0.13, 0.14);
-    material2.toonTextureWeight.setValue(0.01, 0.02, 0.03, 0.04);
-    material2.edgeSize = 0.2;
-    material2.shininess = 0.1;
-    material2.operation = 2;
-    morph.addMaterialMorph(material2);
+    morph.addMaterialMorph(material1.data());
+    material2->index = 1;
+    material2->ambient.setValue(0.61, 0.62, 0.63);
+    material2->diffuse.setValue(0.51, 0.52, 0.53, 0.54);
+    material2->specular.setValue(0.41, 0.42, 0.43);
+    material2->edgeColor.setValue(0.31, 0.32, 0.33, 0.34);
+    material2->sphereTextureWeight.setValue(0.21, 0.22, 0.23, 0.24);
+    material2->textureWeight.setValue(0.11, 0.12, 0.13, 0.14);
+    material2->toonTextureWeight.setValue(0.01, 0.02, 0.03, 0.04);
+    material2->edgeSize = 0.2;
+    material2->shininess = 0.1;
+    material2->operation = 2;
+    morph.addMaterialMorph(material2.data());
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kLip);
@@ -852,30 +832,33 @@ void TestModel::testReadWriteMaterialMorph(size_t indexSize)
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
     QCOMPARE(morph2.category(), morph.category());
     QCOMPARE(morph2.type(), morph.type());
-    const Array<Morph::Material> &materials = morph2.materials();
+    const Array<Morph::Material *> &materials = morph2.materials();
     QCOMPARE(2, materials.count());
-    compare(materials[0].ambient, material1.ambient);
-    compare(materials[0].diffuse, material1.diffuse);
-    compare(materials[0].specular, material1.specular);
-    compare(materials[0].edgeColor, material1.edgeColor);
-    compare(materials[0].sphereTextureWeight, material1.sphereTextureWeight);
-    compare(materials[0].textureWeight, material1.textureWeight);
-    compare(materials[0].toonTextureWeight, material1.toonTextureWeight);
-    QCOMPARE(materials[0].edgeSize, material1.edgeSize);
-    QCOMPARE(materials[0].shininess, material1.shininess);
-    QCOMPARE(materials[0].operation, material1.operation);
-    QCOMPARE(materials[0].index, material1.index);
-    compare(materials[1].ambient, material2.ambient);
-    compare(materials[1].diffuse, material2.diffuse);
-    compare(materials[1].specular, material2.specular);
-    compare(materials[1].edgeColor, material2.edgeColor);
-    compare(materials[1].sphereTextureWeight, material2.sphereTextureWeight);
-    compare(materials[1].textureWeight, material2.textureWeight);
-    compare(materials[1].toonTextureWeight, material2.toonTextureWeight);
-    QCOMPARE(materials[1].edgeSize, material2.edgeSize);
-    QCOMPARE(materials[1].shininess, material2.shininess);
-    QCOMPARE(materials[1].operation, material2.operation);
-    QCOMPARE(materials[1].index, material2.index);
+    compare(materials[0]->ambient, material1->ambient);
+    compare(materials[0]->diffuse, material1->diffuse);
+    compare(materials[0]->specular, material1->specular);
+    compare(materials[0]->edgeColor, material1->edgeColor);
+    compare(materials[0]->sphereTextureWeight, material1->sphereTextureWeight);
+    compare(materials[0]->textureWeight, material1->textureWeight);
+    compare(materials[0]->toonTextureWeight, material1->toonTextureWeight);
+    QCOMPARE(materials[0]->edgeSize, material1->edgeSize);
+    QCOMPARE(materials[0]->shininess, material1->shininess);
+    QCOMPARE(materials[0]->operation, material1->operation);
+    QCOMPARE(materials[0]->index, material1->index);
+    compare(materials[1]->ambient, material2->ambient);
+    compare(materials[1]->diffuse, material2->diffuse);
+    compare(materials[1]->specular, material2->specular);
+    compare(materials[1]->edgeColor, material2->edgeColor);
+    compare(materials[1]->sphereTextureWeight, material2->sphereTextureWeight);
+    compare(materials[1]->textureWeight, material2->textureWeight);
+    compare(materials[1]->toonTextureWeight, material2->toonTextureWeight);
+    QCOMPARE(materials[1]->edgeSize, material2->edgeSize);
+    QCOMPARE(materials[1]->shininess, material2->shininess);
+    QCOMPARE(materials[1]->operation, material2->operation);
+    QCOMPARE(materials[1]->index, material2->index);
+    // delete material1 and mateiral2 at Morph destructor
+    material1.take();
+    material2.take();
 }
 
 void TestModel::testReadWriteRigidBody(size_t indexSize)
@@ -929,20 +912,20 @@ void TestModel::testReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
 {
     Encoding encoding;
     Morph morph, morph2;
-    Morph::UV uv1, uv2;
+    QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // UV morph1
-    uv1.index = 0;
-    uv1.position.setValue(0.1, 0.2, 0.3, 0.4);
-    morph.addUVMorph(uv1);
+    uv1->index = 0;
+    uv1->position.setValue(0.1, 0.2, 0.3, 0.4);
+    morph.addUVMorph(uv1.data());
     // UV morph2
-    uv2.index = 1;
-    uv2.position.setValue(0.5, 0.6, 0.7, 0.8);
-    morph.addUVMorph(uv2);
+    uv2->index = 1;
+    uv2->position.setValue(0.5, 0.6, 0.7, 0.8);
+    morph.addUVMorph(uv2.data());
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kOther);
@@ -956,34 +939,37 @@ void TestModel::testReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
     QCOMPARE(morph2.category(), morph.category());
     QCOMPARE(morph2.type(), morph.type());
-    const Array<Morph::UV> &uvs = morph2.uvs();
+    const Array<Morph::UV *> &uvs = morph2.uvs();
     QCOMPARE(2, uvs.count());
-    compare(uvs[0].position, uv1.position);
-    QCOMPARE(uvs[0].offset, type - pmx::Morph::kTexCoord);
-    QCOMPARE(uvs[0].index, uv1.index);
-    compare(uvs[1].position, uv2.position);
-    QCOMPARE(uvs[1].offset, type - pmx::Morph::kTexCoord);
-    QCOMPARE(uvs[1].index, uv2.index);
+    compare(uvs[0]->position, uv1->position);
+    QCOMPARE(uvs[0]->offset, type - pmx::Morph::kTexCoord);
+    QCOMPARE(uvs[0]->index, uv1->index);
+    compare(uvs[1]->position, uv2->position);
+    QCOMPARE(uvs[1]->offset, type - pmx::Morph::kTexCoord);
+    QCOMPARE(uvs[1]->index, uv2->index);
+    // delete uv1 and uv2 at Morph destructor
+    uv1.take();
+    uv2.take();
 }
 
 void TestModel::testReadWriteVertexMorph(size_t indexSize)
 {
     Encoding encoding;
     Morph morph, morph2;
-    Morph::Vertex vertex1, vertex2;
+    QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // vertex morph1
-    vertex1.index = 0;
-    vertex1.position.setValue(0.1, 0.2, 0.3);
-    morph.addVertexMorph(vertex1);
+    vertex1->index = 0;
+    vertex1->position.setValue(0.1, 0.2, 0.3);
+    morph.addVertexMorph(vertex1.data());
     // vertex morph2
-    vertex2.index = 1;
-    vertex2.position.setValue(0.4, 0.5, 0.6);
-    morph.addVertexMorph(vertex2);
+    vertex2->index = 1;
+    vertex2->position.setValue(0.4, 0.5, 0.6);
+    morph.addVertexMorph(vertex2.data());
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kOther);
@@ -997,12 +983,15 @@ void TestModel::testReadWriteVertexMorph(size_t indexSize)
     QVERIFY(morph2.englishName()->equals(morph.englishName()));
     QCOMPARE(morph2.category(), morph.category());
     QCOMPARE(morph2.type(), morph.type());
-    const Array<Morph::Vertex> &vertices = morph2.vertices();
+    const Array<Morph::Vertex *> &vertices = morph2.vertices();
     QCOMPARE(2, vertices.count());
-    compare(vertices[0].position, vertex1.position);
-    QCOMPARE(vertices[0].index, vertex1.index);
-    compare(vertices[1].position, vertex2.position);
-    QCOMPARE(vertices[1].index, vertex2.index);
+    compare(vertices[0]->position, vertex1->position);
+    QCOMPARE(vertices[0]->index, vertex1->index);
+    compare(vertices[1]->position, vertex2->position);
+    QCOMPARE(vertices[1]->index, vertex2->index);
+    // delete vertex1 and vertex2 at Morph destructor
+    vertex1.take();
+    vertex2.take();
 }
 
 void TestModel::testReadWriteVertexBdef1(size_t indexSize)
@@ -1011,6 +1000,7 @@ void TestModel::testReadWriteVertexBdef1(size_t indexSize)
     Vertex vertex, vertex2;
     Bone bone1;
     Model::DataInfo info;
+    bone1.setIndex(0);
     bones.add(&bone1);
     setVertex(vertex, Vertex::kBdef1, bones);
     info.additionalUVSize = indexSize;
@@ -1029,7 +1019,9 @@ void TestModel::testReadWriteVertexBdef2(size_t indexSize)
     Vertex vertex, vertex2;
     Bone bone1, bone2;
     Model::DataInfo info;
+    bone1.setIndex(0);
     bones.add(&bone1);
+    bone2.setIndex(1);
     bones.add(&bone2);
     setVertex(vertex, Vertex::kBdef2, bones);
     info.additionalUVSize = indexSize;
@@ -1048,9 +1040,13 @@ void TestModel::testReadWriteVertexBdef4(size_t indexSize)
     Vertex vertex, vertex2;
     Bone bone1, bone2, bone3, bone4;
     Model::DataInfo info;
+    bone1.setIndex(0);
     bones.add(&bone1);
+    bone2.setIndex(1);
     bones.add(&bone2);
+    bone3.setIndex(2);
     bones.add(&bone3);
+    bone4.setIndex(3);
     bones.add(&bone4);
     setVertex(vertex, Vertex::kBdef4, bones);
     info.additionalUVSize = indexSize;
@@ -1070,7 +1066,9 @@ void TestModel::testReadWriteVertexSdef(size_t indexSize)
     Vertex vertex, vertex2;
     Bone bone1, bone2;
     Model::DataInfo info;
+    bone1.setIndex(0);
     bones.add(&bone1);
+    bone2.setIndex(1);
     bones.add(&bone2);
     setVertex(vertex, Vertex::kSdef, bones);
     info.additionalUVSize = indexSize;
