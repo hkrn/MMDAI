@@ -90,12 +90,14 @@ public:
 
     bool uploadTexture(void *context, const char *name, const IString *dir, void *texture, bool isToon) {
         const QDir d(static_cast<const internal::String *>(dir)->value());
-        return uploadTexture0(context, d.absoluteFilePath(QString::fromStdString(name)), texture, isToon);
+        const QString &path = QDir::cleanPath(d.absoluteFilePath(QString::fromStdString(name)));
+        return uploadTexture0(context, path, texture, isToon);
     }
     bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) {
         const QDir d(static_cast<const internal::String *>(dir)->value());
         const QString &s = static_cast<const internal::String *>(name)->value();
-        return uploadTexture0(context, d.absoluteFilePath(s), texture, isToon);
+        const QString &path = QDir::cleanPath(d.absoluteFilePath(s));
+        return uploadTexture0(context, path, texture, isToon);
     }
     bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) {
         const QDir d(static_cast<const internal::String *>(dir)->value());
@@ -296,11 +298,11 @@ private:
         QString mutableName = name;
         mutableName.replace("\\", "/");
         /* アーカイブ内にある場合はシステム側のテクスチャ処理とごっちゃにならないように uploadTexture に流して返す */
-        const QString &path = dir.absoluteFilePath(mutableName);
+        const QString &path = QDir::cleanPath(dir.absoluteFilePath(mutableName));
         if (m_archive && !m_archive->data(path).isEmpty())
             return uploadTexture0(context, path, texture, true);
         /* ファイルが存在しない場合はシステム側のテクスチャと仮定 */
-        if (!QFile::exists(dir.absoluteFilePath(name)))
+        if (!QFile::exists(path))
             return uploadTexture0(context, QString(":/textures/%1").arg(name), texture, true);
         else
             return uploadTexture0(context, path, texture, true);
@@ -1136,10 +1138,12 @@ void SceneLoader::updateMatrices(const QSizeF &size)
     /* モデル行列とビュー行列の乗算を QMatrix4x4 を用いて行う */
     QMatrix4x4 modelView4x4, projection4x4;
     float modelViewMatrixf[16], projectionMatrixf[16];
+    Scene::ICamera *camera = m_project->camera();
     Scene::IMatrices *matrices = m_project->matrices();
     matrices->getModelView(modelViewMatrixf);
     projection4x4.setToIdentity();
-    projection4x4.perspective(m_project->camera()->fovy(), size.width() / size.height(), 0.1, 10000);
+    qreal aspectRatio = size.width() / size.height();
+    projection4x4.perspective(camera->fovy(), aspectRatio, camera->znear(), camera->zfar());
     for (int i = 0; i < 16; i++) {
         modelView4x4.data()[i] = modelViewMatrixf[i];
         projectionMatrixf[i] = projection4x4.constData()[i];
