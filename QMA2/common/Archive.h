@@ -60,11 +60,12 @@ public:
     ~Archive();
 
     void setTextCodec(QTextCodec *value);
-    bool open(const QString &filename, QStringList &entries);
+    bool open(const QString &filename, QStringList &entryNames);
     bool close();
-    bool uncompress(const QStringList &entries);
+    bool uncompress(const QStringList &entryNames);
     void replaceFilePath(const QString &from, const QString &to);
     ErrorType error() const;
+    const QStringList entryNames() const;
     const QByteArray data(const QString &name) const;
 
 private:

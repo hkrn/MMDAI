@@ -173,8 +173,16 @@ void Archive::replaceFilePath(const QString &from, const QString &to)
     while (it.hasNext()) {
         it.next();
         QString key = it.key();
-        key.replace(regexp, to);
-        newEntries.insert(key, it.value());
+        const QByteArray &bytes = it.value();
+        /* 一致した場合はパスを置換するが、ディレクトリ名が入っていないケースで一致しない場合はパスを追加 */
+        if (regexp.indexIn(key) != -1) {
+            key.replace(regexp, to);
+            newEntries.insert(key, bytes);
+        }
+        else {
+            key = to + key;
+            newEntries.insert(key, bytes);
+        }
     }
     m_entries = newEntries;
 }
@@ -182,6 +190,11 @@ void Archive::replaceFilePath(const QString &from, const QString &to)
 Archive::ErrorType Archive::error() const
 {
     return m_error;
+}
+
+const QStringList Archive::entryNames() const
+{
+    return m_entries.keys();
 }
 
 const QByteArray Archive::data(const QString &name) const
