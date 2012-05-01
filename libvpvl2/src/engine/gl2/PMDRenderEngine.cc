@@ -373,9 +373,9 @@ public:
           originTransform(0),
           bone1Indices(0),
           bone2Indices(0),
-
-          isBufferAllocated(false)
+          isBufferAllocated(false),
     #endif /* VPVL2_ENABLE_OPENCL */
+          cullFaceState(true)
     {
     }
     virtual ~PrivateContext() {
@@ -406,6 +406,7 @@ public:
         clReleaseMemObject(weightsBuffer);
         isBufferAllocated = false;
 #endif /* VPVL2_ENABLE_OPENCL */
+        cullFaceState = false;
     }
 
 #ifdef VPVL2_LINK_QT
@@ -453,6 +454,7 @@ public:
     int *bone1Indices;
     int *bone2Indices;
     bool isBufferAllocated;
+    bool cullFaceState;
 #endif
 };
 
@@ -1022,14 +1024,23 @@ void PMDRenderEngine::renderModel()
             modelProgram->setIsSubAdditive(isSubSphereAdd);
             modelProgram->setSubTexture(materialPrivate.subTextureID);
         }
-        opacity < 1.0f ? glDisable(GL_CULL_FACE) : glEnable(GL_CULL_FACE);
+        if (opacity < 1.0f && m_context->cullFaceState) {
+            glDisable(GL_CULL_FACE);
+            m_context->cullFaceState = false;
+        }
+        else if (!m_context->cullFaceState) {
+            glEnable(GL_CULL_FACE);
+            m_context->cullFaceState = true;
+        }
         const int nindices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += (nindices << 1);
     }
-
     modelProgram->unbind();
-    glEnable(GL_CULL_FACE);
+    if (!m_context->cullFaceState) {
+        glEnable(GL_CULL_FACE);
+        m_context->cullFaceState = true;
+    }
 }
 
 void PMDRenderEngine::renderShadow()

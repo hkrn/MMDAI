@@ -196,7 +196,7 @@ typedef btAlignedObjectArray<uint32_t> AssetIndices;
 class AssetRenderEngine::PrivateContext
 {
 public:
-    PrivateContext() {}
+    PrivateContext() : cullFaceState(true) {}
     virtual ~PrivateContext() {}
 
     std::map<std::string, GLuint> textures;
@@ -205,6 +205,7 @@ public:
     std::map<const struct aiMesh *, AssetVBO> vbo;
     std::map<const struct aiNode *, AssetRenderEngine::Program *> assetPrograms;
     std::map<const struct aiNode *, ZPlotProgram *> zplotPrograms;
+    bool cullFaceState;
 };
 
 const std::string CanonicalizePath(const std::string &path)
@@ -266,6 +267,10 @@ void AssetRenderEngine::renderModel()
         return;
     const aiScene *a = asset->getScene();
     renderRecurse(a, a->mRootNode);
+    if (!m_context->cullFaceState) {
+        glEnable(GL_CULL_FACE);
+        m_context->cullFaceState = true;
+    }
 }
 
 void AssetRenderEngine::renderEdge()
@@ -445,6 +450,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         GLuint textureID = m_context->textures[texturePath.data];
         program->setTexture(textureID);
+        program->setTexture(0);
     }
     else {
         program->setTexture(0);
@@ -504,10 +510,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside)
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
-    else
+        m_context->cullFaceState = true;
+    }
+    else if (m_context->cullFaceState) {
         glDisable(GL_CULL_FACE);
+        m_context->cullFaceState = false;
+    }
 }
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
