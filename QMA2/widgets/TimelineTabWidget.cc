@@ -416,7 +416,7 @@ void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
     QItemSelectionModel *selectionModel = boneTreeView->selectionModel();
     int currentFrameIndex = m_boneTimeline->frameIndex();
     const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, currentFrameIndex);
-    selectionModel->clear();
+    selectionModel->clearSelection();
     foreach (const QModelIndex &index, indices)
         selectionModel->select(index, QItemSelectionModel::Select);
 }
