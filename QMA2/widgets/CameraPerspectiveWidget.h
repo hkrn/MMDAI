@@ -41,10 +41,15 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/Scene.h>
 
+namespace vpvl2 {
+class IBone;
+}
+
 class QDoubleSpinBox;
 class QGroupBox;
 class QLabel;
 class QPushButton;
+class QRadioButton;
 
 class CameraPerspectiveWidget : public QWidget
 {
@@ -76,6 +81,9 @@ private slots:
     void updateFovy(double value);
     void updateDistance(double value);
     void initializeCamera();
+    void setPositionFromModel(const vpvl2::Vector3 &value);
+    void setPositionFromBone(const vpvl2::Vector3 &value);
+    void setPositionFromBone(const QList<vpvl2::IBone *> &bones);
 
 private:
     QSharedPointer<vpvl2::Scene::ICamera> createCamera() const;
@@ -99,11 +107,17 @@ private:
     QDoubleSpinBox *m_rx;
     QDoubleSpinBox *m_ry;
     QDoubleSpinBox *m_rz;
+    QGroupBox *m_followGroup;
+    QRadioButton *m_followNone;
+    QRadioButton *m_followModel;
+    QRadioButton *m_followBone;
     QDoubleSpinBox *m_fovy;
     QDoubleSpinBox *m_distance;
     QPushButton *m_initializeButton;
     float m_currentFovy;
     float m_currentDistance;
+    bool m_enableFollowingModel;
+    bool m_enableFollowingBone;
 
     Q_DISABLE_COPY(CameraPerspectiveWidget)
 };

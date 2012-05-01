@@ -46,7 +46,9 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     m_currentPosition(0.0f, 0.0f, 0.0f),
     m_currentAngle(0.0f, 0.0f, 0.0f),
     m_currentFovy(0.0f),
-    m_currentDistance(0.0f)
+    m_currentDistance(0.0f),
+    m_enableFollowingModel(false),
+    m_enableFollowingBone(false)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QGridLayout *gridLayout = new QGridLayout();
@@ -117,6 +119,18 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     subLayout->addWidget(m_positionGroup);
     subLayout->addWidget(m_rotationGroup);
     mainLayout->addLayout(subLayout);
+    /* 追従 */
+    m_followGroup = new QGroupBox();
+    m_followNone = new QRadioButton();
+    m_followModel = new QRadioButton();
+    m_followBone = new QRadioButton();
+    m_followNone->setChecked(true);
+    subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_followNone);
+    subLayout->addWidget(m_followModel);
+    subLayout->addWidget(m_followBone);
+    m_followGroup->setLayout(subLayout);
+    mainLayout->addWidget(m_followGroup);
     subLayout = new QHBoxLayout();
     /* 視野角 */
     m_fovyLabel = new QLabel();
@@ -189,6 +203,10 @@ void CameraPerspectiveWidget::retranslate()
     m_cameraButton->setText(tr("Camera"));
     m_fovyLabel->setText(tr("Fovy"));
     m_distanceLabel->setText(tr("Distance"));
+    m_followGroup->setTitle(tr("Follow"));
+    m_followNone->setText(tr("None"));
+    m_followModel->setText(tr("Model"));
+    m_followBone->setText(tr("Bone"));
     m_initializeButton->setText(tr("Initialize"));
 }
 
@@ -280,6 +298,30 @@ void CameraPerspectiveWidget::initializeCamera()
     m_currentFovy = camera->fovy();
     m_currentDistance = camera->distance();
     emit cameraPerspectiveDidChange(createCamera());
+}
+
+void CameraPerspectiveWidget::setPositionFromModel(const Vector3 &value)
+{
+    if (m_followModel->isChecked()) {
+        m_currentPosition = value;
+        emit cameraPerspectiveDidChange(createCamera());
+    }
+}
+
+void CameraPerspectiveWidget::setPositionFromBone(const Vector3 &value)
+{
+    if (m_followBone->isChecked()) {
+        m_currentPosition = value;
+        emit cameraPerspectiveDidChange(createCamera());
+    }
+}
+
+void CameraPerspectiveWidget::setPositionFromBone(const QList<IBone *> &bones)
+{
+    if (!bones.isEmpty() && m_followBone->isChecked()) {
+        m_currentPosition = bones.first()->localTransform().getOrigin();
+        emit cameraPerspectiveDidChange(createCamera());
+    }
 }
 
 QSharedPointer<Scene::ICamera> CameraPerspectiveWidget::createCamera() const

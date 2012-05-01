@@ -1228,6 +1228,8 @@ void MainWindow::connectSceneLoader()
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(refreshScene()));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
             cameraWidget, SLOT(setCameraPerspective(const vpvl2::Scene::ICamera*)));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), cameraWidget, SLOT(setPositionFromModel(vpvl2::Vector3)));
+    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), cameraWidget, SLOT(setPositionFromBone(QList<vpvl2::IBone*>)));
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
     Scene::ILight *light = scene->light();
