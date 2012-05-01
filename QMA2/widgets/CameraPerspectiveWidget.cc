@@ -122,8 +122,8 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     m_fovyLabel = new QLabel();
     subLayout->addWidget(m_fovyLabel);
     m_fovy = new QDoubleSpinBox();
-    m_fovy->setSingleStep(0.01);
-    m_fovy->setRange(0.1, 90.0);
+    m_fovy->setSingleStep(0.1);
+    m_fovy->setRange(0.1, 125.0);
     connect(m_fovy, SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
     subLayout->addWidget(m_fovy);
     /* 距離 */
@@ -131,7 +131,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     subLayout->addWidget(m_distanceLabel);
     m_distance = new QDoubleSpinBox();
     m_distance->setSingleStep(1.0);
-    m_distance->setRange(0.01, zfar);
+    m_distance->setRange(-zfar, zfar);
     connect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
     subLayout->addWidget(m_distance);
     mainLayout->addLayout(subLayout);
