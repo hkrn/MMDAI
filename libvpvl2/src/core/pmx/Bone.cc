@@ -429,6 +429,23 @@ void Bone::write(uint8_t *data, const Model::DataInfo &info) const
         internal::getPosition(m_destinationOrigin, &bu.vector3[0]);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
     }
+    if (m_flags & 0x0100 || m_flags & 0x0200) {
+        internal::writeSignedIndex(m_parentInherenceBoneIndex, boneIndexSize, data);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight), sizeof(m_weight), data);
+    }
+    if (m_flags & 0x0400) {
+        internal::getPosition(m_fixedAxis, &bu.vector3[0]);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+    }
+    if (m_flags & 0x0800) {
+        internal::getPosition(m_axisX, &bu.vector3[0]);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+        internal::getPosition(m_axisZ, &bu.vector3[0]);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+    }
+    if (m_flags & 0x2000) {
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_globalID), sizeof(m_globalID), data);
+    }
     if (m_flags & 0x0020) {
         internal::writeSignedIndex(m_targetBoneIndex, boneIndexSize, data);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_nloop), sizeof(m_nloop), data);
@@ -448,23 +465,6 @@ void Bone::write(uint8_t *data, const Model::DataInfo &info) const
             }
         }
     }
-    if (m_flags & 0x0100 || m_flags & 0x0200) {
-        internal::writeSignedIndex(m_parentInherenceBoneIndex, boneIndexSize, data);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight), sizeof(m_weight), data);
-    }
-    if (m_flags & 0x0400) {
-        internal::getPosition(m_fixedAxis, &bu.vector3[0]);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
-    }
-    if (m_flags & 0x0800) {
-        internal::getPosition(m_axisX, &bu.vector3[0]);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
-        internal::getPosition(m_axisZ, &bu.vector3[0]);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
-    }
-    if (m_flags & 0x2000) {
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_globalID), sizeof(m_globalID), data);
-    }
 }
 
 size_t Bone::estimateSize(const Model::DataInfo &info) const
@@ -477,17 +477,6 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     size += sizeof(m_layerIndex);
     size += sizeof(m_flags);
     size += (m_flags & 0x0001) ? boneIndexSize : sizeof(BoneUnit);
-    if (m_flags & 0x0020) {
-        size += boneIndexSize;
-        size += sizeof(IKUnit);
-        int nlinks = m_IKLinks.count();
-        for (int i = 0; i < nlinks; i++) {
-            size += boneIndexSize;
-            size += sizeof(uint8_t);
-            if (m_IKLinks[i]->hasAngleConstraint)
-                size += sizeof(BoneUnit) * 2;
-        }
-    }
     if (m_flags & 0x0100 || m_flags & 0x0200) {
         size += boneIndexSize;
         size += sizeof(m_weight);
@@ -500,6 +489,17 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     }
     if (m_flags & 0x2000) {
         size += sizeof(m_globalID);
+    }
+    if (m_flags & 0x0020) {
+        size += boneIndexSize;
+        size += sizeof(IKUnit);
+        int nlinks = m_IKLinks.count();
+        for (int i = 0; i < nlinks; i++) {
+            size += boneIndexSize;
+            size += sizeof(uint8_t);
+            if (m_IKLinks[i]->hasAngleConstraint)
+                size += sizeof(BoneUnit) * 2;
+        }
     }
     return size;
 }
