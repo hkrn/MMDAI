@@ -563,8 +563,13 @@ void SceneWidget::deleteSelectedModel()
                                    tr("Do you want to delete the model \"%1\"? This cannot undo.")
                                    .arg(internal::toQString(selected)),
                                    QMessageBox::Yes | QMessageBox::No);
-        if (ret == QMessageBox::Yes)
+        if (ret == QMessageBox::Yes) {
+            /* モデルを削除しても IBone への参照が残ってしまうので中身を空にする */
+            m_bones.clear();
+            m_info->setBones(m_bones, "");
+            m_handles->setBone(0);
             m_loader->deleteModel(selected);
+        }
     }
 }
 
