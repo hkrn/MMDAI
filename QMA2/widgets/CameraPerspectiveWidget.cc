@@ -51,29 +51,29 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QGridLayout *gridLayout = new QGridLayout();
     /* 前 */
-    m_frontLabel = new QPushButton();
-    connect(m_frontLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveFront()));
-    gridLayout->addWidget(m_frontLabel, 0, 0);
+    m_frontButton = new QPushButton();
+    connect(m_frontButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveFront()));
+    gridLayout->addWidget(m_frontButton, 0, 0);
     /* 後ろ */
-    m_backLabel = new QPushButton();
-    connect(m_backLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveBack()));
-    gridLayout->addWidget(m_backLabel, 0, 1);
+    m_backButton = new QPushButton();
+    connect(m_backButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveBack()));
+    gridLayout->addWidget(m_backButton, 0, 1);
     /* トップ */
-    m_topLabel = new QPushButton();
-    connect(m_topLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveTop()));
-    gridLayout->addWidget(m_topLabel, 0, 2);
+    m_topButton = new QPushButton();
+    connect(m_topButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveTop()));
+    gridLayout->addWidget(m_topButton, 0, 2);
     /* 左 */
-    m_leftLabel = new QPushButton();
-    connect(m_leftLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveLeft()));
-    gridLayout->addWidget(m_leftLabel, 1, 0);
+    m_leftButton = new QPushButton();
+    connect(m_leftButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveLeft()));
+    gridLayout->addWidget(m_leftButton, 1, 0);
     /* 右 */
-    m_rightLabel = new QPushButton();
-    connect(m_rightLabel, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveRight()));
-    gridLayout->addWidget(m_rightLabel, 1, 1);
+    m_rightButton = new QPushButton();
+    connect(m_rightButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveRight()));
+    gridLayout->addWidget(m_rightButton, 1, 1);
     /* カメラ視点 */
-    m_cameraLabel = new QPushButton();
-    connect(m_cameraLabel, SIGNAL(clicked()), this, SIGNAL(cameraPerspectiveDidReset()));
-    gridLayout->addWidget(m_cameraLabel, 1, 2);
+    m_cameraButton = new QPushButton();
+    connect(m_cameraButton, SIGNAL(clicked()), this, SIGNAL(cameraPerspectiveDidReset()));
+    gridLayout->addWidget(m_cameraButton, 1, 2);
     m_presetGroup = new QGroupBox();
     m_presetGroup->setLayout(gridLayout);
     mainLayout->addWidget(m_presetGroup);
@@ -135,6 +135,10 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     connect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
     subLayout->addWidget(m_distance);
     mainLayout->addLayout(subLayout);
+    /* 初期化 */
+    m_initializeButton = new QPushButton();
+    connect(m_initializeButton, SIGNAL(clicked()), this, SLOT(initializeCamera()));
+    mainLayout->addWidget(m_initializeButton, 0, Qt::AlignCenter);
     mainLayout->addStretch();
     retranslate();
     setLayout(mainLayout);
@@ -177,14 +181,15 @@ void CameraPerspectiveWidget::retranslate()
     m_presetGroup->setTitle(tr("Preset"));
     m_positionGroup->setTitle(tr("Position"));
     m_rotationGroup->setTitle(tr("Rotation"));
-    m_frontLabel->setText(tr("Front"));
-    m_backLabel->setText(tr("Back"));
-    m_topLabel->setText(tr("Top"));
-    m_leftLabel->setText(tr("Left"));
-    m_rightLabel->setText(tr("Right"));
-    m_cameraLabel->setText(tr("Camera"));
+    m_frontButton->setText(tr("Front"));
+    m_backButton->setText(tr("Back"));
+    m_topButton->setText(tr("Top"));
+    m_leftButton->setText(tr("Left"));
+    m_rightButton->setText(tr("Right"));
+    m_cameraButton->setText(tr("Camera"));
     m_fovyLabel->setText(tr("Fovy"));
     m_distanceLabel->setText(tr("Distance"));
+    m_initializeButton->setText(tr("Initialize"));
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveFront()
@@ -264,6 +269,16 @@ void CameraPerspectiveWidget::updateDistance(double value)
 {
     float distance = static_cast<float>(value);
     m_currentDistance = distance;
+    emit cameraPerspectiveDidChange(createCamera());
+}
+
+void CameraPerspectiveWidget::initializeCamera()
+{
+    QScopedPointer<Scene::ICamera> camera(Scene::createCamera());
+    m_currentAngle = camera->angle();
+    m_currentPosition = camera->position();
+    m_currentFovy = camera->fovy();
+    m_currentDistance = camera->distance();
     emit cameraPerspectiveDidChange(createCamera());
 }
 

@@ -75,6 +75,7 @@ private slots:
     void updateRotationZ(double value);
     void updateFovy(double value);
     void updateDistance(double value);
+    void initializeCamera();
 
 private:
     QSharedPointer<vpvl2::Scene::ICamera> createCamera() const;
@@ -84,12 +85,12 @@ private:
     QGroupBox *m_presetGroup;
     QGroupBox *m_positionGroup;
     QGroupBox *m_rotationGroup;
-    QPushButton *m_frontLabel;
-    QPushButton *m_backLabel;
-    QPushButton *m_topLabel;
-    QPushButton *m_leftLabel;
-    QPushButton *m_rightLabel;
-    QPushButton *m_cameraLabel;
+    QPushButton *m_frontButton;
+    QPushButton *m_backButton;
+    QPushButton *m_topButton;
+    QPushButton *m_leftButton;
+    QPushButton *m_rightButton;
+    QPushButton *m_cameraButton;
     QLabel *m_fovyLabel;
     QLabel *m_distanceLabel;
     QDoubleSpinBox *m_px;
@@ -100,6 +101,7 @@ private:
     QDoubleSpinBox *m_rz;
     QDoubleSpinBox *m_fovy;
     QDoubleSpinBox *m_distance;
+    QPushButton *m_initializeButton;
     float m_currentFovy;
     float m_currentDistance;
 
