@@ -51,7 +51,7 @@ using namespace vpvl2;
 namespace
 {
 
-typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
+typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
 
 static const QRegExp &kAssetLoadable = QRegExp(".(bmp|jpe?g|png|sp[ah]|tga|x)$");
 static const QRegExp &kAssetExtensions = QRegExp(".x$");
