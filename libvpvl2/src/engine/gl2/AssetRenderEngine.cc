@@ -450,7 +450,6 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         GLuint textureID = m_context->textures[texturePath.data];
         program->setTexture(textureID);
-        program->setTexture(0);
     }
     else {
         program->setTexture(0);
