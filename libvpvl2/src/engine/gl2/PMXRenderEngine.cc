@@ -119,19 +119,19 @@ public:
     ObjectProgram(IRenderDelegate *delegate)
         : BaseShaderProgram(delegate),
           m_lightColorUniformLocation(0),
-          m_lightPositionUniformLocation(0)
+          m_lightDirectionUniformLocation(0)
     {
     }
     ~ObjectProgram() {
         m_lightColorUniformLocation = 0;
-        m_lightPositionUniformLocation = 0;
+        m_lightDirectionUniformLocation = 0;
     }
 
     bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
-            m_lightPositionUniformLocation = glGetUniformLocation(m_program, "lightPosition");
+            m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
         }
         return ret;
     }
@@ -139,12 +139,12 @@ public:
         glUniform3fv(m_lightColorUniformLocation, 1, value);
     }
     void setLightDirection(const Vector3 &value) {
-        glUniform3fv(m_lightPositionUniformLocation, 1, value);
+        glUniform3fv(m_lightDirectionUniformLocation, 1, value);
     }
 
 private:
     GLuint m_lightColorUniformLocation;
-    GLuint m_lightPositionUniformLocation;
+    GLuint m_lightDirectionUniformLocation;
 };
 
 class ShadowProgram : public ObjectProgram
@@ -762,10 +762,10 @@ public:
             log0(0, IRenderDelegate::kLogWarning, "Failed setting 4th argument of kernel (bone2Indices): %d", err);
             return;
         }
-        const Vector3 &lightPosition = model->lightPosition();
-        err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(lightPosition), &lightPosition);
+        const Vector3 &lightDirection = kZeroV3; // FIXME: get light direction
+        err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(lightDirection), &lightDirection);
         if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 5th argument of kernel (lightPosition): %d", err);
+            log0(0, IRenderDelegate::kLogWarning, "Failed setting 5th argument of kernel (lightDirection): %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 5, sizeof(nvertices), &nvertices);

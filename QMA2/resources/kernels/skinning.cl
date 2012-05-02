@@ -34,7 +34,7 @@ void performSkinning(const __global float16 *skinningMatrices,
                      const __global float *weights,
                      const __global int *bone1Indices,
                      const __global int *bone2Indices,
-                     const float4 lightPosition,
+                     const float4 lightDirection,
                      const int nvertices,
                      const int strideSize,
                      const int offsetPosition,
@@ -62,7 +62,7 @@ void performSkinning(const __global float16 *skinningMatrices,
         float4 normal2 = s * n2 + weight * n1;
         vertices[strideOffset + offsetPosition] = position2;
         vertices[strideOffset + offsetNormal] = normal2;
-        vertices[strideOffset + offsetToonTexCoord].w = 0.5 + dot(-lightPosition, normal2) * 0.5;
+        vertices[strideOffset + offsetToonTexCoord].w = 0.5 + dot(lightDirection, normal2) * 0.5;
         vertices[strideOffset + offsetEdge] = position2 + normal2 * vertices[strideOffset + offsetEdge];
     }
 }

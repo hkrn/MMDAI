@@ -3,7 +3,7 @@ uniform mat4 modelViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialDiffuse;
 uniform vec3 lightColor;
-uniform vec3 lightPosition;
+uniform vec3 lightDirection;
 uniform vec3 materialAmbient;
 uniform bool hasSphereTexture;
 attribute vec4 inPosition;
@@ -39,7 +39,7 @@ void main() {
     outColor.rgb = max(min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3), kZero3);
     outColor.a = max(min(materialDiffuse.a, kOne), kZero);
     outTexCoord = vec4(inTexCoord, hasSphereTexture ? makeSphereMap(view, normal) : inTexCoord);
-    outToonTexCoord = vec2(0, 0.5 + dot(-lightPosition, normal) * 0.5);
+    outToonTexCoord = vec2(0, 0.5 + dot(lightDirection, normal) * 0.5);
     outUVA1 = inUVA1;
     outUVA2 = inUVA2;
     outUVA3 = inUVA3;

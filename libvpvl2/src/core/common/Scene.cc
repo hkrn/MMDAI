@@ -104,7 +104,7 @@ public:
     }
     void resetDefault() {
         setColor(Vector3(0.6, 0.6, 0.6));
-        setDirection(Vector3(0.5, 1.0, 0.5));
+        setDirection(Vector3(-0.5, -1.0, -0.5));
     }
 
 private:

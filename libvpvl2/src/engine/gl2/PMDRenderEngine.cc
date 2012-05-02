@@ -700,10 +700,10 @@ public:
             log0(0, IRenderDelegate::kLogWarning, "Failed setting 4th argument of kernel (bone2Indices): %d", err);
             return;
         }
-        const Vector3 &lightPosition = model->lightPosition();
-        err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(lightPosition), &lightPosition);
+        const Vector3 &lightDirection = -model->lightPosition();
+        err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(lightDirection), &lightDirection);
         if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 5th argument of kernel (lightPosition): %d", err);
+            log0(0, IRenderDelegate::kLogWarning, "Failed setting 5th argument of kernel (lightDirection): %d", err);
             return;
         }
         err = clSetKernelArg(m_performSkinningKernel, 5, sizeof(nvertices), &nvertices);
@@ -928,7 +928,6 @@ bool PMDRenderEngine::upload(const IString *dir)
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
-    //model->setLightPosition(m_scene->lightPosition());
     //model->setSoftwareSkinningEnable(m_scene->isSoftwareSkinningEnabled());
     if (m_accelerator)
         m_accelerator->uploadModel(m_context, model, context);
@@ -946,7 +945,7 @@ void PMDRenderEngine::update()
     if (!m_model->isVisible())
         return;
     PMDModel *model = m_model->ptr();
-    model->setLightPosition(m_scene->light()->direction());
+    model->setLightPosition(-m_scene->light()->direction());
     int nvertices = model->vertices().count();
     size_t strideSize = model->strideSize(PMDModel::kVerticesStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
