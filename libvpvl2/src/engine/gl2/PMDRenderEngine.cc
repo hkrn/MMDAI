@@ -373,8 +373,9 @@ public:
           originTransform(0),
           bone1Indices(0),
           bone2Indices(0),
-          isBufferAllocated(false),
+          isBufferAllocated(false)
     #endif /* VPVL2_ENABLE_OPENCL */
+        ,
           cullFaceState(true)
     {
     }
@@ -454,8 +455,8 @@ public:
     int *bone1Indices;
     int *bone2Indices;
     bool isBufferAllocated;
-    bool cullFaceState;
 #endif
+    bool cullFaceState;
 };
 
 #ifdef VPVL2_ENABLE_OPENCL

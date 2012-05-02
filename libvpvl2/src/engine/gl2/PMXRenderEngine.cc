@@ -410,8 +410,9 @@ public:
           originTransform(0),
           bone1Indices(0),
           bone2Indices(0),
-          isBufferAllocated(false),
+          isBufferAllocated(false)
     #endif /* VPVL2_ENABLE_OPENCL */
+        ,
           cullFaceState(true)
     {
     }
@@ -965,14 +966,14 @@ bool PMXRenderEngine::upload(const IString *dir)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_model->indices().count() * size, m_model->indicesPtr(), GL_STATIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
-                    "Binding indices to the vertex buffer object (ID=%d)",
-                    m_context->vertexBufferObjects[kModelIndices]);
+         "Binding indices to the vertex buffer object (ID=%d)",
+         m_context->vertexBufferObjects[kModelIndices]);
     size = pmx::Model::strideSize(pmx::Model::kVertexStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, m_model->vertices().count() * size, m_model->vertexPtr(), GL_DYNAMIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
-                    "Binding model vertices to the vertex buffer object (ID=%d)",
-                    m_context->vertexBufferObjects[kModelVertices]);
+         "Binding model vertices to the vertex buffer object (ID=%d)",
+         m_context->vertexBufferObjects[kModelVertices]);
     //model->setSoftwareSkinningEnable(m_scene->isSoftwareSkinningEnabled());
     Accelerator::initializeUserData(m_context);
     if (m_accelerator)
