@@ -152,6 +152,7 @@ void SceneWidget::stop()
 void SceneWidget::clear()
 {
     stop();
+    clearSelectedBones();
     setSelectedModel(0);
     m_loader->release();
     m_loader->createProject();
@@ -565,9 +566,7 @@ void SceneWidget::deleteSelectedModel()
                                    QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::Yes) {
             /* モデルを削除しても IBone への参照が残ってしまうので中身を空にする */
-            m_bones.clear();
-            m_info->setBones(m_bones, "");
-            m_handles->setBone(0);
+            clearSelectedBones();
             m_loader->deleteModel(selected);
         }
     }
@@ -1277,6 +1276,13 @@ void SceneWidget::updateScene()
     m_loader->scene()->updateRenderEngines();
     updateGL();
     emit cameraPerspectiveDidSet(m_loader->scene()->camera());
+}
+
+void SceneWidget::clearSelectedBones()
+{
+    m_bones.clear();
+    m_info->setBones(m_bones, "");
+    m_handles->setBone(0);
 }
 
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)

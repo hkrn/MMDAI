@@ -230,6 +230,7 @@ private slots:
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 private:
+    void clearSelectedBones();
     void updateScene();
     bool acceptAddingModel(vpvl2::IModel *model);
     bool testHitModelHandle(const QPointF &pos);
