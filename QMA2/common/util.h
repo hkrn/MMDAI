@@ -311,6 +311,24 @@ static inline const QMatrix4x4 toMatrix4x4(float matrixf[16])
     return QMatrix4x4(matrixd);
 }
 
+static inline int warning(QWidget *parent,
+                          const QString &title,
+                          const QString &text,
+                          const QString &detail = "",
+                          QMessageBox::StandardButtons buttons = QMessageBox::Ok)
+{
+    QScopedPointer<QMessageBox> mbox(new QMessageBox(parent));
+    if (parent)
+        mbox->setWindowModality(Qt::WindowModal);
+    mbox->setWindowTitle(QString("%1 - %2").arg(qAppName()).arg(title));
+    mbox->setText(text);
+    if (!detail.isEmpty())
+        mbox->setInformativeText(detail);
+    mbox->setIcon(QMessageBox::Warning);
+    mbox->setStandardButtons(buttons);
+    return mbox->exec();
+}
+
 static inline const QString openFileDialog(const QString &name,
                                            const QString &desc,
                                            const QString &exts,

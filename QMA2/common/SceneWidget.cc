@@ -288,8 +288,8 @@ IModel *SceneWidget::addModel(const QString &path, bool skipDialog)
             }
         }
         else {
-            QMessageBox::warning(this, tr("Loading model error"),
-                                 tr("%1 cannot be loaded").arg(fi.fileName()));
+            internal::warning(this, tr("Loading model error"),
+                              tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
     return model;
@@ -317,8 +317,8 @@ IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
             emit fileDidLoad(path);
         }
         else {
-            QMessageBox::warning(this, tr("Loading model motion error"),
-                                 tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            internal::warning(this, tr("Loading model motion error"),
+                              tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
     return motion;
@@ -336,8 +336,8 @@ void SceneWidget::insertMotionToSelectedModel()
             refreshMotions();
     }
     else {
-        QMessageBox::warning(this, tr("The model is not selected."),
-                             tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+        internal::warning(this, tr("The model is not selected."),
+                          tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
     }
 }
 
@@ -356,8 +356,8 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
                 emit fileDidLoad(path);
             }
             else {
-                QMessageBox::warning(this, tr("Loading model motion error"),
-                                     tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+                internal::warning(this, tr("Loading model motion error"),
+                                  tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
             }
         }
     }
@@ -378,9 +378,9 @@ void SceneWidget::setEmptyMotion(IModel *model)
         m_loader->setCameraMotion(cameraMotion);
     }
     else
-        QMessageBox::warning(this,
-                             tr("The model is not selected."),
-                             tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+        internal::warning(this,
+                          tr("The model is not selected."),
+                          tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
 }
 
 void SceneWidget::addAsset()
@@ -401,8 +401,8 @@ IModel *SceneWidget::addAsset(const QString &path)
             emit fileDidLoad(path);
         }
         else {
-            QMessageBox::warning(this, tr("Loading asset error"),
-                                 tr("%1 cannot be loaded").arg(fi.fileName()));
+            internal::warning(this, tr("Loading asset error"),
+                              tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
     return asset;
@@ -427,8 +427,8 @@ IModel *SceneWidget::addAssetFromMetadata(const QString &path)
             setFocus();
         }
         else {
-            QMessageBox::warning(this, tr("Loading asset error"),
-                                 tr("%1 cannot be loaded").arg(fi.fileName()));
+            internal::warning(this, tr("Loading asset error"),
+                              tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
     return asset;
@@ -463,15 +463,15 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
         if (QFile::exists(filename)) {
             ptr = m_loader->loadModelPose(filename, model);
             if (ptr.isNull()) {
-                QMessageBox::warning(this, tr("Loading model pose error"),
-                                     tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
+                internal::warning(this, tr("Loading model pose error"),
+                                  tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
             }
         }
     }
     else
-        QMessageBox::warning(this,
-                             tr("The model is not selected."),
-                             tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
+        internal::warning(this,
+                          tr("The model is not selected."),
+                          tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
     return ptr;
 }
 
@@ -556,8 +556,8 @@ IMotion *SceneWidget::setCamera(const QString &path)
             emit fileDidLoad(path);
         }
         else {
-            QMessageBox::warning(this, tr("Loading camera motion error"),
-                                 tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            internal::warning(this, tr("Loading camera motion error"),
+                              tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
     return motion;
@@ -567,12 +567,12 @@ void SceneWidget::deleteSelectedModel()
 {
     IModel *selected = m_loader->selectedModel();
     if (selected) {
-        QMessageBox::StandardButton ret;
-        ret = QMessageBox::warning(this,
-                                   qAppName(),
-                                   tr("Do you want to delete the model \"%1\"? This cannot undo.")
-                                   .arg(internal::toQString(selected)),
-                                   QMessageBox::Yes | QMessageBox::No);
+        int ret = internal::warning(0,
+                                    tr("Confirm"),
+                                    tr("Do you want to delete the model \"%1\"? This cannot undo.")
+                                    .arg(internal::toQString(selected)),
+                                    "",
+                                    QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::Yes) {
             /* モデルを削除しても IBone への参照が残ってしまうので中身を空にする */
             clearSelectedBones();
@@ -1237,9 +1237,9 @@ void SceneWidget::swipeTriggered(QSwipeGesture *event)
 void SceneWidget::openErrorDialogIfFailed(bool loadingProjectFailed)
 {
     if (!loadingProjectFailed) {
-        QMessageBox::warning(this,
-                             tr("Failed loading the project"),
-                             tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
+        internal::warning(this,
+                          tr("Failed loading the project"),
+                          tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
     }
 }
 

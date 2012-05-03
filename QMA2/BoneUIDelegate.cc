@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "common/util.h"
 #include "dialogs/BoneDialog.h"
 #include "models/BoneMotionModel.h"
 #include "BoneUIDelegate.h"
@@ -58,10 +59,10 @@ void BoneUIDelegate::resetBoneX()
         m_boneMotionModel->resetBone(BoneMotionModel::kX);
     }
     else {
-        QMessageBox::warning(m_parent,
-                             tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset X position of the bone "
-                                "(\"Model\" > \"Select model\" or double click a bone)"));
+        internal::warning(m_parent,
+                          tr("The model or the bone is not selected."),
+                          tr("Select a model or a bone to reset X position of the bone "
+                             "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
@@ -71,10 +72,10 @@ void BoneUIDelegate::resetBoneY()
         m_boneMotionModel->resetBone(BoneMotionModel::kY);
     }
     else {
-        QMessageBox::warning(m_parent,
-                             tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset Y position of the bone "
-                                "(\"Model\" > \"Select model\" or double click a bone)"));
+        internal::warning(m_parent,
+                          tr("The model or the bone is not selected."),
+                          tr("Select a model or a bone to reset Y position of the bone "
+                             "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
@@ -84,10 +85,10 @@ void BoneUIDelegate::resetBoneZ()
         m_boneMotionModel->resetBone(BoneMotionModel::kZ);
     }
     else {
-        QMessageBox::warning(m_parent,
-                             tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset Z position of the bone "
-                                "(\"Model\" > \"Select model\" or double click a bone)"));
+        internal::warning(m_parent,
+                          tr("The model or the bone is not selected."),
+                          tr("Select a model or a bone to reset Z position of the bone "
+                             "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
@@ -97,10 +98,10 @@ void BoneUIDelegate::resetBoneRotation()
         m_boneMotionModel->resetBone(BoneMotionModel::kRotation);
     }
     else {
-        QMessageBox::warning(m_parent,
-                             tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to reset rotation of the bone "
-                                "(\"Model\" > \"Select model\" or double click a bone)"));
+        internal::warning(m_parent,
+                          tr("The model or the bone is not selected."),
+                          tr("Select a model or a bone to reset rotation of the bone "
+                             "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
@@ -110,9 +111,9 @@ void BoneUIDelegate::resetAllBones()
         m_boneMotionModel->resetAllBones();
     }
     else {
-        QMessageBox::warning(m_parent,
-                             tr("The model is not selected."),
-                             tr("Select a model to reset bones (\"Model\" > \"Select model\")"));
+        internal::warning(m_parent,
+                          tr("The model is not selected."),
+                          tr("Select a model to reset bones (\"Model\" > \"Select model\")"));
     }
 }
 
@@ -123,9 +124,9 @@ void BoneUIDelegate::openBoneDialog()
         dialog->exec();
     }
     else {
-        QMessageBox::warning(m_parent,
-                             tr("The model or the bone is not selected."),
-                             tr("Select a model or a bone to open this dialog "
-                                "(\"Model\" > \"Select model\" or double click a bone)"));
+        internal::warning(m_parent,
+                          tr("The model or the bone is not selected."),
+                          tr("Select a model or a bone to open this dialog "
+                             "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }

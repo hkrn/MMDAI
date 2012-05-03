@@ -536,11 +536,11 @@ bool MainWindow::confirmSave(bool condition, bool &cancel)
 {
     cancel = false;
     if (condition) {
-        QMessageBox::StandardButton ret;
-        ret = QMessageBox::warning(this,
-                                   qAppName(),
-                                   tr("Do you want to save your changes?"),
-                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        int ret = internal::warning(0,
+                                    tr("Confirm"),
+                                    tr("Do you want to save your changes?"),
+                                    "",
+                                    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         switch (ret) {
         case QMessageBox::Save:
             return true;
@@ -839,7 +839,7 @@ void MainWindow::buildUI()
     m_menuModel->addMenu(m_menuRetainModels);
     m_menuRetainAssets = new QMenu(this);
     //if (Asset::isSupported())
-        m_menuScene->addMenu(m_menuRetainAssets);
+    m_menuScene->addMenu(m_menuRetainAssets);
     m_menuModel->addAction(m_actionSelectNextModel);
     m_menuModel->addAction(m_actionSelectPreviousModel);
     m_menuModel->addAction(m_actionRevertSelectedModel);
@@ -1367,13 +1367,13 @@ void MainWindow::exportVideo()
             m_exportingVideoDialog->show();
         }
         else {
-            QMessageBox::warning(this, tr("No motion to export."),
-                                 tr("Create or load a motion."));
+            internal::warning(this, tr("No motion to export."),
+                              tr("Create or load a motion."));
         }
     }
     else {
-        QMessageBox::warning(this, tr("Exporting video feature is not supported."),
-                             tr("Exporting video is disabled because OpenCV is not linked."));
+        internal::warning(this, tr("Exporting video feature is not supported."),
+                          tr("Exporting video is disabled because OpenCV is not linked."));
     }
 }
 
@@ -1383,13 +1383,13 @@ void MainWindow::invokeVideoEncoder()
     int fromIndex = m_exportingVideoDialog->fromIndex();
     int toIndex = m_exportingVideoDialog->toIndex();
     if (fromIndex == toIndex) {
-        QMessageBox::warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
-                             tr("Specify different value of \"Index from\" and \"Index to\"."));
+        internal::warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
+                          tr("Specify different value of \"Index from\" and \"Index to\"."));
         return;
     }
     else if (fromIndex > toIndex) {
-        QMessageBox::warning(this, tr("Value of \"Index from\" is bigger than \"Index to\"."),
-                             tr("\"Index from\" must be less than \"Index to\"."));
+        internal::warning(this, tr("Value of \"Index from\" is bigger than \"Index to\"."),
+                          tr("\"Index from\" must be less than \"Index to\"."));
         return;
     }
     const QString &filename = internal::openSaveDialog("mainWindow/lastVideoDirectory",
@@ -1578,8 +1578,8 @@ void MainWindow::invokePlayer()
         m_player->start();
     }
     else {
-        QMessageBox::warning(this, tr("No motion to export."),
-                             tr("Create or load a motion."));
+        internal::warning(this, tr("No motion to export."),
+                          tr("Create or load a motion."));
     }
 }
 
@@ -1591,8 +1591,8 @@ void MainWindow::openPlaySettingDialog()
         m_playSettingDialog->show();
     }
     else {
-        QMessageBox::warning(this, tr("No motion to export."),
-                             tr("Create or load a motion."));
+        internal::warning(this, tr("No motion to export."),
+                          tr("Create or load a motion."));
     }
 }
 

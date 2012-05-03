@@ -402,8 +402,8 @@ void TimelineTabWidget::openFrameWeightDialog()
         break;
     }
     default:
-        QMessageBox::warning(this, tr("Not supported operation"),
-                             tr("The timeline is not supported adjusting keyframe weight."));
+        internal::warning(this, tr("Not supported operation"),
+                          tr("The timeline is not supported adjusting keyframe weight."));
         break;
     }
 }
