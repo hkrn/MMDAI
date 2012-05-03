@@ -460,6 +460,7 @@ bool MainWindow::saveMotionFile(const QString &filename)
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
     QScopedPointer<IMotion> motion(m_factory->createMotion());
     IMotion *motionPtr = motion.data();
+    motionPtr->setParentModel(m_sceneWidget->sceneLoader()->selectedModel());
     m_boneMotionModel->saveMotion(motionPtr);
     m_morphMotionModel->saveMotion(motionPtr);
     return saveMotionFile(filename, motionPtr);
@@ -467,7 +468,7 @@ bool MainWindow::saveMotionFile(const QString &filename)
 
 bool MainWindow::saveMotionFile(const QString &filename, IMotion *motion)
 {
-    typedef QScopedPointer<uint8_t, QScopedPointerArrayDeleter<uint8_t> > ByteArrayPtr;
+    typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
     size_t size = motion->estimateSize();
     ByteArrayPtr buffer(new uint8_t[size]);
     motion->save(buffer.data());
