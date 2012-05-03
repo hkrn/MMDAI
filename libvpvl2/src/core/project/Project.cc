@@ -900,6 +900,7 @@ public:
                                         self->currentMotion->setParentModel(model);
                                 }
                             }
+                            self->m_parent->addMotion(self->currentMotion);
                         }
                         else {
                             delete self->currentMotion;

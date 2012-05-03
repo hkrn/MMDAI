@@ -936,8 +936,9 @@ void SceneLoader::loadProject(const QString &path)
         int progress = 0;
         QList<IModel *> lostModels;
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
-        const Project::UUIDList &motionUUIDs = m_project->motionUUIDs();
         emit projectDidCount(modelUUIDs.size());
+        const Array<IMotion *> &motions = m_project->motions();
+        const int nmotions = motions.count();
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
         Quaternion rotation;
@@ -972,8 +973,6 @@ void SceneLoader::loadProject(const QString &path)
                     if (isModelSelected(model))
                         setSelectedModel(model);
                     /* モデルに属するモーションを取得し、追加する */
-                    const Array<IMotion *> &motions = m_project->motions();
-                    const int nmotions = motions.count();
                     for (int i = 0; i < nmotions; i++) {
                         IMotion *motion = motions[i];
                         if (motion->parentModel() == model) {
@@ -1008,11 +1007,15 @@ void SceneLoader::loadProject(const QString &path)
             emit projectDidProceed(++progress);
         }
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
-        int nmotions = motionUUIDs.size();
         for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = m_project->motion(motionUUIDs[i]);
-            if (!motion->parentModel() && motion->countKeyframes(IKeyframe::kCamera) > 1)
+            IMotion *motion = motions[i];
+            if (!motion->parentModel() && motion->countKeyframes(IKeyframe::kCamera) > 0) {
+                const QUuid uuid(m_project->motionUUID(motion).c_str());
+                deleteCameraMotion();
+                m_camera = motion;
                 m_project->camera()->setMotion(motion);
+                emit cameraMotionDidSet(motion, uuid);
+            }
         }
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
         foreach (IModel *model, lostModels) {

@@ -465,11 +465,15 @@ const QString SceneMotionModel::nameFromModelIndex(const QModelIndex & /* index 
 
 void SceneMotionModel::loadMotion(IMotion *motion)
 {
-    m_cameraData.clear();
     if (motion) {
+        const int nCameraFrames = motion->countKeyframes(IKeyframe::kCamera);
+        const int nLightFrames = motion->countKeyframes(IKeyframe::kLight);
+        if (nCameraFrames == 0 && nLightFrames == 0)
+            return;
+        m_cameraData.clear();
+        m_lightData.clear();
         /* カメラのキーフレームをテーブルのモデルデータにコピーする */
         QScopedPointer<ICameraKeyframe> newCameraKeyframe;
-        const int nCameraFrames = motion->countKeyframes(IKeyframe::kCamera);
         for (int i = 0; i < nCameraFrames; i++) {
             const ICameraKeyframe *cameraKeyframe = motion->findCameraKeyframeAt(i);
             int frameIndex = static_cast<int>(cameraKeyframe->frameIndex());
@@ -481,7 +485,6 @@ void SceneMotionModel::loadMotion(IMotion *motion)
         }
         /* 照明のキーフレームをテーブルのモデルデータにコピーする */
         QScopedPointer<ILightKeyframe> newLightKeyframe;
-        const int nLightFrames = motion->countKeyframes(IKeyframe::kLight);
         for (int i = 0; i < nLightFrames; i++) {
             const ILightKeyframe *lightKeyframe = motion->findLightKeyframeAt(i);
             int frameIndex = static_cast<int>(lightKeyframe->frameIndex());
