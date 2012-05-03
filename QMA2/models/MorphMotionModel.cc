@@ -622,7 +622,17 @@ void MorphMotionModel::setWeight(float value)
 void MorphMotionModel::setWeight(const Scalar &value, IMorph *morph)
 {
     if (morph) {
+        /* 一度頂点がリセットされるので、頂点モーフのみ更新を行う */
         m_model->resetVertices();
+        Array<IMorph *> morphs;
+        m_model->getMorphs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            IMorph *m = morphs[i];
+            /* 頂点モーフでかつ変更するモーフ以外を更新するようにする */
+            if (morph != m && morph->type() == IMorph::kVertex)
+                m->setWeight(m->weight());
+        }
         morph->setWeight(value);
         m_model->performUpdate();
     }
