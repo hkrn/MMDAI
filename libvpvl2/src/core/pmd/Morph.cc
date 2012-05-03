@@ -80,8 +80,24 @@ IMorph::Category Morph::category() const
     }
 }
 
+IMorph::Type Morph::type() const
+{
+    return kVertex;
+}
+
+bool Morph::hasParent() const
+{
+    return false;
+}
+
+const Scalar &Morph::weight() const
+{
+    return m_weight;
+}
+
 void Morph::setWeight(const Scalar &value)
 {
+    m_weight = value;
     m_morph->setWeight(value);
 }
 

@@ -60,8 +60,9 @@ public:
     const IString *name() const { return m_name; }
     int index() const { return m_index; }
     Category category() const;
-    bool hasParent() const { return false; }
-    const Scalar &weight() const { return m_weight; }
+    Type type() const;
+    bool hasParent() const;
+    const Scalar &weight() const;
     void setWeight(const Scalar &value);
     void setIndex(int value);
 
