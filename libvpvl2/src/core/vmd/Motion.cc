@@ -59,12 +59,12 @@ const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid 
 Motion::Motion(IModel *model, IEncoding *encoding)
     : m_model(model),
       m_encoding(encoding),
+      m_name(0),
       m_boneMotion(encoding),
       m_morphMotion(encoding),
       m_error(kNoError),
       m_active(true)
 {
-    internal::zerofill(&m_name, sizeof(m_name));
 }
 
 Motion::~Motion()
@@ -173,7 +173,7 @@ void Motion::save(uint8_t *data) const
 {
     internal::writeBytes(kSignature, kSignatureSize, data);
     uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
-    internal::copyBytes(data, name, sizeof(m_name));
+    internal::copyBytes(data, name, kNameSize);
     m_encoding->disposeByteArray(name);
     data += kNameSize;
     int nBoneFrames = m_boneMotion.countKeyframes();
@@ -231,6 +231,11 @@ void Motion::setParentModel(IModel *model)
     m_boneMotion.setParentModel(model);
     m_morphMotion.setParentModel(model);
     m_model = model;
+    if (model) {
+        const IString *name = model->name();
+        if (name)
+            internal::setString(name, m_name);
+    }
 }
 
 void Motion::seek(float frameIndex)
