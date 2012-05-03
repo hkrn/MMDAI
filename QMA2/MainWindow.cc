@@ -1276,6 +1276,7 @@ void MainWindow::connectWidgets()
     MorphWidget *morphWidget = m_modelTabWidget->morphWidget();
     connect(morphWidget, SIGNAL(morphWillChange()), m_morphMotionModel, SLOT(saveTransform()));
     connect(morphWidget, SIGNAL(morphDidChange()), m_morphMotionModel, SLOT(commitTransform()));
+    connect(m_undo, SIGNAL(indexChanged(int)), morphWidget, SLOT(updateMorphWeightValues()));
     makeBonesSelectable();
 }
 
