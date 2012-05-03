@@ -57,18 +57,6 @@ namespace pmx
 class VPVL2_API Morph : public IMorph
 {
 public:
-    enum Type {
-        kUnknown = -1,
-        kGroup,
-        kVertex,
-        kBone,
-        kTexCoord,
-        kUVA1,
-        kUVA2,
-        kUVA3,
-        kUVA4,
-        kMaterial
-    };
     struct Bone {
         Bone()
             : bone(0),
@@ -164,7 +152,7 @@ public:
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     Category category() const { return m_category; }
-    uint8_t type() const { return m_type; }
+    Type type() const { return m_type; }
     int index() const { return m_index; }
     bool hasParent() const { return m_hasParent; }
 

@@ -51,6 +51,18 @@ class IString;
 class VPVL2_API IMorph
 {
 public:
+    enum Type {
+        kUnknown = -1,
+        kGroup,
+        kVertex,
+        kBone,
+        kTexCoord,
+        kUVA1,
+        kUVA2,
+        kUVA3,
+        kUVA4,
+        kMaterial
+    };
     enum Category {
         kReserved,
         kEyeblow,
@@ -83,6 +95,13 @@ public:
      * @return Category
      */
     virtual Category category() const = 0;
+
+    /**
+     * モーフの種類を返します。
+     *
+     * @return Type
+     */
+    virtual Type type() const = 0;
 
     /**
      * グループモーフに所属しているかを返します。

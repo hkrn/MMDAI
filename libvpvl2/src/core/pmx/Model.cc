@@ -260,7 +260,6 @@ void Model::resetVertices()
     }
 }
 
-
 void Model::performUpdate()
 {
     // update local transform matrix
