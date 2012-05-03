@@ -179,6 +179,7 @@ void SceneWidget::loadProject(const QString &filename)
     dialog->setLabelText(tr("Loading a project %1...").arg(QFileInfo(filename).fileName()));
     dialog->setWindowModality(Qt::WindowModal);
     dialog->setCancelButton(0);
+    clearSelectedBones();
     m_loader->loadProject(filename);
 }
 
