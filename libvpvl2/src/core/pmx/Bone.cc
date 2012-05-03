@@ -514,28 +514,37 @@ void Bone::performFullTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
     if (hasRotationInherence()) {
-        if (Bone *parentBone = m_parentInherenceBone) {
-            const Quaternion &parentRotation = parentBone->hasRotationInherence() ? parentBone->m_rotationInherence : parentBone->m_rotation * parentBone->m_rotationMorph;
-            rotation *= parentRotation;
-            if (!btFuzzyZero(m_weight - 1.0))
-                rotation = Quaternion::getIdentity().slerp(rotation, m_weight);
-            rotation *= parentBone->m_rotationIKLink;
-            m_rotationInherence = Quaternion::getIdentity().slerp(parentRotation * parentBone->m_rotationIKLink, m_weight) * m_rotation * m_rotationMorph;
-            m_rotationInherence.normalize();
+        Bone *parentBone = m_parentInherenceBone;
+        if (parentBone) {
+            if (parentBone->hasRotationInherence())
+                rotation *= parentBone->m_rotationInherence;
+            else
+                rotation *= parentBone->m_rotation * parentBone->m_rotationMorph;
         }
+        if (!btFuzzyZero(m_weight - 1.0))
+            rotation = Quaternion::getIdentity().slerp(rotation, m_weight);
+        if (parentBone && parentBone->hasInverseKinematics())
+            rotation *= parentBone->m_rotationIKLink;
+        m_rotationInherence = Quaternion::getIdentity().slerp(rotation, m_weight) * m_rotation * m_rotationMorph;
+        m_rotationInherence.normalize();
+        rotation *= m_rotationInherence;
     }
     rotation *= m_rotation * m_rotationMorph * m_rotationIKLink;
     rotation.normalize();
     m_localTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
     if (hasPositionInherence()) {
-        if (Bone *parentBone = m_parentInherenceBone) {
-            const Vector3 &parentPosition = parentBone->hasPositionInherence() ? parentBone->m_positionInherence : parentBone->m_position + parentBone->m_positionMorph;
-            position += parentPosition;
-            if (!btFuzzyZero(m_weight - 1.0))
-                position *= m_weight;
-            m_positionInherence = parentPosition + m_position + m_positionMorph;
+        Bone *parentBone = m_parentInherenceBone;
+        if (parentBone) {
+            if (parentBone->hasPositionInherence())
+                position += parentBone->m_positionInherence;
+            else
+                position += parentBone->m_position + parentBone->m_positionMorph;
         }
+        if (!btFuzzyZero(m_weight - 1.0))
+            position *= m_weight;
+        m_positionInherence = position;
+        position += m_positionInherence;
     }
     position += m_position + m_positionMorph;
     m_localTransform.setOrigin(m_offset + m_position + m_positionMorph);
