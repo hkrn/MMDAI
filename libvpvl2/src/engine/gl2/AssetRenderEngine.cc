@@ -66,9 +66,15 @@ public:
           m_materialDiffuseUniformLocation(0),
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
-          m_hasTextureUniformLocation(0),
+          m_hasMainTextureUniformLocation(0),
+          m_hasSubTextureUniformLocation(0),
           m_hasColorVertexUniformLocation(0),
-          m_textureUniformLocation(0),
+          m_isMainSphereMapUniformLocation(0),
+          m_isSubSphereMapUniformLocation(0),
+          m_isMainAdditiveUniformLocation(0),
+          m_isSubAdditiveUniformLocation(0),
+          m_mainTextureUniformLocation(0),
+          m_subTextureUniformLocation(0),
           m_opacityUniformLocation(0)
     {
     }
@@ -83,9 +89,15 @@ public:
         m_materialEmissionUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
-        m_hasTextureUniformLocation = 0;
+        m_hasMainTextureUniformLocation = 0;
+        m_hasSubTextureUniformLocation = 0;
         m_hasColorVertexUniformLocation = 0;
-        m_textureUniformLocation = 0;
+        m_isMainSphereMapUniformLocation = 0;
+        m_isSubSphereMapUniformLocation = 0;
+        m_isMainAdditiveUniformLocation = 0;
+        m_isSubAdditiveUniformLocation = 0;
+        m_mainTextureUniformLocation = 0;
+        m_subTextureUniformLocation = 0;
         m_opacityUniformLocation = 0;
     }
 
@@ -102,9 +114,15 @@ public:
             m_materialEmissionUniformLocation = glGetUniformLocation(m_program, "materialEmission");
             m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
             m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
-            m_hasTextureUniformLocation = glGetUniformLocation(m_program, "hasTexture");
+            m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
+            m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
+            m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
+            m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
+            m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
+            m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
             m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
-            m_textureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+            m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
             m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
         }
         return ret;
@@ -148,15 +166,38 @@ public:
     void setOpacity(float value) {
         glUniform1f(m_opacityUniformLocation, value);
     }
-    void setTexture(GLuint value) {
+    void setIsMainSphereMap(bool value) {
+        glUniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
+    }
+    void setIsSubSphereMap(bool value) {
+        glUniform1i(m_isSubSphereMapUniformLocation, value ? 1 : 0);
+    }
+    void setIsMainAdditive(bool value) {
+        glUniform1i(m_isMainAdditiveUniformLocation, value ? 1 : 0);
+    }
+    void setIsSubAdditive(bool value) {
+        glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
+    }
+    void setMainTexture(GLuint value) {
         if (value) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_textureUniformLocation, 0);
-            glUniform1i(m_hasTextureUniformLocation, 1);
+            glUniform1i(m_mainTextureUniformLocation, 0);
+            glUniform1i(m_hasMainTextureUniformLocation, 1);
         }
         else {
-            glUniform1i(m_hasTextureUniformLocation, 0);
+            glUniform1i(m_hasMainTextureUniformLocation, 0);
+        }
+    }
+    void setSubTexture(GLuint value) {
+        if (value) {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, value);
+            glUniform1i(m_subTextureUniformLocation, 1);
+            glUniform1i(m_hasSubTextureUniformLocation, 1);
+        }
+        else {
+            glUniform1i(m_hasSubTextureUniformLocation, 0);
         }
     }
 
@@ -171,9 +212,15 @@ private:
     GLuint m_materialEmissionUniformLocation;
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
-    GLuint m_hasTextureUniformLocation;
+    GLuint m_hasMainTextureUniformLocation;
+    GLuint m_hasSubTextureUniformLocation;
     GLuint m_hasColorVertexUniformLocation;
-    GLuint m_textureUniformLocation;
+    GLuint m_isMainSphereMapUniformLocation;
+    GLuint m_isSubSphereMapUniformLocation;
+    GLuint m_isMainAdditiveUniformLocation;
+    GLuint m_isSubAdditiveUniformLocation;
+    GLuint m_mainTextureUniformLocation;
+    GLuint m_subTextureUniformLocation;
     GLuint m_opacityUniformLocation;
 };
 
@@ -220,6 +267,21 @@ const std::string CanonicalizePath(const std::string &path)
     return ret;
 }
 
+bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::string &subTexture)
+{
+    std::string::size_type pos = path.find_first_of("*");
+    if (pos != std::string::npos) {
+        mainTexture = CanonicalizePath(path.substr(0, pos));
+        subTexture  = CanonicalizePath(path.substr(pos + 1));
+        return true;
+    }
+    else {
+        mainTexture = CanonicalizePath(path);
+        subTexture = "";
+        return false;
+    }
+}
+
 AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, asset::Model *model)
 #ifdef VPVL2_LINK_QT
     : QGLFunctions(),
@@ -238,6 +300,7 @@ AssetRenderEngine::~AssetRenderEngine()
 {
     const aiScene *scene = m_model->ptr()->getScene();
     const unsigned int nmaterials = scene->mNumMaterials;
+    std::string texture, mainTexture, subTexture;
     aiString texturePath;
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
@@ -246,9 +309,16 @@ AssetRenderEngine::~AssetRenderEngine()
         int textureIndex = 0;
         while (found == AI_SUCCESS) {
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-            textureID = m_context->textures[texturePath.data];
+            if (found != AI_SUCCESS)
+                break;
+            if (SplitTexturePath(texture, mainTexture, subTexture)) {
+                textureID = m_context->textures[subTexture];
+                glDeleteTextures(1, &textureID);
+                m_context->textures.erase(subTexture);
+            }
+            textureID = m_context->textures[mainTexture];
             glDeleteTextures(1, &textureID);
-            m_context->textures.erase(texturePath.data);
+            m_context->textures.erase(mainTexture);
             textureIndex++;
         }
     }
@@ -306,7 +376,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     const unsigned int nmaterials = scene->mNumMaterials;
     void *context = 0;
     aiString texturePath;
-    std::string path;
+    std::string path, mainTexture, subTexture;
     m_delegate->allocateContext(m_model, context);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
@@ -316,13 +386,31 @@ bool AssetRenderEngine::upload(const IString *dir)
         while (found == AI_SUCCESS) {
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             path = texturePath.data;
-            if (m_context->textures[path] == 0) {
-                IString *canonicalized = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(CanonicalizePath(path).c_str()));
-                if (m_delegate->uploadTexture(context, canonicalized, dir, &textureID, false)) {
-                    m_context->textures[path] = textureID;
-                    log0(context, IRenderDelegate::kLogInfo, "Loaded a texture: %s (ID=%d)", canonicalized->toByteArray(), textureID);
+            if (SplitTexturePath(path, mainTexture, subTexture)) {
+                if (m_context->textures[mainTexture] == 0) {
+                    IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                    if (m_delegate->uploadTexture(context, mainTexturePath, dir, &textureID, false)) {
+                        m_context->textures[mainTexture] = textureID;
+                        log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                    }
+                    delete mainTexturePath;
                 }
-                delete canonicalized;
+                if (m_context->textures[subTexture] == 0) {
+                    IString *subTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
+                    if (m_delegate->uploadTexture(context, subTexturePath, dir, &textureID, false)) {
+                        m_context->textures[subTexture] = textureID;
+                        log0(context, IRenderDelegate::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
+                    }
+                    delete subTexturePath;
+                }
+            }
+            else if (m_context->textures[mainTexture] == 0) {
+                IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                if (m_delegate->uploadTexture(context, mainTexturePath, dir, &textureID, false)) {
+                    m_context->textures[mainTexture] = textureID;
+                    log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                }
+                delete mainTexturePath;
             }
             textureIndex++;
         }
@@ -446,13 +534,27 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *program)
 {
     int textureIndex = 0;
+    GLuint textureID;
+    std::string mainTexture, subTexture;
     aiString texturePath;
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
-        GLuint textureID = m_context->textures[texturePath.data];
-        program->setTexture(textureID);
+        bool isAdditive = false;
+        if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
+            textureID = m_context->textures[subTexture];
+            isAdditive = subTexture.find(".spa") != std::string::npos;
+            program->setSubTexture(textureID);
+            program->setIsSubAdditive(isAdditive);
+            program->setIsSubSphereMap(isAdditive || subTexture.find(".sph") != std::string::npos);
+        }
+        textureID = m_context->textures[mainTexture];
+        isAdditive = mainTexture.find(".spa") != std::string::npos;
+        program->setIsMainAdditive(isAdditive);
+        program->setIsMainSphereMap(isAdditive || mainTexture.find(".sph") != std::string::npos);
+        program->setMainTexture(textureID);
     }
     else {
-        program->setTexture(0);
+        program->setMainTexture(0);
+        program->setSubTexture(0);
     }
     aiColor4D ambient, diffuse, emission, specular;
     Color color(0.0f, 0.0f, 0.0f, 0.0f);

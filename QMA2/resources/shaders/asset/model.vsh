@@ -10,43 +10,33 @@ uniform vec3 materialEmission;
 uniform vec3 materialSpecular;
 uniform float materialShininess;
 uniform bool hasColorVertex;
+uniform bool isMainSphereMap;
+uniform bool isSubSphereMap;
 attribute vec4 inColor;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 varying vec4 outColor;
-varying vec2 outTexCoord;
+varying vec4 outTexCoord;
+const float kTwo = 2.0;
 const float kOne = 1.0;
-const float kZero = 0.0;
+const float kHalf = 0.5;
+const vec3 kOne3 = vec3(kOne, kOne, kOne);
+
+vec2 makeSphereMap(vec3 position, vec3 normal) {
+    vec3 R = reflect(position, normal);
+    float M = kTwo * sqrt(R.x * R.x + R.y * R.y + (R.z + kOne) * (R.z + kOne));
+    return vec2(R.x / M + kHalf, R.y / M + kHalf);
+}
 
 void main() {
-#if 1
-    vec4 color = vec4(materialAmbient * lightColor + materialDiffuse.rgb * lightColor, materialDiffuse.a);
-#else
+    vec3 view = normalize(inPosition.xyz);
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec3 light = normalize(normalMatrix * lightDirection - position.xyz);
-    if (hasColorVertex) {
-        color = materialAmbient * inColor;
-    }
-    else {
-        color = materialAmbient;
-    }
-    color += materialEmission;
-    float diffuse = max(dot(light, normal), kZero);
-    if (diffuse != kZero) {
-        vec3 view = normalize(position.xyz);
-        vec3 halfway = normalize(light - view);
-        float specular = pow(max(dot(normal, halfway), kZero), materialShininess);
-        if (hasColorVertex) {
-            color += materialDiffuse * diffuse * inColor + materialSpecular * specular;
-        }
-        else {
-            color += materialDiffuse * diffuse + materialSpecular * specular;
-        }
-    }
-#endif
+    vec4 color = vec4(materialAmbient * lightColor + materialDiffuse.rgb * lightColor, materialDiffuse.a);
+    vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
+    vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     outColor = color;
-    outTexCoord = inTexCoord;
+    outTexCoord = vec4(mainTexCoord, subTexCoord);
     gl_Position = modelViewProjectionMatrix * transformMatrix * inPosition;
 }
 
