@@ -68,7 +68,7 @@ public slots:
     void setCurrentFrameIndex(int frameIndex);
 
 signals:
-    void motionDidSeek(float column);
+    void motionDidSeek(float column, bool forceCameraUpdate);
 
 private slots:
     void retranslate();

@@ -101,10 +101,10 @@ public:
     virtual ~MotionBaseModel() {
     }
 
-    virtual QVariant headerData(int /* section */, Qt::Orientation /* orientation */, int /* role */) const {
+    QVariant headerData(int /* section */, Qt::Orientation /* orientation */, int /* role */) const {
         return QVariant();
     }
-    virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const {
+    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const {
         if (!hasIndex(row, column, parent))
             return QModelIndex();
         ITreeItem *parentItem = 0;
@@ -115,14 +115,14 @@ public:
         ITreeItem *childItem = parentItem->child(row);
         return childItem ? createIndex(row, column, childItem) : QModelIndex();
     }
-    virtual QModelIndex parent(const QModelIndex &child) const {
+    QModelIndex parent(const QModelIndex &child) const {
         if (!child.isValid())
             return QModelIndex();
         ITreeItem *childItem = static_cast<ITreeItem *>(child.internalPointer());
         ITreeItem *parentItem = childItem->parent();
         return parentItem == root() ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
     }
-    virtual int rowCount(const QModelIndex &parent) const {
+    int rowCount(const QModelIndex &parent) const {
         ITreeItem *parentItem;
         if (parent.column() > 0)
             return 0;
@@ -136,12 +136,12 @@ public:
         }
         return parentItem->countChildren();
     }
-    virtual void selectKeyframesByModelIndex(const QModelIndex &index) {
+    void selectKeyframesByModelIndex(const QModelIndex &index) {
         QModelIndexList indices;
         indices.append(index);
         selectKeyframesByModelIndices(indices);
     }
-    virtual void cutKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex) {
+    void cutKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex) {
         copyKeyframesByModelIndices(indices, frameIndex);
         deleteKeyframesByModelIndices(indices);
     }
@@ -153,6 +153,7 @@ public:
     virtual void pasteKeyframesByFrameIndex(int frameIndex) = 0;
     virtual int maxFrameCount() const = 0;
     virtual int maxFrameIndex() const = 0;
+    virtual bool forceCameraUpdate() const = 0;
 
     vpvl2::IMotion *currentMotion() const { return m_motion; }
     void setFrameIndex(float newIndex) {

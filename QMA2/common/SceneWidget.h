@@ -139,7 +139,7 @@ public slots:
     void translateModel(const vpvl2::Vector3 &delta);
     void translateModel(vpvl2::IModel *model, const vpvl2::Vector3 &delta);
     void advanceMotion(float delta);
-    void seekMotion(float frameIndex, bool force = false);
+    void seekMotion(float frameIndex, bool forceCameraUpdate);
     void resetMotion();
     void setCameraPerspective(const QSharedPointer<vpvl2::Scene::ICamera> &camera);
     void setModelEdgeOffset(double value);

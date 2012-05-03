@@ -488,30 +488,39 @@ void SceneWidget::advanceMotion(float delta)
     updateScene();
 }
 
-void SceneWidget::seekMotion(float frameIndex, bool force)
+void SceneWidget::seekMotion(float frameIndex, bool forceCameraUpdate)
 {
     /*
-       advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある
-       同じフレームインデックスにシークする場合はカメラと照明は動かさないようにする。force で強制的に動かすことが出来る
+       advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある。
+       force でカメラと照明を強制的に動かすことが出来る(例として場面タブからシークした場合)。
+       同じフレームインデックスにシークする場合は force なしの場合は何もしない。
      */
     Scene *scene = m_loader->scene();
-    if (m_frameIndex == frameIndex && !force) {
-        Scene::ICamera *camera = scene->camera();
-        Scene::ILight *light = scene->light();
-        IMotion *cameraMotion = camera->motion();
-        IMotion *lightMotion = light->motion();
-        camera->setMotion(0);
-        light->setMotion(0);
-        scene->seek(frameIndex);
-        camera->setMotion(cameraMotion);
-        light->setMotion(lightMotion);
+    if (m_frameIndex != frameIndex) {
+        if (!forceCameraUpdate) {
+            /* 一旦カメラと照明のモーションを外してモデルのモーションのみ動かすようにする */
+            Scene::ICamera *camera = scene->camera();
+            Scene::ILight *light = scene->light();
+            IMotion *cameraMotion = camera->motion();
+            IMotion *lightMotion = light->motion();
+            camera->setMotion(0);
+            light->setMotion(0);
+            scene->seek(frameIndex);
+            camera->setMotion(cameraMotion);
+            light->setMotion(lightMotion);
+        }
+        else {
+            scene->seek(frameIndex);
+        }
+        m_frameIndex = frameIndex;
+        emit motionDidSeek(frameIndex);
     }
-    else {
+    else if (forceCameraUpdate) {
         scene->seek(frameIndex);
         m_frameIndex = frameIndex;
+        emit motionDidSeek(frameIndex);
     }
     updateScene();
-    emit motionDidSeek(frameIndex);
 }
 
 void SceneWidget::resetMotion()

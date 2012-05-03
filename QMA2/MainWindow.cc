@@ -1249,7 +1249,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(handleDidMoveRelative(vpvl2::Vector3,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl2::Vector3,vpvl2::IBone*,int)));
     connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl2::Scalar,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(rotateAngle(vpvl2::Scalar,vpvl2::IBone*,int)));
     connect(m_sceneWidget, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_timelineTabWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
-    connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float)),  m_sceneWidget, SLOT(seekMotion(float)));
+    connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float,bool)),  m_sceneWidget, SLOT(seekMotion(float,bool)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl2::IModel*)));

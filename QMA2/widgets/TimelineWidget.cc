@@ -201,7 +201,7 @@ void TimelineWidget::setCurrentFrameIndex(float frameIndex)
     m_treeView->scrollTo(model->index(0, MotionBaseModel::toModelIndex(frameIndex)), QAbstractItemView::PositionAtCenter);
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
-    emit motionDidSeek(frameIndex);
+    emit motionDidSeek(frameIndex, model->forceCameraUpdate());
 }
 
 void TimelineWidget::setCurrentFrameIndex(int frameIndex)

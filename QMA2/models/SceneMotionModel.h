@@ -65,12 +65,13 @@ public:
                               QObject *parent = 0);
     ~SceneMotionModel();
 
-    virtual QVariant data(const QModelIndex &index, int role) const;
-    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    virtual int maxFrameCount() const;
-    virtual int maxFrameIndex() const;
-    virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
+    QVariant data(const QModelIndex &index, int role) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+    int columnCount(const QModelIndex &parent = QModelIndex()) const;
+    int maxFrameCount() const;
+    int maxFrameIndex() const;
+    bool forceCameraUpdate() const;
+    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
     void saveMotion(vpvl2::IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
@@ -101,7 +102,7 @@ signals:
     void motionDidUpdate(vpvl2::IModel *model);
 
 protected:
-    virtual ITreeItem *root() const { return m_rootTreeItem; }
+    ITreeItem *root() const { return m_rootTreeItem; }
 
 private:
     const SceneWidget *m_sceneWidget;

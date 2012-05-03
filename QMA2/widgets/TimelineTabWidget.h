@@ -94,7 +94,7 @@ public slots:
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
-    void motionDidSeek(float frameIndex);
+    void motionDidSeek(float frameIndex, bool forceCameraUpdate);
     void currentTabDidChange(int type);
 
 private slots:

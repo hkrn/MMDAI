@@ -94,7 +94,7 @@ void ScenePlayer::start()
     m_sceneWidget->setPreferredFPS(sceneFPS);
     m_sceneWidget->sceneLoader()->startPhysicsSimulation();
     /* 場面を開始位置にシーク */
-    m_sceneWidget->seekMotion(m_dialog->fromIndex());
+    m_sceneWidget->seekMotion(m_dialog->fromIndex(), true);
     /* ハンドルも情報パネルも消す */
     m_sceneWidget->setHandlesVisible(false);
     m_sceneWidget->setInfoPanelVisible(false);

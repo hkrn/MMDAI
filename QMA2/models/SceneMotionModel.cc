@@ -347,6 +347,11 @@ int SceneMotionModel::maxFrameIndex() const
     return m_motion ? m_motion->maxFrameIndex() : 0;
 }
 
+bool SceneMotionModel::forceCameraUpdate() const
+{
+    return true;
+}
+
 const QModelIndex SceneMotionModel::frameIndexToModelIndex(ITreeItem *item, int frameIndex) const
 {
     QModelIndex modelIndex;

@@ -252,6 +252,11 @@ int PMDMotionModel::maxFrameIndex() const
     return m_motion ? m_motion->maxFrameIndex() : 0;
 }
 
+bool PMDMotionModel::forceCameraUpdate() const
+{
+    return false;
+}
+
 void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys &keys)
 {
     /* モデルが新規の場合はそのモデルの巻き戻しスタックを作成し、そうでない場合は該当のモデルの巻戻しスタックを有効にする */

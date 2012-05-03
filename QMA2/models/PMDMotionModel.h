@@ -83,20 +83,21 @@ public:
     };
 
     explicit PMDMotionModel(QUndoGroup *undo, QObject *parent = 0);
-    virtual ~PMDMotionModel();
+    ~PMDMotionModel();
 
-    virtual QVariant data(const QModelIndex &index, int role) const;
-    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
+    QVariant data(const QModelIndex &index, int role) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
 
     virtual void saveTransform() = 0;
     virtual void commitTransform() = 0;
-    virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
     void updateModel(vpvl2::IModel *model);
     void refreshModel(vpvl2::IModel *model);
     int maxFrameCount() const;
     int maxFrameIndex() const;
+    bool forceCameraUpdate() const;
 
     vpvl2::IModel *selectedModel() const { return m_model; }
     const Keys keys() const { return m_keys[m_model]; }
@@ -119,7 +120,7 @@ protected:
     const Values values() const { return m_values[m_model]; }
     RootPtr rootPtr() const { return rootPtr(m_model); }
     RootPtr rootPtr(vpvl2::IModel *model) const { return m_roots[model]; }
-    virtual ITreeItem *root() const { return rootPtr().data(); }
+    ITreeItem *root() const { return rootPtr().data(); }
 
     vpvl2::IModel *m_model;
 
