@@ -67,7 +67,6 @@ public:
     const QString nameFromModelIndex(const QModelIndex &index) const;
 
     void setFrames(const KeyFramePairList &frames);
-    void resetAllMorphs();
     void setWeight(float value);
     void setWeight(const vpvl2::Scalar &value, vpvl2::IMorph *morph);
     vpvl2::IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
@@ -85,6 +84,7 @@ public slots:
     void selectMorphs(const QList<vpvl2::IMorph *> &morphs);
     void saveTransform();
     void commitTransform();
+    void resetAllMorphs();
 
 signals:
     void morphsDidSelect(const QList<vpvl2::IMorph *> &morphs);

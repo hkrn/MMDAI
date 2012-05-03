@@ -99,9 +99,12 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     otherVBoxLayout->addWidget(m_otherRegistButton);
     m_otherGroup = new QGroupBox();
     m_otherGroup->setLayout(otherVBoxLayout);
+    /* 「全てのモーフをリセット」ボタン */
+    m_resetAllButton = new QPushButton();
+    connect(m_resetAllButton, SIGNAL(clicked()), m_morphMotionModel, SLOT(resetAllMorphs()));
     /* レイアウト結合 */
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    QHBoxLayout *subLayout = new QHBoxLayout();
+    QLayout *subLayout = new QHBoxLayout();
     subLayout->addWidget(m_eyeGroup);
     subLayout->addWidget(m_lipGroup);
     mainLayout->addLayout(subLayout);
@@ -109,6 +112,7 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     subLayout->addWidget(m_eyeblowGroup);
     subLayout->addWidget(m_otherGroup);
     mainLayout->addLayout(subLayout);
+    mainLayout->addWidget(m_resetAllButton);
     mainLayout->addStretch();
     retranslate();
     setLayout(mainLayout);
@@ -118,7 +122,7 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
 
 void MorphWidget::retranslate()
 {
-    QString buttonText = tr("Regist");
+    const QString &buttonText = tr("Regist");
     m_eyeRegistButton->setText(buttonText);
     m_lipRegistButton->setText(buttonText);
     m_eyeblowRegistButton->setText(buttonText);
@@ -127,6 +131,7 @@ void MorphWidget::retranslate()
     m_lipGroup->setTitle(tr("Lip"));
     m_eyeblowGroup->setTitle(tr("Eyeblow"));
     m_otherGroup->setTitle(tr("Other"));
+    m_resetAllButton->setText(tr("Reset all morphs"));
 }
 
 void MorphWidget::setPMDModel(IModel *model)

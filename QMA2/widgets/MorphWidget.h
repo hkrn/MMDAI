@@ -101,6 +101,7 @@ private:
     QPushButton *m_lipRegistButton;
     QPushButton *m_eyeblowRegistButton;
     QPushButton *m_otherRegistButton;
+    QPushButton *m_resetAllButton;
     MorphMotionModel *m_morphMotionModel;
 
     Q_DISABLE_COPY(MorphWidget)
