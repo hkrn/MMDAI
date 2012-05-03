@@ -351,8 +351,29 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
     IMotion *motion = 0;
     if (model) {
         if (QFile::exists(path)) {
-            motion = m_loader->loadModelMotion(path, model);
+            motion = m_loader->loadModelMotion(path);
             if (motion) {
+                /* 違うモデルに適用しようとしているかどうかの確認 */
+                if (!model->name()->equals(motion->name())) {
+                    int ret = internal::warning(0,
+                                                tr("Applying this motion to the different model"),
+                                                tr("This motion is created for %1. Do you apply this motion to %2?")
+                                                .arg(internal::toQString(motion))
+                                                .arg(internal::toQString(model)),
+                                                "",
+                                                QMessageBox::Yes|QMessageBox::No);
+                    if (ret == QMessageBox::Yes) {
+                        m_loader->setModelMotion(motion, model);
+                    }
+                    else {
+                        delete motion;
+                        motion = 0;
+                        return motion;
+                    }
+                }
+                else {
+                    m_loader->setModelMotion(motion, model);
+                }
                 emit fileDidLoad(path);
             }
             else {
