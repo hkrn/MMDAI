@@ -137,17 +137,20 @@ void PMDMotionModel::State::resetBones()
         bone->setPosition(kZeroV3);
         bone->setRotation(Quaternion::getIdentity());
     }
+    m_model->performUpdate();
 }
 
 void PMDMotionModel::State::resetMorphs()
 {
     Array<IMorph *> morphs;
+    m_model->resetVertices();
     m_model->getMorphs(morphs);
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = morphs[i];
         morph->setWeight(0);
     }
+    m_model->performUpdate();
 }
 
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
