@@ -79,6 +79,8 @@ public:
     void getBones(Array<IBone *> & /* value */) const {}
     void getMorphs(Array<IMorph *> & /* value */) const {}
     void getLabels(Array<ILabel *> & /* value */) const {}
+    void getBoundingBox(Vector3 &min, Vector3 &max) const;
+    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     const Vector3 &position() const { return m_asset.position(); }
     const Quaternion &rotation() const { return m_asset.rotation(); }
     const Scalar &opacity() const { return m_asset.opacity(); }

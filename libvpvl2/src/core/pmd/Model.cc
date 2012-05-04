@@ -214,6 +214,50 @@ int Model::count(Object value) const
     }
 }
 
+void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
+{
+    min.setZero();
+    max.setZero();
+    const uint8_t *verticesPtr = static_cast<const uint8_t *>(m_model.verticesPointer());
+    const size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
+    const int nvertices = m_model.vertices().count();
+    size_t offset = m_model.strideOffset(vpvl::PMDModel::kVerticesStride);
+    for (int i = 0; i < nvertices; i++) {
+        const Vector3 &position = *reinterpret_cast<const Vector3 *>(verticesPtr + offset);
+        if (position.x() < min.x() && position.y() < min.y() && position.z() < min.z())
+            min = position;
+        if (position.x() > max.x() && position.y() > max.y() && position.z() > max.z())
+            max = position;
+        offset += stride;
+    }
+}
+
+void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
+{
+    center.setZero();
+    radius = 0;
+    IBone *bone = findBone(m_encoding->stringConstant(IEncoding::kCenter));
+    if (bone) {
+        const Vector3 &centerPosition = bone->localTransform().getOrigin();
+        const uint8_t *verticesPtr = static_cast<const uint8_t *>(m_model.verticesPointer());
+        const size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
+        const int nvertices = m_model.vertices().count();
+        size_t offset = m_model.strideOffset(vpvl::PMDModel::kVerticesStride);
+        for (int i = 0; i < nvertices; i++) {
+            const Vector3 &position = *reinterpret_cast<const Vector3 *>(verticesPtr + offset);
+            btSetMax(radius, centerPosition.distance2(position));
+            offset += stride;
+        }
+        radius = btSqrt(radius);
+    }
+    else {
+        Vector3 min, max;
+        getBoundingBox(min, max);
+        center = (min + max) / 2.0;
+        radius = center.length();
+    }
+}
+
 void Model::setName(const IString *value)
 {
     internal::setString(value, m_name);

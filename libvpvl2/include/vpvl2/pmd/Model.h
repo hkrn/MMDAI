@@ -79,6 +79,8 @@ public:
     void getBones(Array<IBone *> &value) const { value.copy(m_bones); }
     void getMorphs(Array<IMorph *> &value) const { value.copy(m_morphs); }
     void getLabels(Array<ILabel *> &value) const { value.copy(m_labels); }
+    void getBoundingBox(Vector3 &min, Vector3 &max) const;
+    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     const Vector3 &position() const { return m_model.positionOffset(); }
     const Quaternion &rotation() const { return m_model.rotationOffset(); }
     const Scalar &opacity() const { return m_opacity; }

@@ -431,6 +431,42 @@ void Model::getLabels(Array<ILabel *> &value) const
     }
 }
 
+void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
+{
+    min.setZero();
+    max.setZero();
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        const Vector3 &position = m_skinnedVertices[i].position;
+        if (position.x() < min.x() && position.y() < min.y() && position.z() < min.z())
+            min = position;
+        if (position.x() > max.x() && position.y() > max.y() && position.z() > max.z())
+            max = position;
+    }
+}
+
+void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
+{
+    center.setZero();
+    radius = 0;
+    IBone *bone = findBone(m_encoding->stringConstant(IEncoding::kCenter));
+    if (bone) {
+        const Vector3 &centerPosition = bone->localTransform().getOrigin();
+        const int nvertices = m_vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            const Vector3 &position = m_skinnedVertices[i].position;
+            btSetMax(radius, centerPosition.distance2(position));
+        }
+        radius = btSqrt(radius);
+    }
+    else {
+        Vector3 min, max;
+        getBoundingBox(min, max);
+        center = (min + max) / 2.0;
+        radius = center.length();
+    }
+}
+
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;

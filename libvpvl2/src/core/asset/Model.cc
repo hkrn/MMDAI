@@ -36,6 +36,7 @@
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/internal/util.h"
+#include "aiScene.h"
 
 namespace vpvl2
 {
@@ -65,6 +66,50 @@ Model::~Model()
 bool Model::load(const uint8_t *data, size_t size)
 {
     return m_asset.load(data, size);
+}
+
+void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
+{
+    min.setZero();
+    max.setZero();
+    const aiScene *scene = m_asset.getScene();
+    aiMesh **meshes = scene->mMeshes;
+    const unsigned int nmeshes = scene->mNumMeshes;
+    Vector3 position;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const aiMesh *mesh = meshes[i];
+        const aiVector3D *vertices = mesh->mVertices;
+        const unsigned int nvertices = mesh->mNumVertices;
+        for (unsigned int j = 0; j < nvertices; j++) {
+            const aiVector3D &vertex = vertices[i];
+            position.setValue(vertex.x, vertex.y, vertex.z);
+            if (position.x() < min.x() && position.y() < min.y() && position.z() < min.z())
+                min = position;
+            if (position.x() > max.x() && position.y() > max.y() && position.z() > max.z())
+                max = position;
+        }
+    }
+}
+
+void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
+{
+    center.setZero();
+    radius = 0;
+    const aiScene *scene = m_asset.getScene();
+    aiMesh **meshes = scene->mMeshes;
+    const unsigned int nmeshes = scene->mNumMeshes;
+    Vector3 position;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const aiMesh *mesh = meshes[i];
+        const aiVector3D *vertices = mesh->mVertices;
+        const unsigned int nvertices = mesh->mNumVertices;
+        for (unsigned int j = 0; j < nvertices; j++) {
+            const aiVector3D &vertex = vertices[i];
+            position.setValue(vertex.x, vertex.y, vertex.z);
+            btSetMax(radius, center.distance2(position));
+        }
+    }
+    radius = btSqrt(radius);
 }
 
 void Model::setName(const IString *value)

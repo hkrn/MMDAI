@@ -63,7 +63,8 @@ public:
         kFinger,
         kElbow,
         kArm,
-        kWrist
+        kWrist,
+        kCenter
     };
 
     virtual ~IEncoding() {}

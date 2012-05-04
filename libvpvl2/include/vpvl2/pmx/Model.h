@@ -148,6 +148,8 @@ public:
     void getBones(Array<IBone *> &value) const;
     void getMorphs(Array<IMorph *> &value) const;
     void getLabels(Array<ILabel *> &value) const;
+    void getBoundingBox(Vector3 &min, Vector3 &max) const;
+    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
