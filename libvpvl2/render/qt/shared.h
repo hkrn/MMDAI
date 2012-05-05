@@ -85,7 +85,7 @@ static const QString kKernelProgramsDir = "../../QMA2/resources/kernels";
 static const QString kModelDir = "render/res/miku2";
 static const QString kStageDir = "render/res/stage";
 static const QString kMotion = "render/res/motion.vmd";
-static const QString kCamera = "render/res/camera.vmd";
+static const QString kCamera = "render/res/camera.vmd.404";
 static const QString kModelName = "miku.pmx";
 static const QString kStageName = "stage.x";
 static const QString kStage2Name = "stage2.x";
@@ -186,6 +186,10 @@ public:
         }
         case kWrist: {
             static const String s("手首");
+            return &s;
+        }
+        case kCenter: {
+            static const String s("センター");
             return &s;
         }
         default: {
@@ -680,6 +684,7 @@ public:
           m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
       #endif /* VPVL2_NO_BULLET */
+          m_fbo(0),
           m_delegate(this),
           m_factory(0),
           m_encoding(0),
@@ -698,6 +703,7 @@ public:
 #ifdef VPVL2_LINK_ASSIMP
         Assimp::DefaultLogger::kill();
 #endif
+        delete m_fbo;
         delete m_factory;
         delete m_encoding;
     }
@@ -727,6 +733,7 @@ protected:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         resize(kWidth, kHeight);
         startTimer(1000.0f / 60.0f);
+        m_fbo = new QGLFramebufferObject(512, 512, QGLFramebufferObject::Depth);
         m_timer.start();
     }
     void timerEvent(QTimerEvent *) {
@@ -771,7 +778,6 @@ protected:
                 break;
             }
             m_scene.seek(m_currentFrameIndex);
-            qDebug() << m_currentFrameIndex;
             for (int i = 0; i < nmotions; i++) {
                 IMotion *motion = motions[i];
                 if (motion->isReachedTo(motion->maxFrameIndex())) {
@@ -805,16 +811,52 @@ protected:
         glViewport(0, 0, w, h);
     }
     void paintGL() {
-        glEnable(GL_DEPTH_TEST);
-        glClearColor(0, 0, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const int nengines = engines.count();
-        for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
-            engine->renderModel();
-            engine->renderEdge();
-            engine->renderShadow();
+        {
+            glDisable(GL_BLEND);
+            m_fbo->bind();
+            float shadowMatrix4x4[16];
+            Scene::IMatrices *matrices = m_scene.matrices();
+            Vector3 center;
+            Scalar radius;
+            IModel *model = m_scene.models()[0];
+            model->getBoundingSphere(center, radius);
+            QMatrix4x4 shadowMatrix;
+            const Scalar &angle = 45;
+            const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
+            const Scalar &margin = 50;
+            const Vector3 &eye = -m_scene.light()->direction().normalized() * distance + center;
+            shadowMatrix.perspective(angle, 1, 1, distance + radius + margin);
+            shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
+                                QVector3D(center.x(), center.y(), center.z()),
+                                QVector3D(0, 1, 0));
+            for (int i = 0; i < 16; i++)
+                shadowMatrix4x4[i] = shadowMatrix.constData()[i];
+            matrices->setLightViewProjection(shadowMatrix4x4);
+            glViewport(0, 0, m_fbo->width(), m_fbo->height());
+            glClearColor(1, 1, 1, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                engine->renderZPlot();
+            }
+            m_fbo->release();
+            GLuint textureID = m_fbo->texture();
+            m_scene.light()->setShadowMappingTexture(&textureID);
+            glEnable(GL_BLEND);
+        }
+        {
+            glViewport(0, 0, width(), height());
+            glEnable(GL_DEPTH_TEST);
+            glClearColor(0, 0, 1, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                engine->renderModel();
+                engine->renderEdge();
+                engine->renderShadow();
+            }
         }
     }
 
@@ -831,7 +873,6 @@ private:
         m_projectionMatrix.perspective(m_scene.camera()->fovy(), kWidth / float(kHeight), kCameraNear, kCameraFar);
         for (int i = 0; i < 16; i++)
             matrixf[i] = m_projectionMatrix.constData()[i];
-        m_scene.matrices()->setProjection(matrixf);
     }
     void updateModelViewProjectionMatrix() {
         float matrixf[16];
@@ -844,7 +885,7 @@ private:
 #ifdef VPVL2_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
         Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
-        addModel(QDir(kStageDir).absoluteFilePath(kStageName));
+        // addModel(QDir(kStageDir).absoluteFilePath(kStageName));
         // addModel(kStage2Name, kStageDir);
 #endif
         addMotion(kMotion, addModel(QDir(kModelDir).absoluteFilePath(kModelName)));
@@ -934,6 +975,7 @@ private:
     btDiscreteDynamicsWorld m_world;
 #endif /* VPVL2_NO_BULLET */
     QElapsedTimer m_timer;
+    QGLFramebufferObject *m_fbo;
     QPoint m_prevPos;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;

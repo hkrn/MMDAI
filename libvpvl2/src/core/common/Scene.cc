@@ -55,25 +55,19 @@ public:
     Matrices() {}
     ~Matrices() {}
 
-    void getModel(float value[16]) const { memcpy(value, m_model, sizeof(m_model)); }
-    void getView(float value[16]) const { memcpy(value, m_view, sizeof(m_view)); }
-    void getProjection(float value[16]) const { memcpy(value, m_projection, sizeof(m_projection)); }
     void getModelView(float value[16]) const { memcpy(value, m_modelView, sizeof(m_modelView)); }
     void getModelViewProjection(float value[16]) const { memcpy(value, m_modelViewProjection, sizeof(m_modelViewProjection)); }
+    void getLightViewProjection(float value[16]) const { memcpy(value, m_lightViewProjection, sizeof(m_lightViewProjection)); }
     void getNormal(float value[9]) const { memcpy(value, m_normal, sizeof(m_normal)); }
-    void setModel(float value[16]) { memcpy(m_model, value, sizeof(m_model)); }
-    void setView(float value[16]) { memcpy(m_view, value, sizeof(m_view)); }
-    void setProjection(float value[16]) { memcpy(m_projection, value, sizeof(m_projection)); }
     void setModelView(float value[16]) { memcpy(m_modelView, value, sizeof(m_modelView)); }
     void setModelViewProjection(float value[16]) { memcpy(m_modelViewProjection, value, sizeof(m_modelViewProjection)); }
+    void setLightViewProjection(float value[16]) { memcpy(m_lightViewProjection, value, sizeof(m_lightViewProjection)); }
     void setNormal(float value[9]) { memcpy(m_normal, value, sizeof(m_normal)); }
 
 private:
-    float m_model[16];
-    float m_view[16];
-    float m_projection[16];
     float m_modelView[16];
     float m_modelViewProjection[16];
+    float m_lightViewProjection[16];
     float m_normal[9];
 };
 class Light : public Scene::ILight {
@@ -81,23 +75,27 @@ public:
     Light() :
         m_motion(0),
         m_color(kZeroV3),
-        m_direction(kZeroV3)
+        m_direction(kZeroV3),
+        m_userData(0)
     {
         resetDefault();
     }
     ~Light() {
         delete m_motion;
         m_motion = 0;
+        m_userData = 0;
         m_color.setZero();
         m_direction.setZero();
     }
 
     const Vector3 &color() const { return m_color; }
     const Vector3 &direction() const { return m_direction; }
+    void *shadowMappingTexture() const { return m_userData; }
     IMotion *motion() const { return m_motion; }
     void setColor(const Vector3 &value) { m_color = value; }
     void setDirection(const Vector3 &value) { m_direction = value; }
     void setMotion(IMotion *value) { m_motion = value; }
+    void setShadowMappingTexture(void *value) { m_userData = value; }
     void copyFrom(ILight *value) {
         setColor(value->color());
         setDirection(value->direction());
@@ -111,6 +109,7 @@ private:
     IMotion *m_motion;
     Vector3 m_color;
     Vector3 m_direction;
+    void *m_userData;
 };
 class Camera : public Scene::ICamera {
 public:
@@ -181,7 +180,6 @@ public:
     void updateMatrices(Matrices &matrices) const {
         float matrix4x4[16], v[12], matrix3x3[9];
         m_transform.getOpenGLMatrix(matrix4x4);
-        matrices.setView(matrix4x4);
         matrices.setModelView(matrix4x4);
         m_transform.getBasis().inverse().transpose().getOpenGLSubMatrix(v);
         matrix3x3[0] = v[0]; matrix3x3[1] = v[1]; matrix3x3[2] = v[2];

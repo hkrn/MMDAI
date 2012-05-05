@@ -55,17 +55,13 @@ public:
     public:
         virtual ~IMatrices() {}
 
-        virtual void getModel(float value[16]) const = 0;
-        virtual void getView(float value[16]) const = 0;
-        virtual void getProjection(float value[16]) const = 0;
         virtual void getModelView(float value[16]) const = 0;
         virtual void getModelViewProjection(float value[16]) const = 0;
+        virtual void getLightViewProjection(float value[16]) const = 0;
         virtual void getNormal(float value[16]) const = 0;
-        virtual void setModel(float value[16]) = 0;
-        virtual void setView(float value[16]) = 0;
-        virtual void setProjection(float value[16]) = 0;
         virtual void setModelView(float value[16]) = 0;
         virtual void setModelViewProjection(float value[16]) = 0;
+        virtual void setLightViewProjection(float value[16]) = 0;
         virtual void setNormal(float value[9]) = 0;
     };
     class ILight {
@@ -74,10 +70,12 @@ public:
 
         virtual const Vector3 &color() const = 0;
         virtual const Vector3 &direction() const = 0;
+        virtual void *shadowMappingTexture() const = 0;
         virtual IMotion *motion() const = 0;
         virtual void setColor(const Vector3 &value) = 0;
         virtual void setDirection(const Vector3 &value) = 0;
         virtual void setMotion(IMotion *value) = 0;
+        virtual void setShadowMappingTexture(void *value) = 0;
         virtual void copyFrom(ILight *value) = 0;
         virtual void resetDefault() = 0;
     };

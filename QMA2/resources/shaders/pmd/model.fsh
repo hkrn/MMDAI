@@ -1,4 +1,4 @@
-/* pmd/model.fsh */
+/* pmd/model.fsh (unpackDepth from three.js) */
 #ifdef GL_ES
 precision highp float;
 #endif
@@ -15,12 +15,18 @@ uniform sampler2D depthTexture;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outPosition;
-varying vec4 outShadowTexCoord;
+varying vec4 outShadowCoord;
 varying vec2 outToonTexCoord;
 const float kAlphaThreshold = 0.05;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
+
+float unpackDepth(vec4 value) {
+    const vec4 kBitShift = vec4(1.0 / 16777216.0, 1.0 / 65536.0, 1.0 / 256.0, 1.0);
+    float depth = dot(value, kBitShift);
+    return depth;
+}
 
 void main() {
     vec4 color = outColor;
@@ -42,17 +48,11 @@ void main() {
         }
     }
     if (hasDepthTexture) {
-#if 0
-        float depth = texture2DProj(depthTexture, outShadowTexCoord).x;
-        if ((outShadowTexCoord.z / outShadowTexCoord.w) >= depth)
-            color.rgb *= 0.5;
-#else
-        vec4 divided = outPosition / outPosition.w;
-        divided.z += 0.0005;
-        float depth = texture2D(depthTexture, divided.st).z;
-        if (outShadowTexCoord.w > 0.0 && depth < divided.z)
-            color.rgb *= 0.5;
-#endif
+        vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
+        vec4 depth4 = texture2D(depthTexture, outShadowCoord.xy);
+        float depth = depth4.z; // unpackDepth(depth4);
+        if (depth < shadowCoord.z)
+            color.r = 1.0;
     }
     gl_FragColor = color;
 }

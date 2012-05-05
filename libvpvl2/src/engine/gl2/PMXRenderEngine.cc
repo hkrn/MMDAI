@@ -186,7 +186,8 @@ public:
           m_uva2AttributeLocation(0),
           m_uva3AttributeLocation(0),
           m_uva4AttributeLocation(0),
-          m_lightViewMatrixUniformLocation(0),
+          m_modelViewInverseMatrixUniformLocation(0),
+          m_lightViewProjectionMatrixUniformLocation(0),
           m_normalMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
@@ -198,7 +199,9 @@ public:
           m_isSPATextureUniformLocation(0),
           m_isSubTextureUniformLocation(0),
           m_toonTextureUniformLocation(0),
-          m_hasToonTextureUniformLocation(0)
+          m_hasToonTextureUniformLocation(0),
+          m_depthTextureUniformLocation(0),
+          m_hasDepthTextureUniformLocation(0)
     {
     }
     ~ModelProgram() {
@@ -209,7 +212,8 @@ public:
         m_uva2AttributeLocation = 0;
         m_uva3AttributeLocation = 0;
         m_uva4AttributeLocation = 0;
-        m_lightViewMatrixUniformLocation = 0;
+        m_modelViewInverseMatrixUniformLocation = 0;
+        m_lightViewProjectionMatrixUniformLocation = 0;
         m_normalMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
@@ -222,6 +226,8 @@ public:
         m_isSubTextureUniformLocation = 0;
         m_toonTextureUniformLocation = 0;
         m_hasToonTextureUniformLocation = 0;
+        m_depthTextureUniformLocation = 0;
+        m_hasDepthTextureUniformLocation = 0;
     }
 
     bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
@@ -234,7 +240,8 @@ public:
             m_uva2AttributeLocation = glGetAttribLocation(m_program, "inUVA2");
             m_uva3AttributeLocation = glGetAttribLocation(m_program, "inUVA3");
             m_uva4AttributeLocation = glGetAttribLocation(m_program, "inUVA4");
-            m_lightViewMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewMatrix");
+            m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
+            m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
             m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
             m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
@@ -247,11 +254,19 @@ public:
             m_isSubTextureUniformLocation = glGetUniformLocation(m_program, "isSubTexture");
             m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
             m_hasToonTextureUniformLocation = glGetUniformLocation(m_program, "hasToonTexture");
+            m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
+            m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
         }
         return ret;
     }
     void bind() {
         ObjectProgram::bind();
+    }
+    void setModelViewInverseMatrix(const GLfloat value[16]) {
+        glUniformMatrix4fv(m_modelViewInverseMatrixUniformLocation, 1, GL_FALSE, value);
+    }
+    void setLightViewProjectionMatrix(const GLfloat value[16]) {
+        glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_normalAttributeLocation);
@@ -289,11 +304,6 @@ public:
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
-    }
-    void setLightDirection(const Vector3 &value) {
-        float matrix[16];
-        glUniformMatrix4fv(m_lightViewMatrixUniformLocation, 1, GL_FALSE, matrix);
-        ObjectProgram::setLightDirection(value);
     }
     void setMainTexture(GLuint value) {
         if (value) {
@@ -353,6 +363,17 @@ public:
             glUniform1i(m_hasToonTextureUniformLocation, 0);
         }
     }
+    void setDepthTexture(GLuint value) {
+        if (value) {
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, value);
+            glUniform1i(m_depthTextureUniformLocation, 3);
+            glUniform1i(m_hasDepthTextureUniformLocation, 1);
+        }
+        else {
+            glUniform1i(m_hasDepthTextureUniformLocation, 0);
+        }
+    }
 
 private:
     GLuint m_normalAttributeLocation;
@@ -362,7 +383,8 @@ private:
     GLuint m_uva2AttributeLocation;
     GLuint m_uva3AttributeLocation;
     GLuint m_uva4AttributeLocation;
-    GLuint m_lightViewMatrixUniformLocation;
+    GLuint m_modelViewInverseMatrixUniformLocation;
+    GLuint m_lightViewProjectionMatrixUniformLocation;
     GLuint m_normalMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
@@ -375,6 +397,8 @@ private:
     GLuint m_isSubTextureUniformLocation;
     GLuint m_toonTextureUniformLocation;
     GLuint m_hasToonTextureUniformLocation;
+    GLuint m_depthTextureUniformLocation;
+    GLuint m_hasDepthTextureUniformLocation;
 };
 
 }
@@ -1033,7 +1057,14 @@ void PMXRenderEngine::renderModel()
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
     matrices->getNormal(matrix4x4);
     modelProgram->setNormalMatrix(matrix4x4);
+    m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix4x4);
+    modelProgram->setModelViewInverseMatrix(matrix4x4);
+    matrices->getLightViewProjection(matrix4x4);
+    modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
+    void *texture = light->shadowMappingTexture();
+    if (texture)
+        modelProgram->setDepthTexture(*static_cast<GLuint *>(texture));
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -1149,6 +1180,29 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderZPlot()
 {
+    ZPlotProgram *zplotProgram = m_context->zplotProgram;
+    zplotProgram->bind();
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    size_t offset = pmx::Model::strideOffset(pmx::Model::kVertexStride);
+    size_t size   = pmx::Model::strideSize(pmx::Model::kVertexStride);
+    zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
+    float matrix4x4[16];
+    m_scene->matrices()->getLightViewProjection(matrix4x4);
+    zplotProgram->setModelViewProjectionMatrix(matrix4x4);
+    glCullFace(GL_FRONT);
+    const Array<pmx::Material *> &materials = m_model->materials();
+    const int nmaterials = materials.count();
+    offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
+    for (int i = 0; i < nmaterials; i++) {
+        const pmx::Material *material = materials[i];
+        const int nindices = material->indices();
+        if (material->isShadowMapDrawn())
+            glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+        offset += nindices * size;
+    }
+    glCullFace(GL_BACK);
+    zplotProgram->unbind();
 }
 
 bool PMXRenderEngine::isAcceleratorAvailable() const

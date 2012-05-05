@@ -141,8 +141,7 @@ public:
         : ObjectProgram(delegate),
           m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
-          m_boneAttributesAttributeLocation(0),
-          m_boneMatricesUniformLocation(0),
+          m_modelViewInverseMatrixUniformLocation(0),
           m_lightViewProjectionMatrixUniformLocation(0),
           m_normalMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
@@ -163,8 +162,7 @@ public:
     ~ModelProgram() {
         m_texCoordAttributeLocation = 0;
         m_toonTexCoordAttributeLocation = 0;
-        m_boneAttributesAttributeLocation = 0;
-        m_boneMatricesUniformLocation = 0;
+        m_modelViewInverseMatrixUniformLocation = 0;
         m_lightViewProjectionMatrixUniformLocation = 0;
         m_normalMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
@@ -187,8 +185,7 @@ public:
         if (ret) {
             m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
-            m_boneAttributesAttributeLocation = glGetAttribLocation(m_program, "inBoneAttributes");
-            m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+            m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
             m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
             m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
@@ -218,12 +215,8 @@ public:
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
         glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setBoneAttributes(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneAttributesAttributeLocation);
-        glVertexAttribPointer(m_boneAttributesAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setBoneMatrices(const GLfloat *ptr, GLsizei size) {
-        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, ptr);
+    void setModelViewInverseMatrix(const GLfloat value[16]) {
+        glUniformMatrix4fv(m_modelViewInverseMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setLightViewProjectionMatrix(const GLfloat value[16]) {
         glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
@@ -291,8 +284,7 @@ public:
 private:
     GLuint m_texCoordAttributeLocation;
     GLuint m_toonTexCoordAttributeLocation;
-    GLuint m_boneAttributesAttributeLocation;
-    GLuint m_boneMatricesUniformLocation;
+    GLuint m_modelViewInverseMatrixUniformLocation;
     GLuint m_lightViewProjectionMatrixUniformLocation;
     GLuint m_normalMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
@@ -970,14 +962,9 @@ void PMDRenderEngine::renderModel()
                             model->strideSize(PMDModel::kNormalsStride));
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)),
                               model->strideSize(PMDModel::kTextureCoordsStride));
-    //modelProgram->setDepthTexture(m_depthTexture);
-
-    if (!model->isSoftwareSkinningEnabled()) {
-        modelProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kBoneAttributesStride)),
-                                        model->strideSize(PMDModel::kBoneAttributesStride));
-        // XXX: boneMatricesPointer is removed, we must implement updateBoneMatrices.
-        //m_modelProgram->setBoneMatrices(model->boneMatricesPointer(), model->bones().count());
-    }
+    void *texture = m_scene->light()->shadowMappingTexture();
+    if (texture)
+        modelProgram->setDepthTexture(*static_cast<GLuint *>(texture));
 
     const Scene::IMatrices *matrices = m_scene->matrices();
     float matrix4x4[16];
@@ -985,10 +972,13 @@ void PMDRenderEngine::renderModel()
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
     matrices->getNormal(matrix4x4);
     modelProgram->setNormalMatrix(matrix4x4);
+    m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix4x4);
+    modelProgram->setModelViewInverseMatrix(matrix4x4);
+    matrices->getLightViewProjection(matrix4x4);
+    modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
-    // modelProgram->setLightViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
     if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
         modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
                                       model->strideSize(PMDModel::kToonTextureStride));
@@ -1086,15 +1076,25 @@ void PMDRenderEngine::renderZPlot()
         return;
     ZPlotProgram *zplotProgram = m_context->zplotProgram;
     PMDModel *model = m_model->ptr();
+    float matrix4x4[16];
     zplotProgram->bind();
-    // zplotProgram->setModelViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
-    zplotProgram->setTransformMatrix(kIdentityMatrix4x4);
+    m_scene->matrices()->getLightViewProjection(matrix4x4);
+    zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                               model->strideSize(PMDModel::kVerticesStride));
     glCullFace(GL_FRONT);
-    glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
+    const vpvl::MaterialList &materials = model->materials();
+    const int nmaterials = materials.count();
+    size_t offset = 0, size = model->strideSize(vpvl::PMDModel::kIndicesStride);
+    for (int i = 0; i < nmaterials; i++) {
+        const vpvl::Material *material = materials[i];
+        const int nindices = material->countIndices();
+        if (!btFuzzyZero(material->opacity() - 0.98))
+            glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        offset += nindices * size;
+    }
     glCullFace(GL_BACK);
     zplotProgram->unbind();
 }

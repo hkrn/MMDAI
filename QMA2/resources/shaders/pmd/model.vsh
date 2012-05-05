@@ -1,5 +1,6 @@
 /* pmd/model.vsh */
 uniform mat4 modelViewProjectionMatrix;
+uniform mat4 modelViewInverseMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightColor;
@@ -14,8 +15,7 @@ attribute vec2 inTexCoord;
 attribute vec2 inToonTexCoord;
 varying vec4 outColor;
 varying vec4 outTexCoord;
-varying vec4 outPosition;
-varying vec4 outShadowTexCoord;
+varying vec4 outShadowCoord;
 varying vec2 outToonTexCoord;
 const float kTwo = 2.0;
 const float kOne = 1.0;
@@ -39,8 +39,13 @@ void main() {
     outTexCoord = vec4(mainTexCoord, subTexCoord);
     outToonTexCoord = inToonTexCoord;
     if (hasDepthTexture) {
-        outShadowTexCoord = lightViewProjectionMatrix * inPosition;
-        outPosition = position;
+        const mat4 kBias = mat4(
+            0.5, 0.0, 0.0, 0.5,
+            0.0, 0.5, 0.0, 0.5,
+            0.0, 0.0, 0.5, 0.5,
+            0.0, 0.0, 0.0, 1.0
+        );
+        outShadowCoord = kBias * lightViewProjectionMatrix * modelViewInverseMatrix * inPosition;
     }
     gl_Position = position;
 }

@@ -1,21 +1,22 @@
 /* pmx/model.vsh */
 uniform mat4 modelViewProjectionMatrix;
+uniform mat4 modelViewInverseMatrix;
+uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialDiffuse;
 uniform vec3 lightColor;
 uniform vec3 lightDirection;
 uniform vec3 materialAmbient;
 uniform bool hasSphereTexture;
+uniform bool hasDepthTexture;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 attribute vec4 inUVA1;
-attribute vec4 inUVA2;
-attribute vec4 inUVA3;
-attribute vec4 inUVA4;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec2 outToonTexCoord;
+varying vec4 outShadowCoord;
 varying vec4 outUVA1;
 varying vec4 outUVA2;
 varying vec4 outUVA3;
@@ -41,9 +42,15 @@ void main() {
     outTexCoord = vec4(inTexCoord, hasSphereTexture ? makeSphereMap(view, normal) : inTexCoord);
     outToonTexCoord = vec2(0, 0.5 + dot(lightDirection, normal) * 0.5);
     outUVA1 = inUVA1;
-    outUVA2 = inUVA2;
-    outUVA3 = inUVA3;
-    outUVA4 = inUVA4;
+    if (hasDepthTexture) {
+        const mat4 kBias = mat4(
+            0.5, 0.0, 0.0, 0.5,
+            0.0, 0.5, 0.0, 0.5,
+            0.0, 0.0, 0.5, 0.5,
+            0.0, 0.0, 0.0, 1.0
+        );
+        outShadowCoord = kBias * lightViewProjectionMatrix * modelViewInverseMatrix * inPosition;
+    }
     gl_Position = modelViewProjectionMatrix * inPosition;
 }
 
