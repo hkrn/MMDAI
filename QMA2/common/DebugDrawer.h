@@ -122,13 +122,9 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         m_program.bind();
-        const Scene::IMatrices *matrices = scene->matrices();
-        matrices->getModelView(matrix);
-        int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
-        func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-        matrices->getProjection(matrix);
-        int projectionMatrix = m_program.uniformLocation("projectionMatrix");
-        func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+        scene->matrices()->getModelViewProjection(matrix);
+        int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
+        func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
         /* IK ボーンの収集 */
@@ -168,13 +164,9 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         m_program.bind();
-        const Scene::IMatrices *matrices = scene->matrices();
-        matrices->getModelView(matrix);
-        int modelViewMatrix = m_program.uniformLocation("modelViewMatrix");
-        func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-        matrices->getProjection(matrix);
-        int projectionMatrix = m_program.uniformLocation("projectionMatrix");
-        func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
+        scene->matrices()->getModelViewProjection(matrix);
+        int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
+        func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
         m_program.enableAttributeArray("inPosition");
         /* ボーン表示 */

@@ -73,9 +73,8 @@ public:
         m_program.bind();
         QMatrix4x4 modelview, projection;
         projection.ortho(0.0, m_size.width(), 0.0, m_size.height(), -1.0, 1.0);
-        m_program.setUniformValue("projectionMatrix", projection);
         modelview.translate(pos);
-        m_program.setUniformValue("modelViewMatrix", modelview);
+        m_program.setUniformValue("modelViewProjectionMatrix", projection * modelview);
         QGLFunctions func(QGLContext::currentContext());
         func.glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);

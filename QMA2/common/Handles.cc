@@ -205,13 +205,9 @@ static void UIInitializeRenderingModel(const Scene *scene,
 {
     QGLFunctions func(QGLContext::currentContext());
     float matrix[16];
-    const Scene::IMatrices *matrices = scene->matrices();
-    matrices->getModelView(matrix);
-    int modelViewMatrix = program->uniformLocation("modelViewMatrix");
+    scene->matrices()->getModelViewProjection(matrix);
+    int modelViewMatrix = program->uniformLocation("modelViewProjectionMatrix");
     func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
-    matrices->getProjection(matrix);
-    int projectionMatrix = program->uniformLocation("projectionMatrix");
-    func.glUniformMatrix4fv(projectionMatrix, 1, GL_FALSE, matrix);
     int boneMatrix = program->uniformLocation("boneMatrix");
     transform.getOpenGLMatrix(matrix);
     func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);

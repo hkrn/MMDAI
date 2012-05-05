@@ -43,6 +43,7 @@
 #include <QtCore/QString>
 #include <QtCore/QUuid>
 #include <QtGui/QColor>
+#include <QtGui/QMatrix4x4>
 
 #include "VPDFile.h"
 
@@ -89,6 +90,7 @@ public:
     void render();
     void updateMatrices(const QSizeF &size);
     const QList<QUuid> renderOrderList() const;
+    const QMatrix4x4 &projectionMatrix() const { return m_projection; }
 
     bool isGridVisible() const;
     bool isPhysicsEnabled() const;
@@ -203,6 +205,7 @@ private:
 
     internal::World *m_world;
     QMap<QString, vpvl2::IModel*> m_name2assets;
+    QMatrix4x4 m_projection;
     vpvl2::IEncoding *m_encoding;
     vpvl2::IRenderDelegate *m_renderDelegate;
     vpvl2::Factory *m_factory;

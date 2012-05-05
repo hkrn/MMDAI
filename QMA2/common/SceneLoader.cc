@@ -1139,22 +1139,21 @@ void SceneLoader::render()
 void SceneLoader::updateMatrices(const QSizeF &size)
 {
     /* モデル行列とビュー行列の乗算を QMatrix4x4 を用いて行う */
-    QMatrix4x4 modelView4x4, projection4x4;
+    QMatrix4x4 modelView4x4;
     float modelViewMatrixf[16], projectionMatrixf[16];
     Scene::ICamera *camera = m_project->camera();
     Scene::IMatrices *matrices = m_project->matrices();
     matrices->getModelView(modelViewMatrixf);
-    projection4x4.setToIdentity();
+    m_projection.setToIdentity();
     qreal aspectRatio = size.width() / size.height();
-    projection4x4.perspective(camera->fovy(), aspectRatio, camera->znear(), camera->zfar());
+    m_projection.perspective(camera->fovy(), aspectRatio, camera->znear(), camera->zfar());
     for (int i = 0; i < 16; i++) {
         modelView4x4.data()[i] = modelViewMatrixf[i];
-        projectionMatrixf[i] = projection4x4.constData()[i];
+        projectionMatrixf[i] = m_projection.constData()[i];
     }
-    const QMatrix4x4 &modelViewProjection4x4 = projection4x4 * modelView4x4;
+    const QMatrix4x4 &modelViewProjection4x4 = m_projection * modelView4x4;
     for (int i = 0; i < 16; i++)
         modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
-    matrices->setProjection(projectionMatrixf);
     matrices->setModelViewProjection(modelViewMatrixf);
 }
 

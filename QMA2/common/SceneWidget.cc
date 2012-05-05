@@ -614,15 +614,15 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
     // This implementation based on the below page.
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
     Scene *scene = m_loader->scene();
-    float modelviewMatrixf[16], projectionMatrixf[16];
+    float modelviewMatrixf[16];
     GLdouble modelviewMatrixd[16], projectionMatrixd[16];
     const GLint viewport[4] = { 0, 0, width(), height() };
     const Scene::IMatrices *matrices = scene->matrices();
     matrices->getModelView(modelviewMatrixf);
-    matrices->getProjection(projectionMatrixf);
+    const QMatrix4x4 &projection = m_loader->projectionMatrix();
     for (int i = 0; i < 16; i++) {
         modelviewMatrixd[i] = modelviewMatrixf[i];
-        projectionMatrixd[i] = projectionMatrixf[i];
+        projectionMatrixd[i] = projection.constData()[i];
     }
     GLdouble wx = input.x(), wy = height() - input.y(), cx, cy, cz, fx, fy, fz;
     gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
