@@ -697,15 +697,20 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     const GLvoid *vertexPtr = 0;
     const unsigned int nmeshes = node->mNumMeshes;
     const size_t stride = sizeof(AssetVertex);
-    float matrix4x4[16];
+    float matrix4x4[16], opacity;
     transform.getOpenGLMatrix(matrix4x4);
     ZPlotProgram *program = m_context->zplotPrograms[node];
     program->bind();
-    // program->setModelViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
     program->setTransformMatrix(matrix4x4);
+    m_scene->matrices()->getLightViewProjection(matrix4x4);
+    program->setModelViewProjectionMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        bool succeeded = aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS;
+        if (succeeded && btFuzzyZero(opacity - 0.98))
+            continue;
         const AssetVBO &vbo = m_context->vbo[mesh];
         const AssetIndices &indices = m_context->indices[mesh];
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
