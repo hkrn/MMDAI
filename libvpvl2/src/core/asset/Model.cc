@@ -72,44 +72,16 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 {
     min.setZero();
     max.setZero();
-    const aiScene *scene = m_asset.getScene();
-    aiMesh **meshes = scene->mMeshes;
-    const unsigned int nmeshes = scene->mNumMeshes;
-    Vector3 position;
-    for (unsigned int i = 0; i < nmeshes; i++) {
-        const aiMesh *mesh = meshes[i];
-        const aiVector3D *vertices = mesh->mVertices;
-        const unsigned int nvertices = mesh->mNumVertices;
-        for (unsigned int j = 0; j < nvertices; j++) {
-            const aiVector3D &vertex = vertices[i];
-            position.setValue(vertex.x, vertex.y, vertex.z);
-            if (position.x() < min.x() && position.y() < min.y() && position.z() < min.z())
-                min = position;
-            if (position.x() > max.x() && position.y() > max.y() && position.z() > max.z())
-                max = position;
-        }
-    }
+    const aiScene *a = m_asset.getScene();
+    getBoundingBoxRecurse(a, a->mRootNode, min, max);
 }
 
 void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
-    center.setZero();
-    radius = 0;
-    const aiScene *scene = m_asset.getScene();
-    aiMesh **meshes = scene->mMeshes;
-    const unsigned int nmeshes = scene->mNumMeshes;
-    Vector3 position;
-    for (unsigned int i = 0; i < nmeshes; i++) {
-        const aiMesh *mesh = meshes[i];
-        const aiVector3D *vertices = mesh->mVertices;
-        const unsigned int nvertices = mesh->mNumVertices;
-        for (unsigned int j = 0; j < nvertices; j++) {
-            const aiVector3D &vertex = vertices[i];
-            position.setValue(vertex.x, vertex.y, vertex.z);
-            btSetMax(radius, center.distance2(position));
-        }
-    }
-    radius = btSqrt(radius);
+    Vector3 min, max;
+    getBoundingBox(min, max);
+    center = (min + max) / 2.0;
+    radius = center.length();
 }
 
 void Model::setName(const IString *value)
@@ -120,6 +92,27 @@ void Model::setName(const IString *value)
 void Model::setComment(const IString *value)
 {
     internal::setString(value, m_comment);
+}
+
+void Model::getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const
+{
+    const unsigned int nmeshes = node->mNumMeshes;
+    const Scalar &scale = scaleFactor();
+    Vector3 position;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const aiVector3D *vertices = mesh->mVertices;
+        const unsigned int nvertices = mesh->mNumVertices;
+        for (unsigned int j = 0; j < nvertices; j++) {
+            const aiVector3D &vertex = vertices[i] * scale;
+            position.setValue(vertex.x, vertex.y, vertex.z);
+            min.setMin(position);
+            max.setMax(position);
+        }
+    }
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
+        getBoundingBoxRecurse(scene, node->mChildren[i], min, max);
 }
 
 } /* namespace asset */

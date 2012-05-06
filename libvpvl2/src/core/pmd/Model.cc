@@ -224,10 +224,8 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
     size_t offset = m_model.strideOffset(vpvl::PMDModel::kVerticesStride);
     for (int i = 0; i < nvertices; i++) {
         const Vector3 &position = *reinterpret_cast<const Vector3 *>(verticesPtr + offset);
-        if (position.x() < min.x() && position.y() < min.y() && position.z() < min.z())
-            min = position;
-        if (position.x() > max.x() && position.y() > max.y() && position.z() > max.z())
-            max = position;
+        min.setMin(position);
+        max.setMax(position);
         offset += stride;
     }
 }

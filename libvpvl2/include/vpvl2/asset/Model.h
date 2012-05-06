@@ -45,6 +45,7 @@
 #include "vpvl2/IString.h"
 
 #include "vpvl/Asset.h"
+#include <aiScene.h>
 
 class btDiscreteDynamicsWorld;
 
@@ -101,6 +102,8 @@ public:
     vpvl::Asset *ptr() { return &m_asset; }
 
 private:
+    void getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const;
+
     vpvl::Asset m_asset;
     IEncoding *m_encoding;
     IString *m_name;
