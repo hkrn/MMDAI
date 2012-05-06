@@ -972,7 +972,7 @@ void PMDRenderEngine::renderModel()
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
     matrices->getNormal(matrix4x4);
     modelProgram->setNormalMatrix(matrix4x4);
-    m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix4x4);
+    m_scene->camera()->modelViewTransform().inverse().getOpenGLMatrix(matrix4x4);
     modelProgram->setModelViewInverseMatrix(matrix4x4);
     matrices->getLightViewProjection(matrix4x4);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
@@ -990,7 +990,7 @@ void PMDRenderEngine::renderModel()
     //const bool hasSingleSphereMap = m_context->hasSingleSphereMap;
     const bool hasMultipleSphereMap = m_context->hasMultipleSphereMap;
     Color ambient, diffuse;
-    size_t offset = 0;
+    size_t offset = 0, size = model->strideSize(vpvl::PMDModel::kIndicesStride);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
@@ -1014,7 +1014,7 @@ void PMDRenderEngine::renderModel()
             modelProgram->setIsSubAdditive(isSubSphereAdd);
             modelProgram->setSubTexture(materialPrivate.subTextureID);
         }
-        if (opacity < 1.0f && m_context->cullFaceState) {
+        if (!btFuzzyZero(opacity - 1.0f) && m_context->cullFaceState) {
             glDisable(GL_CULL_FACE);
             m_context->cullFaceState = false;
         }
@@ -1024,7 +1024,7 @@ void PMDRenderEngine::renderModel()
         }
         const int nindices = material->countIndices();
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
-        offset += (nindices << 1);
+        offset += nindices * size;
     }
     modelProgram->unbind();
     if (!m_context->cullFaceState) {

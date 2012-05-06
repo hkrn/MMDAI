@@ -207,13 +207,13 @@ public:
         : BaseShaderProgram(delegate),
           m_normalAttributeLocation(0),
           m_lightColorUniformLocation(0),
-          m_lightPositionUniformLocation(0)
+          m_lightDirectionUniformLocation(0)
     {
     }
     ~ObjectProgram() {
         m_normalAttributeLocation = 0;
         m_lightColorUniformLocation = 0;
-        m_lightPositionUniformLocation = 0;
+        m_lightDirectionUniformLocation = 0;
     }
 
     virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
@@ -221,7 +221,7 @@ public:
         if (ret) {
             m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
             m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
-            m_lightPositionUniformLocation = glGetUniformLocation(m_program, "lightPosition");
+            m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
         }
         return ret;
     }
@@ -229,7 +229,7 @@ public:
         glUniform3fv(m_lightColorUniformLocation, 1, value);
     }
     void setLightDirection(const Vector3 &value) {
-        glUniform3fv(m_lightPositionUniformLocation, 1, value);
+        glUniform3fv(m_lightDirectionUniformLocation, 1, value);
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_normalAttributeLocation);
@@ -239,7 +239,7 @@ public:
 private:
     GLuint m_normalAttributeLocation;
     GLuint m_lightColorUniformLocation;
-    GLuint m_lightPositionUniformLocation;
+    GLuint m_lightDirectionUniformLocation;
 };
 
 class ZPlotProgram : public BaseShaderProgram

@@ -4,6 +4,7 @@ uniform mat4 modelViewInverseMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightColor;
+uniform vec3 lightDirection;
 uniform vec3 materialAmbient;
 uniform vec4 materialDiffuse;
 uniform bool isMainSphereMap;
@@ -37,16 +38,14 @@ void main() {
     outColor.rgb = min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3);
     outColor.a = materialDiffuse.a;
     outTexCoord = vec4(mainTexCoord, subTexCoord);
-    outToonTexCoord = inToonTexCoord;
+    outToonTexCoord = vec2(0, 1.0 - dot(normalize(lightDirection), normal) * 0.5);
     if (hasDepthTexture) {
-        const mat4 kBias = mat4(
-            0.5, 0.0, 0.0, 0.5,
-            0.0, 0.5, 0.0, 0.5,
-            0.0, 0.0, 0.5, 0.5,
-            0.0, 0.0, 0.0, 1.0
-        );
-        outShadowCoord = kBias * lightViewProjectionMatrix * modelViewInverseMatrix * inPosition;
+        outShadowCoord = lightViewProjectionMatrix * inPosition;
+        //outShadowCoord = lightViewProjectionMatrix * modelViewInverseMatrix * inPosition;
+        gl_Position = position; //outShadowCoord;
     }
-    gl_Position = position;
+    else {
+        gl_Position = position;
+    }
 }
 

@@ -42,15 +42,15 @@ void main() {
         else if (isSubTexture)
             color.rgb *= texture2D(sphereTexture, outUVA1.xy).rgb;
     }
-    if (hasToonTexture) {
-        color.rgb *= texture2D(toonTexture, outToonTexCoord).rgb;
-    }
     if (hasDepthTexture) {
         vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
-        vec4 depth4 = texture2D(depthTexture, outShadowCoord.xy);
+        vec4 depth4 = texture2D(depthTexture, shadowCoord.xy);
         float depth = unpackDepth(depth4);
         if (depth < shadowCoord.z)
             color.rgb *= 0.5;
+    }
+    else if (hasToonTexture) {
+        color.rgb *= texture2D(toonTexture, outToonTexCoord).rgb;
     }
     gl_FragColor = color;
 }

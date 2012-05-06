@@ -38,7 +38,6 @@ void main() {
             color *= texture2D(mainTexture, outTexCoord.xy);
         }
     }
-    color *= texture2D(toonTexture, outToonTexCoord);
     if (hasSubTexture) {
         if (isSubAdditive) {
             color.rgb += texture2D(subTexture, outTexCoord.zw).rgb;
@@ -49,10 +48,13 @@ void main() {
     }
     if (hasDepthTexture) {
         vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
-        vec4 depth4 = texture2D(depthTexture, outShadowCoord.xy);
-        float depth = depth4.z; // unpackDepth(depth4);
+        vec4 depth4 = texture2D(depthTexture, shadowCoord.xy);
+        float depth = unpackDepth(depth4);
         if (depth < shadowCoord.z)
-            color.r = 1.0;
+            color.rgb *= 0.5;
+    }
+    else {
+        color.rgb *= texture2D(toonTexture, outToonTexCoord).rgb;
     }
     gl_FragColor = color;
 }

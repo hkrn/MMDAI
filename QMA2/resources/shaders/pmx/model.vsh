@@ -40,7 +40,7 @@ void main() {
     outColor.rgb = max(min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3), kZero3);
     outColor.a = max(min(materialDiffuse.a, kOne), kZero);
     outTexCoord = vec4(inTexCoord, hasSphereTexture ? makeSphereMap(view, normal) : inTexCoord);
-    outToonTexCoord = vec2(0, 0.5 + dot(lightDirection, normal) * 0.5);
+    outToonTexCoord = vec2(0, 1.0 - dot(normalize(lightDirection), normal) * 0.5);
     outUVA1 = inUVA1;
     if (hasDepthTexture) {
         const mat4 kBias = mat4(
@@ -49,7 +49,7 @@ void main() {
             0.0, 0.0, 0.5, 0.5,
             0.0, 0.0, 0.0, 1.0
         );
-        outShadowCoord = kBias * lightViewProjectionMatrix * modelViewInverseMatrix * inPosition;
+        outShadowCoord = kBias * lightViewProjectionMatrix * inPosition;
     }
     gl_Position = modelViewProjectionMatrix * inPosition;
 }
