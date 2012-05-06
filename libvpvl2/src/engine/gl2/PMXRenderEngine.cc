@@ -969,6 +969,8 @@ void PMXRenderEngine::renderModel()
 
 void PMXRenderEngine::renderShadow()
 {
+    if (!m_model->isVisible() || !m_context)
+        return;
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
     const Scene::ILight *light = m_scene->light();
     const Vector3 &lightDirection = light->direction();
@@ -1013,6 +1015,8 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderEdge()
 {
+    if (!m_model->isVisible() || !m_context)
+        return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -1048,6 +1052,8 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderZPlot()
 {
+    if (!m_model->isVisible() || !m_context)
+        return;
     ZPlotProgram *zplotProgram = m_context->zplotProgram;
     zplotProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
