@@ -68,6 +68,8 @@ BT_DECLARE_HANDLE(aiScene);
 #include "vpvl2/pmx/Morph.h"
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
+#include "vpvl2/asset/Model.h"
+#include "vpvl2/pmd/Model.h"
 
 #include "vpvl2/vmd/Motion.h"
 
@@ -82,7 +84,7 @@ static const int kFPS = 60;
 static const QString kSystemTexturesDir = "../../QMA2/resources/images";
 static const QString kShaderProgramsDir = "../../QMA2/resources/shaders";
 static const QString kKernelProgramsDir = "../../QMA2/resources/kernels";
-static const QString kModelDir = "render/res/miku2";
+static const QString kModelDir = "render/res/lat";
 static const QString kStageDir = "render/res/stage";
 static const QString kMotion = "render/res/motion.vmd";
 static const QString kCamera = "render/res/camera.vmd.404";
@@ -733,7 +735,17 @@ protected:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         resize(kWidth, kHeight);
         startTimer(1000.0f / 60.0f);
-        m_fbo = new QGLFramebufferObject(512, 512, QGLFramebufferObject::Depth);
+        QGLFramebufferObjectFormat format;
+        format.setAttachment(QGLFramebufferObject::Depth);
+        m_fbo = new QGLFramebufferObject(1024, 1024, format);
+        GLuint textureID = m_fbo->texture();
+        if (textureID > 0) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
         m_timer.start();
     }
     void timerEvent(QTimerEvent *) {
@@ -811,25 +823,48 @@ protected:
         glViewport(0, 0, w, h);
     }
     void paintGL() {
+        QMatrix4x4 shadowMatrix;
+        float shadowMatrix4x4[16];
+        Scene::IMatrices *matrices = m_scene.matrices();
         const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const int nengines = engines.count();
         {
             glDisable(GL_BLEND);
             m_fbo->bind();
-            float shadowMatrix4x4[16];
-            Scene::IMatrices *matrices = m_scene.matrices();
-            Vector3 center;
-            Scalar radius;
-            IModel *model = m_scene.models()[0];
-            model->getBoundingSphere(center, radius);
-            QMatrix4x4 shadowMatrix;
+            Vector3 target = kZeroV3, center;
+            Scalar maxRadius = 0, radius;
+            const Array<IModel *> &models = m_scene.models();
+            const int nmodels = models.count();
+            Array<Scalar> radiusArray;
+            Array<Vector3> centerArray;
+            for (int i = 0; i < nmodels; i++) {
+                IModel *model = models[i];
+                if (model->isVisible()) {
+                    model->getBoundingSphere(center, radius);
+                    radiusArray.add(radius);
+                    centerArray.add(target);
+                    target += center;
+                }
+            }
+            target /= nmodels;
+            for (int i = 0; i < nmodels; i++) {
+                IModel *model = models[i];
+                if (model->isVisible()) {
+                    const Vector3 &c = centerArray[i];
+                    const Scalar &r = radiusArray[i];
+                    const Scalar &d = target.distance(c) + r;
+                    btSetMax(maxRadius, d);
+                }
+            }
             const Scalar &angle = 45;
-            const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
+            const Scalar &distance = maxRadius / btSin(btRadians(angle) * 0.5);
             const Scalar &margin = 50;
-            const Vector3 &eye = -m_scene.light()->direction().normalized() * distance + center;
-            shadowMatrix.perspective(angle, 1, 1, distance + radius + margin);
+            const Vector3 &eye = -m_scene.light()->direction().normalized() * maxRadius + target;
+            //qDebug().space() << eye << target << distance << maxRadius << margin;
+
+            shadowMatrix.perspective(angle, 1, 1, distance + maxRadius + margin);
             shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
-                                QVector3D(center.x(), center.y(), center.z()),
+                                QVector3D(target.x(), target.y(), target.z()),
                                 QVector3D(0, 1, 0));
             for (int i = 0; i < 16; i++)
                 shadowMatrix4x4[i] = shadowMatrix.constData()[i];
@@ -847,6 +882,14 @@ protected:
             glEnable(GL_BLEND);
         }
         {
+            QMatrix4x4 m;
+            m.scale(0.5);
+            m.translate(1, 1, 1);
+            shadowMatrix = m * shadowMatrix;
+            for (int i = 0; i < 16; i++)
+                shadowMatrix4x4[i] = shadowMatrix.constData()[i];
+            matrices->setLightViewProjection(shadowMatrix4x4);
+
             glViewport(0, 0, width(), height());
             glEnable(GL_DEPTH_TEST);
             glClearColor(0, 0, 1, 1);
