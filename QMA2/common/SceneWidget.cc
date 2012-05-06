@@ -72,6 +72,7 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_grid(0),
     m_info(0),
     m_handles(0),
+    m_depthBuffer(0),
     m_editMode(kSelect),
     m_totalDelta(0.0f),
     m_lastDistance(0.0f),
@@ -112,6 +113,8 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
 
 SceneWidget::~SceneWidget()
 {
+    delete m_depthBuffer;
+    m_depthBuffer = 0;
     delete m_handles;
     m_handles = 0;
     delete m_info;
@@ -828,6 +831,7 @@ void SceneWidget::initializeGL()
     m_loader = new SceneLoader(m_encoding, m_factory);
     connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     const QSize &s = size();
+    m_depthBuffer = new QGLFramebufferObject(QSize(1024, 1024), QGLFramebufferObject::Depth);
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
     m_debugDrawer = new DebugDrawer();
@@ -1058,10 +1062,12 @@ void SceneWidget::paintGL()
 {
 #ifdef IS_QMA2
     qglClearColor(m_loader->screenColor());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Scene *scene = m_loader->scene();
+    m_loader->renderZPlot(m_editMode != kSelect ? m_depthBuffer : 0);
+    glViewport(0, 0, width(), height());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     m_grid->draw(scene, m_loader->isGridVisible());
-    m_loader->render();
+    m_loader->renderModels();
     IBone *bone = 0;
     if (!m_bones.isEmpty())
         bone = m_bones.first();

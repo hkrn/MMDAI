@@ -703,6 +703,37 @@ const QUuid SceneLoader::findUUID(IModel *model) const
     return QUuid(m_project->modelUUID(model).c_str());
 }
 
+void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
+{
+    const Array<IModel *> &models = m_project->models();
+    const int nmodels = models.count();
+    Array<Scalar> radiusArray;
+    Array<Vector3> centerArray;
+    center.setZero();
+    radius = 0;
+    for (int i = 0; i < nmodels; i++) {
+        IModel *model = models[i];
+        if (model->isVisible()) {
+            Vector3 c;
+            Scalar r;
+            model->getBoundingSphere(c, r);
+            radiusArray.add(r);
+            centerArray.add(c);
+            center += c;
+        }
+    }
+    center /= nmodels;
+    for (int i = 0; i < nmodels; i++) {
+        IModel *model = models[i];
+        if (model->isVisible()) {
+            const Vector3 &c = centerArray[i];
+            const Scalar &r = radiusArray[i];
+            const Scalar &d = center.distance(c) + r;
+            btSetMax(radius, d);
+        }
+    }
+}
+
 bool SceneLoader::isProjectModified() const
 {
     return m_project->isDirty();
@@ -1111,7 +1142,7 @@ void SceneLoader::release()
     m_model = 0;
 }
 
-void SceneLoader::render()
+void SceneLoader::renderModels()
 {
     UIEnableMultisample();
     /* 順番にそってレンダリング開始 */
@@ -1133,6 +1164,62 @@ void SceneLoader::render()
             engine->renderEdge();
             engine->renderModel();
         }
+    }
+}
+
+void SceneLoader::renderZPlot(QGLFramebufferObject *renderTarget)
+{
+    Scene::IMatrices *matrices = m_project->matrices();
+    Scene::ILight *light = m_project->light();
+    /* デプスバッファがある場合はシャドウマッピングを有効にし、ない場合は無効にする */
+    if (renderTarget) {
+        QMatrix4x4 shadowMatrix;
+        Vector3 center;
+        Scalar radius;
+        float shadowMatrix4x4[16];
+        getBoundingSphere(center, radius);
+        const Scalar &angle = 45;
+        const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
+        const Scalar &margin = 50;
+        const Vector3 &eye = -light->direction() * radius * 2 + center;
+        shadowMatrix.perspective(angle, 1, 1, distance + radius + margin);
+        shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
+                            QVector3D(center.x(), center.y(), center.z()),
+                            QVector3D(0, 1, 0));
+        for (int i = 0; i < 16; i++)
+            shadowMatrix4x4[i] = shadowMatrix.constData()[i];
+        matrices->setLightViewProjection(shadowMatrix4x4);
+        /* デプスバッファのテクスチャにレンダリング */
+        glDisable(GL_BLEND);
+        renderTarget->bind();
+        glViewport(0, 0, renderTarget->width(), renderTarget->height());
+        glClearColor(1, 1, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        const int nobjects = m_renderOrderList.count();
+        for (int i = 0; i < nobjects; i++) {
+            const QUuid &uuid = m_renderOrderList[i];
+            const Project::UUID &uuidString = uuid.toString().toStdString();
+            if (IModel *model = m_project->model(uuidString)) {
+                IRenderEngine *engine = m_project->renderEngine(model);
+                engine->renderZPlot();
+            }
+        }
+        /* デプスバッファのテクスチャの識別子を登録してシャドウマッピングを有効にする */
+        renderTarget->release();
+        GLuint textureID = renderTarget->texture();
+        light->setShadowMappingTexture(&textureID);
+        glEnable(GL_BLEND);
+        /* デプスバッファの読み込みに必要な行列を作成する */
+        QMatrix4x4 m;
+        m.scale(0.5);
+        m.translate(1, 1, 1);
+        shadowMatrix = m * shadowMatrix;
+        for (int i = 0; i < 16; i++)
+            shadowMatrix4x4[i] = shadowMatrix.constData()[i];
+        matrices->setLightViewProjection(shadowMatrix4x4);
+    }
+    else {
+        light->setShadowMappingTexture(0);
     }
 }
 

@@ -62,6 +62,8 @@ class IRenderDelegate;
 class Project;
 }
 
+class QGLFramebufferObject;
+
 class SceneLoader : public QObject
 {
     Q_OBJECT
@@ -75,6 +77,7 @@ public:
     vpvl2::IModel *findModel(const QUuid &uuid) const;
     vpvl2::IMotion *findMotion(const QUuid &uuid) const;
     const QUuid findUUID(vpvl2::IModel *model) const;
+    void getBoundingSphere(vpvl2::Vector3 &center, vpvl2::Scalar &radius) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, vpvl2::IModel *&asset);
     vpvl2::IModel *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -87,7 +90,8 @@ public:
     vpvl2::IMotion *newCameraMotion() const;
     vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
     void release();
-    void render();
+    void renderModels();
+    void renderZPlot(QGLFramebufferObject *renderTarget);
     void updateMatrices(const QSizeF &size);
     const QList<QUuid> renderOrderList() const;
     const QMatrix4x4 &projectionMatrix() const { return m_projection; }

@@ -244,6 +244,7 @@ private:
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
     Handles *m_handles;
+    QGLFramebufferObject *m_depthBuffer;
     QList<vpvl2::IBone *> m_bones;
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
