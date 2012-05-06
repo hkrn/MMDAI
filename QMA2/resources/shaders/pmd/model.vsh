@@ -23,7 +23,7 @@ const float kOne = 1.0;
 const float kHalf = 0.5;
 const vec3 kOne3 = vec3(kOne, kOne, kOne);
 
-vec2 makeSphereMap(vec3 position, vec3 normal) {
+vec2 makeSphereMap(const vec3 position, const vec3 normal) {
     vec3 R = reflect(position, normal);
     float M = kTwo * sqrt(R.x * R.x + R.y * R.y + (R.z + kOne) * (R.z + kOne));
     return vec2(R.x / M + kHalf, R.y / M + kHalf);
@@ -41,11 +41,7 @@ void main() {
     outToonTexCoord = vec2(0, 1.0 - dot(normalize(lightDirection), normal) * 0.5);
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * inPosition;
-        //outShadowCoord = lightViewProjectionMatrix * modelViewInverseMatrix * inPosition;
-        gl_Position = position; //outShadowCoord;
     }
-    else {
-        gl_Position = position;
-    }
+    gl_Position = position;
 }
 

@@ -17,12 +17,12 @@ varying vec4 outTexCoord;
 varying vec4 outPosition;
 varying vec4 outShadowCoord;
 varying vec2 outToonTexCoord;
-const float kAlphaThreshold = 0.05;
 const float kOne = 1.0;
 const float kZero = 0.0;
+const float kDepthThreshold = 0.00002;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 
-float unpackDepth(vec4 value) {
+float unpackDepth(const vec4 value) {
     const vec4 kBitShift = vec4(1.0 / 16777216.0, 1.0 / 65536.0, 1.0 / 256.0, 1.0);
     float depth = dot(value, kBitShift);
     return depth;
@@ -46,15 +46,18 @@ void main() {
             color *= texture2D(subTexture, outTexCoord.zw);
         }
     }
+    vec3 toonColor = texture2D(toonTexture, outToonTexCoord).rgb;
     if (hasDepthTexture) {
         vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
         vec4 depth4 = texture2D(depthTexture, shadowCoord.xy);
-        float depth = unpackDepth(depth4);
-        if (depth < shadowCoord.z)
-            color.rgb *= 0.5;
+        float depth = unpackDepth(depth4) + kDepthThreshold;
+        if (depth < shadowCoord.z) {
+            vec3 toon = texture2D(toonTexture, vec2(0.0, 1.0)).rgb;
+            color.rgb *= min(toonColor, toon);
+        }
     }
     else {
-        color.rgb *= texture2D(toonTexture, outToonTexCoord).rgb;
+        color.rgb *= toonColor;
     }
     gl_FragColor = color;
 }

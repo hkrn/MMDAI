@@ -1,5 +1,6 @@
 /* asset/model.vsh */
 uniform mat4 modelViewProjectionMatrix;
+uniform mat4 lightViewProjectionMatrix;
 uniform mat4 transformMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightColor;
@@ -9,15 +10,15 @@ uniform vec4 materialDiffuse;
 uniform vec3 materialEmission;
 uniform vec3 materialSpecular;
 uniform float materialShininess;
-uniform bool hasColorVertex;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
-attribute vec4 inColor;
+uniform bool hasDepthTexture;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 varying vec4 outColor;
 varying vec4 outTexCoord;
+varying vec4 outShadowCoord;
 const float kTwo = 2.0;
 const float kOne = 1.0;
 const float kHalf = 0.5;
@@ -37,6 +38,8 @@ void main() {
     vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
     outColor = color;
     outTexCoord = vec4(mainTexCoord, subTexCoord);
+    if (hasDepthTexture)
+        outShadowCoord = lightViewProjectionMatrix * transformMatrix * inPosition;
     gl_Position = modelViewProjectionMatrix * transformMatrix * inPosition;
 }
 

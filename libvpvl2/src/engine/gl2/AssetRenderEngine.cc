@@ -57,46 +57,36 @@ class AssetRenderEngine::Program : public ObjectProgram
 public:
     Program(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_texCoordAttributeLocation(0),
           m_colorAttributeLocation(0),
-          m_normalMatrixUniformLocation(0),
           m_transformMatrixUniformLocation(0),
-          m_lightViewProjectionMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
-          m_hasMainTextureUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
           m_hasColorVertexUniformLocation(0),
           m_isMainSphereMapUniformLocation(0),
           m_isSubSphereMapUniformLocation(0),
           m_isMainAdditiveUniformLocation(0),
           m_isSubAdditiveUniformLocation(0),
-          m_mainTextureUniformLocation(0),
           m_subTextureUniformLocation(0),
           m_opacityUniformLocation(0)
     {
     }
     ~Program() {
-        m_texCoordAttributeLocation = 0;
         m_colorAttributeLocation = 0;
-        m_normalMatrixUniformLocation = 0;
         m_transformMatrixUniformLocation = 0;
-        m_lightViewProjectionMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
         m_materialEmissionUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
-        m_hasMainTextureUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
         m_hasColorVertexUniformLocation = 0;
         m_isMainSphereMapUniformLocation = 0;
         m_isSubSphereMapUniformLocation = 0;
         m_isMainAdditiveUniformLocation = 0;
         m_isSubAdditiveUniformLocation = 0;
-        m_mainTextureUniformLocation = 0;
         m_subTextureUniformLocation = 0;
         m_opacityUniformLocation = 0;
     }
@@ -104,34 +94,25 @@ public:
     virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
-            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
-            m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_transformMatrixUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
-            m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
             m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
             m_materialEmissionUniformLocation = glGetUniformLocation(m_program, "materialEmission");
             m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
             m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
-            m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
             m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
             m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
             m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
             m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
             m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
             m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
-            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
             m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
             m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
         }
         return ret;
     }
 
-    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_texCoordAttributeLocation);
-        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
     void setColor(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_colorAttributeLocation);
         glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -139,14 +120,8 @@ public:
     void setHasColor(bool value) {
         glUniform1i(m_hasColorVertexUniformLocation, value ? 1 : 0);
     }
-    void setNormalMatrix(const float value[16]) {
-        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
-    }
     void setTransformMatrix(const float value[9]) {
         glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_FALSE, value);
-    }
-    void setLightViewProjectionMatrix(const GLfloat value[16]) {
-        glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialAmbient(const Color &value) {
         glUniform3fv(m_materialAmbientUniformLocation, 1, value);
@@ -178,17 +153,6 @@ public:
     void setIsSubAdditive(bool value) {
         glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
     }
-    void setMainTexture(GLuint value) {
-        if (value) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_mainTextureUniformLocation, 0);
-            glUniform1i(m_hasMainTextureUniformLocation, 1);
-        }
-        else {
-            glUniform1i(m_hasMainTextureUniformLocation, 0);
-        }
-    }
     void setSubTexture(GLuint value) {
         if (value) {
             glActiveTexture(GL_TEXTURE1);
@@ -202,24 +166,20 @@ public:
     }
 
 private:
-    GLuint m_texCoordAttributeLocation;
     GLuint m_colorAttributeLocation;
     GLuint m_normalMatrixUniformLocation;
     GLuint m_transformMatrixUniformLocation;
-    GLuint m_lightViewProjectionMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
     GLuint m_materialEmissionUniformLocation;
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
-    GLuint m_hasMainTextureUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
     GLuint m_hasColorVertexUniformLocation;
     GLuint m_isMainSphereMapUniformLocation;
     GLuint m_isSubSphereMapUniformLocation;
     GLuint m_isMainAdditiveUniformLocation;
     GLuint m_isSubAdditiveUniformLocation;
-    GLuint m_mainTextureUniformLocation;
     GLuint m_subTextureUniformLocation;
     GLuint m_opacityUniformLocation;
 };
@@ -606,6 +566,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     else {
         program->setOpacity(asset->opacity());
     }
+    void *texture = m_scene->light()->shadowMappingTexture();
+    if (texture && !btFuzzyZero(opacity - 0.98)) {
+        GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
+        program->setDepthTexture(textureID);
+    }
+    else {
+        program->setDepthTexture(0);
+    }
     int wireframe, twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -650,7 +618,8 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     const Scene::IMatrices *matrices = m_scene->matrices();
     matrices->getModelViewProjection(matrix4x4);
     program->setModelViewProjectionMatrix(matrix4x4);
-    // program->setLightViewProjectionMatrix(m_scene->lightViewProjectionMatrix());
+    matrices->getLightViewProjection(matrix4x4);
+    program->setLightViewProjectionMatrix(matrix4x4);
     matrices->getNormal(matrix4x4);
     program->setNormalMatrix(matrix4x4);
     transform.getOpenGLMatrix(matrix4x4);

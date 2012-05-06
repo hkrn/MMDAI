@@ -113,40 +113,6 @@ private:
     GLuint m_sizeUniformLocation;
 };
 
-class ObjectProgram : public BaseShaderProgram
-{
-public:
-    ObjectProgram(IRenderDelegate *delegate)
-        : BaseShaderProgram(delegate),
-          m_lightColorUniformLocation(0),
-          m_lightDirectionUniformLocation(0)
-    {
-    }
-    ~ObjectProgram() {
-        m_lightColorUniformLocation = 0;
-        m_lightDirectionUniformLocation = 0;
-    }
-
-    bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
-        if (ret) {
-            m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
-            m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
-        }
-        return ret;
-    }
-    void setLightColor(const Vector3 &value) {
-        glUniform3fv(m_lightColorUniformLocation, 1, value);
-    }
-    void setLightDirection(const Vector3 &value) {
-        glUniform3fv(m_lightDirectionUniformLocation, 1, value);
-    }
-
-private:
-    GLuint m_lightColorUniformLocation;
-    GLuint m_lightDirectionUniformLocation;
-};
-
 class ShadowProgram : public ObjectProgram
 {
 public:
@@ -179,46 +145,26 @@ class ModelProgram : public ObjectProgram
 public:
     ModelProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_normalAttributeLocation(0),
-          m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
           m_uva1AttributeLocation(0),
-          m_uva2AttributeLocation(0),
-          m_uva3AttributeLocation(0),
-          m_uva4AttributeLocation(0),
           m_modelViewInverseMatrixUniformLocation(0),
-          m_lightViewProjectionMatrixUniformLocation(0),
-          m_normalMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
-          m_mainTextureUniformLocation(0),
-          m_hasMainTextureUniformLocation(0),
           m_sphereTextureUniformLocation(0),
           m_hasSphereTextureUniformLocation(0),
           m_isSPHTextureUniformLocation(0),
           m_isSPATextureUniformLocation(0),
           m_isSubTextureUniformLocation(0),
           m_toonTextureUniformLocation(0),
-          m_hasToonTextureUniformLocation(0),
-          m_depthTextureUniformLocation(0),
-          m_hasDepthTextureUniformLocation(0)
+          m_hasToonTextureUniformLocation(0)
     {
     }
     ~ModelProgram() {
-        m_normalAttributeLocation = 0;
-        m_texCoordAttributeLocation = 0;
         m_toonTexCoordAttributeLocation = 0;
         m_uva1AttributeLocation = 0;
-        m_uva2AttributeLocation = 0;
-        m_uva3AttributeLocation = 0;
-        m_uva4AttributeLocation = 0;
         m_modelViewInverseMatrixUniformLocation = 0;
-        m_lightViewProjectionMatrixUniformLocation = 0;
-        m_normalMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
-        m_mainTextureUniformLocation = 0;
-        m_hasMainTextureUniformLocation = 0;
         m_sphereTextureUniformLocation = 0;
         m_hasSphereTextureUniformLocation = 0;
         m_isSPHTextureUniformLocation = 0;
@@ -226,27 +172,16 @@ public:
         m_isSubTextureUniformLocation = 0;
         m_toonTextureUniformLocation = 0;
         m_hasToonTextureUniformLocation = 0;
-        m_depthTextureUniformLocation = 0;
-        m_hasDepthTextureUniformLocation = 0;
     }
 
     bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
-            m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
-            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
             m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
-            m_uva2AttributeLocation = glGetAttribLocation(m_program, "inUVA2");
-            m_uva3AttributeLocation = glGetAttribLocation(m_program, "inUVA3");
-            m_uva4AttributeLocation = glGetAttribLocation(m_program, "inUVA4");
             m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
-            m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
-            m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
             m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
-            m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
             m_sphereTextureUniformLocation = glGetUniformLocation(m_program, "sphereTexture");
             m_hasSphereTextureUniformLocation = glGetUniformLocation(m_program, "hasSphereTexture");
             m_isSPHTextureUniformLocation = glGetUniformLocation(m_program, "isSPHTexture");
@@ -254,8 +189,6 @@ public:
             m_isSubTextureUniformLocation = glGetUniformLocation(m_program, "isSubTexture");
             m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
             m_hasToonTextureUniformLocation = glGetUniformLocation(m_program, "hasToonTexture");
-            m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
-            m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
         }
         return ret;
     }
@@ -265,17 +198,6 @@ public:
     void setModelViewInverseMatrix(const GLfloat value[16]) {
         glUniformMatrix4fv(m_modelViewInverseMatrixUniformLocation, 1, GL_FALSE, value);
     }
-    void setLightViewProjectionMatrix(const GLfloat value[16]) {
-        glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
-    }
-    void setNormal(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_normalAttributeLocation);
-        glVertexAttribPointer(m_normalAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_texCoordAttributeLocation);
-        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
     void setToonTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
         glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -284,37 +206,11 @@ public:
         glEnableVertexAttribArray(m_uva1AttributeLocation);
         glVertexAttribPointer(m_uva1AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setUVA2(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_uva2AttributeLocation);
-        glVertexAttribPointer(m_uva2AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setUVA3(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_uva3AttributeLocation);
-        glVertexAttribPointer(m_uva3AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setUVA4(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_uva4AttributeLocation);
-        glVertexAttribPointer(m_uva4AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setNormalMatrix(const float value[9]) {
-        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
-    }
     void setMaterialAmbient(const Color &value) {
         glUniform3fv(m_materialAmbientUniformLocation, 1, value);
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
-    }
-    void setMainTexture(GLuint value) {
-        if (value) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_mainTextureUniformLocation, 0);
-            glUniform1i(m_hasMainTextureUniformLocation, 1);
-        }
-        else {
-            glUniform1i(m_hasMainTextureUniformLocation, 0);
-        }
     }
     void setSphereTexture(GLuint value, pmx::Material::SphereTextureRenderMode mode) {
         if (value) {
@@ -363,33 +259,13 @@ public:
             glUniform1i(m_hasToonTextureUniformLocation, 0);
         }
     }
-    void setDepthTexture(GLuint value) {
-        if (value) {
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_depthTextureUniformLocation, 3);
-            glUniform1i(m_hasDepthTextureUniformLocation, 1);
-        }
-        else {
-            glUniform1i(m_hasDepthTextureUniformLocation, 0);
-        }
-    }
 
 private:
-    GLuint m_normalAttributeLocation;
-    GLuint m_texCoordAttributeLocation;
     GLuint m_toonTexCoordAttributeLocation;
     GLuint m_uva1AttributeLocation;
-    GLuint m_uva2AttributeLocation;
-    GLuint m_uva3AttributeLocation;
-    GLuint m_uva4AttributeLocation;
     GLuint m_modelViewInverseMatrixUniformLocation;
-    GLuint m_lightViewProjectionMatrixUniformLocation;
-    GLuint m_normalMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
-    GLuint m_mainTextureUniformLocation;
-    GLuint m_hasMainTextureUniformLocation;
     GLuint m_sphereTextureUniformLocation;
     GLuint m_hasSphereTextureUniformLocation;
     GLuint m_isSPHTextureUniformLocation;
@@ -397,8 +273,6 @@ private:
     GLuint m_isSubTextureUniformLocation;
     GLuint m_toonTextureUniformLocation;
     GLuint m_hasToonTextureUniformLocation;
-    GLuint m_depthTextureUniformLocation;
-    GLuint m_hasDepthTextureUniformLocation;
 };
 
 }
@@ -1042,15 +916,6 @@ void PMXRenderEngine::renderModel()
     offset = pmx::Model::strideOffset(pmx::Model::kUVA1Stride);
     size   = pmx::Model::strideSize(pmx::Model::kUVA1Stride);
     modelProgram->setUVA1(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = pmx::Model::strideOffset(pmx::Model::kUVA2Stride);
-    size   = pmx::Model::strideSize(pmx::Model::kUVA2Stride);
-    modelProgram->setUVA2(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = pmx::Model::strideOffset(pmx::Model::kUVA3Stride);
-    size   = pmx::Model::strideSize(pmx::Model::kUVA3Stride);
-    modelProgram->setUVA3(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = pmx::Model::strideOffset(pmx::Model::kUVA4Stride);
-    size   = pmx::Model::strideSize(pmx::Model::kUVA4Stride);
-    modelProgram->setUVA4(reinterpret_cast<const GLvoid *>(offset), size);
     const Scene::IMatrices *matrices = m_scene->matrices();
     float matrix4x4[16];
     matrices->getModelViewProjection(matrix4x4);
@@ -1063,8 +928,7 @@ void PMXRenderEngine::renderModel()
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
     void *texture = light->shadowMappingTexture();
-    if (texture)
-        modelProgram->setDepthTexture(*static_cast<GLuint *>(texture));
+    GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -1080,6 +944,10 @@ void PMXRenderEngine::renderModel()
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
         modelProgram->setSphereTexture(materialPrivate.sphereTextureID, material->sphereTextureRenderMode());
         modelProgram->setToonTexture(materialPrivate.toonTextureID);
+        if (texture && material->isSelfShadowDrawn())
+            modelProgram->setDepthTexture(textureID);
+        else
+            modelProgram->setDepthTexture(0);
         if (material->isCullFaceDisabled() && m_context->cullFaceState) {
             glDisable(GL_CULL_FACE);
             m_context->cullFaceState = false;

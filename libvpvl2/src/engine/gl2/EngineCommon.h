@@ -206,22 +206,43 @@ public:
     ObjectProgram(IRenderDelegate *delegate)
         : BaseShaderProgram(delegate),
           m_normalAttributeLocation(0),
+          m_texCoordAttributeLocation(0),
+          m_normalMatrixUniformLocation(0),
           m_lightColorUniformLocation(0),
-          m_lightDirectionUniformLocation(0)
+          m_lightDirectionUniformLocation(0),
+          m_lightViewProjectionMatrixUniformLocation(0),
+          m_hasMainTextureUniformLocation(0),
+          m_hasDepthTextureUniformLocation(0),
+          m_mainTextureUniformLocation(0),
+          m_depthTextureUniformLocation(0)
     {
     }
     ~ObjectProgram() {
         m_normalAttributeLocation = 0;
+        m_texCoordAttributeLocation = 0;
+        m_normalMatrixUniformLocation = 0;
         m_lightColorUniformLocation = 0;
         m_lightDirectionUniformLocation = 0;
+        m_lightViewProjectionMatrixUniformLocation = 0;
+        m_hasMainTextureUniformLocation = 0;
+        m_hasDepthTextureUniformLocation = 0;
+        m_mainTextureUniformLocation = 0;
+        m_depthTextureUniformLocation = 0;
     }
 
     virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
             m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
+            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
+            m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
             m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
+            m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
+            m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
+            m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
+            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+            m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
         }
         return ret;
     }
@@ -231,15 +252,54 @@ public:
     void setLightDirection(const Vector3 &value) {
         glUniform3fv(m_lightDirectionUniformLocation, 1, value);
     }
+    void setLightViewProjectionMatrix(const GLfloat value[16]) {
+        glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
+    }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_normalAttributeLocation);
         glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
+    void setNormalMatrix(const float value[16]) {
+        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
+    }
+    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_texCoordAttributeLocation);
+        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setMainTexture(GLuint value) {
+        if (value) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, value);
+            glUniform1i(m_mainTextureUniformLocation, 0);
+            glUniform1i(m_hasMainTextureUniformLocation, 1);
+        }
+        else {
+            glUniform1i(m_hasMainTextureUniformLocation, 0);
+        }
+    }
+    void setDepthTexture(GLuint value) {
+        if (value) {
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, value);
+            glUniform1i(m_depthTextureUniformLocation, 3);
+            glUniform1i(m_hasDepthTextureUniformLocation, 1);
+        }
+        else {
+            glUniform1i(m_hasDepthTextureUniformLocation, 0);
+        }
+    }
 
 private:
     GLuint m_normalAttributeLocation;
+    GLuint m_texCoordAttributeLocation;
+    GLuint m_normalMatrixUniformLocation;
     GLuint m_lightColorUniformLocation;
     GLuint m_lightDirectionUniformLocation;
+    GLuint m_lightViewProjectionMatrixUniformLocation;
+    GLuint m_hasMainTextureUniformLocation;
+    GLuint m_hasDepthTextureUniformLocation;
+    GLuint m_mainTextureUniformLocation;
+    GLuint m_depthTextureUniformLocation;
 };
 
 class ZPlotProgram : public BaseShaderProgram

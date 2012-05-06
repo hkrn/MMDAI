@@ -139,77 +139,49 @@ class ModelProgram : public ObjectProgram
 public:
     ModelProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_texCoordAttributeLocation(0),
           m_toonTexCoordAttributeLocation(0),
           m_modelViewInverseMatrixUniformLocation(0),
-          m_lightViewProjectionMatrixUniformLocation(0),
-          m_normalMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
-          m_hasMainTextureUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
-          m_hasDepthTextureUniformLocation(0),
           m_isMainSphereMapUniformLocation(0),
           m_isSubSphereMapUniformLocation(0),
           m_isMainAdditiveUniformLocation(0),
           m_isSubAdditiveUniformLocation(0),
-          m_mainTextureUniformLocation(0),
           m_subTextureUniformLocation(0),
-          m_toonTextureUniformLocation(0),
-          m_depthTextureUniformLocation(0)
+          m_toonTextureUniformLocation(0)
     {
     }
     ~ModelProgram() {
-        m_texCoordAttributeLocation = 0;
         m_toonTexCoordAttributeLocation = 0;
         m_modelViewInverseMatrixUniformLocation = 0;
-        m_lightViewProjectionMatrixUniformLocation = 0;
-        m_normalMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
-        m_hasMainTextureUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
-        m_hasDepthTextureUniformLocation = 0;
         m_isMainSphereMapUniformLocation = 0;
         m_isSubSphereMapUniformLocation = 0;
         m_isMainAdditiveUniformLocation = 0;
         m_isSubAdditiveUniformLocation = 0;
-        m_mainTextureUniformLocation = 0;
         m_subTextureUniformLocation = 0;
         m_toonTextureUniformLocation = 0;
-        m_depthTextureUniformLocation = 0;
     }
 
     bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
         bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
         if (ret) {
-            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
             m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
             m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
-            m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
-            m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
             m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
             m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-            m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
             m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
-            m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
             m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
             m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
             m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
             m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
-            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
             m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
             m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
-            m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
         }
         return ret;
-    }
-    void bind() {
-        ObjectProgram::bind();
-    }
-    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_texCoordAttributeLocation);
-        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setToonTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
@@ -217,12 +189,6 @@ public:
     }
     void setModelViewInverseMatrix(const GLfloat value[16]) {
         glUniformMatrix4fv(m_modelViewInverseMatrixUniformLocation, 1, GL_FALSE, value);
-    }
-    void setLightViewProjectionMatrix(const GLfloat value[16]) {
-        glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
-    }
-    void setNormalMatrix(const GLfloat value[9]) {
-        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialAmbient(const Color &value) {
         glUniform3fv(m_materialAmbientUniformLocation, 1, value);
@@ -242,17 +208,6 @@ public:
     void setIsSubAdditive(bool value) {
         glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
     }
-    void setMainTexture(GLuint value) {
-        if (value) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_mainTextureUniformLocation, 0);
-            glUniform1i(m_hasMainTextureUniformLocation, 1);
-        }
-        else {
-            glUniform1i(m_hasMainTextureUniformLocation, 0);
-        }
-    }
     void setSubTexture(GLuint value) {
         if (value) {
             glActiveTexture(GL_TEXTURE2);
@@ -269,37 +224,19 @@ public:
         glBindTexture(GL_TEXTURE_2D, value);
         glUniform1i(m_toonTextureUniformLocation, 1);
     }
-    void setDepthTexture(GLuint value) {
-        if (value) {
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_depthTextureUniformLocation, 3);
-            glUniform1i(m_hasDepthTextureUniformLocation, 1);
-        }
-        else {
-            glUniform1i(m_hasDepthTextureUniformLocation, 0);
-        }
-    }
 
 private:
-    GLuint m_texCoordAttributeLocation;
     GLuint m_toonTexCoordAttributeLocation;
     GLuint m_modelViewInverseMatrixUniformLocation;
-    GLuint m_lightViewProjectionMatrixUniformLocation;
-    GLuint m_normalMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
-    GLuint m_hasMainTextureUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
-    GLuint m_hasDepthTextureUniformLocation;
     GLuint m_isMainSphereMapUniformLocation;
     GLuint m_isSubSphereMapUniformLocation;
     GLuint m_isMainAdditiveUniformLocation;
     GLuint m_isSubAdditiveUniformLocation;
-    GLuint m_mainTextureUniformLocation;
     GLuint m_subTextureUniformLocation;
     GLuint m_toonTextureUniformLocation;
-    GLuint m_depthTextureUniformLocation;
 };
 
 enum VertexBufferObjectType
@@ -963,9 +900,7 @@ void PMDRenderEngine::renderModel()
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)),
                               model->strideSize(PMDModel::kTextureCoordsStride));
     void *texture = m_scene->light()->shadowMappingTexture();
-    if (texture)
-        modelProgram->setDepthTexture(*static_cast<GLuint *>(texture));
-
+    GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     const Scene::IMatrices *matrices = m_scene->matrices();
     float matrix4x4[16];
     matrices->getModelViewProjection(matrix4x4);
@@ -1013,6 +948,12 @@ void PMDRenderEngine::renderModel()
             modelProgram->setIsSubSphereMap(isSubSphereAdd || material->isSubSphereModulate());
             modelProgram->setIsSubAdditive(isSubSphereAdd);
             modelProgram->setSubTexture(materialPrivate.subTextureID);
+        }
+        if (texture && !btFuzzyZero(opacity - 0.98)) {
+            modelProgram->setDepthTexture(textureID);
+        }
+        else {
+            modelProgram->setDepthTexture(0);
         }
         if (!btFuzzyZero(opacity - 1.0f) && m_context->cullFaceState) {
             glDisable(GL_CULL_FACE);
