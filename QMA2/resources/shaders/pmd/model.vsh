@@ -31,14 +31,13 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 
 void main() {
     vec3 view = normalize(inPosition.xyz);
-    vec3 normal = normalize(normalMatrix * inNormal);
     vec4 position = modelViewProjectionMatrix * inPosition;
-    vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
-    vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
+    vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;
+    vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;
     outColor.rgb = min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3);
     outColor.a = materialDiffuse.a;
     outTexCoord = vec4(mainTexCoord, subTexCoord);
-    outToonTexCoord = vec2(0, 1.0 - dot(normalize(lightDirection), normal) * 0.5);
+    outToonTexCoord = vec2(0, 1.0 - dot(normalize(lightDirection), inNormal) * 0.5);
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * inPosition;
     }

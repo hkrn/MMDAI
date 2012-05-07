@@ -3,6 +3,7 @@
 precision highp float;
 #endif
 
+uniform bool useToon;
 uniform bool hasMainTexture;
 uniform bool hasSubTexture;
 uniform bool hasDepthTexture;
@@ -46,18 +47,20 @@ void main() {
             color *= texture2D(subTexture, outTexCoord.zw);
         }
     }
-    vec3 toonColor = texture2D(toonTexture, outToonTexCoord).rgb;
-    if (hasDepthTexture) {
-        vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
-        vec4 depth4 = texture2D(depthTexture, shadowCoord.xy);
-        float depth = unpackDepth(depth4) + kDepthThreshold;
-        if (depth < shadowCoord.z) {
-            vec3 toon = texture2D(toonTexture, vec2(0.0, 1.0)).rgb;
-            color.rgb *= min(toonColor, toon);
+    if (useToon) {
+        vec3 toonColor = texture2D(toonTexture, outToonTexCoord).rgb;
+        if (hasDepthTexture) {
+            vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
+            vec4 depth4 = texture2D(depthTexture, shadowCoord.xy);
+            float depth = unpackDepth(depth4) + kDepthThreshold;
+            if (depth < shadowCoord.z) {
+                vec3 toon = texture2D(toonTexture, vec2(0.0, 1.0)).rgb;
+                color.rgb *= min(toonColor, toon);
+            }
         }
-    }
-    else {
-        color.rgb *= toonColor;
+        else {
+            color.rgb *= toonColor;
+        }
     }
     gl_FragColor = color;
 }

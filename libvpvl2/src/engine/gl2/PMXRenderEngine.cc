@@ -156,7 +156,8 @@ public:
           m_isSPATextureUniformLocation(0),
           m_isSubTextureUniformLocation(0),
           m_toonTextureUniformLocation(0),
-          m_hasToonTextureUniformLocation(0)
+          m_hasToonTextureUniformLocation(0),
+          m_useToonUniformLocation(0)
     {
     }
     ~ModelProgram() {
@@ -172,6 +173,7 @@ public:
         m_isSubTextureUniformLocation = 0;
         m_toonTextureUniformLocation = 0;
         m_hasToonTextureUniformLocation = 0;
+        m_useToonUniformLocation = 0;
     }
 
     bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
@@ -189,6 +191,7 @@ public:
             m_isSubTextureUniformLocation = glGetUniformLocation(m_program, "isSubTexture");
             m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
             m_hasToonTextureUniformLocation = glGetUniformLocation(m_program, "hasToonTexture");
+            m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
         }
         return ret;
     }
@@ -211,6 +214,9 @@ public:
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
+    }
+    void setToonEnable(bool value) {
+        glUniform1i(m_useToonUniformLocation, value ? 1 : 0);
     }
     void setSphereTexture(GLuint value, pmx::Material::SphereTextureRenderMode mode) {
         if (value) {
@@ -273,6 +279,7 @@ private:
     GLuint m_isSubTextureUniformLocation;
     GLuint m_toonTextureUniformLocation;
     GLuint m_hasToonTextureUniformLocation;
+    GLuint m_useToonUniformLocation;
 };
 
 }
@@ -931,6 +938,7 @@ void PMXRenderEngine::renderModel()
     GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
+    modelProgram->setToonEnable(light->isToonEnabled());
     const Array<pmx::Material *> &materials = m_model->materials();
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();

@@ -149,7 +149,8 @@ public:
           m_isMainAdditiveUniformLocation(0),
           m_isSubAdditiveUniformLocation(0),
           m_subTextureUniformLocation(0),
-          m_toonTextureUniformLocation(0)
+          m_toonTextureUniformLocation(0),
+          m_useToonUniformLocation(0)
     {
     }
     ~ModelProgram() {
@@ -164,6 +165,7 @@ public:
         m_isSubAdditiveUniformLocation = 0;
         m_subTextureUniformLocation = 0;
         m_toonTextureUniformLocation = 0;
+        m_useToonUniformLocation = 0;
     }
 
     bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
@@ -180,6 +182,7 @@ public:
             m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
             m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
             m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
+            m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
         }
         return ret;
     }
@@ -207,6 +210,9 @@ public:
     }
     void setIsSubAdditive(bool value) {
         glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
+    }
+    void setToonEnable(bool value) {
+        glUniform1i(m_useToonUniformLocation, value ? 1 : 0);
     }
     void setSubTexture(GLuint value) {
         if (value) {
@@ -237,6 +243,7 @@ private:
     GLuint m_isSubAdditiveUniformLocation;
     GLuint m_subTextureUniformLocation;
     GLuint m_toonTextureUniformLocation;
+    GLuint m_useToonUniformLocation;
 };
 
 enum VertexBufferObjectType
@@ -899,8 +906,6 @@ void PMDRenderEngine::renderModel()
                             model->strideSize(PMDModel::kNormalsStride));
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)),
                               model->strideSize(PMDModel::kTextureCoordsStride));
-    void *texture = m_scene->light()->shadowMappingTexture();
-    GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     const Scene::IMatrices *matrices = m_scene->matrices();
     float matrix4x4[16];
     matrices->getModelViewProjection(matrix4x4);
@@ -912,8 +917,11 @@ void PMDRenderEngine::renderModel()
     matrices->getLightViewProjection(matrix4x4);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
+    void *texture = light->shadowMappingTexture();
+    GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
+    modelProgram->setToonEnable(light->isToonEnabled());
     if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
         modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
                                       model->strideSize(PMDModel::kToonTextureStride));

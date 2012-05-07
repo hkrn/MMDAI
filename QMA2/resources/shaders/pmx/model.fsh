@@ -3,6 +3,7 @@
 precision highp float;
 #endif
 
+uniform bool useToon;
 uniform bool hasMainTexture;
 uniform bool hasToonTexture;
 uniform bool hasSphereTexture;
@@ -43,7 +44,7 @@ void main() {
         else if (isSubTexture)
             color.rgb *= texture2D(sphereTexture, outUVA1.xy).rgb;
     }
-    if (hasToonTexture) {
+    if (useToon && hasToonTexture) {
         vec3 toonColor = texture2D(toonTexture, outToonTexCoord).rgb;
         if (hasDepthTexture) {
             vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;

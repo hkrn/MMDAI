@@ -76,26 +76,30 @@ public:
         m_motion(0),
         m_color(kZeroV3),
         m_direction(kZeroV3),
-        m_userData(0)
+        m_enableToon(false),
+        m_depthTexture(0)
     {
         resetDefault();
     }
     ~Light() {
         delete m_motion;
         m_motion = 0;
-        m_userData = 0;
+        m_depthTexture = 0;
+        m_enableToon = false;
         m_color.setZero();
         m_direction.setZero();
     }
 
     const Vector3 &color() const { return m_color; }
     const Vector3 &direction() const { return m_direction; }
-    void *shadowMappingTexture() const { return m_userData; }
+    void *shadowMappingTexture() const { return m_depthTexture; }
+    bool isToonEnabled() const { return m_enableToon; }
     IMotion *motion() const { return m_motion; }
     void setColor(const Vector3 &value) { m_color = value; }
     void setDirection(const Vector3 &value) { m_direction = value; }
     void setMotion(IMotion *value) { m_motion = value; }
-    void setShadowMappingTexture(void *value) { m_userData = value; }
+    void setShadowMappingTexture(void *value) { m_depthTexture = value; }
+    void setToonEnable(bool value) { m_enableToon = value; }
     void copyFrom(ILight *value) {
         setColor(value->color());
         setDirection(value->direction());
@@ -109,7 +113,8 @@ private:
     IMotion *m_motion;
     Vector3 m_color;
     Vector3 m_direction;
-    void *m_userData;
+    bool m_enableToon;
+    void *m_depthTexture;
 };
 class Camera : public Scene::ICamera {
 public:

@@ -71,11 +71,13 @@ public:
         virtual const Vector3 &color() const = 0;
         virtual const Vector3 &direction() const = 0;
         virtual void *shadowMappingTexture() const = 0;
+        virtual bool isToonEnabled() const = 0;
         virtual IMotion *motion() const = 0;
         virtual void setColor(const Vector3 &value) = 0;
         virtual void setDirection(const Vector3 &value) = 0;
         virtual void setMotion(IMotion *value) = 0;
         virtual void setShadowMappingTexture(void *value) = 0;
+        virtual void setToonEnable(bool value) = 0;
         virtual void copyFrom(ILight *value) = 0;
         virtual void resetDefault() = 0;
     };
