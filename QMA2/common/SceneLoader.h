@@ -158,7 +158,7 @@ public slots:
     void saveProject(const QString &path);
     void setCameraMotion(vpvl2::IMotion *motion);
     void setLightColor(const vpvl2::Vector3 &color);
-    void setLightPosition(const vpvl2::Vector3 &position);
+    void setLightDirection(const vpvl2::Vector3 &value);
     void setModelMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void setRenderOrderList(const QList<QUuid> &value);
     void setWorldGravity(const vpvl2::Vector3 &value);

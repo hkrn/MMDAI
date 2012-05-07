@@ -970,9 +970,9 @@ void SceneLoader::loadProject(const QString &path)
     if (ret) {
         /* 光源設定 */
         const Vector3 &color = UIGetVector3(m_project->globalSetting("light.color"), Vector3(0.6, 0.6, 0.6));
-        const Vector3 &position = UIGetVector3(m_project->globalSetting("light.position"), Vector3(0.5, 1.0, 0.5));
+        const Vector3 &position = UIGetVector3(m_project->globalSetting("light.direction"), Vector3(-0.5, -1.0, -0.5));
         setLightColor(Color(color.x(), color.y(), color.z(), 1.0));
-        setLightPosition(position);
+        setLightDirection(position);
         /* アクセラレーションの有効化(有効にしている場合) */
         if (isAccelerationEnabled()) {
 #if QMA2_TBD
@@ -1173,9 +1173,7 @@ void SceneLoader::renderModels()
 #else
             if (true) {
 #endif
-                glCullFace(GL_FRONT);
                 engine->renderShadow();
-                glCullFace(GL_BACK);
             }
             engine->renderEdge();
             engine->renderModel();
@@ -1202,6 +1200,7 @@ void SceneLoader::renderZPlot(QGLFramebufferObject *renderTarget)
         else {
             getBoundingSphere(center, radius);
         }
+        getBoundingSphere(center, radius);
         const Scalar &angle = 45;
         const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
         const Scalar &margin = 50;
@@ -1228,10 +1227,7 @@ void SceneLoader::renderZPlot(QGLFramebufferObject *renderTarget)
                 engine->renderZPlot();
             }
         }
-        /* デプスバッファのテクスチャの識別子を登録してシャドウマッピングを有効にする */
         renderTarget->release();
-        GLuint textureID = renderTarget->texture();
-        light->setShadowMappingTexture(&textureID);
         glEnable(GL_BLEND);
         /* デプスバッファの読み込みに必要な行列を作成する */
         QMatrix4x4 m;
@@ -1331,13 +1327,13 @@ void SceneLoader::setLightColor(const Vector3 &color)
     emit lightColorDidSet(color);
 }
 
-void SceneLoader::setLightPosition(const Vector3 &position)
+void SceneLoader::setLightDirection(const Vector3 &position)
 {
     m_project->light()->setDirection(position);
     if (m_project) {
         QString str;
         str.sprintf("%.5f,%.5f,%.5f", position.x(), position.y(), position.z());
-        m_project->setGlobalSetting("light.position", str.toStdString());
+        m_project->setGlobalSetting("light.direction", str.toStdString());
     }
     emit lightDirectionDidSet(position);
 }
