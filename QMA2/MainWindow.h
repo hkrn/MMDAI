@@ -132,6 +132,7 @@ private slots:
     void openGravitySettingDialog();
     void openRenderOrderDialog();
     void openScreenColorDialog();
+    void openShadowMapDialog();
     void makeBonesSelectable();
 
 private:
@@ -213,6 +214,7 @@ private:
     QAction *m_actionOpenGravitySettingsDialog;
     QAction *m_actionOpenRenderOrderDialog;
     QAction *m_actionOpenScreenColorDialog;
+    QAction *m_actionOpenShadowMapDialog;
     QAction *m_actionEnableAcceleration;
     QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;

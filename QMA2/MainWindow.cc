@@ -50,6 +50,7 @@
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/PlaySettingDialog.h"
 #include "dialogs/RenderOrderDialog.h"
+#include "dialogs/ShadowMapSettingDialog.h"
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
@@ -655,6 +656,8 @@ void MainWindow::buildUI()
     connect(m_actionOpenRenderOrderDialog, SIGNAL(triggered()), SLOT(openRenderOrderDialog()));
     m_actionOpenScreenColorDialog = new QAction(this);
     connect(m_actionOpenScreenColorDialog, SIGNAL(triggered()), SLOT(openScreenColorDialog()));
+    m_actionOpenShadowMapDialog = new QAction(this);
+    connect(m_actionOpenShadowMapDialog, SIGNAL(triggered()), SLOT(openShadowMapDialog()));
     m_actionEnableAcceleration = new QAction(this);
     m_actionEnableAcceleration->setCheckable(true);
     m_actionEnableAcceleration->setEnabled(Scene::isAcceleratorSupported());
@@ -814,6 +817,7 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionOpenGravitySettingsDialog);
     m_menuProject->addAction(m_actionOpenRenderOrderDialog);
     m_menuProject->addAction(m_actionOpenScreenColorDialog);
+    m_menuProject->addAction(m_actionOpenShadowMapDialog);
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionEnableAcceleration);
     m_menuProject->addAction(m_actionEnablePhysics);
@@ -934,6 +938,7 @@ void MainWindow::bindActions()
     m_actionOpenGravitySettingsDialog->setShortcut(m_settings.value(kPrefix + "gravitySettings").toString());
     m_actionOpenRenderOrderDialog->setShortcut(m_settings.value(kPrefix + "renderOrderDialog").toString());
     m_actionOpenScreenColorDialog->setShortcut(m_settings.value(kPrefix + "screenColorDialog").toString());
+    m_actionOpenShadowMapDialog->setShortcut(m_settings.value(kPrefix + "shadowMapDialog").toString());
     m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
@@ -1051,6 +1056,8 @@ void MainWindow::retranslate()
     m_actionOpenRenderOrderDialog->setStatusTip(tr("Open a dialog to set order of rendering assets and models."));
     m_actionOpenScreenColorDialog->setText(tr("Screen color setting"));
     m_actionOpenScreenColorDialog->setStatusTip(tr("Open a dialog to set screen color."));
+    m_actionOpenShadowMapDialog->setText(tr("Shadow map setting"));
+    m_actionOpenShadowMapDialog->setStatusTip(tr("Open a dialog to configure shadow map."));
     m_actionEnableAcceleration->setText(tr("Enable acceleration"));
     m_actionEnableAcceleration->setStatusTip(tr("Enable or disable acceleration using OpenCL if supported."));
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
@@ -1632,24 +1639,30 @@ void MainWindow::showLicenseWidget()
 
 void MainWindow::openGravitySettingDialog()
 {
-    GravitySettingDialog dialog(m_sceneWidget->sceneLoader());
-    dialog.exec();
+    QScopedPointer<GravitySettingDialog> dialog(new GravitySettingDialog(m_sceneWidget->sceneLoader()));
+    dialog->exec();
 }
 
 void MainWindow::openRenderOrderDialog()
 {
-    RenderOrderDialog dialog(m_sceneWidget->sceneLoader());
-    dialog.exec();
+    QScopedPointer<RenderOrderDialog> dialog(new RenderOrderDialog(m_sceneWidget->sceneLoader()));
+    dialog->exec();
 }
 
 void MainWindow::openScreenColorDialog()
 {
-    QColorDialog dialog;
+    QScopedPointer<QColorDialog> dialog(new QColorDialog());
     SceneLoader *loader = m_sceneWidget->sceneLoader();
     const QColor &before = loader->screenColor();
-    connect(&dialog, SIGNAL(currentColorChanged(QColor)), loader, SLOT(setScreenColor(QColor)));
-    if (dialog.exec() == QColorDialog::Rejected)
+    connect(dialog.data(), SIGNAL(currentColorChanged(QColor)), loader, SLOT(setScreenColor(QColor)));
+    if (dialog->exec() == QColorDialog::Rejected)
         loader->setScreenColor(before);
+}
+
+void MainWindow::openShadowMapDialog()
+{
+    QScopedPointer<ShadowMapSettingDialog> dialog(new ShadowMapSettingDialog(m_sceneWidget->sceneLoader()));
+    dialog->exec();
 }
 
 void MainWindow::updateWindowTitle()

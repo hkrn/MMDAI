@@ -188,7 +188,8 @@ SOURCES += main.cc \
     unzip/ioapi.c \
     common/Archive.cc \
     widgets/SceneLightWidget.cc \
-    widgets/ModelSettingWidget.cc
+    widgets/ModelSettingWidget.cc \
+    dialogs/ShadowMapSettingDialog.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -237,7 +238,8 @@ HEADERS  += \
     unzip/ioapi.h \
     common/Archive.h \
     widgets/SceneLightWidget.h \
-    widgets/ModelSettingWidget.h
+    widgets/ModelSettingWidget.h \
+    dialogs/ShadowMapSettingDialog.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc

@@ -399,10 +399,25 @@ static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
     if (!value.empty()) {
         QStringList gravity = QString::fromStdString(value).split(",");
         if (gravity.length() == 3) {
-            float x = gravity.at(0).toFloat();
-            float y = gravity.at(1).toFloat();
-            float z = gravity.at(2).toFloat();
+            const Scalar &x = gravity.at(0).toFloat();
+            const Scalar &y = gravity.at(1).toFloat();
+            const Scalar &z = gravity.at(2).toFloat();
             return Vector3(x, y, z);
+        }
+    }
+    return def;
+}
+/* 文字列を解析して Vector4 を構築する */
+static const Vector4 UIGetVector4(const std::string &value, const Vector4 &def)
+{
+    if (!value.empty()) {
+        QStringList gravity = QString::fromStdString(value).split(",");
+        if (gravity.length() == 4) {
+            const Scalar &x = gravity.at(0).toFloat();
+            const Scalar &y = gravity.at(1).toFloat();
+            const Scalar &z = gravity.at(2).toFloat();
+            const Scalar &w = gravity.at(3).toFloat();
+            return Vector4(x, y, z, w);
         }
     }
     return def;
@@ -414,10 +429,10 @@ static const Quaternion UIGetQuaternion(const std::string &value, const Quaterni
     if (!value.empty()) {
         QStringList gravity = QString::fromStdString(value).split(",");
         if (gravity.length() == 4) {
-            float x = gravity.at(0).toFloat();
-            float y = gravity.at(1).toFloat();
-            float z = gravity.at(2).toFloat();
-            float w = gravity.at(3).toFloat();
+            const Scalar &x = gravity.at(0).toFloat();
+            const Scalar &y = gravity.at(1).toFloat();
+            const Scalar &z = gravity.at(2).toFloat();
+            const Scalar &w = gravity.at(3).toFloat();
             return Quaternion(x, y, z, w);
         }
     }
@@ -722,7 +737,8 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
             center += c;
         }
     }
-    center /= nmodels;
+    if (nmodels > 0)
+        center /= nmodels;
     for (int i = 0; i < nmodels; i++) {
         IModel *model = models[i];
         if (model->isVisible()) {
@@ -1177,7 +1193,15 @@ void SceneLoader::renderZPlot(QGLFramebufferObject *renderTarget)
         Vector3 center;
         Scalar radius;
         float shadowMatrix4x4[16];
-        getBoundingSphere(center, radius);
+        /* プロジェクトにバウンディングスフィアの設定があればそちらを適用し、無ければ計算する */
+        const Vector4 &boundingSphere = shadowBoundingSphere();
+        if (!boundingSphere.isZero() && !btFuzzyZero(boundingSphere.w())) {
+            center = boundingSphere;
+            radius = boundingSphere.w();
+        }
+        else {
+            getBoundingSphere(center, radius);
+        }
         const Scalar &angle = 45;
         const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
         const Scalar &margin = 50;
@@ -1794,6 +1818,49 @@ void SceneLoader::setScreenColor(const QColor &value)
         QString str;
         str.sprintf("%.5f,%.5f,%.5f", value.redF(), value.greenF(), value.blueF());
         m_project->setGlobalSetting("screen.color", str.toStdString());
+    }
+}
+
+const QSize SceneLoader::shadowMapSize() const
+{
+    if (m_project) {
+        Vector3 s = UIGetVector3(m_project->globalSetting("shadow.size"), Vector3(1024, 1024, 0));
+        return QSize(s.x(), s.y());
+    }
+    return QSize(1024, 1024);
+}
+
+void SceneLoader::setShadowMapSize(const QSize &value)
+{
+    if (m_project) {
+        QString str;
+        str.sprintf("%d,%d,0", value.width(), value.height());
+        m_project->setGlobalSetting("shadow.size", str.toStdString());
+    }
+}
+
+const Vector4 SceneLoader::shadowBoundingSphere() const
+{
+    return m_project ? UIGetVector4(m_project->globalSetting("shadow.sphere"), kZeroV4) : kZeroV4;
+}
+
+void SceneLoader::setShadowBoundingSphere(const Vector4 &value)
+{
+    if (m_project) {
+        QString str;
+        str.sprintf("%.f,%.f,%.f,%.f", value.x(), value.y(), value.z(), value.w());
+        m_project->setGlobalSetting("shadow.sphere", str.toStdString());
+    }
+}
+bool SceneLoader::isSoftShadowEnabled() const
+{
+    return m_project ? QString::fromStdString(m_project->globalSetting("shadow.soft")) == "true" : false;
+}
+
+void SceneLoader::setSoftShadowEnable(bool value)
+{
+    if (m_project) {
+        m_project->setGlobalSetting("shadow.soft", value ? "true" : "false");
     }
 }
 

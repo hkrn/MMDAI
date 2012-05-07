@@ -113,6 +113,9 @@ public:
     bool isLoop() const;
     bool isGridIncluded() const;
     const QString backgroundAudio() const;
+    const QSize shadowMapSize() const;
+    const vpvl2::Vector4 shadowBoundingSphere() const;
+    bool isSoftShadowEnabled() const;
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
@@ -181,6 +184,9 @@ public slots:
     void setBackgroundAudioPath(const QString &value);
     void setPreferredFPS(int value);
     void setScreenColor(const QColor &value);
+    void setShadowMapSize(const QSize &value);
+    void setShadowBoundingSphere(const vpvl2::Vector4 &value);
+    void setSoftShadowEnable(bool value);
 
 signals:
     void projectDidCount(int value);

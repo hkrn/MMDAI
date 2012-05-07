@@ -183,6 +183,8 @@ void SceneWidget::loadProject(const QString &filename)
     dialog->setWindowModality(Qt::WindowModal);
     dialog->setCancelButton(0);
     clearSelectedBones();
+    delete m_depthBuffer;
+    m_depthBuffer = new QGLFramebufferObject(m_loader->shadowMapSize(), QGLFramebufferObject::Depth);
     m_loader->loadProject(filename);
 }
 
