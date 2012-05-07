@@ -460,8 +460,8 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
     else {
         Vector3 min, max;
         getBoundingBox(min, max);
-        center = (min + max) / 2.0;
-        radius = center.length();
+        center = (min + max) * 0.5;
+        radius = (max - min).length() * 0.5;
     }
 }
 
