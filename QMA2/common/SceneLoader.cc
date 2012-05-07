@@ -1823,15 +1823,16 @@ void SceneLoader::setScreenColor(const QColor &value)
 
 const QSize SceneLoader::shadowMapSize() const
 {
+    static const Vector3 defaultValue(1024, 1024, 0);
     if (m_project) {
-        const Vector3 defaultValue(1024, 1024, 0);
         const std::string &value = m_project->globalSetting("shadow.texture.size");
         Vector3 s = UIGetVector3(value, defaultValue);
-        if (!UIIsPowerOfTwo(s.x()) || !UIIsPowerOfTwo(s.y()))
+        /* テクスチャのサイズが 128px 未満または2乗の数ではない場合はデフォルトのサイズを適用するように強制する */
+        if (s.x() < 128 || s.y() < 128 || !UIIsPowerOfTwo(s.x()) || !UIIsPowerOfTwo(s.y()))
             s = defaultValue;
         return QSize(s.x(), s.y());
     }
-    return QSize(1024, 1024);
+    return QSize(defaultValue.x(), defaultValue.y());
 }
 
 void SceneLoader::setShadowMapSize(const QSize &value)
