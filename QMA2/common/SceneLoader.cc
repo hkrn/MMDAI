@@ -439,6 +439,10 @@ static const Quaternion UIGetQuaternion(const std::string &value, const Quaterni
     return def;
 }
 
+static inline bool UIIsPowerOfTwo(int value) {
+    return (value & (value - 1)) == 0;
+}
+
 #ifdef GL_MULTISAMPLE
 static inline void UIEnableMultisample()
 {
@@ -1820,7 +1824,11 @@ void SceneLoader::setScreenColor(const QColor &value)
 const QSize SceneLoader::shadowMapSize() const
 {
     if (m_project) {
-        Vector3 s = UIGetVector3(m_project->globalSetting("shadow.size"), Vector3(1024, 1024, 0));
+        const Vector3 defaultValue(1024, 1024, 0);
+        const std::string &value = m_project->globalSetting("shadow.texture.size");
+        Vector3 s = UIGetVector3(value, defaultValue);
+        if (!UIIsPowerOfTwo(s.x()) || !UIIsPowerOfTwo(s.y()))
+            s = defaultValue;
         return QSize(s.x(), s.y());
     }
     return QSize(1024, 1024);
@@ -1831,7 +1839,7 @@ void SceneLoader::setShadowMapSize(const QSize &value)
     if (m_project) {
         QString str;
         str.sprintf("%d,%d,0", value.width(), value.height());
-        m_project->setGlobalSetting("shadow.size", str.toStdString());
+        m_project->setGlobalSetting("shadow.texture.size", str.toStdString());
     }
 }
 
@@ -1850,13 +1858,13 @@ void SceneLoader::setShadowBoundingSphere(const Vector4 &value)
 }
 bool SceneLoader::isSoftShadowEnabled() const
 {
-    return m_project ? QString::fromStdString(m_project->globalSetting("shadow.soft")) == "true" : false;
+    return m_project ? QString::fromStdString(m_project->globalSetting("shadow.texture.soft")) == "true" : false;
 }
 
 void SceneLoader::setSoftShadowEnable(bool value)
 {
     if (m_project) {
-        m_project->setGlobalSetting("shadow.soft", value ? "true" : "false");
+        m_project->setGlobalSetting("shadow.texture.soft", value ? "true" : "false");
     }
 }
 
