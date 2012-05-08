@@ -1831,7 +1831,6 @@ void SceneLoader::setSelectedAsset(IModel *value)
 void SceneLoader::setPreferredFPS(int value)
 {
     m_world->setPreferredFPS(value);
-    // m_renderer->scene()->setPreferredFPS(value);
 }
 
 void SceneLoader::setScreenColor(const QColor &value)

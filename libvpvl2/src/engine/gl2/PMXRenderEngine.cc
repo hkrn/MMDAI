@@ -982,14 +982,14 @@ void PMXRenderEngine::renderShadow()
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
     const Scene::ILight *light = m_scene->light();
     const Vector3 &lightDirection = light->direction();
-    const Scalar dot = plane.dot(lightDirection);
+    const Scalar dot = plane.dot(-lightDirection);
     float shadowMatrix[16];
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             int index = (i << 2) + j;
-            shadowMatrix[index] = -plane[i] * lightDirection[j];
+            shadowMatrix[index] = plane[i] * lightDirection[j];
             if (i == j)
                 shadowMatrix[index] += dot;
         }
