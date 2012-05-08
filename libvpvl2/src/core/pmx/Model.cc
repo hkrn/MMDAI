@@ -455,6 +455,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
             const Vector3 &position = m_skinnedVertices[i].position;
             btSetMax(radius, centerPosition.distance2(position));
         }
+        center = centerPosition;
         radius = btSqrt(radius);
     }
     else {
