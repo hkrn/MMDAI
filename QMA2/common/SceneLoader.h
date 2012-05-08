@@ -44,6 +44,7 @@
 #include <QtCore/QUuid>
 #include <QtGui/QColor>
 #include <QtGui/QMatrix4x4>
+#include <QtOpenGL/QtOpenGL>
 
 #include "VPDFile.h"
 
@@ -91,8 +92,9 @@ public:
     vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
     void release();
     void renderModels();
-    void renderZPlot(QGLFramebufferObject *renderTarget);
+    void renderZPlot();
     void updateMatrices(const QSizeF &size);
+    void updateDepthBuffer(const QSize &value);
     const QList<QUuid> renderOrderList() const;
     const QMatrix4x4 &projectionMatrix() const { return m_projection; }
 
@@ -214,6 +216,7 @@ private:
     int globalSetting(const char *key, int def) const;
 
     internal::World *m_world;
+    QGLFramebufferObject *m_depthBuffer;
     QMap<QString, vpvl2::IModel*> m_name2assets;
     QMatrix4x4 m_projection;
     vpvl2::IEncoding *m_encoding;
@@ -225,6 +228,7 @@ private:
     vpvl2::IModel *m_asset;
     vpvl2::IMotion *m_camera;
     vpvl2::Array<QUuid> m_renderOrderList;
+    GLuint m_depthBufferID;
 
     Q_DISABLE_COPY(SceneLoader)
 };

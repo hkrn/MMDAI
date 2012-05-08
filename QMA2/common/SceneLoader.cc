@@ -544,6 +544,7 @@ const QByteArray UILoadFile(const QString &filename,
 SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory)
     : QObject(),
       m_world(0),
+      m_depthBuffer(0),
       m_encoding(encoding),
       m_renderDelegate(0),
       m_factory(factory),
@@ -551,7 +552,8 @@ SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory)
       m_projectDelegate(0),
       m_model(0),
       m_asset(0),
-      m_camera(0)
+      m_camera(0),
+      m_depthBufferID(0)
 {
     m_world = new internal::World();
     m_renderDelegate = new UIDelegate();
@@ -562,12 +564,15 @@ SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory)
 SceneLoader::~SceneLoader()
 {
     release();
+    m_depthBufferID = 0;
     delete m_factory;
     m_factory = 0;
     delete m_renderDelegate;
     m_renderDelegate = 0;
     delete m_projectDelegate;
     m_projectDelegate = 0;
+    delete m_depthBuffer;
+    m_depthBuffer = 0;
     delete m_world;
     m_world = 0;
     delete m_encoding;
@@ -1073,6 +1078,7 @@ void SceneLoader::loadProject(const QString &path)
             m_project->removeModel(model);
             m_project->deleteModel(model);
         }
+        updateDepthBuffer(shadowMapSize());
         sort(true);
         m_project->setDirty(false);
         emit projectDidLoad(true);
@@ -1185,66 +1191,70 @@ void SceneLoader::renderModels()
     }
 }
 
-void SceneLoader::renderZPlot(QGLFramebufferObject *renderTarget)
+void SceneLoader::renderZPlot()
 {
     Scene::IMatrices *matrices = m_project->matrices();
     Scene::ILight *light = m_project->light();
-    /* デプスバッファがある場合はシャドウマッピングを有効にし、ない場合は無効にする */
-    if (renderTarget) {
-        QMatrix4x4 shadowMatrix;
-        Vector3 center;
-        Scalar radius;
-        float shadowMatrix4x4[16];
-        /* プロジェクトにバウンディングスフィアの設定があればそちらを適用し、無ければ計算する */
-        const Vector4 &boundingSphere = shadowBoundingSphere();
-        if (!boundingSphere.isZero() && !btFuzzyZero(boundingSphere.w())) {
-            center = boundingSphere;
-            radius = boundingSphere.w();
-        }
-        else {
-            getBoundingSphere(center, radius);
-        }
-        getBoundingSphere(center, radius);
-        const Scalar &angle = 45;
-        const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
-        const Scalar &margin = 50;
-        const Vector3 &eye = -light->direction() * radius * 2 + center;
-        shadowMatrix.perspective(angle, 1, 1, distance + radius + margin);
-        shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
-                            QVector3D(center.x(), center.y(), center.z()),
-                            QVector3D(0, 1, 0));
-        for (int i = 0; i < 16; i++)
-            shadowMatrix4x4[i] = shadowMatrix.constData()[i];
-        matrices->setLightViewProjection(shadowMatrix4x4);
-        /* デプスバッファのテクスチャにレンダリング */
-        glDisable(GL_BLEND);
-        renderTarget->bind();
-        glViewport(0, 0, renderTarget->width(), renderTarget->height());
-        glClearColor(1, 1, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        const int nobjects = m_renderOrderList.count();
-        for (int i = 0; i < nobjects; i++) {
-            const QUuid &uuid = m_renderOrderList[i];
-            const Project::UUID &uuidString = uuid.toString().toStdString();
-            if (IModel *model = m_project->model(uuidString)) {
-                IRenderEngine *engine = m_project->renderEngine(model);
-                engine->renderZPlot();
-            }
-        }
-        renderTarget->release();
-        glEnable(GL_BLEND);
-        /* デプスバッファの読み込みに必要な行列を作成する */
-        QMatrix4x4 m;
-        m.scale(0.5);
-        m.translate(1, 1, 1);
-        shadowMatrix = m * shadowMatrix;
-        for (int i = 0; i < 16; i++)
-            shadowMatrix4x4[i] = shadowMatrix.constData()[i];
-        matrices->setLightViewProjection(shadowMatrix4x4);
+    QMatrix4x4 shadowMatrix;
+    Vector3 center;
+    Scalar radius;
+    float shadowMatrix4x4[16];
+    /* プロジェクトにバウンディングスフィアの設定があればそちらを適用し、無ければ計算する */
+    const Vector4 &boundingSphere = shadowBoundingSphere();
+    if (!boundingSphere.isZero() && !btFuzzyZero(boundingSphere.w())) {
+        center = boundingSphere;
+        radius = boundingSphere.w();
     }
     else {
-        light->setShadowMappingTexture(0);
+        getBoundingSphere(center, radius);
     }
+    const Scalar &angle = 45;
+    const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
+    const Scalar &margin = 50;
+    const Vector3 &eye = -light->direction() * radius * 2 + center;
+    shadowMatrix.perspective(angle, 1, 1, distance + radius + margin);
+    shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
+                        QVector3D(center.x(), center.y(), center.z()),
+                        QVector3D(0, 1, 0));
+    for (int i = 0; i < 16; i++)
+        shadowMatrix4x4[i] = shadowMatrix.constData()[i];
+    matrices->setLightViewProjection(shadowMatrix4x4);
+    /* デプスバッファのテクスチャにレンダリング */
+    glDisable(GL_BLEND);
+    m_depthBuffer->bind();
+    glViewport(0, 0, m_depthBuffer->width(), m_depthBuffer->height());
+    glClearColor(1, 1, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    const int nobjects = m_renderOrderList.count();
+    for (int i = 0; i < nobjects; i++) {
+        const QUuid &uuid = m_renderOrderList[i];
+        const Project::UUID &uuidString = uuid.toString().toStdString();
+        if (IModel *model = m_project->model(uuidString)) {
+            IRenderEngine *engine = m_project->renderEngine(model);
+            engine->renderZPlot();
+        }
+    }
+    m_depthBuffer->release();
+    glEnable(GL_BLEND);
+    /* デプスバッファの読み込みに必要な行列を作成する */
+    QMatrix4x4 m;
+    m.scale(0.5);
+    m.translate(1, 1, 1);
+    shadowMatrix = m * shadowMatrix;
+    for (int i = 0; i < 16; i++)
+        shadowMatrix4x4[i] = shadowMatrix.constData()[i];
+    matrices->setLightViewProjection(shadowMatrix4x4);
+    light->setShadowMappingTexture(&m_depthBufferID);
+}
+
+void SceneLoader::updateDepthBuffer(const QSize &value)
+{
+    delete m_depthBuffer;
+    if (!value.isEmpty())
+        m_depthBuffer = new QGLFramebufferObject(value, QGLFramebufferObject::Depth);
+    else
+        m_depthBuffer = new QGLFramebufferObject(1024, 1024, QGLFramebufferObject::Depth);
+    m_depthBufferID = m_depthBuffer->texture();
 }
 
 void SceneLoader::updateMatrices(const QSizeF &size)
@@ -1841,6 +1851,7 @@ void SceneLoader::setShadowMapSize(const QSize &value)
         QString str;
         str.sprintf("%d,%d,0", value.width(), value.height());
         m_project->setGlobalSetting("shadow.texture.size", str.toStdString());
+        updateDepthBuffer(value);
     }
 }
 

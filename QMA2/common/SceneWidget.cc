@@ -72,7 +72,6 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_grid(0),
     m_info(0),
     m_handles(0),
-    m_depthBuffer(0),
     m_editMode(kSelect),
     m_totalDelta(0.0f),
     m_lastDistance(0.0f),
@@ -113,8 +112,6 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
 
 SceneWidget::~SceneWidget()
 {
-    delete m_depthBuffer;
-    m_depthBuffer = 0;
     delete m_handles;
     m_handles = 0;
     delete m_info;
@@ -184,9 +181,6 @@ void SceneWidget::loadProject(const QString &filename)
     dialog->setCancelButton(0);
     clearSelectedBones();
     m_loader->loadProject(filename);
-    /* 設定を読み込んでからじゃないとプロジェクト設定にあるテクスチャサイズを取得できない */
-    delete m_depthBuffer;
-    m_depthBuffer = new QGLFramebufferObject(m_loader->shadowMapSize(), QGLFramebufferObject::Depth);
 }
 
 void SceneWidget::saveProject(const QString &filename)
@@ -834,8 +828,6 @@ void SceneWidget::initializeGL()
     m_loader = new SceneLoader(m_encoding, m_factory);
     connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     const QSize &s = size();
-    /* セルフシャドウ用の深度バッファを作成 */
-    m_depthBuffer = new QGLFramebufferObject(QSize(1024, 1024), QGLFramebufferObject::Depth);
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
     m_debugDrawer = new DebugDrawer();
@@ -848,6 +840,7 @@ void SceneWidget::initializeGL()
     m_info->load();
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
+    m_loader->updateDepthBuffer(QSize());
 #endif
     m_info->setModel(0);
     m_info->setBones(QList<IBone *>(), "");
@@ -1067,22 +1060,13 @@ void SceneWidget::paintGL()
 #ifdef IS_QMA2
     qglClearColor(m_loader->screenColor());
     Scene *scene = m_loader->scene();
-    Scene::ILight *light = scene->light();
-    /*
-     * setShadowMappingTexture にはポインタで渡す仕様でかつ、
-     * ローカル変数に置いているが、renderModels は同じスコープで使用するため問題ない
-     */
-    GLuint depthTextureID = 0;
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     if (m_editMode != kSelect) {
-        m_loader->renderZPlot(m_depthBuffer);
-        depthTextureID = m_depthBuffer->texture();
-        light->setShadowMappingTexture(&depthTextureID);
-        light->setToonEnable(true);
+        m_loader->renderZPlot();
+        scene->light()->setToonEnable(true);
     }
     else {
-        m_loader->renderZPlot(0);
-        light->setToonEnable(false);
+        scene->light()->setToonEnable(false);
     }
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     glViewport(0, 0, width(), height());
