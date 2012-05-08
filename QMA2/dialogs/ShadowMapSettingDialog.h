@@ -65,6 +65,8 @@ private slots:
     void toggleLightViewParameter(bool value);
 
 private:
+    QDoubleSpinBox *createSpinBox(double min, double max);
+
     QLabel *m_sizeLabel;
     QComboBox *m_sizeComboBox;
     QCheckBox *m_enableSoftShadow;

@@ -53,15 +53,11 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     m_enableSoftShadow = new QCheckBox();
     m_enableAutoLightView = new QCheckBox();
     m_centerLabel = new QLabel();
-    m_x = new QDoubleSpinBox();
-    m_x->setRange(-zfar, zfar);
-    m_y = new QDoubleSpinBox();
-    m_y->setRange(-zfar, zfar);
-    m_z = new QDoubleSpinBox();
-    m_z->setRange(-zfar, zfar);
+    m_x = createSpinBox(-zfar, zfar);
+    m_y = createSpinBox(-zfar, zfar);
+    m_z = createSpinBox(-zfar, zfar);
     m_radiusLabel = new QLabel();
-    m_radius = new QDoubleSpinBox();
-    m_radius->setRange(0.0, zfar);
+    m_radius = createSpinBox(0.0, zfar);
     m_enableSoftShadow->setChecked(loader->isSoftShadowEnabled());
     m_boundingSphere = loader->shadowBoundingSphere();
     bool autoLightView = m_boundingSphere.isZero() && btFuzzyZero(m_boundingSphere.w());
@@ -104,7 +100,7 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     connect(this, SIGNAL(boundingSphereDidChange(vpvl2::Vector4)), loader, SLOT(setShadowBoundingSphere(vpvl2::Vector4)));
     mainLayout->addWidget(button);
     setLayout(mainLayout);
-    setWindowTitle("Shadow map setting");
+    setWindowTitle(tr("Shadow map setting"));
     retranslate();
 }
 
@@ -155,4 +151,12 @@ void ShadowMapSettingDialog::toggleLightViewParameter(bool value)
         m_radius->setEnabled(true);
         m_enableAutoLightView->setChecked(false);
     }
+}
+
+QDoubleSpinBox *ShadowMapSettingDialog::createSpinBox(double min, double max)
+{
+    QDoubleSpinBox *spinBox = new QDoubleSpinBox();
+    spinBox->setRange(min, max);
+    spinBox->setAlignment(Qt::AlignLeft);
+    return spinBox;
 }
