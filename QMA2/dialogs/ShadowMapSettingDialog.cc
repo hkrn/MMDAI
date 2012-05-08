@@ -79,16 +79,19 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
         size = powl(2, i);
         i++;
     }
+    QVBoxLayout *mainLayout = new QVBoxLayout();
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(m_sizeLabel, m_sizeComboBox);
+    mainLayout->addLayout(formLayout);
+    formLayout = new QFormLayout();
     QFormLayout *subLayout = new QFormLayout();
     subLayout->addRow("X", m_x);
     subLayout->addRow("Y", m_y);
     subLayout->addRow("Z", m_z);
     formLayout->addRow(m_centerLabel, subLayout);
     formLayout->addRow(m_radiusLabel, m_radius);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(m_enableSoftShadow);
+    // TODO: implement soft shadow
+    //mainLayout->addWidget(m_enableSoftShadow);
     mainLayout->addWidget(m_enableAutoLightView);
     mainLayout->addLayout(formLayout);
     QDialogButtonBox *button = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
