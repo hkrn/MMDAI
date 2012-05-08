@@ -62,17 +62,20 @@ signals:
 private slots:
     void retranslate();
     void emitSignals();
+    void toggleLightViewParameter(bool value);
 
 private:
     QLabel *m_sizeLabel;
     QComboBox *m_sizeComboBox;
+    QCheckBox *m_enableSoftShadow;
+    QCheckBox *m_enableAutoLightView;
     QLabel *m_centerLabel;
     QDoubleSpinBox *m_x;
     QDoubleSpinBox *m_y;
     QDoubleSpinBox *m_z;
     QLabel *m_radiusLabel;
     QDoubleSpinBox *m_radius;
-    QCheckBox *m_enableSoftShadow;
+    vpvl2::Vector4 m_boundingSphere;
 };
 
 #endif // SHADOWMAPSETTINGDIALOG_H

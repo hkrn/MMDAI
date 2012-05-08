@@ -50,6 +50,8 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     const Scalar zfar = camera->zfar();
     m_sizeLabel = new QLabel();
     m_sizeComboBox = new QComboBox();
+    m_enableSoftShadow = new QCheckBox();
+    m_enableAutoLightView = new QCheckBox();
     m_centerLabel = new QLabel();
     m_x = new QDoubleSpinBox();
     m_x->setRange(-zfar, zfar);
@@ -60,24 +62,17 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     m_radiusLabel = new QLabel();
     m_radius = new QDoubleSpinBox();
     m_radius->setRange(0.0, zfar);
-    m_enableSoftShadow = new QCheckBox();
     m_enableSoftShadow->setChecked(loader->isSoftShadowEnabled());
-    const Vector4 &boundingSphere = loader->shadowBoundingSphere();
-    if (!boundingSphere.isZero() && btFuzzyZero(boundingSphere.w())) {
-        m_x->setValue(boundingSphere.x());
-        m_y->setValue(boundingSphere.y());
-        m_z->setValue(boundingSphere.z());
-        m_radius->setValue(boundingSphere.w());
-    }
-    else {
+    m_boundingSphere = loader->shadowBoundingSphere();
+    bool autoLightView = m_boundingSphere.isZero() && btFuzzyZero(m_boundingSphere.w());
+    if (autoLightView) {
         Vector3 center;
         Scalar radius;
         loader->getBoundingSphere(center, radius);
-        m_x->setValue(center.x());
-        m_y->setValue(center.y());
-        m_z->setValue(center.z());
-        m_radius->setValue(radius);
+        m_boundingSphere.setValue(center.x(), center.y(), center.z(), radius);
     }
+    toggleLightViewParameter(autoLightView);
+    connect(m_enableAutoLightView, SIGNAL(toggled(bool)), SLOT(toggleLightViewParameter(bool)));
     int i = 8, size = 128, max;
     const qreal swidth = loader->shadowMapSize().width();
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
@@ -97,8 +92,9 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     formLayout->addRow(m_centerLabel, subLayout);
     formLayout->addRow(m_radiusLabel, m_radius);
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(formLayout);
     mainLayout->addWidget(m_enableSoftShadow);
+    mainLayout->addWidget(m_enableAutoLightView);
+    mainLayout->addLayout(formLayout);
     QDialogButtonBox *button = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(button, SIGNAL(accepted()), SLOT(accept()));
     connect(button, SIGNAL(rejected()), SLOT(reject()));
@@ -122,6 +118,7 @@ void ShadowMapSettingDialog::retranslate()
     m_centerLabel->setText(tr("Center"));
     m_radiusLabel->setText(tr("Radius"));
     m_enableSoftShadow->setText(tr("Enable soft shadow"));
+    m_enableAutoLightView->setText(tr("Calculate light view automatically"));
 }
 
 void ShadowMapSettingDialog::emitSignals()
@@ -132,4 +129,30 @@ void ShadowMapSettingDialog::emitSignals()
     emit sizeDidChange(QSize(size, size));
     emit softShadowDidEnable(enableSoftShadow);
     emit boundingSphereDidChange(boundingSphere);
+}
+
+void ShadowMapSettingDialog::toggleLightViewParameter(bool value)
+{
+    if (value) {
+        m_x->setValue(0);
+        m_y->setValue(0);
+        m_z->setValue(0);
+        m_radius->setValue(0);
+        m_x->setEnabled(false);
+        m_y->setEnabled(false);
+        m_z->setEnabled(false);
+        m_radius->setEnabled(false);
+        m_enableAutoLightView->setChecked(true);
+    }
+    else {
+        m_x->setValue(m_boundingSphere.x());
+        m_y->setValue(m_boundingSphere.y());
+        m_z->setValue(m_boundingSphere.z());
+        m_radius->setValue(m_boundingSphere.w());
+        m_x->setEnabled(true);
+        m_y->setEnabled(true);
+        m_z->setEnabled(true);
+        m_radius->setEnabled(true);
+        m_enableAutoLightView->setChecked(false);
+    }
 }
