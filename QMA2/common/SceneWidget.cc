@@ -244,6 +244,13 @@ void SceneWidget::setModelProjectiveShadowEnable(bool value)
     refreshMotions();
 }
 
+void SceneWidget::setModelSelfShadowEnable(bool value)
+{
+    if (IModel *model = m_loader->selectedModel())
+        m_loader->setSelfShadowEnable(model, value);
+    refreshMotions();
+}
+
 void SceneWidget::setHandlesVisible(bool value)
 {
     m_handles->setVisible(value);

@@ -56,9 +56,19 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     /* エッジ色 */
     m_edgeColorDialogOpenButton = new QPushButton();
     connect(m_edgeColorDialogOpenButton, SIGNAL(clicked()), SLOT(openEdgeColorDialog()));
-    m_projectiveShadowCheckbox = new QCheckBox();
-    connect(m_projectiveShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidChange(bool)));
+    /* 影の種類の選択 */
+    m_noShadowCheckbox = new QRadioButton();
+    m_noShadowCheckbox->setChecked(true);
+    m_projectiveShadowCheckbox = new QRadioButton();
+    connect(m_projectiveShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidEnable(bool)));
     m_projectiveShadowCheckbox->setEnabled(false);
+    m_selfShadowCheckbox = new QRadioButton();
+    connect(m_selfShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(selfShadowDidEnable(bool)));
+    m_selfShadowCheckbox->setEnabled(false);
+    m_radioButtonsGroup = new QButtonGroup();
+    m_radioButtonsGroup->addButton(m_noShadowCheckbox);
+    m_radioButtonsGroup->addButton(m_projectiveShadowCheckbox);
+    m_radioButtonsGroup->addButton(m_selfShadowCheckbox);
     /* モデルの位置(X,Y,Z) */
     const Scalar &zfar = 10000;
     QFormLayout *formLayout = new QFormLayout();
@@ -82,13 +92,18 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     m_rotationGroup->setLayout(formLayout);
     /* 構築 */
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    QHBoxLayout *subLayout = new QHBoxLayout();
+    QLayout *subLayout = new QHBoxLayout();
     subLayout->setAlignment(Qt::AlignCenter);
     subLayout->addWidget(m_edgeOffsetLabel);
     subLayout->addWidget(m_edgeOffsetSpinBox);
     subLayout->addWidget(m_edgeColorDialogOpenButton);
     mainLayout->addLayout(subLayout);
-    mainLayout->addWidget(m_projectiveShadowCheckbox, 0, Qt::AlignCenter);
+    subLayout = new QVBoxLayout();
+    subLayout->addWidget(m_noShadowCheckbox);
+    subLayout->addWidget(m_projectiveShadowCheckbox);
+    subLayout->addWidget(m_selfShadowCheckbox);
+    mainLayout->addLayout(subLayout);
+    mainLayout->setAlignment(subLayout, Qt::AlignCenter);
     subLayout = new QHBoxLayout();
     subLayout->addWidget(m_positionGroup);
     subLayout->addWidget(m_rotationGroup);
@@ -106,7 +121,9 @@ void ModelSettingWidget::retranslate()
 {
     m_edgeOffsetLabel->setText(tr("Edge offset:"));
     m_edgeColorDialogOpenButton->setText(tr("Color"));
+    m_noShadowCheckbox->setText(tr("Disable shadow"));
     m_projectiveShadowCheckbox->setText(tr("Enable projective shadow"));
+    m_selfShadowCheckbox->setText(tr("Enable self shadow"));
     m_positionGroup->setTitle(tr("Position offset"));
     m_rotationGroup->setTitle(tr("Rotation offset"));
 }
@@ -126,6 +143,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         // FIXME: m_edgeOffsetSpinBox->setValue(model->edgeOffset());
         m_edgeOffsetSpinBox->setEnabled(true);
         m_projectiveShadowCheckbox->setEnabled(true);
+        m_selfShadowCheckbox->setEnabled(true);
         const Vector3 &color = kZeroC; // FIXME: model->edgeColor();
         QColor c;
         c.setRedF(color.x());
@@ -135,9 +153,11 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_edgeColorDialog->setCurrentColor(c);
         if (loader) {
             m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
+            m_selfShadowCheckbox->setChecked(loader->isSelfShadowEnabled(model));
         }
         else {
             m_projectiveShadowCheckbox->setChecked(false);
+            m_selfShadowCheckbox->setChecked(false);
         }
         const Vector3 &position = model->position();
         m_px->setValue(position.x());
@@ -159,6 +179,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_edgeOffsetSpinBox->setValue(0.0f);
         m_edgeOffsetSpinBox->setEnabled(false);
         m_projectiveShadowCheckbox->setEnabled(false);
+        m_selfShadowCheckbox->setEnabled(false);
         m_px->setValue(0.0);
         m_py->setValue(0.0);
         m_pz->setValue(0.0);

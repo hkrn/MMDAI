@@ -44,12 +44,13 @@ namespace vpvl2 {
 class IModel;
 }
 
-class QCheckBox;
+class QButtonGroup;
 class QColorDialog;
 class QDoubleSpinBox;
 class QGroupBox;
 class QLabel;
 class QPushButton;
+class QRadioButton;
 class SceneLoader;
 
 class ModelSettingWidget : public QWidget
@@ -65,7 +66,8 @@ signals:
     void edgeColorDidChange(const QColor &color);
     void positionOffsetDidChange(const vpvl2::Vector3 &value);
     void rotationOffsetDidChange(const vpvl2::Vector3 &value);
-    void projectiveShadowDidChange(bool value);
+    void projectiveShadowDidEnable(bool value);
+    void selfShadowDidEnable(bool value);
 
 private slots:
     void retranslate();
@@ -85,7 +87,10 @@ private:
     QDoubleSpinBox *m_edgeOffsetSpinBox;
     QPushButton *m_edgeColorDialogOpenButton;
     QColorDialog *m_edgeColorDialog;
-    QCheckBox *m_projectiveShadowCheckbox;
+    QButtonGroup *m_radioButtonsGroup;
+    QRadioButton *m_noShadowCheckbox;
+    QRadioButton *m_projectiveShadowCheckbox;
+    QRadioButton *m_selfShadowCheckbox;
     QDoubleSpinBox *m_px;
     QDoubleSpinBox *m_py;
     QDoubleSpinBox *m_pz;

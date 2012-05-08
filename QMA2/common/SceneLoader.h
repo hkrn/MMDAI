@@ -121,6 +121,8 @@ public:
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
+    bool isSelfShadowEnabled(const vpvl2::IModel *model) const;
+    void setSelfShadowEnable(const vpvl2::IModel *model, bool value);
     vpvl2::IModel *selectedModel() const;
     bool isModelSelected(const vpvl2::IModel *value) const;
     void setModelEdgeColor(vpvl2::IModel *model, const QColor &value);

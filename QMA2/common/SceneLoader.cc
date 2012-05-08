@@ -1179,7 +1179,7 @@ void SceneLoader::renderModels()
         if (IModel *model = m_project->model(uuidString)) {
             IRenderEngine *engine = m_project->renderEngine(model);
 #ifdef IS_QMA2
-            if (isProjectiveShadowEnabled(model)) {
+            if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
 #else
             if (true) {
 #endif
@@ -1229,7 +1229,8 @@ void SceneLoader::renderZPlot()
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->model(uuidString)) {
+        IModel *model = m_project->model(uuidString);
+        if (model && isSelfShadowEnabled(model)) {
             IRenderEngine *engine = m_project->renderEngine(model);
             engine->renderZPlot();
         }
@@ -1456,6 +1457,17 @@ void SceneLoader::setProjectiveShadowEnable(const IModel *model, bool value)
 {
     if (m_project)
         m_project->setModelSetting(model, "shadow.projective", value ? "true" : "false");
+}
+
+bool SceneLoader::isSelfShadowEnabled(const IModel *model) const
+{
+    return m_project ? m_project->modelSetting(model, "shadow.ss") == "true" : false;
+}
+
+void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
+{
+    if (m_project)
+        m_project->setModelSetting(model, "shadow.ss", value ? "true" : "false");
 }
 
 IModel *SceneLoader::selectedModel() const
