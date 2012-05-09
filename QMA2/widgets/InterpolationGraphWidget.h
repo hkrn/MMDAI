@@ -37,13 +37,13 @@
 #ifndef INTERPOLATIONGRAPHWIDGET_H
 #define INTERPOLATIONGRAPHWIDGET_H
 
-#include "models/BoneMotionModel.h"
-#include "models/SceneMotionModel.h"
-
+#include <QtGui/QAbstractItemView>
 #include <QtGui/QWidget>
 #include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/ICameraKeyframe.h>
 
+class BoneMotionModel;
+class SceneMotionModel;
 class QComboBox;
 class QHBoxLayout;
 
@@ -63,6 +63,7 @@ public:
     InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
     ~InterpolationGraphWidget();
 
+    void setModelIndices(const QModelIndexList &indices);
     void setType(Type value) { m_type = value; }
 
 public slots:
@@ -84,8 +85,6 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private slots:
-    void setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames);
-    void setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames);
     void setIndex(int value);
 
 private:

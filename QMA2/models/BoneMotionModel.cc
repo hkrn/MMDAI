@@ -280,7 +280,7 @@ public:
         /* すべてのキーフレーム情報を登録する */
         foreach (const BoneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
-            BoneMotionModel::KeyFramePtr data = pair.second;
+            const BoneMotionModel::KeyFramePtr &data = pair.second;
             IBoneKeyframe *boneKeyframe = data.data();
             /* キーフレームの対象ボーン名を取得する */
             if (boneKeyframe) {
@@ -398,14 +398,6 @@ private:
     PMDMotionModel::State m_oldState;
     PMDMotionModel::State m_newState;
 };
-
-static IBone *UIBoneFromModelIndex(const QModelIndex &index, IModel *model)
-{
-    /* QModelIndex -> TreeIndex -> ByteArray -> Bone の順番で対象のボーンを求めて選択状態にする作業 */
-    TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-    internal::String s(item->name());
-    return model->findBone(&s);
-}
 
 static const Quaternion UIRotateGlobalAxisAngle(const IBone *bone, const Scalar &value, int flags)
 {
@@ -555,7 +547,6 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
     KeyFramePairList boneFrames;
     IModel *model = selectedModel();
-    QScopedPointer<IBoneKeyframe> newBoneKeyframe;
     /* モデルのインデックスを参照し、存在するボーンに対してボーンの現在の値からボーンのキーフレームにコピーする */
     foreach (const QModelIndex &index, indices) {
         int frameIndex = toFrameIndex(index);
@@ -565,12 +556,12 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
             IBone *bone = model->findBone(&s);
             if (bone) {
                 /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
-                newBoneKeyframe.reset(m_factory->createBoneKeyframe());
-                newBoneKeyframe->setDefaultInterpolationParameter();
-                newBoneKeyframe->setName(bone->name());
-                newBoneKeyframe->setPosition(bone->position());
-                newBoneKeyframe->setRotation(bone->rotation());
-                boneFrames.append(KeyFramePair(frameIndex, KeyFramePtr(newBoneKeyframe.take())));
+                KeyFramePtr newKeyframe(m_factory->createBoneKeyframe());
+                newKeyframe->setDefaultInterpolationParameter();
+                newKeyframe->setName(bone->name());
+                newKeyframe->setPosition(bone->position());
+                newKeyframe->setRotation(bone->rotation());
+                boneFrames.append(KeyFramePair(frameIndex, newKeyframe));
             }
         }
     }
@@ -582,18 +573,17 @@ void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices
     if (m_model && m_motion) {
         /* 前回呼ばれた copyFrames で作成したデータを破棄しておく */
         m_copiedKeyframes.clear();
-        QScopedPointer<IBoneKeyframe> newBoneKeyframe;
         /* モデル内のすべてのボーン名を参照し、データがあるものだけを BoneKeyFrame に移しておく */
         foreach (const QModelIndex &index, indices) {
             if (index.isValid()) {
                 const QVariant &variant = index.data(kBinaryDataRole);
                 if (variant.canConvert(QVariant::ByteArray)) {
                     const QByteArray &bytes = variant.toByteArray();
-                    newBoneKeyframe.reset(m_factory->createBoneKeyframe());
-                    newBoneKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                    KeyFramePtr newKeyframe(m_factory->createBoneKeyframe());
+                    newKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                     /* 予め差分をとっておき、pasteKeyframes でペースト先の差分をたすようにする */
-                    int diff = newBoneKeyframe->frameIndex() - frameIndex;
-                    m_copiedKeyframes.append(KeyFramePair(diff, KeyFramePtr(newBoneKeyframe.take())));
+                    int diff = newKeyframe->frameIndex() - frameIndex;
+                    m_copiedKeyframes.append(KeyFramePair(diff, newKeyframe));
                 }
             }
         }
@@ -608,15 +598,14 @@ void BoneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
          * m_frames のデータを引数のフレームインデックスと一緒に積ませて SetFramesCommand として作成する
          * m_frames のデータは破棄されないので、#copyFrames で破棄するようになってる
          */
-        KeyFramePairList frames;
-        QScopedPointer<IBoneKeyframe> newBoneKeyframe;
+        KeyFramePairList keyframes;
         foreach (const KeyFramePair &pair, m_copiedKeyframes) {
-            newBoneKeyframe.reset(pair.second->clone());
+            KeyFramePtr keyframe(pair.second->clone());
             /* コピー先にフレームインデックスを更新する */
             int newFrameIndex = frameIndex + pair.first;
-            frames.append(KeyFramePair(newFrameIndex, KeyFramePtr(newBoneKeyframe.take())));
+            keyframes.append(KeyFramePair(newFrameIndex, keyframe));
         }
-        addUndoCommand(new SetFramesCommand(this, frames));
+        addUndoCommand(new SetFramesCommand(this, keyframes));
     }
 }
 
@@ -627,12 +616,13 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
     QSet<QString> registered;
     /* m_frames が #copyFrames でコピーされていること前提 */
     if (m_model && m_motion && !m_copiedKeyframes.isEmpty()) {
-        KeyFramePairList frames;
-        QScopedPointer<IBoneKeyframe> frame, newFrame;
+        KeyFramePairList keyframes;
+        KeyFramePtr newKeyframe;
+        QScopedPointer<IBoneKeyframe> keyframe;
         /* 基本的な処理は pasteFrame と同等だが、「左」「右」の名前を持つボーンは特別扱い */
         foreach (const KeyFramePair &pair, m_copiedKeyframes) {
-            frame.reset(pair.second->clone());
-            const QString &name = internal::toQString(frame->name());
+            keyframe.reset(pair.second->clone());
+            const QString &name = internal::toQString(keyframe->name());
             /* 二重登録防止のため、「左」「右」はどちらか出てきたら処理は一回のみ */
             if (!registered.contains(name)) {
                 bool isRight = name.startsWith(right);
@@ -645,25 +635,25 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
                     else if (isLeft)
                         key.replace(left, right);
                     internal::String s(key);
-                    newFrame.reset(frame->clone());
-                    newFrame->setName(&s);
-                    Vector3 position = newFrame->position();
+                    newKeyframe = KeyFramePtr(keyframe->clone());
+                    newKeyframe->setName(&s);
+                    Vector3 position = newKeyframe->position();
                     position.setValue(-position.x(), position.y(), position.z());
-                    newFrame->setPosition(position);
-                    Quaternion rotation = newFrame->rotation();
+                    newKeyframe->setPosition(position);
+                    Quaternion rotation = newKeyframe->rotation();
                     rotation.setValue(rotation.x(), -rotation.y(), -rotation.z(), rotation.w());
-                    newFrame->setRotation(rotation);
+                    newKeyframe->setRotation(rotation);
                     registered.insert(key);
                 }
             }
             else {
-                newFrame.reset(pair.second->clone());
+                newKeyframe = KeyFramePtr(pair.second->clone());
             }
             /* コピー先にフレームインデックスを更新する */
             int newFrameIndex = frameIndex + pair.first;
-            frames.append(KeyFramePair(newFrameIndex, KeyFramePtr(newFrame.take())));
+            keyframes.append(KeyFramePair(newFrameIndex, newKeyframe));
         }
-        addUndoCommand(new SetFramesCommand(this, frames));
+        addUndoCommand(new SetFramesCommand(this, keyframes));
     }
 }
 
@@ -695,29 +685,6 @@ void BoneMotionModel::commitTransform()
     }
 }
 
-void BoneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
-{
-    if (m_model) {
-        QList<IBone *> bones;
-        QList<KeyFramePtr> frames;
-        QScopedPointer<IBoneKeyframe> boneKeyframe;
-        foreach (const QModelIndex &index, indices) {
-            if (index.isValid()) {
-                IBone *bone = UIBoneFromModelIndex(index, m_model);
-                if (bone)
-                    bones.append(bone);
-                const QVariant &data = index.data(kBinaryDataRole);
-                if (data.canConvert(QVariant::ByteArray)) {
-                    boneKeyframe.reset(m_factory->createBoneKeyframe());
-                    boneKeyframe->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
-                    frames.append(KeyFramePtr(boneKeyframe.take()));
-                }
-            }
-        }
-        emit keyframesDidSelect(frames);
-    }
-}
-
 const QString BoneMotionModel::nameFromModelIndex(const QModelIndex &index) const
 {
     return static_cast<TreeItem *>(index.internalPointer())->name();
@@ -737,6 +704,20 @@ const QModelIndexList BoneMotionModel::modelIndicesFromBones(const QList<IBone *
     return indices;
 }
 
+BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(const QModelIndexList &indices) const
+{
+    KeyFramePairList keyframes;
+    foreach (const QModelIndex &index, indices) {
+        const QVariant &variant = index.data(BoneMotionModel::kBinaryDataRole);
+        if (variant.canConvert(QVariant::ByteArray)) {
+            KeyFramePtr keyframe(m_factory->createBoneKeyframe());
+            keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+            keyframes.append(KeyFramePair(MotionBaseModel::toFrameIndex(index), keyframe));
+        }
+    }
+    return keyframes;
+}
+
 void BoneMotionModel::loadPose(VPDFilePtr pose, IModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
@@ -752,18 +733,18 @@ void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int frameIndex)
 {
     if (model == m_model) {
         VPDFile::BoneList bones;
-        QScopedPointer<IBoneKeyframe> boneKeyframe;
+        QScopedPointer<IBoneKeyframe> keyframe;
         /* モデルにある全てのボーンを参照し、現在のキーフレームでデータが入ってるものを VPDFile::Bone に変換する */
         foreach (ITreeItem *item, keys()) {
             const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
             const QVariant &variant = modelIndex.data(BoneMotionModel::kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 VPDFile::Bone *bone = new VPDFile::Bone();
-                boneKeyframe.reset(m_factory->createBoneKeyframe());
-                boneKeyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-                const Quaternion &q = boneKeyframe->rotation();
-                bone->name = internal::toQString(boneKeyframe->name());
-                bone->position = boneKeyframe->position();
+                keyframe.reset(m_factory->createBoneKeyframe());
+                keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+                const Quaternion &q = keyframe->rotation();
+                bone->name = internal::toQString(keyframe->name());
+                bone->position = keyframe->position();
                 bone->rotation = Vector4(q.x(), q.y(), q.z(), q.w());
                 bones.append(bone);
             }
@@ -866,32 +847,32 @@ void BoneMotionModel::loadMotion(IMotion *motion, IModel *model)
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {
-        const int nBoneFrames = motion->countKeyframes(IKeyframe::kBone);
+        const int nkeyframes = motion->countKeyframes(IKeyframe::kBone);
         const Keys &keys = this->keys();
-        QScopedPointer<IBoneKeyframe> newBoneKeyframe;
+        QScopedPointer<IBoneKeyframe> newKeyframe;
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
-        for (int i = 0; i < nBoneFrames; i++) {
-            const IBoneKeyframe *frame = motion->findBoneKeyframeAt(i);
-            const IString *name = frame->name();
+        for (int i = 0; i < nkeyframes; i++) {
+            const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
+            const IString *name = keyframe->name();
             const QString &key = internal::toQString(name);
             if (keys.contains(key)) {
-                int frameIndex = static_cast<int>(frame->frameIndex());
-                QByteArray bytes(frame->estimateSize(), '0');
+                int frameIndex = static_cast<int>(keyframe->frameIndex());
+                QByteArray bytes(keyframe->estimateSize(), '0');
                 ITreeItem *item = keys[key];
                 /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
-                newBoneKeyframe.reset(m_factory->createBoneKeyframe());
-                newBoneKeyframe->setName(name);
-                newBoneKeyframe->setPosition(frame->position());
-                newBoneKeyframe->setRotation(frame->rotation());
-                newBoneKeyframe->setFrameIndex(frameIndex);
+                newKeyframe.reset(m_factory->createBoneKeyframe());
+                newKeyframe->setName(name);
+                newKeyframe->setPosition(keyframe->position());
+                newKeyframe->setRotation(keyframe->rotation());
+                newKeyframe->setFrameIndex(frameIndex);
                 QuadWord v;
                 for (int i = 0; i < IBoneKeyframe::kMax; i++) {
                     IBoneKeyframe::InterpolationType type = static_cast<IBoneKeyframe::InterpolationType>(i);
-                    frame->getInterpolationParameter(type, v);
-                    newBoneKeyframe->setInterpolationParameter(type, v);
+                    keyframe->getInterpolationParameter(type, v);
+                    newKeyframe->setInterpolationParameter(type, v);
                 }
-                newBoneKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                newKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 /* キーフレームのバイナリデータが QModelIndex の QVariant に登録される。この方が管理が楽になる */
                 setData(modelIndex, bytes);
             }
@@ -935,17 +916,16 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
 {
     KeyFramePairList frames;
     /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
-    QScopedPointer<IBoneKeyframe> clonedFrame;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (IBone *bone = item->bone()) {
-                IBoneKeyframe *frameToDelete = m_motion->findBoneKeyframe(toFrameIndex(index), bone->name());
-                if (frameToDelete) {
-                    clonedFrame.reset(frameToDelete->clone());
+                IBoneKeyframe *keyframeToDelete = m_motion->findBoneKeyframe(toFrameIndex(index), bone->name());
+                if (keyframeToDelete) {
+                    KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
-                    clonedFrame->setFrameIndex(-1);
-                    frames.append(KeyFramePair(frameToDelete->frameIndex(), KeyFramePtr(clonedFrame.take())));
+                    clonedKeyframe->setFrameIndex(-1);
+                    frames.append(KeyFramePair(keyframeToDelete->frameIndex(), clonedKeyframe));
                 }
             }
         }
@@ -959,14 +939,13 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
 {
     KeyFramePairList keyframes;
     Quaternion newRotation;
-    QScopedPointer<IBoneKeyframe> keyframe;
     foreach (const QModelIndex &index, indices) {
         if (index.isValid()) {
             /* QModelIndex からキーフレームを取得し、その中に入っている値を補正する */
             const QVariant &variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 const QByteArray &bytes = variant.toByteArray();
-                keyframe.reset(m_factory->createBoneKeyframe());
+                KeyFramePtr keyframe(m_factory->createBoneKeyframe());
                 keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                 const Quaternion &oldRotation = keyframe->rotation();
                 newRotation.setX(oldRotation.x() * rotation.x());
@@ -977,7 +956,7 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
                     newRotation.normalize();
                 keyframe->setPosition(keyframe->position() * position);
                 keyframe->setRotation(newRotation);
-                keyframes.append(KeyFramePair(toFrameIndex(index), KeyFramePtr(keyframe.take())));
+                keyframes.append(KeyFramePair(toFrameIndex(index), keyframe));
             }
         }
     }

@@ -136,11 +136,6 @@ public:
         }
         return parentItem->countChildren();
     }
-    void selectKeyframesByModelIndex(const QModelIndex &index) {
-        QModelIndexList indices;
-        indices.append(index);
-        selectKeyframesByModelIndices(indices);
-    }
     void cutKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex) {
         copyKeyframesByModelIndices(indices, frameIndex);
         deleteKeyframesByModelIndices(indices);
@@ -171,7 +166,6 @@ public:
 public slots:
     virtual void removeMotion() = 0;
     virtual void addKeyframesByModelIndices(const QModelIndexList &indices) = 0;
-    virtual void selectKeyframesByModelIndices(const QModelIndexList &indices) = 0;
     virtual void deleteKeyframesByModelIndices(const QModelIndexList &indices) = 0;
 
 signals:

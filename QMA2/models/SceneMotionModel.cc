@@ -218,7 +218,7 @@ public:
         IMotion *motion = m_smm->currentMotion();
         foreach (const SceneMotionModel::KeyFramePair &pair, m_frames) {
             int frameIndex = pair.first;
-            SceneMotionModel::KeyFramePtr ptr = pair.second;
+            const SceneMotionModel::KeyFramePtr &ptr = pair.second;
             ICameraKeyframe *cameraKeyframe = reinterpret_cast<ICameraKeyframe *>(ptr.data());
             const QModelIndex &modelIndex = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
             if (cameraKeyframe->frameIndex() >= 0) {
@@ -430,37 +430,32 @@ void SceneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
     if (m_cameraIndex.isValid()) {
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
-            KeyFramePairList frames;
-            QScopedPointer<ICameraKeyframe> frame(m_factory->createCameraKeyframe());
-            frame->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-            frames.append(KeyFramePair(frameIndex, KeyFramePtr(frame.take())));
-            addUndoCommand(new SetFramesCommand(this, frames, m_cameraTreeItem));
+            KeyFramePairList keyframes;
+            KeyFramePtr keyframe(m_factory->createCameraKeyframe());
+            keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+            keyframes.append(KeyFramePair(frameIndex, keyframe));
+            addUndoCommand(new SetFramesCommand(this, keyframes, m_cameraTreeItem));
         }
     }
-}
-
-void SceneMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
-{
-    /* 照明データ未対応 */
-    QList<KeyFramePtr> frames;
-    QScopedPointer<ICameraKeyframe> frame;
-    foreach (const QModelIndex &index, indices) {
-        if (index.isValid()) {
-            const QVariant &data = index.data(kBinaryDataRole);
-            if (data.canConvert(QVariant::ByteArray)) {
-                frame.reset(m_factory->createCameraKeyframe());
-                frame->read(reinterpret_cast<const uint8_t *>(data.toByteArray().constData()));
-                frames.append(KeyFramePtr(frame.take()));
-            }
-        }
-    }
-    if (!frames.isEmpty())
-        keyframesDidSelect(frames);
 }
 
 const QString SceneMotionModel::nameFromModelIndex(const QModelIndex & /* index */) const
 {
     return QString();
+}
+
+SceneMotionModel::KeyFramePairList SceneMotionModel::keyframesFromModelIndices(const QModelIndexList &indices) const
+{
+    KeyFramePairList keyframes;
+    foreach (const QModelIndex &index, indices) {
+        const QVariant &variant = index.data(SceneMotionModel::kBinaryDataRole);
+        if (variant.canConvert(QVariant::ByteArray)) {
+            KeyFramePtr keyframe(m_factory->createCameraKeyframe());
+            keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+            keyframes.append(KeyFramePair(MotionBaseModel::toFrameIndex(index), keyframe));
+        }
+    }
+    return keyframes;
 }
 
 void SceneMotionModel::loadMotion(IMotion *motion)

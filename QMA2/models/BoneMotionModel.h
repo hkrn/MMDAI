@@ -77,6 +77,7 @@ public:
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
     const QString nameFromModelIndex(const QModelIndex &index) const;
     const QModelIndexList modelIndicesFromBones(const QList<vpvl2::IBone *> &bones, int frameIndex) const;
+    KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
     void loadPose(VPDFilePtr pose, vpvl2::IModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl2::IModel *model, int frameIndex);
@@ -95,7 +96,6 @@ public:
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
-    void selectKeyframesByModelIndices(const QModelIndexList &indices);
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void selectBonesByModelIndices(const QModelIndexList &indices);
     void removeModel();
@@ -113,7 +113,6 @@ signals:
     void positionDidChange(vpvl2::IBone *bone, const vpvl2::Vector3 &lastPosition);
     void rotationDidChange(vpvl2::IBone *bone, const vpvl2::Quaternion &lastRotation);
     void bonesDidSelect(const QList<vpvl2::IBone *> &bones);
-    void keyframesDidSelect(const QList<BoneMotionModel::KeyFramePtr> &frames);
 
 private:
     void translateInternal(const vpvl2::Vector3 &position, const vpvl2::Vector3 &delta, vpvl2::IBone *bone, int flags);

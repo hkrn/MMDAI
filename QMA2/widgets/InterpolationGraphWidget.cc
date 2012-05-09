@@ -34,6 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "models/BoneMotionModel.h"
+#include "models/SceneMotionModel.h"
 #include "widgets/InterpolationGraphWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
@@ -70,31 +72,37 @@ InterpolationGraphWidget::~InterpolationGraphWidget()
 {
 }
 
-void InterpolationGraphWidget::setBoneKeyFrames(const QList<BoneMotionModel::KeyFramePtr> &frames)
+void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
 {
     bool enabled = false;
-    if (frames.count() == 1) {
-        IBoneKeyframe *frame = frames.first().data();
-        frame->getInterpolationParameter(IBoneKeyframe::kX, m_boneIP.x);
-        frame->getInterpolationParameter(IBoneKeyframe::kY, m_boneIP.y);
-        frame->getInterpolationParameter(IBoneKeyframe::kZ, m_boneIP.z);
-        frame->getInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
-        updateValues(true);
-        enabled = true;
+    /* まだ複数のキーフレームに対する処理は対応していない */
+    if (m_type == kBone) {
+        const BoneMotionModel::KeyFramePairList &keyframes = m_boneMotionModel->keyframesFromModelIndices(indices);
+        if (!keyframes.isEmpty()) {
+            IBoneKeyframe *keyframe = keyframes.first().second.data();
+            keyframe->getInterpolationParameter(IBoneKeyframe::kX, m_boneIP.x);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kY, m_boneIP.y);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kZ, m_boneIP.z);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
+            updateValues(true);
+            enabled = true;
+        }
+    }
+    else if (m_type == kCamera) {
+        const SceneMotionModel::KeyFramePairList &keyframes = m_sceneMotionModel->keyframesFromModelIndices(indices);
+        if (!keyframes.isEmpty()) {
+            ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes.first().second.data());
+            keyframe->getInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kFovy, m_cameraIP.fovy);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
+            updateValues(true);
+            enabled = true;
+        }
     }
     setEnabled(enabled);
-}
-
-void InterpolationGraphWidget::setCameraKeyFrames(const QList<SceneMotionModel::KeyFramePtr> &frames)
-{
-    ICameraKeyframe *frame = reinterpret_cast<ICameraKeyframe *>(frames.last().data());
-    frame->getInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
-    frame->getInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
-    frame->getInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
-    frame->getInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
-    frame->getInterpolationParameter(ICameraKeyframe::kFovy, m_cameraIP.fovy);
-    frame->getInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
-    updateValues(true);
 }
 
 void InterpolationGraphWidget::setX1(int value)

@@ -38,6 +38,7 @@
 #define INTERPOLATIONDIALOG_H
 
 #include <QtGui/QWidget>
+#include <QtGui/QAbstractItemView>
 #include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/ICameraKeyframe.h>
 
@@ -47,16 +48,18 @@ class BoneMotionModel;
 class InterpolationGraphWidget;
 class SceneMotionModel;
 
-class InterpolationWidget : public QWidget
+class InterpolationDialog : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
-    ~InterpolationWidget();
+    explicit InterpolationDialog(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
+    ~InterpolationDialog();
+
+    void setMode(int mode);
+    void setModelIndices(const QModelIndexList &indices);
 
 private slots:
-    void setMode(int mode);
     void disable();
     void resetInterpolation();
 
@@ -68,7 +71,7 @@ private:
     QComboBox *m_comboBox;
     InterpolationGraphWidget *m_graphWidget;
 
-    Q_DISABLE_COPY(InterpolationWidget)
+    Q_DISABLE_COPY(InterpolationDialog)
 };
 
 #endif // INTERPOLATIONWIDGET_H

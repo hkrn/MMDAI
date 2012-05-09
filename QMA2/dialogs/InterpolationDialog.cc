@@ -45,16 +45,12 @@
 
 using namespace vpvl2;
 
-InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
+InterpolationDialog::InterpolationDialog(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
     : QWidget(parent)
 {
 
     m_comboBox = new QComboBox();
     m_graphWidget = new InterpolationGraphWidget(bmm, smm);
-    connect(bmm, SIGNAL(keyframesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
-            m_graphWidget, SLOT(setBoneKeyFrames(QList<BoneMotionModel::KeyFramePtr>)));
-    connect(smm, SIGNAL(keyframesDidSelect(QList<SceneMotionModel::KeyFramePtr>)),
-            m_graphWidget, SLOT(setCameraKeyFrames(QList<SceneMotionModel::KeyFramePtr>)));
     connect(m_comboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(setIndex(int)));
     QHBoxLayout *c = new QHBoxLayout();
     QPushButton *button = new QPushButton(tr("Reset"));
@@ -84,22 +80,22 @@ InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel 
     setEnabled(false);
 }
 
-InterpolationWidget::~InterpolationWidget()
+InterpolationDialog::~InterpolationDialog()
 {
 }
 
-void InterpolationWidget::setMode(int mode)
+void InterpolationDialog::setMode(int mode)
 {
     bool enabled = true;
     m_comboBox->clear();
-    if (mode == TimelineTabWidget::kBone) {
+    if (mode == TimelineTabWidget::kBoneTabIndex) {
         m_comboBox->addItem(tr("X axis"));
         m_comboBox->addItem(tr("Y axis"));
         m_comboBox->addItem(tr("Z axis"));
         m_comboBox->addItem(tr("Rotation"));
         m_graphWidget->setType(InterpolationGraphWidget::kBone);
     }
-    else if (mode == TimelineTabWidget::kScene) {
+    else if (mode == TimelineTabWidget::kSceneTabIndex) {
         m_comboBox->addItem(tr("X axis"));
         m_comboBox->addItem(tr("Y axis"));
         m_comboBox->addItem(tr("Z axis"));
@@ -114,13 +110,18 @@ void InterpolationWidget::setMode(int mode)
     setEnabled(enabled);
 }
 
-void InterpolationWidget::disable()
+void InterpolationDialog::setModelIndices(const QModelIndexList &indices)
+{
+    m_graphWidget->setModelIndices(indices);
+}
+
+void InterpolationDialog::disable()
 {
     resetInterpolation();
     setEnabled(false);
 }
 
-void InterpolationWidget::resetInterpolation()
+void InterpolationDialog::resetInterpolation()
 {
     m_graphWidget->setX1(20);
     m_graphWidget->setY1(20);
@@ -128,7 +129,7 @@ void InterpolationWidget::resetInterpolation()
     m_graphWidget->setY2(107);
 }
 
-QSpinBox *InterpolationWidget::createSpinBox(int defaultValue,
+QSpinBox *InterpolationDialog::createSpinBox(int defaultValue,
                                              const char *signal,
                                              const char *slot)
 {

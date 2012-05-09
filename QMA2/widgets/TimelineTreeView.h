@@ -58,6 +58,12 @@ public:
 public slots:
     void addKeyframesBySelectedIndices();
 
+signals:
+    void modelIndexDidSelect(const QModelIndexList &indices);
+
+protected:
+    void mouseDoubleClickEvent(QMouseEvent *event);
+
 private slots:
     void addCollapsed(const QModelIndex &index);
     void addExpanded(const QModelIndex &index);

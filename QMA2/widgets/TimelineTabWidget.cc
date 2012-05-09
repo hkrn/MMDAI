@@ -38,6 +38,7 @@
 #include "common/util.h"
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/FrameWeightDialog.h"
+#include "dialogs/InterpolationDialog.h"
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
@@ -61,11 +62,13 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_morphTimeline(0),
     m_sceneTimeline(0),
     m_frameSelectionDialog(0),
-    m_frameWeightDialog(0)
+    m_frameWeightDialog(0),
+    m_interpolationDialog(0)
 {
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
     m_boneTimeline->setFrameIndexSpinBoxEnable(false);
+    m_interpolationDialog = new InterpolationDialog(bmm, smm);
     m_boneSelectButton = new QRadioButton();
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(false);
@@ -96,6 +99,8 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float,bool)), SIGNAL(motionDidSeek(float,bool)));
     connect(m_morphTimeline, SIGNAL(motionDidSeek(float,bool)), SIGNAL(motionDidSeek(float,bool)));
     connect(m_sceneTimeline, SIGNAL(motionDidSeek(float,bool)), SIGNAL(motionDidSeek(float,bool)));
+    connect(m_boneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
+    connect(m_sceneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(bmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleBoneEnable(vpvl2::IModel*)));
     connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), SLOT(toggleBoneButtonsByBone(QList<vpvl2::IBone*>)));
     connect(mmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleFaceEnable(vpvl2::IModel*)));
@@ -108,6 +113,8 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
 
 TimelineTabWidget::~TimelineTabWidget()
 {
+    delete m_interpolationDialog;
+    m_interpolationDialog = 0;
 }
 
 void TimelineTabWidget::addKeyFramesFromSelectedIndices()
@@ -400,6 +407,14 @@ void TimelineTabWidget::openFrameWeightDialog()
                           tr("The timeline is not supported adjusting keyframe weight."));
         break;
     }
+}
+
+void TimelineTabWidget::openInterpolationDialog(const QModelIndexList &indices)
+{
+    /* 補間ダイアログを表示する */
+    m_interpolationDialog->setMode(m_tabWidget->currentIndex());
+    m_interpolationDialog->setModelIndices(indices);
+    m_interpolationDialog->show();
 }
 
 void TimelineTabWidget::selectBones(const QList<IBone *> &bones)

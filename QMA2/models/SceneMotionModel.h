@@ -77,6 +77,7 @@ public:
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframesByFrameIndex(int frameIndex);
     const QString nameFromModelIndex(const QModelIndex &index) const;
+    KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
     void setFrames(const KeyFramePairList &frames);
     void refreshScene();
@@ -90,7 +91,6 @@ public:
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
-    void selectKeyframesByModelIndices(const QModelIndexList &indices);
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void removeMotion();
@@ -98,7 +98,6 @@ public slots:
     void markAsNew() { setModified(false); }
 
 signals:
-    void keyframesDidSelect(const QList<SceneMotionModel::KeyFramePtr> &cameraFrames);
     void motionDidUpdate(vpvl2::IModel *model);
 
 protected:

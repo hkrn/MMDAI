@@ -113,6 +113,18 @@ const QModelIndexList &TimelineTreeView::expandedModelIndices() const
     return m_expanded;
 }
 
+void TimelineTreeView::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    const QModelIndex &index = indexAt(event->pos());
+    if (index.isValid()) {
+        QModelIndexList indices;
+        // MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
+        indices.append(index);
+        emit modelIndexDidSelect(indices);
+    }
+    QTreeView::mouseDoubleClickEvent(event);
+}
+
 void TimelineTreeView::addCollapsed(const QModelIndex &index)
 {
     m_expanded.removeOne(index);
@@ -161,17 +173,6 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
         BoneMotionModel *bmm = 0;
         if (!names.empty() && (bmm = qobject_cast<BoneMotionModel *>(pmm)))
             bmm->selectBonesByModelIndices(names);
-        pmm->selectKeyframesByModelIndices(indices);
-    }
-    /* 場面のモデルである SceneMotionModel のクラスである */
-    else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(m)) {
-        foreach (const QModelIndex &index, selected.indexes()) {
-            SceneMotionModel::ITreeItem *item = static_cast<SceneMotionModel::ITreeItem *>(index.internalPointer());
-            /* ルートでもカテゴリでもなく、カメラまたは照明のキーフレームが選択されていることを確認する */
-            if (item && !item->isRoot() && !item->isCategory())
-                indices.append(index);
-        }
-        smm->selectKeyframesByModelIndices(indices);
     }
 }
 

@@ -55,7 +55,7 @@ class QSettings;
 class QTabWidget;
 class FrameSelectionDialog;
 class FrameWeightDialog;
-class InterpolationWidget;
+class InterpolationDialog;
 class TimelineWidget;
 class BoneMotionModel;
 class MorphMotionModel;
@@ -117,6 +117,7 @@ private slots:
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();
+    void openInterpolationDialog(const QModelIndexList &indices);
     void selectBones(const QList<vpvl2::IBone *> &bones);
 
 signals:
@@ -140,6 +141,7 @@ private:
     QRadioButton *m_boneMoveButton;
     FrameSelectionDialog *m_frameSelectionDialog;
     FrameWeightDialog *m_frameWeightDialog;
+    InterpolationDialog *m_interpolationDialog;
 
     Q_DISABLE_COPY(TimelineTabWidget)
 };
