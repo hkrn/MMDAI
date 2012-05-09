@@ -56,13 +56,6 @@ TimelineTreeView::~TimelineTreeView()
 {
 }
 
-void TimelineTreeView::selectFrameIndex(int frameIndex)
-{
-    QList<int> frameIndices;
-    frameIndices.append(frameIndex);
-    selectFrameIndices(frameIndices, false);
-}
-
 void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly)
 {
     QItemSelection selection;

@@ -51,7 +51,6 @@ public:
     explicit TimelineTreeView(QWidget *parent = 0);
     ~TimelineTreeView();
 
-    void selectFrameIndex(int frameIndex);
     void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
     void deleteKeyframesBySelectedIndices();
     const QModelIndexList &expandedModelIndices() const;

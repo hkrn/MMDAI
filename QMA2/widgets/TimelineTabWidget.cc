@@ -65,7 +65,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
 {
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
-    m_boneTimeline->setEnableFrameIndexSpinBox(false);
+    m_boneTimeline->setFrameIndexSpinBoxEnable(false);
     m_boneSelectButton = new QRadioButton();
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(false);
@@ -87,7 +87,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(mainLayout);
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
     m_morphTimeline = new TimelineWidget(mmm, this);
-    m_morphTimeline->setEnableFrameIndexSpinBox(false);
+    m_morphTimeline->setFrameIndexSpinBoxEnable(false);
     m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline, "");
     m_sceneTimeline = new TimelineWidget(smm, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
@@ -327,7 +327,7 @@ void TimelineTabWidget::notifyCurrentTabIndex()
 void TimelineTabWidget::toggleBoneEnable(IModel *model)
 {
     bool value = model ? true : false;
-    m_boneTimeline->setEnableFrameIndexSpinBox(value);
+    m_boneTimeline->setFrameIndexSpinBoxEnable(value);
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(value);
     m_boneRotateButton->setEnabled(false);
@@ -336,7 +336,7 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
 
 void TimelineTabWidget::toggleFaceEnable(IModel *model)
 {
-    m_morphTimeline->setEnableFrameIndexSpinBox(model ? true : false);
+    m_morphTimeline->setFrameIndexSpinBoxEnable(model ? true : false);
 }
 
 void TimelineTabWidget::toggleBoneButtonsByBone(const QList<IBone *> &bones)

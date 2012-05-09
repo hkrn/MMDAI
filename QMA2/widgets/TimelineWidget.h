@@ -59,7 +59,7 @@ public:
     ~TimelineWidget();
 
     int frameIndex() const;
-    void setEnableFrameIndexSpinBox(bool value);
+    void setFrameIndexSpinBoxEnable(bool value);
 
     TimelineTreeView *treeView() const { return m_treeView; }
 
@@ -72,8 +72,8 @@ signals:
 
 private slots:
     void retranslate();
-    void setCurrentColumnIndex(const QModelIndex &index);
     void setCurrentFrameIndexBySpinBox();
+    void setCurrentFrameIndex(const QModelIndex &index);
     void reexpand();
 
 private:

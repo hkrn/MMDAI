@@ -148,7 +148,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     mainLayout->addWidget(treeView);
     mainLayout->setContentsMargins(QMargins());
     QItemSelectionModel *sm = treeView->selectionModel();
-    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentColumnIndex(QModelIndex)));
+    connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentFrameIndex(QModelIndex)));
     /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
     connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(reexpand()));
     connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(setCurrentFrameIndexBySpinBox()));
@@ -180,28 +180,16 @@ int TimelineWidget::frameIndex() const
     return 0;
 }
 
-void TimelineWidget::setEnableFrameIndexSpinBox(bool value)
+void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
 {
     m_spinBox->setEnabled(value);
     m_button->setEnabled(value);
 }
 
-void TimelineWidget::setCurrentColumnIndex(const QModelIndex &index)
-{
-    int frameIndex = MotionBaseModel::toFrameIndex(index);
-    setCurrentFrameIndex(frameIndex);
-}
-
 void TimelineWidget::setCurrentFrameIndex(float frameIndex)
 {
-    /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
-    model->setFrameIndex(frameIndex);
-    m_treeView->selectFrameIndex(frameIndex);
-    m_treeView->scrollTo(model->index(0, MotionBaseModel::toModelIndex(frameIndex)), QAbstractItemView::PositionAtCenter);
-    m_spinBox->setValue(frameIndex);
-    /* モーション移動を行わせるようにシグナルを発行する */
-    emit motionDidSeek(frameIndex, model->forceCameraUpdate());
+    setCurrentFrameIndex(model->index(0, MotionBaseModel::toModelIndex(frameIndex)));
 }
 
 void TimelineWidget::setCurrentFrameIndex(int frameIndex)
@@ -212,6 +200,21 @@ void TimelineWidget::setCurrentFrameIndex(int frameIndex)
 void TimelineWidget::setCurrentFrameIndexBySpinBox()
 {
     setCurrentFrameIndex(m_spinBox->value());
+}
+
+void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
+{
+    /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
+    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
+    int frameIndex = MotionBaseModel::toFrameIndex(index);
+    model->setFrameIndex(frameIndex);
+    QList<int> frameIndices;
+    frameIndices.append(frameIndex);
+    m_treeView->selectFrameIndices(frameIndices, false);
+    m_treeView->scrollTo(index);
+    m_spinBox->setValue(frameIndex);
+    /* モーション移動を行わせるようにシグナルを発行する */
+    emit motionDidSeek(frameIndex, model->forceCameraUpdate());
 }
 
 void TimelineWidget::reexpand()
