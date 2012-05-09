@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef INTERPOLATIONWIDGET_H
-#define INTERPOLATIONWIDGET_H
+#ifndef INTERPOLATIONGRAPHWIDGET_H
+#define INTERPOLATIONGRAPHWIDGET_H
 
 #include "models/BoneMotionModel.h"
 #include "models/SceneMotionModel.h"
@@ -46,7 +46,6 @@
 
 class QComboBox;
 class QHBoxLayout;
-class SceneMotionModel;
 
 class InterpolationGraphWidget : public QWidget
 {
@@ -106,32 +105,6 @@ private:
     bool m_p2Clicked;
 
     Q_DISABLE_COPY(InterpolationGraphWidget)
-};
-
-class QSpinBox;
-
-class InterpolationWidget : public QWidget
-{
-    Q_OBJECT
-
-public:
-    explicit InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
-    ~InterpolationWidget();
-
-private slots:
-    void setMode(int mode);
-    void disable();
-    void resetInterpolation();
-
-private:
-    QSpinBox *createSpinBox(int defaultValue,
-                            const char *signal,
-                            const char *slot);
-
-    QComboBox *m_comboBox;
-    InterpolationGraphWidget *m_graphWidget;
-
-    Q_DISABLE_COPY(InterpolationWidget)
 };
 
 #endif // INTERPOLATIONWIDGET_H

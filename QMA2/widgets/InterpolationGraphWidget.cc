@@ -34,9 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "models/BoneMotionModel.h"
-#include "models/SceneMotionModel.h"
-#include "widgets/InterpolationWidget.h"
+#include "widgets/InterpolationGraphWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
 #include <QtGui/QtGui>
@@ -272,99 +270,4 @@ void InterpolationGraphWidget::setValue(QuadWord &q, bool import)
 void InterpolationGraphWidget::setDefault(QuadWord &q)
 {
     q.setValue(20, 20, 107, 107);
-}
-
-InterpolationWidget::InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
-    : QWidget(parent)
-{
-
-    m_comboBox = new QComboBox();
-    m_graphWidget = new InterpolationGraphWidget(bmm, smm);
-    connect(bmm, SIGNAL(keyframesDidSelect(QList<BoneMotionModel::KeyFramePtr>)),
-            m_graphWidget, SLOT(setBoneKeyFrames(QList<BoneMotionModel::KeyFramePtr>)));
-    connect(smm, SIGNAL(keyframesDidSelect(QList<SceneMotionModel::KeyFramePtr>)),
-            m_graphWidget, SLOT(setCameraKeyFrames(QList<SceneMotionModel::KeyFramePtr>)));
-    connect(m_comboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(setIndex(int)));
-    QHBoxLayout *c = new QHBoxLayout();
-    QPushButton *button = new QPushButton(tr("Reset"));
-    connect(button, SIGNAL(clicked()), this, SLOT(resetInterpolation()));
-    c->addWidget(m_comboBox);
-    c->addWidget(button);
-    QGridLayout *gridLayout = new QGridLayout();
-    gridLayout->addWidget(new QLabel("X1"), 0, 0);
-    gridLayout->addWidget(createSpinBox(20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int))), 0, 1);
-    gridLayout->addWidget(new QLabel("X2"), 1, 0);
-    gridLayout->addWidget(createSpinBox(107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int))), 1, 1);
-    gridLayout->addWidget(new QLabel("Y1"), 2, 0);
-    gridLayout->addWidget(createSpinBox(20, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int))), 2, 1);
-    gridLayout->addWidget(new QLabel("Y2"), 3, 0);
-    gridLayout->addWidget(createSpinBox(107, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int))), 3, 1);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(c);
-    QHBoxLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_graphWidget);
-    subLayout->addLayout(gridLayout);
-    subLayout->setAlignment(gridLayout, Qt::AlignCenter);
-    mainLayout->addLayout(subLayout);
-    //mainLayout->addWidget(m_graphWidget, Qt::AlignVCenter);
-    //mainLayout->setAlignment(gridLayout, Qt::AlignCenter);
-    mainLayout->addStretch();
-    setLayout(mainLayout);
-    setEnabled(false);
-}
-
-InterpolationWidget::~InterpolationWidget()
-{
-}
-
-void InterpolationWidget::setMode(int mode)
-{
-    bool enabled = true;
-    m_comboBox->clear();
-    if (mode == TimelineTabWidget::kBone) {
-        m_comboBox->addItem(tr("X axis"));
-        m_comboBox->addItem(tr("Y axis"));
-        m_comboBox->addItem(tr("Z axis"));
-        m_comboBox->addItem(tr("Rotation"));
-        m_graphWidget->setType(InterpolationGraphWidget::kBone);
-    }
-    else if (mode == TimelineTabWidget::kScene) {
-        m_comboBox->addItem(tr("X axis"));
-        m_comboBox->addItem(tr("Y axis"));
-        m_comboBox->addItem(tr("Z axis"));
-        m_comboBox->addItem(tr("Rotation"));
-        m_comboBox->addItem(tr("Fovy"));
-        m_comboBox->addItem(tr("Distance"));
-        m_graphWidget->setType(InterpolationGraphWidget::kCamera);
-    }
-    else {
-        enabled = false;
-    }
-    setEnabled(enabled);
-}
-
-void InterpolationWidget::disable()
-{
-    resetInterpolation();
-    setEnabled(false);
-}
-
-void InterpolationWidget::resetInterpolation()
-{
-    m_graphWidget->setX1(20);
-    m_graphWidget->setY1(20);
-    m_graphWidget->setX2(107);
-    m_graphWidget->setY2(107);
-}
-
-QSpinBox *InterpolationWidget::createSpinBox(int defaultValue,
-                                             const char *signal,
-                                             const char *slot)
-{
-    QSpinBox *spinBox = new QSpinBox();
-    spinBox->setRange(0, 127);
-    connect(spinBox, SIGNAL(valueChanged(int)), m_graphWidget, slot);
-    connect(m_graphWidget, signal, spinBox, SLOT(setValue(int)));
-    spinBox->setValue(defaultValue);
-    return spinBox;
 }

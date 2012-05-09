@@ -161,6 +161,7 @@ SOURCES += main.cc \
     dialogs/BoneDialog.cc \
     dialogs/ExportVideoDialog.cc \
     dialogs/FrameWeightDialog.cc \
+    dialogs/InterpolationDialog.cc \
     dialogs/PlaySettingDialog.cc \
     widgets/TimelineWidget.cc \
     widgets/MorphWidget.cc \
@@ -168,10 +169,10 @@ SOURCES += main.cc \
     widgets/TabWidget.cc \
     widgets/TimelineTabWidget.cc \
     widgets/TimelineTreeView.cc \
-    widgets/InterpolationWidget.cc \
     widgets/LicenseWidget.cc \
     widgets/AssetWidget.cc \
     widgets/ModelTabWidget.cc \
+    widgets/InterpolationGraphWidget.cc \
     MainWindow.cc \
     BoneUIDelegate.cc \
     common/Handles.cc \
@@ -211,6 +212,7 @@ HEADERS  += \
     dialogs/BoneDialog.h \
     dialogs/ExportVideoDialog.h \
     dialogs/FrameWeightDialog.h \
+    dialogs/InterpolationDialog.h \
     dialogs/PlaySettingDialog.h \
     widgets/TimelineWidget.h \
     widgets/MorphWidget.h \
@@ -218,10 +220,10 @@ HEADERS  += \
     widgets/TabWidget.h \
     widgets/TimelineTabWidget.h \
     widgets/TimelineTreeView.h \
-    widgets/InterpolationWidget.h \
     widgets/LicenseWidget.h \
     widgets/AssetWidget.h \
     widgets/ModelTabWidget.h \
+    widgets/InterpolationGraphWidget.h \
     MainWindow.h \
     BoneUIDelegate.h \
     dialogs/FrameSelectionDialog.h \

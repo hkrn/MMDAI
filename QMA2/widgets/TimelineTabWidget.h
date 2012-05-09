@@ -85,8 +85,6 @@ public:
                                QWidget *parent = 0);
     ~TimelineTabWidget();
 
-    InterpolationWidget *interpolationWidget() const { return m_interpolationWidget; }
-
 public slots:
     void addKeyFramesFromSelectedIndices();
     void loadPose(VPDFilePtr pose, vpvl2::IModel *model);
@@ -136,7 +134,6 @@ private:
     TimelineWidget *m_boneTimeline;
     TimelineWidget *m_morphTimeline;
     TimelineWidget *m_sceneTimeline;
-    InterpolationWidget *m_interpolationWidget;
     QButtonGroup *m_boneButtonGroup;
     QRadioButton *m_boneSelectButton;
     QRadioButton *m_boneRotateButton;

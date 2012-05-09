@@ -34,52 +34,41 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "widgets/AssetWidget.h"
-#include "widgets/CameraPerspectiveWidget.h"
-#include "widgets/MorphWidget.h"
-#include "widgets/SceneLightWidget.h"
-#include "widgets/TabWidget.h"
+#ifndef INTERPOLATIONDIALOG_H
+#define INTERPOLATIONDIALOG_H
 
-#include <QtGui/QtGui>
+#include <QtGui/QWidget>
+#include <vpvl2/IBoneKeyframe.h>
+#include <vpvl2/ICameraKeyframe.h>
 
-using namespace vpvl2;
+class QComboBox;
+class QSpinBox;
+class BoneMotionModel;
+class InterpolationGraphWidget;
+class SceneMotionModel;
 
-TabWidget::TabWidget(QSettings *settings, QWidget *parent) :
-    QWidget(parent),
-    m_settings(settings),
-    m_asset(0),
-    m_camera(0),
-    m_light(0)
+class InterpolationWidget : public QWidget
 {
-    m_asset = new AssetWidget();
-    m_camera = new CameraPerspectiveWidget();
-    m_light = new SceneLightWidget();
-    m_tabWidget = new QTabWidget();
-    m_tabWidget->addTab(m_asset, "");
-    m_tabWidget->addTab(m_camera, "");
-    m_tabWidget->addTab(m_light, "");
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(m_tabWidget);
-    retranslate();
-    setMinimumWidth(350);
-    setLayout(layout);
-    restoreGeometry(m_settings->value("tabWidget/geometry").toByteArray());
-}
+    Q_OBJECT
 
-TabWidget::~TabWidget()
-{
-}
+public:
+    explicit InterpolationWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
+    ~InterpolationWidget();
 
-void TabWidget::retranslate()
-{
-    m_tabWidget->setTabText(0, tr("Asset"));
-    m_tabWidget->setTabText(1, tr("Camera"));
-    m_tabWidget->setTabText(2, tr("Light"));
-    setWindowTitle(tr("Scene Tabs"));
-}
+private slots:
+    void setMode(int mode);
+    void disable();
+    void resetInterpolation();
 
-void TabWidget::closeEvent(QCloseEvent *event)
-{
-    m_settings->setValue("tabWidget/geometry", saveGeometry());
-    event->accept();
-}
+private:
+    QSpinBox *createSpinBox(int defaultValue,
+                            const char *signal,
+                            const char *slot);
+
+    QComboBox *m_comboBox;
+    InterpolationGraphWidget *m_graphWidget;
+
+    Q_DISABLE_COPY(InterpolationWidget)
+};
+
+#endif // INTERPOLATIONWIDGET_H

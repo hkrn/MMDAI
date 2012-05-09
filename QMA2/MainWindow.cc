@@ -48,6 +48,7 @@
 #include "dialogs/ExportVideoDialog.h"
 #include "dialogs/GravitySettingDialog.h"
 #include "dialogs/FrameSelectionDialog.h"
+#include "dialogs/InterpolationDialog.h"
 #include "dialogs/PlaySettingDialog.h"
 #include "dialogs/RenderOrderDialog.h"
 #include "dialogs/ShadowMapSettingDialog.h"
@@ -59,7 +60,6 @@
 #include "widgets/AssetWidget.h"
 #include "widgets/CameraPerspectiveWidget.h"
 #include "widgets/MorphWidget.h"
-#include "widgets/InterpolationWidget.h"
 #include "widgets/LicenseWidget.h"
 #include "widgets/ModelInfoWidget.h"
 #include "widgets/ModelSettingWidget.h"
@@ -1199,7 +1199,6 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,vpvl2::IModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFilePtr,vpvl2::IModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,vpvl2::IModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(vpvl2::IMotion*,vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_timelineTabWidget->interpolationWidget(), SLOT(disable()));
     connect(loader, SIGNAL(assetDidAdd(vpvl2::IModel*,QUuid)), assetWidget, SLOT(addAsset(vpvl2::IModel*)));
     connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), assetWidget, SLOT(removeAsset(vpvl2::IModel*)));
     connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), assetWidget, SLOT(addModel(vpvl2::IModel*)));
