@@ -102,6 +102,7 @@ void InterpolationDialog::setMode(int mode)
 {
     bool enabled = true;
     m_parameterTypeComboBox->clear();
+    m_presetComboBox->setCurrentIndex(0);
     if (mode == TimelineTabWidget::kBoneTabIndex) {
         m_parameterTypeComboBox->addItem(tr("X axis"));
         m_parameterTypeComboBox->addItem(tr("Y axis"));
@@ -138,6 +139,7 @@ void InterpolationDialog::retranslate()
 {
     m_parameterTypeLabel->setText(tr("Parameter type"));
     m_presetLabel->setText(tr("Preset"));
+    m_presetComboBox->clear();
     m_presetComboBox->addItem(tr("None"), QVector4D());
     m_presetComboBox->addItem(tr("Linear default"), QVector4D(20, 107, 20, 107));
     m_presetComboBox->addItem(tr("S-curve"), QVector4D(127, 0, 0, 127));
