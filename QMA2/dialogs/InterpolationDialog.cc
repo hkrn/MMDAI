@@ -49,35 +49,45 @@ InterpolationDialog::InterpolationDialog(BoneMotionModel *bmm, SceneMotionModel 
     : QWidget(parent)
 {
 
-    m_comboBox = new QComboBox();
     m_graphWidget = new InterpolationGraphWidget(bmm, smm);
-    connect(m_comboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(setIndex(int)));
-    QHBoxLayout *c = new QHBoxLayout();
-    QPushButton *button = new QPushButton(tr("Reset"));
-    connect(button, SIGNAL(clicked()), this, SLOT(resetInterpolation()));
-    c->addWidget(m_comboBox);
-    c->addWidget(button);
-    QGridLayout *gridLayout = new QGridLayout();
-    gridLayout->addWidget(new QLabel("X1"), 0, 0);
-    gridLayout->addWidget(createSpinBox(20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int))), 0, 1);
-    gridLayout->addWidget(new QLabel("X2"), 1, 0);
-    gridLayout->addWidget(createSpinBox(107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int))), 1, 1);
-    gridLayout->addWidget(new QLabel("Y1"), 2, 0);
-    gridLayout->addWidget(createSpinBox(20, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int))), 2, 1);
-    gridLayout->addWidget(new QLabel("Y2"), 3, 0);
-    gridLayout->addWidget(createSpinBox(107, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int))), 3, 1);
     QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(c);
     QHBoxLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_graphWidget);
-    subLayout->addLayout(gridLayout);
-    subLayout->setAlignment(gridLayout, Qt::AlignCenter);
+    m_parameterTypeLabel = new QLabel();
+    m_parameterTypeComboBox = new QComboBox();
+    connect(m_parameterTypeComboBox, SIGNAL(currentIndexChanged(int)), m_graphWidget, SLOT(selectParameterType(int)));
+    subLayout->addWidget(m_parameterTypeLabel);
+    subLayout->addWidget(m_parameterTypeComboBox);
     mainLayout->addLayout(subLayout);
-    //mainLayout->addWidget(m_graphWidget, Qt::AlignVCenter);
-    //mainLayout->setAlignment(gridLayout, Qt::AlignCenter);
+    m_presetLabel = new QLabel();
+    m_presetComboBox = new QComboBox();
+    connect(m_presetComboBox, SIGNAL(currentIndexChanged(int)), SLOT(selectPreset(int)));
+    subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_presetLabel);
+    subLayout->addWidget(m_presetComboBox);
+    mainLayout->addLayout(subLayout);
+    m_applyAllButton = new QPushButton();
+    connect(m_applyAllButton, SIGNAL(clicked()), m_graphWidget, SLOT(applyAll()));
+    mainLayout->addWidget(m_applyAllButton);
+    mainLayout->setAlignment(m_applyAllButton, Qt::AlignCenter);
+    QFormLayout *parameterLayout = new QFormLayout();
+    parameterLayout->addRow("X1", createSpinBox(20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int))));
+    parameterLayout->addRow("X2", createSpinBox(107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int))));
+    parameterLayout->addRow("Y1", createSpinBox(20, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int))));
+    parameterLayout->addRow("Y2", createSpinBox(107, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int))));
+    subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_graphWidget);
+    subLayout->addLayout(parameterLayout);
+    subLayout->setAlignment(m_graphWidget, Qt::AlignRight);
+    subLayout->setAlignment(parameterLayout, Qt::AlignLeft);
+    mainLayout->addLayout(subLayout);
+    m_buttonBox = new QDialogButtonBox(QDialogButtonBox::Save|QDialogButtonBox::Discard|QDialogButtonBox::Reset);
+    connect(m_buttonBox, SIGNAL(clicked(QAbstractButton*)), SLOT(clickButton(QAbstractButton*)));
+    mainLayout->addWidget(m_buttonBox);
     mainLayout->addStretch();
     setLayout(mainLayout);
+    retranslate();
     setEnabled(false);
+    setWindowTitle(tr("Keyframe interpolation setting"));
 }
 
 InterpolationDialog::~InterpolationDialog()
@@ -87,21 +97,21 @@ InterpolationDialog::~InterpolationDialog()
 void InterpolationDialog::setMode(int mode)
 {
     bool enabled = true;
-    m_comboBox->clear();
+    m_parameterTypeComboBox->clear();
     if (mode == TimelineTabWidget::kBoneTabIndex) {
-        m_comboBox->addItem(tr("X axis"));
-        m_comboBox->addItem(tr("Y axis"));
-        m_comboBox->addItem(tr("Z axis"));
-        m_comboBox->addItem(tr("Rotation"));
+        m_parameterTypeComboBox->addItem(tr("X axis"));
+        m_parameterTypeComboBox->addItem(tr("Y axis"));
+        m_parameterTypeComboBox->addItem(tr("Z axis"));
+        m_parameterTypeComboBox->addItem(tr("Rotation"));
         m_graphWidget->setType(InterpolationGraphWidget::kBone);
     }
     else if (mode == TimelineTabWidget::kSceneTabIndex) {
-        m_comboBox->addItem(tr("X axis"));
-        m_comboBox->addItem(tr("Y axis"));
-        m_comboBox->addItem(tr("Z axis"));
-        m_comboBox->addItem(tr("Rotation"));
-        m_comboBox->addItem(tr("Fovy"));
-        m_comboBox->addItem(tr("Distance"));
+        m_parameterTypeComboBox->addItem(tr("X axis"));
+        m_parameterTypeComboBox->addItem(tr("Y axis"));
+        m_parameterTypeComboBox->addItem(tr("Z axis"));
+        m_parameterTypeComboBox->addItem(tr("Rotation"));
+        m_parameterTypeComboBox->addItem(tr("Fovy"));
+        m_parameterTypeComboBox->addItem(tr("Distance"));
         m_graphWidget->setType(InterpolationGraphWidget::kCamera);
     }
     else {
@@ -115,18 +125,61 @@ void InterpolationDialog::setModelIndices(const QModelIndexList &indices)
     m_graphWidget->setModelIndices(indices);
 }
 
+void InterpolationDialog::retranslate()
+{
+    m_parameterTypeLabel->setText(tr("Parameter type"));
+    m_presetLabel->setText(tr("Preset"));
+    m_presetComboBox->addItem(tr("None"), QVector4D());
+    m_presetComboBox->addItem(tr("Linear default"), QVector4D(20, 107, 20, 107));
+    m_presetComboBox->addItem(tr("S-curve"), QVector4D(127, 0, 0, 127));
+    m_presetComboBox->addItem(tr("Reversed S-curve"), QVector4D(0, 127, 127, 0));
+    m_presetComboBox->addItem(tr("Half S-curve"), QVector4D(64, 64, 0, 127));
+    m_presetComboBox->addItem(tr("Half reversed S-curve"), QVector4D(0, 127, 64, 64));
+    m_applyAllButton->setText(tr("Apply all"));
+}
+
 void InterpolationDialog::disable()
 {
-    resetInterpolation();
+    m_graphWidget->setLinearInterpolation();
     setEnabled(false);
 }
 
-void InterpolationDialog::resetInterpolation()
+void InterpolationDialog::clickButton(QAbstractButton *button)
 {
-    m_graphWidget->setX1(20);
-    m_graphWidget->setY1(20);
-    m_graphWidget->setX2(107);
-    m_graphWidget->setY2(107);
+    QDialogButtonBox::ButtonRole role = m_buttonBox->buttonRole(button);
+    switch (role) {
+    case QDialogButtonBox::AcceptRole:
+        m_graphWidget->save();
+        close();
+        break;
+    case QDialogButtonBox::DestructiveRole:
+        close();
+        break;
+    case QDialogButtonBox::ResetRole:
+        m_graphWidget->setLinearInterpolation();
+        break;
+    case QDialogButtonBox::InvalidRole:
+    case QDialogButtonBox::ActionRole:
+    case QDialogButtonBox::ApplyRole:
+    case QDialogButtonBox::RejectRole:
+    case QDialogButtonBox::HelpRole:
+    case QDialogButtonBox::YesRole:
+    case QDialogButtonBox::NoRole:
+    default:
+        break;
+    }
+}
+
+void InterpolationDialog::selectPreset(int value)
+{
+    const QVariant &variant = m_presetComboBox->itemData(value);
+    const QVector4D &v4 = variant.value<QVector4D>();
+    if (!v4.isNull()) {
+        m_graphWidget->setX1(v4.x());
+        m_graphWidget->setX2(v4.y());
+        m_graphWidget->setY1(v4.z());
+        m_graphWidget->setY2(v4.w());
+    }
 }
 
 QSpinBox *InterpolationDialog::createSpinBox(int defaultValue,

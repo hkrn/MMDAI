@@ -162,7 +162,7 @@ void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(IBone *bone)
         keyframe->setPosition(bone->position());
         keyframe->setRotation(bone->rotation());
         keyframes.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(keyframe.take())));
-        model->setFrames(keyframes);
+        model->setKeyframes(keyframes);
     }
 }
 
@@ -181,7 +181,7 @@ void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(IMorph *face)
         keyframe->setName(face->name());
         keyframe->setWeight(face->weight());
         keyframes.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
-        model->setFrames(keyframes);
+        model->setKeyframes(keyframes);
     }
 }
 
@@ -225,7 +225,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
             frame->setDefaultInterpolationParameter();
             boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame.take())));
         }
-        model->setFrames(boneFrames);
+        model->setKeyframes(boneFrames);
         break;
     }
     case kMorphTabIndex:
@@ -246,7 +246,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
             frame->setWeight(0);
             faceFrames.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(frame.take())));
         }
-        model->setFrames(faceFrames);
+        model->setKeyframes(faceFrames);
         break;
     }
     }

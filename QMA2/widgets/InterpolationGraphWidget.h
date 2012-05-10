@@ -42,6 +42,9 @@
 #include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/ICameraKeyframe.h>
 
+#include "models/BoneMotionModel.h"
+#include "models/SceneMotionModel.h"
+
 class BoneMotionModel;
 class SceneMotionModel;
 class QComboBox;
@@ -65,6 +68,8 @@ public:
 
     void setModelIndices(const QModelIndexList &indices);
     void setType(Type value) { m_type = value; }
+    void setLinearInterpolation();
+    void save();
 
 public slots:
     void setX1(int value);
@@ -85,7 +90,8 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private slots:
-    void setIndex(int value);
+    void applyAll();
+    void selectParameterType(int value);
 
 private:
     void updateValues(bool import);
@@ -94,6 +100,8 @@ private:
 
     BoneMotionModel *m_boneMotionModel;
     SceneMotionModel *m_sceneMotionModel;
+    BoneMotionModel::KeyFramePairList m_boneKeyframes;
+    SceneMotionModel::KeyFramePairList m_cameraKeyframes;
     vpvl2::IBoneKeyframe::InterpolationParameter m_boneIP;
     vpvl2::ICameraKeyframe::InterpolationParameter m_cameraIP;
     QPoint m_p1;

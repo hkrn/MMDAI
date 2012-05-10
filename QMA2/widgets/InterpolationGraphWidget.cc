@@ -34,8 +34,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "models/BoneMotionModel.h"
-#include "models/SceneMotionModel.h"
 #include "widgets/InterpolationGraphWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
@@ -76,6 +74,8 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
 {
     bool enabled = false;
     /* まだ複数のキーフレームに対する処理は対応していない */
+    m_boneKeyframes.clear();
+    m_cameraKeyframes.clear();
     if (m_type == kBone) {
         const BoneMotionModel::KeyFramePairList &keyframes = m_boneMotionModel->keyframesFromModelIndices(indices);
         if (!keyframes.isEmpty()) {
@@ -86,6 +86,7 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
             keyframe->getInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
             updateValues(true);
             enabled = true;
+            m_boneKeyframes = keyframes;
         }
     }
     else if (m_type == kCamera) {
@@ -100,9 +101,42 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
             keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
             updateValues(true);
             enabled = true;
+            m_cameraKeyframes = keyframes;
         }
     }
     setEnabled(enabled);
+}
+
+void InterpolationGraphWidget::setLinearInterpolation()
+{
+    setX1(20);
+    setY1(20);
+    setX2(107);
+    setY2(107);
+}
+
+void InterpolationGraphWidget::save()
+{
+    foreach (const BoneMotionModel::KeyFramePair &pair, m_boneKeyframes) {
+        IBoneKeyframe *keyframe = pair.second.data();
+        keyframe->setInterpolationParameter(IBoneKeyframe::kX, m_boneIP.x);
+        keyframe->setInterpolationParameter(IBoneKeyframe::kY, m_boneIP.y);
+        keyframe->setInterpolationParameter(IBoneKeyframe::kZ, m_boneIP.z);
+        keyframe->setInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
+    }
+    if (!m_boneKeyframes.isEmpty())
+        m_boneMotionModel->setKeyframes(m_boneKeyframes);
+    foreach (const SceneMotionModel::KeyFramePair &pair, m_cameraKeyframes) {
+        ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(pair.second.data());
+        keyframe->setInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kFovy, m_cameraIP.fovy);
+    }
+    if (!m_cameraKeyframes.isEmpty())
+        m_sceneMotionModel->setKeyframes(m_cameraKeyframes);
 }
 
 void InterpolationGraphWidget::setX1(int value)
@@ -199,7 +233,26 @@ void InterpolationGraphWidget::paintEvent(QPaintEvent * /* event */)
     }
 }
 
-void InterpolationGraphWidget::setIndex(int value)
+void InterpolationGraphWidget::applyAll()
+{
+    QuadWord v(m_p1.x(), m_p1.y(), m_p2.x(), m_p2.y());
+    if (m_type == kBone) {
+        m_boneIP.x = v;
+        m_boneIP.y = v;
+        m_boneIP.z = v;
+        m_boneIP.rotation = v;
+    }
+    else if (m_type == kCamera) {
+        m_cameraIP.x = v;
+        m_cameraIP.y = v;
+        m_cameraIP.z = v;
+        m_cameraIP.rotation = v;
+        m_cameraIP.fovy = v;
+        m_cameraIP.distance = v;
+    }
+}
+
+void InterpolationGraphWidget::selectParameterType(int value)
 {
     m_index = value;
     updateValues(true);
@@ -226,7 +279,6 @@ void InterpolationGraphWidget::updateValues(bool import)
             qWarning("Out of bone combo index: %d", m_index);
             break;
         }
-        m_boneMotionModel->setInterpolationParameter(m_boneIP);
         break;
     case kCamera:
         switch (m_index) {
@@ -252,7 +304,6 @@ void InterpolationGraphWidget::updateValues(bool import)
             qWarning("Out of camera combo index: %d", m_index);
             break;
         }
-        m_sceneMotionModel->setCameraInterpolationParameter(m_cameraIP);
         break;
     }
     update();

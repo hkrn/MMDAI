@@ -79,14 +79,8 @@ public:
     const QString nameFromModelIndex(const QModelIndex &index) const;
     KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
-    void setFrames(const KeyFramePairList &frames);
+    void setKeyframes(const KeyFramePairList &frames);
     void refreshScene();
-    const vpvl2::ICameraKeyframe::InterpolationParameter &cameraInterpolationParameter() const {
-        return m_cameraInterpolationParameter;
-    }
-    void setCameraInterpolationParameter(const vpvl2::ICameraKeyframe::InterpolationParameter &value) {
-        m_cameraInterpolationParameter = value;
-    }
     vpvl2::Factory *factory() const { return m_factory; }
 
 public slots:

@@ -165,16 +165,15 @@ private:
 };
 
 /* 今のところカメラフレームしか対応していないため、暫定実装になってる */
-class SetFramesCommand : public QUndoCommand
+class SetKeyframesCommand : public QUndoCommand
 {
 public:
-    SetFramesCommand(SceneMotionModel *smm,
+    SetKeyframesCommand(SceneMotionModel *smm,
                      const SceneMotionModel::KeyFramePairList &frames,
                      SceneMotionModel::ITreeItem *cameraTreeItem)
         : QUndoCommand(),
           m_smm(smm),
-          m_cameraTreeItem(cameraTreeItem),
-          m_parameter(smm->cameraInterpolationParameter())
+          m_cameraTreeItem(cameraTreeItem)
     {
         QList<int> indices;
         foreach (const SceneMotionModel::KeyFramePair &frame, frames) {
@@ -187,7 +186,7 @@ public:
         m_frames = frames;
         m_frameIndices = indices;
     }
-    virtual ~SetFramesCommand() {
+    virtual ~SetKeyframesCommand() {
     }
 
     virtual void undo() {
@@ -224,12 +223,6 @@ public:
             if (cameraKeyframe->frameIndex() >= 0) {
                 QByteArray bytes(cameraKeyframe->estimateSize(), '0');
                 newCameraKeyframe.reset(cameraKeyframe->clone());
-                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kX, m_parameter.x);
-                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kY, m_parameter.y);
-                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kZ, m_parameter.z);
-                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kRotation, m_parameter.rotation);
-                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kFovy, m_parameter.fovy);
-                newCameraKeyframe->setInterpolationParameter(ICameraKeyframe::kDistance, m_parameter.distance);
                 newCameraKeyframe->setFrameIndex(frameIndex);
                 newCameraKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 motion->replaceKeyframe(newCameraKeyframe.take());
@@ -253,7 +246,6 @@ private:
     SceneMotionModel::KeyFramePairList m_frames;
     SceneMotionModel *m_smm;
     SceneMotionModel::ITreeItem *m_cameraTreeItem;
-    ICameraKeyframe::InterpolationParameter m_parameter;
 };
 
 }
@@ -415,7 +407,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
             }
         }
     }
-    setFrames(sceneFrames);
+    setKeyframes(sceneFrames);
 }
 
 void SceneMotionModel::copyKeyframesByModelIndices(const QModelIndexList & /* indices */, int frameIndex)
@@ -434,7 +426,7 @@ void SceneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
             KeyFramePtr keyframe(m_factory->createCameraKeyframe());
             keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
             keyframes.append(KeyFramePair(frameIndex, keyframe));
-            addUndoCommand(new SetFramesCommand(this, keyframes, m_cameraTreeItem));
+            addUndoCommand(new SetKeyframesCommand(this, keyframes, m_cameraTreeItem));
         }
     }
 }
@@ -494,11 +486,11 @@ void SceneMotionModel::loadMotion(IMotion *motion)
     reset();
 }
 
-void SceneMotionModel::setFrames(const KeyFramePairList &frames)
+void SceneMotionModel::setKeyframes(const KeyFramePairList &frames)
 {
     /* 照明データ未対応 */
     if (m_motion)
-        addUndoCommand(new SetFramesCommand(this, frames, m_cameraTreeItem));
+        addUndoCommand(new SetKeyframesCommand(this, frames, m_cameraTreeItem));
     else
         qWarning("No motion to register camera frames.");
 }
@@ -543,7 +535,7 @@ void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
             }
         }
     }
-    addUndoCommand(new SetFramesCommand(this, frames, m_cameraTreeItem));
+    addUndoCommand(new SetKeyframesCommand(this, frames, m_cameraTreeItem));
 }
 
 void SceneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList & /* indices */, float /* value */)

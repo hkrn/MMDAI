@@ -42,8 +42,12 @@
 #include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/ICameraKeyframe.h>
 
+class QAbstractButton;
 class QComboBox;
 class QSpinBox;
+class QLabel;
+class QPushButton;
+class QDialogButtonBox;
 class BoneMotionModel;
 class InterpolationGraphWidget;
 class SceneMotionModel;
@@ -60,15 +64,22 @@ public:
     void setModelIndices(const QModelIndexList &indices);
 
 private slots:
+    void retranslate();
     void disable();
-    void resetInterpolation();
+    void clickButton(QAbstractButton *button);
+    void selectPreset(int value);
 
 private:
     QSpinBox *createSpinBox(int defaultValue,
                             const char *signal,
                             const char *slot);
 
-    QComboBox *m_comboBox;
+    QLabel *m_parameterTypeLabel;
+    QComboBox *m_parameterTypeComboBox;
+    QLabel *m_presetLabel;
+    QComboBox *m_presetComboBox;
+    QPushButton *m_applyAllButton;
+    QDialogButtonBox *m_buttonBox;
     InterpolationGraphWidget *m_graphWidget;
 
     Q_DISABLE_COPY(InterpolationDialog)

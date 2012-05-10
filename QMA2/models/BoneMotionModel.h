@@ -81,7 +81,7 @@ public:
 
     void loadPose(VPDFilePtr pose, vpvl2::IModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl2::IModel *model, int frameIndex);
-    void setFrames(const KeyFramePairList &frames);
+    void setKeyframes(const KeyFramePairList &frames);
     void resetBone(ResetType type);
     void resetAllBones();
     void setPosition(int coordinate, float value);
@@ -91,8 +91,6 @@ public:
     vpvl2::Factory *factory() const { return m_factory; }
     PMDMotionModel::State *mutableState() { return &m_state; }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
-    const vpvl2::IBoneKeyframe::InterpolationParameter &interpolationParameter() const { return m_interpolationParameter; }
-    void setInterpolationParameter(const vpvl2::IBoneKeyframe::InterpolationParameter &value) { m_interpolationParameter = value; }
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);

@@ -208,21 +208,20 @@ private:
     int m_frameIndex;
 };
 
-class SetFramesCommand : public QUndoCommand
+class SetKeyframesCommand : public QUndoCommand
 {
 public:
     /*
      * BoneMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
      * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
      */
-    SetFramesCommand(BoneMotionModel *bmm, const BoneMotionModel::KeyFramePairList &frames)
+    SetKeyframesCommand(BoneMotionModel *bmm, const BoneMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
           m_keys(bmm->keys()),
           m_bmm(bmm),
           m_model(bmm->selectedModel()),
           m_motion(bmm->currentMotion()),
-          m_bone(bmm->selectedBone()),
-          m_parameter(bmm->interpolationParameter())
+          m_bone(bmm->selectedBone())
     {
         QSet<int> indexProceeded;
         /* 現在選択中のモデルにある全てのボーンを取り出す */
@@ -245,7 +244,7 @@ public:
         m_frames = frames;
         m_frameIndices = indexProceeded.toList();
     }
-    virtual ~SetFramesCommand() {
+    virtual ~SetKeyframesCommand() {
     }
 
     virtual void undo() {
@@ -305,10 +304,6 @@ public:
                 if (boneKeyframe->frameIndex() >= 0) {
                     QByteArray bytes(boneKeyframe->estimateSize(), '0');
                     newBoneKeyframe.reset(boneKeyframe->clone());
-                    newBoneKeyframe->setInterpolationParameter(IBoneKeyframe::kX, m_parameter.x);
-                    newBoneKeyframe->setInterpolationParameter(IBoneKeyframe::kY, m_parameter.y);
-                    newBoneKeyframe->setInterpolationParameter(IBoneKeyframe::kZ, m_parameter.z);
-                    newBoneKeyframe->setInterpolationParameter(IBoneKeyframe::kRotation, m_parameter.rotation);
                     newBoneKeyframe->setFrameIndex(frameIndex);
                     newBoneKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
                     m_motion->replaceKeyframe(newBoneKeyframe.take());
@@ -343,7 +338,6 @@ private:
     IModel *m_model;
     IMotion *m_motion;
     IBone *m_bone;
-    IBoneKeyframe::InterpolationParameter m_parameter;
 };
 
 class ResetAllCommand : public QUndoCommand
@@ -565,7 +559,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
             }
         }
     }
-    setFrames(boneFrames);
+    setKeyframes(boneFrames);
 }
 
 void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex)
@@ -605,7 +599,7 @@ void BoneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
             int newFrameIndex = frameIndex + pair.first;
             keyframes.append(KeyFramePair(newFrameIndex, keyframe));
         }
-        addUndoCommand(new SetFramesCommand(this, keyframes));
+        addUndoCommand(new SetKeyframesCommand(this, keyframes));
     }
 }
 
@@ -653,7 +647,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
             int newFrameIndex = frameIndex + pair.first;
             keyframes.append(KeyFramePair(newFrameIndex, newKeyframe));
         }
-        addUndoCommand(new SetFramesCommand(this, keyframes));
+        addUndoCommand(new SetKeyframesCommand(this, keyframes));
     }
 }
 
@@ -708,11 +702,31 @@ BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(con
 {
     KeyFramePairList keyframes;
     foreach (const QModelIndex &index, indices) {
-        const QVariant &variant = index.data(BoneMotionModel::kBinaryDataRole);
-        if (variant.canConvert(QVariant::ByteArray)) {
-            KeyFramePtr keyframe(m_factory->createBoneKeyframe());
-            keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-            keyframes.append(KeyFramePair(MotionBaseModel::toFrameIndex(index), keyframe));
+        int frameIndex = toFrameIndex(index);
+        TreeItem *treeItem = static_cast<TreeItem *>(index.internalPointer());
+        if (treeItem->isRoot()) {
+            continue;
+        }
+        else if (treeItem->isCategory()) {
+            int nchildren = treeItem->countChildren();
+            for (int i = 0; i < nchildren; i++) {
+                ITreeItem *childTreeItem = treeItem->child(i);
+                const QModelIndex childIndex = frameIndexToModelIndex(childTreeItem, frameIndex);
+                const QVariant &variant = childIndex.data(BoneMotionModel::kBinaryDataRole);
+                if (variant.canConvert(QVariant::ByteArray)) {
+                    KeyFramePtr keyframe(m_factory->createBoneKeyframe());
+                    keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+                    keyframes.append(KeyFramePair(frameIndex, keyframe));
+                }
+            }
+        }
+        else {
+            const QVariant &variant = index.data(BoneMotionModel::kBinaryDataRole);
+            if (variant.canConvert(QVariant::ByteArray)) {
+                KeyFramePtr keyframe(m_factory->createBoneKeyframe());
+                keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+                keyframes.append(KeyFramePair(frameIndex, keyframe));
+            }
         }
     }
     return keyframes;
@@ -756,10 +770,10 @@ void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int frameIndex)
     }
 }
 
-void BoneMotionModel::setFrames(const KeyFramePairList &frames)
+void BoneMotionModel::setKeyframes(const KeyFramePairList &frames)
 {
     if (m_model && m_motion)
-        addUndoCommand(new SetFramesCommand(this, frames));
+        addUndoCommand(new SetKeyframesCommand(this, frames));
     else
         qWarning("No model or motion to register bone frames.");
 }
@@ -930,7 +944,7 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
             }
         }
     }
-    addUndoCommand(new SetFramesCommand(this, frames));
+    addUndoCommand(new SetKeyframesCommand(this, frames));
 }
 
 void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices,
@@ -960,7 +974,7 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
             }
         }
     }
-    setFrames(keyframes);
+    setKeyframes(keyframes);
 }
 
 void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)

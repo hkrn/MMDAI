@@ -100,7 +100,7 @@ private:
     bool m_isCategory;
 };
 
-class SetFramesCommand : public QUndoCommand
+class SetKeyframesCommand : public QUndoCommand
 {
 public:
     typedef QPair<QModelIndex, QByteArray> ModelIndex;
@@ -109,7 +109,7 @@ public:
      * MorphMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
      * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
      */
-    SetFramesCommand(MorphMotionModel *fmm, const MorphMotionModel::KeyFramePairList &frames)
+    SetKeyframesCommand(MorphMotionModel *fmm, const MorphMotionModel::KeyFramePairList &frames)
         : QUndoCommand(),
           m_keys(fmm->keys()),
           m_fmm(fmm),
@@ -138,7 +138,7 @@ public:
         m_frames = frames;
         m_frameIndices = indexProceeded.toList();
     }
-    ~SetFramesCommand() {
+    ~SetKeyframesCommand() {
     }
 
     void undo() {
@@ -345,7 +345,7 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
             }
         }
     }
-    setFrames(keyframes);
+    setKeyframes(keyframes);
 }
 
 void MorphMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex)
@@ -377,7 +377,7 @@ void MorphMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
             int newFrameIndex = frameIndex + pair.first;
             keyframes.append(KeyFramePair(newFrameIndex, keyframe));
         }
-        addUndoCommand(new SetFramesCommand(this, keyframes));
+        addUndoCommand(new SetKeyframesCommand(this, keyframes));
     }
 }
 
@@ -419,10 +419,10 @@ const QString MorphMotionModel::nameFromModelIndex(const QModelIndex &index) con
     return item->name();
 }
 
-void MorphMotionModel::setFrames(const KeyFramePairList &frames)
+void MorphMotionModel::setKeyframes(const KeyFramePairList &frames)
 {
     if (m_model && m_motion) {
-        addUndoCommand(new SetFramesCommand(this, frames));
+        addUndoCommand(new SetKeyframesCommand(this, frames));
     }
     else {
         qWarning("No model or motion to register morph frames.");
@@ -583,7 +583,7 @@ void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
         }
     }
     if (!keyframes.isEmpty())
-        addUndoCommand(new SetFramesCommand(this, keyframes));
+        addUndoCommand(new SetKeyframesCommand(this, keyframes));
 }
 
 void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
@@ -602,7 +602,7 @@ void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &
             }
         }
     }
-    setFrames(keyframes);
+    setKeyframes(keyframes);
 }
 
 void MorphMotionModel::selectMorphs(const QList<IMorph *> &morphs)
