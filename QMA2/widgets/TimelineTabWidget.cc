@@ -414,7 +414,8 @@ void TimelineTabWidget::openInterpolationDialog(const QModelIndexList &indices)
     /* 補間ダイアログを表示する */
     m_interpolationDialog->setMode(m_tabWidget->currentIndex());
     m_interpolationDialog->setModelIndices(indices);
-    m_interpolationDialog->show();
+    if (m_interpolationDialog->hasValidKeyframes())
+        m_interpolationDialog->show();
 }
 
 void TimelineTabWidget::selectBones(const QList<IBone *> &bones)

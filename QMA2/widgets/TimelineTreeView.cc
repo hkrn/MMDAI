@@ -118,7 +118,6 @@ void TimelineTreeView::mouseDoubleClickEvent(QMouseEvent *event)
     const QModelIndex &index = indexAt(event->pos());
     if (index.isValid()) {
         QModelIndexList indices;
-        // MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
         indices.append(index);
         emit modelIndexDidSelect(indices);
     }

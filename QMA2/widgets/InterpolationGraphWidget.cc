@@ -73,7 +73,6 @@ InterpolationGraphWidget::~InterpolationGraphWidget()
 void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
 {
     bool enabled = false;
-    /* まだ複数のキーフレームに対する処理は対応していない */
     m_boneKeyframes.clear();
     m_cameraKeyframes.clear();
     if (m_type == kBone) {
@@ -87,6 +86,7 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
             updateValues(true);
             enabled = true;
             m_boneKeyframes = keyframes;
+            m_preservedBoneIP = m_boneIP;
         }
     }
     else if (m_type == kCamera) {
@@ -102,6 +102,7 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
             updateValues(true);
             enabled = true;
             m_cameraKeyframes = keyframes;
+            m_preservedCameraIP = m_cameraIP;
         }
     }
     setEnabled(enabled);
@@ -113,6 +114,13 @@ void InterpolationGraphWidget::setLinearInterpolation()
     setY1(20);
     setX2(107);
     setY2(107);
+}
+
+void InterpolationGraphWidget::reset()
+{
+    m_boneIP = m_preservedBoneIP;
+    m_cameraIP = m_preservedCameraIP;
+    updateValues(true);
 }
 
 void InterpolationGraphWidget::save()
@@ -275,6 +283,9 @@ void InterpolationGraphWidget::updateValues(bool import)
         case 3:
             setValue(m_boneIP.rotation, import);
             break;
+        case -1:
+            /* ignore */
+            break;
         default:
             qWarning("Out of bone combo index: %d", m_index);
             break;
@@ -299,6 +310,9 @@ void InterpolationGraphWidget::updateValues(bool import)
             break;
         case 5:
             setValue(m_cameraIP.fovy, import);
+            break;
+        case -1:
+            /* ignore */
             break;
         default:
             qWarning("Out of camera combo index: %d", m_index);

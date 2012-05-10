@@ -65,21 +65,25 @@ InterpolationDialog::InterpolationDialog(BoneMotionModel *bmm, SceneMotionModel 
     subLayout->addWidget(m_presetLabel);
     subLayout->addWidget(m_presetComboBox);
     mainLayout->addLayout(subLayout);
-    m_applyAllButton = new QPushButton();
-    connect(m_applyAllButton, SIGNAL(clicked()), m_graphWidget, SLOT(applyAll()));
-    mainLayout->addWidget(m_applyAllButton);
-    mainLayout->setAlignment(m_applyAllButton, Qt::AlignCenter);
     QFormLayout *parameterLayout = new QFormLayout();
     parameterLayout->addRow("X1", createSpinBox(20, SIGNAL(x1ValueDidChange(int)), SLOT(setX1(int))));
     parameterLayout->addRow("X2", createSpinBox(107, SIGNAL(x2ValueDidChange(int)), SLOT(setX2(int))));
     parameterLayout->addRow("Y1", createSpinBox(20, SIGNAL(y1ValueDidChange(int)), SLOT(setY1(int))));
     parameterLayout->addRow("Y2", createSpinBox(107, SIGNAL(y2ValueDidChange(int)), SLOT(setY2(int))));
+    QVBoxLayout *groupLayout = new QVBoxLayout();
     subLayout = new QHBoxLayout();
     subLayout->addWidget(m_graphWidget);
     subLayout->addLayout(parameterLayout);
     subLayout->setAlignment(m_graphWidget, Qt::AlignRight);
     subLayout->setAlignment(parameterLayout, Qt::AlignLeft);
-    mainLayout->addLayout(subLayout);
+    groupLayout->addLayout(subLayout);
+    m_applyAllButton = new QPushButton();
+    connect(m_applyAllButton, SIGNAL(clicked()), m_graphWidget, SLOT(applyAll()));
+    groupLayout->addWidget(m_applyAllButton);
+    groupLayout->setAlignment(m_applyAllButton, Qt::AlignCenter);
+    m_parameterGroup = new QGroupBox();
+    m_parameterGroup->setLayout(groupLayout);
+    mainLayout->addWidget(m_parameterGroup);
     m_buttonBox = new QDialogButtonBox(QDialogButtonBox::Save|QDialogButtonBox::Discard|QDialogButtonBox::Reset);
     connect(m_buttonBox, SIGNAL(clicked(QAbstractButton*)), SLOT(clickButton(QAbstractButton*)));
     mainLayout->addWidget(m_buttonBox);
@@ -125,6 +129,11 @@ void InterpolationDialog::setModelIndices(const QModelIndexList &indices)
     m_graphWidget->setModelIndices(indices);
 }
 
+bool InterpolationDialog::hasValidKeyframes() const
+{
+    return m_graphWidget->isEnabled();
+}
+
 void InterpolationDialog::retranslate()
 {
     m_parameterTypeLabel->setText(tr("Parameter type"));
@@ -136,6 +145,7 @@ void InterpolationDialog::retranslate()
     m_presetComboBox->addItem(tr("Half S-curve"), QVector4D(64, 64, 0, 127));
     m_presetComboBox->addItem(tr("Half reversed S-curve"), QVector4D(0, 127, 64, 64));
     m_applyAllButton->setText(tr("Apply all"));
+    m_parameterGroup->setTitle(tr("Interpolation parameter"));
 }
 
 void InterpolationDialog::disable()
@@ -156,7 +166,7 @@ void InterpolationDialog::clickButton(QAbstractButton *button)
         close();
         break;
     case QDialogButtonBox::ResetRole:
-        m_graphWidget->setLinearInterpolation();
+        m_graphWidget->reset();
         break;
     case QDialogButtonBox::InvalidRole:
     case QDialogButtonBox::ActionRole:

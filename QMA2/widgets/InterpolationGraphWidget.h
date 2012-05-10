@@ -69,6 +69,7 @@ public:
     void setModelIndices(const QModelIndexList &indices);
     void setType(Type value) { m_type = value; }
     void setLinearInterpolation();
+    void reset();
     void save();
 
 public slots:
@@ -103,7 +104,9 @@ private:
     BoneMotionModel::KeyFramePairList m_boneKeyframes;
     SceneMotionModel::KeyFramePairList m_cameraKeyframes;
     vpvl2::IBoneKeyframe::InterpolationParameter m_boneIP;
+    vpvl2::IBoneKeyframe::InterpolationParameter m_preservedBoneIP;
     vpvl2::ICameraKeyframe::InterpolationParameter m_cameraIP;
+    vpvl2::ICameraKeyframe::InterpolationParameter m_preservedCameraIP;
     QPoint m_p1;
     QPoint m_p2;
     Type m_type;

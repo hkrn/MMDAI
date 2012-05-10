@@ -44,6 +44,7 @@
 
 class QAbstractButton;
 class QComboBox;
+class QGroupBox;
 class QSpinBox;
 class QLabel;
 class QPushButton;
@@ -62,6 +63,7 @@ public:
 
     void setMode(int mode);
     void setModelIndices(const QModelIndexList &indices);
+    bool hasValidKeyframes() const;
 
 private slots:
     void retranslate();
@@ -78,6 +80,7 @@ private:
     QComboBox *m_parameterTypeComboBox;
     QLabel *m_presetLabel;
     QComboBox *m_presetComboBox;
+    QGroupBox *m_parameterGroup;
     QPushButton *m_applyAllButton;
     QDialogButtonBox *m_buttonBox;
     InterpolationGraphWidget *m_graphWidget;
