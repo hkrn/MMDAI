@@ -102,7 +102,7 @@ private:
     BoneMotionModel *m_boneMotionModel;
     SceneMotionModel *m_sceneMotionModel;
     BoneMotionModel::KeyFramePairList m_boneKeyframes;
-    SceneMotionModel::KeyFramePairList m_cameraKeyframes;
+    SceneMotionModel::CameraKeyFramePairList m_cameraKeyframes;
     vpvl2::IBoneKeyframe::InterpolationParameter m_boneIP;
     vpvl2::IBoneKeyframe::InterpolationParameter m_preservedBoneIP;
     vpvl2::ICameraKeyframe::InterpolationParameter m_cameraIP;

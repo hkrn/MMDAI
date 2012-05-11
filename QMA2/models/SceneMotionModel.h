@@ -43,7 +43,7 @@
 
 namespace vpvl2 {
 class Factory;
-class IKeyframe;
+class ILightKeyframe;
 class IModel;
 class Scene;
 }
@@ -55,9 +55,12 @@ class SceneMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl2::IKeyframe> KeyFramePtr;
-    typedef QPair<int, KeyFramePtr> KeyFramePair;
-    typedef QList<KeyFramePair> KeyFramePairList;
+    typedef QSharedPointer<vpvl2::ICameraKeyframe> CameraKeyFramePtr;
+    typedef QPair<int, CameraKeyFramePtr> CameraKeyFramePair;
+    typedef QList<CameraKeyFramePair> CameraKeyFramePairList;
+    typedef QSharedPointer<vpvl2::ILightKeyframe> LightKeyFramePtr;
+    typedef QPair<int, LightKeyFramePtr> LightKeyFramePair;
+    typedef QList<LightKeyFramePair> LightKeyFramePairList;
 
     explicit SceneMotionModel(vpvl2::Factory *factory,
                               QUndoGroup *undo,
@@ -77,9 +80,9 @@ public:
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframesByFrameIndex(int frameIndex);
     const QString nameFromModelIndex(const QModelIndex &index) const;
-    KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
+    CameraKeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
-    void setKeyframes(const KeyFramePairList &frames);
+    void setKeyframes(const CameraKeyFramePairList &frames);
     void refreshScene();
     vpvl2::Factory *factory() const { return m_factory; }
 
