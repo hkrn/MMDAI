@@ -256,6 +256,7 @@ SceneMotionModel::SceneMotionModel(Factory *factory,
                                    QObject *parent)
     : MotionBaseModel(undo, parent),
       m_sceneWidget(sceneWidget),
+      m_stack(0),
       m_factory(factory),
       m_rootTreeItem(0),
       m_cameraTreeItem(0),
@@ -274,6 +275,7 @@ SceneMotionModel::~SceneMotionModel()
     // m_cameraTreeItem は m_rootTreeItem に子供として追加されてるので、delete するときに同時に delete される
     delete m_lightTreeItem;
     delete m_rootTreeItem;
+    delete m_stack;
 }
 
 QVariant SceneMotionModel::data(const QModelIndex &index, int role) const
@@ -481,6 +483,9 @@ void SceneMotionModel::loadMotion(IMotion *motion)
             newLightKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
             setData(modelIndex, bytes);
         }
+        m_stack = new QUndoStack();
+        m_undo->addStack(m_stack);
+        m_undo->setActiveStack(m_stack);
         m_motion = motion;
     }
     reset();
@@ -495,6 +500,11 @@ void SceneMotionModel::setKeyframes(const CameraKeyFramePairList &frames)
         qWarning("No motion to register camera frames.");
 }
 
+void SceneMotionModel::setActiveUndoStack()
+{
+    m_undo->setActiveStack(m_stack);
+}
+
 void SceneMotionModel::refreshScene()
 {
     reset();
@@ -502,6 +512,9 @@ void SceneMotionModel::refreshScene()
 
 void SceneMotionModel::removeMotion()
 {
+    m_undo->setActiveStack(0);
+    delete m_stack;
+    m_stack = 0;
     m_cameraData.clear();
     m_lightData.clear();
     setModified(false);

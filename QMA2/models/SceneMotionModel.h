@@ -83,6 +83,7 @@ public:
     CameraKeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
     void setKeyframes(const CameraKeyFramePairList &frames);
+    void setActiveUndoStack();
     void refreshScene();
     vpvl2::Factory *factory() const { return m_factory; }
 
@@ -103,6 +104,7 @@ protected:
 private:
     const SceneWidget *m_sceneWidget;
     QModelIndex m_cameraIndex;
+    QUndoStack *m_stack;
     Values m_cameraData;
     Values m_lightData;
     vpvl2::Factory *m_factory;

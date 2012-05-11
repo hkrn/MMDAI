@@ -1246,6 +1246,9 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), loader, SLOT(setLightDirection(vpvl2::Vector3)));
+    /* 空のカメラモーションを登録 */
+    IMotion *cameraMotion = loader->newCameraMotion();
+    loader->setCameraMotion(cameraMotion);
 }
 
 void MainWindow::connectWidgets()

@@ -95,6 +95,7 @@ public:
 
     void updateModel(vpvl2::IModel *model);
     void refreshModel(vpvl2::IModel *model);
+    void setActiveUndoStack();
     int maxFrameCount() const;
     int maxFrameIndex() const;
     bool forceCameraUpdate() const;

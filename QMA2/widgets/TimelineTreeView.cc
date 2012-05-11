@@ -86,26 +86,32 @@ void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool r
 void TimelineTreeView::addKeyframesBySelectedIndices()
 {
     MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
-    m->addKeyframesByModelIndices(selectionModel()->selectedIndexes());
+    const QModelIndexList &indices = selectionModel()->selectedIndexes();
+    m->addKeyframesByModelIndices(indices);
 }
 
 void TimelineTreeView::deleteKeyframesBySelectedIndices()
 {
     MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
-    m->deleteKeyframesByModelIndices(selectionModel()->selectedIndexes());
+    const QModelIndexList &indices = selectionModel()->selectedIndexes();
+    m->deleteKeyframesByModelIndices(indices);
 }
 
 void TimelineTreeView::setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position,
                                                                const vpvl2::Vector3 &rotation)
 {
-    if (BoneMotionModel *m = qobject_cast<BoneMotionModel *>(model()))
-        m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), position, rotation);
+    if (BoneMotionModel *m = qobject_cast<BoneMotionModel *>(model())) {
+        const QModelIndexList &indices = selectionModel()->selectedIndexes();
+        m->applyKeyframeWeightByModelIndices(indices, position, rotation);
+    }
 }
 
 void TimelineTreeView::setMorphKeyframesWeightBySelectedIndices(float value)
 {
-    if (MorphMotionModel *m = qobject_cast<MorphMotionModel *>(model()))
-        m->applyKeyframeWeightByModelIndices(selectionModel()->selectedIndexes(), value);
+    if (MorphMotionModel *m = qobject_cast<MorphMotionModel *>(model())) {
+        const QModelIndexList &indices = selectionModel()->selectedIndexes();
+        m->applyKeyframeWeightByModelIndices(indices, value);
+    }
 }
 
 const QModelIndexList &TimelineTreeView::expandedModelIndices() const

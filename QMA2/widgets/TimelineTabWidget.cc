@@ -314,14 +314,25 @@ void TimelineTabWidget::previousFrame()
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
     switch (index) {
-    case kBoneTabIndex:
+    case kBoneTabIndex: {
+        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model());
+        model->setActiveUndoStack();
         emit currentTabDidChange(kBone);
         break;
-    case kMorphTabIndex:
+    }
+    case kMorphTabIndex: {
+        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_morphTimeline->treeView()->model());
+        model->setActiveUndoStack();
         emit currentTabDidChange(kMorph);
         break;
-    case kSceneTabIndex:
+    }
+    case kSceneTabIndex: {
+        SceneMotionModel *model = static_cast<SceneMotionModel *>(m_sceneTimeline->treeView()->model());
+        model->setActiveUndoStack();
         emit currentTabDidChange(kScene);
+        break;
+    }
+    default:
         break;
     }
 }

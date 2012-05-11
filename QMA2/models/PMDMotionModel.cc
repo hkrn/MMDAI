@@ -245,6 +245,14 @@ void PMDMotionModel::refreshModel(IModel *model)
     }
 }
 
+void PMDMotionModel::setActiveUndoStack()
+{
+    if (m_stacks.contains(m_model))
+        m_undo->setActiveStack(m_stacks[m_model].data());
+    else
+        m_undo->setActiveStack(0);
+}
+
 int PMDMotionModel::maxFrameCount() const
 {
     return 54000;
@@ -264,8 +272,9 @@ void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys 
 {
     /* モデルが新規の場合はそのモデルの巻き戻しスタックを作成し、そうでない場合は該当のモデルの巻戻しスタックを有効にする */
     if (!m_stacks.contains(model)) {
-        QUndoStack *stack = new QUndoStack();
-        m_stacks.insert(model, UndoStackPtr(stack));
+        UndoStackPtr stackPtr(new QUndoStack());
+        QUndoStack *stack = stackPtr.data();
+        m_stacks.insert(model, stackPtr);
         m_undo->addStack(stack);
         m_undo->setActiveStack(stack);
     }

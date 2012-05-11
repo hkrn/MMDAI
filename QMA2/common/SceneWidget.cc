@@ -403,8 +403,6 @@ void SceneWidget::setEmptyMotion(IModel *model)
     if (model) {
         IMotion *modelMotion = m_loader->newModelMotion(model);
         m_loader->setModelMotion(modelMotion, model);
-        IMotion *cameraMotion = m_loader->newCameraMotion();
-        m_loader->setCameraMotion(cameraMotion);
     }
     else
         internal::warning(this,
