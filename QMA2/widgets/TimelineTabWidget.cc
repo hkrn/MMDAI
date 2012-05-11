@@ -63,7 +63,8 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_sceneTimeline(0),
     m_frameSelectionDialog(0),
     m_frameWeightDialog(0),
-    m_interpolationDialog(0)
+    m_interpolationDialog(0),
+    m_lastSelectedModel(0)
 {
     m_tabWidget = new QTabWidget();
     m_boneTimeline = new TimelineWidget(bmm, this);
@@ -318,18 +319,21 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
         PMDMotionModel *model = static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model());
         model->setActiveUndoStack();
         emit currentTabDidChange(kBone);
+        emit currentModelDidChange(m_lastSelectedModel);
         break;
     }
     case kMorphTabIndex: {
         PMDMotionModel *model = static_cast<PMDMotionModel *>(m_morphTimeline->treeView()->model());
         model->setActiveUndoStack();
         emit currentTabDidChange(kMorph);
+        emit currentModelDidChange(m_lastSelectedModel);
         break;
     }
     case kSceneTabIndex: {
         SceneMotionModel *model = static_cast<SceneMotionModel *>(m_sceneTimeline->treeView()->model());
         model->setActiveUndoStack();
         emit currentTabDidChange(kScene);
+        emit currentModelDidChange(0);
         break;
     }
     default:
@@ -450,6 +454,12 @@ void TimelineTabWidget::selectButton(QAbstractButton *button)
         emit editModeDidSet(SceneWidget::kRotate);
     else if (button == m_boneMoveButton)
         emit editModeDidSet(SceneWidget::kMove);
+}
+
+void TimelineTabWidget::setLastSelectedModel(IModel *model)
+{
+    if (model)
+        m_lastSelectedModel = model;
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)

@@ -207,6 +207,7 @@ void SceneWidget::setSelectedModel(IModel *value)
     m_loader->setSelectedModel(value);
     m_info->setModel(value);
     m_info->update();
+    m_editMode = value ? kSelect : kNone;
 }
 
 void SceneWidget::setModelEdgeOffset(double value)
@@ -1083,7 +1084,7 @@ void SceneWidget::paintGL()
     if (!m_bones.isEmpty())
         bone = m_bones.first();
     switch (m_editMode) {
-    case kSelect:
+    case kSelect: /* ボーン選択モード */
         /* モデルのボーンの接続部分をレンダリング */
         if (!(m_handleFlags & Handles::kEnable))
             m_debugDrawer->drawModelBones(m_loader->selectedModel(), scene, m_bones.toSet());
@@ -1098,16 +1099,20 @@ void SceneWidget::paintGL()
             m_handles->drawImageHandles(bone);
         m_info->draw();
         break;
-    case kRotate:
+    case kRotate: /* 回転モード */
         /* kRotate と kMove の場合はレンダリングがうまくいかない関係でモデルのハンドルを最後に持ってく */
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawRotationHandle();
         break;
-    case kMove:
+    case kMove: /* 移動モード */
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawMoveHandle();
+        break;
+    case kNone: /* モデル選択なし */
+    default:
+        m_info->draw();
         break;
     }
 #endif

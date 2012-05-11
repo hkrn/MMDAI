@@ -1482,10 +1482,11 @@ bool SceneLoader::isModelSelected(const IModel *value) const
 
 void SceneLoader::setSelectedModel(IModel *value)
 {
-    if (m_project) {
+    if (m_project && value != m_model) {
         m_model = value;
         m_project->setModelSetting(value, "selected", "true");
-        emit modelDidSelect(value, this);
+        if (signal)
+            emit modelDidSelect(value, this);
     }
 }
 

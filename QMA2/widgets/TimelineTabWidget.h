@@ -94,6 +94,8 @@ public slots:
 signals:
     void motionDidSeek(float frameIndex, bool forceCameraUpdate);
     void currentTabDidChange(int type);
+    void currentModelDidChange(vpvl2::IModel *model);
+    void editModeDidSet(SceneWidget::EditMode mode);
 
 private slots:
     void retranslate();
@@ -119,12 +121,8 @@ private slots:
     void openFrameWeightDialog();
     void openInterpolationDialog(const QModelIndexList &indices);
     void selectBones(const QList<vpvl2::IBone *> &bones);
-
-signals:
-    void editModeDidSet(SceneWidget::EditMode mode);
-
-private slots:
     void selectButton(QAbstractButton *button);
+    void setLastSelectedModel(vpvl2::IModel *model);
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
@@ -142,6 +140,7 @@ private:
     FrameSelectionDialog *m_frameSelectionDialog;
     FrameWeightDialog *m_frameWeightDialog;
     InterpolationDialog *m_interpolationDialog;
+    vpvl2::IModel *m_lastSelectedModel;
 
     Q_DISABLE_COPY(TimelineTabWidget)
 };

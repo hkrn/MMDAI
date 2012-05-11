@@ -1213,6 +1213,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_morphMotionModel, SLOT(setPMDModel(vpvl2::IModel*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl2::IModel*)));
     connect(loader ,SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(vpvl2::IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_timelineTabWidget, SLOT(setLastSelectedModel(vpvl2::IModel*)));
     connect(loader, SIGNAL(assetDidSelect(vpvl2::IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl2::IModel*,SceneLoader*)));
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
@@ -1225,6 +1226,7 @@ void MainWindow::connectSceneLoader()
     connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl2::Quaternion)), handles, SLOT(updateBone()));
+    connect(m_timelineTabWidget, SIGNAL(currentModelDidChange(vpvl2::IModel*)), m_sceneWidget, SLOT(setSelectedModel(vpvl2::IModel*)));
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     Scene *scene = m_sceneWidget->sceneLoader()->scene();

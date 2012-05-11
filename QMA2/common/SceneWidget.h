@@ -80,6 +80,7 @@ class SceneWidget : public QGLWidget, protected QGLFunctions
 
 public:
     enum EditMode {
+        kNone,
         kSelect,
         kRotate,
         kMove
@@ -89,7 +90,6 @@ public:
     ~SceneWidget();
 
     SceneLoader *sceneLoader() const;
-    void setSelectedModel(vpvl2::IModel *value);
     void setWorldGravity(const vpvl2::Vector3 &value);
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
@@ -150,6 +150,7 @@ public slots:
     void setModelSelfShadowEnable(bool value);
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
+    void setSelectedModel(vpvl2::IModel *value);
 
 signals:
     void initailizeGLContextDidDone();
