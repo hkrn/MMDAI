@@ -66,7 +66,7 @@ public:
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     const QString nameFromModelIndex(const QModelIndex &index) const;
 
-    void setKeyframes(const KeyFramePairList &frames);
+    void setKeyframes(const KeyFramePairList &keyframes);
     void setWeight(float value);
     void setWeight(const vpvl2::Scalar &value, vpvl2::IMorph *morph);
     vpvl2::IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }

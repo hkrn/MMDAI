@@ -109,7 +109,7 @@ public:
      * MorphMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
      * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
      */
-    SetKeyframesCommand(MorphMotionModel *fmm, const MorphMotionModel::KeyFramePairList &frames)
+    SetKeyframesCommand(MorphMotionModel *fmm, const MorphMotionModel::KeyFramePairList &keyframes)
         : QUndoCommand(),
           m_keys(fmm->keys()),
           m_fmm(fmm),
@@ -121,7 +121,7 @@ public:
         /* 現在選択中のモデルにある全ての頂点モーフを取り出す */
         const PMDMotionModel::TreeItemList &items = m_keys.values();
         /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
-        foreach (const MorphMotionModel::KeyFramePair &frame, frames) {
+        foreach (const MorphMotionModel::KeyFramePair &frame, keyframes) {
             int frameIndex = frame.first;
             /* フレーム単位での重複を避けるためにスキップ処理を設ける */
             if (!indexProceeded.contains(frameIndex)) {
@@ -135,7 +135,7 @@ public:
                 indexProceeded.insert(frameIndex);
             }
         }
-        m_frames = frames;
+        m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
     }
     ~SetKeyframesCommand() {
@@ -171,7 +171,7 @@ public:
         QScopedPointer<IMorphKeyframe> newMorphKeyframe;
         QString key;
         /* すべてのキーフレーム情報を登録する */
-        foreach (const MorphMotionModel::KeyFramePair &pair, m_frames) {
+        foreach (const MorphMotionModel::KeyFramePair &pair, m_keyframes) {
             int frameIndex = pair.first;
             const MorphMotionModel::KeyFramePtr &ptr = pair.second;
             IMorphKeyframe *morphKeyframe = ptr.data();
@@ -227,7 +227,7 @@ private:
     /* m_frameIndices に加えて undo で復元する用のキーフレームの集合 */
     QList<ModelIndex> m_modelIndices;
     /* 実際に登録する用のキーフレームの集合 */
-    MorphMotionModel::KeyFramePairList m_frames;
+    MorphMotionModel::KeyFramePairList m_keyframes;
     MorphMotionModel *m_fmm;
     IModel *m_model;
     IMotion *m_motion;
@@ -419,10 +419,10 @@ const QString MorphMotionModel::nameFromModelIndex(const QModelIndex &index) con
     return item->name();
 }
 
-void MorphMotionModel::setKeyframes(const KeyFramePairList &frames)
+void MorphMotionModel::setKeyframes(const KeyFramePairList &keyframes)
 {
     if (m_model && m_motion) {
-        addUndoCommand(new SetKeyframesCommand(this, frames));
+        addUndoCommand(new SetKeyframesCommand(this, keyframes));
     }
     else {
         qWarning("No model or motion to register morph frames.");

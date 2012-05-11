@@ -215,7 +215,7 @@ public:
      * BoneMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
      * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
      */
-    SetKeyframesCommand(BoneMotionModel *bmm, const BoneMotionModel::KeyFramePairList &frames)
+    SetKeyframesCommand(BoneMotionModel *bmm, const BoneMotionModel::KeyFramePairList &keyframes)
         : QUndoCommand(),
           m_keys(bmm->keys()),
           m_bmm(bmm),
@@ -227,7 +227,7 @@ public:
         /* 現在選択中のモデルにある全てのボーンを取り出す */
         const BoneMotionModel::TreeItemList &items = m_keys.values();
         /* フレームインデックスがまたがるので複雑だが対象のキーフレームを全て保存しておく */
-        foreach (const BoneMotionModel::KeyFramePair &frame, frames) {
+        foreach (const BoneMotionModel::KeyFramePair &frame, keyframes) {
             int frameIndex = frame.first;
             /* フレーム単位での重複を避けるためにスキップ処理を設ける */
             if (!indexProceeded.contains(frameIndex)) {
@@ -241,7 +241,7 @@ public:
                 indexProceeded.insert(frameIndex);
             }
         }
-        m_frames = frames;
+        m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
     }
     virtual ~SetKeyframesCommand() {
@@ -277,7 +277,7 @@ public:
         QString key;
         QScopedPointer<IBoneKeyframe> newBoneKeyframe;
         /* すべてのキーフレーム情報を登録する */
-        foreach (const BoneMotionModel::KeyFramePair &pair, m_frames) {
+        foreach (const BoneMotionModel::KeyFramePair &pair, m_keyframes) {
             int frameIndex = pair.first;
             const BoneMotionModel::KeyFramePtr &data = pair.second;
             IBoneKeyframe *boneKeyframe = data.data();
@@ -333,7 +333,7 @@ private:
     /* m_frameIndices に加えて undo で復元する用のキーフレームの集合 */
     QList<ModelIndex> m_modelIndices;
     /* 実際に登録する用のキーフレームの集合 */
-    BoneMotionModel::KeyFramePairList m_frames;
+    BoneMotionModel::KeyFramePairList m_keyframes;
     BoneMotionModel *m_bmm;
     IModel *m_model;
     IMotion *m_motion;
@@ -770,10 +770,10 @@ void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int frameIndex)
     }
 }
 
-void BoneMotionModel::setKeyframes(const KeyFramePairList &frames)
+void BoneMotionModel::setKeyframes(const KeyFramePairList &keyframes)
 {
     if (m_model && m_motion)
-        addUndoCommand(new SetKeyframesCommand(this, frames));
+        addUndoCommand(new SetKeyframesCommand(this, keyframes));
     else
         qWarning("No model or motion to register bone frames.");
 }
@@ -928,7 +928,7 @@ void BoneMotionModel::removeModel()
 
 void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    KeyFramePairList frames;
+    KeyFramePairList keyframes;
     /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
     foreach (const QModelIndex &index, indices) {
         if (index.isValid() && index.column() > 1) {
@@ -939,12 +939,12 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
                     KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
                     clonedKeyframe->setFrameIndex(-1);
-                    frames.append(KeyFramePair(keyframeToDelete->frameIndex(), clonedKeyframe));
+                    keyframes.append(KeyFramePair(keyframeToDelete->frameIndex(), clonedKeyframe));
                 }
             }
         }
     }
-    addUndoCommand(new SetKeyframesCommand(this, frames));
+    addUndoCommand(new SetKeyframesCommand(this, keyframes));
 }
 
 void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices,

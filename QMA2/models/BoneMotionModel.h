@@ -81,7 +81,7 @@ public:
 
     void loadPose(VPDFilePtr pose, vpvl2::IModel *model, int frameIndex);
     void savePose(VPDFile *pose, vpvl2::IModel *model, int frameIndex);
-    void setKeyframes(const KeyFramePairList &frames);
+    void setKeyframes(const KeyFramePairList &keyframes);
     void resetBone(ResetType type);
     void resetAllBones();
     void setPosition(int coordinate, float value);
