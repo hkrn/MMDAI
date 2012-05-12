@@ -91,28 +91,6 @@ public:
         m_opacityUniformLocation = 0;
     }
 
-    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
-        if (ret) {
-            m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
-            m_transformMatrixUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
-            m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
-            m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-            m_materialEmissionUniformLocation = glGetUniformLocation(m_program, "materialEmission");
-            m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
-            m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
-            m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
-            m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
-            m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
-            m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
-            m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
-            m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
-            m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
-            m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
-        }
-        return ret;
-    }
-
     void setColor(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_colorAttributeLocation);
         glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -163,6 +141,26 @@ public:
         else {
             glUniform1i(m_hasSubTextureUniformLocation, 0);
         }
+    }
+
+protected:
+    virtual void getLocations() {
+        ObjectProgram::getLocations();
+        m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
+        m_transformMatrixUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
+        m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
+        m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+        m_materialEmissionUniformLocation = glGetUniformLocation(m_program, "materialEmission");
+        m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
+        m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
+        m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
+        m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
+        m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
+        m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
+        m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
+        m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
+        m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
+        m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
     }
 
 private:
@@ -398,14 +396,18 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     IString *vertexShaderSource = 0, *fragmentShaderSource = 0;
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, context);
-    ret = assetProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    assetProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
+    assetProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
+    ret = assetProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, context);
-    ret = zplotProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    zplotProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
+    zplotProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
+    ret = zplotProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)

@@ -81,16 +81,6 @@ public:
         m_sizeUniformLocation = 0;
     }
 
-    bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
-        if (ret) {
-            m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
-            m_edgeSizeAttributeLocation = glGetAttribLocation(m_program, "inEdgeSize");
-            m_colorUniformLocation = glGetUniformLocation(m_program, "color");
-            m_sizeUniformLocation = glGetUniformLocation(m_program, "size");
-        }
-        return ret;
-    }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_normalAttributeLocation);
         glVertexAttribPointer(m_normalAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -104,6 +94,15 @@ public:
     }
     void setSize(const Scalar &value) {
         glUniform1f(m_sizeUniformLocation, value);
+    }
+
+protected:
+    virtual void getLocations() {
+        BaseShaderProgram::getLocations();
+        m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
+        m_edgeSizeAttributeLocation = glGetAttribLocation(m_program, "inEdgeSize");
+        m_colorUniformLocation = glGetUniformLocation(m_program, "color");
+        m_sizeUniformLocation = glGetUniformLocation(m_program, "size");
     }
 
 private:
@@ -125,15 +124,14 @@ public:
         m_shadowMatrixUniformLocation = 0;
     }
 
-    bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
-        if (ret) {
-            m_shadowMatrixUniformLocation = glGetUniformLocation(m_program, "shadowMatrix");
-        }
-        return ret;
-    }
     void setShadowMatrix(const float value[16]) {
         glUniformMatrix4fv(m_shadowMatrixUniformLocation, 1, GL_FALSE, value);
+    }
+
+protected:
+    virtual void getLocations() {
+        ObjectProgram::getLocations();
+        m_shadowMatrixUniformLocation = glGetUniformLocation(m_program, "shadowMatrix");
     }
 
 private:
@@ -176,28 +174,6 @@ public:
         m_useToonUniformLocation = 0;
     }
 
-    bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        bool ret = ObjectProgram::load(vertexShaderSource, fragmentShaderSource, context);
-        if (ret) {
-            m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
-            m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
-            m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
-            m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
-            m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-            m_sphereTextureUniformLocation = glGetUniformLocation(m_program, "sphereTexture");
-            m_hasSphereTextureUniformLocation = glGetUniformLocation(m_program, "hasSphereTexture");
-            m_isSPHTextureUniformLocation = glGetUniformLocation(m_program, "isSPHTexture");
-            m_isSPATextureUniformLocation = glGetUniformLocation(m_program, "isSPATexture");
-            m_isSubTextureUniformLocation = glGetUniformLocation(m_program, "isSubTexture");
-            m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
-            m_hasToonTextureUniformLocation = glGetUniformLocation(m_program, "hasToonTexture");
-            m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
-        }
-        return ret;
-    }
-    void bind() {
-        ObjectProgram::bind();
-    }
     void setModelViewInverseMatrix(const GLfloat value[16]) {
         glUniformMatrix4fv(m_modelViewInverseMatrixUniformLocation, 1, GL_FALSE, value);
     }
@@ -264,6 +240,24 @@ public:
         else {
             glUniform1i(m_hasToonTextureUniformLocation, 0);
         }
+    }
+
+protected:
+    virtual void getLocations() {
+        ObjectProgram::getLocations();
+        m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
+        m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
+        m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
+        m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
+        m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+        m_sphereTextureUniformLocation = glGetUniformLocation(m_program, "sphereTexture");
+        m_hasSphereTextureUniformLocation = glGetUniformLocation(m_program, "hasSphereTexture");
+        m_isSPHTextureUniformLocation = glGetUniformLocation(m_program, "isSPHTexture");
+        m_isSPATextureUniformLocation = glGetUniformLocation(m_program, "isSPATexture");
+        m_isSubTextureUniformLocation = glGetUniformLocation(m_program, "isSubTexture");
+        m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
+        m_hasToonTextureUniformLocation = glGetUniformLocation(m_program, "hasToonTexture");
+        m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
     }
 
 private:
@@ -788,45 +782,53 @@ bool PMXRenderEngine::upload(const IString *dir)
     bool ret = true;
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-    m_context->edgeProgram = new EdgeProgram(m_delegate);
-    m_context->modelProgram = new ModelProgram(m_delegate);
-    m_context->shadowProgram = new ShadowProgram(m_delegate);
-    m_context->zplotProgram = new ZPlotProgram(m_delegate);
+    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_delegate);
+    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegate);
+    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_delegate);
+    ZPlotProgram *zplotProgram = m_context->zplotProgram = new ZPlotProgram(m_delegate);
 #ifdef VPVL2_LINK_QT
     const QGLContext *glContext = QGLContext::currentContext();
     initializeGLFunctions(glContext);
     m_context->initializeContext(glContext);
-    m_context->edgeProgram->initializeContext(glContext);
-    m_context->modelProgram->initializeContext(glContext);
-    m_context->shadowProgram->initializeContext(glContext);
-    m_context->zplotProgram->initializeContext(glContext);
+    edgeProgram->initializeContext(glContext);
+    modelProgram->initializeContext(glContext);
+    shadowProgram->initializeContext(glContext);
+    zplotProgram->initializeContext(glContext);
 #endif /* VPVL2_LINK_QT */
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeFragmentShader, m_model, context);
-    ret = m_context->edgeProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    edgeProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
+    edgeProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
+    ret = edgeProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, context);
-    ret = m_context->modelProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    modelProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
+    modelProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
+    ret = modelProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowFragmentShader, m_model, context);
-    ret = m_context->shadowProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    shadowProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
+    shadowProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
+    ret = shadowProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)
         return ret;
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, context);
-    ret = m_context->zplotProgram->load(vertexShaderSource, fragmentShaderSource, context);
+    zplotProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
+    zplotProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
+    ret = zplotProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
     if (!ret)

@@ -88,6 +88,9 @@ public:
           m_positionAttributeLocation(0),
           m_message(0)
     {
+#ifndef VPVL2_LINK_QT
+        m_program = glCreateProgram();
+#endif
     }
     virtual ~BaseShaderProgram() {
         if (m_program) {
@@ -103,47 +106,71 @@ public:
 #ifdef VPVL2_LINK_QT
     virtual void initializeContext(const QGLContext *context) {
         initializeGLFunctions(context);
+        m_program = glCreateProgram();
     }
 #endif
 
-    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        if (!vertexShaderSource || !fragmentShaderSource) {
+    bool addShaderSource(const IString *s, GLenum type, void *context) {
+        if (!s) {
             log0(context, IRenderDelegate::kLogWarning, "Empty shader source found!");
             return false;
         }
-        GLuint vertexShader = compileShader(context, vertexShaderSource, GL_VERTEX_SHADER);
-        GLuint fragmentShader = compileShader(context, fragmentShaderSource, GL_FRAGMENT_SHADER);
-        if (vertexShader && fragmentShader) {
-            GLuint program = glCreateProgram();
-            glAttachShader(program, vertexShader);
-            glAttachShader(program, fragmentShader);
-            glLinkProgram(program);
-            glValidateProgram(program);
-            glDeleteShader(vertexShader);
-            glDeleteShader(fragmentShader);
-            GLint linked;
-            glGetProgramiv(program, GL_LINK_STATUS, &linked);
-            if (!linked) {
-                GLint len;
-                glGetShaderiv(program, GL_INFO_LOG_LENGTH, &len);
-                if (len > 0) {
-                    delete[] m_message;
-                    m_message = new char[len];
-                    glGetProgramInfoLog(program, len, NULL, m_message);
-                    log0(context, IRenderDelegate::kLogWarning, "%s", m_message);
-                }
-                glDeleteProgram(program);
-                return false;
+        GLuint shader = glCreateShader(type);
+        const char *source = reinterpret_cast<const char *>(s->toByteArray());
+        glShaderSource(shader, 1, &source, NULL);
+        glCompileShader(shader);
+        GLint compiled;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+        if (!compiled) {
+            GLint len;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+            if (len > 0) {
+                delete[] m_message;
+                m_message = new char[len];
+                glGetShaderInfoLog(shader, len, NULL, m_message);
+                log0(context, IRenderDelegate::kLogWarning, "%s", m_message);
             }
-            m_modelViewProjectionUniformLocation = glGetUniformLocation(program, "modelViewProjectionMatrix");
-            m_positionAttributeLocation = glGetAttribLocation(program, "inPosition");
-            m_program = program;
-            log0(context, IRenderDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
-            return true;
-        }
-        else {
+            glDeleteShader(shader);
             return false;
         }
+        glAttachShader(m_program, shader);
+        glDeleteShader(shader);
+        return true;
+    }
+    bool linkProgram(void *context) {
+        GLint linked;
+        glLinkProgram(m_program);
+        glGetProgramiv(m_program, GL_LINK_STATUS, &linked);
+        if (!linked) {
+            GLint len = 0;
+            glGetShaderiv(m_program, GL_INFO_LOG_LENGTH, &len);
+            if (len > 0) {
+                delete[] m_message;
+                m_message = new char[len];
+                glGetProgramInfoLog(m_program, len, NULL, m_message);
+                log0(context, IRenderDelegate::kLogWarning, "Link failed: %s", m_message);
+            }
+            glDeleteProgram(m_program);
+            return false;
+        }
+        GLint validated;
+        glValidateProgram(m_program);
+        glGetProgramiv(m_program, GL_VALIDATE_STATUS, &validated);
+        if (!validated) {
+            GLint len = 0;
+            glGetShaderiv(m_program, GL_INFO_LOG_LENGTH, &len);
+            if (len > 0) {
+                delete[] m_message;
+                m_message = new char[len];
+                glGetProgramInfoLog(m_program, len, NULL, m_message);
+                log0(context, IRenderDelegate::kLogWarning, "Validation failed: %s", m_message);
+            }
+            glDeleteProgram(m_program);
+            return false;
+        }
+        log0(context, IRenderDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
+        getLocations();
+        return true;
     }
     virtual void bind() {
         glUseProgram(m_program);
@@ -162,6 +189,10 @@ public:
     }
 
 protected:
+    virtual void getLocations() {
+        m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
+        m_positionAttributeLocation = glGetAttribLocation(m_program, "inPosition");
+    }
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
         va_list ap;
         va_start(ap, format);
@@ -172,28 +203,6 @@ protected:
     GLuint m_program;
 
 private:
-    GLuint compileShader(void *context, const IString *s, GLenum type) {
-        GLuint shader = glCreateShader(type);
-        const char *source = reinterpret_cast<const char *>(s->toByteArray());
-        glShaderSource(shader, 1, &source, NULL);
-        glCompileShader(shader);
-        GLint compiled;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-        if (!compiled) {
-            GLint len;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-            if (len > 0) {
-                delete[] m_message;
-                m_message = new char[len];
-                glGetShaderInfoLog(shader, len, NULL, m_message);
-                log0(context, IRenderDelegate::kLogWarning, "%s", m_message);
-            }
-            glDeleteShader(shader);
-            return 0;
-        }
-        return shader;
-    }
-
     IRenderDelegate *m_delegate;
     GLuint m_modelViewProjectionUniformLocation;
     GLuint m_positionAttributeLocation;
@@ -230,22 +239,6 @@ public:
         m_depthTextureUniformLocation = 0;
     }
 
-    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
-        if (ret) {
-            m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
-            m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
-            m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
-            m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
-            m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
-            m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
-            m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
-            m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
-            m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
-            m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
-        }
-        return ret;
-    }
     void setLightColor(const Vector3 &value) {
         glUniform3fv(m_lightColorUniformLocation, 1, value);
     }
@@ -289,6 +282,21 @@ public:
         }
     }
 
+protected:
+    virtual void getLocations() {
+        BaseShaderProgram::getLocations();
+        m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
+        m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
+        m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
+        m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
+        m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
+        m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
+        m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
+        m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
+        m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
+        m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
+    }
+
 private:
     GLuint m_normalAttributeLocation;
     GLuint m_texCoordAttributeLocation;
@@ -314,15 +322,14 @@ public:
         m_transformUniformLocation = 0;
     }
 
-    virtual bool load(const IString *vertexShaderSource, const IString *fragmentShaderSource, void *context) {
-        bool ret = BaseShaderProgram::load(vertexShaderSource, fragmentShaderSource, context);
-        if (ret) {
-            m_transformUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
-        }
-        return ret;
-    }
     void setTransformMatrix(const float value[16]) {
         glUniformMatrix4fv(m_transformUniformLocation, 1, GL_FALSE, value);
+    }
+
+protected:
+    virtual void getLocations() {
+        BaseShaderProgram::getLocations();
+        m_transformUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
     }
 
 private:
