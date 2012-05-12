@@ -50,7 +50,7 @@ namespace vmd
 class LightAnimationKeyFramePredication
 {
 public:
-    bool operator()(const IKeyframe *left, const IKeyframe *right) {
+    bool operator()(const IKeyframe *left, const IKeyframe *right) const {
         return left->frameIndex() < right->frameIndex();
     }
 };
