@@ -73,7 +73,7 @@ bool VideoEncoder::isSupported()
 
 void VideoEncoder::initialize()
 {
-    avcodec_init();
+    //avcodec_init();
     avcodec_register_all();
     av_register_all();
     av_lockmgr_register(UIAVCodecLockCallback);

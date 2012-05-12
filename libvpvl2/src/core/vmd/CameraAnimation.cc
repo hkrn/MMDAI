@@ -51,7 +51,7 @@ using namespace vpvl2::vmd;
 class CameraAnimationKeyFramePredication
 {
 public:
-    bool operator()(const IKeyframe *left, const IKeyframe *right) {
+    bool operator()(const IKeyframe *left, const IKeyframe *right) const {
         return left->frameIndex() < right->frameIndex();
     }
 };

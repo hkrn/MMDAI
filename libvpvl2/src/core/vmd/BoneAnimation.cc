@@ -52,7 +52,7 @@ using namespace vpvl2::vmd;
 class BoneAnimationKeyframePredication
 {
 public:
-    bool operator()(const IBoneKeyframe *left, const IBoneKeyframe *right) {
+    bool operator()(const IBoneKeyframe *left, const IBoneKeyframe *right) const {
         return left->frameIndex() < right->frameIndex();
     }
 };

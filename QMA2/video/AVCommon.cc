@@ -71,7 +71,7 @@ AVStream *OpenAudioStream(AVFormatContext *formatContext,
                           int bitrate,
                           int sampleRate)
 {
-    AVStream *stream = av_new_stream(formatContext, 0);
+    AVStream *stream = avformat_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
     codec->codec_id = codecID;
     codec->codec_type = AVMEDIA_TYPE_AUDIO;
@@ -111,7 +111,8 @@ AVStream *OpenVideoStream(AVFormatContext *formatContext,
                           int bitrate,
                           int fps)
 {
-    AVStream *stream = av_new_stream(formatContext, 0);
+    //AVStream *stream = av_new_stream(formatContext, 0);
+    AVStream *stream = avformat_new_stream(formatContext, 0);
     AVCodecContext *codec = stream->codec;
     codec->codec_id = codecID;
     codec->me_method = 1;

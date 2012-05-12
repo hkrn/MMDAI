@@ -51,7 +51,7 @@ using namespace vpvl2::vmd;
 class MorphAnimationKeyframePredication
 {
 public:
-    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) {
+    bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) const {
         return left->frameIndex() < right->frameIndex();
     }
 };
