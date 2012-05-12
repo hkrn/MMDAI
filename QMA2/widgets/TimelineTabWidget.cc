@@ -103,8 +103,8 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(m_boneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(m_sceneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(bmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleBoneEnable(vpvl2::IModel*)));
+    connect(mmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleMorphEnable(vpvl2::IModel*)));
     connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), SLOT(toggleBoneButtonsByBone(QList<vpvl2::IBone*>)));
-    connect(mmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleFaceEnable(vpvl2::IModel*)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -118,7 +118,7 @@ TimelineTabWidget::~TimelineTabWidget()
     m_interpolationDialog = 0;
 }
 
-void TimelineTabWidget::addKeyFramesFromSelectedIndices()
+void TimelineTabWidget::addKeyframesFromSelectedIndices()
 {
     currentSelectedTimelineWidget()->treeView()->addKeyframesBySelectedIndices();
 }
@@ -146,7 +146,7 @@ void TimelineTabWidget::savePose(VPDFile *pose, IModel *model)
     m->savePose(pose, model, m_boneTimeline->frameIndex());
 }
 
-void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(IBone *bone)
+void TimelineTabWidget::addBoneKeyframesAtCurrentFrameIndex(IBone *bone)
 {
     /*
      * 渡されたボーンの名前と位置と回転情報を元に新しいボーンのキーフレームとして登録する処理
@@ -167,20 +167,20 @@ void TimelineTabWidget::addBoneKeyFrameAtCurrentFrameIndex(IBone *bone)
     }
 }
 
-void TimelineTabWidget::addFaceKeyFrameAtCurrentFrameIndex(IMorph *face)
+void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
 {
     /*
      * 渡された頂点モーフの名前と重み係数を元に新しい頂点モーフのキーフレームとして登録する処理
      * (FaceKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
-    if (face) {
+    if (morph) {
         MorphMotionModel *model = static_cast<MorphMotionModel *>(m_morphTimeline->treeView()->model());
         MorphMotionModel::KeyFramePairList keyframes;
         QScopedPointer<IMorphKeyframe> keyframe;
         int frameIndex = m_morphTimeline->frameIndex();
         keyframe.reset(model->factory()->createMorphKeyframe());
-        keyframe->setName(face->name());
-        keyframe->setWeight(face->weight());
+        keyframe->setName(morph->name());
+        keyframe->setWeight(morph->weight());
         keyframes.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
         model->setKeyframes(keyframes);
     }
@@ -356,7 +356,7 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
     m_boneMoveButton->setEnabled(false);
 }
 
-void TimelineTabWidget::toggleFaceEnable(IModel *model)
+void TimelineTabWidget::toggleMorphEnable(IModel *model)
 {
     m_morphTimeline->setFrameIndexSpinBoxEnable(model ? true : false);
 }
@@ -429,8 +429,38 @@ void TimelineTabWidget::openInterpolationDialog(const QModelIndexList &indices)
     /* 補間ダイアログを表示する */
     m_interpolationDialog->setMode(m_tabWidget->currentIndex());
     m_interpolationDialog->setModelIndices(indices);
-    if (m_interpolationDialog->hasValidKeyframes())
+    if (m_interpolationDialog->hasValidKeyframes()) {
         m_interpolationDialog->show();
+    }
+    else {
+        internal::warning(this,
+                          tr("No keyframes selected"),
+                          tr("Select bone or camera keyframe(s) to open interpolation dialog."));
+    }
+}
+
+void TimelineTabWidget::openInterpolationDialogBySelectedIndices()
+{
+    TimelineTreeView *view = 0;
+    switch (m_tabWidget->currentIndex()) {
+    case kBoneTabIndex:
+        view = m_boneTimeline->treeView();
+        break;
+    case kSceneTabIndex:
+        view = m_sceneTimeline->treeView();
+        break;
+    default:
+        break;
+    }
+    if (view) {
+        const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
+        openInterpolationDialog(indices);
+    }
+    else {
+        internal::warning(this,
+                          tr("Interpolation is not supported"),
+                          tr("Configuration of morph interpolation is not supported (always linear)."));
+    }
 }
 
 void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
@@ -458,6 +488,7 @@ void TimelineTabWidget::selectButton(QAbstractButton *button)
 
 void TimelineTabWidget::setLastSelectedModel(IModel *model)
 {
+    /* タブ移動時でモデル選択を切り替えるため最後に選択したモデルのポインタを保存する処理。NULL はスキップする */
     if (model)
         m_lastSelectedModel = model;
 }

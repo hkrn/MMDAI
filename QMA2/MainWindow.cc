@@ -225,7 +225,6 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
         QMenu menu(this);
         menu.addAction(m_actionRegisterFrame);
         menu.addAction(m_actionSelectAllFrames);
-        menu.addAction(m_actionSelectFrameDialog);
         menu.addSeparator();
         menu.addAction(m_actionCut);
         menu.addAction(m_actionCopy);
@@ -236,6 +235,10 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
         menu.addAction(m_actionRedoFrame);
         menu.addSeparator();
         menu.addAction(m_actionDeleteSelectedFrame);
+        menu.addSeparator();
+        menu.addAction(m_actionSelectFrameDialog);
+        menu.addAction(m_actionFrameWeightDialog);
+        menu.addAction(m_actionInterpolationDialog);
         menu.exec(pos);
     }
 }
@@ -616,7 +619,7 @@ void MainWindow::buildUI()
     connect(m_actionExit, SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
     m_actionRegisterFrame = new QAction(this);
-    connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyFramesFromSelectedIndices()));
+    connect(m_actionRegisterFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(addKeyframesFromSelectedIndices()));
     m_actionInsertEmptyFrame = new QAction(this);
     connect(m_actionInsertEmptyFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(insertKeyframesBySelectedIndices()));
     m_actionDeleteSelectedFrame = new QAction(this);
@@ -714,6 +717,8 @@ void MainWindow::buildUI()
     connect(m_actionSelectFrameDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameSelectionDialog()));
     m_actionFrameWeightDialog = new QAction(this);
     connect(m_actionFrameWeightDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameWeightDialog()));
+    m_actionInterpolationDialog = new QAction(this);
+    connect(m_actionInterpolationDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openInterpolationDialogBySelectedIndices()));
     m_actionNextFrame = new QAction(this);
     connect(m_actionNextFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(nextFrame()));
     m_actionPreviousFrame = new QAction(this);
@@ -866,6 +871,7 @@ void MainWindow::buildUI()
     m_menuFrame->addAction(m_actionSelectAllFrames);
     m_menuFrame->addAction(m_actionSelectFrameDialog);
     m_menuFrame->addAction(m_actionFrameWeightDialog);
+    m_menuFrame->addAction(m_actionInterpolationDialog);
     m_menuFrame->addSeparator();
     m_menuFrame->addAction(m_actionNextFrame);
     m_menuFrame->addAction(m_actionPreviousFrame);
@@ -972,6 +978,7 @@ void MainWindow::bindActions()
     m_actionSelectAllFrames->setShortcut(m_settings.value(kPrefix + "selectAllFrames", "Ctrl+A").toString());
     m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog", "Ctrl+Alt+S").toString());
     m_actionFrameWeightDialog->setShortcut(m_settings.value(kPrefix + "frameWeightDialog", "Ctrl+Alt+W").toString());
+    m_actionInterpolationDialog->setShortcut(m_settings.value(kPrefix + "interpolationDialog", "Ctrl+Alt+I").toString());
     m_actionInsertEmptyFrame->setShortcut(m_settings.value(kPrefix + "insertEmptyFrame", "Ctrl+I").toString());
     m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
     m_actionNextFrame->setShortcut(m_settings.value(kPrefix + "nextFrame", QKeySequence(QKeySequence::Forward).toString()).toString());
@@ -1124,6 +1131,8 @@ void MainWindow::retranslate()
     m_actionSelectFrameDialog->setStatusTip(tr("Open keyframe range selection dialog to select multiple frame indices."));
     m_actionFrameWeightDialog->setText(tr("Open keyframe weight dialog"));
     m_actionFrameWeightDialog->setStatusTip(tr("Open keyframe weight dialog to set weight to selected registered keyframes."));
+    m_actionInterpolationDialog->setText(tr("Open interpolation dialog"));
+    m_actionInterpolationDialog->setStatusTip(tr("Open interpolation dialog to configure interpolation parameter of keyframes."));
     m_actionInsertEmptyFrame->setText(tr("Insert empty keyframe"));
     m_actionInsertEmptyFrame->setStatusTip(tr("Insert an empty keyframe to the selected keyframe."));
     m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
@@ -1270,7 +1279,7 @@ void MainWindow::connectWidgets()
     connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(refreshMotions()));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
     connect(m_sceneWidget, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl2::IBone*>)));
-    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl2::IMorph*)), m_timelineTabWidget, SLOT(addFaceKeyFrameAtCurrentFrameIndex(vpvl2::IMorph*)));
+    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl2::IMorph*)), m_timelineTabWidget, SLOT(addMorphKeyframesAtCurrentFrameIndex(vpvl2::IMorph*)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));

@@ -248,6 +248,7 @@ private:
     QAction *m_actionSelectAllFrames;
     QAction *m_actionSelectFrameDialog;
     QAction *m_actionFrameWeightDialog;
+    QAction *m_actionInterpolationDialog;
     QAction *m_actionInsertEmptyFrame;
     QAction *m_actionDeleteSelectedFrame;
     QAction *m_actionNextFrame;

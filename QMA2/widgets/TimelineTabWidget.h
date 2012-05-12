@@ -86,7 +86,7 @@ public:
     ~TimelineTabWidget();
 
 public slots:
-    void addKeyFramesFromSelectedIndices();
+    void addKeyframesFromSelectedIndices();
     void loadPose(VPDFilePtr pose, vpvl2::IModel *model);
     void savePose(VPDFile *pose, vpvl2::IModel *model);
     void selectFrameIndices(int fromIndex, int toIndex);
@@ -99,8 +99,8 @@ signals:
 
 private slots:
     void retranslate();
-    void addBoneKeyFrameAtCurrentFrameIndex(vpvl2::IBone *bone);
-    void addFaceKeyFrameAtCurrentFrameIndex(vpvl2::IMorph *face);
+    void addBoneKeyframesAtCurrentFrameIndex(vpvl2::IBone *bone);
+    void addMorphKeyframesAtCurrentFrameIndex(vpvl2::IMorph *morph);
     void setCurrentFrameIndex(int value);
     void setCurrentFrameIndexZero();
     void insertKeyframesBySelectedIndices();
@@ -114,12 +114,13 @@ private slots:
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
     void toggleBoneEnable(vpvl2::IModel *model);
-    void toggleFaceEnable(vpvl2::IModel *model);
+    void toggleMorphEnable(vpvl2::IModel *model);
     void toggleBoneButtonsByBone(const QList<vpvl2::IBone *> &bones);
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();
     void openInterpolationDialog(const QModelIndexList &indices);
+    void openInterpolationDialogBySelectedIndices();
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void selectButton(QAbstractButton *button);
     void setLastSelectedModel(vpvl2::IModel *model);
