@@ -1485,8 +1485,7 @@ void SceneLoader::setSelectedModel(IModel *value)
     if (m_project && value != m_model) {
         m_model = value;
         m_project->setModelSetting(value, "selected", "true");
-        if (signal)
-            emit modelDidSelect(value, this);
+        emit modelDidSelect(value, this);
     }
 }
 
