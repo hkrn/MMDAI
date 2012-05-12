@@ -121,7 +121,7 @@ Bone::Bone()
       m_rotationMorph(Quaternion::getIdentity()),
       m_rotationIKLink(Quaternion::getIdentity()),
       m_localTransform(Transform::getIdentity()),
-      m_originalLocalTransform(Transform::getIdentity()),
+      m_worldTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_offset(kZeroV3),
       m_position(kZeroV3),
@@ -161,7 +161,7 @@ Bone::~Bone()
     m_position.setZero();
     m_positionMorph.setZero();
     m_localTransform.setIdentity();
-    m_originalLocalTransform.setIdentity();
+    m_worldTransform.setIdentity();
     m_destinationOrigin.setZero();
     m_fixedAxis.setZero();
     m_axisX.setZero();
@@ -713,7 +713,7 @@ void Bone::performUpdateLocalTransform()
 {
     static Transform localToOrigin = Transform::getIdentity();
     localToOrigin.setOrigin(-m_origin);
-    m_originalLocalTransform = m_localTransform;
+    m_worldTransform = m_localTransform;
     m_localTransform *= localToOrigin;
 }
 
@@ -745,9 +745,9 @@ void Bone::setRotation(const Quaternion &value)
 const Vector3 Bone::destinationOrigin() const
 {
     if (m_destinationOriginBone)
-        return m_destinationOriginBone->m_originalLocalTransform.getOrigin();
+        return m_destinationOriginBone->m_worldTransform.getOrigin();
     else
-        return m_originalLocalTransform.getOrigin() + m_originalLocalTransform.getBasis() * m_destinationOrigin;
+        return m_worldTransform.getOrigin() + m_worldTransform.getBasis() * m_destinationOrigin;
 }
 
 const Vector3 &Bone::fixedAxis() const

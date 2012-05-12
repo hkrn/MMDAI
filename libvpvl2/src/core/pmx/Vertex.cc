@@ -403,15 +403,15 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
     const Vector3 &vertexPosition = m_origin + m_morphPosition;
     switch (m_type) {
     case kBdef1: {
-        const Transform &transform = m_bones[0]->skinningTransform();
+        const Transform &transform = m_bones[0]->localTransform();
         position = transform * vertexPosition;
         normal = transform.getBasis() * m_normal;
         break;
     }
     case kBdef2:
     case kSdef: {
-        const Transform &transformA = m_bones[0]->skinningTransform();
-        const Transform &transformB = m_bones[1]->skinningTransform();
+        const Transform &transformA = m_bones[0]->localTransform();
+        const Transform &transformB = m_bones[1]->localTransform();
         const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
         const Vector3 &v2 = transformB * vertexPosition;
@@ -422,10 +422,10 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
         break;
     }
     case kBdef4: {
-        const Transform &transformA = m_bones[0]->skinningTransform();
-        const Transform &transformB = m_bones[1]->skinningTransform();
-        const Transform &transformC = m_bones[2]->skinningTransform();
-        const Transform &transformD = m_bones[3]->skinningTransform();
+        const Transform &transformA = m_bones[0]->localTransform();
+        const Transform &transformB = m_bones[1]->localTransform();
+        const Transform &transformC = m_bones[2]->localTransform();
+        const Transform &transformD = m_bones[3]->localTransform();
         const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
         const Vector3 &v2 = transformB * vertexPosition;

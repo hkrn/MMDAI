@@ -62,7 +62,7 @@ public:
     int index() const;
     IBone *parentBone() const { return m_parentBone; }
     IBone *targetBone() const { return m_targetBone; }
-    const Transform &localTransform() const;
+    const Transform &worldTransform() const;
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
     const Vector3 &position() const;

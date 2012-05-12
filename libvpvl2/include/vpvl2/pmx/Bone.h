@@ -79,8 +79,8 @@ public:
     void performUpdateLocalTransform();
     void resetIKLink();
     const Vector3 &offset() const;
-    const Transform &localTransform() const { return m_originalLocalTransform; }
-    const Transform &skinningTransform() const { return m_localTransform; }
+    const Transform &worldTransform() const { return m_worldTransform; }
+    const Transform &localTransform() const { return m_localTransform; }
     void getLinkedBones(Array<IBone *> &value) const;
 
     void setPosition(const Vector3 &value);
@@ -160,7 +160,7 @@ private:
     Quaternion m_rotationMorph;
     Quaternion m_rotationIKLink;
     Transform m_localTransform;
-    Transform m_originalLocalTransform;
+    Transform m_worldTransform;
     Vector3 m_origin;
     Vector3 m_offset;
     Vector3 m_position;

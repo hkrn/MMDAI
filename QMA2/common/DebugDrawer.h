@@ -180,9 +180,9 @@ public:
         static const Vector3 kBlue  = Vector3(0, 0, 1);
         if (mode == 'V') {
             /* モデルビュー行列を元に軸表示 */
-            const Transform &transform = bone->localTransform();
+            const Transform &transform = bone->worldTransform();
             const btMatrix3x3 &modelView = scene->camera()->modelViewTransform().getBasis();
-            const Vector3 &origin = bone->localTransform().getOrigin();
+            const Vector3 &origin = bone->worldTransform().getOrigin();
             drawLine(origin, transform * (modelView.getRow(0) * kLength), kRed);
             drawLine(origin, transform * (modelView.getRow(1) * kLength), kGreen);
             drawLine(origin, transform * (modelView.getRow(2) * kLength), kBlue);
@@ -190,7 +190,7 @@ public:
         else if (mode == 'L') {
             if (bone->hasLocalAxes()) {
                 /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-                const Transform &transform = bone->localTransform();
+                const Transform &transform = bone->worldTransform();
                 const Vector3 &origin = transform.getOrigin();
                 Matrix3x3 axes = Matrix3x3::getIdentity();
                 bone->getLocalAxes(axes);
@@ -200,7 +200,7 @@ public:
             }
             else {
                 /* 現在のボーン位置と回転量を乗算した軸を表示 */
-                const Transform &transform = bone->localTransform();
+                const Transform &transform = bone->worldTransform();
                 const Vector3 &origin = transform.getOrigin();
                 drawLine(origin, transform * Vector3(kLength, 0, 0), kRed);
                 drawLine(origin, transform * Vector3(0, kLength, 0), kGreen);
@@ -209,7 +209,7 @@ public:
         }
         else {
             /* 現在のボーン位置に対する固定軸を表示 */
-            const Vector3 &origin = bone->localTransform().getOrigin();
+            const Vector3 &origin = bone->worldTransform().getOrigin();
             drawLine(origin, origin + Vector3(kLength, 0, 0), kRed);
             drawLine(origin, origin + Vector3(0, kLength, 0), kGreen);
             drawLine(origin, origin + Vector3(0, 0, kLength), kBlue);
@@ -231,7 +231,7 @@ private:
         static const QColor kColorRed = QColor::fromRgbF(1.0, 0.0, 0.0);
         static const QColor kColorOrange = QColor::fromRgbF(1.0, 0.75, 0.0);
         static const QColor kColorBlue = QColor::fromRgbF(0.0, 0.0, 1.0);
-        const Vector3 &origin = bone->localTransform().getOrigin();
+        const Vector3 &origin = bone->worldTransform().getOrigin();
         const Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
         const Scalar &sphereRadius = 0.2f;
         /* ボーン接続を表示するための頂点設定 */

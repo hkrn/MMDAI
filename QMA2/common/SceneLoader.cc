@@ -1101,7 +1101,7 @@ IMotion *SceneLoader::newCameraMotion() const
     frame->setDefaultInterpolationParameter();
     frame->setPosition(camera->position());
     frame->setAngle(camera->angle());
-    frame->setFovy(camera->fovy());
+    frame->setFovy(camera->fov());
     frame->setDistance(camera->distance());
     newCameraMotion->addKeyframe(frame.take());
     newCameraMotion->update(IKeyframe::kCamera);
@@ -1245,7 +1245,7 @@ void SceneLoader::renderZPlot()
     for (int i = 0; i < 16; i++)
         shadowMatrix4x4[i] = shadowMatrix.constData()[i];
     matrices->setLightViewProjection(shadowMatrix4x4);
-    light->setShadowMappingTexture(&m_depthBufferID);
+    light->setDepthTexture(&m_depthBufferID);
 }
 
 void SceneLoader::updateDepthBuffer(const QSize &value)
@@ -1268,7 +1268,7 @@ void SceneLoader::updateMatrices(const QSizeF &size)
     matrices->getModelView(modelViewMatrixf);
     m_projection.setToIdentity();
     qreal aspectRatio = size.width() / size.height();
-    m_projection.perspective(camera->fovy(), aspectRatio, camera->znear(), camera->zfar());
+    m_projection.perspective(camera->fov(), aspectRatio, camera->znear(), camera->zfar());
     for (int i = 0; i < 16; i++) {
         modelView4x4.data()[i] = modelViewMatrixf[i];
         projectionMatrixf[i] = m_projection.constData()[i];

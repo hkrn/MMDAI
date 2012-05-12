@@ -89,7 +89,7 @@ public:
     virtual IBone *targetBone() const = 0;
 
     /**
-     * ボーンのローカル行列を返します。
+     * ボーンのワールド変換行列を返します。
      *
      * ボーンの位置を求めるにはこれが返す値の Transform::getOrigin によって求めることが出来ます。
      * ボーンの初期位置を求めたい場合は origin を使用してください。
@@ -97,16 +97,16 @@ public:
      * @return Transform
      * @sa origin
      */
-    virtual const Transform &localTransform() const = 0;
+    virtual const Transform &worldTransform() const = 0;
 
     /**
      * ボーンの初期位置を返します。
      *
      * 返す値はボーン変形関係なく常に不変です。そのため、ボーン変形によって生じた値を
-     * 求めたい場合は localTransform を使用してください。
+     * 求めたい場合は worldTransform を使用してください。
      *
      * @return Vector3
-     * @sa localTransform
+     * @sa worldTransform
      */
     virtual const Vector3 &origin() const = 0;
 

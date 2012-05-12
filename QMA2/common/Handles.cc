@@ -451,7 +451,7 @@ bool Handles::testHitImage(const QPointF &p,
 
 btScalar Handles::angle(const Vector3 &pos) const
 {
-    return pos.angle(m_bone->localTransform().getOrigin());
+    return pos.angle(m_bone->worldTransform().getOrigin());
 }
 
 int Handles::modeFromConstraint() const
@@ -486,10 +486,10 @@ const Transform Handles::modelHandleTransform() const
     if (m_bone) {
         int mode = modeFromConstraint();
         if (mode == 'G') {
-            transform.setOrigin(m_bone->localTransform().getOrigin());
+            transform.setOrigin(m_bone->worldTransform().getOrigin());
         }
         else if (mode == 'L') {
-            transform = m_bone->localTransform();
+            transform = m_bone->worldTransform();
         }
         else if (mode == 'V') {
             const Matrix3x3 &basis = m_loader->scene()->camera()->modelViewTransform().getBasis();
@@ -497,7 +497,7 @@ const Transform Handles::modelHandleTransform() const
             newBasis[0] = basis * Vector3(1, 0, 0);
             newBasis[1] = basis * Vector3(0, 1, 0);
             newBasis[2] = basis * Vector3(0, 0, 1);
-            transform.setOrigin(m_bone->localTransform().getOrigin());
+            transform.setOrigin(m_bone->worldTransform().getOrigin());
             transform.setBasis(newBasis);
         }
     }

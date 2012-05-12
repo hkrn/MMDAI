@@ -757,8 +757,8 @@ void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
     Scene::ICamera *camera = m_loader->scene()->camera();
     Scalar fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-        Scalar fovy = camera->fovy();
-        camera->setFovy(up ? fovy - fovyStep : fovy + fovyStep);
+        Scalar fovy = camera->fov();
+        camera->setFov(up ? fovy - fovyStep : fovy + fovyStep);
     }
     else {
         Scalar distance = camera->distance();
@@ -930,7 +930,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             /* 操作可能なボーンを探す */
             for (int i = 0; i < nbones; i++) {
                 IBone *bone = bones[i];
-                const Vector3 &o = bone->localTransform().getOrigin(),
+                const Vector3 &o = bone->worldTransform().getOrigin(),
                         min = o - size, max = o + size;
                 if (btRayAabb(znear, zfar, min, max, hitLambda, normal) && bone->isInteractive()) {
                     nearestBone = bone;
@@ -1391,7 +1391,7 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &di
     if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
         /* 回転ハンドルである(ドーナツ) */
         if (flags & Handles::kRotate) {
-            const Vector3 &origin = m_handles->currentBone()->localTransform().getOrigin();
+            const Vector3 &origin = m_handles->currentBone()->worldTransform().getOrigin();
             const Vector3 &delta = (pick - origin).normalize();
             Scalar angle = 0.0;
             int axis = 0;

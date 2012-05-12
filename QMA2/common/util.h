@@ -275,7 +275,7 @@ static inline void dumpBones(IModel *model)
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        const Transform &transform = bone->localTransform();
+        const Transform &transform = bone->worldTransform();
         const Vector3 &p = transform.getOrigin();
         const Quaternion &q = transform.getRotation();
         qDebug().nospace() << "index=" << i

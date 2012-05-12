@@ -78,7 +78,7 @@ int Bone::index() const
     return m_bone->id();
 }
 
-const Transform &Bone::localTransform() const
+const Transform &Bone::worldTransform() const
 {
     return m_bone->localTransform();
 }

@@ -76,7 +76,7 @@ public:
         virtual void setColor(const Vector3 &value) = 0;
         virtual void setDirection(const Vector3 &value) = 0;
         virtual void setMotion(IMotion *value) = 0;
-        virtual void setShadowMappingTexture(void *value) = 0;
+        virtual void setDepthTexture(void *value) = 0;
         virtual void setToonEnable(bool value) = 0;
         virtual void copyFrom(ILight *value) = 0;
         virtual void resetDefault() = 0;
@@ -88,14 +88,14 @@ public:
         virtual const Transform &modelViewTransform() const = 0;
         virtual const Vector3 &position() const = 0;
         virtual const Vector3 &angle() const = 0;
-        virtual Scalar fovy() const = 0;
+        virtual Scalar fov() const = 0;
         virtual Scalar distance() const = 0;
         virtual Scalar znear() const = 0;
         virtual Scalar zfar() const = 0;
         virtual IMotion *motion() const = 0;
         virtual void setPosition(const Vector3 &value) = 0;
         virtual void setAngle(const Vector3 &value) = 0;
-        virtual void setFovy(Scalar value) = 0;
+        virtual void setFov(Scalar value) = 0;
         virtual void setDistance(Scalar value) = 0;
         virtual void setZNear(Scalar value) = 0;
         virtual void setZFar(Scalar value) = 0;

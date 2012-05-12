@@ -98,7 +98,7 @@ public:
     void setColor(const Vector3 &value) { m_color = value; }
     void setDirection(const Vector3 &value) { m_direction = value; }
     void setMotion(IMotion *value) { m_motion = value; }
-    void setShadowMappingTexture(void *value) { m_depthTexture = value; }
+    void setDepthTexture(void *value) { m_depthTexture = value; }
     void setToonEnable(bool value) { m_enableToon = value; }
     void copyFrom(ILight *value) {
         setColor(value->color());
@@ -123,7 +123,7 @@ public:
           m_transform(Transform::getIdentity()),
           m_position(kZeroV3),
           m_angle(kZeroV3),
-          m_fovy(0),
+          m_fov(0),
           m_distance(0),
           m_znear(0.1),
           m_zfar(10000)
@@ -137,7 +137,7 @@ public:
         m_transform.setIdentity();
         m_position.setZero();
         m_angle.setZero();
-        m_fovy = 0;
+        m_fov = 0;
         m_distance = 0;
         m_znear = 0;
         m_zfar = 0;
@@ -146,14 +146,14 @@ public:
     const Transform &modelViewTransform() const { return m_transform; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &angle() const { return m_angle; }
-    Scalar fovy() const { return m_fovy; }
+    Scalar fov() const { return m_fov; }
     Scalar distance() const { return m_distance; }
     Scalar znear() const { return m_znear; }
     Scalar zfar() const { return m_zfar; }
     IMotion *motion() const { return m_motion; }
     void setPosition(const Vector3 &value) { m_position = value; }
     void setAngle(const Vector3 &value) { m_angle = value; }
-    void setFovy(Scalar value) { m_fovy = value; }
+    void setFov(Scalar value) { m_fov = value; }
     void setDistance(Scalar value) { m_distance = value; }
     void setZNear(Scalar value) { m_znear = value; }
     void setZFar(Scalar value) { m_zfar = value; }
@@ -161,14 +161,14 @@ public:
     void copyFrom(ICamera *value) {
         setPosition(value->position());
         setAngle(value->angle());
-        setFovy(value->fovy());
+        setFov(value->fov());
         setDistance(value->distance());
         setZNear(value->znear());
         setZFar(value->zfar());
     }
     void resetDefault() {
         setPosition(Vector3(0, 10, 0));
-        setFovy(30);
+        setFov(30);
         setDistance(50);
         updateTransform();
     }
@@ -199,7 +199,7 @@ private:
     Quaternion m_rotation;
     Vector3 m_position;
     Vector3 m_angle;
-    Scalar m_fovy;
+    Scalar m_fov;
     Scalar m_distance;
     Scalar m_znear;
     Scalar m_zfar;
@@ -340,7 +340,7 @@ void Scene::advance(float delta)
             animation->advance(delta);
             camera.setPosition(animation->position());
             camera.setAngle(animation->angle());
-            camera.setFovy(animation->fovy());
+            camera.setFov(animation->fovy());
             camera.setDistance(animation->distance());
         }
     }
@@ -375,7 +375,7 @@ void Scene::seek(float frameIndex)
             animation->seek(frameIndex);
             camera.setPosition(animation->position());
             camera.setAngle(animation->angle());
-            camera.setFovy(animation->fovy());
+            camera.setFov(animation->fovy());
             camera.setDistance(animation->distance());
         }
     }

@@ -449,7 +449,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
     radius = 0;
     IBone *bone = findBone(m_encoding->stringConstant(IEncoding::kCenter));
     if (bone) {
-        const Vector3 &centerPosition = bone->localTransform().getOrigin();
+        const Vector3 &centerPosition = bone->worldTransform().getOrigin();
         const int nvertices = m_vertices.count();
         for (int i = 0; i < nvertices; i++) {
             const Vector3 &position = m_skinnedVertices[i].position;

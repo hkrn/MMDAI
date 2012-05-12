@@ -236,7 +236,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
     radius = 0;
     IBone *bone = findBone(m_encoding->stringConstant(IEncoding::kCenter));
     if (bone) {
-        const Vector3 &centerPosition = bone->localTransform().getOrigin();
+        const Vector3 &centerPosition = bone->worldTransform().getOrigin();
         const uint8_t *verticesPtr = static_cast<const uint8_t *>(m_model.verticesPointer());
         const size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
         const int nvertices = m_model.vertices().count();

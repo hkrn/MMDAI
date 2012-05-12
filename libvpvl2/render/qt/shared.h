@@ -808,7 +808,7 @@ protected:
         Scene::ICamera *camera = m_scene.camera();
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             const qreal step = 1.0;
-            camera->setFovy(qMax(event->delta() > 0 ? camera->fovy() - step : camera->fovy() + step, 0.0));
+            camera->setFov(qMax(event->delta() > 0 ? camera->fov() - step : camera->fov() + step, 0.0));
         }
         else {
             qreal step = 4.0;
@@ -879,7 +879,7 @@ protected:
             }
             m_fbo->release();
             GLuint textureID = m_fbo->texture();
-            m_scene.light()->setShadowMappingTexture(&textureID);
+            m_scene.light()->setDepthTexture(&textureID);
             glEnable(GL_BLEND);
         }
         {
@@ -914,7 +914,7 @@ private:
     void updateProjectionMatrix() {
         float matrixf[16];
         m_projectionMatrix.setToIdentity();
-        m_projectionMatrix.perspective(m_scene.camera()->fovy(), kWidth / float(kHeight), kCameraNear, kCameraFar);
+        m_projectionMatrix.perspective(m_scene.camera()->fov(), kWidth / float(kHeight), kCameraNear, kCameraFar);
         for (int i = 0; i < 16; i++)
             matrixf[i] = m_projectionMatrix.constData()[i];
     }
