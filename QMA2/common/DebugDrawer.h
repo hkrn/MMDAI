@@ -52,7 +52,7 @@ using namespace vpvl2;
 class DebugDrawer : public btIDebugDraw
 {
 public:
-    typedef QSet<IBone *> BoneSet;
+    typedef QSet<const IBone *> BoneSet;
 
     DebugDrawer()
         : m_flags(0),
@@ -116,13 +116,7 @@ public:
                    const btTransform &transform,
                    const btVector3 &color) {
         if (m_program.isLinked()) {
-            m_program.bind();
-            float matrix[16];
-            QGLFunctions func(QGLContext::currentContext());
-            scene->matrices()->getModelViewProjection(matrix);
-            int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
-            func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
-            m_program.setUniformValue("boneMatrix", QMatrix4x4());
+            prepare(scene);
             world->debugDrawObject(transform, shape, color);
             m_program.release();
         }
@@ -134,15 +128,9 @@ public:
         Array<IBone *> bones;
         model->getBones(bones);
         const int nbones = bones.count();
-        float matrix[16];
-        QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
-        m_program.bind();
-        scene->matrices()->getModelViewProjection(matrix);
-        int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
-        func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
-        m_program.setUniformValue("boneMatrix", QMatrix4x4());
+        prepare(scene);
         m_program.enableAttributeArray("inPosition");
         /* IK ボーンの収集 */
         BoneSet bonesForIK;
@@ -172,19 +160,23 @@ public:
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawBoneTransform(IBone *bone, Scene *scene, int mode) {
+    void drawMovableBone(const IBone *bone, const Scene *scene) {
+        if (!bone || !bone->isMovable() || !m_program.isLinked())
+            return;
+        glDisable(GL_DEPTH_TEST);
+        prepare(scene);
+        m_program.setUniformValue("color", QColor::fromRgbF(0, 1, 1));
+        drawSphere(bone->worldTransform().getOrigin(), 0.5, Vector3(0.0f, 1.0f, 1.0f));
+        m_program.release();
+        glEnable(GL_DEPTH_TEST);
+    }
+    void drawBoneTransform(const IBone *bone, const Scene *scene, int mode) {
         /* 固定軸がある場合は軸表示なし */
         if (!m_visible || !bone || !m_program.isLinked() || bone->hasFixedAxes())
             return;
-        float matrix[16];
-        QGLFunctions func(QGLContext::currentContext());
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
-        m_program.bind();
-        scene->matrices()->getModelViewProjection(matrix);
-        int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
-        func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
-        m_program.setUniformValue("boneMatrix", QMatrix4x4());
+        prepare(scene);
         m_program.enableAttributeArray("inPosition");
         /* ボーン表示 */
         BoneSet selectedBones;
@@ -236,7 +228,16 @@ public:
     }
 
 private:
-    void drawBone(IBone *bone, const BoneSet &selected, const BoneSet &IK) {
+    void prepare(const Scene *scene) {
+        float matrix[16];
+        QGLFunctions func(QGLContext::currentContext());
+        scene->matrices()->getModelViewProjection(matrix);
+        m_program.bind();
+        int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
+        func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
+        m_program.setUniformValue("boneMatrix", QMatrix4x4());
+    }
+    void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK) {
         const Vector3 &dest = bone->destinationOrigin();
         if (!bone || !bone->isVisible() || dest.isZero())
             return;

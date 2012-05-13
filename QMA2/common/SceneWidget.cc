@@ -130,6 +130,7 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_info(0),
     m_plane(0),
     m_handles(0),
+    m_currentSelectedBone(0),
     m_editMode(kSelect),
     m_totalDelta(0.0f),
     m_lastDistance(0.0f),
@@ -701,11 +702,11 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 void SceneWidget::selectBones(const QList<IBone *> &bones)
 {
     /* signal/slot による循環参照防止 */
-    if (m_bones != bones) {
+    if (m_selectedBones != bones) {
         m_info->setBones(bones, tr("(multiple)"));
         m_info->update();
         m_handles->setBone(bones.isEmpty() ? 0 : bones.first());
-        m_bones = bones;
+        m_selectedBones = bones;
         emit bonesDidSelect(bones);
     }
 }
@@ -934,13 +935,22 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_handles->setPoint2D(pos);
 #ifdef IS_QMA2
     QRectF rect;
+    Vector3 znear1, zfar1, hit1, znear2, zfar2, hit2, znear3, zfar3, hit3;
+    makeRay(pos, znear1, zfar1);
+    m_plane->test(znear1, zfar1, hit1);
+    makeRay(pos + QPointF(1, 0), znear2, zfar2);
+    m_plane->test(znear2, zfar2, hit2);
+    makeRay(pos + QPointF(0, 1), znear3, zfar3);
+    m_plane->test(znear3, zfar3, hit3);
+    m_delta.setX((hit2 - hit1).x());
+    m_delta.setY((hit3 - hit1).y());
     /*
      * モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する。
      * また、右下のハンドル処理はひとつ以上ボーンが選択されていなければならない。
      */
     bool movable = false, rotateable = false;
-    if (!m_bones.isEmpty()) {
-        IBone *bone = m_bones.last();
+    if (!m_selectedBones.isEmpty()) {
+        IBone *bone = m_selectedBones.last();
         movable = bone->isMovable();
         rotateable = bone->isRotateable();
         /* 右下のハンドルを掴まれた */
@@ -986,31 +996,13 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     if (IModel *model = m_loader->selectedModel()) {
         /* ボーン選択モードである */
         if (m_editMode == kSelect) {
-            static const Vector3 size(0.1f, 0.1f, 0.1f);
-            const QPointF &pos = event->posF();
-            Vector3 znear, zfar, normal;
-            makeRay(pos, znear, zfar);
-            Array<IBone *> bones;
-            model->getBones(bones);
-            const int nbones = bones.count();
-            IBone *nearestBone = 0;
-            Scalar hitLambda = 1.0f;
-            /* 操作可能なボーンを探す */
-            for (int i = 0; i < nbones; i++) {
-                IBone *bone = bones[i];
-                const Vector3 &o = bone->worldTransform().getOrigin(),
-                        min = o - size, max = o + size;
-                if (btRayAabb(znear, zfar, min, max, hitLambda, normal) && bone->isInteractive()) {
-                    nearestBone = bone;
-                    break;
-                }
-            }
+            IBone *nearestBone = findNearestBone(model, znear1, zfar1, 0.1);
             /* 操作可能で最も近いボーンを選択状態にする */
             if (nearestBone) {
                 QList<IBone *> selectedBones;
                 /* CTRL が押されている場合は前回の選択状態を引き継ぐ */
                 if (event->modifiers() & Qt::CTRL)
-                    selectedBones.append(m_bones);
+                    selectedBones.append(m_selectedBones);
                 /* すでにボーンが選択済みの場合は選択状態を外す */
                 if (selectedBones.contains(nearestBone))
                     selectedBones.removeOne(nearestBone);
@@ -1026,6 +1018,15 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
         else if (m_editMode == kRotate || m_editMode == kMove) {
             Vector3 rayFrom, rayTo, pick;
             makeRay(pos, rayFrom, rayTo);
+            /* 移動ボーンでかつ範囲内にある */
+            IBone *bone = m_handles->currentBone();
+            if (bone->isMovable() && intersectsBone(bone, znear1, zfar1, 0.5)) {
+                m_currentSelectedBone = bone;
+                m_lastBonePosition = bone->worldTransform().getOrigin();
+                setCursor(Qt::ClosedHandCursor);
+                emit handleDidGrab();
+                return;
+            }
             /* モデルハンドルにカーソルが入ってる */
             if (m_handles->testHitModel(rayFrom, rayTo, false, flags, pick)) {
                 m_handleFlags = flags;
@@ -1042,7 +1043,14 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const QPointF &pos = event->posF();
     m_isImageHandleRectIntersect = false;
-    if (event->buttons() & Qt::LeftButton) {
+    if (m_currentSelectedBone) {
+        Vector3 znear, zfar, hit;
+        makeRay(pos, znear, zfar);
+        m_plane->test(znear, zfar, hit);
+        const Vector3 &delta = hit - m_lastBonePosition;
+        emit handleDidMoveAbsolute(delta, m_currentSelectedBone, 'G');
+    }
+    else if (event->buttons() & Qt::LeftButton) {
         const Qt::KeyboardModifiers modifiers = event->modifiers();
         const QPointF &diff = m_handles->diffPoint2D(pos);
         /* モデルのハンドルがクリックされた */
@@ -1052,7 +1060,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         /* 有効な右下のハンドルがクリックされた (かつ操作切り替えボタンではないこと) */
         else if (m_handleFlags & Handles::kEnable && !Handles::isToggleButton(m_handleFlags)) {
             m_isImageHandleRectIntersect = true;
-            m_totalDelta = m_totalDelta + (pos.y() - m_clickOrigin.y()) * 0.1f;
+            m_totalDelta = m_totalDelta + (pos.y() - m_clickOrigin.y()) * m_delta.y();
             grabImageHandle(m_totalDelta);
             QCursor::setPos(mapToGlobal(m_clickOrigin.toPoint()));
         }
@@ -1066,7 +1074,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         /* 場面の移動 */
         else if (modifiers & Qt::ShiftModifier) {
-            translateScene(Vector3(diff.x() * -0.1f, diff.y() * 0.1f, 0.0f));
+            translateScene(Vector3(diff.x() * m_delta.x(), diff.y() * m_delta.y(), 0.0f));
         }
         /* 場面の回転 (X と Y が逆転している点に注意) */
         else {
@@ -1074,10 +1082,10 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         m_handles->setPoint2D(pos);
     }
-    else if (!m_bones.isEmpty()) {
+    else if (!m_selectedBones.isEmpty()) {
         QRectF rect;
         int flags;
-        IBone *bone = m_bones.last();
+        IBone *bone = m_selectedBones.last();
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
         /* 操作ハンドル(右下の画像)にマウスカーソルが入ってるか? */
         m_isImageHandleRectIntersect = m_handles->testHitImage(pos, movable, rotateable, flags, rect);
@@ -1125,8 +1133,10 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
      */
     bool isModelHandle = flags & Handles::kModel;
     bool isImageHandle = flags & Handles::kEnable && !Handles::isToggleButton(flags);
-    if (isModelHandle || isImageHandle)
+    if (isModelHandle || isImageHandle || m_currentSelectedBone)
         emit handleDidRelease();
+    m_currentSelectedBone = 0;
+    m_lastBonePosition.setZero();
 }
 
 void SceneWidget::paintGL()
@@ -1149,13 +1159,17 @@ void SceneWidget::paintGL()
     m_loader->renderModels();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;
-    if (!m_bones.isEmpty())
-        bone = m_bones.first();
+    if (!m_selectedBones.isEmpty())
+        bone = m_selectedBones.first();
     switch (m_editMode) {
     case kSelect: /* ボーン選択モード */
         /* モデルのボーンの接続部分をレンダリング */
-        if (!(m_handleFlags & Handles::kEnable))
-            m_debugDrawer->drawModelBones(m_loader->selectedModel(), scene, m_bones.toSet());
+        if (!(m_handleFlags & Handles::kEnable)) {
+            QSet<const IBone *> boneSet;
+            foreach (const IBone *bone, m_selectedBones)
+                boneSet.insert(bone);
+            m_debugDrawer->drawModelBones(m_loader->selectedModel(), scene, boneSet);
+        }
         /* 右下のハンドルが領域に入ってる場合は軸を表示する */
         if (m_isImageHandleRectIntersect)
             m_debugDrawer->drawBoneTransform(bone, scene, m_handles->modeFromConstraint());
@@ -1169,11 +1183,13 @@ void SceneWidget::paintGL()
         break;
     case kRotate: /* 回転モード */
         /* kRotate と kMove の場合はレンダリングがうまくいかない関係でモデルのハンドルを最後に持ってく */
+        m_debugDrawer->drawMovableBone(bone, scene);
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawRotationHandle();
         break;
     case kMove: /* 移動モード */
+        m_debugDrawer->drawMovableBone(bone, scene);
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawMoveHandle();
@@ -1250,8 +1266,8 @@ void SceneWidget::panTriggered(QPanGesture *event)
     /* 移動のジェスチャー */
     const QPointF &delta = event->delta();
     const Vector3 newDelta(delta.x() * -0.25, delta.y() * 0.25, 0.0f);
-    if (!m_bones.isEmpty()) {
-        IBone *bone = m_bones.last();
+    if (!m_selectedBones.isEmpty()) {
+        IBone *bone = m_selectedBones.last();
         switch (state) {
         case Qt::GestureStarted:
             emit handleDidGrab();
@@ -1282,8 +1298,8 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
         qreal value = event->rotationAngle() - event->lastRotationAngle();
         const Scalar &radian = vpvl2::radian(value);
         /* ボーンが選択されている場合はボーンの回転 (現時点でY軸のみ) */
-        if (!m_bones.isEmpty()) {
-            IBone *bone = m_bones.last();
+        if (!m_selectedBones.isEmpty()) {
+            IBone *bone = m_selectedBones.last();
             int mode = m_handles->modeFromConstraint(), axis = 'Y' << 8;
             switch (state) {
             case Qt::GestureStarted:
@@ -1393,8 +1409,8 @@ void SceneWidget::updateScene()
 
 void SceneWidget::clearSelectedBones()
 {
-    m_bones.clear();
-    m_info->setBones(m_bones, "");
+    m_selectedBones.clear();
+    m_info->setBones(m_selectedBones, "");
     m_handles->setBone(0);
 }
 
@@ -1439,9 +1455,7 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &di
     Vector3 rayFrom, rayTo, pick, delta = kZeroV3;
     /* モデルのハンドルに当たっている場合のみモデルを動かす */
     if (flags & Handles::kMove) {
-        /* カメラ距離で移動量を変化させる。分母値は適当気味 */
-        const Scalar &d = m_loader->scene()->camera()->modelViewTransform().getOrigin().z() / -1000.0f;
-        const QPointF &diff2 = diff * d;
+        const QPointF &diff2 = QPointF(diff.x() * m_delta.x(), diff.y() * m_delta.y());
         /* 移動ハンドルである(矢印の先端) */
         if (flags & Handles::kX) {
             delta.setValue(diff2.x(), 0, 0);
@@ -1486,4 +1500,42 @@ void SceneWidget::grabModelHandleByRaycast(const QPointF &pos, const QPointF &di
         }
         m_handles->setPoint3D(pick);
     }
+}
+
+IBone *SceneWidget::findNearestBone(const IModel *model,
+                                    const Vector3 &znear,
+                                    const Vector3 &zfar,
+                                    const Scalar &threshold) const
+{
+    static const Vector3 size(threshold, threshold, threshold);
+    Array<IBone *> bones;
+    model->getBones(bones);
+    const int nbones = bones.count();
+    IBone *nearestBone = 0;
+    Scalar hitLambda = 1.0f;
+    Vector3 normal;
+    /* 操作可能なボーンを探す */
+    for (int i = 0; i < nbones; i++) {
+        IBone *bone = bones[i];
+        const Vector3 &o = bone->worldTransform().getOrigin(),
+                min = o - size, max = o + size;
+        if (btRayAabb(znear, zfar, min, max, hitLambda, normal) && bone->isInteractive()) {
+            nearestBone = bone;
+            break;
+        }
+    }
+    return nearestBone;
+}
+
+bool SceneWidget::intersectsBone(const IBone *bone,
+                                 const Vector3 &znear,
+                                 const Vector3 &zfar,
+                                 const Scalar &threshold) const
+{
+    static const Vector3 size(threshold, threshold, threshold);
+    const Vector3 &o = bone->worldTransform().getOrigin(),
+            min = o - size, max = o + size;
+    Scalar hitLambda = 1.0f;
+    Vector3 normal;
+    return btRayAabb(znear, zfar, min, max, hitLambda, normal);
 }

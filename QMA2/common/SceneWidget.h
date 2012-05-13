@@ -112,7 +112,7 @@ public:
     void makeRay(const QPointF &input, vpvl2::Vector3 &rayFrom, vpvl2::Vector3 &rayTo) const;
     Handles *handles() const { return m_handles; }
     EditMode editMode() const { return m_editMode; }
-    const QList<vpvl2::IBone *> &selectedBones() const { return m_bones; }
+    const QList<vpvl2::IBone *> &selectedBones() const { return m_selectedBones; }
     float currentFrameIndex() const { return m_frameIndex; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
@@ -241,7 +241,17 @@ private:
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();
     void grabImageHandle(const vpvl2::Scalar &deltaValue);
-    void grabModelHandleByRaycast(const QPointF &pos, const QPointF &diff, int flags);
+    void grabModelHandleByRaycast(const QPointF &pos,
+                                  const QPointF &diff,
+                                  int flags);
+    vpvl2::IBone *findNearestBone(const vpvl2::IModel *model,
+                                  const vpvl2::Vector3 &znear,
+                                  const vpvl2::Vector3 &zfar,
+                                  const vpvl2::Scalar &threshold) const;
+    bool intersectsBone(const vpvl2::IBone *bone,
+                        const vpvl2::Vector3 &znear,
+                        const vpvl2::Vector3 &zfar,
+                        const vpvl2::Scalar &threshold) const;
 
     vpvl2::IEncoding *m_encoding;
     vpvl2::Factory *m_factory;
@@ -250,10 +260,13 @@ private:
     internal::InfoPanel *m_info;
     PlaneWorld *m_plane;
     Handles *m_handles;
-    QList<vpvl2::IBone *> m_bones;
+    QList<vpvl2::IBone *> m_selectedBones;
+    vpvl2::IBone *m_currentSelectedBone;
+    vpvl2::Vector3 m_lastBonePosition;
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
     EditMode m_editMode;
+    QPointF m_delta;
     vpvl2::Scalar m_totalDelta;
     float m_lastDistance;
     float m_prevElapsed;
