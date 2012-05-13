@@ -76,7 +76,9 @@ public:
         m_motion(0),
         m_color(kZeroV3),
         m_direction(kZeroV3),
+        m_depthTextureSize(kZeroV3),
         m_enableToon(false),
+        m_enableSoftShadow(false),
         m_depthTexture(0)
     {
         resetDefault();
@@ -86,20 +88,26 @@ public:
         m_motion = 0;
         m_depthTexture = 0;
         m_enableToon = false;
+        m_enableSoftShadow = false;
         m_color.setZero();
         m_direction.setZero();
+        m_depthTextureSize.setZero();
     }
 
     const Vector3 &color() const { return m_color; }
     const Vector3 &direction() const { return m_direction; }
-    void *shadowMappingTexture() const { return m_depthTexture; }
+    const Vector3 &depthTextureSize() const { return m_depthTextureSize; }
+    void *depthTexture() const { return m_depthTexture; }
     bool isToonEnabled() const { return m_enableToon; }
+    bool isSoftShadowEnabled() const { return m_enableSoftShadow; }
     IMotion *motion() const { return m_motion; }
     void setColor(const Vector3 &value) { m_color = value; }
     void setDirection(const Vector3 &value) { m_direction = value; }
+    void setDepthTextureSize(const Vector3 &value) { m_depthTextureSize = value; }
     void setMotion(IMotion *value) { m_motion = value; }
     void setDepthTexture(void *value) { m_depthTexture = value; }
     void setToonEnable(bool value) { m_enableToon = value; }
+    void setSoftShadowEnable(bool value) { m_enableSoftShadow = value; }
     void copyFrom(ILight *value) {
         setColor(value->color());
         setDirection(value->direction());
@@ -113,7 +121,9 @@ private:
     IMotion *m_motion;
     Vector3 m_color;
     Vector3 m_direction;
+    Vector3 m_depthTextureSize;
     bool m_enableToon;
+    bool m_enableSoftShadow;
     void *m_depthTexture;
 };
 class Camera : public Scene::ICamera {

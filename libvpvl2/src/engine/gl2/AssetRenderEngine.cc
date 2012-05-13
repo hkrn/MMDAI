@@ -568,7 +568,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     else {
         program->setOpacity(asset->opacity());
     }
-    void *texture = m_scene->light()->shadowMappingTexture();
+    void *texture = m_scene->light()->depthTexture();
     if (texture && !btFuzzyZero(opacity - 0.98)) {
         GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
         program->setDepthTexture(textureID);

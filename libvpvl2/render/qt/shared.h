@@ -84,7 +84,7 @@ static const int kFPS = 60;
 static const QString kSystemTexturesDir = "../../QMA2/resources/images";
 static const QString kShaderProgramsDir = "../../QMA2/resources/shaders";
 static const QString kKernelProgramsDir = "../../QMA2/resources/kernels";
-static const QString kModelDir = "render/res/lat";
+static const QString kModelDir = "render/res/miku";
 static const QString kStageDir = "render/res/stage";
 static const QString kMotion = "render/res/motion.vmd";
 static const QString kCamera = "render/res/camera.vmd.404";
@@ -746,7 +746,10 @@ protected:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
-        m_scene.light()->setToonEnable(true);
+        Scene::ILight *light = m_scene.light();
+        light->setToonEnable(true);
+        light->setSoftShadowEnable(true);
+        light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
         m_timer.start();
     }
     void timerEvent(QTimerEvent *) {

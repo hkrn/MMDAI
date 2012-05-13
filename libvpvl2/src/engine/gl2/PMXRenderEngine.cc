@@ -936,11 +936,13 @@ void PMXRenderEngine::renderModel()
     matrices->getLightViewProjection(matrix4x4);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
-    void *texture = light->shadowMappingTexture();
+    void *texture = light->depthTexture();
     GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
     modelProgram->setToonEnable(light->isToonEnabled());
+    modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
+    modelProgram->setDepthTextureSize(light->depthTextureSize());
     const Array<pmx::Material *> &materials = m_model->materials();
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();

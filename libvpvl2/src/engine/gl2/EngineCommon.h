@@ -223,7 +223,9 @@ public:
           m_hasMainTextureUniformLocation(0),
           m_hasDepthTextureUniformLocation(0),
           m_mainTextureUniformLocation(0),
-          m_depthTextureUniformLocation(0)
+          m_depthTextureUniformLocation(0),
+          m_depthTextureSizeUniformLocation(0),
+          m_enableSoftShadowUniformLocation(0)
     {
     }
     ~ObjectProgram() {
@@ -237,6 +239,8 @@ public:
         m_hasDepthTextureUniformLocation = 0;
         m_mainTextureUniformLocation = 0;
         m_depthTextureUniformLocation = 0;
+        m_depthTextureSizeUniformLocation = 0;
+        m_enableSoftShadowUniformLocation = 0;
     }
 
     void setLightColor(const Vector3 &value) {
@@ -281,6 +285,12 @@ public:
             glUniform1i(m_hasDepthTextureUniformLocation, 0);
         }
     }
+    void setDepthTextureSize(const Vector3 &value) {
+        glUniform2fv(m_depthTextureSizeUniformLocation, 1, value);
+    }
+    void setSoftShadowEnable(bool value) {
+        glUniform1f(m_enableSoftShadowUniformLocation, value ? 1 : 0);
+    }
 
 protected:
     virtual void getLocations() {
@@ -295,6 +305,8 @@ protected:
         m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
         m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
         m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
+        m_depthTextureSizeUniformLocation = glGetUniformLocation(m_program, "depthTextureSize");
+        m_enableSoftShadowUniformLocation = glGetUniformLocation(m_program, "useSoftShadow");
     }
 
 private:
@@ -308,6 +320,8 @@ private:
     GLuint m_hasDepthTextureUniformLocation;
     GLuint m_mainTextureUniformLocation;
     GLuint m_depthTextureUniformLocation;
+    GLuint m_depthTextureSizeUniformLocation;
+    GLuint m_enableSoftShadowUniformLocation;
 };
 
 class ZPlotProgram : public BaseShaderProgram

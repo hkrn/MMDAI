@@ -922,11 +922,13 @@ void PMDRenderEngine::renderModel()
     matrices->getLightViewProjection(matrix4x4);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
-    void *texture = light->shadowMappingTexture();
+    void *texture = light->depthTexture();
     GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
     modelProgram->setToonEnable(light->isToonEnabled());
+    modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
+    modelProgram->setDepthTextureSize(light->depthTextureSize());
     if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
         modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
                                       model->strideSize(PMDModel::kToonTextureStride));

@@ -1,9 +1,11 @@
-/* pmd/model.fsh (unpackDepth from three.js) */
+/* pmd/model.fsh (unpackDepth and soft shadow based on three.js) */
 #ifdef GL_ES
 precision highp float;
 #endif
 
+uniform vec2 depthTextureSize;
 uniform bool useToon;
+uniform bool useSoftShadow;
 uniform bool hasMainTexture;
 uniform bool hasSubTexture;
 uniform bool hasDepthTexture;
@@ -20,7 +22,6 @@ varying vec4 outShadowCoord;
 varying vec2 outToonTexCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
-const float kDepthThreshold = 0.00002;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 
 float unpackDepth(const vec4 value) {
@@ -50,12 +51,46 @@ void main() {
     if (useToon) {
         vec3 toonColor = texture2D(toonTexture, outToonTexCoord).rgb;
         if (hasDepthTexture) {
+            const vec2 kToonColorCoord = vec2(kZero, kOne);
             vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
-            vec4 depth4 = texture2D(depthTexture, shadowCoord.xy);
-            float depth = unpackDepth(depth4) + kDepthThreshold;
-            if (depth < shadowCoord.z) {
-                vec3 toon = texture2D(toonTexture, vec2(0.0, 1.0)).rgb;
-                color.rgb *= min(toonColor, toon);
+            if (useSoftShadow) {
+                const float kSubPixel = 1.25;
+                const float kDelta = kOne / 9.0;
+                float depth = kZero, shadow = kZero;
+                float xpoffset = kOne / depthTextureSize.x;
+                float ypoffset = kOne / depthTextureSize.y;
+                float dx0 = -kSubPixel * xpoffset;
+                float dy0 = -kSubPixel * ypoffset;
+                float dx1 = kSubPixel * xpoffset;
+                float dy1 = kSubPixel * ypoffset;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx0, dy0)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(0.0, dy0)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx1, dy0)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx0, 0.0)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx1, 0.0)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx0, dy1)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(0.0, dy1)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx1, dy1)));
+                if (depth < shadowCoord.z) shadow += kDelta;
+                vec3 toon = texture2D(toonTexture, kToonColorCoord).rgb;
+                color.rgb *= toon + (toonColor - toon) * (kOne - shadow);
+            }
+            else {
+                const float kDepthThreshold = 0.00002;
+                float depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy)) + kDepthThreshold;
+                if (depth < shadowCoord.z) {
+                    vec3 toon = texture2D(toonTexture, kToonColorCoord).rgb;
+                    color.rgb *= min(toonColor, toon);
+                }
             }
         }
         else {
