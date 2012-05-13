@@ -935,15 +935,13 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_handles->setPoint2D(pos);
 #ifdef IS_QMA2
     QRectF rect;
-    Vector3 znear1, zfar1, hit1, znear2, zfar2, hit2, znear3, zfar3, hit3;
-    makeRay(pos, znear1, zfar1);
-    m_plane->test(znear1, zfar1, hit1);
-    makeRay(pos + QPointF(1, 0), znear2, zfar2);
-    m_plane->test(znear2, zfar2, hit2);
-    makeRay(pos + QPointF(0, 1), znear3, zfar3);
-    m_plane->test(znear3, zfar3, hit3);
-    m_delta.setX((hit2 - hit1).x());
-    m_delta.setY((hit3 - hit1).y());
+    Vector3 znear, zfar, hit;
+    makeRay(pos, znear, zfar);
+    m_plane->test(znear, zfar, hit);
+    /* 今は決め打ちの値にしている */
+    const Scalar &delta = 0.0005 * m_loader->scene()->camera()->distance();
+    m_delta.setX(delta);
+    m_delta.setY(delta);
     /*
      * モデルのハンドルと重なるケースを考慮して右下のハンドルを優先的に処理する。
      * また、右下のハンドル処理はひとつ以上ボーンが選択されていなければならない。
@@ -996,7 +994,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     if (IModel *model = m_loader->selectedModel()) {
         /* ボーン選択モードである */
         if (m_editMode == kSelect) {
-            IBone *nearestBone = findNearestBone(model, znear1, zfar1, 0.1);
+            IBone *nearestBone = findNearestBone(model, znear, zfar, 0.1);
             /* 操作可能で最も近いボーンを選択状態にする */
             if (nearestBone) {
                 QList<IBone *> selectedBones;
@@ -1020,7 +1018,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             makeRay(pos, rayFrom, rayTo);
             /* 移動ボーンでかつ範囲内にある */
             IBone *bone = m_handles->currentBone();
-            if (bone->isMovable() && intersectsBone(bone, znear1, zfar1, 0.5)) {
+            if (bone->isMovable() && intersectsBone(bone, znear, zfar, 0.5)) {
                 m_currentSelectedBone = bone;
                 m_lastBonePosition = bone->worldTransform().getOrigin();
                 setCursor(Qt::ClosedHandCursor);
@@ -1072,9 +1070,9 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
                     ry(0.0f, diff.x() * radian(0.1f), 0.0f);
             light->setDirection(direction * Matrix3x3(rx * ry));
         }
-        /* 場面の移動 */
+        /* 場面の移動 (X 方向だけ向きを逆にする) */
         else if (modifiers & Qt::ShiftModifier) {
-            translateScene(Vector3(diff.x() * m_delta.x(), diff.y() * m_delta.y(), 0.0f));
+            translateScene(Vector3(diff.x() * -m_delta.x(), diff.y() * m_delta.y(), 0.0f));
         }
         /* 場面の回転 (X と Y が逆転している点に注意) */
         else {
