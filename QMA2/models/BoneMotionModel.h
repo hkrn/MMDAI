@@ -41,6 +41,7 @@
 #include "models/PMDMotionModel.h"
 
 #include <vpvl2/IBoneKeyframe.h>
+#include <vpvl2/Scene.h>
 
 namespace vpvl2 {
 class Factory;
@@ -48,8 +49,6 @@ class IBone;
 class IModel;
 class IMotion;
 }
-
-class SceneWidget;
 
 class BoneMotionModel : public PMDMotionModel
 {
@@ -67,7 +66,7 @@ public:
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    BoneMotionModel(vpvl2::Factory *factory, QUndoGroup *undo, const SceneWidget *sceneWidget, QObject *parent = 0);
+    BoneMotionModel(vpvl2::Factory *factory, QUndoGroup *undo, QObject *parent = 0);
     ~BoneMotionModel();
 
     void saveMotion(vpvl2::IMotion *motion);
@@ -112,15 +111,18 @@ signals:
     void rotationDidChange(vpvl2::IBone *bone, const vpvl2::Quaternion &lastRotation);
     void bonesDidSelect(const QList<vpvl2::IBone *> &bones);
 
+private slots:
+    void setCamera(const vpvl2::Scene::ICamera *camera);
+
 private:
     void translateInternal(const vpvl2::Vector3 &position, const vpvl2::Vector3 &delta, vpvl2::IBone *bone, int flags);
 
-    const SceneWidget *m_sceneWidget;
     PMDMotionModel::State m_state;
     KeyFramePairList m_copiedKeyframes;
     QList<vpvl2::IBone *> m_selectedBones;
     vpvl2::Factory *m_factory;
     vpvl2::IBoneKeyframe::InterpolationParameter m_interpolationParameter;
+    vpvl2::Transform m_viewTransform;
     /* 操作時のボーンの位置と回転量を保存する。操作中は変化しない (vpvl2::IMorphKeyframe::State と重複するが...) */
     QHash<vpvl2::IBone *, QPair<vpvl2::Vector3, vpvl2::Quaternion> > m_boneTransformStates;
 

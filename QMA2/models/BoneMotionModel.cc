@@ -420,9 +420,8 @@ static const Quaternion UIRotateGlobalAxisAngle(const IBone *bone, const Scalar 
     return rot;
 }
 
-static const Vector3 UITranslateFromView(const SceneWidget *sceneWidget, const Vector3 &delta)
+static const Vector3 UITranslateFromView(const Transform &transform, const Vector3 &delta)
 {
-    const Transform &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform();
     const Matrix3x3 &matrix = transform.getBasis();
     Vector3 value = kZeroV3;
     value += matrix[0] * delta.x();
@@ -431,7 +430,7 @@ static const Vector3 UITranslateFromView(const SceneWidget *sceneWidget, const V
     return value;
 }
 
-static const Quaternion UIRotateViewAxisAngle(const IBone *bone, const Scalar &value, int flags, const SceneWidget *sceneWidget)
+static const Quaternion UIRotateViewAxisAngle(const IBone *bone, const Scalar &value, int flags, const Transform &transform)
 {
     Quaternion rot = Quaternion::getIdentity();
     /* 固定軸の場合は固定軸をそのまま使って変形させる */
@@ -439,20 +438,20 @@ static const Quaternion UIRotateViewAxisAngle(const IBone *bone, const Scalar &v
         rot.setRotation(bone->fixedAxis(), radian(value));
     }
     else {
-        const Matrix3x3 &transform = sceneWidget->sceneLoader()->scene()->camera()->modelViewTransform().getBasis();
+        const Matrix3x3 &matrix = transform.getBasis();
         /*
          * 0x0000ff00 <= ff の部分に X/Y/Z のいずれかの軸のフラグが入ってる
          * また、座標系の関係でX軸とY軸は値を反転させる
          */
         switch ((flags & 0xff00) >> 8) {
         case 'X':
-            rot.setRotation(transform.getRow(0), -radian(value));
+            rot.setRotation(matrix.getRow(0), -radian(value));
             break;
         case 'Y':
-            rot.setRotation(transform.getRow(1), -radian(value));
+            rot.setRotation(matrix.getRow(1), -radian(value));
             break;
         case 'Z':
-            rot.setRotation(transform.getRow(2), radian(value));
+            rot.setRotation(matrix.getRow(2), radian(value));
             break;
         }
     }
@@ -505,12 +504,11 @@ static const Quaternion UIRotateLocalAxisAngle(const IBone *bone, const Scalar &
 
 BoneMotionModel::BoneMotionModel(Factory *factory,
                                  QUndoGroup *undo,
-                                 const SceneWidget *sceneWidget,
                                  QObject *parent) :
     PMDMotionModel(undo, parent),
-    m_sceneWidget(sceneWidget),
     m_state(0),
-    m_factory(factory)
+    m_factory(factory),
+    m_viewTransform(Transform::getIdentity())
 {
 }
 
@@ -1126,7 +1124,7 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
     /* 固定軸がある場合は変形方法に関係なく常に固定軸を使って変形されます */
     switch (flags & 0xff) {
     case 'V': { /* ビュー変形 (カメラ視点) */
-        bone->setRotation(lastRotation * UIRotateViewAxisAngle(bone, value, flags, m_sceneWidget));
+        bone->setRotation(lastRotation * UIRotateViewAxisAngle(bone, value, flags, m_viewTransform));
         break;
     }
     case 'L': /* ローカル変形 */
@@ -1152,11 +1150,16 @@ void BoneMotionModel::selectBones(const QList<IBone *> &bones)
     }
 }
 
+void BoneMotionModel::setCamera(const Scene::ICamera *camera)
+{
+    m_viewTransform = camera->modelViewTransform();
+}
+
 void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &delta, IBone *bone, int flags)
 {
     switch (flags & 0xff) {
     case 'V': /* ビュー変形 (カメラ視点) */
-        bone->setPosition(Transform(bone->rotation(), position) * UITranslateFromView(m_sceneWidget, delta));
+        bone->setPosition(Transform(bone->rotation(), position) * UITranslateFromView(m_viewTransform, delta));
         break;
     case 'L': /* ローカル変形 */
         bone->setPosition(Transform(bone->rotation(), position) * delta);

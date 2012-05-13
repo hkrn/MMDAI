@@ -153,7 +153,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_undo = new QUndoGroup(this);
     m_sceneWidget = new SceneWidget(m_encoding, m_factory, &m_settings);
     /* SceneWidget で渡しているのは Scene が initializeGL で初期化されるという特性のため */
-    m_boneMotionModel = new BoneMotionModel(m_factory, m_undo, m_sceneWidget, this);
+    m_boneMotionModel = new BoneMotionModel(m_factory, m_undo, this);
     m_morphMotionModel = new MorphMotionModel(m_factory, m_undo, this);
     m_sceneMotionModel = new SceneMotionModel(m_factory, m_undo, m_sceneWidget, this);
     m_sceneTabWidget = new TabWidget(&m_settings);
@@ -1284,6 +1284,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)), m_boneMotionModel, SLOT(setCamera(const vpvl2::Scene::ICamera*)));
     connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
