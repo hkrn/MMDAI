@@ -62,6 +62,63 @@
 using namespace vpvl2;
 using namespace internal;
 
+
+class SceneWidget::PlaneWorld {
+public:
+    PlaneWorld()
+        : m_dispatcher(&m_config),
+          m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
+          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
+          m_state(0),
+          m_shape(0),
+          m_body(0)
+    {
+        m_state = new btDefaultMotionState();
+        m_shape = new btBoxShape(btVector3(internal::kWorldAabbSize.x(), internal::kWorldAabbSize.y(), 0.01));
+        btRigidBody::btRigidBodyConstructionInfo info(0, m_state, m_shape);
+        m_body = new btRigidBody(info);
+        m_world.addRigidBody(m_body);
+    }
+    ~PlaneWorld()
+    {
+        m_world.removeRigidBody(m_body);
+        delete m_body;
+        delete m_shape;
+        delete m_state;
+    }
+
+    void updateTransform(const Transform &value) {
+        m_body->setWorldTransform(value);
+        m_world.stepSimulation(1);
+    }
+    void draw(const Scene *scene, internal::DebugDrawer *drawer) {
+        const btTransform &worldTransform = m_body->getWorldTransform();
+        m_world.setDebugDrawer(drawer);
+        drawer->drawShape(&m_world, m_shape, scene, worldTransform, btVector3(1, 0, 0));
+        m_world.setDebugDrawer(0);
+    }
+    bool test(const Vector3 &from, const Vector3 &to, Vector3 &hit) {
+        btCollisionWorld::ClosestRayResultCallback callback(from, to);
+        m_world.rayTest(from, to, callback);
+        hit.setZero();
+        if (callback.hasHit()) {
+            hit = callback.m_hitPointWorld;
+            return true;
+        }
+        return false;
+    }
+
+private:
+    btDefaultCollisionConfiguration m_config;
+    btCollisionDispatcher m_dispatcher;
+    btAxisSweep3 m_broadphase;
+    btSequentialImpulseConstraintSolver m_solver;
+    btDiscreteDynamicsWorld m_world;
+    btDefaultMotionState *m_state;
+    btBoxShape *m_shape;
+    btRigidBody *m_body;
+};
+
 SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_loader(0),
@@ -71,6 +128,7 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_debugDrawer(0),
     m_grid(0),
     m_info(0),
+    m_plane(0),
     m_handles(0),
     m_editMode(kSelect),
     m_totalDelta(0.0f),
@@ -94,7 +152,10 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_isImageHandleRectIntersect(false)
 {
     m_grid = new Grid();
+    m_plane = new PlaneWorld();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
+    connect(this, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
+            this, SLOT(updatePlaneWorld(const vpvl2::Scene::ICamera*)));
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
     setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
@@ -118,6 +179,8 @@ SceneWidget::~SceneWidget()
     m_info = 0;
     delete m_grid;
     m_grid = 0;
+    delete m_plane;
+    m_plane = 0;
 }
 
 SceneLoader *SceneWidget::sceneLoader() const
@@ -697,6 +760,13 @@ void SceneWidget::resetModelPosition()
         model->setPosition(kZeroV3);
         emit modelDidMove(position);
     }
+}
+
+void SceneWidget::updatePlaneWorld(const Scene::ICamera *camera)
+{
+    Transform transform = camera->modelViewTransform().inverse();
+    transform.setOrigin(kZeroV3);
+    m_plane->updateTransform(transform);
 }
 
 void SceneWidget::loadFile(const QString &file)

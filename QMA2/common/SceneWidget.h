@@ -61,6 +61,7 @@ class DebugDrawer;
 class Delegate;
 class Grid;
 class InfoPanel;
+class World;
 }
 
 class Handles;
@@ -207,6 +208,7 @@ private slots:
     void setCamera();
     void resetCamera();
     void resetModelPosition();
+    void updatePlaneWorld(const vpvl2::Scene::ICamera *camera);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void openErrorDialogIfFailed(bool loadingProjectFailed);
     void zoomIn() { zoom(true, Qt::NoModifier); }
@@ -232,6 +234,7 @@ private slots:
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
 
 private:
+    class PlaneWorld;
     void clearSelectedBones();
     void updateScene();
     bool acceptAddingModel(vpvl2::IModel *model);
@@ -245,6 +248,7 @@ private:
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
+    PlaneWorld *m_plane;
     Handles *m_handles;
     QList<vpvl2::IBone *> m_bones;
     QElapsedTimer m_timer;

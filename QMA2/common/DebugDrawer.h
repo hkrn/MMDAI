@@ -74,21 +74,21 @@ public:
     void drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int /* lifeTime */, const btVector3 &color) {
         QVector3D lines[2];
         setLine(PointOnB, PointOnB + normalOnB * distance, lines);
-        m_program.setUniformValue("color", QColor::fromRgb(color.x() * 255, color.y() * 255, color.z() * 255));
+        m_program.setUniformValue("color", QColor::fromRgbF(color.x(), color.y(), color.z()));
         m_program.setAttributeArray("inPosition", lines);
         glDrawArrays(GL_LINES, 0, 2);
     }
     void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
         QVector3D lines[2];
         setLine(from, to, lines);
-        m_program.setUniformValue("color", QColor::fromRgb(color.x() * 255, color.y() * 255, color.z() * 255));
+        m_program.setUniformValue("color", QColor::fromRgbF(color.x(), color.y(), color.z()));
         m_program.setAttributeArray("inPosition", lines);
         glDrawArrays(GL_LINES, 0, 2);
     }
     void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &fromColor, const btVector3 & /* toColor */) {
         QVector3D lines[2];
         setLine(from, to, lines);
-        m_program.setUniformValue("color", QColor::fromRgb(fromColor.x() * 255, fromColor.y() * 255, fromColor.z() * 255));
+        m_program.setUniformValue("color", QColor::fromRgbF(fromColor.x(), fromColor.y(), fromColor.z()));
         m_program.setAttributeArray("inPosition", lines);
         glDrawArrays(GL_LINES, 0, 2);
     }
@@ -109,6 +109,23 @@ public:
     }
     void setVisible(bool value) {
         m_visible = value;
+    }
+    void drawShape(btDiscreteDynamicsWorld *world,
+                   btCollisionShape *shape,
+                   const Scene *scene,
+                   const btTransform &transform,
+                   const btVector3 &color) {
+        if (m_program.isLinked()) {
+            m_program.bind();
+            float matrix[16];
+            QGLFunctions func(QGLContext::currentContext());
+            scene->matrices()->getModelViewProjection(matrix);
+            int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
+            func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
+            m_program.setUniformValue("boneMatrix", QMatrix4x4());
+            world->debugDrawObject(transform, shape, color);
+            m_program.release();
+        }
     }
 
     void drawModelBones(IModel *model, Scene *scene, const BoneSet &selectedBones) {
