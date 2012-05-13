@@ -49,7 +49,8 @@ public:
     explicit World()
         : m_dispatcher(&m_config),
           m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
-          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
+          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
+          m_preferredFPS(0)
     {
         setGravity(btVector3(0.0f, -9.8f, 0.0f));
         setPreferredFPS(Scene::defaultFPS());
@@ -58,9 +59,6 @@ public:
     {
     }
 
-    btDiscreteDynamicsWorld *mutableWorld() {
-        return &m_world;
-    }
     const btVector3 gravity() const {
         return m_world.getGravity();
     }
@@ -68,7 +66,20 @@ public:
         m_world.setGravity(value);
     }
     void setPreferredFPS(const Scalar &value) {
-        m_world.getSolverInfo().m_numIterations = static_cast<int>(10 * 60 / value);
+        m_preferredFPS = value;
+    }
+    void stepSimulationDefault(const Scalar &substep = 1) {
+        m_world.stepSimulation(1, substep, 1.0 / m_preferredFPS);
+    }
+    void stepSimulationDelta(const Scalar &delta) {
+        const Scalar &step = delta / m_preferredFPS;
+        m_world.stepSimulation(step, 1.0 / m_preferredFPS);
+    }
+    void addModel(vpvl2::IModel *value) {
+        value->joinWorld(&m_world);
+    }
+    void removeModel(vpvl2::IModel *value) {
+        value->leaveWorld(&m_world);
     }
 
 private:
@@ -77,6 +88,7 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
+    Scalar m_preferredFPS;
 
     Q_DISABLE_COPY(World)
 };

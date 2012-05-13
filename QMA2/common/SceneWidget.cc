@@ -509,10 +509,8 @@ void SceneWidget::advanceMotion(float delta)
         return;
     Scene *scene = m_loader->scene();
     scene->advance(delta);
-    if (m_loader->isPhysicsEnabled()) {
-        const Scalar &step = delta / Scene::defaultFPS();
-        m_loader->world()->mutableWorld()->stepSimulation(step);
-    }
+    if (m_loader->isPhysicsEnabled())
+        m_loader->world()->stepSimulationDelta(delta);
     updateScene();
 }
 

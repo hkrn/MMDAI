@@ -1401,25 +1401,23 @@ void SceneLoader::startPhysicsSimulation()
 {
     /* 物理暴走を防ぐために少し進めてから開始する */
     if (isPhysicsEnabled()) {
-        btDiscreteDynamicsWorld *world = m_world->mutableWorld();
         const Array<IModel *> &models = m_project->models();
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
-            model->joinWorld(world);
+            m_world->addModel(model);
         }
-        world->stepSimulation(1, 60);
+        m_world->stepSimulationDefault(60.0);
     }
 }
 
 void SceneLoader::stopPhysicsSimulation()
 {
-    btDiscreteDynamicsWorld *world = m_world->mutableWorld();
     const Array<IModel *> &models = m_project->models();
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         IModel *model = models[i];
-        model->leaveWorld(world);
+        m_world->removeModel(model);
     }
 }
 
@@ -1833,6 +1831,7 @@ void SceneLoader::setSelectedAsset(IModel *value)
 
 void SceneLoader::setPreferredFPS(int value)
 {
+    m_project->setPreferredFPS(value);
     m_world->setPreferredFPS(value);
 }
 
