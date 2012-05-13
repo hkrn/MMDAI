@@ -70,6 +70,7 @@ private slots:
     void setCameraPerspectiveFront();
     void setCameraPerspectiveBack();
     void setCameraPerspectiveTop();
+    void setCameraPerspectiveBottom();
     void setCameraPerspectiveLeft();
     void setCameraPerspectiveRight();
     void updatePositionX(double value);

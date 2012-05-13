@@ -228,6 +228,12 @@ void CameraPerspectiveWidget::setCameraPerspectiveTop()
     emit cameraPerspectiveDidChange(createCamera());
 }
 
+void CameraPerspectiveWidget::setCameraPerspectiveBottom()
+{
+    m_currentAngle = Vector3(-90, 0, 0);
+    emit cameraPerspectiveDidChange(createCamera());
+}
+
 void CameraPerspectiveWidget::setCameraPerspectiveLeft()
 {
     m_currentAngle = Vector3(0, -90, 0);

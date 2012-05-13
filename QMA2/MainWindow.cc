@@ -1001,6 +1001,18 @@ void MainWindow::bindActions()
     m_actionAbout->setShortcut(m_settings.value(kPrefix + "about", "Alt+Q, Alt+/").toString());
     m_actionAboutQt->setShortcut(m_settings.value(kPrefix + "aboutQt").toString());
     m_actionClearRecentFiles->setShortcut(m_settings.value(kPrefix + "clearRecentFiles").toString());
+    QShortcut *cameraFront = new QShortcut(m_settings.value(kPrefix + "cameraFront", QKeySequence(Qt::Key_2)).toString(), this);
+    connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveFront()));
+    QShortcut *cameraBack = new QShortcut(m_settings.value(kPrefix + "cameraBack", QKeySequence(Qt::Key_8)).toString(), this);
+    connect(cameraBack, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveBack()));
+    QShortcut *cameraLeft = new QShortcut(m_settings.value(kPrefix + "cameraLeft", QKeySequence(Qt::Key_4)).toString(), this);
+    connect(cameraLeft, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveLeft()));
+    QShortcut *cameraRight = new QShortcut(m_settings.value(kPrefix + "cameraRight", QKeySequence(Qt::Key_6)).toString(), this);
+    connect(cameraRight, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveRight()));
+    QShortcut *cameraTop = new QShortcut(m_settings.value(kPrefix + "cameraTop", QKeySequence(Qt::Key_5)).toString(), this);
+    connect(cameraTop, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveTop()));
+    QShortcut *cameraBottom = new QShortcut(m_settings.value(kPrefix + "cameraBottom", QKeySequence(Qt::Key_0)).toString(), this);
+    connect(cameraBottom, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveBottom()));
 }
 
 void MainWindow::retranslate()
