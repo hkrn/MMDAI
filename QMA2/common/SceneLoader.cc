@@ -639,11 +639,12 @@ void SceneLoader::createProject()
     if (!m_project) {
         m_project = new Project(m_projectDelegate, m_factory);
         /*
-         * デフォルトではグリッド表示と物理演算を有効にするため、設定後強制的に dirty フラグを無効にする
+         * デフォルトではグリッド表示と物理演算とソフトシャドウを有効にするため、設定後強制的に dirty フラグを無効にする
          * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
          */
         m_project->setGlobalSetting("grid.visible", "true");
         m_project->setGlobalSetting("physics.enabled", "true");
+        m_project->setGlobalSetting("shadow.texture.soft", "true");
         m_project->setDirty(false);
     }
 }
@@ -1246,6 +1247,8 @@ void SceneLoader::renderZPlot()
         shadowMatrix4x4[i] = shadowMatrix.constData()[i];
     matrices->setLightViewProjection(shadowMatrix4x4);
     light->setDepthTexture(&m_depthBufferID);
+    light->setDepthTextureSize(Vector3(m_depthBuffer->width(), m_depthBuffer->height(), 0));
+    light->setSoftShadowEnable(isSoftShadowEnabled());
 }
 
 void SceneLoader::updateDepthBuffer(const QSize &value)
@@ -1881,7 +1884,7 @@ void SceneLoader::setShadowBoundingSphere(const Vector4 &value)
 }
 bool SceneLoader::isSoftShadowEnabled() const
 {
-    return m_project ? QString::fromStdString(m_project->globalSetting("shadow.texture.soft")) == "true" : false;
+    return m_project ? QString::fromStdString(m_project->globalSetting("shadow.texture.soft")) == "true" : true;
 }
 
 void SceneLoader::setSoftShadowEnable(bool value)

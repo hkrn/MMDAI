@@ -90,8 +90,7 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     subLayout->addRow("Z", m_z);
     formLayout->addRow(m_centerLabel, subLayout);
     formLayout->addRow(m_radiusLabel, m_radius);
-    // TODO: implement soft shadow
-    //mainLayout->addWidget(m_enableSoftShadow);
+    mainLayout->addWidget(m_enableSoftShadow);
     mainLayout->addWidget(m_enableAutoLightView);
     mainLayout->addLayout(formLayout);
     QDialogButtonBox *button = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
