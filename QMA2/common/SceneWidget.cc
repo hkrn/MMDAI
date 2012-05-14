@@ -47,6 +47,7 @@
 #include "Handles.h"
 #include "InfoPanel.h"
 #include "SceneLoader.h"
+#include "TextureDrawHelper.h"
 #include "World.h"
 #include "util.h"
 
@@ -125,14 +126,17 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_settings(settings),
     m_encoding(encoding),
     m_factory(factory),
+    m_currentSelectedBone(0),
+    m_lastBonePosition(kZeroV3),
+    m_totalDelta(0.0f),
     m_debugDrawer(0),
     m_grid(0),
     m_info(0),
+    m_backgroundDrawer(0),
     m_plane(0),
     m_handles(0),
-    m_currentSelectedBone(0),
     m_editMode(kSelect),
-    m_totalDelta(0.0f),
+    m_backgroundTexture(0),
     m_lastDistance(0.0f),
     m_prevElapsed(0.0f),
     m_frameIndex(0.0f),
@@ -154,6 +158,7 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
 {
     m_grid = new Grid();
     m_plane = new PlaneWorld();
+    m_backgroundDrawer = new TextureDrawHelper(QSize());
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     connect(this, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
             this, SLOT(updatePlaneWorld(const vpvl2::Scene::ICamera*)));
@@ -182,6 +187,8 @@ SceneWidget::~SceneWidget()
     m_grid = 0;
     delete m_plane;
     m_plane = 0;
+    delete m_backgroundDrawer;
+    m_backgroundDrawer = 0;
 }
 
 SceneLoader *SceneWidget::sceneLoader() const
@@ -272,6 +279,20 @@ void SceneWidget::setSelectedModel(IModel *value)
     m_info->setModel(value);
     m_info->update();
     m_editMode = value ? kSelect : kNone;
+}
+
+void SceneWidget::setBackgroundImage(const QImage &image)
+{
+    deleteTexture(m_backgroundTexture);
+    if (image.isNull()) {
+        m_backgroundTexture = 0;
+        m_backgroundDrawer->resize(QSize());
+    }
+    else {
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption;
+        m_backgroundTexture = bindTexture(image, GL_TEXTURE_2D, GL_RGBA, options);
+        m_backgroundDrawer->resize(image.size());
+    }
 }
 
 void SceneWidget::setModelEdgeOffset(double value)
@@ -546,6 +567,20 @@ void SceneWidget::insertPoseToSelectedModel()
                                                model);
     if (!ptr.isNull() && model)
         model->performUpdate();
+}
+
+void SceneWidget::setBackgroundImage()
+{
+    const QImage image(openFileDialog("sceneWidget/lastBackgroundImageDirectory",
+                                      tr("Open background image file"),
+                                      tr("Image file (*.bmp *.jpg *.gif *.png *.tif)"),
+                                      m_settings));
+    setBackgroundImage(image);
+}
+
+void SceneWidget::clearBackgroundImage()
+{
+    setBackgroundImage(QImage());
 }
 
 VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModel *model)
@@ -915,6 +950,7 @@ void SceneWidget::initializeGL()
     m_info->load();
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
+    m_backgroundDrawer->load();
     m_loader->updateDepthBuffer(QSize());
 #endif
     m_info->setModel(0);
@@ -1153,6 +1189,7 @@ void SceneWidget::paintGL()
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     glViewport(0, 0, width(), height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    m_backgroundDrawer->draw(QRectF(QPointF(), m_backgroundDrawer->size()), m_backgroundTexture);
     m_grid->draw(scene, m_loader->isGridVisible());
     m_loader->renderModels();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */

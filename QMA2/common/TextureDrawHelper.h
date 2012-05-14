@@ -67,7 +67,7 @@ public:
         draw(QRectF(rect), pos, textureID);
     }
     void draw(const QRectF &rect, const QVector3D &pos, GLuint textureID) {
-        if (!isAvailable())
+        if (!isAvailable() || m_size.isEmpty() || textureID == 0)
             return;
         glDisable(GL_DEPTH_TEST);
         m_program.bind();

@@ -218,6 +218,8 @@ private:
     QAction *m_actionEnableAcceleration;
     QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;
+    QAction *m_actionSetBackgroundImage;
+    QAction *m_actionClearBackgroundImage;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
     QAction *m_actionRotateUp;

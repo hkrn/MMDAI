@@ -670,6 +670,10 @@ void MainWindow::buildUI()
     m_actionShowGrid = new QAction(this);
     m_actionShowGrid->setCheckable(true);
     m_actionShowGrid->setChecked(true);
+    m_actionSetBackgroundImage = new QAction(this);
+    connect(m_actionSetBackgroundImage, SIGNAL(triggered()), m_sceneWidget, SLOT(setBackgroundImage()));
+    m_actionClearBackgroundImage = new QAction(this);
+    connect(m_actionClearBackgroundImage, SIGNAL(triggered()), m_sceneWidget, SLOT(clearBackgroundImage()));
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -827,6 +831,9 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionEnableAcceleration);
     m_menuProject->addAction(m_actionEnablePhysics);
     m_menuProject->addAction(m_actionShowGrid);
+    m_menuProject->addSeparator();
+    m_menuProject->addAction(m_actionSetBackgroundImage);
+    m_menuProject->addAction(m_actionClearBackgroundImage);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
     m_menuScene->addAction(m_actionZoomIn);
@@ -948,6 +955,8 @@ void MainWindow::bindActions()
     m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
+    m_actionSetBackgroundImage->setShortcut(m_settings.value(kPrefix + "setBackgroundImage").toString());
+    m_actionClearBackgroundImage->setShortcut(m_settings.value(kPrefix + "clearBackgroundImage").toString());
     m_actionZoomIn->setShortcut(m_settings.value(kPrefix + "zoomIn", QKeySequence(QKeySequence::ZoomIn).toString()).toString());
     m_actionZoomOut->setShortcut(m_settings.value(kPrefix + "zoomOut", QKeySequence(QKeySequence::ZoomOut).toString()).toString());
     m_actionRotateUp->setShortcut(m_settings.value(kPrefix + "rotateUp", "Ctrl+Up").toString());
@@ -1083,6 +1092,10 @@ void MainWindow::retranslate()
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionShowGrid->setText(tr("Show grid"));
     m_actionShowGrid->setStatusTip(tr("Show or hide scene grid."));
+    m_actionSetBackgroundImage->setText(tr("Set background image"));
+    m_actionSetBackgroundImage->setStatusTip(tr("Set a background image to the scene."));
+    m_actionClearBackgroundImage->setText(tr("Clear background image"));
+    m_actionClearBackgroundImage->setStatusTip(tr("Clear current background image."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomOut->setText(tr("Zoom out"));

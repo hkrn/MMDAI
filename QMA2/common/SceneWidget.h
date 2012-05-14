@@ -61,6 +61,7 @@ class DebugDrawer;
 class Delegate;
 class Grid;
 class InfoPanel;
+class TextureDrawHelper;
 class World;
 }
 
@@ -152,6 +153,7 @@ public slots:
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
     void setSelectedModel(vpvl2::IModel *value);
+    void setBackgroundImage(const QImage &image);
 
 signals:
     void initailizeGLContextDidDone();
@@ -205,6 +207,8 @@ private slots:
     void addAsset();
     void addAssetFromMetadata();
     void insertPoseToSelectedModel();
+    void setBackgroundImage();
+    void clearBackgroundImage();
     void setCamera();
     void resetCamera();
     void resetModelPosition();
@@ -255,19 +259,21 @@ private:
 
     vpvl2::IEncoding *m_encoding;
     vpvl2::Factory *m_factory;
+    vpvl2::IBone *m_currentSelectedBone;
+    vpvl2::Vector3 m_lastBonePosition;
+    vpvl2::Scalar m_totalDelta;
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
+    internal::TextureDrawHelper *m_backgroundDrawer;
     PlaneWorld *m_plane;
     Handles *m_handles;
     QList<vpvl2::IBone *> m_selectedBones;
-    vpvl2::IBone *m_currentSelectedBone;
-    vpvl2::Vector3 m_lastBonePosition;
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
-    EditMode m_editMode;
     QPointF m_delta;
-    vpvl2::Scalar m_totalDelta;
+    EditMode m_editMode;
+    GLuint m_backgroundTexture;
     float m_lastDistance;
     float m_prevElapsed;
     float m_frameIndex;
