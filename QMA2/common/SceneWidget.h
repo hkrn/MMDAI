@@ -41,7 +41,8 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QUuid>
-#include <QtOpenGL/QtOpenGL>
+#include <QtOpenGL/QGLFunctions>
+#include <QtOpenGL/QGLWidget>
 #include "VPDFile.h"
 
 #include <vpvl2/Common.h>
@@ -57,6 +58,7 @@ class Scene;
 }
 
 namespace internal {
+class BackgroundImage;
 class DebugDrawer;
 class Delegate;
 class Grid;
@@ -153,7 +155,7 @@ public slots:
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
     void setSelectedModel(vpvl2::IModel *value);
-    void setBackgroundImage(const QImage &image);
+    void setBackgroundImage(const QImage &image, const QString &filename);
 
 signals:
     void initailizeGLContextDidDone();
@@ -208,6 +210,8 @@ private slots:
     void addAssetFromMetadata();
     void insertPoseToSelectedModel();
     void setBackgroundImage();
+    void setBackgroundPosition(const QPoint &value);
+    void setBackgroundImageScale(bool value);
     void clearBackgroundImage();
     void setCamera();
     void resetCamera();
@@ -265,7 +269,7 @@ private:
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
-    internal::TextureDrawHelper *m_backgroundDrawer;
+    internal::BackgroundImage *m_background;
     PlaneWorld *m_plane;
     Handles *m_handles;
     QList<vpvl2::IBone *> m_selectedBones;
@@ -273,7 +277,6 @@ private:
     QPointF m_clickOrigin;
     QPointF m_delta;
     EditMode m_editMode;
-    GLuint m_backgroundTexture;
     float m_lastDistance;
     float m_prevElapsed;
     float m_frameIndex;

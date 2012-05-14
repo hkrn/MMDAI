@@ -101,7 +101,6 @@ public:
     bool isGridVisible() const;
     bool isPhysicsEnabled() const;
     bool isAccelerationEnabled() const;
-    bool isBlackBackgroundEnabled() const;
     const vpvl2::Vector3 worldGravity() const;
     const QColor screenColor() const;
     int frameIndexPlayFrom() const;
@@ -118,6 +117,9 @@ public:
     const QSize shadowMapSize() const;
     const vpvl2::Vector4 shadowBoundingSphere() const;
     bool isSoftShadowEnabled() const;
+    const QString backgroundImage() const;
+    const QPoint backgroundImagePosition() const;
+    bool isBackgroundImageScaled() const;
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
@@ -191,6 +193,9 @@ public slots:
     void setShadowMapSize(const QSize &value);
     void setShadowBoundingSphere(const vpvl2::Vector4 &value);
     void setSoftShadowEnable(bool value);
+    void setBackgroundImagePath(const QString &value);
+    void setBackgroundImagePosition(const QPoint &value);
+    void setBackgroundImageScale(bool value);
 
 signals:
     void projectDidCount(int value);

@@ -587,7 +587,6 @@ void Handles::drawImageHandles(IBone *bone)
 {
     if (!m_visible)
         return;
-    glDisable(GL_DEPTH_TEST);
     if (bone && bone->isMovable()) {
         m_helper->draw(m_x.enableMove.rect, m_x.enableMove.textureID);
         m_helper->draw(m_y.enableMove.rect, m_y.enableMove.textureID);
@@ -633,7 +632,6 @@ void Handles::drawImageHandles(IBone *bone)
     default:
         break;
     }
-    glEnable(GL_DEPTH_TEST);
 }
 
 void Handles::drawRotationHandle()

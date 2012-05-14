@@ -241,7 +241,8 @@ HEADERS  += \
     common/Archive.h \
     widgets/SceneLightWidget.h \
     widgets/ModelSettingWidget.h \
-    dialogs/ShadowMapSettingDialog.h
+    dialogs/ShadowMapSettingDialog.h \
+    common/BackgroundImage.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc

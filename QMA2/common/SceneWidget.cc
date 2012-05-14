@@ -42,6 +42,7 @@
 #include "SceneWidget.h"
 
 #include "Application.h"
+#include "BackgroundImage.h"
 #include "DebugDrawer.h"
 #include "Grid.h"
 #include "Handles.h"
@@ -132,11 +133,10 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_debugDrawer(0),
     m_grid(0),
     m_info(0),
-    m_backgroundDrawer(0),
+    m_background(0),
     m_plane(0),
     m_handles(0),
     m_editMode(kSelect),
-    m_backgroundTexture(0),
     m_lastDistance(0.0f),
     m_prevElapsed(0.0f),
     m_frameIndex(0.0f),
@@ -158,7 +158,6 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
 {
     m_grid = new Grid();
     m_plane = new PlaneWorld();
-    m_backgroundDrawer = new TextureDrawHelper(QSize());
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     connect(this, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
             this, SLOT(updatePlaneWorld(const vpvl2::Scene::ICamera*)));
@@ -187,8 +186,8 @@ SceneWidget::~SceneWidget()
     m_grid = 0;
     delete m_plane;
     m_plane = 0;
-    delete m_backgroundDrawer;
-    m_backgroundDrawer = 0;
+    delete m_background;
+    m_background = 0;
 }
 
 SceneLoader *SceneWidget::sceneLoader() const
@@ -244,18 +243,32 @@ void SceneWidget::loadProject(const QString &filename)
 {
     QScopedPointer<QProgressDialog> dialog(new QProgressDialog());
     QProgressDialog *ptr = dialog.data();
+    /* プロジェクトの読み込みが完了したらダイアログを閉じるようにする */
     connect(m_loader, SIGNAL(projectDidLoad(bool)), ptr, SLOT(close()));
     connect(m_loader, SIGNAL(projectDidCount(int)), ptr, SLOT(setMaximum(int)));
     connect(m_loader, SIGNAL(projectDidProceed(int)), ptr, SLOT(setValue(int)));
     dialog->setLabelText(tr("Loading a project %1...").arg(QFileInfo(filename).fileName()));
     dialog->setWindowModality(Qt::WindowModal);
     dialog->setCancelButton(0);
+    /* ぶら下がりポインタを残さないために選択状態のボーンを全てクリアする */
     clearSelectedBones();
+    /* プロジェクト読み込み */
     m_loader->loadProject(filename);
+    /* 背景画像読み込み */
+    const QString &backgroundImageFilePath = m_loader->backgroundImage();
+    const QImage backgroundImage(backgroundImageFilePath);
+    m_background->setImage(backgroundImage, backgroundImageFilePath, this);
+    m_background->setImagePosition(m_loader->backgroundImagePosition());
+    m_background->setScaleEnable(m_loader->isBackgroundImageScaled());
+    QApplication::alert(this);
 }
 
 void SceneWidget::saveProject(const QString &filename)
 {
+    /* 背景画像設定をプロジェクトに保存する */
+    m_loader->setBackgroundImagePath(m_background->imageFilename());
+    m_loader->setBackgroundImagePosition(m_background->imagePosition());
+    m_loader->setBackgroundImageScale(m_background->isScaleEnabled());
     m_loader->saveProject(filename);
 }
 
@@ -281,18 +294,9 @@ void SceneWidget::setSelectedModel(IModel *value)
     m_editMode = value ? kSelect : kNone;
 }
 
-void SceneWidget::setBackgroundImage(const QImage &image)
+void SceneWidget::setBackgroundImage(const QImage &image, const QString &filename)
 {
-    deleteTexture(m_backgroundTexture);
-    if (image.isNull()) {
-        m_backgroundTexture = 0;
-        m_backgroundDrawer->resize(QSize());
-    }
-    else {
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption;
-        m_backgroundTexture = bindTexture(image, GL_TEXTURE_2D, GL_RGBA, options);
-        m_backgroundDrawer->resize(image.size());
-    }
+    m_background->setImage(image, filename, this);
 }
 
 void SceneWidget::setModelEdgeOffset(double value)
@@ -571,16 +575,28 @@ void SceneWidget::insertPoseToSelectedModel()
 
 void SceneWidget::setBackgroundImage()
 {
-    const QImage image(openFileDialog("sceneWidget/lastBackgroundImageDirectory",
-                                      tr("Open background image file"),
-                                      tr("Image file (*.bmp *.jpg *.gif *.png *.tif)"),
-                                      m_settings));
-    setBackgroundImage(image);
+    const QString &filename = openFileDialog("sceneWidget/lastBackgroundImageDirectory",
+                                             tr("Open background image file"),
+                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif)"),
+                                             m_settings);
+    const QImage image(filename);
+    setBackgroundImage(image, filename);
+}
+
+void SceneWidget::setBackgroundPosition(const QPoint &value)
+{
+    m_background->setImagePosition(value);
+}
+
+void SceneWidget::setBackgroundImageScale(bool value)
+{
+    m_background->setScaleEnable(value);
+    m_background->resize(size());
 }
 
 void SceneWidget::clearBackgroundImage()
 {
-    setBackgroundImage(QImage());
+    setBackgroundImage(QImage(), "");
 }
 
 VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModel *model)
@@ -950,7 +966,7 @@ void SceneWidget::initializeGL()
     m_info->load();
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
-    m_backgroundDrawer->load();
+    m_background = new BackgroundImage(s);
     m_loader->updateDepthBuffer(QSize());
 #endif
     m_info->setModel(0);
@@ -1189,7 +1205,7 @@ void SceneWidget::paintGL()
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     glViewport(0, 0, width(), height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    m_backgroundDrawer->draw(QRectF(QPointF(), m_backgroundDrawer->size()), m_backgroundTexture);
+    m_background->draw();
     m_grid->draw(scene, m_loader->isGridVisible());
     m_loader->renderModels();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
@@ -1243,6 +1259,7 @@ void SceneWidget::resizeGL(int w, int h)
     const QSize s(w, h);
     m_handles->resize(s);
     m_info->resize(s);
+    m_background->resize(s);
 }
 
 void SceneWidget::timerEvent(QTimerEvent *event)

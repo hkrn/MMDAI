@@ -674,6 +674,8 @@ void MainWindow::buildUI()
     connect(m_actionSetBackgroundImage, SIGNAL(triggered()), m_sceneWidget, SLOT(setBackgroundImage()));
     m_actionClearBackgroundImage = new QAction(this);
     connect(m_actionClearBackgroundImage, SIGNAL(triggered()), m_sceneWidget, SLOT(clearBackgroundImage()));
+    m_actionOpenBackgroundImageDialog = new QAction(this);
+    connect(m_actionOpenBackgroundImageDialog, SIGNAL(triggered()), SLOT(openBackgroundImageDialog()));
 
     m_actionZoomIn = new QAction(this);
     connect(m_actionZoomIn, SIGNAL(triggered()), m_sceneWidget, SLOT(zoomIn()));
@@ -834,6 +836,7 @@ void MainWindow::buildUI()
     m_menuProject->addSeparator();
     m_menuProject->addAction(m_actionSetBackgroundImage);
     m_menuProject->addAction(m_actionClearBackgroundImage);
+    m_menuProject->addAction(m_actionOpenBackgroundImageDialog);
     m_menuBar->addMenu(m_menuProject);
     m_menuScene = new QMenu(this);
     m_menuScene->addAction(m_actionZoomIn);
@@ -957,6 +960,7 @@ void MainWindow::bindActions()
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
     m_actionSetBackgroundImage->setShortcut(m_settings.value(kPrefix + "setBackgroundImage").toString());
     m_actionClearBackgroundImage->setShortcut(m_settings.value(kPrefix + "clearBackgroundImage").toString());
+    m_actionOpenBackgroundImageDialog->setShortcut(m_settings.value(kPrefix + "openBackgroundImageDialog").toString());
     m_actionZoomIn->setShortcut(m_settings.value(kPrefix + "zoomIn", QKeySequence(QKeySequence::ZoomIn).toString()).toString());
     m_actionZoomOut->setShortcut(m_settings.value(kPrefix + "zoomOut", QKeySequence(QKeySequence::ZoomOut).toString()).toString());
     m_actionRotateUp->setShortcut(m_settings.value(kPrefix + "rotateUp", "Ctrl+Up").toString());
@@ -1096,6 +1100,8 @@ void MainWindow::retranslate()
     m_actionSetBackgroundImage->setStatusTip(tr("Set a background image to the scene."));
     m_actionClearBackgroundImage->setText(tr("Clear background image"));
     m_actionClearBackgroundImage->setStatusTip(tr("Clear current background image."));
+    m_actionOpenBackgroundImageDialog->setText(tr("Background image setting"));
+    m_actionOpenBackgroundImageDialog->setStatusTip(tr("Open a dialog to configure background image."));
     m_actionZoomIn->setText(tr("Zoom in"));
     m_actionZoomIn->setStatusTip(tr("Zoom in the scene."));
     m_actionZoomOut->setText(tr("Zoom out"));
@@ -1703,6 +1709,31 @@ void MainWindow::openScreenColorDialog()
 void MainWindow::openShadowMapDialog()
 {
     QScopedPointer<ShadowMapSettingDialog> dialog(new ShadowMapSettingDialog(m_sceneWidget->sceneLoader()));
+    dialog->exec();
+}
+
+void MainWindow::openBackgroundImageDialog()
+{
+    QScopedPointer<QDialog> dialog(new QDialog());
+    QFormLayout *subLayout = new QFormLayout();
+    QSpinBox *x = new QSpinBox();
+    connect(x, SIGNAL(valueChanged(int)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
+    subLayout->addRow("X", x);
+    QSpinBox *y = new QSpinBox();
+    connect(y, SIGNAL(valueChanged(int)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
+    subLayout->addRow("Y", y);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->addLayout(subLayout);
+    QCheckBox *checkbox = new QCheckBox();
+    connect(checkbox, SIGNAL(clicked(bool)), m_sceneWidget, SLOT(setBackgroundImageScale(bool)));
+    connect(checkbox, SIGNAL(clicked(bool)), x, SLOT(setDisabled(bool)));
+    connect(checkbox, SIGNAL(clicked(bool)), y, SLOT(setDisabled(bool)));
+    checkbox->setText(tr("Scale background image"));
+    mainLayout->addWidget(checkbox);
+    QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    mainLayout->addWidget(box);
+    dialog->setLayout(mainLayout);
+    dialog->setWindowTitle(tr("Background image setting"));
     dialog->exec();
 }
 

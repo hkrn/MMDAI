@@ -133,6 +133,7 @@ private slots:
     void openRenderOrderDialog();
     void openScreenColorDialog();
     void openShadowMapDialog();
+    void openBackgroundImageDialog();
     void makeBonesSelectable();
 
 private:
@@ -220,6 +221,7 @@ private:
     QAction *m_actionShowGrid;
     QAction *m_actionSetBackgroundImage;
     QAction *m_actionClearBackgroundImage;
+    QAction *m_actionOpenBackgroundImageDialog;
     QAction *m_actionZoomIn;
     QAction *m_actionZoomOut;
     QAction *m_actionRotateUp;

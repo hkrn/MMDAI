@@ -1893,6 +1893,48 @@ void SceneLoader::setSoftShadowEnable(bool value)
     }
 }
 
+const QString SceneLoader::backgroundImage() const
+{
+    return m_project ? QString::fromStdString(m_project->globalSetting("background.image.path")) : "";
+}
+
+void SceneLoader::setBackgroundImagePath(const QString &value)
+{
+    if (m_project) {
+        m_project->setGlobalSetting("background.image.path", value.toStdString());
+    }
+}
+
+const QPoint SceneLoader::backgroundImagePosition() const
+{
+    if (m_project) {
+        const Vector3 &value = UIGetVector3(m_project->globalSetting("background.image.path"), kZeroV3);
+        return QPoint(value.x(), value.y());
+    }
+    return QPoint();
+}
+
+void SceneLoader::setBackgroundImagePosition(const QPoint &value)
+{
+    if (m_project) {
+        QString str;
+        str.sprintf("%d,%d,0", value.x(), value.y());
+        m_project->setGlobalSetting("background.image.position", str.toStdString());
+    }
+}
+
+bool SceneLoader::isBackgroundImageScaled() const
+{
+    return m_project ? m_project->globalSetting("background.image.scale") == "true" : false;
+}
+
+void SceneLoader::setBackgroundImageScale(bool value)
+{
+    if (m_project) {
+        m_project->setGlobalSetting("background.image.scale", value ? "true" : "false");
+    }
+}
+
 bool SceneLoader::globalSetting(const char *key, bool def) const
 {
     return m_project ? m_project->globalSetting(key) == "true" : def;
