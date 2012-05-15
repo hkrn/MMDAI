@@ -4,6 +4,7 @@ precision highp float;
 #endif
 
 uniform vec2 depthTextureSize;
+uniform float opacity;
 uniform bool useToon;
 uniform bool useSoftShadow;
 uniform bool hasMainTexture;
@@ -97,6 +98,7 @@ void main() {
             color.rgb *= toonColor;
         }
     }
+    color.a *= opacity;
     gl_FragColor = color;
 }
 

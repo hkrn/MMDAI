@@ -71,7 +71,8 @@ public:
           m_normalAttributeLocation(0),
           m_edgeSizeAttributeLocation(0),
           m_colorUniformLocation(0),
-          m_sizeUniformLocation(0)
+          m_sizeUniformLocation(0),
+          m_opacityUniformLocation(0)
     {
     }
     ~EdgeProgram() {
@@ -79,6 +80,7 @@ public:
         m_edgeSizeAttributeLocation = 0;
         m_colorUniformLocation = 0;
         m_sizeUniformLocation = 0;
+        m_opacityUniformLocation = 0;
     }
 
     void setNormal(const GLvoid *ptr, GLsizei stride) {
@@ -95,6 +97,9 @@ public:
     void setSize(const Scalar &value) {
         glUniform1f(m_sizeUniformLocation, value);
     }
+    void setOpacity(const Scalar &value) {
+        glUniform1f(m_opacityUniformLocation, value);
+    }
 
 protected:
     virtual void getLocations() {
@@ -103,6 +108,7 @@ protected:
         m_edgeSizeAttributeLocation = glGetAttribLocation(m_program, "inEdgeSize");
         m_colorUniformLocation = glGetUniformLocation(m_program, "color");
         m_sizeUniformLocation = glGetUniformLocation(m_program, "size");
+        m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
     }
 
 private:
@@ -110,6 +116,7 @@ private:
     GLuint m_edgeSizeAttributeLocation;
     GLuint m_colorUniformLocation;
     GLuint m_sizeUniformLocation;
+    GLuint m_opacityUniformLocation;
 };
 
 class ShadowProgram : public ObjectProgram
@@ -943,9 +950,12 @@ void PMXRenderEngine::renderModel()
     modelProgram->setToonEnable(light->isToonEnabled());
     modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
     modelProgram->setDepthTextureSize(light->depthTextureSize());
+    const Scalar &opacity = m_model->opacity();
+    modelProgram->setOpacity(opacity);
     const Array<pmx::Material *> &materials = m_model->materials();
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
+    const bool hasModelTransparent = !btFuzzyZero(opacity - 1.0);
     offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
@@ -960,7 +970,8 @@ void PMXRenderEngine::renderModel()
             modelProgram->setDepthTexture(textureID);
         else
             modelProgram->setDepthTexture(0);
-        if (material->isCullFaceDisabled() && m_context->cullFaceState) {
+        if ((!hasModelTransparent && m_context->cullFaceState) ||
+                (material->isCullFaceDisabled() && m_context->cullFaceState)) {
             glDisable(GL_CULL_FACE);
             m_context->cullFaceState = false;
         }
@@ -1045,6 +1056,7 @@ void PMXRenderEngine::renderEdge()
     float matrix4x4[16];
     m_scene->matrices()->getModelViewProjection(matrix4x4);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
+    edgeProgram->setOpacity(m_model->opacity());
     glCullFace(GL_FRONT);
     const Array<pmx::Material *> &materials = m_model->materials();
     const int nmaterials = materials.count();

@@ -172,7 +172,7 @@ public:
     const IString *comment() const { return m_comment; }
     const IString *englishComment() const { return m_englishComment; }
     Error error() const { return m_info.error; }
-    bool isVisible() const { return m_visible; }
+    bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);

@@ -65,7 +65,7 @@ public:
     const IString *englishName() const { return m_name; }
     const IString *comment() const { return m_name; }
     const IString *englishComment() const { return m_name; }
-    bool isVisible() const { return true; }
+    bool isVisible() const { return !btFuzzyZero(opacity()); }
     Error error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}

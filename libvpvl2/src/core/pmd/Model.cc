@@ -51,7 +51,9 @@ Model::Model(IEncoding *encoding)
       m_name(0),
       m_englishName(0),
       m_comment(0),
-      m_englishComment(0)
+      m_englishComment(0),
+      m_opacity(1),
+      m_scaleFactor(1)
 {
 }
 
