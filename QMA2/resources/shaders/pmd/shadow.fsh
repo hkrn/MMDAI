@@ -1,4 +1,7 @@
 /* pmd/shadow.fsh */
+#ifdef GL_ES
+precision highp float;
+#endif
 uniform vec3 lightColor;
 
 void main() {

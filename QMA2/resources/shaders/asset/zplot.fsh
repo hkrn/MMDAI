@@ -1,4 +1,7 @@
 /* asset/zplot.fsh based on three.js */
+#ifdef GL_ES
+precision highp float;
+#endif
 const vec4 kBitShift = vec4(16777216.0, 65536.0, 256.0, 1.0);
 const vec4 kBitMask = vec4(0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
 
