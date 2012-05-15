@@ -1016,15 +1016,15 @@ void SceneLoader::loadProject(const QString &path)
                 if (type == IModel::kPMD || type == IModel::kPMX) {
                     delegate->setArchive(0);
                     /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
-                    // const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
-                    // model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
-                    // model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
+                    const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
+                    model->setEdgeColor(color);
+                    model->setEdgeWidth(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
                     model->setPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
                     model->setOpacity(QString::fromStdString(m_project->modelSetting(model, "opacity")).toFloat());
                     /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
                     const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV3);
                     rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
-                    // model->setRotationOffset(rotation);
+                    model->setRotation(rotation);
                     const QUuid modelUUID(modelUUIDString.c_str());
                     m_renderOrderList.add(modelUUID);
                     emit modelDidAdd(model, modelUUID);
@@ -1496,7 +1496,7 @@ void SceneLoader::setModelEdgeOffset(IModel *model, float value)
     if (m_project && model) {
         QString str;
         str.sprintf("%.5f", value);
-        // model->setEdgeOffset(value);
+        model->setEdgeWidth(value);
         m_project->setModelSetting(model, "edge.offset", str.toStdString());
     }
 }
@@ -1544,7 +1544,7 @@ void SceneLoader::setModelEdgeColor(IModel *model, const QColor &value)
         QString str;
         float red = value.redF(), green = value.greenF(), blue = value.blueF();
         str.sprintf("%.5f,%.5f,%.5f", red, green, blue);
-        // model->setEdgeColor(Color(red, green, blue, 1.0));
+        model->setEdgeColor(Color(red, green, blue, 1.0));
         m_project->setModelSetting(model, "edge.color", str.toStdString());
     }
 }

@@ -156,7 +156,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
     disableSignals();
     if (model) {
         createEdgeColorDialog();
-        // FIXME: m_edgeOffsetSpinBox->setValue(model->edgeOffset());
+        m_edgeOffsetSpinBox->setValue(model->edgeWidth());
         m_edgeOffsetSpinBox->setEnabled(true);
         m_opacitySlider->setEnabled(true);
         m_opacitySpinBox->setEnabled(true);
