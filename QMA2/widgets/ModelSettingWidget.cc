@@ -56,6 +56,15 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     /* エッジ色 */
     m_edgeColorDialogOpenButton = new QPushButton();
     connect(m_edgeColorDialogOpenButton, SIGNAL(clicked()), SLOT(openEdgeColorDialog()));
+    /* 不透明度 */
+    m_opacityLabel = new QLabel();
+    m_opacitySlider = new QSlider(Qt::Horizontal);
+    m_opacitySlider->setRange(0, 100);
+    m_opacitySpinBox = new QSpinBox();
+    m_opacitySpinBox->setRange(0, 100);
+    connect(m_opacitySlider, SIGNAL(valueChanged(int)), m_opacitySpinBox, SLOT(setValue(int)));
+    connect(m_opacitySpinBox, SIGNAL(valueChanged(int)), m_opacitySlider, SLOT(setValue(int)));
+    connect(m_opacitySpinBox, SIGNAL(valueChanged(int)), SLOT(emitOpacitySignal(int)));
     /* 影の種類の選択 */
     m_noShadowCheckbox = new QRadioButton();
     m_noShadowCheckbox->setChecked(true);
@@ -94,6 +103,12 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QLayout *subLayout = new QHBoxLayout();
     subLayout->setAlignment(Qt::AlignCenter);
+    subLayout->addWidget(m_opacityLabel);
+    subLayout->addWidget(m_opacitySlider);
+    subLayout->addWidget(m_opacitySpinBox);
+    mainLayout->addLayout(subLayout);
+    subLayout = new QHBoxLayout();
+    subLayout->setAlignment(Qt::AlignCenter);
     subLayout->addWidget(m_edgeOffsetLabel);
     subLayout->addWidget(m_edgeOffsetSpinBox);
     subLayout->addWidget(m_edgeColorDialogOpenButton);
@@ -121,6 +136,7 @@ void ModelSettingWidget::retranslate()
 {
     m_edgeOffsetLabel->setText(tr("Edge offset:"));
     m_edgeColorDialogOpenButton->setText(tr("Color"));
+    m_opacityLabel->setText(tr("Opacity:"));
     m_noShadowCheckbox->setText(tr("Disable shadow"));
     m_projectiveShadowCheckbox->setText(tr("Enable projective shadow"));
     m_selfShadowCheckbox->setText(tr("Enable self shadow"));
@@ -142,6 +158,9 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         createEdgeColorDialog();
         // FIXME: m_edgeOffsetSpinBox->setValue(model->edgeOffset());
         m_edgeOffsetSpinBox->setEnabled(true);
+        m_opacitySlider->setEnabled(true);
+        m_opacitySpinBox->setEnabled(true);
+        m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
         m_projectiveShadowCheckbox->setEnabled(true);
         m_selfShadowCheckbox->setEnabled(true);
         const Vector3 &color = kZeroC; // FIXME: model->edgeColor();
@@ -180,6 +199,9 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_edgeOffsetSpinBox->setEnabled(false);
         m_projectiveShadowCheckbox->setEnabled(false);
         m_selfShadowCheckbox->setEnabled(false);
+        m_opacitySlider->setEnabled(false);
+        m_opacitySpinBox->setEnabled(false);
+        m_opacitySpinBox->setValue(0);
         m_px->setValue(0.0);
         m_py->setValue(0.0);
         m_pz->setValue(0.0);
@@ -218,6 +240,11 @@ void ModelSettingWidget::updateRotation()
 {
     const Vector3 rotation(m_rx->value(), m_ry->value(), m_rz->value());
     emit rotationOffsetDidChange(rotation);
+}
+
+void ModelSettingWidget::emitOpacitySignal(int value)
+{
+    emit opacityDidChange(value / Scalar(m_opacitySlider->maximum()));
 }
 
 void ModelSettingWidget::disableSignals()

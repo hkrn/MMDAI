@@ -51,6 +51,8 @@ class QGroupBox;
 class QLabel;
 class QPushButton;
 class QRadioButton;
+class QSlider;
+class QSpinBox;
 class SceneLoader;
 
 class ModelSettingWidget : public QWidget
@@ -64,6 +66,7 @@ public:
 signals:
     void edgeOffsetDidChange(double value);
     void edgeColorDidChange(const QColor &color);
+    void opacityDidChange(const vpvl2::Scalar &value);
     void positionOffsetDidChange(const vpvl2::Vector3 &value);
     void rotationOffsetDidChange(const vpvl2::Vector3 &value);
     void projectiveShadowDidEnable(bool value);
@@ -76,6 +79,7 @@ private slots:
     void setPositionOffset(const vpvl2::Vector3 &position);
     void updatePosition();
     void updateRotation();
+    void emitOpacitySignal(int value);
 
 private:
     void disableSignals();
@@ -87,6 +91,9 @@ private:
     QDoubleSpinBox *m_edgeOffsetSpinBox;
     QPushButton *m_edgeColorDialogOpenButton;
     QColorDialog *m_edgeColorDialog;
+    QLabel *m_opacityLabel;
+    QSlider *m_opacitySlider;
+    QSpinBox *m_opacitySpinBox;
     QButtonGroup *m_radioButtonsGroup;
     QRadioButton *m_noShadowCheckbox;
     QRadioButton *m_projectiveShadowCheckbox;

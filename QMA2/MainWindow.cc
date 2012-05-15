@@ -1330,6 +1330,7 @@ void MainWindow::connectWidgets()
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
     ModelSettingWidget *modelSettingWidget = m_modelTabWidget->modelSettingWidget();
     connect(modelSettingWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
+    connect(modelSettingWidget, SIGNAL(opacityDidChange(vpvl2::Scalar)), m_sceneWidget, SLOT(setModelOpacity(vpvl2::Scalar)));
     connect(modelSettingWidget, SIGNAL(projectiveShadowDidEnable(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(selfShadowDidEnable(bool)), m_sceneWidget, SLOT(setModelSelfShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));

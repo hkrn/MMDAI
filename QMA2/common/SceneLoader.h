@@ -129,6 +129,7 @@ public:
     bool isModelSelected(const vpvl2::IModel *value) const;
     void setModelEdgeColor(vpvl2::IModel *model, const QColor &value);
     void setModelEdgeOffset(vpvl2::IModel *model, float value);
+    void setModelOpacity(vpvl2::IModel *model, const vpvl2::Scalar &value);
     void setModelPosition(vpvl2::IModel *model, const vpvl2::Vector3 &value);
     const vpvl2::Vector3 modelRotation(vpvl2::IModel *value) const;
     void setModelRotation(vpvl2::IModel *model, const vpvl2::Vector3 &value);

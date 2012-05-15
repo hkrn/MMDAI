@@ -147,6 +147,7 @@ public slots:
     void resetMotion();
     void setCameraPerspective(const QSharedPointer<vpvl2::Scene::ICamera> &camera);
     void setModelEdgeOffset(double value);
+    void setModelOpacity(const vpvl2::Scalar &value);
     void setModelEdgeColor(const QColor &color);
     void setModelPositionOffset(const vpvl2::Vector3 &value);
     void setModelRotationOffset(const vpvl2::Vector3 &value);

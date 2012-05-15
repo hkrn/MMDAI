@@ -1020,6 +1020,7 @@ void SceneLoader::loadProject(const QString &path)
                     // model->setEdgeColor(Color(color.x(), color.y(), color.z(), 1.0));
                     // model->setEdgeOffset(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
                     model->setPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
+                    model->setOpacity(QString::fromStdString(m_project->modelSetting(model, "opacity")).toFloat());
                     /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
                     const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV3);
                     rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
@@ -1497,6 +1498,16 @@ void SceneLoader::setModelEdgeOffset(IModel *model, float value)
         str.sprintf("%.5f", value);
         // model->setEdgeOffset(value);
         m_project->setModelSetting(model, "edge.offset", str.toStdString());
+    }
+}
+
+void SceneLoader::setModelOpacity(IModel *model, const Scalar &value)
+{
+    if (m_project && model) {
+        QString str;
+        str.sprintf("%.5f", value);
+        model->setOpacity(value);
+        m_project->setModelSetting(model, "opacity", str.toStdString());
     }
 }
 
