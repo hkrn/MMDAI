@@ -79,7 +79,7 @@ public:
         glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setOpacity(const Scalar &value) {
-        glUniform1f(m_colorUniformLocation, value);
+        glUniform1f(m_opacityUniformLocation, value);
     }
 
 protected:
@@ -1052,14 +1052,14 @@ void PMDRenderEngine::renderZPlot()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible())
+    if (!m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()))
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     PMDModel *model = m_model->ptr();
     edgeProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kEdgeIndices]);
-    edgeProgram->setColor(model->edgeColor());
+    edgeProgram->setColor(m_model->edgeColor());
     edgeProgram->setOpacity(m_model->opacity());
     float matrix4x4[16];
     m_scene->matrices()->getModelViewProjection(matrix4x4);

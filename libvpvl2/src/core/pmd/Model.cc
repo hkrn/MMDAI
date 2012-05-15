@@ -53,8 +53,11 @@ Model::Model(IEncoding *encoding)
       m_comment(0),
       m_englishComment(0),
       m_opacity(1),
-      m_scaleFactor(1)
+      m_scaleFactor(1),
+      m_edgeColor(kZeroV3),
+      m_edgeWidth(0)
 {
+    m_edgeColor.setW(1);
 }
 
 Model::~Model()
@@ -146,6 +149,9 @@ bool Model::load(const uint8_t *data, size_t size)
         m_comment = m_encoding->toString(m_model.comment(), IString::kShiftJIS, vpvl::PMDModel::kCommentSize);
         delete m_englishComment;
         m_englishComment = m_encoding->toString(m_model.englishComment(), IString::kShiftJIS, vpvl::PMDModel::kCommentSize);
+        const vpvl::Color &edgeColor = m_model.edgeColor();
+        m_edgeColor.setValue(edgeColor.x(), edgeColor.y(), edgeColor.z());
+        m_edgeWidth = m_model.edgeOffset();
         m_model.setVisible(true);
     }
     return ret;
@@ -309,6 +315,18 @@ void Model::setOpacity(const Scalar &value)
 void Model::setScaleFactor(const Scalar &value)
 {
     m_scaleFactor = value;
+}
+
+void Model::setEdgeColor(const Vector3 &value)
+{
+    m_model.setEdgeColor(Color(value.x(), value.y(), value.z(), 1.0));
+    m_edgeColor = value;
+}
+
+void Model::setEdgeWidth(const Scalar &value)
+{
+    m_model.setEdgeOffset(value);
+    m_edgeWidth = value;
 }
 
 }
