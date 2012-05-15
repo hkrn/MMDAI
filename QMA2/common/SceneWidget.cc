@@ -1099,6 +1099,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const QPointF &pos = event->posF();
+    IBone *bone = m_handles->currentBone();
     m_isImageHandleRectIntersect = false;
     if (m_currentSelectedBone) {
         Vector3 znear, zfar, hit;
@@ -1139,11 +1140,17 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         m_handles->setPoint2D(pos);
     }
-    else if (!m_selectedBones.isEmpty()) {
+    else if (bone) {
         QRectF rect;
         int flags;
-        IBone *bone = m_selectedBones.last();
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
+        Vector3 znear, zfar;
+        makeRay(pos, znear, zfar);
+        /* 選択モード状態ではなく、かつ移動可能ボーンに付随する水色の球状にカーソルがあたっているか？ */
+        if (movable && m_editMode != kSelect && intersectsBone(bone, znear, zfar, 0.5)) {
+            setCursor(Qt::OpenHandCursor);
+            return;
+        }
         /* 操作ハンドル(右下の画像)にマウスカーソルが入ってるか? */
         m_isImageHandleRectIntersect = m_handles->testHitImage(pos, movable, rotateable, flags, rect);
         /* ハンドル操作中ではない場合のみ (m_handleFlags は mousePressEvent で設定される) */
@@ -1175,15 +1182,14 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
     else
         unsetCursor();
     /* 状態をリセットする */
-    setEditMode(m_editMode);
     m_totalDelta = 0.0f;
     /* handleDidRelease を発行するかどうかを判定するためフラグの状態を保存する */
     int flags = m_handleFlags;
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
     m_handles->setPoint3D(Vector3(0.0f, 0.0f, 0.0f));
-    m_handles->setVisibilityFlags(Handles::kVisibleAll);
     m_lockTouchEvent = false;
+    setEditMode(m_editMode);
     /*
      * ハンドルを使って操作した場合のみ handleDidRelease を発行する
      * (そうしないと commitTransform が呼ばれて余計な UndoCommand が追加されてしまうため)
