@@ -48,7 +48,7 @@ public:
     BackgroundImage(const QSize &size)
         : m_backgroundDrawer(0),
           m_backgroundTexture(0),
-          m_scaleImage(false)
+          m_uniformImage(false)
     {
         m_backgroundDrawer = new TextureDrawHelper(size);
         m_backgroundDrawer->load();
@@ -61,7 +61,7 @@ public:
     }
 
     void resize(const QSize &size) {
-        if (m_scaleImage)
+        if (m_uniformImage)
             m_backgroundDrawer->resize(m_backgroundImageSize);
         else
             m_backgroundDrawer->resize(size);
@@ -79,12 +79,12 @@ public:
             m_backgroundImageSize = image.size();
             m_backgroundImageFilename = filename;
         }
-        if (m_scaleImage)
+        if (m_uniformImage)
             resize(QSize());
     }
     void draw() {
         QRectF rect;
-        if (!m_scaleImage) {
+        if (!m_uniformImage) {
             const QSize &sceneSize = m_backgroundDrawer->size();
             const qreal &centerX = sceneSize.width() * 0.5 - m_backgroundImageSize.width() * 0.5;
             const qreal &centerY = sceneSize.height() * 0.5 - m_backgroundImageSize.height() * 0.5;
@@ -98,8 +98,8 @@ public:
     const QString &imageFilename() const { return m_backgroundImageFilename; }
     const QPoint &imagePosition() const { return m_backgroundImagePosition; }
     void setImagePosition(const QPoint &value) { m_backgroundImagePosition = value; }
-    bool isScaleEnabled() const { return m_scaleImage; }
-    void setScaleEnable(bool value) { m_scaleImage = value; }
+    bool isUniformEnabled() const { return m_uniformImage; }
+    void setUniformEnable(bool value) { m_uniformImage = value; }
 
 private:
     TextureDrawHelper *m_backgroundDrawer;
@@ -107,7 +107,7 @@ private:
     QPoint m_backgroundImagePosition;
     QString m_backgroundImageFilename;
     GLuint m_backgroundTexture;
-    bool m_scaleImage;
+    bool m_uniformImage;
 };
 
 }

@@ -1725,7 +1725,7 @@ void MainWindow::openBackgroundImageDialog()
 {
     QScopedPointer<BackgroundImageSettingDialog> dialog(new BackgroundImageSettingDialog(m_sceneWidget->sceneLoader()));
     connect(dialog.data(), SIGNAL(positionDidChange(QPoint)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
-    connect(dialog.data(), SIGNAL(scaleDidEnable(bool)), m_sceneWidget, SLOT(setBackgroundImageScale(bool)));
+    connect(dialog.data(), SIGNAL(uniformDidEnable(bool)), m_sceneWidget, SLOT(setBackgroundImageUniformEnable(bool)));
     dialog->exec();
 }
 

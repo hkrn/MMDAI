@@ -42,7 +42,7 @@
 BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, QWidget *parent) :
     QDialog(parent),
     m_position(loader->backgroundImagePosition()),
-    m_scaled(loader->isBackgroundImageScaled())
+    m_scaled(loader->isBackgroundImageUniformEnabled())
 {
     QFormLayout *subLayout = new QFormLayout();
     m_x = new QSpinBox();
@@ -60,10 +60,10 @@ BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, 
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addLayout(subLayout);
     m_checkbox = new QCheckBox();
-    connect(m_checkbox, SIGNAL(clicked(bool)), SIGNAL(scaleDidEnable(bool)));
+    connect(m_checkbox, SIGNAL(clicked(bool)), SIGNAL(uniformDidEnable(bool)));
     connect(m_checkbox, SIGNAL(clicked(bool)), m_x, SLOT(setDisabled(bool)));
     connect(m_checkbox, SIGNAL(clicked(bool)), m_y, SLOT(setDisabled(bool)));
-    m_checkbox->setText(tr("Scale background image"));
+    m_checkbox->setText(tr("Uniform background image"));
     m_checkbox->setChecked(m_scaled);
     mainLayout->addWidget(m_checkbox);
     QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -92,6 +92,6 @@ void BackgroundImageSettingDialog::setPositionY(int value)
 void BackgroundImageSettingDialog::restoreAndClose()
 {
     emit positionDidChange(m_position);
-    emit scaleDidEnable(m_scaled);
+    emit uniformDidEnable(m_scaled);
     close();
 }

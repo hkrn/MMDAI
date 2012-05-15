@@ -212,7 +212,7 @@ private slots:
     void insertPoseToSelectedModel();
     void setBackgroundImage();
     void setBackgroundPosition(const QPoint &value);
-    void setBackgroundImageScale(bool value);
+    void setBackgroundImageUniformEnable(bool value);
     void clearBackgroundImage();
     void setCamera();
     void resetCamera();

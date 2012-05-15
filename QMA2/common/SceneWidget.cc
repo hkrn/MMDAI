@@ -257,7 +257,7 @@ void SceneWidget::loadProject(const QString &filename)
     /* 背景画像読み込み */
     m_background->setImage(m_loader->backgroundImage(), this);
     m_background->setImagePosition(m_loader->backgroundImagePosition());
-    m_background->setScaleEnable(m_loader->isBackgroundImageScaled());
+    m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
     QApplication::alert(this);
 }
 
@@ -266,7 +266,7 @@ void SceneWidget::saveProject(const QString &filename)
     /* 背景画像設定をプロジェクトに保存する */
     m_loader->setBackgroundImagePath(m_background->imageFilename());
     m_loader->setBackgroundImagePosition(m_background->imagePosition());
-    m_loader->setBackgroundImageScale(m_background->isScaleEnabled());
+    m_loader->setBackgroundImageUniformEnable(m_background->isUniformEnabled());
     m_loader->saveProject(filename);
 }
 
@@ -594,11 +594,11 @@ void SceneWidget::setBackgroundPosition(const QPoint &value)
     m_loader->setBackgroundImagePosition(value);
 }
 
-void SceneWidget::setBackgroundImageScale(bool value)
+void SceneWidget::setBackgroundImageUniformEnable(bool value)
 {
-    m_background->setScaleEnable(value);
+    m_background->setUniformEnable(value);
     m_background->resize(size());
-    m_loader->setBackgroundImageScale(value);
+    m_loader->setBackgroundImageUniformEnable(value);
 }
 
 void SceneWidget::clearBackgroundImage()

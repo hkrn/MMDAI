@@ -1934,15 +1934,15 @@ void SceneLoader::setBackgroundImagePosition(const QPoint &value)
     }
 }
 
-bool SceneLoader::isBackgroundImageScaled() const
+bool SceneLoader::isBackgroundImageUniformEnabled() const
 {
-    return m_project ? m_project->globalSetting("background.image.scale") == "true" : false;
+    return m_project ? m_project->globalSetting("background.image.uniform") == "true" : false;
 }
 
-void SceneLoader::setBackgroundImageScale(bool value)
+void SceneLoader::setBackgroundImageUniformEnable(bool value)
 {
     if (m_project) {
-        m_project->setGlobalSetting("background.image.scale", value ? "true" : "false");
+        m_project->setGlobalSetting("background.image.uniform", value ? "true" : "false");
     }
 }
 

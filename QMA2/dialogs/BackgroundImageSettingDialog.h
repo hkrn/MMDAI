@@ -54,7 +54,7 @@ public:
 
 signals:
     void positionDidChange(const QPoint &value);
-    void scaleDidEnable(bool value);
+    void uniformDidEnable(bool value);
 
 private slots:
     void setPositionX(int value);

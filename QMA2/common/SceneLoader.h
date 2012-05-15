@@ -119,7 +119,7 @@ public:
     bool isSoftShadowEnabled() const;
     const QString backgroundImage() const;
     const QPoint backgroundImagePosition() const;
-    bool isBackgroundImageScaled() const;
+    bool isBackgroundImageUniformEnabled() const;
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
@@ -196,7 +196,7 @@ public slots:
     void setSoftShadowEnable(bool value);
     void setBackgroundImagePath(const QString &value);
     void setBackgroundImagePosition(const QPoint &value);
-    void setBackgroundImageScale(bool value);
+    void setBackgroundImageUniformEnable(bool value);
 
 signals:
     void projectDidCount(int value);
