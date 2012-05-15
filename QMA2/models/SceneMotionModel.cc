@@ -489,6 +489,7 @@ void SceneMotionModel::loadMotion(IMotion *motion)
         m_undo->addStack(m_stack);
         m_undo->setActiveStack(m_stack);
         m_motion = motion;
+        emit cameraMotionDidLoad();
     }
     reset();
 }

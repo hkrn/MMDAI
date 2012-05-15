@@ -1297,6 +1297,9 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), loader, SLOT(setLightDirection(vpvl2::Vector3)));
+    connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), loader, SLOT(setProjectDirtyFalse()));
+    connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel, SLOT(markAsNew()));
+    connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), SLOT(disconnectInitialSlots()));
     /* 空のカメラモーションを登録 */
     IMotion *cameraMotion = loader->newCameraMotion();
     loader->setCameraMotion(cameraMotion);
@@ -1764,4 +1767,11 @@ void MainWindow::updateWindowTitle()
 void MainWindow::makeBonesSelectable()
 {
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
+}
+
+void MainWindow::disconnectInitialSlots()
+{
+    disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoader(), SLOT(setProjectDirtyFalse()));
+    disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel, SLOT(markAsNew()));
+    disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSlots()));
 }

@@ -216,6 +216,9 @@ signals:
     void lightColorDidSet(const vpvl2::Vector3 &color);
     void lightDirectionDidSet(const vpvl2::Vector3 &position);
 
+private slots:
+    void setProjectDirtyFalse();
+
 private:
     void insertModel(vpvl2::IModel *model, const QString &name);
     void insertMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);

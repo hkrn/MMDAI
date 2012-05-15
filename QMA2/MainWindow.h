@@ -136,6 +136,7 @@ private slots:
     void openBackgroundImageDialog();
     void openUndoView();
     void makeBonesSelectable();
+    void disconnectInitialSlots();
 
 private:
     bool saveMotionAs(QString &filename);

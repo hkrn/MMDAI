@@ -1946,6 +1946,11 @@ void SceneLoader::setBackgroundImageUniformEnable(bool value)
     }
 }
 
+void SceneLoader::setProjectDirtyFalse()
+{
+    m_project->setDirty(false);
+}
+
 bool SceneLoader::globalSetting(const char *key, bool def) const
 {
     return m_project ? m_project->globalSetting(key) == "true" : def;

@@ -96,6 +96,7 @@ public slots:
     void markAsNew() { setModified(false); }
 
 signals:
+    void cameraMotionDidLoad();
     void motionDidUpdate(vpvl2::IModel *model);
 
 protected:
