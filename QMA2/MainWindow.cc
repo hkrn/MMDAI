@@ -635,6 +635,8 @@ void MainWindow::buildUI()
     connect(m_actionReversedPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteKeyframesWithReverse()));
     m_actionUndoFrame = m_undo->createUndoAction(this);
     m_actionRedoFrame = m_undo->createRedoAction(this);
+    m_actionOpenUndoView = new QAction(this);
+    connect(m_actionOpenUndoView, SIGNAL(triggered()), SLOT(openUndoView()));
     m_actionBoneXPosZero = new QAction(this);
     connect(m_actionBoneXPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneX()));
     m_actionBoneYPosZero = new QAction(this);
@@ -821,6 +823,8 @@ void MainWindow::buildUI()
     m_menuEdit->addAction(m_actionCopy);
     m_menuEdit->addAction(m_actionPaste);
     m_menuEdit->addAction(m_actionReversedPaste);
+    m_menuEdit->addSeparator();
+    m_menuEdit->addAction(m_actionOpenUndoView);
     m_menuBar->addMenu(m_menuEdit);
     m_menuProject = new QMenu(this);
     m_menuProject->addAction(m_actionPlay);
@@ -1003,6 +1007,7 @@ void MainWindow::bindActions()
     m_actionReversedPaste->setShortcut(m_settings.value(kPrefix + "reversedPaste", "Alt+Ctrl+V").toString());
     m_actionUndoFrame->setShortcut(m_settings.value(kPrefix + "undoFrame", QKeySequence(QKeySequence::Undo).toString()).toString());
     m_actionRedoFrame->setShortcut(m_settings.value(kPrefix + "redoFrame", QKeySequence(QKeySequence::Redo).toString()).toString());
+    m_actionOpenUndoView->setShortcut(m_settings.value(kPrefix + "undoView").toString());
     m_actionViewLogMessage->setShortcut(m_settings.value(kPrefix + "viewLogMessage").toString());
     m_actionEnableMoveGesture->setShortcut(m_settings.value(kPrefix + "enableMoveGesture").toString());
     m_actionEnableRotateGesture->setShortcut(m_settings.value(kPrefix + "enableRotateGesture").toString());
@@ -1181,6 +1186,8 @@ void MainWindow::retranslate()
     m_actionPaste->setStatusTip(tr("Paste a selected keyframe."));
     m_actionReversedPaste->setText(tr("Paste with reversed"));
     m_actionReversedPaste->setStatusTip(tr("Paste a selected keyframe with reversed."));
+    m_actionOpenUndoView->setText(tr("Undo history"));
+    m_actionOpenUndoView->setStatusTip(tr("Open a window to view undo history."));
     m_actionViewLogMessage->setText(tr("Logger Window"));
     m_actionViewLogMessage->setStatusTip(tr("Open logger window."));
     m_actionEnableMoveGesture->setText(tr("Enable move gesture"));
@@ -1719,6 +1726,20 @@ void MainWindow::openBackgroundImageDialog()
     connect(dialog.data(), SIGNAL(positionDidChange(QPoint)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
     connect(dialog.data(), SIGNAL(scaleDidEnable(bool)), m_sceneWidget, SLOT(setBackgroundImageScale(bool)));
     dialog->exec();
+}
+
+void MainWindow::openUndoView()
+{
+    QWidget *widget = new QWidget();
+    QUndoView *undoView = new QUndoView(m_undo);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->addWidget(undoView);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
+    connect(buttons, SIGNAL(accepted()), widget, SLOT(close()));
+    mainLayout->addWidget(buttons);
+    widget->setLayout(mainLayout);
+    widget->setWindowTitle(tr("Undo history"));
+    widget->show();
 }
 
 void MainWindow::updateWindowTitle()

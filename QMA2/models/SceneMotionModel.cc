@@ -185,6 +185,8 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indices;
+        setText(QApplication::tr("Register camera keyframes")
+                .arg(m_keyframes.size()).arg(m_frameIndices.size()));
     }
     virtual ~SetKeyframesCommand() {
     }

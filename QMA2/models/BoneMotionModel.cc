@@ -130,6 +130,7 @@ public:
                 m_modelIndices.append(ModelIndex(index, data.toByteArray()));
         }
         m_pose = pose.data()->clone();
+        setText(QApplication::tr("Load a pose to %1").arg(frameIndex));
     }
     virtual ~LoadPoseCommand() {
         delete m_pose;
@@ -243,6 +244,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
+        setText(QApplication::tr("Register bone keyframes of %1").arg(internal::toQString(m_model)));
     }
     virtual ~SetKeyframesCommand() {
     }
@@ -349,6 +351,7 @@ public:
     {
         /* 全てのボーンの情報を保存しておく */
         m_state.save();
+        setText(QApplication::tr("Reset all bones of %1").arg(internal::toQString(model)));
     }
     virtual ~ResetAllCommand() {
     }
@@ -377,6 +380,7 @@ public:
         m_oldState.copyFrom(state);
         /* 前と後の全てのボーンの情報を保存しておく */
         m_newState.save();
+        setText(QApplication::tr("Set bones of %1").arg(internal::toQString(model)));
     }
 
     void undo() {
