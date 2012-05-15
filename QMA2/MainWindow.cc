@@ -44,6 +44,7 @@
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
 #include "common/util.h"
+#include "dialogs/BackgroundImageSettingDialog.h"
 #include "dialogs/BoneDialog.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "dialogs/GravitySettingDialog.h"
@@ -1714,26 +1715,9 @@ void MainWindow::openShadowMapDialog()
 
 void MainWindow::openBackgroundImageDialog()
 {
-    QScopedPointer<QDialog> dialog(new QDialog());
-    QFormLayout *subLayout = new QFormLayout();
-    QSpinBox *x = new QSpinBox();
-    connect(x, SIGNAL(valueChanged(int)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
-    subLayout->addRow("X", x);
-    QSpinBox *y = new QSpinBox();
-    connect(y, SIGNAL(valueChanged(int)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
-    subLayout->addRow("Y", y);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(subLayout);
-    QCheckBox *checkbox = new QCheckBox();
-    connect(checkbox, SIGNAL(clicked(bool)), m_sceneWidget, SLOT(setBackgroundImageScale(bool)));
-    connect(checkbox, SIGNAL(clicked(bool)), x, SLOT(setDisabled(bool)));
-    connect(checkbox, SIGNAL(clicked(bool)), y, SLOT(setDisabled(bool)));
-    checkbox->setText(tr("Scale background image"));
-    mainLayout->addWidget(checkbox);
-    QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    mainLayout->addWidget(box);
-    dialog->setLayout(mainLayout);
-    dialog->setWindowTitle(tr("Background image setting"));
+    QScopedPointer<BackgroundImageSettingDialog> dialog(new BackgroundImageSettingDialog(m_sceneWidget->sceneLoader()));
+    connect(dialog.data(), SIGNAL(positionDidChange(QPoint)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
+    connect(dialog.data(), SIGNAL(scaleDidEnable(bool)), m_sceneWidget, SLOT(setBackgroundImageScale(bool)));
     dialog->exec();
 }
 

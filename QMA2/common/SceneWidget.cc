@@ -255,9 +255,7 @@ void SceneWidget::loadProject(const QString &filename)
     /* プロジェクト読み込み */
     m_loader->loadProject(filename);
     /* 背景画像読み込み */
-    const QString &backgroundImageFilePath = m_loader->backgroundImage();
-    const QImage backgroundImage(backgroundImageFilePath);
-    m_background->setImage(backgroundImage, backgroundImageFilePath, this);
+    m_background->setImage(m_loader->backgroundImage(), this);
     m_background->setImagePosition(m_loader->backgroundImagePosition());
     m_background->setScaleEnable(m_loader->isBackgroundImageScaled());
     QApplication::alert(this);
@@ -294,9 +292,9 @@ void SceneWidget::setSelectedModel(IModel *value)
     m_editMode = value ? kSelect : kNone;
 }
 
-void SceneWidget::setBackgroundImage(const QImage &image, const QString &filename)
+void SceneWidget::setBackgroundImage(const QString &filename)
 {
-    m_background->setImage(image, filename, this);
+    m_background->setImage(filename, this);
 }
 
 void SceneWidget::setModelEdgeOffset(double value)
@@ -579,24 +577,26 @@ void SceneWidget::setBackgroundImage()
                                              tr("Open background image file"),
                                              tr("Image file (*.bmp *.jpg *.gif *.png *.tif)"),
                                              m_settings);
-    const QImage image(filename);
-    setBackgroundImage(image, filename);
+    if (!filename.isEmpty())
+        setBackgroundImage(filename);
 }
 
 void SceneWidget::setBackgroundPosition(const QPoint &value)
 {
     m_background->setImagePosition(value);
+    m_loader->setBackgroundImagePosition(value);
 }
 
 void SceneWidget::setBackgroundImageScale(bool value)
 {
     m_background->setScaleEnable(value);
     m_background->resize(size());
+    m_loader->setBackgroundImageScale(value);
 }
 
 void SceneWidget::clearBackgroundImage()
 {
-    setBackgroundImage(QImage(), "");
+    setBackgroundImage("");
 }
 
 VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModel *model)

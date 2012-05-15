@@ -190,7 +190,8 @@ SOURCES += main.cc \
     common/Archive.cc \
     widgets/SceneLightWidget.cc \
     widgets/ModelSettingWidget.cc \
-    dialogs/ShadowMapSettingDialog.cc
+    dialogs/ShadowMapSettingDialog.cc \
+    dialogs/BackgroundImageSettingDialog.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -242,7 +243,8 @@ HEADERS  += \
     widgets/SceneLightWidget.h \
     widgets/ModelSettingWidget.h \
     dialogs/ShadowMapSettingDialog.h \
-    common/BackgroundImage.h
+    common/BackgroundImage.h \
+    dialogs/BackgroundImageSettingDialog.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/QMA2.qrc

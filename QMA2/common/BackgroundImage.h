@@ -66,8 +66,9 @@ public:
         else
             m_backgroundDrawer->resize(size);
     }
-    void setImage(const QImage &image, const QString &filename, QGLWidget *widget) {
+    void setImage(const QString &filename, QGLWidget *widget) {
         widget->deleteTexture(m_backgroundTexture);
+        QImage image(filename);
         if (image.isNull()) {
             m_backgroundTexture = 0;
             m_backgroundImageFilename = "";

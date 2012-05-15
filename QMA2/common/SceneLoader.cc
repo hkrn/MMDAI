@@ -1908,7 +1908,7 @@ void SceneLoader::setBackgroundImagePath(const QString &value)
 const QPoint SceneLoader::backgroundImagePosition() const
 {
     if (m_project) {
-        const Vector3 &value = UIGetVector3(m_project->globalSetting("background.image.path"), kZeroV3);
+        const Vector3 &value = UIGetVector3(m_project->globalSetting("background.image.position"), kZeroV3);
         return QPoint(value.x(), value.y());
     }
     return QPoint();

@@ -155,7 +155,7 @@ public slots:
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
     void setSelectedModel(vpvl2::IModel *value);
-    void setBackgroundImage(const QImage &image, const QString &filename);
+    void setBackgroundImage(const QString &filename);
 
 signals:
     void initailizeGLContextDidDone();
