@@ -66,21 +66,39 @@ public:
         else
             m_backgroundDrawer->resize(size);
     }
-    void setImage(const QString &filename, QGLWidget *widget) {
-        widget->deleteTexture(m_backgroundTexture);
-        QImage image(filename);
-        if (image.isNull()) {
-            m_backgroundTexture = 0;
-            m_backgroundImageFilename = "";
+    void setImage(const QString &filename) {
+        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+        context->deleteTexture(m_backgroundTexture);
+        QFileInfo info(filename);
+        if (info.suffix().toLower() == "mng") {
+            m_movie.setFileName(filename);
+            m_movie.jumpToFrame(0);
+            m_backgroundImageFilename = filename;
+            generateTextureFromImage(m_movie.currentImage(), context);
         }
         else {
-            QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption;
-            m_backgroundTexture = widget->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, options);
-            m_backgroundImageSize = image.size();
-            m_backgroundImageFilename = filename;
+            QImage image(filename);
+            if (image.isNull()) {
+                m_backgroundImageFilename = "";
+                m_backgroundTexture = 0;
+            }
+            else {
+                m_backgroundImageFilename = filename;
+                generateTextureFromImage(image, context);
+            }
         }
         if (m_uniformImage)
             resize(QSize());
+    }
+    void setFrameIndex(int value) {
+        if (m_movie.isValid()) {
+            int frameIndex = qBound(0, value, m_movie.frameCount() - 1);
+            if (m_movie.jumpToFrame(frameIndex)) {
+                QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+                context->deleteTexture(m_backgroundTexture);
+                generateTextureFromImage(m_movie.currentImage(), context);
+            }
+        }
     }
     void draw() {
         QRectF rect;
@@ -102,7 +120,14 @@ public:
     void setUniformEnable(bool value) { m_uniformImage = value; }
 
 private:
+    void generateTextureFromImage(const QImage &image, QGLContext *context) {
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption;
+        m_backgroundTexture = context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, options);
+        m_backgroundImageSize = image.size();
+    }
+
     TextureDrawHelper *m_backgroundDrawer;
+    QMovie m_movie;
     QSize m_backgroundImageSize;
     QPoint m_backgroundImagePosition;
     QString m_backgroundImageFilename;

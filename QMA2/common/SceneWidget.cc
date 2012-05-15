@@ -255,7 +255,7 @@ void SceneWidget::loadProject(const QString &filename)
     /* プロジェクト読み込み */
     m_loader->loadProject(filename);
     /* 背景画像読み込み */
-    m_background->setImage(m_loader->backgroundImage(), this);
+    m_background->setImage(m_loader->backgroundImage());
     m_background->setImagePosition(m_loader->backgroundImagePosition());
     m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
     QApplication::alert(this);
@@ -294,7 +294,7 @@ void SceneWidget::setSelectedModel(IModel *value)
 
 void SceneWidget::setBackgroundImage(const QString &filename)
 {
-    m_background->setImage(filename, this);
+    m_background->setImage(filename);
 }
 
 void SceneWidget::setModelEdgeOffset(double value)
@@ -582,7 +582,7 @@ void SceneWidget::setBackgroundImage()
 {
     const QString &filename = openFileDialog("sceneWidget/lastBackgroundImageDirectory",
                                              tr("Open background image file"),
-                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif)"),
+                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)"),
                                              m_settings);
     if (!filename.isEmpty())
         setBackgroundImage(filename);
@@ -659,6 +659,7 @@ void SceneWidget::seekMotion(float frameIndex, bool forceCameraUpdate)
         scene->seek(frameIndex);
     }
     m_frameIndex = frameIndex;
+    m_background->setFrameIndex(frameIndex);
     emit motionDidSeek(frameIndex);
     updateScene();
 }
@@ -673,6 +674,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_frameIndex = 0;
+    m_background->setFrameIndex(0);
     updateScene();
     emit motionDidSeek(0.0f);
 }
