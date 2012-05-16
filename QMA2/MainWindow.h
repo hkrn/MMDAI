@@ -134,7 +134,9 @@ private slots:
     void openScreenColorDialog();
     void openShadowMapDialog();
     void openBackgroundImageDialog();
+    void openUndoView();
     void makeBonesSelectable();
+    void disconnectInitialSlots();
 
 private:
     bool saveMotionAs(QString &filename);
@@ -263,6 +265,7 @@ private:
     QAction *m_actionReversedPaste;
     QAction *m_actionUndoFrame;
     QAction *m_actionRedoFrame;
+    QAction *m_actionOpenUndoView;
     QAction *m_actionViewLogMessage;
     QAction *m_actionEnableMoveGesture;
     QAction *m_actionEnableRotateGesture;

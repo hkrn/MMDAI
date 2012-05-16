@@ -84,7 +84,7 @@ static const int kFPS = 60;
 static const QString kSystemTexturesDir = "../../QMA2/resources/images";
 static const QString kShaderProgramsDir = "../../QMA2/resources/shaders";
 static const QString kKernelProgramsDir = "../../QMA2/resources/kernels";
-static const QString kModelDir = "render/res/miku";
+static const QString kModelDir = "render/res/lat";
 static const QString kStageDir = "render/res/stage";
 static const QString kMotion = "render/res/motion.vmd";
 static const QString kCamera = "render/res/camera.vmd.404";
@@ -935,7 +935,9 @@ private:
         // addModel(QDir(kStageDir).absoluteFilePath(kStageName));
         // addModel(kStage2Name, kStageDir);
 #endif
-        addMotion(kMotion, addModel(QDir(kModelDir).absoluteFilePath(kModelName)));
+        IModel *model = addModel(QDir(kModelDir).absoluteFilePath(kModelName));
+        addMotion(kMotion, model);
+        model->setOpacity(1.0);
         // addMotion(kMotion, addModel(QString("miku.pmx"), "render/res/lat"));
         QByteArray bytes;
         if (UISlurpFile(kCamera, bytes)) {

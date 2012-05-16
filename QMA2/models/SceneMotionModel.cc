@@ -185,6 +185,8 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indices;
+        setText(QApplication::tr("Register camera keyframes")
+                .arg(m_keyframes.size()).arg(m_frameIndices.size()));
     }
     virtual ~SetKeyframesCommand() {
     }
@@ -487,6 +489,7 @@ void SceneMotionModel::loadMotion(IMotion *motion)
         m_undo->addStack(m_stack);
         m_undo->setActiveStack(m_stack);
         m_motion = motion;
+        emit cameraMotionDidLoad();
     }
     reset();
 }

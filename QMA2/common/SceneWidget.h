@@ -147,6 +147,7 @@ public slots:
     void resetMotion();
     void setCameraPerspective(const QSharedPointer<vpvl2::Scene::ICamera> &camera);
     void setModelEdgeOffset(double value);
+    void setModelOpacity(const vpvl2::Scalar &value);
     void setModelEdgeColor(const QColor &color);
     void setModelPositionOffset(const vpvl2::Vector3 &value);
     void setModelRotationOffset(const vpvl2::Vector3 &value);
@@ -155,7 +156,7 @@ public slots:
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
     void setSelectedModel(vpvl2::IModel *value);
-    void setBackgroundImage(const QImage &image, const QString &filename);
+    void setBackgroundImage(const QString &filename);
 
 signals:
     void initailizeGLContextDidDone();
@@ -211,7 +212,7 @@ private slots:
     void insertPoseToSelectedModel();
     void setBackgroundImage();
     void setBackgroundPosition(const QPoint &value);
-    void setBackgroundImageScale(bool value);
+    void setBackgroundImageUniformEnable(bool value);
     void clearBackgroundImage();
     void setCamera();
     void resetCamera();

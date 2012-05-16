@@ -65,7 +65,7 @@ public:
     const IString *englishName() const { return m_name; }
     const IString *comment() const { return m_name; }
     const IString *englishComment() const { return m_name; }
-    bool isVisible() const { return true; }
+    bool isVisible() const { return !btFuzzyZero(opacity()); }
     Error error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}
@@ -86,6 +86,8 @@ public:
     const Quaternion &rotation() const { return m_asset.rotation(); }
     const Scalar &opacity() const { return m_asset.opacity(); }
     const Scalar &scaleFactor() const { return m_asset.scaleFactor(); }
+    const Vector3 &edgeColor() const { return kZeroV3; }
+    const Scalar &edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
     IModel *parentModel() const { return m_parentModel; }
     IBone *parentBone() const { return m_parentBone; }
     void setName(const IString *value);
@@ -96,6 +98,8 @@ public:
     void setRotation(const Quaternion &value) { m_asset.setRotation(value); }
     void setOpacity(const Scalar &value) { m_asset.setOpacity(value); }
     void setScaleFactor(const Scalar &value) { m_asset.setScaleFactor(value); }
+    void setEdgeColor(const Vector3 & /* value */) {}
+    void setEdgeWidth(const Scalar & /* value */) {}
     void setParentModel(IModel *value) { m_parentModel = value; }
     void setParentBone(IBone *value) { m_parentBone = value; }
 

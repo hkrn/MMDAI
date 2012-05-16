@@ -119,7 +119,7 @@ public:
     bool isSoftShadowEnabled() const;
     const QString backgroundImage() const;
     const QPoint backgroundImagePosition() const;
-    bool isBackgroundImageScaled() const;
+    bool isBackgroundImageUniformEnabled() const;
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
@@ -129,6 +129,7 @@ public:
     bool isModelSelected(const vpvl2::IModel *value) const;
     void setModelEdgeColor(vpvl2::IModel *model, const QColor &value);
     void setModelEdgeOffset(vpvl2::IModel *model, float value);
+    void setModelOpacity(vpvl2::IModel *model, const vpvl2::Scalar &value);
     void setModelPosition(vpvl2::IModel *model, const vpvl2::Vector3 &value);
     const vpvl2::Vector3 modelRotation(vpvl2::IModel *value) const;
     void setModelRotation(vpvl2::IModel *model, const vpvl2::Vector3 &value);
@@ -195,7 +196,7 @@ public slots:
     void setSoftShadowEnable(bool value);
     void setBackgroundImagePath(const QString &value);
     void setBackgroundImagePosition(const QPoint &value);
-    void setBackgroundImageScale(bool value);
+    void setBackgroundImageUniformEnable(bool value);
 
 signals:
     void projectDidCount(int value);
@@ -214,6 +215,9 @@ signals:
     void cameraMotionDidSet(vpvl2::IMotion *motion, const QUuid &uuid);
     void lightColorDidSet(const vpvl2::Vector3 &color);
     void lightDirectionDidSet(const vpvl2::Vector3 &position);
+
+private slots:
+    void setProjectDirtyFalse();
 
 private:
     void insertModel(vpvl2::IModel *model, const QString &name);

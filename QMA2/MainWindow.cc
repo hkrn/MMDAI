@@ -44,6 +44,7 @@
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
 #include "common/util.h"
+#include "dialogs/BackgroundImageSettingDialog.h"
 #include "dialogs/BoneDialog.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "dialogs/GravitySettingDialog.h"
@@ -634,6 +635,8 @@ void MainWindow::buildUI()
     connect(m_actionReversedPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteKeyframesWithReverse()));
     m_actionUndoFrame = m_undo->createUndoAction(this);
     m_actionRedoFrame = m_undo->createRedoAction(this);
+    m_actionOpenUndoView = new QAction(this);
+    connect(m_actionOpenUndoView, SIGNAL(triggered()), SLOT(openUndoView()));
     m_actionBoneXPosZero = new QAction(this);
     connect(m_actionBoneXPosZero, SIGNAL(triggered()), m_boneUIDelegate, SLOT(resetBoneX()));
     m_actionBoneYPosZero = new QAction(this);
@@ -820,6 +823,8 @@ void MainWindow::buildUI()
     m_menuEdit->addAction(m_actionCopy);
     m_menuEdit->addAction(m_actionPaste);
     m_menuEdit->addAction(m_actionReversedPaste);
+    m_menuEdit->addSeparator();
+    m_menuEdit->addAction(m_actionOpenUndoView);
     m_menuBar->addMenu(m_menuEdit);
     m_menuProject = new QMenu(this);
     m_menuProject->addAction(m_actionPlay);
@@ -1002,6 +1007,7 @@ void MainWindow::bindActions()
     m_actionReversedPaste->setShortcut(m_settings.value(kPrefix + "reversedPaste", "Alt+Ctrl+V").toString());
     m_actionUndoFrame->setShortcut(m_settings.value(kPrefix + "undoFrame", QKeySequence(QKeySequence::Undo).toString()).toString());
     m_actionRedoFrame->setShortcut(m_settings.value(kPrefix + "redoFrame", QKeySequence(QKeySequence::Redo).toString()).toString());
+    m_actionOpenUndoView->setShortcut(m_settings.value(kPrefix + "undoView").toString());
     m_actionViewLogMessage->setShortcut(m_settings.value(kPrefix + "viewLogMessage").toString());
     m_actionEnableMoveGesture->setShortcut(m_settings.value(kPrefix + "enableMoveGesture").toString());
     m_actionEnableRotateGesture->setShortcut(m_settings.value(kPrefix + "enableRotateGesture").toString());
@@ -1180,6 +1186,8 @@ void MainWindow::retranslate()
     m_actionPaste->setStatusTip(tr("Paste a selected keyframe."));
     m_actionReversedPaste->setText(tr("Paste with reversed"));
     m_actionReversedPaste->setStatusTip(tr("Paste a selected keyframe with reversed."));
+    m_actionOpenUndoView->setText(tr("Undo history"));
+    m_actionOpenUndoView->setStatusTip(tr("Open a window to view undo history."));
     m_actionViewLogMessage->setText(tr("Logger Window"));
     m_actionViewLogMessage->setStatusTip(tr("Open logger window."));
     m_actionEnableMoveGesture->setText(tr("Enable move gesture"));
@@ -1289,6 +1297,9 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), loader, SLOT(setLightDirection(vpvl2::Vector3)));
+    connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), loader, SLOT(setProjectDirtyFalse()));
+    connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel, SLOT(markAsNew()));
+    connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), SLOT(disconnectInitialSlots()));
     /* 空のカメラモーションを登録 */
     IMotion *cameraMotion = loader->newCameraMotion();
     loader->setCameraMotion(cameraMotion);
@@ -1322,6 +1333,7 @@ void MainWindow::connectWidgets()
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
     ModelSettingWidget *modelSettingWidget = m_modelTabWidget->modelSettingWidget();
     connect(modelSettingWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
+    connect(modelSettingWidget, SIGNAL(opacityDidChange(vpvl2::Scalar)), m_sceneWidget, SLOT(setModelOpacity(vpvl2::Scalar)));
     connect(modelSettingWidget, SIGNAL(projectiveShadowDidEnable(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(selfShadowDidEnable(bool)), m_sceneWidget, SLOT(setModelSelfShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
@@ -1714,27 +1726,24 @@ void MainWindow::openShadowMapDialog()
 
 void MainWindow::openBackgroundImageDialog()
 {
-    QScopedPointer<QDialog> dialog(new QDialog());
-    QFormLayout *subLayout = new QFormLayout();
-    QSpinBox *x = new QSpinBox();
-    connect(x, SIGNAL(valueChanged(int)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
-    subLayout->addRow("X", x);
-    QSpinBox *y = new QSpinBox();
-    connect(y, SIGNAL(valueChanged(int)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
-    subLayout->addRow("Y", y);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(subLayout);
-    QCheckBox *checkbox = new QCheckBox();
-    connect(checkbox, SIGNAL(clicked(bool)), m_sceneWidget, SLOT(setBackgroundImageScale(bool)));
-    connect(checkbox, SIGNAL(clicked(bool)), x, SLOT(setDisabled(bool)));
-    connect(checkbox, SIGNAL(clicked(bool)), y, SLOT(setDisabled(bool)));
-    checkbox->setText(tr("Scale background image"));
-    mainLayout->addWidget(checkbox);
-    QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    mainLayout->addWidget(box);
-    dialog->setLayout(mainLayout);
-    dialog->setWindowTitle(tr("Background image setting"));
+    QScopedPointer<BackgroundImageSettingDialog> dialog(new BackgroundImageSettingDialog(m_sceneWidget->sceneLoader()));
+    connect(dialog.data(), SIGNAL(positionDidChange(QPoint)), m_sceneWidget, SLOT(setBackgroundPosition(QPoint)));
+    connect(dialog.data(), SIGNAL(uniformDidEnable(bool)), m_sceneWidget, SLOT(setBackgroundImageUniformEnable(bool)));
     dialog->exec();
+}
+
+void MainWindow::openUndoView()
+{
+    QWidget *widget = new QWidget();
+    QUndoView *undoView = new QUndoView(m_undo);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->addWidget(undoView);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
+    connect(buttons, SIGNAL(accepted()), widget, SLOT(close()));
+    mainLayout->addWidget(buttons);
+    widget->setLayout(mainLayout);
+    widget->setWindowTitle(tr("Undo history"));
+    widget->show();
 }
 
 void MainWindow::updateWindowTitle()
@@ -1758,4 +1767,11 @@ void MainWindow::updateWindowTitle()
 void MainWindow::makeBonesSelectable()
 {
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
+}
+
+void MainWindow::disconnectInitialSlots()
+{
+    disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoader(), SLOT(setProjectDirtyFalse()));
+    disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel, SLOT(markAsNew()));
+    disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSlots()));
 }

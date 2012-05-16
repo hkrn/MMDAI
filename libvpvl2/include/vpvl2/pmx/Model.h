@@ -172,7 +172,7 @@ public:
     const IString *comment() const { return m_comment; }
     const IString *englishComment() const { return m_englishComment; }
     Error error() const { return m_info.error; }
-    bool isVisible() const { return m_visible; }
+    bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
@@ -183,12 +183,16 @@ public:
     const Quaternion &rotation() const { return m_rotation; }
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
+    const Vector3 &edgeColor() const { return kZeroV3; }
+    const Scalar &edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
     void setPosition(const Vector3 &value) { m_position = value; }
     void setRotation(const Quaternion &value) { m_rotation = value; }
     void setOpacity(const Scalar &value) { m_opacity = value; }
     void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
+    void setEdgeColor(const Vector3 & /* value */) {}
+    void setEdgeWidth(const Scalar & /* value */) {}
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 

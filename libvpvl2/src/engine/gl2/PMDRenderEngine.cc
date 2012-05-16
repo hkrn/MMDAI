@@ -55,30 +55,21 @@ public:
     EdgeProgram(IRenderDelegate *delegate)
         : BaseShaderProgram(delegate),
           m_normalAttributeLocation(0),
-          m_boneAttributesAttributeLocation(0),
           m_edgeAttributeLocation(0),
-          m_boneMatricesUniformLocation(0),
-          m_colorUniformLocation(0)
+          m_colorUniformLocation(0),
+          m_opacityUniformLocation(0)
     {
     }
     ~EdgeProgram() {
         m_normalAttributeLocation = 0;
-        m_boneAttributesAttributeLocation = 0;
         m_edgeAttributeLocation = 0;
-        m_boneMatricesUniformLocation = 0;
         m_colorUniformLocation = 0;
+        m_opacityUniformLocation = 0;
     }
 
-    void setBoneAttributes(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneAttributesAttributeLocation);
-        glVertexAttribPointer(m_boneAttributesAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
     void setEdge(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_edgeAttributeLocation);
         glVertexAttribPointer(m_edgeAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setBoneMatrices(const GLfloat *ptr, GLsizei size) {
-        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, ptr);
     }
     void setColor(const Vector3 &value) {
         glUniform4fv(m_colorUniformLocation, 1, value);
@@ -87,23 +78,24 @@ public:
         glEnableVertexAttribArray(m_normalAttributeLocation);
         glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
+    void setOpacity(const Scalar &value) {
+        glUniform1f(m_opacityUniformLocation, value);
+    }
 
 protected:
     virtual void getLocations() {
         BaseShaderProgram::getLocations();
         m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
-        m_boneAttributesAttributeLocation = glGetAttribLocation(m_program, "inBoneAttributes");
         m_edgeAttributeLocation = glGetAttribLocation(m_program, "inEdgeOffset");
-        m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
         m_colorUniformLocation = glGetUniformLocation(m_program, "color");
+        m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
     }
 
 private:
     GLuint m_normalAttributeLocation;
-    GLuint m_boneAttributesAttributeLocation;
     GLuint m_edgeAttributeLocation;
-    GLuint m_boneMatricesUniformLocation;
     GLuint m_colorUniformLocation;
+    GLuint m_opacityUniformLocation;
 };
 
 class ShadowProgram : public ObjectProgram
@@ -929,6 +921,9 @@ void PMDRenderEngine::renderModel()
     modelProgram->setToonEnable(light->isToonEnabled());
     modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
     modelProgram->setDepthTextureSize(light->depthTextureSize());
+    const Scalar &modelOpacity = m_model->opacity();
+    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0);
+    modelProgram->setOpacity(modelOpacity);
     if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
         modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
                                       model->strideSize(PMDModel::kToonTextureStride));
@@ -946,12 +941,11 @@ void PMDRenderEngine::renderModel()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
-        const float opacity = material->opacity();
+        const Scalar &materialOpacity = material->opacity();
         const bool isMainSphereAdd = material->isMainSphereAdd();
         ambient = material->ambient();
-        ambient.setW(ambient.w() * opacity);
         diffuse = material->diffuse();
-        diffuse.setW(diffuse.w() * opacity);
+        diffuse.setW(diffuse.w() * materialOpacity);
         modelProgram->setMaterialAmbient(ambient);
         modelProgram->setMaterialDiffuse(diffuse);
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
@@ -964,13 +958,14 @@ void PMDRenderEngine::renderModel()
             modelProgram->setIsSubAdditive(isSubSphereAdd);
             modelProgram->setSubTexture(materialPrivate.subTextureID);
         }
-        if (texture && !btFuzzyZero(opacity - 0.98)) {
+        if (texture && !btFuzzyZero(materialOpacity - 0.98)) {
             modelProgram->setDepthTexture(textureID);
         }
         else {
             modelProgram->setDepthTexture(0);
         }
-        if (!btFuzzyZero(opacity - 1.0f) && m_context->cullFaceState) {
+        if ((hasModelTransparent && m_context->cullFaceState) ||
+                (!btFuzzyZero(materialOpacity - 1.0f) && m_context->cullFaceState)) {
             glDisable(GL_CULL_FACE);
             m_context->cullFaceState = false;
         }
@@ -1057,14 +1052,15 @@ void PMDRenderEngine::renderZPlot()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible())
+    if (!m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()))
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     PMDModel *model = m_model->ptr();
     edgeProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kEdgeIndices]);
-    edgeProgram->setColor(model->edgeColor());
+    edgeProgram->setColor(m_model->edgeColor());
+    edgeProgram->setOpacity(m_model->opacity());
     float matrix4x4[16];
     m_scene->matrices()->getModelViewProjection(matrix4x4);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
@@ -1073,8 +1069,6 @@ void PMDRenderEngine::renderEdge()
                                  model->strideSize(PMDModel::kVerticesStride));
         edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kNormalsStride)),
                                model->strideSize(PMDModel::kNormalsStride));
-        edgeProgram->setBoneAttributes(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kBoneAttributesStride)),
-                                       model->strideSize(PMDModel::kBoneAttributesStride));
         edgeProgram->setEdge(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
                              model->strideSize(PMDModel::kEdgeVerticesStride));
         // XXX: boneMatricesPointer is removed, we must implement updateBoneMatrices alternative.

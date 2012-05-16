@@ -34,78 +34,39 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELSETTINGWIDGET_H
-#define MODELSETTINGWIDGET_H
+#ifndef BACKGROUNDIMAGESETTINGDIALOG_H
+#define BACKGROUNDIMAGESETTINGDIALOG_H
 
-#include <QtGui/QWidget>
-#include <vpvl2/Common.h>
+#include <QtCore/QPoint>
+#include <QtGui/QDialog>
 
-namespace vpvl2 {
-class IModel;
-}
-
-class QButtonGroup;
-class QColorDialog;
-class QDoubleSpinBox;
-class QGroupBox;
-class QLabel;
-class QPushButton;
-class QRadioButton;
-class QSlider;
+class QCheckBox;
 class QSpinBox;
 class SceneLoader;
 
-class ModelSettingWidget : public QWidget
+class BackgroundImageSettingDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit ModelSettingWidget(QWidget *parent = 0);
-    ~ModelSettingWidget();
+    explicit BackgroundImageSettingDialog(SceneLoader *loader, QWidget *parent = 0);
+    ~BackgroundImageSettingDialog();
 
 signals:
-    void edgeOffsetDidChange(double value);
-    void edgeColorDidChange(const QColor &color);
-    void opacityDidChange(const vpvl2::Scalar &value);
-    void positionOffsetDidChange(const vpvl2::Vector3 &value);
-    void rotationOffsetDidChange(const vpvl2::Vector3 &value);
-    void projectiveShadowDidEnable(bool value);
-    void selfShadowDidEnable(bool value);
+    void positionDidChange(const QPoint &value);
+    void uniformDidEnable(bool value);
 
 private slots:
-    void retranslate();
-    void openEdgeColorDialog();
-    void setModel(vpvl2::IModel *model, SceneLoader *loader);
-    void setPositionOffset(const vpvl2::Vector3 &position);
-    void updatePosition();
-    void updateRotation();
-    void emitOpacitySignal(int value);
+    void setPositionX(int value);
+    void setPositionY(int value);
+    void restoreAndClose();
 
 private:
-    void disableSignals();
-    void enableSignals();
-    void createEdgeColorDialog();
-    QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
-
-    QLabel *m_edgeOffsetLabel;
-    QDoubleSpinBox *m_edgeOffsetSpinBox;
-    QPushButton *m_edgeColorDialogOpenButton;
-    QColorDialog *m_edgeColorDialog;
-    QLabel *m_opacityLabel;
-    QSlider *m_opacitySlider;
-    QSpinBox *m_opacitySpinBox;
-    QButtonGroup *m_radioButtonsGroup;
-    QRadioButton *m_noShadowCheckbox;
-    QRadioButton *m_projectiveShadowCheckbox;
-    QRadioButton *m_selfShadowCheckbox;
-    QDoubleSpinBox *m_px;
-    QDoubleSpinBox *m_py;
-    QDoubleSpinBox *m_pz;
-    QGroupBox *m_positionGroup;
-    QDoubleSpinBox *m_rx;
-    QDoubleSpinBox *m_ry;
-    QDoubleSpinBox *m_rz;
-    QGroupBox *m_rotationGroup;
+    QSpinBox *m_x;
+    QSpinBox *m_y;
+    QCheckBox *m_checkbox;
+    QPoint m_position;
+    bool m_scaled;
 };
 
-#endif // MODELSETTINGWIDGET_H
+#endif // BACKGROUNDIMAGESETTINGDIALOG_H

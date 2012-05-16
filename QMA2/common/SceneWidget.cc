@@ -255,11 +255,9 @@ void SceneWidget::loadProject(const QString &filename)
     /* プロジェクト読み込み */
     m_loader->loadProject(filename);
     /* 背景画像読み込み */
-    const QString &backgroundImageFilePath = m_loader->backgroundImage();
-    const QImage backgroundImage(backgroundImageFilePath);
-    m_background->setImage(backgroundImage, backgroundImageFilePath, this);
+    m_background->setImage(m_loader->backgroundImage());
     m_background->setImagePosition(m_loader->backgroundImagePosition());
-    m_background->setScaleEnable(m_loader->isBackgroundImageScaled());
+    m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
     QApplication::alert(this);
 }
 
@@ -268,7 +266,7 @@ void SceneWidget::saveProject(const QString &filename)
     /* 背景画像設定をプロジェクトに保存する */
     m_loader->setBackgroundImagePath(m_background->imageFilename());
     m_loader->setBackgroundImagePosition(m_background->imagePosition());
-    m_loader->setBackgroundImageScale(m_background->isScaleEnabled());
+    m_loader->setBackgroundImageUniformEnable(m_background->isUniformEnabled());
     m_loader->saveProject(filename);
 }
 
@@ -294,15 +292,22 @@ void SceneWidget::setSelectedModel(IModel *value)
     m_editMode = value ? kSelect : kNone;
 }
 
-void SceneWidget::setBackgroundImage(const QImage &image, const QString &filename)
+void SceneWidget::setBackgroundImage(const QString &filename)
 {
-    m_background->setImage(image, filename, this);
+    m_background->setImage(filename);
 }
 
 void SceneWidget::setModelEdgeOffset(double value)
 {
     if (IModel *model = m_loader->selectedModel())
         m_loader->setModelEdgeOffset(model, static_cast<float>(value));
+    refreshMotions();
+}
+
+void SceneWidget::setModelOpacity(const Scalar &value)
+{
+    if (IModel *model = m_loader->selectedModel())
+        m_loader->setModelOpacity(model, value);
     refreshMotions();
 }
 
@@ -577,26 +582,28 @@ void SceneWidget::setBackgroundImage()
 {
     const QString &filename = openFileDialog("sceneWidget/lastBackgroundImageDirectory",
                                              tr("Open background image file"),
-                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif)"),
+                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)"),
                                              m_settings);
-    const QImage image(filename);
-    setBackgroundImage(image, filename);
+    if (!filename.isEmpty())
+        setBackgroundImage(filename);
 }
 
 void SceneWidget::setBackgroundPosition(const QPoint &value)
 {
     m_background->setImagePosition(value);
+    m_loader->setBackgroundImagePosition(value);
 }
 
-void SceneWidget::setBackgroundImageScale(bool value)
+void SceneWidget::setBackgroundImageUniformEnable(bool value)
 {
-    m_background->setScaleEnable(value);
+    m_background->setUniformEnable(value);
     m_background->resize(size());
+    m_loader->setBackgroundImageUniformEnable(value);
 }
 
 void SceneWidget::clearBackgroundImage()
 {
-    setBackgroundImage(QImage(), "");
+    setBackgroundImage("");
 }
 
 VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModel *model)
@@ -652,6 +659,7 @@ void SceneWidget::seekMotion(float frameIndex, bool forceCameraUpdate)
         scene->seek(frameIndex);
     }
     m_frameIndex = frameIndex;
+    m_background->setFrameIndex(frameIndex);
     emit motionDidSeek(frameIndex);
     updateScene();
 }
@@ -666,6 +674,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_frameIndex = 0;
+    m_background->setFrameIndex(0);
     updateScene();
     emit motionDidSeek(0.0f);
 }
@@ -1092,6 +1101,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const QPointF &pos = event->posF();
+    IBone *bone = m_handles->currentBone();
     m_isImageHandleRectIntersect = false;
     if (m_currentSelectedBone) {
         Vector3 znear, zfar, hit;
@@ -1132,11 +1142,17 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         m_handles->setPoint2D(pos);
     }
-    else if (!m_selectedBones.isEmpty()) {
+    else if (bone) {
         QRectF rect;
         int flags;
-        IBone *bone = m_selectedBones.last();
         bool movable = bone->isMovable(), rotateable = bone->isRotateable();
+        Vector3 znear, zfar;
+        makeRay(pos, znear, zfar);
+        /* 選択モード状態ではなく、かつ移動可能ボーンに付随する水色の球状にカーソルがあたっているか？ */
+        if (movable && m_editMode != kSelect && intersectsBone(bone, znear, zfar, 0.5)) {
+            setCursor(Qt::OpenHandCursor);
+            return;
+        }
         /* 操作ハンドル(右下の画像)にマウスカーソルが入ってるか? */
         m_isImageHandleRectIntersect = m_handles->testHitImage(pos, movable, rotateable, flags, rect);
         /* ハンドル操作中ではない場合のみ (m_handleFlags は mousePressEvent で設定される) */
@@ -1168,15 +1184,14 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
     else
         unsetCursor();
     /* 状態をリセットする */
-    setEditMode(m_editMode);
     m_totalDelta = 0.0f;
     /* handleDidRelease を発行するかどうかを判定するためフラグの状態を保存する */
     int flags = m_handleFlags;
     m_handleFlags = Handles::kNone;
     m_handles->setAngle(0.0f);
     m_handles->setPoint3D(Vector3(0.0f, 0.0f, 0.0f));
-    m_handles->setVisibilityFlags(Handles::kVisibleAll);
     m_lockTouchEvent = false;
+    setEditMode(m_editMode);
     /*
      * ハンドルを使って操作した場合のみ handleDidRelease を発行する
      * (そうしないと commitTransform が呼ばれて余計な UndoCommand が追加されてしまうため)

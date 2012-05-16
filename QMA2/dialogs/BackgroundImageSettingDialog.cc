@@ -34,78 +34,64 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELSETTINGWIDGET_H
-#define MODELSETTINGWIDGET_H
+#include <QtGui/QtGui>
 
-#include <QtGui/QWidget>
-#include <vpvl2/Common.h>
+#include "common/SceneLoader.h"
+#include "BackgroundImageSettingDialog.h"
 
-namespace vpvl2 {
-class IModel;
+BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, QWidget *parent) :
+    QDialog(parent),
+    m_position(loader->backgroundImagePosition()),
+    m_scaled(loader->isBackgroundImageUniformEnabled())
+{
+    QFormLayout *subLayout = new QFormLayout();
+    m_x = new QSpinBox();
+    m_x->setRange(-maximumWidth(), maximumWidth());
+    m_x->setValue(m_position.x());
+    m_x->setDisabled(m_scaled);
+    connect(m_x, SIGNAL(valueChanged(int)), SLOT(setPositionX(int)));
+    subLayout->addRow("X", m_x);
+    m_y = new QSpinBox();
+    m_y->setRange(-maximumHeight(), maximumHeight());
+    m_y->setValue(m_position.y());
+    m_y->setDisabled(m_scaled);
+    connect(m_y, SIGNAL(valueChanged(int)), SLOT(setPositionY(int)));
+    subLayout->addRow("Y", m_y);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->addLayout(subLayout);
+    m_checkbox = new QCheckBox();
+    connect(m_checkbox, SIGNAL(clicked(bool)), SIGNAL(uniformDidEnable(bool)));
+    connect(m_checkbox, SIGNAL(clicked(bool)), m_x, SLOT(setDisabled(bool)));
+    connect(m_checkbox, SIGNAL(clicked(bool)), m_y, SLOT(setDisabled(bool)));
+    m_checkbox->setText(tr("Uniform background image"));
+    m_checkbox->setChecked(m_scaled);
+    mainLayout->addWidget(m_checkbox);
+    QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(box, SIGNAL(accepted()), SLOT(close()));
+    connect(box, SIGNAL(rejected()), SLOT(restoreAndClose()));
+    mainLayout->addWidget(box);
+    mainLayout->addStretch();
+    setLayout(mainLayout);
+    setWindowTitle(tr("Background image setting"));
 }
 
-class QButtonGroup;
-class QColorDialog;
-class QDoubleSpinBox;
-class QGroupBox;
-class QLabel;
-class QPushButton;
-class QRadioButton;
-class QSlider;
-class QSpinBox;
-class SceneLoader;
-
-class ModelSettingWidget : public QWidget
+BackgroundImageSettingDialog::~BackgroundImageSettingDialog()
 {
-    Q_OBJECT
+}
 
-public:
-    explicit ModelSettingWidget(QWidget *parent = 0);
-    ~ModelSettingWidget();
+void BackgroundImageSettingDialog::setPositionX(int value)
+{
+    emit positionDidChange(QPoint(value, m_y->value()));
+}
 
-signals:
-    void edgeOffsetDidChange(double value);
-    void edgeColorDidChange(const QColor &color);
-    void opacityDidChange(const vpvl2::Scalar &value);
-    void positionOffsetDidChange(const vpvl2::Vector3 &value);
-    void rotationOffsetDidChange(const vpvl2::Vector3 &value);
-    void projectiveShadowDidEnable(bool value);
-    void selfShadowDidEnable(bool value);
+void BackgroundImageSettingDialog::setPositionY(int value)
+{
+    emit positionDidChange(QPoint(m_x->value(), value));
+}
 
-private slots:
-    void retranslate();
-    void openEdgeColorDialog();
-    void setModel(vpvl2::IModel *model, SceneLoader *loader);
-    void setPositionOffset(const vpvl2::Vector3 &position);
-    void updatePosition();
-    void updateRotation();
-    void emitOpacitySignal(int value);
-
-private:
-    void disableSignals();
-    void enableSignals();
-    void createEdgeColorDialog();
-    QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
-
-    QLabel *m_edgeOffsetLabel;
-    QDoubleSpinBox *m_edgeOffsetSpinBox;
-    QPushButton *m_edgeColorDialogOpenButton;
-    QColorDialog *m_edgeColorDialog;
-    QLabel *m_opacityLabel;
-    QSlider *m_opacitySlider;
-    QSpinBox *m_opacitySpinBox;
-    QButtonGroup *m_radioButtonsGroup;
-    QRadioButton *m_noShadowCheckbox;
-    QRadioButton *m_projectiveShadowCheckbox;
-    QRadioButton *m_selfShadowCheckbox;
-    QDoubleSpinBox *m_px;
-    QDoubleSpinBox *m_py;
-    QDoubleSpinBox *m_pz;
-    QGroupBox *m_positionGroup;
-    QDoubleSpinBox *m_rx;
-    QDoubleSpinBox *m_ry;
-    QDoubleSpinBox *m_rz;
-    QGroupBox *m_rotationGroup;
-};
-
-#endif // MODELSETTINGWIDGET_H
+void BackgroundImageSettingDialog::restoreAndClose()
+{
+    emit positionDidChange(m_position);
+    emit uniformDidEnable(m_scaled);
+    close();
+}

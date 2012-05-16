@@ -137,6 +137,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
+        setText(QApplication::tr("Register morph keyframes of %1").arg(internal::toQString(m_model)));
     }
     ~SetKeyframesCommand() {
     }
@@ -243,6 +244,7 @@ public:
     {
         /* 全ての頂点モーフの情報を保存しておく */
         m_state.save();
+        setText(QApplication::tr("Reset all morphs of %1").arg(internal::toQString(model)));
     }
 
     void undo() {
@@ -269,6 +271,7 @@ public:
         m_oldState.copyFrom(oldState);
         /* 前と後の全ての頂点モーフの情報を保存しておく */
         m_newState.save();
+        setText(QApplication::tr("Set morphs of %1").arg(internal::toQString(model)));
     }
     virtual ~SetMorphCommand() {
     }

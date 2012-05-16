@@ -69,8 +69,7 @@ public:
           m_isSubSphereMapUniformLocation(0),
           m_isMainAdditiveUniformLocation(0),
           m_isSubAdditiveUniformLocation(0),
-          m_subTextureUniformLocation(0),
-          m_opacityUniformLocation(0)
+          m_subTextureUniformLocation(0)
     {
     }
     ~Program() {
@@ -88,7 +87,6 @@ public:
         m_isMainAdditiveUniformLocation = 0;
         m_isSubAdditiveUniformLocation = 0;
         m_subTextureUniformLocation = 0;
-        m_opacityUniformLocation = 0;
     }
 
     void setColor(const GLvoid *ptr, GLsizei stride) {
@@ -115,9 +113,6 @@ public:
     }
     void setMaterialShininess(float value) {
         glUniform1f(m_materialShininessUniformLocation, value);
-    }
-    void setOpacity(float value) {
-        glUniform1f(m_opacityUniformLocation, value);
     }
     void setIsMainSphereMap(bool value) {
         glUniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
@@ -160,7 +155,6 @@ protected:
         m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
         m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
         m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
-        m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
     }
 
 private:
@@ -179,7 +173,6 @@ private:
     GLuint m_isMainAdditiveUniformLocation;
     GLuint m_isSubAdditiveUniformLocation;
     GLuint m_subTextureUniformLocation;
-    GLuint m_opacityUniformLocation;
 };
 
 struct AssetVertex
@@ -629,6 +622,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     const Scene::ILight *light = m_scene->light();
     program->setLightColor(light->color());
     program->setLightDirection(light->direction());
+    program->setOpacity(m_model->opacity());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = m_context->vbo[mesh];

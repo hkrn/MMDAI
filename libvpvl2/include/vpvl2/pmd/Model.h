@@ -64,7 +64,7 @@ public:
     const IString *englishName() const { return m_englishName; }
     const IString *comment() const { return m_comment; }
     const IString *englishComment() const { return m_englishComment; }
-    bool isVisible() const { return m_model.isVisible(); }
+    bool isVisible() const { return m_model.isVisible() && !btFuzzyZero(m_opacity); }
     Error error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
@@ -85,6 +85,8 @@ public:
     const Quaternion &rotation() const { return m_model.rotationOffset(); }
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
+    const Vector3 &edgeColor() const { return m_edgeColor; }
+    const Scalar &edgeWidth() const { return m_edgeWidth; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
     void setName(const IString *value);
@@ -95,6 +97,8 @@ public:
     void setRotation(const Quaternion &value);
     void setOpacity(const Scalar &value);
     void setScaleFactor(const Scalar &value);
+    void setEdgeColor(const Vector3 &value);
+    void setEdgeWidth(const Scalar &value);
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 
@@ -114,6 +118,8 @@ private:
     Hash<HashString, IMorph *> m_name2morphs;
     Scalar m_opacity;
     Scalar m_scaleFactor;
+    Vector3 m_edgeColor;
+    Scalar m_edgeWidth;
 };
 
 }

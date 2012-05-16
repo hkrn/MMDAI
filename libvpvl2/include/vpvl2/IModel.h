@@ -277,6 +277,8 @@ public:
     virtual const Quaternion &rotation() const = 0;
     virtual const Scalar &opacity() const = 0;
     virtual const Scalar &scaleFactor() const = 0;
+    virtual const Vector3 &edgeColor() const = 0;
+    virtual const Scalar &edgeWidth() const = 0;
     virtual IModel *parentModel() const = 0;
     virtual IBone *parentBone() const = 0;
     virtual void setName(const IString *value) = 0;
@@ -287,6 +289,8 @@ public:
     virtual void setRotation(const Quaternion &value) = 0;
     virtual void setOpacity(const Scalar &value) = 0;
     virtual void setScaleFactor(const Scalar &value) = 0;
+    virtual void setEdgeColor(const Vector3 &value) = 0;
+    virtual void setEdgeWidth(const Scalar &value) = 0;
     virtual void setParentModel(IModel *value) = 0;
     virtual void setParentBone(IBone *value) = 0;
 };
