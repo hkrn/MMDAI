@@ -114,8 +114,8 @@ public:
     bool isVisible() const { return m_flags & 0x0008; }
     bool isInteractive() const { return m_flags & 0x0010; }
     bool hasInverseKinematics() const { return m_flags & 0x0020; }
-    bool hasPositionInherence() const { return m_flags & 0x0100; }
-    bool hasRotationInherence() const { return m_flags & 0x0200; }
+    bool hasRotationInherence() const { return m_flags & 0x0100; }
+    bool hasPositionInherence() const { return m_flags & 0x0200; }
     bool hasFixedAxes() const { return m_flags & 0x0400; }
     bool hasLocalAxes() const { return m_flags & 0x0800; }
     bool isTransformedAfterPhysicsSimulation() const { return m_flags & 0x1000; }
