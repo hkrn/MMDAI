@@ -594,8 +594,8 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
     Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
                         Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
-    if (const vpvl::Bone *bone = asset->parentBone()) {
-        const Transform &boneTransform = bone->localTransform();
+    if (const IBone *bone = m_model->parentBone()) {
+        const Transform &boneTransform = bone->worldTransform();
         const btMatrix3x3 &boneBasis = boneTransform.getBasis();
         transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
         transform.setBasis(boneBasis.scaled(scaleVector));
