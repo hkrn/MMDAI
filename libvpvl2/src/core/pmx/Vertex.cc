@@ -68,10 +68,10 @@ struct Bdef4Unit {
 };
 
 struct SdefUnit {
+    float weight;
     float c[3];
     float r0[3];
     float r1[3];
-    float weight;
 };
 
 #pragma pack(pop)
