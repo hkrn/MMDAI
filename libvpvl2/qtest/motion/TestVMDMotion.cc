@@ -383,7 +383,7 @@ void TestVMDMotion::parseLightKeyframe()
     QCOMPARE(frame.frameIndex(), 1.0f);
     QVERIFY(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
 #ifdef VPVL2_COORDINATE_OPENGL
-    QVERIFY(frame.direction() == Vector3(-0.5f, -0.6f, 0.7f));
+    QVERIFY(frame.direction() == Vector3(0.5f, 0.6f, -0.7f));
 #else
     QVERIFY(frame.direction() == Vector3(0.5f, 0.6f, 0.7f));
 #endif

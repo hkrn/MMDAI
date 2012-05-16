@@ -260,43 +260,43 @@ void TestModel::testMaterialMorphMergeAmbient() const
     morph.operation = 0;
     material.setAmbient(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    compare(Color(0.8, 0.8, 0.8, 0.8), material.ambient());
+    compare(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.6, 0.6, 0.6, 0.8), material.ambient());
+    compare(Color(0.6, 0.6, 0.6, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(0.4, 0.4, 0.4, 0.8), material.ambient());
+    compare(Color(0.4, 0.4, 0.4, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(0.2, 0.2, 0.2, 0.8), material.ambient());
+    compare(Color(0.2, 0.2, 0.2, 1.0), material.ambient());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(0.0, 0.0, 0.0, 0.8), material.ambient());
+    compare(Color(0.0, 0.0, 0.0, 1.0), material.ambient());
     material.resetMorph();
     // add (0.2)
     morph.ambient.setValue(0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    compare(Color(0.8, 0.8, 0.8, 0.8), material.ambient());
+    compare(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.85, 0.85, 0.85, 0.8), material.ambient());
+    compare(Color(0.85, 0.85, 0.85, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(0.9, 0.9, 0.9, 0.8), material.ambient());
+    compare(Color(0.9, 0.9, 0.9, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.ambient());
+    compare(Color(0.95, 0.95, 0.95, 1.0), material.ambient());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.0, 1.0, 1.0, 0.8), material.ambient());
+    compare(Color(1.0, 1.0, 1.0, 1.0), material.ambient());
     material.resetMorph();
     // add (0.6)
     morph.ambient.setValue(0.6, 0.6, 0.6);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    compare(Color(0.8, 0.8, 0.8, 0.8), material.ambient());
+    compare(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.ambient());
+    compare(Color(0.95, 0.95, 0.95, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(1.1, 1.1, 1.1, 0.8), material.ambient());
+    compare(Color(1.1, 1.1, 1.1, 1.0), material.ambient());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(1.25, 1.25, 1.25, 0.8), material.ambient());
+    compare(Color(1.25, 1.25, 1.25, 1.0), material.ambient());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.4, 1.4, 1.4, 0.8), material.ambient());
+    compare(Color(1.4, 1.4, 1.4, 1.0), material.ambient());
 }
 
 void TestModel::testMaterialMorphMergeDiffuse() const
@@ -319,31 +319,31 @@ void TestModel::testMaterialMorphMergeDiffuse() const
     compare(Color(0.0, 0.0, 0.0, 0.8), material.diffuse());
     material.resetMorph();
     // add (0.2)
-    morph.diffuse.setValue(0.2, 0.2, 0.2, 1.0);
+    morph.diffuse.setValue(0.2, 0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
     compare(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.85, 0.85, 0.85, 0.8), material.diffuse());
+    compare(Color(0.85, 0.85, 0.85, 0.85), material.diffuse());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(0.9, 0.9, 0.9, 0.8), material.diffuse());
+    compare(Color(0.9, 0.9, 0.9, 0.9), material.diffuse());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.diffuse());
+    compare(Color(0.95, 0.95, 0.95, 0.95), material.diffuse());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.0, 1.0, 1.0, 0.8), material.diffuse());
+    compare(Color(1.0, 1.0, 1.0, 1.0), material.diffuse());
     material.resetMorph();
     // add (0.6)
-    morph.diffuse.setValue(0.6, 0.6, 0.6, 1.0);
+    morph.diffuse.setValue(0.6, 0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
     compare(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.diffuse());
+    compare(Color(0.95, 0.95, 0.95, 0.95), material.diffuse());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(1.1, 1.1, 1.1, 0.8), material.diffuse());
+    compare(Color(1.1, 1.1, 1.1, 1.1), material.diffuse());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(1.25, 1.25, 1.25, 0.8), material.diffuse());
+    compare(Color(1.25, 1.25, 1.25, 1.25), material.diffuse());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.4, 1.4, 1.4, 0.8), material.diffuse());
+    compare(Color(1.4, 1.4, 1.4, 1.4), material.diffuse());
 }
 
 void TestModel::testMaterialMorphMergeSpecular() const
@@ -355,42 +355,42 @@ void TestModel::testMaterialMorphMergeSpecular() const
     morph.operation = 0;
     material.setSpecular(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    compare(Color(0.8, 0.8, 0.8, 0.8), material.specular());
+    compare(Color(0.8, 0.8, 0.8, 1.0), material.specular());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.6, 0.6, 0.6, 0.8), material.specular());
+    compare(Color(0.6, 0.6, 0.6, 1.0), material.specular());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(0.4, 0.4, 0.4, 0.8), material.specular());
+    compare(Color(0.4, 0.4, 0.4, 1.0), material.specular());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(0.2, 0.2, 0.2, 0.8), material.specular());
+    compare(Color(0.2, 0.2, 0.2, 1.0), material.specular());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(0.0, 0.0, 0.0, 0.8), material.specular());
+    compare(Color(0.0, 0.0, 0.0, 1.0), material.specular());
     material.resetMorph();
     // add (0.2)
     morph.specular.setValue(0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    compare(Color(0.8, 0.8, 0.8, 0.8), material.specular());
+    compare(Color(0.8, 0.8, 0.8, 1.0), material.specular());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.85, 0.85, 0.85, 0.8), material.specular());
+    compare(Color(0.85, 0.85, 0.85, 1.0), material.specular());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(0.9, 0.9, 0.9, 0.8), material.specular());
+    compare(Color(0.9, 0.9, 0.9, 1.0), material.specular());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.specular());
+    compare(Color(0.95, 0.95, 0.95, 1.0), material.specular());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.0, 1.0, 1.0, 0.8), material.specular());
+    compare(Color(1.0, 1.0, 1.0, 1.0), material.specular());
     material.resetMorph();
     // add (0.6)
     morph.specular.setValue(0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
-    compare(Color(0.8, 0.8, 0.8, 0.8), material.specular());
+    compare(Color(0.8, 0.8, 0.8, 1.0), material.specular());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.specular());
+    compare(Color(0.95, 0.95, 0.95, 1.0), material.specular());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(1.1, 1.1, 1.1, 0.8), material.specular());
+    compare(Color(1.1, 1.1, 1.1, 1.0), material.specular());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(1.25, 1.25, 1.25, 0.8), material.specular());
+    compare(Color(1.25, 1.25, 1.25, 1.0), material.specular());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.4, 1.4, 1.4, 0.8), material.specular());
+    compare(Color(1.4, 1.4, 1.4, 1.0), material.specular());
 }
 
 void TestModel::testMaterialMorphMergeShininess() const
@@ -459,31 +459,31 @@ void TestModel::testMaterialMorphMergeEdgeColor() const
     compare(Color(0.0, 0.0, 0.0, 0.8), material.edgeColor());
     material.resetMorph();
     // add (0.2)
-    morph.edgeColor.setValue(0.2, 0.2, 0.2, 1.0);
+    morph.edgeColor.setValue(0.2, 0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
     compare(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.85, 0.85, 0.85, 0.8), material.edgeColor());
+    compare(Color(0.85, 0.85, 0.85, 0.85), material.edgeColor());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(0.9, 0.9, 0.9, 0.8), material.edgeColor());
+    compare(Color(0.9, 0.9, 0.9, 0.9), material.edgeColor());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.edgeColor());
+    compare(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.0, 1.0, 1.0, 0.8), material.edgeColor());
+    compare(Color(1.0, 1.0, 1.0, 1.0), material.edgeColor());
     material.resetMorph();
     // add (0.6)
-    morph.edgeColor.setValue(0.6, 0.6, 0.6, 1.0);
+    morph.edgeColor.setValue(0.6, 0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
     compare(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
     material.mergeMorph(&morph, 0.25);
-    compare(Color(0.95, 0.95, 0.95, 0.8), material.edgeColor());
+    compare(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor());
     material.mergeMorph(&morph, 0.5);
-    compare(Color(1.1, 1.1, 1.1, 0.8), material.edgeColor());
+    compare(Color(1.1, 1.1, 1.1, 1.1), material.edgeColor());
     material.mergeMorph(&morph, 0.75);
-    compare(Color(1.25, 1.25, 1.25, 0.8), material.edgeColor());
+    compare(Color(1.25, 1.25, 1.25, 1.25), material.edgeColor());
     material.mergeMorph(&morph, 1.0);
-    compare(Color(1.4, 1.4, 1.4, 0.8), material.edgeColor());
+    compare(Color(1.4, 1.4, 1.4, 1.4), material.edgeColor());
 }
 
 void TestModel::testMaterialMorphMergeEdgeSize() const
@@ -662,9 +662,9 @@ void TestModel::testReadWriteMaterial(size_t indexSize)
     material.setName(&name);
     material.setEnglishName(&englishName);
     material.setSphereTextureRenderMode(Material::kSubTexture);
-    material.setAmbient(Color(0.01, 0.02, 0.03, 0.0));
+    material.setAmbient(Color(0.01, 0.02, 0.03, 1.0));
     material.setDiffuse(Color(0.11, 0.12, 0.13, 0.14));
-    material.setSpecular(Color(0.21, 0.22, 0.23, 0.0));
+    material.setSpecular(Color(0.21, 0.22, 0.23, 1.0));
     material.setEdgeColor(Color(0.31, 0.32, 0.33, 0.34));
     material.setShininess(0.1);
     material.setEdgeSize(0.2);

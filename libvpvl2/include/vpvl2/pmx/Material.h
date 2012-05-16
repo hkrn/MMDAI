@@ -63,18 +63,49 @@ public:
         kAddTexture,
         kSubTexture
     };
-    struct Color3 {
-        Color base;
+    struct RGB3 {
+        Color result;
+        Vector3 base;
         Vector3 mul;
         Vector3 add;
-        Color3() : base(kZeroC), mul(1, 1, 1), add(kZeroV3) {}
-        const Color calculate() const {
+        RGB3()
+            : result(kZeroC),
+              base(kZeroV3),
+              mul(1, 1, 1),
+              add(kZeroV3)
+        {
+        }
+        void calculate() {
             const Vector3 &mixed = base * mul + add;
-            return Color(mixed.x(), mixed.y(), mixed.z(), base.w());
+            result.setValue(mixed.x(), mixed.y(), mixed.z(), 1);
         }
         void reset() {
             mul.setValue(1, 1, 1);
-            add.setValue(0, 0, 0);
+            add.setZero();
+            calculate();
+        }
+    };
+    struct RGBA3 {
+        Color result;
+        Color base;
+        Color mul;
+        Color add;
+        RGBA3()
+            : result(kZeroC),
+              base(kZeroC),
+              mul(1, 1, 1, 1),
+              add(0, 0, 0, 0)
+        {
+        }
+        void calculate() {
+            const Vector3 &mixed = base * mul + add;
+            const Scalar &alpha = base.w() + add.w();
+            result.setValue(mixed.x(), mixed.y(), mixed.z(), alpha);
+        }
+        void reset() {
+            mul.setValue(1, 1, 1, 1);
+            add.setValue(0, 0, 0, 0);
+            calculate();
         }
     };
 
@@ -109,10 +140,10 @@ public:
     const IString *sphereTexture() const { return m_sphereTexture; }
     const IString *toonTexture() const { return m_toonTexture; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
-    const Color ambient() const { return m_ambient.calculate(); }
-    const Color diffuse() const { return m_diffuse.calculate(); }
-    const Color specular() const { return m_specular.calculate(); }
-    const Color edgeColor() const { return m_edgeColor.calculate(); }
+    const Color &ambient() const { return m_ambient.result; }
+    const Color &diffuse() const { return m_diffuse.result; }
+    const Color &specular() const { return m_specular.result; }
+    const Color &edgeColor() const { return m_edgeColor.result; }
     float shininess() const { return m_shininess.x() * m_shininess.y() + m_shininess.z(); }
     float edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_edgeSize.z(); }
     int textureIndex() const { return m_textureIndex; }
@@ -153,10 +184,10 @@ private:
     IString *m_sphereTexture;
     IString *m_toonTexture;
     SphereTextureRenderMode m_sphereTextureRenderMode;
-    Color3 m_ambient;
-    Color3 m_diffuse;
-    Color3 m_specular;
-    Color3 m_edgeColor;
+    RGB3 m_ambient;
+    RGBA3 m_diffuse;
+    RGB3 m_specular;
+    RGBA3 m_edgeColor;
     Vector3 m_shininess;
     Vector3 m_edgeSize;
     int m_textureIndex;
