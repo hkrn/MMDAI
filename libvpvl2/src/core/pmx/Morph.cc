@@ -498,7 +498,7 @@ void Morph::setWeight(const Scalar &value)
     case kMaterial: /* material */
         nmorphs = m_materials.count();
         for (int i = 0; i < nmorphs; i++) {
-            Material *v = m_materials.at(0);
+            Material *v = m_materials.at(i);
             const Array<pmx::Material *> *materials = v->materials;
             const int nmaterials = materials->count();
             for (int j = 0; j < nmaterials; j++) {
