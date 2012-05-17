@@ -133,6 +133,8 @@ public:
           m_modelViewInverseMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
+          m_materialSpecularUniformLocation(0),
+          m_materialShininessUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
           m_isMainSphereMapUniformLocation(0),
           m_isSubSphereMapUniformLocation(0),
@@ -148,6 +150,8 @@ public:
         m_modelViewInverseMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
+        m_materialSpecularUniformLocation = 0;
+        m_materialShininessUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
         m_isMainSphereMapUniformLocation = 0;
         m_isSubSphereMapUniformLocation = 0;
@@ -170,6 +174,12 @@ public:
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
+    }
+    void setMaterialSpecular(const Color &value) {
+        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
+    }
+    void setMaterialShininess(const Scalar &value) {
+        glUniform1f(m_materialShininessUniformLocation, value);
     }
     void setIsMainSphereMap(bool value) {
         glUniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
@@ -210,6 +220,8 @@ protected:
         m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
         m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
         m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+        m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
+        m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
         m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
         m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
         m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
@@ -225,6 +237,8 @@ private:
     GLuint m_modelViewInverseMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
+    GLuint m_materialSpecularUniformLocation;
+    GLuint m_materialShininessUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
     GLuint m_isMainSphereMapUniformLocation;
     GLuint m_isSubSphereMapUniformLocation;
@@ -934,7 +948,7 @@ void PMDRenderEngine::renderModel()
     const int nmaterials = materials.count();
     //const bool hasSingleSphereMap = m_context->hasSingleSphereMap;
     const bool hasMultipleSphereMap = m_context->hasMultipleSphereMap;
-    Color ambient, diffuse;
+    Color diffuse;
     size_t offset = 0, size = model->strideSize(vpvl::PMDModel::kIndicesStride);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
@@ -943,11 +957,12 @@ void PMDRenderEngine::renderModel()
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         const Scalar &materialOpacity = material->opacity();
         const bool isMainSphereAdd = material->isMainSphereAdd();
-        ambient = material->ambient();
         diffuse = material->diffuse();
         diffuse.setW(diffuse.w() * materialOpacity);
-        modelProgram->setMaterialAmbient(ambient);
+        modelProgram->setMaterialAmbient(material->ambient());
         modelProgram->setMaterialDiffuse(diffuse);
+        modelProgram->setMaterialSpecular(material->specular());
+        modelProgram->setMaterialShininess(material->shiness());
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
         modelProgram->setToonTexture(m_context->toonTextureID[material->toonID()]);
         modelProgram->setIsMainSphereMap(isMainSphereAdd || material->isMainSphereModulate());

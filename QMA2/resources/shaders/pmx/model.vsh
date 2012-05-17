@@ -7,6 +7,8 @@ uniform vec4 materialDiffuse;
 uniform vec3 lightColor;
 uniform vec3 lightDirection;
 uniform vec3 materialAmbient;
+uniform vec3 materialSpecular;
+uniform float materialShininess;
 uniform bool hasSphereTexture;
 uniform bool hasDepthTexture;
 attribute vec4 inPosition;
@@ -36,10 +38,17 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 
 void main() {
     vec3 view = normalize(normalMatrix * inPosition.xyz);
-    outColor.rgb = max(min(materialAmbient + lightColor * materialDiffuse.rgb, kOne3), kZero3);
+    vec3 lightPosition = normalize(-lightDirection);
+    vec3 halfVector = normalize(lightPosition - normalize(inPosition.xyz));
+    vec3 color = materialAmbient;
+    float hdotn = max(dot(halfVector, inNormal), 0.0);
+    color += lightColor * materialDiffuse.rgb;
+    color += materialSpecular * pow(hdotn, max(materialShininess, 1.0));
+    outColor.rgb = max(min(color, kOne3), kZero3);
     outColor.a = max(min(materialDiffuse.a, kOne), kZero);
-    outTexCoord = vec4(inTexCoord, hasSphereTexture ? makeSphereMap(view, inNormal) : inTexCoord);
-    outToonTexCoord = vec2(0, 1.0 - dot(normalize(lightDirection), inNormal) * 0.5);
+    outTexCoord.xy = inTexCoord;
+    outTexCoord.zw = hasSphereTexture ? makeSphereMap(view, inNormal) : inTexCoord;
+    outToonTexCoord = vec2(0, 1.0 + dot(lightPosition, inNormal) * 0.5);
     outUVA1 = inUVA1;
     if (hasDepthTexture)
         outShadowCoord = lightViewProjectionMatrix * inPosition;

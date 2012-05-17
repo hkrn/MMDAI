@@ -79,6 +79,13 @@ public:
             const Vector3 &mixed = base * mul + add;
             result.setValue(mixed.x(), mixed.y(), mixed.z(), 1);
         }
+        void calculateMulWeight(const Vector3 &value, const Scalar &weight) {
+            static const Vector3 kOne3(1.0, 1.0, 1.0);
+            mul = kOne3 - (kOne3 - value) * weight;
+        }
+        void calculateAddWeight(const Vector3 &value, const Scalar &weight) {
+            add = value * weight;
+        }
         void reset() {
             mul.setValue(1, 1, 1);
             add.setZero();
@@ -99,8 +106,17 @@ public:
         }
         void calculate() {
             const Vector3 &mixed = base * mul + add;
-            const Scalar &alpha = base.w() + add.w();
+            const Scalar &alpha = base.w() * mul.w() + add.w();
             result.setValue(mixed.x(), mixed.y(), mixed.z(), alpha);
+        }
+        void calculateMulWeight(const Vector3 &value, const Scalar &weight) {
+            static const Vector3 kOne3(1.0, 1.0, 1.0);
+            const Vector3 &v = kOne3 - (kOne3 - value) * weight;
+            mul.setValue(v.x(), v.y(), v.z(), 1.0 - (1.0 - value.w()) * weight);
+        }
+        void calculateAddWeight(const Vector3 &value, const Scalar &weight) {
+            const Vector3 &v = value * weight;
+            add.setValue(v.x(), v.y(), v.z(), value.w() * weight);
         }
         void reset() {
             mul.setValue(1, 1, 1, 1);
@@ -144,6 +160,9 @@ public:
     const Color &diffuse() const { return m_diffuse.result; }
     const Color &specular() const { return m_specular.result; }
     const Color &edgeColor() const { return m_edgeColor.result; }
+    const Color &mainTextureBlend() const { return m_mainTextureBlend.result; }
+    const Color &sphereTextureBlend() const { return m_sphereTextureBlend.result; }
+    const Color &toonTextureBlend() const { return m_toonTextureBlend.result; }
     float shininess() const { return m_shininess.x() * m_shininess.y() + m_shininess.z(); }
     float edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_edgeSize.z(); }
     int textureIndex() const { return m_textureIndex; }
@@ -188,6 +207,9 @@ private:
     RGBA3 m_diffuse;
     RGB3 m_specular;
     RGBA3 m_edgeColor;
+    RGBA3 m_mainTextureBlend;
+    RGBA3 m_sphereTextureBlend;
+    RGBA3 m_toonTextureBlend;
     Vector3 m_shininess;
     Vector3 m_edgeSize;
     int m_textureIndex;

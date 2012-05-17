@@ -155,6 +155,11 @@ public:
           m_modelViewInverseMatrixUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
+          m_materialSpecularUniformLocation(0),
+          m_materialShininessUniformLocation(0),
+          m_mainTextureBlendUniformLocation(0),
+          m_sphereTextureBlendUniformLocation(0),
+          m_toonTextureBlendUniformLocation(0),
           m_sphereTextureUniformLocation(0),
           m_hasSphereTextureUniformLocation(0),
           m_isSPHTextureUniformLocation(0),
@@ -171,6 +176,11 @@ public:
         m_modelViewInverseMatrixUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
+        m_materialSpecularUniformLocation = 0;
+        m_materialShininessUniformLocation = 0;
+        m_mainTextureBlendUniformLocation = 0;
+        m_sphereTextureBlendUniformLocation = 0;
+        m_toonTextureBlendUniformLocation = 0;
         m_sphereTextureUniformLocation = 0;
         m_hasSphereTextureUniformLocation = 0;
         m_isSPHTextureUniformLocation = 0;
@@ -197,6 +207,21 @@ public:
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
+    }
+    void setMaterialSpecular(const Color &value) {
+        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
+    }
+    void setMaterialShininess(const Scalar &value) {
+        glUniform1f(m_materialShininessUniformLocation, value);
+    }
+    void setMainTextureBlend(const Color &value) {
+        glUniform4fv(m_mainTextureBlendUniformLocation, 1, value);
+    }
+    void setSphereTextureBlend(const Color &value) {
+        glUniform4fv(m_sphereTextureBlendUniformLocation, 1, value);
+    }
+    void setToonTextureBlend(const Color &value) {
+        glUniform4fv(m_toonTextureBlendUniformLocation, 1, value);
     }
     void setToonEnable(bool value) {
         glUniform1i(m_useToonUniformLocation, value ? 1 : 0);
@@ -257,6 +282,11 @@ protected:
         m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
         m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
         m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+        m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
+        m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
+        m_mainTextureBlendUniformLocation = glGetUniformLocation(m_program, "mainTextureBlend");
+        m_sphereTextureBlendUniformLocation = glGetUniformLocation(m_program, "sphereTextureBlend");
+        m_toonTextureBlendUniformLocation = glGetUniformLocation(m_program, "toonTextureBlend");
         m_sphereTextureUniformLocation = glGetUniformLocation(m_program, "sphereTexture");
         m_hasSphereTextureUniformLocation = glGetUniformLocation(m_program, "hasSphereTexture");
         m_isSPHTextureUniformLocation = glGetUniformLocation(m_program, "isSPHTexture");
@@ -273,6 +303,11 @@ private:
     GLuint m_modelViewInverseMatrixUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
+    GLuint m_materialSpecularUniformLocation;
+    GLuint m_materialShininessUniformLocation;
+    GLuint m_mainTextureBlendUniformLocation;
+    GLuint m_sphereTextureBlendUniformLocation;
+    GLuint m_toonTextureBlendUniformLocation;
     GLuint m_sphereTextureUniformLocation;
     GLuint m_hasSphereTextureUniformLocation;
     GLuint m_isSPHTextureUniformLocation;
@@ -963,6 +998,11 @@ void PMXRenderEngine::renderModel()
         const MaterialTextures &materialPrivate = materialPrivates[i];
         modelProgram->setMaterialAmbient(material->ambient());
         modelProgram->setMaterialDiffuse(material->diffuse());
+        modelProgram->setMaterialSpecular(material->specular());
+        modelProgram->setMaterialShininess(material->shininess());
+        modelProgram->setMainTextureBlend(material->mainTextureBlend());
+        modelProgram->setSphereTextureBlend(material->sphereTextureBlend());
+        modelProgram->setToonTextureBlend(material->toonTextureBlend());
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
         modelProgram->setSphereTexture(materialPrivate.sphereTextureID, material->sphereTextureRenderMode());
         modelProgram->setToonTexture(materialPrivate.toonTextureID);

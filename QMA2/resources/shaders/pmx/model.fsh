@@ -3,6 +3,9 @@
 precision highp float;
 #endif
 
+uniform vec4 mainTextureBlend;
+uniform vec4 sphereTextureBlend;
+uniform vec4 toonTextureBlend;
 uniform vec2 depthTextureSize;
 uniform float opacity;
 uniform bool useToon;
@@ -35,20 +38,26 @@ float unpackDepth(const vec4 value) {
 
 void main() {
     vec4 color = outColor;
+    vec4 textureColor = vec4(1.0, 1.0, 1.0, 1.0);
     if (hasMainTexture) {
-        color *= texture2D(mainTexture, outTexCoord.xy);
+        float alpha = mainTextureBlend.a;
+        textureColor = texture2D(mainTexture, outTexCoord.xy);
+        textureColor.rgb *= mainTextureBlend.rgb * alpha + (1.0 - alpha);
     }
+    color.rgb *= textureColor.rgb;
     if (hasSphereTexture) {
         if (isSPHTexture)
-            color.rgb *= texture2D(sphereTexture, outTexCoord.zw).rgb;
+            textureColor.rgb *= texture2D(sphereTexture, outTexCoord.zw).rgb;
         else if (isSPATexture)
-            color.rgb += texture2D(sphereTexture, outTexCoord.zw).rgb;
+            textureColor.rgb += texture2D(sphereTexture, outTexCoord.zw).rgb;
         else if (isSubTexture)
-            color.rgb *= texture2D(sphereTexture, outUVA1.xy).rgb;
+            textureColor.rgb *= texture2D(sphereTexture, outUVA1.xy).rgb;
+        textureColor.rgb *= sphereTextureBlend.rgb;
     }
     if (useToon) {
         if (hasToonTexture) {
-            vec3 toonColor = texture2D(toonTexture, outToonTexCoord).rgb;
+            vec4 toonColorRGBA = texture2D(toonTexture, outToonTexCoord);
+            vec3 toonColor = toonColorRGBA.rgb * toonTextureBlend.rgb;
             if (hasDepthTexture) {
                 const vec2 kToonColorCoord = vec2(kZero, kOne);
                 vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
@@ -97,7 +106,7 @@ void main() {
             }
         }
     }
-    color.a *= opacity;
+    color.a *= textureColor.a * opacity;
     gl_FragColor = color;
 }
 

@@ -214,6 +214,12 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     m_edgeColor.calculate();
     m_shininess.setX(unit.shininess);
     m_edgeSize.setX(unit.edgeSize);
+    m_mainTextureBlend.base.setValue(1, 1, 1, 1);
+    m_mainTextureBlend.calculate();
+    m_sphereTextureBlend.base.setValue(1, 1, 1, 1);
+    m_sphereTextureBlend.calculate();
+    m_toonTextureBlend.base.setValue(1, 1, 1, 1);
+    m_toonTextureBlend.calculate();
     m_flags = unit.flags;
     ptr += sizeof(unit);
     m_textureIndex = internal::readSignedIndex(ptr, textureIndexSize);
@@ -278,37 +284,34 @@ size_t Material::estimateSize(const Model::DataInfo &info) const
 
 void Material::mergeMorph(const Morph::Material *morph, float weight)
 {
+    btClamp(weight, 0.0f, 1.0f);
     if (btFuzzyZero(weight)) {
         resetMorph();
     }
     else {
-        btClamp(weight, 0.0f, 1.0f);
-        const Vector3 &ambient = morph->ambient,
-                &diffuse = morph->diffuse,
-                &specular = morph->specular,
-                &edgeColor = morph->edgeColor;
-        static const Vector3 kOne(1.0, 1.0, 1.0);
         switch (morph->operation) {
         case 0: { // modulate
-            m_ambient.mul = kOne - ambient * weight;
-            const Vector3 &dc = kOne - diffuse * weight;
-            m_diffuse.mul.setValue(dc.x(), dc.y(), dc.z(), 1.0 - diffuse.w() * weight);
-            m_specular.mul = kOne - specular * weight;
-            m_shininess.setY(1.0 - morph->shininess * weight);
-            const Vector3 &ec = kOne - edgeColor * weight;
-            m_edgeColor.mul.setValue(ec.x(), ec.y(), ec.z(), 1.0 - edgeColor.w() * weight);
-            m_edgeSize.setY(1.0 - morph->edgeSize * weight);
+            m_ambient.calculateMulWeight(morph->ambient, weight);
+            m_diffuse.calculateMulWeight(morph->diffuse, weight);
+            m_specular.calculateMulWeight(morph->specular, weight);
+            m_shininess.setY(1.0 - (1.0 - morph->shininess) * weight);
+            m_edgeColor.calculateMulWeight(morph->edgeColor, weight);
+            m_edgeSize.setY(1.0 - (1.0 - morph->edgeSize) * weight);
+            m_mainTextureBlend.calculateMulWeight(morph->textureWeight, weight);
+            m_sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, weight);
+            m_toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, weight);
             break;
         }
         case 1: { // add
-            m_ambient.add = ambient * weight;
-            const Vector3 &dc = diffuse * weight;
-            m_diffuse.add.setValue(dc.x(), dc.y(), dc.z(), diffuse.w() * weight);
-            m_specular.add = specular * weight;
+            m_ambient.calculateAddWeight(morph->ambient, weight);
+            m_diffuse.calculateAddWeight(morph->diffuse, weight);
+            m_specular.calculateAddWeight(morph->specular, weight);
             m_shininess.setZ(morph->shininess * weight);
-            const Vector3 &ec = edgeColor * weight;
-            m_edgeColor.add.setValue(ec.x(), ec.y(), ec.z(), edgeColor.w() * weight);
+            m_edgeColor.calculateAddWeight(morph->edgeColor, weight);
             m_edgeSize.setZ(morph->edgeSize * weight);
+            m_mainTextureBlend.calculateAddWeight(morph->textureWeight, weight);
+            m_sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, weight);
+            m_toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, weight);
             break;
         }
         default:
@@ -318,6 +321,9 @@ void Material::mergeMorph(const Morph::Material *morph, float weight)
         m_diffuse.calculate();
         m_specular.calculate();
         m_edgeColor.calculate();
+        m_mainTextureBlend.calculate();
+        m_sphereTextureBlend.calculate();
+        m_toonTextureBlend.calculate();
     }
 }
 
@@ -329,6 +335,9 @@ void Material::resetMorph()
     m_shininess.setValue(m_shininess.x(), 1, 0);
     m_edgeColor.reset();
     m_edgeSize.setValue(m_edgeSize.x(), 1, 0);
+    m_mainTextureBlend.reset();
+    m_sphereTextureBlend.reset();
+    m_toonTextureBlend.reset();
 }
 
 void Material::setName(const IString *value)
