@@ -451,8 +451,6 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
 void Morph::setWeight(const Scalar &value)
 {
     m_weight = value;
-    if (btFuzzyZero(value))
-        return;
     int nmorphs;
     switch (m_type) {
     case kGroup: /* group */
