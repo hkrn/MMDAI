@@ -251,7 +251,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         for (int i = 0; i < 2; i++)
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         const Bdef2Unit &unit = *reinterpret_cast<Bdef2Unit *>(ptr);
-        m_weight[0] = unit.weight;
+        m_weight[0] = btClamped(unit.weight, 0.0f, 1.0f);
         ptr += sizeof(unit);
         break;
     }
@@ -260,7 +260,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         const Bdef4Unit &unit = *reinterpret_cast<Bdef4Unit *>(ptr);
         for (int i = 0; i < 4; i++)
-            m_weight[i] = unit.weight[i];
+            m_weight[i] = btClamped(unit.weight[i], 0.0f, 1.0f);
         ptr += sizeof(unit);
         break;
     }
@@ -271,7 +271,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         m_c.setValue(unit.c[0], unit.c[1], unit.c[2]);
         m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);
         m_r1.setValue(unit.r1[0], unit.r1[1], unit.r1[2]);
-        m_weight[0] = unit.weight;
+        m_weight[0] = btClamped(unit.weight, 0.0f, 1.0f);
         ptr += sizeof(unit);
         break;
     }
