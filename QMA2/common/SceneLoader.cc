@@ -656,9 +656,8 @@ void SceneLoader::deleteAsset(IModel *asset)
         const QUuid uuid(m_project->modelUUID(asset).c_str());
         emit assetWillDelete(asset, uuid);
         m_project->removeModel(asset);
+        m_project->deleteModel(asset);
         m_renderOrderList.remove(uuid);
-        delete asset;
-        m_asset = 0;
     }
 }
 
