@@ -193,7 +193,7 @@ void AssetWidget::removeModel(IModel *model)
     int index = modelIndexOf(model);
     if (index >= 0) {
         /* モデルが見つかればモデルとそのボーンリストを表示上から削除する。実際にモデルを削除をしない */
-        m_models.removeAt(index);
+        m_models.removeAt(index - 1);
         m_modelComboBox->removeItem(index);
         m_modelComboBox->setCurrentIndex(0);
         m_modelBonesComboBox->clear();
