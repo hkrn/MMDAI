@@ -603,7 +603,7 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
     m_project->setModelSetting(model, "selected", "false");
 #ifndef IS_QMA2
     if (isPhysicsEnabled())
-        model->joinWorld(m_world->mutableWorld());
+        m_world->addModel(model);
 #endif
     m_renderOrderList.add(uuid);
     static_cast<UIDelegate *>(m_renderDelegate)->setArchive(0);
@@ -1179,11 +1179,7 @@ void SceneLoader::renderModels()
         const Project::UUID &uuidString = uuid.toString().toStdString();
         if (IModel *model = m_project->model(uuidString)) {
             IRenderEngine *engine = m_project->renderEngine(model);
-#ifdef IS_QMA2
             if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
-#else
-            if (true) {
-#endif
                 engine->renderShadow();
             }
             engine->renderEdge();
@@ -1192,11 +1188,9 @@ void SceneLoader::renderModels()
     }
 }
 
-void SceneLoader::renderZPlot()
+void SceneLoader::setLightViewProjectionMatrix(QMatrix4x4 &shadowMatrix)
 {
     Scene::IMatrices *matrices = m_project->matrices();
-    Scene::ILight *light = m_project->light();
-    QMatrix4x4 shadowMatrix;
     Vector3 center;
     Scalar radius;
     float shadowMatrix4x4[16];
@@ -1212,7 +1206,7 @@ void SceneLoader::renderZPlot()
     const Scalar &angle = 45;
     const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
     const Scalar &margin = 50;
-    const Vector3 &eye = -light->direction() * radius * 2 + center;
+    const Vector3 &eye = -m_project->light()->direction() * radius * 2 + center;
     shadowMatrix.perspective(angle, 1, 1, distance + radius + margin);
     shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
                         QVector3D(center.x(), center.y(), center.z()),
@@ -1220,12 +1214,33 @@ void SceneLoader::renderZPlot()
     for (int i = 0; i < 16; i++)
         shadowMatrix4x4[i] = shadowMatrix.constData()[i];
     matrices->setLightViewProjection(shadowMatrix4x4);
-    /* デプスバッファのテクスチャにレンダリング */
+}
+
+void SceneLoader::setLightViewProjectionTextureMatrix(const QMatrix4x4 &shadowMatrix)
+{
+    /* デプスバッファの読み込みに必要な行列を作成する */
+    float shadowMatrix4x4[16];
+    QMatrix4x4 bias;
+    bias.scale(0.5);
+    bias.translate(1, 1, 1);
+    const QMatrix4x4 &newShadowMatrix = bias * shadowMatrix;
+    for (int i = 0; i < 16; i++)
+        shadowMatrix4x4[i] = newShadowMatrix.constData()[i];
+    m_project->matrices()->setLightViewProjection(shadowMatrix4x4);
+}
+
+void SceneLoader::bindDepthTexture()
+{
     glDisable(GL_BLEND);
     m_depthBuffer->bind();
     glViewport(0, 0, m_depthBuffer->width(), m_depthBuffer->height());
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void SceneLoader::renderZPlot()
+{
+    /* デプスバッファのテクスチャにレンダリング */
     const int nobjects = m_renderOrderList.count();
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
@@ -1236,19 +1251,26 @@ void SceneLoader::renderZPlot()
             engine->renderZPlot();
         }
     }
+}
+
+void SceneLoader::renderZPlotToTexture()
+{
+    QMatrix4x4 shadowMatrix;
+    setLightViewProjectionMatrix(shadowMatrix);
+    bindDepthTexture();
+    renderZPlot();
+    releaseDepthTexture();
+    setLightViewProjectionTextureMatrix(shadowMatrix);
+}
+
+void SceneLoader::releaseDepthTexture()
+{
     m_depthBuffer->release();
-    glEnable(GL_BLEND);
-    /* デプスバッファの読み込みに必要な行列を作成する */
-    QMatrix4x4 m;
-    m.scale(0.5);
-    m.translate(1, 1, 1);
-    shadowMatrix = m * shadowMatrix;
-    for (int i = 0; i < 16; i++)
-        shadowMatrix4x4[i] = shadowMatrix.constData()[i];
-    matrices->setLightViewProjection(shadowMatrix4x4);
+    Scene::ILight *light = m_project->light();
     light->setDepthTexture(&m_depthBufferID);
     light->setDepthTextureSize(Vector3(m_depthBuffer->width(), m_depthBuffer->height(), 0));
     light->setSoftShadowEnable(isSoftShadowEnabled());
+    glEnable(GL_BLEND);
 }
 
 void SceneLoader::updateDepthBuffer(const QSize &value)

@@ -74,6 +74,7 @@ public:
     ~SceneLoader();
 
     QList<vpvl2::IModel *> allModels() const;
+    void bindDepthTexture();
     vpvl2::IModel *findAsset(const QUuid &uuid) const;
     vpvl2::IModel *findModel(const QUuid &uuid) const;
     vpvl2::IMotion *findMotion(const QUuid &uuid) const;
@@ -91,8 +92,12 @@ public:
     vpvl2::IMotion *newCameraMotion() const;
     vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
     void release();
+    void releaseDepthTexture();
     void renderModels();
     void renderZPlot();
+    void renderZPlotToTexture();
+    void setLightViewProjectionMatrix(QMatrix4x4 &shadowMatrix);
+    void setLightViewProjectionTextureMatrix(const QMatrix4x4 &shadowMatrix);
     void updateMatrices(const QSizeF &size);
     void updateDepthBuffer(const QSize &value);
     const QList<QUuid> renderOrderList() const;

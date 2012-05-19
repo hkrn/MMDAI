@@ -125,6 +125,7 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     m_loader(0),
     m_settings(settings),
+    m_background(0),
     m_encoding(encoding),
     m_factory(factory),
     m_currentSelectedBone(0),
@@ -133,7 +134,6 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_debugDrawer(0),
     m_grid(0),
     m_info(0),
-    m_background(0),
     m_plane(0),
     m_handles(0),
     m_editMode(kSelect),
@@ -975,9 +975,9 @@ void SceneWidget::initializeGL()
     m_info->load();
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
+#endif
     m_background = new BackgroundImage(s);
     m_loader->updateDepthBuffer(QSize());
-#endif
     m_info->setModel(0);
     m_info->setBones(QList<IBone *>(), "");
     m_info->setFPS(0.0f);
@@ -994,9 +994,9 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_lockTouchEvent = true;
     m_clickOrigin = pos;
     m_handles->setPoint2D(pos);
+    Vector3 znear, zfar, hit;
 #ifdef IS_QMA2
     QRectF rect;
-    Vector3 znear, zfar, hit;
     makeRay(pos, znear, zfar);
     m_plane->test(znear, zfar, hit);
     /* 今は決め打ちの値にしている */
@@ -1050,6 +1050,8 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             return;
         }
     }
+#else
+    Q_UNUSED(hit)
 #endif
     /* モデルが選択状態にある */
     if (IModel *model = m_loader->selectedModel()) {
@@ -1211,7 +1213,7 @@ void SceneWidget::paintGL()
     Scene *scene = m_loader->scene();
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     if (m_editMode != kSelect) {
-        m_loader->renderZPlot();
+        m_loader->renderZPlotToTexture();
         scene->light()->setToonEnable(true);
     }
     else {

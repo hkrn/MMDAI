@@ -204,6 +204,7 @@ protected:
 
     SceneLoader *m_loader;
     QSettings *m_settings;
+    internal::BackgroundImage *m_background;
 
 private slots:
     void addModel();
@@ -270,7 +271,6 @@ private:
     internal::DebugDrawer *m_debugDrawer;
     internal::Grid *m_grid;
     internal::InfoPanel *m_info;
-    internal::BackgroundImage *m_background;
     PlaneWorld *m_plane;
     Handles *m_handles;
     QList<vpvl2::IBone *> m_selectedBones;
