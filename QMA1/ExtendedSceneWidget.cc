@@ -36,6 +36,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "BackgroundImage.h"
 #include "ExtendedSceneWidget.h"
 #include "SceneLoader.h"
 #include "Script.h"
@@ -48,8 +49,11 @@
 using namespace vpvl2;
 using namespace internal;
 
-ExtendedSceneWidget::ExtendedSceneWidget(QSettings *settings, QWidget *parent)
-    : SceneWidget(settings, parent),
+ExtendedSceneWidget::ExtendedSceneWidget(vpvl2::IEncoding *encoding,
+                                         vpvl2::Factory *factory,
+                                         QSettings *settings,
+                                         QWidget *parent)
+    : SceneWidget(encoding, factory, settings, parent),
       m_script(0),
       m_tiledStage(0),
       m_enableTransparent(false)
@@ -102,11 +106,6 @@ void ExtendedSceneWidget::loadScript(const QString &filename)
     }
 }
 
-void ExtendedSceneWidget::setEmptyMotion(IModel * /* model */)
-{
-    // emit this
-}
-
 void ExtendedSceneWidget::dropEvent(QDropEvent *event)
 {
     SceneWidget::dropEvent(event);
@@ -128,6 +127,7 @@ void ExtendedSceneWidget::initializeGL()
     m_tiledStage = new TiledStage(m_loader->world());
     m_loader->setPhysicsEnabled(true);
     m_loader->startPhysicsSimulation();
+    connect(m_loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), SLOT(setDefaultModelShadowSetting(vpvl2::IModel*)));
     setShowModelDialog(false);
     if (arguments.count() == 2)
         loadScript(arguments[1]);
@@ -136,7 +136,7 @@ void ExtendedSceneWidget::initializeGL()
     /* vpvl::Scene の初期値を変更したため、互換性のために視点を変更する */
     Scene::ICamera *camera = m_loader->scene()->camera();
     camera->setPosition(Vector3(0, 13, 0));
-    camera->setFovy(16);
+    camera->setFov(16);
     camera->setDistance(100);
     emit cameraPerspectiveDidSet(camera);
 }
@@ -149,17 +149,34 @@ extern void UISetGLContextTransparent(bool value);
 
 void ExtendedSceneWidget::paintGL()
 {
-    UISetGLContextTransparent(m_enableTransparent);
-    glEnable(GL_DEPTH_TEST);
-    qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Scene *scene = m_loader->scene();
-    m_tiledStage->renderBackground(scene);
-    m_tiledStage->renderFloor(scene);
-    m_loader->render();
+    QMatrix4x4 shadowMatrix;
+    m_loader->setLightViewProjectionMatrix(shadowMatrix);
+    m_loader->bindDepthTexture();
+    m_loader->renderZPlot();
+    m_loader->releaseDepthTexture();
+    m_loader->setLightViewProjectionTextureMatrix(shadowMatrix);
+    scene->light()->setToonEnable(true);
+    /* 通常のレンダリングを行うよう切り替えてレンダリングする */
+    UISetGLContextTransparent(m_enableTransparent);
+    qglClearColor(m_enableTransparent ? Qt::transparent : Qt::darkBlue);
+    glEnable(GL_DEPTH_TEST);
+    glViewport(0, 0, width(), height());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    m_background->draw();
+    const QMatrix4x4 &projection = m_loader->projectionMatrix();
+    m_tiledStage->renderBackground(scene, projection);
+    m_tiledStage->renderFloor(scene, projection);
+    m_loader->renderModels();
     if (m_script) {
         const QList<IMotion *> &motions = m_script->stoppedMotions();
         if (!motions.isEmpty())
             emit motionDidFinished(motions);
     }
+}
+
+void ExtendedSceneWidget::setDefaultModelShadowSetting(IModel *model)
+{
+    //m_loader->setSelfShadowEnable(model, true);
+    m_loader->setProjectiveShadowEnable(model, false);
 }

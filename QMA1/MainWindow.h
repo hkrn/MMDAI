@@ -42,6 +42,8 @@
 #include <QtGui/QMainWindow>
 
 namespace vpvl2 {
+class Factory;
+class IEncoding;
 class IModel;
 class IMotion;
 }
@@ -92,6 +94,9 @@ private:
     void updateInformation();
     void buildMenuBar();
     void retranslate();
+
+    vpvl2::IEncoding *m_encoding;
+    vpvl2::Factory *m_factory;
 
     QSettings m_settings;
     LicenseWidget *m_licenseWidget;

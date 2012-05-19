@@ -66,8 +66,8 @@ public:
 
     void loadFloor(const QString &path);
     void loadBackground(const QString &path);
-    void renderFloor(const vpvl2::Scene *scene);
-    void renderBackground(const vpvl2::Scene *scene);
+    void renderFloor(const vpvl2::Scene *scene, const QMatrix4x4 &projection);
+    void renderBackground(const vpvl2::Scene *scene, const QMatrix4x4 &projection);
     void setSize(float width, float height, float depth);
 
 private:

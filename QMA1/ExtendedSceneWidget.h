@@ -49,7 +49,10 @@ class ExtendedSceneWidget : public SceneWidget
     Q_OBJECT
 
 public:
-    explicit ExtendedSceneWidget(QSettings *settings, QWidget *parent = 0);
+    explicit ExtendedSceneWidget(vpvl2::IEncoding *encoding,
+                                 vpvl2::Factory *factory,
+                                 QSettings *settings,
+                                 QWidget *parent = 0);
     ~ExtendedSceneWidget();
 
     TiledStage *tiledStage() const { return m_tiledStage; }
@@ -60,7 +63,6 @@ public slots:
     void clear();
     void loadScript();
     void loadScript(const QString &filename);
-    void setEmptyMotion(vpvl2::IModel *model);
     void setTransparentEnable(bool value) { m_enableTransparent = value; }
 
 signals:
@@ -71,6 +73,9 @@ protected:
     void dropEvent(QDropEvent *event);
     void initializeGL();
     void paintGL();
+
+private slots:
+    void setDefaultModelShadowSetting(vpvl2::IModel *model);
 
 private:
     Script *m_script;

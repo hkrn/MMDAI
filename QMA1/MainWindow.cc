@@ -78,6 +78,8 @@ static int FindIndexOfActions(IModel *model, const QList<QAction *> &actions)
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
+    m_encoding(0),
+    m_factory(0),
     m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
     m_licenseWidget(0),
     m_loggerWidget(0),
@@ -85,9 +87,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_model(0),
     m_currentFPS(0)
 {
+    m_encoding = new internal::Encoding();
+    m_factory = new vpvl2::Factory(m_encoding);
     m_licenseWidget = new LicenseWidget();
     m_loggerWidget = LoggerWidget::createInstance(&m_settings);
-    m_sceneWidget = new ExtendedSceneWidget(&m_settings);
+    m_sceneWidget = new ExtendedSceneWidget(m_encoding, m_factory, &m_settings);
     resize(600, 600);
     setMinimumSize(QSize(640, 480));
     setCentralWidget(m_sceneWidget);

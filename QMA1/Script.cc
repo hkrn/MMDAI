@@ -428,7 +428,7 @@ void Script::handleCommand(const ScriptArgument &output)
                 if (argc >= 6) {
                     internal::String s(argv[5]);
                     if (IBone *bone = model->findBone(&s))
-                        model->setPosition(bone->localTransform().getOrigin());
+                        model->setPosition(bone->worldTransform().getOrigin());
                 }
                 else if (parentModel) {
                     model->setPosition(parentModel->position());
@@ -646,7 +646,7 @@ void Script::handleCommand(const ScriptArgument &output)
         }
         Vector3 position;
         parsePosition(argv[0], position);
-        m_parent->sceneLoader()->setLightPosition(position);
+        m_parent->sceneLoader()->scene()->light()->setDirection(-position);
         Arguments a; a << position.x() << position.y() << position.z();
         emit eventDidPost(kLightDirectionEvent, a);
     }

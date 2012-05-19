@@ -81,6 +81,12 @@ public:
     void removeModel(vpvl2::IModel *value) {
         value->leaveWorld(&m_world);
     }
+    void addRigidBody(btRigidBody *value) {
+        m_world.addRigidBody(value);
+    }
+    void removeRigidBody(btRigidBody *value) {
+        m_world.removeRigidBody(value);
+    }
 
 private:
     btDefaultCollisionConfiguration m_config;

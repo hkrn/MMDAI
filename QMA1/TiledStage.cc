@@ -100,19 +100,17 @@ public:
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
         m_textureID = context->bindTexture(QImage(path), GL_TEXTURE_2D, GL_RGBA, options);
     }
-    void render(const vpvl2::Scene *scene) {
+    void render(const vpvl2::Scene *scene, const QMatrix4x4 &projection4x4) {
         if (!m_program.isLinked())
             return;
         if (!m_cullFace)
             glDisable(GL_CULL_FACE);
-        QMatrix4x4 modelView4x4, projection4x4;
-        float modelViewMatrixf[16], projectionMatrixf[16], normalMatrix[9];
+        QMatrix4x4 modelView4x4;
+        float modelViewMatrixf[16], normalMatrix[9];
         const vpvl2::Scene::IMatrices *matrices = scene->matrices();
         matrices->getModelView(modelViewMatrixf);
-        matrices->getProjection(projectionMatrixf);
         for (int i = 0; i < 16; i++) {
             modelView4x4.data()[i] = modelViewMatrixf[i];
-            projection4x4.data()[i] = projectionMatrixf[i];
         }
         const QMatrix4x4 &modelViewProjection4x4 = projection4x4 * modelView4x4;
         m_program.bind();
@@ -214,16 +212,16 @@ void TiledStage::loadBackground(const QString &path)
     setSize(25.0f, 40.0f, 25.0f);
 }
 
-void TiledStage::renderFloor(const Scene *scene)
+void TiledStage::renderFloor(const Scene *scene, const QMatrix4x4 &projection)
 {
     if (m_floor)
-        m_floor->render(scene);
+        m_floor->render(scene, projection);
 }
 
-void TiledStage::renderBackground(const Scene *scene)
+void TiledStage::renderBackground(const Scene *scene, const QMatrix4x4 &projection)
 {
     if (m_background)
-        m_background->render(scene);
+        m_background->render(scene, projection);
 }
 
 void TiledStage::setSize(float width, float height, float depth)
@@ -280,14 +278,14 @@ void TiledStage::buildFloor(float width, float height)
     builder.m_restitution = 0.8f;
     builder.m_friction = 0.5f;
     m_floorRigidBody = new btRigidBody(builder);
-    m_world->mutableWorld()->addRigidBody(m_floorRigidBody);
+    m_world->addRigidBody(m_floorRigidBody);
 }
 
 void TiledStage::destroyFloor()
 {
     if (m_floorRigidBody) {
         delete m_floorRigidBody->getMotionState();
-        m_world->mutableWorld()->removeCollisionObject(m_floorRigidBody);
+        m_world->removeRigidBody(m_floorRigidBody);
         delete m_floorRigidBody;
         m_floorRigidBody = 0;
     }
