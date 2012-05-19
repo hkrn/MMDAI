@@ -1209,7 +1209,6 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 void SceneWidget::paintGL()
 {
 #ifdef IS_QMA2
-    qglClearColor(m_loader->screenColor());
     Scene *scene = m_loader->scene();
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     if (m_editMode != kSelect) {
@@ -1220,6 +1219,7 @@ void SceneWidget::paintGL()
         scene->light()->setToonEnable(false);
     }
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
+    qglClearColor(m_loader->screenColor());
     glViewport(0, 0, width(), height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     m_background->draw();
