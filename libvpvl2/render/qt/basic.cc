@@ -677,6 +677,7 @@ public:
           m_delegate(0),
           m_factory(0),
           m_encoding(0),
+          m_depthTextureID(0),
           m_prevElapsed(0),
           m_currentFrameIndex(0)
     {
@@ -744,9 +745,11 @@ protected:
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         Scene::ILight *light = m_scene.light();
+        m_depthTextureID = m_fbo->texture();
         light->setToonEnable(true);
         light->setSoftShadowEnable(true);
         light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
+        light->setDepthTexture(&m_depthTextureID);
     }
     void timerEvent(QTimerEvent *) {
         float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
@@ -864,8 +867,6 @@ protected:
                 engine->renderZPlot();
             }
             m_fbo->release();
-            GLuint textureID = m_fbo->texture();
-            m_scene.light()->setDepthTexture(&textureID);
             glEnable(GL_BLEND);
         }
         {
@@ -1024,6 +1025,7 @@ private:
     Scene m_scene;
     Factory *m_factory;
     IEncoding *m_encoding;
+    GLuint m_depthTextureID;
     float m_prevElapsed;
     float m_currentFrameIndex;
 };

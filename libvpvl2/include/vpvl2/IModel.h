@@ -195,8 +195,9 @@ public:
     /**
      * モデルの変形を実行します。
      *
+     * @param Vector3
      */
-    virtual void performUpdate() = 0;
+    virtual void performUpdate(const Vector3 &lightDirection) = 0;
 
     /**
      * モデルの物理演算を有効にします。

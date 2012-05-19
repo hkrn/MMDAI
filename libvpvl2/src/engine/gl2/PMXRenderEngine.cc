@@ -277,7 +277,7 @@ public:
 protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
-        m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
+        m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
         m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
         m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
         m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
@@ -927,7 +927,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     Accelerator::initializeUserData(m_context);
     if (m_accelerator)
         m_accelerator->uploadModel(m_context, m_model, context);
-    m_model->performUpdate();
+    m_model->performUpdate(m_scene->light()->direction());
     m_model->setVisible(true);
     update();
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_model->name()->toByteArray());
@@ -936,11 +936,21 @@ bool PMXRenderEngine::upload(const IString *dir)
     pmx::Model::MeshTranforms transforms;
     pmx::Model::MeshIndices indices;
     pmx::Model::MeshWeights weights;
-    m_model->getMeshTransforms(transforms, indices, weights);
+    pmx::Model::MeshMatrices matrices;
+    m_model->getMeshTransforms(transforms, indices, weights, matrices);
     for (int i = 0; i < nmaterials; i++) {
-        const pmx::Model::BoneTransforms &tr = transforms[i];
-        qDebug("%s: %d", materials[i]->name()->toByteArray(), tr.size());
+        const pmx::Model::BoneTransforms &boneTransforms = transforms[i];
+        const int nBoneTransforms = boneTransforms.size();
+        const pmx::Model::BoneIndices &boneIndices = indices[i];
+        const int nindices = boneIndices.size();
+        qDebug("%s: bones = %d indices = %d", materials[i]->name()->toByteArray(), nBoneTransforms, nindices);
+        for (int j = 0; j < nindices; j++) {
+            int boneIndex = boneIndices[j];
+            if (boneIndex >= nBoneTransforms)
+                qDebug("exceeded index found: %d at [%d][%d]", boneIndex, i, j);
+        }
     }
+    matrices.releaseArrayAll();
 
     return ret;
 }
@@ -974,6 +984,9 @@ void PMXRenderEngine::renderModel()
     offset = pmx::Model::strideOffset(pmx::Model::kTexCoordStride);
     size   = pmx::Model::strideSize(pmx::Model::kTexCoordStride);
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
+    offset = pmx::Model::strideOffset(pmx::Model::kToonCoordSize);
+    size   = pmx::Model::strideSize(pmx::Model::kToonCoordSize);
+    modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
     offset = pmx::Model::strideOffset(pmx::Model::kUVA1Stride);
     size   = pmx::Model::strideSize(pmx::Model::kUVA1Stride);
     modelProgram->setUVA1(reinterpret_cast<const GLvoid *>(offset), size);

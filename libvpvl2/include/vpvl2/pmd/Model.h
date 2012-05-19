@@ -70,7 +70,7 @@ public:
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void resetVertices();
-    void performUpdate();
+    void performUpdate(const Vector3 &lightDirection);
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
@@ -110,9 +110,13 @@ public:
     typedef btAlignedObjectArray<BoneTransforms> MeshTranforms;
     typedef btAlignedObjectArray<BoneIndices> MeshIndices;
     typedef btAlignedObjectArray<BoneWeights> MeshWeights;
+    typedef Array<Scalar *> MeshMatrices;
     void getMeshTransforms(MeshTranforms &boneTransforms,
-                           MeshIndices boneIndices,
-                           MeshWeights boneWeights) const;
+                           MeshIndices &boneIndices,
+                           MeshWeights &boneWeights,
+                           MeshMatrices &boneMatrices) const;
+    void updateMeshMatrices(const MeshIndices &boneIndices,
+                            MeshMatrices &boneMatrices) const;
 
 private:
     IEncoding *m_encoding;

@@ -171,8 +171,9 @@ void Model::resetVertices()
 {
 }
 
-void Model::performUpdate()
+void Model::performUpdate(const Vector3 &lightDirection)
 {
+    m_model.setLightPosition(-lightDirection);
     m_model.updateImmediate();
 }
 
@@ -330,8 +331,9 @@ void Model::setEdgeWidth(const Scalar &value)
 }
 
 void Model::getMeshTransforms(MeshTranforms &boneTransforms,
-                              MeshIndices boneIndices,
-                              MeshWeights boneWeights) const
+                              MeshIndices &boneIndices,
+                              MeshWeights &boneWeights,
+                              MeshMatrices &boneMatrices) const
 {
     const vpvl::MaterialList &materials = m_model.materials();
     const vpvl::VertexList &vertices = m_model.vertices();
@@ -340,38 +342,77 @@ void Model::getMeshTransforms(MeshTranforms &boneTransforms,
     const int nmaterials = materials.count();
     btHashMap<btHashInt, int> set;
     btTransform skinningTransform;
+    BoneTransforms transforms;
+    BoneIndices indices;
+    BoneWeights weights;
     for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const int nindices = material->countIndices();
-        BoneTransforms transforms;
-        BoneIndices indices;
-        BoneWeights weights;
+        int boneIndexInteral = 0;
+        transforms.clear();
+        indices.clear();
+        weights.clear();
         for (int j = 0; j < nindices; j++) {
             int vertexIndex = vertexIndices[j];
             vpvl::Vertex *vertex = vertices[vertexIndex];
             int boneIndex1 = vertex->bone1();
-            if (!set.find(boneIndex1)) {
+            int *boneIndex1ValuePtr = set.find(boneIndex1), boneIndex1Value = 0;
+            if (!boneIndex1ValuePtr) {
                 vpvl::Bone *bone = bones[boneIndex1];
                 bone->getSkinTransform(skinningTransform);
                 transforms.push_back(skinningTransform);
-                set.insert(boneIndex1, 0);
+                boneIndex1Value = boneIndexInteral++;
+                set.insert(boneIndex1, boneIndex1Value);
             }
-            indices.push_back(boneIndex1);
+            else {
+                boneIndex1Value = *boneIndex1ValuePtr;
+            }
+            indices.push_back(boneIndex1Value);
             weights.push_back(vertex->weight());
             int boneIndex2 = vertex->bone2();
-            if (!set.find(boneIndex2)) {
+            int *boneIndex2ValuePtr = set.find(boneIndex2), boneIndex2Value = 0;
+            if (!boneIndex2ValuePtr) {
                 vpvl::Bone *bone = bones[boneIndex2];
                 bone->getSkinTransform(skinningTransform);
                 transforms.push_back(skinningTransform);
-                set.insert(boneIndex2, 0);
+                boneIndex2Value = boneIndexInteral++;
+                set.insert(boneIndex2, boneIndex2Value);
             }
-            indices.push_back(boneIndex2);
+            else {
+                boneIndex2Value = *boneIndex2ValuePtr;
+            }
+            indices.push_back(boneIndex2Value);
             weights.push_back(1.0 - vertex->weight());
         }
+        size_t size = transforms.size() * 16;
+        Scalar *matrices = new Scalar[size];
+        memset(matrices, 0, sizeof(Scalar) * size);
         boneTransforms.push_back(transforms);
         boneIndices.push_back(indices);
         boneWeights.push_back(weights);
+        boneMatrices.add(matrices);
         set.clear();
+    }
+}
+
+void Model::updateMeshMatrices(const MeshIndices &boneIndices,
+                               MeshMatrices &boneMatrices) const
+{
+    const vpvl::BoneList &bones = m_model.bones();
+    const int nBoneIndices = boneIndices.size();
+    btTransform transform;
+    for (int i = 0; i < nBoneIndices; i++) {
+        const BoneIndices &indices = boneIndices[i];
+        const int nindices = indices.size();
+        Scalar *matrices = boneMatrices[i];
+        size_t offset = 0;
+        for (int j = 0; j < nindices; j++) {
+            const int index = indices[j];
+            vpvl::Bone *bone = bones[index];
+            bone->getSkinTransform(transform);
+            transform.getOpenGLMatrix(&matrices[offset]);
+            offset += j * 16;
+        }
     }
 }
 

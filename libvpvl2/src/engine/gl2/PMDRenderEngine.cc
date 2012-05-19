@@ -216,7 +216,7 @@ public:
 protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
-        m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonTexCoord");
+        m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
         m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
         m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
         m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
@@ -889,11 +889,21 @@ bool PMDRenderEngine::upload(const IString *dir)
     pmd::Model::MeshTranforms transforms;
     pmd::Model::MeshIndices indices;
     pmd::Model::MeshWeights weights;
-    m_model->getMeshTransforms(transforms, indices, weights);
+    pmd::Model::MeshMatrices matrices;
+    m_model->getMeshTransforms(transforms, indices, weights, matrices);
     for (int i = 0; i < nmaterials; i++) {
-        const pmd::Model::BoneTransforms &tr = transforms[i];
-        qDebug("%d: %d", i, tr.size());
+        const pmd::Model::BoneTransforms &boneTransforms = transforms[i];
+        const int nBoneTransforms = boneTransforms.size();
+        const pmd::Model::BoneIndices &boneIndices = indices[i];
+        const int nindices = boneIndices.size();
+        qDebug("%d: bones = %d indices = %d", i, nBoneTransforms, nindices);
+        for (int j = 0; j < nindices; j++) {
+            int boneIndex = boneIndices[j];
+            if (boneIndex >= nBoneTransforms)
+                qDebug("exceeded index found: %d at [%d][%d]", boneIndex, i, j);
+        }
     }
+    matrices.releaseArrayAll();
 
     return ret;
 }
@@ -948,10 +958,8 @@ void PMDRenderEngine::renderModel()
     const Scalar &modelOpacity = m_model->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0);
     modelProgram->setOpacity(modelOpacity);
-    if (model->isToonEnabled() && (model->isSoftwareSkinningEnabled() || (m_accelerator && m_accelerator->isAvailable()))) {
-        modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
-                                      model->strideSize(PMDModel::kToonTextureStride));
-    }
+    modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
+                                  model->strideSize(PMDModel::kToonTextureStride));
 
     const MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = m_context->materials;

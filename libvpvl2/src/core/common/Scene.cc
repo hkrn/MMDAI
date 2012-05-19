@@ -404,11 +404,12 @@ void Scene::seek(float frameIndex)
 
 void Scene::updateModels()
 {
+    const Vector3 &lightDirection = light()->direction();
     const Array<IModel *> &models = m_context->models;
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         IModel *model = models[i];
-        model->performUpdate();
+        model->performUpdate(lightDirection);
     }
 }
 

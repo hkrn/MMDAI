@@ -575,7 +575,7 @@ void SceneWidget::insertPoseToSelectedModel()
                                                               m_settings),
                                                model);
     if (!ptr.isNull() && model)
-        model->performUpdate();
+        model->performUpdate(m_loader->scene()->light()->direction());
 }
 
 void SceneWidget::setBackgroundImage()
@@ -857,7 +857,7 @@ void SceneWidget::loadFile(const QString &file)
         IModel *model = m_loader->selectedModel();
         VPDFilePtr ptr = insertPoseToSelectedModel(file, model);
         if (!ptr.isNull() && model)
-            model->performUpdate();
+            model->performUpdate(m_loader->scene()->light()->direction());
     }
     /* アクセサリ情報ファイル */
     else if (extension == "vac") {

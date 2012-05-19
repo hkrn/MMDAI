@@ -238,9 +238,9 @@ private:
 class ResetAllCommand : public QUndoCommand
 {
 public:
-    ResetAllCommand(IModel *model)
+    ResetAllCommand(IModel *model, PMDMotionModel *parent)
         : QUndoCommand(),
-          m_state(model)
+          m_state(model, parent)
     {
         /* 全ての頂点モーフの情報を保存しておく */
         m_state.save();
@@ -263,10 +263,10 @@ private:
 class SetMorphCommand : public QUndoCommand
 {
 public:
-    SetMorphCommand(IModel *model, const PMDMotionModel::State &oldState)
+    SetMorphCommand(IModel *model, PMDMotionModel *parent, const PMDMotionModel::State &oldState)
         : QUndoCommand(),
-          m_oldState(0),
-          m_newState(model)
+          m_oldState(0, parent),
+          m_newState(model, parent)
     {
         m_oldState.copyFrom(oldState);
         /* 前と後の全ての頂点モーフの情報を保存しておく */
@@ -304,7 +304,7 @@ static IMorph *UIMorphFromModelIndex(const QModelIndex &index, IModel *model)
 MorphMotionModel::MorphMotionModel(Factory *factory, QUndoGroup *undo, QObject *parent)
     : PMDMotionModel(undo, parent),
       m_factory(factory),
-      m_state(0)
+      m_state(0, this)
 {
 }
 
@@ -397,7 +397,7 @@ void MorphMotionModel::commitTransform()
 {
     /* 状態を圧縮し、モーフ変形があれば SetMorphCommand を作成して UndoStack に追加 */
     if (m_model && m_state.compact())
-        addUndoCommand(new SetMorphCommand(m_model, m_state));
+        addUndoCommand(new SetMorphCommand(m_model, this, m_state));
 }
 
 void MorphMotionModel::selectKeyframesByModelIndices(const QModelIndexList &indices)
@@ -436,7 +436,7 @@ void MorphMotionModel::setKeyframes(const KeyFramePairList &keyframes)
 void MorphMotionModel::resetAllMorphs()
 {
     if (m_model)
-        addUndoCommand(new ResetAllCommand(m_model));
+        addUndoCommand(new ResetAllCommand(m_model, this));
 }
 
 void MorphMotionModel::setPMDModel(IModel *model)
@@ -635,6 +635,6 @@ void MorphMotionModel::setWeight(const Scalar &value, IMorph *morph)
                 m->setWeight(m->weight());
         }
         morph->setWeight(value);
-        m_model->performUpdate();
+        m_model->performUpdate(m_lightDirection);
     }
 }

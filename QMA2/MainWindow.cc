@@ -1264,6 +1264,8 @@ void MainWindow::connectSceneLoader()
     connect(loader ,SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(vpvl2::IModel*,SceneLoader*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_timelineTabWidget, SLOT(setLastSelectedModel(vpvl2::IModel*)));
     connect(loader, SIGNAL(assetDidSelect(vpvl2::IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl2::IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), m_boneMotionModel, SLOT(setLightDirection(vpvl2::Vector3)));
+    connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), m_morphMotionModel, SLOT(setLightDirection(vpvl2::Vector3)));
     connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionShowGrid, SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));

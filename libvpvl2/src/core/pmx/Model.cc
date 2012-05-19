@@ -75,7 +75,7 @@ struct Model::SkinnedVertex {
     SkinnedVertex() {}
     Vector3 position;
     Vector3 normal;
-    Vector3 texcoord;
+    Vector4 texcoord;
     Vector4 uva1;
     Vector4 uva2;
     Vector4 uva3;
@@ -108,23 +108,26 @@ Model::~Model()
 size_t Model::strideOffset(StrideType type)
 {
     static const SkinnedVertex v;
+    static const uint8_t *base = reinterpret_cast<const uint8_t *>(&v.position);
     switch (type) {
     case kVertexStride:
-        return reinterpret_cast<const uint8_t *>(&v.position) - reinterpret_cast<const uint8_t *>(&v.position);
+        return 0;
     case kNormalStride:
-        return reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.normal) - base;
     case kTexCoordStride:
-        return reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.texcoord) - base;
     case kEdgeSizeStride:
-        return reinterpret_cast<const uint8_t *>(&v.normal[3]) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.normal[3]) - base;
+    case kToonCoordSize:
+        return reinterpret_cast<const uint8_t *>(&v.texcoord[2]) - base;
     case kUVA1Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva1) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.uva1) - base;
     case kUVA2Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva2) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.uva2) - base;
     case kUVA3Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva3) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.uva3) - base;
     case kUVA4Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva4) - reinterpret_cast<const uint8_t *>(&v.position);
+        return reinterpret_cast<const uint8_t *>(&v.uva4) - base;
     default:
         return 0;
     }
@@ -137,6 +140,7 @@ size_t Model::strideSize(StrideType type)
     case kNormalStride:
     case kTexCoordStride:
     case kEdgeSizeStride:
+    case kToonCoordSize:
     case kUVA1Stride:
     case kUVA2Stride:
     case kUVA3Stride:
@@ -260,7 +264,7 @@ void Model::resetVertices()
     }
 }
 
-void Model::performUpdate()
+void Model::performUpdate(const Vector3 &lightDirection)
 {
     // update local transform matrix
     const int nbones = m_bones.count();
@@ -303,9 +307,10 @@ void Model::performUpdate()
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = m_vertices[i];
         SkinnedVertex &v = m_skinnedVertices[i];
+        const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
         vertex->performSkinning(v.position, v.normal);
         v.normal[3] = vertex->edgeSize();
-        v.texcoord = vertex->texcoord() + vertex->uv(0);
+        v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5);
         v.uva1 = vertex->uv(1);
         v.uva2 = vertex->uv(2);
         v.uva3 = vertex->uv(3);
@@ -813,17 +818,22 @@ void Model::parseJoints(const DataInfo &info)
 }
 
 void Model::getMeshTransforms(MeshTranforms &boneTransforms,
-                              MeshIndices boneIndices,
-                              MeshWeights boneWeights) const
+                              MeshIndices &boneIndices,
+                              MeshWeights &boneWeights,
+                              MeshMatrices &boneMatrices) const
 {
     const int nmaterials = m_materials.count();
     btHashMap<btHashInt, int> set;
+    BoneTransforms transforms;
+    BoneIndices indices;
+    BoneWeights weights;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = m_materials[i];
         const int nindices = material->indices();
-        BoneTransforms transforms;
-        BoneIndices indices;
-        BoneWeights weights;
+        int boneIndexInteral = 0;
+        transforms.clear();
+        indices.clear();
+        weights.clear();
         for (int j = 0; j < nindices; j++) {
             int vertexIndex = m_skinnedIndices[j];
             Vertex *vertex = m_vertices[vertexIndex];
@@ -831,11 +841,16 @@ void Model::getMeshTransforms(MeshTranforms &boneTransforms,
                 Bone *bone = vertex->bone(k);
                 if (bone) {
                     int boneIndex = bone->index();
-                    if (!set.find(boneIndex)) {
+                    int *boneIndexValuePtr = set.find(boneIndex), boneIndexValue = 0;
+                    if (!boneIndexValuePtr) {
                         transforms.push_back(bone->localTransform());
-                        set.insert(boneIndex, 0);
+                        boneIndexValue = boneIndexInteral++;
+                        set.insert(boneIndex, boneIndexValue);
                     }
-                    indices.push_back(boneIndex);
+                    else {
+                        boneIndexValue = *boneIndexValuePtr;
+                    }
+                    indices.push_back(boneIndexValue);
                     weights.push_back(vertex->weight(0));
                 }
                 else {
@@ -844,10 +859,32 @@ void Model::getMeshTransforms(MeshTranforms &boneTransforms,
                 }
             }
         }
+        size_t size = transforms.size() * 16;
+        Scalar *matrices = new Scalar[size];
+        memset(matrices, 0, sizeof(Scalar) * size);
         boneTransforms.push_back(transforms);
         boneIndices.push_back(indices);
         boneWeights.push_back(weights);
+        boneMatrices.add(matrices);
         set.clear();
+    }
+}
+
+void Model::updateMeshMatrices(const MeshIndices &boneIndices,
+                               MeshMatrices &boneMatrices) const
+{
+    const int nBoneIndices = boneIndices.size();
+    for (int i = 0; i < nBoneIndices; i++) {
+        const BoneIndices &indices = boneIndices[i];
+        const int nindices = indices.size();
+        Scalar *matrices = boneMatrices[i];
+        size_t offset = 0;
+        for (int j = 0; j < nindices; j++) {
+            const int index = indices[j];
+            Bone *bone = m_bones[index];
+            bone->localTransform().getOpenGLMatrix(&matrices[offset]);
+            offset += j * 16;
+        }
     }
 }
 

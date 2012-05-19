@@ -345,9 +345,9 @@ private:
 class ResetAllCommand : public QUndoCommand
 {
 public:
-    ResetAllCommand(IModel *model)
+    ResetAllCommand(IModel *model, PMDMotionModel *parent)
         : QUndoCommand(),
-          m_state(model)
+          m_state(model, parent)
     {
         /* 全てのボーンの情報を保存しておく */
         m_state.save();
@@ -372,10 +372,10 @@ private:
 class SetBoneCommand : public QUndoCommand
 {
 public:
-    SetBoneCommand(IModel *model, const PMDMotionModel::State &state)
+    SetBoneCommand(IModel *model, PMDMotionModel *parent, const PMDMotionModel::State &state)
         : QUndoCommand(),
-          m_oldState(0),
-          m_newState(model)
+          m_oldState(0, parent),
+          m_newState(model, parent)
     {
         m_oldState.copyFrom(state);
         /* 前と後の全てのボーンの情報を保存しておく */
@@ -510,7 +510,7 @@ BoneMotionModel::BoneMotionModel(Factory *factory,
                                  QUndoGroup *undo,
                                  QObject *parent) :
     PMDMotionModel(undo, parent),
-    m_state(0),
+    m_state(0, this),
     m_factory(factory),
     m_viewTransform(Transform::getIdentity())
 {
@@ -676,7 +676,7 @@ void BoneMotionModel::commitTransform()
     if (m_model) {
         /* 状態を圧縮し、ボーン変形があれば SetBoneCommand を作成して UndoStack に追加 */
         if (m_state.compact())
-            addUndoCommand(new SetBoneCommand(m_model, m_state));
+            addUndoCommand(new SetBoneCommand(m_model, this, m_state));
         m_boneTransformStates.clear();
     }
 }
@@ -1025,7 +1025,7 @@ void BoneMotionModel::resetBone(ResetType type)
 void BoneMotionModel::resetAllBones()
 {
     if (m_model)
-        addUndoCommand(new ResetAllCommand(m_model));
+        addUndoCommand(new ResetAllCommand(m_model, this));
 }
 
 void BoneMotionModel::setPosition(int coordinate, float value)
@@ -1052,7 +1052,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
         selected->setPosition(position);
-        m_model->performUpdate();
+        m_model->performUpdate(m_lightDirection);
         emit positionDidChange(selected, lastPosition);
     }
 }
@@ -1081,7 +1081,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
         qFatal("Unexpected coordinate value: %c", coordinate);
     }
     selected->setRotation(rotation);
-    m_model->performUpdate();
+    m_model->performUpdate(m_lightDirection);
     emit rotationDidChange(selected, lastRotation);
 }
 
@@ -1141,7 +1141,7 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
-    m_model->performUpdate();
+    m_model->performUpdate(m_lightDirection);
     emit rotationDidChange(bone, lastRotation);
 }
 
@@ -1175,6 +1175,6 @@ void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
-    m_model->performUpdate();
+    m_model->performUpdate(m_lightDirection);
     emit positionDidChange(bone, position);
 }

@@ -15,11 +15,11 @@ uniform bool hasDepthTexture;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
-attribute vec2 inToonTexCoord;
+attribute vec2 inToonCoord;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
-varying vec2 outToonTexCoord;
+varying vec2 outToonCoord;
 const float kTwo = 2.0;
 const float kOne = 1.0;
 const float kHalf = 0.5;
@@ -44,7 +44,7 @@ void main() {
     outColor.a = materialDiffuse.a;
     outTexCoord.xy = isMainSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;
     outTexCoord.zw = isSubSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;
-    outToonTexCoord = vec2(0, 1.0 + dot(lightPosition, inNormal) * 0.5);
+    outToonCoord = inToonCoord;
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * inPosition;
     }

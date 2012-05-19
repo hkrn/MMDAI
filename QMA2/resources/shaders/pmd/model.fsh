@@ -20,7 +20,7 @@ varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outPosition;
 varying vec4 outShadowCoord;
-varying vec2 outToonTexCoord;
+varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
@@ -50,7 +50,7 @@ void main() {
         }
     }
     if (useToon) {
-        vec3 toonColor = texture2D(toonTexture, outToonTexCoord).rgb;
+        vec3 toonColor = texture2D(toonTexture, outToonCoord).rgb;
         if (hasDepthTexture) {
             const vec2 kToonColorCoord = vec2(kZero, kOne);
             vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;

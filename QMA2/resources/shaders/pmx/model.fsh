@@ -25,7 +25,7 @@ varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
 varying vec4 outUVA1;
-varying vec2 outToonTexCoord;
+varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
@@ -56,7 +56,7 @@ void main() {
     }
     if (useToon) {
         if (hasToonTexture) {
-            vec4 toonColorRGBA = texture2D(toonTexture, outToonTexCoord);
+            vec4 toonColorRGBA = texture2D(toonTexture, outToonCoord);
             vec3 toonColor = toonColorRGBA.rgb * toonTextureBlend.rgb;
             if (hasDepthTexture) {
                 const vec2 kToonColorCoord = vec2(kZero, kOne);

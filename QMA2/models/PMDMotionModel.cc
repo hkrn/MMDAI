@@ -42,8 +42,9 @@
 
 using namespace vpvl2;
 
-PMDMotionModel::State::State(IModel *model)
-    : m_model(model)
+PMDMotionModel::State::State(IModel *model, PMDMotionModel *parent)
+    : m_parent(parent),
+      m_model(model)
 {
 }
 
@@ -65,7 +66,7 @@ void PMDMotionModel::State::restore() const
         IMorph *m = morph.first;
         m->setWeight(morph.second);
     }
-    m_model->performUpdate();
+    m_model->performUpdate(m_parent->lightDirection());
 }
 
 void PMDMotionModel::State::save()
@@ -137,7 +138,7 @@ void PMDMotionModel::State::resetBones()
         bone->setPosition(kZeroV3);
         bone->setRotation(Quaternion::getIdentity());
     }
-    m_model->performUpdate();
+    m_model->performUpdate(m_parent->lightDirection());
 }
 
 void PMDMotionModel::State::resetMorphs()
@@ -150,12 +151,13 @@ void PMDMotionModel::State::resetMorphs()
         IMorph *morph = morphs[i];
         morph->setWeight(0);
     }
-    m_model->performUpdate();
+    m_model->performUpdate(m_parent->lightDirection());
 }
 
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
-    m_model(0)
+    m_model(0),
+    m_lightDirection(kZeroV3)
 {
     /* 空のモデルのデータを予め入れておく */
     m_roots.insert(0, RootPtr(0));
@@ -227,10 +229,15 @@ void PMDMotionModel::markAsNew(IModel *model)
         setModified(false);
 }
 
+void PMDMotionModel::setLightDirection(const Vector3 &value)
+{
+    m_lightDirection = value;
+}
+
 void PMDMotionModel::updateModel(IModel *model)
 {
     if (model) {
-        model->performUpdate();
+        model->performUpdate(m_lightDirection);
         emit frameIndexDidChange(m_frameIndex, m_frameIndex);
     }
 }
