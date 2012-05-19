@@ -1,0 +1,22 @@
+; * 実行バイナリと同じディレクトリに config.ini として配置する
+; * ";" または "#" はコメント行として無視される
+; 以下 ";" がついている設定は省略可能であり、値はデフォルト値となっている
+
+; window.width = 640
+; window.height = 480
+; scene.fps = 30
+; scene.znear = 1.0
+; scene.zfar = 10000.0
+
+dir.model = ./res/lat
+dir.motion = ./res
+dir.camera = ./res
+
+; dir.system.toon = ../../QMA2/resources/images
+; dir.system.kernels = ../../QMA2/resources/kernels
+; dir.system.shaders = ../../QMA2/resources/shaders
+
+file.model = miku.pmx
+file.motion = motion.vmd
+file.camera = camera.vmd
+
