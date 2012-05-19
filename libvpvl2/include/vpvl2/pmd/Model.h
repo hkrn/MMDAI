@@ -104,6 +104,16 @@ public:
 
     vpvl::PMDModel *ptr() { return &m_model; }
 
+    typedef btAlignedObjectArray<Transform> BoneTransforms;
+    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<float> BoneWeights;
+    typedef btAlignedObjectArray<BoneTransforms> MeshTranforms;
+    typedef btAlignedObjectArray<BoneIndices> MeshIndices;
+    typedef btAlignedObjectArray<BoneWeights> MeshWeights;
+    void getMeshTransforms(MeshTranforms &boneTransforms,
+                           MeshIndices boneIndices,
+                           MeshWeights boneWeights) const;
+
 private:
     IEncoding *m_encoding;
     IString *m_name;

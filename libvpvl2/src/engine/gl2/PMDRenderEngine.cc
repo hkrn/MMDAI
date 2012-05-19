@@ -885,6 +885,16 @@ bool PMDRenderEngine::upload(const IString *dir)
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", modelName->toByteArray());
     delete modelName;
     m_delegate->releaseContext(m_model, context);
+
+    pmd::Model::MeshTranforms transforms;
+    pmd::Model::MeshIndices indices;
+    pmd::Model::MeshWeights weights;
+    m_model->getMeshTransforms(transforms, indices, weights);
+    for (int i = 0; i < nmaterials; i++) {
+        const pmd::Model::BoneTransforms &tr = transforms[i];
+        qDebug("%d: %d", i, tr.size());
+    }
+
     return ret;
 }
 

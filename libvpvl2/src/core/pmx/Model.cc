@@ -812,5 +812,44 @@ void Model::parseJoints(const DataInfo &info)
     }
 }
 
+void Model::getMeshTransforms(MeshTranforms &boneTransforms,
+                              MeshIndices boneIndices,
+                              MeshWeights boneWeights) const
+{
+    const int nmaterials = m_materials.count();
+    btHashMap<btHashInt, int> set;
+    for (int i = 0; i < nmaterials; i++) {
+        const Material *material = m_materials[i];
+        const int nindices = material->indices();
+        BoneTransforms transforms;
+        BoneIndices indices;
+        BoneWeights weights;
+        for (int j = 0; j < nindices; j++) {
+            int vertexIndex = m_skinnedIndices[j];
+            Vertex *vertex = m_vertices[vertexIndex];
+            for (int k = 0; k < 4; k++) {
+                Bone *bone = vertex->bone(k);
+                if (bone) {
+                    int boneIndex = bone->index();
+                    if (!set.find(boneIndex)) {
+                        transforms.push_back(bone->localTransform());
+                        set.insert(boneIndex, 0);
+                    }
+                    indices.push_back(boneIndex);
+                    weights.push_back(vertex->weight(0));
+                }
+                else {
+                    indices.push_back(-1);
+                    weights.push_back(0.0);
+                }
+            }
+        }
+        boneTransforms.push_back(transforms);
+        boneIndices.push_back(indices);
+        boneWeights.push_back(weights);
+        set.clear();
+    }
+}
+
 }
 }

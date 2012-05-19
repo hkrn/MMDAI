@@ -329,5 +329,51 @@ void Model::setEdgeWidth(const Scalar &value)
     m_edgeWidth = value;
 }
 
+void Model::getMeshTransforms(MeshTranforms &boneTransforms,
+                              MeshIndices boneIndices,
+                              MeshWeights boneWeights) const
+{
+    const vpvl::MaterialList &materials = m_model.materials();
+    const vpvl::VertexList &vertices = m_model.vertices();
+    const vpvl::IndexList &vertexIndices = m_model.indices();
+    const vpvl::BoneList &bones = m_model.bones();
+    const int nmaterials = materials.count();
+    btHashMap<btHashInt, int> set;
+    btTransform skinningTransform;
+    for (int i = 0; i < nmaterials; i++) {
+        const vpvl::Material *material = materials[i];
+        const int nindices = material->countIndices();
+        BoneTransforms transforms;
+        BoneIndices indices;
+        BoneWeights weights;
+        for (int j = 0; j < nindices; j++) {
+            int vertexIndex = vertexIndices[j];
+            vpvl::Vertex *vertex = vertices[vertexIndex];
+            int boneIndex1 = vertex->bone1();
+            if (!set.find(boneIndex1)) {
+                vpvl::Bone *bone = bones[boneIndex1];
+                bone->getSkinTransform(skinningTransform);
+                transforms.push_back(skinningTransform);
+                set.insert(boneIndex1, 0);
+            }
+            indices.push_back(boneIndex1);
+            weights.push_back(vertex->weight());
+            int boneIndex2 = vertex->bone2();
+            if (!set.find(boneIndex2)) {
+                vpvl::Bone *bone = bones[boneIndex2];
+                bone->getSkinTransform(skinningTransform);
+                transforms.push_back(skinningTransform);
+                set.insert(boneIndex2, 0);
+            }
+            indices.push_back(boneIndex2);
+            weights.push_back(1.0 - vertex->weight());
+        }
+        boneTransforms.push_back(transforms);
+        boneIndices.push_back(indices);
+        boneWeights.push_back(weights);
+        set.clear();
+    }
+}
+
 }
 }

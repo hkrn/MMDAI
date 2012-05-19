@@ -196,6 +196,15 @@ public:
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 
+    typedef btAlignedObjectArray<Transform> BoneTransforms;
+    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<float> BoneWeights;
+    typedef btAlignedObjectArray<BoneTransforms> MeshTranforms;
+    typedef btAlignedObjectArray<BoneIndices> MeshIndices;
+    typedef btAlignedObjectArray<BoneWeights> MeshWeights;
+    void getMeshTransforms(MeshTranforms &boneTransforms,
+                           MeshIndices boneIndices,
+                           MeshWeights boneWeights) const;
 private:
     void release();
     void parseNamesAndComments(const DataInfo &info);

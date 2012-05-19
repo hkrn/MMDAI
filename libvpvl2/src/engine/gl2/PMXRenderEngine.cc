@@ -932,6 +932,16 @@ bool PMXRenderEngine::upload(const IString *dir)
     update();
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_model->name()->toByteArray());
     m_delegate->releaseContext(m_model, context);
+
+    pmx::Model::MeshTranforms transforms;
+    pmx::Model::MeshIndices indices;
+    pmx::Model::MeshWeights weights;
+    m_model->getMeshTransforms(transforms, indices, weights);
+    for (int i = 0; i < nmaterials; i++) {
+        const pmx::Model::BoneTransforms &tr = transforms[i];
+        qDebug("%s: %d", materials[i]->name()->toByteArray(), tr.size());
+    }
+
     return ret;
 }
 
