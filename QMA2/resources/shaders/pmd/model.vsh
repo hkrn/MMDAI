@@ -27,8 +27,9 @@ const vec3 kOne3 = vec3(kOne, kOne, kOne);
 
 vec2 makeSphereMap(const vec3 position, const vec3 normal) {
     vec3 R = reflect(position, normal);
-    float M = kTwo * sqrt(R.x * R.x + R.y * R.y + (R.z + kOne) * (R.z + kOne));
-    return vec2(R.x / M + kHalf, R.y / M + kHalf);
+    R.z += kOne;
+    float M = kTwo * sqrt(dot(R, R));
+    return R.xy / M + kHalf;
 }
 
 void main() {
