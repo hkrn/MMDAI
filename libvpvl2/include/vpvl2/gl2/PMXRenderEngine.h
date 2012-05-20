@@ -64,8 +64,10 @@ namespace vpvl2
 
 class Scene;
 
-namespace pmx
-{
+namespace cl {
+class PMXAccelerator;
+}
+namespace pmx {
 class Model;
 }
 
@@ -80,7 +82,10 @@ class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
 public:
     class PrivateContext;
 
-    PMXRenderEngine(IRenderDelegate *delegate, const Scene *scene, pmx::Model *model);
+    PMXRenderEngine(IRenderDelegate *delegate,
+                    const Scene *scene,
+                    cl::PMXAccelerator *accelerator,
+                    pmx::Model *model);
     virtual ~PMXRenderEngine();
 
     IModel *model() const;
@@ -101,12 +106,10 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    class Accelerator;
-
     const Scene *m_scene;
+    cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_model;
     PrivateContext *m_context;
-    Accelerator *m_accelerator;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

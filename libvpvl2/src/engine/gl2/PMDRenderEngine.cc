@@ -37,10 +37,14 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/gl2/PMDRenderEngine.h"
 
 #include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/pmd/Model.h"
+#ifdef VPVL2_ENABLE_OPENCL
+#include "vpvl2/cl/Context.h"
+#include "vpvl2/cl/PMDAccelerator.h"
+#endif
 
 #include "EngineCommon.h"
 
@@ -297,24 +301,7 @@ public:
           zplotProgram(0),
           hasSingleSphereMap(false),
           hasMultipleSphereMap(false),
-          materials(0)
-    #ifdef VPVL2_ENABLE_OPENCL
-        ,
-          vertexBufferForCL(0),
-          boneMatricesBuffer(0),
-          originMatricesBuffer(0),
-          outputMatricesBuffer(0),
-          weightsBuffer(0),
-          bone1IndicesBuffer(0),
-          bone2IndicesBuffer(0),
-          weights(0),
-          boneTransform(0),
-          originTransform(0),
-          bone1Indices(0),
-          bone2Indices(0),
-          isBufferAllocated(false)
-    #endif /* VPVL2_ENABLE_OPENCL */
-        ,
+          materials(0),
           cullFaceState(true)
     {
     }
@@ -331,21 +318,6 @@ public:
         shadowProgram = 0;
         delete zplotProgram;
         zplotProgram = 0;
-#ifdef VPVL2_ENABLE_OPENCL
-        delete[] boneTransform;
-        delete[] originTransform;
-        delete[] bone1Indices;
-        delete[] bone2Indices;
-        delete[] weights;
-        clReleaseMemObject(vertexBufferForCL);
-        clReleaseMemObject(boneMatricesBuffer);
-        clReleaseMemObject(originMatricesBuffer);
-        clReleaseMemObject(outputMatricesBuffer);
-        clReleaseMemObject(bone1IndicesBuffer);
-        clReleaseMemObject(bone2IndicesBuffer);
-        clReleaseMemObject(weightsBuffer);
-        isBufferAllocated = false;
-#endif /* VPVL2_ENABLE_OPENCL */
         cullFaceState = false;
     }
 
@@ -378,353 +350,13 @@ public:
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
     PMDModelMaterialPrivate *materials;
-#ifdef VPVL2_ENABLE_OPENCL
-    cl_mem vertexBufferForCL;
-    cl_mem boneMatricesBuffer;
-    cl_mem originMatricesBuffer;
-    cl_mem outputMatricesBuffer;
-    cl_mem weightsBuffer;
-    cl_mem bone1IndicesBuffer;
-    cl_mem bone2IndicesBuffer;
-    size_t localWGSizeForUpdateBoneMatrices;
-    size_t localWGSizeForPerformSkinning;
-    float *weights;
-    float *boneTransform;
-    float *originTransform;
-    int *bone1Indices;
-    int *bone2Indices;
-    bool isBufferAllocated;
-#endif
     bool cullFaceState;
 };
 
-#ifdef VPVL2_ENABLE_OPENCL
-class PMDRenderEngine::Accelerator : public BaseAccelerator
-{
-public:
-    Accelerator(IRenderDelegate *delegate)
-        : BaseAccelerator(delegate),
-          m_updateBoneMatricesKernel(0),
-          m_performSkinningKernel(0)
-    {
-    }
-    ~Accelerator() {
-        clReleaseKernel(m_performSkinningKernel);
-        m_performSkinningKernel = 0;
-        clReleaseKernel(m_updateBoneMatricesKernel);
-        m_updateBoneMatricesKernel = 0;
-    }
-
-    bool createKernelPrograms() {
-        if (!m_context)
-            return false;
-        cl_int err;
-        const IString *source = m_delegate->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
-        const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
-        const size_t sourceSize = source->length();
-        clReleaseProgram(m_program);
-        m_program = clCreateProgramWithSource(m_context, 1, &sourceText, &sourceSize, &err);
-        delete source;
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed creating an OpenCL program: %d", err);
-            return false;
-        }
-        const char *flags = "-cl-mad-enable -DMAC -DGUID_ARG";
-        err = clBuildProgram(m_program, 1, &m_device, flags, 0, 0);
-        if (err != CL_SUCCESS) {
-            size_t buildLogSize;
-            clGetProgramBuildInfo(m_program, m_device, CL_PROGRAM_BUILD_LOG, 0, 0, &buildLogSize);
-            cl_char *buildLog = new cl_char[buildLogSize + 1];
-            clGetProgramBuildInfo(m_program, m_device, CL_PROGRAM_BUILD_LOG, buildLogSize, buildLog, 0);
-            buildLog[buildLogSize] = 0;
-            log0(0, IRenderDelegate::kLogWarning, "Failed building a program: %s", buildLog);
-            delete[] buildLog;
-            return false;
-        }
-        clReleaseKernel(m_updateBoneMatricesKernel);
-        m_updateBoneMatricesKernel = clCreateKernel(m_program, "updateBoneMatrices", &err);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed creating a kernel: %d", err);
-            return false;
-        }
-        clReleaseKernel(m_performSkinningKernel);
-        m_performSkinningKernel = clCreateKernel(m_program, "performSkinning", &err);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed creating a kernel: %d", err);
-            return false;
-        }
-        return true;
-    }
-    void uploadModel(PMDRenderEngine::PrivateContext *userData, const PMDModel *model, void *context) {
-        if (!isAvailable())
-            return;
-        cl_int err;
-        userData->vertexBufferForCL = clCreateFromGLBuffer(m_context,
-                                                           CL_MEM_READ_WRITE,
-                                                           userData->vertexBufferObjects[kModelVertices],
-                                                           &err);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed creating OpenCL vertex buffer: %d", err);
-            return;
-        }
-        const int nBoneMatricesAllocs = model->bones().count() << 4;
-        const int nBoneMatricesSize = nBoneMatricesAllocs * sizeof(float);
-        userData->boneTransform = new float[nBoneMatricesAllocs];
-        userData->originTransform = new float[nBoneMatricesAllocs];
-        const VertexList &vertices = model->vertices();
-        const int nVerticesAlloc = vertices.count();
-        userData->bone1Indices = new int[nVerticesAlloc];
-        userData->bone2Indices = new int[nVerticesAlloc];
-        userData->weights = new float[nVerticesAlloc];
-        for (int i = 0; i < nVerticesAlloc; i++) {
-            const Vertex *vertex = vertices[i];
-            userData->bone1Indices[i] = vertex->bone1();
-            userData->bone2Indices[i] = vertex->bone2();
-            userData->weights[i] = vertex->weight();
-        }
-        userData->boneMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
-            return;
-        }
-        userData->originMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed creating originMatricesBuffer: %d", err);
-            return;
-        }
-        userData->outputMatricesBuffer = clCreateBuffer(m_context, CL_MEM_READ_WRITE, nBoneMatricesSize, 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed creating outputMatricesBuffer %d", err);
-            return;
-        }
-        userData->weightsBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(float), 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed creating weightsBuffer: %d", err);
-            return;
-        }
-        userData->bone1IndicesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed creating bone1IndicesBuffer: %d", err);
-        }
-        userData->bone2IndicesBuffer = clCreateBuffer(m_context, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed creating bone2IndicesBuffer: %d", err);
-            return;
-        }
-        err = clGetKernelWorkGroupInfo(m_updateBoneMatricesKernel,
-                                       m_device,
-                                       CL_KERNEL_WORK_GROUP_SIZE,
-                                       sizeof(userData->localWGSizeForUpdateBoneMatrices),
-                                       &userData->localWGSizeForUpdateBoneMatrices,
-                                       0);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
-            return;
-        }
-        err = clGetKernelWorkGroupInfo(m_performSkinningKernel,
-                                       m_device,
-                                       CL_KERNEL_WORK_GROUP_SIZE,
-                                       sizeof(userData->localWGSizeForPerformSkinning),
-                                       &userData->localWGSizeForPerformSkinning,
-                                       0);
-        if (err != CL_SUCCESS) {
-            log0(context, IRenderDelegate::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
-            return;
-        }
-        userData->isBufferAllocated = true;
-    }
-    void updateModel(PMDRenderEngine::PrivateContext *userData, PMDModel *model) {
-        if (!isAvailable() || !userData->isBufferAllocated)
-            return;
-        const BoneList &bones = model->bones();
-        const int nbones = bones.count();
-        Transform transform = Transform::getIdentity();
-        for (int i = 0; i < nbones; i++) {
-            Bone *bone = bones[i];
-            int index = i << 4;
-#define SOFTWARE_BONE_TRANSFORM
-#ifndef SOFTWARE_BONE_TRANSFORM
-            bone->localTransform().getOpenGLMatrix(&userData->boneTransform[index]);
-            transform.setOrigin(bone->originPosition());
-            transform.getOpenGLMatrix(&userData->originTransform[index]);
-#else
-            bone->getSkinTransform(transform);
-            transform.getOpenGLMatrix(&userData->boneTransform[index]);
-#endif
-        }
-        size_t nsize = (nbones * sizeof(float)) << 4;
-        cl_int err;
-#ifndef SOFTWARE_BONE_TRANSFORM
-        err = clEnqueueWriteBuffer(m_queue, userData->boneMatricesBuffer, CL_TRUE, 0, nsize, userData->boneTransform, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write bone matrices buffer: %d", err);
-            return;
-        }
-        err = clEnqueueWriteBuffer(m_queue, userData->originMatricesBuffer, CL_TRUE, 0, nsize, userData->originTransform, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write origin matrices buffer: %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_updateBoneMatricesKernel, 0, sizeof(userData->boneMatricesBuffer), &userData->boneMatricesBuffer);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 1st argument of kernel (boneMatricesBuffer): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_updateBoneMatricesKernel, 1, sizeof(userData->originMatricesBuffer), &userData->originMatricesBuffer);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 2nd argument of kernel (originMatricesBuffer): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_updateBoneMatricesKernel, 2, sizeof(int), &nbones);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 3th argument of kernel (nbones): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_updateBoneMatricesKernel, 3, sizeof(userData->outputMatricesBuffer), &userData->outputMatricesBuffer);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 4rd argument of kernel (outputMatricesBuffer): %d", err);
-            return;
-        }
-        size_t local = userData->localWGSizeForUpdateBoneMatrices;
-        size_t global = local * ((nbones + (local - 1)) / local);
-        err = clEnqueueNDRangeKernel(m_queue, m_updateBoneMatricesKernel, 1, 0, &global, &local, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue executing kernel");
-            return;
-        }
-        clFinish(m_queue);
-#else
-        size_t local, global;
-        err = clEnqueueWriteBuffer(m_queue, userData->outputMatricesBuffer, CL_TRUE, 0, nsize, userData->boneTransform, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write output matrices buffer: %d", err);
-            return;
-        }
-#endif
-        /* force flushing OpenGL commands to acquire GL objects by OpenCL */
-        glFinish();
-        clEnqueueAcquireGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
-        int nvertices = model->vertices().count();
-        err = clEnqueueWriteBuffer(m_queue, userData->bone1IndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int), userData->bone1Indices, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write bone1 indices buffer: %d", err);
-            return;
-        }
-        err = clEnqueueWriteBuffer(m_queue, userData->bone2IndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int), userData->bone2Indices, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write bone2 indices buffer: %d", err);
-            return;
-        }
-        err = clEnqueueWriteBuffer(m_queue, userData->weightsBuffer, CL_TRUE, 0, nvertices * sizeof(float), userData->weights, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write weights buffer: %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_performSkinningKernel, 0, sizeof(userData->outputMatricesBuffer), &userData->outputMatricesBuffer);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 1st argument of kernel (skinningMatrices): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_performSkinningKernel, 1, sizeof(userData->weightsBuffer), &userData->weightsBuffer);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 2nd argument of kernel (weights): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_performSkinningKernel, 2, sizeof(userData->bone1IndicesBuffer), &userData->bone1IndicesBuffer);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 3rd argument of kernel (bone1Indices): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_performSkinningKernel, 3, sizeof(userData->bone2IndicesBuffer), &userData->bone2IndicesBuffer);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 4th argument of kernel (bone2Indices): %d", err);
-            return;
-        }
-        const Vector3 &lightDirection = -model->lightPosition();
-        err = clSetKernelArg(m_performSkinningKernel, 4, sizeof(lightDirection), &lightDirection);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 5th argument of kernel (lightDirection): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_performSkinningKernel, 5, sizeof(nvertices), &nvertices);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 6th argument of kernel (nvertices): %d", err);
-            return;
-        }
-        size_t strideSize = model->strideSize(PMDModel::kVerticesStride) >> 4;
-        err = clSetKernelArg(m_performSkinningKernel, 6, sizeof(strideSize), &strideSize);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 7th argument of kernel (strideSize): %d", err);
-            return;
-        }
-        size_t offsetPosition = model->strideOffset(PMDModel::kVerticesStride) >> 4;
-        err = clSetKernelArg(m_performSkinningKernel, 7, sizeof(offsetPosition), &offsetPosition);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 8th argument of kernel (offsetPosition): %d", err);
-            return;
-        }
-        size_t offsetNormal = model->strideOffset(PMDModel::kNormalsStride) >> 4;
-        err = clSetKernelArg(m_performSkinningKernel, 8, sizeof(offsetNormal), &offsetNormal);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 9th argument of kernel (offsetNormal): %d", err);
-            return;
-        }
-        size_t offsetToonTexture = model->strideOffset(PMDModel::kToonTextureStride) >> 4;
-        err = clSetKernelArg(m_performSkinningKernel, 9, sizeof(offsetToonTexture), &offsetToonTexture);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 10th argument of kernel (offsetTexCoord): %d", err);
-            return;
-        }
-        size_t offsetEdge = model->strideOffset(PMDModel::kEdgeVerticesStride) >> 4;
-        err = clSetKernelArg(m_performSkinningKernel, 10, sizeof(offsetEdge), &offsetEdge);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 11th argument of kernel (offsetEdge): %d", err);
-            return;
-        }
-        err = clSetKernelArg(m_performSkinningKernel, 11, sizeof(userData->vertexBufferForCL), &userData->vertexBufferForCL);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed setting 12th argument of kernel (vertices): %d", err);
-            return;
-        }
-        local = userData->localWGSizeForUpdateBoneMatrices;
-        global = local * ((nvertices + (local - 1)) / local);
-        err = clEnqueueNDRangeKernel(m_queue, m_performSkinningKernel, 1, 0, &global, &local, 0, 0, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed enqueue executing kernel: %d", err);
-            return;
-        }
-        clEnqueueReleaseGLObjects(m_queue, 1, &userData->vertexBufferForCL, 0, 0, 0);
-        clFinish(m_queue);
-    }
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
-        va_list ap;
-        va_start(ap, format);
-        m_delegate->log(context, level, format, ap);
-        va_end(ap);
-    }
-
-private:
-    cl_kernel m_updateBoneMatricesKernel;
-    cl_kernel m_performSkinningKernel;
-};
-#else
-class PMDRenderEngine::Accelerator : public BaseAccelerator {
-public:
-    static void initializeUserData(PMDRenderEngine::PrivateContext * /* userData */) {}
-
-    Accelerator(IRenderDelegate *delegate) : BaseAccelerator(delegate) {}
-    ~Accelerator() {}
-
-    void uploadModel(PrivateContext * /* userData */, const PMDModel * /* model */, void * /* context */) {
-    }
-    void deleteModel(PrivateContext * /* userData */) {
-    }
-    void updateModel(PrivateContext * /* userData */, PMDModel * /* model */) {
-    }
-};
-#endif
-
-PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate, const Scene *scene, pmd::Model *model)
+PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
+                                 const Scene *scene,
+                                 cl::PMDAccelerator *accelerator,
+                                 pmd::Model *model)
 #ifdef VPVL_LINK_QT
     : QGLFunctions(),
       #else
@@ -732,9 +364,9 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate, const Scene *scene, 
       #endif /* VPVL_LINK_QT */
       m_delegate(delegate),
       m_scene(scene),
+      m_accelerator(accelerator),
       m_model(model),
-      m_context(0),
-      m_accelerator(0)
+      m_context(0)
 {
     m_context = new PrivateContext();
 }
@@ -746,8 +378,10 @@ PMDRenderEngine::~PMDRenderEngine()
         delete m_context;
         m_context = 0;
     }
+#ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
     m_accelerator = 0;
+#endif
     m_model = 0;
     m_delegate = 0;
     m_scene = 0;
@@ -762,6 +396,8 @@ bool PMDRenderEngine::upload(const IString *dir)
 {
     bool ret = true;
     void *context = 0;
+    if (!m_context)
+        m_context = new PrivateContext();
     m_delegate->allocateContext(m_model, context);
     EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_delegate);
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegate);
@@ -785,8 +421,11 @@ bool PMDRenderEngine::upload(const IString *dir)
     ret = edgeProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
-    if (!ret)
+    if (!ret) {
+        delete m_context;
+        m_context = 0;
         return ret;
+    }
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, context);
     modelProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
@@ -794,8 +433,11 @@ bool PMDRenderEngine::upload(const IString *dir)
     ret = modelProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
-    if (!ret)
+    if (!ret) {
+        delete m_context;
+        m_context = 0;
         return ret;
+    }
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowFragmentShader, m_model, context);
     shadowProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
@@ -803,8 +445,11 @@ bool PMDRenderEngine::upload(const IString *dir)
     ret = shadowProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
-    if (!ret)
+    if (!ret) {
+        delete m_context;
+        m_context = 0;
         return ret;
+    }
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, context);
     zplotProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
@@ -812,8 +457,11 @@ bool PMDRenderEngine::upload(const IString *dir)
     ret = zplotProgram->linkProgram(context);
     delete vertexShaderSource;
     delete fragmentShaderSource;
-    if (!ret)
+    if (!ret) {
+        delete m_context;
+        m_context = 0;
         return ret;
+    }
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
@@ -876,34 +524,16 @@ bool PMDRenderEngine::upload(const IString *dir)
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
-    //model->setSoftwareSkinningEnable(m_scene->isSoftwareSkinningEnabled());
-    if (m_accelerator)
-        m_accelerator->uploadModel(m_context, model, context);
+#ifdef VPVL2_ENABLE_OPENCL
+    if (m_accelerator && m_accelerator->isAvailable())
+        m_accelerator->uploadModel(m_model, m_context->vertexBufferObjects[kModelVertices], context);
+#endif
     model->updateImmediate();
     update();
     IString *modelName = m_delegate->toUnicode(model->name());
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", modelName->toByteArray());
     delete modelName;
     m_delegate->releaseContext(m_model, context);
-
-    pmd::Model::MeshTranforms transforms;
-    pmd::Model::MeshIndices indices;
-    pmd::Model::MeshWeights weights;
-    pmd::Model::MeshMatrices matrices;
-    m_model->getMeshTransforms(transforms, indices, weights, matrices);
-    for (int i = 0; i < nmaterials; i++) {
-        const pmd::Model::BoneTransforms &boneTransforms = transforms[i];
-        const int nBoneTransforms = boneTransforms.size();
-        const pmd::Model::BoneIndices &boneIndices = indices[i];
-        const int nindices = boneIndices.size();
-        qDebug("%d: bones = %d indices = %d", i, nBoneTransforms, nindices);
-        for (int j = 0; j < nindices; j++) {
-            int boneIndex = boneIndices[j];
-            if (boneIndex >= nBoneTransforms)
-                qDebug("exceeded index found: %d at [%d][%d]", boneIndex, i, j);
-        }
-    }
-    matrices.releaseArrayAll();
 
     return ret;
 }
@@ -919,13 +549,15 @@ void PMDRenderEngine::update()
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBufferSubData(GL_ARRAY_BUFFER, 0, nvertices * strideSize, model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    if (m_accelerator)
-        m_accelerator->updateModel(m_context, model);
+#ifdef VPVL2_ENABLE_OPENCL
+    if (m_accelerator && m_accelerator->isAvailable())
+        m_accelerator->updateModel(m_model);
+#endif
 }
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model->isVisible())
+    if (!m_model->isVisible() || !m_context)
         return;
     PMDModel *model = m_model->ptr();
     ModelProgram *modelProgram = m_context->modelProgram;
@@ -1019,7 +651,7 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderShadow()
 {
-    if (!m_model->isVisible())
+    if (!m_model->isVisible() || !m_context)
         return;
     static const Vector3 plane(0.0f, 1.0f, 0.0f);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -1056,7 +688,7 @@ void PMDRenderEngine::renderShadow()
 
 void PMDRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible())
+    if (!m_model->isVisible() || !m_context)
         return;
     ZPlotProgram *zplotProgram = m_context->zplotProgram;
     PMDModel *model = m_model->ptr();
@@ -1085,7 +717,7 @@ void PMDRenderEngine::renderZPlot()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()))
+    if (!m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()) || !m_context)
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     PMDModel *model = m_model->ptr();
@@ -1097,6 +729,7 @@ void PMDRenderEngine::renderEdge()
     float matrix4x4[16];
     m_scene->matrices()->getModelViewProjection(matrix4x4);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
+    /*
     if (!model->isSoftwareSkinningEnabled() && !(m_accelerator && m_accelerator->isAvailable())) {
         edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                                  model->strideSize(PMDModel::kVerticesStride));
@@ -1111,26 +744,13 @@ void PMDRenderEngine::renderEdge()
         edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
                                  model->strideSize(PMDModel::kEdgeVerticesStride));
     }
+    */
+    edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
+                             model->strideSize(PMDModel::kEdgeVerticesStride));
     glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     glCullFace(GL_BACK);
     edgeProgram->unbind();
-}
-
-bool PMDRenderEngine::isAcceleratorAvailable() const
-{
-    return Scene::isAcceleratorSupported() && m_accelerator ? m_accelerator->isAvailable() : false;
-}
-
-bool PMDRenderEngine::initializeAccelerator()
-{
-    if (m_accelerator)
-        return true;
-    if (Scene::isAcceleratorSupported()) {
-        m_accelerator = new Accelerator(m_delegate);
-        return m_accelerator->initializeContext() && m_accelerator->createKernelPrograms();
-    }
-    return false;
 }
 
 void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)

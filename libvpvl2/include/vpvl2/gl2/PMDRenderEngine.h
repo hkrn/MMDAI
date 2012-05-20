@@ -64,8 +64,10 @@ namespace vpvl2
 
 class Scene;
 
-namespace pmd
-{
+namespace cl {
+class PMDAccelerator;
+}
+namespace pmd {
 class Model;
 }
 
@@ -80,7 +82,10 @@ class VPVL2_API PMDRenderEngine : public vpvl2::IRenderEngine
 public:
     class PrivateContext;
 
-    PMDRenderEngine(IRenderDelegate *delegate, const Scene *scene, pmd::Model *model);
+    PMDRenderEngine(IRenderDelegate *delegate,
+                    const Scene *scene,
+                    cl::PMDAccelerator *accelerator,
+                    pmd::Model *model);
     virtual ~PMDRenderEngine();
 
     IModel *model() const;
@@ -92,22 +97,16 @@ public:
     void renderShadow();
     void renderZPlot();
 
-    //static bool isAcceleratorSupported();
-    bool isAcceleratorAvailable() const;
-    bool initializeAccelerator();
-
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
     IRenderDelegate *m_delegate;
 
 private:
-    class Accelerator;
-
     const Scene *m_scene;
+    cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_model;
     PrivateContext *m_context;
-    Accelerator *m_accelerator;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMDRenderEngine)
 };

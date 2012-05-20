@@ -45,6 +45,20 @@
 #include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
 
+#ifdef VPVL2_ENABLE_OPENCL
+#include "vpvl2/cl/Context.h"
+#include "vpvl2/cl/PMDAccelerator.h"
+#include "vpvl2/cl/PMXAccelerator.h"
+#else
+namespace vpvl2 {
+namespace cl {
+class Context;
+class PMDAccelerator;
+class PMXAccelerator;
+}
+}
+#endif
+
 namespace
 {
 
@@ -222,15 +236,47 @@ namespace vpvl2
 
 struct Scene::PrivateContext {
     PrivateContext()
-        : preferredFPS(Scene::defaultFPS())
+        : computeContext(0),
+          preferredFPS(Scene::defaultFPS())
     {
     }
     ~PrivateContext() {
+#ifdef VPVL2_ENABLE_OPENCL
+        delete computeContext;
+#endif
+        computeContext = 0;
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
     }
 
+    cl::Context *createComputeContext(IRenderDelegate *delegate) {
+#ifdef VPVL2_ENABLE_OPENCL
+        if (!computeContext) {
+            computeContext = new cl::Context(delegate);
+            computeContext->initializeContext();
+        }
+#endif
+        return computeContext;
+    }
+    cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
+        cl::PMDAccelerator *accelerator = 0;
+#ifdef VPVL2_ENABLE_OPENCL
+        accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
+        accelerator->createKernelProgram();
+#endif
+        return accelerator;
+    }
+    cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
+        cl::PMXAccelerator *accelerator = 0;
+#ifdef VPVL2_ENABLE_OPENCL
+        accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
+        accelerator->createKernelProgram();
+#endif
+        return accelerator;
+    }
+
+    cl::Context *computeContext;
     Hash<HashPtr, IRenderEngine *> model2engine;
     Array<IModel *> models;
     Array<IMotion *> motions;
@@ -283,17 +329,22 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
 {
     IRenderEngine *engine = 0;
     switch (model->type()) {
-    case IModel::kAsset:
+    case IModel::kAsset: {
 #ifdef VPVL2_LINK_ASSIMP
         engine = new gl2::AssetRenderEngine(delegate, this, static_cast<asset::Model *>(model));
 #endif
         break;
-    case IModel::kPMD:
-        engine = new gl2::PMDRenderEngine(delegate, this, static_cast<pmd::Model *>(model));
+    }
+    case IModel::kPMD: {
+        cl::PMDAccelerator *accelerator = m_context->createPMDAccelerator(delegate);
+        engine = new gl2::PMDRenderEngine(delegate, this, accelerator, static_cast<pmd::Model *>(model));
         break;
-    case IModel::kPMX:
-        engine = new gl2::PMXRenderEngine(delegate, this, static_cast<pmx::Model *>(model));
+    }
+    case IModel::kPMX: {
+        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate);
+        engine = new gl2::PMXRenderEngine(delegate, this, accelerator, static_cast<pmx::Model *>(model));
         break;
+    }
     default:
         break;
     }

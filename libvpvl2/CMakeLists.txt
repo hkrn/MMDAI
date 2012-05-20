@@ -197,20 +197,28 @@ option(VPVL2_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (de
 option(VPVL2_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
 if(VPVL2_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl2_gl_sources)
-  list(APPEND vpvl2_public_headers
+  list(APPEND vpvl2_internal_headers
       include/vpvl2/gl2/AssetRenderEngine.h
       include/vpvl2/gl2/PMDRenderEngine.h
       include/vpvl2/gl2/PMXRenderEngine.h
   )
-  list(APPEND vpvl2_internal_headers include/vpvl2/internal/gl2.h)
   if(VPVL2_ENABLE_NVIDIA_CG)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg vpvl2_gl_sources)
-    list(APPEND vpvl2_public_headers include/vpvl2/cg/Renderer.h)
+    list(APPEND vpvl2_internal_headers include/vpvl2/cg/Renderer.h)
+  endif()
+  if(VPVL2_ENABLE_OPENCL)
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cl vpvl2_gl_sources)
+    list(APPEND vpvl2_internal_headers
+         include/vpvl2/cl/Context.h
+         include/vpvl2/cl/PMDAccelerator.h
+         include/vpvl2/cl/PMXAccelerator.h
+     )
   endif()
   list(APPEND vpvl2_sources ${vpvl2_gl_sources})
   set(VPVL2_COORDINATE_OPENGL ON BOOL)
 endif()
 
+# library configuration
 option(VPVL2_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
 if(VPVL2_ENABLE_PROJECT)
   list(APPEND vpvl2_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/core/project/Project.cc)
