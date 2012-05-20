@@ -341,6 +341,18 @@ public:
         case kZPlotFragmentShader:
             file += "zplot.fsh";
             break;
+        case kEdgeWithSkinningVertexShader:
+            file += "skinning/edge.vsh";
+            break;
+        case kModelWithSkinningVertexShader:
+            file += "skinning/model.vsh";
+            break;
+        case kShadowWithSkinningVertexShader:
+            file += "skinning/shadow.vsh";
+            break;
+        case kZPlotWithSkinningVertexShader:
+            file += "skinning/zplot.vsh";
+            break;
         }
         QByteArray bytes;
         QString path = m_settings->value("dir.system.shaders", "../../QMA2/resources/shaders").toString() + "/" + file;
@@ -704,6 +716,8 @@ public:
         m_delegate = new Delegate(m_settings, this);
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
+        // m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+        // m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
         Scene::ICamera *camera = m_scene.camera();
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
         camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
@@ -1040,7 +1054,7 @@ int main(int argc, char *argv[])
     return app.exec();
 #else
     UI *ui = new UI();
-    ui->loadSetting(QDir::current().absoluteFilePath("config.ini"));
+    ui->load(QDir::current().absoluteFilePath("config.ini"));
     ui->show();
     delete ui;
     return 0;

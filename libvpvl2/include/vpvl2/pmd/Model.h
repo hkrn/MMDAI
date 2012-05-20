@@ -105,7 +105,7 @@ public:
     vpvl::PMDModel *ptr() { return &m_model; }
 
     typedef btAlignedObjectArray<Transform> BoneTransforms;
-    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<float> BoneIndices;
     typedef btAlignedObjectArray<float> BoneWeights;
     typedef btAlignedObjectArray<BoneTransforms> MeshTranforms;
     typedef btAlignedObjectArray<BoneIndices> MeshIndices;

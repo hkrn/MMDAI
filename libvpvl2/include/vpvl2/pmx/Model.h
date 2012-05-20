@@ -198,7 +198,7 @@ public:
     void setParentBone(IBone * /* value */) {}
 
     typedef btAlignedObjectArray<Transform> BoneTransforms;
-    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<float> BoneIndices;
     typedef btAlignedObjectArray<float> BoneWeights;
     typedef btAlignedObjectArray<BoneTransforms> MeshTranforms;
     typedef btAlignedObjectArray<BoneIndices> MeshIndices;

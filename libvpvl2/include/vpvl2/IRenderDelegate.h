@@ -60,7 +60,11 @@ public:
         kShadowVertexShader,
         kShadowFragmentShader,
         kZPlotVertexShader,
-        kZPlotFragmentShader
+        kZPlotFragmentShader,
+        kEdgeWithSkinningVertexShader,
+        kModelWithSkinningVertexShader,
+        kShadowWithSkinningVertexShader,
+        kZPlotWithSkinningVertexShader
     };
     enum KernelType {
         kModelSkinningKernel

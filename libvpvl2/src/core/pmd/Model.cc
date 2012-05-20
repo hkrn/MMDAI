@@ -388,7 +388,6 @@ void Model::getMeshTransforms(MeshTranforms &boneTransforms,
                 boneIndex2Value = *boneIndex2ValuePtr;
             }
             indices.push_back(boneIndex2Value);
-            weights.push_back(1.0 - vertex->weight());
         }
         size_t size = transforms.size() * 16;
         Scalar *matrices = new Scalar[size];
@@ -407,18 +406,21 @@ void Model::updateMeshMatrices(const MeshIndices &boneIndices,
     const vpvl::BoneList &bones = m_model.bones();
     const int nBoneIndices = boneIndices.size();
     btTransform transform;
+    btHashMap<btHashInt, int> set;
     for (int i = 0; i < nBoneIndices; i++) {
         const BoneIndices &indices = boneIndices[i];
         const int nindices = indices.size();
         Scalar *matrices = boneMatrices[i];
-        size_t offset = 0;
         for (int j = 0; j < nindices; j++) {
             const int index = indices[j];
-            vpvl::Bone *bone = bones[index];
-            bone->getSkinTransform(transform);
-            transform.getOpenGLMatrix(&matrices[offset]);
-            offset += j * 16;
+            if (!set.find(index)) {
+                vpvl::Bone *bone = bones[index];
+                bone->getSkinTransform(transform);
+                transform.getOpenGLMatrix(&matrices[index * 16]);
+                set.insert(index, 0);
+            }
         }
+        set.clear();
     }
 }
 
