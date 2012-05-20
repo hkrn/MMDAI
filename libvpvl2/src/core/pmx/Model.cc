@@ -95,7 +95,8 @@ Model::Model(IEncoding *encoding)
       m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
       m_scaleFactor(1),
-      m_visible(false)
+      m_visible(false),
+      m_enableSkinning(true)
 {
     internal::zerofill(&m_info, sizeof(m_info));
 }
@@ -303,18 +304,20 @@ void Model::performUpdate(const Vector3 &lightDirection)
         bone->performUpdateLocalTransform();
     }
     // skinning
-    const int nvertices = m_vertices.count();
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices[i];
-        SkinnedVertex &v = m_skinnedVertices[i];
-        const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
-        vertex->performSkinning(v.position, v.normal);
-        v.normal[3] = vertex->edgeSize();
-        v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5);
-        v.uva1 = vertex->uv(1);
-        v.uva2 = vertex->uv(2);
-        v.uva3 = vertex->uv(3);
-        v.uva4 = vertex->uv(4);
+    if (m_enableSkinning) {
+        const int nvertices = m_vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            Vertex *vertex = m_vertices[i];
+            SkinnedVertex &v = m_skinnedVertices[i];
+            const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
+            vertex->performSkinning(v.position, v.normal);
+            v.normal[3] = vertex->edgeSize();
+            v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5);
+            v.uva1 = vertex->uv(1);
+            v.uva2 = vertex->uv(2);
+            v.uva3 = vertex->uv(3);
+            v.uva4 = vertex->uv(4);
+        }
     }
 }
 
@@ -886,6 +889,11 @@ void Model::updateMeshMatrices(const MeshIndices &boneIndices,
             offset += j * 16;
         }
     }
+}
+
+void Model::setSkinningEnable(bool value)
+{
+    m_enableSkinning = value;
 }
 
 }

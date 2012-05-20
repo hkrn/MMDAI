@@ -210,6 +210,7 @@ public:
                            MeshMatrices &boneMatrices) const;
     void updateMeshMatrices(const MeshIndices &boneIndices,
                             MeshMatrices &boneMatrices) const;
+    void setSkinningEnable(bool value);
 
 private:
     void release();
@@ -251,6 +252,7 @@ private:
     Scalar m_scaleFactor;
     DataInfo m_info;
     bool m_visible;
+    bool m_enableSkinning;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };

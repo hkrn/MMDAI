@@ -55,7 +55,8 @@ Model::Model(IEncoding *encoding)
       m_opacity(1),
       m_scaleFactor(1),
       m_edgeColor(kZeroV3),
-      m_edgeWidth(0)
+      m_edgeWidth(0),
+      m_enableSkinning(true)
 {
     m_edgeColor.setW(1);
 }
@@ -73,6 +74,11 @@ Model::~Model()
     m_comment = 0;
     delete m_englishComment;
     m_englishComment = 0;
+    m_opacity = 0;
+    m_scaleFactor = 0;
+    m_edgeColor.setZero();
+    m_edgeWidth = 0;
+    m_enableSkinning = false;
 }
 
 bool Model::load(const uint8_t *data, size_t size)
@@ -414,6 +420,12 @@ void Model::updateMeshMatrices(const MeshIndices &boneIndices,
             offset += j * 16;
         }
     }
+}
+
+void Model::setSkinnningEnable(bool value)
+{
+    m_enableSkinning = value;
+    m_model.setSoftwareSkinningEnable(value);
 }
 
 }

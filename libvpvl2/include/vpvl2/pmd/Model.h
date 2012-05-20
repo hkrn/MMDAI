@@ -117,6 +117,7 @@ public:
                            MeshMatrices &boneMatrices) const;
     void updateMeshMatrices(const MeshIndices &boneIndices,
                             MeshMatrices &boneMatrices) const;
+    void setSkinnningEnable(bool value);
 
 private:
     IEncoding *m_encoding;
@@ -134,6 +135,7 @@ private:
     Scalar m_scaleFactor;
     Vector3 m_edgeColor;
     Scalar m_edgeWidth;
+    bool m_enableSkinning;
 };
 
 }

@@ -107,6 +107,11 @@ public:
         virtual void copyFrom(ICamera *value) = 0;
         virtual void resetDefault() = 0;
     };
+    enum AccelerationType {
+        kSoftwareFallback,
+        kOpenCLAccelerationType1,
+        kVertexShaderAccelerationType1
+    };
 
     static ICamera *createCamera();
     static ILight *createLight();
@@ -137,6 +142,9 @@ public:
     ILight *light() const;
     ICamera *camera() const;
     const Scalar &preferredFPS() const;
+
+    AccelerationType accelerationType() const;
+    void setAccelerationType(AccelerationType value);
 
 private:
     struct PrivateContext;

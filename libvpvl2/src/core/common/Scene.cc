@@ -237,6 +237,7 @@ namespace vpvl2
 struct Scene::PrivateContext {
     PrivateContext()
         : computeContext(0),
+          accelerationType(Scene::kSoftwareFallback),
           preferredFPS(Scene::defaultFPS())
     {
     }
@@ -262,21 +263,26 @@ struct Scene::PrivateContext {
     cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
         cl::PMDAccelerator *accelerator = 0;
 #ifdef VPVL2_ENABLE_OPENCL
-        accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
-        accelerator->createKernelProgram();
+        if (accelerationType == kOpenCLAccelerationType1) {
+            accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
+            accelerator->createKernelProgram();
+        }
 #endif
         return accelerator;
     }
     cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
         cl::PMXAccelerator *accelerator = 0;
 #ifdef VPVL2_ENABLE_OPENCL
-        accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
-        accelerator->createKernelProgram();
+        if (accelerationType == kOpenCLAccelerationType1) {
+            accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
+            accelerator->createKernelProgram();
+        }
 #endif
         return accelerator;
     }
 
     cl::Context *computeContext;
+    Scene::AccelerationType accelerationType;
     Hash<HashPtr, IRenderEngine *> model2engine;
     Array<IModel *> models;
     Array<IMotion *> motions;
@@ -353,6 +359,18 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
 
 void Scene::addModel(IModel *model, IRenderEngine *engine)
 {
+    const bool isSoftwareSkinning = accelerationType() == kSoftwareFallback;
+    switch (model->type()) {
+    case IModel::kPMD:
+        static_cast<pmd::Model *>(model)->setSkinnningEnable(isSoftwareSkinning);
+        break;
+    case IModel::kPMX:
+        static_cast<pmx::Model *>(model)->setSkinningEnable(isSoftwareSkinning);
+        break;
+    case IModel::kAsset:
+    default:
+        break;
+    }
     m_context->models.add(model);
     m_context->engines.add(engine);
     m_context->model2engine.insert(HashPtr(model), engine);
@@ -549,6 +567,16 @@ Scene::ICamera *Scene::camera() const
 const Scalar &Scene::preferredFPS() const
 {
     return m_context->preferredFPS;
+}
+
+Scene::AccelerationType Scene::accelerationType() const
+{
+    return m_context->accelerationType;
+}
+
+void Scene::setAccelerationType(AccelerationType value)
+{
+    m_context->accelerationType = value;
 }
 
 }
