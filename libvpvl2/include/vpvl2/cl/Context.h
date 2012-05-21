@@ -41,116 +41,30 @@
 #include <OpenCL/cl.h>
 #include <OpenCL/cl_gl.h>
 #include <OpenCL/cl_gl_ext.h>
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl.h>
 #else
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
+#include <GL/gl.h>
 #endif /* __APPLE__ */
 
 #include "vpvl2/IRenderDelegate.h"
 
 namespace vpvl2
 {
+
 namespace cl
 {
 
 class Context
 {
 public:
-    Context(IRenderDelegate *delegate)
-        : m_delegate(delegate),
-          m_context(0),
-          m_queue(0),
-          m_device(0)
-    {
-    }
-    virtual ~Context() {
-        clReleaseCommandQueue(m_queue);
-        m_queue = 0;
-        clReleaseContext(m_context);
-        m_context = 0;
-    }
+    Context(IRenderDelegate *delegate);
+    ~Context();
 
-    bool isAvailable() const {
-        return m_context && m_queue;
-    }
-    bool initializeContext() {
-        if (m_context && m_queue)
-            return true;
-        cl_int err = 0;
-        cl_uint nplatforms;
-        err = clGetPlatformIDs(0, 0, &nplatforms);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
-            return false;
-        }
-        cl_platform_id *platforms = new cl_platform_id[nplatforms];
-        err = clGetPlatformIDs(nplatforms, platforms, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed getting OpenCL platforms: %d", err);
-            delete[] platforms;
-            return false;
-        }
-        for (cl_uint i = 0; i < nplatforms; i++) {
-            cl_char buffer[BUFSIZ];
-            clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);
-            clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_PLATFORM_NAME: %s", buffer);
-            clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
-        }
-        cl_platform_id firstPlatform = platforms[0];
-        err = clGetDeviceIDs(firstPlatform, CL_DEVICE_TYPE_ALL, 1, &m_device, 0);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed getting a OpenCL device: %d", err);
-            delete[] platforms;
-            return false;
-        }
-        {
-            cl_char buffer[BUFSIZ];
-            cl_uint frequency, addressBits;
-            cl_device_type type;
-            clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
-            clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_NAME: %s", buffer);
-            clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
-            clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_TYPE: %d", type);
-            clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
-            clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
-            clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
-            log0(0, IRenderDelegate::kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
-        }
-        cl_context_properties props[] = {
-            CL_CONTEXT_PLATFORM,
-            reinterpret_cast<cl_context_properties>(firstPlatform),
-    #ifdef __APPLE__
-            CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-            reinterpret_cast<cl_context_properties>(CGLGetShareGroup(CGLGetCurrentContext())),
-    #endif
-            0
-        };
-        clReleaseContext(m_context);
-        m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed initialize a OpenCL context: %d", err);
-            delete[] platforms;
-            return false;
-        }
-        clReleaseCommandQueue(m_queue);
-        m_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
-        if (err != CL_SUCCESS) {
-            log0(0, IRenderDelegate::kLogWarning, "Failed initialize a OpenCL command queue: %d", err);
-            delete[] platforms;
-            return false;
-        }
-        delete[] platforms;
-        return true;
-    }
+    bool isAvailable() const;
+    bool initializeContext();
 
     IRenderDelegate *renderDelegate() const { return m_delegate; }
     cl_context computeContext() const { return m_context; }
@@ -158,12 +72,7 @@ public:
     cl_device_id hostDevice() const { return m_device; }
 
 private:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
-        va_list ap;
-        va_start(ap, format);
-        m_delegate->log(context, level, format, ap);
-        va_end(ap);
-    }
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
 
     IRenderDelegate *m_delegate;
     cl_context m_context;
