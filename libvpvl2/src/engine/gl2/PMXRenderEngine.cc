@@ -354,7 +354,6 @@ public:
         shadowProgram = 0;
         delete zplotProgram;
         zplotProgram = 0;
-        meshMatrices.releaseArrayAll();
         cullFaceState = false;
     }
 
@@ -385,10 +384,7 @@ public:
     ZPlotProgram *zplotProgram;
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
     MaterialTextures *materials;
-    pmx::Model::MeshTranforms meshTransforms;
-    pmx::Model::MeshIndices meshIndices;
-    pmx::Model::MeshWeights meshWeights;
-    pmx::Model::MeshMatrices meshMatrices;
+    pmx::Model::SkinningMesh mesh;
     bool cullFaceState;
 };
 
@@ -573,14 +569,11 @@ bool PMXRenderEngine::upload(const IString *dir)
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_model->name()->toByteArray());
     m_delegate->releaseContext(m_model, context);
 
-    m_model->getMeshTransforms(m_context->meshTransforms,
-                               m_context->meshIndices,
-                               m_context->meshWeights,
-                               m_context->meshMatrices);
+    m_model->getSkinningMesh(m_context->mesh);
     for (int i = 0; i < nmaterials; i++) {
-        const pmx::Model::BoneTransforms &boneTransforms = m_context->meshTransforms[i];
+        const pmx::Model::BoneTransforms &boneTransforms = m_context->mesh.transforms[i];
         const int nBoneTransforms = boneTransforms.size();
-        const pmx::Model::BoneIndices &boneIndices = m_context->meshIndices[i];
+        const pmx::Model::BoneIndices &boneIndices = m_context->mesh.indices[i];
         const int nindices = boneIndices.size();
         qDebug("%s: bones = %d indices = %d", materials[i]->name()->toByteArray(), nBoneTransforms, nindices);
         for (int j = 0; j < nindices; j++) {
@@ -603,7 +596,7 @@ void PMXRenderEngine::update()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->updateModel(m_model);
+        m_accelerator->updateModel(m_model, m_scene);
 #endif
 }
 
@@ -623,8 +616,8 @@ void PMXRenderEngine::renderModel()
     offset = pmx::Model::strideOffset(pmx::Model::kTexCoordStride);
     size   = pmx::Model::strideSize(pmx::Model::kTexCoordStride);
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = pmx::Model::strideOffset(pmx::Model::kToonCoordSize);
-    size   = pmx::Model::strideSize(pmx::Model::kToonCoordSize);
+    offset = pmx::Model::strideOffset(pmx::Model::kToonCoordStride);
+    size   = pmx::Model::strideSize(pmx::Model::kToonCoordStride);
     modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
     offset = pmx::Model::strideOffset(pmx::Model::kUVA1Stride);
     size   = pmx::Model::strideSize(pmx::Model::kUVA1Stride);

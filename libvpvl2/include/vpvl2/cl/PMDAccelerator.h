@@ -62,27 +62,16 @@ private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
 
     Context *m_context;
-    pmd::Model::MeshTranforms m_meshTransforms;
-    pmd::Model::MeshIndices m_meshIndices;
-    pmd::Model::MeshWeights m_meshWeights;
-    pmd::Model::MeshMatrices m_meshMatrices;
     cl_program m_program;
-    cl_kernel m_updateBoneMatricesKernel;
     cl_kernel m_performSkinningKernel;
-    cl_mem m_vertexBuffer;
+    cl_mem m_verticesBuffer;
     cl_mem m_boneMatricesBuffer;
-    cl_mem m_originMatricesBuffer;
-    cl_mem m_outputMatricesBuffer;
-    cl_mem m_weightsBuffer;
-    cl_mem m_bone1IndicesBuffer;
-    cl_mem m_bone2IndicesBuffer;
-    size_t m_localWGSizeForUpdateBoneMatrices;
+    cl_mem m_boneWeightsBuffer;
+    cl_mem m_boneIndicesBuffer;
     size_t m_localWGSizeForPerformSkinning;
-    float *m_weights;
+    float *m_boneWeights;
     float *m_boneTransform;
-    float *m_originTransform;
-    int *m_bone1Indices;
-    int *m_bone2Indices;
+    int *m_boneIndices;
     bool m_isBufferAllocated;
 };
 

@@ -111,12 +111,18 @@ public:
     typedef btAlignedObjectArray<BoneIndices> MeshIndices;
     typedef btAlignedObjectArray<BoneWeights> MeshWeights;
     typedef Array<Scalar *> MeshMatrices;
-    void getMeshTransforms(MeshTranforms &boneTransforms,
-                           MeshIndices &boneIndices,
-                           MeshWeights &boneWeights,
-                           MeshMatrices &boneMatrices) const;
-    void updateMeshMatrices(const MeshIndices &boneIndices,
-                            MeshMatrices &boneMatrices) const;
+    struct SkinningMesh {
+        MeshTranforms transforms;
+        MeshIndices indices;
+        MeshWeights weights;
+        MeshMatrices matrices;
+        ~SkinningMesh() {
+            matrices.releaseArrayAll();
+        }
+        bool isActive() const { return matrices.count() > 0; }
+    };
+    void getSkinningMesh(SkinningMesh &object) const;
+    void updateSkinningMesh(SkinningMesh &object) const;
     void setSkinnningEnable(bool value);
 
 private:

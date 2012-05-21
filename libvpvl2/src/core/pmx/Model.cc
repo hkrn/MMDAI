@@ -119,7 +119,7 @@ size_t Model::strideOffset(StrideType type)
         return reinterpret_cast<const uint8_t *>(&v.texcoord) - base;
     case kEdgeSizeStride:
         return reinterpret_cast<const uint8_t *>(&v.normal[3]) - base;
-    case kToonCoordSize:
+    case kToonCoordStride:
         return reinterpret_cast<const uint8_t *>(&v.texcoord[2]) - base;
     case kUVA1Stride:
         return reinterpret_cast<const uint8_t *>(&v.uva1) - base;
@@ -141,7 +141,7 @@ size_t Model::strideSize(StrideType type)
     case kNormalStride:
     case kTexCoordStride:
     case kEdgeSizeStride:
-    case kToonCoordSize:
+    case kToonCoordStride:
     case kUVA1Stride:
     case kUVA2Stride:
     case kUVA3Stride:
@@ -820,10 +820,7 @@ void Model::parseJoints(const DataInfo &info)
     }
 }
 
-void Model::getMeshTransforms(MeshTranforms &boneTransforms,
-                              MeshIndices &boneIndices,
-                              MeshWeights &boneWeights,
-                              MeshMatrices &boneMatrices) const
+void Model::getSkinningMesh(SkinningMesh &object) const
 {
     const int nmaterials = m_materials.count();
     btHashMap<btHashInt, int> set;
@@ -840,6 +837,20 @@ void Model::getMeshTransforms(MeshTranforms &boneTransforms,
         for (int j = 0; j < nindices; j++) {
             int vertexIndex = m_skinnedIndices[j];
             Vertex *vertex = m_vertices[vertexIndex];
+            switch (vertex->type()) {
+            case Vertex::kBdef1:
+                object.bdef1.push_back(vertexIndex);
+                break;
+            case Vertex::kBdef2:
+                object.bdef2.push_back(vertexIndex);
+                break;
+            case Vertex::kBdef4:
+                object.bdef4.push_back(vertexIndex);
+                break;
+            case Vertex::kSdef:
+                object.sdef.push_back(vertexIndex);
+                break;
+            }
             for (int k = 0; k < 4; k++) {
                 Bone *bone = vertex->bone(k);
                 if (bone) {
@@ -865,22 +876,21 @@ void Model::getMeshTransforms(MeshTranforms &boneTransforms,
         size_t size = transforms.size() * 16;
         Scalar *matrices = new Scalar[size];
         memset(matrices, 0, sizeof(Scalar) * size);
-        boneTransforms.push_back(transforms);
-        boneIndices.push_back(indices);
-        boneWeights.push_back(weights);
-        boneMatrices.add(matrices);
+        object.transforms.push_back(transforms);
+        object.indices.push_back(indices);
+        object.weights.push_back(weights);
+        object.matrices.add(matrices);
         set.clear();
     }
 }
 
-void Model::updateMeshMatrices(const MeshIndices &boneIndices,
-                               MeshMatrices &boneMatrices) const
+void Model::updateSkinningMesh(SkinningMesh &object) const
 {
-    const int nBoneIndices = boneIndices.size();
+    const int nBoneIndices = object.indices.size();
     for (int i = 0; i < nBoneIndices; i++) {
-        const BoneIndices &indices = boneIndices[i];
+        const BoneIndices &indices = object.indices[i];
         const int nindices = indices.size();
-        Scalar *matrices = boneMatrices[i];
+        Scalar *matrices = object.matrices[i];
         size_t offset = 0;
         for (int j = 0; j < nindices; j++) {
             const int index = indices[j];

@@ -333,7 +333,6 @@ public:
             glDeleteTextures(1, &toonTextureID[i]);
         }
         glDeleteBuffers(kVertexBufferObjectMax, vertexBufferObjects);
-        meshMatrices.releaseArrayAll();
         delete edgeProgram;
         edgeProgram = 0;
         delete modelProgram;
@@ -369,10 +368,7 @@ public:
     ModelProgram *modelProgram;
     ShadowProgram *shadowProgram;
     ZPlotProgram *zplotProgram;
-    pmd::Model::MeshTranforms meshTransforms;
-    pmd::Model::MeshIndices meshIndices;
-    pmd::Model::MeshWeights meshWeights;
-    pmd::Model::MeshMatrices meshMatrices;
+    pmd::Model::SkinningMesh mesh;
     GLuint toonTextureID[PMDModel::kCustomTextureMax];
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
     bool hasSingleSphereMap;
@@ -566,10 +562,7 @@ bool PMDRenderEngine::upload(const IString *dir)
         }
     }
     if (isVertexShaderSkinning) {
-        m_model->getMeshTransforms(m_context->meshTransforms,
-                                   m_context->meshIndices,
-                                   m_context->meshWeights,
-                                   m_context->meshMatrices);
+        m_model->getSkinningMesh(m_context->mesh);
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
@@ -596,8 +589,8 @@ void PMDRenderEngine::update()
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBufferSubData(GL_ARRAY_BUFFER, 0, nvertices * strideSize, model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    if (m_context->meshMatrices.count() > 0)
-        m_model->updateMeshMatrices(m_context->meshIndices, m_context->meshMatrices);
+    if (m_context->mesh.isActive())
+        m_model->updateSkinningMesh(m_context->mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->updateModel(m_model);
@@ -645,7 +638,7 @@ void PMDRenderEngine::renderModel()
     const MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
-    const bool isVertexSkinning = m_context->meshMatrices.count() > 0;
+    const bool isVertexSkinning = m_context->mesh.isActive();
     //const bool hasSingleSphereMap = m_context->hasSingleSphereMap;
     const bool hasMultipleSphereMap = m_context->hasMultipleSphereMap;
     Color diffuse;
@@ -680,10 +673,10 @@ void PMDRenderEngine::renderModel()
             modelProgram->setDepthTexture(0);
         }
         if (isVertexSkinning) {
-            const pmd::Model::BoneTransforms &transforms = m_context->meshTransforms[i];
-            const pmd::Model::BoneIndices &indices = m_context->meshIndices[i];
-            const pmd::Model::BoneWeights &weights = m_context->meshWeights[i];
-            const float *matrices = m_context->meshMatrices[i];
+            const pmd::Model::BoneTransforms &transforms = m_context->mesh.transforms[i];
+            const pmd::Model::BoneIndices &indices = m_context->mesh.indices[i];
+            const pmd::Model::BoneWeights &weights = m_context->mesh.weights[i];
+            const float *matrices = m_context->mesh.matrices[i];
             modelProgram->setBoneIndices(indices);
             modelProgram->setBoneWeights(weights);
             modelProgram->setBoneMatrices(matrices, transforms.size());

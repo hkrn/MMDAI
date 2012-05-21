@@ -336,10 +336,7 @@ void Model::setEdgeWidth(const Scalar &value)
     m_edgeWidth = value;
 }
 
-void Model::getMeshTransforms(MeshTranforms &boneTransforms,
-                              MeshIndices &boneIndices,
-                              MeshWeights &boneWeights,
-                              MeshMatrices &boneMatrices) const
+void Model::getSkinningMesh(SkinningMesh &object) const
 {
     const vpvl::MaterialList &materials = m_model.materials();
     const vpvl::VertexList &vertices = m_model.vertices();
@@ -392,25 +389,24 @@ void Model::getMeshTransforms(MeshTranforms &boneTransforms,
         size_t size = transforms.size() * 16;
         Scalar *matrices = new Scalar[size];
         memset(matrices, 0, sizeof(Scalar) * size);
-        boneTransforms.push_back(transforms);
-        boneIndices.push_back(indices);
-        boneWeights.push_back(weights);
-        boneMatrices.add(matrices);
+        object.transforms.push_back(transforms);
+        object.indices.push_back(indices);
+        object.weights.push_back(weights);
+        object.matrices.add(matrices);
         set.clear();
     }
 }
 
-void Model::updateMeshMatrices(const MeshIndices &boneIndices,
-                               MeshMatrices &boneMatrices) const
+void Model::updateSkinningMesh(SkinningMesh &object) const
 {
     const vpvl::BoneList &bones = m_model.bones();
-    const int nBoneIndices = boneIndices.size();
+    const int nBoneIndices = object.indices.size();
     btTransform transform;
     btHashMap<btHashInt, int> set;
     for (int i = 0; i < nBoneIndices; i++) {
-        const BoneIndices &indices = boneIndices[i];
+        const BoneIndices &indices = object.indices[i];
         const int nindices = indices.size();
-        Scalar *matrices = boneMatrices[i];
+        Scalar *matrices = object.matrices[i];
         for (int j = 0; j < nindices; j++) {
             const int index = indices[j];
             if (!set.find(index)) {

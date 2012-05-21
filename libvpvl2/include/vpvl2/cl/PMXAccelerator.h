@@ -42,6 +42,9 @@
 
 namespace vpvl2
 {
+
+class Scene;
+
 namespace cl
 {
 
@@ -53,34 +56,26 @@ public:
 
     bool isAvailable() const;
     bool createKernelProgram();
-    void uploadModel(pmx::Model *model, GLuint buffer, void *context);
-    void updateModel(pmx::Model *model);
+    void uploadModel(const pmx::Model *model, GLuint buffer, void *context);
+    void updateModel(const pmx::Model *model, const Scene *scene);
 
 private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
 
     Context *m_context;
-    pmx::Model::MeshTranforms m_meshTransforms;
-    pmx::Model::MeshIndices m_meshIndices;
-    pmx::Model::MeshWeights m_meshWeights;
-    pmx::Model::MeshMatrices m_meshMatrices;
+    pmx::Model::SkinningMesh m_mesh;
     cl_program m_program;
-    cl_kernel m_updateBoneMatricesKernel;
     cl_kernel m_performSkinningKernel;
-    cl_mem m_vertexBuffer;
+    cl_mem m_verticesBuffer;
+    cl_mem m_vertexEdgeSizeBuffer;
+    cl_mem m_boneWeightsBuffer;
+    cl_mem m_boneIndicesBuffer;
     cl_mem m_boneMatricesBuffer;
-    cl_mem m_originMatricesBuffer;
-    cl_mem m_outputMatricesBuffer;
-    cl_mem m_weightsBuffer;
-    cl_mem m_bone1IndicesBuffer;
-    cl_mem m_bone2IndicesBuffer;
-    size_t m_localWGSizeForUpdateBoneMatrices;
     size_t m_localWGSizeForPerformSkinning;
-    float *m_weights;
+    float *m_vertexEdgeSize;
     float *m_boneTransform;
-    float *m_originTransform;
-    int *m_bone1Indices;
-    int *m_bone2Indices;
+    float *m_boneWeights;
+    int *m_boneIndices;
     bool m_isBufferAllocated;
 };
 

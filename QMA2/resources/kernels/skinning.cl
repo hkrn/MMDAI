@@ -1,4 +1,4 @@
-static float4 matrixMultVector4(float16 *m, float4 *v)
+static float4 matrixMultVector4(const float16 *m, const float4 *v)
 {
     return (float4)(
        dot(m->s048c, *v) + m->s3,
@@ -8,7 +8,7 @@ static float4 matrixMultVector4(float16 *m, float4 *v)
     );
 }
 
-static float4 matrixMultVector3(float16 *m, float4 *v)
+static float4 matrixMultVector3(const float16 *m, const float4 *v)
 {
     return (float4)(
        dot((float4)(m->s048, 0.0), *v),
@@ -19,27 +19,15 @@ static float4 matrixMultVector3(float16 *m, float4 *v)
 }
 
 __kernel
-void updateBoneMatrices(const __global float16 *boneMatrices,
-                        const __global float16 *originMatrices,
-                        const int nbones,
-                        __global float16 *outputMatrices)
-{
-    int id = get_global_id(0);
-    if (id < nbones)
-        outputMatrices[id] = boneMatrices[id] * originMatrices[id];
-}
-
-__kernel
-void performSkinning(const __global float16 *skinningMatrices,
-                     const __global float *weights,
-                     const __global int *bone1Indices,
-                     const __global int *bone2Indices,
+void performSkinning(const __global float16 *localMatrices,
+                     const __global float *boneWeights,
+                     const __global int2 *boneIndices,
                      const float4 lightDirection,
                      const int nvertices,
                      const int strideSize,
                      const int offsetPosition,
                      const int offsetNormal,
-                     const int offsetToonTexCoord,
+                     const int offsetTexCoord,
                      const int offsetEdge,
                      __global float4 *vertices)
 {
@@ -48,11 +36,10 @@ void performSkinning(const __global float16 *skinningMatrices,
         int strideOffset = strideSize * id;
         float4 position = vertices[strideOffset + offsetPosition];
         float4 normal = vertices[strideOffset + offsetNormal];
-        float weight = weights[id];
-        int bone1 = bone1Indices[id];
-        int bone2 = bone2Indices[id];
-        float16 transform1 = skinningMatrices[bone1];
-        float16 transform2 = skinningMatrices[bone2];
+        int2 boneIndex = boneIndices[id];
+        float weight = boneWeights[id];
+        float16 transform1 = localMatrices[boneIndex.x];
+        float16 transform2 = localMatrices[boneIndex.y];
         float4 v1 = matrixMultVector4(&transform1, &position);
         float4 v2 = matrixMultVector4(&transform2, &position);
         float4 n1 = matrixMultVector3(&transform1, &normal);
@@ -62,8 +49,73 @@ void performSkinning(const __global float16 *skinningMatrices,
         float4 normal2 = s * n2 + weight * n1;
         vertices[strideOffset + offsetPosition] = position2;
         vertices[strideOffset + offsetNormal] = normal2;
-        vertices[strideOffset + offsetToonTexCoord].w = 0.5 + dot(lightDirection, normal2) * 0.5;
+        vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
         vertices[strideOffset + offsetEdge] = position2 + normal2 * vertices[strideOffset + offsetEdge];
+    }
+}
+
+__kernel
+void performSkinning2(const __global float16 *localMatrices,
+                      const __global float4 *boneWeights,
+                      const __global int4 *boneIndices,
+                      const __global float *edgeSize,
+                      const float4 lightDirection,
+                      const int nvertices,
+                      const int strideSize,
+                      const int offsetPosition,
+                      const int offsetNormal,
+                      const int offsetTexCoord,
+                      __global float4 *vertices)
+{
+    int id = get_global_id(0);
+    if (id < nvertices) {
+        int strideOffset = strideSize * id;
+        float4 position = vertices[strideOffset + offsetPosition];
+        float4 normal = vertices[strideOffset + offsetNormal];
+        int4 boneIndex = boneIndices[id];
+        float4 weight = boneWeights[id];
+        if (boneIndex.w >= 0) { // bdef4
+            float16 transform1 = localMatrices[boneIndex.x];
+            float16 transform2 = localMatrices[boneIndex.y];
+            float16 transform3 = localMatrices[boneIndex.z];
+            float16 transform4 = localMatrices[boneIndex.w];
+            float4 v1 = matrixMultVector4(&transform1, &position);
+            float4 v2 = matrixMultVector4(&transform2, &position);
+            float4 v3 = matrixMultVector4(&transform3, &position);
+            float4 v4 = matrixMultVector4(&transform4, &position);
+            float4 n1 = matrixMultVector3(&transform1, &normal);
+            float4 n2 = matrixMultVector3(&transform2, &normal);
+            float4 n3 = matrixMultVector3(&transform3, &normal);
+            float4 n4 = matrixMultVector3(&transform4, &normal);
+            float4 position2 = weight.x * v1 + weight.y * v2 + weight.z * v3 + weight.w * v4;
+            float4 normal2 = weight.x * n1 + weight.y * n2 + weight.z * n3 + weight.w * n4;;
+            vertices[strideOffset + offsetPosition] = position2;
+            vertices[strideOffset + offsetNormal] = normal2;
+            vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
+        }
+        else if (boneIndex.y >= 0) { // bdef2 or sdef2
+            float16 transform1 = localMatrices[boneIndex.x];
+            float16 transform2 = localMatrices[boneIndex.y];
+            float4 v1 = matrixMultVector4(&transform1, &position);
+            float4 v2 = matrixMultVector4(&transform2, &position);
+            float4 n1 = matrixMultVector3(&transform1, &normal);
+            float4 n2 = matrixMultVector3(&transform2, &normal);
+            float w = weight.x;
+            float s = 1.0f - w;
+            float4 position2 = s * v2 + w * v1;
+            float4 normal2 = s * n2 + w * n1;
+            vertices[strideOffset + offsetPosition] = position2;
+            vertices[strideOffset + offsetNormal] = normal2;
+            vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
+        } else { // bdef1
+            float16 transform = localMatrices[boneIndex.x];
+            float4 position2 = matrixMultVector4(&transform, &position);
+            float4 normal2 = matrixMultVector3(&transform, &normal);
+            vertices[strideOffset + offsetPosition] = position2;
+            vertices[strideOffset + offsetNormal] = normal2;
+            vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
+        }
+        vertices[strideOffset + offsetNormal].w = edgeSize[id];
     }
 }
 

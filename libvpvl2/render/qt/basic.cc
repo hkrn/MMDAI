@@ -716,7 +716,7 @@ public:
         m_delegate = new Delegate(m_settings, this);
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
-        // m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+        m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
         // m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
         Scene::ICamera *camera = m_scene.camera();
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
