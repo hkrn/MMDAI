@@ -257,6 +257,8 @@ struct Scene::PrivateContext {
             computeContext = new cl::Context(delegate);
             computeContext->initializeContext();
         }
+#else
+        (void) delegate;
 #endif
         return computeContext;
     }
@@ -267,6 +269,8 @@ struct Scene::PrivateContext {
             accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
         }
+#else
+        (void) delegate;
 #endif
         return accelerator;
     }
@@ -277,6 +281,8 @@ struct Scene::PrivateContext {
             accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
         }
+#else
+        (void) delegate;
 #endif
         return accelerator;
     }
