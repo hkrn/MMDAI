@@ -716,7 +716,7 @@ public:
         m_delegate = new Delegate(m_settings, this);
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
-        m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+        // m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
         // m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
         Scene::ICamera *camera = m_scene.camera();
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
@@ -761,9 +761,9 @@ protected:
         Scene::ILight *light = m_scene.light();
         m_depthTextureID = m_fbo->texture();
         light->setToonEnable(true);
-        light->setSoftShadowEnable(true);
-        light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
-        light->setDepthTexture(&m_depthTextureID);
+        //light->setSoftShadowEnable(true);
+        //light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
+        //light->setDepthTexture(&m_depthTextureID);
     }
     void timerEvent(QTimerEvent *) {
         float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
@@ -899,8 +899,8 @@ protected:
             for (int i = 0; i < nengines; i++) {
                 IRenderEngine *engine = engines[i];
                 engine->renderModel();
-                engine->renderEdge();
-                engine->renderShadow();
+                //engine->renderEdge();
+                //engine->renderShadow();
             }
         }
     }

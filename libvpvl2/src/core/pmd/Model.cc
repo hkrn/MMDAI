@@ -180,7 +180,34 @@ void Model::resetVertices()
 void Model::performUpdate(const Vector3 &lightDirection)
 {
     m_model.setLightPosition(-lightDirection);
+    m_model.setSoftwareSkinningEnable(false);
     m_model.updateImmediate();
+    SkinningMeshes mesh;
+    getSkinningMeshes(mesh);
+    updateSkinningMeshes(mesh);
+    const uint8_t *ptr = reinterpret_cast<const uint8_t *>(m_model.verticesPointer());
+    const int nmaterials = m_model.materials().count();
+    for (int i = 0; i < nmaterials; i++) {
+        const VertexBoneIndicesAndWeights &indicesAndWeights = mesh.indicesAndWeights[i];
+        const int nIndicesAndWeights = indicesAndWeights.size();
+        for (int j = 0; j < nIndicesAndWeights; j++) {
+            const Vector4 &v = indicesAndWeights[j];
+            vpvl::Vertex *vertex = m_model.vertices().at(v.w());
+            const Transform &transform1 = mesh.transforms[v.x()];
+            const Transform &transform2 = mesh.transforms[v.y()];
+            const Vector3 &v1 = transform1 * vertex->position();
+            const Vector3 &n1 = transform1.getBasis() * vertex->normal();
+            const Vector3 &v2 = transform2 * vertex->position();
+            const Vector3 &n2 = transform2.getBasis() * vertex->normal();
+            const float weight = v.z();
+            const uint8_t *vptr = ptr + size_t(m_model.strideSize(vpvl::PMDModel::kVerticesStride) * v.w());
+            const uint8_t *nptr = ptr + size_t(m_model.strideSize(vpvl::PMDModel::kVerticesStride) * v.w()) + m_model.strideOffset(vpvl::PMDModel::kNormalsStride);
+            Vector3 *p = const_cast<Vector3 *>(reinterpret_cast<const Vector3 *>(vptr));
+            Vector3 *n = const_cast<Vector3 *>(reinterpret_cast<const Vector3 *>(nptr));
+            p->setInterpolate3(v2, v1, weight);
+            n->setInterpolate3(n2, n1, weight);
+        }
+    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
@@ -336,87 +363,76 @@ void Model::setEdgeWidth(const Scalar &value)
     m_edgeWidth = value;
 }
 
-void Model::getSkinningMesh(SkinningMesh &object) const
+void Model::getSkinningMeshes(SkinningMeshes &meshes) const
 {
     const vpvl::MaterialList &materials = m_model.materials();
     const vpvl::VertexList &vertices = m_model.vertices();
     const vpvl::IndexList &vertexIndices = m_model.indices();
-    const vpvl::BoneList &bones = m_model.bones();
     const int nmaterials = materials.count();
     btHashMap<btHashInt, int> set;
-    btTransform skinningTransform;
-    BoneTransforms transforms;
-    BoneIndices indices;
-    BoneWeights weights;
+    BoneIndices boneIndices;
+    VertexBoneIndicesAndWeights indicesAndWeights;
+    meshes.transforms.resize(m_model.bones().count());
+    int offset = 0;
     for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const int nindices = material->countIndices();
         int boneIndexInteral = 0;
-        transforms.clear();
-        indices.clear();
-        weights.clear();
         for (int j = 0; j < nindices; j++) {
-            int vertexIndex = vertexIndices[j];
-            vpvl::Vertex *vertex = vertices[vertexIndex];
-            int boneIndex1 = vertex->bone1();
-            int *boneIndex1ValuePtr = set.find(boneIndex1), boneIndex1Value = 0;
-            if (!boneIndex1ValuePtr) {
-                vpvl::Bone *bone = bones[boneIndex1];
-                bone->getSkinTransform(skinningTransform);
-                transforms.push_back(skinningTransform);
-                boneIndex1Value = boneIndexInteral++;
-                set.insert(boneIndex1, boneIndex1Value);
+            const int vertexIndex = vertexIndices[offset + j];
+            const vpvl::Vertex *vertex = vertices[vertexIndex];
+            const int boneIndex1 = vertex->bone1();
+            int *normalizedBoneIndex1Ptr = set.find(boneIndex1), normalizedBoneIndex1;
+            if (!normalizedBoneIndex1Ptr) {
+                normalizedBoneIndex1 = boneIndexInteral++;
+                set.insert(boneIndex1, normalizedBoneIndex1);
+                boneIndices.push_back(boneIndex1);
             }
             else {
-                boneIndex1Value = *boneIndex1ValuePtr;
+                normalizedBoneIndex1 = *normalizedBoneIndex1Ptr;
             }
-            indices.push_back(boneIndex1Value);
-            weights.push_back(vertex->weight());
-            int boneIndex2 = vertex->bone2();
-            int *boneIndex2ValuePtr = set.find(boneIndex2), boneIndex2Value = 0;
-            if (!boneIndex2ValuePtr) {
-                vpvl::Bone *bone = bones[boneIndex2];
-                bone->getSkinTransform(skinningTransform);
-                transforms.push_back(skinningTransform);
-                boneIndex2Value = boneIndexInteral++;
-                set.insert(boneIndex2, boneIndex2Value);
+            const int boneIndex2 = vertex->bone2();
+            int *normalizedBoneIndex2Ptr = set.find(boneIndex2), normalizedBoneIndex2;
+            if (!normalizedBoneIndex2Ptr) {
+                normalizedBoneIndex2 = boneIndexInteral++;
+                set.insert(boneIndex2, normalizedBoneIndex2);
+                boneIndices.push_back(boneIndex2);
             }
             else {
-                boneIndex2Value = *boneIndex2ValuePtr;
+                normalizedBoneIndex2 = *normalizedBoneIndex2Ptr;
             }
-            indices.push_back(boneIndex2Value);
+            //indicesAndWeights.push_back(Vector4(normalizedBoneIndex1, normalizedBoneIndex2, vertex->weight(), vertexIndex));
+            indicesAndWeights.push_back(Vector4(boneIndex1, boneIndex2, vertex->weight(), vertexIndex));
         }
-        size_t size = transforms.size() * 16;
-        Scalar *matrices = new Scalar[size];
-        memset(matrices, 0, sizeof(Scalar) * size);
-        object.transforms.push_back(transforms);
-        object.indices.push_back(indices);
-        object.weights.push_back(weights);
-        object.matrices.add(matrices);
+        meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
+        meshes.bones.push_back(boneIndices);
+        meshes.indicesAndWeights.push_back(indicesAndWeights);
+        boneIndices.clear();
+        indicesAndWeights.clear();
         set.clear();
+        offset += nindices;
     }
 }
 
-void Model::updateSkinningMesh(SkinningMesh &object) const
+void Model::updateSkinningMeshes(SkinningMeshes &meshes) const
 {
     const vpvl::BoneList &bones = m_model.bones();
-    const int nBoneIndices = object.indices.size();
-    btTransform transform;
-    btHashMap<btHashInt, int> set;
-    for (int i = 0; i < nBoneIndices; i++) {
-        const BoneIndices &indices = object.indices[i];
-        const int nindices = indices.size();
-        Scalar *matrices = object.matrices[i];
-        for (int j = 0; j < nindices; j++) {
-            const int index = indices[j];
-            if (!set.find(index)) {
-                vpvl::Bone *bone = bones[index];
-                bone->getSkinTransform(transform);
-                transform.getOpenGLMatrix(&matrices[index * 16]);
-                set.insert(index, 0);
-            }
+    const int nbones = bones.count();
+    MeshLocalTransforms &transforms = meshes.transforms;
+    for (int i = 0; i < nbones; i++) {
+        const vpvl::Bone *bone = bones[i];
+        bone->getSkinTransform(transforms[i]);
+    }
+    const int nmaterials = m_model.materials().count();
+    for (int i = 0; i < nmaterials; i++) {
+        const BoneIndices &boneIndices = meshes.bones[i];
+        const int nBoneIndices = boneIndices.size();
+        Scalar *matrices = meshes.matrices[i];
+        for (int j = 0; j < nBoneIndices; j++) {
+            const int boneIndex = boneIndices[j];
+            const Transform &transform = transforms[boneIndex];
+            transform.getOpenGLMatrix(&matrices[j * 16]);
         }
-        set.clear();
     }
 }
 

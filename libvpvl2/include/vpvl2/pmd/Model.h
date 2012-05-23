@@ -104,25 +104,22 @@ public:
 
     vpvl::PMDModel *ptr() { return &m_model; }
 
-    typedef btAlignedObjectArray<Transform> BoneTransforms;
-    typedef btAlignedObjectArray<float> BoneIndices;
-    typedef btAlignedObjectArray<float> BoneWeights;
-    typedef btAlignedObjectArray<BoneTransforms> MeshTranforms;
-    typedef btAlignedObjectArray<BoneIndices> MeshIndices;
-    typedef btAlignedObjectArray<BoneWeights> MeshWeights;
+    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<Vector4> VertexBoneIndicesAndWeights;
+    typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
+    typedef btAlignedObjectArray<VertexBoneIndicesAndWeights> MeshVertexBoneIndicesAndWeights;
+    typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
     typedef Array<Scalar *> MeshMatrices;
-    struct SkinningMesh {
-        MeshTranforms transforms;
-        MeshIndices indices;
-        MeshWeights weights;
+    struct SkinningMeshes {
+        MeshBoneIndices bones;
+        MeshVertexBoneIndicesAndWeights indicesAndWeights;
+        MeshLocalTransforms transforms;
         MeshMatrices matrices;
-        ~SkinningMesh() {
-            matrices.releaseArrayAll();
-        }
-        bool isActive() const { return matrices.count() > 0; }
+        bool isActive() const { return bones.size() > 0; }
+        ~SkinningMeshes() { matrices.releaseArrayAll(); }
     };
-    void getSkinningMesh(SkinningMesh &object) const;
-    void updateSkinningMesh(SkinningMesh &object) const;
+    void getSkinningMeshes(SkinningMeshes &meshes) const;
+    void updateSkinningMeshes(SkinningMeshes &meshes) const;
     void setSkinnningEnable(bool value);
 
 private:

@@ -25,9 +25,8 @@ const float kOne = 1.0;
 const float kHalf = 0.5;
 const vec3 kOne3 = vec3(kOne, kOne, kOne);
 
-attribute vec2 inBoneIndices;
-attribute float inBoneWeight;
-const int kMaxBones = 64;
+attribute vec3 inBoneIndicesAndWeights;
+const int kMaxBones = 128;
 uniform mat4 boneMatrices[kMaxBones];
 
 vec4 performLinearBlendSkinning(const vec4 position, const float weight, const mat4 matrix1, const mat4 matrix2) {
@@ -42,10 +41,11 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 }
 
 void main() {
-    mat4 matrix1 = boneMatrices[int(inBoneIndices.x)];
-    mat4 matrix2 = boneMatrices[int(inBoneIndices.y)];
-    vec4 position = performLinearBlendSkinning(inPosition, inBoneWeight, matrix1, matrix2);
-    vec3 normal = normalize(performLinearBlendSkinning(vec4(inNormal, 0), inBoneWeight, matrix1, matrix2).xyz);
+    mat4 matrix1 = boneMatrices[int(inBoneIndicesAndWeights.x)];
+    mat4 matrix2 = boneMatrices[int(inBoneIndicesAndWeights.y)];
+    float weight = inBoneIndicesAndWeights.z;
+    vec4 position = performLinearBlendSkinning(inPosition, weight, matrix1, matrix2);
+    vec3 normal = normalize(performLinearBlendSkinning(vec4(inNormal, 0), weight, matrix1, matrix2).xyz);
     vec3 view = normalize(normalMatrix * position.xyz);
     vec3 lightPosition = normalize(-lightDirection);
     vec3 halfVector = normalize(lightPosition - normalize(position.xyz));

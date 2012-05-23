@@ -678,6 +678,8 @@ void PMXRenderEngine::renderModel()
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * size;
     }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     modelProgram->unbind();
     if (!m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
@@ -728,6 +730,8 @@ void PMXRenderEngine::renderShadow()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     shadowProgram->unbind();
 }
 
@@ -766,6 +770,8 @@ void PMXRenderEngine::renderEdge()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     edgeProgram->unbind();
 }
 
@@ -795,6 +801,8 @@ void PMXRenderEngine::renderZPlot()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     zplotProgram->unbind();
 }
 

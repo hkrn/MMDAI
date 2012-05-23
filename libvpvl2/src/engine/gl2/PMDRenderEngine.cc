@@ -147,8 +147,7 @@ public:
           m_subTextureUniformLocation(0),
           m_toonTextureUniformLocation(0),
           m_useToonUniformLocation(0),
-          m_boneIndicesAttributeLocation(0),
-          m_boneWeightAttributeLocation(0),
+          m_boneIndicesAndWeightsAttributeLocation(0),
           m_boneMatricesUniformLocation(0)
     {
     }
@@ -167,8 +166,7 @@ public:
         m_subTextureUniformLocation = 0;
         m_toonTextureUniformLocation = 0;
         m_useToonUniformLocation = 0;
-        m_boneIndicesAttributeLocation = 0;
-        m_boneWeightAttributeLocation = 0;
+        m_boneIndicesAndWeightsAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
     }
 
@@ -222,15 +220,11 @@ public:
         glBindTexture(GL_TEXTURE_2D, value);
         glUniform1i(m_toonTextureUniformLocation, 1);
     }
-    void setBoneIndices(const pmd::Model::BoneIndices &value) {
-        glEnableVertexAttribArray(m_boneIndicesAttributeLocation);
-        glVertexAttrib2fv(value.size() * 0.5, &value[0]);
+    void setBoneIndicesAndWeights(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_boneIndicesAndWeightsAttributeLocation);
+        glVertexAttribPointer(m_boneIndicesAndWeightsAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setBoneWeights(const pmd::Model::BoneWeights &value) {
-        glEnableVertexAttribArray(m_boneWeightAttributeLocation);
-        glVertexAttrib1fv(value.size(), &value[0]);
-    }
-    void setBoneMatrices(const float *value, size_t size) {
+    void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
@@ -251,8 +245,7 @@ protected:
         m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
         m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
         m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
-        m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
-        m_boneWeightAttributeLocation = glGetAttribLocation(m_program, "inBoneWeight");
+        m_boneIndicesAndWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneIndicesAndWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
     }
 
@@ -271,8 +264,7 @@ private:
     GLuint m_subTextureUniformLocation;
     GLuint m_toonTextureUniformLocation;
     GLuint m_useToonUniformLocation;
-    GLuint m_boneIndicesAttributeLocation;
-    GLuint m_boneWeightAttributeLocation;
+    GLuint m_boneIndicesAndWeightsAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
 };
 
@@ -322,17 +314,16 @@ public:
           modelProgram(0),
           shadowProgram(0),
           zplotProgram(0),
+          materials(0),
           hasSingleSphereMap(false),
           hasMultipleSphereMap(false),
-          materials(0),
           cullFaceState(true)
     {
     }
     virtual ~PrivateContext() {
-        for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
-            glDeleteTextures(1, &toonTextureID[i]);
-        }
+        glDeleteTextures(PMDModel::kCustomTextureMax, toonTextures);
         glDeleteBuffers(kVertexBufferObjectMax, vertexBufferObjects);
+        glDeleteBuffers(boneIndicesAndWeights.count(), &boneIndicesAndWeights[0]);
         delete edgeProgram;
         edgeProgram = 0;
         delete modelProgram;
@@ -368,12 +359,13 @@ public:
     ModelProgram *modelProgram;
     ShadowProgram *shadowProgram;
     ZPlotProgram *zplotProgram;
-    pmd::Model::SkinningMesh mesh;
-    GLuint toonTextureID[PMDModel::kCustomTextureMax];
+    PMDModelMaterialPrivate *materials;
+    pmd::Model::SkinningMeshes mesh;
+    Array<GLuint> boneIndicesAndWeights;
+    GLuint toonTextures[PMDModel::kCustomTextureMax];
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
     bool hasSingleSphereMap;
     bool hasMultipleSphereMap;
-    PMDModelMaterialPrivate *materials;
     bool cullFaceState;
 };
 
@@ -500,6 +492,32 @@ bool PMDRenderEngine::upload(const IString *dir)
         return ret;
     }
     PMDModel *model = m_model->ptr();
+    glGenBuffers(kVertexBufferObjectMax, m_context->vertexBufferObjects);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kEdgeIndices]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
+                 model->edgeIndicesPointer(), GL_STATIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding edge indices to the vertex buffer object (ID=%d)",
+         m_context->vertexBufferObjects[kEdgeIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(PMDModel::kIndicesStride),
+                 model->indicesPointer(), GL_STATIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding indices to the vertex buffer object (ID=%d)",
+         m_context->vertexBufferObjects[kModelIndices]);
+    const int nvertices = model->vertices().count();
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
+    glBufferData(GL_ARRAY_BUFFER, nvertices * model->strideSize(PMDModel::kVerticesStride),
+                 model->verticesPointer(), GL_DYNAMIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding model vertices to the vertex buffer object (ID=%d)",
+         m_context->vertexBufferObjects[kModelVertices]);
+    if (isVertexShaderSkinning) {
+        m_model->getSkinningMeshes(m_context->mesh);
+        const int nindices = m_context->mesh.indicesAndWeights.size();
+        m_context->boneIndicesAndWeights.resize(nindices);
+        glGenBuffers(nindices, &m_context->boneIndicesAndWeights[0]);
+    }
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
@@ -524,45 +542,32 @@ bool PMDRenderEngine::upload(const IString *dir)
         delete second;
         hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
         hasMultipleSphere |= material->isSubSphereAdd();
+        if (isVertexShaderSkinning) {
+            const pmd::Model::SkinningMeshes &mesh = m_context->mesh;
+            const pmd::Model::VertexBoneIndicesAndWeights &indicesAndWeights = mesh.indicesAndWeights[i];
+            glBindBuffer(GL_ARRAY_BUFFER, m_context->boneIndicesAndWeights[i]);
+            glBufferData(GL_ARRAY_BUFFER, indicesAndWeights.size() * sizeof(indicesAndWeights[0]), &indicesAndWeights[0], GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
     }
-    m_context->hasSingleSphereMap = hasSingleSphere;
-    m_context->hasMultipleSphereMap = hasMultipleSphere;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     log0(context, IRenderDelegate::kLogInfo,
          "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
          hasSingleSphere ? "true" : "false",
          hasMultipleSphere ? "true" : "false");
-    glGenBuffers(kVertexBufferObjectMax, m_context->vertexBufferObjects);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kEdgeIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
-                 model->edgeIndicesPointer(), GL_STATIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
-         "Binding edge indices to the vertex buffer object (ID=%d)",
-         m_context->vertexBufferObjects[kEdgeIndices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(PMDModel::kIndicesStride),
-                 model->indicesPointer(), GL_STATIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
-         "Binding indices to the vertex buffer object (ID=%d)",
-         m_context->vertexBufferObjects[kModelIndices]);
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, model->vertices().count() * model->strideSize(PMDModel::kVerticesStride),
-                 model->verticesPointer(), GL_DYNAMIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
-         "Binding model vertices to the vertex buffer object (ID=%d)",
-         m_context->vertexBufferObjects[kModelVertices]);
+    m_context->hasSingleSphereMap = hasSingleSphere;
+    m_context->hasMultipleSphereMap = hasMultipleSphere;
     if (m_delegate->uploadToonTexture(context, "toon0.bmp", dir, &textureID)) {
-        m_context->toonTextureID[0] = textureID;
+        m_context->toonTextures[0] = textureID;
         log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
         const uint8_t *name = model->toonTexture(i);
         if (m_delegate->uploadToonTexture(context, reinterpret_cast<const char *>(name), dir, &textureID)) {
-            m_context->toonTextureID[i + 1] = textureID;
+            m_context->toonTextures[i + 1] = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
-    }
-    if (isVertexShaderSkinning) {
-        m_model->getSkinningMesh(m_context->mesh);
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
@@ -590,7 +595,7 @@ void PMDRenderEngine::update()
     glBufferSubData(GL_ARRAY_BUFFER, 0, nvertices * strideSize, model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     if (m_context->mesh.isActive())
-        m_model->updateSkinningMesh(m_context->mesh);
+        m_model->updateSkinningMeshes(m_context->mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->updateModel(m_model);
@@ -638,12 +643,11 @@ void PMDRenderEngine::renderModel()
     const MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
-    const bool isVertexSkinning = m_context->mesh.isActive();
+    const bool isVertexShaderSkinning = m_context->mesh.isActive();
     //const bool hasSingleSphereMap = m_context->hasSingleSphereMap;
     const bool hasMultipleSphereMap = m_context->hasMultipleSphereMap;
     Color diffuse;
     size_t offset = 0, size = model->strideSize(vpvl::PMDModel::kIndicesStride);
-
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
@@ -657,7 +661,7 @@ void PMDRenderEngine::renderModel()
         modelProgram->setMaterialSpecular(material->specular());
         modelProgram->setMaterialShininess(material->shiness());
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
-        modelProgram->setToonTexture(m_context->toonTextureID[material->toonID()]);
+        modelProgram->setToonTexture(m_context->toonTextures[material->toonID()]);
         modelProgram->setIsMainSphereMap(isMainSphereAdd || material->isMainSphereModulate());
         modelProgram->setIsMainAdditive(isMainSphereAdd);
         if (hasMultipleSphereMap) {
@@ -672,14 +676,11 @@ void PMDRenderEngine::renderModel()
         else {
             modelProgram->setDepthTexture(0);
         }
-        if (isVertexSkinning) {
-            const pmd::Model::BoneTransforms &transforms = m_context->mesh.transforms[i];
-            const pmd::Model::BoneIndices &indices = m_context->mesh.indices[i];
-            const pmd::Model::BoneWeights &weights = m_context->mesh.weights[i];
-            const float *matrices = m_context->mesh.matrices[i];
-            modelProgram->setBoneIndices(indices);
-            modelProgram->setBoneWeights(weights);
-            modelProgram->setBoneMatrices(matrices, transforms.size());
+        if (isVertexShaderSkinning) {
+            const pmd::Model::SkinningMeshes &mesh = m_context->mesh;
+            glBindBuffer(GL_ARRAY_BUFFER, m_context->boneIndicesAndWeights[i]);
+            modelProgram->setBoneIndicesAndWeights(0, sizeof(Vector3));
+            modelProgram->setBoneMatrices(mesh.matrices[i], mesh.bones[i].size());
         }
         if ((hasModelTransparent && m_context->cullFaceState) ||
                 (!btFuzzyZero(materialOpacity - 1.0f) && m_context->cullFaceState)) {
@@ -694,6 +695,8 @@ void PMDRenderEngine::renderModel()
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * size;
     }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     modelProgram->unbind();
     if (!m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
@@ -735,6 +738,8 @@ void PMDRenderEngine::renderShadow()
     glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->indices().count(), GL_UNSIGNED_SHORT, 0);
     glCullFace(GL_BACK);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     shadowProgram->unbind();
 }
 
@@ -764,6 +769,8 @@ void PMDRenderEngine::renderZPlot()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     zplotProgram->unbind();
 }
 
@@ -802,6 +809,8 @@ void PMDRenderEngine::renderEdge()
     glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     glCullFace(GL_BACK);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     edgeProgram->unbind();
 }
 
