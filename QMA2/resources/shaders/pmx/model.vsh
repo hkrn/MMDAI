@@ -39,9 +39,11 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 }
 
 void main() {
-    vec3 view = normalize(normalMatrix * inPosition.xyz);
+    vec3 position3 = inPosition.xyz;
+    vec4 position = vec4(position3, 1.0);
+    vec3 view = normalize(normalMatrix * position3);
     vec3 lightPosition = normalize(-lightDirection);
-    vec3 halfVector = normalize(lightPosition - normalize(inPosition.xyz));
+    vec3 halfVector = normalize(lightPosition - normalize(position3));
     vec3 color = materialAmbient;
     float hdotn = max(dot(halfVector, inNormal), 0.0);
     color += lightColor * materialDiffuse.rgb;
@@ -53,7 +55,7 @@ void main() {
     outToonCoord = inToonCoord;
     outUVA1 = inUVA1;
     if (hasDepthTexture)
-        outShadowCoord = lightViewProjectionMatrix * inPosition;
-    gl_Position = modelViewProjectionMatrix * inPosition;
+        outShadowCoord = lightViewProjectionMatrix * position;
+    gl_Position = modelViewProjectionMatrix * position;
 }
 

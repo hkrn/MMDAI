@@ -218,7 +218,7 @@ public:
           m_opacityUniformLocation(0)
     {
     }
-    ~ObjectProgram() {
+    virtual ~ObjectProgram() {
         m_normalAttributeLocation = 0;
         m_texCoordAttributeLocation = 0;
         m_normalMatrixUniformLocation = 0;
@@ -328,7 +328,7 @@ public:
           m_transformUniformLocation(0)
     {
     }
-    ~ZPlotProgram() {
+    virtual ~ZPlotProgram() {
         m_transformUniformLocation = 0;
     }
 

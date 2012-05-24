@@ -441,7 +441,6 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
         break;
     }
     }
-    position.setW(1);
 }
 
 const Vector4 &Vertex::uv(int index) const

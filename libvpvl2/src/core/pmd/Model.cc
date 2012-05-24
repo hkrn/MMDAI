@@ -180,34 +180,7 @@ void Model::resetVertices()
 void Model::performUpdate(const Vector3 &lightDirection)
 {
     m_model.setLightPosition(-lightDirection);
-    m_model.setSoftwareSkinningEnable(false);
     m_model.updateImmediate();
-    SkinningMeshes mesh;
-    getSkinningMeshes(mesh);
-    updateSkinningMeshes(mesh);
-    const uint8_t *ptr = reinterpret_cast<const uint8_t *>(m_model.verticesPointer());
-    const int nmaterials = m_model.materials().count();
-    for (int i = 0; i < nmaterials; i++) {
-        const VertexBoneIndicesAndWeights &indicesAndWeights = mesh.indicesAndWeights[i];
-        const int nIndicesAndWeights = indicesAndWeights.size();
-        for (int j = 0; j < nIndicesAndWeights; j++) {
-            const Vector4 &v = indicesAndWeights[j];
-            vpvl::Vertex *vertex = m_model.vertices().at(v.w());
-            const Transform &transform1 = mesh.transforms[v.x()];
-            const Transform &transform2 = mesh.transforms[v.y()];
-            const Vector3 &v1 = transform1 * vertex->position();
-            const Vector3 &n1 = transform1.getBasis() * vertex->normal();
-            const Vector3 &v2 = transform2 * vertex->position();
-            const Vector3 &n2 = transform2.getBasis() * vertex->normal();
-            const float weight = v.z();
-            const uint8_t *vptr = ptr + size_t(m_model.strideSize(vpvl::PMDModel::kVerticesStride) * v.w());
-            const uint8_t *nptr = ptr + size_t(m_model.strideSize(vpvl::PMDModel::kVerticesStride) * v.w()) + m_model.strideOffset(vpvl::PMDModel::kNormalsStride);
-            Vector3 *p = const_cast<Vector3 *>(reinterpret_cast<const Vector3 *>(vptr));
-            Vector3 *n = const_cast<Vector3 *>(reinterpret_cast<const Vector3 *>(nptr));
-            p->setInterpolate3(v2, v1, weight);
-            n->setInterpolate3(n2, n1, weight);
-        }
-    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
@@ -371,9 +344,10 @@ void Model::getSkinningMeshes(SkinningMeshes &meshes) const
     const int nmaterials = materials.count();
     btHashMap<btHashInt, int> set;
     BoneIndices boneIndices;
-    VertexBoneIndicesAndWeights indicesAndWeights;
     meshes.transforms.resize(m_model.bones().count());
     int offset = 0;
+    size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
+    uint8_t *ptr = static_cast<uint8_t *>(const_cast<void *>(m_model.boneAttributesPointer()));
     for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const int nindices = material->countIndices();
@@ -401,14 +375,12 @@ void Model::getSkinningMeshes(SkinningMeshes &meshes) const
             else {
                 normalizedBoneIndex2 = *normalizedBoneIndex2Ptr;
             }
-            //indicesAndWeights.push_back(Vector4(normalizedBoneIndex1, normalizedBoneIndex2, vertex->weight(), vertexIndex));
-            indicesAndWeights.push_back(Vector4(boneIndex1, boneIndex2, vertex->weight(), vertexIndex));
+            Vector3 *v = reinterpret_cast<Vector3 *>(ptr + vertexIndex * stride);
+            v->setValue(normalizedBoneIndex1, normalizedBoneIndex2, vertex->weight());
         }
         meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
         meshes.bones.push_back(boneIndices);
-        meshes.indicesAndWeights.push_back(indicesAndWeights);
         boneIndices.clear();
-        indicesAndWeights.clear();
         set.clear();
         offset += nindices;
     }

@@ -77,6 +77,8 @@ public:
         kTexCoordStride,
         kEdgeSizeStride,
         kToonCoordStride,
+        kBoneIndexStride,
+        kBoneWeightStride,
         kUVA1Stride,
         kUVA2Stride,
         kUVA3Stride,
@@ -197,29 +199,22 @@ public:
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 
-    typedef btAlignedObjectArray<Transform> BoneTransforms;
-    typedef btAlignedObjectArray<float> BoneIndices;
-    typedef btAlignedObjectArray<float> BoneWeights;
-    typedef btAlignedObjectArray<BoneTransforms> MeshTranforms;
-    typedef btAlignedObjectArray<BoneIndices> MeshIndices;
-    typedef btAlignedObjectArray<BoneWeights> MeshWeights;
+    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
+    typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
     typedef Array<Scalar *> MeshMatrices;
-    struct SkinningMesh {
-        MeshTranforms transforms;
-        MeshIndices indices;
-        MeshWeights weights;
+    struct SkinningMeshes {
+        MeshBoneIndices bones;
+        MeshLocalTransforms transforms;
         MeshMatrices matrices;
-        btAlignedObjectArray<int> bdef1;
-        btAlignedObjectArray<int> bdef2;
-        btAlignedObjectArray<int> bdef4;
-        btAlignedObjectArray<int> sdef;
-        ~SkinningMesh() {
-            matrices.releaseArrayAll();
-        }
-        bool isActive() const { return matrices.count() > 0; }
+        BoneIndices bdef1;
+        BoneIndices bdef2;
+        BoneIndices bdef4;
+        BoneIndices sdef;
+        ~SkinningMeshes() { matrices.releaseArrayAll(); }
     };
-    void getSkinningMesh(SkinningMesh &object) const;
-    void updateSkinningMesh(SkinningMesh &object) const;
+    void getSkinningMesh(SkinningMeshes &meshes) const;
+    void updateSkinningMesh(SkinningMeshes &meshes) const;
     void setSkinningEnable(bool value);
 
 private:

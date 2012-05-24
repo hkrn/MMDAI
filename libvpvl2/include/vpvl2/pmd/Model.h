@@ -112,10 +112,8 @@ public:
     typedef Array<Scalar *> MeshMatrices;
     struct SkinningMeshes {
         MeshBoneIndices bones;
-        MeshVertexBoneIndicesAndWeights indicesAndWeights;
         MeshLocalTransforms transforms;
         MeshMatrices matrices;
-        bool isActive() const { return bones.size() > 0; }
         ~SkinningMeshes() { matrices.releaseArrayAll(); }
     };
     void getSkinningMeshes(SkinningMeshes &meshes) const;

@@ -76,6 +76,8 @@ struct Model::SkinnedVertex {
     Vector3 position;
     Vector3 normal;
     Vector4 texcoord;
+    Vector4 boneIndices;
+    Vector4 boneWeights;
     Vector4 uva1;
     Vector4 uva2;
     Vector4 uva3;
@@ -121,6 +123,10 @@ size_t Model::strideOffset(StrideType type)
         return reinterpret_cast<const uint8_t *>(&v.normal[3]) - base;
     case kToonCoordStride:
         return reinterpret_cast<const uint8_t *>(&v.texcoord[2]) - base;
+    case kBoneIndexStride:
+        return reinterpret_cast<const uint8_t *>(&v.boneIndices) - base;
+    case kBoneWeightStride:
+        return reinterpret_cast<const uint8_t *>(&v.boneWeights) - base;
     case kUVA1Stride:
         return reinterpret_cast<const uint8_t *>(&v.uva1) - base;
     case kUVA2Stride:
@@ -142,6 +148,8 @@ size_t Model::strideSize(StrideType type)
     case kTexCoordStride:
     case kEdgeSizeStride:
     case kToonCoordStride:
+    case kBoneIndexStride:
+    case kBoneWeightStride:
     case kUVA1Stride:
     case kUVA2Stride:
     case kUVA3Stride:
@@ -820,85 +828,88 @@ void Model::parseJoints(const DataInfo &info)
     }
 }
 
-void Model::getSkinningMesh(SkinningMesh &object) const
+void Model::getSkinningMesh(SkinningMeshes &meshes) const
 {
     const int nmaterials = m_materials.count();
     btHashMap<btHashInt, int> set;
-    BoneTransforms transforms;
-    BoneIndices indices;
-    BoneWeights weights;
+    BoneIndices boneIndices;
+    meshes.transforms.resize(m_bones.count());
+    int offset = 0;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = m_materials[i];
         const int nindices = material->indices();
         int boneIndexInteral = 0;
-        transforms.clear();
-        indices.clear();
-        weights.clear();
         for (int j = 0; j < nindices; j++) {
-            int vertexIndex = m_skinnedIndices[j];
+            int vertexIndex = m_skinnedIndices[offset + j];
             Vertex *vertex = m_vertices[vertexIndex];
             switch (vertex->type()) {
             case Vertex::kBdef1:
-                object.bdef1.push_back(vertexIndex);
+                meshes.bdef1.push_back(vertexIndex);
                 break;
             case Vertex::kBdef2:
-                object.bdef2.push_back(vertexIndex);
+                meshes.bdef2.push_back(vertexIndex);
                 break;
             case Vertex::kBdef4:
-                object.bdef4.push_back(vertexIndex);
+                meshes.bdef4.push_back(vertexIndex);
                 break;
             case Vertex::kSdef:
-                object.sdef.push_back(vertexIndex);
+                meshes.sdef.push_back(vertexIndex);
                 break;
             }
+            SkinnedVertex &skinnedVertex = m_skinnedVertices[vertexIndex];
+            skinnedVertex.position.setW(vertex->type());
             for (int k = 0; k < 4; k++) {
                 Bone *bone = vertex->bone(k);
                 if (bone) {
                     int boneIndex = bone->index();
-                    int *boneIndexValuePtr = set.find(boneIndex), boneIndexValue = 0;
-                    if (!boneIndexValuePtr) {
-                        transforms.push_back(bone->localTransform());
-                        boneIndexValue = boneIndexInteral++;
-                        set.insert(boneIndex, boneIndexValue);
+                    int *normalizedBoneIndexPtr = set.find(boneIndex), normalizedBoneIndex = 0;
+                    if (!normalizedBoneIndexPtr) {
+                        normalizedBoneIndex = boneIndexInteral++;
+                        set.insert(boneIndex, normalizedBoneIndex);
+                        boneIndices.push_back(boneIndex);
                     }
                     else {
-                        boneIndexValue = *boneIndexValuePtr;
+                        normalizedBoneIndex = *normalizedBoneIndexPtr;
                     }
-                    indices.push_back(boneIndexValue);
-                    weights.push_back(vertex->weight(0));
+                    skinnedVertex.boneIndices[k] = normalizedBoneIndex;
+                    skinnedVertex.boneWeights[k] = vertex->weight(k);
                 }
                 else {
-                    indices.push_back(-1);
-                    weights.push_back(0.0);
+                    skinnedVertex.boneIndices[k] = -1;
+                    skinnedVertex.boneWeights[k] = 0;
                 }
             }
         }
-        size_t size = transforms.size() * 16;
-        Scalar *matrices = new Scalar[size];
-        memset(matrices, 0, sizeof(Scalar) * size);
-        object.transforms.push_back(transforms);
-        object.indices.push_back(indices);
-        object.weights.push_back(weights);
-        object.matrices.add(matrices);
+        meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
+        meshes.bones.push_back(boneIndices);
+        boneIndices.clear();
         set.clear();
+        offset += nindices;
     }
 }
 
-void Model::updateSkinningMesh(SkinningMesh &object) const
+void Model::updateSkinningMesh(SkinningMeshes &meshes) const
 {
-    const int nBoneIndices = object.indices.size();
-    for (int i = 0; i < nBoneIndices; i++) {
-        const BoneIndices &indices = object.indices[i];
-        const int nindices = indices.size();
-        Scalar *matrices = object.matrices[i];
-        size_t offset = 0;
-        for (int j = 0; j < nindices; j++) {
-            const int index = indices[j];
-            Bone *bone = m_bones[index];
-            bone->localTransform().getOpenGLMatrix(&matrices[offset]);
-            offset += j * 16;
+    const int nbones = m_bones.count();
+    MeshLocalTransforms &transforms = meshes.transforms;
+    for (int i = 0; i < nbones; i++) {
+        const Bone *bone = m_bones[i];
+        transforms[i] = bone->localTransform();
+    }
+    const int nmaterials = m_materials.count();
+    for (int i = 0; i < nmaterials; i++) {
+        const BoneIndices &boneIndices = meshes.bones[i];
+        const int nBoneIndices = boneIndices.size();
+        Scalar *matrices = meshes.matrices[i];
+        for (int j = 0; j < nBoneIndices; j++) {
+            const int boneIndex = boneIndices[j];
+            const Transform &transform = transforms[boneIndex];
+            transform.getOpenGLMatrix(&matrices[j * 16]);
         }
     }
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++)
+        m_skinnedVertices[i].position = m_vertices[i]->origin() + m_vertices[i]->position();
 }
 
 void Model::setSkinningEnable(bool value)
