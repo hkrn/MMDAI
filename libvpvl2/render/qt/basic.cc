@@ -713,6 +713,7 @@ public:
 
     void load(const QString &filename) {
         m_settings = new QSettings(filename, QSettings::IniFormat, this);
+        m_settings->setIniCodec("UTF-8");
         m_delegate = new Delegate(m_settings, this);
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
