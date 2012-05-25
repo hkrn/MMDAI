@@ -152,6 +152,18 @@ public:
         case IRenderDelegate::kZPlotFragmentShader:
             filename += "zplot.fsh";
             break;
+        case IRenderDelegate::kEdgeWithSkinningVertexShader:
+            filename += "skinning.edge.vsh";
+            break;
+        case IRenderDelegate::kModelWithSkinningVertexShader:
+            filename += "skinning.model.vsh";
+            break;
+        case IRenderDelegate::kShadowWithSkinningVertexShader:
+            filename += "skinning.shadow.vsh";
+            break;
+        case IRenderDelegate::kZPlotWithSkinningVertexShader:
+            filename += "skinning.zplot.vsh";
+            break;
         }
         const QString &path = QString(":/shaders/%1").arg(filename);
         QFile file(path);
@@ -982,13 +994,6 @@ void SceneLoader::loadProject(const QString &path)
         const Vector3 &position = UIGetVector3(m_project->globalSetting("light.direction"), Vector3(-0.5, -1.0, -0.5));
         setLightColor(Color(color.x(), color.y(), color.z(), 1.0));
         setLightDirection(position);
-        /* アクセラレーションの有効化(有効にしている場合) */
-        if (isAccelerationEnabled()) {
-#if QMA2_TBD
-            if (m_renderer->initializeAccelerator())
-                m_renderer->scene()->setSoftwareSkinningEnable(false);
-#endif
-        }
         int progress = 0;
         QList<IModel *> lostModels;
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
@@ -998,7 +1003,10 @@ void SceneLoader::loadProject(const QString &path)
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
         Quaternion rotation;
+        Scene *sceneObject = scene();
+        Scene::AccelerationType accelerationType = globalAccelerationType();
         UIDelegate *delegate = static_cast<UIDelegate *>(m_renderDelegate);
+        sceneObject->setAccelerationType(accelerationType);
         for (int i = 0; i < nmodels; i++) {
             const Project::UUID &modelUUIDString = modelUUIDs[i];
             IModel *model = m_project->model(modelUUIDString);
@@ -1010,7 +1018,8 @@ void SceneLoader::loadProject(const QString &path)
                 internal::String d(fileInfo.absolutePath());
                 IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
                 engine->upload(&d);
-                scene()->addModel(model, engine);
+                sceneObject->setAccelerationType(modelAccelerationType(model));
+                sceneObject->addModel(model, engine);
                 IModel::Type type = model->type();
                 if (type == IModel::kPMD || type == IModel::kPMX) {
                     delegate->setArchive(0);
@@ -1063,6 +1072,7 @@ void SceneLoader::loadProject(const QString &path)
             lostModels.append(model);
             emit projectDidProceed(++progress);
         }
+        sceneObject->setAccelerationType(accelerationType);
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
         for (int i = 0; i < nmotions; i++) {
             IMotion *motion = motions[i];
@@ -1478,7 +1488,7 @@ bool SceneLoader::isProjectiveShadowEnabled(const IModel *model) const
 
 void SceneLoader::setProjectiveShadowEnable(const IModel *model, bool value)
 {
-    if (m_project)
+    if (m_project && isProjectiveShadowEnabled(model) != value)
         m_project->setModelSetting(model, "shadow.projective", value ? "true" : "false");
 }
 
@@ -1489,7 +1499,7 @@ bool SceneLoader::isSelfShadowEnabled(const IModel *model) const
 
 void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
 {
-    if (m_project)
+    if (m_project && isSelfShadowEnabled(model) != value)
         m_project->setModelSetting(model, "shadow.ss", value ? "true" : "false");
 }
 
@@ -1500,7 +1510,7 @@ bool SceneLoader::isOpenCLSkinningEnabled(const IModel *model) const
 
 void SceneLoader::setOpenCLSkinningEnable(const IModel *model, bool value)
 {
-    if (m_project)
+    if (m_project && isOpenCLSkinningEnabled(model) != value)
         m_project->setModelSetting(model, "skinning.opencl", value ? "true" : "false");
 }
 
@@ -1511,7 +1521,7 @@ bool SceneLoader::isVertexShaderSkinningType1Enabled(const IModel *model) const
 
 void SceneLoader::setVertexShaderSkinningType1Enable(const IModel *model, bool value)
 {
-    if (m_project)
+    if (m_project && isVertexShaderSkinningType1Enabled(model) != value)
         m_project->setModelSetting(model, "skinning.vs.type1", value ? "true" : "false");
 }
 
@@ -1616,39 +1626,6 @@ void SceneLoader::setPhysicsEnabled(bool value)
         m_project->setGlobalSetting("physics.enabled", value ? "true" : "false");
 }
 
-bool SceneLoader::isAccelerationEnabled() const
-{
-    return globalSetting("acceleration.enabled", false);
-}
-
-void SceneLoader::setAccelerationEnabled(bool value)
-{
-#if QMA2_TBD
-    /* アクセレーションをサポートする場合のみ有効にする。しない場合は常に無効に設定 */
-    if (isAccelerationSupported()) {
-        if (value) {
-            if (m_renderer->initializeAccelerator()) {
-                m_renderer->scene()->setSoftwareSkinningEnable(false);
-                if (m_project && !isAccelerationEnabled())
-                    m_project->setGlobalSetting("acceleration.enabled", "true");
-                return;
-            }
-            else {
-                qWarning("%s", qPrintable(tr("Failed enabling acceleration and set fallback.")));
-            }
-        }
-    }
-    else {
-        qWarning("%s", qPrintable(tr("Acceleration is not supported on this platform and set fallback.")));
-    }
-    m_renderer->scene()->setSoftwareSkinningEnable(true);
-    if (m_project && isAccelerationEnabled())
-        m_project->setGlobalSetting("acceleration.enabled", "false");
-#else
-    Q_UNUSED(value)
-#endif
-}
-
 /* 再生設定及びエンコード設定の場合は同値チェックを行わない。こちらは値を確実に保存させる必要があるため */
 int SceneLoader::frameIndexPlayFrom() const
 {
@@ -1745,7 +1722,7 @@ bool SceneLoader::isLoop() const
 
 void SceneLoader::setLoop(bool value)
 {
-    if (m_project)
+    if (m_project && value != isLoop())
         m_project->setGlobalSetting("play.loop", value ? "true" : "false");
 }
 
@@ -1942,7 +1919,7 @@ bool SceneLoader::isSoftShadowEnabled() const
 
 void SceneLoader::setSoftShadowEnable(bool value)
 {
-    if (m_project) {
+    if (m_project && isSoftShadowEnabled() != value) {
         m_project->setGlobalSetting("shadow.texture.soft", value ? "true" : "false");
     }
 }
@@ -1984,9 +1961,43 @@ bool SceneLoader::isBackgroundImageUniformEnabled() const
 
 void SceneLoader::setBackgroundImageUniformEnable(bool value)
 {
-    if (m_project) {
+    if (m_project && isBackgroundImageUniformEnabled() != value) {
         m_project->setGlobalSetting("background.image.uniform", value ? "true" : "false");
     }
+}
+
+bool SceneLoader::isOpenCLSkinningEnabled() const
+{
+    return m_project ? m_project->globalSetting("skinning.opencl") == "true" : false;
+}
+
+void SceneLoader::setOpenCLSkinningEnable(bool value)
+{
+    if (m_project && isOpenCLSkinningEnabled() != value) {
+            m_project->setGlobalSetting("skinning.opencl", value ? "true" : "false");
+        if (value)
+            m_project->setAccelerationType(Scene::kOpenCLAccelerationType1);
+    }
+}
+
+bool SceneLoader::isVertexShaderSkinningType1Enabled() const
+{
+    return m_project ? m_project->globalSetting("skinning.vs.type1") == "true" : false;
+}
+
+void SceneLoader::setVertexShaderSkinningType1Enable(bool value)
+{
+    if (m_project && isVertexShaderSkinningType1Enabled() != value) {
+        m_project->setGlobalSetting("skinning.vs.type1", value ? "true" : "false");
+        if (value)
+            m_project->setAccelerationType(Scene::kVertexShaderAccelerationType1);
+    }
+}
+
+void SceneLoader::setSoftwareSkinningEnable(bool value)
+{
+    if (m_project && value)
+        m_project->setAccelerationType(Scene::kSoftwareFallback);
 }
 
 void SceneLoader::setProjectDirtyFalse()
@@ -2007,6 +2018,26 @@ int SceneLoader::globalSetting(const char *key, int def) const
         return ok ? value : def;
     }
     return def;
+}
+
+Scene::AccelerationType SceneLoader::globalAccelerationType() const
+{
+    if (isOpenCLSkinningEnabled())
+        return Scene::kOpenCLAccelerationType1;
+    else if (isVertexShaderSkinningType1Enabled())
+        return Scene::kVertexShaderAccelerationType1;
+    else
+        return Scene::kSoftwareFallback;
+}
+
+Scene::AccelerationType SceneLoader::modelAccelerationType(const IModel *model) const
+{
+    if (isOpenCLSkinningEnabled(model))
+        return Scene::kOpenCLAccelerationType1;
+    else if (isVertexShaderSkinningType1Enabled(model))
+        return Scene::kVertexShaderAccelerationType1;
+    else
+        return globalAccelerationType();
 }
 
 Scene *SceneLoader::scene() const

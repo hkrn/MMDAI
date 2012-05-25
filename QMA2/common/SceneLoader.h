@@ -105,7 +105,6 @@ public:
 
     bool isGridVisible() const;
     bool isPhysicsEnabled() const;
-    bool isAccelerationEnabled() const;
     const vpvl2::Vector3 worldGravity() const;
     const QColor screenColor() const;
     int frameIndexPlayFrom() const;
@@ -125,6 +124,8 @@ public:
     const QString backgroundImage() const;
     const QPoint backgroundImagePosition() const;
     bool isBackgroundImageUniformEnabled() const;
+    bool isOpenCLSkinningEnabled() const;
+    bool isVertexShaderSkinningType1Enabled() const;
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
@@ -184,7 +185,6 @@ public slots:
 
     void setGridVisible(bool value);
     void setPhysicsEnabled(bool value);
-    void setAccelerationEnabled(bool value);
     void setFrameIndexPlayFrom(int value);
     void setFrameIndexPlayTo(int value);
     void setSceneFPSForPlay(int value);
@@ -206,6 +206,9 @@ public slots:
     void setBackgroundImagePath(const QString &value);
     void setBackgroundImagePosition(const QPoint &value);
     void setBackgroundImageUniformEnable(bool value);
+    void setOpenCLSkinningEnable(bool value);
+    void setVertexShaderSkinningType1Enable(bool value);
+    void setSoftwareSkinningEnable(bool value);
 
 signals:
     void projectDidCount(int value);
@@ -234,6 +237,8 @@ private:
     void commitAssetProperties();
     bool globalSetting(const char *key, bool def) const;
     int globalSetting(const char *key, int def) const;
+    vpvl2::Scene::AccelerationType globalAccelerationType() const;
+    vpvl2::Scene::AccelerationType modelAccelerationType(const vpvl2::IModel *model) const;
 
     internal::World *m_world;
     QGLFramebufferObject *m_depthBuffer;

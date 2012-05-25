@@ -51,6 +51,14 @@
         <file alias="pmx.shadow.vsh">shaders/pmx/shadow.vsh</file>
         <file alias="pmx.zplot.fsh">shaders/pmx/zplot.fsh</file>
         <file alias="pmx.zplot.vsh">shaders/pmx/zplot.vsh</file>
+        <file alias="pmd.skinning.edge.vsh">shaders/pmd/skinning/edge.vsh</file>
+        <file alias="pmd.skinning.model.vsh">shaders/pmd/skinning/model.vsh</file>
+        <file alias="pmd.skinning.shadow.vsh">shaders/pmd/skinning/shadow.vsh</file>
+        <file alias="pmd.skinning.zplot.vsh">shaders/pmd/skinning/zplot.vsh</file>
+        <file alias="pmx.skinning.edge.vsh">shaders/pmx/skinning/edge.vsh</file>
+        <file alias="pmx.skinning.model.vsh">shaders/pmx/skinning/model.vsh</file>
+        <file alias="pmx.skinning.shadow.vsh">shaders/pmx/skinning/shadow.vsh</file>
+        <file alias="pmx.skinning.zplot.vsh">shaders/pmx/skinning/zplot.vsh</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="x-disable-move.png">images/icons/x-disable-move.png</file>

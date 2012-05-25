@@ -303,9 +303,10 @@ void MainWindow::loadProject()
             m_sceneMotionModel->removeMotion();
             m_sceneWidget->loadProject(filename);
             SceneLoader *loader = m_sceneWidget->sceneLoader();
-            m_actionEnableAcceleration->setChecked(loader->isAccelerationEnabled());
             m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
             m_actionShowGrid->setChecked(loader->isGridVisible());
+            m_actionSetOpenCLSkinning->setChecked(loader->isOpenCLSkinningEnabled());
+            m_actionSetVertexShaderSkinningType1->setChecked(loader->isVertexShaderSkinningType1Enabled());
             m_currentProjectFilename = filename;
             updateWindowTitle();
         }
@@ -510,7 +511,8 @@ bool MainWindow::saveProjectAs(QString &filename)
 bool MainWindow::saveProjectFile(const QString &filename)
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
-    loader->setAccelerationEnabled(m_actionEnableAcceleration->isChecked());
+    loader->setOpenCLSkinningEnable(m_actionSetOpenCLSkinning->isChecked());
+    loader->setVertexShaderSkinningType1Enable(m_actionSetVertexShaderSkinningType1->isChecked());
     loader->setPhysicsEnabled(m_actionEnablePhysics->isChecked());
     loader->setGridVisible(m_actionShowGrid->isChecked());
     m_sceneWidget->saveProject(filename);
@@ -664,9 +666,6 @@ void MainWindow::buildUI()
     connect(m_actionOpenScreenColorDialog, SIGNAL(triggered()), SLOT(openScreenColorDialog()));
     m_actionOpenShadowMapDialog = new QAction(this);
     connect(m_actionOpenShadowMapDialog, SIGNAL(triggered()), SLOT(openShadowMapDialog()));
-    m_actionEnableAcceleration = new QAction(this);
-    m_actionEnableAcceleration->setCheckable(true);
-    m_actionEnableAcceleration->setEnabled(Scene::isAcceleratorSupported());
     m_actionEnablePhysics = new QAction(this);
     m_actionEnablePhysics->setCheckable(true);
     m_actionEnablePhysics->setChecked(true);
@@ -771,6 +770,22 @@ void MainWindow::buildUI()
     connect(m_actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     m_actionAboutQt->setMenuRole(QAction::AboutQtRole);
 
+    QActionGroup *accelerationGroup = new QActionGroup(this);
+    accelerationGroup->setExclusive(true);
+    m_actionSetSoftwareSkinningFallback = new QAction(this);
+    m_actionSetSoftwareSkinningFallback->setCheckable(true);
+    accelerationGroup->addAction(m_actionSetSoftwareSkinningFallback);
+    m_actionSetOpenCLSkinning = new QAction(this);
+    m_actionSetOpenCLSkinning->setCheckable(Scene::isAcceleratorSupported());
+    accelerationGroup->addAction(m_actionSetOpenCLSkinning);
+    m_actionSetVertexShaderSkinningType1 = new QAction(this);
+    m_actionSetVertexShaderSkinningType1->setCheckable(true);
+    accelerationGroup->addAction(m_actionSetVertexShaderSkinningType1);
+    m_menuAcceleration = new QMenu(this);
+    m_menuAcceleration->addAction(m_actionSetSoftwareSkinningFallback);
+    m_menuAcceleration->addAction(m_actionSetOpenCLSkinning);
+    m_menuAcceleration->addAction(m_actionSetVertexShaderSkinningType1);
+
 #ifdef Q_OS_MACX
     m_menuBar = new QMenuBar(0);
 #else
@@ -835,7 +850,7 @@ void MainWindow::buildUI()
     m_menuProject->addAction(m_actionOpenScreenColorDialog);
     m_menuProject->addAction(m_actionOpenShadowMapDialog);
     m_menuProject->addSeparator();
-    m_menuProject->addAction(m_actionEnableAcceleration);
+    m_menuProject->addMenu(m_menuAcceleration);
     m_menuProject->addAction(m_actionEnablePhysics);
     m_menuProject->addAction(m_actionShowGrid);
     m_menuProject->addSeparator();
@@ -960,7 +975,6 @@ void MainWindow::bindActions()
     m_actionOpenRenderOrderDialog->setShortcut(m_settings.value(kPrefix + "renderOrderDialog").toString());
     m_actionOpenScreenColorDialog->setShortcut(m_settings.value(kPrefix + "screenColorDialog").toString());
     m_actionOpenShadowMapDialog->setShortcut(m_settings.value(kPrefix + "shadowMapDialog").toString());
-    m_actionEnableAcceleration->setShortcut(m_settings.value(kPrefix + "enableAcceleration").toString());
     m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
     m_actionSetBackgroundImage->setShortcut(m_settings.value(kPrefix + "setBackgroundImage").toString());
@@ -1020,6 +1034,9 @@ void MainWindow::bindActions()
     m_actionAbout->setShortcut(m_settings.value(kPrefix + "about", "Alt+Q, Alt+/").toString());
     m_actionAboutQt->setShortcut(m_settings.value(kPrefix + "aboutQt").toString());
     m_actionClearRecentFiles->setShortcut(m_settings.value(kPrefix + "clearRecentFiles").toString());
+    m_actionSetSoftwareSkinningFallback->setShortcut(m_settings.value(kPrefix + "setSoftwareSkinningFallback").toString());
+    m_actionSetOpenCLSkinning->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
+    m_actionSetVertexShaderSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
     QShortcut *cameraFront = new QShortcut(m_settings.value(kPrefix + "cameraFront", QKeySequence(Qt::Key_2)).toString(), this);
     connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveFront()));
     QShortcut *cameraBack = new QShortcut(m_settings.value(kPrefix + "cameraBack", QKeySequence(Qt::Key_8)).toString(), this);
@@ -1096,8 +1113,6 @@ void MainWindow::retranslate()
     m_actionOpenScreenColorDialog->setStatusTip(tr("Open a dialog to set screen color."));
     m_actionOpenShadowMapDialog->setText(tr("Shadow map setting"));
     m_actionOpenShadowMapDialog->setStatusTip(tr("Open a dialog to configure shadow map."));
-    m_actionEnableAcceleration->setText(tr("Enable acceleration"));
-    m_actionEnableAcceleration->setStatusTip(tr("Enable or disable acceleration using OpenCL if supported."));
     m_actionEnablePhysics->setText(tr("Enable physics simulation"));
     m_actionEnablePhysics->setStatusTip(tr("Enable or disable physics simulation using Bullet."));
     m_actionShowGrid->setText(tr("Show grid"));
@@ -1222,6 +1237,12 @@ void MainWindow::retranslate()
     m_actionCreateMotionOnToolBar->setStatusTip(tr("Create an empty model motion (discards previous model motion)."));
     m_actionDeleteModelOnToolBar->setText(tr("Delete model"));
     m_actionDeleteModelOnToolBar->setStatusTip(m_actionDeleteSelectedModel->statusTip());
+    m_actionSetSoftwareSkinningFallback->setText(tr("Software skinning"));
+    m_actionSetSoftwareSkinningFallback->setStatusTip(tr("Enable software skinning. This is default and stable but slow."));
+    m_actionSetOpenCLSkinning->setText(tr("OpenCL skinning"));
+    m_actionSetOpenCLSkinning->setStatusTip(tr("Enable OpenCL skinning. This is fast (faster than vertex shader skinning by case) but maybe causes unstable."));
+    m_actionSetVertexShaderSkinningType1->setText(tr("Vertex shader skinning"));
+    m_actionSetVertexShaderSkinningType1->setStatusTip(tr("Enable Vertex shader skinning. This is fast but maybe causes unstable."));
     m_menuFile->setTitle(tr("&File"));
     m_menuEdit->setTitle(tr("&Edit"));
     m_menuProject->setTitle(tr("&Project"));
@@ -1233,6 +1254,7 @@ void MainWindow::retranslate()
     m_menuRetainModels->setTitle(tr("Select model"));
     m_menuRecentFiles->setTitle(tr("Open recent files"));
     m_menuHelp->setTitle(tr("&Help"));
+    m_menuAcceleration->setTitle(tr("Set acceleration type"));
 }
 
 void MainWindow::connectSceneLoader()
@@ -1266,8 +1288,10 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(assetDidSelect(vpvl2::IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl2::IModel*,SceneLoader*)));
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), m_boneMotionModel, SLOT(setLightDirection(vpvl2::Vector3)));
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), m_morphMotionModel, SLOT(setLightDirection(vpvl2::Vector3)));
-    connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
+    connect(m_actionSetSoftwareSkinningFallback, SIGNAL(toggled(bool)), loader, SLOT(setSoftwareSkinningEnable(bool)));
+    connect(m_actionSetOpenCLSkinning, SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnable(bool)));
+    connect(m_actionSetVertexShaderSkinningType1, SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));
     connect(m_actionShowGrid, SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
     connect(assetWidget, SIGNAL(assetDidRemove(vpvl2::IModel*)), loader, SLOT(deleteAsset(vpvl2::IModel*)));
     connect(assetWidget, SIGNAL(assetDidSelect(vpvl2::IModel*)), loader, SLOT(setSelectedAsset(vpvl2::IModel*)));
@@ -1305,6 +1329,14 @@ void MainWindow::connectSceneLoader()
     /* 空のカメラモーションを登録 */
     IMotion *cameraMotion = loader->newCameraMotion();
     loader->setCameraMotion(cameraMotion);
+    /* アクセラレーションの状態を設定 */
+    m_actionSetSoftwareSkinningFallback->setChecked(false);
+    if (loader->isOpenCLSkinningEnabled())
+        m_actionSetOpenCLSkinning->setChecked(true);
+    else if (loader->isVertexShaderSkinningType1Enabled())
+        m_actionSetVertexShaderSkinningType1->setChecked(true);
+    else
+        m_actionSetSoftwareSkinningFallback->setChecked(true);
 }
 
 void MainWindow::connectWidgets()

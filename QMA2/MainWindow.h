@@ -218,7 +218,6 @@ private:
     QAction *m_actionOpenRenderOrderDialog;
     QAction *m_actionOpenScreenColorDialog;
     QAction *m_actionOpenShadowMapDialog;
-    QAction *m_actionEnableAcceleration;
     QAction *m_actionEnablePhysics;
     QAction *m_actionShowGrid;
     QAction *m_actionSetBackgroundImage;
@@ -281,6 +280,9 @@ private:
     QAction *m_actionCreateMotionOnToolBar;
     QAction *m_actionInsertMotionOnToolBar;
     QAction *m_actionDeleteModelOnToolBar;
+    QAction *m_actionSetSoftwareSkinningFallback;
+    QAction *m_actionSetOpenCLSkinning;
+    QAction *m_actionSetVertexShaderSkinningType1;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;
     QMenu *m_menuEdit;
@@ -293,6 +295,7 @@ private:
     QMenu *m_menuRetainAssets;
     QMenu *m_menuRecentFiles;
     QMenu *m_menuHelp;
+    QMenu *m_menuAcceleration;
 
     Q_DISABLE_COPY(MainWindow)
 };
