@@ -346,6 +346,20 @@ void SceneWidget::setModelSelfShadowEnable(bool value)
     refreshMotions();
 }
 
+void SceneWidget::setModelOpenSkinningEnable(bool value)
+{
+    if (IModel *model = m_loader->selectedModel())
+        m_loader->setSelfShadowEnable(model, value);
+    refreshMotions();
+}
+
+void SceneWidget::setModelVertexShaderSkinningType1Enable(bool value)
+{
+    if (IModel *model = m_loader->selectedModel())
+        m_loader->setSelfShadowEnable(model, value);
+    refreshMotions();
+}
+
 void SceneWidget::setHandlesVisible(bool value)
 {
     m_handles->setVisible(value);

@@ -1493,6 +1493,28 @@ void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
         m_project->setModelSetting(model, "shadow.ss", value ? "true" : "false");
 }
 
+bool SceneLoader::isOpenCLSkinningEnabled(const IModel *model) const
+{
+    return m_project ? m_project->modelSetting(model, "skinning.opencl") == "true" : false;
+}
+
+void SceneLoader::setOpenCLSkinningEnable(const IModel *model, bool value)
+{
+    if (m_project)
+        m_project->setModelSetting(model, "skinning.opencl", value ? "true" : "false");
+}
+
+bool SceneLoader::isVertexShaderSkinningType1Enabled(const IModel *model) const
+{
+    return m_project ? m_project->modelSetting(model, "skinning.vs.type1") == "true" : false;
+}
+
+void SceneLoader::setVertexShaderSkinningType1Enable(const IModel *model, bool value)
+{
+    if (m_project)
+        m_project->setModelSetting(model, "skinning.vs.type1", value ? "true" : "false");
+}
+
 IModel *SceneLoader::selectedModel() const
 {
     return m_model;

@@ -153,6 +153,8 @@ public slots:
     void setModelRotationOffset(const vpvl2::Vector3 &value);
     void setModelProjectiveShadowEnable(bool value);
     void setModelSelfShadowEnable(bool value);
+    void setModelOpenSkinningEnable(bool value);
+    void setModelVertexShaderSkinningType1Enable(bool value);
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
     void setSelectedModel(vpvl2::IModel *value);

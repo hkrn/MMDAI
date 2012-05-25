@@ -130,6 +130,10 @@ public:
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
     bool isSelfShadowEnabled(const vpvl2::IModel *model) const;
     void setSelfShadowEnable(const vpvl2::IModel *model, bool value);
+    bool isOpenCLSkinningEnabled(const vpvl2::IModel *model) const;
+    void setOpenCLSkinningEnable(const vpvl2::IModel *model, bool value);
+    bool isVertexShaderSkinningType1Enabled(const vpvl2::IModel *model) const;
+    void setVertexShaderSkinningType1Enable(const vpvl2::IModel *model, bool value);
     vpvl2::IModel *selectedModel() const;
     bool isModelSelected(const vpvl2::IModel *value) const;
     void setModelEdgeColor(vpvl2::IModel *model, const QColor &value);

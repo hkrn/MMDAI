@@ -71,6 +71,8 @@ signals:
     void rotationOffsetDidChange(const vpvl2::Vector3 &value);
     void projectiveShadowDidEnable(bool value);
     void selfShadowDidEnable(bool value);
+    void openclSkinningDidEnable(bool value);
+    void vertexShaderSkinningType1DidEnable(bool value);
 
 private slots:
     void retranslate();
@@ -94,10 +96,16 @@ private:
     QLabel *m_opacityLabel;
     QSlider *m_opacitySlider;
     QSpinBox *m_opacitySpinBox;
-    QButtonGroup *m_radioButtonsGroup;
+    QGroupBox *m_shadowGroup;
+    QButtonGroup *m_shadowButtonsGroup;
     QRadioButton *m_noShadowCheckbox;
     QRadioButton *m_projectiveShadowCheckbox;
     QRadioButton *m_selfShadowCheckbox;
+    QGroupBox *m_accelerationGroup;
+    QButtonGroup *m_accelerationButtonsGroup;
+    QRadioButton *m_softwareSkinningCheckbox;
+    QRadioButton *m_openclSkinningCheckbox;
+    QRadioButton *m_vertexShaderSkinningType1SkinningCheckbox;
     QDoubleSpinBox *m_px;
     QDoubleSpinBox *m_py;
     QDoubleSpinBox *m_pz;
