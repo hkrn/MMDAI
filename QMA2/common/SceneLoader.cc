@@ -218,7 +218,7 @@ public:
         return new(std::nothrow) internal::String(QString::fromStdString(value));
     }
     IString *toUnicode(const uint8_t *value) const {
-        return new(std::nothrow) internal::String(internal::toQString(value));
+        return new(std::nothrow) internal::String(internal::toQStringFromBytes(value));
     }
     void error(const char *format, va_list ap) {
         qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
@@ -594,7 +594,7 @@ SceneLoader::~SceneLoader()
 void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid)
 {
     /* モデル名が空っぽの場合はファイル名から補完しておく */
-    const QString &key = internal::toQString(model).trimmed();
+    const QString &key = internal::toQStringFromModel(model).trimmed();
     if (key.isEmpty()) {
         internal::String s(key);
         model->setName(&s);
@@ -995,7 +995,7 @@ void SceneLoader::loadProject(const QString &path)
         setLightColor(Color(color.x(), color.y(), color.z(), 1.0));
         setLightDirection(position);
         int progress = 0;
-        QList<IModel *> lostModels;
+        QList<IModel *> lostModels, assets;
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         emit projectDidCount(modelUUIDs.size());
         const Array<IMotion *> &motions = m_project->motions();
@@ -1055,11 +1055,8 @@ void SceneLoader::loadProject(const QString &path)
                     internal::String s(fileInfo.baseName().toUtf8());
                     model->setName(&s);
                     delegate->setArchive(0);
-                    const QUuid assetUUID(modelUUIDString.c_str());
-                    m_renderOrderList.add(assetUUID);
-                    emit assetDidAdd(model, assetUUID);
-                    if (isAssetSelected(model))
-                        setSelectedAsset(model);
+                    m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
+                    assets.append(model);
                     emit projectDidProceed(++progress);
                     continue;
                 }
@@ -1088,6 +1085,19 @@ void SceneLoader::loadProject(const QString &path)
         foreach (IModel *model, lostModels) {
             m_project->removeModel(model);
             m_project->deleteModel(model);
+        }
+        /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルとアクセサリ読み込みに行う */
+        foreach (IModel *model, assets) {
+            const QUuid assetUUID(m_project->modelUUID(model).c_str());
+            model->setPosition(assetPosition(model));
+            model->setRotation(assetRotation(model));
+            model->setScaleFactor(assetScaleFactor(model));
+            model->setOpacity(assetOpacity(model));
+            model->setParentModel(assetParentModel(model));
+            model->setParentBone(assetParentBone(model));
+            emit assetDidAdd(model, assetUUID);
+            if (isAssetSelected(model))
+                setSelectedAsset(model);
         }
         updateDepthBuffer(shadowMapSize());
         sort(true);
@@ -1331,7 +1341,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModel *asset)
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
         const char lineSeparator[] = "\r\n";
-        stream << internal::toQString(asset) << lineSeparator;
+        stream << internal::toQStringFromModel(asset) << lineSeparator;
         stream << m_name2assets.key(asset) << lineSeparator;
         stream << asset->scaleFactor() << lineSeparator;
         const Vector3 &position = asset->position();
@@ -1341,7 +1351,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModel *asset)
         stream << QString("%1,%2,%3").arg(rotation.x(), 0, 'f', 1)
                   .arg(rotation.y(), 0, 'f', 1).arg(rotation.z(), 0, 'f', 1) << lineSeparator;
         const IBone *bone = asset->parentBone();
-        stream << (bone ? internal::toQString(bone) : "地面") << lineSeparator;
+        stream << (bone ? internal::toQStringFromBone(bone) : "地面") << lineSeparator;
         stream << 1 << lineSeparator;
     }
     else {
@@ -1837,7 +1847,7 @@ IBone *SceneLoader::assetParentBone(IModel *asset) const
 void SceneLoader::setAssetParentBone(const IModel *asset, IBone *bone)
 {
     if (m_project)
-        m_project->setModelSetting(asset, "parent.bone", internal::toQString(bone).toStdString());
+        m_project->setModelSetting(asset, "parent.bone", internal::toQStringFromBone(bone).toStdString());
 }
 
 IModel *SceneLoader::selectedAsset() const
@@ -1974,7 +1984,7 @@ bool SceneLoader::isOpenCLSkinningEnabled() const
 void SceneLoader::setOpenCLSkinningEnable(bool value)
 {
     if (m_project && isOpenCLSkinningEnabled() != value) {
-            m_project->setGlobalSetting("skinning.opencl", value ? "true" : "false");
+        m_project->setGlobalSetting("skinning.opencl", value ? "true" : "false");
         if (value)
             m_project->setAccelerationType(Scene::kOpenCLAccelerationType1);
     }
