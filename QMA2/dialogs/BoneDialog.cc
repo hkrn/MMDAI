@@ -128,7 +128,7 @@ void BoneDialog::retranslate()
     m_xAngleLabel->setText(tr("X Axis"));
     m_yAngleLabel->setText(tr("Y Axis"));
     m_zAngleLabel->setText(tr("Z Axis"));
-    setWindowTitle(tr("Bone dialog of %1").arg(internal::toQString(m_boneMotionModel->selectedBone())));
+    setWindowTitle(tr("Bone dialog of %1").arg(internal::toQStringFromBone(m_boneMotionModel->selectedBone())));
 }
 
 void BoneDialog::setPosition(const Vector3 &position)

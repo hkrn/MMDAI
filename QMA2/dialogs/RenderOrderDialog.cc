@@ -143,7 +143,7 @@ void RenderOrderDialog::buildOriginFromRenderOrder(const SceneLoader *loader)
     const QList<QUuid> &list = loader->renderOrderList();
     foreach (const QUuid &uuid, list) {
         if (IModel *model = loader->findModel(uuid))
-            m_origin.append(NameUUID(internal::toQString(model), uuid));
+            m_origin.append(NameUUID(internal::toQStringFromModel(model), uuid));
     }
 }
 

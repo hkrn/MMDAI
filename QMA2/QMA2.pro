@@ -154,6 +154,7 @@ SOURCES += main.cc \
     common/VPDFile.cc \
     common/SceneLoader.cc \
     common/LoggerWidget.cc \
+    common/StringHelper.cc \
     models/PMDMotionModel.cc \
     models/BoneMotionModel.cc \
     models/MorphMotionModel.cc \
@@ -205,6 +206,7 @@ HEADERS  += \
     common/InfoPanel.h \
     common/DebugDrawer.h \
     common/LoggerWidget.h \
+    common/StringHelper.h \
     models/MotionBaseModel.h \
     models/BoneMotionModel.h \
     models/MorphMotionModel.h \

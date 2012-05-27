@@ -158,7 +158,7 @@ void AssetWidget::addAsset(IModel *asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
     m_assets.append(asset);
-    m_assetComboBox->addItem(internal::toQString(asset));
+    m_assetComboBox->addItem(internal::toQStringFromModel(asset));
     m_assetComboBox->setCurrentIndex(m_assetComboBox->count() - 1);
     changeCurrentAsset(asset);
     setEnable(true);
@@ -185,7 +185,7 @@ void AssetWidget::addModel(IModel *model)
      * モデルは SceneLoader が管理するのでポインタのみ。解放してはいけない
      */
     m_models.append(model);
-    m_modelComboBox->addItem(internal::toQString(model));
+    m_modelComboBox->addItem(internal::toQStringFromModel(model));
 }
 
 void AssetWidget::removeModel(IModel *model)
@@ -238,7 +238,7 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
             int index = modelIndexOf(model);
             m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
         }
-        const QString &name = internal::toQString(bone);
+        const QString &name = internal::toQStringFromBone(bone);
         int index = m_modelBonesComboBox->findText(name);
         if (index >= 0)
             m_modelBonesComboBox->setCurrentIndex(index);
@@ -374,7 +374,7 @@ void AssetWidget::updateModelBoneComboBox(IModel *model)
         const int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
-            m_modelBonesComboBox->addItem(internal::toQString(bone), i);
+            m_modelBonesComboBox->addItem(internal::toQStringFromBone(bone), i);
         }
     }
 }

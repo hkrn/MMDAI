@@ -146,7 +146,7 @@ void MorphWidget::setPMDModel(IModel *model)
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
-            const QString &name = internal::toQString(morph->name());
+            const QString &name = internal::toQStringFromMorph(morph);
             switch (morph->category()) {
             case IMorph::kEye:
                 m_eyes->addItem(name, name);

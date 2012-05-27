@@ -137,7 +137,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
-        setText(QApplication::tr("Register morph keyframes of %1").arg(internal::toQString(m_model)));
+        setText(QApplication::tr("Register morph keyframes of %1").arg(internal::toQStringFromModel(m_model)));
     }
     ~SetKeyframesCommand() {
     }
@@ -178,10 +178,10 @@ public:
             IMorphKeyframe *morphKeyframe = ptr.data();
             /* キーフレームの対象頂点モーフ名を取得する */
             if (morphKeyframe) {
-                key = internal::toQString(morphKeyframe);
+                key = internal::toQStringFromMorphKeyframe(morphKeyframe);
             }
             else if (m_morph) {
-                key = internal::toQString(m_morph);
+                key = internal::toQStringFromMorph(m_morph);
             }
             else {
                 qWarning("No bone is selected or null");
@@ -244,7 +244,7 @@ public:
     {
         /* 全ての頂点モーフの情報を保存しておく */
         m_state.save();
-        setText(QApplication::tr("Reset all morphs of %1").arg(internal::toQString(model)));
+        setText(QApplication::tr("Reset all morphs of %1").arg(internal::toQStringFromModel(model)));
     }
 
     void undo() {
@@ -271,7 +271,7 @@ public:
         m_oldState.copyFrom(oldState);
         /* 前と後の全ての頂点モーフの情報を保存しておく */
         m_newState.save();
-        setText(QApplication::tr("Set morphs of %1").arg(internal::toQString(model)));
+        setText(QApplication::tr("Set morphs of %1").arg(internal::toQStringFromModel(model)));
     }
     virtual ~SetMorphCommand() {
     }
@@ -461,7 +461,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
             Keys keys;
             for (int i = 0; i < nmorphs; i++) {
                 IMorph *morph = morphs[i];
-                const QString &name = internal::toQString(morph);
+                const QString &name = internal::toQStringFromMorph(morph);
                 TreeItem *child, *parent = 0;
                 /* カテゴリ毎に頂点モーフを追加して整理する */
                 switch (morph->category()) {
@@ -499,7 +499,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
         }
         m_model = model;
         emit modelDidChange(model);
-        qDebug("Set a model in MorphMotionModel: %s", qPrintable(internal::toQString(model)));
+        qDebug("Set a model in MorphMotionModel: %s", qPrintable(internal::toQStringFromModel(model)));
     }
     else {
         m_model = 0;
@@ -517,8 +517,7 @@ void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);
-            const IString *name = keyframe->name();
-            const QString &key = internal::toQString(name);
+            const QString &key = internal::toQStringFromMorphKeyframe(keyframe);
             const Keys &keys = this->keys();
             if (keys.contains(key)) {
                 int frameIndex = static_cast<int>(keyframe->frameIndex());
@@ -527,7 +526,7 @@ void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
                 /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
                 IMorphKeyframe *newFrame = m_factory->createMorphKeyframe();
-                newFrame->setName(name);
+                newFrame->setName(keyframe->name());
                 newFrame->setWeight(keyframe->weight());
                 newFrame->setFrameIndex(frameIndex);
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
@@ -538,10 +537,10 @@ void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
         m_motion = motion;
         refreshModel(m_model);
         setModified(false);
-        qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(internal::toQString(model)));
+        qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(internal::toQStringFromModel(model)));
     }
     else {
-        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQString(model)));
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQStringFromModel(model)));
     }
 }
 

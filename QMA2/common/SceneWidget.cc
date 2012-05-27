@@ -475,8 +475,8 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
                     int ret = internal::warning(0,
                                                 tr("Applying this motion to the different model"),
                                                 tr("This motion is created for %1. Do you apply this motion to %2?")
-                                                .arg(internal::toQString(motion))
-                                                .arg(internal::toQString(model)),
+                                                .arg(internal::toQStringFromMotion(motion))
+                                                .arg(internal::toQStringFromModel(model)),
                                                 "",
                                                 QMessageBox::Yes|QMessageBox::No);
                     if (ret == QMessageBox::Yes) {
@@ -574,7 +574,7 @@ void SceneWidget::saveMetadataFromAsset(IModel *asset)
 {
     if (asset) {
         QString filename = QFileDialog::getSaveFileName(this, tr("Save %1 as VAC file")
-                                                        .arg(internal::toQString(asset)), "",
+                                                        .arg(internal::toQStringFromModel(asset)), "",
                                                         tr("MMD accessory metadata (*.vac)"));
         m_loader->saveMetadataFromAsset(filename, asset);
     }
@@ -726,7 +726,7 @@ void SceneWidget::deleteSelectedModel()
         int ret = internal::warning(0,
                                     tr("Confirm"),
                                     tr("Do you want to delete the model \"%1\"? This cannot undo.")
-                                    .arg(internal::toQString(selected)),
+                                    .arg(internal::toQStringFromModel(selected)),
                                     "",
                                     QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::Yes) {
@@ -1450,8 +1450,8 @@ bool SceneWidget::acceptAddingModel(IModel *model)
 {
     /* モデルを追加する前にモデルの名前とコメントを出すダイアログを表示 */
     QMessageBox mbox;
-    QString comment = internal::toQString(model->comment());
-    mbox.setText(tr("Model Information of \"%1\"").arg(internal::toQString(model->name())));
+    QString comment = internal::toQStringFromString(model->comment());
+    mbox.setText(tr("Model Information of \"%1\"").arg(internal::toQStringFromModel(model)));
     mbox.setInformativeText(comment.replace("\n", "<br>"));
     mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     return mbox.exec() == QMessageBox::Ok;
