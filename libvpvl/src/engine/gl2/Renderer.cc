@@ -1193,10 +1193,12 @@ void Renderer::setAssetMaterial(const aiMaterial *material, const Asset *asset, 
         program->setOpacity(asset->opacity());
     }
     int wireframe, twoside;
+#if !(defined(VPVL_BUILD_IOS))
     if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside)
         glEnable(GL_CULL_FACE);
     else
