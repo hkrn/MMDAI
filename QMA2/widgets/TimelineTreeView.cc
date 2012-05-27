@@ -42,18 +42,84 @@
 
 #include <QtGui/QtGui>
 
-TimelineTreeView::TimelineTreeView(QWidget *parent)
+TimelineTreeView::TimelineTreeView(QItemDelegate *delegate, QWidget *parent)
     : QTreeView(parent)
 {
+    setItemDelegate(delegate);
     setExpandsOnDoubleClick(true);
     setUniformRowHeights(true);
     setSortingEnabled(false);
-    connect(this, SIGNAL(collapsed(QModelIndex)), this, SLOT(addCollapsed(QModelIndex)));
-    connect(this, SIGNAL(expanded(QModelIndex)), this, SLOT(addExpanded(QModelIndex)));
+    m_frozenTreeView = new QTreeView(this);
+    m_frozenTreeView->setItemDelegate(delegate);
+    connect(m_frozenTreeView, SIGNAL(collapsed(QModelIndex)), this, SLOT(addCollapsed(QModelIndex)));
+    connect(m_frozenTreeView, SIGNAL(expanded(QModelIndex)), this, SLOT(addExpanded(QModelIndex)));
+    connect(m_frozenTreeView->verticalScrollBar(), SIGNAL(valueChanged(int)),
+            verticalScrollBar(), SLOT(setValue(int)));
+    connect(verticalScrollBar(), SIGNAL(valueChanged(int)),
+            m_frozenTreeView->verticalScrollBar(), SLOT(setValue(int)));
+    connect(header(),SIGNAL(sectionResized(int,int,int)),
+            this, SLOT(updateSectionWidth(int,int,int)));
 }
 
 TimelineTreeView::~TimelineTreeView()
 {
+}
+
+void TimelineTreeView::initializeFrozenView()
+{
+    QAbstractItemModel *m = model();
+    m_frozenTreeView->setModel(m);
+    m_frozenTreeView->setFocusPolicy(Qt::NoFocus);
+    m_frozenTreeView->header()->setResizeMode(QHeaderView::Fixed);
+    viewport()->stackUnder(m_frozenTreeView);
+    m_frozenTreeView->setStyleSheet("QTableView { border: none;"
+                                "background-color: #8EDE21;"
+                                "selection-background-color: #999}"); //for demo purposes
+    m_frozenTreeView->setSelectionModel(selectionModel());
+    m_frozenTreeView->setColumnWidth(0, columnWidth(0));
+    m_frozenTreeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_frozenTreeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_frozenTreeView->show();
+}
+
+void TimelineTreeView::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    updateFrozenColumnGeometry();
+}
+
+QModelIndex TimelineTreeView::moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers)
+{
+    QModelIndex current = QTreeView::moveCursor(cursorAction, modifiers);
+    const int x = visualRect(current).topLeft().x();
+    if(cursorAction == MoveLeft && current.column() > 0 && x < m_frozenTreeView->columnWidth(0)){
+        const int newValue = horizontalScrollBar()->value() + x - m_frozenTreeView->columnWidth(0);
+        horizontalScrollBar()->setValue(newValue);
+    }
+    return current;
+}
+
+void TimelineTreeView::scrollTo(const QModelIndex &index, ScrollHint hint)
+{
+    if (index.column() > 0)
+        QTreeView::scrollTo(index, hint);
+}
+
+void TimelineTreeView::updateSectionWidth(int logicalIndex, int newSize, int /* oldSize */)
+{
+    if (logicalIndex == 0) {
+        m_frozenTreeView->setColumnWidth(0, newSize);
+        updateFrozenColumnGeometry();
+    }
+}
+
+void TimelineTreeView::updateFrozenColumnGeometry()
+{
+    const QRect rect(0,
+                     0,
+                     columnWidth(0) + frameWidth(),
+                     viewport()->height() + header()->height());
+    m_frozenTreeView->setGeometry(rect);
 }
 
 void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly)
@@ -132,13 +198,17 @@ void TimelineTreeView::mouseDoubleClickEvent(QMouseEvent *event)
 
 void TimelineTreeView::addCollapsed(const QModelIndex &index)
 {
+    collapse(index);
     m_expanded.removeOne(index);
+    updateFrozenColumnGeometry();
 }
 
 void TimelineTreeView::addExpanded(const QModelIndex &index)
 {
+    expand(index);
     if (!m_expanded.contains(index))
         m_expanded.append(index);
+    updateFrozenColumnGeometry();
 }
 
 void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const QItemSelection & /* deselected */)

@@ -262,7 +262,7 @@ void PMDMotionModel::setActiveUndoStack()
 
 int PMDMotionModel::maxFrameCount() const
 {
-    return 54000;
+    return 20;
 }
 
 int PMDMotionModel::maxFrameIndex() const

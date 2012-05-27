@@ -335,7 +335,7 @@ int SceneMotionModel::columnCount(const QModelIndex & /* parent */) const
 
 int SceneMotionModel::maxFrameCount() const
 {
-    return 54000;
+    return 20;
 }
 
 int SceneMotionModel::maxFrameIndex() const

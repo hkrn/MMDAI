@@ -48,6 +48,7 @@ class QLabel;
 class QPushButton;
 class QSettings;
 class QSpinBox;
+class QTreeView;
 
 class TimelineWidget : public QWidget
 {
