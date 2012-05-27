@@ -232,16 +232,17 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
     m_opacity->setValue(asset->opacity());
     if (isAssetChanged) {
         /* コンボボックスの更新によるシグナル発行でボーン情報が更新されてしまうため、事前にボーンを保存して再設定する */
+        IModel *model = asset->parentModel();
+        updateModelBoneComboBox(model);
+        int index = modelIndexOf(model);
+        m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
         IBone *bone = asset->parentBone();
-        if (IModel *model = asset->parentModel()) {
-            updateModelBoneComboBox(model);
-            int index = modelIndexOf(model);
-            m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
+        if (bone) {
+            const QString &name = internal::toQStringFromBone(bone);
+            index = m_modelBonesComboBox->findText(name);
+            if (index >= 0)
+                m_modelBonesComboBox->setCurrentIndex(index);
         }
-        const QString &name = internal::toQStringFromBone(bone);
-        int index = m_modelBonesComboBox->findText(name);
-        if (index >= 0)
-            m_modelBonesComboBox->setCurrentIndex(index);
         emit assetDidSelect(asset);
     }
 }
@@ -265,11 +266,14 @@ void AssetWidget::changeCurrentModel(int index)
 
 void AssetWidget::changeParentBone(int index)
 {
-    if (m_currentModel) {
+    if (index >= 0 && m_currentModel) {
         Array<IBone *> bones;
         m_currentModel->getBones(bones);
         IBone *bone = bones.at(index);
         m_currentAsset->setParentBone(bone);
+    }
+    else {
+        m_currentAsset->setParentBone(0);
     }
 }
 
@@ -367,6 +371,8 @@ void AssetWidget::setEnable(bool value)
 
 void AssetWidget::updateModelBoneComboBox(IModel *model)
 {
+    /* changeParentBone が呼ばれてしまうので一時的に signal を切る */
+    disconnect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
     m_modelBonesComboBox->clear();
     if (model) {
         Array<IBone *> bones;
@@ -377,6 +383,7 @@ void AssetWidget::updateModelBoneComboBox(IModel *model)
             m_modelBonesComboBox->addItem(internal::toQStringFromBone(bone), i);
         }
     }
+    connect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
 }
 
 int AssetWidget::modelIndexOf(IModel *model)
