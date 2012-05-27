@@ -1087,6 +1087,7 @@ void SceneLoader::loadProject(const QString &path)
             m_project->deleteModel(model);
         }
         /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルとアクセサリ読み込みに行う */
+        IModel *selectedAssetModel = 0;
         foreach (IModel *model, assets) {
             const QUuid assetUUID(m_project->modelUUID(model).c_str());
             model->setPosition(assetPosition(model));
@@ -1095,10 +1096,12 @@ void SceneLoader::loadProject(const QString &path)
             model->setOpacity(assetOpacity(model));
             model->setParentModel(assetParentModel(model));
             model->setParentBone(assetParentBone(model));
-            emit assetDidAdd(model, assetUUID);
             if (isAssetSelected(model))
-                setSelectedAsset(model);
+                selectedAssetModel = model;
+            emit assetDidAdd(model, assetUUID);
         }
+        if (selectedAssetModel)
+            setSelectedAsset(selectedAssetModel);
         updateDepthBuffer(shadowMapSize());
         sort(true);
         m_project->setDirty(false);
@@ -1466,7 +1469,8 @@ void SceneLoader::stopPhysicsSimulation()
 const Vector3 SceneLoader::worldGravity() const
 {
     static const Vector3 defaultGravity(0.0, -9.8, 0.0);
-    return m_project ? UIGetVector3(m_project->globalSetting("physics.gravity"), defaultGravity) : defaultGravity;
+    const Vector3 &gravity = m_project ? UIGetVector3(m_project->globalSetting("physics.gravity"), defaultGravity) : defaultGravity;
+    return gravity;
 }
 
 const QColor SceneLoader::screenColor() const
@@ -1493,7 +1497,8 @@ void SceneLoader::setWorldGravity(const Vector3 &value)
 
 bool SceneLoader::isProjectiveShadowEnabled(const IModel *model) const
 {
-    return m_project ? m_project->modelSetting(model, "shadow.projective") == "true" : false;
+    bool enabled = m_project ? m_project->modelSetting(model, "shadow.projective") == "true" : false;
+    return enabled;
 }
 
 void SceneLoader::setProjectiveShadowEnable(const IModel *model, bool value)
@@ -1504,7 +1509,8 @@ void SceneLoader::setProjectiveShadowEnable(const IModel *model, bool value)
 
 bool SceneLoader::isSelfShadowEnabled(const IModel *model) const
 {
-    return m_project ? m_project->modelSetting(model, "shadow.ss") == "true" : false;
+    bool enabled = m_project ? m_project->modelSetting(model, "shadow.ss") == "true" : false;
+    return enabled;
 }
 
 void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
@@ -1515,7 +1521,8 @@ void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
 
 bool SceneLoader::isOpenCLSkinningEnabled(const IModel *model) const
 {
-    return m_project ? m_project->modelSetting(model, "skinning.opencl") == "true" : false;
+    bool enabled = m_project ? m_project->modelSetting(model, "skinning.opencl") == "true" : false;
+    return enabled;
 }
 
 void SceneLoader::setOpenCLSkinningEnable(const IModel *model, bool value)
@@ -1526,7 +1533,8 @@ void SceneLoader::setOpenCLSkinningEnable(const IModel *model, bool value)
 
 bool SceneLoader::isVertexShaderSkinningType1Enabled(const IModel *model) const
 {
-    return m_project ? m_project->modelSetting(model, "skinning.vs.type1") == "true" : false;
+    bool enabled = m_project ? m_project->modelSetting(model, "skinning.vs.type1") == "true" : false;
+    return enabled;
 }
 
 void SceneLoader::setVertexShaderSkinningType1Enable(const IModel *model, bool value)
@@ -1542,12 +1550,22 @@ IModel *SceneLoader::selectedModel() const
 
 bool SceneLoader::isModelSelected(const IModel *value) const
 {
-    return m_project ? m_project->modelSetting(value, "selected") == "true" : false;
+    bool selected = m_project ? m_project->modelSetting(value, "selected") == "true" : false;
+    return selected;
 }
 
 void SceneLoader::setSelectedModel(IModel *value)
 {
     if (m_project && value != m_model) {
+        const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
+        Project::UUIDList::const_iterator it = modelUUIDs.begin(), end = modelUUIDs.end();
+        while (it != end) {
+            IModel *model = m_project->model(*it);
+            IModel::Type type = model->type();
+            if (type == IModel::kPMD || type == IModel::kPMX)
+                m_project->setModelSetting(model, "selected", "false");
+            ++it;
+        }
         m_model = value;
         m_project->setModelSetting(value, "selected", "true");
         emit modelDidSelect(value, this);
@@ -1586,7 +1604,8 @@ void SceneLoader::setModelPosition(IModel *model, const Vector3 &value)
 
 const Vector3 SceneLoader::modelRotation(IModel *value) const
 {
-    return m_project ? UIGetVector3(m_project->modelSetting(value, "offset.rotation"), kZeroV3) : kZeroV3;
+    const Vector3 &rotation = m_project ? UIGetVector3(m_project->modelSetting(value, "offset.rotation"), kZeroV3) : kZeroV3;
+    return rotation;
 }
 
 void SceneLoader::setModelRotation(IModel *model, const Vector3 &value)
@@ -1614,7 +1633,8 @@ void SceneLoader::setModelEdgeColor(IModel *model, const QColor &value)
 
 bool SceneLoader::isGridVisible() const
 {
-    return globalSetting("grid.visible", true);
+    bool visible = globalSetting("grid.visible", true);
+    return visible;
 }
 
 void SceneLoader::setGridVisible(bool value)
@@ -1626,7 +1646,8 @@ void SceneLoader::setGridVisible(bool value)
 
 bool SceneLoader::isPhysicsEnabled() const
 {
-    return globalSetting("physics.enabled", false);
+    bool enabled = globalSetting("physics.enabled", false);
+    return enabled;
 }
 
 void SceneLoader::setPhysicsEnabled(bool value)
@@ -1639,7 +1660,8 @@ void SceneLoader::setPhysicsEnabled(bool value)
 /* 再生設定及びエンコード設定の場合は同値チェックを行わない。こちらは値を確実に保存させる必要があるため */
 int SceneLoader::frameIndexPlayFrom() const
 {
-    return globalSetting("play.frame_index.from", 0);
+    int value = globalSetting("play.frame_index.from", 0);
+    return value;
 }
 
 void SceneLoader::setFrameIndexPlayFrom(int value)
@@ -1650,7 +1672,8 @@ void SceneLoader::setFrameIndexPlayFrom(int value)
 
 int SceneLoader::frameIndexPlayTo() const
 {
-    return globalSetting("play.frame_index.to", int(m_project->maxFrameIndex()));
+    int value = globalSetting("play.frame_index.to", int(m_project->maxFrameIndex()));
+    return value;
 }
 
 void SceneLoader::setFrameIndexPlayTo(int value)
@@ -1661,7 +1684,8 @@ void SceneLoader::setFrameIndexPlayTo(int value)
 
 int SceneLoader::sceneFPSForPlay() const
 {
-    return globalSetting("play.fps", 60);
+    int value = globalSetting("play.fps", 60);
+    return value;
 }
 
 void SceneLoader::setSceneFPSForPlay(int value)
@@ -1672,7 +1696,8 @@ void SceneLoader::setSceneFPSForPlay(int value)
 
 int SceneLoader::frameIndexEncodeVideoFrom() const
 {
-    return globalSetting("video.frame_index.from", 0);
+    int value = globalSetting("video.frame_index.from", 0);
+    return value;
 }
 
 void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
@@ -1683,7 +1708,8 @@ void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
 
 int SceneLoader::frameIndexEncodeVideoTo() const
 {
-    return globalSetting("video.frame_index.to", int(m_project->maxFrameIndex()));
+    int value = globalSetting("video.frame_index.to", int(m_project->maxFrameIndex()));
+    return value;
 }
 
 void SceneLoader::setFrameIndexEncodeVideoTo(int value)
@@ -1694,7 +1720,8 @@ void SceneLoader::setFrameIndexEncodeVideoTo(int value)
 
 int SceneLoader::sceneFPSForEncodeVideo() const
 {
-    return globalSetting("video.fps", 60);
+    int value = globalSetting("video.fps", 60);
+    return value;
 }
 
 void SceneLoader::setSceneFPSForEncodeVideo(int value)
@@ -1705,7 +1732,8 @@ void SceneLoader::setSceneFPSForEncodeVideo(int value)
 
 int SceneLoader::sceneWidth() const
 {
-    return globalSetting("video.width", 0);
+    int value = globalSetting("video.width", 0);
+    return value;
 }
 
 void SceneLoader::setSceneWidth(int value)
@@ -1716,7 +1744,8 @@ void SceneLoader::setSceneWidth(int value)
 
 int SceneLoader::sceneHeight() const
 {
-    return globalSetting("video.height", 0);
+    int value = globalSetting("video.height", 0);
+    return value;
 }
 
 void SceneLoader::setSceneHeight(int value)
@@ -1727,7 +1756,8 @@ void SceneLoader::setSceneHeight(int value)
 
 bool SceneLoader::isLoop() const
 {
-    return globalSetting("play.loop", false);
+    bool value = globalSetting("play.loop", false);
+    return value;
 }
 
 void SceneLoader::setLoop(bool value)
@@ -1738,7 +1768,8 @@ void SceneLoader::setLoop(bool value)
 
 bool SceneLoader::isGridIncluded() const
 {
-    return globalSetting("grid.video", false);
+    bool included = globalSetting("grid.video", false);
+    return included;
 }
 
 void SceneLoader::setGridIncluded(bool value)
@@ -1749,7 +1780,8 @@ void SceneLoader::setGridIncluded(bool value)
 
 const QString SceneLoader::backgroundAudio() const
 {
-    return m_project ? QString::fromStdString(m_project->globalSetting("audio.path")) : "";
+    const QString &path = m_project ? QString::fromStdString(m_project->globalSetting("audio.path")) : "";
+    return path;
 }
 
 void SceneLoader::setBackgroundAudioPath(const QString &value)
@@ -1760,7 +1792,8 @@ void SceneLoader::setBackgroundAudioPath(const QString &value)
 
 const Vector3 SceneLoader::assetPosition(const IModel *asset)
 {
-    return m_project ? UIGetVector3(m_project->modelSetting(asset, "position"), kZeroV3) : kZeroV3;
+    const Vector3 &position = m_project ? UIGetVector3(m_project->modelSetting(asset, "position"), kZeroV3) : kZeroV3;
+    return position;
 }
 
 void SceneLoader::setAssetPosition(const IModel *asset, const Vector3 &value)
@@ -1774,7 +1807,8 @@ void SceneLoader::setAssetPosition(const IModel *asset, const Vector3 &value)
 
 const Quaternion SceneLoader::assetRotation(const IModel *asset)
 {
-    return m_project ? UIGetQuaternion(m_project->modelSetting(asset, "rotation"), Quaternion::getIdentity()) : Quaternion::getIdentity();
+    const Quaternion &rotation = m_project ? UIGetQuaternion(m_project->modelSetting(asset, "rotation"), Quaternion::getIdentity()) : Quaternion::getIdentity();
+    return rotation;
 }
 
 void SceneLoader::setAssetRotation(const IModel *asset, const Quaternion &value)
@@ -1824,7 +1858,8 @@ void SceneLoader::setAssetScaleFactor(const IModel *asset, float value)
 
 IModel *SceneLoader::assetParentModel(IModel *asset) const
 {
-    return m_project ? m_project->model(m_project->modelSetting(asset, "parent.model")) : 0;
+    IModel *parentModel = m_project ? m_project->model(m_project->modelSetting(asset, "parent.model")) : 0;
+    return parentModel;
 }
 
 void SceneLoader::setAssetParentModel(const IModel *asset, IModel *model)
@@ -1857,13 +1892,22 @@ IModel *SceneLoader::selectedAsset() const
 
 bool SceneLoader::isAssetSelected(const IModel *value) const
 {
-    return m_project ? m_project->modelSetting(value, "selected") == "true" : false;
+    bool selected = m_project ? m_project->modelSetting(value, "selected") == "true" : false;
+    return selected;
 }
 
 void SceneLoader::setSelectedAsset(IModel *value)
 {
     if (m_project) {
         commitAssetProperties();
+        const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
+        Project::UUIDList::const_iterator it = modelUUIDs.begin(), end = modelUUIDs.end();
+        while (it != end) {
+            IModel *model = m_project->model(*it);
+            if (model->type() == IModel::kAsset)
+                m_project->setModelSetting(model, "selected", "false");
+            ++it;
+        }
         m_asset = value;
         m_project->setModelSetting(value, "selected", "true");
         emit assetDidSelect(value, this);
@@ -1911,7 +1955,8 @@ void SceneLoader::setShadowMapSize(const QSize &value)
 
 const Vector4 SceneLoader::shadowBoundingSphere() const
 {
-    return m_project ? UIGetVector4(m_project->globalSetting("shadow.sphere"), kZeroV4) : kZeroV4;
+    const Vector4 &value = m_project ? UIGetVector4(m_project->globalSetting("shadow.sphere"), kZeroV4) : kZeroV4;
+    return value;
 }
 
 void SceneLoader::setShadowBoundingSphere(const Vector4 &value)
@@ -1924,7 +1969,8 @@ void SceneLoader::setShadowBoundingSphere(const Vector4 &value)
 }
 bool SceneLoader::isSoftShadowEnabled() const
 {
-    return m_project ? QString::fromStdString(m_project->globalSetting("shadow.texture.soft")) == "true" : true;
+    bool enabled = m_project ? QString::fromStdString(m_project->globalSetting("shadow.texture.soft")) == "true" : true;
+    return enabled;
 }
 
 void SceneLoader::setSoftShadowEnable(bool value)
@@ -1936,7 +1982,8 @@ void SceneLoader::setSoftShadowEnable(bool value)
 
 const QString SceneLoader::backgroundImage() const
 {
-    return m_project ? QString::fromStdString(m_project->globalSetting("background.image.path")) : "";
+    const QString &path = m_project ? QString::fromStdString(m_project->globalSetting("background.image.path")) : "";
+    return path;
 }
 
 void SceneLoader::setBackgroundImagePath(const QString &value)
@@ -1966,7 +2013,8 @@ void SceneLoader::setBackgroundImagePosition(const QPoint &value)
 
 bool SceneLoader::isBackgroundImageUniformEnabled() const
 {
-    return m_project ? m_project->globalSetting("background.image.uniform") == "true" : false;
+    bool enabled = m_project ? m_project->globalSetting("background.image.uniform") == "true" : false;
+    return enabled;
 }
 
 void SceneLoader::setBackgroundImageUniformEnable(bool value)
@@ -1978,7 +2026,8 @@ void SceneLoader::setBackgroundImageUniformEnable(bool value)
 
 bool SceneLoader::isOpenCLSkinningEnabled() const
 {
-    return m_project ? m_project->globalSetting("skinning.opencl") == "true" : false;
+    bool enabled = m_project ? m_project->globalSetting("skinning.opencl") == "true" : false;
+    return enabled;
 }
 
 void SceneLoader::setOpenCLSkinningEnable(bool value)
@@ -1992,7 +2041,8 @@ void SceneLoader::setOpenCLSkinningEnable(bool value)
 
 bool SceneLoader::isVertexShaderSkinningType1Enabled() const
 {
-    return m_project ? m_project->globalSetting("skinning.vs.type1") == "true" : false;
+    bool enabled = m_project ? m_project->globalSetting("skinning.vs.type1") == "true" : false;
+    return enabled;
 }
 
 void SceneLoader::setVertexShaderSkinningType1Enable(bool value)

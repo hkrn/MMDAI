@@ -219,6 +219,9 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
     bool isAssetChanged = false;
     if (m_currentAsset != asset) {
         m_currentAsset = asset;
+        int index = m_assets.indexOf(asset);
+        if (index >= 0)
+            m_assetComboBox->setCurrentIndex(index);
         isAssetChanged = true;
     }
     m_px->setValue(position.x());
