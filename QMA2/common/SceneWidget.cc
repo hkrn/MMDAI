@@ -154,6 +154,7 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_enableRotateGesture(false),
     m_enableScaleGesture(false),
     m_enableUndoGesture(false),
+    m_enableUpdateGL(true),
     m_isImageHandleRectIntersect(false)
 {
     m_grid = new Grid();
@@ -252,12 +253,17 @@ void SceneWidget::loadProject(const QString &filename)
     dialog->setCancelButton(0);
     /* ぶら下がりポインタを残さないために選択状態のボーンを全てクリアする */
     clearSelectedBones();
+    stopAutomaticRendering();
+    /* プロジェクトの読み込みが完了するまで描画を一時的に停止する */
+    m_enableUpdateGL = false;
     /* プロジェクト読み込み */
     m_loader->loadProject(filename);
     /* 背景画像読み込み */
     m_background->setImage(m_loader->backgroundImage());
     m_background->setImagePosition(m_loader->backgroundImagePosition());
     m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
+    m_enableUpdateGL = true;
+    startAutomaticRendering();
     QApplication::alert(this);
 }
 
@@ -1486,7 +1492,8 @@ void SceneWidget::updateScene()
 {
     m_loader->updateMatrices(QSizeF(size()));
     m_loader->scene()->updateRenderEngines();
-    updateGL();
+    if (m_enableUpdateGL)
+        updateGL();
     emit cameraPerspectiveDidSet(m_loader->scene()->camera());
 }
 
