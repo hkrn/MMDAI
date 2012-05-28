@@ -120,6 +120,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     m_treeView = new TimelineTreeView(delegate);
     /* 専用の選択処理を行うようにスロットを追加する */
+    connect(m_treeView->horizontalScrollBar(), SIGNAL(actionTriggered(int)), SLOT(adjustFrameColumnSize(int)));
     m_treeView->setModel(base);
     m_treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
     m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -213,6 +214,40 @@ void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
     emit motionDidSeek(frameIndex, model->forceCameraUpdate());
+}
+
+void TimelineWidget::adjustFrameColumnSize(int value)
+{
+    QAbstractSlider *slider = qobject_cast<QAbstractSlider *>(sender());
+    int sliderPosition = slider->sliderPosition();
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
+    switch (value) {
+    case QAbstractSlider::SliderMove:
+        if (sliderPosition == slider->maximum()) {
+            m->setFrameIndexColumnMax(m->frameIndexColumnMax() + MotionBaseModel::kFrameIndexColumnStep);
+        }
+        else if (sliderPosition == slider->minimum()) {
+            /* 値が最大値未満の場合自動的に列が切り詰められるように動作する */
+            m->setFrameIndexColumnMax(m->frameIndexColumnMax() - MotionBaseModel::kFrameIndexColumnStep);
+            /* リセットを行わないと空白部分がヘッダーの方で残ったままになる。また、スライダを右にずらすことでスクロール出来るようになる */
+            m_treeView->header()->reset();
+            slider->setSliderPosition(5);
+        }
+        break;
+    case QAbstractSlider::SliderToMaximum:
+        m->setFrameIndexColumnMax(m->frameIndexColumnMax() + MotionBaseModel::kFrameIndexColumnStep);
+        break;
+    case QAbstractSlider::SliderToMinimum:
+        m->setFrameIndexColumnMax(m->frameIndexColumnMax() - MotionBaseModel::kFrameIndexColumnStep);
+        break;
+    case QAbstractSlider::SliderNoAction:
+    case QAbstractSlider::SliderSingleStepAdd:
+    case QAbstractSlider::SliderSingleStepSub:
+    case QAbstractSlider::SliderPageStepAdd:
+    case QAbstractSlider::SliderPageStepSub:
+    default:
+        break;
+    }
 }
 
 void TimelineWidget::reexpand()

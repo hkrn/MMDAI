@@ -77,6 +77,8 @@ public:
         kNameRole = 0x1000,
         kBinaryDataRole
     };
+    static const int kFrameIndexColumnStep = 5;
+    static const int kFrameIndexColumnMinimum = 30;
 
     static int toFrameIndex(const QModelIndex &index) {
         return toFrameIndex(index.column());
@@ -94,7 +96,9 @@ public:
         : QAbstractTableModel(parent),
           m_motion(0),
           m_undo(undo),
-          m_frameIndex(0.0),
+          m_frameIndex(0),
+          m_frameIndexColumnMax(kFrameIndexColumnMinimum),
+          m_frameIndexColumnOffset(kFrameIndexColumnMinimum),
           m_modified(false)
     {
     }
@@ -146,7 +150,6 @@ public:
     virtual void saveMotion(vpvl2::IMotion *motion) = 0;
     virtual void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex) = 0;
     virtual void pasteKeyframesByFrameIndex(int frameIndex) = 0;
-    virtual int maxFrameCount() const = 0;
     virtual int maxFrameIndex() const = 0;
     virtual bool forceCameraUpdate() const = 0;
 
@@ -161,7 +164,38 @@ public:
         emit motionDidModify(value);
     }
     bool isModified() const { return m_modified; }
+    int maxFrameCount() const { return m_frameIndexColumnOffset; }
     float frameIndex() const { return m_frameIndex; }
+    bool canFetchMore(const QModelIndex & /* parent */) const {
+        return m_frameIndexColumnOffset < m_frameIndexColumnMax;
+    }
+    void fetchMore(const QModelIndex &parent) {
+        int remain = m_frameIndexColumnMax - m_frameIndexColumnOffset;
+        int step = kFrameIndexColumnStep;
+        int itemsToFetch = qMin(step, remain);
+        if (itemsToFetch > 0) {
+            beginInsertColumns(parent, m_frameIndexColumnOffset, m_frameIndexColumnOffset + itemsToFetch - 1);
+            m_frameIndexColumnOffset += itemsToFetch;
+            endInsertColumns();
+        }
+    }
+    int frameIndexColumnMax() const {
+        return m_frameIndexColumnMax;
+    }
+    void setFrameIndexColumnMax(int value) {
+        if (value < maxFrameIndex())
+            value = maxFrameIndex();
+        if (value < kFrameIndexColumnMinimum)
+            value = kFrameIndexColumnMinimum;
+        if (m_frameIndexColumnMax > value) {
+            removeColumns(value, m_frameIndexColumnMax - value);
+            m_frameIndexColumnOffset = value;
+        }
+        m_frameIndexColumnMax = value;
+    }
+    void updateFrameIndexColumnMax() {
+        setFrameIndexColumnMax(0);
+    }
 
 public slots:
     virtual void removeMotion() = 0;
@@ -183,6 +217,8 @@ protected:
     vpvl2::IMotion *m_motion;
     QUndoGroup *m_undo;
     float m_frameIndex;
+    int m_frameIndexColumnMax;
+    int m_frameIndexColumnOffset;
     bool m_modified;
 
 private:

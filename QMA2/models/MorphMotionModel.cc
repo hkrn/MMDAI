@@ -506,6 +506,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
         emit modelDidChange(0);
     }
     /* テーブルモデルを更新 */
+    updateFrameIndexColumnMax();
     reset();
 }
 

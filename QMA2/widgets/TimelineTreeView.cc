@@ -49,7 +49,8 @@ TimelineTreeView::TimelineTreeView(QItemDelegate *delegate, QWidget *parent)
     setExpandsOnDoubleClick(true);
     setUniformRowHeights(true);
     setSortingEnabled(false);
-    m_frozenTreeView = new QTreeView(this);
+    m_frozenTreeView = new QTreeView();
+    //m_frozenTreeView->setParent(this);
     m_frozenTreeView->setItemDelegate(delegate);
     connect(m_frozenTreeView, SIGNAL(collapsed(QModelIndex)), this, SLOT(addCollapsed(QModelIndex)));
     connect(m_frozenTreeView, SIGNAL(expanded(QModelIndex)), this, SLOT(addExpanded(QModelIndex)));
@@ -71,7 +72,7 @@ void TimelineTreeView::initializeFrozenView()
     m_frozenTreeView->setModel(m);
     m_frozenTreeView->setFocusPolicy(Qt::NoFocus);
     m_frozenTreeView->header()->setResizeMode(QHeaderView::Fixed);
-    viewport()->stackUnder(m_frozenTreeView);
+    //viewport()->stackUnder(m_frozenTreeView);
     m_frozenTreeView->setStyleSheet("QTableView { border: none;"
                                 "background-color: #8EDE21;"
                                 "selection-background-color: #999}"); //for demo purposes
@@ -79,7 +80,7 @@ void TimelineTreeView::initializeFrozenView()
     m_frozenTreeView->setColumnWidth(0, columnWidth(0));
     m_frozenTreeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_frozenTreeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_frozenTreeView->show();
+    //m_frozenTreeView->show();
 }
 
 void TimelineTreeView::resizeEvent(QResizeEvent *event)
@@ -258,7 +259,6 @@ TimelineHeaderView::TimelineHeaderView(Qt::Orientation orientation, QWidget *par
     setResizeMode(QHeaderView::Fixed);
     setClickable(true);
     setMovable(false);
-    setStretchLastSection(true);
     setSortIndicatorShown(false);
     setDefaultSectionSize(16);
 }

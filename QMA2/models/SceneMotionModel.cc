@@ -330,12 +330,7 @@ bool SceneMotionModel::setData(const QModelIndex &index, const QVariant &value, 
 
 int SceneMotionModel::columnCount(const QModelIndex & /* parent */) const
 {
-    return maxFrameCount() + 2;
-}
-
-int SceneMotionModel::maxFrameCount() const
-{
-    return 20;
+    return maxFrameCount() + 1;
 }
 
 int SceneMotionModel::maxFrameIndex() const
@@ -489,6 +484,7 @@ void SceneMotionModel::loadMotion(IMotion *motion)
         m_undo->addStack(m_stack);
         m_undo->setActiveStack(m_stack);
         m_motion = motion;
+        updateFrameIndexColumnMax();
         emit cameraMotionDidLoad();
     }
     reset();
@@ -510,6 +506,7 @@ void SceneMotionModel::setActiveUndoStack()
 
 void SceneMotionModel::refreshScene()
 {
+    updateFrameIndexColumnMax();
     reset();
 }
 
