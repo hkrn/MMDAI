@@ -158,6 +158,7 @@ SOURCES += main.cc \
     models/PMDMotionModel.cc \
     models/BoneMotionModel.cc \
     models/MorphMotionModel.cc \
+    models/MotionBaseModel.cc \
     models/SceneMotionModel.cc \
     dialogs/BoneDialog.cc \
     dialogs/ExportVideoDialog.cc \

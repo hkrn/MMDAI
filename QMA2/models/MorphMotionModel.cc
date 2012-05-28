@@ -506,7 +506,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
         emit modelDidChange(0);
     }
     /* テーブルモデルを更新 */
-    updateFrameIndexColumnMax();
+    setFrameIndexColumnMax(0);
     reset();
 }
 
@@ -515,6 +515,9 @@ void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {
         const int nkeyframes = motion->countKeyframes(IKeyframe::kMorph);
+        /* フレーム列の最大数をモーションのフレーム数に更新する */
+        setFrameIndexColumnMax(motion);
+        reset();
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);

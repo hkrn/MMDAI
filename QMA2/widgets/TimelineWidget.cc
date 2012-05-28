@@ -114,8 +114,8 @@ private:
 }
 
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
-                               QWidget *parent) :
-    QWidget(parent)
+                               QWidget *parent)
+    : QWidget(parent)
 {
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
     m_treeView = new TimelineTreeView(delegate);
@@ -132,9 +132,11 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_headerView->setResizeMode(0, QHeaderView::ResizeToContents);
     m_treeView->initializeFrozenView();
     m_spinBox = new QSpinBox();
-    m_spinBox->setMaximum(base->maxFrameCount());
-    /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     connect(m_spinBox, SIGNAL(valueChanged(int)), SLOT(setCurrentFrameIndex(int)));
+    connect(base, SIGNAL(frameIndexColumnMaxDidChange(int,int)), SLOT(setMaximumFrameIndexRange(int)));
+    m_spinBox->setRange(0, base->maxFrameCount());
+    m_spinBox->setWrapping(true);
+    /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     m_label = new QLabel();
     m_button = new QPushButton();
     /* キーフレームの登録処理 */
@@ -214,6 +216,12 @@ void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
     emit motionDidSeek(frameIndex, model->forceCameraUpdate());
+}
+
+void TimelineWidget::setMaximumFrameIndexRange(int value)
+{
+    m_spinBox->setRange(0, value);
+    m_spinBox->setWrapping(true);
 }
 
 void TimelineWidget::adjustFrameColumnSize(int value)

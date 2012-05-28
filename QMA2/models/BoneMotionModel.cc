@@ -856,7 +856,6 @@ void BoneMotionModel::setPMDModel(IModel *model)
         emit modelDidChange(0);
     }
     /* テーブルモデルを更新 */
-    updateFrameIndexColumnMax();
     reset();
 }
 
@@ -867,6 +866,9 @@ void BoneMotionModel::loadMotion(IMotion *motion, IModel *model)
         const int nkeyframes = motion->countKeyframes(IKeyframe::kBone);
         const Keys &keys = this->keys();
         QScopedPointer<IBoneKeyframe> newKeyframe;
+        /* フレーム列の最大数をモーションのフレーム数に更新する */
+        setFrameIndexColumnMax(motion);
+        reset();
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
