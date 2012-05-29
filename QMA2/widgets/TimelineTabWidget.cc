@@ -493,6 +493,11 @@ void TimelineTabWidget::setLastSelectedModel(IModel *model)
         m_lastSelectedModel = model;
 }
 
+void TimelineTabWidget::clearLastSelectedModel()
+{
+    m_lastSelectedModel = 0;
+}
+
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
 {
     /* from と to の値が逆転していないかの検証 (本来は from <= to が正しい) */
