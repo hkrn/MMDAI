@@ -204,7 +204,11 @@ if(VPVL2_OPENGL_RENDERER)
   )
   if(VPVL2_ENABLE_NVIDIA_CG)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg vpvl2_gl_sources)
-    list(APPEND vpvl2_internal_headers include/vpvl2/cg/Renderer.h)
+    list(APPEND vpvl2_internal_headers
+         include/vpvl2/cg/AssetRenderEngine.h
+         include/vpvl2/cg/PMDRenderEngine.h
+         include/vpvl2/cg/PMXRenderEngine.h
+    )
   endif()
   if(VPVL2_ENABLE_OPENCL)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cl vpvl2_gl_sources)
