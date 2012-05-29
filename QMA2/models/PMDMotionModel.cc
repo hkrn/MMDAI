@@ -299,6 +299,8 @@ void PMDMotionModel::removePMDModel(IModel *model)
 {
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
     m_model = 0;
+    /* モーションのポインタを残すとダングリングポインタと化してクラッシュするので、ゼロクリアする */
+    m_motion = 0;
     m_undo->setActiveStack(0);
     m_values.remove(model);
     m_keys.remove(model);
