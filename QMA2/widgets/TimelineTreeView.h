@@ -92,7 +92,9 @@ class TimelineHeaderView : public QHeaderView
     Q_OBJECT
 
 public:
-    explicit TimelineHeaderView(Qt::Orientation orientation, QWidget *parent = 0);
+    explicit TimelineHeaderView(Qt::Orientation orientation,
+                                bool stretchLastSection,
+                                QWidget *parent = 0);
     virtual ~TimelineHeaderView();
 
 signals:

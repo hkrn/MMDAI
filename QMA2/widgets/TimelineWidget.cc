@@ -114,6 +114,7 @@ private:
 }
 
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
+                               bool stretchLastSection,
                                QWidget *parent)
     : QWidget(parent)
 {
@@ -126,7 +127,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     connect(m_treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             m_treeView, SLOT(selectModelIndices(QItemSelection,QItemSelection)));
-    m_headerView = new TimelineHeaderView(Qt::Horizontal);
+    m_headerView = new TimelineHeaderView(Qt::Horizontal, stretchLastSection);
     connect(m_headerView, SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentFrameIndex(int)));
     m_treeView->setHeader(m_headerView);
     m_headerView->setResizeMode(0, QHeaderView::ResizeToContents);

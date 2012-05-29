@@ -67,7 +67,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_lastSelectedModel(0)
 {
     m_tabWidget = new QTabWidget();
-    m_boneTimeline = new TimelineWidget(bmm, this);
+    m_boneTimeline = new TimelineWidget(bmm, true, this);
     m_boneTimeline->setFrameIndexSpinBoxEnable(false);
     m_interpolationDialog = new InterpolationDialog(bmm, smm);
     m_boneSelectButton = new QRadioButton();
@@ -90,10 +90,10 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     /* hack bone timeline layout */
     reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(mainLayout);
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
-    m_morphTimeline = new TimelineWidget(mmm, this);
+    m_morphTimeline = new TimelineWidget(mmm, true, this);
     m_morphTimeline->setFrameIndexSpinBoxEnable(false);
     m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline, "");
-    m_sceneTimeline = new TimelineWidget(smm, this);
+    m_sceneTimeline = new TimelineWidget(smm, false, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */

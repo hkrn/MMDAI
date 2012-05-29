@@ -56,6 +56,7 @@ class TimelineWidget : public QWidget
 
 public:
     explicit TimelineWidget(MotionBaseModel *base,
+                            bool stretchLastSection,
                             QWidget *parent = 0);
     ~TimelineWidget();
 

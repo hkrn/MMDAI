@@ -252,11 +252,14 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
     }
 }
 
-TimelineHeaderView::TimelineHeaderView(Qt::Orientation orientation, QWidget *parent)
+TimelineHeaderView::TimelineHeaderView(Qt::Orientation orientation,
+                                       bool stretchLastSection,
+                                       QWidget *parent)
     : QHeaderView(orientation, parent)
 {
     setDefaultAlignment(Qt::AlignLeft|Qt::AlignVCenter);
     setResizeMode(QHeaderView::Fixed);
+    setStretchLastSection(stretchLastSection);
     setClickable(true);
     setMovable(false);
     setSortIndicatorShown(false);
