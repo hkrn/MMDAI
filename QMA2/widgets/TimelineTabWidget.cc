@@ -314,36 +314,47 @@ void TimelineTabWidget::previousFrame()
 
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
+    Type type;
+    vpvl2::IModel *lastSelectedModel = 0;
     switch (index) {
     case kBoneTabIndex: {
-        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model());
-        model->setActiveUndoStack();
-        emit currentTabDidChange(kBone);
-        emit currentModelDidChange(m_lastSelectedModel);
+        static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model())->setActiveUndoStack();
+        type = kBone;
+        lastSelectedModel = m_lastSelectedModel;
         break;
     }
     case kMorphTabIndex: {
-        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_morphTimeline->treeView()->model());
-        model->setActiveUndoStack();
-        emit currentTabDidChange(kMorph);
-        emit currentModelDidChange(m_lastSelectedModel);
+        static_cast<PMDMotionModel *>(m_morphTimeline->treeView()->model())->setActiveUndoStack();
+        type = kMorph;
+        lastSelectedModel = m_lastSelectedModel;
         break;
     }
     case kSceneTabIndex: {
         SceneMotionModel *model = static_cast<SceneMotionModel *>(m_sceneTimeline->treeView()->model());
         model->setActiveUndoStack();
-        emit currentTabDidChange(kScene);
-        emit currentModelDidChange(0);
+        type = kScene;
         break;
     }
     default:
-        break;
+        return;
     }
+    emit currentTabDidChange(type);
+    emit currentModelDidChange(lastSelectedModel);
 }
 
 void TimelineTabWidget::notifyCurrentTabIndex()
 {
-    setCurrentTabIndex(m_tabWidget->currentIndex());
+    /*
+     * 場面タブでモデル読み込みをするとボーンとモーフのキーフレームが消失してしまう。
+     * そのため、ボーンモードに強制切り替えにする
+     */
+    if (m_tabWidget->currentIndex() == kSceneTabIndex) {
+        setCurrentTabIndex(kBoneTabIndex);
+        m_tabWidget->setCurrentIndex(kBoneTabIndex);
+    }
+    else {
+        setCurrentTabIndex(m_tabWidget->currentIndex());
+    }
 }
 
 void TimelineTabWidget::toggleBoneEnable(IModel *model)
@@ -491,6 +502,13 @@ void TimelineTabWidget::setLastSelectedModel(IModel *model)
     /* タブ移動時でモデル選択を切り替えるため最後に選択したモデルのポインタを保存する処理。NULL はスキップする */
     if (model)
         m_lastSelectedModel = model;
+    /*
+     * 最初の列以外を隠す。モデルを選択した後でないと BoneMotionModel と MorphMotionModel の
+     * columnCount が 1 を返してしまうため、ここで処理する
+     */
+    m_boneTimeline->treeView()->updateFrozenTreeView();
+    m_morphTimeline->treeView()->updateFrozenTreeView();
+    m_sceneTimeline->treeView()->updateFrozenTreeView();
 }
 
 void TimelineTabWidget::clearLastSelectedModel()

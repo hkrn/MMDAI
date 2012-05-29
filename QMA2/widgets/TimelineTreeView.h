@@ -57,6 +57,7 @@ public:
     void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
     void deleteKeyframesBySelectedIndices();
     void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
+    void updateFrozenTreeView();
     const QModelIndexList &expandedModelIndices() const;
 
 public slots:
@@ -79,7 +80,7 @@ private slots:
     void updateSectionWidth(int logicalIndex, int newSize, int oldSize);
 
 private:
-    void updateFrozenColumnGeometry();
+    void updateFrozenTreeViewGeometry();
 
     QTreeView *m_frozenTreeView;
     QModelIndexList m_expanded;

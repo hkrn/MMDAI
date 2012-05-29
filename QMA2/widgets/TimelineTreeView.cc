@@ -57,7 +57,7 @@ TimelineTreeView::TimelineTreeView(QItemDelegate *delegate, QWidget *parent)
             verticalScrollBar(), SLOT(setValue(int)));
     connect(verticalScrollBar(), SIGNAL(valueChanged(int)),
             m_frozenTreeView->verticalScrollBar(), SLOT(setValue(int)));
-    connect(header(),SIGNAL(sectionResized(int,int,int)), SLOT(updateSectionWidth(int,int,int)));
+    connect(header(), SIGNAL(sectionResized(int,int,int)), SLOT(updateSectionWidth(int,int,int)));
 }
 
 TimelineTreeView::~TimelineTreeView()
@@ -68,27 +68,25 @@ void TimelineTreeView::initializeFrozenView()
 {
     QAbstractItemModel *m = model();
     m_frozenTreeView->setModel(m);
-    m_frozenTreeView->setSelectionModel(selectionModel());
+    /* TODO: ボーン名を選択したらボーンを選択するようにするための処理を追加する */
+    //m_frozenTreeView->setSelectionModel(selectionModel());
     m_frozenTreeView->setFocusPolicy(Qt::NoFocus);
     m_frozenTreeView->header()->setResizeMode(QHeaderView::Fixed);
     viewport()->stackUnder(m_frozenTreeView);
-    m_frozenTreeView->setStyleSheet("QTreeView { border: none;"
-                                    "background-color: #8EDE21;"
-                                    "selection-background-color: #999}"); //for demo purposes
-    int ncolumns = m->columnCount();
-    for (int i = i; i < ncolumns; i++)
-        m_frozenTreeView->setColumnHidden(i, true);
+    updateFrozenTreeView();
     m_frozenTreeView->setColumnWidth(0, columnWidth(0));
     m_frozenTreeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_frozenTreeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_frozenTreeView->show();
-    updateFrozenColumnGeometry();
+    updateFrozenTreeViewGeometry();
 }
 
 void TimelineTreeView::resizeEvent(QResizeEvent *event)
 {
     QTreeView::resizeEvent(event);
-    updateFrozenColumnGeometry();
+    resizeColumnToContents(0);
+    updateFrozenTreeViewGeometry();
+    m_frozenTreeView->setColumnWidth(0, columnWidth(0));
 }
 
 QModelIndex TimelineTreeView::moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers)
@@ -108,19 +106,26 @@ void TimelineTreeView::scrollTo(const QModelIndex &index, ScrollHint hint)
         QTreeView::scrollTo(index, hint);
 }
 
+void TimelineTreeView::updateFrozenTreeView()
+{
+    int ncolumns = model()->columnCount();
+    for (int i = 1; i < ncolumns; i++)
+        m_frozenTreeView->setColumnHidden(i, true);
+}
+
 void TimelineTreeView::updateSectionWidth(int logicalIndex, int newSize, int /* oldSize */)
 {
     if (logicalIndex == 0) {
         m_frozenTreeView->setColumnWidth(0, newSize);
-        updateFrozenColumnGeometry();
+        updateFrozenTreeViewGeometry();
     }
 }
 
-void TimelineTreeView::updateFrozenColumnGeometry()
+void TimelineTreeView::updateFrozenTreeViewGeometry()
 {
-    const QRect rect(0,
-                     0,
-                     columnWidth(0) + frameWidth(),
+    const QRect rect(frameWidth(),
+                     frameWidth(),
+                     columnWidth(0),
                      viewport()->height() + header()->height());
     m_frozenTreeView->setGeometry(rect);
 }
@@ -203,7 +208,7 @@ void TimelineTreeView::addCollapsed(const QModelIndex &index)
 {
     collapse(index);
     m_expanded.removeOne(index);
-    updateFrozenColumnGeometry();
+    updateFrozenTreeViewGeometry();
 }
 
 void TimelineTreeView::addExpanded(const QModelIndex &index)
@@ -211,7 +216,7 @@ void TimelineTreeView::addExpanded(const QModelIndex &index)
     expand(index);
     if (!m_expanded.contains(index))
         m_expanded.append(index);
-    updateFrozenColumnGeometry();
+    updateFrozenTreeViewGeometry();
 }
 
 void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const QItemSelection & /* deselected */)
