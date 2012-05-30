@@ -37,19 +37,8 @@
 #ifndef VPVL2_CG2_PMXRENDERENGINE_H_
 #define VPVL2_CG2_PMXRENDERENGINE_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/IRenderDelegate.h"
-#include "vpvl2/IRenderEngine.h"
-
+#include "vpvl2/cg/EngineCommon.h"
 #include "vpvl2/pmx/Model.h"
-
-#ifdef VPVL2_LINK_QT
-#include <QtOpenGL/QtOpenGL>
-#include <QtOpenGL/QGLFunctions>
-#endif /* VPVL_LINK_QT */
-
-#include <cg/cg.h>
-#include <cg/cgGL.h>
 
 namespace vpvl2
 {
@@ -113,6 +102,8 @@ private:
     cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_model;
     CGcontext m_context;
+    CGeffect m_effect;
+    EffectParameters m_parameters;
     pmx::Model::SkinningMeshes m_mesh;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     MaterialTextures *m_materials;

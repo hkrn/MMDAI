@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/cg/PMDRenderEngine.h"
-
 #include "vpvl2/vpvl2.h"
+
 #ifdef VPVL2_ENABLE_OPENCL
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMDAccelerator.h"
@@ -91,6 +91,8 @@ PMDRenderEngine::~PMDRenderEngine()
     delete m_accelerator;
     m_accelerator = 0;
 #endif
+    cgDestroyEffect(m_effect);
+    m_effect = 0;
     m_delegate = 0;
     m_scene = 0;
     m_model = 0;
@@ -108,6 +110,13 @@ bool PMDRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
+    IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, context);
+    m_effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
+    delete source;
+    if (!m_effect) {
+        return false;
+    }
+    m_parameters.getEffectParameters(m_effect);
     PMDModel *model = m_model->ptr();
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kEdgeIndices]);

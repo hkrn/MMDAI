@@ -86,8 +86,9 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
       #endif /* VPVL2_LINK_QT */
       m_delegate(delegate),
       m_scene(scene),
-      m_context(context),
       m_model(model),
+      m_context(context),
+      m_effect(0),
       m_cullFaceState(true)
 {
 }
@@ -119,7 +120,8 @@ AssetRenderEngine::~AssetRenderEngine()
         }
     }
     deleteRecurse(scene, scene->mRootNode);
-    delete m_context;
+    cgDestroyEffect(m_effect);
+    m_effect = 0;
     m_context = 0;
     m_model = 0;
     m_delegate = 0;
@@ -144,6 +146,13 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     m_delegate->allocateContext(m_model, context);
+    IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, context);
+    m_effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
+    delete source;
+    if (!m_effect) {
+        return false;
+    }
+    m_parameters.getEffectParameters(m_effect);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;

@@ -40,6 +40,7 @@
 #include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Vertex.h"
+
 #ifdef VPVL2_ENABLE_OPENCL
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMXAccelerator.h"
@@ -83,6 +84,8 @@ PMXRenderEngine::~PMXRenderEngine()
     delete m_accelerator;
     m_accelerator = 0;
 #endif
+    cgDestroyEffect(m_effect);
+    m_effect = 0;
     m_delegate = 0;
     m_scene = 0;
     m_model = 0;
@@ -101,6 +104,13 @@ bool PMXRenderEngine::upload(const IString *dir)
     bool ret = true;
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
+    IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, context);
+    m_effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
+    delete source;
+    if (!m_effect) {
+        return false;
+    }
+    m_parameters.getEffectParameters(m_effect);
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     size_t size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);

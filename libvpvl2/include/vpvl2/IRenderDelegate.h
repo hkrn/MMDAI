@@ -50,7 +50,8 @@ class VPVL2_API IRenderDelegate
 public:
     enum LogLevel {
         kLogInfo,
-        kLogWarning
+        kLogWarning,
+        kMaxLogLevel
     };
     enum ShaderType {
         kEdgeVertexShader,
@@ -64,10 +65,13 @@ public:
         kEdgeWithSkinningVertexShader,
         kModelWithSkinningVertexShader,
         kShadowWithSkinningVertexShader,
-        kZPlotWithSkinningVertexShader
+        kZPlotWithSkinningVertexShader,
+        kModelEffectTechniques,
+        kMaxShaderType
     };
     enum KernelType {
-        kModelSkinningKernel
+        kModelSkinningKernel,
+        kMaxKernelType
     };
     virtual ~IRenderDelegate() {}
 

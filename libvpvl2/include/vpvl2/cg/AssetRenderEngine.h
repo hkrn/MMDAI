@@ -40,15 +40,7 @@
 #include "vpvl2/Common.h"
 #ifdef VPVL2_LINK_ASSIMP
 
-#include "vpvl2/IRenderDelegate.h"
-#include "vpvl2/IRenderEngine.h"
-
-#ifdef VPVL2_LINK_QT
-#include <QtOpenGL/QtOpenGL>
-#endif /* VPVL_LINK_QT */
-
-#include <cg/cg.h>
-#include <cg/cgGL.h>
+#include "vpvl2/cg/EngineCommon.h"
 
 #include <assimp.h>
 #include <aiScene.h>
@@ -128,6 +120,8 @@ private:
     const Scene *m_scene;
     asset::Model *m_model;
     CGcontext m_context;
+    CGeffect m_effect;
+    EffectParameters m_parameters;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, AssetVertices> m_vertices;
     std::map<const struct aiMesh *, AssetIndices> m_indices;
