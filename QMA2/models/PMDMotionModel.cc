@@ -220,7 +220,7 @@ const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int fr
 int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
 {
     /* カラムは常に1つ以上存在するようにしないと assertion error が発生する */
-    return m_model ? maxFrameCount() + 2 : 1;
+    return m_model ? maxFrameCount() + 1 : 1;
 }
 
 void PMDMotionModel::markAsNew(IModel *model)
@@ -247,6 +247,7 @@ void PMDMotionModel::refreshModel(IModel *model)
     if (model) {
         /* モデルのフレーム移動なしの更新とテーブルモデルの更新両方を含む */
         updateModel(model);
+        setFrameIndexColumnMax(0);
         reset();
         emit motionDidUpdate(model);
     }
@@ -258,11 +259,6 @@ void PMDMotionModel::setActiveUndoStack()
         m_undo->setActiveStack(m_stacks[m_model].data());
     else
         m_undo->setActiveStack(0);
-}
-
-int PMDMotionModel::maxFrameCount() const
-{
-    return 54000;
 }
 
 int PMDMotionModel::maxFrameIndex() const
@@ -295,17 +291,22 @@ void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys 
         m_keys.insert(model, keys);
     if (!m_values.contains(model))
         m_values.insert(model, Values());
+    /* 最初のキーフレーム登録が正しく行われるようにするため更新しておく必要がある */
+    setFrameIndexColumnMax(0);
 }
 
 void PMDMotionModel::removePMDModel(IModel *model)
 {
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
     m_model = 0;
+    /* モーションのポインタを残すとダングリングポインタと化してクラッシュするので、ゼロクリアする */
+    m_motion = 0;
     m_undo->setActiveStack(0);
     m_values.remove(model);
     m_keys.remove(model);
     m_stacks.remove(model);
     m_roots.remove(model);
+    setFrameIndexColumnMax(0);
 }
 
 void PMDMotionModel::removePMDMotion(IModel *model)

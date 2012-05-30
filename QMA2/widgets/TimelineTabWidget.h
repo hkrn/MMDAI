@@ -124,6 +124,7 @@ private slots:
     void selectBones(const QList<vpvl2::IBone *> &bones);
     void selectButton(QAbstractButton *button);
     void setLastSelectedModel(vpvl2::IModel *model);
+    void clearLastSelectedModel();
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);

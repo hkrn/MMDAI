@@ -67,7 +67,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_lastSelectedModel(0)
 {
     m_tabWidget = new QTabWidget();
-    m_boneTimeline = new TimelineWidget(bmm, this);
+    m_boneTimeline = new TimelineWidget(bmm, true, this);
     m_boneTimeline->setFrameIndexSpinBoxEnable(false);
     m_interpolationDialog = new InterpolationDialog(bmm, smm);
     m_boneSelectButton = new QRadioButton();
@@ -90,10 +90,10 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     /* hack bone timeline layout */
     reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(mainLayout);
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
-    m_morphTimeline = new TimelineWidget(mmm, this);
+    m_morphTimeline = new TimelineWidget(mmm, true, this);
     m_morphTimeline->setFrameIndexSpinBoxEnable(false);
     m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline, "");
-    m_sceneTimeline = new TimelineWidget(smm, this);
+    m_sceneTimeline = new TimelineWidget(smm, false, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
@@ -314,36 +314,47 @@ void TimelineTabWidget::previousFrame()
 
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
+    Type type;
+    vpvl2::IModel *lastSelectedModel = 0;
     switch (index) {
     case kBoneTabIndex: {
-        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model());
-        model->setActiveUndoStack();
-        emit currentTabDidChange(kBone);
-        emit currentModelDidChange(m_lastSelectedModel);
+        static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model())->setActiveUndoStack();
+        type = kBone;
+        lastSelectedModel = m_lastSelectedModel;
         break;
     }
     case kMorphTabIndex: {
-        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_morphTimeline->treeView()->model());
-        model->setActiveUndoStack();
-        emit currentTabDidChange(kMorph);
-        emit currentModelDidChange(m_lastSelectedModel);
+        static_cast<PMDMotionModel *>(m_morphTimeline->treeView()->model())->setActiveUndoStack();
+        type = kMorph;
+        lastSelectedModel = m_lastSelectedModel;
         break;
     }
     case kSceneTabIndex: {
         SceneMotionModel *model = static_cast<SceneMotionModel *>(m_sceneTimeline->treeView()->model());
         model->setActiveUndoStack();
-        emit currentTabDidChange(kScene);
-        emit currentModelDidChange(0);
+        type = kScene;
         break;
     }
     default:
-        break;
+        return;
     }
+    emit currentTabDidChange(type);
+    emit currentModelDidChange(lastSelectedModel);
 }
 
 void TimelineTabWidget::notifyCurrentTabIndex()
 {
-    setCurrentTabIndex(m_tabWidget->currentIndex());
+    /*
+     * 場面タブでモデル読み込みをするとボーンとモーフのキーフレームが消失してしまう。
+     * そのため、ボーンモードに強制切り替えにする
+     */
+    if (m_tabWidget->currentIndex() == kSceneTabIndex) {
+        setCurrentTabIndex(kBoneTabIndex);
+        m_tabWidget->setCurrentIndex(kBoneTabIndex);
+    }
+    else {
+        setCurrentTabIndex(m_tabWidget->currentIndex());
+    }
 }
 
 void TimelineTabWidget::toggleBoneEnable(IModel *model)
@@ -491,6 +502,18 @@ void TimelineTabWidget::setLastSelectedModel(IModel *model)
     /* タブ移動時でモデル選択を切り替えるため最後に選択したモデルのポインタを保存する処理。NULL はスキップする */
     if (model)
         m_lastSelectedModel = model;
+    /*
+     * 最初の列以外を隠す。モデルを選択した後でないと BoneMotionModel と MorphMotionModel の
+     * columnCount が 1 を返してしまうため、ここで処理する
+     */
+    m_boneTimeline->treeView()->updateFrozenTreeView();
+    m_morphTimeline->treeView()->updateFrozenTreeView();
+    m_sceneTimeline->treeView()->updateFrozenTreeView();
+}
+
+void TimelineTabWidget::clearLastSelectedModel()
+{
+    m_lastSelectedModel = 0;
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)

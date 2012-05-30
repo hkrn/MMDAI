@@ -281,7 +281,7 @@ void Motion::reset()
 
 float Motion::maxFrameIndex() const
 {
-    return btMax(m_boneMotion.maxIndex(), m_morphMotion.maxIndex());
+    return btMax(btMax(btMax(m_boneMotion.maxIndex(), m_morphMotion.maxIndex()), m_cameraMotion.maxIndex()), m_lightMotion.maxIndex());
 }
 
 bool Motion::isReachedTo(float atEnd) const

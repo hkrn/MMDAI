@@ -48,6 +48,7 @@ class QLabel;
 class QPushButton;
 class QSettings;
 class QSpinBox;
+class QTreeView;
 
 class TimelineWidget : public QWidget
 {
@@ -55,6 +56,7 @@ class TimelineWidget : public QWidget
 
 public:
     explicit TimelineWidget(MotionBaseModel *base,
+                            bool stretchLastSection,
                             QWidget *parent = 0);
     ~TimelineWidget();
 
@@ -74,6 +76,8 @@ private slots:
     void retranslate();
     void setCurrentFrameIndexBySpinBox();
     void setCurrentFrameIndex(const QModelIndex &index);
+    void setMaximumFrameIndexRange(int value);
+    void adjustFrameColumnSize(int value);
     void reexpand();
 
 private:

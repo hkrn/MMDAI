@@ -330,12 +330,7 @@ bool SceneMotionModel::setData(const QModelIndex &index, const QVariant &value, 
 
 int SceneMotionModel::columnCount(const QModelIndex & /* parent */) const
 {
-    return maxFrameCount() + 2;
-}
-
-int SceneMotionModel::maxFrameCount() const
-{
-    return 54000;
+    return maxFrameCount() + 1;
 }
 
 int SceneMotionModel::maxFrameIndex() const
@@ -463,6 +458,9 @@ void SceneMotionModel::loadMotion(IMotion *motion)
             return;
         m_cameraData.clear();
         m_lightData.clear();
+        /* フレーム列の最大数をモーションのフレーム数に更新する */
+        setFrameIndexColumnMax(motion);
+        reset();
         /* カメラのキーフレームをテーブルのモデルデータにコピーする */
         QScopedPointer<ICameraKeyframe> newCameraKeyframe;
         for (int i = 0; i < nCameraFrames; i++) {
@@ -510,6 +508,7 @@ void SceneMotionModel::setActiveUndoStack()
 
 void SceneMotionModel::refreshScene()
 {
+    setFrameIndexColumnMax(0);
     reset();
 }
 

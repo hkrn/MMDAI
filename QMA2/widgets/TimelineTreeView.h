@@ -43,16 +43,21 @@
 
 #include <vpvl2/Common.h>
 
+class QItemDelegate;
+
 class TimelineTreeView : public QTreeView
 {
     Q_OBJECT
 
 public:
-    explicit TimelineTreeView(QWidget *parent = 0);
+    explicit TimelineTreeView(QItemDelegate *delegate, QWidget *parent = 0);
     ~TimelineTreeView();
 
+    void initializeFrozenView();
     void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
     void deleteKeyframesBySelectedIndices();
+    void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
+    void updateFrozenTreeView();
     const QModelIndexList &expandedModelIndices() const;
 
 public slots:
@@ -63,6 +68,8 @@ signals:
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent *event);
+    void resizeEvent(QResizeEvent *event);
+    QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers);
 
 private slots:
     void addCollapsed(const QModelIndex &index);
@@ -70,8 +77,12 @@ private slots:
     void selectModelIndices(const QItemSelection &selected, const QItemSelection &deselected);
     void setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
     void setMorphKeyframesWeightBySelectedIndices(float value);
+    void updateSectionWidth(int logicalIndex, int newSize, int oldSize);
 
 private:
+    void updateFrozenTreeViewGeometry();
+
+    QTreeView *m_frozenTreeView;
     QModelIndexList m_expanded;
 
     Q_DISABLE_COPY(TimelineTreeView)
@@ -82,7 +93,9 @@ class TimelineHeaderView : public QHeaderView
     Q_OBJECT
 
 public:
-    explicit TimelineHeaderView(Qt::Orientation orientation, QWidget *parent = 0);
+    explicit TimelineHeaderView(Qt::Orientation orientation,
+                                bool stretchLastSection,
+                                QWidget *parent = 0);
     virtual ~TimelineHeaderView();
 
 signals:

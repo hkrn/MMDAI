@@ -1273,6 +1273,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), assetWidget, SLOT(removeAsset(vpvl2::IModel*)));
     connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), assetWidget, SLOT(addModel(vpvl2::IModel*)));
     connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), assetWidget, SLOT(removeModel(vpvl2::IModel*)));
+    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_timelineTabWidget, SLOT(clearLastSelectedModel()));
     connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
     connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,vpvl2::IModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
     connect(loader, SIGNAL(cameraMotionDidSet(vpvl2::IMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
