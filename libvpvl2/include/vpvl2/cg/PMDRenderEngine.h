@@ -34,12 +34,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_GL2_PMDRENDERENGINE_H_
-#define VPVL2_GL2_PMDRENDERENGINE_H_
+#ifndef VPVL2_CG2_PMDRENDERENGINE_H_
+#define VPVL2_CG2_PMDRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
+#include "vpvl2/pmd/Model.h"
 
 #ifdef VPVL2_LINK_QT
 #include <QtOpenGL/QtOpenGL>
@@ -64,6 +65,20 @@ class Model;
 namespace cg
 {
 
+enum VertexBufferObjectType
+{
+    kModelVertices,
+    kEdgeIndices,
+    kModelIndices,
+    kVertexBufferObjectMax
+};
+
+struct MaterialTextures
+{
+    GLuint mainTextureID;
+    GLuint subTextureID;
+};
+
 class VPVL2_API PMDRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
@@ -74,13 +89,13 @@ public:
 
     PMDRenderEngine(IRenderDelegate *delegate,
                     const Scene *scene,
+                    CGcontext effectContext,
                     cl::PMDAccelerator *accelerator,
                     pmd::Model *model);
     virtual ~PMDRenderEngine();
 
     IModel *model() const;
     bool upload(const IString *dir);
-    void deleteModel();
     void update();
     void renderModel();
     void renderEdge();
@@ -93,7 +108,18 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    PrivateContext *m_context;
+    const Scene *m_scene;
+    cl::PMDAccelerator *m_accelerator;
+    pmd::Model *m_model;
+    CGcontext m_context;
+    MaterialTextures *m_textures;
+    pmd::Model::SkinningMeshes m_mesh;
+    GLuint m_toonTextures[vpvl::PMDModel::kCustomTextureMax];
+    GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
+    bool m_hasSingleSphereMap;
+    bool m_hasMultipleSphereMap;
+    bool m_cullFaceState;
+    bool m_isVertexShaderSkinning;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMDRenderEngine)
 };

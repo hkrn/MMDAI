@@ -355,18 +355,6 @@ namespace gl2
 
 using namespace vpvl;
 
-static const float kIdentityMatrix3x3[] = {
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 1
-};
-static const float kIdentityMatrix4x4[] = {
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-};
-
 class PMDRenderEngine::PrivateContext
         #ifdef VPVL2_LINK_QT
         : protected QGLFunctions

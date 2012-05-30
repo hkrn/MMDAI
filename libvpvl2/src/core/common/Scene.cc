@@ -45,6 +45,14 @@
 #include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+#include "vpvl2/cg/AssetRenderEngine.h"
+#include "vpvl2/cg/PMDRenderEngine.h"
+#include "vpvl2/cg/PMXRenderEngine.h"
+#else
+BT_DECLARE_HANDLE(CGcontext)
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+
 #ifdef VPVL2_ENABLE_OPENCL
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMDAccelerator.h"
@@ -57,7 +65,7 @@ class PMDAccelerator;
 class PMXAccelerator;
 }
 }
-#endif
+#endif /* VPVL2_ENABLE_OPENCL */
 
 namespace
 {
@@ -238,14 +246,19 @@ struct Scene::PrivateContext {
     PrivateContext()
         : computeContext(0),
           accelerationType(Scene::kSoftwareFallback),
+          effectContext(0),
           preferredFPS(Scene::defaultFPS())
     {
     }
     ~PrivateContext() {
 #ifdef VPVL2_ENABLE_OPENCL
         delete computeContext;
-#endif
+#endif /* VPVL2_ENABLE_OPENCL */
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        cgDestroyContext(effectContext);
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
         computeContext = 0;
+        effectContext = 0;
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
@@ -259,7 +272,7 @@ struct Scene::PrivateContext {
         }
 #else
         (void) delegate;
-#endif
+#endif /* VPVL2_ENABLE_OPENCL */
         return computeContext;
     }
     cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
@@ -271,7 +284,7 @@ struct Scene::PrivateContext {
         }
 #else
         (void) delegate;
-#endif
+#endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
     cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
@@ -283,12 +296,13 @@ struct Scene::PrivateContext {
         }
 #else
         (void) delegate;
-#endif
+#endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
 
     cl::Context *computeContext;
     Scene::AccelerationType accelerationType;
+    CGcontext effectContext;
     Hash<HashPtr, IRenderEngine *> model2engine;
     Array<IModel *> models;
     Array<IMotion *> motions;
@@ -343,18 +357,33 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
     switch (model->type()) {
     case IModel::kAsset: {
 #ifdef VPVL2_LINK_ASSIMP
-        engine = new gl2::AssetRenderEngine(delegate, this, static_cast<asset::Model *>(model));
-#endif
+        asset::Model *m = static_cast<asset::Model *>(model);
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        engine = new cg::AssetRenderEngine(delegate, this, m_context->effectContext, m);
+#else
+        engine = new gl2::AssetRenderEngine(delegate, this, m);
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+#endif /* VPVL2_LINK_ASSIMP */
         break;
     }
     case IModel::kPMD: {
         cl::PMDAccelerator *accelerator = m_context->createPMDAccelerator(delegate);
-        engine = new gl2::PMDRenderEngine(delegate, this, accelerator, static_cast<pmd::Model *>(model));
+        pmd::Model *m = static_cast<pmd::Model *>(model);
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+#else
+        engine = new gl2::PMDRenderEngine(delegate, this, accelerator, m);
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
         break;
     }
     case IModel::kPMX: {
         cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate);
-        engine = new gl2::PMXRenderEngine(delegate, this, accelerator, static_cast<pmx::Model *>(model));
+        pmx::Model *m = static_cast<pmx::Model *>(model);
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+#else
+        engine = new gl2::PMXRenderEngine(delegate, this, accelerator, m);
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
         break;
     }
     default:

@@ -36,6 +36,14 @@
 
 #include "vpvl2/cg/PMDRenderEngine.h"
 
+#include "vpvl2/vpvl2.h"
+#ifdef VPVL2_ENABLE_OPENCL
+#include "vpvl2/cl/Context.h"
+#include "vpvl2/cl/PMDAccelerator.h"
+#endif
+
+using namespace vpvl;
+
 namespace vpvl2
 {
 namespace cg
@@ -43,32 +51,160 @@ namespace cg
 
 PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
                                  const Scene *scene,
+                                 CGcontext effectContext,
                                  cl::PMDAccelerator *accelerator,
                                  pmd::Model *model)
-    : m_context(0)
+#ifdef VPVL_LINK_QT
+    : QGLFunctions(),
+      #else
+    :
+      #endif /* VPVL_LINK_QT */
+      m_delegate(delegate),
+      m_scene(scene),
+      m_accelerator(accelerator),
+      m_model(model),
+      m_context(effectContext),
+      m_textures(0),
+      m_hasSingleSphereMap(false),
+      m_hasMultipleSphereMap(false),
+      m_cullFaceState(true),
+      m_isVertexShaderSkinning(false)
 {
 }
 
 PMDRenderEngine::~PMDRenderEngine()
 {
+    glDeleteTextures(vpvl::PMDModel::kCustomTextureMax, m_toonTextures);
+    glDeleteBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
+    if (m_textures) {
+        const vpvl::MaterialList &modelMaterials = m_model->ptr()->materials();
+        const int nmaterials = modelMaterials.count();
+        for (int i = 0; i < nmaterials; i++) {
+            MaterialTextures &materialPrivate = m_textures[i];
+            glDeleteTextures(1, &materialPrivate.mainTextureID);
+            glDeleteTextures(1, &materialPrivate.subTextureID);
+        }
+        delete[] m_textures;
+        m_textures = 0;
+    }
+#ifdef VPVL2_ENABLE_OPENCL
+    delete m_accelerator;
+    m_accelerator = 0;
+#endif
+    m_delegate = 0;
+    m_scene = 0;
+    m_model = 0;
+    m_context = 0;
+    m_cullFaceState = false;
+    m_isVertexShaderSkinning = false;
 }
 
 IModel *PMDRenderEngine::model() const
 {
-    return 0;
+    return m_model;
 }
 
 bool PMDRenderEngine::upload(const IString *dir)
 {
-    return false;
-}
-
-void PMDRenderEngine::deleteModel()
-{
+    void *context = 0;
+    m_delegate->allocateContext(m_model, context);
+    PMDModel *model = m_model->ptr();
+    glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kEdgeIndices]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
+                 model->edgeIndicesPointer(), GL_STATIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding edge indices to the vertex buffer object (ID=%d)",
+         m_vertexBufferObjects[kEdgeIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->indices().count() * model->strideSize(PMDModel::kIndicesStride),
+                 model->indicesPointer(), GL_STATIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding indices to the vertex buffer object (ID=%d)",
+         m_vertexBufferObjects[kModelIndices]);
+    const int nvertices = model->vertices().count();
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
+    glBufferData(GL_ARRAY_BUFFER, nvertices * model->strideSize(PMDModel::kVerticesStride),
+                 model->verticesPointer(), GL_DYNAMIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding model vertices to the vertex buffer object (ID=%d)",
+         m_vertexBufferObjects[kModelVertices]);
+    if (m_isVertexShaderSkinning)
+        m_model->getSkinningMeshes(m_mesh);
+    const MaterialList &materials = model->materials();
+    const int nmaterials = materials.count();
+    GLuint textureID = 0;
+    MaterialTextures *materialPrivates = new MaterialTextures[nmaterials];
+    bool hasSingleSphere = false, hasMultipleSphere = false;
+    for (int i = 0; i < nmaterials; i++) {
+        const Material *material = materials[i];
+        IString *primary = m_delegate->toUnicode(material->mainTextureName());
+        IString *second = m_delegate->toUnicode(material->subTextureName());
+        MaterialTextures &materialPrivate = materialPrivates[i];
+        materialPrivate.mainTextureID = 0;
+        materialPrivate.subTextureID = 0;
+        if (m_delegate->uploadTexture(context, primary, dir, &textureID, false)) {
+            materialPrivate.mainTextureID = textureID;
+            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
+        }
+        if (m_delegate->uploadTexture(context, second, dir, &textureID, false)) {
+            materialPrivate.subTextureID = textureID;
+            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
+        }
+        delete primary;
+        delete second;
+        hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
+        hasMultipleSphere |= material->isSubSphereAdd();
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Sphere map information: hasSingleSphere=%s, hasMultipleSphere=%s",
+         hasSingleSphere ? "true" : "false",
+         hasMultipleSphere ? "true" : "false");
+    m_hasSingleSphereMap = hasSingleSphere;
+    m_hasMultipleSphereMap = hasMultipleSphere;
+    if (m_delegate->uploadToonTexture(context, "toon0.bmp", dir, &textureID)) {
+        m_toonTextures[0] = textureID;
+        log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+    }
+    for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
+        const uint8_t *name = model->toonTexture(i);
+        if (m_delegate->uploadToonTexture(context, reinterpret_cast<const char *>(name), dir, &textureID)) {
+            m_toonTextures[i + 1] = textureID;
+            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+        }
+    }
+#ifdef VPVL2_ENABLE_OPENCL
+    if (m_accelerator && m_accelerator->isAvailable())
+        m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
+#endif
+    model->updateImmediate();
+    update();
+    IString *modelName = m_delegate->toUnicode(model->name());
+    log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", modelName->toByteArray());
+    delete modelName;
+    m_delegate->releaseContext(m_model, context);
+    return true;
 }
 
 void PMDRenderEngine::update()
 {
+    if (!m_model->isVisible())
+        return;
+    PMDModel *model = m_model->ptr();
+    model->setLightPosition(-m_scene->light()->direction());
+    int nvertices = model->vertices().count();
+    size_t strideSize = model->strideSize(PMDModel::kVerticesStride);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nvertices * strideSize, model->verticesPointer());
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    if (m_isVertexShaderSkinning)
+        m_model->updateSkinningMeshes(m_mesh);
+#ifdef VPVL2_ENABLE_OPENCL
+    if (m_accelerator && m_accelerator->isAvailable())
+        m_accelerator->updateModel(m_model);
+#endif
 }
 
 void PMDRenderEngine::renderModel()
@@ -89,6 +225,10 @@ void PMDRenderEngine::renderZPlot()
 
 void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
 {
+    va_list ap;
+    va_start(ap, format);
+    m_delegate->log(context, level, format, ap);
+    va_end(ap);
 }
 
 } /* namespace gl2 */

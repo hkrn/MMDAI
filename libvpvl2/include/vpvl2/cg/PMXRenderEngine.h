@@ -34,12 +34,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_GL2_PMXRENDERENGINE_H_
-#define VPVL2_GL2_PMXRENDERENGINE_H_
+#ifndef VPVL2_CG2_PMXRENDERENGINE_H_
+#define VPVL2_CG2_PMXRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
+
+#include "vpvl2/pmx/Model.h"
 
 #ifdef VPVL2_LINK_QT
 #include <QtOpenGL/QtOpenGL>
@@ -74,6 +76,7 @@ public:
 
     PMXRenderEngine(IRenderDelegate *delegate,
                     const Scene *scene,
+                    CGcontext effectContext,
                     cl::PMXAccelerator *accelerator,
                     pmx::Model *model);
     virtual ~PMXRenderEngine();
@@ -96,7 +99,25 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    PrivateContext *m_context;
+    struct MaterialTextures {
+        GLuint mainTextureID;
+        GLuint sphereTextureID;
+        GLuint toonTextureID;
+    };
+    enum VertexBufferObjectType {
+        kModelVertices,
+        kModelIndices,
+        kVertexBufferObjectMax
+    };
+    const Scene *m_scene;
+    cl::PMXAccelerator *m_accelerator;
+    pmx::Model *m_model;
+    CGcontext m_context;
+    pmx::Model::SkinningMeshes m_mesh;
+    GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
+    MaterialTextures *m_materials;
+    bool m_cullFaceState;
+    bool m_isVertexShaderSkinning;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

@@ -88,7 +88,7 @@ public:
     class Program;
     class PrivateContext;
 
-    AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, asset::Model *model);
+    AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, CGcontext context, asset::Model *model);
     virtual ~AssetRenderEngine();
 
     IModel *model() const;
@@ -99,22 +99,40 @@ public:
     void renderShadow();
     void renderZPlot();
 
-    bool isAcceleratorAvailable() const;
-    bool initializeAccelerator();
-
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
     IRenderDelegate *m_delegate;
 
 private:
+    struct AssetVertex {
+        AssetVertex() {}
+        vpvl2::Vector4 position;
+        vpvl2::Vector3 normal;
+        vpvl2::Vector3 texcoord;
+        vpvl2::Color color;
+    };
+    struct AssetVBO {
+        GLuint vertices;
+        GLuint indices;
+    };
+    typedef btAlignedObjectArray<AssetVertex> AssetVertices;
+    typedef btAlignedObjectArray<uint32_t> AssetIndices;
+
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
-    void setAssetMaterial(const aiMaterial *material, Program *program);
+    void setAssetMaterial(const aiMaterial *material);
 
-    PrivateContext *m_context;
+    const Scene *m_scene;
+    asset::Model *m_model;
+    CGcontext m_context;
+    std::map<std::string, GLuint> m_textures;
+    std::map<const struct aiMesh *, AssetVertices> m_vertices;
+    std::map<const struct aiMesh *, AssetIndices> m_indices;
+    std::map<const struct aiMesh *, AssetVBO> m_vbo;
+    bool m_cullFaceState;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };
