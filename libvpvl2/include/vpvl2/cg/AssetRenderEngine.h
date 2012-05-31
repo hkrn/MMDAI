@@ -121,7 +121,7 @@ private:
     asset::Model *m_model;
     CGcontext m_context;
     CGeffect m_effect;
-    EffectParameters m_parameters;
+    Effect m_parameters;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, AssetVertices> m_vertices;
     std::map<const struct aiMesh *, AssetIndices> m_indices;

@@ -249,6 +249,10 @@ struct Scene::PrivateContext {
           effectContext(0),
           preferredFPS(Scene::defaultFPS())
     {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        effectContext = cgCreateContext();
+        cgGLRegisterStates(effectContext);
+#endif
     }
     ~PrivateContext() {
 #ifdef VPVL2_ENABLE_OPENCL

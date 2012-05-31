@@ -102,14 +102,11 @@ private:
     cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_model;
     CGcontext m_context;
-    CGeffect m_effect;
-    EffectParameters m_parameters;
+    Effect m_effect;
     MaterialTextures *m_textures;
     pmd::Model::SkinningMeshes m_mesh;
     GLuint m_toonTextures[vpvl::PMDModel::kCustomTextureMax];
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
-    bool m_hasSingleSphereMap;
-    bool m_hasMultipleSphereMap;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
 

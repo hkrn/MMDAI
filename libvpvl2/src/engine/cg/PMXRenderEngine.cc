@@ -110,7 +110,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     if (!m_effect) {
         return false;
     }
-    m_parameters.getEffectParameters(m_effect);
+    m_parameters.attachEffect(m_effect);
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     size_t size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);

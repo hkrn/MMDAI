@@ -103,7 +103,7 @@ private:
     pmx::Model *m_model;
     CGcontext m_context;
     CGeffect m_effect;
-    EffectParameters m_parameters;
+    Effect m_parameters;
     pmx::Model::SkinningMeshes m_mesh;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     MaterialTextures *m_materials;

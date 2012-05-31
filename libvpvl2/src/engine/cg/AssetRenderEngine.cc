@@ -152,7 +152,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     if (!m_effect) {
         return false;
     }
-    m_parameters.getEffectParameters(m_effect);
+    m_parameters.attachEffect(m_effect);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
