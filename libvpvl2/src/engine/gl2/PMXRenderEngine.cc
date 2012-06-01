@@ -567,10 +567,10 @@ bool PMXRenderEngine::upload(const IString *dir)
     const bool isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
     m_context->isVertexShaderSkinning = isVertexShaderSkinning;
     if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeWithSkinningVertexShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeWithSkinningVertexShader, m_model, dir, context);
     else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeFragmentShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeVertexShader, m_model, dir, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeFragmentShader, m_model, dir, context);
     edgeProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     edgeProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = edgeProgram->linkProgram(context);
@@ -582,10 +582,10 @@ bool PMXRenderEngine::upload(const IString *dir)
         return ret;
     }
     if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelWithSkinningVertexShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelWithSkinningVertexShader, m_model, dir, context);
     else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, dir, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, dir, context);
     modelProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     modelProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = modelProgram->linkProgram(context);
@@ -597,10 +597,10 @@ bool PMXRenderEngine::upload(const IString *dir)
         return ret;
     }
     if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowWithSkinningVertexShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowWithSkinningVertexShader, m_model, dir, context);
     else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowFragmentShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowVertexShader, m_model, dir, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowFragmentShader, m_model, dir, context);
     shadowProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     shadowProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = shadowProgram->linkProgram(context);
@@ -612,10 +612,10 @@ bool PMXRenderEngine::upload(const IString *dir)
         return ret;
     }
     if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotWithSkinningVertexShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotWithSkinningVertexShader, m_model, dir, context);
     else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, context);
+        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, dir, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, dir, context);
     zplotProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     zplotProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = zplotProgram->linkProgram(context);

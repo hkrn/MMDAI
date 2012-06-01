@@ -106,17 +106,24 @@ bool PMDRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-    IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, context);
-    CGeffect effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
+    IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
+    CGeffect effect;
+    cgSetErrorHandler(&PMDRenderEngine::handleError, this);
+    if (source)
+        effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
     delete source;
     if (!effect) {
         return false;
     }
+#ifdef VPVL2_LINK_QT
+    const QGLContext *glContext = QGLContext::currentContext();
+    initializeGLFunctions(glContext);
+#endif
     m_effect.attachEffect(effect);
-    cgSetParameter1i(m_effect.useToon, 1);
-    cgSetParameter1i(m_effect.parthf, 0);
-    cgSetParameter1i(m_effect.transp, 0);
-    cgSetParameter1i(m_effect.opadd, 0);
+    m_effect.useToon.setValue(true);
+    m_effect.parthf.setValue(false);
+    m_effect.transp.setValue(false);
+    m_effect.opadd.setValue(false);
     PMDModel *model = m_model->ptr();
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kEdgeIndices]);
@@ -132,7 +139,7 @@ bool PMDRenderEngine::upload(const IString *dir)
          "Binding indices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelIndices]);
     const int nvertices = model->vertices().count();
-    cgSetParameter1i(m_effect.vertexCount, nvertices);
+    m_effect.vertexCount.setValue(nvertices);
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, nvertices * model->strideSize(PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
@@ -144,21 +151,21 @@ bool PMDRenderEngine::upload(const IString *dir)
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
-    MaterialTextures *materialPrivates = new MaterialTextures[nmaterials];
-    cgSetParameter1i(m_effect.subsetCount, nmaterials);
+    MaterialTextures *textures = m_textures = new MaterialTextures[nmaterials];
+    m_effect.subsetCount.setValue(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         IString *primary = m_delegate->toUnicode(material->mainTextureName());
         IString *second = m_delegate->toUnicode(material->subTextureName());
-        MaterialTextures &materialPrivate = materialPrivates[i];
-        materialPrivate.mainTextureID = 0;
-        materialPrivate.subTextureID = 0;
+        MaterialTextures &texture = textures[i];
+        texture.mainTextureID = 0;
+        texture.subTextureID = 0;
         if (m_delegate->uploadTexture(context, primary, dir, &textureID, false)) {
-            materialPrivate.mainTextureID = textureID;
+            texture.mainTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
         if (m_delegate->uploadTexture(context, second, dir, &textureID, false)) {
-            materialPrivate.subTextureID = textureID;
+            texture.subTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
         delete primary;
@@ -177,6 +184,10 @@ bool PMDRenderEngine::upload(const IString *dir)
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
     }
+    float matrix4x4[16];
+    Transform::getIdentity().getOpenGLMatrix(matrix4x4);
+    m_effect.world.setCameraMatrix(matrix4x4);
+    m_effect.world.setLightMatrix(matrix4x4);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
@@ -192,7 +203,7 @@ bool PMDRenderEngine::upload(const IString *dir)
 
 void PMDRenderEngine::update()
 {
-    if (!m_model->isVisible())
+    if (!m_model->isVisible() || !m_effect.isAttached())
         return;
     PMDModel *model = m_model->ptr();
     model->setLightPosition(-m_scene->light()->direction());
@@ -226,7 +237,7 @@ void PMDRenderEngine::update()
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model->isVisible())
+    if (!m_model->isVisible() || !m_effect.isAttached())
         return;
     const Scene::IMatrices *matrices = m_scene->matrices();
     float matrix4x4[16];
@@ -241,19 +252,23 @@ void PMDRenderEngine::renderModel()
     const Scalar &modelOpacity = m_model->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
             isToonEnabled = light->isToonEnabled(),
-            hasShadowMap = light->depthTexture() ? true : false;
+            hasShadowMap = false; //light->depthTexture() ? true : false;
     const int nmaterials = materials.count();
     Color diffuse;
     size_t offset = 0;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
     glVertexPointer(3, GL_FLOAT, model->strideSize(PMDModel::kVerticesStride),
                     reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)));
+    glEnableClientState(GL_VERTEX_ARRAY);
     glNormalPointer(GL_FLOAT, model->strideSize(PMDModel::kNormalsStride),
                     reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kNormalsStride)));
+    glEnableClientState(GL_NORMAL_ARRAY);
     glTexCoordPointer(2, GL_FLOAT, model->strideSize(PMDModel::kTextureCoordsStride),
                       reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
+    m_effect.toonColor.setGeometryColor(Vector3(1, 1, 1));
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const MaterialTextures &texture = m_textures[i];
@@ -269,32 +284,32 @@ void PMDRenderEngine::renderModel()
         if (hasMainTexture) {
             if (material->isMainSphereAdd()) {
                 m_effect.materialSphereMap.setTexture(texture.mainTextureID);
-                cgSetParameter1i(m_effect.spadd, 1);
-                cgSetParameter1i(m_effect.useTexture, 0);
+                m_effect.spadd.setValue(true);
+                m_effect.useTexture.setValue(true);
                 hasSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
                 m_effect.materialSphereMap.setTexture(texture.mainTextureID);
-                cgSetParameter1i(m_effect.spadd, 0);
-                cgSetParameter1i(m_effect.useTexture, 0);
+                m_effect.spadd.setValue(false);
+                m_effect.useTexture.setValue(false);
                 hasSphereMap = true;
             }
             else {
                 m_effect.materialTexture.setTexture(texture.mainTextureID);
-                cgSetParameter1i(m_effect.useTexture, 1);
+                m_effect.useTexture.setValue(true);
             }
         }
         else {
-            cgSetParameter1i(m_effect.useTexture, 0);
+            m_effect.useTexture.setValue(false);
         }
         if (!hasSphereMap) {
             if (material->isSubSphereAdd()) {
                 m_effect.materialSphereMap.setTexture(texture.subTextureID);
-                cgSetParameter1i(m_effect.spadd, 1);
+                m_effect.spadd.setValue(true);
             }
             else if (material->isSubSphereModulate()) {
                 m_effect.materialSphereMap.setTexture(texture.subTextureID);
-                cgSetParameter1i(m_effect.spadd, 0);
+                m_effect.spadd.setValue(false);
             }
         }
         if ((hasModelTransparent && m_cullFaceState) ||
@@ -309,12 +324,14 @@ void PMDRenderEngine::renderModel()
         const int nindices = material->countIndices();
         const char *target = hasShadowMap ? "object_ss" : "object";
         CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, isToonEnabled);
-        CGpass pass = cgGetFirstPass(technique);
-        while (pass) {
-            cgSetPassState(pass);
-            glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
-            cgResetPassState(pass);
-            pass = cgGetNextPass(pass);
+        if (cgIsTechnique(technique)) {
+            CGpass pass = cgGetFirstPass(technique);
+            while (pass) {
+                cgSetPassState(pass);
+                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+                cgResetPassState(pass);
+                pass = cgGetNextPass(pass);
+            }
         }
         offset += nindices * indexStride;
     }
@@ -328,14 +345,20 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderEdge()
 {
+    if (!m_model->isVisible() || !m_effect.isAttached())
+        return;
 }
 
 void PMDRenderEngine::renderShadow()
 {
+    if (!m_model->isVisible() || !m_effect.isAttached())
+        return;
 }
 
 void PMDRenderEngine::renderZPlot()
 {
+    if (!m_model->isVisible() || !m_effect.isAttached())
+        return;
 }
 
 void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -344,6 +367,15 @@ void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
+}
+
+void PMDRenderEngine::handleError(CGcontext context, CGerror error, void *data)
+{
+    PMDRenderEngine *engine = static_cast<PMDRenderEngine *>(data);
+    Q_UNUSED(context)
+    Q_UNUSED(error)
+    Q_UNUSED(engine)
+    //engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
 }
 
 } /* namespace gl2 */

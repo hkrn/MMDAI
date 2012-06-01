@@ -292,6 +292,9 @@ public:
         case kModelSkinningKernel:
             file = "skinning.cl";
             break;
+        case kMaxKernelType:
+        default:
+            break;
         }
         QByteArray bytes;
         QString path = m_settings->value("dir.system.kernels", "../../QMA2/resources/kernels").toString() + "/" + file;
@@ -303,8 +306,14 @@ public:
             return 0;
         }
     }
-    IString *loadShaderSource(ShaderType type, const IModel *model, void * /* context */) {
+    IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */) {
         QString file;
+        if (type == kModelEffectTechniques) {
+            QDir d(static_cast<const String *>(dir)->value());
+            QFile info(d.absoluteFilePath("effect.fx"));
+            QByteArray bytes;
+            return UISlurpFile(info.fileName(), bytes) ? new(std::nothrow) String(bytes) : 0;
+        }
         switch (model->type()) {
         case IModel::kAsset:
             file += "asset/";
@@ -352,6 +361,10 @@ public:
             break;
         case kZPlotWithSkinningVertexShader:
             file += "skinning/zplot.vsh";
+            break;
+        case kModelEffectTechniques:
+        case kMaxShaderType:
+        default:
             break;
         }
         QByteArray bytes;

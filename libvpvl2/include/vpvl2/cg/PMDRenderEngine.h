@@ -98,6 +98,8 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
+    static void handleError(CGcontext context, CGerror error, void *data);
+
     const Scene *m_scene;
     cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_model;

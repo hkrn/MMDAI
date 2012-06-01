@@ -117,7 +117,7 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    bool uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
+    bool uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);

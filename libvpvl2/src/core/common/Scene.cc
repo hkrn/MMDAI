@@ -251,6 +251,9 @@ struct Scene::PrivateContext {
     {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         effectContext = cgCreateContext();
+        cgSetParameterSettingMode(effectContext, CG_DEFERRED_PARAMETER_SETTING);
+        cgGLSetDebugMode(CG_TRUE);
+        cgGLSetManageTextureParameters(effectContext, CG_TRUE);
         cgGLRegisterStates(effectContext);
 #endif
     }

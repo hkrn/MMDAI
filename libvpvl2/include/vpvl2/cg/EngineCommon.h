@@ -57,18 +57,23 @@ namespace vpvl2
 namespace cg
 {
 
-class BaseSemantic
+class BaseParameter
 {
 public:
-    BaseSemantic()
+    BaseParameter()
         : m_baseParameter(0)
     {
     }
-    virtual ~BaseSemantic() {
+    virtual ~BaseParameter() {
         m_baseParameter = 0;
     }
 
-    void connectParameter(CGparameter sourceParameter, CGparameter &destinationParameter) {
+    void addParameter(CGparameter parameter) {
+        connectParameter(parameter, m_baseParameter);
+    }
+
+protected:
+    static void connectParameter(CGparameter sourceParameter, CGparameter &destinationParameter) {
         if (destinationParameter) {
             cgConnectParameter(sourceParameter, destinationParameter);
         }
@@ -76,19 +81,45 @@ public:
             destinationParameter = sourceParameter;
         }
     }
-    void addParameter(CGparameter parameter) {
-        connectParameter(parameter, m_baseParameter);
-    }
 
-protected:
     CGparameter m_baseParameter;
 };
 
-class MatrixSemantic : public BaseSemantic
+class BooleanParameter : public BaseParameter
+{
+public:
+    BooleanParameter()
+        : BaseParameter()
+    {
+    }
+    ~BooleanParameter() {}
+
+    void setValue(bool value) {
+        if (cgIsParameter(m_baseParameter))
+            cgSetParameter1i(m_baseParameter, value ? 1 : 0);
+    }
+};
+
+class IntegerParameter : public BaseParameter
+{
+public:
+    IntegerParameter()
+        : BaseParameter()
+    {
+    }
+    ~IntegerParameter() {}
+
+    void setValue(int value) {
+        if (cgIsParameter(m_baseParameter))
+            cgSetParameter1i(m_baseParameter, value);
+    }
+};
+
+class MatrixSemantic : public BaseParameter
 {
 public:
     MatrixSemantic()
-        : BaseSemantic(),
+        : BaseParameter(),
           m_camera(0),
           m_light(0)
     {
@@ -101,23 +132,25 @@ public:
     void addParameter(CGparameter parameter) {
         CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
         if (!cgIsAnnotation(annotation)) {
-            BaseSemantic::connectParameter(parameter, m_camera);
+            BaseParameter::connectParameter(parameter, m_camera);
         }
         else {
             const char *name = cgGetStringAnnotationValue(annotation);
             if (strcmp(name, "Camera") == 0) {
-                BaseSemantic::connectParameter(parameter, m_camera);
+                BaseParameter::connectParameter(parameter, m_camera);
             }
             else if (strcmp(name, "Light") == 0) {
-                BaseSemantic::connectParameter(parameter, m_light);
+                BaseParameter::connectParameter(parameter, m_light);
             }
         }
     }
     void setCameraMatrix(float *value) {
-        cgSetMatrixParameterfc(m_camera, value);
+        if (cgIsParameter(m_camera))
+            cgSetMatrixParameterfr(m_camera, value);
     }
     void setLightMatrix(float *value) {
-        cgSetMatrixParameterfc(m_light, value);
+        if (cgIsParameter(m_light))
+            cgSetMatrixParameterfr(m_light, value);
     }
 
 private:
@@ -125,11 +158,11 @@ private:
     CGparameter m_light;
 };
 
-class MaterialSemantic : public BaseSemantic
+class MaterialSemantic : public BaseParameter
 {
 public:
     MaterialSemantic()
-        : BaseSemantic(),
+        : BaseParameter(),
           m_geometry(0),
           m_light(0)
     {
@@ -144,24 +177,28 @@ public:
         if (cgIsAnnotation(annotation)) {
             const char *name = cgGetStringAnnotationValue(annotation);
             if (strcmp(name, "Geometry") == 0) {
-                BaseSemantic::connectParameter(parameter, m_geometry);
+                BaseParameter::connectParameter(parameter, m_geometry);
             }
             else if (strcmp(name, "Light") == 0) {
-                BaseSemantic::connectParameter(parameter, m_light);
+                BaseParameter::connectParameter(parameter, m_light);
             }
         }
     }
     void setGeometryColor(const Vector3 &value) {
-        cgSetParameter4fv(m_geometry, value);
+        if (cgIsParameter(m_geometry))
+            cgSetParameter4fv(m_geometry, value);
     }
     void setGeometryValue(const Scalar &value) {
-        cgSetParameter1f(m_geometry, value);
+        if (cgIsParameter(m_geometry))
+            cgSetParameter1f(m_geometry, value);
     }
     void setLightColor(const Vector3 &value) {
-        cgSetParameter4fv(m_light, value);
+        if (cgIsParameter(m_light))
+            cgSetParameter4fv(m_light, value);
     }
     void setLightValue(const Scalar &value) {
-        cgSetParameter1f(m_light, value);
+        if (cgIsParameter(m_light))
+            cgSetParameter1f(m_light, value);
     }
 
 private:
@@ -169,26 +206,36 @@ private:
     CGparameter m_light;
 };
 
-class MaterialTextureSemantic : public BaseSemantic
+class MaterialTextureSemantic : public BaseParameter
 {
 public:
     MaterialTextureSemantic()
-        : BaseSemantic()
+        : BaseParameter()
     {
     }
     ~MaterialTextureSemantic() {
     }
 
     void setTexture(GLuint value) {
-        cgGLSetTextureParameter(m_baseParameter, value);
+        if (cgIsParameter(m_baseParameter)) {
+            if (value) {
+                glBindTexture(GL_TEXTURE_2D, value);
+                cgGLSetTextureParameter(m_baseParameter, value);
+                cgSetSamplerState(m_baseParameter);
+                cgGLEnableTextureParameter(m_baseParameter);
+            }
+            else {
+                cgGLDisableTextureParameter(m_baseParameter);
+            }
+        }
     }
 };
 
-class GeometrySemantic : public BaseSemantic
+class GeometrySemantic : public BaseParameter
 {
 public:
     GeometrySemantic()
-        : BaseSemantic(),
+        : BaseParameter(),
           m_camera(0),
           m_light(0)
     {
@@ -203,18 +250,20 @@ public:
         if (cgIsAnnotation(annotation)) {
             const char *name = cgGetStringAnnotationValue(annotation);
             if (strcmp(name, "Camera") == 0) {
-                BaseSemantic::connectParameter(parameter, m_camera);
+                BaseParameter::connectParameter(parameter, m_camera);
             }
             else if (strcmp(name, "Light") == 0) {
-                BaseSemantic::connectParameter(parameter, m_light);
+                BaseParameter::connectParameter(parameter, m_light);
             }
         }
     }
     void setCameraValue(const Vector3 &value) {
-        cgSetParameter4fv(m_camera, value);
+        if (cgIsParameter(m_camera))
+            cgSetParameter4fv(m_camera, value);
     }
     void setLightValue(const Vector3 &value) {
-        cgSetParameter4fv(m_light, value);
+        if (cgIsParameter(m_light))
+            cgSetParameter4fv(m_light, value);
     }
 
 private:
@@ -222,22 +271,22 @@ private:
     CGparameter m_light;
 };
 
-class TimeSemantic : public BaseSemantic
+class TimeSemantic : public BaseParameter
 {
 public:
     CGannotation syncInEditMode;
     TimeSemantic()
-        : BaseSemantic(),
+        : BaseParameter(),
           syncInEditMode(0)
     {
     }
     void addParameter(CGparameter parameter) {
-        BaseSemantic::addParameter(parameter);
+        BaseParameter::addParameter(parameter);
         syncInEditMode = cgGetNamedParameterAnnotation(parameter, "SyncInEditMode");
     }
 };
 
-class ControlObjectSemantic : public BaseSemantic
+class ControlObjectSemantic : public BaseParameter
 {
 public:
     CGannotation name;
@@ -248,13 +297,13 @@ public:
     {
     }
     void addParameter(CGparameter parameter) {
-        BaseSemantic::addParameter(parameter);
+        BaseParameter::addParameter(parameter);
         name = cgGetNamedParameterAnnotation(parameter, "name");
         item = cgGetNamedParameterAnnotation(parameter, "item");
     }
 };
 
-class TextureSemantic : public BaseSemantic
+class TextureSemantic : public BaseParameter
 {
 public:
     CGannotation width;
@@ -273,7 +322,7 @@ public:
     {
     }
     void addParameter(CGparameter parameter) {
-        BaseSemantic::addParameter(parameter);
+        BaseParameter::addParameter(parameter);
         width = cgGetNamedParameterAnnotation(parameter, "Width");
         height = cgGetNamedParameterAnnotation(parameter, "Height");
         depth = cgGetNamedParameterAnnotation(parameter, "Depth");
@@ -329,7 +378,7 @@ public:
     }
 };
 
-class AnimatedTextureSemantic : public BaseSemantic
+class AnimatedTextureSemantic : public BaseParameter
 {
 public:
     CGannotation resourceName;
@@ -344,7 +393,7 @@ public:
     {
     }
     void addParameter(CGparameter parameter) {
-        BaseSemantic::addParameter(parameter);
+        BaseParameter::addParameter(parameter);
         resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
         offset = cgGetNamedParameterAnnotation(parameter, "Offset");
         speed = cgGetNamedParameterAnnotation(parameter, "Speed");
@@ -352,7 +401,7 @@ public:
     }
 };
 
-class TextureValueSemantic : public BaseSemantic
+class TextureValueSemantic : public BaseParameter
 {
 public:
     CGannotation textureName;
@@ -361,12 +410,12 @@ public:
     {
     }
     void addParameter(CGparameter parameter) {
-        BaseSemantic::addParameter(parameter);
+        BaseParameter::addParameter(parameter);
         textureName = cgGetNamedParameterAnnotation(parameter, "TextureName");
     }
 };
 
-class StandardsGlobalSemantic : public BaseSemantic
+class StandardsGlobalSemantic : public BaseParameter
 {
 public:
     CGannotation scriptOutput;
@@ -381,7 +430,7 @@ public:
     {
     }
     void addParameter(CGparameter parameter) {
-        BaseSemantic::addParameter(parameter);
+        BaseParameter::addParameter(parameter);
         scriptOutput = cgGetNamedParameterAnnotation(parameter, "ScriptOutput");
         scriptClass = cgGetNamedParameterAnnotation(parameter, "ScriptClass");
         scriptOrder = cgGetNamedParameterAnnotation(parameter, "ScriptOrder");
@@ -437,15 +486,6 @@ struct Effect {
           leftMouseDown(0),
           middleMouseDown(0),
           rightMouseDown(0),
-          parthf(0),
-          spadd(0),
-          transp(0),
-          useTexture(0),
-          useSpheremap(0),
-          useToon(0),
-          opadd(0),
-          vertexCount(0),
-          subsetCount(0),
           index(0)
     {
     }
@@ -498,10 +538,10 @@ struct Effect {
             else if (strcmp(semantic, "EDGECOLOR") == 0) {
                 edgeColor.addParameter(parameter);
             }
-            else if (strcmp(semantic, "POSITION") == 0) {
+            else if (strcmp(semantic, "_POSITION") == 0) {
                 position.addParameter(parameter);
             }
-            else if (strcmp(semantic, "DIRECTION") == 0) {
+            else if (strcmp(semantic, "_DIRECTION") == 0) {
                 direction.addParameter(parameter);
             }
             else if (strcmp(semantic, "MATERIALTEXTURE") == 0) {
@@ -543,25 +583,48 @@ struct Effect {
             }
             else if (strcmp(semantic, "_INDEX") == 0) {
             }
+            else {
+                const char *name = cgGetParameterName(parameter);
+                if (strcmp(name, "pathf") == 0) {
+                    parthf.addParameter(parameter);
+                }
+                else if (strcmp(name, "spadd") == 0) {
+                    spadd.addParameter(parameter);
+                }
+                else if (strcmp(name, "transp") == 0) {
+                    transp.addParameter(parameter);
+                }
+                else if (strcmp(name, "use_texture") == 0) {
+                    useTexture.addParameter(parameter);
+                }
+                else if (strcmp(name,"use_spheremap") == 0) {
+                    useSpheremap.addParameter(parameter);
+                }
+                else if (strcmp(name, "use_toon") == 0) {
+                    useToon.addParameter(parameter);
+                }
+                else if (strcmp(name, "opadd") == 0) {
+                    opadd.addParameter(parameter);
+                }
+                else if (strcmp(name, "VertexCount") == 0) {
+                    vertexCount.addParameter(parameter);
+                }
+                else if (strcmp(name, "SubsetCount") == 0) {
+                    subsetCount.addParameter(parameter);
+                }
+            }
             parameter = cgGetNextParameter(parameter);
         }
-        parthf = cgGetNamedEffectParameter(effect, "pathf");
-        spadd = cgGetNamedEffectParameter(effect, "spadd");
-        transp = cgGetNamedEffectParameter(effect, "transp");
-        useTexture = cgGetNamedEffectParameter(effect, "use_texture");
-        useSpheremap = cgGetNamedEffectParameter(effect, "use_spheremap");
-        useToon = cgGetNamedEffectParameter(effect, "use_toon");
-        opadd = cgGetNamedEffectParameter(effect, "opadd");
-        vertexCount = cgGetNamedEffectParameter(effect, "VertexCount");
-        subsetCount = cgGetNamedEffectParameter(effect, "SubsetCount");
         effect = value;
         return true;
     }
     CGtechnique findTechnique(const char *pass, int offset, int nmaterials, bool hasTexture, bool useToon) {
         CGtechnique technique = cgGetFirstTechnique(effect);
         while (technique) {
-            if (cgValidateTechnique(technique) == CG_FALSE)
+            if (cgValidateTechnique(technique) == CG_FALSE) {
+                technique = cgGetNextTechnique(technique);
                 continue;
+            }
             bool ok = true;
             CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
             ok |= Effect::isPassEquals(passAnnotation, pass);
@@ -578,6 +641,9 @@ struct Effect {
             technique = cgGetNextTechnique(technique);
         }
         return technique;
+    }
+    bool isAttached() const {
+        return cgIsEffect(effect) == CG_TRUE;
     }
 
     CGeffect effect;
@@ -613,15 +679,15 @@ struct Effect {
     TextureValueSemantic textureValue;
     StandardsGlobalSemantic standardsGlobal;
     /* special parameters */
-    CGparameter parthf;
-    CGparameter spadd;
-    CGparameter transp;
-    CGparameter useTexture;
-    CGparameter useSpheremap;
-    CGparameter useToon;
-    CGparameter opadd;
-    CGparameter vertexCount;
-    CGparameter subsetCount;
+    BooleanParameter parthf;
+    BooleanParameter spadd;
+    BooleanParameter transp;
+    BooleanParameter useTexture;
+    BooleanParameter useSpheremap;
+    BooleanParameter useToon;
+    BooleanParameter opadd;
+    IntegerParameter vertexCount;
+    IntegerParameter subsetCount;
     CGparameter index;
 };
 

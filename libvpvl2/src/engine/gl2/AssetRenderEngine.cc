@@ -366,7 +366,7 @@ bool AssetRenderEngine::upload(const IString *dir)
             textureIndex++;
         }
     }
-    ret = uploadRecurse(scene, scene->mRootNode, context);
+    ret = uploadRecurse(scene, scene->mRootNode, dir, context);
     m_delegate->releaseContext(m_model, context);
     return ret;
 }
@@ -375,7 +375,7 @@ void AssetRenderEngine::update()
 {
 }
 
-bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
+bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context)
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
@@ -387,8 +387,8 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     zplotProgram->initializeContext(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
     IString *vertexShaderSource = 0, *fragmentShaderSource = 0;
-    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, dir, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, dir, context);
     assetProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     assetProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = assetProgram->linkProgram(context);
@@ -396,8 +396,8 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     delete fragmentShaderSource;
     if (!ret)
         return ret;
-    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, context);
+    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, dir, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, dir, context);
     zplotProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     zplotProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = zplotProgram->linkProgram(context);
@@ -463,7 +463,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     }
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
-        ret = uploadRecurse(scene, node->mChildren[i], context);
+        ret = uploadRecurse(scene, node->mChildren[i], dir, context);
         if (!ret)
             return ret;
     }

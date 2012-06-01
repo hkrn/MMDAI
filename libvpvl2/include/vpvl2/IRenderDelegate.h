@@ -183,10 +183,11 @@ public:
      *
      * @param type
      * @param model
+     * @param dir
      * @param context
      * @return IString
      */
-    virtual IString *loadShaderSource(ShaderType type, const IModel *model, void *context) = 0;
+    virtual IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context) = 0;
 
     /**
      * 指定された形式の (OpenCL の) カーネルのソースを読み込みます。
