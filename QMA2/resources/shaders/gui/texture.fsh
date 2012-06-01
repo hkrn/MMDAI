@@ -1,4 +1,7 @@
 /* gui/texture.fsh */
+#ifdef GL_ES
+precision highp float;
+#endif
 uniform sampler2D mainTexture;
 varying vec2 outTexCoord;
 
