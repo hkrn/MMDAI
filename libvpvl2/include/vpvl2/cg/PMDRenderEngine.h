@@ -107,7 +107,7 @@ private:
     Effect m_effect;
     MaterialTextures *m_textures;
     pmd::Model::SkinningMeshes m_mesh;
-    GLuint m_toonTextures[vpvl::PMDModel::kCustomTextureMax];
+    Color m_toonTextureColors[vpvl::PMDModel::kCustomTextureMax];
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;

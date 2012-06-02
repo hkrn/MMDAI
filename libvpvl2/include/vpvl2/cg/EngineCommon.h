@@ -216,16 +216,18 @@ public:
     ~MaterialTextureSemantic() {
     }
 
+    void addParameter(CGparameter parameter) {
+        BaseParameter::addParameter(parameter);
+    }
+
     void setTexture(GLuint value) {
         if (cgIsParameter(m_baseParameter)) {
             if (value) {
-                glBindTexture(GL_TEXTURE_2D, value);
                 cgGLSetTextureParameter(m_baseParameter, value);
                 cgSetSamplerState(m_baseParameter);
-                cgGLEnableTextureParameter(m_baseParameter);
             }
             else {
-                cgGLDisableTextureParameter(m_baseParameter);
+                cgGLSetTextureParameter(m_baseParameter, 0);
             }
         }
     }
@@ -491,7 +493,8 @@ struct Effect {
     }
     ~Effect()
     {
-        cgDestroyEffect(effect);
+        if (cgIsEffect(effect))
+            cgDestroyEffect(effect);
         effect = 0;
     }
 
@@ -544,12 +547,6 @@ struct Effect {
             else if (strcmp(semantic, "_DIRECTION") == 0) {
                 direction.addParameter(parameter);
             }
-            else if (strcmp(semantic, "MATERIALTEXTURE") == 0) {
-                materialTexture.addParameter(parameter);
-            }
-            else if (strcmp(semantic, "MATERIALSPHEREMAP") == 0) {
-                materialSphereMap.addParameter(parameter);
-            }
             else if (strcmp(semantic, "VIEWPORTPIXELSIZE") == 0) {
             }
             else if (strcmp(semantic, "MOUSEPOSITION") == 0) {
@@ -585,7 +582,7 @@ struct Effect {
             }
             else {
                 const char *name = cgGetParameterName(parameter);
-                if (strcmp(name, "pathf") == 0) {
+                if (strcmp(name, "parthf") == 0) {
                     parthf.addParameter(parameter);
                 }
                 else if (strcmp(name, "spadd") == 0) {
@@ -612,6 +609,26 @@ struct Effect {
                 else if (strcmp(name, "SubsetCount") == 0) {
                     subsetCount.addParameter(parameter);
                 }
+                else {
+                    CGtype type = cgGetParameterType(parameter);
+                    if (type == CG_SAMPLER2D) {
+                        CGstateassignment sa = cgGetFirstSamplerStateAssignment(parameter);
+                        while (sa) {
+                            CGstate s = cgGetSamplerStateAssignmentState(sa);
+                            if (cgIsState(s) && cgGetStateType(s) == CG_TEXTURE) {
+                                CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
+                                const char *semantic = cgGetParameterSemantic(textureParameter);
+                                if (strcmp(semantic, "MATERIALTEXTURE") == 0) {
+                                    materialTexture.addParameter(parameter);
+                                }
+                                else if (strcmp(semantic, "MATERIALSPHEREMAP") == 0) {
+                                    materialSphereMap.addParameter(parameter);
+                                }
+                            }
+                            sa = cgGetNextStateAssignment(sa);
+                        }
+                    }
+                }
             }
             parameter = cgGetNextParameter(parameter);
         }
@@ -625,18 +642,18 @@ struct Effect {
                 technique = cgGetNextTechnique(technique);
                 continue;
             }
-            bool ok = true;
+            int ok = 1;
             CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
-            ok |= Effect::isPassEquals(passAnnotation, pass);
+            ok &= Effect::isPassEquals(passAnnotation, pass);
             CGannotation subsetAnnotation = cgGetNamedTechniqueAnnotation(technique, "Subset");
-            ok |= Effect::containsSubset(subsetAnnotation, offset, nmaterials);
+            ok &= Effect::containsSubset(subsetAnnotation, offset, nmaterials);
             CGannotation useTextureAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseTexture");
-            ok |= (!useTextureAnnotation || Effect::toBool(useTextureAnnotation) == hasTexture);
+            ok &= (!useTextureAnnotation || Effect::toBool(useTextureAnnotation) == hasTexture);
             CGannotation useSphereMapAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseSphereMap");
-            ok |= (!useSphereMapAnnotation || Effect::toBool(useSphereMapAnnotation) == hasTexture);
+            ok &= (!useSphereMapAnnotation || Effect::toBool(useSphereMapAnnotation) == hasTexture);
             CGannotation useToonAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseToon");
-            ok |= (!useToonAnnotation || Effect::toBool(useToonAnnotation) == useToon);
-            if (ok)
+            ok &= (!useToonAnnotation || Effect::toBool(useToonAnnotation) == useToon);
+            if (ok == 1)
                 break;
             technique = cgGetNextTechnique(technique);
         }

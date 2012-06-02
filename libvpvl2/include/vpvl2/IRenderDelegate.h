@@ -145,6 +145,10 @@ public:
      */
     virtual bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) = 0;
 
+    virtual void getToonColor(void *context, const char *name, const IString *dir, Color &value) = 0;
+
+    virtual void getToonColor(void *context, const IString *name, const IString *dir, Color &value) = 0;
+
     /**
      * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
      *

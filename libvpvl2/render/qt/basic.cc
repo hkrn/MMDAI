@@ -281,6 +281,26 @@ public:
         const QString &pathString = m_systemDir.absoluteFilePath(format.sprintf("toon%02d.bmp", index + 1));
         return uploadTextureInternal(pathString, texture, true, context);
     }
+    void getToonColor(void * /* context */, const char *name, const IString *dir, Color &value) {
+        const QString &path = createPath(dir, name);
+        if (QFile::exists(path)) {
+            getToonColorInternal(path, value);
+        }
+        else {
+            String s(m_systemDir.absolutePath());
+            getToonColorInternal(createPath(&s, name), value);
+        }
+    }
+    void getToonColor(void * /* context */, const IString *name, const IString *dir, Color &value) {
+        const QString &path = createPath(dir, name);
+        if (QFile::exists(path)) {
+            getToonColorInternal(path, value);
+        }
+        else {
+            String s(m_systemDir.absolutePath());
+            getToonColorInternal(createPath(&s, name), value);
+        }
+    }
 
     void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
@@ -422,6 +442,17 @@ private:
         ctx->textureCache.insert(path, textureID);
         qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(path));
         return textureID != 0;
+    }
+    void getToonColorInternal(const QString &path, Color &value) {
+        const QImage image(path);
+        if (!image.isNull()) {
+            const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
+            const QColor color(rgb);
+            value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+        }
+        else {
+            value.setZero();
+        }
     }
 
     const QSettings *m_settings;
@@ -731,7 +762,7 @@ public:
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
         // m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
-        m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
+        // m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
         Scene::ICamera *camera = m_scene.camera();
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
         camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
@@ -986,6 +1017,7 @@ private:
             qWarning("Failed parsing the model: %d", model->error());
             return 0;
         }
+        model->setEdgeWidth(1);
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
         String s(dir);

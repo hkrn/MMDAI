@@ -73,7 +73,6 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
 PMDRenderEngine::~PMDRenderEngine()
 {
     glDeleteBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
-    glDeleteTextures(vpvl::PMDModel::kCustomTextureMax, m_toonTextures);
     if (m_textures) {
         const vpvl::MaterialList &modelMaterials = m_model->ptr()->materials();
         const int nmaterials = modelMaterials.count();
@@ -106,19 +105,20 @@ bool PMDRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
+#ifdef VPVL2_LINK_QT
+    const QGLContext *glContext = QGLContext::currentContext();
+    initializeGLFunctions(glContext);
+#endif
     IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
     CGeffect effect;
     cgSetErrorHandler(&PMDRenderEngine::handleError, this);
     if (source)
         effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
     delete source;
-    if (!effect) {
+    if (!cgIsEffect(effect)) {
+        log0(context, IRenderDelegate::kLogWarning, "CG effect compile error\n%s", cgGetLastListing(m_context));
         return false;
     }
-#ifdef VPVL2_LINK_QT
-    const QGLContext *glContext = QGLContext::currentContext();
-    initializeGLFunctions(glContext);
-#endif
     m_effect.attachEffect(effect);
     m_effect.useToon.setValue(true);
     m_effect.parthf.setValue(false);
@@ -173,16 +173,10 @@ bool PMDRenderEngine::upload(const IString *dir)
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    if (m_delegate->uploadToonTexture(context, "toon0.bmp", dir, &textureID)) {
-        m_toonTextures[0] = textureID;
-        log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
-    }
-    for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
+    m_delegate->getToonColor(context, "toon0.bmp", dir, m_toonTextureColors[0]);
+    for (int i = 0; i < PMDModel::kCustomTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
-        if (m_delegate->uploadToonTexture(context, reinterpret_cast<const char *>(name), dir, &textureID)) {
-            m_toonTextures[i + 1] = textureID;
-            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
-        }
+        m_delegate->getToonColor(context, reinterpret_cast<const char *>(name), dir, m_toonTextureColors[i + 1]);
     }
     float matrix4x4[16];
     Transform::getIdentity().getOpenGLMatrix(matrix4x4);
@@ -268,17 +262,18 @@ void PMDRenderEngine::renderModel()
                       reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)));
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
-    m_effect.toonColor.setGeometryColor(Vector3(1, 1, 1));
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const MaterialTextures &texture = m_textures[i];
         const Scalar &materialOpacity = material->opacity();
+        const Color &toonColor = m_toonTextureColors[material->toonID()];
         diffuse = material->diffuse();
         diffuse.setW(diffuse.w() * materialOpacity);
         m_effect.ambient.setGeometryColor(material->ambient());
         m_effect.diffuse.setGeometryColor(diffuse);
         m_effect.specular.setGeometryColor(material->specular());
         m_effect.specularPower.setGeometryValue(material->shiness());
+        m_effect.toonColor.setGeometryColor(toonColor);
         bool hasSphereMap = false;
         bool hasMainTexture = texture.mainTextureID > 0;
         if (hasMainTexture) {
@@ -335,6 +330,9 @@ void PMDRenderEngine::renderModel()
         }
         offset += nindices * indexStride;
     }
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     if (!m_cullFaceState) {
@@ -347,6 +345,54 @@ void PMDRenderEngine::renderEdge()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
+    const Scene::IMatrices *matrices = m_scene->matrices();
+    float matrix4x4[16];
+    matrices->getModelViewProjection(matrix4x4);
+    m_effect.worldViewProjection.setCameraMatrix(matrix4x4);
+    matrices->getLightViewProjection(matrix4x4);
+    m_effect.worldViewProjection.setLightMatrix(matrix4x4);
+    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
+    m_effect.toonColor.setGeometryColor(kZeroV3);
+    m_effect.ambient.setGeometryColor(kZeroV3);
+    m_effect.diffuse.setGeometryColor(kZeroV3);
+    m_effect.specular.setGeometryColor(kZeroV3);
+    m_effect.specularPower.setGeometryValue(0);
+    m_effect.materialTexture.setTexture(0);
+    m_effect.materialSphereMap.setTexture(0);
+    m_effect.spadd.setValue(false);
+    m_effect.useTexture.setValue(false);
+    PMDModel *model = m_model->ptr();
+    const Scene::ILight *light = m_scene->light();
+    const MaterialList &materials = model->materials();
+    const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
+    const bool isToonEnabled = light->isToonEnabled();
+    const int nmaterials = materials.count();
+    size_t offset = 0;
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
+    glVertexPointer(3, GL_FLOAT, model->strideSize(PMDModel::kEdgeVerticesStride),
+                    reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)));
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glCullFace(GL_FRONT);
+    for (int i = 0; i < nmaterials; i++) {
+        const Material *material = materials[i];
+        const int nindices = material->countIndices();
+        CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, isToonEnabled);
+        if (cgIsTechnique(technique)) {
+            CGpass pass = cgGetFirstPass(technique);
+            while (pass) {
+                cgSetPassState(pass);
+                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+                cgResetPassState(pass);
+                pass = cgGetNextPass(pass);
+            }
+        }
+        offset += nindices * indexStride;
+    }
+    glCullFace(GL_BACK);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void PMDRenderEngine::renderShadow()
@@ -359,6 +405,54 @@ void PMDRenderEngine::renderZPlot()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
+    const Scene::IMatrices *matrices = m_scene->matrices();
+    float matrix4x4[16];
+    matrices->getModelViewProjection(matrix4x4);
+    m_effect.worldViewProjection.setCameraMatrix(matrix4x4);
+    matrices->getLightViewProjection(matrix4x4);
+    m_effect.worldViewProjection.setLightMatrix(matrix4x4);
+    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
+    m_effect.toonColor.setGeometryColor(kZeroV3);
+    m_effect.ambient.setGeometryColor(kZeroV3);
+    m_effect.diffuse.setGeometryColor(kZeroV3);
+    m_effect.specular.setGeometryColor(kZeroV3);
+    m_effect.specularPower.setGeometryValue(0);
+    m_effect.materialTexture.setTexture(0);
+    m_effect.materialSphereMap.setTexture(0);
+    m_effect.spadd.setValue(false);
+    m_effect.useTexture.setValue(false);
+    PMDModel *model = m_model->ptr();
+    const Scene::ILight *light = m_scene->light();
+    const MaterialList &materials = model->materials();
+    const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
+    const bool isToonEnabled = light->isToonEnabled();
+    const int nmaterials = materials.count();
+    size_t offset = 0;
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
+    glVertexPointer(3, GL_FLOAT, model->strideSize(PMDModel::kVerticesStride),
+                    reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)));
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glCullFace(GL_FRONT);
+    for (int i = 0; i < nmaterials; i++) {
+        const Material *material = materials[i];
+        const int nindices = material->countIndices();
+        CGtechnique technique = m_effect.findTechnique("zplot", i, nmaterials, false, isToonEnabled);
+        if (cgIsTechnique(technique)) {
+            CGpass pass = cgGetFirstPass(technique);
+            while (pass) {
+                cgSetPassState(pass);
+                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+                cgResetPassState(pass);
+                pass = cgGetNextPass(pass);
+            }
+        }
+        offset += nindices * indexStride;
+    }
+    glCullFace(GL_BACK);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -375,7 +469,7 @@ void PMDRenderEngine::handleError(CGcontext context, CGerror error, void *data)
     Q_UNUSED(context)
     Q_UNUSED(error)
     Q_UNUSED(engine)
-    //engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
+    engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
 }
 
 } /* namespace gl2 */

@@ -258,17 +258,17 @@ struct Scene::PrivateContext {
 #endif
     }
     ~PrivateContext() {
-#ifdef VPVL2_ENABLE_OPENCL
-        delete computeContext;
-#endif /* VPVL2_ENABLE_OPENCL */
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        cgDestroyContext(effectContext);
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
-        computeContext = 0;
-        effectContext = 0;
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
+#ifdef VPVL2_ENABLE_OPENCL
+        delete computeContext;
+        computeContext = 0;
+#endif /* VPVL2_ENABLE_OPENCL */
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        cgDestroyContext(effectContext);
+        effectContext = 0;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
     cl::Context *createComputeContext(IRenderDelegate *delegate) {
