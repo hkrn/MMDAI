@@ -218,9 +218,7 @@ void PMDRenderEngine::update()
     m_effect.diffuse.setLightColor(kOne);
     m_effect.emissive.setLightColor(kZeroV3);
     m_effect.specular.setLightColor(kOne);
-    m_effect.toonColor.setLightColor(kZeroV3);
     m_effect.edgeColor.setLightColor(kZeroV3);
-    m_effect.specularPower.setLightValue(0);
     const Vector3 &lightDirection = light->direction();
     m_effect.position.setLightValue(-lightDirection);
     m_effect.direction.setLightValue(lightDirection);
@@ -233,12 +231,7 @@ void PMDRenderEngine::renderModel()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    const Scene::IMatrices *matrices = m_scene->matrices();
-    float matrix4x4[16];
-    matrices->getModelViewProjection(matrix4x4);
-    m_effect.worldViewProjection.setCameraMatrix(matrix4x4);
-    matrices->getLightViewProjection(matrix4x4);
-    m_effect.worldViewProjection.setLightMatrix(matrix4x4);
+    setMatrixParameters();
     PMDModel *model = m_model->ptr();
     const Scene::ILight *light = m_scene->light();
     const MaterialList &materials = model->materials();
@@ -272,7 +265,7 @@ void PMDRenderEngine::renderModel()
         m_effect.ambient.setGeometryColor(material->ambient());
         m_effect.diffuse.setGeometryColor(diffuse);
         m_effect.specular.setGeometryColor(material->specular());
-        m_effect.specularPower.setGeometryValue(material->shiness());
+        m_effect.specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
         m_effect.toonColor.setGeometryColor(toonColor);
         bool hasSphereMap = false;
         bool hasMainTexture = texture.mainTextureID > 0;
@@ -291,6 +284,7 @@ void PMDRenderEngine::renderModel()
             }
             else {
                 m_effect.materialTexture.setTexture(texture.mainTextureID);
+                m_effect.spadd.setValue(false);
                 m_effect.useTexture.setValue(true);
             }
         }
@@ -301,10 +295,12 @@ void PMDRenderEngine::renderModel()
             if (material->isSubSphereAdd()) {
                 m_effect.materialSphereMap.setTexture(texture.subTextureID);
                 m_effect.spadd.setValue(true);
+                hasSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
                 m_effect.materialSphereMap.setTexture(texture.subTextureID);
                 m_effect.spadd.setValue(false);
+                hasSphereMap = true;
             }
         }
         if ((hasModelTransparent && m_cullFaceState) ||
@@ -318,7 +314,7 @@ void PMDRenderEngine::renderModel()
         }
         const int nindices = material->countIndices();
         const char *target = hasShadowMap ? "object_ss" : "object";
-        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, isToonEnabled);
+        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, isToonEnabled);
         if (cgIsTechnique(technique)) {
             CGpass pass = cgGetFirstPass(technique);
             while (pass) {
@@ -345,22 +341,8 @@ void PMDRenderEngine::renderEdge()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    const Scene::IMatrices *matrices = m_scene->matrices();
-    float matrix4x4[16];
-    matrices->getModelViewProjection(matrix4x4);
-    m_effect.worldViewProjection.setCameraMatrix(matrix4x4);
-    matrices->getLightViewProjection(matrix4x4);
-    m_effect.worldViewProjection.setLightMatrix(matrix4x4);
-    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
-    m_effect.toonColor.setGeometryColor(kZeroV3);
-    m_effect.ambient.setGeometryColor(kZeroV3);
-    m_effect.diffuse.setGeometryColor(kZeroV3);
-    m_effect.specular.setGeometryColor(kZeroV3);
-    m_effect.specularPower.setGeometryValue(0);
-    m_effect.materialTexture.setTexture(0);
-    m_effect.materialSphereMap.setTexture(0);
-    m_effect.spadd.setValue(false);
-    m_effect.useTexture.setValue(false);
+    setMatrixParameters();
+    setNoGeometryColorParameters();
     PMDModel *model = m_model->ptr();
     const Scene::ILight *light = m_scene->light();
     const MaterialList &materials = model->materials();
@@ -377,7 +359,7 @@ void PMDRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, isToonEnabled);
+        CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, false, isToonEnabled);
         if (cgIsTechnique(technique)) {
             CGpass pass = cgGetFirstPass(technique);
             while (pass) {
@@ -405,22 +387,8 @@ void PMDRenderEngine::renderZPlot()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    const Scene::IMatrices *matrices = m_scene->matrices();
-    float matrix4x4[16];
-    matrices->getModelViewProjection(matrix4x4);
-    m_effect.worldViewProjection.setCameraMatrix(matrix4x4);
-    matrices->getLightViewProjection(matrix4x4);
-    m_effect.worldViewProjection.setLightMatrix(matrix4x4);
-    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
-    m_effect.toonColor.setGeometryColor(kZeroV3);
-    m_effect.ambient.setGeometryColor(kZeroV3);
-    m_effect.diffuse.setGeometryColor(kZeroV3);
-    m_effect.specular.setGeometryColor(kZeroV3);
-    m_effect.specularPower.setGeometryValue(0);
-    m_effect.materialTexture.setTexture(0);
-    m_effect.materialSphereMap.setTexture(0);
-    m_effect.spadd.setValue(false);
-    m_effect.useTexture.setValue(false);
+    setMatrixParameters();
+    setNoGeometryColorParameters();
     PMDModel *model = m_model->ptr();
     const Scene::ILight *light = m_scene->light();
     const MaterialList &materials = model->materials();
@@ -437,7 +405,7 @@ void PMDRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_effect.findTechnique("zplot", i, nmaterials, false, isToonEnabled);
+        CGtechnique technique = m_effect.findTechnique("zplot", i, nmaterials, false, false, isToonEnabled);
         if (cgIsTechnique(technique)) {
             CGpass pass = cgGetFirstPass(technique);
             while (pass) {
@@ -461,6 +429,35 @@ void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
+}
+
+void PMDRenderEngine::setMatrixParameters()
+{
+    const Scene::IMatrices *matrices = m_scene->matrices();
+    float matrix4x4[16];
+    matrices->getModelViewProjection(matrix4x4);
+    m_effect.viewProjection.setCameraMatrix(matrix4x4);
+    m_effect.worldViewProjection.setCameraMatrix(matrix4x4);
+    matrices->getLightViewProjection(matrix4x4);
+    m_effect.viewProjection.setLightMatrix(matrix4x4);
+    m_effect.worldViewProjection.setLightMatrix(matrix4x4);
+    m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix4x4);
+    m_effect.view.setCameraMatrix(matrix4x4);
+    m_effect.worldView.setCameraMatrix(matrix4x4);
+}
+
+void PMDRenderEngine::setNoGeometryColorParameters()
+{
+    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
+    m_effect.toonColor.setGeometryColor(kZeroV3);
+    m_effect.ambient.setGeometryColor(kZeroV3);
+    m_effect.diffuse.setGeometryColor(kZeroV3);
+    m_effect.specular.setGeometryColor(kZeroV3);
+    m_effect.specularPower.setGeometryValue(0);
+    m_effect.materialTexture.setTexture(0);
+    m_effect.materialSphereMap.setTexture(0);
+    m_effect.spadd.setValue(false);
+    m_effect.useTexture.setValue(false);
 }
 
 void PMDRenderEngine::handleError(CGcontext context, CGerror error, void *data)

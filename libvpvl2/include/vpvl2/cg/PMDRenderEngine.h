@@ -98,6 +98,8 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
+    void setMatrixParameters();
+    void setNoGeometryColorParameters();
     static void handleError(CGcontext context, CGerror error, void *data);
 
     const Scene *m_scene;

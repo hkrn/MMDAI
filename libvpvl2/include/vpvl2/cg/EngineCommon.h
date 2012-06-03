@@ -173,14 +173,20 @@ public:
     }
 
     void addParameter(CGparameter parameter) {
-        CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
-        if (cgIsAnnotation(annotation)) {
-            const char *name = cgGetStringAnnotationValue(annotation);
-            if (strcmp(name, "Geometry") == 0) {
-                BaseParameter::connectParameter(parameter, m_geometry);
-            }
-            else if (strcmp(name, "Light") == 0) {
-                BaseParameter::connectParameter(parameter, m_light);
+        const char *name = cgGetParameterSemantic(parameter);
+        if (strcmp(name, "SPECULARPOWER") == 0 || strcmp(name, "EMISSIVE") == 0 || strcmp(name, "TOONCOLOR") == 0) {
+            BaseParameter::connectParameter(parameter, m_geometry);
+        }
+        else {
+            CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
+            if (cgIsAnnotation(annotation)) {
+                const char *name = cgGetStringAnnotationValue(annotation);
+                if (strcmp(name, "Geometry") == 0) {
+                    BaseParameter::connectParameter(parameter, m_geometry);
+                }
+                else if (strcmp(name, "Light") == 0) {
+                    BaseParameter::connectParameter(parameter, m_light);
+                }
             }
         }
     }
@@ -452,13 +458,13 @@ struct Effect {
         return nvalues > 0 ? values[0] : 0;
     }
     static bool isPassEquals(CGannotation annotation, const char *target) {
-        if (!annotation)
+        if (!cgIsAnnotation(annotation))
             return true;
         const char *s = cgGetStringAnnotationValue(annotation);
         return strcmp(s, target) == 0;
     }
     static bool containsSubset(CGannotation annotation, int subset, int nmaterials) {
-        if (!annotation)
+        if (!cgIsAnnotation(annotation))
             return true;
         const std::string s(cgGetStringAnnotationValue(annotation));
         std::istringstream stream(s);
@@ -635,7 +641,7 @@ struct Effect {
         effect = value;
         return true;
     }
-    CGtechnique findTechnique(const char *pass, int offset, int nmaterials, bool hasTexture, bool useToon) {
+    CGtechnique findTechnique(const char *pass, int offset, int nmaterials, bool hasTexture, bool hasSphereMap, bool useToon) {
         CGtechnique technique = cgGetFirstTechnique(effect);
         while (technique) {
             if (cgValidateTechnique(technique) == CG_FALSE) {
@@ -648,11 +654,11 @@ struct Effect {
             CGannotation subsetAnnotation = cgGetNamedTechniqueAnnotation(technique, "Subset");
             ok &= Effect::containsSubset(subsetAnnotation, offset, nmaterials);
             CGannotation useTextureAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseTexture");
-            ok &= (!useTextureAnnotation || Effect::toBool(useTextureAnnotation) == hasTexture);
+            ok &= (!cgIsAnnotation(useTextureAnnotation) || Effect::toBool(useTextureAnnotation) == hasTexture);
             CGannotation useSphereMapAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseSphereMap");
-            ok &= (!useSphereMapAnnotation || Effect::toBool(useSphereMapAnnotation) == hasTexture);
+            ok &= (!cgIsAnnotation(useSphereMapAnnotation) || Effect::toBool(useSphereMapAnnotation) == hasSphereMap);
             CGannotation useToonAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseToon");
-            ok &= (!useToonAnnotation || Effect::toBool(useToonAnnotation) == useToon);
+            ok &= (!cgIsAnnotation(useToonAnnotation) || Effect::toBool(useToonAnnotation) == useToon);
             if (ok == 1)
                 break;
             technique = cgGetNextTechnique(technique);
