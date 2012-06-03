@@ -38,8 +38,12 @@
 #define VPVL2_CG_ENGINECOMMON_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IBone.h"
+#include "vpvl2/IModel.h"
+#include "vpvl2/IMorph.h"
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
+#include "vpvl2/IString.h"
 
 #include <string>
 #include <sstream>
@@ -297,18 +301,144 @@ public:
 class ControlObjectSemantic : public BaseParameter
 {
 public:
-    CGannotation name;
-    CGannotation item;
     ControlObjectSemantic()
-        : name(0),
-          item(0)
     {
     }
     void addParameter(CGparameter parameter) {
-        BaseParameter::addParameter(parameter);
-        name = cgGetNamedParameterAnnotation(parameter, "name");
-        item = cgGetNamedParameterAnnotation(parameter, "item");
+        if (cgIsAnnotation(cgGetNamedParameterAnnotation(parameter, "name")))
+            m_parameters.add(parameter);
     }
+    void update(IRenderDelegate *delegate, IModel *self) {
+        const int nparameters = m_parameters.count();
+        for (int i = 0; i < nparameters; i++) {
+            CGparameter parameter = m_parameters[i];
+            CGannotation nameAnnotation = cgGetNamedParameterAnnotation(parameter, "name");
+            const char *name = cgGetStringAnnotationValue(nameAnnotation);
+            if (strcmp(name, "(self)") == 0) {
+                setParameter(delegate, self, parameter);
+            }
+            else if (strcmp(name, "(OffscreenOwenr)") == 0) {
+                // TODO
+            }
+            else {
+                IModel *model = delegate->findModel(name);
+                setParameter(delegate, model, parameter);
+            }
+        }
+    }
+
+private:
+    void setParameter(IRenderDelegate *delegate, IModel *model, CGparameter parameter) {
+        float matrix4x4[16];
+        Transform::getIdentity().getOpenGLMatrix(matrix4x4);
+        CGtype type = cgGetParameterType(parameter);
+        if (model) {
+            CGannotation itemAnnotation = cgGetNamedParameterAnnotation(parameter, "item");
+            if (cgIsAnnotation(itemAnnotation)) {
+                const char *item = cgGetStringAnnotationValue(itemAnnotation);
+                IModel::Type type = model->type();
+                if (type == IModel::kPMD || type == IModel::kPMX) {
+                    const IString *s = delegate->toUnicode(reinterpret_cast<const uint8_t *>(item));
+                    IBone *bone = model->findBone(s);
+                    IMorph *morph = model->findMorph(s);
+                    delete s;
+                    if (bone) {
+                        switch (type) {
+                        case CG_FLOAT3:
+                        case CG_FLOAT4:
+                            cgSetParameter4fv(parameter, bone->worldTransform().getOrigin());
+                            break;
+                        case CG_FLOAT4x4:
+                            bone->worldTransform().getOpenGLMatrix(matrix4x4);
+                            cgSetMatrixParameterfr(parameter, matrix4x4);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    else if (morph && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, morph->weight());
+                    }
+                }
+                else {
+                    const Vector3 &position = model->position();
+                    const Quaternion &rotation = model->rotation();
+                    if (strcmp(item, "X") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, position.x());
+                    }
+                    else if (strcmp(item, "Y") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, position.y());
+                    }
+                    else if (strcmp(item, "Z") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, position.z());
+                    }
+                    else if (strcmp(item, "XYZ") == 0 && type == CG_FLOAT3) {
+                        cgSetParameter3fv(parameter, position);
+                    }
+                    else if (strcmp(item, "Rx") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, btDegrees(rotation.x()));
+                    }
+                    else if (strcmp(item, "Ry") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, btDegrees(rotation.y()));
+                    }
+                    else if (strcmp(item, "Rz") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, btDegrees(rotation.z()));
+                    }
+                    else if (strcmp(item, "Rxyz") == 0 && type == CG_FLOAT3) {
+                        const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
+                        cgSetParameter3fv(parameter, rotationDegree);
+                    }
+                    else if (strcmp(item, "Sr") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, model->scaleFactor());
+                    }
+                    else if (strcmp(item, "Tr") == 0 && type == CG_FLOAT) {
+                        cgSetParameter1f(parameter, model->opacity());
+                    }
+                }
+            }
+            else {
+                switch (type) {
+                case CG_BOOL:
+                    cgSetParameter1i(parameter, model->isVisible());
+                    break;
+                case CG_FLOAT:
+                    cgSetParameter1i(parameter, model->scaleFactor());
+                    break;
+                case CG_FLOAT3:
+                case CG_FLOAT4:
+                    cgSetParameter4fv(parameter, model->position());
+                    break;
+                case CG_FLOAT4x4:
+                    cgSetMatrixParameterfr(parameter, matrix4x4);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        else {
+            CGtype type = cgGetParameterType(parameter);
+            switch (type) {
+            case CG_BOOL:
+                cgSetParameter1i(parameter, 0);
+                break;
+            case CG_FLOAT:
+                cgSetParameter1i(parameter, 1);
+                break;
+            case CG_FLOAT3:
+            case CG_FLOAT4:
+                cgSetParameter4f(parameter, 0, 0, 0, 1);
+                break;
+            case CG_FLOAT4x4:
+                cgSetMatrixParameterfr(parameter, matrix4x4);
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    Array<CGparameter> m_parameters;
 };
 
 class TextureSemantic : public BaseParameter

@@ -149,6 +149,8 @@ public:
 
     virtual void getToonColor(void *context, const IString *name, const IString *dir, Color &value) = 0;
 
+    virtual IModel *findModel(const char *name) const = 0;
+
     /**
      * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
      *

@@ -301,6 +301,9 @@ public:
             getToonColorInternal(createPath(&s, name), value);
         }
     }
+    IModel *findModel(const char * /* name */) const {
+        return 0;
+    }
 
     void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);

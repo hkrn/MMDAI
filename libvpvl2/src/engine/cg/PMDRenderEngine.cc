@@ -217,6 +217,7 @@ void PMDRenderEngine::update()
     m_effect.ambient.setLightColor(kOne);
     m_effect.diffuse.setLightColor(kOne);
     m_effect.emissive.setLightColor(kZeroV3);
+    m_effect.emissive.setGeometryColor(kZeroV3);
     m_effect.specular.setLightColor(kOne);
     m_effect.edgeColor.setLightColor(kZeroV3);
     const Vector3 &lightDirection = light->direction();
@@ -225,6 +226,7 @@ void PMDRenderEngine::update()
     const Scene::ICamera *camera = m_scene->camera();
     m_effect.position.setCameraValue(camera->position());
     m_effect.direction.setCameraValue(kZeroV3); // TODO: set camera direction
+    m_effect.controlObject.update(m_delegate, m_model);
 }
 
 void PMDRenderEngine::renderModel()
@@ -233,12 +235,10 @@ void PMDRenderEngine::renderModel()
         return;
     setMatrixParameters();
     PMDModel *model = m_model->ptr();
-    const Scene::ILight *light = m_scene->light();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
     const Scalar &modelOpacity = m_model->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
-            isToonEnabled = light->isToonEnabled(),
             hasShadowMap = false; //light->depthTexture() ? true : false;
     const int nmaterials = materials.count();
     Color diffuse;
@@ -314,7 +314,7 @@ void PMDRenderEngine::renderModel()
         }
         const int nindices = material->countIndices();
         const char *target = hasShadowMap ? "object_ss" : "object";
-        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, isToonEnabled);
+        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         if (cgIsTechnique(technique)) {
             CGpass pass = cgGetFirstPass(technique);
             while (pass) {
@@ -344,10 +344,8 @@ void PMDRenderEngine::renderEdge()
     setMatrixParameters();
     setNoGeometryColorParameters();
     PMDModel *model = m_model->ptr();
-    const Scene::ILight *light = m_scene->light();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
-    const bool isToonEnabled = light->isToonEnabled();
     const int nmaterials = materials.count();
     size_t offset = 0;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
@@ -359,7 +357,7 @@ void PMDRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, false, isToonEnabled);
+        CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, false, true);
         if (cgIsTechnique(technique)) {
             CGpass pass = cgGetFirstPass(technique);
             while (pass) {
@@ -390,10 +388,8 @@ void PMDRenderEngine::renderZPlot()
     setMatrixParameters();
     setNoGeometryColorParameters();
     PMDModel *model = m_model->ptr();
-    const Scene::ILight *light = m_scene->light();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
-    const bool isToonEnabled = light->isToonEnabled();
     const int nmaterials = materials.count();
     size_t offset = 0;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
@@ -405,14 +401,16 @@ void PMDRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_effect.findTechnique("zplot", i, nmaterials, false, false, isToonEnabled);
-        if (cgIsTechnique(technique)) {
-            CGpass pass = cgGetFirstPass(technique);
-            while (pass) {
-                cgSetPassState(pass);
-                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
-                cgResetPassState(pass);
-                pass = cgGetNextPass(pass);
+        if (!btFuzzyZero(material->opacity() - 0.98)) {
+            CGtechnique technique = m_effect.findTechnique("zplot", i, nmaterials, false, false, true);
+            if (cgIsTechnique(technique)) {
+                CGpass pass = cgGetFirstPass(technique);
+                while (pass) {
+                    cgSetPassState(pass);
+                    glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+                    cgResetPassState(pass);
+                    pass = cgGetNextPass(pass);
+                }
             }
         }
         offset += nindices * indexStride;
@@ -464,8 +462,6 @@ void PMDRenderEngine::handleError(CGcontext context, CGerror error, void *data)
 {
     PMDRenderEngine *engine = static_cast<PMDRenderEngine *>(data);
     Q_UNUSED(context)
-    Q_UNUSED(error)
-    Q_UNUSED(engine)
     engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
 }
 
