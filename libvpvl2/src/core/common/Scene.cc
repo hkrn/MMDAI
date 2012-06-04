@@ -50,7 +50,7 @@
 #include "vpvl2/cg/PMDRenderEngine.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
 #else
-BT_DECLARE_HANDLE(CGcontext)
+BT_DECLARE_HANDLE(CGcontext);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 #ifdef VPVL2_ENABLE_OPENCL
@@ -72,26 +72,6 @@ namespace
 
 using namespace vpvl2;
 
-class Matrices : public Scene::IMatrices {
-public:
-    Matrices() {}
-    ~Matrices() {}
-
-    void getModelView(float value[16]) const { memcpy(value, m_modelView, sizeof(m_modelView)); }
-    void getModelViewProjection(float value[16]) const { memcpy(value, m_modelViewProjection, sizeof(m_modelViewProjection)); }
-    void getLightViewProjection(float value[16]) const { memcpy(value, m_lightViewProjection, sizeof(m_lightViewProjection)); }
-    void getNormal(float value[9]) const { memcpy(value, m_normal, sizeof(m_normal)); }
-    void setModelView(float value[16]) { memcpy(m_modelView, value, sizeof(m_modelView)); }
-    void setModelViewProjection(float value[16]) { memcpy(m_modelViewProjection, value, sizeof(m_modelViewProjection)); }
-    void setLightViewProjection(float value[16]) { memcpy(m_lightViewProjection, value, sizeof(m_lightViewProjection)); }
-    void setNormal(float value[9]) { memcpy(m_normal, value, sizeof(m_normal)); }
-
-private:
-    float m_modelView[16];
-    float m_modelViewProjection[16];
-    float m_lightViewProjection[16];
-    float m_normal[9];
-};
 class Light : public Scene::ILight {
 public:
     Light() :
@@ -214,16 +194,6 @@ public:
         m_transform.setRotation(rotationZ * rotationX * rotationY);
         m_transform.setOrigin(m_transform * -m_position - Vector3(0, 0, m_distance));
     }
-    void updateMatrices(Matrices &matrices) const {
-        float matrix4x4[16], v[12], matrix3x3[9];
-        m_transform.getOpenGLMatrix(matrix4x4);
-        matrices.setModelView(matrix4x4);
-        m_transform.getBasis().inverse().transpose().getOpenGLSubMatrix(v);
-        matrix3x3[0] = v[0]; matrix3x3[1] = v[1]; matrix3x3[2] = v[2];
-        matrix3x3[3] = v[4]; matrix3x3[4] = v[5]; matrix3x3[5] = v[6];
-        matrix3x3[6] = v[8]; matrix3x3[7] = v[9]; matrix3x3[8] = v[10];
-        matrices.setNormal(matrix3x3);
-    }
 
 private:
     IMotion *m_motion;
@@ -314,7 +284,6 @@ struct Scene::PrivateContext {
     Array<IModel *> models;
     Array<IMotion *> motions;
     Array<IRenderEngine *> engines;
-    Matrices matrices;
     Light light;
     Camera camera;
     Color lightColor;
@@ -538,7 +507,6 @@ void Scene::updateCamera()
 {
     Camera &camera = m_context->camera;
     camera.updateTransform();
-    camera.updateMatrices(m_context->matrices);
 }
 
 void Scene::setPreferredFPS(const Scalar &value)
@@ -589,11 +557,6 @@ IRenderEngine *Scene::renderEngine(IModel *model) const
 {
     IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(HashPtr(model)));
     return engine ? *engine : 0;
-}
-
-Scene::IMatrices *Scene::matrices() const
-{
-    return &m_context->matrices;
 }
 
 Scene::ILight *Scene::light() const

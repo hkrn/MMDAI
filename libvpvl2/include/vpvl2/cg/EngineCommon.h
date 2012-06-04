@@ -122,44 +122,99 @@ public:
 class MatrixSemantic : public BaseParameter
 {
 public:
-    MatrixSemantic()
+    MatrixSemantic(int flags)
         : BaseParameter(),
           m_camera(0),
-          m_light(0)
+          m_cameraInversed(0),
+          m_cameraTransposed(0),
+          m_cameraInverseTransposed(0),
+          m_light(0),
+          m_lightInversed(0),
+          m_lightTransposed(0),
+          m_lightInverseTransposed(0),
+          m_flags(flags)
     {
     }
     ~MatrixSemantic() {
         m_camera = 0;
+        m_cameraInversed = 0;
+        m_cameraTransposed = 0;
+        m_cameraInverseTransposed = 0;
         m_light = 0;
+        m_lightInversed = 0;
+        m_lightTransposed = 0;
+        m_lightInverseTransposed = 0;
     }
 
-    void addParameter(CGparameter parameter) {
+    void addParameter(CGparameter parameter, const char *suffix) {
         CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
         if (!cgIsAnnotation(annotation)) {
-            BaseParameter::connectParameter(parameter, m_camera);
+            setParameter(parameter, suffix, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
         }
         else {
             const char *name = cgGetStringAnnotationValue(annotation);
             if (strcmp(name, "Camera") == 0) {
-                BaseParameter::connectParameter(parameter, m_camera);
+                setParameter(parameter, suffix, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
             }
             else if (strcmp(name, "Light") == 0) {
-                BaseParameter::connectParameter(parameter, m_light);
+                setParameter(parameter, suffix, m_lightInversed, m_lightTransposed, m_lightInverseTransposed, m_light);
             }
         }
     }
-    void setCameraMatrix(float *value) {
-        if (cgIsParameter(m_camera))
-            cgSetMatrixParameterfr(m_camera, value);
-    }
-    void setLightMatrix(float *value) {
-        if (cgIsParameter(m_light))
-            cgSetMatrixParameterfr(m_light, value);
+    void setMatrices(const IRenderDelegate *delegate, const IModel *model) {
+        setMatrix(delegate, model, m_camera, IRenderDelegate::kCameraMatrix);
+        setMatrix(delegate, model, m_cameraInversed, IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix);
+        setMatrix(delegate, model, m_cameraTransposed, IRenderDelegate::kCameraMatrix | IRenderDelegate::kTransposeMatrix);
+        setMatrix(delegate, model, m_cameraInverseTransposed,
+                  IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
+        setMatrix(delegate, model, m_light, IRenderDelegate::kLightMatrix);
+        setMatrix(delegate, model, m_lightInversed, IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix);
+        setMatrix(delegate, model, m_lightTransposed, IRenderDelegate::kLightMatrix | IRenderDelegate::kTransposeMatrix);
+        setMatrix(delegate, model, m_lightInverseTransposed,
+                  IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
     }
 
 private:
+    void setParameter(CGparameter sourceParameter,
+                      const char *suffix,
+                      CGparameter &inverse,
+                      CGparameter &transposed,
+                      CGparameter &inversetransposed,
+                      CGparameter &baseParameter)
+    {
+        static const char kInverseTranspose[] = "INVERSETRANSPOSE";
+        static const char kTranspose[] = "TRANSPOSE";
+        static const char kInverse[] = "INVERSE";
+        if (strncmp(suffix, kInverseTranspose, sizeof(kInverseTranspose)) == 0) {
+            BaseParameter::connectParameter(sourceParameter, inversetransposed);
+        }
+        else if (strncmp(suffix, kTranspose, sizeof(kTranspose)) == 0) {
+            BaseParameter::connectParameter(sourceParameter, transposed);
+        }
+        else if (strncmp(suffix, kInverse, sizeof(kInverse)) == 0) {
+            BaseParameter::connectParameter(sourceParameter, inverse);
+        }
+        else {
+            BaseParameter::connectParameter(sourceParameter, baseParameter);
+        }
+    }
+    void setMatrix(const IRenderDelegate *delegate, const IModel *model, CGparameter parameter, int flags) {
+        if (cgIsParameter(parameter)) {
+            float matrix[16];
+            delegate->getMatrix(matrix, model, m_flags | flags);
+            cgSetMatrixParameterfr(parameter, matrix);
+        }
+    }
+
     CGparameter m_camera;
+    CGparameter m_cameraInversed;
+    CGparameter m_cameraTransposed;
+    CGparameter m_cameraInverseTransposed;
     CGparameter m_light;
+    CGparameter m_lightInversed;
+    CGparameter m_lightTransposed;
+    CGparameter m_lightInverseTransposed;
+    int m_flags;
 };
 
 class MaterialSemantic : public BaseParameter
@@ -619,6 +674,12 @@ struct Effect {
 
     Effect()
         : effect(0),
+          world(IRenderDelegate::kWorldMatrix),
+          view(IRenderDelegate::kViewMatrix),
+          projection(IRenderDelegate::kProjectionMatrix),
+          worldView(IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix),
+          viewProjection(IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
+          worldViewProjection(IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
           viewportPixelSize(0),
           mousePosition(0),
           leftMouseDown(0),
@@ -636,25 +697,31 @@ struct Effect {
 
     bool attachEffect(CGeffect value) {
         CGparameter parameter = cgGetFirstEffectParameter(value);
+        static const char kWorldSemantic[] = "WORLD";
+        static const char kViewSemantic[] = "VIEW";
+        static const char kProjectionSemantic[] = "PROJECTION";
+        static const char kWorldViewSemantic[] = "WORLDVIEW";
+        static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
+        static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
         while (parameter) {
             const char *semantic = cgGetParameterSemantic(parameter);
-            if (strcmp(semantic, "WORLD") == 0) {
-                world.addParameter(parameter);
+            if (strncmp(semantic, kWorldSemantic, sizeof(kWorldSemantic)) == 0) {
+                world.addParameter(parameter, semantic + sizeof(kWorldSemantic));
             }
-            else if (strcmp(semantic, "VIEW") == 0) {
-                view.addParameter(parameter);
+            else if (strncmp(semantic, kViewSemantic, sizeof(kViewSemantic)) == 0) {
+                view.addParameter(parameter, semantic + sizeof(kViewSemantic));
             }
-            else if (strcmp(semantic, "PROJECTION") == 0) {
-                projection.addParameter(parameter);
+            else if (strncmp(semantic, kProjectionSemantic, sizeof(kProjectionSemantic)) == 0) {
+                projection.addParameter(parameter, semantic + sizeof(kProjectionSemantic));
             }
-            else if (strcmp(semantic, "WORLDVIEW") == 0) {
-                worldView.addParameter(parameter);
+            else if (strncmp(semantic, kWorldViewSemantic, sizeof(kWorldViewSemantic)) == 0) {
+                worldView.addParameter(parameter, semantic + sizeof(kWorldViewSemantic));
             }
-            else if (strcmp(semantic, "VIEWPROJECTION") == 0) {
-                viewProjection.addParameter(parameter);
+            else if (strncmp(semantic, kViewProjectionSemantic, sizeof(kViewProjectionSemantic)) == 0) {
+                viewProjection.addParameter(parameter, semantic + sizeof(kViewProjectionSemantic));
             }
-            else if (strcmp(semantic, "WORLDVIEWPROJECTION") == 0) {
-                worldViewProjection.addParameter(parameter);
+            else if (strncmp(semantic, kWorldViewProjectionSemantic, sizeof(kWorldViewProjectionSemantic)) == 0) {
+                worldViewProjection.addParameter(parameter, semantic + sizeof(kWorldViewProjectionSemantic));
             }
             else if (strcmp(semantic, "DIFFUSE") == 0) {
                 diffuse.addParameter(parameter);

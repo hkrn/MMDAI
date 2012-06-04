@@ -73,6 +73,18 @@ public:
         kModelSkinningKernel,
         kMaxKernelType
     };
+    enum MatrixTypeFlags {
+        kWorldMatrix        = 0x001,
+        kViewMatrix         = 0x002,
+        kProjectionMatrix   = 0x004,
+        kInverseMatrix      = 0x008,
+        kTransposeMatrix    = 0x010,
+        kCameraMatrix       = 0x020,
+        kLightMatrix        = 0x040,
+        kShadowMatrix       = 0x080,
+        kMaxMatrixTypeFlags = 0x100
+    };
+
     virtual ~IRenderDelegate() {}
 
     /**
@@ -148,6 +160,8 @@ public:
     virtual void getToonColor(void *context, const char *name, const IString *dir, Color &value) = 0;
 
     virtual void getToonColor(void *context, const IString *name, const IString *dir, Color &value) = 0;
+
+    virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
 
     virtual IModel *findModel(const char *name) const = 0;
 

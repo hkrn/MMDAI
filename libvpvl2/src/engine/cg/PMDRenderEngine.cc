@@ -178,10 +178,7 @@ bool PMDRenderEngine::upload(const IString *dir)
         const uint8_t *name = model->toonTexture(i);
         m_delegate->getToonColor(context, reinterpret_cast<const char *>(name), dir, m_toonTextureColors[i + 1]);
     }
-    float matrix4x4[16];
-    Transform::getIdentity().getOpenGLMatrix(matrix4x4);
-    m_effect.world.setCameraMatrix(matrix4x4);
-    m_effect.world.setLightMatrix(matrix4x4);
+    setMatrixParameters();
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
@@ -431,17 +428,12 @@ void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
 
 void PMDRenderEngine::setMatrixParameters()
 {
-    const Scene::IMatrices *matrices = m_scene->matrices();
-    float matrix4x4[16];
-    matrices->getModelViewProjection(matrix4x4);
-    m_effect.viewProjection.setCameraMatrix(matrix4x4);
-    m_effect.worldViewProjection.setCameraMatrix(matrix4x4);
-    matrices->getLightViewProjection(matrix4x4);
-    m_effect.viewProjection.setLightMatrix(matrix4x4);
-    m_effect.worldViewProjection.setLightMatrix(matrix4x4);
-    m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix4x4);
-    m_effect.view.setCameraMatrix(matrix4x4);
-    m_effect.worldView.setCameraMatrix(matrix4x4);
+    m_effect.world.setMatrices(m_delegate, m_model);
+    m_effect.view.setMatrices(m_delegate, m_model);
+    m_effect.projection.setMatrices(m_delegate, m_model);
+    m_effect.worldView.setMatrices(m_delegate, m_model);
+    m_effect.viewProjection.setMatrices(m_delegate, m_model);
+    m_effect.worldViewProjection.setMatrices(m_delegate, m_model);
 }
 
 void PMDRenderEngine::setNoGeometryColorParameters()

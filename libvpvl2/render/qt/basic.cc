@@ -237,11 +237,14 @@ public:
     struct PrivateContext {
         QHash<QString, GLuint> textureCache;
     };
-    Delegate(const QSettings *settings, QGLWidget *widget)
+    Delegate(const QSettings *settings, const Scene *scene, QGLWidget *widget)
         : m_settings(settings),
+          m_scene(scene),
           m_systemDir(m_settings->value("dir.system.toon", "../../QMA2/resources/images").toString()),
           m_widget(widget)
     {
+        m_lightWorldMatrix.scale(0.5);
+        m_lightWorldMatrix.translate(1, 1, 1);
     }
     ~Delegate()
     {
@@ -304,7 +307,54 @@ public:
     IModel *findModel(const char * /* name */) const {
         return 0;
     }
-
+    void getMatrix(float value[], const IModel *model, int flags) const {
+        QMatrix4x4 m;
+        if (flags & IRenderDelegate::kCameraMatrix) {
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_cameraProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_cameraViewMatrix;
+        }
+        else if (flags & IRenderDelegate::kLightMatrix) {
+            if (flags & IRenderDelegate::kWorldMatrix)
+                m *= m_lightWorldMatrix;
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_lightProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_lightViewMatrix;
+        }
+        else if (flags & IRenderDelegate::kShadowMatrix) {
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_cameraProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_cameraViewMatrix;
+            if (flags & IRenderDelegate::kWorldMatrix) {
+                static const Vector3 plane(0.0f, 1.0f, 0.0f);
+                const Scene::ILight *light = m_scene->light();
+                const Vector3 &direction = light->direction();
+                const Scalar dot = plane.dot(-direction);
+                QMatrix4x4 shadowMatrix;
+                for (int i = 0; i < 4; i++) {
+                    int offset = i * 4;
+                    for (int j = 0; j < 4; j++) {
+                        int index = offset + j;
+                        shadowMatrix.data()[index] = plane[i] * direction[j];
+                        if (i == j)
+                            shadowMatrix.data()[index] += dot;
+                    }
+                }
+                m *= shadowMatrix;
+            }
+        }
+        m.scale(model->scaleFactor());
+        if (flags & IRenderDelegate::kInverseMatrix)
+            m = m.inverted();
+        if (flags & IRenderDelegate::kTransposeMatrix)
+            m = m.transposed();
+        for (int i = 0; i < 16; i++) {
+            value[i] = float(m.constData()[i]);
+        }
+    }
     void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
@@ -406,6 +456,21 @@ public:
         return new(std::nothrow) String(s);
     }
 
+    void updateMatrices(const QSize &size) {
+        float matrix[16];
+        m_viewport = size;
+        m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix);
+        for (int i = 0; i < 16; i++)
+            m_cameraViewMatrix.data()[i] = matrix[i];
+        m_cameraProjectionMatrix.setToIdentity();
+        Scene::ICamera *camera = m_scene->camera();
+        m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / float(size.height()), camera->znear(), camera->zfar());
+    }
+    void setLightMatrices(const QMatrix4x4 &view, const QMatrix4x4 &projection) {
+        m_lightViewMatrix = view;
+        m_lightProjectionMatrix = projection;
+    }
+
 private:
     static const QString createPath(const IString *dir, const char *name) {
         return createPath(dir, QString(name));
@@ -459,8 +524,15 @@ private:
     }
 
     const QSettings *m_settings;
+    const Scene *m_scene;
     const QDir m_systemDir;
     QGLWidget *m_widget;
+    QSize m_viewport;
+    QMatrix4x4 m_lightWorldMatrix;
+    QMatrix4x4 m_lightViewMatrix;
+    QMatrix4x4 m_lightProjectionMatrix;
+    QMatrix4x4 m_cameraViewMatrix;
+    QMatrix4x4 m_cameraProjectionMatrix;
 };
 } /* namespace anonymous */
 
@@ -761,7 +833,8 @@ public:
     void load(const QString &filename) {
         m_settings = new QSettings(filename, QSettings::IniFormat, this);
         m_settings->setIniCodec("UTF-8");
-        m_delegate = new Delegate(m_settings, this);
+        m_delegate = new Delegate(m_settings, &m_scene, this);
+        m_delegate->updateMatrices(size());
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
         // m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
@@ -809,7 +882,7 @@ protected:
         Scene::ILight *light = m_scene.light();
         m_depthTextureID = m_fbo->texture();
         light->setToonEnable(true);
-        //light->setSoftShadowEnable(true);
+        light->setSoftShadowEnable(true);
         light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
         light->setDepthTexture(&m_depthTextureID);
     }
@@ -830,9 +903,7 @@ protected:
             }
         }
         m_world.stepSimulation(diff * (60.0 / m_scene.preferredFPS()));
-        updateModelViewMatrix();
-        updateProjectionMatrix();
-        updateModelViewProjectionMatrix();
+        m_delegate->updateMatrices(size());
         m_scene.updateRenderEngines();
         updateGL();
     }
@@ -875,13 +946,13 @@ protected:
         glViewport(0, 0, w, h);
     }
     void paintGL() {
-        QMatrix4x4 shadowMatrix;
-        float shadowMatrix4x4[16];
-        Scene::IMatrices *matrices = m_scene.matrices();
+        if (!m_delegate)
+            return;
         const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const int nengines = engines.count();
         {
             glDisable(GL_BLEND);
+            glViewport(0, 0, 1024, 1024);
             m_fbo->bind();
             Vector3 target = kZeroV3, center;
             Scalar maxRadius = 0, radius;
@@ -912,15 +983,12 @@ protected:
             const Scalar &distance = maxRadius / btSin(btRadians(angle) * 0.5);
             const Scalar &margin = 50;
             const Vector3 &eye = -m_scene.light()->direction().normalized() * maxRadius + target;
-            //qDebug().space() << eye << target << distance << maxRadius << margin;
-
-            shadowMatrix.perspective(angle, 1, 1, distance + maxRadius + margin);
-            shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
-                                QVector3D(target.x(), target.y(), target.z()),
-                                QVector3D(0, 1, 0));
-            for (int i = 0; i < 16; i++)
-                shadowMatrix4x4[i] = shadowMatrix.constData()[i];
-            matrices->setLightViewProjection(shadowMatrix4x4);
+            QMatrix4x4 lightViewMatrix, lightProjectionMatrix;
+            lightViewMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
+                                   QVector3D(target.x(), target.y(), target.z()),
+                                   QVector3D(0, 1, 0));
+            lightProjectionMatrix.perspective(angle, 1, 1, distance + maxRadius + margin);
+            m_delegate->setLightMatrices(lightViewMatrix, lightProjectionMatrix);
             glViewport(0, 0, m_fbo->width(), m_fbo->height());
             glClearColor(1, 1, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -932,14 +1000,6 @@ protected:
             glEnable(GL_BLEND);
         }
         {
-            QMatrix4x4 m;
-            m.scale(0.5);
-            m.translate(1, 1, 1);
-            shadowMatrix = m * shadowMatrix;
-            for (int i = 0; i < 16; i++)
-                shadowMatrix4x4[i] = shadowMatrix.constData()[i];
-            matrices->setLightViewProjection(shadowMatrix4x4);
-
             glViewport(0, 0, width(), height());
             glEnable(GL_DEPTH_TEST);
             glClearColor(0, 0, 1, 1);
@@ -954,27 +1014,6 @@ protected:
     }
 
 private:
-    void updateModelViewMatrix() {
-        float matrixf[16];
-        m_scene.matrices()->getModelView(matrixf);
-        for (int i = 0; i < 16; i++)
-            m_modelViewMatrix.data()[i] = matrixf[i];
-    }
-    void updateProjectionMatrix() {
-        float matrixf[16];
-        Scene::ICamera *camera = m_scene.camera();
-        m_projectionMatrix.setToIdentity();
-        m_projectionMatrix.perspective(camera->fov(), width() / float(height()), camera->znear(), camera->zfar());
-        for (int i = 0; i < 16; i++)
-            matrixf[i] = m_projectionMatrix.constData()[i];
-    }
-    void updateModelViewProjectionMatrix() {
-        float matrixf[16];
-        const QMatrix4x4 &result = m_projectionMatrix * m_modelViewMatrix;
-        for (int i = 0; i < 16; i++)
-            matrixf[i] = result.constData()[i];
-        m_scene.matrices()->setModelViewProjection(matrixf);
-    }
     bool loadScene() {
 #ifdef VPVL2_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;

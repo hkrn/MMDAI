@@ -51,19 +51,6 @@ class IRenderEngine;
 class VPVL2_API Scene
 {
 public:
-    class IMatrices {
-    public:
-        virtual ~IMatrices() {}
-
-        virtual void getModelView(float value[16]) const = 0;
-        virtual void getModelViewProjection(float value[16]) const = 0;
-        virtual void getLightViewProjection(float value[16]) const = 0;
-        virtual void getNormal(float value[16]) const = 0;
-        virtual void setModelView(float value[16]) = 0;
-        virtual void setModelViewProjection(float value[16]) = 0;
-        virtual void setLightViewProjection(float value[16]) = 0;
-        virtual void setNormal(float value[9]) = 0;
-    };
     class ILight {
     public:
         virtual ~ILight() {}
@@ -138,7 +125,6 @@ public:
     const Array<IMotion *> &motions() const;
     const Array<IRenderEngine *> &renderEngines() const;
     IRenderEngine *renderEngine(IModel *model) const;
-    IMatrices *matrices() const;
     ILight *light() const;
     ICamera *camera() const;
     const Scalar &preferredFPS() const;

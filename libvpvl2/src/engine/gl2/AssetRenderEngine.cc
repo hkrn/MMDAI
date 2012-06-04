@@ -610,12 +610,22 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     float matrix4x4[16];
     Program *program = m_context->assetPrograms[node];
     program->bind();
-    const Scene::IMatrices *matrices = m_scene->matrices();
-    matrices->getModelViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kCameraMatrix);
     program->setModelViewProjectionMatrix(matrix4x4);
-    matrices->getLightViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kLightMatrix);
     program->setLightViewProjectionMatrix(matrix4x4);
-    matrices->getNormal(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kCameraMatrix);
     program->setNormalMatrix(matrix4x4);
     transform.getOpenGLMatrix(matrix4x4);
     program->setTransformMatrix(matrix4x4);
@@ -667,7 +677,11 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     ZPlotProgram *program = m_context->zplotPrograms[node];
     program->bind();
     program->setTransformMatrix(matrix4x4);
-    m_scene->matrices()->getLightViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kCameraMatrix);
     program->setModelViewProjectionMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {

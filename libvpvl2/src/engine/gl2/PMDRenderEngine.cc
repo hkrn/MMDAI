@@ -659,15 +659,25 @@ void PMDRenderEngine::renderModel()
                             model->strideSize(PMDModel::kNormalsStride));
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)),
                               model->strideSize(PMDModel::kTextureCoordsStride));
-    const Scene::IMatrices *matrices = m_scene->matrices();
     float matrix4x4[16];
-    matrices->getModelViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kCameraMatrix);
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
-    matrices->getNormal(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kInverseMatrix
+                          | IRenderDelegate::kTransposeMatrix
+                          | IRenderDelegate::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
-    m_scene->camera()->modelViewTransform().inverse().getOpenGLMatrix(matrix4x4);
-    modelProgram->setModelViewInverseMatrix(matrix4x4);
-    matrices->getLightViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
     void *texture = light->depthTexture();
@@ -753,25 +763,11 @@ void PMDRenderEngine::renderShadow()
 {
     if (!m_model->isVisible() || !m_context)
         return;
-    static const Vector3 plane(0.0f, 1.0f, 0.0f);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
-    const Scene::ILight *light = m_scene->light();
-    const Vector3 &direction = light->direction();
-    const Scalar dot = plane.dot(-direction);
-    float shadowMatrix[16];
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            int index = (i << 2) + j;
-            shadowMatrix[index] = plane[i] * direction[j];
-            if (i == j)
-                shadowMatrix[index] += dot;
-        }
-    }
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     PMDModel *model = m_model->ptr();
     shadowProgram->bind();
-    const Scene::IMatrices *matrices = m_scene->matrices();
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
@@ -780,11 +776,15 @@ void PMDRenderEngine::renderShadow()
             boneStride = model->strideSize(PMDModel::kVerticesStride);
     float matrix4x4[16];
     size_t offset = 0;
-    matrices->getModelViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
-    shadowProgram->setShadowMatrix(shadowMatrix);
+    Scene::ILight *light = m_scene->light();
     shadowProgram->setLightColor(light->color());
-    shadowProgram->setLightDirection(direction);
+    shadowProgram->setLightDirection(light->direction());
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                                model->strideSize(PMDModel::kVerticesStride));
     glCullFace(GL_FRONT);
@@ -813,7 +813,10 @@ void PMDRenderEngine::renderZPlot()
     PMDModel *model = m_model->ptr();
     float matrix4x4[16];
     zplotProgram->bind();
-    m_scene->matrices()->getLightViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kLightMatrix);
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
@@ -857,7 +860,11 @@ void PMDRenderEngine::renderEdge()
     edgeProgram->setColor(m_model->edgeColor());
     edgeProgram->setOpacity(m_model->opacity());
     float matrix4x4[16];
-    m_scene->matrices()->getModelViewProjection(matrix4x4);
+    m_delegate->getMatrix(matrix4x4, m_model,
+                          IRenderDelegate::kWorldMatrix
+                          | IRenderDelegate::kViewMatrix
+                          | IRenderDelegate::kProjectionMatrix
+                          | IRenderDelegate::kCameraMatrix);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
                              model->strideSize(PMDModel::kEdgeVerticesStride));
