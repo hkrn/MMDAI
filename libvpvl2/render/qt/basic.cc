@@ -355,6 +355,14 @@ public:
             value[i] = float(m.constData()[i]);
         }
     }
+    void getViewport(Vector3 &value) const {
+        value.setValue(m_viewport.width(), m_viewport.height(), 0);
+    }
+    void getTime(int64_t &value, bool sync) const {
+        value = 0;
+        if (!sync)
+            value = QDateTime::currentMSecsSinceEpoch();
+    }
     void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
         fprintf(stderr, "%s", "\n");
@@ -946,13 +954,16 @@ protected:
         glViewport(0, 0, w, h);
     }
     void paintGL() {
-        if (!m_delegate)
+        if (!m_delegate) {
+            glViewport(0, 0, width(), height());
+            glClearColor(0, 0, 1, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             return;
+        }
         const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const int nengines = engines.count();
         {
             glDisable(GL_BLEND);
-            glViewport(0, 0, 1024, 1024);
             m_fbo->bind();
             Vector3 target = kZeroV3, center;
             Scalar maxRadius = 0, radius;

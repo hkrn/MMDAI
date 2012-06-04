@@ -163,6 +163,10 @@ public:
 
     virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
 
+    virtual void getViewport(Vector3 &value) const = 0;
+
+    virtual void getTime(int64_t &value, bool sync) const = 0;
+
     virtual IModel *findModel(const char *name) const = 0;
 
     /**
