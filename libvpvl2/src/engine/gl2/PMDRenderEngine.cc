@@ -763,8 +763,6 @@ void PMDRenderEngine::renderShadow()
 {
     if (!m_model->isVisible() || !m_context)
         return;
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     PMDModel *model = m_model->ptr();
     shadowProgram->bind();
@@ -785,8 +783,10 @@ void PMDRenderEngine::renderShadow()
     Scene::ILight *light = m_scene->light();
     shadowProgram->setLightColor(light->color());
     shadowProgram->setLightDirection(light->direction());
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)),
                                model->strideSize(PMDModel::kVerticesStride));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     glCullFace(GL_FRONT);
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];

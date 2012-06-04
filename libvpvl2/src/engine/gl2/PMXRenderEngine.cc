@@ -829,6 +829,7 @@ void PMXRenderEngine::renderShadow()
     shadowProgram->setLightDirection(light->direction());
     size_t offset = pmx::Model::strideOffset(pmx::Model::kVertexStride);
     size_t size = pmx::Model::strideSize(pmx::Model::kVertexStride);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     glCullFace(GL_FRONT);
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -838,6 +839,7 @@ void PMXRenderEngine::renderShadow()
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         const int nindices = material->indices();
