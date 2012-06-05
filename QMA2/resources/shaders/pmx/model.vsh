@@ -21,17 +21,14 @@ varying vec4 outTexCoord;
 varying vec2 outToonCoord;
 varying vec4 outShadowCoord;
 varying vec4 outUVA1;
-varying vec4 outUVA2;
-varying vec4 outUVA3;
-varying vec4 outUVA4;
-const float kTwo = 2.0;
 const float kOne = 1.0;
-const float kHalf = 0.5;
 const float kZero = 0.0;
-const vec3 kOne3 = vec3(kOne, kOne, kOne);
-const vec3 kZero3 = vec3(kZero, kZero, kZero);
+const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
+const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 
 vec2 makeSphereMap(const vec3 position, const vec3 normal) {
+    const float kTwo = 2.0;
+    const float kHalf = 0.5;
     vec3 R = reflect(position, normal);
     R.z += kOne;
     float M = kTwo * sqrt(dot(R, R));
@@ -40,16 +37,15 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 
 void main() {
     vec3 position3 = inPosition.xyz;
-    vec4 position = vec4(position3, 1.0);
+    vec4 position = vec4(position3, kOne);
     vec3 view = normalize(normalMatrix * position3);
     vec3 lightPosition = normalize(-lightDirection);
     vec3 halfVector = normalize(lightPosition - normalize(position3));
-    vec3 color = materialAmbient;
-    float hdotn = max(dot(halfVector, inNormal), 0.0);
-    color += lightColor * materialDiffuse.rgb;
-    color += materialSpecular * pow(hdotn, max(materialShininess, 1.0));
-    outColor.rgb = max(min(color, kOne3), kZero3);
-    outColor.a = max(min(materialDiffuse.a, kOne), kZero);
+    vec4 color = vec4(materialAmbient, materialDiffuse.a);
+    float hdotn = max(dot(halfVector, inNormal), kZero);
+    color.rgb += lightColor * materialDiffuse.rgb;
+    color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
+    outColor = max(min(color, kOne4), kZero4);
     outTexCoord.xy = inTexCoord;
     outTexCoord.zw = hasSphereTexture ? makeSphereMap(view, inNormal) : inTexCoord;
     outToonCoord = inToonCoord;

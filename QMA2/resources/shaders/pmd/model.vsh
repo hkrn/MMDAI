@@ -20,12 +20,14 @@ varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
 varying vec2 outToonCoord;
-const float kTwo = 2.0;
 const float kOne = 1.0;
-const float kHalf = 0.5;
-const vec3 kOne3 = vec3(kOne, kOne, kOne);
+const float kZero = 0.0;
+const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
+const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 
 vec2 makeSphereMap(const vec3 position, const vec3 normal) {
+    const float kTwo = 2.0;
+    const float kHalf = 0.5;
     vec3 R = reflect(position, normal);
     R.z += kOne;
     float M = kTwo * sqrt(dot(R, R));
@@ -36,12 +38,11 @@ void main() {
     vec3 view = normalize(normalMatrix * inPosition.xyz);
     vec3 lightPosition = normalize(-lightDirection);
     vec3 halfVector = normalize(lightPosition - normalize(inPosition.xyz));
-    vec3 color = materialAmbient;
-    float hdotn = max(dot(halfVector, inNormal), 0.0);
-    color += lightColor * materialDiffuse.rgb;
-    color += materialSpecular * pow(hdotn, max(materialShininess, 1.0));
-    outColor.rgb = color;
-    outColor.a = materialDiffuse.a;
+    vec4 color = vec4(materialAmbient, materialDiffuse.a);
+    float hdotn = max(dot(halfVector, inNormal), kZero);
+    color.rgb += lightColor * materialDiffuse.rgb;
+    color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
+    outColor = max(min(color, kOne4), kZero4);
     outTexCoord.xy = isMainSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;
     outTexCoord.zw = isSubSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;
     outToonCoord = inToonCoord;
