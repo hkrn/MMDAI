@@ -403,7 +403,9 @@ private:
             return true;
         }
         const QImage &image = QImage(path).rgbSwapped();
-        QGLContext::BindOptions options = QGLContext::DefaultBindOption | QGLContext::PremultipliedAlphaBindOption;
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
+                | QGLContext::InvertedYBindOption
+                | QGLContext::PremultipliedAlphaBindOption;
         GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
         setTextureID(textureID, isToon, texture);
         ctx->textureCache.insert(path, textureID);
@@ -721,7 +723,7 @@ public:
         m_delegate = new Delegate(m_settings, this);
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
-        // m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+        //m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
         m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
         Scene::ICamera *camera = m_scene.camera();
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
@@ -904,8 +906,8 @@ protected:
             for (int i = 0; i < nengines; i++) {
                 IRenderEngine *engine = engines[i];
                 engine->renderModel();
-                //engine->renderEdge();
-                //engine->renderShadow();
+                engine->renderEdge();
+                engine->renderShadow();
             }
         }
     }

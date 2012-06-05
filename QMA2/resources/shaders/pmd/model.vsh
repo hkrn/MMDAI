@@ -1,14 +1,12 @@
 /* pmd/model.vsh */
 uniform mat4 modelViewProjectionMatrix;
-uniform mat4 modelViewInverseMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialDiffuse;
+uniform vec3 cameraPosition;
 uniform vec3 lightColor;
 uniform vec3 lightDirection;
 uniform vec3 materialAmbient;
-uniform vec3 materialSpecular;
-uniform float materialShininess;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
 uniform bool hasDepthTexture;
@@ -19,6 +17,8 @@ attribute vec2 inToonCoord;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
+varying vec3 outEyeView;
+varying vec3 outNormal;
 varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
@@ -35,13 +35,12 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 }
 
 void main() {
-    vec3 view = normalize(normalMatrix * inPosition.xyz);
-    vec3 lightPosition = normalize(-lightDirection);
-    vec3 halfVector = normalize(lightPosition - normalize(inPosition.xyz));
+    vec3 position3 = inPosition.xyz;
+    vec3 view = normalize(normalMatrix * position3);
     vec4 color = vec4(materialAmbient, materialDiffuse.a);
-    float hdotn = max(dot(halfVector, inNormal), kZero);
     color.rgb += lightColor * materialDiffuse.rgb;
-    color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
+    outEyeView = cameraPosition - position3;
+    outNormal = inNormal;
     outColor = max(min(color, kOne4), kZero4);
     outTexCoord.xy = isMainSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;
     outTexCoord.zw = isSubSphereMap ? makeSphereMap(view, inNormal) : inTexCoord;

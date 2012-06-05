@@ -244,7 +244,7 @@ public:
         : ObjectProgram(delegate),
           m_toonTexCoordAttributeLocation(0),
           m_uva1AttributeLocation(0),
-          m_modelViewInverseMatrixUniformLocation(0),
+          m_cameraPositionUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
           m_materialSpecularUniformLocation(0),
@@ -268,7 +268,7 @@ public:
     ~ModelProgram() {
         m_toonTexCoordAttributeLocation = 0;
         m_uva1AttributeLocation = 0;
-        m_modelViewInverseMatrixUniformLocation = 0;
+        m_cameraPositionUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
@@ -289,8 +289,8 @@ public:
         m_boneMatricesUniformLocation = 0;
     }
 
-    void setModelViewInverseMatrix(const GLfloat value[16]) {
-        glUniformMatrix4fv(m_modelViewInverseMatrixUniformLocation, 1, GL_FALSE, value);
+    void setCameraPosition(const Vector3 &value) {
+        glUniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
     void setToonTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
@@ -388,7 +388,7 @@ protected:
         ObjectProgram::getLocations();
         m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
         m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
-        m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
+        m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
         m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
         m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
@@ -412,7 +412,7 @@ protected:
 private:
     GLuint m_toonTexCoordAttributeLocation;
     GLuint m_uva1AttributeLocation;
-    GLuint m_modelViewInverseMatrixUniformLocation;
+    GLuint m_cameraPositionUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
     GLuint m_materialSpecularUniformLocation;
@@ -732,8 +732,6 @@ void PMXRenderEngine::renderModel()
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
     matrices->getNormal(matrix4x4);
     modelProgram->setNormalMatrix(matrix4x4);
-    m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix4x4);
-    modelProgram->setModelViewInverseMatrix(matrix4x4);
     matrices->getLightViewProjection(matrix4x4);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
@@ -744,6 +742,7 @@ void PMXRenderEngine::renderModel()
     modelProgram->setToonEnable(light->isToonEnabled());
     modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
     modelProgram->setDepthTextureSize(light->depthTextureSize());
+    modelProgram->setCameraPosition(m_scene->camera()->position());
     const Scalar &opacity = m_model->opacity();
     modelProgram->setOpacity(opacity);
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -792,8 +791,6 @@ void PMXRenderEngine::renderModel()
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * size;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     modelProgram->unbind();
     if (!m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
@@ -855,8 +852,6 @@ void PMXRenderEngine::renderShadow()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     shadowProgram->unbind();
 }
 
@@ -906,8 +901,6 @@ void PMXRenderEngine::renderEdge()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     edgeProgram->unbind();
 }
 
@@ -948,8 +941,6 @@ void PMXRenderEngine::renderZPlot()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     zplotProgram->unbind();
 }
 
