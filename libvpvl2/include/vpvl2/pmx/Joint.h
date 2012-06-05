@@ -88,6 +88,7 @@ public:
     const Vector3 &rotationUpperLimit() const { return m_rotationUpperLimit; }
     const Vector3 &positionStiffness() const { return m_positionStiffness; }
     const Vector3 &rotationStiffness() const { return m_rotationStiffness; }
+    int index() const { return m_index; }
 
     void setRigidBody1(RigidBody *value);
     void setRigidBody2(RigidBody *value);

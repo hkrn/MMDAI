@@ -82,6 +82,7 @@ public:
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
+    int index() const { return m_index; }
     bool isSpecial() const { return m_special; }
     IBone *bone(int index) const;
     IMorph *morph(int index) const;
@@ -99,6 +100,7 @@ private:
     IString *m_name;
     IString *m_englishName;
     Array<Pair *> m_pairs;
+    int m_index;
     bool m_special;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Label)

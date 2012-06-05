@@ -403,7 +403,7 @@ private:
             return true;
         }
         const QImage &image = QImage(path).rgbSwapped();
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
+        QGLContext::BindOptions options = QGLContext::DefaultBindOption | QGLContext::PremultipliedAlphaBindOption;
         GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
         setTextureID(textureID, isToon, texture);
         ctx->textureCache.insert(path, textureID);
@@ -501,7 +501,7 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
         return debug.space();
     }
     debug.nospace();
-    debug << "Material id                      = " << 0;
+    debug << "Material id                      = " << material->index();
     debug << "\n";
     debug << "         name                    = " << material->name();
     debug << "\n";
@@ -580,7 +580,9 @@ QDebug operator<<(QDebug debug, const pmx::Label *label)
         return debug.space();
     }
     debug.nospace();
-    debug << "Label name      = " << label->name();
+    debug << "Label id        = " << label->index();
+    debug << "\n";
+    debug << "      name      = " << label->name();
     debug << "\n";
     debug << "      english   = " << label->englishName();
     debug << "\n";
@@ -643,7 +645,9 @@ QDebug operator<<(QDebug debug, const pmx::Joint *joint)
         return debug.space();
     }
     debug.nospace();
-    debug << "Joint name               = " << joint->name();
+    debug << "Joint id                 = " << joint->index();
+    debug << "\n";
+    debug << "      name               = " << joint->name();
     debug << "\n";
     debug << "      english            = " << joint->englishName();
     debug << "\n";
@@ -745,8 +749,8 @@ protected:
     void initializeGL() {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
-        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
         startTimer(1000.0f / 60.0f);
         QGLFramebufferObjectFormat format;
         format.setAttachment(QGLFramebufferObject::Depth);
@@ -761,10 +765,10 @@ protected:
         }
         Scene::ILight *light = m_scene.light();
         m_depthTextureID = m_fbo->texture();
-        light->setToonEnable(true);
+        //light->setToonEnable(true);
         //light->setSoftShadowEnable(true);
         light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
-        light->setDepthTexture(&m_depthTextureID);
+        //light->setDepthTexture(&m_depthTextureID);
     }
     void timerEvent(QTimerEvent *) {
         float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
@@ -900,8 +904,8 @@ protected:
             for (int i = 0; i < nengines; i++) {
                 IRenderEngine *engine = engines[i];
                 engine->renderModel();
-                engine->renderEdge();
-                engine->renderShadow();
+                //engine->renderEdge();
+                //engine->renderShadow();
             }
         }
     }
