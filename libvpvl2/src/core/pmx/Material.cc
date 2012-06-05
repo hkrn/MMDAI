@@ -73,6 +73,7 @@ Material::Material()
       m_sphereTextureRenderMode(kNone),
       m_shininess(0, 1, 0),
       m_edgeSize(0, 1, 0),
+      m_index(-1),
       m_textureIndex(0),
       m_sphereTextureIndex(0),
       m_toonTextureIndex(0),
@@ -97,6 +98,7 @@ Material::~Material()
     m_userDataArea = 0;
     m_shininess.setZero();
     m_edgeSize.setZero();
+    m_index = -1;
     m_textureIndex = 0;
     m_sphereTextureIndex = 0;
     m_toonTextureIndex = 0;
@@ -189,6 +191,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
             else
                 material->m_toonTexture = textures[toonTextureIndex];
         }
+        material->m_index = i;
         actualIndices += material->indices();
     }
     return actualIndices == expectedIndices;

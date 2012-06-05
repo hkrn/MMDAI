@@ -165,6 +165,7 @@ public:
     const Color &toonTextureBlend() const { return m_toonTextureBlend.result; }
     float shininess() const { return m_shininess.x() * m_shininess.y() + m_shininess.z(); }
     float edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_edgeSize.z(); }
+    int index() const { return m_index; }
     int textureIndex() const { return m_textureIndex; }
     int sphereTextureIndex() const { return m_sphereTextureIndex; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
@@ -212,6 +213,7 @@ private:
     RGBA3 m_toonTextureBlend;
     Vector3 m_shininess;
     Vector3 m_edgeSize;
+    int m_index;
     int m_textureIndex;
     int m_sphereTextureIndex;
     int m_toonTextureIndex;

@@ -65,6 +65,7 @@ struct Label::Pair {
 Label::Label()
     : m_name(0),
       m_englishName(0),
+      m_index(-1),
       m_special(false)
 {
 }
@@ -76,6 +77,8 @@ Label::~Label()
     delete m_englishName;
     m_englishName = 0;
     m_pairs.releaseAll();
+    m_index = -1;
+    m_special = false;
 }
 
 bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -163,6 +166,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                 return false;
             }
         }
+        label->m_index = i;
     }
     return true;
 }

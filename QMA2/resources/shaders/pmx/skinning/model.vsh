@@ -1,35 +1,30 @@
 /* pmx/model.vsh */
 uniform mat4 modelViewProjectionMatrix;
-uniform mat4 modelViewInverseMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialDiffuse;
+uniform vec3 cameraPosition;
 uniform vec3 lightColor;
 uniform vec3 lightDirection;
 uniform vec3 materialAmbient;
-uniform vec3 materialSpecular;
-uniform float materialShininess;
 uniform bool hasSphereTexture;
 uniform bool hasDepthTexture;
 attribute vec4 inPosition;
+attribute vec4 inUVA1;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 attribute vec2 inToonCoord;
-attribute vec4 inUVA1;
 varying vec4 outColor;
 varying vec4 outTexCoord;
-varying vec2 outToonCoord;
 varying vec4 outShadowCoord;
 varying vec4 outUVA1;
-varying vec4 outUVA2;
-varying vec4 outUVA3;
-varying vec4 outUVA4;
-const float kTwo = 2.0;
+varying vec3 outEyeView;
+varying vec3 outNormal;
+varying vec2 outToonCoord;
 const float kOne = 1.0;
-const float kHalf = 0.5;
 const float kZero = 0.0;
-const vec3 kOne3 = vec3(kOne, kOne, kOne);
-const vec3 kZero3 = vec3(kZero, kZero, kZero);
+const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
+const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 
 attribute vec4 inBoneIndices;
 attribute vec4 inBoneWeights;
@@ -68,6 +63,8 @@ vec4 performSkinning(const vec3 position3, const int type) {
 }
 
 vec2 makeSphereMap(const vec3 position, const vec3 normal) {
+    const float kTwo = 2.0;
+    const float kHalf = 0.5;
     vec3 R = reflect(position, normal);
     R.z += kOne;
     float M = kTwo * sqrt(dot(R, R));
@@ -78,21 +75,20 @@ void main() {
     int type = int(inPosition.w);
     vec4 position = performSkinning(inPosition.xyz, type);
     vec3 normal = performSkinning(inNormal, type).xyz;
-    vec3 view = normalize(normalMatrix * position.xyz);
-    vec3 lightPosition = normalize(-lightDirection);
-    vec3 halfVector = normalize(lightPosition - normalize(position.xyz));
-    vec3 color = materialAmbient;
-    float hdotn = max(dot(halfVector, normal), 0.0);
-    color += lightColor * materialDiffuse.rgb;
-    color += materialSpecular * pow(hdotn, max(materialShininess, 1.0));
-    outColor.rgb = max(min(color, kOne3), kZero3);
-    outColor.a = max(min(materialDiffuse.a, kOne), kZero);
+    vec3 position3 = position.xyz;
+    vec3 view = normalize(normalMatrix * position3);
+    vec4 color = vec4(materialAmbient, materialDiffuse.a);
+    color.rgb += lightColor * materialDiffuse.rgb;
+    outEyeView = cameraPosition - position3;
+    outNormal = inNormal;
+    outColor = max(min(color, kOne4), kZero4);
     outTexCoord.xy = inTexCoord;
     outTexCoord.zw = hasSphereTexture ? makeSphereMap(view, normal) : inTexCoord;
     outToonCoord = inToonCoord;
     outUVA1 = inUVA1;
-    if (hasDepthTexture)
+    if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * position;
+    }
     gl_Position = modelViewProjectionMatrix * position;
 }
 

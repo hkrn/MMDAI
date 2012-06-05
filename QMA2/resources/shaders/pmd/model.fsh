@@ -3,7 +3,10 @@
 precision highp float;
 #endif
 
+uniform vec3 lightDirection;
+uniform vec3 materialSpecular;
 uniform vec2 depthTextureSize;
+uniform float materialShininess;
 uniform float opacity;
 uniform bool useToon;
 uniform bool useSoftShadow;
@@ -18,8 +21,9 @@ uniform sampler2D toonTexture;
 uniform sampler2D depthTexture;
 varying vec4 outColor;
 varying vec4 outTexCoord;
-varying vec4 outPosition;
 varying vec4 outShadowCoord;
+varying vec3 outEyeView;
+varying vec3 outNormal;
 varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
@@ -98,6 +102,9 @@ void main() {
             color.rgb *= toonColor;
         }
     }
+    vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
+    float hdotn = max(dot(halfVector, normalize(outNormal)), kZero);
+    color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
     color.a *= opacity;
     gl_FragColor = color;
 }

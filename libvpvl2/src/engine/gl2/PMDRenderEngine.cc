@@ -198,7 +198,7 @@ public:
     ModelProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
           m_toonTexCoordAttributeLocation(0),
-          m_modelViewInverseMatrixUniformLocation(0),
+          m_cameraPositionUniformLocation(0),
           m_materialAmbientUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
           m_materialSpecularUniformLocation(0),
@@ -217,7 +217,7 @@ public:
     }
     ~ModelProgram() {
         m_toonTexCoordAttributeLocation = 0;
-        m_modelViewInverseMatrixUniformLocation = 0;
+        m_cameraPositionUniformLocation = 0;
         m_materialAmbientUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
@@ -238,8 +238,8 @@ public:
         glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
         glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setModelViewInverseMatrix(const GLfloat value[16]) {
-        glUniformMatrix4fv(m_modelViewInverseMatrixUniformLocation, 1, GL_FALSE, value);
+    void setCameraPosition(const Vector3 &value) {
+        glUniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
     void setMaterialAmbient(const Color &value) {
         glUniform3fv(m_materialAmbientUniformLocation, 1, value);
@@ -296,7 +296,7 @@ protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
         m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
-        m_modelViewInverseMatrixUniformLocation = glGetUniformLocation(m_program, "modelViewInverseMatrix");
+        m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
         m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
         m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
@@ -315,7 +315,7 @@ protected:
 
 private:
     GLuint m_toonTexCoordAttributeLocation;
-    GLuint m_modelViewInverseMatrixUniformLocation;
+    GLuint m_cameraPositionUniformLocation;
     GLuint m_materialAmbientUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
     GLuint m_materialSpecularUniformLocation;
@@ -687,6 +687,7 @@ void PMDRenderEngine::renderModel()
     modelProgram->setToonEnable(light->isToonEnabled());
     modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
     modelProgram->setDepthTextureSize(light->depthTextureSize());
+    modelProgram->setCameraPosition(m_scene->camera()->position());
     const Scalar &modelOpacity = m_model->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0);
     modelProgram->setOpacity(modelOpacity);
@@ -750,8 +751,6 @@ void PMDRenderEngine::renderModel()
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     modelProgram->unbind();
     if (!m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
@@ -800,8 +799,6 @@ void PMDRenderEngine::renderShadow()
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     shadowProgram->unbind();
 }
 
@@ -843,8 +840,6 @@ void PMDRenderEngine::renderZPlot()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     zplotProgram->unbind();
 }
 
@@ -882,8 +877,6 @@ void PMDRenderEngine::renderEdge()
     glCullFace(GL_FRONT);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
     glCullFace(GL_BACK);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     edgeProgram->unbind();
 }
 
