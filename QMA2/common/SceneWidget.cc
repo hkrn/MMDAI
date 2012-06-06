@@ -172,9 +172,12 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     setMinimumSize(540, 480);
     /* 通常はマウスを動かしても mouseMove が呼ばれないため、マウスが動いたら常時 mouseEvent を呼ぶようにする */
     setMouseTracking(true);
+#ifdef QMA2_ENABLE_GESTURE
+    /* ジェスチャを有効にすると突然死が発生しやすいことを確認しているため無効化 */
     grabGesture(Qt::PanGesture);
     grabGesture(Qt::PinchGesture);
     grabGesture(Qt::SwipeGesture);
+#endif
 }
 
 SceneWidget::~SceneWidget()

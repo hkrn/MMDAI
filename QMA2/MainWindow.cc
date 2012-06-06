@@ -920,11 +920,13 @@ void MainWindow::buildUI()
     m_menuView->addAction(m_actionShowModelDock);
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionShowModelDialog);
+#ifdef QMA2_ENABLE_GESTURE
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionEnableMoveGesture);
     m_menuView->addAction(m_actionEnableRotateGesture);
     m_menuView->addAction(m_actionEnableScaleGesture);
     m_menuView->addAction(m_actionEnableUndoGesture);
+#endif
     m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
     m_menuHelp->addAction(m_actionAbout);
