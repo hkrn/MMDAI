@@ -60,7 +60,8 @@ public:
                             QWidget *parent = 0);
     ~TimelineWidget();
 
-    int frameIndex() const;
+    int currentFrameIndex() const;
+    int selectedFrameIndex() const;
     void setFrameIndexSpinBoxEnable(bool value);
 
     TimelineTreeView *treeView() const { return m_treeView; }

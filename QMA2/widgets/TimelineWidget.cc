@@ -170,7 +170,12 @@ void TimelineWidget::retranslate()
     m_button->setText(tr("Register"));
 }
 
-int TimelineWidget::frameIndex() const
+int TimelineWidget::currentFrameIndex() const
+{
+    return m_spinBox->value();
+}
+
+int TimelineWidget::selectedFrameIndex() const
 {
     /* 選択状態のモデルインデックスの最初のインデックスからキーフレームのインデックスを求める */
     const QModelIndexList &indices = m_treeView->selectionModel()->selectedIndexes();
@@ -179,7 +184,8 @@ int TimelineWidget::frameIndex() const
         if (index.isValid())
             return MotionBaseModel::toFrameIndex(index);
     }
-    return 0;
+    /* 選択状態のモデルインデックスがない場合はスピンボックス上の現在のフレーム位置を返すようにする */
+    return currentFrameIndex();
 }
 
 void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
@@ -206,6 +212,8 @@ void TimelineWidget::setCurrentFrameIndexBySpinBox()
 
 void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
 {
+    if (!index.isValid())
+        return;
     /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
     int frameIndex = MotionBaseModel::toFrameIndex(index);
