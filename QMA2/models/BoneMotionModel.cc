@@ -987,8 +987,17 @@ void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
     foreach (const QModelIndex &index, indices) {
         if (index.isValid()) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (IBone *bone = item->bone())
+            if (item->isCategory()) {
+                int nbones = item->countChildren();
+                for (int i = 0; i < nbones; i++) {
+                    TreeItem *child = static_cast<TreeItem *>(item->child(i));
+                    IBone *bone = child->bone();
+                    bones.append(bone);
+                }
+            }
+            else if (IBone *bone = item->bone()) {
                 bones.append(bone);
+            }
         }
     }
     m_selectedBones = bones;
