@@ -136,7 +136,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     connect(m_spinBox, SIGNAL(valueChanged(int)), SLOT(setCurrentFrameIndex(int)));
     connect(base, SIGNAL(frameIndexColumnMaxDidChange(int,int)), SLOT(setMaximumFrameIndexRange(int)));
     m_spinBox->setRange(0, base->maxFrameCount());
-    m_spinBox->setWrapping(true);
+    m_spinBox->setWrapping(false);
     /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     m_label = new QLabel();
     m_button = new QPushButton();
@@ -154,7 +154,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QItemSelectionModel *sm = m_treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentFrameIndex(QModelIndex)));
     /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
-    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(reexpand()));
+    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_treeView, SLOT(restoreExpandState()));
     connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(setCurrentFrameIndexBySpinBox()));
     retranslate();
     setLayout(mainLayout);
@@ -228,27 +228,25 @@ void TimelineWidget::setMaximumFrameIndexRange(int value)
 void TimelineWidget::adjustFrameColumnSize(int value)
 {
     QAbstractSlider *slider = qobject_cast<QAbstractSlider *>(sender());
-    int sliderPosition = slider->sliderPosition();
     MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
+    int sliderPosition = slider->sliderPosition();
+    int frameIndexColumnMax = m->frameIndexColumnMax();
     switch (value) {
     case QAbstractSlider::SliderMove:
-        if (sliderPosition == slider->maximum()) {
-            m->setFrameIndexColumnMax(m->frameIndexColumnMax() + MotionBaseModel::kFrameIndexColumnStep);
+        if (sliderPosition >= slider->maximum()) {
+            /* 列とツリーテーブルの拡張を行う */
+            m->setFrameIndexColumnMax(frameIndexColumnMax + MotionBaseModel::kFrameIndexColumnStep);
+            slider->setSliderPosition(sliderPosition);
         }
-        else if (sliderPosition == slider->minimum()) {
+        else if (sliderPosition <= slider->minimum() && frameIndexColumnMax > MotionBaseModel::kFrameIndexColumnMinimum) {
             /* 値が最大値未満の場合自動的に列が切り詰められるように動作する */
-            m->setFrameIndexColumnMax(m->frameIndexColumnMax() - MotionBaseModel::kFrameIndexColumnStep);
-            /* リセットを行わないと空白部分がヘッダーの方で残ったままになる。また、スライダを右にずらすことでスクロール出来るようになる */
+            m->setFrameIndexColumnMax(frameIndexColumnMax - MotionBaseModel::kFrameIndexColumnMinimum);
+            /* リセットを行わないと空白部分がヘッダーの方で残ったままになる */
             m_treeView->header()->reset();
-            slider->setSliderPosition(5);
         }
         break;
     case QAbstractSlider::SliderToMaximum:
-        m->setFrameIndexColumnMax(m->frameIndexColumnMax() + MotionBaseModel::kFrameIndexColumnStep);
-        break;
     case QAbstractSlider::SliderToMinimum:
-        m->setFrameIndexColumnMax(m->frameIndexColumnMax() - MotionBaseModel::kFrameIndexColumnStep);
-        break;
     case QAbstractSlider::SliderNoAction:
     case QAbstractSlider::SliderSingleStepAdd:
     case QAbstractSlider::SliderSingleStepSub:
@@ -257,11 +255,4 @@ void TimelineWidget::adjustFrameColumnSize(int value)
     default:
         break;
     }
-}
-
-void TimelineWidget::reexpand()
-{
-    /* QAbstractTableModel#reset が行われると QTreeView では閉じてしまうので、開閉状態を reset 前に戻す */
-    foreach (const QModelIndex &index, m_treeView->expandedModelIndices())
-        m_treeView->expand(index);
 }

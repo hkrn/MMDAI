@@ -78,7 +78,7 @@ public:
         kBinaryDataRole
     };
     static const int kFrameIndexColumnStep = 5;
-    static const int kFrameIndexColumnMinimum = 30;
+    static const int kFrameIndexColumnMinimum = 31; /* 1 for header */
 
     static int toFrameIndex(const QModelIndex &index);
     static int toFrameIndex(int modelColumnIndex);

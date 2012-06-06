@@ -57,11 +57,11 @@ public:
     void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
     void deleteKeyframesBySelectedIndices();
     void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
-    void updateFrozenTreeView();
-    const QModelIndexList &expandedModelIndices() const;
+    QItemSelectionModel *frozenViewSelectionModel() const;
 
 public slots:
     void addKeyframesBySelectedIndices();
+    void updateFrozenTreeView();
 
 signals:
     void modelIndexDidSelect(const QModelIndexList &indices);
@@ -78,6 +78,7 @@ private slots:
     void setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
     void setMorphKeyframesWeightBySelectedIndices(float value);
     void updateSectionWidth(int logicalIndex, int newSize, int oldSize);
+    void restoreExpandState();
 
 private:
     void updateFrozenTreeViewGeometry();

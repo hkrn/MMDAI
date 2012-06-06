@@ -78,7 +78,6 @@ private slots:
     void setCurrentFrameIndex(const QModelIndex &index);
     void setMaximumFrameIndexRange(int value);
     void adjustFrameColumnSize(int value);
-    void reexpand();
 
 private:
     TimelineTreeView *m_treeView;
