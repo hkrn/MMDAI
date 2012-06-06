@@ -96,6 +96,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     m_sceneTimeline = new TimelineWidget(smm, false, this);
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
     connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
+    connect(m_boneTimeline->treeView()->frozenViewSelectionModel(),
+            SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            SLOT(selectBonesByItemSelection(QItemSelection)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
     connect(m_boneTimeline, SIGNAL(motionDidSeek(float,bool)), SIGNAL(motionDidSeek(float,bool)));
     connect(m_morphTimeline, SIGNAL(motionDidSeek(float,bool)), SIGNAL(motionDidSeek(float,bool)));
@@ -105,6 +108,10 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(bmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleBoneEnable(vpvl2::IModel*)));
     connect(mmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleMorphEnable(vpvl2::IModel*)));
     connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), SLOT(toggleBoneButtonsByBone(QList<vpvl2::IBone*>)));
+    /* モーションを読み込んだらフローズンビューを忘れずに更新しておく(フローズンビューが勢い良くスクロール出来てしまうことを防ぐ) */
+    connect(bmm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_boneTimeline->treeView(), SLOT(updateFrozenTreeView()));
+    connect(mmm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_morphTimeline->treeView(), SLOT(updateFrozenTreeView()));
+    connect(smm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneTimeline->treeView(), SLOT(updateFrozenTreeView()));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -485,6 +492,17 @@ void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
     selectionModel->clearSelection();
     foreach (const QModelIndex &index, indices)
         selectionModel->select(index, QItemSelectionModel::Select);
+}
+
+void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selection)
+{
+    BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+    const QModelIndexList &indices = selection.indexes();
+    if (!indices.empty()) {
+        QModelIndexList bone;
+        bone.append(indices.first());
+        bmm->selectBonesByModelIndices(bone);
+    }
 }
 
 void TimelineTabWidget::selectButton(QAbstractButton *button)
