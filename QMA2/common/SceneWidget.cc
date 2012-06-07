@@ -1158,7 +1158,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             light->setDirection(direction * Matrix3x3(rx * ry));
         }
         /* 場面の移動 (X 方向だけ向きを逆にする) */
-        else if (modifiers & Qt::ShiftModifier) {
+        else if (modifiers & Qt::ShiftModifier || event->buttons() & Qt::MiddleButton) {
             translateScene(Vector3(diff.x() * -m_delta.x(), diff.y() * m_delta.y(), 0.0f));
         }
         /* 場面の回転 (X と Y が逆転している点に注意) */
