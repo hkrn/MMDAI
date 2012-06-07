@@ -76,6 +76,7 @@ signals:
 private slots:
     void retranslate();
     void setCurrentFrameIndexBySpinBox();
+    void setCurrentFrameIndexAndSelect(int frameIndex);
     void setCurrentFrameIndex(const QModelIndex &index);
     void setMaximumFrameIndexRange(int value);
     void adjustFrameColumnSize(int value);

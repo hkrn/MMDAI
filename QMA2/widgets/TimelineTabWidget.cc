@@ -112,6 +112,10 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(bmm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_boneTimeline->treeView(), SLOT(updateFrozenTreeView()));
     connect(mmm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_morphTimeline->treeView(), SLOT(updateFrozenTreeView()));
     connect(smm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneTimeline->treeView(), SLOT(updateFrozenTreeView()));
+    /* フレームが切り替わったら現在のフレーム位置を設定し直す */
+    connect(bmm, SIGNAL(frameIndexDidChange(int,int)), m_boneTimeline, SLOT(setCurrentFrameIndex(int)));
+    connect(mmm, SIGNAL(frameIndexDidChange(int,int)), m_morphTimeline, SLOT(setCurrentFrameIndex(int)));
+    connect(smm, SIGNAL(frameIndexDidChange(int,int)), m_sceneTimeline, SLOT(setCurrentFrameIndex(int)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();

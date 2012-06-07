@@ -119,16 +119,11 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     : QWidget(parent)
 {
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
-    m_treeView = new TimelineTreeView(delegate);
+    m_treeView = new TimelineTreeView(base, delegate);
     /* 専用の選択処理を行うようにスロットを追加する */
     connect(m_treeView->horizontalScrollBar(), SIGNAL(actionTriggered(int)), SLOT(adjustFrameColumnSize(int)));
-    m_treeView->setModel(base);
-    m_treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
-    m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    connect(m_treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
-            m_treeView, SLOT(selectModelIndices(QItemSelection,QItemSelection)));
     m_headerView = new TimelineHeaderView(Qt::Horizontal, stretchLastSection);
-    connect(m_headerView, SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentFrameIndex(int)));
+    connect(m_headerView, SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentFrameIndexAndSelect(int)));
     m_treeView->setHeader(m_headerView);
     m_headerView->setResizeMode(0, QHeaderView::ResizeToContents);
     m_treeView->initializeFrozenView();
@@ -196,18 +191,26 @@ void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
 
 void TimelineWidget::setCurrentFrameIndex(float frameIndex)
 {
-    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
-    setCurrentFrameIndex(model->index(0, MotionBaseModel::toModelIndex(frameIndex)));
+    setCurrentFrameIndex(int(frameIndex));
 }
 
 void TimelineWidget::setCurrentFrameIndex(int frameIndex)
 {
-    setCurrentFrameIndex(float(frameIndex));
+    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
+    setCurrentFrameIndex(model->index(0, MotionBaseModel::toModelIndex(frameIndex)));
 }
 
 void TimelineWidget::setCurrentFrameIndexBySpinBox()
 {
-    setCurrentFrameIndex(m_spinBox->value());
+    int frameIndex = m_spinBox->value();
+    setCurrentFrameIndex(frameIndex);
+}
+
+void TimelineWidget::setCurrentFrameIndexAndSelect(int frameIndex)
+{
+    setCurrentFrameIndex(frameIndex);
+    QList<int> frameIndices; frameIndices.append(frameIndex);
+    m_treeView->selectFrameIndices(frameIndices, false);
 }
 
 void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
@@ -218,9 +221,6 @@ void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
     int frameIndex = MotionBaseModel::toFrameIndex(index);
     model->setFrameIndex(frameIndex);
-    QList<int> frameIndices;
-    frameIndices.append(frameIndex);
-    m_treeView->selectFrameIndices(frameIndices, false);
     m_treeView->scrollTo(index);
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */

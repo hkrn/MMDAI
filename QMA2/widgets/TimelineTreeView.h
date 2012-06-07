@@ -43,6 +43,7 @@
 
 #include <vpvl2/Common.h>
 
+class MotionBaseModel;
 class QItemDelegate;
 
 class TimelineTreeView : public QTreeView
@@ -50,7 +51,7 @@ class TimelineTreeView : public QTreeView
     Q_OBJECT
 
 public:
-    explicit TimelineTreeView(QItemDelegate *delegate, QWidget *parent = 0);
+    explicit TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent = 0);
     ~TimelineTreeView();
 
     void initializeFrozenView();

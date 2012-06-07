@@ -133,11 +133,13 @@ QItemSelection MotionBaseModel::selectKeyframesFromItemSelection(const QItemSele
     return newSelection;
 }
 
-void MotionBaseModel::setFrameIndex(float newIndex)
+void MotionBaseModel::setFrameIndex(int newIndex)
 {
-    float oldIndex = m_frameIndex;
-    m_frameIndex = newIndex;
-    emit frameIndexDidChange(newIndex, oldIndex);
+    int oldIndex = m_frameIndex;
+    if (oldIndex != newIndex) {
+        m_frameIndex = newIndex;
+        emit frameIndexDidChange(newIndex, oldIndex);
+    }
 }
 
 void MotionBaseModel::setModified(bool value)

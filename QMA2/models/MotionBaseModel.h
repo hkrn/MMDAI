@@ -103,7 +103,7 @@ public:
     virtual bool forceCameraUpdate() const = 0;
 
     vpvl2::IMotion *currentMotion() const { return m_motion; }
-    void setFrameIndex(float newIndex);
+    void setFrameIndex(int newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }
     int maxFrameCount() const { return m_frameIndexColumnOffset; }
@@ -131,7 +131,7 @@ protected:
 
     vpvl2::IMotion *m_motion;
     QUndoGroup *m_undo;
-    float m_frameIndex;
+    int m_frameIndex;
     int m_frameIndexColumnMax;
     int m_frameIndexColumnOffset;
     bool m_modified;
