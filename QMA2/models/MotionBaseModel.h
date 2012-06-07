@@ -92,6 +92,7 @@ public:
     QModelIndex parent(const QModelIndex &child) const;
     int rowCount(const QModelIndex &parent) const;
     void cutKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
+    QItemSelection selectKeyframesFromItemSelection(const QItemSelection &selection);
 
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const = 0;
     virtual const QString nameFromModelIndex(const QModelIndex &index) const = 0;

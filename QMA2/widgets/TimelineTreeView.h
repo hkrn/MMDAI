@@ -67,6 +67,9 @@ signals:
     void modelIndexDidSelect(const QModelIndexList &indices);
 
 protected:
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *event);
     void resizeEvent(QResizeEvent *event);
     QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers);
@@ -83,7 +86,9 @@ private slots:
 private:
     void updateFrozenTreeViewGeometry();
 
+    QRubberBand *m_rubberBand;
     QTreeView *m_frozenTreeView;
+    QRect m_rubberBandRect;
     QModelIndexList m_expanded;
 
     Q_DISABLE_COPY(TimelineTreeView)

@@ -43,7 +43,8 @@
 #include <QtGui/QtGui>
 
 TimelineTreeView::TimelineTreeView(QItemDelegate *delegate, QWidget *parent)
-    : QTreeView(parent)
+    : QTreeView(parent),
+      m_rubberBand(0)
 {
     setItemDelegate(delegate);
     setExpandsOnDoubleClick(true);
@@ -64,6 +65,7 @@ TimelineTreeView::TimelineTreeView(QItemDelegate *delegate, QWidget *parent)
 
 TimelineTreeView::~TimelineTreeView()
 {
+    delete m_rubberBand;
 }
 
 void TimelineTreeView::initializeFrozenView()
@@ -200,6 +202,37 @@ void TimelineTreeView::setMorphKeyframesWeightBySelectedIndices(float value)
         const QModelIndexList &indices = selectionModel()->selectedIndexes();
         m->applyKeyframeWeightByModelIndices(indices, value);
     }
+}
+
+void TimelineTreeView::mousePressEvent(QMouseEvent *event)
+{
+    const QPoint &pos = event->pos();
+    m_rubberBandRect.setTopLeft(pos);
+    m_rubberBandRect.setBottomRight(pos);
+    if (!m_rubberBand)
+        m_rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
+    m_rubberBand->setGeometry(m_rubberBandRect);
+    m_rubberBand->show();
+}
+
+void TimelineTreeView::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_rubberBand->isVisible()) {
+        m_rubberBandRect.setBottomRight(event->pos());
+        const QRect &rect = m_rubberBandRect.normalized();
+        const QModelIndex &topLeft = indexAt(rect.topLeft()), &bottomRight = indexAt(rect.bottomRight());
+        QItemSelection selection;
+        selection.select(topLeft, bottomRight);
+        MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
+        selection = mbm->selectKeyframesFromItemSelection(selection);
+        selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+        m_rubberBand->setGeometry(rect);
+    }
+}
+
+void TimelineTreeView::mouseReleaseEvent(QMouseEvent * /* event */)
+{
+    m_rubberBand->hide();
 }
 
 void TimelineTreeView::mouseDoubleClickEvent(QMouseEvent *event)
