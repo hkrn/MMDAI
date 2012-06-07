@@ -86,11 +86,13 @@ protected:
             return -1;
         while (first <= last) {
             int mid = (first + last) / 2;
+            const T *keyframe = keyframes[mid];
+            const int frameIndex = int(keyframe->frameIndex());
             if (mid >= size)
                 return -1;
-            if (key > keyframes[mid]->frameIndex())
+            if (key > frameIndex)
                 first = mid + 1;
-            else if (key < keyframes[mid]->frameIndex())
+            else if (key < frameIndex)
                 last = mid - 1;
             else
                 return mid;
