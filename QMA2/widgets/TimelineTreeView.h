@@ -62,6 +62,7 @@ public:
 
 public slots:
     void addKeyframesBySelectedIndices();
+    void restoreExpandState();
     void updateFrozenTreeView();
 
 signals:
@@ -82,7 +83,6 @@ private slots:
     void setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
     void setMorphKeyframesWeightBySelectedIndices(float value);
     void updateSectionWidth(int logicalIndex, int newSize, int oldSize);
-    void restoreExpandState();
 
 private:
     void updateFrozenTreeViewGeometry();

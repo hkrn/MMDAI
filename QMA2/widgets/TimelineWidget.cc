@@ -239,18 +239,25 @@ void TimelineWidget::adjustFrameColumnSize(int value)
     MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
     int sliderPosition = slider->sliderPosition();
     int frameIndexColumnMax = m->frameIndexColumnMax();
+    int frameIndexColumnMin = MotionBaseModel::kFrameIndexColumnMinimum;
+    int maxFrameIndex = qMax(m->maxFrameIndex(), frameIndexColumnMin);
     switch (value) {
     case QAbstractSlider::SliderMove:
         if (sliderPosition >= slider->maximum()) {
             /* 列とツリーテーブルの拡張を行う */
             m->setFrameIndexColumnMax(frameIndexColumnMax + MotionBaseModel::kFrameIndexColumnStep);
             slider->setSliderPosition(sliderPosition);
+            /* リセットを行うと開閉状態もリセットされるのでリセット前の状態に戻す */
+            m_treeView->restoreExpandState();
         }
-        else if (sliderPosition <= slider->minimum() && frameIndexColumnMax > MotionBaseModel::kFrameIndexColumnMinimum) {
-            /* 値が最大値未満の場合自動的に列が切り詰められるように動作する */
+        /* 列数がモーションの最大値より大きい場合のみ切り詰めを行うようにする */
+        else if (sliderPosition <= slider->minimum() && frameIndexColumnMax > maxFrameIndex) {
+            /* setFrameIndexColumnMax の値が最大値未満の場合自動的に列が切り詰められるように処理される */
             m->setFrameIndexColumnMax(frameIndexColumnMax - MotionBaseModel::kFrameIndexColumnMinimum);
             /* リセットを行わないと空白部分がヘッダーの方で残ったままになる */
             m_treeView->header()->reset();
+            /* リセットを行うと開閉状態もリセットされるのでリセット前の状態に戻す */
+            m_treeView->restoreExpandState();
         }
         break;
     case QAbstractSlider::SliderToMaximum:
