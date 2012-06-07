@@ -206,21 +206,27 @@ void TimelineTreeView::setMorphKeyframesWeightBySelectedIndices(float value)
 
 void TimelineTreeView::mousePressEvent(QMouseEvent *event)
 {
-    const QPoint &pos = event->pos();
-    m_rubberBandRect.setTopLeft(pos);
-    m_rubberBandRect.setBottomRight(pos);
-    if (!m_rubberBand)
-        m_rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
-    m_rubberBand->setGeometry(m_rubberBandRect);
-    m_rubberBand->show();
+    const QPoint &pos = event->globalPos();
+    const QWidget *v = viewport();
+    if (v->rect().contains(v->mapFromGlobal(pos))) {
+        m_rubberBandRect.setTopLeft(pos);
+        m_rubberBandRect.setBottomRight(pos);
+        if (!m_rubberBand)
+            m_rubberBand = new QRubberBand(QRubberBand::Rectangle);
+        m_rubberBand->setGeometry(m_rubberBandRect);
+        m_rubberBand->show();
+    }
 }
 
 void TimelineTreeView::mouseMoveEvent(QMouseEvent *event)
 {
-    if (m_rubberBand->isVisible()) {
-        m_rubberBandRect.setBottomRight(event->pos());
+    const QPoint &pos = event->globalPos();
+    const QWidget *v = viewport();
+    if (m_rubberBand->isVisible() && v->rect().contains(v->mapFromGlobal(pos))) {
+        m_rubberBandRect.setBottomRight(pos);
         const QRect &rect = m_rubberBandRect.normalized();
-        const QModelIndex &topLeft = indexAt(rect.topLeft()), &bottomRight = indexAt(rect.bottomRight());
+        const QModelIndex &topLeft = indexAt(mapFromGlobal(rect.topLeft())),
+                &bottomRight = indexAt(mapFromGlobal(rect.bottomRight()));
         QItemSelection selection;
         selection.select(topLeft, bottomRight);
         MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
