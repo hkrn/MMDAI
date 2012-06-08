@@ -61,11 +61,13 @@ public:
             painter->fillRect(option.rect, qApp->palette().alternateBase());
         painter->setRenderHint(QPainter::Antialiasing);
         MotionBaseModel::ITreeItem *item = static_cast<MotionBaseModel::ITreeItem *>(index.internalPointer());
-        /* カテゴリ内のボーンリストにひとつでもキーフレームが含まれていればダイアモンドマークを表示する */
+        /* カテゴリ内のボーンリストにひとつでもキーフレームが含まれていれば中空きのダイアモンドマークを表示する */
         const PMDMotionModel *m = qobject_cast<const PMDMotionModel *>(index.model());
-        if (m && item->isCategory()) {
+        bool isCategory = item->isCategory(), hasCategoryData = false;
+        if (m && isCategory) {
             int nchildren = item->countChildren(), frameIndex = MotionBaseModel::toFrameIndex(index.column());
             bool dataFound = false;
+            /* カテゴリ内の登録済みのキーフレームを探す */
             for (int i = 0; i < nchildren; i++) {
                 const QModelIndex &mi = m->frameIndexToModelIndex(item->child(i), frameIndex);
                 if (mi.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
@@ -75,21 +77,34 @@ public:
             }
             if (dataFound) {
                 painter->setBrush(Qt::NoBrush);
-                if (option.state & QStyle::State_Selected)
-                    painter->setPen(Qt::NoPen);
-                else
+                /* 選択状態にある場合は赤線枠で表示し、登録済みの場合は黒線枠で表示 */
+                if (option.state & QStyle::State_Selected) {
+                    painter->setPen(Qt::red);
+                    hasCategoryData = true;
+                }
+                else {
                     painter->setPen(Qt::black);
+                }
                 drawDiamond(painter, option);
             }
         }
-        /* モデルのデータにキーフレームのバイナリが含まれていればダイアモンドマークを表示する */
-        painter->setPen(Qt::NoPen);
+        /* モデルのデータにキーフレームのバイナリが含まれていれば塗りつぶしのダイアモンドマークを表示する。登録済みの場合は赤色で表示 */
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
+            painter->setPen(Qt::NoPen);
             painter->setBrush(option.state & QStyle::State_Selected ? Qt::red : option.palette.foreground());
             drawDiamond(painter, option);
         }
-        else if (option.state & QStyle::State_Selected) {
-            painter->setBrush(option.palette.highlight());
+        /* 選択中の場合は選択状態の色(通常は青)で表示。カテゴリの場合は線枠、フレームの場合は塗りつぶし */
+        else if (!hasCategoryData && option.state & QStyle::State_Selected) {
+            if (isCategory) {
+                QPen pen; pen.setBrush(option.palette.highlight());
+                painter->setPen(pen);
+                painter->setBrush(Qt::NoBrush);
+            }
+            else {
+                painter->setPen(Qt::NoPen);
+                painter->setBrush(option.palette.highlight());
+            }
             drawDiamond(painter, option);
         }
         painter->restore();
@@ -128,9 +143,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_headerView->setResizeMode(0, QHeaderView::ResizeToContents);
     m_treeView->initializeFrozenView();
     m_spinBox = new QSpinBox();
+    m_spinBox->setAlignment(Qt::AlignRight);
     connect(m_spinBox, SIGNAL(valueChanged(int)), SLOT(setCurrentFrameIndex(int)));
-    connect(base, SIGNAL(frameIndexColumnMaxDidChange(int,int)), SLOT(setMaximumFrameIndexRange(int)));
-    m_spinBox->setRange(0, base->maxFrameCount());
+    connect(m_spinBox, SIGNAL(editingFinished()), SLOT(setCurrentFrameIndexAndExpandBySpinBox()));
+    m_spinBox->setRange(0, kFrameIndexColumnMax);
     m_spinBox->setWrapping(false);
     /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     m_label = new QLabel();
@@ -206,6 +222,17 @@ void TimelineWidget::setCurrentFrameIndexBySpinBox()
     setCurrentFrameIndex(frameIndex);
 }
 
+void TimelineWidget::setCurrentFrameIndexAndExpandBySpinBox()
+{
+    /* タイムラインを伸縮した上で現在のフレーム位置を選択指定 */
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
+    int frameIndex = m_spinBox->value();
+    m->setFrameIndexColumnMax(frameIndex);
+    m_treeView->header()->reset();
+    m_treeView->restoreExpandState();
+    setCurrentFrameIndexAndSelect(frameIndex);
+}
+
 void TimelineWidget::setCurrentFrameIndexAndSelect(int frameIndex)
 {
     setCurrentFrameIndex(frameIndex);
@@ -225,12 +252,6 @@ void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
     emit motionDidSeek(frameIndex, model->forceCameraUpdate());
-}
-
-void TimelineWidget::setMaximumFrameIndexRange(int value)
-{
-    m_spinBox->setRange(0, value);
-    m_spinBox->setWrapping(true);
 }
 
 void TimelineWidget::adjustFrameColumnSize(int value)
