@@ -62,7 +62,7 @@ void ConstructScriptArguments(const QString &input, QString &command, QList<QVar
 
 static int FindIndexOfActions(IModel *model, const QList<QAction *> &actions)
 {
-    const QString &name = internal::toQString(model);
+    const QString &name = internal::toQStringFromModel(model);
     int i = 0, found = -1;
     foreach (QAction *action, actions) {
         if (action->text() == name) {
@@ -175,7 +175,7 @@ void MainWindow::setCurrentModel(IModel *value)
 void MainWindow::addModel(IModel *model, const QUuid &uuid)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
-    QString name = internal::toQString(model);
+    QString name = internal::toQStringFromModel(model);
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select a model %1").arg(name));
@@ -206,7 +206,7 @@ void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
 void MainWindow::addAsset(IModel *asset, const QUuid &uuid)
 {
     /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
-    QString name = internal::toQString(asset);
+    QString name = internal::toQStringFromModel(asset);
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select an asset %1").arg(name));
@@ -304,7 +304,7 @@ const QString MainWindow::buildWindowTitle()
 {
     QString title = qAppName();
     if (m_model)
-        title += " - " + internal::toQString(m_model);
+        title += " - " + internal::toQStringFromModel(m_model);
     return title;
 }
 

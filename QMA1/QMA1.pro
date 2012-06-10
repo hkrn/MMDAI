@@ -163,6 +163,7 @@ SOURCES += main.cc \
     ../QMA2/common/SceneLoader.cc \
     ../QMA2/common/LoggerWidget.cc \
     ../QMA2/common/Handles.cc \
+    ../QMA2/common/StringHelper.cc \
     ../QMA2/common/Archive.cc \
     ../QMA2/unzip/ioapi.c \
     ../QMA2/unzip/unzip.c \
@@ -191,6 +192,7 @@ HEADERS  += \
     ../QMA2/common/InfoPanel.h \
     ../QMA2/common/DebugDrawer.h \
     ../QMA2/common/LoggerWidget.h \
+    ../QMA2/common/ScringHelper.h \
     ../QMA2/common/Archive.h \
     ../QMA2/unzip/ioapi.h \
     ../QMA2/unzip/unzip.h \

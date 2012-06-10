@@ -434,7 +434,7 @@ void Script::handleCommand(const ScriptArgument &output)
                     model->setPosition(parentModel->position());
                 }
             }
-            model->performUpdate();
+            model->performUpdate(loader->scene()->light()->direction());
             m_models.insert(modelName, model);
             Arguments a; a << modelName;
             emit eventDidPost(kModelAddEvent, a);
