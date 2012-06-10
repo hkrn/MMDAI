@@ -81,21 +81,20 @@ public:
 protected:
     template<typename T>
     static int findKeyframeIndex(int key, const Array<T *> &keyframes) {
-        int first = 0, size = keyframes.count(), last = size;
-        if (size == 0)
-            return -1;
-        while (first < last) {
-            int mid = (first + last) / 2;
+        int min = 0, max = keyframes.count() - 1;
+        while (min < max) {
+            int mid = (min + max) / 2;
             const T *keyframe = keyframes[mid];
             const int frameIndex = int(keyframe->frameIndex());
-            if (mid >= size)
-                return -1;
-            if (key > frameIndex)
-                first = mid + 1;
-            else if (key < frameIndex)
-                last = mid - 1;
+            if (frameIndex < key)
+                min = mid + 1;
             else
-                return mid;
+                max = mid;
+        }
+        if (min == max) {
+            const int frameIndex = keyframes[min]->frameIndex();
+            if (frameIndex == key)
+                return min;
         }
         return -1;
     }
