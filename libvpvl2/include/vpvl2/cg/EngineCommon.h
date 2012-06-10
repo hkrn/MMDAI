@@ -38,6 +38,7 @@
 #define VPVL2_CG_ENGINECOMMON_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/Scene.h"
 #include "vpvl2/IBone.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMorph.h"
@@ -161,17 +162,23 @@ public:
             }
         }
     }
-    void setMatrices(const IRenderDelegate *delegate, const IModel *model) {
-        setMatrix(delegate, model, m_camera, IRenderDelegate::kCameraMatrix);
-        setMatrix(delegate, model, m_cameraInversed, IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix);
-        setMatrix(delegate, model, m_cameraTransposed, IRenderDelegate::kCameraMatrix | IRenderDelegate::kTransposeMatrix);
+    void setMatrices(const IRenderDelegate *delegate, const IModel *model, int extraCameraFlags, int extraLightFlags) {
+        setMatrix(delegate, model, m_camera,
+                  extraCameraFlags | IRenderDelegate::kCameraMatrix);
+        setMatrix(delegate, model, m_cameraInversed,
+                  extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix);
+        setMatrix(delegate, model, m_cameraTransposed,
+                  extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kTransposeMatrix);
         setMatrix(delegate, model, m_cameraInverseTransposed,
-                  IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
-        setMatrix(delegate, model, m_light, IRenderDelegate::kLightMatrix);
-        setMatrix(delegate, model, m_lightInversed, IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix);
-        setMatrix(delegate, model, m_lightTransposed, IRenderDelegate::kLightMatrix | IRenderDelegate::kTransposeMatrix);
+                  extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
+        setMatrix(delegate, model, m_light,
+                  extraLightFlags | IRenderDelegate::kLightMatrix);
+        setMatrix(delegate, model, m_lightInversed,
+                  extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix);
+        setMatrix(delegate, model, m_lightTransposed,
+                  extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kTransposeMatrix);
         setMatrix(delegate, model, m_lightInverseTransposed,
-                  IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
+                  extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
     }
 
 private:
@@ -363,7 +370,7 @@ public:
         if (cgIsAnnotation(cgGetNamedParameterAnnotation(parameter, "name")))
             m_parameters.add(parameter);
     }
-    void update(IRenderDelegate *delegate, IModel *self) {
+    void update(const IRenderDelegate *delegate, const IModel *self) {
         const int nparameters = m_parameters.count();
         for (int i = 0; i < nparameters; i++) {
             CGparameter parameter = m_parameters[i];
@@ -383,7 +390,7 @@ public:
     }
 
 private:
-    void setParameter(IRenderDelegate *delegate, IModel *model, CGparameter parameter) {
+    void setParameter(const IRenderDelegate *delegate, const IModel *model, CGparameter parameter) {
         float matrix4x4[16];
         Transform::getIdentity().getOpenGLMatrix(matrix4x4);
         CGtype type = cgGetParameterType(parameter);
@@ -861,6 +868,47 @@ struct Effect {
             technique = cgGetNextTechnique(technique);
         }
         return technique;
+    }
+    void setModelMatrixParameters(const IRenderDelegate *delegate,
+                                  const IModel *model,
+                                  int extraCameraFlags = 0,
+                                  int extraLightFlags = 0)
+    {
+        world.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
+        view.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
+        projection.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
+        worldView.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
+        viewProjection.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
+        worldViewProjection.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
+    }
+    void setZeroGeometryParameters(const IModel *model) {
+        edgeColor.setGeometryColor(model->edgeColor());
+        toonColor.setGeometryColor(kZeroV3);
+        ambient.setGeometryColor(kZeroV3);
+        diffuse.setGeometryColor(kZeroV3);
+        specular.setGeometryColor(kZeroV3);
+        specularPower.setGeometryValue(0);
+        materialTexture.setTexture(0);
+        materialSphereMap.setTexture(0);
+        spadd.setValue(false);
+        useTexture.setValue(false);
+    }
+    void updateModelGeometryParameters(const IRenderDelegate *delegate, const Scene *scene, const IModel *model) {
+        const Scene::ILight *light = scene->light();
+        const Vector3 kOne(1, 1, 1);
+        ambient.setLightColor(kOne);
+        diffuse.setLightColor(kOne);
+        emissive.setLightColor(kZeroV3);
+        emissive.setGeometryColor(kZeroV3);
+        specular.setLightColor(kOne);
+        edgeColor.setLightColor(kZeroV3);
+        const Vector3 &lightDirection = light->direction();
+        position.setLightValue(-lightDirection);
+        direction.setLightValue(lightDirection);
+        const Scene::ICamera *camera = scene->camera();
+        position.setCameraValue(camera->position());
+        direction.setCameraValue(kZeroV3); // TODO: set camera direction
+        controlObject.update(delegate, model);
     }
     bool isAttached() const {
         return cgIsEffect(effect) == CG_TRUE;

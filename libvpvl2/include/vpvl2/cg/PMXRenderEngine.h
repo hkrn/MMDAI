@@ -88,25 +88,33 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    struct MaterialTextures {
-        GLuint mainTextureID;
-        GLuint sphereTextureID;
-        GLuint toonTextureID;
-    };
+    static void handleError(CGcontext context, CGerror error, void *data);
+
     enum VertexBufferObjectType {
         kModelVertices,
         kModelIndices,
         kVertexBufferObjectMax
     };
+    struct MaterialContext {
+        MaterialContext()
+            : mainTextureID(0),
+              sphereTextureID(0),
+              toonTextureColor(1, 1, 1, 1)
+        {
+        }
+        GLuint mainTextureID;
+        GLuint sphereTextureID;
+        Color toonTextureColor;
+    };
+
     const Scene *m_scene;
     cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_model;
     CGcontext m_context;
-    CGeffect m_effect;
-    Effect m_parameters;
+    Effect m_effect;
     pmx::Model::SkinningMeshes m_mesh;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
-    MaterialTextures *m_materials;
+    MaterialContext *m_materialContexts;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
 

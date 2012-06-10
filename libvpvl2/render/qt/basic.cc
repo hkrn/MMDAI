@@ -304,6 +304,11 @@ public:
             getToonColorInternal(createPath(&s, name), value);
         }
     }
+    void getToonColor(void * /* context */, int index, Color &value) {
+        QString format;
+        const QString &pathString = m_systemDir.absoluteFilePath(format.sprintf("toon%02d.bmp", index + 1));
+        getToonColorInternal(pathString, value);
+    }
     IModel *findModel(const char * /* name */) const {
         return 0;
     }
@@ -527,9 +532,6 @@ private:
             const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
             const QColor color(rgb);
             value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-        }
-        else {
-            value.setZero();
         }
     }
 

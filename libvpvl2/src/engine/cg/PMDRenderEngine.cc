@@ -64,7 +64,7 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       m_accelerator(accelerator),
       m_model(model),
       m_context(effectContext),
-      m_textures(0),
+      m_materialContexts(0),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
 {
@@ -73,16 +73,16 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
 PMDRenderEngine::~PMDRenderEngine()
 {
     glDeleteBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
-    if (m_textures) {
+    if (m_materialContexts) {
         const vpvl::MaterialList &modelMaterials = m_model->ptr()->materials();
         const int nmaterials = modelMaterials.count();
         for (int i = 0; i < nmaterials; i++) {
-            MaterialTextures &materialPrivate = m_textures[i];
+            MaterialContext &materialPrivate = m_materialContexts[i];
             glDeleteTextures(1, &materialPrivate.mainTextureID);
             glDeleteTextures(1, &materialPrivate.subTextureID);
         }
-        delete[] m_textures;
-        m_textures = 0;
+        delete[] m_materialContexts;
+        m_materialContexts = 0;
     }
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
@@ -151,21 +151,21 @@ bool PMDRenderEngine::upload(const IString *dir)
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
-    MaterialTextures *textures = m_textures = new MaterialTextures[nmaterials];
+    MaterialContext *materialContexts = m_materialContexts = new MaterialContext[nmaterials];
     m_effect.subsetCount.setValue(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         IString *primary = m_delegate->toUnicode(material->mainTextureName());
         IString *second = m_delegate->toUnicode(material->subTextureName());
-        MaterialTextures &texture = textures[i];
-        texture.mainTextureID = 0;
-        texture.subTextureID = 0;
+        MaterialContext &materialContext = materialContexts[i];
+        materialContext.mainTextureID = 0;
+        materialContext.subTextureID = 0;
         if (m_delegate->uploadTexture(context, primary, dir, &textureID, false)) {
-            texture.mainTextureID = textureID;
+            materialContext.mainTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
         if (m_delegate->uploadTexture(context, second, dir, &textureID, false)) {
-            texture.subTextureID = textureID;
+            materialContext.subTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
         delete primary;
@@ -178,7 +178,7 @@ bool PMDRenderEngine::upload(const IString *dir)
         const uint8_t *name = model->toonTexture(i);
         m_delegate->getToonColor(context, reinterpret_cast<const char *>(name), dir, m_toonTextureColors[i + 1]);
     }
-    setMatrixParameters();
+    m_effect.setModelMatrixParameters(m_delegate, m_model);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
@@ -209,28 +209,14 @@ void PMDRenderEngine::update()
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->updateModel(m_model);
 #endif
-    const Scene::ILight *light = m_scene->light();
-    const Vector3 kOne(1, 1, 1);
-    m_effect.ambient.setLightColor(kOne);
-    m_effect.diffuse.setLightColor(kOne);
-    m_effect.emissive.setLightColor(kZeroV3);
-    m_effect.emissive.setGeometryColor(kZeroV3);
-    m_effect.specular.setLightColor(kOne);
-    m_effect.edgeColor.setLightColor(kZeroV3);
-    const Vector3 &lightDirection = light->direction();
-    m_effect.position.setLightValue(-lightDirection);
-    m_effect.direction.setLightValue(lightDirection);
-    const Scene::ICamera *camera = m_scene->camera();
-    m_effect.position.setCameraValue(camera->position());
-    m_effect.direction.setCameraValue(kZeroV3); // TODO: set camera direction
-    m_effect.controlObject.update(m_delegate, m_model);
+    m_effect.updateModelGeometryParameters(m_delegate, m_scene, m_model);
 }
 
 void PMDRenderEngine::renderModel()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    setMatrixParameters();
+    m_effect.setModelMatrixParameters(m_delegate, m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -254,7 +240,7 @@ void PMDRenderEngine::renderModel()
     m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
-        const MaterialTextures &texture = m_textures[i];
+        const MaterialContext &materialContext = m_materialContexts[i];
         const Scalar &materialOpacity = material->opacity();
         const Color &toonColor = m_toonTextureColors[material->toonID()];
         diffuse = material->diffuse();
@@ -265,22 +251,22 @@ void PMDRenderEngine::renderModel()
         m_effect.specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
         m_effect.toonColor.setGeometryColor(toonColor);
         bool hasSphereMap = false;
-        bool hasMainTexture = texture.mainTextureID > 0;
+        bool hasMainTexture = materialContext.mainTextureID > 0;
         if (hasMainTexture) {
             if (material->isMainSphereAdd()) {
-                m_effect.materialSphereMap.setTexture(texture.mainTextureID);
+                m_effect.materialSphereMap.setTexture(materialContext.mainTextureID);
                 m_effect.spadd.setValue(true);
                 m_effect.useTexture.setValue(true);
                 hasSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
-                m_effect.materialSphereMap.setTexture(texture.mainTextureID);
+                m_effect.materialSphereMap.setTexture(materialContext.mainTextureID);
                 m_effect.spadd.setValue(false);
                 m_effect.useTexture.setValue(false);
                 hasSphereMap = true;
             }
             else {
-                m_effect.materialTexture.setTexture(texture.mainTextureID);
+                m_effect.materialTexture.setTexture(materialContext.mainTextureID);
                 m_effect.spadd.setValue(false);
                 m_effect.useTexture.setValue(true);
             }
@@ -290,12 +276,12 @@ void PMDRenderEngine::renderModel()
         }
         if (!hasSphereMap) {
             if (material->isSubSphereAdd()) {
-                m_effect.materialSphereMap.setTexture(texture.subTextureID);
+                m_effect.materialSphereMap.setTexture(materialContext.subTextureID);
                 m_effect.spadd.setValue(true);
                 hasSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
-                m_effect.materialSphereMap.setTexture(texture.subTextureID);
+                m_effect.materialSphereMap.setTexture(materialContext.subTextureID);
                 m_effect.spadd.setValue(false);
                 hasSphereMap = true;
             }
@@ -338,8 +324,8 @@ void PMDRenderEngine::renderEdge()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    setMatrixParameters();
-    setNoGeometryColorParameters();
+    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setZeroGeometryParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -382,8 +368,8 @@ void PMDRenderEngine::renderZPlot()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    setMatrixParameters();
-    setNoGeometryColorParameters();
+    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setZeroGeometryParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -424,30 +410,6 @@ void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
-}
-
-void PMDRenderEngine::setMatrixParameters()
-{
-    m_effect.world.setMatrices(m_delegate, m_model);
-    m_effect.view.setMatrices(m_delegate, m_model);
-    m_effect.projection.setMatrices(m_delegate, m_model);
-    m_effect.worldView.setMatrices(m_delegate, m_model);
-    m_effect.viewProjection.setMatrices(m_delegate, m_model);
-    m_effect.worldViewProjection.setMatrices(m_delegate, m_model);
-}
-
-void PMDRenderEngine::setNoGeometryColorParameters()
-{
-    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
-    m_effect.toonColor.setGeometryColor(kZeroV3);
-    m_effect.ambient.setGeometryColor(kZeroV3);
-    m_effect.diffuse.setGeometryColor(kZeroV3);
-    m_effect.specular.setGeometryColor(kZeroV3);
-    m_effect.specularPower.setGeometryValue(0);
-    m_effect.materialTexture.setTexture(0);
-    m_effect.materialSphereMap.setTexture(0);
-    m_effect.spadd.setValue(false);
-    m_effect.useTexture.setValue(false);
 }
 
 void PMDRenderEngine::handleError(CGcontext context, CGerror error, void *data)

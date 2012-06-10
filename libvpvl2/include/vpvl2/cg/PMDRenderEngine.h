@@ -55,20 +55,6 @@ class Model;
 namespace cg
 {
 
-enum VertexBufferObjectType
-{
-    kModelVertices,
-    kEdgeIndices,
-    kModelIndices,
-    kVertexBufferObjectMax
-};
-
-struct MaterialTextures
-{
-    GLuint mainTextureID;
-    GLuint subTextureID;
-};
-
 class VPVL2_API PMDRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
@@ -98,16 +84,30 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    void setMatrixParameters();
-    void setNoGeometryColorParameters();
     static void handleError(CGcontext context, CGerror error, void *data);
+
+    enum VertexBufferObjectType {
+        kModelVertices,
+        kEdgeIndices,
+        kModelIndices,
+        kVertexBufferObjectMax
+    };
+    struct MaterialContext {
+        MaterialContext()
+            : mainTextureID(0),
+              subTextureID(0)
+        {
+        }
+        GLuint mainTextureID;
+        GLuint subTextureID;
+    };
 
     const Scene *m_scene;
     cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_model;
     CGcontext m_context;
     Effect m_effect;
-    MaterialTextures *m_textures;
+    MaterialContext *m_materialContexts;
     pmd::Model::SkinningMeshes m_mesh;
     Color m_toonTextureColors[vpvl::PMDModel::kCustomTextureMax];
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
