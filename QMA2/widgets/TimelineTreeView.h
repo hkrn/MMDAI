@@ -43,6 +43,7 @@
 
 #include <vpvl2/Common.h>
 
+class MotionBaseModel;
 class QItemDelegate;
 
 class TimelineTreeView : public QTreeView
@@ -50,23 +51,27 @@ class TimelineTreeView : public QTreeView
     Q_OBJECT
 
 public:
-    explicit TimelineTreeView(QItemDelegate *delegate, QWidget *parent = 0);
+    explicit TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent = 0);
     ~TimelineTreeView();
 
     void initializeFrozenView();
     void selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly);
     void deleteKeyframesBySelectedIndices();
     void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
-    void updateFrozenTreeView();
-    const QModelIndexList &expandedModelIndices() const;
+    QItemSelectionModel *frozenViewSelectionModel() const;
 
 public slots:
     void addKeyframesBySelectedIndices();
+    void restoreExpandState();
+    void updateFrozenTreeView();
 
 signals:
     void modelIndexDidSelect(const QModelIndexList &indices);
 
 protected:
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *event);
     void resizeEvent(QResizeEvent *event);
     QModelIndex moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers);
@@ -82,7 +87,9 @@ private slots:
 private:
     void updateFrozenTreeViewGeometry();
 
+    QRubberBand *m_rubberBand;
     QTreeView *m_frozenTreeView;
+    QRect m_rubberBandRect;
     QModelIndexList m_expanded;
 
     Q_DISABLE_COPY(TimelineTreeView)

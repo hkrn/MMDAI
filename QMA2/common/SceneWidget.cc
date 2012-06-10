@@ -172,9 +172,12 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     setMinimumSize(540, 480);
     /* 通常はマウスを動かしても mouseMove が呼ばれないため、マウスが動いたら常時 mouseEvent を呼ぶようにする */
     setMouseTracking(true);
+#ifdef QMA2_ENABLE_GESTURE
+    /* ジェスチャを有効にすると突然死が発生しやすいことを確認しているため無効化 */
     grabGesture(Qt::PanGesture);
     grabGesture(Qt::PinchGesture);
     grabGesture(Qt::SwipeGesture);
+#endif
 }
 
 SceneWidget::~SceneWidget()
@@ -1155,7 +1158,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
             light->setDirection(direction * Matrix3x3(rx * ry));
         }
         /* 場面の移動 (X 方向だけ向きを逆にする) */
-        else if (modifiers & Qt::ShiftModifier) {
+        else if (modifiers & Qt::ShiftModifier || event->buttons() & Qt::MiddleButton) {
             translateScene(Vector3(diff.x() * -m_delta.x(), diff.y() * m_delta.y(), 0.0f));
         }
         /* 場面の回転 (X と Y が逆転している点に注意) */

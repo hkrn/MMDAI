@@ -61,11 +61,13 @@ public:
             painter->fillRect(option.rect, qApp->palette().alternateBase());
         painter->setRenderHint(QPainter::Antialiasing);
         MotionBaseModel::ITreeItem *item = static_cast<MotionBaseModel::ITreeItem *>(index.internalPointer());
-        /* カテゴリ内のボーンリストにひとつでもキーフレームが含まれていればダイアモンドマークを表示する */
+        /* カテゴリ内のボーンリストにひとつでもキーフレームが含まれていれば中空きのダイアモンドマークを表示する */
         const PMDMotionModel *m = qobject_cast<const PMDMotionModel *>(index.model());
-        if (m && item->isCategory()) {
+        bool isCategory = item->isCategory(), hasCategoryData = false;
+        if (m && isCategory) {
             int nchildren = item->countChildren(), frameIndex = MotionBaseModel::toFrameIndex(index.column());
             bool dataFound = false;
+            /* カテゴリ内の登録済みのキーフレームを探す */
             for (int i = 0; i < nchildren; i++) {
                 const QModelIndex &mi = m->frameIndexToModelIndex(item->child(i), frameIndex);
                 if (mi.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
@@ -75,21 +77,34 @@ public:
             }
             if (dataFound) {
                 painter->setBrush(Qt::NoBrush);
-                if (option.state & QStyle::State_Selected)
-                    painter->setPen(Qt::NoPen);
-                else
+                /* 選択状態にある場合は赤線枠で表示し、登録済みの場合は黒線枠で表示 */
+                if (option.state & QStyle::State_Selected) {
+                    painter->setPen(Qt::red);
+                    hasCategoryData = true;
+                }
+                else {
                     painter->setPen(Qt::black);
+                }
                 drawDiamond(painter, option);
             }
         }
-        /* モデルのデータにキーフレームのバイナリが含まれていればダイアモンドマークを表示する */
-        painter->setPen(Qt::NoPen);
+        /* モデルのデータにキーフレームのバイナリが含まれていれば塗りつぶしのダイアモンドマークを表示する。登録済みの場合は赤色で表示 */
         if (index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
+            painter->setPen(Qt::NoPen);
             painter->setBrush(option.state & QStyle::State_Selected ? Qt::red : option.palette.foreground());
             drawDiamond(painter, option);
         }
-        else if (option.state & QStyle::State_Selected) {
-            painter->setBrush(option.palette.highlight());
+        /* 選択中の場合は選択状態の色(通常は青)で表示。カテゴリの場合は線枠、フレームの場合は塗りつぶし */
+        else if (!hasCategoryData && option.state & QStyle::State_Selected) {
+            if (isCategory) {
+                QPen pen; pen.setBrush(option.palette.highlight());
+                painter->setPen(pen);
+                painter->setBrush(Qt::NoBrush);
+            }
+            else {
+                painter->setPen(Qt::NoPen);
+                painter->setBrush(option.palette.highlight());
+            }
             drawDiamond(painter, option);
         }
         painter->restore();
@@ -119,24 +134,20 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     : QWidget(parent)
 {
     TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
-    m_treeView = new TimelineTreeView(delegate);
+    m_treeView = new TimelineTreeView(base, delegate);
     /* 専用の選択処理を行うようにスロットを追加する */
     connect(m_treeView->horizontalScrollBar(), SIGNAL(actionTriggered(int)), SLOT(adjustFrameColumnSize(int)));
-    m_treeView->setModel(base);
-    m_treeView->setSelectionBehavior(QAbstractItemView::SelectItems);
-    m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    connect(m_treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
-            m_treeView, SLOT(selectModelIndices(QItemSelection,QItemSelection)));
     m_headerView = new TimelineHeaderView(Qt::Horizontal, stretchLastSection);
-    connect(m_headerView, SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentFrameIndex(int)));
+    connect(m_headerView, SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentFrameIndexAndSelect(int)));
     m_treeView->setHeader(m_headerView);
     m_headerView->setResizeMode(0, QHeaderView::ResizeToContents);
     m_treeView->initializeFrozenView();
     m_spinBox = new QSpinBox();
+    m_spinBox->setAlignment(Qt::AlignRight);
     connect(m_spinBox, SIGNAL(valueChanged(int)), SLOT(setCurrentFrameIndex(int)));
-    connect(base, SIGNAL(frameIndexColumnMaxDidChange(int,int)), SLOT(setMaximumFrameIndexRange(int)));
-    m_spinBox->setRange(0, base->maxFrameCount());
-    m_spinBox->setWrapping(true);
+    connect(m_spinBox, SIGNAL(editingFinished()), SLOT(setCurrentFrameIndexAndExpandBySpinBox()));
+    m_spinBox->setRange(0, kFrameIndexColumnMax);
+    m_spinBox->setWrapping(false);
     /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     m_label = new QLabel();
     m_button = new QPushButton();
@@ -154,7 +165,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QItemSelectionModel *sm = m_treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentFrameIndex(QModelIndex)));
     /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
-    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(reexpand()));
+    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_treeView, SLOT(restoreExpandState()));
     connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(setCurrentFrameIndexBySpinBox()));
     retranslate();
     setLayout(mainLayout);
@@ -170,7 +181,12 @@ void TimelineWidget::retranslate()
     m_button->setText(tr("Register"));
 }
 
-int TimelineWidget::frameIndex() const
+int TimelineWidget::currentFrameIndex() const
+{
+    return m_spinBox->value();
+}
+
+int TimelineWidget::selectedFrameIndex() const
 {
     /* 選択状態のモデルインデックスの最初のインデックスからキーフレームのインデックスを求める */
     const QModelIndexList &indices = m_treeView->selectionModel()->selectedIndexes();
@@ -179,7 +195,8 @@ int TimelineWidget::frameIndex() const
         if (index.isValid())
             return MotionBaseModel::toFrameIndex(index);
     }
-    return 0;
+    /* 選択状態のモデルインデックスがない場合はスピンボックス上の現在のフレーム位置を返すようにする */
+    return currentFrameIndex();
 }
 
 void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
@@ -190,65 +207,82 @@ void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
 
 void TimelineWidget::setCurrentFrameIndex(float frameIndex)
 {
-    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
-    setCurrentFrameIndex(model->index(0, MotionBaseModel::toModelIndex(frameIndex)));
+    setCurrentFrameIndex(int(frameIndex));
 }
 
 void TimelineWidget::setCurrentFrameIndex(int frameIndex)
 {
-    setCurrentFrameIndex(float(frameIndex));
+    MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
+    setCurrentFrameIndex(model->index(0, MotionBaseModel::toModelIndex(frameIndex)));
 }
 
 void TimelineWidget::setCurrentFrameIndexBySpinBox()
 {
-    setCurrentFrameIndex(m_spinBox->value());
+    int frameIndex = m_spinBox->value();
+    setCurrentFrameIndex(frameIndex);
+}
+
+void TimelineWidget::setCurrentFrameIndexAndExpandBySpinBox()
+{
+    /* タイムラインを伸縮した上で現在のフレーム位置を選択指定 */
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
+    int frameIndex = m_spinBox->value();
+    m->setFrameIndexColumnMax(frameIndex);
+    m_treeView->header()->reset();
+    m_treeView->restoreExpandState();
+    setCurrentFrameIndexAndSelect(frameIndex);
+}
+
+void TimelineWidget::setCurrentFrameIndexAndSelect(int frameIndex)
+{
+    setCurrentFrameIndex(frameIndex);
+    QList<int> frameIndices; frameIndices.append(frameIndex);
+    m_treeView->selectFrameIndices(frameIndices, false);
 }
 
 void TimelineWidget::setCurrentFrameIndex(const QModelIndex &index)
 {
+    if (!index.isValid())
+        return;
     /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
     int frameIndex = MotionBaseModel::toFrameIndex(index);
     model->setFrameIndex(frameIndex);
-    QList<int> frameIndices;
-    frameIndices.append(frameIndex);
-    m_treeView->selectFrameIndices(frameIndices, false);
     m_treeView->scrollTo(index);
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
     emit motionDidSeek(frameIndex, model->forceCameraUpdate());
 }
 
-void TimelineWidget::setMaximumFrameIndexRange(int value)
-{
-    m_spinBox->setRange(0, value);
-    m_spinBox->setWrapping(true);
-}
-
 void TimelineWidget::adjustFrameColumnSize(int value)
 {
     QAbstractSlider *slider = qobject_cast<QAbstractSlider *>(sender());
-    int sliderPosition = slider->sliderPosition();
     MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
+    int sliderPosition = slider->sliderPosition();
+    int frameIndexColumnMax = m->frameIndexColumnMax();
+    int frameIndexColumnMin = MotionBaseModel::kFrameIndexColumnMinimum;
+    int maxFrameIndex = qMax(m->maxFrameIndex(), frameIndexColumnMin);
     switch (value) {
     case QAbstractSlider::SliderMove:
-        if (sliderPosition == slider->maximum()) {
-            m->setFrameIndexColumnMax(m->frameIndexColumnMax() + MotionBaseModel::kFrameIndexColumnStep);
+        if (sliderPosition >= slider->maximum()) {
+            /* 列とツリーテーブルの拡張を行う */
+            m->setFrameIndexColumnMax(frameIndexColumnMax + MotionBaseModel::kFrameIndexColumnStep);
+            slider->setSliderPosition(sliderPosition);
+            /* リセットを行うと開閉状態もリセットされるのでリセット前の状態に戻す */
+            m_treeView->restoreExpandState();
         }
-        else if (sliderPosition == slider->minimum()) {
-            /* 値が最大値未満の場合自動的に列が切り詰められるように動作する */
-            m->setFrameIndexColumnMax(m->frameIndexColumnMax() - MotionBaseModel::kFrameIndexColumnStep);
-            /* リセットを行わないと空白部分がヘッダーの方で残ったままになる。また、スライダを右にずらすことでスクロール出来るようになる */
+        /* 列数がモーションの最大値より大きい場合のみ切り詰めを行うようにする */
+        else if (sliderPosition <= slider->minimum() && frameIndexColumnMax > maxFrameIndex) {
+            /* setFrameIndexColumnMax の値が最大値未満の場合自動的に列が切り詰められるように処理される */
+            m->setFrameIndexColumnMax(frameIndexColumnMax - MotionBaseModel::kFrameIndexColumnMinimum);
+            /* リセットを行わないと空白部分がヘッダーの方で残ったままになる */
             m_treeView->header()->reset();
-            slider->setSliderPosition(5);
+            /* リセットを行うと開閉状態もリセットされるのでリセット前の状態に戻す */
+            m_treeView->restoreExpandState();
         }
         break;
     case QAbstractSlider::SliderToMaximum:
-        m->setFrameIndexColumnMax(m->frameIndexColumnMax() + MotionBaseModel::kFrameIndexColumnStep);
-        break;
     case QAbstractSlider::SliderToMinimum:
-        m->setFrameIndexColumnMax(m->frameIndexColumnMax() - MotionBaseModel::kFrameIndexColumnStep);
-        break;
     case QAbstractSlider::SliderNoAction:
     case QAbstractSlider::SliderSingleStepAdd:
     case QAbstractSlider::SliderSingleStepSub:
@@ -257,11 +291,4 @@ void TimelineWidget::adjustFrameColumnSize(int value)
     default:
         break;
     }
-}
-
-void TimelineWidget::reexpand()
-{
-    /* QAbstractTableModel#reset が行われると QTreeView では閉じてしまうので、開閉状態を reset 前に戻す */
-    foreach (const QModelIndex &index, m_treeView->expandedModelIndices())
-        m_treeView->expand(index);
 }

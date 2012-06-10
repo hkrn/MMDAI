@@ -78,7 +78,7 @@ public:
         kBinaryDataRole
     };
     static const int kFrameIndexColumnStep = 5;
-    static const int kFrameIndexColumnMinimum = 30;
+    static const int kFrameIndexColumnMinimum = 31; /* 1 for header */
 
     static int toFrameIndex(const QModelIndex &index);
     static int toFrameIndex(int modelColumnIndex);
@@ -92,6 +92,7 @@ public:
     QModelIndex parent(const QModelIndex &child) const;
     int rowCount(const QModelIndex &parent) const;
     void cutKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
+    QItemSelection selectKeyframesFromItemSelection(const QItemSelection &selection);
 
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const = 0;
     virtual const QString nameFromModelIndex(const QModelIndex &index) const = 0;
@@ -102,7 +103,7 @@ public:
     virtual bool forceCameraUpdate() const = 0;
 
     vpvl2::IMotion *currentMotion() const { return m_motion; }
-    void setFrameIndex(float newIndex);
+    void setFrameIndex(int newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }
     int maxFrameCount() const { return m_frameIndexColumnOffset; }
@@ -130,7 +131,7 @@ protected:
 
     vpvl2::IMotion *m_motion;
     QUndoGroup *m_undo;
-    float m_frameIndex;
+    int m_frameIndex;
     int m_frameIndexColumnMax;
     int m_frameIndexColumnOffset;
     bool m_modified;

@@ -42,15 +42,21 @@
 
 #include <QtGui/QtGui>
 
-TimelineTreeView::TimelineTreeView(QItemDelegate *delegate, QWidget *parent)
-    : QTreeView(parent)
+TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent)
+    : QTreeView(parent),
+      m_rubberBand(0)
 {
+    setModel(mbm);
+    setSelectionBehavior(QAbstractItemView::SelectItems);
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
     setItemDelegate(delegate);
     setExpandsOnDoubleClick(true);
     setUniformRowHeights(true);
     setSortingEnabled(false);
+    setItemsExpandable(false);
     m_frozenTreeView = new QTreeView(this);
-    m_frozenTreeView->setItemDelegate(delegate);
+    QItemDelegate *itemDelegate = new QItemDelegate();
+    m_frozenTreeView->setItemDelegate(itemDelegate);
     connect(m_frozenTreeView, SIGNAL(collapsed(QModelIndex)), SLOT(addCollapsed(QModelIndex)));
     connect(m_frozenTreeView, SIGNAL(expanded(QModelIndex)), SLOT(addExpanded(QModelIndex)));
     connect(m_frozenTreeView->verticalScrollBar(), SIGNAL(valueChanged(int)),
@@ -58,19 +64,19 @@ TimelineTreeView::TimelineTreeView(QItemDelegate *delegate, QWidget *parent)
     connect(verticalScrollBar(), SIGNAL(valueChanged(int)),
             m_frozenTreeView->verticalScrollBar(), SLOT(setValue(int)));
     connect(header(), SIGNAL(sectionResized(int,int,int)), SLOT(updateSectionWidth(int,int,int)));
+    connect(selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            SLOT(selectModelIndices(QItemSelection,QItemSelection)));
 }
 
 TimelineTreeView::~TimelineTreeView()
 {
+    delete m_rubberBand;
 }
 
 void TimelineTreeView::initializeFrozenView()
 {
     QAbstractItemModel *m = model();
     m_frozenTreeView->setModel(m);
-    /* TODO: ボーン名を選択したらボーンを選択するようにするための処理を追加する */
-    //m_frozenTreeView->setSelectionModel(selectionModel());
-    m_frozenTreeView->setFocusPolicy(Qt::NoFocus);
     m_frozenTreeView->header()->setResizeMode(QHeaderView::Fixed);
     viewport()->stackUnder(m_frozenTreeView);
     updateFrozenTreeView();
@@ -91,13 +97,23 @@ void TimelineTreeView::resizeEvent(QResizeEvent *event)
 
 QModelIndex TimelineTreeView::moveCursor(CursorAction cursorAction, Qt::KeyboardModifiers modifiers)
 {
-    QModelIndex current = QTreeView::moveCursor(cursorAction, modifiers);
-    const int x = visualRect(current).topLeft().x();
-    if(cursorAction == MoveLeft && current.column() > 0 && x < m_frozenTreeView->columnWidth(0)){
-        const int newValue = horizontalScrollBar()->value() + x - m_frozenTreeView->columnWidth(0);
-        horizontalScrollBar()->setValue(newValue);
+    const QModelIndex &ci = currentIndex();
+    int column = ci.column();
+    if (column == 0) {
+        return QModelIndex();
     }
-    return current;
+    else if (column == 1 && cursorAction == MoveLeft) {
+        return ci;
+    }
+    else {
+        const QModelIndex &current = QTreeView::moveCursor(cursorAction, modifiers);
+        const int x = visualRect(current).topLeft().x();
+        if(cursorAction == MoveLeft && current.column() > 0 && x < m_frozenTreeView->columnWidth(0)){
+            const int newValue = horizontalScrollBar()->value() + x - m_frozenTreeView->columnWidth(0);
+            horizontalScrollBar()->setValue(newValue);
+        }
+        return current;
+    }
 }
 
 void TimelineTreeView::scrollTo(const QModelIndex &index, ScrollHint hint)
@@ -130,19 +146,35 @@ void TimelineTreeView::updateFrozenTreeViewGeometry()
     m_frozenTreeView->setGeometry(rect);
 }
 
+QItemSelectionModel *TimelineTreeView::frozenViewSelectionModel() const
+{
+    return m_frozenTreeView->selectionModel();
+}
+
 void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool registeredOnly)
 {
     QItemSelection selection;
     if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(model())) {
         /* 現在のキーフレームのインデックスから全てのボーンまたは頂点モーフを選択する処理 */
+        QSet<QModelIndex> categories;
         foreach (PMDMotionModel::ITreeItem *item, pmm->keys().values()) {
             foreach (int frameIndex, frameIndices) {
+                /* モデルインデックス(登録済みのキーフレームのみ取得するように指定されている場合はデータがあるかを確認してなかったらスキップする) */
                 const QModelIndex &index = pmm->frameIndexToModelIndex(item, frameIndex);
-                if (registeredOnly && !index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
-                    continue;
+                if (registeredOnly) {
+                    const QVariant &variant = index.data(MotionBaseModel::kBinaryDataRole);
+                    if (!variant.canConvert(QVariant::ByteArray))
+                        continue;
+                }
                 selection.append(QItemSelectionRange(index));
+                /* カテゴリを追加 */
+                const QModelIndex &category = pmm->index(item->parent()->rowIndex(), MotionBaseModel::toModelIndex(frameIndex));
+                categories.insert(category);
             }
         }
+        /* すべてのカテゴリを選択状態にする */
+        foreach (const QModelIndex &index, categories)
+            selection.append(QItemSelectionRange(index));
         selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
     }
     else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(model())) {
@@ -188,9 +220,53 @@ void TimelineTreeView::setMorphKeyframesWeightBySelectedIndices(float value)
     }
 }
 
-const QModelIndexList &TimelineTreeView::expandedModelIndices() const
+void TimelineTreeView::mousePressEvent(QMouseEvent *event)
 {
-    return m_expanded;
+    const QPoint &pos = event->globalPos();
+    const QWidget *v = viewport();
+    if (v->rect().contains(v->mapFromGlobal(pos))) {
+        m_rubberBandRect.setTopLeft(pos);
+        m_rubberBandRect.setBottomRight(pos);
+        if (!m_rubberBand)
+            m_rubberBand = new QRubberBand(QRubberBand::Rectangle);
+        m_rubberBand->setGeometry(m_rubberBandRect);
+        m_rubberBand->show();
+    }
+}
+
+void TimelineTreeView::mouseMoveEvent(QMouseEvent *event)
+{
+    const QPoint &pos = event->globalPos();
+    const QWidget *v = viewport();
+    if (m_rubberBand->isVisible() && v->rect().contains(v->mapFromGlobal(pos))) {
+        m_rubberBandRect.setBottomRight(pos);
+        const QRect &rect = m_rubberBandRect.normalized();
+        const QModelIndex &topLeft = indexAt(mapFromGlobal(rect.topLeft())),
+                &bottomRight = indexAt(mapFromGlobal(rect.bottomRight()));
+        QItemSelection selection;
+        selection.select(topLeft, bottomRight);
+        MotionBaseModel *mbm = static_cast<MotionBaseModel *>(model());
+        selection = mbm->selectKeyframesFromItemSelection(selection);
+        selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+        m_rubberBand->setGeometry(rect);
+    }
+}
+
+void TimelineTreeView::mouseReleaseEvent(QMouseEvent *event)
+{
+    MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
+    if (m_rubberBandRect.topLeft() == m_rubberBandRect.bottomRight()) {
+        const QModelIndex &index = indexAt(event->pos());
+        if (index.isValid()) {
+            selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+            m->setFrameIndex(MotionBaseModel::toFrameIndex(index));
+        }
+    }
+    else {
+        const QModelIndex &index = indexAt(mapFromGlobal(m_rubberBandRect.topLeft()));
+        m->setFrameIndex(MotionBaseModel::toFrameIndex(index));
+    }
+    m_rubberBand->hide();
 }
 
 void TimelineTreeView::mouseDoubleClickEvent(QMouseEvent *event)
@@ -222,11 +298,12 @@ void TimelineTreeView::addExpanded(const QModelIndex &index)
 void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const QItemSelection & /* deselected */)
 {
     QAbstractItemModel *m = model();
-    QModelIndexList names, indices;
+    QModelIndexList names, indices, selectedIndices = selected.indexes();
     /* ボーンまた頂点モーフのモデルである PMDMotionModel のクラスである */
-    if (PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(m)) {
+    if (selectedIndices.size() > 0) {
+        PMDMotionModel *pmm = qobject_cast<PMDMotionModel *>(m);
         QItemSelectionModel *sm = selectionModel();
-        foreach (const QModelIndex &index, selected.indexes()) {
+        foreach (const QModelIndex &index, selectedIndices) {
             PMDMotionModel::ITreeItem *item = static_cast<PMDMotionModel::ITreeItem *>(index.internalPointer());
             /* ボーンまたは頂点フレームのカテゴリ名またはキーフレームが選択されていることを確認する */
             int column = index.column();
@@ -234,6 +311,7 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
                 if (item->isCategory()) {
                     int nchildren = item->countChildren();
                     for (int i = 0; i < nchildren; i++) {
+                        /* ボーン名またはモーフ名 */
                         if (column == 0) {
                             const QModelIndex &child = pmm->index(i, 0, index);
                             names.append(child);
@@ -257,6 +335,12 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
         if (!names.empty() && (bmm = qobject_cast<BoneMotionModel *>(pmm)))
             bmm->selectBonesByModelIndices(names);
     }
+}
+
+void TimelineTreeView::restoreExpandState()
+{
+    foreach (const QModelIndex &index, m_expanded)
+        m_frozenTreeView->expand(index);
 }
 
 TimelineHeaderView::TimelineHeaderView(Qt::Orientation orientation,

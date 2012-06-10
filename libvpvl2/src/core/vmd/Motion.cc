@@ -428,18 +428,22 @@ void Motion::deleteKeyframe(IKeyframe *&value)
     switch (value->type()) {
     case IKeyframe::kBone:
         m_boneMotion.deleteKeyframe(value);
+        update(IKeyframe::kBone);
         value = 0;
         break;
     case IKeyframe::kCamera:
         m_cameraMotion.deleteKeyframe(value);
+        update(IKeyframe::kCamera);
         value = 0;
         break;
     case IKeyframe::kLight:
         m_lightMotion.deleteKeyframe(value);
+        update(IKeyframe::kLight);
         value = 0;
         break;
     case IKeyframe::kMorph:
         m_morphMotion.deleteKeyframe(value);
+        update(IKeyframe::kMorph);
         value = 0;
         break;
     default:

@@ -110,12 +110,16 @@ public:
         m_model = internal::toQStringFromModel(model);
     }
     void setBones(const QList<IBone *> &bones, const QString &alterTextOnMultiple) {
-        if (bones.count() > 1)
+        int nbones = bones.size();
+        if (nbones > 1) {
             m_bone = alterTextOnMultiple;
-        else if (bones.count() == 1)
+        }
+        else if (nbones == 1) {
             m_bone = internal::toQStringFromBone(bones.first());
-        else
+        }
+        else {
             m_bone = internal::toQStringFromBone(static_cast<IBone *>(0));
+        }
     }
     void setFPS(float value) {
         m_fps = value;

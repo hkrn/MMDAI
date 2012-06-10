@@ -121,11 +121,25 @@ void MotionBaseModel::cutKeyframesByModelIndices(const QModelIndexList &indices,
     deleteKeyframesByModelIndices(indices);
 }
 
-void MotionBaseModel::setFrameIndex(float newIndex)
+QItemSelection MotionBaseModel::selectKeyframesFromItemSelection(const QItemSelection &selection)
 {
-    float oldIndex = m_frameIndex;
-    m_frameIndex = newIndex;
-    emit frameIndexDidChange(newIndex, oldIndex);
+    const QModelIndexList &indices = selection.indexes();
+    QItemSelection newSelection;
+    foreach (const QModelIndex &index, indices) {
+        const QVariant &variant = index.data(kBinaryDataRole);
+        if (variant.canConvert(QVariant::ByteArray))
+            newSelection.select(index, index);
+    }
+    return newSelection;
+}
+
+void MotionBaseModel::setFrameIndex(int newIndex)
+{
+    int oldIndex = m_frameIndex;
+    if (oldIndex != newIndex) {
+        m_frameIndex = newIndex;
+        emit frameIndexDidChange(newIndex, oldIndex);
+    }
 }
 
 void MotionBaseModel::setModified(bool value)

@@ -99,7 +99,6 @@ signals:
 
 private slots:
     void retranslate();
-    void addBoneKeyframesAtCurrentFrameIndex(vpvl2::IBone *bone);
     void addMorphKeyframesAtCurrentFrameIndex(vpvl2::IMorph *morph);
     void setCurrentFrameIndex(int value);
     void setCurrentFrameIndexZero();
@@ -122,6 +121,7 @@ private slots:
     void openInterpolationDialog(const QModelIndexList &indices);
     void openInterpolationDialogBySelectedIndices();
     void selectBones(const QList<vpvl2::IBone *> &bones);
+    void selectBonesByItemSelection(const QItemSelection &selection);
     void selectButton(QAbstractButton *button);
     void setLastSelectedModel(vpvl2::IModel *model);
     void clearLastSelectedModel();

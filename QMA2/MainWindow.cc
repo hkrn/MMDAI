@@ -920,11 +920,13 @@ void MainWindow::buildUI()
     m_menuView->addAction(m_actionShowModelDock);
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionShowModelDialog);
+#ifdef QMA2_ENABLE_GESTURE
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionEnableMoveGesture);
     m_menuView->addAction(m_actionEnableRotateGesture);
     m_menuView->addAction(m_actionEnableScaleGesture);
     m_menuView->addAction(m_actionEnableUndoGesture);
+#endif
     m_menuBar->addMenu(m_menuView);
     m_menuHelp = new QMenu(this);
     m_menuHelp->addAction(m_actionAbout);
@@ -1317,8 +1319,11 @@ void MainWindow::connectSceneLoader()
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
     Scene::ILight *light = scene->light();
+    const Vector3 &direction = light->direction();
     lightWidget->setColor(light->color());
-    lightWidget->setDirection(light->direction());
+    lightWidget->setDirection(direction);
+    m_boneMotionModel->setLightDirection(direction);
+    m_morphMotionModel->setLightDirection(direction);
     connect(loader, SIGNAL(lightColorDidSet(vpvl2::Vector3)), lightWidget, SLOT(setColor(vpvl2::Vector3)));
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));
