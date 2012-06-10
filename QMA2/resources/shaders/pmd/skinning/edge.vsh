@@ -4,6 +4,7 @@ uniform vec4 color;
 attribute vec3 inPosition;
 attribute vec3 inNormal; // unused
 varying vec4 outColor;
+const float kOne = 1.0;
 
 attribute vec3 inBoneIndicesAndWeights;
 const int kMaxBones = 128;
@@ -18,7 +19,7 @@ vec4 performLinearBlendSkinning(const vec4 position) {
 
 void main() {
     outColor = color;
-    vec4 position = performLinearBlendSkinning(vec4(inPosition, 1.0));
+    vec4 position = performLinearBlendSkinning(vec4(inPosition, kOne));
     gl_Position = modelViewProjectionMatrix * position;
 }
 

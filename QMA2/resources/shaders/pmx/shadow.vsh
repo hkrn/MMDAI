@@ -1,8 +1,9 @@
 /* pmx/shadow.vsh */
 uniform mat4 modelViewProjectionMatrix;
-attribute vec4 inPosition;
+attribute vec3 inPosition;
+const float kOne = 1.0;
 
 void main() {
-    gl_Position = modelViewProjectionMatrix * vec4(inPosition.xyz, 1.0);
+    gl_Position = modelViewProjectionMatrix * vec4(inPosition, kOne);
 }
 

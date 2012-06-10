@@ -10,7 +10,7 @@ uniform vec3 materialAmbient;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
 uniform bool hasDepthTexture;
-attribute vec4 inPosition;
+attribute vec3 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 attribute vec2 inToonCoord;
@@ -46,7 +46,7 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 }
 
 void main() {
-    vec4 position = performLinearBlendSkinning(inPosition);
+    vec4 position = performLinearBlendSkinning(vec4(inPosition, kOne));
     vec3 normal = performLinearBlendSkinning(vec4(inNormal, kZero)).xyz;
     vec3 view = normalize(normalMatrix * position.xyz);
     vec4 color = vec4(materialAmbient, materialDiffuse.a);

@@ -9,8 +9,8 @@ uniform vec3 lightDirection;
 uniform vec3 materialAmbient;
 uniform bool hasSphereTexture;
 uniform bool hasDepthTexture;
-attribute vec4 inPosition;
 attribute vec4 inUVA1;
+attribute vec3 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 attribute vec2 inToonCoord;
@@ -36,12 +36,11 @@ vec2 makeSphereMap(const vec3 position, const vec3 normal) {
 }
 
 void main() {
-    vec3 position3 = inPosition.xyz;
-    vec4 position = vec4(position3, kOne);
-    vec3 view = normalize(normalMatrix * position3);
+    vec4 position = vec4(inPosition, kOne);
+    vec3 view = normalize(normalMatrix * inPosition);
     vec4 color = vec4(materialAmbient, materialDiffuse.a);
     color.rgb += lightColor * materialDiffuse.rgb;
-    outEyeView = cameraPosition - position3;
+    outEyeView = cameraPosition - inPosition;
     outNormal = inNormal;
     outColor = max(min(color, kOne4), kZero4);
     outTexCoord.xy = inTexCoord;

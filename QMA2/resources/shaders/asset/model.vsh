@@ -13,7 +13,7 @@ uniform float materialShininess;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
 uniform bool hasDepthTexture;
-attribute vec4 inPosition;
+attribute vec3 inPosition;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
 varying vec4 outColor;
@@ -31,7 +31,7 @@ vec2 makeSphereMap(vec3 position, vec3 normal) {
 }
 
 void main() {
-    vec3 view = normalize(inPosition.xyz);
+    vec3 view = normalize(inPosition);
     vec3 normal = normalize(normalMatrix * inNormal);
     vec4 color = vec4(materialAmbient * lightColor + materialDiffuse.rgb * lightColor, materialDiffuse.a);
     vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
@@ -40,6 +40,6 @@ void main() {
     outTexCoord = vec4(mainTexCoord, subTexCoord);
     if (hasDepthTexture)
         outShadowCoord = lightViewProjectionMatrix * transformMatrix * inPosition;
-    gl_Position = modelViewProjectionMatrix * transformMatrix * inPosition;
+    gl_Position = modelViewProjectionMatrix * transformMatrix * vec4(inPosition, kOne);
 }
 

@@ -1,6 +1,7 @@
 /* pmx/edge.vsh */
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
+uniform float edgeSize;
 attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute float inEdgeSize;
@@ -47,7 +48,7 @@ void main() {
     int type = int(inPosition.w);
     vec3 position = performSkinning(inPosition.xyz, type).xyz;
     vec3 normal = performSkinning(inNormal, type).xyz;
-    vec3 edge = position + normal * inEdgeSize * 0.03;
-    gl_Position = modelViewProjectionMatrix * vec4(edge, 0.0);
+    vec3 edge = position + normal * inEdgeSize * edgeSize * 0.03;
+    gl_Position = modelViewProjectionMatrix * vec4(edge, 0.0); // disabled
 }
 

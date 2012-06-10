@@ -1,6 +1,7 @@
 /* pmd/zplot.vsh */
 uniform mat4 modelViewProjectionMatrix;
-attribute vec4 inPosition;
+attribute vec3 inPosition;
+const float kOne = 1.0;
 
 attribute vec3 inBoneIndicesAndWeights;
 const int kMaxBones = 128;
@@ -14,7 +15,7 @@ vec4 performLinearBlendSkinning(const vec4 position) {
 }
 
 void main() {
-    vec4 position = performLinearBlendSkinning(inPosition);
+    vec4 position = performLinearBlendSkinning(vec4(inPosition, kOne));
     gl_Position = modelViewProjectionMatrix * position;
 }
 

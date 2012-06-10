@@ -2,6 +2,7 @@
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 shadowMatrix;
 attribute vec4 inPosition;
+const float kOne = 1.0;
 
 attribute vec4 inBoneIndices;
 attribute vec4 inBoneWeights;
