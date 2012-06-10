@@ -280,8 +280,8 @@ void PMXRenderEngine::renderEdge()
     size_t offset = 0;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
-    glVertexPointer(3, GL_FLOAT, m_model->strideSize(pmx::Model::kVertexStride),
-                    reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kVertexStride)));
+    glVertexPointer(3, GL_FLOAT, m_model->strideSize(pmx::Model::kEdgeVertexStride),
+                    reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kEdgeVertexStride)));
     glEnableClientState(GL_VERTEX_ARRAY);
     glCullFace(GL_FRONT);
     for (int i = 0; i < nmaterials; i++) {

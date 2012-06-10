@@ -1078,7 +1078,7 @@ private:
             qWarning("Failed parsing the model: %d", model->error());
             return 0;
         }
-        model->setEdgeWidth(1);
+        //model->setEdgeWidth(1);
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
         String s(dir);
