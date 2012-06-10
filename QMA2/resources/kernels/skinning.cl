@@ -34,8 +34,8 @@ void performSkinning(const __global float16 *localMatrices,
     int id = get_global_id(0);
     if (id < nvertices) {
         int strideOffset = strideSize * id;
-        float4 position = vertices[strideOffset + offsetPosition];
-        float4 normal = vertices[strideOffset + offsetNormal];
+        float4 position = (float4)(vertices[strideOffset + offsetPosition].xyz, 1.0);
+        float4 normal = (float4)(vertices[strideOffset + offsetNormal].xyz, 0.0);
         int2 boneIndex = boneIndices[id];
         float weight = boneWeights[id];
         float16 transform1 = localMatrices[boneIndex.x];
@@ -65,15 +65,18 @@ void performSkinning2(const __global float16 *localMatrices,
                       const int offsetPosition,
                       const int offsetNormal,
                       const int offsetTexCoord,
+                      const int offsetEdgeVertex,
+                      const int offsetEdgeSize,
                       __global float4 *vertices)
 {
     int id = get_global_id(0);
     if (id < nvertices) {
         int strideOffset = strideSize * id;
-        float4 position = vertices[strideOffset + offsetPosition];
-        float4 normal = vertices[strideOffset + offsetNormal];
+        float4 position = (float4)(vertices[strideOffset + offsetPosition].xyz, 1.0);
+        float4 normal = (float4)(vertices[strideOffset + offsetNormal].xyz, 0.0);
         int4 boneIndex = boneIndices[id];
         float4 weight = boneWeights[id];
+        float4 position2, normal2;
         if (boneIndex.w >= 0) { // bdef4
             float16 transform1 = localMatrices[boneIndex.x];
             float16 transform2 = localMatrices[boneIndex.y];
@@ -87,8 +90,8 @@ void performSkinning2(const __global float16 *localMatrices,
             float4 n2 = matrixMultVector3(&transform2, &normal);
             float4 n3 = matrixMultVector3(&transform3, &normal);
             float4 n4 = matrixMultVector3(&transform4, &normal);
-            float4 position2 = weight.x * v1 + weight.y * v2 + weight.z * v3 + weight.w * v4;
-            float4 normal2 = weight.x * n1 + weight.y * n2 + weight.z * n3 + weight.w * n4;;
+            position2 = weight.x * v1 + weight.y * v2 + weight.z * v3 + weight.w * v4;
+            normal2 = weight.x * n1 + weight.y * n2 + weight.z * n3 + weight.w * n4;;
             vertices[strideOffset + offsetPosition] = position2;
             vertices[strideOffset + offsetNormal] = normal2;
             vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
@@ -102,20 +105,21 @@ void performSkinning2(const __global float16 *localMatrices,
             float4 n2 = matrixMultVector3(&transform2, &normal);
             float w = weight.x;
             float s = 1.0f - w;
-            float4 position2 = s * v2 + w * v1;
-            float4 normal2 = s * n2 + w * n1;
+            position2 = s * v2 + w * v1;
+            normal2 = s * n2 + w * n1;
             vertices[strideOffset + offsetPosition] = position2;
             vertices[strideOffset + offsetNormal] = normal2;
             vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
         } else { // bdef1
             float16 transform = localMatrices[boneIndex.x];
-            float4 position2 = matrixMultVector4(&transform, &position);
-            float4 normal2 = matrixMultVector3(&transform, &normal);
+            position2 = matrixMultVector4(&transform, &position);
+            normal2 = matrixMultVector3(&transform, &normal);
             vertices[strideOffset + offsetPosition] = position2;
             vertices[strideOffset + offsetNormal] = normal2;
             vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
         }
-        vertices[strideOffset + offsetNormal].w = edgeSize[id];
+        float edgeSize = vertices[strideOffset + offsetEdgeSize].x;
+        vertices[strideOffset + offsetEdgeVertex] = position2 + normal2 * (edgeSize * 0.03f);
     }
 }
 
