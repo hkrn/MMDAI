@@ -78,6 +78,7 @@ public:
         kEdgeSizeStride,
         kToonCoordStride,
         kEdgeVertexStride,
+        kVertexIndexStride,
         kBoneIndexStride,
         kBoneWeightStride,
         kUVA1Stride,

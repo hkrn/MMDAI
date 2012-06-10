@@ -126,6 +126,8 @@ size_t Model::strideOffset(StrideType type)
         return reinterpret_cast<const uint8_t *>(&v.texcoord[2]) - base;
     case kEdgeVertexStride:
         return reinterpret_cast<const uint8_t *>(&v.edge) - base;
+    case kVertexIndexStride:
+        return reinterpret_cast<const uint8_t *>(&v.edge[3]) - base;
     case kBoneIndexStride:
         return reinterpret_cast<const uint8_t *>(&v.boneIndices) - base;
     case kBoneWeightStride:
@@ -152,6 +154,7 @@ size_t Model::strideSize(StrideType type)
     case kEdgeSizeStride:
     case kToonCoordStride:
     case kEdgeVertexStride:
+    case kVertexIndexStride:
     case kBoneIndexStride:
     case kBoneWeightStride:
     case kUVA1Stride:
@@ -330,7 +333,6 @@ void Model::performUpdate(const Vector3 &lightDirection)
                 const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
                 const float edgeSize = vertex->edgeSize();
                 vertex->performSkinning(v.position, v.normal);
-                v.normal[3] = edgeSize;
                 v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5);
                 v.edge = v.position + v.normal * edgeSize * materialEdgeSize * 0.03;
                 v.uva1 = vertex->uv(1);
@@ -768,6 +770,20 @@ void Model::parseMaterials(const DataInfo &info)
         m_materials.add(material);
         material->read(ptr, info, size);
         ptr += size;
+    }
+    /* set initial skinned vertex value */
+    int offset = 0;
+    for (int i = 0; i < nmaterials; i++) {
+        const Material *material = m_materials[i];
+        const int nindices = material->indices(), offsetTo = offset + nindices;
+        for (int i = offset; i < offsetTo; i++) {
+            const int index = m_indices[i];
+            Vertex *vertex = m_vertices[index];
+            SkinnedVertex &v = m_skinnedVertices[index];
+            v.normal[3] = vertex->edgeSize();
+            v.edge[3] = index;
+        }
+        offset += nindices;
     }
 }
 
