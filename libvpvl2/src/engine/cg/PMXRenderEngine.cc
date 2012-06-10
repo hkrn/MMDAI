@@ -107,7 +107,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     initializeGLFunctions(glContext);
 #endif
     IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
-    CGeffect effect;
+    CGeffect effect = 0;
     cgSetErrorHandler(&PMXRenderEngine::handleError, this);
     if (source)
         effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
