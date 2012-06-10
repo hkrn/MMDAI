@@ -445,7 +445,7 @@ void MainWindow::buildMenuBar()
     m_menuScript->addAction(m_actionPause);
     m_menuScript->addAction(m_actionStop);
     m_menuScript->addSeparator();
-    m_menuScript->addAction(m_actionEnableAcceleration);
+    //m_menuScript->addAction(m_actionEnableAcceleration);
     m_menuScript->addAction(m_actionShowModelDialog);
     m_menuScript->addSeparator();
     m_menuScript->addAction(m_actionExecuteCommand);
@@ -507,7 +507,6 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(assetDidAdd(vpvl2::IModel*,QUuid)), this, SLOT(addAsset(vpvl2::IModel*,QUuid)));
     connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), this, SLOT(deleteAsset(vpvl2::IModel*,QUuid)));
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), this, SLOT(setCurrentModel(vpvl2::IModel*)));
-    connect(m_actionEnableAcceleration, SIGNAL(triggered(bool)), loader, SLOT(setAccelerationEnabled(bool)));
 }
 
 void MainWindow::disableAcceleration()

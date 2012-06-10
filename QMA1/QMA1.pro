@@ -192,7 +192,7 @@ HEADERS  += \
     ../QMA2/common/InfoPanel.h \
     ../QMA2/common/DebugDrawer.h \
     ../QMA2/common/LoggerWidget.h \
-    ../QMA2/common/ScringHelper.h \
+    ../QMA2/common/StringHelper.h \
     ../QMA2/common/Archive.h \
     ../QMA2/unzip/ioapi.h \
     ../QMA2/unzip/unzip.h \

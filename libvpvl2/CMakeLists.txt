@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(VPVL2_VERSION_MAJOR 0)
-set(VPVL2_VERSION_COMPAT 3)
+set(VPVL2_VERSION_COMPAT 4)
 set(VPVL2_VERSION_MINOR 0)
 
 # set library version
