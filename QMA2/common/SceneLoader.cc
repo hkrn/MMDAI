@@ -667,6 +667,9 @@ void SceneLoader::deleteAsset(IModel *asset)
     if (asset && m_project->containsModel(asset)) {
         const QUuid uuid(m_project->modelUUID(asset).c_str());
         emit assetWillDelete(asset, uuid);
+        /* 削除対象が選択中の場合は追加後に commitAssetProperties で落ちることを防ぐために 0 にリセットする */
+        if (asset == m_asset)
+            m_asset = 0;
         m_project->removeModel(asset);
         m_project->deleteModel(asset);
         m_renderOrderList.remove(uuid);
@@ -690,6 +693,12 @@ void SceneLoader::deleteModel(IModel *&model)
         const QUuid uuid(m_project->modelUUID(model).c_str());
         emit modelWillDelete(model, uuid);
         /*
+         * 削除対象が選択中の場合選択対象から外して 0 にリセットする
+         * ただし実際は先に setSelectedModel(0) で解除してしまうので予防策
+         */
+        if (model == m_model)
+            m_model = 0;
+        /*
          * motionWillDelete を発行するため、削除対象のモデルに所属するモーションを削除する。
          * なお、データの物理削除を伴うため、配列に削除前のモーション配列をコピーしてから処理する必要がある。
          * そうしないと削除したモーションデータを参照してクラッシュしてしまう。
@@ -706,7 +715,6 @@ void SceneLoader::deleteModel(IModel *&model)
         m_project->removeModel(model);
         m_project->deleteModel(model);
         m_renderOrderList.remove(uuid);
-        m_model = 0;
     }
 }
 
