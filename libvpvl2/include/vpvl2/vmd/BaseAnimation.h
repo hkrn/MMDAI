@@ -84,7 +84,7 @@ protected:
         int first = 0, size = keyframes.count(), last = size;
         if (size == 0)
             return -1;
-        while (first <= last) {
+        while (first < last) {
             int mid = (first + last) / 2;
             const T *keyframe = keyframes[mid];
             const int frameIndex = int(keyframe->frameIndex());
