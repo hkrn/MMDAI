@@ -298,6 +298,18 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetTexCoord): %d", argumentIndex, err);
         return;
     }
+    size_t offsetEdgeVertex = model->strideOffset(pmx::Model::kEdgeVertexStride) >> 4;
+    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeVertex), &offsetEdgeVertex);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
+        return;
+    }
+    size_t offsetEdgeSize = model->strideOffset(pmx::Model::kEdgeSizeStride) >> 4;
+    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeSize), &offsetEdgeSize);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
+        return;
+    }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_verticesBuffer), &m_verticesBuffer);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %th argument of kernel (vertices): %d", argumentIndex, err);

@@ -115,6 +115,7 @@ public:
     EdgeProgram(IRenderDelegate *delegate)
         : BaseShaderProgram(delegate),
           m_colorUniformLocation(0),
+          m_edgeSizeUniformLocation(0),
           m_opacityUniformLocation(0),
           m_boneIndicesAttributeLocation(0),
           m_boneWeightsAttributeLocation(0),
@@ -123,6 +124,7 @@ public:
     }
     ~EdgeProgram() {
         m_colorUniformLocation = 0;
+        m_edgeSizeUniformLocation = 0;
         m_opacityUniformLocation = 0;
         m_boneIndicesAttributeLocation = 0;
         m_boneWeightsAttributeLocation = 0;
@@ -131,6 +133,9 @@ public:
 
     void setColor(const Color &value) {
         glUniform4fv(m_colorUniformLocation, 1, value);
+    }
+    void setSize(const Scalar &value) {
+        glUniform1f(m_edgeSizeUniformLocation, value);
     }
     void setOpacity(const Scalar &value) {
         glUniform1f(m_opacityUniformLocation, value);
@@ -151,6 +156,7 @@ protected:
     virtual void getLocations() {
         BaseShaderProgram::getLocations();
         m_colorUniformLocation = glGetUniformLocation(m_program, "color");
+        m_edgeSizeUniformLocation = glGetUniformLocation(m_program, "edgeSize");
         m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
@@ -159,6 +165,7 @@ protected:
 
 private:
     GLuint m_colorUniformLocation;
+    GLuint m_edgeSizeUniformLocation;
     GLuint m_opacityUniformLocation;
     GLuint m_boneIndicesAttributeLocation;
     GLuint m_boneWeightsAttributeLocation;
@@ -871,6 +878,7 @@ void PMXRenderEngine::renderEdge()
                 edgeProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
                 edgeProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
                 edgeProgram->setBoneMatrices(mesh.matrices[i], mesh.bones[i].size());
+                edgeProgram->setSize(material->edgeSize());
             }
             glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         }
