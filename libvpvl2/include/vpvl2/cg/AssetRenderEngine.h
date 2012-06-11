@@ -97,6 +97,8 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
+    static void handleError(CGcontext context, CGerror error, void *data);
+
     struct AssetVertex {
         AssetVertex() {}
         vpvl2::Vector4 position;
@@ -105,6 +107,11 @@ private:
         vpvl2::Color color;
     };
     struct AssetVBO {
+        AssetVBO()
+            : vertices(0),
+              indices(0)
+        {
+        }
         GLuint vertices;
         GLuint indices;
     };
@@ -120,8 +127,7 @@ private:
     const Scene *m_scene;
     asset::Model *m_model;
     CGcontext m_context;
-    CGeffect m_effect;
-    Effect m_parameters;
+    Effect m_effect;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, AssetVertices> m_vertices;
     std::map<const struct aiMesh *, AssetIndices> m_indices;

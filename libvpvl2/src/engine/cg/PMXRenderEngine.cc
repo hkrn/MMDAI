@@ -191,6 +191,7 @@ void PMXRenderEngine::update()
         m_accelerator->updateModel(m_model, m_scene);
 #endif
     m_effect.updateModelGeometryParameters(m_delegate, m_scene, m_model);
+    m_effect.updateViewportParameters(m_delegate);
 }
 
 void PMXRenderEngine::renderModel()

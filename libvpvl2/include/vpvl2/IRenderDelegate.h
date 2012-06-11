@@ -73,6 +73,12 @@ public:
         kModelSkinningKernel,
         kMaxKernelType
     };
+    enum MousePositionType {
+        kMouseCursorPosition,
+        kMouseLeftPressPosition,
+        kMouseMiddlePressPosition,
+        kMouseRightPressPosition
+    };
     enum MatrixTypeFlags {
         kWorldMatrix        = 0x001,
         kViewMatrix         = 0x002,
@@ -167,7 +173,11 @@ public:
 
     virtual void getViewport(Vector3 &value) const = 0;
 
-    virtual void getTime(int64_t &value, bool sync) const = 0;
+    virtual void getMousePosition(Vector4 &value, MousePositionType type) const = 0;
+
+    virtual void getTime(float &value, bool sync) const = 0;
+
+    virtual void getElapsed(float &value, bool sync) const = 0;
 
     virtual IModel *findModel(const char *name) const = 0;
 

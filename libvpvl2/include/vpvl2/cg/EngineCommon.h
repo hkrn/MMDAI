@@ -62,6 +62,54 @@ namespace vpvl2
 namespace cg
 {
 
+class Util
+{
+public:
+    static bool toBool(CGannotation annotation) {
+        int nvalues = 0;
+        const CGbool *values = cgGetBoolAnnotationValues(annotation, &nvalues);
+        return nvalues > 0 ? values[0] == CG_TRUE : 0;
+    }
+    static int toInt(CGannotation annotation) {
+        int nvalues = 0;
+        const int *values = cgGetIntAnnotationValues(annotation, &nvalues);
+        return nvalues > 0 ? values[0] : 0;
+    }
+    static bool isPassEquals(CGannotation annotation, const char *target) {
+        if (!cgIsAnnotation(annotation))
+            return true;
+        const char *s = cgGetStringAnnotationValue(annotation);
+        return strcmp(s, target) == 0;
+    }
+    static bool containsSubset(CGannotation annotation, int subset, int nmaterials) {
+        if (!cgIsAnnotation(annotation))
+            return true;
+        const std::string s(cgGetStringAnnotationValue(annotation));
+        std::istringstream stream(s);
+        std::string segment;
+        while (std::getline(stream, segment, ',')) {
+            if (strtol(segment.c_str(), 0, 10) == subset)
+                return true;
+            std::string::size_type offset = segment.find("-");
+            if (offset != std::string::npos) {
+                int from = strtol(segment.substr(0, offset).c_str(), 0, 10);
+                int to = strtol(segment.substr(offset).c_str(), 0, 10);
+                if (to == 0)
+                    to = nmaterials;
+                if (from > to)
+                    std::swap(from, to);
+                if (from <= subset && subset <= to)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+private:
+    Util() {}
+    ~Util() {}
+};
+
 class BaseParameter
 {
 public:
@@ -120,6 +168,35 @@ public:
     }
 };
 
+class Float2Parameter : public BaseParameter
+{
+public:
+    Float2Parameter()
+        : BaseParameter()
+    {
+    }
+    ~Float2Parameter() {}
+
+    void setValue(const Vector3 &value) {
+        if (cgIsParameter(m_baseParameter))
+            cgSetParameter2fv(m_baseParameter, value);
+    }
+};
+
+class Float4Parameter : public BaseParameter
+{
+public:
+    Float4Parameter()
+        : BaseParameter()
+    {
+    }
+    ~Float4Parameter() {}
+
+    void setValue(const Vector4 &value) {
+        if (cgIsParameter(m_baseParameter))
+            cgSetParameter4fv(m_baseParameter, value);
+    }
+};
 class MatrixSemantic : public BaseParameter
 {
 public:
@@ -348,16 +425,38 @@ private:
 class TimeSemantic : public BaseParameter
 {
 public:
-    CGannotation syncInEditMode;
     TimeSemantic()
         : BaseParameter(),
-          syncInEditMode(0)
+          m_syncEnabled(0),
+          m_syncDisabled(0)
     {
     }
+
     void addParameter(CGparameter parameter) {
-        BaseParameter::addParameter(parameter);
-        syncInEditMode = cgGetNamedParameterAnnotation(parameter, "SyncInEditMode");
+        CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "SyncInEditMode");
+        if (cgIsAnnotation(annotation)) {
+            if (Util::toBool(annotation)) {
+                BaseParameter::connectParameter(parameter, m_syncEnabled);
+                return;
+            }
+        }
+        BaseParameter::connectParameter(parameter, m_syncDisabled);
     }
+    void setValue(const IRenderDelegate *delegate) {
+        float value = 0;
+        if (cgIsParameter(m_syncEnabled)) {
+            delegate->getTime(value, true);
+            cgSetParameter1f(m_syncEnabled, value);
+        }
+        if (cgIsParameter(m_syncDisabled)) {
+            delegate->getTime(value, false);
+            cgSetParameter1f(m_syncDisabled, value);
+        }
+    }
+
+private:
+    CGparameter m_syncEnabled;
+    CGparameter m_syncDisabled;
 };
 
 class ControlObjectSemantic : public BaseParameter
@@ -638,47 +737,8 @@ public:
     }
 };
 
-struct Effect {
-    static bool toBool(CGannotation annotation) {
-        int nvalues = 0;
-        const CGbool *values = cgGetBoolAnnotationValues(annotation, &nvalues);
-        return nvalues > 0 ? values[0] == CG_TRUE : 0;
-    }
-    static int toInt(CGannotation annotation) {
-        int nvalues = 0;
-        const int *values = cgGetIntAnnotationValues(annotation, &nvalues);
-        return nvalues > 0 ? values[0] : 0;
-    }
-    static bool isPassEquals(CGannotation annotation, const char *target) {
-        if (!cgIsAnnotation(annotation))
-            return true;
-        const char *s = cgGetStringAnnotationValue(annotation);
-        return strcmp(s, target) == 0;
-    }
-    static bool containsSubset(CGannotation annotation, int subset, int nmaterials) {
-        if (!cgIsAnnotation(annotation))
-            return true;
-        const std::string s(cgGetStringAnnotationValue(annotation));
-        std::istringstream stream(s);
-        std::string segment;
-        while (std::getline(stream, segment, ',')) {
-            if (strtol(segment.c_str(), 0, 10) == subset)
-                return true;
-            std::string::size_type offset = segment.find("-");
-            if (offset != std::string::npos) {
-                int from = strtol(segment.substr(0, offset).c_str(), 0, 10);
-                int to = strtol(segment.substr(offset).c_str(), 0, 10);
-                if (to == 0)
-                    to = nmaterials;
-                if (from > to)
-                    std::swap(from, to);
-                if (from <= subset && subset <= to)
-                    return true;
-            }
-        }
-        return false;
-    }
-
+class Effect {
+public:
     Effect()
         : effect(0),
           world(IRenderDelegate::kWorldMatrix),
@@ -687,11 +747,6 @@ struct Effect {
           worldView(IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix),
           viewProjection(IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
           worldViewProjection(IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
-          viewportPixelSize(0),
-          mousePosition(0),
-          leftMouseDown(0),
-          middleMouseDown(0),
-          rightMouseDown(0),
           index(0)
     {
     }
@@ -758,14 +813,19 @@ struct Effect {
                 direction.addParameter(parameter);
             }
             else if (strcmp(semantic, "VIEWPORTPIXELSIZE") == 0) {
+                viewportPixelSize.addParameter(parameter);
             }
             else if (strcmp(semantic, "MOUSEPOSITION") == 0) {
+                mousePosition.addParameter(parameter);
             }
             else if (strcmp(semantic, "LEFTMOUSEDOWN") == 0) {
+                leftMouseDown.addParameter(parameter);
             }
             else if (strcmp(semantic, "MIDDLEMOUSEDOWN") == 0) {
+                middleMouseDown.addParameter(parameter);
             }
             else if (strcmp(semantic, "RIGHTMOUSEDOWN") == 0) {
+                rightMouseDown.addParameter(parameter);
             }
             else if (strcmp(semantic, "CONTROLOBJECT") == 0) {
                 controlObject.addParameter(parameter);
@@ -854,15 +914,15 @@ struct Effect {
             }
             int ok = 1;
             CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
-            ok &= Effect::isPassEquals(passAnnotation, pass);
+            ok &= Util::isPassEquals(passAnnotation, pass);
             CGannotation subsetAnnotation = cgGetNamedTechniqueAnnotation(technique, "Subset");
-            ok &= Effect::containsSubset(subsetAnnotation, offset, nmaterials);
+            ok &= Util::containsSubset(subsetAnnotation, offset, nmaterials);
             CGannotation useTextureAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseTexture");
-            ok &= (!cgIsAnnotation(useTextureAnnotation) || Effect::toBool(useTextureAnnotation) == hasTexture);
+            ok &= (!cgIsAnnotation(useTextureAnnotation) || Util::toBool(useTextureAnnotation) == hasTexture);
             CGannotation useSphereMapAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseSphereMap");
-            ok &= (!cgIsAnnotation(useSphereMapAnnotation) || Effect::toBool(useSphereMapAnnotation) == hasSphereMap);
+            ok &= (!cgIsAnnotation(useSphereMapAnnotation) || Util::toBool(useSphereMapAnnotation) == hasSphereMap);
             CGannotation useToonAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseToon");
-            ok &= (!cgIsAnnotation(useToonAnnotation) || Effect::toBool(useToonAnnotation) == useToon);
+            ok &= (!cgIsAnnotation(useToonAnnotation) || Util::toBool(useToonAnnotation) == useToon);
             if (ok == 1)
                 break;
             technique = cgGetNextTechnique(technique);
@@ -910,6 +970,22 @@ struct Effect {
         direction.setCameraValue(kZeroV3); // TODO: set camera direction
         controlObject.update(delegate, model);
     }
+    void updateViewportParameters(const IRenderDelegate *delegate) {
+        Vector3 viewport;
+        delegate->getViewport(viewport);
+        viewportPixelSize.setValue(viewport);
+        Vector4 position;
+        delegate->getMousePosition(position, IRenderDelegate::kMouseCursorPosition);
+        mousePosition.setValue(position);
+        delegate->getMousePosition(position, IRenderDelegate::kMouseLeftPressPosition);
+        leftMouseDown.setValue(position);
+        delegate->getMousePosition(position, IRenderDelegate::kMouseMiddlePressPosition);
+        middleMouseDown.setValue(position);
+        delegate->getMousePosition(position, IRenderDelegate::kMouseRightPressPosition);
+        rightMouseDown.setValue(position);
+        time.setValue(delegate);
+        elapsedTime.setValue(delegate);
+    }
     bool isAttached() const {
         return cgIsEffect(effect) == CG_TRUE;
     }
@@ -932,13 +1008,13 @@ struct Effect {
     GeometrySemantic direction;
     MaterialTextureSemantic materialTexture;
     MaterialTextureSemantic materialSphereMap;
-    CGparameter viewportPixelSize;
+    Float2Parameter viewportPixelSize;
     TimeSemantic time;
     TimeSemantic elapsedTime;
-    CGparameter mousePosition;
-    CGparameter leftMouseDown;
-    CGparameter middleMouseDown;
-    CGparameter rightMouseDown;
+    Float2Parameter mousePosition;
+    Float4Parameter leftMouseDown;
+    Float4Parameter middleMouseDown;
+    Float4Parameter rightMouseDown;
     ControlObjectSemantic controlObject;
     RenderConrolTargetSemantic renderControlTarget;
     TextureSemantic renderDepthStencilTarget;

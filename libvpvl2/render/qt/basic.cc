@@ -363,10 +363,41 @@ public:
     void getViewport(Vector3 &value) const {
         value.setValue(m_viewport.width(), m_viewport.height(), 0);
     }
-    void getTime(int64_t &value, bool sync) const {
-        value = 0;
-        if (!sync)
-            value = QDateTime::currentMSecsSinceEpoch();
+    void getTime(float &value, bool sync) const {
+        value = sync ? 0 : QDateTime::currentMSecsSinceEpoch();
+    }
+    void getElapsed(float &value, bool sync) const {
+        value = sync ? 1.0 / 60.0 : QDateTime::currentMSecsSinceEpoch();
+    }
+    void getMousePosition(Vector4 &value, MousePositionType type) const {
+        switch (type) {
+        case kMouseLeftPressPosition:
+            value.setValue(m_mouseLeftPressPosition.x(),
+                           m_mouseLeftPressPosition.y(),
+                           m_mouseLeftPressPosition.z(),
+                           m_mouseLeftPressPosition.w());
+            break;
+        case kMouseMiddlePressPosition:
+            value.setValue(m_mouseMiddlePressPosition.x(),
+                           m_mouseMiddlePressPosition.y(),
+                           m_mouseMiddlePressPosition.z(),
+                           m_mouseMiddlePressPosition.w());
+            break;
+        case kMouseRightPressPosition:
+            value.setValue(m_mouseRightPressPosition.x(),
+                           m_mouseRightPressPosition.y(),
+                           m_mouseRightPressPosition.z(),
+                           m_mouseRightPressPosition.w());
+            break;
+        case kMouseCursorPosition:
+            value.setValue(m_mouseCursorPosition.x(),
+                           m_mouseCursorPosition.y(),
+                           m_mouseCursorPosition.z(),
+                           m_mouseCursorPosition.w());
+            break;
+        default:
+            break;
+        }
     }
     void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
         vfprintf(stderr, format, ap);
@@ -483,6 +514,24 @@ public:
         m_lightViewMatrix = view;
         m_lightProjectionMatrix = projection;
     }
+    void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type) {
+        switch (type) {
+        case kMouseLeftPressPosition:
+            m_mouseLeftPressPosition.setValue(value.x(), value.y(), pressed, 0);
+            break;
+        case kMouseMiddlePressPosition:
+            m_mouseMiddlePressPosition.setValue(value.x(), value.y(), pressed, 0);
+            break;
+        case kMouseRightPressPosition:
+            m_mouseRightPressPosition.setValue(value.x(), value.y(), pressed, 0);
+            break;
+        case kMouseCursorPosition:
+            m_mouseCursorPosition.setValue(value.x(), value.y(), 0, 0);
+            break;
+        default:
+            break;
+        }
+    }
 
 private:
     static const QString createPath(const IString *dir, const char *name) {
@@ -545,6 +594,10 @@ private:
     QMatrix4x4 m_lightProjectionMatrix;
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
+    Vector4 m_mouseCursorPosition;
+    Vector4 m_mouseLeftPressPosition;
+    Vector4 m_mouseMiddlePressPosition;
+    Vector4 m_mouseRightPressPosition;
 };
 } /* namespace anonymous */
 
@@ -836,6 +889,7 @@ public:
         m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f);
 #endif /* VPVL2_NO_BULLET */
         setMinimumSize(320, 240);
+        setMouseTracking(true);
     }
     ~UI() {
 #ifdef VPVL2_LINK_ASSIMP
@@ -925,6 +979,7 @@ protected:
     }
     void mousePressEvent(QMouseEvent *event) {
         m_prevPos = event->pos();
+        setMousePositions(event);
     }
     void mouseMoveEvent(QMouseEvent *event) {
         if (event->buttons() & Qt::LeftButton) {
@@ -938,8 +993,10 @@ protected:
             }
             m_prevPos = event->pos();
         }
+        setMousePositions(event);
     }
-    void keyPressEvent(QKeyEvent * /* event */) {
+    void mouseReleaseEvent(QMouseEvent *event) {
+        setMousePositions(event);
     }
     void wheelEvent(QWheelEvent *event) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
@@ -1033,6 +1090,17 @@ protected:
     }
 
 private:
+    void setMousePositions(QMouseEvent *event) {
+        const QPointF &pos = event->posF();
+        const QSizeF &size = geometry().size() / 2;
+        const qreal w = size.width(), h = size.height();
+        const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);
+        Qt::MouseButtons buttons = event->buttons();
+        m_delegate->setMousePosition(value, buttons & Qt::LeftButton, IRenderDelegate::kMouseLeftPressPosition);
+        m_delegate->setMousePosition(value, buttons & Qt::MiddleButton, IRenderDelegate::kMouseMiddlePressPosition);
+        m_delegate->setMousePosition(value, buttons & Qt::RightButton, IRenderDelegate::kMouseRightPressPosition);
+        m_delegate->setMousePosition(value, false, IRenderDelegate::kMouseCursorPosition);
+    }
     bool loadScene() {
 #ifdef VPVL2_LINK_ASSIMP
         Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
