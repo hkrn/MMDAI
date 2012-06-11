@@ -955,19 +955,20 @@ public:
     }
     void updateModelGeometryParameters(const IRenderDelegate *delegate, const Scene *scene, const IModel *model) {
         const Scene::ILight *light = scene->light();
-        const Vector3 kOne(1, 1, 1);
-        ambient.setLightColor(kOne);
+        const Vector3 kOne(1, 1, 1), &color = light->color();
+        ambient.setLightColor(Vector3(0.7, 0.7, 0.7) - (kOne - color));
         diffuse.setLightColor(kOne);
         emissive.setLightColor(kZeroV3);
         emissive.setGeometryColor(kZeroV3);
-        specular.setLightColor(kOne);
+        specular.setLightColor(light->color());
         edgeColor.setLightColor(kZeroV3);
         const Vector3 &lightDirection = light->direction();
         position.setLightValue(-lightDirection);
-        direction.setLightValue(lightDirection);
+        direction.setLightValue(lightDirection.normalized());
         const Scene::ICamera *camera = scene->camera();
-        position.setCameraValue(camera->position());
-        direction.setCameraValue(kZeroV3); // TODO: set camera direction
+        const Vector3 &cameraPosition = camera->modelViewTransform().getOrigin();
+        position.setCameraValue(cameraPosition);
+        direction.setCameraValue((cameraPosition - camera->position()).normalized());
         controlObject.update(delegate, model);
     }
     void updateViewportParameters(const IRenderDelegate *delegate) {
