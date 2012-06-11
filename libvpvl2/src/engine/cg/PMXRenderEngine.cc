@@ -222,8 +222,10 @@ void PMXRenderEngine::renderModel()
         const pmx::Material *material = materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
         const Color &toonColor = materialContext.toonTextureColor;
-        m_effect.ambient.setGeometryColor(material->ambient());
-        m_effect.diffuse.setGeometryColor(material->diffuse());
+        const Color &diffuse = material->diffuse();
+        m_effect.ambient.setGeometryColor(diffuse);
+        m_effect.diffuse.setGeometryColor(diffuse);
+        m_effect.emissive.setGeometryColor(material->ambient());
         m_effect.specular.setGeometryColor(material->specular());
         m_effect.specularPower.setGeometryValue(btMax(material->shininess(), 1.0f));
         m_effect.toonColor.setGeometryColor(toonColor);

@@ -238,16 +238,18 @@ void PMDRenderEngine::renderModel()
     glTexCoordPointer(2, GL_FLOAT, model->strideSize(PMDModel::kTextureCoordsStride),
                       reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)));
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    Color diffuseColor(0, 0, 0, 1);
     m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
         const Scalar &materialOpacity = material->opacity();
         const Color &toonColor = m_toonTextureColors[material->toonID()];
-        diffuse = material->diffuse();
-        diffuse.setW(diffuse.w() * materialOpacity);
-        m_effect.ambient.setGeometryColor(material->ambient());
-        m_effect.diffuse.setGeometryColor(diffuse);
+        const Color &diffuse = material->diffuse();
+        diffuseColor.setValue(diffuse.x(), diffuse.y(), diffuse.z(), diffuse.w() * materialOpacity);
+        m_effect.ambient.setGeometryColor(diffuseColor);
+        m_effect.diffuse.setGeometryColor(diffuseColor);
+        m_effect.emissive.setGeometryColor(material->ambient());
         m_effect.specular.setGeometryColor(material->specular());
         m_effect.specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
         m_effect.toonColor.setGeometryColor(toonColor);
