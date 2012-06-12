@@ -943,10 +943,10 @@ public:
     }
     void setZeroGeometryParameters(const IModel *model) {
         edgeColor.setGeometryColor(model->edgeColor());
-        toonColor.setGeometryColor(kZeroV3);
-        ambient.setGeometryColor(kZeroV3);
-        diffuse.setGeometryColor(kZeroV3);
-        specular.setGeometryColor(kZeroV3);
+        toonColor.setGeometryColor(kZeroC);
+        ambient.setGeometryColor(kZeroC);
+        diffuse.setGeometryColor(kZeroC);
+        specular.setGeometryColor(kZeroC);
         specularPower.setGeometryValue(0);
         materialTexture.setTexture(0);
         materialSphereMap.setTexture(0);
@@ -957,14 +957,18 @@ public:
         const Scene::ILight *light = scene->light();
         const Vector3 &lightColor = light->color();
         if (model->type() == IModel::kAsset) {
+            const Vector3 &ac = Vector3(0.7, 0.7, 0.7) - lightColor;
+            ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));
+            diffuse.setLightColor(Color(1, 1, 1, 1));
+            specular.setLightColor(lightColor);
         }
         else {
             ambient.setLightColor(lightColor);
             diffuse.setLightColor(kZeroC);
-            emissive.setLightColor(kZeroC);
             specular.setLightColor(lightColor);
-            edgeColor.setLightColor(model->edgeColor());
         }
+        emissive.setLightColor(kZeroC);
+        edgeColor.setLightColor(kZeroC);
         const Vector3 &lightDirection = light->direction();
         position.setLightValue(-lightDirection);
         direction.setLightValue(lightDirection.normalized());
