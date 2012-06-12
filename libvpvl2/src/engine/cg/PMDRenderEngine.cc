@@ -225,7 +225,6 @@ void PMDRenderEngine::renderModel()
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
             hasShadowMap = false; //light->depthTexture() ? true : false;
     const int nmaterials = materials.count();
-    Color diffuse;
     size_t offset = 0;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
