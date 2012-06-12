@@ -245,6 +245,7 @@ public:
     {
         m_lightWorldMatrix.scale(0.5);
         m_lightWorldMatrix.translate(1, 1, 1);
+        m_timer.start();
     }
     ~Delegate()
     {
@@ -364,10 +365,10 @@ public:
         value.setValue(m_viewport.width(), m_viewport.height(), 0);
     }
     void getTime(float &value, bool sync) const {
-        value = sync ? 0 : QDateTime::currentMSecsSinceEpoch();
+        value = sync ? 0 : m_timer.elapsed() / 1000.0f;
     }
     void getElapsed(float &value, bool sync) const {
-        value = sync ? 1.0 / 60.0 : QDateTime::currentMSecsSinceEpoch();
+        value = sync ? 0 : 1.0 / 60.0;
     }
     void getMousePosition(Vector4 &value, MousePositionType type) const {
         switch (type) {
@@ -594,6 +595,7 @@ private:
     QMatrix4x4 m_lightProjectionMatrix;
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
+    QElapsedTimer m_timer;
     Vector4 m_mouseCursorPosition;
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
@@ -907,11 +909,20 @@ public:
         m_delegate->updateMatrices(size());
         resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
         m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
-        // m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
-        // m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
+        if (m_settings->value("enable.opencl", false).toBool())
+            m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+        else if (m_settings->value("enable.vss", false).toBool())
+            m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
         Scene::ICamera *camera = m_scene.camera();
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
         camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
+        Scene::ILight *light = m_scene.light();
+        m_depthTextureID = m_fbo->texture();
+        light->setToonEnable(m_settings->value("enable.toon", true).toBool());
+        light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
+        light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
+        if (m_settings->value("enable.sm", false).toBool())
+            light->setDepthTexture(&m_depthTextureID);
         if (loadScene())
             m_timer.start();
         else
@@ -949,12 +960,6 @@ protected:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
-        Scene::ILight *light = m_scene.light();
-        m_depthTextureID = m_fbo->texture();
-        //light->setToonEnable(true);
-        //light->setSoftShadowEnable(true);
-        light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
-        //light->setDepthTexture(&m_depthTextureID);
     }
     void timerEvent(QTimerEvent *) {
         float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
@@ -1110,6 +1115,8 @@ private:
 #endif
         const QString &modelPath = QDir(m_settings->value("dir.model").toString())
                 .absoluteFilePath(m_settings->value("file.model").toString());
+        const QString &assetPath = QDir(m_settings->value("dir.asset").toString())
+                .absoluteFilePath(m_settings->value("file.asset").toString());
         const QString &modelMotionPath = QDir(m_settings->value("dir.motion").toString())
                 .absoluteFilePath(m_settings->value("file.motion").toString());
         const QString &cameraMotionPath = QDir(m_settings->value("dir.camera").toString())
@@ -1119,6 +1126,7 @@ private:
             addMotion(modelMotionPath, model);
             model->setOpacity(1.0);
         }
+        addModel(assetPath);
         QByteArray bytes;
         if (UISlurpFile(cameraMotionPath, bytes)) {
             bool ok = true;
@@ -1146,7 +1154,7 @@ private:
             qWarning("Failed parsing the model: %d", model->error());
             return 0;
         }
-        //model->setEdgeWidth(1);
+        model->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
         String s(dir);
