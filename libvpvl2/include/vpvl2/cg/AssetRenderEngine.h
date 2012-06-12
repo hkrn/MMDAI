@@ -122,7 +122,7 @@ private:
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
-    void setAssetMaterial(const aiMaterial *material);
+    void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
 
     const Scene *m_scene;
     asset::Model *m_model;

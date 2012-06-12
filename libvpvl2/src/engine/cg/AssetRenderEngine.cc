@@ -47,7 +47,6 @@ namespace vpvl2
 namespace cg
 {
 
-
 const std::string CanonicalizePath(const std::string &path)
 {
     const std::string from("\\"), to("/");
@@ -88,7 +87,6 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
       m_scene(scene),
       m_model(model),
       m_context(context),
-      m_effect(0),
       m_cullFaceState(true)
 {
 }
@@ -120,8 +118,6 @@ AssetRenderEngine::~AssetRenderEngine()
         }
     }
     deleteRecurse(scene, scene->mRootNode);
-    cgDestroyEffect(m_effect);
-    m_effect = 0;
     m_context = 0;
     m_model = 0;
     m_delegate = 0;
@@ -147,12 +143,20 @@ bool AssetRenderEngine::upload(const IString *dir)
     std::string path, mainTexture, subTexture;
     m_delegate->allocateContext(m_model, context);
     IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
-    m_effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
+    CGeffect effect = 0;
+    cgSetErrorHandler(&AssetRenderEngine::handleError, this);
+    if (source)
+        effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
     delete source;
-    if (!m_effect) {
+    if (!cgIsEffect(effect)) {
+        log0(context, IRenderDelegate::kLogWarning, "CG effect compile error\n%s", cgGetLastListing(m_context));
         return false;
     }
-    m_parameters.attachEffect(m_effect);
+    m_effect.attachEffect(effect);
+    m_effect.useToon.setValue(false);
+    m_effect.parthf.setValue(false);
+    m_effect.transp.setValue(false);
+    m_effect.opadd.setValue(false);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -197,22 +201,48 @@ bool AssetRenderEngine::upload(const IString *dir)
 
 void AssetRenderEngine::update()
 {
+    if (!m_model->isVisible() || !m_effect.isAttached())
+        return;
+    m_effect.updateModelGeometryParameters(m_delegate, m_scene, m_model);
+    m_effect.updateViewportParameters(m_delegate);
 }
 
 void AssetRenderEngine::renderModel()
 {
+    if (!m_model->isVisible() || !m_effect.isAttached())
+        return;
+    vpvl::Asset *asset = m_model->ptr();
+    if (btFuzzyZero(asset->opacity()))
+        return;
+    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    const aiScene *a = asset->getScene();
+    renderRecurse(a, a->mRootNode);
+    if (!m_cullFaceState) {
+        glEnable(GL_CULL_FACE);
+        m_cullFaceState = true;
+    }
 }
 
 void AssetRenderEngine::renderEdge()
 {
+    /* do nothing */
 }
 
 void AssetRenderEngine::renderShadow()
 {
+    /* do nothing */
 }
 
 void AssetRenderEngine::renderZPlot()
 {
+    if (!m_model->isVisible() || !m_effect.isAttached())
+        return;
+    vpvl::Asset *asset = m_model->ptr();
+    if (btFuzzyZero(asset->opacity()))
+        return;
+    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    const aiScene *a = asset->getScene();
+    renderZPlotRecurse(a, a->mRootNode);
 }
 
 void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -269,7 +299,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
                     assetVertex.normal.setZero();
                 }
                 const aiVector3D &v = vertices[vertexIndex];
-                assetVertex.position.setValue(v.x, v.y, v.z, 1.0f);
+                assetVertex.position.setValue(v.x, v.y, v.z, index);
                 assetVertices.push_back(assetVertex);
                 indices.push_back(index);
                 index++;
@@ -309,14 +339,215 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
 {
+    vpvl::Asset *asset = m_model->ptr();
+    const btScalar &scaleFactor = asset->scaleFactor();
+    aiVector3D aiS, aiP;
+    aiQuaternion aiQ;
+    node->mTransformation.Decompose(aiS, aiQ, aiP);
+    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
+    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
+                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
+    if (const IBone *bone = m_model->parentBone()) {
+        const Transform &boneTransform = bone->worldTransform();
+        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
+        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
+        transform.setBasis(boneBasis.scaled(scaleVector));
+    }
+    static const AssetVertex v;
+    const uint8_t *basePtr = reinterpret_cast<const uint8_t *>(&v.position);
+    const GLvoid *vertexPtr = 0;
+    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - basePtr);
+    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - basePtr);
+    const size_t stride = sizeof(AssetVertex);
+    const bool hasShadowMap = false; // light->depthTexture() ? true : false;
+    const unsigned int nmeshes = node->mNumMeshes;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const AssetVBO &vbo = m_vbo[mesh];
+        const AssetIndices &indices = m_indices[mesh];
+        bool hasTexture = false, hasSphereMap = false;
+        setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
+        const char *target = hasShadowMap ? "object_ss" : "object";
+        CGtechnique technique = m_effect.findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+        if (cgIsTechnique(technique)) {
+            CGpass pass = cgGetFirstPass(technique);
+            const int nindices = indices.size();
+            glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
+            glNormalPointer(GL_FLOAT, stride, normalPtr);
+            glTexCoordPointer(2, GL_FLOAT, stride, texcoordPtr);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_NORMAL_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            while (pass) {
+                cgSetPassState(pass);
+                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+                cgResetPassState(pass);
+                pass = cgGetNextPass(pass);
+            }
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+    }
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
+        renderRecurse(scene, node->mChildren[i]);
 }
 
 void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)
 {
+    vpvl::Asset *asset = m_model->ptr();
+    const btScalar &scaleFactor = asset->scaleFactor();
+    aiVector3D aiS, aiP;
+    aiQuaternion aiQ;
+    node->mTransformation.Decompose(aiS, aiQ, aiP);
+    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
+    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
+                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
+    if (const vpvl::Bone *bone = asset->parentBone()) {
+        const Transform &boneTransform = bone->localTransform();
+        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
+        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
+        transform.setBasis(boneBasis.scaled(scaleVector));
+    }
+    const GLvoid *vertexPtr = 0;
+    const size_t stride = sizeof(AssetVertex);
+    const unsigned int nmeshes = node->mNumMeshes;
+    float opacity;
+    glCullFace(GL_FRONT);
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        bool succeeded = aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS;
+        if (succeeded && btFuzzyZero(opacity - 0.98))
+            continue;
+        const AssetVBO &vbo = m_vbo[mesh];
+        const AssetIndices &indices = m_indices[mesh];
+        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
+        CGtechnique technique = m_effect.findTechnique("zplot", i, nmeshes, false, false, false);
+        if (cgIsTechnique(technique)) {
+            CGpass pass = cgGetFirstPass(technique);
+            const int nindices = indices.size();
+            glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            while (pass) {
+                cgSetPassState(pass);
+                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+                cgResetPassState(pass);
+                pass = cgGetNextPass(pass);
+            }
+            glDisableClientState(GL_VERTEX_ARRAY);
+        }
+    }
+    glCullFace(GL_BACK);
+    const unsigned int nChildNodes = node->mNumChildren;
+    for (unsigned int i = 0; i < nChildNodes; i++)
+        renderZPlotRecurse(scene, node->mChildren[i]);
 }
 
-void AssetRenderEngine::setAssetMaterial(const aiMaterial *material)
+void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap)
 {
+    int textureIndex = 0;
+    GLuint textureID;
+    std::string mainTexture, subTexture;
+    aiString texturePath;
+    if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
+        bool isAdditive = false;
+        if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
+            textureID = m_textures[subTexture];
+            isAdditive = subTexture.find(".spa") != std::string::npos;
+            m_effect.materialSphereMap.setTexture(textureID);
+            m_effect.spadd.setValue(isAdditive);
+            hasSphereMap = true;
+        }
+        textureID = m_textures[mainTexture];
+        m_effect.materialTexture.setTexture(textureID);
+        hasTexture = true;
+    }
+    else {
+        m_effect.materialTexture.setTexture(0);
+        m_effect.materialSphereMap.setTexture(0);
+        hasTexture = false;
+        hasSphereMap = false;
+    }
+    // * ambient = diffuse
+    // * specular / 10
+    // * emissive
+    aiColor4D ambient, diffuse, emission, specular;
+    Color color;
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
+        color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
+    }
+    else {
+        color.setValue(0, 0, 0, 1);
+    }
+    m_effect.ambient.setGeometryColor(color);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
+        color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+    }
+    else {
+        color.setValue(0, 0, 0, 1);
+    }
+    m_effect.diffuse.setGeometryColor(color);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
+        color.setValue(emission.r, emission.g, emission.b, emission.a);
+    }
+    else {
+        color.setValue(0, 0, 0, 0);
+    }
+    m_effect.emissive.setGeometryColor(color);
+    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
+        color.setValue(specular.r, specular.g, specular.b, specular.a);
+    }
+    else {
+        color.setValue(0, 0, 0, 1);
+    }
+    m_effect.specular.setGeometryColor(color);
+    float shininess, strength;
+    int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
+    int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
+    if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
+        m_effect.specularPower.setGeometryValue(shininess * strength);
+    }
+    else if (ret1 == aiReturn_SUCCESS) {
+        m_effect.specularPower.setGeometryValue(shininess);
+    }
+    else {
+        m_effect.specularPower.setGeometryValue(1);
+    }
+    /*
+    void *texture = m_scene->light()->depthTexture();
+    if (texture && !btFuzzyZero(opacity - 0.98)) {
+        GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
+        program->setDepthTexture(textureID);
+    }
+    else {
+        program->setDepthTexture(0);
+    }
+    */
+    int wireframe, twoside;
+    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_cullFaceState) {
+        glEnable(GL_CULL_FACE);
+        m_cullFaceState = true;
+    }
+    else if (m_cullFaceState) {
+        glDisable(GL_CULL_FACE);
+        m_cullFaceState = false;
+    }
+}
+
+void AssetRenderEngine::handleError(CGcontext context, CGerror error, void *data)
+{
+    AssetRenderEngine *engine = static_cast<AssetRenderEngine *>(data);
+    Q_UNUSED(context)
+    engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
 }
 
 } /* namespace cg */
