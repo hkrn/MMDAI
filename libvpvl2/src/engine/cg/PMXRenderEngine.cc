@@ -129,17 +129,20 @@ bool PMXRenderEngine::upload(const IString *dir)
          "Binding indices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelIndices]);
     size = pmx::Model::strideSize(pmx::Model::kVertexStride);
+    const int nvertices = m_model->vertices().count();
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
-    glBufferData(GL_ARRAY_BUFFER, m_model->vertices().count() * size, m_model->vertexPtr(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, nvertices * size, m_model->vertexPtr(), GL_DYNAMIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model vertices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelVertices]);
+    m_effect.vertexCount.setValue(nvertices);
     if (m_isVertexShaderSkinning)
         m_model->getSkinningMesh(m_mesh);
     const Array<pmx::Material *> &materials = m_model->materials();
     const int nmaterials = materials.count();
     GLuint textureID = 0;
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
+    m_effect.subsetCount.setValue(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         MaterialContext &materialPrivate = materialPrivates[i];
