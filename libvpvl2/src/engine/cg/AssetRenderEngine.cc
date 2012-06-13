@@ -257,7 +257,9 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
+    int totalIndices = 0;
     AssetVertex assetVertex;
+    m_effect.subsetCount.setValue(nmeshes);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
@@ -307,13 +309,16 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
         }
         AssetVBO &vbo = m_vbo[mesh];
         size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
+        const int nindices = indices.size();
         glGenBuffers(1, &vbo.vertices);
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
         glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].position, GL_STATIC_DRAW);
         glGenBuffers(1, &vbo.indices);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, nindices * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
+        totalIndices += nindices;
     }
+    m_effect.vertexCount.setValue(totalIndices);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], context);
@@ -454,6 +459,8 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     GLuint textureID;
     std::string mainTexture, subTexture;
     aiString texturePath;
+    hasTexture = false;
+    hasSphereMap = false;
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         bool isAdditive = false;
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
@@ -461,22 +468,26 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
             isAdditive = subTexture.find(".spa") != std::string::npos;
             m_effect.materialSphereMap.setTexture(textureID);
             m_effect.spadd.setValue(isAdditive);
+            m_effect.useSpheremap.setValue(true);
             hasSphereMap = true;
         }
         textureID = m_textures[mainTexture];
-        m_effect.materialTexture.setTexture(textureID);
-        hasTexture = true;
+        if (textureID > 0) {
+            m_effect.materialTexture.setTexture(textureID);
+            m_effect.useTexture.setValue(true);
+            hasTexture = true;
+        }
     }
     else {
         m_effect.materialTexture.setTexture(0);
         m_effect.materialSphereMap.setTexture(0);
-        hasTexture = false;
-        hasSphereMap = false;
+        m_effect.useTexture.setValue(false);
+        m_effect.useSpheremap.setValue(false);
     }
     // * ambient = diffuse
     // * specular / 10
     // * emissive
-    aiColor4D ambient, diffuse, emission, specular;
+    aiColor4D ambient, diffuse, specular;
     Color color;
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
         color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
@@ -484,23 +495,18 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else {
         color.setValue(0, 0, 0, 1);
     }
-    m_effect.ambient.setGeometryColor(color);
+    m_effect.emissive.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
         color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
     }
     else {
         color.setValue(0, 0, 0, 1);
     }
+    m_effect.ambient.setGeometryColor(color);
     m_effect.diffuse.setGeometryColor(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
-        color.setValue(emission.r, emission.g, emission.b, emission.a);
-    }
-    else {
-        color.setValue(0, 0, 0, 0);
-    }
-    m_effect.emissive.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
-        color.setValue(specular.r, specular.g, specular.b, specular.a);
+        static const float kDivide = 10.0;
+        color.setValue(specular.r / kDivide, specular.g / kDivide, specular.b / kDivide, specular.a);
     }
     else {
         color.setValue(0, 0, 0, 1);
@@ -518,21 +524,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else {
         m_effect.specularPower.setGeometryValue(1);
     }
-    /*
-    void *texture = m_scene->light()->depthTexture();
-    if (texture && !btFuzzyZero(opacity - 0.98)) {
-        GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
-        program->setDepthTexture(textureID);
-    }
-    else {
-        program->setDepthTexture(0);
-    }
-    */
-    int wireframe, twoside;
-    if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    int twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_cullFaceState) {
         glEnable(GL_CULL_FACE);
         m_cullFaceState = true;
