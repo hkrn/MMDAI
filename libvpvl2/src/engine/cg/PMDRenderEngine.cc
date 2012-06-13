@@ -64,6 +64,7 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       m_accelerator(accelerator),
       m_model(model),
       m_context(effectContext),
+      m_effect(delegate),
       m_materialContexts(0),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
@@ -178,7 +179,7 @@ bool PMDRenderEngine::upload(const IString *dir)
         const uint8_t *name = model->toonTexture(i);
         m_delegate->getToonColor(context, reinterpret_cast<const char *>(name), dir, m_toonTextureColors[i + 1]);
     }
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
@@ -209,15 +210,15 @@ void PMDRenderEngine::update()
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->updateModel(m_model);
 #endif
-    m_effect.updateModelGeometryParameters(m_delegate, m_scene, m_model);
-    m_effect.updateViewportParameters(m_delegate);
+    m_effect.updateModelGeometryParameters(m_scene, m_model);
+    m_effect.updateViewportParameters();
 }
 
 void PMDRenderEngine::renderModel()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -326,7 +327,7 @@ void PMDRenderEngine::renderEdge()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
@@ -370,7 +371,7 @@ void PMDRenderEngine::renderZPlot()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();

@@ -81,29 +81,6 @@ public:
         const char *s = cgGetStringAnnotationValue(annotation);
         return strcmp(s, target) == 0;
     }
-    static bool containsSubset(CGannotation annotation, int subset, int nmaterials) {
-        if (!cgIsAnnotation(annotation))
-            return true;
-        const std::string s(cgGetStringAnnotationValue(annotation));
-        std::istringstream stream(s);
-        std::string segment;
-        while (std::getline(stream, segment, ',')) {
-            if (strtol(segment.c_str(), 0, 10) == subset)
-                return true;
-            std::string::size_type offset = segment.find("-");
-            if (offset != std::string::npos) {
-                int from = strtol(segment.substr(0, offset).c_str(), 0, 10);
-                int to = strtol(segment.substr(offset).c_str(), 0, 10);
-                if (to == 0)
-                    to = nmaterials;
-                if (from > to)
-                    std::swap(from, to);
-                if (from <= subset && subset <= to)
-                    return true;
-            }
-        }
-        return false;
-    }
 
 private:
     Util() {}
@@ -200,8 +177,9 @@ public:
 class MatrixSemantic : public BaseParameter
 {
 public:
-    MatrixSemantic(int flags)
+    MatrixSemantic(const IRenderDelegate *delegate, int flags)
         : BaseParameter(),
+          m_delegate(delegate),
           m_camera(0),
           m_cameraInversed(0),
           m_cameraTransposed(0),
@@ -214,6 +192,7 @@ public:
     {
     }
     ~MatrixSemantic() {
+        m_delegate = 0;
         m_camera = 0;
         m_cameraInversed = 0;
         m_cameraTransposed = 0;
@@ -239,22 +218,22 @@ public:
             }
         }
     }
-    void setMatrices(const IRenderDelegate *delegate, const IModel *model, int extraCameraFlags, int extraLightFlags) {
-        setMatrix(delegate, model, m_camera,
+    void setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags) {
+        setMatrix(model, m_camera,
                   extraCameraFlags | IRenderDelegate::kCameraMatrix);
-        setMatrix(delegate, model, m_cameraInversed,
+        setMatrix(model, m_cameraInversed,
                   extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix);
-        setMatrix(delegate, model, m_cameraTransposed,
+        setMatrix(model, m_cameraTransposed,
                   extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kTransposeMatrix);
-        setMatrix(delegate, model, m_cameraInverseTransposed,
+        setMatrix(model, m_cameraInverseTransposed,
                   extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
-        setMatrix(delegate, model, m_light,
+        setMatrix(model, m_light,
                   extraLightFlags | IRenderDelegate::kLightMatrix);
-        setMatrix(delegate, model, m_lightInversed,
+        setMatrix(model, m_lightInversed,
                   extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix);
-        setMatrix(delegate, model, m_lightTransposed,
+        setMatrix(model, m_lightTransposed,
                   extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kTransposeMatrix);
-        setMatrix(delegate, model, m_lightInverseTransposed,
+        setMatrix(model, m_lightInverseTransposed,
                   extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
     }
 
@@ -282,14 +261,15 @@ private:
             BaseParameter::connectParameter(sourceParameter, baseParameter);
         }
     }
-    void setMatrix(const IRenderDelegate *delegate, const IModel *model, CGparameter parameter, int flags) {
+    void setMatrix(const IModel *model, CGparameter parameter, int flags) {
         if (cgIsParameter(parameter)) {
             float matrix[16];
-            delegate->getMatrix(matrix, model, m_flags | flags);
+            m_delegate->getMatrix(matrix, model, m_flags | flags);
             cgSetMatrixParameterfr(parameter, matrix);
         }
     }
 
+    const IRenderDelegate *m_delegate;
     CGparameter m_camera;
     CGparameter m_cameraInversed;
     CGparameter m_cameraTransposed;
@@ -425,11 +405,17 @@ private:
 class TimeSemantic : public BaseParameter
 {
 public:
-    TimeSemantic()
+    TimeSemantic(const IRenderDelegate *delegate)
         : BaseParameter(),
+          m_delegate(delegate),
           m_syncEnabled(0),
           m_syncDisabled(0)
     {
+    }
+    ~TimeSemantic() {
+        m_delegate = 0;
+        m_syncEnabled = 0;
+        m_syncDisabled = 0;
     }
 
     void addParameter(CGparameter parameter) {
@@ -442,19 +428,20 @@ public:
         }
         BaseParameter::connectParameter(parameter, m_syncDisabled);
     }
-    void setValue(const IRenderDelegate *delegate) {
+    void setValue() {
         float value = 0;
         if (cgIsParameter(m_syncEnabled)) {
-            delegate->getTime(value, true);
+            m_delegate->getTime(value, true);
             cgSetParameter1f(m_syncEnabled, value);
         }
         if (cgIsParameter(m_syncDisabled)) {
-            delegate->getTime(value, false);
+            m_delegate->getTime(value, false);
             cgSetParameter1f(m_syncDisabled, value);
         }
     }
 
 private:
+    const IRenderDelegate *m_delegate;
     CGparameter m_syncEnabled;
     CGparameter m_syncDisabled;
 };
@@ -462,34 +449,40 @@ private:
 class ControlObjectSemantic : public BaseParameter
 {
 public:
-    ControlObjectSemantic()
+    ControlObjectSemantic(const IRenderDelegate *delegate)
+        : BaseParameter(),
+          m_delegate(delegate)
     {
     }
+    ~ControlObjectSemantic() {
+        m_delegate = 0;
+    }
+
     void addParameter(CGparameter parameter) {
         if (cgIsAnnotation(cgGetNamedParameterAnnotation(parameter, "name")))
             m_parameters.add(parameter);
     }
-    void update(const IRenderDelegate *delegate, const IModel *self) {
+    void update(const IModel *self) {
         const int nparameters = m_parameters.count();
         for (int i = 0; i < nparameters; i++) {
             CGparameter parameter = m_parameters[i];
             CGannotation nameAnnotation = cgGetNamedParameterAnnotation(parameter, "name");
             const char *name = cgGetStringAnnotationValue(nameAnnotation);
             if (strcmp(name, "(self)") == 0) {
-                setParameter(delegate, self, parameter);
+                setParameter(self, parameter);
             }
             else if (strcmp(name, "(OffscreenOwenr)") == 0) {
                 // TODO
             }
             else {
-                IModel *model = delegate->findModel(name);
-                setParameter(delegate, model, parameter);
+                IModel *model = m_delegate->findModel(name);
+                setParameter(model, parameter);
             }
         }
     }
 
 private:
-    void setParameter(const IRenderDelegate *delegate, const IModel *model, CGparameter parameter) {
+    void setParameter(const IModel *model, CGparameter parameter) {
         float matrix4x4[16];
         Transform::getIdentity().getOpenGLMatrix(matrix4x4);
         CGtype type = cgGetParameterType(parameter);
@@ -499,7 +492,7 @@ private:
                 const char *item = cgGetStringAnnotationValue(itemAnnotation);
                 IModel::Type type = model->type();
                 if (type == IModel::kPMD || type == IModel::kPMX) {
-                    const IString *s = delegate->toUnicode(reinterpret_cast<const uint8_t *>(item));
+                    const IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(item));
                     IBone *bone = model->findBone(s);
                     IMorph *morph = model->findMorph(s);
                     delete s;
@@ -599,57 +592,231 @@ private:
         }
     }
 
+    const IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
 };
 
 class TextureSemantic : public BaseParameter
 {
 public:
-    CGannotation width;
-    CGannotation height;
-    CGannotation depth;
-    CGannotation dimensions;
-    CGannotation viewportRatio;
-    CGannotation format;
-    TextureSemantic()
-        : width(0),
-          height(0),
-          depth(0),
-          dimensions(0),
-          viewportRatio(0),
-          format(0)
+    TextureSemantic(const IRenderDelegate *delegate)
+        : BaseParameter(),
+          m_delegate(delegate)
     {
     }
-    void addParameter(CGparameter parameter) {
-        BaseParameter::addParameter(parameter);
-        width = cgGetNamedParameterAnnotation(parameter, "Width");
-        height = cgGetNamedParameterAnnotation(parameter, "Height");
-        depth = cgGetNamedParameterAnnotation(parameter, "Depth");
-        dimensions = cgGetNamedParameterAnnotation(parameter, "Dimensions");
-        viewportRatio = cgGetNamedParameterAnnotation(parameter, "ViewportRatio");
-        format = cgGetNamedParameterAnnotation(parameter, "Format");
+    ~TextureSemantic() {
+        const int ntextures = m_textures.count();
+        glDeleteTextures(ntextures, &m_textures[0]);
     }
+
+    void addParameter(CGparameter parameter) {
+        CGannotation type = cgGetNamedParameterAnnotation(parameter, "ResourceType");
+        if (cgIsAnnotation(type)) {
+            const char *typeName = cgGetStringAnnotationValue(type);
+            if (strcmp(typeName, "texture3D") == 0) {
+                generateTexture3D(parameter);
+            }
+            else if (strcmp(typeName, "texture2D") == 0) {
+                generateTexture2D(parameter);
+            }
+        }
+        else {
+            generateTexture2D(parameter);
+        }
+    }
+
+protected:
+    bool isMimapEnabled(CGparameter parameter) {
+        CGannotation mipmapAnnotation = cgGetNamedParameterAnnotation(parameter, "Miplevels");
+        bool enableGeneratingMipmap = false;
+        if (cgIsAnnotation(mipmapAnnotation)) {
+            enableGeneratingMipmap = Util::toInt(mipmapAnnotation) != 1;
+        }
+        CGannotation levelAnnotation = cgGetNamedParameterAnnotation(parameter, "Level");
+        if (cgIsAnnotation(levelAnnotation)) {
+            enableGeneratingMipmap = Util::toInt(levelAnnotation) != 1;
+        }
+        return enableGeneratingMipmap;
+    }
+    virtual void generateTexture2D(CGparameter parameter, GLuint texture, int width, int height) {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        if (isMimapEnabled(parameter))
+            glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    virtual void generateTexture3D(CGparameter parameter, GLuint texture, int width, int height, int depth) {
+        glBindTexture(GL_TEXTURE_3D, texture);
+        glTexImage3D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        if (isMimapEnabled(parameter))
+            glGenerateMipmap(GL_TEXTURE_3D);
+        glBindTexture(GL_TEXTURE_3D, 0);
+    }
+
+private:
+    void generateTexture2D(CGparameter parameter) {
+        int width, height;
+        getSize2(parameter, width, height);
+        GLuint texture;
+        glGenTextures(1, &texture);
+        m_textures.add(texture);
+        generateTexture2D(parameter, texture, width, height);
+    }
+    void generateTexture3D(CGparameter parameter) {
+        int width, height, depth;
+        getSize3(parameter, width, height, depth);
+        GLuint texture;
+        glGenTextures(1, &texture);
+        m_textures.add(texture);
+        generateTexture3D(parameter, texture, width, height, depth);
+    }
+    void getSize2(CGparameter parameter, int &width, int &height) {
+        CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewportRatio");
+        int nvalues = 0;
+        if (cgIsAnnotation(viewportRatioAnnotation)) {
+            const float *values = cgGetFloatAnnotationValues(viewportRatioAnnotation, &nvalues);
+            if (nvalues == 2) {
+                Vector3 viewport;
+                m_delegate->getViewport(viewport);
+                float widthRatio = values[0];
+                float heightRatio = values[1];
+                width = btMax(1, int(viewport.x() * widthRatio));
+                height = btMax(1, int(viewport.y() * heightRatio));
+                return;
+            }
+        }
+        CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
+        if (cgIsAnnotation(dimensionsAnnotation)) {
+            const int *values = cgGetIntAnnotationValues(viewportRatioAnnotation, &nvalues);
+            if (nvalues == 2) {
+                width = btMax(1,values[0]);
+                height = btMax(1,values[1]);
+                return;
+            }
+        }
+        CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
+        CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
+        if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation)) {
+            width = btMax(1, Util::toInt(widthAnnotation));
+            height = btMax(1, Util::toInt(heightAnnotation));
+            return;
+        }
+        Vector3 viewport;
+        m_delegate->getViewport(viewport);
+        width = btMax(1, int(viewport.x()));
+        height = btMax(1, int(viewport.y()));
+    }
+    void getSize3(CGparameter parameter, int &width, int &height, int &depth) {
+        int nvalues = 0;
+        CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
+        if (cgIsAnnotation(dimensionsAnnotation)) {
+            const int *values = cgGetIntAnnotationValues(dimensionsAnnotation, &nvalues);
+            if (nvalues == 3) {
+                width = btMax(1,values[0]);
+                height = btMax(1,values[1]);
+                depth = btMax(1,values[2]);
+                return;
+            }
+        }
+        CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
+        CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
+        CGannotation depthAnnotation = cgGetNamedParameterAnnotation(parameter, "Depth");
+        if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation) && cgIsAnnotation(depthAnnotation)) {
+            width = btMax(1, Util::toInt(widthAnnotation));
+            height = btMax(1, Util::toInt(heightAnnotation));
+            depth = btMax(1, Util::toInt(depthAnnotation));
+            return;
+        }
+        Vector3 viewport;
+        m_delegate->getViewport(viewport);
+        width = btMax(1, int(viewport.x()));
+        height = btMax(1, int(viewport.y()));
+        depth = 24;
+    }
+
+    const IRenderDelegate *m_delegate;
+    Array<CGparameter> m_parameters;
+    Array<GLuint> m_textures;
 };
 
-class RenderConrolTargetSemantic : public TextureSemantic
+class RenderColorTargetSemantic : public TextureSemantic
 {
 public:
-    CGannotation mipLevels;
-    CGannotation levels;
-    RenderConrolTargetSemantic()
-        : TextureSemantic(),
-          mipLevels(0),
-          levels(0)
+    RenderColorTargetSemantic(const IRenderDelegate *delegate)
+        : TextureSemantic(delegate)
     {
     }
-    void addParameter(CGparameter parameter) {
-        TextureSemantic::addParameter(parameter);
-        mipLevels = cgGetNamedParameterAnnotation(parameter, "MipLevels");
-        levels = cgGetNamedParameterAnnotation(parameter, "Levels");
+    ~RenderColorTargetSemantic() {
+        const int nFrameBuffers = m_frameBuffers.count();
+        const int nRenderBuffers = m_renderBuffers.count();
+        glDeleteFramebuffers(nFrameBuffers, &m_frameBuffers[0]);
+        glDeleteRenderbuffers(nRenderBuffers, &m_renderBuffers[0]);
     }
+
+protected:
+    void generateTexture2D(CGparameter parameter, GLuint texture, int width, int height) {
+        TextureSemantic::generateTexture2D(parameter, texture, width, height);
+        GLuint frameBuffer, renderBuffer;
+        glGenFramebuffers(1, &frameBuffer);
+        m_frameBuffers.add(frameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glFramebufferTexture2D(texture, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glGenRenderbuffers(1, &renderBuffer);
+        m_renderBuffers.add(renderBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_COLOR_ATTACHMENT0, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, frameBuffer, GL_RENDERBUFFER, renderBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+
+private:
+    Array<GLuint> m_frameBuffers;
+    Array<GLuint> m_renderBuffers;
 };
 
-class OffscreenRenderTargetSemantic : public RenderConrolTargetSemantic
+class RenderDepthStencilTargetSemantic : public TextureSemantic
+{
+public:
+    RenderDepthStencilTargetSemantic(const IRenderDelegate *delegate)
+        : TextureSemantic(delegate)
+    {
+    }
+    ~RenderDepthStencilTargetSemantic() {
+        const int nFrameBuffers = m_frameBuffers.count();
+        const int nRenderBuffers = m_renderBuffers.count();
+        glDeleteFramebuffers(nFrameBuffers, &m_frameBuffers[0]);
+        glDeleteRenderbuffers(nRenderBuffers, &m_renderBuffers[0]);
+    }
+
+protected:
+    void generateTexture2D(CGparameter parameter, GLuint texture, int width, int height) {
+        TextureSemantic::generateTexture2D(parameter, texture, width, height);
+        GLuint frameBuffer, renderBuffer;
+        glGenFramebuffers(1, &frameBuffer);
+        m_frameBuffers.add(frameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glFramebufferTexture2D(texture, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glGenRenderbuffers(1, &renderBuffer);
+        m_renderBuffers.add(renderBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, frameBuffer, GL_DEPTH_ATTACHMENT, renderBuffer);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, frameBuffer, GL_STENCIL_ATTACHMENT, renderBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+
+private:
+    Array<GLuint> m_frameBuffers;
+    Array<GLuint> m_renderBuffers;
+};
+
+class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 {
 public:
     CGannotation clearColor;
@@ -657,8 +824,8 @@ public:
     CGannotation antiAlias;
     CGannotation description;
     CGannotation defaultEffect;
-    OffscreenRenderTargetSemantic()
-        : RenderConrolTargetSemantic(),
+    OffscreenRenderTargetSemantic(const IRenderDelegate *delegate)
+        : RenderColorTargetSemantic(delegate),
           clearColor(0),
           clearDepth(0),
           antiAlias(0),
@@ -666,9 +833,11 @@ public:
           defaultEffect(0)
     {
     }
+    ~OffscreenRenderTargetSemantic() {
+    }
 
     void addParameter(CGparameter parameter) {
-        RenderConrolTargetSemantic::addParameter(parameter);
+        RenderColorTargetSemantic::addParameter(parameter);
         clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
         antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
@@ -691,6 +860,9 @@ public:
           seekVariable(0)
     {
     }
+    ~AnimatedTextureSemantic() {
+    }
+
     void addParameter(CGparameter parameter) {
         BaseParameter::addParameter(parameter);
         resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
@@ -708,46 +880,51 @@ public:
         : textureName(0)
     {
     }
+    ~TextureValueSemantic() {
+    }
+
     void addParameter(CGparameter parameter) {
         BaseParameter::addParameter(parameter);
         textureName = cgGetNamedParameterAnnotation(parameter, "TextureName");
     }
 };
 
-class StandardsGlobalSemantic : public BaseParameter
-{
-public:
-    CGannotation scriptOutput;
-    CGannotation scriptClass;
-    CGannotation scriptOrder;
-    CGannotation script;
-    StandardsGlobalSemantic()
-        : scriptOutput(0),
-          scriptClass(0),
-          scriptOrder(0),
-          script(0)
-    {
-    }
-    void addParameter(CGparameter parameter) {
-        BaseParameter::addParameter(parameter);
-        scriptOutput = cgGetNamedParameterAnnotation(parameter, "ScriptOutput");
-        scriptClass = cgGetNamedParameterAnnotation(parameter, "ScriptClass");
-        scriptOrder = cgGetNamedParameterAnnotation(parameter, "ScriptOrder");
-        script = cgGetNamedParameterAnnotation(parameter, "Script");
-    }
-};
-
 class Effect {
 public:
-    Effect()
+    typedef std::vector<std::string> Techniques;
+    enum ScriptOutputType {
+        kColor
+    };
+    enum ScriptClassType {
+        kObject,
+        kScene,
+        kSceneObject
+    };
+    enum ScriptOrderType {
+        kPreProcess,
+        kStandard,
+        kPostProcess
+    };
+
+    Effect(const IRenderDelegate *delegate)
         : effect(0),
-          world(IRenderDelegate::kWorldMatrix),
-          view(IRenderDelegate::kViewMatrix),
-          projection(IRenderDelegate::kProjectionMatrix),
-          worldView(IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix),
-          viewProjection(IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
-          worldViewProjection(IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
-          index(0)
+          world(delegate, IRenderDelegate::kWorldMatrix),
+          view(delegate, IRenderDelegate::kViewMatrix),
+          projection(delegate, IRenderDelegate::kProjectionMatrix),
+          worldView(delegate, IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix),
+          viewProjection(delegate, IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
+          worldViewProjection(delegate, IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
+          time(delegate),
+          elapsedTime(delegate),
+          controlObject(delegate),
+          renderColorTarget(delegate),
+          renderDepthStencilTarget(delegate),
+          offscreenRenderTarget(delegate),
+          index(0),
+          m_delegate(delegate),
+          m_scriptOutput(kColor),
+          m_scriptClass(kObject),
+          m_scriptOrder(kStandard)
     {
     }
     ~Effect()
@@ -755,6 +932,7 @@ public:
         if (cgIsEffect(effect))
             cgDestroyEffect(effect);
         effect = 0;
+        m_delegate = 0;
     }
 
     bool attachEffect(CGeffect value) {
@@ -830,23 +1008,14 @@ public:
             else if (strcmp(semantic, "CONTROLOBJECT") == 0) {
                 controlObject.addParameter(parameter);
             }
-            else if (strcmp(semantic, "RENDERCONTROLTARGET") == 0) {
-                renderControlTarget.addParameter(parameter);
-            }
-            else if (strcmp(semantic, "RENDERDEPTHSTENCILTARGET") == 0) {
-                renderDepthStencilTarget.addParameter(parameter);
-            }
             else if (strcmp(semantic, "ANIMATEDTEXTURE") == 0) {
                 animatedTexture.addParameter(parameter);
-            }
-            else if (strcmp(semantic, "OFFSCREENRENDERTARGET") == 0) {
-                offscreenRenderTarget.addParameter(parameter);
             }
             else if (strcmp(semantic, "TEXTUREVALUE") == 0) {
                 textureValue.addParameter(parameter);
             }
             else if (strcmp(semantic, "STANDARDSGLOBAL") == 0) {
-                standardsGlobal.addParameter(parameter);
+                setStandardsGlobal(parameter);
             }
             else if (strcmp(semantic, "_INDEX") == 0) {
             }
@@ -880,24 +1049,7 @@ public:
                     subsetCount.addParameter(parameter);
                 }
                 else {
-                    CGtype type = cgGetParameterType(parameter);
-                    if (type == CG_SAMPLER2D) {
-                        CGstateassignment sa = cgGetFirstSamplerStateAssignment(parameter);
-                        while (sa) {
-                            CGstate s = cgGetSamplerStateAssignmentState(sa);
-                            if (cgIsState(s) && cgGetStateType(s) == CG_TEXTURE) {
-                                CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
-                                const char *semantic = cgGetParameterSemantic(textureParameter);
-                                if (strcmp(semantic, "MATERIALTEXTURE") == 0) {
-                                    materialTexture.addParameter(parameter);
-                                }
-                                else if (strcmp(semantic, "MATERIALSPHEREMAP") == 0) {
-                                    materialSphereMap.addParameter(parameter);
-                                }
-                            }
-                            sa = cgGetNextStateAssignment(sa);
-                        }
-                    }
+                    setTextureParameters(parameter);
                 }
             }
             parameter = cgGetNextParameter(parameter);
@@ -905,41 +1057,45 @@ public:
         effect = value;
         return true;
     }
-    CGtechnique findTechnique(const char *pass, int offset, int nmaterials, bool hasTexture, bool hasSphereMap, bool useToon) {
-        CGtechnique technique = cgGetFirstTechnique(effect);
-        while (technique) {
-            if (cgValidateTechnique(technique) == CG_FALSE) {
-                technique = cgGetNextTechnique(technique);
-                continue;
+    CGtechnique findTechnique(const char *pass,
+                              int offset,
+                              int nmaterials,
+                              bool hasTexture,
+                              bool hasSphereMap,
+                              bool useToon)
+    {
+        CGtechnique technique = 0;
+        if (!m_techniques.empty()) {
+            Techniques::const_iterator it = m_techniques.begin(), end = m_techniques.end();
+            while (it != end) {
+                const std::string &techniqueName = *it;
+                CGtechnique technique = cgGetNamedTechnique(effect, techniqueName.c_str());
+                if (cgIsTechnique(technique)
+                        && testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon))
+                    break;
+                ++it;
             }
-            int ok = 1;
-            CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
-            ok &= Util::isPassEquals(passAnnotation, pass);
-            CGannotation subsetAnnotation = cgGetNamedTechniqueAnnotation(technique, "Subset");
-            ok &= Util::containsSubset(subsetAnnotation, offset, nmaterials);
-            CGannotation useTextureAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseTexture");
-            ok &= (!cgIsAnnotation(useTextureAnnotation) || Util::toBool(useTextureAnnotation) == hasTexture);
-            CGannotation useSphereMapAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseSphereMap");
-            ok &= (!cgIsAnnotation(useSphereMapAnnotation) || Util::toBool(useSphereMapAnnotation) == hasSphereMap);
-            CGannotation useToonAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseToon");
-            ok &= (!cgIsAnnotation(useToonAnnotation) || Util::toBool(useToonAnnotation) == useToon);
-            if (ok == 1)
-                break;
-            technique = cgGetNextTechnique(technique);
+        }
+        else {
+            technique = cgGetFirstTechnique(effect);
+            while (technique) {
+                if (testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon))
+                    break;
+                technique = cgGetNextTechnique(technique);
+            }
         }
         return technique;
     }
-    void setModelMatrixParameters(const IRenderDelegate *delegate,
-                                  const IModel *model,
+    void setModelMatrixParameters(const IModel *model,
                                   int extraCameraFlags = 0,
                                   int extraLightFlags = 0)
     {
-        world.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
-        view.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
-        projection.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
-        worldView.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
-        viewProjection.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
-        worldViewProjection.setMatrices(delegate, model, extraCameraFlags, extraLightFlags);
+        world.setMatrices(model, extraCameraFlags, extraLightFlags);
+        view.setMatrices(model, extraCameraFlags, extraLightFlags);
+        projection.setMatrices(model, extraCameraFlags, extraLightFlags);
+        worldView.setMatrices(model, extraCameraFlags, extraLightFlags);
+        viewProjection.setMatrices(model, extraCameraFlags, extraLightFlags);
+        worldViewProjection.setMatrices(model, extraCameraFlags, extraLightFlags);
     }
     void setZeroGeometryParameters(const IModel *model) {
         edgeColor.setGeometryColor(model->edgeColor());
@@ -953,7 +1109,7 @@ public:
         spadd.setValue(false);
         useTexture.setValue(false);
     }
-    void updateModelGeometryParameters(const IRenderDelegate *delegate, const Scene *scene, const IModel *model) {
+    void updateModelGeometryParameters(const Scene *scene, const IModel *model) {
         const Scene::ILight *light = scene->light();
         const Vector3 &lightColor = light->color();
         if (model->type() == IModel::kAsset) {
@@ -976,27 +1132,29 @@ public:
         const Vector3 &cameraPosition = camera->modelViewTransform().getOrigin();
         position.setCameraValue(cameraPosition);
         direction.setCameraValue((cameraPosition - camera->position()).normalized());
-        controlObject.update(delegate, model);
+        controlObject.update(model);
     }
-    void updateViewportParameters(const IRenderDelegate *delegate) {
+    void updateViewportParameters() {
         Vector3 viewport;
-        delegate->getViewport(viewport);
+        m_delegate->getViewport(viewport);
         viewportPixelSize.setValue(viewport);
         Vector4 position;
-        delegate->getMousePosition(position, IRenderDelegate::kMouseCursorPosition);
+        m_delegate->getMousePosition(position, IRenderDelegate::kMouseCursorPosition);
         mousePosition.setValue(position);
-        delegate->getMousePosition(position, IRenderDelegate::kMouseLeftPressPosition);
+        m_delegate->getMousePosition(position, IRenderDelegate::kMouseLeftPressPosition);
         leftMouseDown.setValue(position);
-        delegate->getMousePosition(position, IRenderDelegate::kMouseMiddlePressPosition);
+        m_delegate->getMousePosition(position, IRenderDelegate::kMouseMiddlePressPosition);
         middleMouseDown.setValue(position);
-        delegate->getMousePosition(position, IRenderDelegate::kMouseRightPressPosition);
+        m_delegate->getMousePosition(position, IRenderDelegate::kMouseRightPressPosition);
         rightMouseDown.setValue(position);
-        time.setValue(delegate);
-        elapsedTime.setValue(delegate);
+        time.setValue();
+        elapsedTime.setValue();
     }
-    bool isAttached() const {
-        return cgIsEffect(effect) == CG_TRUE;
-    }
+
+    bool isAttached() const { return cgIsEffect(effect) == CG_TRUE; }
+    ScriptOutputType scriptOutput() const { return m_scriptOutput; }
+    ScriptClassType scriptClass() const { return m_scriptClass; }
+    ScriptOrderType scriptOrder() const { return m_scriptOrder; }
 
     CGeffect effect;
     MatrixSemantic world;
@@ -1024,12 +1182,11 @@ public:
     Float4Parameter middleMouseDown;
     Float4Parameter rightMouseDown;
     ControlObjectSemantic controlObject;
-    RenderConrolTargetSemantic renderControlTarget;
-    TextureSemantic renderDepthStencilTarget;
+    RenderColorTargetSemantic renderColorTarget;
+    RenderDepthStencilTargetSemantic renderDepthStencilTarget;
     AnimatedTextureSemantic animatedTexture;
     OffscreenRenderTargetSemantic offscreenRenderTarget;
     TextureValueSemantic textureValue;
-    StandardsGlobalSemantic standardsGlobal;
     /* special parameters */
     BooleanParameter parthf;
     BooleanParameter spadd;
@@ -1041,6 +1198,139 @@ public:
     IntegerParameter vertexCount;
     IntegerParameter subsetCount;
     CGparameter index;
+
+private:
+    static bool testTechnique(CGtechnique technique,
+                              const char *pass,
+                              int offset,
+                              int nmaterials,
+                              bool hasTexture,
+                              bool hasSphereMap,
+                              bool useToon)
+    {
+        if (cgValidateTechnique(technique) == CG_FALSE)
+            return false;
+        int ok = 1;
+        CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
+        ok &= Util::isPassEquals(passAnnotation, pass);
+        CGannotation subsetAnnotation = cgGetNamedTechniqueAnnotation(technique, "Subset");
+        ok &= containsSubset(subsetAnnotation, offset, nmaterials);
+        CGannotation useTextureAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseTexture");
+        ok &= (!cgIsAnnotation(useTextureAnnotation) || Util::toBool(useTextureAnnotation) == hasTexture);
+        CGannotation useSphereMapAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseSphereMap");
+        ok &= (!cgIsAnnotation(useSphereMapAnnotation) || Util::toBool(useSphereMapAnnotation) == hasSphereMap);
+        CGannotation useToonAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseToon");
+        ok &= (!cgIsAnnotation(useToonAnnotation) || Util::toBool(useToonAnnotation) == useToon);
+        return ok == 1;
+    }
+    static bool containsSubset(CGannotation annotation, int subset, int nmaterials) {
+        if (!cgIsAnnotation(annotation))
+            return true;
+        const std::string s(cgGetStringAnnotationValue(annotation));
+        std::istringstream stream(s);
+        std::string segment;
+        while (std::getline(stream, segment, ',')) {
+            if (strtol(segment.c_str(), 0, 10) == subset)
+                return true;
+            std::string::size_type offset = segment.find("-");
+            if (offset != std::string::npos) {
+                int from = strtol(segment.substr(0, offset).c_str(), 0, 10);
+                int to = strtol(segment.substr(offset).c_str(), 0, 10);
+                if (to == 0)
+                    to = nmaterials;
+                if (from > to)
+                    std::swap(from, to);
+                if (from <= subset && subset <= to)
+                    return true;
+            }
+        }
+        return false;
+    }
+    void setStandardsGlobal(CGparameter parameter) {
+        CGannotation scriptClassAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptClass");
+        if (cgIsAnnotation(scriptClassAnnotation)) {
+            const char *value = cgGetStringAnnotationValue(scriptClassAnnotation);
+            if (strcmp(value, "object") == 0) {
+                m_scriptClass = kObject;
+            }
+            else if (strcmp(value, "scene") == 0) {
+                m_scriptClass = kScene;
+            }
+            else if (strcmp(value, "sceneobject") == 0) {
+                m_scriptClass = kSceneObject;
+            }
+        }
+        CGannotation scriptOrderAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptOrder");
+        if (cgIsAnnotation(scriptOrderAnnotation)) {
+            const char *value = cgGetStringAnnotationValue(scriptOrderAnnotation);
+            if (strcmp(value, "standard") == 0) {
+                m_scriptOrder = kStandard;
+            }
+            else if (strcmp(value, "preprocess") == 0) {
+                m_scriptOrder = kPreProcess;
+            }
+            else if (strcmp(value, "postprocess") == 0) {
+                m_scriptOrder = kPostProcess;
+            }
+        }
+        CGannotation scriptAnnotation = cgGetNamedParameterAnnotation(parameter, "Script");
+        if (cgIsAnnotation(scriptAnnotation)) {
+            const char *value = cgGetStringAnnotationValue(scriptAnnotation);
+            static const char kMultipleTechniques[] = "Technique=Technique?";
+            static const char kSingleTechnique[] = "Technique=";
+            if (strncmp(value, kMultipleTechniques, sizeof(kMultipleTechniques)) == 0) {
+                const std::string s(value + sizeof(kMultipleTechniques));
+                std::istringstream stream(s);
+                std::string segment;
+                while (std::getline(stream, segment, ':')) {
+                    m_techniques.push_back(segment);
+                }
+            }
+            else if (strncmp(value, kSingleTechnique, sizeof(kSingleTechnique)) == 0) {
+                m_techniques.push_back(std::string(value + sizeof(kSingleTechnique)));
+            }
+        }
+    }
+    void setTextureParameters(CGparameter parameter) {
+        CGtype type = cgGetParameterType(parameter);
+        if (type == CG_SAMPLER2D) {
+            CGstateassignment sa = cgGetFirstSamplerStateAssignment(parameter);
+            while (sa) {
+                CGstate s = cgGetSamplerStateAssignmentState(sa);
+                if (cgIsState(s) && cgGetStateType(s) == CG_TEXTURE) {
+                    CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
+                    const char *semantic = cgGetParameterSemantic(textureParameter);
+                    if (strcmp(semantic, "MATERIALTEXTURE") == 0) {
+                        materialTexture.addParameter(parameter);
+                        break;
+                    }
+                    else if (strcmp(semantic, "MATERIALSPHEREMAP") == 0) {
+                        materialSphereMap.addParameter(parameter);
+                        break;
+                    }
+                    else if (strcmp(semantic, "RENDERCOLORTARGET") == 0) {
+                        renderColorTarget.addParameter(parameter);
+                        break;
+                    }
+                    else if (strcmp(semantic, "RENDERDEPTHSTENCILTARGET") == 0) {
+                        renderDepthStencilTarget.addParameter(parameter);
+                        break;
+                    }
+                    else if (strcmp(semantic, "OFFSCREENRENDERTARGET") == 0) {
+                        offscreenRenderTarget.addParameter(parameter);
+                        break;
+                    }
+                }
+                sa = cgGetNextStateAssignment(sa);
+            }
+        }
+    }
+
+    const IRenderDelegate *m_delegate;
+    ScriptOutputType m_scriptOutput;
+    ScriptClassType m_scriptClass;
+    ScriptOrderType m_scriptOrder;
+    Techniques m_techniques;
 };
 
 } /* namespace gl2 */

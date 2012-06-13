@@ -61,6 +61,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_accelerator(accelerator),
       m_model(model),
       m_context(effectContext),
+      m_effect(delegate),
       m_materialContexts(0),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
@@ -193,15 +194,15 @@ void PMXRenderEngine::update()
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->updateModel(m_model, m_scene);
 #endif
-    m_effect.updateModelGeometryParameters(m_delegate, m_scene, m_model);
-    m_effect.updateViewportParameters(m_delegate);
+    m_effect.updateModelGeometryParameters(m_scene, m_model);
+    m_effect.updateViewportParameters();
 }
 
 void PMXRenderEngine::renderModel()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
     const size_t indexStride = m_model->strideSize(pmx::Model::kIndexStride);
     const Scalar &modelOpacity = m_model->opacity();
@@ -278,7 +279,7 @@ void PMXRenderEngine::renderEdge()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
     const size_t indexStride = m_model->strideSize(pmx::Model::kIndexStride);
@@ -318,7 +319,7 @@ void PMXRenderEngine::renderShadow()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model, IRenderDelegate::kShadowMatrix);
+    m_effect.setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
     m_effect.setZeroGeometryParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
     const size_t indexStride = m_model->strideSize(pmx::Model::kIndexStride);
@@ -355,7 +356,7 @@ void PMXRenderEngine::renderZPlot()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
     const size_t indexStride = m_model->strideSize(pmx::Model::kIndexStride);

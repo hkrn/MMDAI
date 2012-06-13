@@ -87,6 +87,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
       m_scene(scene),
       m_model(model),
       m_context(context),
+      m_effect(delegate),
       m_cullFaceState(true)
 {
 }
@@ -203,8 +204,8 @@ void AssetRenderEngine::update()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
-    m_effect.updateModelGeometryParameters(m_delegate, m_scene, m_model);
-    m_effect.updateViewportParameters(m_delegate);
+    m_effect.updateModelGeometryParameters(m_scene, m_model);
+    m_effect.updateViewportParameters();
 }
 
 void AssetRenderEngine::renderModel()
@@ -214,7 +215,7 @@ void AssetRenderEngine::renderModel()
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     const aiScene *a = asset->getScene();
     renderRecurse(a, a->mRootNode);
     if (!m_cullFaceState) {
@@ -240,7 +241,7 @@ void AssetRenderEngine::renderZPlot()
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
         return;
-    m_effect.setModelMatrixParameters(m_delegate, m_model);
+    m_effect.setModelMatrixParameters(m_model);
     const aiScene *a = asset->getScene();
     renderZPlotRecurse(a, a->mRootNode);
 }
