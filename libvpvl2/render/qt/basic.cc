@@ -428,9 +428,20 @@ public:
         QString file;
         if (type == kModelEffectTechniques) {
             QDir d(static_cast<const String *>(dir)->value());
-            QFile info(d.absoluteFilePath("effect.fx"));
             QByteArray bytes;
-            return UISlurpFile(info.fileName(), bytes) ? new(std::nothrow) String(bytes) : 0;
+            if (m_model2filename.contains(model)) {
+                QFileInfo info(d.absoluteFilePath(m_model2filename[model]));
+                QRegExp regexp("^.+\\[([^\\]]+)\\]$");
+                const QString &name = info.baseName();
+                const QString &basename = regexp.exactMatch(name) ? regexp.capturedTexts().at(1) : name;
+                const QString &fx = d.absoluteFilePath(basename + ".fx");
+                if (QFile::exists(fx))
+                    return UISlurpFile(fx, bytes) ? new (std::nothrow) String(bytes) : 0;
+                const QString &cgfx = d.absoluteFilePath(basename + ".cgfx");
+                if (QFile::exists(cgfx))
+                    return UISlurpFile(cgfx, bytes) ? new (std::nothrow) String(bytes) : 0;
+            }
+            return UISlurpFile(d.absoluteFilePath("effect.fx"), bytes) ? new(std::nothrow) String(bytes) : 0;
         }
         switch (model->type()) {
         case IModel::kAsset:
@@ -533,6 +544,10 @@ public:
             break;
         }
     }
+    void addModelFilename(const IModel *model, const QString &filename) {
+        if (model)
+            m_model2filename.insert(model, filename);
+    }
 
 private:
     static const QString createPath(const IString *dir, const char *name) {
@@ -590,6 +605,7 @@ private:
     const QDir m_systemDir;
     QGLWidget *m_widget;
     QSize m_viewport;
+    QHash<const IModel *, QString> m_model2filename;
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;
@@ -1144,9 +1160,7 @@ private:
             qWarning("Failed loading the model");
             return 0;
         }
-        return addModel(bytes, QFileInfo(path).absoluteDir().path());
-    }
-    IModel *addModel(const QByteArray &bytes, const QString &dir) {
+        const QFileInfo info(path);
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         IModel *model = m_factory->createModel(data, bytes.size(), ok);
@@ -1154,10 +1168,11 @@ private:
             qWarning("Failed parsing the model: %d", model->error());
             return 0;
         }
+        m_delegate->addModelFilename(model, info.fileName());
         model->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
-        String s(dir);
+        String s(info.absoluteDir().absolutePath());
         engine->upload(&s);
         m_scene.addModel(model, engine);
 #if 0
