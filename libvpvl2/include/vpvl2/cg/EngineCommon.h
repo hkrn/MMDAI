@@ -628,13 +628,13 @@ public:
         else {
             generateTexture2D(parameter);
         }
-        m_parameters.add(parameter);
         const char *name = cgGetParameterName(parameter);
+        m_parameters.add(parameter);
         m_name2parameters.insert(name, parameter);
     }
-    CGparameter findParameter(const char *name) {
+    CGparameter findParameter(const char *name) const {
         CGparameter *parameter = const_cast<CGparameter *>(m_name2parameters.find(name));
-        return parameter ? 0 : *parameter;
+        return parameter ? *parameter : 0;
     }
 
 protected:
@@ -955,12 +955,6 @@ public:
         static const char kWorldViewSemantic[] = "WORLDVIEW";
         static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
         static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
-        CGtechnique technique = cgGetFirstTechnique(value);
-        while (technique) {
-            if (parseTechniqueScript(technique))
-                m_techniques.add(technique);
-            technique = cgGetNextTechnique(technique);
-        }
         CGparameter parameter = cgGetFirstEffectParameter(value);
         while (parameter) {
             const char *semantic = cgGetParameterSemantic(parameter);
@@ -1074,6 +1068,12 @@ public:
             parameter = cgGetNextParameter(parameter);
         }
         effect = value;
+        CGtechnique technique = cgGetFirstTechnique(value);
+        while (technique) {
+            if (parseTechniqueScript(technique))
+                m_techniques.add(technique);
+            technique = cgGetNextTechnique(technique);
+        }
         return true;
     }
     CGtechnique findTechnique(const char *pass,
@@ -1252,6 +1252,7 @@ private:
         CGpass pass;
         bool enterLoop;
     };
+    typedef btAlignedObjectArray<ScriptState> ScriptStates;
 
     static bool testTechnique(CGtechnique technique,
                               const char *pass,
@@ -1288,7 +1289,7 @@ private:
             std::string::size_type offset = segment.find("-");
             if (offset != std::string::npos) {
                 int from = strtol(segment.substr(0, offset).c_str(), 0, 10);
-                int to = strtol(segment.substr(offset).c_str(), 0, 10);
+                int to = strtol(segment.substr(offset + 1).c_str(), 0, 10);
                 if (to == 0)
                     to = nmaterials;
                 if (from > to)
@@ -1298,6 +1299,19 @@ private:
             }
         }
         return false;
+    }
+    static void setStateFromTextureSemantic(const TextureSemantic &semantic,
+                                            const std::string &value,
+                                            ScriptState::Type type,
+                                            ScriptState &state)
+    {
+        state.type = type;
+        if (!value.empty()) {
+            CGparameter parameter = semantic.findParameter(value.c_str());
+            if (cgIsParameter(parameter)) {
+                state.parameter = parameter;
+            }
+        }
     }
     void setStandardsGlobal(CGparameter parameter) {
         CGannotation scriptClassAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptClass");
@@ -1367,15 +1381,15 @@ private:
                         break;
                     }
                     else if (strcmp(semantic, "RENDERCOLORTARGET") == 0) {
-                        renderColorTarget.addParameter(parameter);
+                        renderColorTarget.addParameter(textureParameter);
                         break;
                     }
                     else if (strcmp(semantic, "RENDERDEPTHSTENCILTARGET") == 0) {
-                        renderDepthStencilTarget.addParameter(parameter);
+                        renderDepthStencilTarget.addParameter(textureParameter);
                         break;
                     }
                     else if (strcmp(semantic, "OFFSCREENRENDERTARGET") == 0) {
-                        offscreenRenderTarget.addParameter(parameter);
+                        offscreenRenderTarget.addParameter(textureParameter);
                         break;
                     }
                 }
@@ -1383,7 +1397,6 @@ private:
             }
         }
     }
-    typedef btAlignedObjectArray<ScriptState> ScriptStates;
     bool parseTechniqueScript(CGtechnique technique) {
         if (!cgIsTechnique(technique) || !cgValidateTechnique(technique))
             return false;
@@ -1399,42 +1412,22 @@ private:
                 std::string::size_type offset = segment.find("=");
                 if (offset != std::string::npos) {
                     const std::string &command = segment.substr(0, offset);
-                    const std::string &value = segment.substr(offset);
+                    const std::string &value = segment.substr(offset + 1);
                     newState.enterLoop = lastState.enterLoop;
                     if (command == "RenderColorTarget" || command == "RenderColorTarget0") {
-                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
-                        if (cgIsParameter(parameter)) {
-                            newState.type = ScriptState::kRenderColorTarget0;
-                            newState.parameter = parameter;
-                        }
+                        setStateFromTextureSemantic(renderColorTarget, value, ScriptState::kRenderColorTarget0, newState);
                     }
                     else if (command == "RenderColorTarget1") {
-                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
-                        if (cgIsParameter(parameter)) {
-                            newState.type = ScriptState::kRenderColorTarget1;
-                            newState.parameter = parameter;
-                        }
+                        setStateFromTextureSemantic(renderColorTarget, value, ScriptState::kRenderColorTarget1, newState);
                     }
                     else if (command == "RenderColorTarget2") {
-                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
-                        if (cgIsParameter(parameter)) {
-                            newState.type = ScriptState::kRenderColorTarget2;
-                            newState.parameter = parameter;
-                        }
+                        setStateFromTextureSemantic(renderColorTarget, value, ScriptState::kRenderColorTarget2, newState);
                     }
                     else if (command == "RenderColorTarget3") {
-                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
-                        if (cgIsParameter(parameter)) {
-                            newState.type = ScriptState::kRenderColorTarget3;
-                            newState.parameter = parameter;
-                        }
+                        setStateFromTextureSemantic(renderColorTarget, value, ScriptState::kRenderColorTarget3, newState);
                     }
                     else if (command == "RenderDepthStencilTarget") {
-                        CGparameter parameter = renderDepthStencilTarget.findParameter(value.c_str());
-                        if (cgIsParameter(parameter)) {
-                            newState.type = ScriptState::kRenderDepthStencilTarget;
-                            newState.parameter = parameter;
-                        }
+                        setStateFromTextureSemantic(renderDepthStencilTarget, value, ScriptState::kRenderDepthStencilTarget, newState);
                     }
                     else if (command == "ClearSetColor") {
                         CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
