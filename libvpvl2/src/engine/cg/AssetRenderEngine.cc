@@ -378,7 +378,6 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         const char *target = hasShadowMap ? "object_ss" : "object";
         CGtechnique technique = m_effect.findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         if (cgIsTechnique(technique)) {
-            CGpass pass = cgGetFirstPass(technique);
             const int nindices = indices.size();
             glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
             glNormalPointer(GL_FLOAT, stride, normalPtr);
@@ -386,12 +385,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
             glEnableClientState(GL_VERTEX_ARRAY);
             glEnableClientState(GL_NORMAL_ARRAY);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            while (pass) {
-                cgSetPassState(pass);
-                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
-                cgResetPassState(pass);
-                pass = cgGetNextPass(pass);
-            }
+            m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, 0);
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);

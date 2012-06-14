@@ -253,15 +253,7 @@ void PMXRenderEngine::renderModel()
         const int nindices = material->indices();
         const char *target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
-        if (cgIsTechnique(technique)) {
-            CGpass pass = cgGetFirstPass(technique);
-            while (pass) {
-                cgSetPassState(pass);
-                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
-                cgResetPassState(pass);
-                pass = cgGetNextPass(pass);
-            }
-        }
+        m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glDisableClientState(GL_VERTEX_ARRAY);

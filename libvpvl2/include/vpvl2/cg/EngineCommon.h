@@ -81,6 +81,11 @@ public:
         const char *s = cgGetStringAnnotationValue(annotation);
         return strcmp(s, target) == 0;
     }
+    static bool isIntegerParameter(CGparameter parameter) {
+        return cgGetParameterType(parameter) == CG_BOOL ||
+                cgGetParameterType(parameter) == CG_INT ||
+                cgGetParameterType(parameter) == CG_FLOAT;
+    }
 
 private:
     Util() {}
@@ -471,7 +476,7 @@ public:
             if (strcmp(name, "(self)") == 0) {
                 setParameter(self, parameter);
             }
-            else if (strcmp(name, "(OffscreenOwenr)") == 0) {
+            else if (strcmp(name, "(OffscreenOwner)") == 0) {
                 // TODO
             }
             else {
@@ -623,6 +628,13 @@ public:
         else {
             generateTexture2D(parameter);
         }
+        m_parameters.add(parameter);
+        const char *name = cgGetParameterName(parameter);
+        m_name2parameters.insert(name, parameter);
+    }
+    CGparameter findParameter(const char *name) {
+        CGparameter *parameter = const_cast<CGparameter *>(m_name2parameters.find(name));
+        return parameter ? 0 : *parameter;
     }
 
 protected:
@@ -737,6 +749,7 @@ private:
     const IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
+    Hash<HashString, CGparameter> m_name2parameters;
 };
 
 class RenderColorTargetSemantic : public TextureSemantic
@@ -891,7 +904,7 @@ public:
 
 class Effect {
 public:
-    typedef std::vector<std::string> Techniques;
+    typedef Array<CGtechnique> Techniques;
     enum ScriptOutputType {
         kColor
     };
@@ -936,13 +949,19 @@ public:
     }
 
     bool attachEffect(CGeffect value) {
-        CGparameter parameter = cgGetFirstEffectParameter(value);
         static const char kWorldSemantic[] = "WORLD";
         static const char kViewSemantic[] = "VIEW";
         static const char kProjectionSemantic[] = "PROJECTION";
         static const char kWorldViewSemantic[] = "WORLDVIEW";
         static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
         static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
+        CGtechnique technique = cgGetFirstTechnique(value);
+        while (technique) {
+            if (parseTechniqueScript(technique))
+                m_techniques.add(technique);
+            technique = cgGetNextTechnique(technique);
+        }
+        CGparameter parameter = cgGetFirstEffectParameter(value);
         while (parameter) {
             const char *semantic = cgGetParameterSemantic(parameter);
             if (strncmp(semantic, kWorldSemantic, sizeof(kWorldSemantic)) == 0) {
@@ -1065,26 +1084,24 @@ public:
                               bool useToon)
     {
         CGtechnique technique = 0;
-        if (!m_techniques.empty()) {
-            Techniques::const_iterator it = m_techniques.begin(), end = m_techniques.end();
-            while (it != end) {
-                const std::string &techniqueName = *it;
-                CGtechnique technique = cgGetNamedTechnique(effect, techniqueName.c_str());
-                if (cgIsTechnique(technique)
-                        && testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon))
-                    break;
-                ++it;
-            }
-        }
-        else {
-            technique = cgGetFirstTechnique(effect);
-            while (technique) {
-                if (testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon))
-                    break;
-                technique = cgGetNextTechnique(technique);
-            }
+        const int ntechniques = m_techniques.count();
+        for (int i = 0; i < ntechniques; i++) {
+            technique = m_techniques[i];
+            if (testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon))
+                break;
         }
         return technique;
+    }
+    void executeTechniquePasses(CGtechnique technique, GLsizei count, GLenum type, const GLvoid *ptr) {
+        if (cgIsTechnique(technique)) {
+            CGpass pass = cgGetFirstPass(technique);
+            while (pass) {
+                cgSetPassState(pass);
+                glDrawElements(GL_TRIANGLES, count, type, ptr);
+                cgResetPassState(pass);
+                pass = cgGetNextPass(pass);
+            }
+        }
     }
     void setModelMatrixParameters(const IModel *model,
                                   int extraCameraFlags = 0,
@@ -1200,6 +1217,42 @@ public:
     CGparameter index;
 
 private:
+    struct ScriptState {
+        ScriptState()
+            : type(kUnknown),
+              parameter(0),
+              pass(0),
+              enterLoop(false)
+        {
+        }
+        void reset() {
+            type = kUnknown;
+            parameter = 0;
+            pass = 0;
+            enterLoop = false;
+        }
+        enum Type {
+            kUnknown,
+            kRenderColorTarget0,
+            kRenderColorTarget1,
+            kRenderColorTarget2,
+            kRenderColorTarget3,
+            kRenderDepthStencilTarget,
+            kClearSetColor,
+            kClearSetDepth,
+            kClear,
+            kScriptExternal,
+            kPass,
+            kLoopByCount,
+            kLoopEnd,
+            kLoopGetIndex,
+            kDraw
+        } type;
+        CGparameter parameter;
+        CGpass pass;
+        bool enterLoop;
+    };
+
     static bool testTechnique(CGtechnique technique,
                               const char *pass,
                               int offset,
@@ -1278,16 +1331,21 @@ private:
             const char *value = cgGetStringAnnotationValue(scriptAnnotation);
             static const char kMultipleTechniques[] = "Technique=Technique?";
             static const char kSingleTechnique[] = "Technique=";
+            m_techniques.clear();
             if (strncmp(value, kMultipleTechniques, sizeof(kMultipleTechniques)) == 0) {
                 const std::string s(value + sizeof(kMultipleTechniques));
                 std::istringstream stream(s);
                 std::string segment;
                 while (std::getline(stream, segment, ':')) {
-                    m_techniques.push_back(segment);
+                    CGtechnique technique = cgGetNamedTechnique(effect, segment.c_str());
+                    if (parseTechniqueScript(technique))
+                        m_techniques.add(technique);
                 }
             }
             else if (strncmp(value, kSingleTechnique, sizeof(kSingleTechnique)) == 0) {
-                m_techniques.push_back(std::string(value + sizeof(kSingleTechnique)));
+                CGtechnique technique = cgGetNamedTechnique(effect, value + sizeof(kSingleTechnique));
+                if (parseTechniqueScript(technique))
+                    m_techniques.add(technique);
             }
         }
     }
@@ -1325,12 +1383,139 @@ private:
             }
         }
     }
+    typedef btAlignedObjectArray<ScriptState> ScriptStates;
+    bool parseTechniqueScript(CGtechnique technique) {
+        if (!cgIsTechnique(technique) || !cgValidateTechnique(technique))
+            return false;
+        CGannotation scriptAnnotation = cgGetNamedTechniqueAnnotation(technique, "Script");
+        if (cgIsAnnotation(scriptAnnotation)) {
+            const std::string s(cgGetStringAnnotationValue(scriptAnnotation));
+            std::istringstream stream(s);
+            std::string segment;
+            ScriptStates techniqueScriptStates, scriptExternalStates;
+            ScriptState lastState, newState;
+            bool useScriptExternal = m_scriptOrder == kPostProcess;
+            while (std::getline(stream, segment, ';')) {
+                std::string::size_type offset = segment.find("=");
+                if (offset != std::string::npos) {
+                    const std::string &command = segment.substr(0, offset);
+                    const std::string &value = segment.substr(offset);
+                    newState.enterLoop = lastState.enterLoop;
+                    if (command == "RenderColorTarget" || command == "RenderColorTarget0") {
+                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
+                        if (cgIsParameter(parameter)) {
+                            newState.type = ScriptState::kRenderColorTarget0;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "RenderColorTarget1") {
+                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
+                        if (cgIsParameter(parameter)) {
+                            newState.type = ScriptState::kRenderColorTarget1;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "RenderColorTarget2") {
+                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
+                        if (cgIsParameter(parameter)) {
+                            newState.type = ScriptState::kRenderColorTarget2;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "RenderColorTarget3") {
+                        CGparameter parameter = renderColorTarget.findParameter(value.c_str());
+                        if (cgIsParameter(parameter)) {
+                            newState.type = ScriptState::kRenderColorTarget3;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "RenderDepthStencilTarget") {
+                        CGparameter parameter = renderDepthStencilTarget.findParameter(value.c_str());
+                        if (cgIsParameter(parameter)) {
+                            newState.type = ScriptState::kRenderDepthStencilTarget;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "ClearSetColor") {
+                        CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
+                        if (cgIsParameter(parameter) && cgGetParameterType(parameter) == CG_FLOAT4) {
+                            newState.type = ScriptState::kClearSetColor;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "ClearSetDepth") {
+                        CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
+                        if (cgIsParameter(parameter) && cgGetParameterType(parameter) == CG_FLOAT) {
+                            newState.type = ScriptState::kClearSetDepth;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "Clear") {
+                        newState.type = ScriptState::kClear;
+                    }
+                    else if (command == "Pass") {
+                        CGpass pass = cgGetNamedPass(technique, value.c_str());
+                        if (cgIsPass(pass)) {
+                            newState.type = ScriptState::kPass;
+                            newState.pass = pass;
+                        }
+                    }
+                    else if (command == "LoopByCount" && !lastState.enterLoop) {
+                        CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
+                        if (Util::isIntegerParameter(parameter)) {
+                            newState.type = ScriptState::kLoopByCount;
+                            newState.enterLoop = true;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "LoopEnd" && lastState.enterLoop) {
+                        newState.type = ScriptState::kLoopEnd;
+                        newState.enterLoop = false;
+                    }
+                    else if (command == "LoopGetIndex" && lastState.enterLoop) {
+                        CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
+                        if (Util::isIntegerParameter(parameter)) {
+                            newState.type = ScriptState::kLoopByCount;
+                            newState.enterLoop = true;
+                            newState.parameter = parameter;
+                        }
+                    }
+                    else if (command == "Draw") {
+                        if (value == "Buffer" && m_scriptClass == kObject)
+                            return false;
+                        if (value == "Geometry" && m_scriptClass == kScene)
+                            return false;
+                    }
+                    else if (command == "ScriptExternal" && m_scriptOrder == kPostProcess) {
+                        newState.type = ScriptState::kScriptExternal;
+                        useScriptExternal = false;
+                        if (lastState.enterLoop)
+                            return false;
+                    }
+                    if (newState.type != ScriptState::kUnknown) {
+                        lastState = newState;
+                        if (useScriptExternal)
+                            scriptExternalStates.push_back(newState);
+                        else
+                            techniqueScriptStates.push_back(newState);
+                        newState.reset();
+                    }
+                }
+            }
+            m_techniqueScriptStates.insert(technique, techniqueScriptStates);
+            m_scriptExternalStates.insert(technique, scriptExternalStates);
+            return !lastState.enterLoop;
+        }
+        return true;
+    }
 
     const IRenderDelegate *m_delegate;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     ScriptOrderType m_scriptOrder;
     Techniques m_techniques;
+    Hash<HashPtr, ScriptStates> m_techniqueScriptStates;
+    Hash<HashPtr, ScriptStates> m_scriptExternalStates;
 };
 
 } /* namespace gl2 */
