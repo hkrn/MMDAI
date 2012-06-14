@@ -434,12 +434,12 @@ public:
                 QRegExp regexp("^.+\\[([^\\]]+)\\]$");
                 const QString &name = info.baseName();
                 const QString &basename = regexp.exactMatch(name) ? regexp.capturedTexts().at(1) : name;
-                const QString &fx = d.absoluteFilePath(basename + ".fx");
-                if (QFile::exists(fx))
-                    return UISlurpFile(fx, bytes) ? new (std::nothrow) String(bytes) : 0;
                 const QString &cgfx = d.absoluteFilePath(basename + ".cgfx");
                 if (QFile::exists(cgfx))
                     return UISlurpFile(cgfx, bytes) ? new (std::nothrow) String(bytes) : 0;
+                const QString &fx = d.absoluteFilePath(basename + ".fx");
+                if (QFile::exists(fx))
+                    return UISlurpFile(fx, bytes) ? new (std::nothrow) String(bytes) : 0;
             }
             return UISlurpFile(d.absoluteFilePath("effect.fx"), bytes) ? new(std::nothrow) String(bytes) : 0;
         }
