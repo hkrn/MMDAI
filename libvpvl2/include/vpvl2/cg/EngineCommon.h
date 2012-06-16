@@ -1048,7 +1048,7 @@ public:
                               int nmaterials,
                               bool hasTexture,
                               bool hasSphereMap,
-                              bool useToon)
+                              bool useToon) const
     {
         CGtechnique technique = 0;
         const int ntechniques = m_techniques.size();
@@ -1061,15 +1061,15 @@ public:
     }
     void executeTechniquePasses(const CGtechnique technique, GLsizei count, GLenum type, const GLvoid *ptr) {
         if (cgIsTechnique(technique)) {
-            const ScriptStates *tss = m_techniqueScriptStates.find(technique);
-            executeScriptStates(tss, count, type, ptr);
+            const Script *tss = m_techniqueScripts.find(technique);
+            executeScript(tss, count, type, ptr);
             const Passes *passes = m_techniquePasses.find(technique);
             if (passes) {
                 const int npasses = passes->size();
                 for (int i = 0; i < npasses; i++) {
                     CGpass pass = passes->at(i);
-                    const ScriptStates *pss = m_passScriptStates.find(pass);
-                    executeScriptStates(pss, count, type, ptr);
+                    const Script *pss = m_passScripts.find(pass);
+                    executeScript(pss, count, type, ptr);
                 }
             }
         }
@@ -1241,7 +1241,7 @@ private:
         GLuint stencilBuffer;
         bool enterLoop;
     };
-    typedef btAlignedObjectArray<ScriptState> ScriptStates;
+    typedef btAlignedObjectArray<ScriptState> Script;
 
     static bool testTechnique(const CGtechnique technique,
                               const char *pass,
@@ -1348,9 +1348,9 @@ private:
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-    void executeScriptStates(const ScriptStates *states, GLsizei count, GLenum type, const GLvoid *ptr) {
-        if (states) {
-            const int nstates = states->size();
+    void executeScript(const Script *script, GLsizei count, GLenum type, const GLvoid *ptr) {
+        if (script) {
+            const int nstates = script->size();
             int stateIndex = 0, nloop = 0, backStateIndex = 0;
             GLuint frameBufferObject, depthBuffer, stencilBuffer, colorBuffers[] = {
                 GL_COLOR_ATTACHMENT0,
@@ -1361,7 +1361,7 @@ private:
             static const size_t nbuffers = sizeof(colorBuffers) / sizeof(colorBuffers[0]);
             Vector4 v4;
             while (stateIndex < nstates) {
-                const ScriptState &state = states->at(stateIndex);
+                const ScriptState &state = script->at(stateIndex);
                 switch (state.type) {
                 case ScriptState::kClearColor:
                     frameBufferObject = state.frameBufferObject;
@@ -1544,12 +1544,12 @@ private:
         }
     }
     bool parsePassScript(const CGpass pass, GLuint frameBufferObject) {
-        if (m_passScriptStates[pass])
+        if (m_passScripts[pass])
             return true;
         if (!cgIsPass(pass))
             return false;
         const CGannotation scriptAnnotation = cgGetNamedPassAnnotation(pass, "Script");
-        ScriptStates passScriptStates;
+        Script passScriptStates;
         if (cgIsAnnotation(scriptAnnotation)) {
             const std::string s(cgGetStringAnnotationValue(scriptAnnotation));
             ScriptState lastState, newState;
@@ -1650,19 +1650,19 @@ private:
             state.type = ScriptState::kDrawGeometry;
             passScriptStates.push_back(state);
         }
-        m_passScriptStates.insert(pass, passScriptStates);
+        m_passScripts.insert(pass, passScriptStates);
         return true;
     }
     bool parseTechniqueScript(const CGtechnique technique, GLuint &frameBufferObject, Passes &passes) {
         if (!cgIsTechnique(technique) || !cgValidateTechnique(technique))
             return false;
         const CGannotation scriptAnnotation = cgGetNamedTechniqueAnnotation(technique, "Script");
-        ScriptStates techniqueScriptStates;
+        Script techniqueScriptStates;
         if (cgIsAnnotation(scriptAnnotation)) {
             const std::string s(cgGetStringAnnotationValue(scriptAnnotation));
             std::istringstream stream(s);
             std::string segment;
-            ScriptStates scriptExternalStates;
+            Script scriptExternalStates;
             ScriptState lastState, newState;
             bool useScriptExternal = m_scriptOrder == kPostProcess,
                     renderColorTarget0DidSet = false,
@@ -1782,8 +1782,8 @@ private:
                 glDeleteFramebuffers(1, &frameBufferObject);
                 frameBufferObject = 0;
             }
-            m_techniqueScriptStates.insert(technique, techniqueScriptStates);
-            m_scriptExternalStates.insert(technique, scriptExternalStates);
+            m_techniqueScripts.insert(technique, techniqueScriptStates);
+            m_externalScripts.insert(technique, scriptExternalStates);
             return !lastState.enterLoop;
         }
         else {
@@ -1797,7 +1797,7 @@ private:
                 }
                 pass = cgGetNextPass(pass);
             }
-            m_techniqueScriptStates.insert(technique, techniqueScriptStates);
+            m_techniqueScripts.insert(technique, techniqueScriptStates);
         }
         return true;
     }
@@ -1808,9 +1808,9 @@ private:
     ScriptOrderType m_scriptOrder;
     Techniques m_techniques;
     TechniquePasses m_techniquePasses;
-    Hash<HashPtr, ScriptStates> m_scriptExternalStates;
-    Hash<HashPtr, ScriptStates> m_techniqueScriptStates;
-    Hash<HashPtr, ScriptStates> m_passScriptStates;
+    Hash<HashPtr, Script> m_externalScripts;
+    Hash<HashPtr, Script> m_techniqueScripts;
+    Hash<HashPtr, Script> m_passScripts;
     btHashMap<btHashPtr, GLuint> m_techniqueFrameBuffers;
 };
 
