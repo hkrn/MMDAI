@@ -1070,7 +1070,6 @@ public:
                     CGpass pass = passes->at(i);
                     const ScriptStates *pss = m_passScriptStates.find(pass);
                     executeScriptStates(pss, count, type, ptr);
-                    executePass(pass, count, type, ptr);
                 }
             }
         }
@@ -1394,9 +1393,6 @@ private:
                     cgGLGetParameter1f(state.parameter, v4);
                     glClearDepth(v4.x());
                     break;
-                case ScriptState::kPass:
-                    executePass(state.pass, count, type, ptr);
-                    break;
                 case ScriptState::kLoopByCount:
                     cgGLGetParameter1f(state.parameter, v4);
                     backStateIndex = stateIndex + 1;
@@ -1425,9 +1421,9 @@ private:
                     setFrameBufferTexture(GL_COLOR_ATTACHMENT3, state);
                     break;
                 case ScriptState::kRenderDepthStencilTarget:
-                    glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
                     depthBuffer = state.depthBuffer;
                     stencilBuffer = state.stencilBuffer;
+                    glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
                     if (depthBuffer > 0 && stencilBuffer > 0) {
                         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
                         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilBuffer);
@@ -1445,6 +1441,9 @@ private:
                     glBindFramebuffer(GL_FRAMEBUFFER, 0);
                     break;
                 case ScriptState::kDrawGeometry:
+                    executePass(state.pass, count, type, ptr);
+                    break;
+                case ScriptState::kPass:
                 case ScriptState::kScriptExternal:
                 case ScriptState::kUnknown:
                 default:
@@ -1454,16 +1453,10 @@ private:
             }
         }
     }
-    void addTechniquePasses(CGtechnique technique) {
+    void addTechniquePasses(const CGtechnique technique) {
         GLuint frameBufferObject;
-        if (parseTechniqueScript(technique, frameBufferObject)) {
-            Passes passes;
-            CGpass pass = cgGetFirstPass(technique);
-            while (pass) {
-                if (parsePassScript(pass, frameBufferObject))
-                    passes.push_back(pass);
-                pass = cgGetNextPass(pass);
-            }
+        Passes passes;
+        if (parseTechniqueScript(technique, frameBufferObject, passes)) {
             m_techniquePasses.insert(technique, passes);
             m_techniques.push_back(technique);
         }
@@ -1653,13 +1646,14 @@ private:
             if (m_scriptClass == kScene)
                 return false;
             ScriptState state;
+            state.pass = pass;
             state.type = ScriptState::kDrawGeometry;
             passScriptStates.push_back(state);
         }
         m_passScriptStates.insert(pass, passScriptStates);
         return true;
     }
-    bool parseTechniqueScript(const CGtechnique technique, GLuint &frameBufferObject) {
+    bool parseTechniqueScript(const CGtechnique technique, GLuint &frameBufferObject, Passes &passes) {
         if (!cgIsTechnique(technique) || !cgValidateTechnique(technique))
             return false;
         const CGannotation scriptAnnotation = cgGetNamedTechniqueAnnotation(technique, "Script");
@@ -1742,6 +1736,7 @@ private:
                         if (parsePassScript(pass, frameBufferObject)) {
                             newState.type = ScriptState::kPass;
                             newState.pass = pass;
+                            passes.push_back(pass);
                         }
                     }
                     else if (!lastState.enterLoop && command == "LoopByCount") {
@@ -1790,6 +1785,19 @@ private:
             m_techniqueScriptStates.insert(technique, techniqueScriptStates);
             m_scriptExternalStates.insert(technique, scriptExternalStates);
             return !lastState.enterLoop;
+        }
+        else {
+            ScriptState state;
+            CGpass pass = cgGetFirstPass(technique);
+            while (pass) {
+                if (parsePassScript(pass, frameBufferObject)) {
+                    state.type = ScriptState::kPass;
+                    state.pass = pass;
+                    passes.push_back(pass);
+                }
+                pass = cgGetNextPass(pass);
+            }
+            m_techniqueScriptStates.insert(technique, techniqueScriptStates);
         }
         return true;
     }
