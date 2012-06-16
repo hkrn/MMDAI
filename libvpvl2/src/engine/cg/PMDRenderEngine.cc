@@ -301,15 +301,7 @@ void PMDRenderEngine::renderModel()
         const int nindices = material->countIndices();
         const char *target = hasShadowMap ? "object_ss" : "object";
         CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
-        if (cgIsTechnique(technique)) {
-            CGpass pass = cgGetFirstPass(technique);
-            while (pass) {
-                cgSetPassState(pass);
-                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
-                cgResetPassState(pass);
-                pass = cgGetNextPass(pass);
-            }
-        }
+        m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -344,15 +336,7 @@ void PMDRenderEngine::renderEdge()
         const Material *material = materials[i];
         const int nindices = material->countIndices();
         CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, false, true);
-        if (cgIsTechnique(technique)) {
-            CGpass pass = cgGetFirstPass(technique);
-            while (pass) {
-                cgSetPassState(pass);
-                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
-                cgResetPassState(pass);
-                pass = cgGetNextPass(pass);
-            }
-        }
+        m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);

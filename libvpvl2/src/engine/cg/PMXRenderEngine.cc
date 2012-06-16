@@ -286,18 +286,10 @@ void PMXRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         const int nindices = material->indices();
-        CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, false, true);
         if (material->isEdgeDrawn()) {
-            if (cgIsTechnique(technique)) {
-                CGpass pass = cgGetFirstPass(technique);
-                m_effect.edgeColor.setGeometryColor(material->edgeColor());
-                while (pass) {
-                    cgSetPassState(pass);
-                    glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
-                    cgResetPassState(pass);
-                    pass = cgGetNextPass(pass);
-                }
-            }
+            CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, false, true);
+            m_effect.edgeColor.setGeometryColor(material->edgeColor());
+            m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         }
         offset += nindices * indexStride;
     }
@@ -327,15 +319,7 @@ void PMXRenderEngine::renderShadow()
         const pmx::Material *material = materials[i];
         const int nindices = material->indices();
         CGtechnique technique = m_effect.findTechnique("shadow", i, nmaterials, false, false, true);
-        if (cgIsTechnique(technique)) {
-            CGpass pass = cgGetFirstPass(technique);
-            while (pass) {
-                cgSetPassState(pass);
-                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
-                cgResetPassState(pass);
-                pass = cgGetNextPass(pass);
-            }
-        }
+        m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);
@@ -365,15 +349,7 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indices();
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_effect.findTechnique("zplot", i, nmaterials, false, false, true);
-            if (cgIsTechnique(technique)) {
-                CGpass pass = cgGetFirstPass(technique);
-                while (pass) {
-                    cgSetPassState(pass);
-                    glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
-                    cgResetPassState(pass);
-                    pass = cgGetNextPass(pass);
-                }
-            }
+            m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         }
         offset += nindices * indexStride;
     }

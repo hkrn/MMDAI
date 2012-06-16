@@ -429,16 +429,10 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         CGtechnique technique = m_effect.findTechnique("zplot", i, nmeshes, false, false, false);
         if (cgIsTechnique(technique)) {
-            CGpass pass = cgGetFirstPass(technique);
             const int nindices = indices.size();
             glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
             glEnableClientState(GL_VERTEX_ARRAY);
-            while (pass) {
-                cgSetPassState(pass);
-                glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
-                cgResetPassState(pass);
-                pass = cgGetNextPass(pass);
-            }
+            m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
             glDisableClientState(GL_VERTEX_ARRAY);
         }
     }
