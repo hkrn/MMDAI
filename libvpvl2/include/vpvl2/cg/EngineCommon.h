@@ -65,23 +65,23 @@ namespace cg
 class Util
 {
 public:
-    static bool toBool(CGannotation annotation) {
+    static bool toBool(const CGannotation annotation) {
         int nvalues = 0;
         const CGbool *values = cgGetBoolAnnotationValues(annotation, &nvalues);
         return nvalues > 0 ? values[0] == CG_TRUE : 0;
     }
-    static int toInt(CGannotation annotation) {
+    static int toInt(const CGannotation annotation) {
         int nvalues = 0;
         const int *values = cgGetIntAnnotationValues(annotation, &nvalues);
         return nvalues > 0 ? values[0] : 0;
     }
-    static bool isPassEquals(CGannotation annotation, const char *target) {
+    static bool isPassEquals(const CGannotation annotation, const char *target) {
         if (!cgIsAnnotation(annotation))
             return true;
         const char *s = cgGetStringAnnotationValue(annotation);
         return strcmp(s, target) == 0;
     }
-    static bool isIntegerParameter(CGparameter parameter) {
+    static bool isIntegerParameter(const CGparameter parameter) {
         return cgGetParameterType(parameter) == CG_BOOL ||
                 cgGetParameterType(parameter) == CG_INT ||
                 cgGetParameterType(parameter) == CG_FLOAT;
@@ -108,7 +108,7 @@ public:
     }
 
 protected:
-    static void connectParameter(CGparameter sourceParameter, CGparameter &destinationParameter) {
+    static void connectParameter(const CGparameter sourceParameter, CGparameter &destinationParameter) {
         if (destinationParameter) {
             cgConnectParameter(sourceParameter, destinationParameter);
         }
@@ -243,7 +243,7 @@ public:
     }
 
 private:
-    void setParameter(CGparameter sourceParameter,
+    void setParameter(const CGparameter sourceParameter,
                       const char *suffix,
                       CGparameter &inverse,
                       CGparameter &transposed,
@@ -487,15 +487,15 @@ public:
     }
 
 private:
-    void setParameter(const IModel *model, CGparameter parameter) {
+    void setParameter(const IModel *model, const CGparameter parameter) {
         float matrix4x4[16];
         Transform::getIdentity().getOpenGLMatrix(matrix4x4);
-        CGtype type = cgGetParameterType(parameter);
+        const CGtype type = cgGetParameterType(parameter);
         if (model) {
-            CGannotation itemAnnotation = cgGetNamedParameterAnnotation(parameter, "item");
+            const CGannotation itemAnnotation = cgGetNamedParameterAnnotation(parameter, "item");
             if (cgIsAnnotation(itemAnnotation)) {
                 const char *item = cgGetStringAnnotationValue(itemAnnotation);
-                IModel::Type type = model->type();
+                const IModel::Type type = model->type();
                 if (type == IModel::kPMD || type == IModel::kPMX) {
                     const IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(item));
                     IBone *bone = model->findBone(s);
@@ -576,7 +576,7 @@ private:
             }
         }
         else {
-            CGtype type = cgGetParameterType(parameter);
+            const CGtype type = cgGetParameterType(parameter);
             switch (type) {
             case CG_BOOL:
                 cgSetParameter1i(parameter, 0);
@@ -615,7 +615,7 @@ public:
     }
 
     void addParameter(CGparameter parameter) {
-        CGannotation type = cgGetNamedParameterAnnotation(parameter, "ResourceType");
+        const CGannotation type = cgGetNamedParameterAnnotation(parameter, "ResourceType");
         GLuint texture = 0;
         if (cgIsAnnotation(type)) {
             const char *typeName = cgGetStringAnnotationValue(type);
@@ -666,7 +666,7 @@ protected:
     }
 
 private:
-    GLuint generateTexture2D0(CGparameter parameter) {
+    GLuint generateTexture2D0(const CGparameter parameter) {
         int width, height;
         getSize2(parameter, width, height);
         GLuint texture;
@@ -675,7 +675,7 @@ private:
         generateTexture2D(parameter, texture, width, height);
         return texture;
     }
-    GLuint generateTexture3D0(CGparameter parameter) {
+    GLuint generateTexture3D0(const CGparameter parameter) {
         int width, height, depth;
         getSize3(parameter, width, height, depth);
         GLuint texture;
@@ -684,8 +684,8 @@ private:
         generateTexture3D(parameter, texture, width, height, depth);
         return texture;
     }
-    void getSize2(CGparameter parameter, int &width, int &height) {
-        CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewportRatio");
+    void getSize2(const CGparameter parameter, int &width, int &height) {
+        const CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewportRatio");
         int nvalues = 0;
         if (cgIsAnnotation(viewportRatioAnnotation)) {
             const float *values = cgGetFloatAnnotationValues(viewportRatioAnnotation, &nvalues);
@@ -699,7 +699,7 @@ private:
                 return;
             }
         }
-        CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
+        const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
         if (cgIsAnnotation(dimensionsAnnotation)) {
             const int *values = cgGetIntAnnotationValues(viewportRatioAnnotation, &nvalues);
             if (nvalues == 2) {
@@ -708,8 +708,8 @@ private:
                 return;
             }
         }
-        CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
-        CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
+        const CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
+        const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
         if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation)) {
             width = btMax(1, Util::toInt(widthAnnotation));
             height = btMax(1, Util::toInt(heightAnnotation));
@@ -720,9 +720,9 @@ private:
         width = btMax(1, int(viewport.x()));
         height = btMax(1, int(viewport.y()));
     }
-    void getSize3(CGparameter parameter, int &width, int &height, int &depth) {
+    void getSize3(const CGparameter parameter, int &width, int &height, int &depth) {
         int nvalues = 0;
-        CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
+        const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
         if (cgIsAnnotation(dimensionsAnnotation)) {
             const int *values = cgGetIntAnnotationValues(dimensionsAnnotation, &nvalues);
             if (nvalues == 3) {
@@ -732,9 +732,9 @@ private:
                 return;
             }
         }
-        CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
-        CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
-        CGannotation depthAnnotation = cgGetNamedParameterAnnotation(parameter, "Depth");
+        const CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
+        const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
+        const CGannotation depthAnnotation = cgGetNamedParameterAnnotation(parameter, "Depth");
         if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation) && cgIsAnnotation(depthAnnotation)) {
             width = btMax(1, Util::toInt(widthAnnotation));
             height = btMax(1, Util::toInt(heightAnnotation));
@@ -1059,7 +1059,7 @@ public:
         }
         return technique;
     }
-    void executeTechniquePasses(const CGtechnique technique, GLsizei count, GLenum type, const GLvoid *ptr) {
+    void executeTechniquePasses(const CGtechnique technique, const GLsizei count, const GLenum type, const GLvoid *ptr) {
         if (cgIsTechnique(technique)) {
             const Script *tss = m_techniqueScripts.find(technique);
             executeScript(tss, count, type, ptr);
@@ -1348,7 +1348,7 @@ private:
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-    void executeScript(const Script *script, GLsizei count, GLenum type, const GLvoid *ptr) {
+    void executeScript(const Script *script, const GLsizei count, const GLenum type, const GLvoid *ptr) {
         if (script) {
             const int nstates = script->size();
             int stateIndex = 0, nloop = 0, backStateIndex = 0;
