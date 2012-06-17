@@ -257,42 +257,38 @@ void PMDRenderEngine::renderModel()
         m_effect.specular.setGeometryColor(material->specular());
         m_effect.specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
         m_effect.toonColor.setGeometryColor(toonColor);
-        bool hasSphereMap = false;
-        bool hasMainTexture = materialContext.mainTextureID > 0;
-        if (hasMainTexture) {
+        bool useTexture = false, useSphereMap = false, spadd = false;
+        if (materialContext.mainTextureID > 0) {
             if (material->isMainSphereAdd()) {
                 m_effect.materialSphereMap.setTexture(materialContext.mainTextureID);
-                m_effect.spadd.setValue(true);
                 m_effect.useTexture.setValue(true);
-                hasSphereMap = true;
+                spadd = true;
+                useSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
                 m_effect.materialSphereMap.setTexture(materialContext.mainTextureID);
-                m_effect.spadd.setValue(false);
-                m_effect.useTexture.setValue(false);
-                hasSphereMap = true;
+                useSphereMap = true;
             }
             else {
                 m_effect.materialTexture.setTexture(materialContext.mainTextureID);
-                m_effect.spadd.setValue(false);
-                m_effect.useTexture.setValue(true);
+                useTexture = true;
             }
         }
-        else {
-            m_effect.useTexture.setValue(false);
-        }
-        if (!hasSphereMap) {
+        if (!useSphereMap) {
             if (material->isSubSphereAdd()) {
                 m_effect.materialSphereMap.setTexture(materialContext.subTextureID);
-                m_effect.spadd.setValue(true);
-                hasSphereMap = true;
+                spadd = true;
+                useSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
                 m_effect.materialSphereMap.setTexture(materialContext.subTextureID);
-                m_effect.spadd.setValue(false);
-                hasSphereMap = true;
+                useSphereMap = true;
             }
         }
+        //qDebug("%d:%s:%s", i, material->mainTextureName(), material->subTextureName());
+        m_effect.useTexture.setValue(useTexture);
+        m_effect.useSpheremap.setValue(useSphereMap);
+        m_effect.spadd.setValue(spadd);
         if ((hasModelTransparent && m_cullFaceState) ||
                 (!btFuzzyZero(materialOpacity - 1.0f) && m_cullFaceState)) {
             glDisable(GL_CULL_FACE);
@@ -304,7 +300,7 @@ void PMDRenderEngine::renderModel()
         }
         const int nindices = material->countIndices();
         const char *target = hasShadowMap ? "object_ss" : "object";
-        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
+        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, useTexture, useSphereMap, true);
         m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
@@ -353,6 +349,30 @@ void PMDRenderEngine::renderShadow()
 {
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
+    m_effect.setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
+    m_effect.setZeroGeometryParameters(m_model);
+    PMDModel *model = m_model->ptr();
+    const MaterialList &materials = model->materials();
+    const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
+    const int nmaterials = materials.count();
+    size_t offset = 0;
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
+    glVertexPointer(3, GL_FLOAT, model->strideSize(PMDModel::kVerticesStride),
+                    reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kVerticesStride)));
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glCullFace(GL_FRONT);
+    for (int i = 0; i < nmaterials; i++) {
+        const Material *material = materials[i];
+        const int nindices = material->countIndices();
+        CGtechnique technique = m_effect.findTechnique("shadow", i, nmaterials, false, false, true);
+        m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        offset += nindices * indexStride;
+    }
+    glCullFace(GL_BACK);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void PMDRenderEngine::renderZPlot()

@@ -293,21 +293,7 @@ public:
     }
     void getMatrix(float value[], const IModel *model, int flags) const {
         QMatrix4x4 m;
-        if (flags & IRenderDelegate::kCameraMatrix) {
-            if (flags & IRenderDelegate::kProjectionMatrix)
-                m *= m_cameraProjectionMatrix;
-            if (flags & IRenderDelegate::kViewMatrix)
-                m *= m_cameraViewMatrix;
-        }
-        else if (flags & IRenderDelegate::kLightMatrix) {
-            if (flags & IRenderDelegate::kWorldMatrix)
-                m *= m_lightWorldMatrix;
-            if (flags & IRenderDelegate::kProjectionMatrix)
-                m *= m_lightProjectionMatrix;
-            if (flags & IRenderDelegate::kViewMatrix)
-                m *= m_lightViewMatrix;
-        }
-        else if (flags & IRenderDelegate::kShadowMatrix) {
+        if (flags & IRenderDelegate::kShadowMatrix) {
             if (flags & IRenderDelegate::kProjectionMatrix)
                 m *= m_cameraProjectionMatrix;
             if (flags & IRenderDelegate::kViewMatrix)
@@ -329,6 +315,20 @@ public:
                 }
                 m *= shadowMatrix;
             }
+        }
+        else if (flags & IRenderDelegate::kCameraMatrix) {
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_cameraProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_cameraViewMatrix;
+        }
+        else if (flags & IRenderDelegate::kLightMatrix) {
+            if (flags & IRenderDelegate::kWorldMatrix)
+                m *= m_lightWorldMatrix;
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_lightProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_lightViewMatrix;
         }
         m.scale(model->scaleFactor());
         if (flags & IRenderDelegate::kInverseMatrix)

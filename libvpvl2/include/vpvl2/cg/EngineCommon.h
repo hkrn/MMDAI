@@ -1101,12 +1101,14 @@ public:
         toonColor.setGeometryColor(kZeroC);
         ambient.setGeometryColor(kZeroC);
         diffuse.setGeometryColor(kZeroC);
+        emissive.setGeometryColor(kZeroC);
         specular.setGeometryColor(kZeroC);
         specularPower.setGeometryValue(0);
         materialTexture.setTexture(0);
         materialSphereMap.setTexture(0);
         spadd.setValue(false);
         useTexture.setValue(false);
+        useSpheremap.setValue(false);
     }
     void updateModelGeometryParameters(const Scene *scene, const IModel *model) {
         const Scene::ILight *light = scene->light();
