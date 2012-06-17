@@ -261,7 +261,6 @@ void PMDRenderEngine::renderModel()
         if (materialContext.mainTextureID > 0) {
             if (material->isMainSphereAdd()) {
                 m_effect.materialSphereMap.setTexture(materialContext.mainTextureID);
-                m_effect.useTexture.setValue(true);
                 spadd = true;
                 useSphereMap = true;
             }
@@ -285,7 +284,6 @@ void PMDRenderEngine::renderModel()
                 useSphereMap = true;
             }
         }
-        //qDebug("%d:%s:%s", i, material->mainTextureName(), material->subTextureName());
         m_effect.useTexture.setValue(useTexture);
         m_effect.useSpheremap.setValue(useSphereMap);
         m_effect.spadd.setValue(spadd);
