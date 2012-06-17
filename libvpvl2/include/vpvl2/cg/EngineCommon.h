@@ -609,7 +609,7 @@ private:
 class RenderColorTargetSemantic : public BaseParameter
 {
 public:
-    RenderColorTargetSemantic(const IRenderDelegate *delegate)
+    RenderColorTargetSemantic(IRenderDelegate *delegate)
         : BaseParameter(),
           m_delegate(delegate)
     {
@@ -619,24 +619,65 @@ public:
         glDeleteTextures(ntextures, &m_textures[0]);
     }
 
-    void addParameter(CGparameter parameter) {
-        const CGannotation type = cgGetNamedParameterAnnotation(parameter, "ResourceType");
-        GLuint texture = 0;
-        if (cgIsAnnotation(type)) {
-            const char *typeName = cgGetStringAnnotationValue(type);
-            if (VPVL2_CG_STREQ_CONST(typeName, "texture3D")) {
-                texture = generateTexture3D0(parameter);
+    void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir) {
+        const CGannotation resourceType = cgGetNamedParameterAnnotation(parameter, "ResourceType");
+        int flags;
+        GLenum textureEnum;
+        if (cgIsAnnotation(resourceType)) {
+            const char *typeName = cgGetStringAnnotationValue(resourceType);
+            const CGtype samplerType = cgGetParameterType(sampler);
+            if (VPVL2_CG_STREQ_CONST(typeName, "CUBE") && samplerType == CG_SAMPLERCUBE) {
+                flags = IRenderDelegate::kTextureCube;
             }
-            else if (VPVL2_CG_STREQ_CONST(typeName, "texture2D")) {
-                texture = generateTexture2D0(parameter);
+            else if (VPVL2_CG_STREQ_CONST(typeName, "3D") && samplerType == CG_SAMPLER3D) {
+                flags = IRenderDelegate::kTexture3D;
+                textureEnum = GL_TEXTURE_3D;
+            }
+            else if (VPVL2_CG_STREQ_CONST(typeName, "2D") && samplerType == CG_SAMPLER2D) {
+                flags = IRenderDelegate::kTexture2D;
+                textureEnum = GL_TEXTURE_2D;
+            }
+            else {
+                return;
             }
         }
         else {
-            texture = generateTexture2D0(parameter);
+            flags = IRenderDelegate::kTexture2D;
+            textureEnum = GL_TEXTURE_2D;
+        }
+        const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
+        GLuint texture = 0;
+        if (cgIsAnnotation(resourceName)) {
+            const char *name = cgGetStringAnnotationValue(resourceName);
+            IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t*>(name));
+            if (isMimapEnabled(parameter))
+                flags |= IRenderDelegate::kGenerateTextureMipmap;
+            m_delegate->uploadTexture(0, s, dir, flags, &texture);
+            delete s;
+            cgGLSetTextureParameter(sampler, texture);
+            cgSetSamplerState(sampler);
+        }
+        else {
+            switch (flags) {
+            case IRenderDelegate::kTextureCube:
+                break;
+            case IRenderDelegate::kTexture3D:
+                texture = generateTexture3D0(parameter);
+                break;
+            case IRenderDelegate::kTexture2D:
+                texture = generateTexture2D0(parameter);
+                break;
+            case IRenderDelegate::kToonTexture:
+            case IRenderDelegate::kGenerateTextureMipmap:
+            case IRenderDelegate::kMaxTextureTypeFlags:
+            default:
+                break;
+            }
         }
         m_parameters.add(parameter);
         m_name2texture.insert(cgGetParameterName(parameter), texture);
     }
+
     GLuint findTexture(const char *name) const {
         GLuint *texture = const_cast<GLuint *>(m_name2texture.find(name));
         return texture ? *texture : 0;
@@ -753,7 +794,7 @@ private:
         depth = 24;
     }
 
-    const IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
     Hash<HashString, GLuint> m_name2texture;
@@ -762,7 +803,7 @@ private:
 class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
 {
 public:
-    RenderDepthStencilTargetSemantic(const IRenderDelegate *delegate)
+    RenderDepthStencilTargetSemantic(IRenderDelegate *delegate)
         : RenderColorTargetSemantic(delegate)
     {
     }
@@ -800,7 +841,7 @@ public:
     CGannotation antiAlias;
     CGannotation description;
     CGannotation defaultEffect;
-    OffscreenRenderTargetSemantic(const IRenderDelegate *delegate)
+    OffscreenRenderTargetSemantic(IRenderDelegate *delegate)
         : RenderColorTargetSemantic(delegate),
           clearColor(0),
           clearDepth(0),
@@ -812,8 +853,8 @@ public:
     ~OffscreenRenderTargetSemantic() {
     }
 
-    void addParameter(CGparameter parameter) {
-        RenderColorTargetSemantic::addParameter(parameter);
+    void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir) {
+        RenderColorTargetSemantic::addParameter(parameter, sampler, dir);
         clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
         antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
@@ -1004,7 +1045,7 @@ public:
                 textureValue.addParameter(parameter);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERDEPTHSTENCILTARGET")) {
-                renderDepthStencilTarget.addParameter(parameter);
+                renderDepthStencilTarget.addParameter(parameter, 0, dir);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, "STANDARDSGLOBAL")) {
                 setStandardsGlobal(parameter);
@@ -1544,24 +1585,15 @@ private:
                         break;
                     }
                     else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERCOLORTARGET")) {
-                        renderColorTarget.addParameter(textureParameter);
+                        renderColorTarget.addParameter(textureParameter, parameter, dir);
                         break;
                     }
                     else if (VPVL2_CG_STREQ_CONST(semantic, "OFFSCREENRENDERTARGET")) {
-                        offscreenRenderTarget.addParameter(textureParameter);
+                        offscreenRenderTarget.addParameter(textureParameter, parameter, dir);
                         break;
                     }
                     else {
-                        const CGannotation resourceNameAnnotation = cgGetNamedParameterAnnotation(textureParameter, "ResourceName");
-                        if (cgIsAnnotation(resourceNameAnnotation)) {
-                            GLuint texture;
-                            const char *value = cgGetStringAnnotationValue(resourceNameAnnotation);
-                            const IString *name = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(value));
-                            m_delegate->uploadTexture(0, name, dir, IRenderDelegate::kTexture2D, &texture);
-                            delete name;
-                            cgGLSetTextureParameter(parameter, texture);
-                            cgSetSamplerState(parameter);;
-                        }
+                        renderColorTarget.addParameter(textureParameter, parameter, dir);
                     }
                 }
                 sa = cgGetNextStateAssignment(sa);

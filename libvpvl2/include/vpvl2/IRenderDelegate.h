@@ -90,10 +90,13 @@ public:
         kShadowMatrix       = 0x080,
         kMaxMatrixTypeFlags = 0x100
     };
-    enum TextureType {
-        kTexture2D,
-        kToonTexture,
-        kMaxTextureType
+    enum TextureTypeFlags {
+        kTexture2D             = 0x1,
+        kToonTexture           = 0x2,
+        kTexture3D             = 0x4,
+        kTextureCube           = 0x8,
+        kGenerateTextureMipmap = 0x10,
+        kMaxTextureTypeFlags   = 0x20
     };
 
     virtual ~IRenderDelegate() {}
@@ -138,7 +141,7 @@ public:
      * @param texture
      * @return bool
      */
-    virtual bool uploadTexture(void *context, const IString *name, const IString *dir, TextureType type, void *texture) = 0;
+    virtual bool uploadTexture(void *context, const IString *name, const IString *dir, int flags, void *texture) = 0;
 
     virtual void getToonColor(void *context, const IString *name, const IString *dir, Color &value) = 0;
 

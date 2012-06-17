@@ -263,20 +263,18 @@ public:
         context = 0;
         qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
-    bool uploadTexture(void *context, const IString *name, const IString *dir, TextureType type, void *texture) {
-        switch (type) {
-        case IRenderDelegate::kTexture2D:
-            return uploadTextureInternal(createPath(dir, name), texture, false, context);
-        case IRenderDelegate::kToonTexture:
-            if (!uploadTextureInternal(createPath(dir, name), texture, true, context)) {
-                String s(m_systemDir.absolutePath());
-                return uploadTextureInternal(createPath(&s, name), texture, true, context);
-            }
-            return true;
-        case IRenderDelegate::kMaxTextureType:
-        default:
-            return false;
+    bool uploadTexture(void *context, const IString *name, const IString *dir, int flags, void *texture) {
+        bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
+        if (flags & IRenderDelegate::kTexture2D) {
+            return uploadTextureInternal(createPath(dir, name), texture, false, mipmap, context);
         }
+        else if (flags & IRenderDelegate::kToonTexture) {
+            if (!uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context)) {
+                String s(m_systemDir.absolutePath());
+                return uploadTextureInternal(createPath(&s, name), texture, true, mipmap, context);
+            }
+        }
+        return false;
     }
     void getToonColor(void * /* context */, const IString *name, const IString *dir, Color &value) {
         const QString &path = createPath(dir, name);
@@ -543,7 +541,7 @@ private:
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
-    bool uploadTextureInternal(const QString &path, void *texture, bool isToon, void *context) {
+    bool uploadTextureInternal(const QString &path, void *texture, bool isToon, bool mipmap, void *context) {
         const QFileInfo info(path);
         if (info.isDir())
             return false;
@@ -560,11 +558,14 @@ private:
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
                 | QGLContext::InvertedYBindOption
                 | QGLContext::PremultipliedAlphaBindOption;
+        if (mipmap)
+            options |= QGLContext::MipmapBindOption;
         GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
         setTextureID(textureID, isToon, texture);
         if (ctx)
             ctx->textureCache.insert(path, textureID);
-        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(path));
+        qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
+               textureID, image.width(), image.height(), qPrintable(path));
         return textureID != 0;
     }
     void getToonColorInternal(const QString &path, Color &value) {
