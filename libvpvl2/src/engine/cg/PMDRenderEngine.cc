@@ -161,11 +161,11 @@ bool PMDRenderEngine::upload(const IString *dir)
         MaterialContext &materialContext = materialContexts[i];
         materialContext.mainTextureID = 0;
         materialContext.subTextureID = 0;
-        if (m_delegate->uploadTexture(context, primary, dir, &textureID, false)) {
+        if (m_delegate->uploadTexture(context, primary, dir, IRenderDelegate::kTexture2D, &textureID)) {
             materialContext.mainTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
-        if (m_delegate->uploadTexture(context, second, dir, &textureID, false)) {
+        if (m_delegate->uploadTexture(context, second, dir, IRenderDelegate::kTexture2D, &textureID)) {
             materialContext.subTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
@@ -174,10 +174,14 @@ bool PMDRenderEngine::upload(const IString *dir)
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    m_delegate->getToonColor(context, "toon0.bmp", dir, m_toonTextureColors[0]);
+    IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
+    m_delegate->getToonColor(context, s, dir, m_toonTextureColors[0]);
+    delete s;
     for (int i = 0; i < PMDModel::kCustomTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
-        m_delegate->getToonColor(context, reinterpret_cast<const char *>(name), dir, m_toonTextureColors[i + 1]);
+        s = m_delegate->toUnicode(name);
+        m_delegate->getToonColor(context, s, dir, m_toonTextureColors[i + 1]);
+        delete s;
     }
     m_effect.setModelMatrixParameters(m_model);
 #ifdef VPVL2_ENABLE_OPENCL

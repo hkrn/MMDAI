@@ -90,6 +90,11 @@ public:
         kShadowMatrix       = 0x080,
         kMaxMatrixTypeFlags = 0x100
     };
+    enum TextureType {
+        kTexture2D,
+        kToonTexture,
+        kMaxTextureType
+    };
 
     virtual ~IRenderDelegate() {}
 
@@ -129,43 +134,11 @@ public:
      * @param context
      * @param name
      * @param dir
-     * @param texture
-     * @param isToon
-     * @return bool
-     */
-    virtual bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) = 0;
-
-    /**
-     * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
-     *
-     * 基本的な処理戦略は uploadTexture と同じです。
-     *
-     * @sa uploadTexture
-     * @param context
-     * @param name
-     * @param dir
+     * @param type
      * @param texture
      * @return bool
      */
-    virtual bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) = 0;
-
-    /**
-     * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
-     *
-     * 基本的な処理戦略は uploadTexture と同じです。
-     *
-     * @sa uploadTexture
-     * @param context
-     * @param name
-     * @param dir
-     * @param texture
-     * @return bool
-     */
-    virtual bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) = 0;
-
-    virtual void getToonColor(void *context, int index, Color &value) = 0;
-
-    virtual void getToonColor(void *context, const char *name, const IString *dir, Color &value) = 0;
+    virtual bool uploadTexture(void *context, const IString *name, const IString *dir, TextureType type, void *texture) = 0;
 
     virtual void getToonColor(void *context, const IString *name, const IString *dir, Color &value) = 0;
 
@@ -180,22 +153,6 @@ public:
     virtual void getElapsed(float &value, bool sync) const = 0;
 
     virtual IModel *findModel(const char *name) const = 0;
-
-    /**
-     * モデルのトゥーンテクスチャをサーバ (GPU) にアップロードします。
-     *
-     * 基本的な実装戦略は uploadTexture と同じですが、
-     * システム全体におけるトゥーンテクスチャ番号しか渡されないため、
-     * アプリケーションにトゥーンテクスチャをリソースとして含め、
-     * それをアップロードする必要があります。
-     *
-     * @sa uploadTexture
-     * @param context
-     * @param int
-     * @param texture
-     * @return bool
-     */
-    virtual bool uploadToonTexture(void *context, int index, void *texture) = 0;
 
     /**
      * 指定されたフォーマットと可変引数を用いてロギングを行います。

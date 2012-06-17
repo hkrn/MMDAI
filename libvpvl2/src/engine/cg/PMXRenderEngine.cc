@@ -149,17 +149,21 @@ bool PMXRenderEngine::upload(const IString *dir)
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
         path = material->mainTexture();
-        if (path && m_delegate->uploadTexture(context, path, dir, &textureID, false)) {
+        if (path && m_delegate->uploadTexture(context, path, dir, IRenderDelegate::kTexture2D, &textureID)) {
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             materialPrivate.mainTextureID = textureID;
         }
         path = material->sphereTexture();
-        if (path && m_delegate->uploadTexture(context, path, dir, &textureID, false)) {
+        if (path && m_delegate->uploadTexture(context, path, dir, IRenderDelegate::kTexture2D, &textureID)) {
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             materialPrivate.sphereTextureID = textureID;
         }
         if (material->isSharedToonTextureUsed()) {
-            m_delegate->getToonColor(context, material->toonTextureIndex(), materialPrivate.toonTextureColor);
+            char buf[16];
+            snprintf(buf, sizeof(buf), "toon%d.bmp", material->toonTextureIndex());
+            IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(buf));
+            m_delegate->getToonColor(context, s, dir, materialPrivate.toonTextureColor);
+            delete s;
         }
         else {
             path = material->toonTexture();

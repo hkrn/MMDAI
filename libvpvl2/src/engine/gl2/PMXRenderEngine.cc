@@ -637,24 +637,28 @@ bool PMXRenderEngine::upload(const IString *dir)
         materialPrivate.toonTextureID = 0;
         const IString *path = 0;
         path = material->mainTexture();
-        if (path && m_delegate->uploadTexture(context, path, dir, &textureID, false)) {
+        if (path && m_delegate->uploadTexture(context, path, dir, IRenderDelegate::kTexture2D, &textureID)) {
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             materialPrivate.mainTextureID = textureID;
         }
         path = material->sphereTexture();
-        if (path && m_delegate->uploadTexture(context, path, dir, &textureID, false)) {
+        if (path && m_delegate->uploadTexture(context, path, dir, IRenderDelegate::kTexture2D, &textureID)) {
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             materialPrivate.sphereTextureID = textureID;
         }
         if (material->isSharedToonTextureUsed()) {
-            if (m_delegate->uploadToonTexture(context, material->toonTextureIndex(), &textureID)) {
+            char buf[16];
+            snprintf(buf, sizeof(buf), "toon%d.bmp", material->toonTextureIndex());
+            IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(buf));
+            if (m_delegate->uploadTexture(context, s, 0, IRenderDelegate::kToonTexture, &textureID)) {
                 log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a shared toon texture (ID=%d)", textureID);
                 materialPrivate.toonTextureID = textureID;
             }
+            delete s;
         }
         else {
             path = material->toonTexture();
-            if (path && m_delegate->uploadTexture(context, path, dir, &textureID, true)) {
+            if (path && m_delegate->uploadTexture(context, path, dir, IRenderDelegate::kTexture2D, &textureID)) {
                 log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a static toon texture (ID=%d)", textureID);
                 materialPrivate.toonTextureID = textureID;
             }

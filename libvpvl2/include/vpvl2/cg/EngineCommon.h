@@ -1544,7 +1544,7 @@ private:
                             GLuint texture;
                             const char *value = cgGetStringAnnotationValue(resourceNameAnnotation);
                             const IString *name = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(value));
-                            m_delegate->uploadTexture(0, name, dir, &texture, false);
+                            m_delegate->uploadTexture(0, name, dir, IRenderDelegate::kTexture2D, &texture);
                             delete name;
                             cgGLSetTextureParameter(parameter, texture);
                             cgSetSamplerState(parameter);;

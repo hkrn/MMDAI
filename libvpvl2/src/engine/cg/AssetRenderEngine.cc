@@ -169,7 +169,7 @@ bool AssetRenderEngine::upload(const IString *dir)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    if (m_delegate->uploadTexture(context, mainTexturePath, dir, &textureID, false)) {
+                    if (m_delegate->uploadTexture(context, mainTexturePath, dir, IRenderDelegate::kTexture2D, &textureID)) {
                         m_textures[mainTexture] = textureID;
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                     }
@@ -177,7 +177,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 }
                 if (m_textures[subTexture] == 0) {
                     IString *subTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    if (m_delegate->uploadTexture(context, subTexturePath, dir, &textureID, false)) {
+                    if (m_delegate->uploadTexture(context, subTexturePath, dir, IRenderDelegate::kTexture2D, &textureID)) {
                         m_textures[subTexture] = textureID;
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
                     }
@@ -186,7 +186,7 @@ bool AssetRenderEngine::upload(const IString *dir)
             }
             else if (m_textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                if (m_delegate->uploadTexture(context, mainTexturePath, dir, &textureID, false)) {
+                if (m_delegate->uploadTexture(context, mainTexturePath, dir, IRenderDelegate::kTexture2D, &textureID)) {
                     m_textures[mainTexture] = textureID;
                     log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                 }

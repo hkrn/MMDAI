@@ -580,11 +580,11 @@ bool PMDRenderEngine::upload(const IString *dir)
         PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.mainTextureID = 0;
         materialPrivate.subTextureID = 0;
-        if (m_delegate->uploadTexture(context, primary, dir, &textureID, false)) {
+        if (m_delegate->uploadTexture(context, primary, dir, IRenderDelegate::kTexture2D, &textureID)) {
             materialPrivate.mainTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
-        if (m_delegate->uploadTexture(context, second, dir, &textureID, false)) {
+        if (m_delegate->uploadTexture(context, second, dir, IRenderDelegate::kTexture2D, &textureID)) {
             materialPrivate.subTextureID = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
@@ -601,16 +601,20 @@ bool PMDRenderEngine::upload(const IString *dir)
          hasMultipleSphere ? "true" : "false");
     m_context->hasSingleSphereMap = hasSingleSphere;
     m_context->hasMultipleSphereMap = hasMultipleSphere;
-    if (m_delegate->uploadToonTexture(context, "toon0.bmp", dir, &textureID)) {
+    IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
+    if (m_delegate->uploadTexture(context, s, dir, IRenderDelegate::kToonTexture, &textureID)) {
         m_context->toonTextures[0] = textureID;
         log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
+    delete s;
     for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
         const uint8_t *name = model->toonTexture(i);
-        if (m_delegate->uploadToonTexture(context, reinterpret_cast<const char *>(name), dir, &textureID)) {
+        s = m_delegate->toUnicode(name);
+        if (m_delegate->uploadTexture(context, s, dir, IRenderDelegate::kToonTexture,  &textureID)) {
             m_context->toonTextures[i + 1] = textureID;
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
+        delete s;
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())

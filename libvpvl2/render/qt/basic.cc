@@ -263,36 +263,19 @@ public:
         context = 0;
         qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
-    bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) {
-        return uploadTextureInternal(createPath(dir, name), texture, isToon, context);
-    }
-    bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) {
-        if (!uploadTextureInternal(createPath(dir, name), texture, true, context)) {
-            String s(m_systemDir.absolutePath());
-            return uploadTextureInternal(createPath(&s, name), texture, true, context);
-        }
-        return true;
-    }
-    bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) {
-        if (!uploadTextureInternal(createPath(dir, name), texture, true, context)) {
-            String s(m_systemDir.absolutePath());
-            return uploadTextureInternal(createPath(&s, name), texture, true, context);
-        }
-        return true;
-    }
-    bool uploadToonTexture(void *context, int index, void *texture) {
-        QString format;
-        const QString &pathString = m_systemDir.absoluteFilePath(format.sprintf("toon%02d.bmp", index + 1));
-        return uploadTextureInternal(pathString, texture, true, context);
-    }
-    void getToonColor(void * /* context */, const char *name, const IString *dir, Color &value) {
-        const QString &path = createPath(dir, name);
-        if (QFile::exists(path)) {
-            getToonColorInternal(path, value);
-        }
-        else {
-            String s(m_systemDir.absolutePath());
-            getToonColorInternal(createPath(&s, name), value);
+    bool uploadTexture(void *context, const IString *name, const IString *dir, TextureType type, void *texture) {
+        switch (type) {
+        case IRenderDelegate::kTexture2D:
+            return uploadTextureInternal(createPath(dir, name), texture, false, context);
+        case IRenderDelegate::kToonTexture:
+            if (!uploadTextureInternal(createPath(dir, name), texture, true, context)) {
+                String s(m_systemDir.absolutePath());
+                return uploadTextureInternal(createPath(&s, name), texture, true, context);
+            }
+            return true;
+        case IRenderDelegate::kMaxTextureType:
+        default:
+            return false;
         }
     }
     void getToonColor(void * /* context */, const IString *name, const IString *dir, Color &value) {
@@ -304,11 +287,6 @@ public:
             String s(m_systemDir.absolutePath());
             getToonColorInternal(createPath(&s, name), value);
         }
-    }
-    void getToonColor(void * /* context */, int index, Color &value) {
-        QString format;
-        const QString &pathString = m_systemDir.absoluteFilePath(format.sprintf("toon%02d.bmp", index + 1));
-        getToonColorInternal(pathString, value);
     }
     IModel *findModel(const char * /* name */) const {
         return 0;
@@ -550,9 +528,6 @@ public:
     }
 
 private:
-    static const QString createPath(const IString *dir, const char *name) {
-        return createPath(dir, QString(name));
-    }
     static const QString createPath(const IString *dir, const QString &name) {
         const QDir d(static_cast<const String *>(dir)->value());
         return d.absoluteFilePath(name);
