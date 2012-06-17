@@ -577,7 +577,7 @@ private:
             return false;
         }
         PrivateContext *ctx = static_cast<PrivateContext *>(context);
-        if (ctx->textureCache.contains(path)) {
+        if (ctx && ctx->textureCache.contains(path)) {
             setTextureID(ctx->textureCache[path], isToon, texture);
             return true;
         }
@@ -587,7 +587,8 @@ private:
                 | QGLContext::PremultipliedAlphaBindOption;
         GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
         setTextureID(textureID, isToon, texture);
-        ctx->textureCache.insert(path, textureID);
+        if (ctx)
+            ctx->textureCache.insert(path, textureID);
         qDebug("Loaded a texture (ID=%d): \"%s\"", textureID, qPrintable(path));
         return textureID != 0;
     }

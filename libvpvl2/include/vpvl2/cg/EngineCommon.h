@@ -879,7 +879,7 @@ public:
         kPostProcess
     };
 
-    Effect(const IRenderDelegate *delegate)
+    Effect(IRenderDelegate *delegate)
         : effect(0),
           world(delegate, IRenderDelegate::kWorldMatrix),
           view(delegate, IRenderDelegate::kViewMatrix),
@@ -913,7 +913,7 @@ public:
         m_delegate = 0;
     }
 
-    bool attachEffect(CGeffect value) {
+    bool attachEffect(CGeffect value, const IString *dir) {
         static const char kWorldSemantic[] = "WORLD";
         static const char kViewSemantic[] = "VIEW";
         static const char kProjectionSemantic[] = "PROJECTION";
@@ -1030,7 +1030,7 @@ public:
                     subsetCount.addParameter(parameter);
                 }
                 else {
-                    setTextureParameters(parameter);
+                    setTextureParameters(parameter, dir);
                 }
             }
             parameter = cgGetNextParameter(parameter);
@@ -1513,7 +1513,7 @@ private:
             }
         }
     }
-    void setTextureParameters(CGparameter parameter) {
+    void setTextureParameters(CGparameter parameter, const IString *dir) {
         const CGtype type = cgGetParameterType(parameter);
         if (type == CG_SAMPLER2D) {
             CGstateassignment sa = cgGetFirstSamplerStateAssignment(parameter);
@@ -1537,6 +1537,18 @@ private:
                     else if (strcmp(semantic, "OFFSCREENRENDERTARGET") == 0) {
                         offscreenRenderTarget.addParameter(textureParameter);
                         break;
+                    }
+                    else {
+                        const CGannotation resourceNameAnnotation = cgGetNamedParameterAnnotation(textureParameter, "ResourceName");
+                        if (cgIsAnnotation(resourceNameAnnotation)) {
+                            GLuint texture;
+                            const char *value = cgGetStringAnnotationValue(resourceNameAnnotation);
+                            const IString *name = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(value));
+                            m_delegate->uploadTexture(0, name, dir, &texture, false);
+                            delete name;
+                            cgGLSetTextureParameter(parameter, texture);
+                            cgSetSamplerState(parameter);;
+                        }
                     }
                 }
                 sa = cgGetNextStateAssignment(sa);
@@ -1802,7 +1814,7 @@ private:
         return true;
     }
 
-    const IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegate;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     ScriptOrderType m_scriptOrder;

@@ -120,7 +120,7 @@ bool PMDRenderEngine::upload(const IString *dir)
         log0(context, IRenderDelegate::kLogWarning, "CG effect compile error\n%s", cgGetLastListing(m_context));
         return false;
     }
-    m_effect.attachEffect(effect);
+    m_effect.attachEffect(effect, dir);
     m_effect.useToon.setValue(true);
     m_effect.parthf.setValue(false);
     m_effect.transp.setValue(false);
