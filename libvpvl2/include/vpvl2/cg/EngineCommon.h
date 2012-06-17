@@ -57,6 +57,9 @@
 #include <cg/cg.h>
 #include <cg/cgGL.h>
 
+#define VPVL2_CG_STREQ_CONST(s, c) (0 == strncmp((s), (c), (sizeof(c)) - 1))
+#define VPVL2_CG_GET_SUFFIX(s, c) (s + (sizeof(c) - 1))
+
 namespace vpvl2
 {
 namespace cg
@@ -215,10 +218,10 @@ public:
         }
         else {
             const char *name = cgGetStringAnnotationValue(annotation);
-            if (strcmp(name, "Camera") == 0) {
+            if (VPVL2_CG_STREQ_CONST(name, "Camera")) {
                 setParameter(parameter, suffix, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
             }
-            else if (strcmp(name, "Light") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(name, "Light")) {
                 setParameter(parameter, suffix, m_lightInversed, m_lightTransposed, m_lightInverseTransposed, m_light);
             }
         }
@@ -253,13 +256,13 @@ private:
         static const char kInverseTranspose[] = "INVERSETRANSPOSE";
         static const char kTranspose[] = "TRANSPOSE";
         static const char kInverse[] = "INVERSE";
-        if (strncmp(suffix, kInverseTranspose, sizeof(kInverseTranspose)) == 0) {
+        if (VPVL2_CG_STREQ_CONST(suffix, kInverseTranspose)) {
             BaseParameter::connectParameter(sourceParameter, inversetransposed);
         }
-        else if (strncmp(suffix, kTranspose, sizeof(kTranspose)) == 0) {
+        else if (VPVL2_CG_STREQ_CONST(suffix, kTranspose)) {
             BaseParameter::connectParameter(sourceParameter, transposed);
         }
-        else if (strncmp(suffix, kInverse, sizeof(kInverse)) == 0) {
+        else if (VPVL2_CG_STREQ_CONST(suffix, kInverse)) {
             BaseParameter::connectParameter(sourceParameter, inverse);
         }
         else {
@@ -302,17 +305,19 @@ public:
 
     void addParameter(CGparameter parameter) {
         const char *name = cgGetParameterSemantic(parameter);
-        if (strcmp(name, "SPECULARPOWER") == 0 || strcmp(name, "EMISSIVE") == 0 || strcmp(name, "TOONCOLOR") == 0) {
+        if (VPVL2_CG_STREQ_CONST(name, "SPECULARPOWER")
+                || VPVL2_CG_STREQ_CONST(name, "EMISSIVE")
+                || VPVL2_CG_STREQ_CONST(name, "TOONCOLOR")) {
             BaseParameter::connectParameter(parameter, m_geometry);
         }
         else {
             CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
             if (cgIsAnnotation(annotation)) {
                 const char *name = cgGetStringAnnotationValue(annotation);
-                if (strcmp(name, "Geometry") == 0) {
+                if (VPVL2_CG_STREQ_CONST(name, "Geometry")) {
                     BaseParameter::connectParameter(parameter, m_geometry);
                 }
-                else if (strcmp(name, "Light") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "Light")) {
                     BaseParameter::connectParameter(parameter, m_light);
                 }
             }
@@ -385,10 +390,10 @@ public:
         CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
         if (cgIsAnnotation(annotation)) {
             const char *name = cgGetStringAnnotationValue(annotation);
-            if (strcmp(name, "Camera") == 0) {
+            if (VPVL2_CG_STREQ_CONST(name, "Camera")) {
                 BaseParameter::connectParameter(parameter, m_camera);
             }
-            else if (strcmp(name, "Light") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(name, "Light")) {
                 BaseParameter::connectParameter(parameter, m_light);
             }
         }
@@ -473,10 +478,10 @@ public:
             CGparameter parameter = m_parameters[i];
             CGannotation nameAnnotation = cgGetNamedParameterAnnotation(parameter, "name");
             const char *name = cgGetStringAnnotationValue(nameAnnotation);
-            if (strcmp(name, "(self)") == 0) {
+            if (VPVL2_CG_STREQ_CONST(name, "(self)")) {
                 setParameter(self, parameter);
             }
-            else if (strcmp(name, "(OffscreenOwner)") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(name, "(OffscreenOwner)")) {
                 // TODO
             }
             else {
@@ -522,35 +527,35 @@ private:
                 else {
                     const Vector3 &position = model->position();
                     const Quaternion &rotation = model->rotation();
-                    if (strcmp(item, "X") == 0 && type == CG_FLOAT) {
+                    if (VPVL2_CG_STREQ_CONST(item, "X") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, position.x());
                     }
-                    else if (strcmp(item, "Y") == 0 && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Y") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, position.y());
                     }
-                    else if (strcmp(item, "Z") == 0 && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Z") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, position.z());
                     }
-                    else if (strcmp(item, "XYZ") == 0 && type == CG_FLOAT3) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "XYZ") && type == CG_FLOAT3) {
                         cgSetParameter3fv(parameter, position);
                     }
-                    else if (strcmp(item, "Rx") == 0 && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Rx") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, btDegrees(rotation.x()));
                     }
-                    else if (strcmp(item, "Ry") == 0 && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Ry") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, btDegrees(rotation.y()));
                     }
-                    else if (strcmp(item, "Rz") == 0 && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Rz") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, btDegrees(rotation.z()));
                     }
-                    else if (strcmp(item, "Rxyz") == 0 && type == CG_FLOAT3) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Rxyz") && type == CG_FLOAT3) {
                         const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
                         cgSetParameter3fv(parameter, rotationDegree);
                     }
-                    else if (strcmp(item, "Sr") == 0 && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Sr") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, model->scaleFactor());
                     }
-                    else if (strcmp(item, "Tr") == 0 && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Tr") && type == CG_FLOAT) {
                         cgSetParameter1f(parameter, model->opacity());
                     }
                 }
@@ -619,10 +624,10 @@ public:
         GLuint texture = 0;
         if (cgIsAnnotation(type)) {
             const char *typeName = cgGetStringAnnotationValue(type);
-            if (strcmp(typeName, "texture3D") == 0) {
+            if (VPVL2_CG_STREQ_CONST(typeName, "texture3D")) {
                 texture = generateTexture3D0(parameter);
             }
-            else if (strcmp(typeName, "texture2D") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(typeName, "texture2D")) {
                 texture = generateTexture2D0(parameter);
             }
         }
@@ -923,110 +928,116 @@ public:
         CGparameter parameter = cgGetFirstEffectParameter(value);
         while (parameter) {
             const char *semantic = cgGetParameterSemantic(parameter);
-            if (strncmp(semantic, kWorldSemantic, sizeof(kWorldSemantic)) == 0) {
-                world.addParameter(parameter, semantic + sizeof(kWorldSemantic));
+            if (VPVL2_CG_STREQ_CONST(semantic, kWorldViewProjectionSemantic)) {
+                worldViewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
             }
-            else if (strncmp(semantic, kViewSemantic, sizeof(kViewSemantic)) == 0) {
-                view.addParameter(parameter, semantic + sizeof(kViewSemantic));
+            else if (VPVL2_CG_STREQ_CONST(semantic, kWorldViewSemantic)) {
+                worldView.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewSemantic));
             }
-            else if (strncmp(semantic, kProjectionSemantic, sizeof(kProjectionSemantic)) == 0) {
-                projection.addParameter(parameter, semantic + sizeof(kProjectionSemantic));
+            else if (VPVL2_CG_STREQ_CONST(semantic, kViewProjectionSemantic)) {
+                viewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kViewProjectionSemantic));
             }
-            else if (strncmp(semantic, kWorldViewSemantic, sizeof(kWorldViewSemantic)) == 0) {
-                worldView.addParameter(parameter, semantic + sizeof(kWorldViewSemantic));
+            if (VPVL2_CG_STREQ_CONST(semantic, kWorldSemantic)) {
+                world.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldSemantic));
             }
-            else if (strncmp(semantic, kViewProjectionSemantic, sizeof(kViewProjectionSemantic)) == 0) {
-                viewProjection.addParameter(parameter, semantic + sizeof(kViewProjectionSemantic));
+            else if (VPVL2_CG_STREQ_CONST(semantic, kViewSemantic)) {
+                view.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kViewSemantic));
             }
-            else if (strncmp(semantic, kWorldViewProjectionSemantic, sizeof(kWorldViewProjectionSemantic)) == 0) {
-                worldViewProjection.addParameter(parameter, semantic + sizeof(kWorldViewProjectionSemantic));
+            else if (VPVL2_CG_STREQ_CONST(semantic, kProjectionSemantic)) {
+                projection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kProjectionSemantic));
             }
-            else if (strcmp(semantic, "DIFFUSE") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "DIFFUSE")) {
                 diffuse.addParameter(parameter);
             }
-            else if (strcmp(semantic, "AMBIENT") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "AMBIENT")) {
                 ambient.addParameter(parameter);
             }
-            else if (strcmp(semantic, "EMISSIVE") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "EMISSIVE")) {
                 emissive.addParameter(parameter);
             }
-            else if (strcmp(semantic, "SPECULAR") == 0) {
-                specular.addParameter(parameter);
-            }
-            else if (strcmp(semantic, "SPECULARPOWER") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "SPECULARPOWER")) {
                 specularPower.addParameter(parameter);
             }
-            else if (strcmp(semantic, "TOONCOLOR") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "SPECULAR")) {
+                specular.addParameter(parameter);
+            }
+            else if (VPVL2_CG_STREQ_CONST(semantic, "TOONCOLOR")) {
                 toonColor.addParameter(parameter);
             }
-            else if (strcmp(semantic, "EDGECOLOR") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "EDGECOLOR")) {
                 edgeColor.addParameter(parameter);
             }
-            else if (strcmp(semantic, "_POSITION") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "_POSITION")) {
                 position.addParameter(parameter);
             }
-            else if (strcmp(semantic, "_DIRECTION") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "_DIRECTION")) {
                 direction.addParameter(parameter);
             }
-            else if (strcmp(semantic, "VIEWPORTPIXELSIZE") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "VIEWPORTPIXELSIZE")) {
                 viewportPixelSize.addParameter(parameter);
             }
-            else if (strcmp(semantic, "MOUSEPOSITION") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "TIME")) {
+                time.addParameter(parameter);
+            }
+            else if (VPVL2_CG_STREQ_CONST(semantic, "ELAPSEDTIME")) {
+                elapsedTime.addParameter(parameter);
+            }
+            else if (VPVL2_CG_STREQ_CONST(semantic, "MOUSEPOSITION")) {
                 mousePosition.addParameter(parameter);
             }
-            else if (strcmp(semantic, "LEFTMOUSEDOWN") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "LEFTMOUSEDOWN")) {
                 leftMouseDown.addParameter(parameter);
             }
-            else if (strcmp(semantic, "MIDDLEMOUSEDOWN") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "MIDDLEMOUSEDOWN")) {
                 middleMouseDown.addParameter(parameter);
             }
-            else if (strcmp(semantic, "RIGHTMOUSEDOWN") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "RIGHTMOUSEDOWN")) {
                 rightMouseDown.addParameter(parameter);
             }
-            else if (strcmp(semantic, "CONTROLOBJECT") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "CONTROLOBJECT")) {
                 controlObject.addParameter(parameter);
             }
-            else if (strcmp(semantic, "ANIMATEDTEXTURE") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "ANIMATEDTEXTURE")) {
                 animatedTexture.addParameter(parameter);
             }
-            else if (strcmp(semantic, "TEXTUREVALUE") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "TEXTUREVALUE")) {
                 textureValue.addParameter(parameter);
             }
-            else if (strcmp(semantic, "RENDERDEPTHSTENCILTARGET") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERDEPTHSTENCILTARGET")) {
                 renderDepthStencilTarget.addParameter(parameter);
             }
-            else if (strcmp(semantic, "STANDARDSGLOBAL") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "STANDARDSGLOBAL")) {
                 setStandardsGlobal(parameter);
             }
-            else if (strcmp(semantic, "_INDEX") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, "_INDEX")) {
             }
             else {
                 const char *name = cgGetParameterName(parameter);
-                if (strcmp(name, "parthf") == 0) {
+                if (VPVL2_CG_STREQ_CONST(name, "parthf")) {
                     parthf.addParameter(parameter);
                 }
-                else if (strcmp(name, "spadd") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "spadd")) {
                     spadd.addParameter(parameter);
                 }
-                else if (strcmp(name, "transp") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "transp")) {
                     transp.addParameter(parameter);
                 }
-                else if (strcmp(name, "use_texture") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "use_texture")) {
                     useTexture.addParameter(parameter);
                 }
-                else if (strcmp(name,"use_spheremap") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name,"use_spheremap")) {
                     useSpheremap.addParameter(parameter);
                 }
-                else if (strcmp(name, "use_toon") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "use_toon")) {
                     useToon.addParameter(parameter);
                 }
-                else if (strcmp(name, "opadd") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "opadd")) {
                     opadd.addParameter(parameter);
                 }
-                else if (strcmp(name, "VertexCount") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "VertexCount")) {
                     vertexCount.addParameter(parameter);
                 }
-                else if (strcmp(name, "SubsetCount") == 0) {
+                else if (VPVL2_CG_STREQ_CONST(name, "SubsetCount")) {
                     subsetCount.addParameter(parameter);
                 }
                 else {
@@ -1469,26 +1480,26 @@ private:
         const CGannotation scriptClassAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptClass");
         if (cgIsAnnotation(scriptClassAnnotation)) {
             const char *value = cgGetStringAnnotationValue(scriptClassAnnotation);
-            if (strcmp(value, "object") == 0) {
+            if (VPVL2_CG_STREQ_CONST(value, "object")) {
                 m_scriptClass = kObject;
             }
-            else if (strcmp(value, "scene") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(value, "scene")) {
                 m_scriptClass = kScene;
             }
-            else if (strcmp(value, "sceneobject") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(value, "sceneobject")) {
                 m_scriptClass = kSceneObject;
             }
         }
         const CGannotation scriptOrderAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptOrder");
         if (cgIsAnnotation(scriptOrderAnnotation)) {
             const char *value = cgGetStringAnnotationValue(scriptOrderAnnotation);
-            if (strcmp(value, "standard") == 0) {
+            if (VPVL2_CG_STREQ_CONST(value, "standard")) {
                 m_scriptOrder = kStandard;
             }
-            else if (strcmp(value, "preprocess") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(value, "preprocess")) {
                 m_scriptOrder = kPreProcess;
             }
-            else if (strcmp(value, "postprocess") == 0) {
+            else if (VPVL2_CG_STREQ_CONST(value, "postprocess")) {
                 m_scriptOrder = kPostProcess;
             }
         }
@@ -1498,8 +1509,8 @@ private:
             static const char kMultipleTechniques[] = "Technique=Technique?";
             static const char kSingleTechnique[] = "Technique=";
             m_techniques.clear();
-            if (strncmp(value, kMultipleTechniques, sizeof(kMultipleTechniques)) == 0) {
-                const std::string s(value + sizeof(kMultipleTechniques));
+            if (VPVL2_CG_STREQ_CONST(value, kMultipleTechniques)) {
+                const std::string s(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
                 std::istringstream stream(s);
                 std::string segment;
                 while (std::getline(stream, segment, ':')) {
@@ -1507,8 +1518,8 @@ private:
                     addTechniquePasses(technique);
                 }
             }
-            else if (strncmp(value, kSingleTechnique, sizeof(kSingleTechnique)) == 0) {
-                CGtechnique technique = cgGetNamedTechnique(effect, value + sizeof(kSingleTechnique));
+            else if (VPVL2_CG_STREQ_CONST(value, kSingleTechnique)) {
+                CGtechnique technique = cgGetNamedTechnique(effect, VPVL2_CG_GET_SUFFIX(value, kSingleTechnique));
                 addTechniquePasses(technique);
             }
         }
@@ -1522,19 +1533,19 @@ private:
                 if (cgIsState(s) && cgGetStateType(s) == CG_TEXTURE) {
                     CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
                     const char *semantic = cgGetParameterSemantic(textureParameter);
-                    if (strcmp(semantic, "MATERIALTEXTURE") == 0) {
+                    if (VPVL2_CG_STREQ_CONST(semantic, "MATERIALTEXTURE")) {
                         materialTexture.addParameter(parameter);
                         break;
                     }
-                    else if (strcmp(semantic, "MATERIALSPHEREMAP") == 0) {
+                    else if (VPVL2_CG_STREQ_CONST(semantic, "MATERIALSPHEREMAP")) {
                         materialSphereMap.addParameter(parameter);
                         break;
                     }
-                    else if (strcmp(semantic, "RENDERCOLORTARGET") == 0) {
+                    else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERCOLORTARGET")) {
                         renderColorTarget.addParameter(textureParameter);
                         break;
                     }
-                    else if (strcmp(semantic, "OFFSCREENRENDERTARGET") == 0) {
+                    else if (VPVL2_CG_STREQ_CONST(semantic, "OFFSCREENRENDERTARGET")) {
                         offscreenRenderTarget.addParameter(textureParameter);
                         break;
                     }
@@ -1828,5 +1839,8 @@ private:
 
 } /* namespace gl2 */
 } /* namespace vpvl2 */
+
+#undef VPVL2_CG_GET_SUFFIX
+#undef VPVL2_CG_STREQ_CONST
 
 #endif
