@@ -227,10 +227,16 @@ void PMDRenderEngine::renderModel()
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
     const Scalar &modelOpacity = m_model->opacity();
+    const Scene::ILight *light = m_scene->light();
+    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
-            hasShadowMap = false; //light->depthTexture() ? true : false;
+            hasShadowMap = depthTexturePtr ? true : false;
     const int nmaterials = materials.count();
     size_t offset = 0;
+    if (depthTexturePtr && light->hasFloatTexture()) {
+        const GLuint depthTexture = *depthTexturePtr;
+        m_effect.depthTexture.setTexture(depthTexture);
+    }
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
     glVertexPointer(3, GL_FLOAT, model->strideSize(PMDModel::kVerticesStride),
@@ -297,7 +303,7 @@ void PMDRenderEngine::renderModel()
             m_cullFaceState = true;
         }
         const int nindices = material->countIndices();
-        const char *target = hasShadowMap ? "object_ss" : "object";
+        const char *const target = hasShadowMap ? "object_ss" : "object";
         CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, useTexture, useSphereMap, true);
         m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;

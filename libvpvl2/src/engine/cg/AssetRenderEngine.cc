@@ -215,9 +215,15 @@ void AssetRenderEngine::renderModel()
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
         return;
+    const Scene::ILight *light = m_scene->light();
+    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
+    if (depthTexturePtr && light->hasFloatTexture()) {
+        const GLuint depthTexture = *depthTexturePtr;
+        m_effect.depthTexture.setTexture(depthTexture);
+    }
     m_effect.setModelMatrixParameters(m_model);
     const aiScene *a = asset->getScene();
-    renderRecurse(a, a->mRootNode);
+    renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
     if (!m_cullFaceState) {
         glEnable(GL_CULL_FACE);
         m_cullFaceState = true;
@@ -343,7 +349,7 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
         deleteRecurse(scene, node->mChildren[i]);
 }
 
-void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
+void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
 {
     vpvl::Asset *asset = m_model->ptr();
     const btScalar &scaleFactor = asset->scaleFactor();
@@ -365,7 +371,6 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - basePtr);
     const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - basePtr);
     const size_t stride = sizeof(AssetVertex);
-    const bool hasShadowMap = false; // light->depthTexture() ? true : false;
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -393,7 +398,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     }
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
-        renderRecurse(scene, node->mChildren[i]);
+        renderRecurse(scene, node->mChildren[i], hasShadowMap);
 }
 
 void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)

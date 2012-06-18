@@ -1052,6 +1052,9 @@ public:
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, "_INDEX")) {
             }
+            else if (VPVL2_CG_STREQ_CONST(semantic, "TEXUNIT0")) {
+                depthTexture.addParameter(parameter);
+            }
             else {
                 const char *name = cgGetParameterName(parameter);
                 if (VPVL2_CG_STREQ_CONST(name, "parthf")) {
@@ -1216,6 +1219,7 @@ public:
     GeometrySemantic direction;
     MaterialTextureSemantic materialTexture;
     MaterialTextureSemantic materialSphereMap;
+    MaterialTextureSemantic depthTexture;
     Float2Parameter viewportPixelSize;
     TimeSemantic time;
     TimeSemantic elapsedTime;

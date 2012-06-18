@@ -59,6 +59,7 @@ public:
         virtual const Vector3 &direction() const = 0;
         virtual const Vector3 &depthTextureSize() const = 0;
         virtual void *depthTexture() const = 0;
+        virtual bool hasFloatTexture() const = 0;
         virtual bool isToonEnabled() const = 0;
         virtual bool isSoftShadowEnabled() const = 0;
         virtual IMotion *motion() const = 0;
@@ -67,6 +68,7 @@ public:
         virtual void setDepthTextureSize(const Vector3 &value) = 0;
         virtual void setMotion(IMotion *value) = 0;
         virtual void setDepthTexture(void *value) = 0;
+        virtual void setHasFloatTexture(bool value) = 0;
         virtual void setToonEnable(bool value) = 0;
         virtual void setSoftShadowEnable(bool value) = 0;
         virtual void copyFrom(ILight *value) = 0;

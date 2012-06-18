@@ -81,6 +81,7 @@ public:
         m_depthTextureSize(kZeroV3),
         m_enableToon(false),
         m_enableSoftShadow(false),
+        m_hasFloatTexture(false),
         m_depthTexture(0)
     {
         resetDefault();
@@ -91,6 +92,7 @@ public:
         m_depthTexture = 0;
         m_enableToon = false;
         m_enableSoftShadow = false;
+        m_hasFloatTexture = false;
         m_color.setZero();
         m_direction.setZero();
         m_depthTextureSize.setZero();
@@ -100,12 +102,14 @@ public:
     const Vector3 &direction() const { return m_direction; }
     const Vector3 &depthTextureSize() const { return m_depthTextureSize; }
     void *depthTexture() const { return m_depthTexture; }
+    bool hasFloatTexture() const { return m_hasFloatTexture; }
     bool isToonEnabled() const { return m_enableToon; }
     bool isSoftShadowEnabled() const { return m_enableSoftShadow; }
     IMotion *motion() const { return m_motion; }
     void setColor(const Vector3 &value) { m_color = value; }
     void setDirection(const Vector3 &value) { m_direction = value; }
     void setDepthTextureSize(const Vector3 &value) { m_depthTextureSize = value; }
+    void setHasFloatTexture(bool value) { m_hasFloatTexture = value; }
     void setMotion(IMotion *value) { m_motion = value; }
     void setDepthTexture(void *value) { m_depthTexture = value; }
     void setToonEnable(bool value) { m_enableToon = value; }
@@ -126,6 +130,7 @@ private:
     Vector3 m_depthTextureSize;
     bool m_enableToon;
     bool m_enableSoftShadow;
+    bool m_hasFloatTexture;
     void *m_depthTexture;
 };
 class Camera : public Scene::ICamera {

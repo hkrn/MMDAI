@@ -243,8 +243,6 @@ public:
           m_systemDir(m_settings->value("dir.system.toon", "../../QMA2/resources/images").toString()),
           m_widget(widget)
     {
-        m_lightWorldMatrix.scale(0.5);
-        m_lightWorldMatrix.translate(1, 1, 1);
         m_timer.start();
     }
     ~Delegate()
@@ -498,7 +496,8 @@ public:
         Scene::ICamera *camera = m_scene->camera();
         m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / float(size.height()), camera->znear(), camera->zfar());
     }
-    void setLightMatrices(const QMatrix4x4 &view, const QMatrix4x4 &projection) {
+    void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection) {
+        m_lightWorldMatrix = world;
         m_lightViewMatrix = view;
         m_lightProjectionMatrix = projection;
     }
@@ -942,10 +941,15 @@ protected:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
         startTimer(1000.0f / 60.0f);
+        Scene::ILight *light = m_scene.light();
         QGLFramebufferObjectFormat format;
         format.setAttachment(QGLFramebufferObject::Depth);
+#if GL_ARB_texture_float
+        format.setInternalTextureFormat(GL_RGBA32F_ARB);
+        light->setHasFloatTexture(true);
+#endif
         m_fbo = new QGLFramebufferObject(1024, 1024, format);
-        GLuint textureID = m_fbo->texture();
+        GLuint textureID = m_depthTextureID = m_fbo->texture();
         if (textureID > 0) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1062,7 +1066,8 @@ protected:
                                    QVector3D(target.x(), target.y(), target.z()),
                                    QVector3D(0, 1, 0));
             lightProjectionMatrix.perspective(angle, 1, 1, distance + maxRadius + margin);
-            m_delegate->setLightMatrices(lightViewMatrix, lightProjectionMatrix);
+            QMatrix4x4 lightWorldMatrix;
+            m_delegate->setLightMatrices(lightWorldMatrix, lightViewMatrix, lightProjectionMatrix);
             glViewport(0, 0, m_fbo->width(), m_fbo->height());
             glClearColor(1, 1, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
