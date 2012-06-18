@@ -978,7 +978,7 @@ public:
             else if (VPVL2_CG_STREQ_CONST(semantic, kViewProjectionSemantic)) {
                 viewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kViewProjectionSemantic));
             }
-            if (VPVL2_CG_STREQ_CONST(semantic, kWorldSemantic)) {
+            else if (VPVL2_CG_STREQ_CONST(semantic, kWorldSemantic)) {
                 world.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldSemantic));
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, kViewSemantic)) {
