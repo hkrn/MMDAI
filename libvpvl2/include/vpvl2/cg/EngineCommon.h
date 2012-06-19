@@ -1573,7 +1573,7 @@ private:
     }
     void setTextureParameters(CGparameter parameter, const IString *dir) {
         const CGtype type = cgGetParameterType(parameter);
-        if (type == CG_SAMPLER2D) {
+        if (type == CG_SAMPLER2D || type == CG_SAMPLER3D || type == CG_SAMPLERCUBE) {
             CGstateassignment sa = cgGetFirstSamplerStateAssignment(parameter);
             while (sa) {
                 const CGstate s = cgGetSamplerStateAssignmentState(sa);

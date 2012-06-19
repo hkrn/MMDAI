@@ -231,17 +231,318 @@ private:
     QTextCodec *m_utf16;
 };
 
+class DirectDrawSurface
+{
+public:
+    DirectDrawSurface(QGLWidget *context)
+        : m_context(context)
+    {
+        memset(&m_header, 0, sizeof(m_header));
+    }
+    ~DirectDrawSurface() {
+    }
+
+    bool parse(const uint8_t *data, size_t size, GLuint &textureID) {
+        if (size > sizeof(m_header)) {
+            m_header = *reinterpret_cast<const Header *>(data);
+            if (!m_header.isValidSignature()) {
+                return false;
+            }
+            if (!m_header.isValidDescriptionSize()) {
+                return false;
+            }
+            if (!m_header.isValidPixelFormatSize()) {
+                return false;
+            }
+            if (!m_header.isValidDescription()) {
+                return false;
+            }
+            if (!m_header.isValidCapacity()) {
+                return false;
+            }
+            m_header.correct();
+            uint8_t *ptr;
+            m_header.getDataPointer(data, ptr);
+            glGenTextures(1, &textureID);
+            if (m_header.hasCubemap()) {
+                size_t offset = 0;
+                glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+                if (m_header.hasCubemapPositiveX()) {
+                    setCubeTexture(ptr, GL_TEXTURE_CUBE_MAP_POSITIVE_X, offset);
+                    ptr += offset;
+                }
+                if (m_header.hasCubemapNegativeX()) {
+                    setCubeTexture(ptr, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, offset);
+                    ptr += offset;
+                }
+                if (m_header.hasCubemapPositiveY()) {
+                    setCubeTexture(ptr, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, offset);
+                    ptr += offset;
+                }
+                if (m_header.hasCubemapNegativeY()) {
+                    setCubeTexture(ptr, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, offset);
+                    ptr += offset;
+                }
+                if (m_header.hasCubemapPositiveZ()) {
+                    setCubeTexture(ptr, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, offset);
+                    ptr += offset;
+                }
+                if (m_header.hasCubemapNegativeZ()) {
+                    setCubeTexture(ptr, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, offset);
+                    ptr += offset;
+                }
+                glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+                return true;
+            }
+            // volume
+            else if (m_header.hasVolume()) {
+                glBindTexture(GL_TEXTURE_3D, textureID);
+                setVolumeTexture(ptr);
+                glBindTexture(GL_TEXTURE_3D, 0);
+                return true;
+            }
+            // texture
+            else {
+            }
+        }
+        return false;
+    }
+
+private:
+    void setCubeTexture(const uint8_t *ptr, GLenum target, size_t &offset) {
+        uint32_t width = m_header.width(), height = m_header.height();
+        GLenum format, internal, type;
+        m_header.getTextureFormat(internal, format, type);
+        offset = 0;
+        if (m_header.hasMipmap()) {
+            int level = 0;
+            while (height > 1) {
+                glTexImage2D(target, level, internal, width, height, 0, format, type, ptr + offset);
+                offset += m_header.estimateSize(level);
+                width  >>= 1;
+                height >>= 1;
+                btSetMax(width, uint32_t(1));
+                btSetMax(height, uint32_t(1));
+                level++;
+            }
+        }
+        else {
+            glTexImage2D(target, 0, internal, width, height, 0, format, type, ptr);
+            offset += m_header.estimateSize(0);
+        }
+    }
+    void setVolumeTexture(const uint8_t *ptr) {
+        uint32_t width = m_header.width(), height = m_header.height(), depth = m_header.depth();
+        GLenum format, internal, type;
+        m_header.getTextureFormat(internal, format, type);
+        if (m_header.hasMipmap()) {
+            uint32_t mipmapCount = m_header.width();
+            size_t offset = 0;
+            for (uint32_t i = 0; i < mipmapCount; i++) {
+                glTexImage3D(GL_TEXTURE_3D, i, internal, width, height, depth, 0, format, type, ptr);
+                offset += m_header.estimateSize(i);
+                width  >>= 1;
+                height >>= 1;
+                depth  >>= 1;
+                btSetMax(width, uint32_t(1));
+                btSetMax(height, uint32_t(1));
+                btSetMax(depth, uint32_t(1));
+            }
+        }
+        else {
+            glTexImage3D(GL_TEXTURE_3D, 0, internal, width, height, depth, 0, format, type, ptr);
+        }
+    }
+
+    struct Header {
+        enum Flags {
+            kCaps        = 0x00000001,
+            kHeight      = 0x00000002,
+            kWidth       = 0x00000004,
+            kPitch       = 0x00000008,
+            kPixelFormat = 0x00001000,
+            kMipmapCount = 0x00020000,
+            kLinearSize  = 0x00080000,
+            kDepth       = 0x00800000
+        };
+        enum Type1Flags {
+            kComplex = 0x00000008,
+            kTexture = 0x00001000,
+            kMipmap  = 0x00400000
+        };
+        enum Type2Flags {
+            kCubemap          = 0x00000200,
+            kCubemapPositiveX = 0x00000400,
+            kCubemapNegativeX = 0x00000800,
+            kCubemapPositiveY = 0x00001000,
+            kCubemapNegativeY = 0x00002000,
+            kCubemapPositiveZ = 0x00004000,
+            kCubemapNegativeZ = 0x00008000,
+            kVolume           = 0x00200000
+        };
+        uint8_t magic[4];
+        struct Description {
+            uint32_t size;
+            uint32_t flags;
+            uint32_t height;
+            uint32_t width;
+            uint32_t pitchOrLinearSize;
+            uint32_t depth;
+            uint32_t mipmapCount;
+            uint32_t reserved[11];
+            struct PixelFormat {
+                uint32_t size;
+                uint32_t flags;
+                uint8_t fourcc[4];
+                uint32_t bitsCount;
+                struct {
+                    uint32_t red;
+                    uint32_t blue;
+                    uint32_t green;
+                    uint32_t alpha;
+                } bitmask;
+            } pixelFormat;
+            struct Capacity {
+                uint32_t type1;
+                uint32_t type2;
+                uint32_t reserved[2];
+            } capacity;
+        } description;
+        bool isValidSignature() const { return memcmp(magic, "DDS ", sizeof(magic)) == 0; }
+        bool isValidDescriptionSize() const { return description.size == 124; }
+        bool isValidPixelFormatSize() const { return description.pixelFormat.size == 32; }
+        uint32_t width() const { return description.width; }
+        uint32_t height() const { return description.height; }
+        uint32_t depth() const { return description.depth; }
+        uint32_t mipmapCount() const { return description.mipmapCount; }
+        size_t estimateSize(int level) const {
+            size_t size = 0;
+            level += 1;
+            if (description.flags & kLinearSize)
+                size = description.pitchOrLinearSize / (level * 4);
+            else
+                size = description.pitchOrLinearSize * (description.height / level);
+            return btMax(size_t(8), size);
+        }
+        bool isValidCapacity() const {
+            return (description.capacity.type1 & kTexture) == kTexture;
+        }
+        bool hasCubemapPositiveX() const {
+            return (description.capacity.type2 & kCubemapPositiveX) == kCubemapPositiveX;
+        }
+        bool hasCubemapNegativeX() const {
+            return (description.capacity.type2 & kCubemapNegativeX) == kCubemapNegativeX;
+        }
+        bool hasCubemapPositiveY() const {
+            return (description.capacity.type2 & kCubemapPositiveY) == kCubemapPositiveY;
+        }
+        bool hasCubemapNegativeY() const {
+            return (description.capacity.type2 & kCubemapNegativeY) == kCubemapNegativeY;
+        }
+        bool hasCubemapPositiveZ() const {
+            return (description.capacity.type2 & kCubemapPositiveZ) == kCubemapPositiveZ;
+        }
+        bool hasCubemapNegativeZ() const {
+            return (description.capacity.type2 & kCubemapNegativeZ) == kCubemapNegativeZ;
+        }
+        bool hasCubemap() const {
+            Header::Description::Capacity c = description.capacity;
+            return (c.type2 & kCubemap) == kCubemap;
+        }
+        bool hasVolume() const {
+            Header::Description::Capacity c = description.capacity;
+            return (c.type2 & kVolume) == kVolume;
+        }
+        bool hasMipmap() const {
+            uint32_t type1 = description.capacity.type1;
+            return (type1 & kComplex) == kComplex && (type1 & kMipmap) == kMipmap;
+        }
+        bool isValidDescription() const {
+            bool ret = true;
+            uint32_t sdflags = description.flags;
+            ret &= (sdflags & kCaps) == kCaps;
+            ret &= (sdflags & kPixelFormat) == kPixelFormat;
+            ret &= (sdflags & kWidth) == kWidth;
+            ret &= (sdflags & kHeight) == kHeight;
+            return ret;
+        }
+        void correct() {
+            btSetMax(description.width, uint32_t(1));
+            btSetMax(description.height, uint32_t(1));
+            btSetMax(description.depth, uint32_t(1));
+            btSetMax(description.pitchOrLinearSize, uint32_t(1));
+            btSetMax(description.mipmapCount, uint32_t(1));
+        }
+        void getDataPointer(const uint8_t *data, uint8_t *&ptr) const {
+            ptr = const_cast<uint8_t *>(data) + description.size;
+        }
+        void getTextureFormat(GLenum &internal, GLenum &format, GLenum &type) const {
+            const Header::Description::PixelFormat &pf = description.pixelFormat;
+            switch (pf.bitsCount) {
+            case 32:
+                internal = GL_RGBA8;
+                format   = GL_RGBA;
+                type     = GL_UNSIGNED_BYTE;
+                return;
+            case 24:
+                internal = GL_RGB8;
+                format   = GL_RGB;
+                type     = GL_UNSIGNED_BYTE;
+                return;
+            case 16:
+                switch (pf.bitmask.green) {
+                case 0x00f0:
+                    internal = GL_RGBA16;
+                    format   = GL_RGBA;
+                    type     = GL_UNSIGNED_SHORT_4_4_4_4;
+                    return;
+                case 0x07e0:
+                    internal = GL_RGB16;
+                    format   = GL_RGB;
+                    type     = GL_UNSIGNED_SHORT_5_6_5;
+                    return;
+                case 0x03e0:
+                    internal = GL_RGBA16;
+                    format   = GL_RGBA;
+                    type     = GL_UNSIGNED_SHORT_5_5_5_1;
+                    return;
+                case 0x0000:
+                    internal = GL_LUMINANCE8_ALPHA8;
+                    format   = GL_LUMINANCE_ALPHA;
+                    type     = GL_UNSIGNED_BYTE;
+                    return;
+                }
+            case 8:
+                if (pf.bitmask.alpha) {
+                    internal = GL_ALPHA8;
+                    format   = GL_ALPHA;
+                }
+                else {
+                    internal = GL_R8;
+                    format   = GL_RED;
+                }
+                type = GL_UNSIGNED_BYTE;
+                return;
+            }
+            internal = GL_NONE;
+            format   = GL_NONE;
+            type     = GL_UNSIGNED_BYTE;
+        }
+    } m_header;
+    QGLWidget *m_context;
+};
+
 class Delegate : public IRenderDelegate
 {
 public:
     struct PrivateContext {
         QHash<QString, GLuint> textureCache;
     };
-    Delegate(const QSettings *settings, const Scene *scene, QGLWidget *widget)
+    Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context)
         : m_settings(settings),
           m_scene(scene),
           m_systemDir(m_settings->value("dir.system.toon", "../../QMA2/resources/images").toString()),
-          m_widget(widget)
+          m_context(context)
     {
         m_timer.start();
     }
@@ -540,6 +841,10 @@ private:
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
+    static void addTextureCache(PrivateContext *context, const QString &path, GLuint textureID) {
+        if (context)
+            context->textureCache.insert(path, textureID);
+    }
     bool uploadTextureInternal(const QString &path, void *texture, bool isToon, bool mipmap, void *context) {
         const QFileInfo info(path);
         if (info.isDir())
@@ -548,24 +853,45 @@ private:
             qWarning("Cannot loading inexist \"%s\"", qPrintable(path));
             return false;
         }
-        PrivateContext *ctx = static_cast<PrivateContext *>(context);
-        if (ctx && ctx->textureCache.contains(path)) {
-            setTextureID(ctx->textureCache[path], isToon, texture);
+        PrivateContext *privateContext = static_cast<PrivateContext *>(context);
+        if (privateContext && privateContext->textureCache.contains(path)) {
+            setTextureID(privateContext->textureCache[path], isToon, texture);
             return true;
         }
-        const QImage &image = QImage(path).rgbSwapped();
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
-                | QGLContext::InvertedYBindOption
-                | QGLContext::PremultipliedAlphaBindOption;
-        if (mipmap)
-            options |= QGLContext::MipmapBindOption;
-        GLuint textureID = m_widget->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
-        setTextureID(textureID, isToon, texture);
-        if (ctx)
-            ctx->textureCache.insert(path, textureID);
-        qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
-               textureID, image.width(), image.height(), qPrintable(path));
-        return textureID != 0;
+        if (path.endsWith(".dds")) {
+            QFile file(path);
+            if (file.open(QFile::ReadOnly)) {
+                const QByteArray &bytes = file.readAll();
+                const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+                DirectDrawSurface dds(m_context);
+                GLuint textureID;
+                if (!dds.parse(data, bytes.size(), textureID)) {
+                    qDebug("Cannot parse a DDS texture %s", qPrintable(path));
+                    return false;
+                }
+                addTextureCache(privateContext, path, textureID);
+                *static_cast<GLuint *>(texture) = textureID;
+                return true;
+            }
+            else {
+                qDebug("Cannot open a DDS texture %s: %s", qPrintable(path), qPrintable(file.errorString()));
+                return false;
+            }
+        }
+        else {
+            const QImage &image = QImage(path).rgbSwapped();
+            QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
+                    | QGLContext::InvertedYBindOption
+                    | QGLContext::PremultipliedAlphaBindOption;
+            if (mipmap)
+                options |= QGLContext::MipmapBindOption;
+            GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+            setTextureID(textureID, isToon, texture);
+            addTextureCache(privateContext, path, textureID);
+            qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
+                   textureID, image.width(), image.height(), qPrintable(path));
+            return textureID != 0;
+        }
     }
     void getToonColorInternal(const QString &path, Color &value) {
         const QImage image(path);
@@ -579,7 +905,7 @@ private:
     const QSettings *m_settings;
     const Scene *m_scene;
     const QDir m_systemDir;
-    QGLWidget *m_widget;
+    QGLWidget *m_context;
     QSize m_viewport;
     QHash<const IModel *, QString> m_model2filename;
     QMatrix4x4 m_lightWorldMatrix;
