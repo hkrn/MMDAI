@@ -875,6 +875,31 @@ void PMDRenderEngine::renderEdge()
     edgeProgram->unbind();
 }
 
+bool PMDRenderEngine::hasPreProcess() const
+{
+    return false;
+}
+
+bool PMDRenderEngine::hasPostProcess() const
+{
+    return false;
+}
+
+void PMDRenderEngine::preparePostProcess()
+{
+    /* do nothing */
+}
+
+void PMDRenderEngine::performPreProcess()
+{
+    /* do nothing */
+}
+
+void PMDRenderEngine::performPostProcess()
+{
+    /* do nothing */
+}
+
 void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)
 {
     va_list ap;

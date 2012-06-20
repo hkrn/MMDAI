@@ -381,6 +381,31 @@ void AssetRenderEngine::update()
     /* do nothing */
 }
 
+bool AssetRenderEngine::hasPreProcess() const
+{
+    return false;
+}
+
+bool AssetRenderEngine::hasPostProcess() const
+{
+    return false;
+}
+
+void AssetRenderEngine::preparePostProcess()
+{
+    /* do nothing */
+}
+
+void AssetRenderEngine::performPreProcess()
+{
+    /* do nothing */
+}
+
+void AssetRenderEngine::performPostProcess()
+{
+    /* do nothing */
+}
+
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context)
 {
     bool ret = true;

@@ -96,6 +96,11 @@ public:
     void renderEdge();
     void renderShadow();
     void renderZPlot();
+    bool hasPreProcess() const;
+    bool hasPostProcess() const;
+    void preparePostProcess();
+    void performPreProcess();
+    void performPostProcess();
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);

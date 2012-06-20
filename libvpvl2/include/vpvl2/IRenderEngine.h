@@ -56,6 +56,11 @@ public:
     virtual void renderShadow() = 0;
     virtual void renderZPlot() = 0;
     virtual void update() = 0;
+    virtual bool hasPreProcess() const = 0;
+    virtual bool hasPostProcess() const = 0;
+    virtual void preparePostProcess() = 0;
+    virtual void performPreProcess() = 0;
+    virtual void performPostProcess() = 0;
 };
 
 } /* namespace vpvl2 */

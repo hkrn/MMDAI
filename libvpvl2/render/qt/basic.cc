@@ -1411,9 +1411,21 @@ protected:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             for (int i = 0; i < nengines; i++) {
                 IRenderEngine *engine = engines[i];
+                engine->preparePostProcess();
+            }
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                engine->performPreProcess();
+            }
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
                 engine->renderModel();
                 engine->renderEdge();
                 engine->renderShadow();
+            }
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                engine->performPostProcess();
             }
         }
     }

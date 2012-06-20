@@ -927,6 +927,31 @@ void PMXRenderEngine::renderZPlot()
     zplotProgram->unbind();
 }
 
+bool PMXRenderEngine::hasPreProcess() const
+{
+    return false;
+}
+
+bool PMXRenderEngine::hasPostProcess() const
+{
+    return false;
+}
+
+void PMXRenderEngine::preparePostProcess()
+{
+    /* do nothing */
+}
+
+void PMXRenderEngine::performPreProcess()
+{
+    /* do nothing */
+}
+
+void PMXRenderEngine::performPostProcess()
+{
+    /* do nothing */
+}
+
 void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)
 {
     va_list ap;

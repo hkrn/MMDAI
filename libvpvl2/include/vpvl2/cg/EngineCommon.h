@@ -952,7 +952,9 @@ public:
           renderDepthStencilTarget(delegate),
           offscreenRenderTarget(delegate),
           index(0),
+      #ifndef __APPLE__
           glDrawBuffers(0),
+      #endif /* __APPLE__ */
           m_delegate(delegate),
           m_scriptOutput(kColor),
           m_scriptClass(kObject),
@@ -961,8 +963,10 @@ public:
 #ifdef VPVL2_LINK_QT
         const QGLContext *context = QGLContext::currentContext();
         initializeGLFunctions(context);
+#ifndef __APPLE__
         glDrawBuffers = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
-#endif
+#endif /* __APPLE__ */
+#endif /* VPVL2_LINK_QT */
     }
     ~Effect()
     {
@@ -1131,6 +1135,31 @@ public:
                 break;
         }
         return technique;
+    }
+    void executeScriptExternal() {
+        if (m_scriptOrder == kPostProcess)
+            executeScript(&m_externalScript, 0, 0, 0);
+    }
+    void executeTechniques(ScriptOrderType order) {
+        switch (order) {
+        case kPreProcess:
+        case kPostProcess:
+            if (m_scriptOrder == order) {
+                const int nscripts = m_techniqueScripts.size();
+                for (int i = 0; i < nscripts; i++) {
+                    const Script *script = m_techniqueScripts.getAtIndex(i);
+                    if (script)
+                        executeScript(script, 0, 0, 0);
+                }
+            }
+            break;
+        case kStandard:
+        default:
+            break;
+        }
+    }
+    bool hasTechniques(ScriptOrderType order) const {
+        return m_scriptOrder == order ? m_techniqueScripts.size() : 0;
     }
     void executeTechniquePasses(const CGtechnique technique, const GLsizei count, const GLenum type, const GLvoid *ptr) {
         if (cgIsTechnique(technique)) {
@@ -1511,12 +1540,16 @@ private:
                     glBindFramebuffer(GL_FRAMEBUFFER, 0);
                     break;
                 case ScriptState::kDrawBuffer:
+#ifndef __APPLE__
                     if (glDrawBuffers) {
+#endif /* __APPLE__ */
                         glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
                         glDrawBuffers(nbuffers, colorBuffers);
                         executePass(state.pass, count, type, ptr);
                         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#ifndef __APPLE__
                     }
+#endif /* __APPLE__ */
                     break;
                 case ScriptState::kDrawGeometry:
                     executePass(state.pass, count, type, ptr);
@@ -1864,7 +1897,8 @@ private:
                 frameBufferObject = 0;
             }
             m_techniqueScripts.insert(technique, techniqueScriptStates);
-            m_externalScripts.insert(technique, scriptExternalStates);
+            if (m_externalScript.size() == 0)
+                m_externalScript = scriptExternalStates;
             return !lastState.enterLoop;
         }
         else {
@@ -1883,16 +1917,18 @@ private:
         return true;
     }
 
+#ifndef __APPLE__
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
+#endif /* __APPLE__ */
     IRenderDelegate *m_delegate;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     ScriptOrderType m_scriptOrder;
     Techniques m_techniques;
     TechniquePasses m_techniquePasses;
-    Hash<HashPtr, Script> m_externalScripts;
-    Hash<HashPtr, Script> m_techniqueScripts;
-    Hash<HashPtr, Script> m_passScripts;
+    Script m_externalScript;
+    btHashMap<btHashPtr, Script> m_techniqueScripts;
+    btHashMap<btHashPtr, Script> m_passScripts;
     btHashMap<btHashPtr, GLuint> m_techniqueFrameBuffers;
 };
 

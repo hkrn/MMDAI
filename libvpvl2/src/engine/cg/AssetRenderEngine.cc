@@ -210,7 +210,7 @@ void AssetRenderEngine::update()
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
         return;
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
@@ -242,7 +242,7 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
         return;
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
@@ -250,6 +250,31 @@ void AssetRenderEngine::renderZPlot()
     m_effect.setModelMatrixParameters(m_model);
     const aiScene *a = asset->getScene();
     renderZPlotRecurse(a, a->mRootNode);
+}
+
+bool AssetRenderEngine::hasPreProcess() const
+{
+    return m_effect.hasTechniques(Effect::kPreProcess);
+}
+
+bool AssetRenderEngine::hasPostProcess() const
+{
+    return m_effect.hasTechniques(Effect::kPostProcess);
+}
+
+void AssetRenderEngine::preparePostProcess()
+{
+    m_effect.executeScriptExternal();
+}
+
+void AssetRenderEngine::performPreProcess()
+{
+    m_effect.executeTechniques(Effect::kPreProcess);
+}
+
+void AssetRenderEngine::performPostProcess()
+{
+    m_effect.executeTechniques(Effect::kPostProcess);
 }
 
 void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)

@@ -209,7 +209,7 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -284,7 +284,7 @@ void PMXRenderEngine::renderModel()
 
 void PMXRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
@@ -316,7 +316,7 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderShadow()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
     m_effect.setZeroGeometryParameters(m_model);
@@ -345,7 +345,7 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
@@ -372,6 +372,31 @@ void PMXRenderEngine::renderZPlot()
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+bool PMXRenderEngine::hasPreProcess() const
+{
+    return m_effect.hasTechniques(Effect::kPreProcess);
+}
+
+bool PMXRenderEngine::hasPostProcess() const
+{
+    return m_effect.hasTechniques(Effect::kPostProcess);
+}
+
+void PMXRenderEngine::preparePostProcess()
+{
+    m_effect.executeScriptExternal();
+}
+
+void PMXRenderEngine::performPreProcess()
+{
+    m_effect.executeTechniques(Effect::kPreProcess);
+}
+
+void PMXRenderEngine::performPostProcess()
+{
+    m_effect.executeTechniques(Effect::kPostProcess);
 }
 
 void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)

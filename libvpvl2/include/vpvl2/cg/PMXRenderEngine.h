@@ -77,6 +77,11 @@ public:
     void renderEdge();
     void renderShadow();
     void renderZPlot();
+    bool hasPreProcess() const;
+    bool hasPostProcess() const;
+    void preparePostProcess();
+    void performPreProcess();
+    void performPostProcess();
 
     //static bool isAcceleratorSupported();
     bool isAcceleratorAvailable() const;
