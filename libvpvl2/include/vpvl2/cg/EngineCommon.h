@@ -952,13 +952,16 @@ public:
           renderDepthStencilTarget(delegate),
           offscreenRenderTarget(delegate),
           index(0),
+          glDrawBuffers(0),
           m_delegate(delegate),
           m_scriptOutput(kColor),
           m_scriptClass(kObject),
           m_scriptOrder(kStandard)
     {
 #ifdef VPVL2_LINK_QT
-        initializeGLFunctions();
+        const QGLContext *context = QGLContext::currentContext();
+        initializeGLFunctions(context);
+        glDrawBuffers = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
 #endif
     }
     ~Effect()
@@ -1508,10 +1511,12 @@ private:
                     glBindFramebuffer(GL_FRAMEBUFFER, 0);
                     break;
                 case ScriptState::kDrawBuffer:
-                    glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
-                    glDrawBuffers(nbuffers, colorBuffers);
-                    executePass(state.pass, count, type, ptr);
-                    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                    if (glDrawBuffers) {
+                        glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
+                        glDrawBuffers(nbuffers, colorBuffers);
+                        executePass(state.pass, count, type, ptr);
+                        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                    }
                     break;
                 case ScriptState::kDrawGeometry:
                     executePass(state.pass, count, type, ptr);
@@ -1878,6 +1883,7 @@ private:
         return true;
     }
 
+    PFNGLDRAWBUFFERSPROC glDrawBuffers;
     IRenderDelegate *m_delegate;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
