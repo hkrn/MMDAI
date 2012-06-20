@@ -56,7 +56,13 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
                                  CGcontext effectContext,
                                  cl::PMXAccelerator *accelerator,
                                  pmx::Model *model)
-    : m_delegate(delegate),
+
+#ifdef VPVL2_LINK_QT
+    : QGLFunctions(),
+      #else
+    :
+      #endif /* VPVL2_LINK_QT */
+      m_delegate(delegate),
       m_scene(scene),
       m_accelerator(accelerator),
       m_model(model),
@@ -66,6 +72,9 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
 {
+#ifdef VPVL2_LINK_QT
+    initializeGLFunctions();
+#endif /* VPVL2_LINK_QT */
 }
 
 PMXRenderEngine::~PMXRenderEngine()
@@ -103,10 +112,6 @@ bool PMXRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-#ifdef VPVL2_LINK_QT
-    const QGLContext *glContext = QGLContext::currentContext();
-    initializeGLFunctions(glContext);
-#endif
     IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
     CGeffect effect = 0;
     cgSetErrorHandler(&PMXRenderEngine::handleError, this);

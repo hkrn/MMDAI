@@ -372,6 +372,9 @@ public:
           cullFaceState(true),
           isVertexShaderSkinning(false)
     {
+#ifdef VPVL2_LINK_QT
+    initializeGLFunctions();
+#endif
     }
     virtual ~PrivateContext() {
         glDeleteTextures(PMDModel::kCustomTextureMax, toonTextures);
@@ -387,12 +390,6 @@ public:
         cullFaceState = false;
         isVertexShaderSkinning = false;
     }
-
-#ifdef VPVL2_LINK_QT
-    void initializeContext(const QGLContext *context) {
-        initializeGLFunctions(context);
-    }
-#endif /* VPVL2_LINK_QT */
 
     void releaseMaterials(vpvl::PMDModel *model) {
         if (materials) {
@@ -438,6 +435,9 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       m_context(0)
 {
     m_context = new PrivateContext();
+#ifdef VPVL2_LINK_QT
+    initializeGLFunctions();
+#endif
 }
 
 PMDRenderEngine::~PMDRenderEngine()
@@ -472,15 +472,6 @@ bool PMDRenderEngine::upload(const IString *dir)
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegate);
     ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_delegate);
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_delegate);
-#ifdef VPVL2_LINK_QT
-    const QGLContext *glContext = QGLContext::currentContext();
-    initializeGLFunctions(glContext);
-    m_context->initializeContext(glContext);
-    edgeProgram->initializeContext(glContext);
-    modelProgram->initializeContext(glContext);
-    shadowProgram->initializeContext(glContext);
-    zplotProgram->initializeContext(glContext);
-#endif /* VPVL2_LINK_QT */
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
     const bool isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;

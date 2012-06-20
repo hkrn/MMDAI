@@ -69,6 +69,9 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
 {
+#ifdef VPVL2_LINK_QT
+    initializeGLFunctions();
+#endif /* VPVL2_LINK_QT */
 }
 
 PMDRenderEngine::~PMDRenderEngine()
@@ -106,10 +109,6 @@ bool PMDRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-#ifdef VPVL2_LINK_QT
-    const QGLContext *glContext = QGLContext::currentContext();
-    initializeGLFunctions(glContext);
-#endif
     IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
     CGeffect effect = 0;
     cgSetErrorHandler(&PMDRenderEngine::handleError, this);

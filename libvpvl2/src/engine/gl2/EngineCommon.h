@@ -77,7 +77,8 @@ public:
           m_positionAttributeLocation(0),
           m_message(0)
     {
-#ifndef VPVL2_LINK_QT
+#ifdef VPVL2_LINK_QT
+        initializeGLFunctions();
         m_program = glCreateProgram();
 #endif
     }
@@ -91,13 +92,6 @@ public:
         m_modelViewProjectionUniformLocation = 0;
         m_positionAttributeLocation = 0;
     }
-
-#ifdef VPVL2_LINK_QT
-    virtual void initializeContext(const QGLContext *context) {
-        initializeGLFunctions(context);
-        m_program = glCreateProgram();
-    }
-#endif
 
     bool addShaderSource(const IString *s, GLenum type, void *context) {
         if (!s) {

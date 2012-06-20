@@ -90,6 +90,9 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
       m_effect(delegate),
       m_cullFaceState(true)
 {
+#ifdef VPVL2_LINK_QT
+    initializeGLFunctions();
+#endif /* VPVL2_LINK_QT */
 }
 
 AssetRenderEngine::~AssetRenderEngine()
@@ -133,9 +136,6 @@ IModel *AssetRenderEngine::model() const
 bool AssetRenderEngine::upload(const IString *dir)
 {
     bool ret = true;
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions(QGLContext::currentContext());
-#endif /* VPVL2_LINK_QT */
     vpvl::Asset *asset = m_model->ptr();
     const aiScene *scene = asset->getScene();
     const unsigned int nmaterials = scene->mNumMaterials;

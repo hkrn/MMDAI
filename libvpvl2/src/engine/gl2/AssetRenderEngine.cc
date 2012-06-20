@@ -245,6 +245,9 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate, const Scene *sce
       m_context(0)
 {
     m_context = new PrivateContext();
+#ifdef VPVL2_LINK_QT
+    initializeGLFunctions();
+#endif /* VPVL2_LINK_QT */
 }
 
 AssetRenderEngine::~AssetRenderEngine()
@@ -296,10 +299,12 @@ void AssetRenderEngine::renderModel()
 
 void AssetRenderEngine::renderEdge()
 {
+    /* do nothing */
 }
 
 void AssetRenderEngine::renderShadow()
 {
+    /* do nothing */
 }
 
 void AssetRenderEngine::renderZPlot()
@@ -373,6 +378,7 @@ bool AssetRenderEngine::upload(const IString *dir)
 
 void AssetRenderEngine::update()
 {
+    /* do nothing */
 }
 
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context)
@@ -382,10 +388,6 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     AssetVertex assetVertex;
     Program *assetProgram = m_context->assetPrograms[node] = new Program(m_delegate);
     ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram(m_delegate);
-#ifdef VPVL2_LINK_QT
-    assetProgram->initializeContext(QGLContext::currentContext());
-    zplotProgram->initializeContext(QGLContext::currentContext());
-#endif /* VPVL2_LINK_QT */
     IString *vertexShaderSource = 0, *fragmentShaderSource = 0;
     vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, dir, context);
     fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, dir, context);
