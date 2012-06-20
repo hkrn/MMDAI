@@ -54,8 +54,8 @@
 #include <QtOpenGL/QGLFunctions>
 #endif /* VPVL_LINK_QT */
 
-#include <cg/cg.h>
-#include <cg/cgGL.h>
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
 
 #define VPVL2_CG_STREQ_CONST(s, c) (0 == strncmp((s), (c), (sizeof(c)) - 1))
 #define VPVL2_CG_GET_SUFFIX(s, c) (s + (sizeof(c) - 1))
@@ -506,8 +506,9 @@ private:
                     IBone *bone = model->findBone(s);
                     IMorph *morph = model->findMorph(s);
                     delete s;
+                    CGtype parameterType = cgGetParameterType(parameter);
                     if (bone) {
-                        switch (type) {
+                        switch (parameterType) {
                         case CG_FLOAT3:
                         case CG_FLOAT4:
                             cgSetParameter4fv(parameter, bone->worldTransform().getOrigin());
@@ -520,42 +521,43 @@ private:
                             break;
                         }
                     }
-                    else if (morph && type == CG_FLOAT) {
+                    else if (morph && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, morph->weight());
                     }
                 }
                 else {
                     const Vector3 &position = model->position();
                     const Quaternion &rotation = model->rotation();
-                    if (VPVL2_CG_STREQ_CONST(item, "X") && type == CG_FLOAT) {
+                    const CGtype parameterType = cgGetParameterType(parameter);
+                    if (VPVL2_CG_STREQ_CONST(item, "X") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, position.x());
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Y") && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Y") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, position.y());
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Z") && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Z") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, position.z());
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "XYZ") && type == CG_FLOAT3) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "XYZ") && parameterType == CG_FLOAT3) {
                         cgSetParameter3fv(parameter, position);
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Rx") && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Rx") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, btDegrees(rotation.x()));
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Ry") && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Ry") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, btDegrees(rotation.y()));
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Rz") && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Rz") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, btDegrees(rotation.z()));
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Rxyz") && type == CG_FLOAT3) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Rxyz") && parameterType == CG_FLOAT3) {
                         const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
                         cgSetParameter3fv(parameter, rotationDegree);
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Sr") && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Sr") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, model->scaleFactor());
                     }
-                    else if (VPVL2_CG_STREQ_CONST(item, "Tr") && type == CG_FLOAT) {
+                    else if (VPVL2_CG_STREQ_CONST(item, "Tr") && parameterType == CG_FLOAT) {
                         cgSetParameter1f(parameter, model->opacity());
                     }
                 }
@@ -607,12 +609,18 @@ private:
 };
 
 class RenderColorTargetSemantic : public BaseParameter
+        #ifdef VPVL2_LINK_QT
+        , protected QGLFunctions
+        #endif
 {
 public:
     RenderColorTargetSemantic(IRenderDelegate *delegate)
         : BaseParameter(),
           m_delegate(delegate)
     {
+#ifdef VPVL2_LINK_QT
+        initializeGLFunctions();
+#endif
     }
     ~RenderColorTargetSemantic() {
         const int ntextures = m_textures.count();
@@ -906,7 +914,11 @@ public:
     }
 };
 
-class Effect {
+class Effect
+        #ifdef VPVL2_LINK_QT
+        : protected QGLFunctions
+        #endif
+{
 public:
     typedef btAlignedObjectArray<CGtechnique> Techniques;
     typedef btAlignedObjectArray<CGpass> Passes;
@@ -945,6 +957,9 @@ public:
           m_scriptClass(kObject),
           m_scriptOrder(kStandard)
     {
+#ifdef VPVL2_LINK_QT
+        initializeGLFunctions();
+#endif
     }
     ~Effect()
     {
@@ -1393,7 +1408,7 @@ private:
             cgResetPassState(pass);
         }
     }
-    static void setFrameBufferTexture(const GLenum attachment, const ScriptState &state) {
+    void setFrameBufferTexture(const GLenum attachment, const ScriptState &state) {
         GLuint texture = state.texture;
         glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
         if (texture > 0) {
