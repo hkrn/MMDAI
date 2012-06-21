@@ -209,77 +209,7 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
-        return;
-    m_effect.setModelMatrixParameters(m_model);
-    const Array<pmx::Material *> &materials = m_model->materials();
-    const size_t indexStride = m_model->strideSize(pmx::Model::kIndexStride);
-    const Scalar &modelOpacity = m_model->opacity();
-    const Scene::ILight *light = m_scene->light();
-    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
-    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
-            hasShadowMap = depthTexturePtr ? true : false;
-    const int nmaterials = materials.count();
-    size_t offset = 0;
-    if (depthTexturePtr && light->hasFloatTexture()) {
-        const GLuint depthTexture = *depthTexturePtr;
-        m_effect.depthTexture.setTexture(depthTexture);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
-    glVertexPointer(3, GL_FLOAT, m_model->strideSize(pmx::Model::kVertexStride),
-                    reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kVertexStride)));
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glNormalPointer(GL_FLOAT, m_model->strideSize(pmx::Model::kNormalStride),
-                    reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kNormalStride)));
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, m_model->strideSize(pmx::Model::kTexCoordStride),
-                      reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kTexCoordStride)));
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
-    for (int i = 0; i < nmaterials; i++) {
-        const pmx::Material *material = materials[i];
-        const MaterialContext &materialContext = m_materialContexts[i];
-        const Color &toonColor = materialContext.toonTextureColor;
-        const Color &diffuse = material->diffuse();
-        m_effect.ambient.setGeometryColor(diffuse);
-        m_effect.diffuse.setGeometryColor(diffuse);
-        m_effect.emissive.setGeometryColor(material->ambient());
-        m_effect.specular.setGeometryColor(material->specular());
-        m_effect.specularPower.setGeometryValue(btMax(material->shininess(), 1.0f));
-        m_effect.toonColor.setGeometryColor(toonColor);
-        GLuint mainTexture = materialContext.mainTextureID;
-        GLuint sphereTexture = materialContext.sphereTextureID;
-        bool hasMainTexture = mainTexture > 0;
-        bool hasSphereMap = sphereTexture > 0;
-        m_effect.materialTexture.setTexture(mainTexture);
-        m_effect.materialSphereMap.setTexture(sphereTexture);
-        m_effect.spadd.setValue(material->sphereTextureRenderMode() == pmx::Material::kAddTexture);
-        m_effect.useTexture.setValue(hasMainTexture);
-        if ((hasModelTransparent && m_cullFaceState) ||
-                (material->isCullFaceDisabled() && m_cullFaceState)) {
-            glDisable(GL_CULL_FACE);
-            m_cullFaceState = false;
-        }
-        else if (!m_cullFaceState) {
-            glEnable(GL_CULL_FACE);
-            m_cullFaceState = true;
-        }
-        const int nindices = material->indices();
-        const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
-        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
-        m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
-        offset += nindices * indexStride;
-    }
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    if (!m_cullFaceState) {
-        glEnable(GL_CULL_FACE);
-        m_cullFaceState = true;
-    }
+    renderModel(Effect::kStandard);
 }
 
 void PMXRenderEngine::renderEdge()
@@ -391,12 +321,12 @@ void PMXRenderEngine::preparePostProcess()
 
 void PMXRenderEngine::performPreProcess()
 {
-    m_effect.executeTechniques(Effect::kPreProcess);
+    renderModel(Effect::kPreProcess);
 }
 
 void PMXRenderEngine::performPostProcess()
 {
-    m_effect.executeTechniques(Effect::kPostProcess);
+    renderModel(Effect::kPostProcess);
 }
 
 void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -405,6 +335,81 @@ void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
+}
+
+void PMXRenderEngine::renderModel(Effect::ScriptOrderType type)
+{
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != type)
+        return;
+    m_effect.setModelMatrixParameters(m_model);
+    const Array<pmx::Material *> &materials = m_model->materials();
+    const size_t indexStride = m_model->strideSize(pmx::Model::kIndexStride);
+    const Scalar &modelOpacity = m_model->opacity();
+    const Scene::ILight *light = m_scene->light();
+    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
+    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
+            hasShadowMap = depthTexturePtr ? true : false;
+    const int nmaterials = materials.count();
+    size_t offset = 0;
+    if (depthTexturePtr && light->hasFloatTexture()) {
+        const GLuint depthTexture = *depthTexturePtr;
+        m_effect.depthTexture.setTexture(depthTexture);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
+    glVertexPointer(3, GL_FLOAT, m_model->strideSize(pmx::Model::kVertexStride),
+                    reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kVertexStride)));
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glNormalPointer(GL_FLOAT, m_model->strideSize(pmx::Model::kNormalStride),
+                    reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kNormalStride)));
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glTexCoordPointer(2, GL_FLOAT, m_model->strideSize(pmx::Model::kTexCoordStride),
+                      reinterpret_cast<const GLvoid *>(m_model->strideOffset(pmx::Model::kTexCoordStride)));
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
+    for (int i = 0; i < nmaterials; i++) {
+        const pmx::Material *material = materials[i];
+        const MaterialContext &materialContext = m_materialContexts[i];
+        const Color &toonColor = materialContext.toonTextureColor;
+        const Color &diffuse = material->diffuse();
+        m_effect.ambient.setGeometryColor(diffuse);
+        m_effect.diffuse.setGeometryColor(diffuse);
+        m_effect.emissive.setGeometryColor(material->ambient());
+        m_effect.specular.setGeometryColor(material->specular());
+        m_effect.specularPower.setGeometryValue(btMax(material->shininess(), 1.0f));
+        m_effect.toonColor.setGeometryColor(toonColor);
+        GLuint mainTexture = materialContext.mainTextureID;
+        GLuint sphereTexture = materialContext.sphereTextureID;
+        bool hasMainTexture = mainTexture > 0;
+        bool hasSphereMap = sphereTexture > 0;
+        m_effect.materialTexture.setTexture(mainTexture);
+        m_effect.materialSphereMap.setTexture(sphereTexture);
+        m_effect.spadd.setValue(material->sphereTextureRenderMode() == pmx::Material::kAddTexture);
+        m_effect.useTexture.setValue(hasMainTexture);
+        if ((hasModelTransparent && m_cullFaceState) ||
+                (material->isCullFaceDisabled() && m_cullFaceState)) {
+            glDisable(GL_CULL_FACE);
+            m_cullFaceState = false;
+        }
+        else if (!m_cullFaceState) {
+            glEnable(GL_CULL_FACE);
+            m_cullFaceState = true;
+        }
+        const int nindices = material->indices();
+        const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
+        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
+        m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+        offset += nindices * indexStride;
+    }
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    if (!m_cullFaceState) {
+        glEnable(GL_CULL_FACE);
+        m_cullFaceState = true;
+    }
 }
 
 void PMXRenderEngine::handleError(CGcontext context, CGerror error, void *data)

@@ -93,6 +93,7 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
+    void renderModel(Effect::ScriptOrderType type);
     static void handleError(CGcontext context, CGerror error, void *data);
 
     enum VertexBufferObjectType {

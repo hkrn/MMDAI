@@ -210,24 +210,7 @@ void AssetRenderEngine::update()
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
-        return;
-    vpvl::Asset *asset = m_model->ptr();
-    if (btFuzzyZero(asset->opacity()))
-        return;
-    const Scene::ILight *light = m_scene->light();
-    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
-    if (depthTexturePtr && light->hasFloatTexture()) {
-        const GLuint depthTexture = *depthTexturePtr;
-        m_effect.depthTexture.setTexture(depthTexture);
-    }
-    m_effect.setModelMatrixParameters(m_model);
-    const aiScene *a = asset->getScene();
-    renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
-    if (!m_cullFaceState) {
-        glEnable(GL_CULL_FACE);
-        m_cullFaceState = true;
-    }
+    renderModel(Effect::kStandard);
 }
 
 void AssetRenderEngine::renderEdge()
@@ -269,12 +252,12 @@ void AssetRenderEngine::preparePostProcess()
 
 void AssetRenderEngine::performPreProcess()
 {
-    m_effect.executeTechniques(Effect::kPreProcess);
+    renderModel(Effect::kPreProcess);
 }
 
 void AssetRenderEngine::performPostProcess()
 {
-    m_effect.executeTechniques(Effect::kPostProcess);
+    renderModel(Effect::kPostProcess);
 }
 
 void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -283,6 +266,28 @@ void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, con
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
+}
+
+void AssetRenderEngine::renderModel(Effect::ScriptOrderType type)
+{
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != type)
+        return;
+    vpvl::Asset *asset = m_model->ptr();
+    if (btFuzzyZero(asset->opacity()))
+        return;
+    const Scene::ILight *light = m_scene->light();
+    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
+    if (depthTexturePtr && light->hasFloatTexture()) {
+        const GLuint depthTexture = *depthTexturePtr;
+        m_effect.depthTexture.setTexture(depthTexture);
+    }
+    m_effect.setModelMatrixParameters(m_model);
+    const aiScene *a = asset->getScene();
+    renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
+    if (!m_cullFaceState) {
+        glEnable(GL_CULL_FACE);
+        m_cullFaceState = true;
+    }
 }
 
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
