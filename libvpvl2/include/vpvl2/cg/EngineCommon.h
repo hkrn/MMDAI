@@ -121,6 +121,9 @@ protected:
     }
 
     CGparameter m_baseParameter;
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseParameter)
 };
 
 class BooleanParameter : public BaseParameter
@@ -136,6 +139,9 @@ public:
         if (cgIsParameter(m_baseParameter))
             cgSetParameter1i(m_baseParameter, value ? 1 : 0);
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BooleanParameter)
 };
 
 class IntegerParameter : public BaseParameter
@@ -151,6 +157,9 @@ public:
         if (cgIsParameter(m_baseParameter))
             cgSetParameter1i(m_baseParameter, value);
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(IntegerParameter)
 };
 
 class Float2Parameter : public BaseParameter
@@ -166,6 +175,9 @@ public:
         if (cgIsParameter(m_baseParameter))
             cgSetParameter2fv(m_baseParameter, value);
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Float2Parameter)
 };
 
 class Float4Parameter : public BaseParameter
@@ -181,7 +193,11 @@ public:
         if (cgIsParameter(m_baseParameter))
             cgSetParameter4fv(m_baseParameter, value);
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Float4Parameter)
 };
+
 class MatrixSemantic : public BaseParameter
 {
 public:
@@ -287,6 +303,8 @@ private:
     CGparameter m_lightTransposed;
     CGparameter m_lightInverseTransposed;
     int m_flags;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(MatrixSemantic)
 };
 
 class MaterialSemantic : public BaseParameter
@@ -343,6 +361,8 @@ public:
 private:
     CGparameter m_geometry;
     CGparameter m_light;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(MaterialSemantic)
 };
 
 class MaterialTextureSemantic : public BaseParameter
@@ -370,6 +390,9 @@ public:
             }
         }
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(MaterialTextureSemantic)
 };
 
 class GeometrySemantic : public BaseParameter
@@ -410,6 +433,8 @@ public:
 private:
     CGparameter m_camera;
     CGparameter m_light;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(GeometrySemantic)
 };
 
 class TimeSemantic : public BaseParameter
@@ -454,6 +479,8 @@ private:
     const IRenderDelegate *m_delegate;
     CGparameter m_syncEnabled;
     CGparameter m_syncDisabled;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(TimeSemantic)
 };
 
 class ControlObjectSemantic : public BaseParameter
@@ -606,6 +633,8 @@ private:
 
     const IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ControlObjectSemantic)
 };
 
 class RenderColorTargetSemantic : public BaseParameter
@@ -806,6 +835,8 @@ private:
     Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
     Hash<HashString, GLuint> m_name2texture;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderColorTargetSemantic)
 };
 
 class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
@@ -839,6 +870,8 @@ protected:
 private:
     Array<GLuint> m_renderBuffers;
     Hash<HashString, GLuint> m_name2buffer;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderDepthStencilTargetSemantic)
 };
 
 class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
@@ -869,6 +902,9 @@ public:
         description = cgGetNamedParameterAnnotation(parameter, "Description");
         defaultEffect = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenRenderTargetSemantic)
 };
 
 class AnimatedTextureSemantic : public BaseParameter
@@ -895,6 +931,9 @@ public:
         speed = cgGetNamedParameterAnnotation(parameter, "Speed");
         seekVariable = cgGetNamedParameterAnnotation(parameter, "SeekVariable");
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(AnimatedTextureSemantic)
 };
 
 class TextureValueSemantic : public BaseParameter
@@ -912,6 +951,9 @@ public:
         BaseParameter::addParameter(parameter);
         textureName = cgGetNamedParameterAnnotation(parameter, "TextureName");
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(TextureValueSemantic)
 };
 
 class Effect
@@ -1912,6 +1954,8 @@ private:
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
     btHashMap<btHashPtr, GLuint> m_techniqueFrameBuffers;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };
 
 } /* namespace gl2 */
