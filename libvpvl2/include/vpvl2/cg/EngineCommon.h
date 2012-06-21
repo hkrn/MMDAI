@@ -991,7 +991,10 @@ public:
         CGparameter parameter = cgGetFirstEffectParameter(value);
         while (parameter) {
             const char *semantic = cgGetParameterSemantic(parameter);
-            if (VPVL2_CG_STREQ_CONST(semantic, kWorldViewProjectionSemantic)) {
+            if (VPVL2_CG_STREQ_CONST(semantic, "VIEWPORTPIXELSIZE")) {
+                viewportPixelSize.addParameter(parameter);
+            }
+            else if (VPVL2_CG_STREQ_CONST(semantic, kWorldViewProjectionSemantic)) {
                 worldViewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, kWorldViewSemantic)) {
@@ -1035,9 +1038,6 @@ public:
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, "_DIRECTION")) {
                 direction.addParameter(parameter);
-            }
-            else if (VPVL2_CG_STREQ_CONST(semantic, "VIEWPORTPIXELSIZE")) {
-                viewportPixelSize.addParameter(parameter);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, "TIME")) {
                 time.addParameter(parameter);
@@ -1139,24 +1139,6 @@ public:
     void executeScriptExternal() {
         if (m_scriptOrder == kPostProcess)
             executeScript(&m_externalScript, 0, 0, 0);
-    }
-    void executeTechniques(ScriptOrderType order) {
-        switch (order) {
-        case kPreProcess:
-        case kPostProcess:
-            if (m_scriptOrder == order) {
-                const int nscripts = m_techniqueScripts.size();
-                for (int i = 0; i < nscripts; i++) {
-                    const Script *script = m_techniqueScripts.getAtIndex(i);
-                    if (script)
-                        executeScript(script, 0, 0, 0);
-                }
-            }
-            break;
-        case kStandard:
-        default:
-            break;
-        }
     }
     bool hasTechniques(ScriptOrderType order) const {
         return m_scriptOrder == order ? m_techniqueScripts.size() : 0;
@@ -1898,7 +1880,7 @@ private:
             }
             m_techniqueScripts.insert(technique, techniqueScriptStates);
             if (m_externalScript.size() == 0)
-                m_externalScript = scriptExternalStates;
+                m_externalScript.copyFromArray(scriptExternalStates);
             return !lastState.enterLoop;
         }
         else {
