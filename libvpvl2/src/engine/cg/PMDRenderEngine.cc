@@ -150,7 +150,8 @@ bool PMDRenderEngine::upload(const IString *dir)
         m_model->getSkinningMeshes(m_mesh);
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
-    GLuint textureID = 0;
+    IRenderDelegate::Texture texture;
+    GLuint textureID;
     MaterialContext *materialContexts = m_materialContexts = new MaterialContext[nmaterials];
     m_effect.subsetCount.setValue(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
@@ -160,12 +161,12 @@ bool PMDRenderEngine::upload(const IString *dir)
         MaterialContext &materialContext = materialContexts[i];
         materialContext.mainTextureID = 0;
         materialContext.subTextureID = 0;
-        if (m_delegate->uploadTexture(context, primary, dir, IRenderDelegate::kTexture2D, &textureID)) {
-            materialContext.mainTextureID = textureID;
+        if (m_delegate->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            materialContext.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
-        if (m_delegate->uploadTexture(context, second, dir, IRenderDelegate::kTexture2D, &textureID)) {
-            materialContext.subTextureID = textureID;
+        if (m_delegate->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            materialContext.subTextureID = textureID = *static_cast<GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
         delete primary;
@@ -174,12 +175,12 @@ bool PMDRenderEngine::upload(const IString *dir)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
-    m_delegate->getToonColor(context, s, dir, m_toonTextureColors[0]);
+    m_delegate->getToonColor(s, dir, m_toonTextureColors[0], context);
     delete s;
     for (int i = 0; i < PMDModel::kCustomTextureMax - 1; i++) {
         const uint8_t *name = model->toonTexture(i);
         s = m_delegate->toUnicode(name);
-        m_delegate->getToonColor(context, s, dir, m_toonTextureColors[i + 1]);
+        m_delegate->getToonColor(s, dir, m_toonTextureColors[i + 1], context);
         delete s;
     }
     m_effect.setModelMatrixParameters(m_model);

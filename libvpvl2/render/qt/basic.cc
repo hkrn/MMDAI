@@ -536,7 +536,7 @@ class Delegate : public IRenderDelegate
 {
 public:
     struct PrivateContext {
-        QHash<QString, GLuint> textureCache;
+        QHash<QString, Texture> textureCache;
     };
     Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context)
         : m_settings(settings),
@@ -562,7 +562,7 @@ public:
         context = 0;
         qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
     }
-    bool uploadTexture(void *context, const IString *name, const IString *dir, int flags, void *texture) {
+    bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
         bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
         if (flags & IRenderDelegate::kTexture2D) {
             return uploadTextureInternal(createPath(dir, name), texture, false, mipmap, context);
@@ -575,7 +575,7 @@ public:
         }
         return false;
     }
-    void getToonColor(void * /* context */, const IString *name, const IString *dir, Color &value) {
+    void getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */) {
         const QString &path = createPath(dir, name);
         if (QFile::exists(path)) {
             getToonColorInternal(path, value);
@@ -834,18 +834,19 @@ private:
         const QDir d(static_cast<const String *>(dir)->value());
         return d.absoluteFilePath(static_cast<const String *>(name)->value());
     }
-    static void setTextureID(GLuint textureID, bool isToon, void *texture) {
-        *static_cast<GLuint *>(texture) = textureID;
+    static void setTextureID(const Texture &cache, bool isToon, Texture &output) {
+        output = cache;
         if (!isToon) {
+            GLuint textureID = *static_cast<GLuint *>(output.object);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
-    static void addTextureCache(PrivateContext *context, const QString &path, GLuint textureID) {
+    static void addTextureCache(PrivateContext *context, const QString &path, const Texture &texture) {
         if (context)
-            context->textureCache.insert(path, textureID);
+            context->textureCache.insert(path, texture);
     }
-    bool uploadTextureInternal(const QString &path, void *texture, bool isToon, bool mipmap, void *context) {
+    bool uploadTextureInternal(const QString &path, Texture &texture, bool isToon, bool mipmap, void *context) {
         const QFileInfo info(path);
         if (info.isDir())
             return false;
@@ -869,8 +870,8 @@ private:
                     qDebug("Cannot parse a DDS texture %s", qPrintable(path));
                     return false;
                 }
-                addTextureCache(privateContext, path, textureID);
-                *static_cast<GLuint *>(texture) = textureID;
+                setTextureID(texture, isToon, texture);
+                addTextureCache(privateContext, path, texture);
                 return true;
             }
             else {
@@ -886,8 +887,12 @@ private:
             if (mipmap)
                 options |= QGLContext::MipmapBindOption;
             GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
-            setTextureID(textureID, isToon, texture);
-            addTextureCache(privateContext, path, textureID);
+            m_textures.insert(textureID, textureID);
+            texture.width = image.width();
+            texture.height = image.height();
+            texture.object = &m_textures[textureID];
+            setTextureID(texture, isToon, texture);
+            addTextureCache(privateContext, path, texture);
             qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
                    textureID, image.width(), image.height(), qPrintable(path));
             return textureID != 0;
@@ -918,6 +923,7 @@ private:
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
+    QHash<GLuint, GLuint> m_textures;
 };
 } /* namespace anonymous */
 

@@ -146,7 +146,8 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_model->getSkinningMesh(m_mesh);
     const Array<pmx::Material *> &materials = m_model->materials();
     const int nmaterials = materials.count();
-    GLuint textureID = 0;
+    IRenderDelegate::Texture texture;
+    GLuint textureID;
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
     m_effect.subsetCount.setValue(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
@@ -154,26 +155,26 @@ bool PMXRenderEngine::upload(const IString *dir)
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
         path = material->mainTexture();
-        if (path && m_delegate->uploadTexture(context, path, dir, IRenderDelegate::kTexture2D, &textureID)) {
+        if (path && m_delegate->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            materialPrivate.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
-            materialPrivate.mainTextureID = textureID;
         }
         path = material->sphereTexture();
-        if (path && m_delegate->uploadTexture(context, path, dir, IRenderDelegate::kTexture2D, &textureID)) {
+        if (path && m_delegate->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            materialPrivate.sphereTextureID = textureID = *static_cast<GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
-            materialPrivate.sphereTextureID = textureID;
         }
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             snprintf(buf, sizeof(buf), "toon%d.bmp", material->toonTextureIndex());
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            m_delegate->getToonColor(context, s, dir, materialPrivate.toonTextureColor);
+            m_delegate->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
             delete s;
         }
         else {
             path = material->toonTexture();
             if (path) {
-                m_delegate->getToonColor(context, path, dir, materialPrivate.toonTextureColor);
+                m_delegate->getToonColor(path, dir, materialPrivate.toonTextureColor, context);
             }
         }
     }

@@ -158,10 +158,11 @@ bool AssetRenderEngine::upload(const IString *dir)
     m_effect.parthf.setValue(false);
     m_effect.transp.setValue(false);
     m_effect.opadd.setValue(false);
+    IRenderDelegate::Texture texture;
+    GLuint textureID;
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
-        GLuint textureID;
         int textureIndex = 0;
         while (found == AI_SUCCESS) {
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
@@ -169,16 +170,16 @@ bool AssetRenderEngine::upload(const IString *dir)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    if (m_delegate->uploadTexture(context, mainTexturePath, dir, IRenderDelegate::kTexture2D, &textureID)) {
-                        m_textures[mainTexture] = textureID;
+                    if (m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                        m_textures[mainTexture] = textureID = *static_cast<GLuint *>(texture.object);
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                     }
                     delete mainTexturePath;
                 }
                 if (m_textures[subTexture] == 0) {
                     IString *subTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    if (m_delegate->uploadTexture(context, subTexturePath, dir, IRenderDelegate::kTexture2D, &textureID)) {
-                        m_textures[subTexture] = textureID;
+                    if (m_delegate->uploadTexture(subTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                        m_textures[subTexture] = textureID = *static_cast<GLuint *>(texture.object);
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
                     }
                     delete subTexturePath;
@@ -186,8 +187,8 @@ bool AssetRenderEngine::upload(const IString *dir)
             }
             else if (m_textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                if (m_delegate->uploadTexture(context, mainTexturePath, dir, IRenderDelegate::kTexture2D, &textureID)) {
-                    m_textures[mainTexture] = textureID;
+                if (m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                    m_textures[mainTexture] = textureID = *static_cast<GLuint *>(texture.object);
                     log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                 }
                 delete mainTexturePath;

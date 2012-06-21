@@ -98,6 +98,23 @@ public:
         kGenerateTextureMipmap = 0x10,
         kMaxTextureTypeFlags   = 0x20
     };
+    struct Texture {
+        Texture()
+            : width(0),
+              height(0),
+              object(0)
+        {
+        }
+        ~Texture() {
+            width = 0;
+            height = 0;
+            object = 0;
+        }
+
+        int width;
+        int height;
+        void *object;
+    };
 
     virtual ~IRenderDelegate() {}
 
@@ -134,16 +151,16 @@ public:
      * OpenGL の場合は GLuint の値をセットします。
      * 処理中は例外を投げないように処理を行う必要があります。
      *
-     * @param context
      * @param name
      * @param dir
      * @param type
      * @param texture
+     * @param context
      * @return bool
      */
-    virtual bool uploadTexture(void *context, const IString *name, const IString *dir, int flags, void *texture) = 0;
+    virtual bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) = 0;
 
-    virtual void getToonColor(void *context, const IString *name, const IString *dir, Color &value) = 0;
+    virtual void getToonColor(const IString *name, const IString *dir, Color &value, void *context) = 0;
 
     virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
 

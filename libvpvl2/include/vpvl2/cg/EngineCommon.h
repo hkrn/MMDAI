@@ -643,6 +643,20 @@ class RenderColorTargetSemantic : public BaseParameter
         #endif
 {
 public:
+    struct Texture {
+        Texture(int w, int h, int d, GLuint i)
+            : width(w),
+              height(h),
+              depth(d),
+              id(i)
+        {
+        }
+        int width;
+        int height;
+        int depth;
+        GLuint id;
+    };
+
     RenderColorTargetSemantic(IRenderDelegate *delegate)
         : BaseParameter(),
           m_delegate(delegate)
@@ -683,26 +697,32 @@ public:
             textureEnum = GL_TEXTURE_2D;
         }
         const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
-        GLuint texture = 0;
+        IRenderDelegate::Texture texture;
+        GLuint textureID;
         if (cgIsAnnotation(resourceName)) {
             const char *name = cgGetStringAnnotationValue(resourceName);
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t*>(name));
             if (isMimapEnabled(parameter))
                 flags |= IRenderDelegate::kGenerateTextureMipmap;
-            m_delegate->uploadTexture(0, s, dir, flags, &texture);
+            if (m_delegate->uploadTexture(s, dir, flags, texture, 0)) {
+                textureID = *static_cast<GLuint *>(texture.object);
+                cgGLSetTextureParameter(sampler, textureID);
+                cgSetSamplerState(sampler);
+                Texture t(texture.width, texture.height, 0, textureID);
+                m_name2texture.insert(cgGetParameterName(parameter), t);
+                m_textures.add(textureID);
+            }
             delete s;
-            cgGLSetTextureParameter(sampler, texture);
-            cgSetSamplerState(sampler);
         }
         else {
             switch (flags) {
             case IRenderDelegate::kTextureCube:
                 break;
             case IRenderDelegate::kTexture3D:
-                texture = generateTexture3D0(parameter);
+                textureID = generateTexture3D0(parameter);
                 break;
             case IRenderDelegate::kTexture2D:
-                texture = generateTexture2D0(parameter);
+                textureID = generateTexture2D0(parameter);
                 break;
             case IRenderDelegate::kToonTexture:
             case IRenderDelegate::kGenerateTextureMipmap:
@@ -712,12 +732,10 @@ public:
             }
         }
         m_parameters.add(parameter);
-        m_name2texture.insert(cgGetParameterName(parameter), texture);
     }
 
-    GLuint findTexture(const char *name) const {
-        GLuint *texture = const_cast<GLuint *>(m_name2texture.find(name));
-        return texture ? *texture : 0;
+    const Texture *findTexture(const char *name) const {
+        return m_name2texture.find(name);
     }
 
 protected:
@@ -739,6 +757,8 @@ protected:
         if (isMimapEnabled(parameter))
             glGenerateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
+        Texture t(width, height, 0, texture);
+        m_name2texture.insert(cgGetParameterName(parameter), t);
     }
     virtual void generateTexture3D(const CGparameter parameter, GLuint texture, int width, int height, int depth) {
         glBindTexture(GL_TEXTURE_3D, texture);
@@ -746,6 +766,8 @@ protected:
         if (isMimapEnabled(parameter))
             glGenerateMipmap(GL_TEXTURE_3D);
         glBindTexture(GL_TEXTURE_3D, 0);
+        Texture t(width, height, depth, texture);
+        m_name2texture.insert(cgGetParameterName(parameter), t);
     }
 
 private:
@@ -834,7 +856,7 @@ private:
     IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
-    Hash<HashString, GLuint> m_name2texture;
+    Hash<HashString, Texture> m_name2texture;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderColorTargetSemantic)
 };
@@ -971,7 +993,7 @@ public:
     enum ScriptClassType {
         kObject,
         kScene,
-        kSceneObject
+        kSceneOrObject
     };
     enum ScriptOrderType {
         kPreProcess,
@@ -1326,6 +1348,8 @@ private:
               texture(0),
               depthBuffer(0),
               stencilBuffer(0),
+              width(0),
+              height(0),
               enterLoop(false)
         {
         }
@@ -1341,6 +1365,8 @@ private:
             frameBufferObject = 0;
             depthBuffer = 0;
             stencilBuffer = 0;
+            width = 0;
+            height = 0;
             enterLoop = false;
         }
         enum Type {
@@ -1368,6 +1394,8 @@ private:
         GLuint texture;
         GLuint depthBuffer;
         GLuint stencilBuffer;
+        int width;
+        int height;
         bool enterLoop;
     };
     typedef btAlignedObjectArray<ScriptState> Script;
@@ -1418,24 +1446,26 @@ private:
         }
         return false;
     }
-    static void setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
+    void setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
+                                               const std::string &value,
+                                               GLuint frameBufferObject,
+                                               ScriptState::Type type,
+                                               ScriptState &state)
+    {
+        state.type = type;
+        if (!value.empty()) {
+            const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(value.c_str());
+            state.texture = texture->id;
+            state.width = texture->width;
+            state.height = texture->height;
+            state.frameBufferObject = frameBufferObject;
+        }
+    }
+    void setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
                                                       const std::string &value,
                                                       GLuint frameBufferObject,
                                                       ScriptState::Type type,
                                                       ScriptState &state)
-    {
-        state.type = type;
-        if (!value.empty()) {
-            GLuint texture = semantic.findTexture(value.c_str());
-            state.texture = texture;
-            state.frameBufferObject = frameBufferObject;
-        }
-    }
-    static void setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
-                                                             const std::string &value,
-                                                             GLuint frameBufferObject,
-                                                             ScriptState::Type type,
-                                                             ScriptState &state)
     {
         state.type = type;
         if (!value.empty()) {
@@ -1464,55 +1494,55 @@ private:
             cgResetPassState(pass);
         }
     }
-    void setFrameBufferTexture(const GLenum attachment, const ScriptState &state) {
+    void setFrameBufferTexture(const ScriptState &state, GLuint &lastSetTexture) {
         GLuint texture = state.texture;
-        glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
         if (texture > 0) {
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture, 0);
-            glBindTexture(GL_TEXTURE_2D, 0);
+            int index = state.type - ScriptState::kRenderColorTarget0;
+            glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, texture, 0);
+            glViewport(0, 0, state.width, state.height);
+            lastSetTexture = texture;
         }
         else {
-            glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, 0, 0);
+            if (lastSetTexture > 0) {
+                // TODO
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            Vector3 viewport;
+            m_delegate->getViewport(viewport);
+            glViewport(0, 0, viewport.x(), viewport.y());
         }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     void executeScript(const Script *script, const GLsizei count, const GLenum type, const GLvoid *ptr) {
         if (script) {
             const int nstates = script->size();
             int stateIndex = 0, nloop = 0, backStateIndex = 0;
-            GLuint frameBufferObject, depthBuffer, stencilBuffer, colorBuffers[] = {
+            GLuint frameBufferObject, depthBuffer, stencilBuffer, lastSetTexture;
+            Vector4 v4;
+            const GLuint colorBuffers[] = {
                 GL_COLOR_ATTACHMENT0,
                 GL_COLOR_ATTACHMENT1,
                 GL_COLOR_ATTACHMENT2,
                 GL_COLOR_ATTACHMENT3,
             };
             static const size_t nbuffers = sizeof(colorBuffers) / sizeof(colorBuffers[0]);
-            Vector4 v4;
+#ifndef __APPLE__
+            if (glDrawBuffers) {
+#endif /* __APPLE__ */
+                glDrawBuffers(nbuffers, colorBuffers);
+#ifndef __APPLE__
+            }
+#endif /* __APPLE__ */
             while (stateIndex < nstates) {
                 const ScriptState &state = script->at(stateIndex);
                 switch (state.type) {
                 case ScriptState::kClearColor:
                     frameBufferObject = state.frameBufferObject;
-                    if (frameBufferObject) {
-                        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferObject);
-                        glClear(GL_COLOR_BUFFER_BIT);
-                        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                    }
-                    else {
-                        glClear(GL_COLOR_BUFFER_BIT);
-                    }
+                    glClear(GL_COLOR_BUFFER_BIT);
                     break;
                 case ScriptState::kClearDepth:
                     frameBufferObject = state.frameBufferObject;
-                    if (frameBufferObject) {
-                        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferObject);
-                        glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                    }
-                    else {
-                        glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                    }
+                    glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                     break;
                 case ScriptState::kClearSetColor:
                     cgGLGetParameter4f(state.parameter, v4);
@@ -1538,21 +1568,14 @@ private:
                     nloop = int(v4.x());
                     break;
                 case ScriptState::kRenderColorTarget0:
-                    setFrameBufferTexture(GL_COLOR_ATTACHMENT0, state);
-                    break;
                 case ScriptState::kRenderColorTarget1:
-                    setFrameBufferTexture(GL_COLOR_ATTACHMENT1, state);
-                    break;
                 case ScriptState::kRenderColorTarget2:
-                    setFrameBufferTexture(GL_COLOR_ATTACHMENT2, state);
-                    break;
                 case ScriptState::kRenderColorTarget3:
-                    setFrameBufferTexture(GL_COLOR_ATTACHMENT3, state);
+                    setFrameBufferTexture(state, lastSetTexture);
                     break;
                 case ScriptState::kRenderDepthStencilTarget:
                     depthBuffer = state.depthBuffer;
                     stencilBuffer = state.stencilBuffer;
-                    glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
                     if (depthBuffer > 0 && stencilBuffer > 0) {
                         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
                         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilBuffer);
@@ -1561,22 +1584,16 @@ private:
                         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
                         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
                     }
-                    glBindFramebuffer(GL_FRAMEBUFFER, 0);
                     break;
                 case ScriptState::kDrawBuffer:
-#ifndef __APPLE__
-                    if (glDrawBuffers) {
-#endif /* __APPLE__ */
-                        glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
-                        glDrawBuffers(nbuffers, colorBuffers);
+                    if (m_scriptClass != kObject) {
                         executePass(state.pass, count, type, ptr);
-                        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#ifndef __APPLE__
                     }
-#endif /* __APPLE__ */
                     break;
                 case ScriptState::kDrawGeometry:
-                    executePass(state.pass, count, type, ptr);
+                    if (m_scriptClass != kScene) {
+                        executePass(state.pass, count, type, ptr);
+                    }
                     break;
                 case ScriptState::kPass:
                 case ScriptState::kScriptExternal:
@@ -1610,8 +1627,8 @@ private:
             else if (VPVL2_CG_STREQ_CONST(value, "scene")) {
                 m_scriptClass = kScene;
             }
-            else if (VPVL2_CG_STREQ_CONST(value, "sceneobject")) {
-                m_scriptClass = kSceneObject;
+            else if (VPVL2_CG_STREQ_CONST(value, "sceneorobject")) {
+                m_scriptClass = kSceneOrObject;
             }
         }
         const CGannotation scriptOrderAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptOrder");
