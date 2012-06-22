@@ -662,6 +662,12 @@ void SceneWidget::advanceMotion(float delta)
 void SceneWidget::seekMotion(float frameIndex, bool forceCameraUpdate)
 {
     /*
+       渡された値が同じフレーム位置の場合は何もしない
+       (シグナルスロット処理の関係でモーフスライダーが動かなくなってしまうため)
+     */
+    if (frameIndex == m_frameIndex)
+        return;
+    /*
        advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある。
        force でカメラと照明を強制的に動かすことが出来る(例として場面タブからシークした場合)。
      */
