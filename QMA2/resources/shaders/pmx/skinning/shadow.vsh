@@ -1,6 +1,6 @@
 /* pmx/shadow.vsh */
+#version 120
 uniform mat4 modelViewProjectionMatrix;
-uniform mat4 shadowMatrix;
 attribute vec4 inPosition;
 const float kOne = 1.0;
 invariant gl_Position;
@@ -42,6 +42,6 @@ vec4 performSkinning(const vec3 position3, const int type) {
 }
 
 void main() {
-    gl_Position = modelViewProjectionMatrix * shadowMatrix * performSkinning(inPosition.xyz, int(inPosition.w));
+    gl_Position = modelViewProjectionMatrix * performSkinning(inPosition.xyz, int(inPosition.w));
 }
 
