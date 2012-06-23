@@ -568,7 +568,7 @@ public:
             return uploadTextureInternal(createPath(dir, name), texture, false, mipmap, context);
         }
         else if (flags & IRenderDelegate::kToonTexture) {
-            if (!uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context)) {
+            if (!dir || !uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context)) {
                 String s(m_systemDir.absolutePath());
                 return uploadTextureInternal(createPath(&s, name), texture, true, mipmap, context);
             }
