@@ -640,7 +640,7 @@ bool PMXRenderEngine::upload(const IString *dir)
         }
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
-            snprintf(buf, sizeof(buf), "toon%d.bmp", material->toonTextureIndex());
+            snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(buf));
             if (m_delegate->uploadTexture(s, 0, IRenderDelegate::kToonTexture, texture, context)) {
                 materialPrivate.toonTextureID = textureID = *static_cast<GLuint *>(texture.object);
