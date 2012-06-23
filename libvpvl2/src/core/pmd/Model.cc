@@ -157,6 +157,7 @@ bool Model::load(const uint8_t *data, size_t size)
         m_englishComment = m_encoding->toString(m_model.englishComment(), IString::kShiftJIS, vpvl::PMDModel::kCommentSize);
         const vpvl::Color &edgeColor = m_model.edgeColor();
         m_edgeColor.setValue(edgeColor.x(), edgeColor.y(), edgeColor.z());
+        m_edgeColor.setW(1);
         m_edgeWidth = m_model.edgeOffset();
         m_model.setVisible(true);
     }
