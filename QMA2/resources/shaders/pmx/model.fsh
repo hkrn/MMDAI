@@ -1,16 +1,4 @@
 /* pmx/model.fsh (unpackDepth and soft shadow based on three.js) */
-#ifdef GL_ES
-precision highp float;
-#endif
-
-uniform vec4 mainTextureBlend;
-uniform vec4 sphereTextureBlend;
-uniform vec4 toonTextureBlend;
-uniform vec3 lightDirection;
-uniform vec3 materialSpecular;
-uniform vec2 depthTextureSize;
-uniform float materialShininess;
-uniform float opacity;
 uniform bool useToon;
 uniform bool useSoftShadow;
 uniform bool hasMainTexture;
@@ -24,6 +12,34 @@ uniform sampler2D mainTexture;
 uniform sampler2D toonTexture;
 uniform sampler2D sphereTexture;
 uniform sampler2D depthTexture;
+#ifdef GL_ES
+lowp uniform vec4 mainTextureBlend;
+lowp uniform vec4 sphereTextureBlend;
+lowp uniform vec4 toonTextureBlend;
+highp uniform vec3 lightDirection;
+lowp uniform vec3 materialSpecular;
+lowp uniform vec2 depthTextureSize;
+lowp uniform float materialShininess;
+lowp uniform float opacity;
+lowp varying vec4 outColor;
+highp varying vec4 outTexCoord;
+highp varying vec4 outShadowCoord;
+highp varying vec4 outUVA1;
+highp varying vec3 outEyeView;
+highp varying vec3 outNormal;
+highp varying vec2 outToonCoord;
+const float kOne = 1.0;
+const float kZero = 0.0;
+const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
+#else
+uniform vec4 mainTextureBlend;
+uniform vec4 sphereTextureBlend;
+uniform vec4 toonTextureBlend;
+uniform vec3 lightDirection;
+uniform vec3 materialSpecular;
+uniform vec2 depthTextureSize;
+uniform float materialShininess;
+uniform float opacity;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
@@ -34,6 +50,7 @@ varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
+#endif
 
 float unpackDepth(const vec4 value) {
     const vec4 kBitShift = vec4(1.0 / 16777216.0, 1.0 / 65536.0, 1.0 / 256.0, 1.0);

@@ -1,6 +1,6 @@
 /* pmd/edge.fsh */
 #ifdef GL_ES
-precision highp float;
+precision lowp float;
 #endif
 
 uniform float opacity;

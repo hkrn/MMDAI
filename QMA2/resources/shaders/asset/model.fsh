@@ -1,21 +1,25 @@
 /* asset/model.fsh */
-#ifdef GL_ES
-precision highp float;
-#endif
-
 uniform bool hasMainTexture;
 uniform bool hasSubTexture;
 uniform bool isMainAdditive;
 uniform bool isSubAdditive;
 uniform bool hasDepthTexture;
-uniform float opacity;
 uniform sampler2D mainTexture;
 uniform sampler2D subTexture;
 uniform sampler2D depthTexture;
+#ifdef GL_ES
+lowp uniform float opacity;
+lowp varying vec4 outColor;
+highp varying vec4 outTexCoord;
+highp varying vec4 outShadowCoord;
+highp const float kDepthThreshold = 0.00002;
+#else
+uniform float opacity;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
 const float kDepthThreshold = 0.00002;
+#endif
 
 float unpackDepth(const vec4 value) {
     const vec4 kBitShift = vec4(1.0 / 16777216.0, 1.0 / 65536.0, 1.0 / 256.0, 1.0);

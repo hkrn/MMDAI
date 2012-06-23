@@ -1,4 +1,5 @@
 /* pmd/model.vsh */
+#version 120
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
@@ -24,6 +25,7 @@ const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
+invariant gl_Position;
 
 vec2 makeSphereMap(const vec3 position, const vec3 normal) {
     const float kTwo = 2.0;

@@ -1,7 +1,7 @@
 /* asset/model.vsh */
+#version 120
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 lightViewProjectionMatrix;
-uniform mat4 transformMatrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightColor;
 uniform vec3 lightDirection;
@@ -23,6 +23,7 @@ const float kTwo = 2.0;
 const float kOne = 1.0;
 const float kHalf = 0.5;
 const vec3 kOne3 = vec3(kOne, kOne, kOne);
+invariant gl_Position;
 
 vec2 makeSphereMap(vec3 position, vec3 normal) {
     vec3 R = reflect(position, normal);
@@ -39,7 +40,7 @@ void main() {
     outColor = color;
     outTexCoord = vec4(mainTexCoord, subTexCoord);
     if (hasDepthTexture)
-        outShadowCoord = lightViewProjectionMatrix * transformMatrix * inPosition;
-    gl_Position = modelViewProjectionMatrix * transformMatrix * vec4(inPosition, kOne);
+        outShadowCoord = lightViewProjectionMatrix * vec4(inPosition, 1.0);
+    gl_Position = modelViewProjectionMatrix * vec4(inPosition, kOne);
 }
 
