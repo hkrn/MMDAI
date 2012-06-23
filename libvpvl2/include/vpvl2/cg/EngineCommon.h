@@ -698,7 +698,7 @@ public:
         }
         const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
         IRenderDelegate::Texture texture;
-        GLuint textureID;
+        GLuint textureID = 0;
         if (cgIsAnnotation(resourceName)) {
             const char *name = cgGetStringAnnotationValue(resourceName);
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t*>(name));
@@ -731,7 +731,11 @@ public:
                 break;
             }
         }
-        m_parameters.add(parameter);
+        if (cgIsParameter(sampler) && textureID > 0) {
+            m_parameters.add(parameter);
+            cgGLSetTextureParameter(sampler, textureID);
+            cgSetSamplerState(sampler);
+        }
     }
 
     const Texture *findTexture(const char *name) const {
@@ -1494,20 +1498,32 @@ private:
             cgResetPassState(pass);
         }
     }
-    void setFrameBufferTexture(const ScriptState &state, GLuint &lastSetTexture) {
+    void setFrameBufferTexture(const ScriptState &state) {
         GLuint texture = state.texture;
+        const int index = state.type - ScriptState::kRenderColorTarget0;
         if (texture > 0) {
-            int index = state.type - ScriptState::kRenderColorTarget0;
+            const int target = GL_COLOR_ATTACHMENT0 + index;
             glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, texture, 0);
+            if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
+                m_renderColorTargets.push_back(target);
+#ifndef __APPLE__
+                if (glDrawBuffers) {
+#endif /* __APPLE__ */
+                    glDrawBuffers(m_renderColorTargets.size(), &m_renderColorTargets[0]);
+#ifndef __APPLE__
+                }
+#endif /* __APPLE__ */
+            }
+            glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, texture, 0);
             glViewport(0, 0, state.width, state.height);
-            lastSetTexture = texture;
         }
         else {
-            if (lastSetTexture > 0) {
-                // TODO
-            }
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            for (int i = 0; i < 4; i++) {
+                const int target = GL_COLOR_ATTACHMENT0 + i;
+                glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, 0, 0);
+                m_renderColorTargets.remove(target);
+            }
             Vector3 viewport;
             m_delegate->getViewport(viewport);
             glViewport(0, 0, viewport.x(), viewport.y());
@@ -1517,22 +1533,8 @@ private:
         if (script) {
             const int nstates = script->size();
             int stateIndex = 0, nloop = 0, backStateIndex = 0;
-            GLuint frameBufferObject, depthBuffer, stencilBuffer, lastSetTexture;
+            GLuint frameBufferObject, depthBuffer, stencilBuffer;
             Vector4 v4;
-            const GLuint colorBuffers[] = {
-                GL_COLOR_ATTACHMENT0,
-                GL_COLOR_ATTACHMENT1,
-                GL_COLOR_ATTACHMENT2,
-                GL_COLOR_ATTACHMENT3,
-            };
-            static const size_t nbuffers = sizeof(colorBuffers) / sizeof(colorBuffers[0]);
-#ifndef __APPLE__
-            if (glDrawBuffers) {
-#endif /* __APPLE__ */
-                glDrawBuffers(nbuffers, colorBuffers);
-#ifndef __APPLE__
-            }
-#endif /* __APPLE__ */
             while (stateIndex < nstates) {
                 const ScriptState &state = script->at(stateIndex);
                 switch (state.type) {
@@ -1571,7 +1573,7 @@ private:
                 case ScriptState::kRenderColorTarget1:
                 case ScriptState::kRenderColorTarget2:
                 case ScriptState::kRenderColorTarget3:
-                    setFrameBufferTexture(state, lastSetTexture);
+                    setFrameBufferTexture(state);
                     break;
                 case ScriptState::kRenderDepthStencilTarget:
                     depthBuffer = state.depthBuffer;
@@ -1596,6 +1598,8 @@ private:
                     }
                     break;
                 case ScriptState::kPass:
+                    executeScript(m_passScripts.find(state.pass), count, type, ptr);
+                    break;
                 case ScriptState::kScriptExternal:
                 case ScriptState::kUnknown:
                 default:
@@ -1953,7 +1957,6 @@ private:
                 }
                 pass = cgGetNextPass(pass);
             }
-            m_techniqueScripts.insert(technique, techniqueScriptStates);
         }
         return true;
     }
@@ -1968,6 +1971,7 @@ private:
     Techniques m_techniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;
+    btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
     btHashMap<btHashPtr, GLuint> m_techniqueFrameBuffers;
