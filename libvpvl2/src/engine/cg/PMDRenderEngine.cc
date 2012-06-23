@@ -177,7 +177,8 @@ bool PMDRenderEngine::upload(const IString *dir)
     IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
     m_delegate->getToonColor(s, dir, m_toonTextureColors[0], context);
     delete s;
-    for (int i = 0; i < PMDModel::kCustomTextureMax - 1; i++) {
+    static const int nToonTextures = PMDModel::kCustomTextureMax - 1;
+    for (int i = 0; i < nToonTextures; i++) {
         const uint8_t *name = model->toonTexture(i);
         s = m_delegate->toUnicode(name);
         m_delegate->getToonColor(s, dir, m_toonTextureColors[i + 1], context);

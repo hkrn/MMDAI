@@ -568,10 +568,15 @@ public:
             return uploadTextureInternal(createPath(dir, name), texture, false, mipmap, context);
         }
         else if (flags & IRenderDelegate::kToonTexture) {
-            if (!dir || !uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context)) {
-                String s(m_systemDir.absolutePath());
-                return uploadTextureInternal(createPath(&s, name), texture, true, mipmap, context);
+            bool ret = false;
+            if (dir) {
+                ret = uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context);
             }
+            if (!ret) {
+                String s(m_systemDir.absolutePath());
+                ret = uploadTextureInternal(createPath(&s, name), texture, true, mipmap, context);
+            }
+            return ret;
         }
         return false;
     }
@@ -1241,12 +1246,14 @@ public:
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
         camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
         Scene::ILight *light = m_scene.light();
-        m_depthTextureID = m_fbo->texture();
         light->setToonEnable(m_settings->value("enable.toon", true).toBool());
         light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
-        light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
-        if (m_settings->value("enable.sm", false).toBool())
-            light->setDepthTexture(&m_depthTextureID);
+        if (m_fbo) {
+            m_depthTextureID = m_fbo->texture();
+            light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
+            if (m_settings->value("enable.sm", false).toBool())
+                light->setDepthTexture(&m_depthTextureID);
+        }
         if (loadScene())
             m_timer.start();
         else
@@ -1283,6 +1290,7 @@ protected:
         m_fbo = new QGLFramebufferObject(1024, 1024, format);
         GLuint textureID = m_depthTextureID = m_fbo->texture();
         if (textureID > 0) {
+            glBindTexture(GL_TEXTURE_2D, textureID);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

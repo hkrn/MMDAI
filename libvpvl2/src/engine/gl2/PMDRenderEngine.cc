@@ -599,7 +599,8 @@ bool PMDRenderEngine::upload(const IString *dir)
         log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     delete s;
-    for (int i = 0; i < PMDModel::kCustomTextureMax; i++) {
+    static const int nToonTextures = PMDModel::kCustomTextureMax - 1;
+    for (int i = 0; i < nToonTextures; i++) {
         const uint8_t *name = model->toonTexture(i);
         s = m_delegate->toUnicode(name);
         if (m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context)) {
