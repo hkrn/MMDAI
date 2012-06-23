@@ -1361,7 +1361,7 @@ protected:
         }
         const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const int nengines = engines.count();
-        {
+        if (m_scene.light()->depthTexture()) {
             glDisable(GL_BLEND);
             m_fbo->bind();
             Vector3 target = kZeroV3, center;
