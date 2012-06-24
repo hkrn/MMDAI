@@ -1,4 +1,3 @@
-a5
 AppData
 assimp*
 bullet*
@@ -14,10 +13,9 @@ hts_engine_API-*
 install_manifest.txt
 ipch
 julius-*
+libav*
 Makefile*
 moc_*
-OpenCV-*
-opencv*
 open_jtalk-*
 QMACustom.pri
 portaudio*
