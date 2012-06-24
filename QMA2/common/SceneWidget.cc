@@ -266,6 +266,8 @@ void SceneWidget::loadProject(const QString &filename)
     m_background->setImagePosition(m_loader->backgroundImagePosition());
     m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
     m_enableUpdateGL = true;
+    /* 0フレーム目で読み込んだ時シークされないため、強制シークを行うために m_frameIndex を -1 にする */
+    m_frameIndex = -1;
     seekMotion(0, true);
     startAutomaticRendering();
     QApplication::alert(this);
