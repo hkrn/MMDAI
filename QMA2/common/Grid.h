@@ -43,6 +43,8 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/Scene.h>
 
+#include "SceneLoader.h"
+
 namespace internal {
 
 using namespace vpvl2;
@@ -107,16 +109,15 @@ public:
         m_program.link();
     }
 
-    void draw(Scene *scene, bool visible) {
+    void draw(const SceneLoader *loader, bool visible) {
         if (visible && m_program.isLinked()) {
-            float matrix[16];
             m_program.bind();
             QGLFunctions func(QGLContext::currentContext());
             func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
             func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-            scene->matrices()->getModelViewProjection(matrix);
-            int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
-            func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
+            QMatrix4x4 view, projection;
+            loader->getCameraMatrices(view, projection);
+            m_program.setUniformValue("modelViewProjectionMatrix", projection * view);
             int inPosition = m_program.attributeLocation("inPosition");
             m_program.enableAttributeArray(inPosition);
             m_program.setAttributeBuffer(inPosition, GL_FLOAT, 0, 3, sizeof(Vertex));

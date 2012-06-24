@@ -166,6 +166,10 @@ static const inline QString openSaveDialog(const QString &name,
     return fileName;
 }
 
+static const inline Vector3 vec2vec(const QVector4D &value) {
+    Vector3 v(value.x(), value.y(), value.z());
+    return v;
+}
 
 }
 

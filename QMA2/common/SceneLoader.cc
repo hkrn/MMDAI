@@ -58,19 +58,39 @@ static const QRegExp &kAssetExtensions = QRegExp(".x$");
 static const QRegExp &kModelLoadable = QRegExp(".(bmp|jpe?g|pm[dx]|png|sp[ah]|tga)$");
 static const QRegExp &kModelExtensions = QRegExp(".pm[dx]$");
 
+static bool UISlurpFile(const QString &path, QByteArray &bytes) {
+    QFile file(path);
+    if (file.open(QFile::ReadOnly)) {
+        bytes = file.readAll();
+        file.close();
+        return true;
+    }
+    else {
+        qWarning("slurpFile error at %s: %s", qPrintable(path), qPrintable(file.errorString()));
+        return false;
+    }
+}
+
 class UIDelegate : public Project::IDelegate, public IRenderDelegate
 {
 public:
     struct PrivateContext {
-        QHash<QString, GLuint> textureCache;
+        QHash<QString, Texture> textureCache;
     };
-    UIDelegate()
-        : m_archive(0),
+    UIDelegate(QGLWidget *context)
+        : m_scene(0),
+          m_context(context),
+          m_mouseCursorPosition(kZeroV4),
+          m_mouseLeftPressPosition(kZeroV4),
+          m_mouseMiddlePressPosition(kZeroV4),
+          m_mouseRightPressPosition(kZeroV4),
+          m_archive(0),
           m_codec(0)
     {
         m_codec = QTextCodec::codecForName("Shift-JIS");
+        m_timer.start();
     }
-    virtual ~UIDelegate()
+    ~UIDelegate()
     {
         delete m_archive;
     }
@@ -87,34 +107,179 @@ public:
         if (const IString *name = model->name())
             qDebug("Released a context object: %s", name->toByteArray());
     }
-
-    bool uploadTexture(void *context, const char *name, const IString *dir, void *texture, bool isToon) {
-        const QDir d(static_cast<const internal::String *>(dir)->value());
-        const QString &path = QDir::cleanPath(d.absoluteFilePath(QString::fromStdString(name)));
-        return uploadTexture0(context, path, texture, isToon);
+    bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
+        bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
+        if (flags & IRenderDelegate::kTexture2D) {
+            return uploadTextureInternal(createPath(dir, name), texture, false, mipmap, context);
+        }
+        else if (flags & IRenderDelegate::kToonTexture) {
+            bool ret = false;
+            if (dir) {
+                ret = uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context);
+            }
+            if (!ret) {
+                internal::String s(":/textures");
+                ret = uploadTextureInternal(createPath(&s, name), texture, true, mipmap, context);
+            }
+            return ret;
+        }
+        return false;
     }
-    bool uploadTexture(void *context, const IString *name, const IString *dir, void *texture, bool isToon) {
-        const QDir d(static_cast<const internal::String *>(dir)->value());
-        const QString &s = static_cast<const internal::String *>(name)->value();
-        const QString &path = QDir::cleanPath(d.absoluteFilePath(s));
-        return uploadTexture0(context, path, texture, isToon);
+    void getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */) {
+        const QString &path = createPath(dir, name);
+        if (QFile::exists(path)) {
+            getToonColorInternal(path, value);
+        }
+        else {
+            internal::String s(":/textures");
+            getToonColorInternal(createPath(&s, name), value);
+        }
     }
-    bool uploadToonTexture(void *context, const char *name, const IString *dir, void *texture) {
-        const QDir d(static_cast<const internal::String *>(dir)->value());
-        return uploadToonTexture0(context, QString::fromStdString(name), d, texture);
+    IModel *findModel(const char * /* name */) const {
+        return 0;
     }
-    bool uploadToonTexture(void *context, const IString *name, const IString *dir, void *texture) {
-        const QDir d(static_cast<const internal::String *>(dir)->value());
-        const QString &s = static_cast<const internal::String *>(name)->value();
-        return uploadToonTexture0(context, s, d, texture);
+    void getMatrix(float value[], const IModel *model, int flags) const {
+        QMatrix4x4 m;
+        if (flags & IRenderDelegate::kShadowMatrix) {
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_cameraProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_cameraViewMatrix;
+            if (flags & IRenderDelegate::kWorldMatrix) {
+                static const Vector3 plane(0.0f, 1.0f, 0.0f);
+                const Scene::ILight *light = m_scene->light();
+                const Vector3 &direction = light->direction();
+                const Scalar dot = plane.dot(-direction);
+                QMatrix4x4 shadowMatrix;
+                for (int i = 0; i < 4; i++) {
+                    int offset = i * 4;
+                    for (int j = 0; j < 4; j++) {
+                        int index = offset + j;
+                        shadowMatrix.data()[index] = plane[i] * direction[j];
+                        if (i == j)
+                            shadowMatrix.data()[index] += dot;
+                    }
+                }
+                m *= shadowMatrix;
+            }
+        }
+        else if (flags & IRenderDelegate::kCameraMatrix) {
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_cameraProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_cameraViewMatrix;
+        }
+        else if (flags & IRenderDelegate::kLightMatrix) {
+            if (flags & IRenderDelegate::kWorldMatrix)
+                m *= m_lightWorldMatrix;
+            if (flags & IRenderDelegate::kProjectionMatrix)
+                m *= m_lightProjectionMatrix;
+            if (flags & IRenderDelegate::kViewMatrix)
+                m *= m_lightViewMatrix;
+        }
+        m.scale(model->scaleFactor());
+        if (flags & IRenderDelegate::kInverseMatrix)
+            m = m.inverted();
+        if (flags & IRenderDelegate::kTransposeMatrix)
+            m = m.transposed();
+        for (int i = 0; i < 16; i++) {
+            value[i] = float(m.constData()[i]);
+        }
     }
-    bool uploadToonTexture(void *context, int index, void *texture) {
-        QString format;
-        const QString &pathString = format.sprintf("toon%02d.bmp", index + 1);
-        return uploadToonTexture0(context, pathString, QDir(), texture);
+    void getViewport(Vector3 &value) const {
+        value.setValue(m_viewport.width(), m_viewport.height(), 0);
     }
-    IString *loadShaderSource(IRenderDelegate::ShaderType type, const IModel *model, void *context) {
-        Q_UNUSED(context)
+    void getTime(float &value, bool sync) const {
+        value = sync ? 0 : m_timer.elapsed() / 1000.0f;
+    }
+    void getElapsed(float &value, bool sync) const {
+        value = sync ? 0 : 1.0 / 60.0;
+    }
+    void getMousePosition(Vector4 &value, MousePositionType type) const {
+        switch (type) {
+        case kMouseLeftPressPosition:
+            value.setValue(m_mouseLeftPressPosition.x(),
+                           m_mouseLeftPressPosition.y(),
+                           m_mouseLeftPressPosition.z(),
+                           m_mouseLeftPressPosition.w());
+            break;
+        case kMouseMiddlePressPosition:
+            value.setValue(m_mouseMiddlePressPosition.x(),
+                           m_mouseMiddlePressPosition.y(),
+                           m_mouseMiddlePressPosition.z(),
+                           m_mouseMiddlePressPosition.w());
+            break;
+        case kMouseRightPressPosition:
+            value.setValue(m_mouseRightPressPosition.x(),
+                           m_mouseRightPressPosition.y(),
+                           m_mouseRightPressPosition.z(),
+                           m_mouseRightPressPosition.w());
+            break;
+        case kMouseCursorPosition:
+            value.setValue(m_mouseCursorPosition.x(),
+                           m_mouseCursorPosition.y(),
+                           m_mouseCursorPosition.z(),
+                           m_mouseCursorPosition.w());
+            break;
+        default:
+            break;
+        }
+    }
+    void log(void * /* context */, IRenderDelegate::LogLevel level, const char *format, va_list ap) {
+        QString message;
+        message.vsprintf(format, ap);
+        switch (level) {
+        case IRenderDelegate::kLogInfo:
+        default:
+            qDebug("%s", qPrintable(message));
+            break;
+        case IRenderDelegate::kLogWarning:
+            qWarning("%s", qPrintable(message));
+            break;
+        }
+    }
+    IString *loadKernelSource(KernelType type, void * /* context */) {
+        QString filename;
+        switch (type) {
+        case IRenderDelegate::kModelSkinningKernel:
+            filename = "skinning.cl";
+            break;
+        case IRenderDelegate::kMaxKernelType:
+        default:
+            qFatal("should not reach here");
+            break;
+        }
+        const QString &path = QString(":/kernels/%1").arg(filename);
+        QFile file(path);
+        if (file.open(QFile::ReadOnly)) {
+            const QByteArray &bytes = file.readAll();
+            file.close();
+            qDebug("Loaded a kernel: %s", qPrintable(path));
+            return new(std::nothrow) internal::String(bytes);
+        }
+        else {
+            qWarning("Failed loading a kernel: %s", qPrintable(path));
+            return 0;
+        }
+    }
+    IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */) {
+        if (type == kModelEffectTechniques) {
+            QDir d(static_cast<const internal::String *>(dir)->value());
+            QByteArray bytes;
+            if (m_model2filename.contains(model)) {
+                QFileInfo info(d.absoluteFilePath(m_model2filename[model]));
+                QRegExp regexp("^.+\\[([^\\]]+)\\]$");
+                const QString &name = info.baseName();
+                const QString &basename = regexp.exactMatch(name) ? regexp.capturedTexts().at(1) : name;
+                const QString &cgfx = d.absoluteFilePath(basename + ".cgfx");
+                if (QFile::exists(cgfx))
+                    return UISlurpFile(cgfx, bytes) ? new (std::nothrow) internal::String(bytes) : 0;
+                const QString &fx = d.absoluteFilePath(basename + ".fx");
+                if (QFile::exists(fx))
+                    return UISlurpFile(fx, bytes) ? new (std::nothrow) internal::String(bytes) : 0;
+            }
+            return UISlurpFile(d.absoluteFilePath("effect.cgfx"), bytes) ? new(std::nothrow) internal::String(bytes) : 0;
+        }
         QString filename;
         switch (model->type()) {
         case IModel::kAsset:
@@ -164,6 +329,11 @@ public:
         case IRenderDelegate::kZPlotWithSkinningVertexShader:
             filename += "skinning.zplot.vsh";
             break;
+        case IRenderDelegate::kModelEffectTechniques:
+        case IRenderDelegate::kMaxShaderType:
+        default:
+            qFatal("should not reach here");
+            break;
         }
         const QString &path = QString(":/shaders/%1").arg(filename);
         QFile file(path);
@@ -176,39 +346,6 @@ public:
         else {
             qWarning("Failed loading a shader: %s", qPrintable(path));
             return 0;
-        }
-    }
-    IString *loadKernelSource(IRenderDelegate::KernelType type, void * /* context */) {
-        QString filename;
-        switch (type) {
-        case IRenderDelegate::kModelSkinningKernel:
-            filename = "skinning.cl";
-            break;
-        }
-        const QString &path = QString(":/kernels/%1").arg(filename);
-        QFile file(path);
-        if (file.open(QFile::ReadOnly)) {
-            const QByteArray &bytes = file.readAll();
-            file.close();
-            qDebug("Loaded a kernel: %s", qPrintable(path));
-            return new(std::nothrow) internal::String(bytes);
-        }
-        else {
-            qWarning("Failed loading a kernel: %s", qPrintable(path));
-            return 0;
-        }
-    }
-    void log(void * /* context */, IRenderDelegate::LogLevel level, const char *format, va_list ap) {
-        QString message;
-        message.vsprintf(format, ap);
-        switch (level) {
-        case IRenderDelegate::kLogInfo:
-        default:
-            qDebug("%s", qPrintable(message));
-            break;
-        case IRenderDelegate::kLogWarning:
-            qWarning("%s", qPrintable(message));
-            break;
         }
     }
     const std::string toStdFromString(const IString *value) const {
@@ -226,42 +363,107 @@ public:
     void warning(const char *format, va_list ap) {
         qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
     }
-
     void setArchive(Archive *value) {
         delete m_archive;
         m_archive = value;
     }
 
+    void getCameraMatrices(QMatrix4x4 &view, QMatrix4x4 &projection) const {
+        view = m_cameraViewMatrix;
+        projection = m_cameraProjectionMatrix;
+    }
+    void getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection) const {
+        world = m_lightWorldMatrix;
+        view = m_lightViewMatrix;
+        projection = m_lightProjectionMatrix;
+    }
+    void updateCameraMatrices(const QSizeF &size) {
+        float matrix[16];
+        m_viewport = size;
+        m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix);
+        for (int i = 0; i < 16; i++)
+            m_cameraViewMatrix.data()[i] = matrix[i];
+        m_cameraProjectionMatrix.setToIdentity();
+        Scene::ICamera *camera = m_scene->camera();
+        m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / size.height(), camera->znear(), camera->zfar());
+    }
+    void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection) {
+        m_lightWorldMatrix = world;
+        m_lightViewMatrix = view;
+        m_lightProjectionMatrix = projection;
+    }
+    void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type) {
+        const Scalar &elapsed = m_timer.elapsed() / 1000.0f;
+        switch (type) {
+        case kMouseLeftPressPosition:
+            m_mouseLeftPressPosition.setValue(value.x(), value.y(), pressed, elapsed);
+            break;
+        case kMouseMiddlePressPosition:
+            m_mouseMiddlePressPosition.setValue(value.x(), value.y(), pressed, elapsed);
+            break;
+        case kMouseRightPressPosition:
+            m_mouseRightPressPosition.setValue(value.x(), value.y(), pressed, elapsed);
+            break;
+        case kMouseCursorPosition:
+            m_mouseCursorPosition.setValue(value.x(), value.y(), 0, elapsed);
+            break;
+        default:
+            break;
+        }
+    }
+    void addModelFilename(const IModel *model, const QString &filename) {
+        if (model)
+            m_model2filename.insert(model, filename);
+    }
+    void setScene(vpvl2::Scene *value) {
+        m_scene = value;
+    }
+
 private:
-    static void setTextureID(GLuint textureID, bool isToon, void *texture) {
-        *static_cast<GLuint *>(texture) = textureID;
+    static const QString createPath(const IString *dir, const QString &name) {
+        const QDir d(static_cast<const internal::String *>(dir)->value());
+        QString s = QDir::cleanPath(d.absoluteFilePath(name));
+        s.replace("\\", "/");
+        return s;
+    }
+    static const QString createPath(const IString *dir, const IString *name) {
+        const QDir d(static_cast<const internal::String *>(dir)->value());
+        const QString &name2 = static_cast<const internal::String *>(name)->value();
+        QString s = QDir::cleanPath(d.absoluteFilePath(name2));
+        s.replace("\\", "/");
+        return s;
+    }
+    static void setTextureID(const Texture &cache, bool isToon, Texture &output) {
+        output = cache;
         if (!isToon) {
+            GLuint textureID = *static_cast<GLuint *>(output.object);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
-    bool uploadTexture0(void *context, const QString &path, void *texture, bool isToon) {
-        QImage image;
-        QString mutablePath = path;
-        mutablePath.replace(QChar(0xa5), QChar('/')).replace("\\", "/");
-        /* 読み込み済みのキャッシュを検索し、あったらそれを利用する */
-        PrivateContext *ctx = static_cast<PrivateContext *>(context);
-        if (ctx->textureCache.contains(path)) {
-            setTextureID(ctx->textureCache[path], isToon, texture);
-            return true;
-        }
-        QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
-        QFileInfo info(mutablePath);
+    static void addTextureCache(PrivateContext *context, const QString &path, const Texture &texture) {
+        if (context)
+            context->textureCache.insert(path, texture);
+    }
+    bool uploadTextureInternal(const QString &path, Texture &texture, bool isToon, bool mipmap, void *context) {
+        QFileInfo info(path);
         if (info.isDir()) {
             /* ディレクトリの場合は警告は出さず強制的に読み込み失敗に設定する */
             return false;
         }
+        PrivateContext *privateContext = static_cast<PrivateContext *>(context);
+        if (privateContext && privateContext->textureCache.contains(path)) {
+            setTextureID(privateContext->textureCache[path], isToon, texture);
+            return true;
+        }
+        QScopedArrayPointer<uint8_t> ptr(new uint8_t[1]);
+        QImage image;
         /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
-        if (m_archive && !mutablePath.startsWith(":/")) {
+        if (m_archive && !path.startsWith(":/")) {
             QByteArray suffix = info.suffix().toLower().toUtf8();
             if (suffix == "sph" || suffix == "spa")
                 suffix.setRawData("bmp", 3);
-            const QByteArray &bytes = m_archive->data(mutablePath);
+            const QByteArray &bytes = m_archive->data(path);
             image.loadFromData(bytes, suffix.constData());
             if (image.isNull() && suffix == "tga" && bytes.length() > 18) {
                 image = loadTGA(bytes, ptr);
@@ -281,10 +483,10 @@ private:
                 return false;
             }
             if (image.isNull() && info.suffix().toLower() == "tga") {
-                image = loadTGA(mutablePath, ptr);
+                image = loadTGA(path, ptr);
             }
             else {
-                image = QImage(mutablePath).rgbSwapped();
+                image = QImage(path).rgbSwapped();
             }
             if (image.isNull()) {
                 qWarning("Loading texture %s cannot decode", qPrintable(info.absoluteFilePath()));
@@ -292,33 +494,52 @@ private:
             }
         }
         /* スフィアテクスチャの場合一旦反転する */
-        if (mutablePath.endsWith(".sph") || mutablePath.endsWith(".spa")) {
+        if (path.endsWith(".sph") || path.endsWith(".spa")) {
             QTransform transform;
             transform.scale(1, -1);
             image = image.transformed(transform);
         }
-        QGLContext *glcontext = const_cast<QGLContext *>(QGLContext::currentContext());
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption|QGLContext::InvertedYBindOption;
-        GLuint textureID = glcontext->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
-        setTextureID(textureID, isToon, texture);
-        ctx->textureCache.insert(path, textureID);
-        qDebug("Loaded a texture (ID=%d): \"%s\"", textureID,
-               m_archive ? qPrintable(info.fileName()) : qPrintable(mutablePath));
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
+                | QGLContext::InvertedYBindOption
+                | QGLContext::PremultipliedAlphaBindOption;
+        if (mipmap)
+            options |= QGLContext::MipmapBindOption;
+        GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+        m_textures.insert(textureID, textureID);
+        texture.width = image.width();
+        texture.height = image.height();
+        texture.object = &m_textures[textureID];
+        setTextureID(texture, isToon, texture);
+        addTextureCache(privateContext, path, texture);
+        qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
+               textureID, image.width(), image.height(), qPrintable(path));
         return textureID != 0;
     }
-    bool uploadToonTexture0(void *context, const QString &name, const QDir &dir, void *texture) {
-        QString mutableName = name;
-        mutableName.replace("\\", "/");
-        /* アーカイブ内にある場合はシステム側のテクスチャ処理とごっちゃにならないように uploadTexture に流して返す */
-        const QString &path = QDir::cleanPath(dir.absoluteFilePath(mutableName));
-        if (m_archive && !m_archive->data(path).isEmpty())
-            return uploadTexture0(context, path, texture, true);
-        /* ファイルが存在しない場合はシステム側のテクスチャと仮定 */
-        if (!QFile::exists(path))
-            return uploadTexture0(context, QString(":/textures/%1").arg(name), texture, true);
-        else
-            return uploadTexture0(context, path, texture, true);
+    void getToonColorInternal(const QString &path, Color &value) {
+        const QImage image(path);
+        if (!image.isNull()) {
+            const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
+            const QColor color(rgb);
+            value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+        }
     }
+
+    Scene *m_scene;
+    QGLWidget *m_context;
+    QSizeF m_viewport;
+    QHash<const IModel *, QString> m_model2filename;
+    QMatrix4x4 m_lightWorldMatrix;
+    QMatrix4x4 m_lightViewMatrix;
+    QMatrix4x4 m_lightProjectionMatrix;
+    QMatrix4x4 m_cameraViewMatrix;
+    QMatrix4x4 m_cameraProjectionMatrix;
+    QElapsedTimer m_timer;
+    Vector4 m_mouseCursorPosition;
+    Vector4 m_mouseLeftPressPosition;
+    Vector4 m_mouseMiddlePressPosition;
+    Vector4 m_mouseRightPressPosition;
+    QHash<GLuint, GLuint> m_textures;
+
     static QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr) {
         QFile file(path);
         if (file.open(QFile::ReadOnly) && file.size() > 18) {
@@ -400,7 +621,6 @@ private:
         }
         return QImage(dataPtr.data(), width, height, QImage::Format_ARGB32);
     }
-
     Archive *m_archive;
     QTextCodec *m_codec;
 };
@@ -553,7 +773,7 @@ const QByteArray UILoadFile(const QString &filename,
 
 }
 
-SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory)
+SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *context)
     : QObject(),
       m_world(0),
       m_depthBuffer(0),
@@ -568,8 +788,8 @@ SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory)
       m_depthBufferID(0)
 {
     m_world = new internal::World();
-    m_renderDelegate = new UIDelegate();
-    m_projectDelegate = new UIDelegate();
+    m_projectDelegate = new UIDelegate(context);
+    m_renderDelegate = new UIDelegate(context);
     createProject();
 }
 
@@ -658,6 +878,7 @@ void SceneLoader::createProject()
         m_project->setGlobalSetting("physics.enabled", "true");
         m_project->setGlobalSetting("shadow.texture.soft", "true");
         m_project->setDirty(false);
+        static_cast<UIDelegate *>(m_renderDelegate)->setScene(m_project);
     }
 }
 
@@ -777,6 +998,11 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
             btSetMax(radius, d);
         }
     }
+}
+
+void SceneLoader::getCameraMatrices(QMatrix4x4 &view, QMatrix4x4 &projection) const
+{
+    static_cast<UIDelegate *>(m_renderDelegate)->getCameraMatrices(view, projection);
 }
 
 bool SceneLoader::isProjectModified() const
@@ -1219,12 +1445,10 @@ void SceneLoader::renderModels()
     }
 }
 
-void SceneLoader::setLightViewProjectionMatrix(QMatrix4x4 &shadowMatrix)
+void SceneLoader::setLightViewProjectionMatrix()
 {
-    Scene::IMatrices *matrices = m_project->matrices();
     Vector3 center;
     Scalar radius;
-    float shadowMatrix4x4[16];
     /* プロジェクトにバウンディングスフィアの設定があればそちらを適用し、無ければ計算する */
     const Vector4 &boundingSphere = shadowBoundingSphere();
     if (!boundingSphere.isZero() && !btFuzzyZero(boundingSphere.w())) {
@@ -1238,26 +1462,26 @@ void SceneLoader::setLightViewProjectionMatrix(QMatrix4x4 &shadowMatrix)
     const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
     const Scalar &margin = 50;
     const Vector3 &eye = -m_project->light()->direction() * radius * 2 + center;
-    shadowMatrix.perspective(angle, 1, 1, distance + radius + margin);
-    shadowMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
+    QMatrix4x4 world, view, projection;
+    projection.perspective(angle, 1, 1, distance + radius + margin);
+    view.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
                         QVector3D(center.x(), center.y(), center.z()),
                         QVector3D(0, 1, 0));
-    for (int i = 0; i < 16; i++)
-        shadowMatrix4x4[i] = shadowMatrix.constData()[i];
-    matrices->setLightViewProjection(shadowMatrix4x4);
+    static_cast<UIDelegate *>(m_renderDelegate)->setLightMatrices(world, view, projection);
 }
 
-void SceneLoader::setLightViewProjectionTextureMatrix(const QMatrix4x4 &shadowMatrix)
+void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geometry)
 {
-    /* デプスバッファの読み込みに必要な行列を作成する */
-    float shadowMatrix4x4[16];
-    QMatrix4x4 bias;
-    bias.scale(0.5);
-    bias.translate(1, 1, 1);
-    const QMatrix4x4 &newShadowMatrix = bias * shadowMatrix;
-    for (int i = 0; i < 16; i++)
-        shadowMatrix4x4[i] = newShadowMatrix.constData()[i];
-    m_project->matrices()->setLightViewProjection(shadowMatrix4x4);
+    const QPointF &pos = event->posF();
+    const QSizeF &size = geometry.size() / 2;
+    const qreal w = size.width(), h = size.height();
+    const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);
+    Qt::MouseButtons buttons = event->buttons();
+    UIDelegate *d = static_cast<UIDelegate *>(m_renderDelegate);
+    d->setMousePosition(value, buttons & Qt::LeftButton, IRenderDelegate::kMouseLeftPressPosition);
+    d->setMousePosition(value, buttons & Qt::MiddleButton, IRenderDelegate::kMouseMiddlePressPosition);
+    d->setMousePosition(value, buttons & Qt::RightButton, IRenderDelegate::kMouseRightPressPosition);
+    d->setMousePosition(value, false, IRenderDelegate::kMouseCursorPosition);
 }
 
 void SceneLoader::bindDepthTexture()
@@ -1286,12 +1510,16 @@ void SceneLoader::renderZPlot()
 
 void SceneLoader::renderZPlotToTexture()
 {
-    QMatrix4x4 shadowMatrix;
-    setLightViewProjectionMatrix(shadowMatrix);
+    setLightViewProjectionMatrix();
     bindDepthTexture();
     renderZPlot();
     releaseDepthTexture();
-    setLightViewProjectionTextureMatrix(shadowMatrix);
+    UIDelegate *d = static_cast<UIDelegate *>(m_renderDelegate);
+    QMatrix4x4 world, view, projection;
+    d->getLightMatrices(world, view, projection);
+    world.scale(0.5);
+    world.translate(1, 1, 1);
+    d->setLightMatrices(world, view, projection);
 }
 
 void SceneLoader::releaseDepthTexture()
@@ -1316,23 +1544,7 @@ void SceneLoader::updateDepthBuffer(const QSize &value)
 
 void SceneLoader::updateMatrices(const QSizeF &size)
 {
-    /* モデル行列とビュー行列の乗算を QMatrix4x4 を用いて行う */
-    QMatrix4x4 modelView4x4;
-    float modelViewMatrixf[16], projectionMatrixf[16];
-    Scene::ICamera *camera = m_project->camera();
-    Scene::IMatrices *matrices = m_project->matrices();
-    matrices->getModelView(modelViewMatrixf);
-    m_projection.setToIdentity();
-    qreal aspectRatio = size.width() / size.height();
-    m_projection.perspective(camera->fov(), aspectRatio, camera->znear(), camera->zfar());
-    for (int i = 0; i < 16; i++) {
-        modelView4x4.data()[i] = modelViewMatrixf[i];
-        projectionMatrixf[i] = m_projection.constData()[i];
-    }
-    const QMatrix4x4 &modelViewProjection4x4 = m_projection * modelView4x4;
-    for (int i = 0; i < 16; i++)
-        modelViewMatrixf[i] = modelViewProjection4x4.constData()[i];
-    matrices->setModelViewProjection(modelViewMatrixf);
+    static_cast<UIDelegate *>(m_renderDelegate)->updateCameraMatrices(size);
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const

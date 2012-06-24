@@ -70,7 +70,7 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
-    explicit SceneLoader(vpvl2::IEncoding *encoding, vpvl2::Factory *factory);
+    explicit SceneLoader(vpvl2::IEncoding *encoding, vpvl2::Factory *factory, QGLWidget *context);
     ~SceneLoader();
 
     QList<vpvl2::IModel *> allModels() const;
@@ -80,6 +80,7 @@ public:
     vpvl2::IMotion *findMotion(const QUuid &uuid) const;
     const QUuid findUUID(vpvl2::IModel *model) const;
     void getBoundingSphere(vpvl2::Vector3 &center, vpvl2::Scalar &radius) const;
+    void getCameraMatrices(QMatrix4x4 &view, QMatrix4x4 &projection) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, vpvl2::IModel *&asset);
     vpvl2::IModel *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -96,8 +97,8 @@ public:
     void renderModels();
     void renderZPlot();
     void renderZPlotToTexture();
-    void setLightViewProjectionMatrix(QMatrix4x4 &shadowMatrix);
-    void setLightViewProjectionTextureMatrix(const QMatrix4x4 &shadowMatrix);
+    void setLightViewProjectionMatrix();
+    void setMousePosition(const QMouseEvent *event, const QRect &geometry);
     void updateMatrices(const QSizeF &size);
     void updateDepthBuffer(const QSize &value);
     const QList<QUuid> renderOrderList() const;

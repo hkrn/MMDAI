@@ -93,10 +93,10 @@ public:
         m_body->setWorldTransform(value);
         m_world.stepSimulation(1);
     }
-    void draw(const Scene *scene, internal::DebugDrawer *drawer) {
+    void draw(const SceneLoader *loader, internal::DebugDrawer *drawer) {
         const btTransform &worldTransform = m_body->getWorldTransform();
         m_world.setDebugDrawer(drawer);
-        drawer->drawShape(&m_world, m_shape, scene, worldTransform, btVector3(1, 0, 0));
+        drawer->drawShape(&m_world, m_shape, loader, worldTransform, btVector3(1, 0, 0));
         m_world.setDebugDrawer(0);
     }
     bool test(const Vector3 &from, const Vector3 &to, Vector3 &hit) {
@@ -266,6 +266,7 @@ void SceneWidget::loadProject(const QString &filename)
     m_background->setImagePosition(m_loader->backgroundImagePosition());
     m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
     m_enableUpdateGL = true;
+    seekMotion(0, true);
     startAutomaticRendering();
     QApplication::alert(this);
 }
@@ -770,15 +771,12 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 {
     // This implementation based on the below page.
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
-    Scene *scene = m_loader->scene();
-    float modelviewMatrixf[16];
     GLdouble modelviewMatrixd[16], projectionMatrixd[16];
     const GLint viewport[4] = { 0, 0, width(), height() };
-    const Scene::IMatrices *matrices = scene->matrices();
-    matrices->getModelView(modelviewMatrixf);
-    const QMatrix4x4 &projection = m_loader->projectionMatrix();
+    QMatrix4x4 view, projection;
+    m_loader->getCameraMatrices(view, projection);
     for (int i = 0; i < 16; i++) {
-        modelviewMatrixd[i] = modelviewMatrixf[i];
+        modelviewMatrixd[i] = view.constData()[i];
         projectionMatrixd[i] = projection.constData()[i];
     }
     GLdouble wx = input.x(), wy = height() - input.y(), cx, cy, cz, fx, fy, fz;
@@ -989,7 +987,7 @@ void SceneWidget::initializeGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
-    m_loader = new SceneLoader(m_encoding, m_factory);
+    m_loader = new SceneLoader(m_encoding, m_factory, this);
     connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     const QSize &s = size();
     m_handles = new Handles(m_loader, s);
@@ -1027,6 +1025,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
 #ifdef IS_QMA2
     QRectF rect;
     makeRay(pos, znear, zfar);
+    m_loader->setMousePosition(event, geometry());
     m_plane->test(znear, zfar, hit);
     /* 今は決め打ちの値にしている */
     const Scalar &delta = 0.0005 * m_loader->scene()->camera()->distance();
@@ -1134,6 +1133,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
     const QPointF &pos = event->posF();
     IBone *bone = m_handles->currentBone();
     m_isImageHandleRectIntersect = false;
+    m_loader->setMousePosition(event, geometry());
     if (m_currentSelectedBone) {
         Vector3 znear, zfar, hit;
         makeRay(pos, znear, zfar);
@@ -1214,6 +1214,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
         setCursor(Qt::OpenHandCursor);
     else
         unsetCursor();
+    m_loader->setMousePosition(event, geometry());
     /* 状態をリセットする */
     m_totalDelta = 0.0f;
     /* handleDidRelease を発行するかどうかを判定するためフラグの状態を保存する */
@@ -1252,7 +1253,7 @@ void SceneWidget::paintGL()
     glViewport(0, 0, width(), height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     m_background->draw();
-    m_grid->draw(scene, m_loader->isGridVisible());
+    m_grid->draw(m_loader, m_loader->isGridVisible());
     m_loader->renderModels();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;
@@ -1265,11 +1266,11 @@ void SceneWidget::paintGL()
             QSet<const IBone *> boneSet;
             foreach (const IBone *bone, m_selectedBones)
                 boneSet.insert(bone);
-            m_debugDrawer->drawModelBones(m_loader->selectedModel(), scene, boneSet);
+            m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_loader, boneSet);
         }
         /* 右下のハンドルが領域に入ってる場合は軸を表示する */
         if (m_isImageHandleRectIntersect)
-            m_debugDrawer->drawBoneTransform(bone, scene, m_handles->modeFromConstraint());
+            m_debugDrawer->drawBoneTransform(bone, m_loader, m_handles->modeFromConstraint());
         /*
          * 情報パネルと右下のハンドルを最後にレンダリング(表示上最上位に持っていく)
          * 右下の操作ハンドルはモデルが選択されていない場合は非表示にするように変更
@@ -1280,13 +1281,13 @@ void SceneWidget::paintGL()
         break;
     case kRotate: /* 回転モード */
         /* kRotate と kMove の場合はレンダリングがうまくいかない関係でモデルのハンドルを最後に持ってく */
-        m_debugDrawer->drawMovableBone(bone, scene);
+        m_debugDrawer->drawMovableBone(bone, m_loader);
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawRotationHandle();
         break;
     case kMove: /* 移動モード */
-        m_debugDrawer->drawMovableBone(bone, scene);
+        m_debugDrawer->drawMovableBone(bone, m_loader);
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawMoveHandle();

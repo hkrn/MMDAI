@@ -112,17 +112,17 @@ public:
     }
     void drawShape(btDiscreteDynamicsWorld *world,
                    btCollisionShape *shape,
-                   const Scene *scene,
+                   const SceneLoader *loader,
                    const btTransform &transform,
                    const btVector3 &color) {
         if (m_program.isLinked()) {
-            prepare(scene);
+            prepare(loader);
             world->debugDrawObject(transform, shape, color);
             m_program.release();
         }
     }
 
-    void drawModelBones(IModel *model, Scene *scene, const BoneSet &selectedBones) {
+    void drawModelBones(IModel *model, SceneLoader *loader, const BoneSet &selectedBones) {
         if (!model || !m_visible || !m_program.isLinked())
             return;
         Array<IBone *> bones;
@@ -130,7 +130,7 @@ public:
         const int nbones = bones.count();
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
-        prepare(scene);
+        prepare(loader);
         m_program.enableAttributeArray("inPosition");
         /* IK ボーンの収集 */
         BoneSet bonesForIK;
@@ -160,23 +160,23 @@ public:
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawMovableBone(const IBone *bone, const Scene *scene) {
+    void drawMovableBone(const IBone *bone, const SceneLoader *loader) {
         if (!bone || !bone->isMovable() || !m_program.isLinked())
             return;
         glDisable(GL_DEPTH_TEST);
-        prepare(scene);
+        prepare(loader);
         m_program.setUniformValue("color", QColor::fromRgbF(0, 1, 1));
         drawSphere(bone->worldTransform().getOrigin(), 0.5, Vector3(0.0f, 1.0f, 1.0f));
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawBoneTransform(const IBone *bone, const Scene *scene, int mode) {
+    void drawBoneTransform(const IBone *bone, const SceneLoader *loader, int mode) {
         /* 固定軸がある場合は軸表示なし */
         if (!m_visible || !bone || !m_program.isLinked() || bone->hasFixedAxes())
             return;
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
-        prepare(scene);
+        prepare(loader);
         m_program.enableAttributeArray("inPosition");
         /* ボーン表示 */
         BoneSet selectedBones;
@@ -190,11 +190,12 @@ public:
         if (mode == 'V') {
             /* モデルビュー行列を元に軸表示 */
             const Transform &transform = bone->worldTransform();
-            const btMatrix3x3 &modelView = scene->camera()->modelViewTransform().getBasis();
             const Vector3 &origin = bone->worldTransform().getOrigin();
-            drawLine(origin, transform * (modelView.getRow(0) * kLength), kRed);
-            drawLine(origin, transform * (modelView.getRow(1) * kLength), kGreen);
-            drawLine(origin, transform * (modelView.getRow(2) * kLength), kBlue);
+            QMatrix4x4 view, projection;
+            loader->getCameraMatrices(view, projection);
+            drawLine(origin, transform * (internal::vec2vec(view.row(0)) * kLength), kRed);
+            drawLine(origin, transform * (internal::vec2vec(view.row(1)) * kLength), kGreen);
+            drawLine(origin, transform * (internal::vec2vec(view.row(2)) * kLength), kBlue);
         }
         else if (mode == 'L') {
             if (bone->hasLocalAxes()) {
@@ -228,13 +229,11 @@ public:
     }
 
 private:
-    void prepare(const Scene *scene) {
-        float matrix[16];
-        QGLFunctions func(QGLContext::currentContext());
-        scene->matrices()->getModelViewProjection(matrix);
+    void prepare(const SceneLoader *loader) {
+        QMatrix4x4 view, projection;
+        loader->getCameraMatrices(view, projection);
         m_program.bind();
-        int modelViewProjectionMatrix = m_program.uniformLocation("modelViewProjectionMatrix");
-        func.glUniformMatrix4fv(modelViewProjectionMatrix, 1, GL_FALSE, matrix);
+        m_program.setUniformValue("modelViewProjectionMatrix", projection * view);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
     }
     void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK) {

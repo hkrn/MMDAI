@@ -199,16 +199,16 @@ static void UILoadTrackableModel(const aiMesh *mesh,
     model.body = body.take();
 }
 
-static void UIInitializeRenderingModel(const Scene *scene,
+static void UIInitializeRenderingModel(const SceneLoader *loader,
                                        const Transform &transform,
                                        QGLShaderProgram *program)
 {
     QGLFunctions func(QGLContext::currentContext());
-    float matrix[16];
-    scene->matrices()->getModelViewProjection(matrix);
-    int modelViewMatrix = program->uniformLocation("modelViewProjectionMatrix");
-    func.glUniformMatrix4fv(modelViewMatrix, 1, GL_FALSE, matrix);
+    QMatrix4x4 view, projection;
+    loader->getCameraMatrices(view, projection);
+    program->setUniformValue("modelViewProjectionMatrix", projection * view);
     int boneMatrix = program->uniformLocation("boneMatrix");
+    float matrix[16];
     transform.getOpenGLMatrix(matrix);
     func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
 }
@@ -640,7 +640,7 @@ void Handles::drawRotationHandle()
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader->scene(), modelHandleTransform(), &m_program);
+    UIInitializeRenderingModel(m_loader, modelHandleTransform(), &m_program);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
@@ -656,7 +656,7 @@ void Handles::drawMoveHandle()
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader->scene(), modelHandleTransform(), &m_program);
+    UIInitializeRenderingModel(m_loader, modelHandleTransform(), &m_program);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);
