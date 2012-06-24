@@ -168,6 +168,18 @@ public:
                 m *= m_cameraProjectionMatrix;
             if (flags & IRenderDelegate::kViewMatrix)
                 m *= m_cameraViewMatrix;
+            if (flags & IRenderDelegate::kWorldMatrix) {
+                const IBone *bone = model->parentBone();
+                if (bone) {
+                    const Transform &transform = bone->worldTransform();
+                    Scalar matrix[16];
+                    transform.getOpenGLMatrix(matrix);
+                    QMatrix4x4 worldMatrix;
+                    for (int i = 0; i < 16; i++)
+                        worldMatrix.data()[i] = matrix[i];
+                    m *= worldMatrix;
+                }
+            }
         }
         else if (flags & IRenderDelegate::kLightMatrix) {
             if (flags & IRenderDelegate::kWorldMatrix)
@@ -1465,8 +1477,8 @@ void SceneLoader::setLightViewProjectionMatrix()
     QMatrix4x4 world, view, projection;
     projection.perspective(angle, 1, 1, distance + radius + margin);
     view.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
-                        QVector3D(center.x(), center.y(), center.z()),
-                        QVector3D(0, 1, 0));
+                QVector3D(center.x(), center.y(), center.z()),
+                QVector3D(0, 1, 0));
     static_cast<UIDelegate *>(m_renderDelegate)->setLightMatrices(world, view, projection);
 }
 
