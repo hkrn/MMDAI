@@ -45,7 +45,9 @@
 #include "vpvl2/IString.h"
 
 #include "vpvl/Asset.h"
+#ifdef VPVL2_LINK_ASSIMP
 #include <aiScene.h>
+#endif
 
 class btDiscreteDynamicsWorld;
 
@@ -106,7 +108,9 @@ public:
     vpvl::Asset *ptr() { return &m_asset; }
 
 private:
+#ifdef VPVL2_LINK_ASSIMP
     void getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const;
+#endif
 
     vpvl::Asset m_asset;
     IEncoding *m_encoding;

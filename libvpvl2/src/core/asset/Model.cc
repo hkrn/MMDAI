@@ -36,7 +36,9 @@
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/internal/util.h"
+#ifdef VPVL2_LINK_ASSIMP
 #include "aiScene.h"
+#endif
 
 namespace vpvl2
 {
@@ -72,8 +74,10 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 {
     min.setZero();
     max.setZero();
+#ifdef VPVL2_LINK_ASSIMP
     const aiScene *a = m_asset.getScene();
     getBoundingBoxRecurse(a, a->mRootNode, min, max);
+#endif
 }
 
 void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
@@ -94,6 +98,7 @@ void Model::setComment(const IString *value)
     internal::setString(value, m_comment);
 }
 
+#ifdef VPVL2_LINK_ASSIMP
 void Model::getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const
 {
     const unsigned int nmeshes = node->mNumMeshes;
@@ -114,6 +119,7 @@ void Model::getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vect
     for (unsigned int i = 0; i < nChildNodes; i++)
         getBoundingBoxRecurse(scene, node->mChildren[i], min, max);
 }
+#endif
 
 } /* namespace asset */
 } /* namespace vpvl2 */
