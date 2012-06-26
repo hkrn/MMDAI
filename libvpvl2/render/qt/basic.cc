@@ -792,7 +792,7 @@ public:
         QString path = m_settings->value("dir.system.shaders", "../../QMA2/resources/shaders").toString() + "/" + file;
         if (UISlurpFile(path, bytes)) {
             qDebug("Loaded a shader: %s", qPrintable(path));
-            return new(std::nothrow) String(bytes);
+            return new(std::nothrow) String("#version 120\n" + bytes);
         }
         else {
             return 0;
@@ -1428,10 +1428,10 @@ protected:
                 engine->renderZPlot();
             }
             m_fbo->release();
-            glEnable(GL_BLEND);
         }
         {
             glViewport(0, 0, width(), height());
+            glEnable(GL_BLEND);
             glEnable(GL_DEPTH_TEST);
             glClearColor(0, 0, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
