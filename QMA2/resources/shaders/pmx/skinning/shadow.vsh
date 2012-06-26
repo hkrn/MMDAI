@@ -1,8 +1,8 @@
 /* pmx/shadow.vsh */
+invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 attribute vec4 inPosition;
 const float kOne = 1.0;
-invariant gl_Position;
 
 attribute vec4 inBoneIndices;
 attribute vec4 inBoneWeights;

@@ -1,4 +1,5 @@
 /* pmx/edge.vsh */
+invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
 uniform float edgeSize;
@@ -6,7 +7,6 @@ attribute vec4 inPosition;
 attribute vec3 inNormal;
 attribute float inEdgeSize;
 varying vec4 outColor;
-invariant gl_Position;
 
 attribute vec4 inBoneIndices;
 attribute vec4 inBoneWeights;

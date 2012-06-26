@@ -1,4 +1,5 @@
 /* asset/zplot.vsh */
+invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 transformMatrix;
 attribute vec3 inPosition;

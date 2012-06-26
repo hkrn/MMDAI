@@ -1,4 +1,5 @@
 /* pmx/zplot.vsh */
+invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 attribute vec4 inPosition;
 

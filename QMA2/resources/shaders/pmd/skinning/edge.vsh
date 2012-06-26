@@ -1,11 +1,11 @@
 /* pmd/edge.vsh */
+invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
 attribute vec3 inPosition;
 attribute vec3 inNormal; // unused
 varying vec4 outColor;
 const float kOne = 1.0;
-invariant gl_Position;
 
 attribute vec3 inBoneIndicesAndWeights;
 const int kMaxBones = 128;

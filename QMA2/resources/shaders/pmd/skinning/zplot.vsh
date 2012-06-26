@@ -1,4 +1,5 @@
 /* pmd/zplot.vsh */
+invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 attribute vec3 inPosition;
 const float kOne = 1.0;

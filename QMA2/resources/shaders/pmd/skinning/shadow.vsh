@@ -1,9 +1,9 @@
 /* pmd/shadow.vsh */
+invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 shadowMatrix;
 attribute vec3 inPosition;
 const float kOne = 1.0;
-invariant gl_Position;
 
 attribute vec3 inBoneIndicesAndWeights;
 const int kMaxBones = 128;
