@@ -1,5 +1,4 @@
 /* pmx/edge.vsh */
-#version 120
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
 uniform float edgeSize;

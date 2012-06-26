@@ -229,8 +229,7 @@ public:
           m_toonTexCoordAttributeLocation(0),
           m_uva1AttributeLocation(0),
           m_cameraPositionUniformLocation(0),
-          m_materialAmbientUniformLocation(0),
-          m_materialDiffuseUniformLocation(0),
+          m_materialColorUniformLocation(0),
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
           m_mainTextureBlendUniformLocation(0),
@@ -253,8 +252,7 @@ public:
         m_toonTexCoordAttributeLocation = 0;
         m_uva1AttributeLocation = 0;
         m_cameraPositionUniformLocation = 0;
-        m_materialAmbientUniformLocation = 0;
-        m_materialDiffuseUniformLocation = 0;
+        m_materialColorUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
         m_mainTextureBlendUniformLocation = 0;
@@ -284,14 +282,11 @@ public:
         glEnableVertexAttribArray(m_uva1AttributeLocation);
         glVertexAttribPointer(m_uva1AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
-    void setMaterialAmbient(const Color &value) {
-        glUniform3fv(m_materialAmbientUniformLocation, 1, value);
-    }
-    void setMaterialDiffuse(const Color &value) {
-        glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
+    void setMaterialColor(const Color &value) {
+        glUniform4fv(m_materialColorUniformLocation, 1, value);
     }
     void setMaterialSpecular(const Color &value) {
-        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
+        glUniform3fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(const Scalar &value) {
         glUniform1f(m_materialShininessUniformLocation, value);
@@ -373,8 +368,7 @@ protected:
         m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
         m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
-        m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
-        m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+        m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
         m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
         m_mainTextureBlendUniformLocation = glGetUniformLocation(m_program, "mainTextureBlend");
@@ -397,8 +391,7 @@ private:
     GLuint m_toonTexCoordAttributeLocation;
     GLuint m_uva1AttributeLocation;
     GLuint m_cameraPositionUniformLocation;
-    GLuint m_materialAmbientUniformLocation;
-    GLuint m_materialDiffuseUniformLocation;
+    GLuint m_materialColorUniformLocation;
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
     GLuint m_mainTextureBlendUniformLocation;
@@ -716,8 +709,6 @@ void PMXRenderEngine::renderModel()
     m_delegate->getMatrix(matrix4x4, m_model,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kInverseMatrix
-                          | IRenderDelegate::kTransposeMatrix
                           | IRenderDelegate::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
     m_delegate->getMatrix(matrix4x4, m_model,
@@ -745,14 +736,18 @@ void PMXRenderEngine::renderModel()
             boneStride = m_model->strideSize(pmx::Model::kVertexStride);
     const bool hasModelTransparent = !btFuzzyZero(opacity - 1.0),
             isVertexShaderSkinning = m_context->isVertexShaderSkinning;
+    const Vector3 &lc = light->color();
+    Color diffuse, specular;
     offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         const MaterialTextures &materialPrivate = materialPrivates[i];
-        modelProgram->setMaterialAmbient(material->ambient());
-        modelProgram->setMaterialDiffuse(material->diffuse());
-        modelProgram->setMaterialSpecular(material->specular());
+        const Color &ma = material->ambient(), &md = material->diffuse(), &ms = material->specular();
+        diffuse.setValue(ma.x() + md.x() * lc.x(), ma.y() + md.y() * lc.y(), ma.z() + md.z() * lc.z(), md.w());
+        specular.setValue(ms.x() * lc.x(), ms.y() * lc.y(), ms.z() * lc.z(), 1.0);
+        modelProgram->setMaterialColor(diffuse);
+        modelProgram->setMaterialSpecular(specular);
         modelProgram->setMaterialShininess(material->shininess());
         modelProgram->setMainTextureBlend(material->mainTextureBlend());
         modelProgram->setSphereTextureBlend(material->sphereTextureBlend());

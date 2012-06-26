@@ -199,8 +199,7 @@ public:
         : ObjectProgram(delegate),
           m_toonTexCoordAttributeLocation(0),
           m_cameraPositionUniformLocation(0),
-          m_materialAmbientUniformLocation(0),
-          m_materialDiffuseUniformLocation(0),
+          m_materialColorUniformLocation(0),
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
@@ -218,8 +217,7 @@ public:
     ~ModelProgram() {
         m_toonTexCoordAttributeLocation = 0;
         m_cameraPositionUniformLocation = 0;
-        m_materialAmbientUniformLocation = 0;
-        m_materialDiffuseUniformLocation = 0;
+        m_materialColorUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
@@ -241,14 +239,11 @@ public:
     void setCameraPosition(const Vector3 &value) {
         glUniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
-    void setMaterialAmbient(const Color &value) {
-        glUniform3fv(m_materialAmbientUniformLocation, 1, value);
-    }
-    void setMaterialDiffuse(const Color &value) {
-        glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
+    void setMaterialColor(const Color &value) {
+        glUniform4fv(m_materialColorUniformLocation, 1, value);
     }
     void setMaterialSpecular(const Color &value) {
-        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
+        glUniform3fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(const Scalar &value) {
         glUniform1f(m_materialShininessUniformLocation, value);
@@ -297,8 +292,7 @@ protected:
         ObjectProgram::getLocations();
         m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
-        m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
-        m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
+        m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
         m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
         m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
@@ -316,8 +310,7 @@ protected:
 private:
     GLuint m_toonTexCoordAttributeLocation;
     GLuint m_cameraPositionUniformLocation;
-    GLuint m_materialAmbientUniformLocation;
-    GLuint m_materialDiffuseUniformLocation;
+    GLuint m_materialColorUniformLocation;
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
@@ -666,8 +659,6 @@ void PMDRenderEngine::renderModel()
     m_delegate->getMatrix(matrix4x4, m_model,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kInverseMatrix
-                          | IRenderDelegate::kTransposeMatrix
                           | IRenderDelegate::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
     m_delegate->getMatrix(matrix4x4, m_model,
@@ -700,7 +691,8 @@ void PMDRenderEngine::renderModel()
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     //const bool hasSingleSphereMap = m_context->hasSingleSphereMap;
     const bool hasMultipleSphereMap = m_context->hasMultipleSphereMap;
-    Color diffuse;
+    const Vector3 &lc = light->color();
+    Color diffuse, specular;
     size_t offset = 0;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
     for (int i = 0; i < nmaterials; i++) {
@@ -708,11 +700,11 @@ void PMDRenderEngine::renderModel()
         const PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         const Scalar &materialOpacity = material->opacity();
         const bool isMainSphereAdd = material->isMainSphereAdd();
-        diffuse = material->diffuse();
-        diffuse.setW(diffuse.w() * materialOpacity);
-        modelProgram->setMaterialAmbient(material->ambient());
-        modelProgram->setMaterialDiffuse(diffuse);
-        modelProgram->setMaterialSpecular(material->specular());
+        const Color &ma = material->ambient(), &md = material->diffuse(), &ms = material->specular();
+        diffuse.setValue(ma.x() + md.x() * lc.x(), ma.y() + md.y() * lc.y(), ma.z() + md.z() * lc.z(), md.w() * materialOpacity);
+        specular.setValue(ms.x() * lc.x(), ms.y() * lc.y(), ms.z() * lc.z(), 1.0);
+        modelProgram->setMaterialColor(diffuse);
+        modelProgram->setMaterialSpecular(specular);
         modelProgram->setMaterialShininess(material->shiness());
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
         modelProgram->setToonTexture(m_context->toonTextures[material->toonID()]);

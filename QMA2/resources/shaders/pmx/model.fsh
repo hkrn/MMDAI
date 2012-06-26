@@ -12,26 +12,6 @@ uniform sampler2D mainTexture;
 uniform sampler2D toonTexture;
 uniform sampler2D sphereTexture;
 uniform sampler2D depthTexture;
-#ifdef GL_ES
-lowp uniform vec4 mainTextureBlend;
-lowp uniform vec4 sphereTextureBlend;
-lowp uniform vec4 toonTextureBlend;
-highp uniform vec3 lightDirection;
-lowp uniform vec3 materialSpecular;
-lowp uniform vec2 depthTextureSize;
-lowp uniform float materialShininess;
-lowp uniform float opacity;
-lowp varying vec4 outColor;
-highp varying vec4 outTexCoord;
-highp varying vec4 outShadowCoord;
-highp varying vec4 outUVA1;
-highp varying vec3 outEyeView;
-highp varying vec3 outNormal;
-highp varying vec2 outToonCoord;
-const float kOne = 1.0;
-const float kZero = 0.0;
-const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
-#else
 uniform vec4 mainTextureBlend;
 uniform vec4 sphereTextureBlend;
 uniform vec4 toonTextureBlend;
@@ -50,7 +30,6 @@ varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
-#endif
 
 float unpackDepth(const vec4 value) {
     const vec4 kBitShift = vec4(1.0 / 16777216.0, 1.0 / 65536.0, 1.0 / 256.0, 1.0);
@@ -61,6 +40,7 @@ float unpackDepth(const vec4 value) {
 void main() {
     vec4 color = outColor;
     vec4 textureColor = vec4(1.0, 1.0, 1.0, 1.0);
+    vec3 normal = normalize(outNormal);
     if (hasMainTexture) {
         float alpha = mainTextureBlend.a;
         textureColor = texture2D(mainTexture, outTexCoord.xy);
@@ -78,7 +58,8 @@ void main() {
     }
     if (useToon) {
         if (hasToonTexture) {
-            vec4 toonColorRGBA = texture2D(toonTexture, outToonCoord);
+            const vec2 kZero2 = vec2(kZero, kZero);
+            vec4 toonColorRGBA = texture2D(toonTexture, kZero2);
             vec3 toonColor = toonColorRGBA.rgb * toonTextureBlend.rgb;
             if (hasDepthTexture) {
                 const vec2 kToonColorCoord = vec2(kZero, kOne);
@@ -124,12 +105,15 @@ void main() {
                 }
             }
             else {
-                color.rgb *= toonColor;
+                const vec3 kOne3 = vec3(kOne, kOne, kOne);
+                float lightNormal = dot(normal, -lightDirection);
+                float w = max(min(lightNormal * 16.0 + 0.5, kOne), kZero);
+                color.rgb *= toonColor + (kOne3 - toonColor) * w; 
             }
         }
     }
     vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
-    float hdotn = max(dot(halfVector, normalize(outNormal)), kZero);
+    float hdotn = max(dot(halfVector, normal), kZero);
     color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
     color.a *= textureColor.a * opacity;
     gl_FragColor = color;

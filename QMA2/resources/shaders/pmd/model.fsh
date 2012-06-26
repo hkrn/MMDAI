@@ -10,22 +10,6 @@ uniform sampler2D mainTexture;
 uniform sampler2D subTexture;
 uniform sampler2D toonTexture;
 uniform sampler2D depthTexture;
-#ifdef GL_ES
-highp uniform vec3 lightDirection;
-lowp uniform vec3 materialSpecular;
-lowp uniform vec2 depthTextureSize;
-lowp uniform float materialShininess;
-lowp uniform float opacity;
-lowp varying vec4 outColor;
-highp varying vec4 outTexCoord;
-highp varying vec4 outShadowCoord;
-highp varying vec3 outEyeView;
-highp varying vec3 outNormal;
-highp varying vec2 outToonCoord;
-lowp const float kOne = 1.0;
-lowp const float kZero = 0.0;
-lowp const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
-#else
 uniform vec3 lightDirection;
 uniform vec3 materialSpecular;
 uniform vec2 depthTextureSize;
@@ -36,11 +20,9 @@ varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
 varying vec3 outEyeView;
 varying vec3 outNormal;
-varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
-#endif
 
 float unpackDepth(const vec4 value) {
     const vec4 kBitShift = vec4(1.0 / 16777216.0, 1.0 / 65536.0, 1.0 / 256.0, 1.0);
@@ -50,12 +32,13 @@ float unpackDepth(const vec4 value) {
 
 void main() {
     vec4 color = outColor;
+    vec3 normal = normalize(outNormal);
     if (hasMainTexture) {
         if (isMainAdditive) {
             color.rgb += texture2D(mainTexture, outTexCoord.xy).rgb;
         }
         else {
-            color *= texture2D(mainTexture, outTexCoord.xy);
+            color.rgb *= texture2D(mainTexture, outTexCoord.xy).rgb;
         }
     }
     if (hasSubTexture) {
@@ -63,13 +46,13 @@ void main() {
             color.rgb += texture2D(subTexture, outTexCoord.zw).rgb;
         }
         else {
-            color *= texture2D(subTexture, outTexCoord.zw);
+            color.rgb *= texture2D(subTexture, outTexCoord.zw).rgb;
         }
     }
     if (useToon) {
-        vec3 toonColor = texture2D(toonTexture, outToonCoord).rgb;
+        const vec2 kToonColorCoord = vec2(kZero, kOne);
+        vec3 toonColor = texture2D(toonTexture, kToonColorCoord).rgb;
         if (hasDepthTexture) {
-            const vec2 kToonColorCoord = vec2(kZero, kOne);
             vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
             if (useSoftShadow) {
                 const float kSubPixel = 1.25;
@@ -112,11 +95,14 @@ void main() {
             }
         }
         else {
-            color.rgb *= toonColor;
+            const vec3 kOne3 = vec3(kOne, kOne, kOne);
+            float ldotn = dot(normal, -lightDirection);
+            float w = max(min(ldotn * 16.0 + 0.5, kOne), kZero);
+            color.rgb *= toonColor + (kOne3 - toonColor) * w; 
         }
     }
     vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
-    float hdotn = max(dot(halfVector, normalize(outNormal)), kZero);
+    float hdotn = max(dot(halfVector, normal), kZero);
     color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
     color.a *= opacity;
     gl_FragColor = color;

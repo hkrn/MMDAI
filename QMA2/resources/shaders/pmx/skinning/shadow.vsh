@@ -1,5 +1,4 @@
 /* pmx/shadow.vsh */
-#version 120
 uniform mat4 modelViewProjectionMatrix;
 attribute vec4 inPosition;
 const float kOne = 1.0;

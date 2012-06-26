@@ -58,8 +58,8 @@ public:
     Program(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
           m_colorAttributeLocation(0),
-          m_transformMatrixUniformLocation(0),
-          m_materialAmbientUniformLocation(0),
+          m_cameraPositionUniformLocation(0),
+          m_materialColorUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
@@ -74,10 +74,9 @@ public:
     }
     ~Program() {
         m_colorAttributeLocation = 0;
-        m_transformMatrixUniformLocation = 0;
-        m_materialAmbientUniformLocation = 0;
+        m_cameraPositionUniformLocation = 0;
+        m_materialColorUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
-        m_materialEmissionUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
@@ -93,23 +92,20 @@ public:
         glEnableVertexAttribArray(m_colorAttributeLocation);
         glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
+    void setCameraPosition(const Vector3 &value) {
+        glUniform3fv(m_cameraPositionUniformLocation, 1, value);
+    }
     void setHasColor(bool value) {
         glUniform1i(m_hasColorVertexUniformLocation, value ? 1 : 0);
     }
-    void setTransformMatrix(const float value[9]) {
-        glUniformMatrix4fv(m_transformMatrixUniformLocation, 1, GL_FALSE, value);
-    }
-    void setMaterialAmbient(const Color &value) {
-        glUniform3fv(m_materialAmbientUniformLocation, 1, value);
+    void setMaterialColor(const Color &value) {
+        glUniform3fv(m_materialColorUniformLocation, 1, value);
     }
     void setMaterialDiffuse(const Color &value) {
         glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
-    void setMaterialEmission(const Color &value) {
-        glUniform3fv(m_materialEmissionUniformLocation, 1, value);
-    }
     void setMaterialSpecular(const Color &value) {
-        glUniform3fv(m_materialSpecularUniformLocation, 1, value);
+        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(float value) {
         glUniform1f(m_materialShininessUniformLocation, value);
@@ -142,10 +138,9 @@ protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
         m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
-        m_transformMatrixUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
-        m_materialAmbientUniformLocation = glGetUniformLocation(m_program, "materialAmbient");
+        m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
+        m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
         m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-        m_materialEmissionUniformLocation = glGetUniformLocation(m_program, "materialEmission");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
         m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
         m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
@@ -159,11 +154,10 @@ protected:
 
 private:
     GLuint m_colorAttributeLocation;
+    GLuint m_cameraPositionUniformLocation;
     GLuint m_normalMatrixUniformLocation;
-    GLuint m_transformMatrixUniformLocation;
-    GLuint m_materialAmbientUniformLocation;
+    GLuint m_materialColorUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
-    GLuint m_materialEmissionUniformLocation;
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
@@ -539,36 +533,19 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setMainTexture(0);
         program->setSubTexture(0);
     }
-    aiColor4D ambient, diffuse, emission, specular;
-    Color color(0.0f, 0.0f, 0.0f, 0.0f);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
-        color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
-    }
-    else {
-        color.setValue(0.2f, 0.2f, 0.2f, 1.0f);
-    }
-    program->setMaterialAmbient(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
-        color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
-    }
-    else {
-        color.setValue(0.8f, 0.8f, 0.8f, 1.0f);
-    }
-    program->setMaterialDiffuse(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission) == aiReturn_SUCCESS) {
-        color.setValue(emission.r, emission.g, emission.b, emission.a);
-    }
-    else {
-        color.setValue(0.0f, 0.0f, 0.0f, 0.0f);
-    }
-    program->setMaterialEmission(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
-        color.setValue(specular.r, specular.g, specular.b, specular.a);
-    }
-    else {
-        color.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-    }
-    program->setMaterialSpecular(color);
+    aiColor4D ambient, diffuse, specular;
+    const Vector3 &lc = m_scene->light()->color();
+    Color la, mc, md, ms;
+    aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient);
+    aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse);
+    la.setValue(0.7 - lc.x(), 0.7 - lc.y(), 0.7 - lc.z(), 1.0);
+    mc.setValue(diffuse.r * la.x() + ambient.r, diffuse.g * la.y() + ambient.g, diffuse.b * la.z() + ambient.b, diffuse.a);
+    md.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+    program->setMaterialColor(mc);
+    program->setMaterialDiffuse(md);
+    aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular);
+    ms.setValue(specular.r * lc.x(), specular.g * lc.y(), specular.b * lc.z(), specular.a);
+    program->setMaterialSpecular(ms);
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
@@ -614,27 +591,13 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
 {
-    vpvl::Asset *asset = m_model->ptr();
-    const btScalar &scaleFactor = asset->scaleFactor();
-    aiVector3D aiS, aiP;
-    aiQuaternion aiQ;
-    node->mTransformation.Decompose(aiS, aiQ, aiP);
-    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
-    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
-                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
-    if (const IBone *bone = m_model->parentBone()) {
-        const Transform &boneTransform = bone->worldTransform();
-        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
-        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
-        transform.setBasis(boneBasis.scaled(scaleVector));
-    }
     static const AssetVertex v;
+    static const size_t stride = sizeof(v);
     const GLvoid *vertexPtr = 0;
     const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
     const unsigned int nmeshes = node->mNumMeshes;
-    const size_t stride = sizeof(AssetVertex);
     float matrix4x4[16];
     Program *program = m_context->assetPrograms[node];
     program->bind();
@@ -655,12 +618,11 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kCameraMatrix);
     program->setNormalMatrix(matrix4x4);
-    transform.getOpenGLMatrix(matrix4x4);
-    program->setTransformMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
     program->setLightColor(light->color());
     program->setLightDirection(light->direction());
     program->setOpacity(m_model->opacity());
+    program->setCameraPosition(m_scene->camera()->position());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = m_context->vbo[mesh];
@@ -683,28 +645,13 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
 
 void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)
 {
-    vpvl::Asset *asset = m_model->ptr();
-    const btScalar &scaleFactor = asset->scaleFactor();
-    aiVector3D aiS, aiP;
-    aiQuaternion aiQ;
-    node->mTransformation.Decompose(aiS, aiQ, aiP);
-    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
-    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
-                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
-    if (const vpvl::Bone *bone = asset->parentBone()) {
-        const Transform &boneTransform = bone->localTransform();
-        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
-        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
-        transform.setBasis(boneBasis.scaled(scaleVector));
-    }
+    static const AssetVertex v;
+    static const size_t stride = sizeof(v);
+    float matrix4x4[16], opacity;
     const GLvoid *vertexPtr = 0;
     const unsigned int nmeshes = node->mNumMeshes;
-    const size_t stride = sizeof(AssetVertex);
-    float matrix4x4[16], opacity;
-    transform.getOpenGLMatrix(matrix4x4);
-    ZPlotProgram *program = m_context->zplotPrograms[node];
+    Program *program = m_context->assetPrograms[node];
     program->bind();
-    program->setTransformMatrix(matrix4x4);
     m_delegate->getMatrix(matrix4x4, m_model,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix

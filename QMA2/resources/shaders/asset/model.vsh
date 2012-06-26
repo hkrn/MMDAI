@@ -1,15 +1,11 @@
 /* asset/model.vsh */
-#version 120
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
-uniform vec3 lightColor;
-uniform vec3 lightDirection;
-uniform vec3 materialAmbient;
 uniform vec4 materialDiffuse;
-uniform vec3 materialEmission;
-uniform vec3 materialSpecular;
-uniform float materialShininess;
+uniform vec3 materialColor;
+uniform vec3 lightDirection;
+uniform vec3 cameraPosition;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
 uniform bool hasDepthTexture;
@@ -19,28 +15,32 @@ attribute vec2 inTexCoord;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
-const float kTwo = 2.0;
+varying vec3 outEyeView;
+varying vec3 outNormal;
 const float kOne = 1.0;
-const float kHalf = 0.5;
-const vec3 kOne3 = vec3(kOne, kOne, kOne);
+const float kZero = 0.0;
+const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
+const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 invariant gl_Position;
 
-vec2 makeSphereMap(vec3 position, vec3 normal) {
-    vec3 R = reflect(position, normal);
-    float M = kTwo * sqrt(R.x * R.x + R.y * R.y + (R.z + kOne) * (R.z + kOne));
-    return vec2(R.x / M + kHalf, R.y / M + kHalf);
+vec2 makeSphereMap(vec3 normal) {
+    const float kHalf = 0.5;
+    return vec2(normal.x * kHalf + kHalf, normal.y * -kHalf + kHalf);
 }
 
 void main() {
-    vec3 view = normalize(inPosition);
+    vec3 view = normalize(normalMatrix * inPosition);
     vec3 normal = normalize(normalMatrix * inNormal);
-    vec4 color = vec4(materialAmbient * lightColor + materialDiffuse.rgb * lightColor, materialDiffuse.a);
-    vec2 mainTexCoord = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
-    vec2 subTexCoord = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
-    outColor = color;
-    outTexCoord = vec4(mainTexCoord, subTexCoord);
+    vec4 position = vec4(inPosition, kOne);
+    float ldotn = max(dot(normal, -lightDirection), 0.0);
+    vec4 color = vec4(materialColor + ldotn * materialDiffuse.rgb, materialDiffuse.a);
+    outEyeView = cameraPosition - inPosition;
+    outNormal = inNormal;
+    outColor = max(min(color, kOne4), kZero4);
+    outTexCoord.xy = isMainSphereMap ? makeSphereMap(normal) : inTexCoord;
+    outTexCoord.zw = isSubSphereMap ? makeSphereMap(normal) : inTexCoord;
     if (hasDepthTexture)
-        outShadowCoord = lightViewProjectionMatrix * vec4(inPosition, 1.0);
-    gl_Position = modelViewProjectionMatrix * vec4(inPosition, kOne);
+        outShadowCoord = lightViewProjectionMatrix * position;
+    gl_Position = modelViewProjectionMatrix * position;
 }
 

@@ -1,5 +1,4 @@
 /* pmx/model.vsh */
-#version 120
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;

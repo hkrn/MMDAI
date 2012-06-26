@@ -1,5 +1,4 @@
 /* pmd/shadow.vsh */
-#version 120
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 shadowMatrix;
 attribute vec3 inPosition;
