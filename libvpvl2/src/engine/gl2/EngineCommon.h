@@ -242,7 +242,12 @@ public:
         glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setNormalMatrix(const float value[16]) {
-        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, value);
+        float m[] = {
+            value[0], value[1], value[2],
+            value[4], value[5], value[6],
+            value[8], value[9], value[10]
+        };
+        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, m);
     }
     void setTexCoord(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_texCoordAttributeLocation);
