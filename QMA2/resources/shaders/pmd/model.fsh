@@ -38,7 +38,7 @@ void main() {
             color.rgb += texture2D(mainTexture, outTexCoord.xy).rgb;
         }
         else {
-            color.rgb *= texture2D(mainTexture, outTexCoord.xy).rgb;
+            color *= texture2D(mainTexture, outTexCoord.xy);
         }
     }
     if (hasSubTexture) {
