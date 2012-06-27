@@ -310,6 +310,7 @@ public:
             glUniform1i(m_sphereTextureUniformLocation, 1);
             switch (mode) {
             case pmx::Material::kNone:
+            default:
                 glUniform1i(m_hasSphereTextureUniformLocation, 0);
                 glUniform1i(m_isSPHTextureUniformLocation, 0);
                 glUniform1i(m_isSPATextureUniformLocation, 0);
