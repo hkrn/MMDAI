@@ -161,6 +161,7 @@ public:
                     }
                 }
                 m *= shadowMatrix;
+                m.scale(model->scaleFactor());
             }
         }
         else if (flags & IRenderDelegate::kCameraMatrix) {
@@ -179,17 +180,19 @@ public:
                         worldMatrix.data()[i] = matrix[i];
                     m *= worldMatrix;
                 }
+                m.scale(model->scaleFactor());
             }
         }
         else if (flags & IRenderDelegate::kLightMatrix) {
-            if (flags & IRenderDelegate::kWorldMatrix)
+            if (flags & IRenderDelegate::kWorldMatrix) {
                 m *= m_lightWorldMatrix;
+                m.scale(model->scaleFactor());
+            }
             if (flags & IRenderDelegate::kProjectionMatrix)
                 m *= m_lightProjectionMatrix;
             if (flags & IRenderDelegate::kViewMatrix)
                 m *= m_lightViewMatrix;
         }
-        m.scale(model->scaleFactor());
         if (flags & IRenderDelegate::kInverseMatrix)
             m = m.inverted();
         if (flags & IRenderDelegate::kTransposeMatrix)
@@ -353,7 +356,7 @@ public:
             const QByteArray &bytes = file.readAll();
             file.close();
             qDebug("Loaded a shader: %s", qPrintable(path));
-            return new(std::nothrow) internal::String(bytes);
+            return new(std::nothrow) internal::String("#version 120\n" + bytes);
         }
         else {
             qWarning("Failed loading a shader: %s", qPrintable(path));
@@ -465,6 +468,7 @@ private:
         }
         PrivateContext *privateContext = static_cast<PrivateContext *>(context);
         if (privateContext && privateContext->textureCache.contains(path)) {
+            qWarning("Hit the texture from cache: %s", qPrintable(path));
             setTextureID(privateContext->textureCache[path], isToon, texture);
             return true;
         }
@@ -504,12 +508,6 @@ private:
                 qWarning("Loading texture %s cannot decode", qPrintable(info.absoluteFilePath()));
                 return false;
             }
-        }
-        /* スフィアテクスチャの場合一旦反転する */
-        if (path.endsWith(".sph") || path.endsWith(".spa")) {
-            QTransform transform;
-            transform.scale(1, -1);
-            image = image.transformed(transform);
         }
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
                 | QGLContext::InvertedYBindOption
