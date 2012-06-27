@@ -79,8 +79,8 @@ public:
     {
 #ifdef VPVL2_LINK_QT
         initializeGLFunctions();
-        m_program = glCreateProgram();
 #endif
+        m_program = glCreateProgram();
     }
     virtual ~BaseShaderProgram() {
         if (m_program) {
