@@ -57,14 +57,14 @@ class AssetRenderEngine::Program : public ObjectProgram
 public:
     Program(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_colorAttributeLocation(0),
+          m_modelMatrixUniformLocation(0),
+          m_viewProjectionMatrixUniformLocation(0),
           m_cameraPositionUniformLocation(0),
           m_materialColorUniformLocation(0),
           m_materialDiffuseUniformLocation(0),
           m_materialSpecularUniformLocation(0),
           m_materialShininessUniformLocation(0),
           m_hasSubTextureUniformLocation(0),
-          m_hasColorVertexUniformLocation(0),
           m_isMainSphereMapUniformLocation(0),
           m_isSubSphereMapUniformLocation(0),
           m_isMainAdditiveUniformLocation(0),
@@ -73,14 +73,14 @@ public:
     {
     }
     ~Program() {
-        m_colorAttributeLocation = 0;
         m_cameraPositionUniformLocation = 0;
+        m_modelMatrixUniformLocation = 0;
+        m_viewProjectionMatrixUniformLocation = 0;
         m_materialColorUniformLocation = 0;
         m_materialDiffuseUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
         m_materialShininessUniformLocation = 0;
         m_hasSubTextureUniformLocation = 0;
-        m_hasColorVertexUniformLocation = 0;
         m_isMainSphereMapUniformLocation = 0;
         m_isSubSphereMapUniformLocation = 0;
         m_isMainAdditiveUniformLocation = 0;
@@ -88,15 +88,14 @@ public:
         m_subTextureUniformLocation = 0;
     }
 
-    void setColor(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_colorAttributeLocation);
-        glVertexAttribPointer(m_colorAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
     void setCameraPosition(const Vector3 &value) {
         glUniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
-    void setHasColor(bool value) {
-        glUniform1i(m_hasColorVertexUniformLocation, value ? 1 : 0);
+    void setModelMatrix(const Scalar *value) {
+        glUniformMatrix4fv(m_modelMatrixUniformLocation, 1, GL_FALSE, value);
+    }
+    void setViewProjectionMatrix(const Scalar *value) {
+        glUniformMatrix4fv(m_viewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialColor(const Color &value) {
         glUniform3fv(m_materialColorUniformLocation, 1, value);
@@ -137,8 +136,9 @@ public:
 protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
-        m_colorAttributeLocation = glGetAttribLocation(m_program, "inColor");
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
+        m_modelMatrixUniformLocation = glGetUniformLocation(m_program, "modelMatrix");
+        m_viewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "viewProjectionMatrix");
         m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
         m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
@@ -148,12 +148,12 @@ protected:
         m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
         m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
         m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
-        m_hasColorVertexUniformLocation = glGetUniformLocation(m_program, "hasColorVertex");
         m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
     }
 
 private:
-    GLuint m_colorAttributeLocation;
+    GLuint m_modelMatrixUniformLocation;
+    GLuint m_viewProjectionMatrixUniformLocation;
     GLuint m_cameraPositionUniformLocation;
     GLuint m_normalMatrixUniformLocation;
     GLuint m_materialColorUniformLocation;
@@ -161,7 +161,6 @@ private:
     GLuint m_materialSpecularUniformLocation;
     GLuint m_materialShininessUniformLocation;
     GLuint m_hasSubTextureUniformLocation;
-    GLuint m_hasColorVertexUniformLocation;
     GLuint m_isMainSphereMapUniformLocation;
     GLuint m_isSubSphereMapUniformLocation;
     GLuint m_isMainAdditiveUniformLocation;
@@ -175,7 +174,6 @@ struct AssetVertex
     vpvl::Vector4 position;
     vpvl::Vector3 normal;
     vpvl::Vector3 texcoord;
-    vpvl::Color color;
 };
 struct AssetVBO
 {
@@ -432,9 +430,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
         const aiVector3D *vertices = mesh->mVertices;
         const aiVector3D *normals = mesh->mNormals;
         const bool hasNormals = mesh->HasNormals();
-        const bool hasColors = mesh->HasVertexColors(0);
         const bool hasTexCoords = mesh->HasTextureCoords(0);
-        const aiColor4D *colors = hasColors ? mesh->mColors[0] : 0;
         const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
         AssetVertices &assetVertices = m_context->vertices[mesh];
         AssetIndices &indices = m_context->indices[mesh];
@@ -445,14 +441,6 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int k = 0; k < nindices; k++) {
                 int vertexIndex = face.mIndices[k];
-                if (hasColors) {
-                    const aiColor4D &c = colors[vertexIndex];
-                    assetVertex.color.setValue(c.r, c.g, c.b, c.a);
-                }
-                else {
-                    assetVertex.color.setZero();
-                    assetVertex.color.setW(1.0f);
-                }
                 if (hasTexCoords) {
                     const aiVector3D &p = texcoords[vertexIndex];
                     assetVertex.texcoord.setValue(p.x, p.y, 0.0f);
@@ -596,17 +584,15 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     const GLvoid *vertexPtr = 0;
     const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
     const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
-    const GLvoid *colorPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position));
     const unsigned int nmeshes = node->mNumMeshes;
     float matrix4x4[16];
     Program *program = m_context->assetPrograms[node];
     program->bind();
     m_delegate->getMatrix(matrix4x4, m_model,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
+                          IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kCameraMatrix);
-    program->setModelViewProjectionMatrix(matrix4x4);
+    program->setViewProjectionMatrix(matrix4x4);
     m_delegate->getMatrix(matrix4x4, m_model,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
@@ -615,9 +601,8 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     program->setLightViewProjectionMatrix(matrix4x4);
     m_delegate->getMatrix(matrix4x4, m_model,
                           IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kCameraMatrix);
-    program->setNormalMatrix(matrix4x4);
+    program->setModelMatrix(matrix4x4);
     const Scene::ILight *light = m_scene->light();
     program->setLightColor(light->color());
     program->setLightDirection(light->direction());
@@ -632,8 +617,6 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         program->setPosition(vertexPtr, stride);
         program->setNormal(normalPtr, stride);
         program->setTexCoord(texcoordPtr, stride);
-        program->setColor(colorPtr, stride);
-        program->setHasColor(mesh->HasVertexColors(0));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     }

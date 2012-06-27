@@ -1,6 +1,7 @@
 /* asset/model.vsh */
 invariant gl_Position;
-uniform mat4 modelViewProjectionMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 viewProjectionMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialDiffuse;
@@ -29,18 +30,18 @@ vec2 makeSphereMap(vec3 normal) {
 }
 
 void main() {
-    vec3 view = normalize(normalMatrix * inPosition);
-    vec3 normal = normalize(normalMatrix * inNormal);
-    vec4 position = vec4(inPosition, kOne);
+    vec4 position = modelMatrix * vec4(inPosition, kOne);
+    vec4 normal4 = modelMatrix * vec4(inNormal, kZero);
+    vec3 normal = normal4.xyz;
     float ldotn = max(dot(normal, -lightDirection), 0.0);
     vec4 color = vec4(materialColor + ldotn * materialDiffuse.rgb, materialDiffuse.a);
-    outEyeView = cameraPosition - inPosition;
-    outNormal = inNormal;
+    outEyeView = cameraPosition - position.xyz;
+    outNormal = normal;
     outColor = max(min(color, kOne4), kZero4);
     outTexCoord.xy = isMainSphereMap ? makeSphereMap(normal) : inTexCoord;
     outTexCoord.zw = isSubSphereMap ? makeSphereMap(normal) : inTexCoord;
     if (hasDepthTexture)
         outShadowCoord = lightViewProjectionMatrix * position;
-    gl_Position = modelViewProjectionMatrix * position;
+    gl_Position = viewProjectionMatrix * position;
 }
 

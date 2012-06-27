@@ -616,6 +616,7 @@ public:
                     }
                 }
                 m *= shadowMatrix;
+                m.scale(model->scaleFactor());
             }
         }
         else if (flags & IRenderDelegate::kCameraMatrix) {
@@ -634,17 +635,19 @@ public:
                         worldMatrix.data()[i] = matrix[i];
                     m *= worldMatrix;
                 }
+                m.scale(model->scaleFactor());
             }
         }
         else if (flags & IRenderDelegate::kLightMatrix) {
-            if (flags & IRenderDelegate::kWorldMatrix)
+            if (flags & IRenderDelegate::kWorldMatrix) {
                 m *= m_lightWorldMatrix;
+                m.scale(model->scaleFactor());
+            }
             if (flags & IRenderDelegate::kProjectionMatrix)
                 m *= m_lightProjectionMatrix;
             if (flags & IRenderDelegate::kViewMatrix)
                 m *= m_lightViewMatrix;
         }
-        m.scale(model->scaleFactor());
         if (flags & IRenderDelegate::kInverseMatrix)
             m = m.inverted();
         if (flags & IRenderDelegate::kTransposeMatrix)

@@ -30,7 +30,6 @@ vec2 makeSphereMap(const vec3 normal) {
 
 void main() {
     vec4 position = vec4(inPosition, kOne);
-    vec3 view = normalize(normalMatrix * inPosition);
     vec3 normal = normalMatrix * inNormal;
     outEyeView = cameraPosition - inPosition;
     outNormal = inNormal;
