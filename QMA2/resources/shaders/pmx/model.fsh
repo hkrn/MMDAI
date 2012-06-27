@@ -26,7 +26,6 @@ varying vec4 outShadowCoord;
 varying vec4 outUVA1;
 varying vec3 outEyeView;
 varying vec3 outNormal;
-varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
@@ -46,7 +45,6 @@ void main() {
         textureColor = texture2D(mainTexture, outTexCoord.xy);
         textureColor.rgb *= mainTextureBlend.rgb * alpha + (1.0 - alpha);
     }
-    color.rgb *= textureColor.rgb;
     if (hasSphereTexture) {
         if (isSPHTexture)
             textureColor.rgb *= texture2D(sphereTexture, outTexCoord.zw).rgb;
@@ -56,6 +54,7 @@ void main() {
             textureColor.rgb *= texture2D(sphereTexture, outUVA1.xy).rgb;
         textureColor.rgb *= sphereTextureBlend.rgb;
     }
+    color.rgb *= textureColor.rgb;
     if (useToon) {
         if (hasToonTexture) {
             const vec2 kZero2 = vec2(kZero, kZero);

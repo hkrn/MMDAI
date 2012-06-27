@@ -35,7 +35,7 @@ void main() {
     outNormal = inNormal;
     outColor = max(min(materialColor, kOne4), kZero4);
     outTexCoord.xy = inTexCoord;
-    outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : inTexCoord;
+    outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : inToonCoord;
     outUVA1 = inUVA1;
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * position;
