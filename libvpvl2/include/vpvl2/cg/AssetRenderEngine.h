@@ -105,6 +105,7 @@ private:
     void renderModel(Effect::ScriptOrderType type);
     static void handleError(CGcontext context, CGerror error, void *data);
 
+    typedef std::map<std::string, GLuint> Textures;
     struct AssetVertex {
         AssetVertex() {}
         vpvl2::Vector4 position;

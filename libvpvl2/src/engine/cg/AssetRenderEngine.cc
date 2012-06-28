@@ -110,14 +110,21 @@ AssetRenderEngine::~AssetRenderEngine()
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             if (found != AI_SUCCESS)
                 break;
+            texture = texturePath.data;
             if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                textureID = m_textures[subTexture];
-                glDeleteTextures(1, &textureID);
-                m_textures.erase(subTexture);
+                Textures::const_iterator sub = m_textures.find(subTexture);
+                if (sub != m_textures.end()) {
+                    textureID = sub->second;
+                    glDeleteTextures(1, &textureID);
+                    m_textures.erase(subTexture);
+                }
             }
-            textureID = m_textures[mainTexture];
-            glDeleteTextures(1, &textureID);
-            m_textures.erase(mainTexture);
+            Textures::const_iterator main = m_textures.find(mainTexture);
+            if (main != m_textures.end()) {
+                textureID = main->second;
+                glDeleteTextures(1, &textureID);
+                m_textures.erase(mainTexture);
+            }
             textureIndex++;
         }
     }

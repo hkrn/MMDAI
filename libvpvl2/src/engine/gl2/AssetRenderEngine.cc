@@ -186,10 +186,11 @@ typedef btAlignedObjectArray<uint32_t> AssetIndices;
 class AssetRenderEngine::PrivateContext
 {
 public:
+    typedef std::map<std::string, GLuint> Textures;
     PrivateContext() : cullFaceState(true) {}
     virtual ~PrivateContext() {}
 
-    std::map<std::string, GLuint> textures;
+    Textures textures;
     std::map<const struct aiMesh *, AssetVertices> vertices;
     std::map<const struct aiMesh *, AssetIndices> indices;
     std::map<const struct aiMesh *, AssetVBO> vbo;
@@ -257,14 +258,21 @@ AssetRenderEngine::~AssetRenderEngine()
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             if (found != AI_SUCCESS)
                 break;
+            texture = texturePath.data;
             if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                textureID = m_context->textures[subTexture];
-                glDeleteTextures(1, &textureID);
-                m_context->textures.erase(subTexture);
+                PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
+                if (sub != m_context->textures.end()) {
+                    textureID = sub->second;
+                    glDeleteTextures(1, &textureID);
+                    m_context->textures.erase(subTexture);
+                }
             }
-            textureID = m_context->textures[mainTexture];
-            glDeleteTextures(1, &textureID);
-            m_context->textures.erase(mainTexture);
+            PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
+            if (main != m_context->textures.end()) {
+                textureID = main->second;
+                glDeleteTextures(1, &textureID);
+                m_context->textures.erase(mainTexture);
+            }
             textureIndex++;
         }
     }
