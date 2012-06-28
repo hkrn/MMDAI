@@ -156,20 +156,15 @@ class ShadowProgram : public ObjectProgram
 public:
     ShadowProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_shadowMatrixUniformLocation(0),
           m_boneIndicesAndWeightsAttributeLocation(0),
           m_boneMatricesUniformLocation(0)
     {
     }
     ~ShadowProgram() {
-        m_shadowMatrixUniformLocation = 0;
         m_boneIndicesAndWeightsAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
     }
 
-    void setShadowMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_shadowMatrixUniformLocation, 1, GL_FALSE, value);
-    }
     void setBoneIndicesAndWeights(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_boneIndicesAndWeightsAttributeLocation);
         glVertexAttribPointer(m_boneIndicesAndWeightsAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -181,13 +176,11 @@ public:
 protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
-        m_shadowMatrixUniformLocation = glGetUniformLocation(m_program, "shadowMatrix");
         m_boneIndicesAndWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneIndicesAndWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
     }
 
 private:
-    GLuint m_shadowMatrixUniformLocation;
     GLuint m_boneIndicesAndWeightsAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
 };
