@@ -1431,6 +1431,11 @@ protected:
                 engine->renderZPlot();
             }
             m_fbo->release();
+#ifndef VPVL2_ENABLE_NVIDIA_CG
+            lightWorldMatrix.scale(0.5);
+            lightWorldMatrix.translate(1, 1, 1);
+            m_delegate->setLightMatrices(lightWorldMatrix, lightViewMatrix, lightProjectionMatrix);
+#endif
         }
         {
             glViewport(0, 0, width(), height());
