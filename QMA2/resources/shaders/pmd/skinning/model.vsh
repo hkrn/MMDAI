@@ -3,11 +3,8 @@ invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
-uniform vec4 materialDiffuse;
+uniform vec4 materialColor;
 uniform vec3 cameraPosition;
-uniform vec3 lightColor;
-uniform vec3 lightDirection;
-uniform vec3 materialAmbient;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
 uniform bool hasDepthTexture;
@@ -20,7 +17,6 @@ varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
 varying vec3 outEyeView;
 varying vec3 outNormal;
-varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
@@ -37,27 +33,19 @@ vec4 performLinearBlendSkinning(const vec4 position) {
     return weight * (matrix1 * position) + (1.0 - weight) * (matrix2 * position);
 }
 
-vec2 makeSphereMap(const vec3 position, const vec3 normal) {
-    const float kTwo = 2.0;
+vec2 makeSphereMap(const vec3 normal) {
     const float kHalf = 0.5;
-    vec3 R = reflect(position, normal);
-    R.z += kOne;
-    float M = kTwo * sqrt(dot(R, R));
-    return R.xy / M + kHalf;
+    return vec2(normal.x * kHalf + kHalf, normal.y * -kHalf + kHalf);
 }
 
 void main() {
     vec4 position = performLinearBlendSkinning(vec4(inPosition, kOne));
-    vec3 normal = performLinearBlendSkinning(vec4(inNormal, kZero)).xyz;
-    vec3 view = normalize(normalMatrix * position.xyz);
-    vec4 color = vec4(materialAmbient, materialDiffuse.a);
-    color.rgb += lightColor * materialDiffuse.rgb;
+    vec3 normal = normalize(performLinearBlendSkinning(vec4(inNormal, kZero)).xyz);
     outEyeView = cameraPosition - inPosition.xyz;
-    outNormal = inNormal;
-    outColor = max(min(color, kOne4), kZero4);
-    outTexCoord.xy = isMainSphereMap ? makeSphereMap(view, normal) : inTexCoord;
-    outTexCoord.zw = isSubSphereMap ? makeSphereMap(view, normal) : inTexCoord;
-    outToonCoord = inToonCoord;
+    outNormal = normal;
+    outColor = max(min(materialColor, kOne4), kZero4);
+    outTexCoord.xy = isMainSphereMap ? makeSphereMap(normal) : inTexCoord;
+    outTexCoord.zw = isSubSphereMap ? makeSphereMap(normal) : inTexCoord;
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * position;
     }

@@ -17,7 +17,6 @@ varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
 varying vec3 outEyeView;
 varying vec3 outNormal;
-varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
@@ -36,7 +35,6 @@ void main() {
     outColor = max(min(materialColor, kOne4), kZero4);
     outTexCoord.xy = isMainSphereMap ? makeSphereMap(normal) : inTexCoord;
     outTexCoord.zw = isSubSphereMap ? makeSphereMap(normal) : inTexCoord;
-    outToonCoord = inToonCoord;
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * position;
     }

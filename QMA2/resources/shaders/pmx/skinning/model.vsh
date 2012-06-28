@@ -3,25 +3,20 @@ invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
-uniform vec4 materialDiffuse;
+uniform vec4 materialColor;
 uniform vec3 cameraPosition;
-uniform vec3 lightColor;
-uniform vec3 lightDirection;
-uniform vec3 materialAmbient;
 uniform bool hasSphereTexture;
 uniform bool hasDepthTexture;
 attribute vec4 inPosition;
 attribute vec4 inUVA1;
 attribute vec3 inNormal;
 attribute vec2 inTexCoord;
-attribute vec2 inToonCoord;
 varying vec4 outColor;
 varying vec4 outTexCoord;
 varying vec4 outShadowCoord;
 varying vec4 outUVA1;
 varying vec3 outEyeView;
 varying vec3 outNormal;
-varying vec2 outToonCoord;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
@@ -63,29 +58,21 @@ vec4 performSkinning(const vec3 position3, const int type) {
     }
 }
 
-vec2 makeSphereMap(const vec3 position, const vec3 normal) {
-    const float kTwo = 2.0;
+vec2 makeSphereMap(const vec3 normal) {
     const float kHalf = 0.5;
-    vec3 R = reflect(position, normal);
-    R.z += kOne;
-    float M = kTwo * sqrt(dot(R, R));
-    return R.xy / M + kHalf;
+    return vec2(normal.x * kHalf + kHalf, normal.y * -kHalf + kHalf);
 }
 
 void main() {
     int type = int(inPosition.w);
     vec4 position = performSkinning(inPosition.xyz, type);
-    vec3 normal = performSkinning(inNormal, type).xyz;
+    vec3 normal = normalize(performSkinning(inNormal, type).xyz);
     vec3 position3 = position.xyz;
-    vec3 view = normalize(normalMatrix * position3);
-    vec4 color = vec4(materialAmbient, materialDiffuse.a);
-    color.rgb += lightColor * materialDiffuse.rgb;
     outEyeView = cameraPosition - position3;
     outNormal = inNormal;
-    outColor = max(min(color, kOne4), kZero4);
+    outColor = max(min(materialColor, kOne4), kZero4);
     outTexCoord.xy = inTexCoord;
-    outTexCoord.zw = hasSphereTexture ? makeSphereMap(view, normal) : inTexCoord;
-    outToonCoord = inToonCoord;
+    outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : inTexCoord;
     outUVA1 = inUVA1;
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * position;
