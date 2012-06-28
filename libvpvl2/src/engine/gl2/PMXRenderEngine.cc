@@ -621,8 +621,9 @@ bool PMXRenderEngine::upload(const IString *dir)
     const Array<pmx::Material *> &materials = m_model->materials();
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
-    GLuint textureID;
+    GLuint textureID = 0;
     MaterialTextures *materialPrivates = m_context->materials = new MaterialTextures[nmaterials];
+    texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         MaterialTextures &materialPrivate = materialPrivates[i];
@@ -632,12 +633,12 @@ bool PMXRenderEngine::upload(const IString *dir)
         const IString *path = 0;
         path = material->mainTexture();
         if (path && m_delegate->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
         }
         path = material->sphereTexture();
         if (path && m_delegate->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.sphereTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialPrivate.sphereTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
         }
         if (material->isSharedToonTextureUsed()) {
@@ -645,7 +646,7 @@ bool PMXRenderEngine::upload(const IString *dir)
             snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(buf));
             if (m_delegate->uploadTexture(s, 0, IRenderDelegate::kToonTexture, texture, context)) {
-                materialPrivate.toonTextureID = textureID = *static_cast<GLuint *>(texture.object);
+                materialPrivate.toonTextureID = textureID = *static_cast<const GLuint *>(texture.object);
                 log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a shared toon texture (ID=%d)", textureID);
             }
             delete s;
@@ -653,7 +654,7 @@ bool PMXRenderEngine::upload(const IString *dir)
         else {
             path = material->toonTexture();
             if (path && m_delegate->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
-                materialPrivate.toonTextureID = textureID = *static_cast<GLuint *>(texture.object);
+                materialPrivate.toonTextureID = textureID = *static_cast<const GLuint *>(texture.object);
                 log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a static toon texture (ID=%d)", textureID);
             }
         }

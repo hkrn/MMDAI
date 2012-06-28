@@ -147,21 +147,22 @@ bool PMXRenderEngine::upload(const IString *dir)
     const Array<pmx::Material *> &materials = m_model->materials();
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
-    GLuint textureID;
+    GLuint textureID = 0;
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
     m_effect.subsetCount.setValue(nmaterials);
+    texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
         path = material->mainTexture();
         if (path && m_delegate->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
         }
         path = material->sphereTexture();
         if (path && m_delegate->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.sphereTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialPrivate.sphereTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
         }
         if (material->isSharedToonTextureUsed()) {

@@ -535,8 +535,13 @@ private:
 class Delegate : public IRenderDelegate
 {
 public:
+    struct TextureCache {
+        int width;
+        int height;
+        GLuint id;
+    };
     struct PrivateContext {
-        QHash<QString, Texture> textureCache;
+        QHash<QString, TextureCache> textureCache;
     };
     Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context)
         : m_settings(settings),
@@ -854,15 +859,17 @@ private:
         const QDir d(static_cast<const String *>(dir)->value());
         return d.absoluteFilePath(static_cast<const String *>(name)->value());
     }
-    static void setTextureID(const Texture &cache, bool isToon, Texture &output) {
-        output = cache;
+    static void setTextureID(const TextureCache &cache, bool isToon, Texture &output) {
+        output.width = cache.width;
+        output.height = cache.height;
+        *const_cast<GLuint *>(static_cast<const GLuint *>(output.object)) = cache.id;
         if (!isToon) {
-            GLuint textureID = *static_cast<GLuint *>(output.object);
+            GLuint textureID = *static_cast<const GLuint *>(output.object);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
-    static void addTextureCache(PrivateContext *context, const QString &path, const Texture &texture) {
+    static void addTextureCache(PrivateContext *context, const QString &path, const TextureCache &texture) {
         if (context)
             context->textureCache.insert(path, texture);
     }
@@ -890,8 +897,9 @@ private:
                     qDebug("Cannot parse a DDS texture %s", qPrintable(path));
                     return false;
                 }
-                setTextureID(texture, isToon, texture);
-                addTextureCache(privateContext, path, texture);
+                TextureCache cache;
+                setTextureID(cache, isToon, texture);
+                addTextureCache(privateContext, path, cache);
                 return true;
             }
             else {
@@ -907,12 +915,12 @@ private:
             if (mipmap)
                 options |= QGLContext::MipmapBindOption;
             GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
-            m_textures.insert(textureID, textureID);
-            texture.width = image.width();
-            texture.height = image.height();
-            texture.object = &m_textures[textureID];
-            setTextureID(texture, isToon, texture);
-            addTextureCache(privateContext, path, texture);
+            TextureCache cache;
+            cache.width = image.width();
+            cache.height = image.height();
+            cache.id = textureID;
+            setTextureID(cache, isToon, texture);
+            addTextureCache(privateContext, path, cache);
             qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
                    textureID, image.width(), image.height(), qPrintable(path));
             return textureID != 0;
@@ -943,7 +951,6 @@ private:
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
-    QHash<GLuint, GLuint> m_textures;
 };
 } /* namespace anonymous */
 

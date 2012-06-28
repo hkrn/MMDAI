@@ -113,7 +113,7 @@ public:
 
         int width;
         int height;
-        void *object;
+        const void *object;
     };
 
     virtual ~IRenderDelegate() {}

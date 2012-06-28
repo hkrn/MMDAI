@@ -151,9 +151,10 @@ bool PMDRenderEngine::upload(const IString *dir)
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
-    GLuint textureID;
+    GLuint textureID = 0;
     MaterialContext *materialContexts = m_materialContexts = new MaterialContext[nmaterials];
     m_effect.subsetCount.setValue(nmaterials);
+    texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         IString *primary = m_delegate->toUnicode(material->mainTextureName());
@@ -162,11 +163,11 @@ bool PMDRenderEngine::upload(const IString *dir)
         materialContext.mainTextureID = 0;
         materialContext.subTextureID = 0;
         if (m_delegate->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialContext.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialContext.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
         if (m_delegate->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialContext.subTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialContext.subTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
         delete primary;

@@ -699,13 +699,14 @@ public:
         const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
         IRenderDelegate::Texture texture;
         GLuint textureID = 0;
+        texture.object = &textureID;
         if (cgIsAnnotation(resourceName)) {
             const char *name = cgGetStringAnnotationValue(resourceName);
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t*>(name));
             if (isMimapEnabled(parameter))
                 flags |= IRenderDelegate::kGenerateTextureMipmap;
             if (m_delegate->uploadTexture(s, dir, flags, texture, 0)) {
-                textureID = *static_cast<GLuint *>(texture.object);
+                textureID = *static_cast<const GLuint *>(texture.object);
                 cgGLSetTextureParameter(sampler, textureID);
                 cgSetSamplerState(sampler);
                 Texture t(texture.width, texture.height, 0, textureID);

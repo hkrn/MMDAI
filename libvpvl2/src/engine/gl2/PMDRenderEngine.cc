@@ -548,9 +548,10 @@ bool PMDRenderEngine::upload(const IString *dir)
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
-    GLuint textureID;
+    GLuint textureID = 0;
     PMDModelMaterialPrivate *materialPrivates = m_context->materials = new PMDModelMaterialPrivate[nmaterials];
     bool hasSingleSphere = false, hasMultipleSphere = false;
+    texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         IString *primary = m_delegate->toUnicode(material->mainTextureName());
@@ -559,11 +560,11 @@ bool PMDRenderEngine::upload(const IString *dir)
         materialPrivate.mainTextureID = 0;
         materialPrivate.subTextureID = 0;
         if (m_delegate->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
         }
         if (m_delegate->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.subTextureID = textureID = *static_cast<GLuint *>(texture.object);
+            materialPrivate.subTextureID = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
         }
         delete primary;
@@ -581,7 +582,7 @@ bool PMDRenderEngine::upload(const IString *dir)
     m_context->hasMultipleSphereMap = hasMultipleSphere;
     IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
     if (m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context)) {
-        m_context->toonTextures[0] = textureID = *static_cast<GLuint *>(texture.object);
+        m_context->toonTextures[0] = textureID = *static_cast<const GLuint *>(texture.object);
         log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
     delete s;
@@ -590,7 +591,7 @@ bool PMDRenderEngine::upload(const IString *dir)
         const uint8_t *name = model->toonTexture(i);
         s = m_delegate->toUnicode(name);
         if (m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context)) {
-            m_context->toonTextures[i + 1] = textureID = *static_cast<GLuint *>(texture.object);
+            m_context->toonTextures[i + 1] = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
         delete s;
