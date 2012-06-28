@@ -15,8 +15,9 @@ uniform sampler2D depthTexture;
 uniform vec4 mainTextureBlend;
 uniform vec4 sphereTextureBlend;
 uniform vec4 toonTextureBlend;
-uniform vec3 lightDirection;
+uniform vec4 materialColor;
 uniform vec3 materialSpecular;
+uniform vec3 lightDirection;
 uniform vec2 depthTextureSize;
 uniform float materialShininess;
 uniform float opacity;
@@ -36,10 +37,8 @@ float unpackDepth(const vec4 value) {
     return depth;
 }
 
-void main() {
-    vec4 color = outColor;
+vec4 applyTexture(const vec4 color) {
     vec4 textureColor = vec4(1.0, 1.0, 1.0, 1.0);
-    vec3 normal = normalize(outNormal);
     if (hasMainTexture) {
         float alpha = mainTextureBlend.a;
         textureColor = texture2D(mainTexture, outTexCoord.xy);
@@ -54,7 +53,12 @@ void main() {
             textureColor.rgb *= texture2D(sphereTexture, outUVA1.xy).rgb;
         textureColor.rgb *= sphereTextureBlend.rgb;
     }
-    color.rgb *= textureColor.rgb;
+    return color * textureColor;
+}
+
+void main() {
+    vec4 color = applyTexture(outColor);
+    vec3 normal = normalize(outNormal);
     if (useToon) {
         if (hasToonTexture) {
             const vec2 kZero2 = vec2(kZero, kZero);
@@ -91,15 +95,17 @@ void main() {
                     if (depth < shadowCoord.z) shadow += kDelta;
                     depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx1, dy1)));
                     if (depth < shadowCoord.z) shadow += kDelta;
-                    vec3 toon = texture2D(toonTexture, kToonColorCoord).rgb;
-                    color.rgb *= toon + (toonColor - toon) * (kOne - shadow);
+                    vec4 shadowColor = applyTexture(materialColor);
+                    shadowColor.rgb *= toonColor;
+                    color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (1.0 - shadow);
                 }
                 else {
                     const float kDepthThreshold = 0.00002;
                     float depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy)) + kDepthThreshold;
                     if (depth < shadowCoord.z) {
-                        vec3 toon = texture2D(toonTexture, kToonColorCoord).rgb;
-                        color.rgb *= min(toonColor, toon);
+                        vec4 shadow = applyTexture(materialColor);
+                        shadow.rgb *= toonColor;
+                        color.rgb = shadow.rgb + (color.rgb - shadow.rgb) * (1.0 - depth);
                     }
                 }
             }
@@ -114,7 +120,7 @@ void main() {
     vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
     float hdotn = max(dot(halfVector, normal), kZero);
     color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
-    color.a *= textureColor.a * opacity;
+    color.a *= opacity;
     gl_FragColor = color;
 }
 
