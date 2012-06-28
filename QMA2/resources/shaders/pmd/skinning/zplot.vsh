@@ -12,7 +12,9 @@ vec4 performLinearBlendSkinning(const vec4 position) {
     mat4 matrix1 = boneMatrices[int(inBoneIndicesAndWeights.x)];
     mat4 matrix2 = boneMatrices[int(inBoneIndicesAndWeights.y)];
     float weight = inBoneIndicesAndWeights.z;
-    return weight * (matrix1 * position) + (1.0 - weight) * (matrix2 * position);
+    vec4 p1 = matrix2 * position;
+    vec4 p2 = matrix1 * position;
+    return p1 + (p2 - p1) * weight;
 }
 
 void main() {

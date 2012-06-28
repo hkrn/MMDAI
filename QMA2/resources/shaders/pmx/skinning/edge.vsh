@@ -36,7 +36,9 @@ vec4 performSkinning(const vec3 position3, const int type) {
         mat4 matrix1 = boneMatrices[int(inBoneIndices.x)];
         mat4 matrix2 = boneMatrices[int(inBoneIndices.y)];
         float weight = inBoneWeights.x;
-        return weight * (matrix1 * position) + (1.0 - weight) * (matrix2 * position);
+        vec4 p1 = matrix2 * position;
+        vec4 p2 = matrix1 * position;
+        return p1 + (p2 - p1) * weight;
     }
     else if (type == kBdef1) {
         mat4 matrix = boneMatrices[int(inBoneIndices.x)];
