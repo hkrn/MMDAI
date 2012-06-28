@@ -117,6 +117,7 @@ public:
           m_colorUniformLocation(0),
           m_edgeSizeUniformLocation(0),
           m_opacityUniformLocation(0),
+          m_edgeAttributeLocation(0),
           m_boneIndicesAttributeLocation(0),
           m_boneWeightsAttributeLocation(0),
           m_boneMatricesUniformLocation(0)
@@ -126,6 +127,7 @@ public:
         m_colorUniformLocation = 0;
         m_edgeSizeUniformLocation = 0;
         m_opacityUniformLocation = 0;
+        m_edgeAttributeLocation = 0;
         m_boneIndicesAttributeLocation = 0;
         m_boneWeightsAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
@@ -139,6 +141,10 @@ public:
     }
     void setOpacity(const Scalar &value) {
         glUniform1f(m_opacityUniformLocation, value);
+    }
+    void setVertexEdgeSize(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_edgeAttributeLocation);
+        glVertexAttribPointer(m_edgeAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_boneIndicesAttributeLocation);
@@ -158,6 +164,7 @@ protected:
         m_colorUniformLocation = glGetUniformLocation(m_program, "color");
         m_edgeSizeUniformLocation = glGetUniformLocation(m_program, "edgeSize");
         m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
+        m_edgeAttributeLocation = glGetAttribLocation(m_program, "inEdgeSize");
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
@@ -167,6 +174,7 @@ private:
     GLuint m_colorUniformLocation;
     GLuint m_edgeSizeUniformLocation;
     GLuint m_opacityUniformLocation;
+    GLuint m_edgeAttributeLocation;
     GLuint m_boneIndicesAttributeLocation;
     GLuint m_boneWeightsAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
@@ -858,6 +866,11 @@ void PMXRenderEngine::renderEdge()
             boneStride = m_model->strideSize(pmx::Model::kVertexStride);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
+    if (isVertexShaderSkinning) {
+        offset = pmx::Model::strideOffset(pmx::Model::kEdgeSizeStride);
+        size   = pmx::Model::strideSize(pmx::Model::kEdgeSizeStride);
+        edgeProgram->setVertexEdgeSize(reinterpret_cast<const GLvoid *>(offset), size);
+    }
     offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glCullFace(GL_FRONT);
     for (int i = 0; i < nmaterials; i++) {

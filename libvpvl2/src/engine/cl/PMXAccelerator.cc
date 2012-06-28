@@ -304,6 +304,7 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
         return;
     }
+    // FIXME: support edge with material
     size_t offsetEdgeSize = model->strideOffset(pmx::Model::kEdgeSizeStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeSize), &offsetEdgeSize);
     if (err != CL_SUCCESS) {
