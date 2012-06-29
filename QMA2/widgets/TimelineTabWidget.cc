@@ -350,6 +350,7 @@ void TimelineTabWidget::notifyCurrentTabIndex()
 void TimelineTabWidget::toggleBoneEnable(IModel *model)
 {
     bool value = model ? true : false;
+    m_boneTimeline->treeView()->updateFrozenTreeView();
     m_boneTimeline->setFrameIndexSpinBoxEnable(value);
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(value);
@@ -359,6 +360,7 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
 
 void TimelineTabWidget::toggleMorphEnable(IModel *model)
 {
+    m_morphTimeline->treeView()->updateFrozenTreeView();
     m_morphTimeline->setFrameIndexSpinBoxEnable(model ? true : false);
 }
 

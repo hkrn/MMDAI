@@ -127,6 +127,7 @@ void TimelineTreeView::updateFrozenTreeView()
     int ncolumns = model()->columnCount();
     for (int i = 1; i < ncolumns; i++)
         m_frozenTreeView->setColumnHidden(i, true);
+    updateFrozenTreeViewGeometry();
 }
 
 void TimelineTreeView::updateSectionWidth(int logicalIndex, int newSize, int /* oldSize */)
