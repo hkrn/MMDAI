@@ -165,9 +165,9 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
     size_t offset = 0;
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
-        const int nindices = material->indices();
+        const int nindices = material->indices(), offsetTo = offset + nindices;
         const float edgeSize = material->edgeSize();
-        for (int j = 0; j < nindices; j++) {
+        for (int j = offset; j < offsetTo; j++) {
             const int index = indices[j];
             m_materialEdgeSize[index] = edgeSize;
         }
