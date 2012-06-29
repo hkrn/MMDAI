@@ -1278,7 +1278,8 @@ void SceneLoader::loadProject(const QString &path)
                     model->setEdgeColor(color);
                     model->setEdgeWidth(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
                     model->setPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
-                    model->setOpacity(QString::fromStdString(m_project->modelSetting(model, "opacity")).toFloat());
+                    const std::string &os = m_project->modelSetting(model, "opacity");
+                    model->setOpacity(os.empty() ? 1 : QString::fromStdString(os).toFloat());
                     /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
                     const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV3);
                     rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
