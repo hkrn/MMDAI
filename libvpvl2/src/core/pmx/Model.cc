@@ -326,8 +326,8 @@ void Model::performUpdate(const Vector3 &lightDirection)
             const Material *material = m_materials[i];
             const int nindices = material->indices(), offsetTo = offset + nindices;
             const float materialEdgeSize = material->edgeSize();
-            for (int i = offset; i < offsetTo; i++) {
-                const int index = m_indices[i];
+            for (int j = offset; j < offsetTo; j++) {
+                const int index = m_indices[j];
                 Vertex *vertex = m_vertices[index];
                 SkinnedVertex &v = m_skinnedVertices[index];
                 const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
