@@ -244,6 +244,18 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
     }
 }
 
+void MainWindow::hideEvent(QHideEvent * /* event */)
+{
+    if (!m_videoEncoder || !m_videoEncoder->isRunning())
+        m_sceneWidget->stopAutomaticRendering();
+}
+
+void MainWindow::showEvent(QShowEvent * /* event */)
+{
+    if (!m_videoEncoder || !m_videoEncoder->isRunning())
+        m_sceneWidget->startAutomaticRendering();
+}
+
 void MainWindow::selectModel()
 {
     QAction *action = qobject_cast<QAction *>(sender());

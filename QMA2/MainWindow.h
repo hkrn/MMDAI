@@ -93,6 +93,8 @@ signals:
 protected:
     void closeEvent(QCloseEvent *event);
     void contextMenuEvent(QContextMenuEvent *event);
+    void hideEvent(QHideEvent *event);
+    void showEvent(QShowEvent *event);
 
 private slots:
     void connectSceneLoader();

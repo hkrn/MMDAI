@@ -234,13 +234,16 @@ void SceneWidget::clear()
 
 void SceneWidget::startAutomaticRendering()
 {
-    m_internalTimerID = startTimer(m_interval);
+    if (!m_internalTimerID)
+        m_internalTimerID = startTimer(m_interval);
 }
 
 void SceneWidget::stopAutomaticRendering()
 {
-    killTimer(m_internalTimerID);
-    m_internalTimerID = 0;
+    if (m_internalTimerID) {
+        killTimer(m_internalTimerID);
+        m_internalTimerID = 0;
+    }
 }
 
 void SceneWidget::loadProject(const QString &filename)
