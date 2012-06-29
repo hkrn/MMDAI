@@ -85,7 +85,7 @@ namespace pmx
 
 Vertex::Vertex()
     : m_origin(kZeroV3),
-      m_morphPosition(kZeroV3),
+      m_morphDelta(kZeroV3),
       m_normal(kZeroV3),
       m_texcoord(kZeroV3),
       m_c(kZeroV3),
@@ -107,7 +107,7 @@ Vertex::Vertex()
 Vertex::~Vertex()
 {
     m_origin.setZero();
-    m_morphPosition.setZero();
+    m_morphDelta.setZero();
     m_normal.setZero();
     m_texcoord.setZero();
     m_c.setZero();
@@ -375,7 +375,7 @@ size_t Vertex::estimateSize(const Model::DataInfo &info) const
 
 void Vertex::reset()
 {
-    m_morphPosition.setZero();
+    m_morphDelta.setZero();
     for (int i = 0; i < 4; i++)
         m_morphUVs[i].setZero();
 }
@@ -395,12 +395,12 @@ void Vertex::mergeMorph(const Morph::UV *morph, float weight)
 
 void Vertex::mergeMorph(const Morph::Vertex *morph, float weight)
 {
-    m_morphPosition += morph->position * weight;
+    m_morphDelta += morph->position * weight;
 }
 
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
 {
-    const Vector3 &vertexPosition = m_origin + m_morphPosition;
+    const Vector3 &vertexPosition = m_origin + m_morphDelta;
     switch (m_type) {
     case kBdef1: {
         const Transform &transform = m_bones[0]->localTransform();

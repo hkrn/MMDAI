@@ -343,6 +343,14 @@ void Model::performUpdate(const Vector3 &lightDirection)
             offset += nindices;
         }
     }
+    else {
+        const int nvertices = m_vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            Vertex *vertex = m_vertices[i];
+            SkinnedVertex &v = m_skinnedVertices[i];
+            v.position = vertex->origin() + vertex->delta();
+        }
+    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
@@ -939,7 +947,7 @@ void Model::updateSkinningMesh(SkinningMeshes &meshes) const
     }
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++)
-        m_skinnedVertices[i].position = m_vertices[i]->origin() + m_vertices[i]->position();
+        m_skinnedVertices[i].position = m_vertices[i]->origin() + m_vertices[i]->delta();
 }
 
 void Model::setSkinningEnable(bool value)

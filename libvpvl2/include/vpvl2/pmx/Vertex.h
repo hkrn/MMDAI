@@ -93,7 +93,7 @@ public:
     void performSkinning(Vector3 &position, Vector3 &normal);
 
     const Vector3 &origin() const { return m_origin; }
-    const Vector3 &position() const { return m_morphPosition; }
+    const Vector3 &delta() const { return m_morphDelta; }
     const Vector3 &normal() const { return m_normal; }
     const Vector3 &texcoord() const { return m_texcoord; }
     const Vector4 &uv(int index) const;
@@ -122,7 +122,7 @@ private:
     Vector4 m_originUVs[4];
     Vector4 m_morphUVs[5]; /* TexCoord + UVA1-4 */
     Vector3 m_origin;
-    Vector3 m_morphPosition;
+    Vector3 m_morphDelta;
     Vector3 m_normal;
     Vector3 m_texcoord;
     Vector3 m_c;
