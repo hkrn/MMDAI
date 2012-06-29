@@ -45,7 +45,8 @@ using namespace vpvl2;
 
 MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QWidget(parent),
-    m_morphMotionModel(mmm)
+    m_morphMotionModel(mmm),
+    m_seek(true)
 {
     /* 目(左上) */
     QVBoxLayout *eyeVBoxLayout = new QVBoxLayout();
@@ -225,11 +226,17 @@ void MorphWidget::registerBase(const QComboBox *comboBox)
 
 void MorphWidget::updateMorphWeightValues()
 {
-    /* SceneWidget#seekMotion でモデルのモーフ値が変更済みなので、その値を取り出してスライダーに反映させる */
+    /*
+     * SceneWidget#seekMotion でモデルのモーフ値が変更済みなので、その値を取り出してスライダーに反映させる
+     * また、二重にシークして意図しないモーションの動きが発生することを防ぐために一時的にシークを無効にする
+     * (ボーンタイムラインでシークする時の MorphMotionModel::m_frameIndex が 0 であるため)
+     */
+    m_seek = false;
     updateMorphWeight(m_eyes, m_eyeSlider);
     updateMorphWeight(m_lips, m_lipSlider);
     updateMorphWeight(m_eyeblows, m_eyeblowSlider);
     updateMorphWeight(m_others, m_otherSlider);
+    m_seek = true;
 }
 
 void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
@@ -255,7 +262,7 @@ void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
             const Scalar &newWeight = value / static_cast<Scalar>(kSliderMaximumValue);
             m_morphMotionModel->setWeight(newWeight, morph);
-            m_morphMotionModel->updateModel(m_morphMotionModel->selectedModel());
+            m_morphMotionModel->updateModel(m_morphMotionModel->selectedModel(), m_seek);
         }
     }
 }

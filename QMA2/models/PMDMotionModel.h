@@ -94,7 +94,7 @@ public:
     virtual void commitTransform() = 0;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    void updateModel(vpvl2::IModel *model);
+    void updateModel(vpvl2::IModel *model, bool seek);
     void refreshModel(vpvl2::IModel *model);
     void setActiveUndoStack();
     int maxFrameIndex() const;

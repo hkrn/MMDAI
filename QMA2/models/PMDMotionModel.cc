@@ -234,11 +234,12 @@ void PMDMotionModel::setLightDirection(const Vector3 &value)
     m_lightDirection = value;
 }
 
-void PMDMotionModel::updateModel(IModel *model)
+void PMDMotionModel::updateModel(IModel *model, bool seek)
 {
     if (model) {
         model->performUpdate(m_lightDirection);
-        emit frameIndexDidChange(m_frameIndex, m_frameIndex);
+        if (seek)
+            emit frameIndexDidChange(m_frameIndex, m_frameIndex);
     }
 }
 
@@ -246,7 +247,7 @@ void PMDMotionModel::refreshModel(IModel *model)
 {
     if (model) {
         /* モデルのフレーム移動なしの更新とテーブルモデルの更新両方を含む */
-        updateModel(model);
+        updateModel(model, true);
         setFrameIndexColumnMax(0);
         reset();
         emit motionDidUpdate(model);

@@ -103,6 +103,7 @@ private:
     QPushButton *m_otherRegistButton;
     QPushButton *m_resetAllButton;
     MorphMotionModel *m_morphMotionModel;
+    bool m_seek;
 
     Q_DISABLE_COPY(MorphWidget)
 };

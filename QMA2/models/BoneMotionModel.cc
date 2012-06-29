@@ -1030,7 +1030,7 @@ void BoneMotionModel::resetBone(ResetType type)
             qFatal("Unexpected reset bone type: %d", type);
         }
     }
-    updateModel(m_model);
+    updateModel(m_model, true);
 }
 
 void BoneMotionModel::resetAllBones()
