@@ -190,7 +190,6 @@ class ModelProgram : public ObjectProgram
 public:
     ModelProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_toonTexCoordAttributeLocation(0),
           m_cameraPositionUniformLocation(0),
           m_materialColorUniformLocation(0),
           m_materialSpecularUniformLocation(0),
@@ -208,7 +207,6 @@ public:
     {
     }
     ~ModelProgram() {
-        m_toonTexCoordAttributeLocation = 0;
         m_cameraPositionUniformLocation = 0;
         m_materialColorUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
@@ -225,10 +223,6 @@ public:
         m_boneMatricesUniformLocation = 0;
     }
 
-    void setToonTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_toonTexCoordAttributeLocation);
-        glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
     void setCameraPosition(const Vector3 &value) {
         glUniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
@@ -283,7 +277,6 @@ public:
 protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
-        m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
         m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
@@ -301,7 +294,6 @@ protected:
     }
 
 private:
-    GLuint m_toonTexCoordAttributeLocation;
     GLuint m_cameraPositionUniformLocation;
     GLuint m_materialColorUniformLocation;
     GLuint m_materialSpecularUniformLocation;
@@ -673,9 +665,6 @@ void PMDRenderEngine::renderModel()
     const Scalar &modelOpacity = m_model->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0);
     modelProgram->setOpacity(modelOpacity);
-    modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kToonTextureStride)),
-                                  model->strideSize(PMDModel::kToonTextureStride));
-
     const MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = m_context->materials;
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride),
@@ -858,7 +847,9 @@ void PMDRenderEngine::renderEdge()
         */
     }
     glCullFace(GL_FRONT);
+    glDisable(GL_BLEND);
     glDrawElements(GL_TRIANGLES, model->edgeIndicesCount(), GL_UNSIGNED_SHORT, 0);
+    glEnable(GL_BLEND);
     glCullFace(GL_BACK);
     edgeProgram->unbind();
 }
