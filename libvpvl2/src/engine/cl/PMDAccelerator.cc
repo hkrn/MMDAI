@@ -144,10 +144,10 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
     const int nBoneMatricesSize = nBoneMatricesAllocs * sizeof(float);
     m_boneTransform = new float[nBoneMatricesAllocs];
     const VertexList &vertices = m->vertices();
-    const int nVerticesAlloc = vertices.count();
-    m_boneIndices = new int[nVerticesAlloc * 2];
-    m_boneWeights = new float[nVerticesAlloc];
-    for (int i = 0; i < nVerticesAlloc; i++) {
+    const int nvertices = vertices.count();
+    m_boneIndices = new int[nvertices * 2];
+    m_boneWeights = new float[nvertices];
+    for (int i = 0; i < nvertices; i++) {
         const Vertex *vertex = vertices[i];
         m_boneIndices[i * 2 + 0] = vertex->bone1();
         m_boneIndices[i * 2 + 1] = vertex->bone2();
@@ -158,12 +158,12 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneMatricesBuffer %d", err);
         return;
     }
-    m_boneWeightsBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(float), 0, &err);
+    m_boneWeightsBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneWeightsBuffer: %d", err);
         return;
     }
-    m_boneIndicesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int) * 2, 0, &err);
+    m_boneIndicesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(int) * 2, 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneIndicesBuffer: %d", err);
         return;
@@ -177,6 +177,17 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
                                    0);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
+        return;
+    }
+    cl_command_queue queue = m_context->commandQueue();
+    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int) * 2, m_boneIndices, 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write BoneIndicesBuffer: %d", err);
+        return;
+    }
+    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nvertices * sizeof(float), m_boneWeights, 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneWeightsBuffer: %d", err);
         return;
     }
     m_isBufferAllocated = true;
@@ -208,17 +219,6 @@ void PMDAccelerator::updateModel(pmd::Model *model)
     /* force flushing OpenGL commands to acquire GL objects by OpenCL */
     glFinish();
     clEnqueueAcquireGLObjects(queue, 1, &m_verticesBuffer, 0, 0, 0);
-    int nvertices = m->vertices().count();
-    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int) * 2, m_boneIndices, 0, 0, 0);
-    if (err != CL_SUCCESS) {
-        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write BoneIndicesBuffer: %d", err);
-        return;
-    }
-    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nvertices * sizeof(float), m_boneWeights, 0, 0, 0);
-    if (err != CL_SUCCESS) {
-        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneWeightsBuffer: %d", err);
-        return;
-    }
     int argumentIndex = 0;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_boneMatricesBuffer), &m_boneMatricesBuffer);
     if (err != CL_SUCCESS) {
@@ -241,6 +241,7 @@ void PMDAccelerator::updateModel(pmd::Model *model)
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (lightDirection): %d", argumentIndex, err);
         return;
     }
+    const int nvertices = m->vertices().count();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(nvertices), &nvertices);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (nvertices): %d", argumentIndex, err);

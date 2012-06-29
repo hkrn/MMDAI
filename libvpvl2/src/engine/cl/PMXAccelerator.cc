@@ -38,6 +38,7 @@
 
 #include "vpvl2/cl/PMXAccelerator.h"
 #include "vpvl2/pmx/Bone.h"
+#include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Vertex.h"
 
 namespace vpvl2
@@ -53,12 +54,10 @@ PMXAccelerator::PMXAccelerator(Context *context)
       m_program(0),
       m_performSkinningKernel(0),
       m_verticesBuffer(0),
-      m_vertexEdgeSizeBuffer(0),
       m_boneWeightsBuffer(0),
       m_boneIndicesBuffer(0),
       m_boneMatricesBuffer(0),
       m_localWGSizeForPerformSkinning(0),
-      m_vertexEdgeSize(0),
       m_boneTransform(0),
       m_boneWeights(0),
       m_boneIndices(0),
@@ -73,16 +72,16 @@ PMXAccelerator::~PMXAccelerator()
     clReleaseKernel(m_performSkinningKernel);
     m_performSkinningKernel = 0;
     clReleaseMemObject(m_verticesBuffer);
-    m_verticesBuffer = 0;
-    clReleaseMemObject(m_vertexEdgeSizeBuffer);
-    m_vertexEdgeSizeBuffer = 0;
+    m_verticesBuffer = 0;;
+    clReleaseMemObject(m_materialEdgeSizeBuffer);
+    m_materialEdgeSizeBuffer = 0;
     clReleaseMemObject(m_boneIndicesBuffer);
     m_boneIndicesBuffer = 0;
     clReleaseMemObject(m_boneWeightsBuffer);
     m_boneWeightsBuffer = 0;
     m_localWGSizeForPerformSkinning = 0;
-    delete[] m_vertexEdgeSize;
-    m_vertexEdgeSize = 0;
+    delete[] m_materialEdgeSize;
+    m_materialEdgeSize = 0;
     delete[] m_boneTransform;
     m_boneTransform = 0;
     delete[] m_boneWeights;
@@ -151,7 +150,7 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
     const int nVerticesAlloc = nvertices * kMaxBonesPerVertex;
     m_boneIndices = new int[nVerticesAlloc];
     m_boneWeights = new float[nVerticesAlloc];
-    m_vertexEdgeSize = new float[nvertices];
+    m_materialEdgeSize = new float[nvertices];
     for (int i = 0; i < nvertices; i++) {
         const pmx::Vertex *vertex = vertices[i];
         for (int j = 0; j < kMaxBonesPerVertex; j++) {
@@ -159,13 +158,26 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
             m_boneIndices[i * kMaxBonesPerVertex + j] = bone ? bone->index() : -1;
             m_boneWeights[i * kMaxBonesPerVertex + j] = vertex->weight(j);
         }
-        m_vertexEdgeSize[i] = vertex->edgeSize();
     }
+    const Array<int> &indices = model->indices();
+    const Array<pmx::Material *> &materials = model->materials();
+    const int nmaterials = materials.count();
+    size_t offset = 0;
+    for (int i = 0; i < nmaterials; i++) {
+        const pmx::Material *material = materials[i];
+        const int nindices = material->indices();
+        const float edgeSize = material->edgeSize();
+        for (int j = 0; j < nindices; j++) {
+            const int index = indices[j];
+            m_materialEdgeSize[index] = edgeSize;
+        }
+        offset += nindices;
+    }
+    // TODO: perform morph skinning
     m_boneTransform = new float[nBoneMatricesAllocs];
-    model->getSkinningMesh(m_mesh);
-    m_vertexEdgeSizeBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
+    m_materialEdgeSizeBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
-        log0(context, IRenderDelegate::kLogWarning, "Failed creating vertexEdgeSizeBuffer: %d", err);
+        log0(context, IRenderDelegate::kLogWarning, "Failed creating materialEdgeSizeBuffer: %d", err);
         return;
     }
     m_boneMatricesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
@@ -199,6 +211,22 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
         log0(context, IRenderDelegate::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
         return;
     }
+    cl_command_queue queue = m_context->commandQueue();
+    err = clEnqueueWriteBuffer(queue, m_materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float), m_materialEdgeSize, 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write materialEdgeSizeBuffer: %d", err);
+        return;
+    }
+    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(int), m_boneIndices, 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneIndicesBuffer: %d", err);
+        return;
+    }
+    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(float), m_boneWeights, 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneWeightsBuffer: %d", err);
+        return;
+    }
     m_isBufferAllocated = true;
 }
 
@@ -208,7 +236,6 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
         return;
     const Array<pmx::Bone *> &bones = model->bones();
     const int nvertices = model->vertices().count();
-    const int nVerticesAlloc = nvertices * kMaxBonesPerVertex;
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         pmx::Bone *bone = bones[i];
@@ -222,24 +249,9 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
     /* force flushing OpenGL commands to acquire GL objects by OpenCL */
     glFinish();
     clEnqueueAcquireGLObjects(queue, 1, &m_verticesBuffer, 0, 0, 0);
-    err = clEnqueueWriteBuffer(queue, m_vertexEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float), m_vertexEdgeSize, 0, 0, 0);
-    if (err != CL_SUCCESS) {
-        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write vertexEdgeSizeBuffer: %d", err);
-        return;
-    }
     err = clEnqueueWriteBuffer(queue, m_boneMatricesBuffer, CL_TRUE, 0, nsize, m_boneTransform, 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneMatricesBuffer: %d", err);
-        return;
-    }
-    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(int), m_boneIndices, 0, 0, 0);
-    if (err != CL_SUCCESS) {
-        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneIndicesBuffer: %d", err);
-        return;
-    }
-    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(float), m_boneWeights, 0, 0, 0);
-    if (err != CL_SUCCESS) {
-        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneWeightsBuffer: %d", err);
         return;
     }
     int argumentIndex = 0;
@@ -258,9 +270,9 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
         log0(0, IRenderDelegate::kLogWarning, "Failed setting 3rd argument of kernel (boneIndices): %d", err);
         return;
     }
-    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_vertexEdgeSizeBuffer), &m_vertexEdgeSizeBuffer);
+    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_materialEdgeSizeBuffer), &m_materialEdgeSizeBuffer);
     if (err != CL_SUCCESS) {
-        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (edgeSize): %d", argumentIndex, err);
+        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (materialEdgeSize): %d", argumentIndex, err);
         return;
     }
     const Vector3 &lightDirection = scene->light()->direction();
@@ -304,7 +316,6 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
         return;
     }
-    // FIXME: support edge with material
     size_t offsetEdgeSize = model->strideOffset(pmx::Model::kEdgeSizeStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeSize), &offsetEdgeSize);
     if (err != CL_SUCCESS) {

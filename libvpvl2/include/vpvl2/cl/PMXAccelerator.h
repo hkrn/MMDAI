@@ -63,16 +63,15 @@ private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
 
     Context *m_context;
-    pmx::Model::SkinningMeshes m_mesh;
     cl_program m_program;
     cl_kernel m_performSkinningKernel;
     cl_mem m_verticesBuffer;
-    cl_mem m_vertexEdgeSizeBuffer;
+    cl_mem m_materialEdgeSizeBuffer;
     cl_mem m_boneWeightsBuffer;
     cl_mem m_boneIndicesBuffer;
     cl_mem m_boneMatricesBuffer;
     size_t m_localWGSizeForPerformSkinning;
-    float *m_vertexEdgeSize;
+    float *m_materialEdgeSize;
     float *m_boneTransform;
     float *m_boneWeights;
     int *m_boneIndices;

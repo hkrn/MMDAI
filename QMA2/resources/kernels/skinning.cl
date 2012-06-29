@@ -58,7 +58,7 @@ __kernel
 void performSkinning2(const __global float16 *localMatrices,
                       const __global float4 *boneWeights,
                       const __global int4 *boneIndices,
-                      const __global float *edgeSize,
+                      const __global float *materialEdgeSize,
                       const float4 lightDirection,
                       const int nvertices,
                       const int strideSize,
@@ -118,7 +118,7 @@ void performSkinning2(const __global float16 *localMatrices,
             vertices[strideOffset + offsetNormal] = normal2;
             vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
         }
-        float edgeSize = vertices[strideOffset + offsetEdgeSize].x;
+        float edgeSize = vertices[strideOffset + offsetEdgeSize].x * materialEdgeSize[id];
         vertices[strideOffset + offsetEdgeVertex] = position2 + normal2 * (edgeSize * 0.03f);
     }
 }
