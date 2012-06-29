@@ -874,8 +874,6 @@ void PMXRenderEngine::renderEdge()
     }
     offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glCullFace(GL_FRONT);
-    glDisable(GL_ALPHA_TEST);
-    glDisable(GL_BLEND);
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
         const int nindices = material->indices();
@@ -893,8 +891,6 @@ void PMXRenderEngine::renderEdge()
         offset += nindices * size;
     }
     glCullFace(GL_BACK);
-    glEnable(GL_ALPHA_TEST);
-    glEnable(GL_BLEND);
     edgeProgram->unbind();
 }
 
