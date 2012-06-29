@@ -2,7 +2,7 @@
 
 use strict;
 use autodie;
-use Cwd qw(getcwd);
+use Cwd;
 use File::Spec;
 use Getopt::Long;
 use Pod::Usage;
@@ -36,7 +36,7 @@ my $BULLET_CHECKOUT_URI = 'http://bullet.googlecode.com/svn/tags/bullet-2.77';
 my $BULLET_DIRECTORY = 'bullet';
 my $ASSIMP_CHECKOUT_URI = 'https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0';
 my $ASSIMP_DIRECTORY = 'assimp';
-my $PORTAUDIO_CHECKOUT_URI = 'https://subversion.assembla.com/svn/portaudio/portaudio';
+my $PORTAUDIO_CHECKOUT_URI = 'https://subversion.assembla.com/svn/portaudio/portaudio/trunk';
 my $PORTAUDIO_DIRECTORY = 'portaudio';
 my $PORTAUDIO_REVISION = 1788;
 my $LIBAV_CHECKOUT_URI = 'git://git.libav.org/libav.git';
@@ -89,10 +89,20 @@ my $SCONS_PORTAUDIO_ARGS = [
     'enableDebugOutput=' . ($opt_prod ? 'False' : 'True'),
 ];
 my $CONFIGURE_LIBAV_ARGS = [
+    '--enable-shared',
+    '--disable-static',
+    '--disable-ffmpeg',
+    '--disable-avconv',
+    '--disable-avplay',
+    '--disable-avprobe',
+    '--disable-avserver',
+    '--disable-ffmpeg',
+    '--disable-network',
     '--disable-bzlib',
     '--disable-libfreetype',
     '--disable-libopenjpeg',
     '--disable-decoders',
+    '--disable-decoder=h264',
     '--enable-decoder=flac',
     '--enable-decoder=pcm_s16le',
     '--disable-encoders',
@@ -134,7 +144,6 @@ sub build_with_cmake {
         system 'cmake', @args, '..';
     }
     system 'make', '-j' . $opt_num_cpu;
-    chdir ($build_on_plane ? '..' : '../..');
 }
 
 sub build_with_scons {
@@ -149,79 +158,99 @@ sub build_with_scons {
     }
     chdir $directory;
     system 'scons', @args;
-    chdir '..';
 }
 
 sub build_with_configure {
     my ($directory, $configure_args, $do_install, $do_clean) = @_;
     my @args = @$configure_args;
-    if ($opt_static) {
-        push @args, (
-            '--enable-static',
-            '--disable-shared',
-        );
-    }
-    else {
-        push @args, (
-            '--enable-shared',
-            '--disable-static',
-        );
-    }
     chdir $directory;
     system './configure', @args;
     system 'make', '-j' . $opt_num_cpu;
     system 'make', 'install' if $do_install;
     system 'make', 'clean' if $do_clean;
-    chdir '..';
 }
 
 # clone MMDAI sources
 system 'git', 'clone', $MMDAI_CHECKOUT_URI, $MMDAI_DIRECTORY unless -d $MMDAI_DIRECTORY;
-system 'git', 'pull', '--rebase';
 chdir $MMDAI_DIRECTORY;
+# to resolve symlink, use Cwd::cwd()
+my $base_directory = Cwd::cwd();
+chdir $base_directory;
+system 'git', 'pull', '--rebase';
 
 # checkout bullet sources
 system 'svn', 'checkout', $BULLET_CHECKOUT_URI, $BULLET_DIRECTORY unless -d $BULLET_DIRECTORY;
 # append LIBRARY_OUTPUT_PATH dynamically
-my $path = File::Spec->catdir(getcwd(), $BULLET_DIRECTORY, $BUILD_DIRECTORY, 'lib');
+my $path = File::Spec->catdir($base_directory, $BULLET_DIRECTORY, $BUILD_DIRECTORY, 'lib');
 @$CMAKE_BULLET_ARGS = ( @$CMAKE_BULLET_ARGS, '-DLIBRARY_OUTPUT_PATH=' . $path );
 build_with_cmake $BULLET_DIRECTORY, $CMAKE_BULLET_ARGS, 0;
+chdir $base_directory;
 
 # checkout assimp source
 system 'svn', 'checkout', $ASSIMP_CHECKOUT_URI, $ASSIMP_DIRECTORY unless -d $ASSIMP_DIRECTORY;
 build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 1;
+chdir $base_directory;
 
 # checkout portaudio
 system 'svn', 'checkout', '-r', $PORTAUDIO_REVISION, $PORTAUDIO_CHECKOUT_URI, $PORTAUDIO_DIRECTORY unless -d $PORTAUDIO_DIRECTORY;
 build_with_scons $PORTAUDIO_DIRECTORY, $SCONS_PORTAUDIO_ARGS;
+chdir $base_directory;
 
 system 'git', 'clone', $LIBAV_CHECKOUT_URI, $LIBAV_DIRECTORY unless -d $LIBAV_DIRECTORY;
 chdir $LIBAV_DIRECTORY;
 system 'git', 'checkout', $LIBAV_TAG;
-chdir '..';
+chdir $base_directory;
+
 if ($opt_march) {
+    # build libav for i386
     my @i386_args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_i386 = File::Spec->catdir(getcwd(), $LIBAV_DIRECTORY, $BUILD_DIRECTORY, 'libav_i386');
-    push @i386_args, '--prefix=' . $path_i386;
+    my $path_i386 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY . '_i386');
+    push @i386_args, (
+        '--prefix=' . $path_i386,
+        '--arch=i386',
+        '--cc=clang -m32',
+    );
     system 'mkdir', '-p', $path_i386;
     build_with_configure $LIBAV_DIRECTORY, \@i386_args, 1, 1;
+    chdir $base_directory;
+    # build libav for x86_64
     my @x86_64_args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_x86_64 = File::Spec->catdir(getcwd(), $LIBAV_DIRECTORY, $BUILD_DIRECTORY, 'libav_x86_64');
-    push @x86_64_args, '--prefix=' . $path_x86_64;
+    my $path_x86_64 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY . '_x86_64');
+    push @x86_64_args, (
+        '--prefix=' . $path_x86_64,
+        '--arch=x86_64',
+    );
+    system 'mkdir', '-p', $path_x86_64;
     build_with_configure $LIBAV_DIRECTORY, \@x86_64_args, 1, 1;
+    chdir $base_directory;
+    # create universal binary with lipo
+    my $path_universal = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY . '_universal');
+    system 'mkdir', '-p', File::Spec->catdir($path_universal, 'lib');
+    my @libraries = ('libavcodec.dylib', 'libavformat.dylib', 'libavutil.dylib', 'libswscale.dylib');
+    foreach my $library (@libraries) {
+        my $i386_file = File::Spec->catfile($path_i386, 'lib', $library);
+        my $x86_64_file = File::Spec->catfile($path_x86_64, 'lib', $library);
+        my $universal_file = File::Spec->catfile($path_universal, 'lib', $library);
+        system 'lipo', '-create', '-output', $universal_file, '-arch', 'i386', $i386_file, '-arch', 'x86_64', $x86_64_file;
+    }
+    # link include directory
+    system 'ln', '-s', File::Spec->catdir($path_i386, 'include'), File::Spec->catdir($path_universal, 'include');
 }
 else {
     my @args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_libav = File::Spec->catdir(getcwd(), $LIBAV_DIRECTORY, $BUILD_DIRECTORY, 'libav');
+    my $path_libav = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY, 'libav_' . $BUILD_DIRECTORY);
     push @args, '--prefix=' . $path_libav;
     build_with_configure $LIBAV_DIRECTORY, \@args, 1, 1;
 }
+chdir $base_directory;
 
 # build libvpvl
 build_with_cmake $VPVL_DIRECTORY, $CMAKE_VPVL_ARGS, 0;
+chdir $base_directory;
 
 # build libvpvl2
 build_with_cmake $VPVL2_DIRECTORY, $CMAKE_VPVL2_ARGS, 0;
+chdir $base_directory;
 
 __END__
 
