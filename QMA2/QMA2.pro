@@ -69,6 +69,8 @@ CONFIG(debug, debug|release) {
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
                       $${VPVL2_PATH}/debug/include
   LIBS             += -lvpvl_debug -lvpvl2_debug
+  exists(../libav/libav_debug/lib):LIBS += -L../libav/libav_debug/lib
+  exists(../libav/libav_debug/include):INCLUDEPATH += ../libav/libav_debug/include
 }
 CONFIG(release, debug|release) {
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
@@ -80,6 +82,8 @@ CONFIG(release, debug|release) {
   LIBS             += -lvpvl -lvpvl2
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
+  exists(../libav/libav_release/lib):LIBS += -L../libav/libav_release/lib
+  exists(../libav/libav_release/include):INCLUDEPATH += ../libav/libav_release/include
 }
 macx:LIBS += -framework OpenCL -framework CoreServices -framework OpenCL -framework CoreAudio -framework AudioToolbox -framework AudioUnit
 linux-*:LIBS += -lGLU
