@@ -19,6 +19,7 @@ rm -rf ${app_name}.zip ${package_name}
 make
 make install
 mkdir ${package_name}
+rm -rf lib
 mkdir lib
 ldd ${app_name} | grep libassimp.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../assimp/lib/% lib
 ldd ${app_name} | grep libvpvl2.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libvpvl2/release/lib/% lib
@@ -26,6 +27,7 @@ ldd lib/libvpvl2.so.* | grep libvpvl.so | perl -ne 'print [split(/\s+/, $_)]->[3
 ldd ${app_name} | grep libBullet | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../bullet/release/lib/% lib
 ldd ${app_name} | grep libLinearMath.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../bullet/release/lib/% lib
 ldd ${app_name} | grep libQt | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
+strip lib/*
 rm -rf plugins
 cp -r `qmake -query QT_INSTALL_PLUGINS` plugins
 cd plugins
