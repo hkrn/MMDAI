@@ -1,8 +1,12 @@
 #!/usr/bin/perl
 
 use strict;
+use warnings;
 use autodie;
 use Cwd;
+use File::Basename;
+use File::Copy;
+use File::Path qw(make_path);
 use File::Spec;
 use Getopt::Long;
 use Pod::Usage;
@@ -15,6 +19,7 @@ my $opt_num_cpu = 1;
 my $opt_help = 0;
 my $opt_man = 0;
 my $opt_march = 0;
+
 GetOptions(
     'opencl'     => \$opt_opencl,
     'cg'         => \$opt_cg,
@@ -189,7 +194,8 @@ build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 1;
 my $assimp_dir = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_DIRECTORY);
 my $assimp_lib_dir = File::Spec->catdir($assimp_dir, 'lib');
 mkdir $assimp_lib_dir unless -d $assimp_lib_dir;
-system 'cp', '-rf', File::Spec->catdir($assimp_dir, 'code') . '/', $assimp_lib_dir;
+map { copy $_, $assimp_lib_dir } grep { (fileparse($_, '.so', '.dylib'))[2] ne '' } glob File::Spec->catdir($assimp_dir, 'code') . '/*';
+
 if ($^O eq 'MacOS' or $^O eq 'darwin') {
     my $install_name = File::Spec->catfile($assimp_lib_dir, 'libassimp.dylib');
     system 'install_name_tool', '-id', $install_name, $install_name;
@@ -215,7 +221,7 @@ if ($opt_march) {
         '--arch=i386',
         '--cc=clang -m32',
     );
-    system 'mkdir', '-p', $path_i386;
+    make_path $path_i386 unless -d $path_i386;
     build_with_configure $LIBAV_DIRECTORY, \@i386_args, 1, 1;
     chdir $base_directory;
     # build libav for x86_64
@@ -225,12 +231,13 @@ if ($opt_march) {
         '--prefix=' . $path_x86_64,
         '--arch=x86_64',
     );
-    system 'mkdir', '-p', $path_x86_64;
+    make_path $path_x86_64 unless -d $path_x86_64;
     build_with_configure $LIBAV_DIRECTORY, \@x86_64_args, 1, 1;
     chdir $base_directory;
     # create universal binary with lipo
     my $path_universal = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY);
-    system 'mkdir', '-p', File::Spec->catdir($path_universal, 'lib');
+    my $path_universal_lib = File::Spec->catdir($path_universal, 'lib');
+    make_path $path_universal_lib unless -d $path_universal_lib;
     my @libraries = ('libavcodec.dylib', 'libavformat.dylib', 'libavutil.dylib', 'libswscale.dylib');
     foreach my $library (@libraries) {
         my $i386_file = File::Spec->catfile($path_i386, 'lib', $library);
