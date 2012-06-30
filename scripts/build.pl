@@ -224,7 +224,7 @@ if ($opt_march) {
     build_with_configure $LIBAV_DIRECTORY, \@x86_64_args, 1, 1;
     chdir $base_directory;
     # create universal binary with lipo
-    my $path_universal = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY . '_universal');
+    my $path_universal = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY);
     system 'mkdir', '-p', File::Spec->catdir($path_universal, 'lib');
     my @libraries = ('libavcodec.dylib', 'libavformat.dylib', 'libavutil.dylib', 'libswscale.dylib');
     foreach my $library (@libraries) {
@@ -238,7 +238,7 @@ if ($opt_march) {
 }
 else {
     my @args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_libav = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY, 'libav_' . $BUILD_DIRECTORY);
+    my $path_libav = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY);
     push @args, '--prefix=' . $path_libav;
     build_with_configure $LIBAV_DIRECTORY, \@args, 1, 1;
 }
