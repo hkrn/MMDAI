@@ -190,6 +190,10 @@ my $assimp_dir = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_D
 my $assimp_lib_dir = File::Spec->catdir($assimp_dir, 'lib');
 mkdir $assimp_lib_dir unless -d $assimp_lib_dir;
 system 'cp', '-rf', File::Spec->catdir($assimp_dir, 'code') . '/', $assimp_lib_dir;
+if ($^O eq 'MacOS' or $^O eq 'darwin') {
+    my $install_name = File::Spec->catfile($assimp_lib_dir, 'libassimp.dylib');
+    system 'install_name_tool', '-id', $install_name, $install_name;
+}
 chdir $base_directory;
 
 # checkout portaudio
