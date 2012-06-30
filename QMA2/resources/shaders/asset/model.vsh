@@ -32,7 +32,7 @@ vec2 makeSphereMap(vec3 normal) {
 void main() {
     vec4 position = modelMatrix * vec4(inPosition, kOne);
     vec4 normal4 = modelMatrix * vec4(inNormal, kZero);
-    vec3 normal = normal4.xyz;
+    vec3 normal = normalize(normal4.xyz);
     float ldotn = max(dot(normal, -lightDirection), 0.0);
     vec4 color = vec4(materialColor + ldotn * materialDiffuse.rgb, materialDiffuse.a);
     outEyeView = cameraPosition - position.xyz;
