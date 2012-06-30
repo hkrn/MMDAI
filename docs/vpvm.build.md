@@ -3,30 +3,36 @@ libvpvl/libvpvl2/QMA のビルド方法
 
 0.24.0 から libvpvl/libvpvl2 と必要なライブラリを自動的にビルドするスクリプトである build.pl (scripts/build.pl) を用いてビルドするように変更しています。可能であればそちらでビルドしたほうがはるかに楽です。QMA は QtCreator から QMA.pro または QMA2.pro を読み込んでビルドしてください。build.pl を実行するには以下が必要です。
 
-  - perl (5.10)
-  - subversion
+  - Perl
+    - 5.10.1 以降
+  - Subversion
   - git
-  - cmake (2.8)
+  - CMake
+    - 2.8 以降
+  - Qt
+    - 4.8 以降
+    - QtSDK 入れた方が楽
+      - ただし MacOSX ユニバーサルバイナリ作成時だけソースビルドが必要
 
 一度目は一回 build.pl をダウンロードします。build.pl は実行したディレクトリに MMDAI と関連のライブラリがチェックアウトされるため、二回目以降はは以下のように実行します。 
 
-  ./MMDAI/scripts/build.pl 
+<pre>./MMDAI/scripts/build.pl</pre>
 
 MacOSX 版のリリースビルドは以下を実行して作成しています。
 
-  ./MMDAI/scripts/build.pl -opencl -march -static -production
+<pre>./MMDAI/scripts/build.pl -opencl -march -static -production</pre>
 
 Linux 版のリリースビルドは以下を実行して作成しています。
 
-  ./MMDAI/scripts/build.pl -production
+<pre>./MMDAI/scripts/build.pl -production</pre>
 
 デバッグ版は以下を実行して作成しています。
 
-  ./MMDAI/scripts/build.pl
+<pre>./MMDAI/scripts/build.pl</pre>
 
 build.pl で使用可能なオプションは以下を実行することによって列挙されます。
 
-  build.pl --help 
+<pre>build.pl --help</pre>
 
 libvpvl/libvpvl2
 ================
