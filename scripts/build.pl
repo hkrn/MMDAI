@@ -124,7 +124,7 @@ my $CONFIGURE_LIBAV_ARGS = [
 ];
 
 sub build_with_cmake {
-    my ($directory, $cmake_args, $build_on_plane) = @_;
+    my ($directory, $cmake_args, $force_dynamic) = @_;
     my @args = (
         @$cmake_args,
         '-DCMAKE_BUILD_TYPE:STRING=' . $BUILD_TYPE,
@@ -133,15 +133,13 @@ sub build_with_cmake {
     if ($opt_march) {
         push @args, '-DCMAKE_OSX_ARCHITECTURES=i386;x86_64';
     }
+    if ($opt_static and !$force_dynamic) {
+        push @args, '-DCMAKE_CXX_FLAGS=-fvisibility=hidden -fvisibility-inlines-hidden';
+    }
     chdir $directory;
-    if ($build_on_plane) {
-        system 'cmake', @args;
-    }
-    else {
-        mkdir $BUILD_DIRECTORY unless -d $BUILD_DIRECTORY;
-        chdir $BUILD_DIRECTORY;
-        system 'cmake', @args, '..';
-    }
+    mkdir $BUILD_DIRECTORY unless -d $BUILD_DIRECTORY;
+    chdir $BUILD_DIRECTORY;
+    system 'cmake', @args, '..';
     system 'make', '-j' . $opt_num_cpu;
 }
 
@@ -187,7 +185,7 @@ chdir $base_directory;
 
 # checkout assimp source
 system 'svn', 'checkout', $ASSIMP_CHECKOUT_URI, $ASSIMP_DIRECTORY unless -d $ASSIMP_DIRECTORY;
-build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 0;
+build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 1;
 my $assimp_dir = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_DIRECTORY);
 my $assimp_lib_dir = File::Spec->catdir($assimp_dir, 'lib');
 mkdir $assimp_lib_dir unless -d $assimp_lib_dir;

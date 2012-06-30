@@ -32,8 +32,7 @@ VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 
 # Required libraries
-LIBS += -lassimp \
-        -lBulletCollision \
+LIBS += -lBulletCollision \
         -lBulletDynamics \
         -lBulletSoftBody \
         -lLinearMath \
@@ -59,6 +58,8 @@ win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
 
 # configuration by build type
 CONFIG(debug, debug|release) {
+  exists(../libav/libav_debug/lib):LIBS += -L../libav/libav_debug/lib
+  exists(../libav/libav_debug/include):INCLUDEPATH += ../libav/libav_debug/include
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
                       -L$${BULLET_PATH}/msvc-build/lib/debug
   macx:LIBS        += -framework OpenCL
@@ -68,11 +69,11 @@ CONFIG(debug, debug|release) {
                       -L$${VPVL2_PATH}/debug/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
                       $${VPVL2_PATH}/debug/include
-  LIBS             += -lvpvl_debug -lvpvl2_debug
-  exists(../libav/libav_debug/lib):LIBS += -L../libav/libav_debug/lib
-  exists(../libav/libav_debug/include):INCLUDEPATH += ../libav/libav_debug/include
+  LIBS             += -lassimp -lvpvl_debug -lvpvl2_debug
 }
 CONFIG(release, debug|release) {
+  exists(../libav/libav_release/lib):LIBS += -L../libav/libav_release/lib
+  exists(../libav/libav_release/include):INCLUDEPATH += ../libav/libav_release/include
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
                       -L$${BULLET_PATH}/msvc-build/lib/release
   macx:LIBS        += -framework OpenCL
@@ -80,11 +81,9 @@ CONFIG(release, debug|release) {
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib
-  LIBS             += -lvpvl -lvpvl2
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
-  exists(../libav/libav_release/lib):LIBS += -L../libav/libav_release/lib
-  exists(../libav/libav_release/include):INCLUDEPATH += ../libav/libav_release/include
+  LIBS             += -lassimp -lvpvl -lvpvl2
 }
 macx:LIBS += -framework OpenCL -framework CoreServices -framework OpenCL -framework CoreAudio -framework AudioToolbox -framework AudioUnit
 linux-*:LIBS += -lGLU
