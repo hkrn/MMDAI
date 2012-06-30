@@ -32,8 +32,7 @@ VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 
 # Required libraries
-LIBS += -L$${ASSIMP_PATH}/lib \
-        -lassimp \
+LIBS += -lassimp \
         -lBulletCollision \
         -lBulletDynamics \
         -lBulletSoftBody \
@@ -63,7 +62,8 @@ CONFIG(debug, debug|release) {
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
                       -L$${BULLET_PATH}/msvc-build/lib/debug
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L$${BULLET_PATH}/debug/lib \
+  unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
+                      -L$${BULLET_PATH}/debug/lib \
                       -L$${VPVL_PATH}/debug/lib \
                       -L$${VPVL2_PATH}/debug/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
@@ -76,7 +76,8 @@ CONFIG(release, debug|release) {
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
                       -L$${BULLET_PATH}/msvc-build/lib/release
   macx:LIBS        += -framework OpenCL
-  unix:LIBS        += -L$${BULLET_PATH}/release/lib \
+  unix:LIBS        += -L$${ASSIMP_PATH}/release/lib \
+                      -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib
   LIBS             += -lvpvl -lvpvl2
@@ -135,7 +136,7 @@ linux-* {
                     ../bullet/release/lib/libBulletSoftBody.so.* \
                     ../bullet/release/lib/libLinearMath.so.* \
                     ../libvpvl/release/lib/libvpvl.so.* \
-                    ../assimp/lib/libassimp.so.2 \
+                    ../assimp/release/lib/libassimp.so.2 \
                     ../portaudio/build/scons/posix/libportaudio.so \
                     ../libav/libavcodec/libavcodec.so.* \
                     ../libav/libavformat/libavformat.so.* \

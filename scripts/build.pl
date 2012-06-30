@@ -53,7 +53,6 @@ my $CMAKE_BULLET_ARGS = [
 my $CMAKE_ASSIMP_ARGS = [
     '-DBUILD_ASSIMP_TOOLS:BOOL=OFF',
     '-DENABLE_BOOST_WORKAROUND:BOOL=ON',
-    '-DCMAKE_BUILD_TYPE:STRING=Debug',
 ];
 my $CMAKE_VPVL_ARGS = [
     '-DVPVL_ENABLE_PROJECT:BOOL=OFF',
@@ -188,7 +187,11 @@ chdir $base_directory;
 
 # checkout assimp source
 system 'svn', 'checkout', $ASSIMP_CHECKOUT_URI, $ASSIMP_DIRECTORY unless -d $ASSIMP_DIRECTORY;
-build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 1;
+build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 0;
+my $assimp_dir = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_DIRECTORY);
+my $assimp_lib_dir = File::Spec->catdir($assimp_dir, 'lib');
+mkdir $assimp_lib_dir unless -d $assimp_lib_dir;
+system 'cp', '-rf', File::Spec->catdir($assimp_dir, 'code') . '/', $assimp_lib_dir;
 chdir $base_directory;
 
 # checkout portaudio
