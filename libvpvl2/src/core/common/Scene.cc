@@ -41,9 +41,11 @@
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
+#ifdef VPVL2_OPENGL_RENDERER
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
+#endif
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/AssetRenderEngine.h"
@@ -335,6 +337,7 @@ Scene::~Scene()
 IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model) const
 {
     IRenderEngine *engine = 0;
+#ifdef VPVL2_OPENGL_RENDERER
     switch (model->type()) {
     case IModel::kAsset: {
 #ifdef VPVL2_LINK_ASSIMP
@@ -370,6 +373,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
     default:
         break;
     }
+#endif /* VPVL2_OPENGL_RENDERER */
     return engine;
 }
 

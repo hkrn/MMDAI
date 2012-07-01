@@ -43,7 +43,9 @@
 #include <QtOpenGL/QtOpenGL>
 #endif /* VPVL_LINK_QT */
 
-#ifdef VPVL2_BUILD_IOS
+#if defined(VPVL2_ENABLE_GLES2)
+#include <GLES2/gl2.h>
+#elif defined(VPVL2_BUILD_IOS)
 #include <OpenGLES/ES2/gl.h>
 #else
 #ifdef __APPLE__

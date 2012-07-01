@@ -354,6 +354,7 @@ if(VPVL2_OPENGL_RENDERER AND VPVL2_BUILD_SDL)
 endif()
 
 option(VPVL2_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
+option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (default is OFF)" OFF)
 
 # generate configuration
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"

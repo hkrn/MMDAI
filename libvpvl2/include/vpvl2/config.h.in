@@ -67,6 +67,12 @@
 /* Build libvpvl linking against OpenCL */
 #cmakedefine VPVL2_ENABLE_OPENCL
 
+/* Build libvpvl with rendering engines */
+#cmakedefine VPVL2_OPENGL_RENDERER
+
+/* Build libvpvl with OpenGL ES2 */
+#cmakedefine VPVL2_ENABLE_GLES2
+
 /* version */
 #define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
 #define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
