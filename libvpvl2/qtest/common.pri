@@ -4,9 +4,6 @@ CONFIG   += console
 CONFIG   -= app_bundle
 TEMPLATE = app
 
-macx {
-  QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-}
 unix {
   CONFIG(debug, debug|release):OBJECTS_DIR = $${OUT_PWD}/.obj/debug-shared
   CONFIG(release, debug|release):OBJECTS_DIR = $${OUT_PWD}/.obj/release-shared
