@@ -543,6 +543,15 @@ public:
     struct PrivateContext {
         QHash<QString, TextureCache> textureCache;
     };
+
+    static QString readAllAsync(const QString &path) {
+        QByteArray bytes;
+        return UISlurpFile(path, bytes) ? bytes : QString();
+    }
+    static QImage loadImageAsync(const QString &path) {
+        return QGLWidget::convertToGLFormat(QImage(path).rgbSwapped());
+    }
+
     Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context)
         : m_settings(settings),
           m_scene(scene),
@@ -714,11 +723,12 @@ public:
         default:
             break;
         }
-        QByteArray bytes;
-        QString path = m_settings->value("dir.system.kernels", "../../QMA2/resources/kernels").toString() + "/" + file;
-        if (UISlurpFile(path, bytes)) {
+        const QString &path = QDir(m_settings->value("dir.system.kernels", "../../QMA2/resources/kernels").toString()).absoluteFilePath(file);
+        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
+        const QString &source = future.result();
+        if (!source.isNull() && !future.isCanceled()) {
             qDebug("Loaded a kernel: %s", qPrintable(path));
-            return new(std::nothrow) String(bytes);
+            return new(std::nothrow) String(source);
         }
         else {
             return 0;
@@ -728,20 +738,27 @@ public:
         QString file;
         if (type == kModelEffectTechniques) {
             QDir d(static_cast<const String *>(dir)->value());
-            QByteArray bytes;
             if (m_model2filename.contains(model)) {
                 QFileInfo info(d.absoluteFilePath(m_model2filename[model]));
                 QRegExp regexp("^.+\\[([^\\]]+)\\]$");
                 const QString &name = info.baseName();
                 const QString &basename = regexp.exactMatch(name) ? regexp.capturedTexts().at(1) : name;
                 const QString &cgfx = d.absoluteFilePath(basename + ".cgfx");
-                if (QFile::exists(cgfx))
-                    return UISlurpFile(cgfx, bytes) ? new (std::nothrow) String(bytes) : 0;
+                if (QFile::exists(cgfx)) {
+                    const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, cgfx);
+                    const QString &source = future.result();
+                    return !source.isNull() ? new (std::nothrow) String(source) : 0;
+                }
                 const QString &fx = d.absoluteFilePath(basename + ".fx");
-                if (QFile::exists(fx))
-                    return UISlurpFile(fx, bytes) ? new (std::nothrow) String(bytes) : 0;
+                if (QFile::exists(fx)) {
+                    const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, fx);
+                    const QString &source = future.result();
+                    return !source.isNull() ? new (std::nothrow) String(source) : 0;
+                }
             }
-            return UISlurpFile(d.absoluteFilePath("effect.fx"), bytes) ? new(std::nothrow) String(bytes) : 0;
+            const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, d.absoluteFilePath("effect.fx"));
+            const QString &source = future.result();
+            return !source.isNull() ? new (std::nothrow) String(source) : 0;
         }
         switch (model->type()) {
         case IModel::kAsset:
@@ -796,11 +813,12 @@ public:
         default:
             break;
         }
-        QByteArray bytes;
-        QString path = m_settings->value("dir.system.shaders", "../../QMA2/resources/shaders").toString() + "/" + file;
-        if (UISlurpFile(path, bytes)) {
+        const QString &path = QDir(m_settings->value("dir.system.shaders", "../../QMA2/resources/shaders").toString()).absoluteFilePath(file);
+        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
+        const QString &source = future.result();
+        if (!source.isNull() && !future.isCanceled()) {
             qDebug("Loaded a shader: %s", qPrintable(path));
-            return new(std::nothrow) String("#version 120\n" + bytes);
+            return new(std::nothrow) String("#version 120\n" + source);
         }
         else {
             return 0;
@@ -908,13 +926,14 @@ private:
             }
         }
         else {
-            const QImage &image = QImage(path).rgbSwapped();
+            const QFuture<QImage> &future = QtConcurrent::run(&Delegate::loadImageAsync, path);
+            const QImage &image = future.result();
             QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
                     | QGLContext::InvertedYBindOption
                     | QGLContext::PremultipliedAlphaBindOption;
             if (mipmap)
                 options |= QGLContext::MipmapBindOption;
-            GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, options);
+            GLuint textureID = m_context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, options);
             TextureCache cache;
             cache.width = image.width();
             cache.height = image.height();
@@ -1276,10 +1295,13 @@ public:
             if (m_settings->value("enable.sm", false).toBool())
                 light->setDepthTexture(&m_depthTextureID);
         }
-        if (loadScene())
+        if (loadScene()) {
+            startTimer(1000.0f / 60.0f);
             m_timer.start();
-        else
+        }
+        else {
             qFatal("Unable to load scene");
+        }
     }
     void rotate(float x, float y) {
         Scene::ICamera *camera = m_scene.camera();
@@ -1301,7 +1323,6 @@ protected:
         glCullFace(GL_BACK);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
-        startTimer(1000.0f / 60.0f);
         Scene::ILight *light = m_scene.light();
         QGLFramebufferObjectFormat format;
         format.setAttachment(QGLFramebufferObject::Depth);
@@ -1498,34 +1519,60 @@ private:
                 .absoluteFilePath(m_settings->value("file.motion").toString());
         const QString &cameraMotionPath = QDir(m_settings->value("dir.camera").toString())
                 .absoluteFilePath(m_settings->value("file.camera").toString());
-        IModel *model = addModel(modelPath);
-        if (model) {
+        QProgressDialog dialog(this);
+        dialog.setWindowModality(Qt::ApplicationModal);
+        dialog.setLabelText("Loading scene...");
+        dialog.setMaximum(4);
+        dialog.show();
+        IModel *model = addModel(modelPath, dialog);
+        if (model)
             addMotion(modelMotionPath, model);
-            model->setOpacity(1.0);
-        }
-        addModel(assetPath);
-        QByteArray bytes;
-        if (UISlurpFile(cameraMotionPath, bytes)) {
-            bool ok = true;
-            const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            IMotion *motion = m_factory->createMotion(data, bytes.size(), 0, ok);
-            qDebug() << "maxFrameIndex(camera):" << motion->maxFrameIndex();
-            m_scene.camera()->setMotion(motion);
-        }
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        dialog.setValue(dialog.value() + 1);
+        addModel(assetPath, dialog);
+        IMotion *cameraMotion = loadMotion(cameraMotionPath, 0);
+        if (cameraMotion)
+            m_scene.camera()->setMotion(cameraMotion);
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        dialog.setValue(dialog.value() + 1);
         m_scene.seek(0);
         return true;
     }
-    IModel *addModel(const QString &path) {
+    IModel *createModelAsync(const QString &path) const {
         QByteArray bytes;
         if (!UISlurpFile(path, bytes)) {
             qWarning("Failed loading the model");
             return 0;
         }
-        const QFileInfo info(path);
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        IModel *model = m_factory->createModel(data, bytes.size(), ok);
-        if (!ok) {
+        return m_factory->createModel(data, bytes.size(), ok);
+    }
+    IMotion *createMotionAsync(const QString &path, IModel *model) const {
+        QByteArray bytes;
+        if (model && UISlurpFile(path, bytes)) {
+            bool ok = true;
+            IMotion *motion = m_factory->createMotion(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), model, ok);
+            motion->seek(0);
+            return motion;
+        }
+        else {
+            qWarning("Failed parsing the model motion, skipped...");
+        }
+        return 0;
+    }
+    IModel *addModel(const QString &path, QProgressDialog &dialog) {
+        const QFileInfo info(path);
+        const QFuture<IModel *> &future = QtConcurrent::run(this, &UI::createModelAsync, path);
+        dialog.setLabelText(QString("Loading %1...").arg(info.fileName()));
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        IModel *model = future.result();
+        dialog.setValue(dialog.value() + 1);
+        if (!model || future.isCanceled()) {
+            delete model;
+            return 0;
+        }
+        if (model->error() != IModel::kNoError) {
             qWarning("Failed parsing the model: %d", model->error());
             return 0;
         }
@@ -1567,18 +1614,20 @@ private:
 #endif
         return model;
     }
-    void addMotion(const QString &path, IModel *model) {
-        QByteArray bytes;
-        if (model && UISlurpFile(path, bytes)) {
-            bool ok = true;
-            IMotion *motion = m_factory->createMotion(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), model, ok);
-            qDebug() << "maxFrameIndex(model):" << motion->maxFrameIndex();
-            motion->seek(0);
+    IMotion *addMotion(const QString &path, IModel *model) {
+        IMotion *motion = loadMotion(path, model);
+        if (motion)
             m_scene.addMotion(motion);
+        return motion;
+    }
+    IMotion *loadMotion(const QString &path, IModel *model) {
+        const QFuture<IMotion *> &future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
+        IMotion *motion = future.result();
+        if (!motion || future.isCanceled()) {
+            delete motion;
+            return 0;
         }
-        else {
-            qWarning("Failed parsing the model motion, skipped...");
-        }
+        return motion;
     }
 
 #ifndef VPVL2_NO_BULLET
