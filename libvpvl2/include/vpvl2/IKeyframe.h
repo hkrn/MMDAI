@@ -52,6 +52,7 @@ class VPVL2_API IKeyframe
 {
 public:
     typedef double Index;
+    typedef int Layer;
     enum Type {
         kBone,
         kCamera,
@@ -111,7 +112,15 @@ public:
      * @return Index
      * @sa setFrameIndex
      */
-    virtual const IKeyframe::Index &frameIndex() const = 0;
+    virtual const Index &frameIndex() const = 0;
+
+    /**
+     * キーフレームのレイヤー番号を返します。
+     *
+     * @return Layer
+     * @sa setLayerIndex
+     */
+    virtual const Layer &layerIndex() const = 0;
 
     /**
      * キーフレームの動作対象となる名前を設定します。
@@ -130,7 +139,15 @@ public:
      * @param Index
      * @sa frameIndex
      */
-    virtual void setFrameIndex(const IKeyframe::Index &value) = 0;
+    virtual void setFrameIndex(const Index &value) = 0;
+
+    /**
+     * キーフレームのレイヤー番号を設定します。
+     *
+     * @param Layer
+     * @sa layerIndex
+     */
+    virtual void setLayerIndex(const Layer &value) = 0;
 
     /**
      * キーフレームの型を返します。

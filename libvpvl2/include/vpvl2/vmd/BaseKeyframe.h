@@ -52,22 +52,27 @@ class VPVL2_API BaseKeyframe : public virtual IKeyframe
 public:
     BaseKeyframe()
         : m_name(0),
-          m_frameIndex(0)
+          m_frameIndex(0),
+          m_layerIndex(0)
     {
     }
     virtual ~BaseKeyframe() {
         delete m_name;
         m_name = 0;
         m_frameIndex = 0;
+        m_layerIndex = 0;
     }
 
     const IString *name() const { return m_name; }
     const Index &frameIndex() const { return m_frameIndex; }
+    const Layer &layerIndex() const { return m_layerIndex; }
     void setFrameIndex(const IKeyframe::Index &value) { m_frameIndex = value; }
+    void setLayerIndex(const Layer &value) { m_layerIndex = value; }
 
 protected:
     IString *m_name;
     Index m_frameIndex;
+    Layer m_layerIndex;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseKeyframe)
 };
