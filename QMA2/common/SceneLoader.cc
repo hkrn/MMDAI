@@ -185,6 +185,10 @@ public:
                         worldMatrix.data()[i] = matrix[i];
                     m *= worldMatrix;
                 }
+                const Vector3 &position = model->position();
+                m.translate(position.x(), position.y(), position.z());
+                const Quaternion &rotation = model->rotation();
+                m.rotate(QQuaternion(rotation.w(), rotation.x(), rotation.y(), rotation.z()));
                 m.scale(model->scaleFactor());
             }
         }
