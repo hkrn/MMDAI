@@ -446,6 +446,8 @@ IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
         QList<IModel *> models;
         motion = m_loader->loadModelMotion(path, models);
         if (motion) {
+            m_frameIndex = -1;
+            seekMotion(0, false);
             emit fileDidLoad(path);
         }
         else {
@@ -506,6 +508,8 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
                 else {
                     m_loader->setModelMotion(motion, model);
                 }
+                m_frameIndex = -1;
+                seekMotion(0, false);
                 emit fileDidLoad(path);
             }
             else {
