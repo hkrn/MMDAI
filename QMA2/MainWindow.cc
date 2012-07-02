@@ -1364,7 +1364,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(handleDidMoveRelative(vpvl2::Vector3,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl2::Vector3,vpvl2::IBone*,int)));
     connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl2::Scalar,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(rotateAngle(vpvl2::Scalar,vpvl2::IBone*,int)));
     connect(m_sceneWidget, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_timelineTabWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
-    connect(m_timelineTabWidget, SIGNAL(motionDidSeek(float,bool)),  m_sceneWidget, SLOT(seekMotion(float,bool)));
+    connect(m_timelineTabWidget, SIGNAL(motionDidSeek(vpvl2::IKeyframe::Index,bool)),  m_sceneWidget, SLOT(seekMotion(vpvl2::IKeyframe::Index,bool)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl2::IModel*)));
@@ -1378,7 +1378,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
     connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)), m_boneMotionModel, SLOT(setCamera(const vpvl2::Scene::ICamera*)));
-    connect(m_sceneWidget, SIGNAL(motionDidSeek(float)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
+    connect(m_sceneWidget, SIGNAL(motionDidSeek(vpvl2::IKeyframe::Index)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
@@ -1593,7 +1593,8 @@ void MainWindow::invokeVideoEncoder()
         m_videoEncoder->start();
         if (canOpenAudio)
             m_audioDecoder->start();
-        float advanceSecond = 1.0f / (sceneFPS / Scene::defaultFPS()), totalAdvanced = 0.0f;
+        const IKeyframe::Index &advanceSecond = 1.0f / (sceneFPS / Scene::defaultFPS());
+        IKeyframe::Index totalAdvanced = 0.0f;
         /* 全てのモーションが終了するまでエンコード処理 */
         const Scene *scene = m_sceneWidget->sceneLoader()->scene();
         Q_UNUSED(scene)

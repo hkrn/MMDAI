@@ -62,12 +62,12 @@ public:
     }
 
     const IString *name() const { return m_name; }
-    float frameIndex() const { return m_frameIndex; }
-    void setFrameIndex(float value) { m_frameIndex = value; }
+    const Index &frameIndex() const { return m_frameIndex; }
+    void setFrameIndex(const IKeyframe::Index &value) { m_frameIndex = value; }
 
 protected:
     IString *m_name;
-    float m_frameIndex;
+    Index m_frameIndex;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseKeyframe)
 };

@@ -38,6 +38,7 @@
 #define VPVL2_SCENE_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
@@ -115,13 +116,13 @@ public:
     void addMotion(IMotion *motion);
     void deleteModel(vpvl2::IModel *&model);
     void removeMotion(IMotion *motion);
-    void advance(float delta);
-    void seek(float frameIndex);
+    void advance(const IKeyframe::Index &delta);
+    void seek(const IKeyframe::Index &frameIndex);
     void updateModels();
     void updateRenderEngines();
     void updateCamera();
     void setPreferredFPS(const Scalar &value);
-    bool isReachedTo(float frameIndex) const;
+    bool isReachedTo(const IKeyframe::Index &frameIndex) const;
     float maxFrameIndex() const;
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;

@@ -205,7 +205,7 @@ void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
     m_button->setEnabled(value);
 }
 
-void TimelineWidget::setCurrentFrameIndex(float frameIndex)
+void TimelineWidget::setCurrentFrameIndex(const vpvl2::IKeyframe::Index &frameIndex)
 {
     setCurrentFrameIndex(int(frameIndex));
 }

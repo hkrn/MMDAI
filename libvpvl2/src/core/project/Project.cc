@@ -349,7 +349,7 @@ public:
                 internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
                                    vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
-                internal::snprintf(buffer, sizeof(buffer), "%.8f", frame->fovy());
+                internal::snprintf(buffer, sizeof(buffer), "%.8f", frame->fov());
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
                 internal::snprintf(buffer, sizeof(buffer), "%.8f", frame->distance());
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("distance"), VPVL2_CAST_XC(buffer)));
@@ -357,7 +357,7 @@ public:
                 frame->getInterpolationParameter(vmd::CameraKeyframe::kY, iy);
                 frame->getInterpolationParameter(vmd::CameraKeyframe::kZ, iz);
                 frame->getInterpolationParameter(vmd::CameraKeyframe::kRotation, ir);
-                frame->getInterpolationParameter(vmd::CameraKeyframe::kFovy, ifv);
+                frame->getInterpolationParameter(vmd::CameraKeyframe::kFov, ifv);
                 frame->getInterpolationParameter(vmd::CameraKeyframe::kDistance, idt);
                 internal::snprintf(buffer, sizeof(buffer),
                                    "%.f,%.f,%.f,%.f,"
@@ -733,7 +733,7 @@ public:
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "fovy", 4) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setFovy(internal::stringToFloat(value.c_str()));
+                        keyframe->setFov(internal::stringToFloat(value.c_str()));
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);

@@ -171,7 +171,7 @@ void TestVMDMotion::saveCameraKeyframe()
     frame.setPosition(pos);
     frame.setAngle(angle);
     frame.setDistance(7);
-    frame.setFovy(8);
+    frame.setFov(8);
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
             pz(17, 18, 19, 20),
@@ -197,7 +197,7 @@ void TestVMDMotion::saveCameraKeyframe()
     QVERIFY(qFuzzyCompare(newFrame.angle().y(), frame.angle().y()));
     QVERIFY(qFuzzyCompare(newFrame.angle().z(), frame.angle().z()));
     QVERIFY(newFrame.distance() == frame.distance());
-    QVERIFY(newFrame.fovy() == frame.fovy());
+    QVERIFY(newFrame.fov() == frame.fov());
     testCameraInterpolationMatrix(p, frame);
     // cloned camera frame shold be copied with deep
     QScopedPointer<ICameraKeyframe> cloned(frame.clone());
@@ -208,7 +208,7 @@ void TestVMDMotion::saveCameraKeyframe()
     QVERIFY(qFuzzyCompare(cloned->angle().y(), frame.angle().y()));
     QVERIFY(qFuzzyCompare(cloned->angle().z(), frame.angle().z()));
     QVERIFY(cloned->distance() == frame.distance());
-    QVERIFY(cloned->fovy() == frame.fovy());
+    QVERIFY(cloned->fov() == frame.fov());
     testCameraInterpolationMatrix(p, *static_cast<CameraKeyframe *>(cloned.data()));
 }
 
@@ -343,7 +343,7 @@ void TestVMDMotion::parseCameraKeyframe()
     QVERIFY(frame.position() == Vector3(2.0f, 3.0f, 4.0f));
     QVERIFY(frame.angle() == Vector3(degree(5.0f), degree(6.0f), degree(7.0f)));
 #endif
-    QCOMPARE(frame.fovy(), 8.0f);
+    QCOMPARE(frame.fov(), 8.0f);
     // TODO: perspective flag
 }
 

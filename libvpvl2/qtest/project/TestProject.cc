@@ -346,7 +346,7 @@ void TestProject::testCameraAnimation(const IMotion *motion)
     QVERIFY(qFuzzyCompare(angle1.x(), -degree(1)));
     QVERIFY(qFuzzyCompare(angle1.y(), -degree(2)));
     QVERIFY(qFuzzyCompare(angle1.z(), -degree(3)));
-    QCOMPARE(ca.frameAt(0)->fovy(), 15.0f);
+    QCOMPARE(ca.frameAt(0)->fov(), 15.0f);
     QCOMPARE(ca.frameAt(0)->distance(), 150.0f);
     for (int i = 0; i < ICameraKeyframe::kMax; i++) {
         int offset = i * 4;
@@ -359,7 +359,7 @@ void TestProject::testCameraAnimation(const IMotion *motion)
     QVERIFY(qFuzzyCompare(angle2.x(), -degree(3)));
     QVERIFY(qFuzzyCompare(angle2.y(), -degree(1)));
     QVERIFY(qFuzzyCompare(angle2.z(), -degree(2)));
-    QCOMPARE(ca.frameAt(1)->fovy(), 30.0f);
+    QCOMPARE(ca.frameAt(1)->fov(), 30.0f);
     QCOMPARE(ca.frameAt(1)->distance(), 300.0f);
     for (int i = ICameraKeyframe::kMax - 1; i >= 0; i--) {
         int offset = (ICameraKeyframe::kMax - 1 - i) * 4;

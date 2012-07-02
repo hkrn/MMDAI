@@ -1378,7 +1378,7 @@ IMotion *SceneLoader::newCameraMotion() const
     cameraKeyframe->setDefaultInterpolationParameter();
     cameraKeyframe->setPosition(camera->position());
     cameraKeyframe->setAngle(camera->angle());
-    cameraKeyframe->setFovy(camera->fov());
+    cameraKeyframe->setFov(camera->fov());
     cameraKeyframe->setDistance(camera->distance());
     lightKeyframe->setColor(light->color());
     lightKeyframe->setDirection(light->direction());

@@ -146,8 +146,8 @@ public:
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
-    const Scalar &weight() const { return m_weight; }
-    void setWeight(const Scalar &value);
+    const Weight &weight() const { return m_weight; }
+    void setWeight(const Weight &value);
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -197,7 +197,7 @@ private:
     Array<Group *> m_groups;
     IString *m_name;
     IString *m_englishName;
-    Scalar m_weight;
+    Weight m_weight;
     Category m_category;
     Type m_type;
     int m_index;

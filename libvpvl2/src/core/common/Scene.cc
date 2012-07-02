@@ -421,7 +421,7 @@ void Scene::removeMotion(IMotion *motion)
     m_context->motions.remove(motion);
 }
 
-void Scene::advance(float delta)
+void Scene::advance(const IKeyframe::Index &delta)
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
@@ -456,7 +456,7 @@ void Scene::advance(float delta)
     updateCamera();
 }
 
-void Scene::seek(float frameIndex)
+void Scene::seek(const IKeyframe::Index &frameIndex)
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
@@ -523,7 +523,7 @@ void Scene::setPreferredFPS(const Scalar &value)
     m_context->preferredFPS = value;
 }
 
-bool Scene::isReachedTo(float frameIndex) const
+bool Scene::isReachedTo(const IKeyframe::Index &frameIndex) const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
@@ -539,7 +539,7 @@ float Scene::maxFrameIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
-    float maxFrameIndex = 0;
+    IKeyframe::Index maxFrameIndex = 0;
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
         btSetMax(maxFrameIndex, motion->maxFrameIndex());

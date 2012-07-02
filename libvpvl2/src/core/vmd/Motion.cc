@@ -238,16 +238,16 @@ void Motion::setParentModel(IModel *model)
     }
 }
 
-void Motion::seek(float frameIndex)
+void Motion::seek(const IKeyframe::Index &frameIndex)
 {
     m_boneMotion.seek(frameIndex);
     m_morphMotion.seek(frameIndex);
     m_active = maxFrameIndex() > frameIndex;
 }
 
-void Motion::advance(float delta)
+void Motion::advance(const IKeyframe::Index &delta)
 {
-    if (delta == 0.0f) {
+    if (delta == 0) {
         m_boneMotion.advance(delta);
         m_morphMotion.advance(delta);
     }
@@ -279,12 +279,12 @@ void Motion::reset()
     m_active = true;
 }
 
-float Motion::maxFrameIndex() const
+const IKeyframe::Index &Motion::maxFrameIndex() const
 {
     return btMax(btMax(btMax(m_boneMotion.maxIndex(), m_morphMotion.maxIndex()), m_cameraMotion.maxIndex()), m_lightMotion.maxIndex());
 }
 
-bool Motion::isReachedTo(float atEnd) const
+bool Motion::isReachedTo(const IKeyframe::Index &atEnd) const
 {
     // force inactive motion is reached
     return !m_active || (m_boneMotion.currentIndex() >= atEnd && m_morphMotion.currentIndex() >= atEnd);

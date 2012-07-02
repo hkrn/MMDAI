@@ -71,18 +71,18 @@ public:
     ~MorphAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(float frameAt);
+    void seek(const IKeyframe::Index &frameAt);
     void setParentModel(IModel *model);
     void reset();
     MorphKeyframe *frameAt(int i) const;
-    MorphKeyframe *findKeyframe(int frameIndex, const IString *name) const;
+    MorphKeyframe *findKeyframe(const IKeyframe::Index &frameIndex, const IString *name) const;
 
     bool isNullFrameEnabled() const { return m_enableNullFrame; }
     void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
     void buildInternalNodes(IModel *model);
-    void calculateFrames(float frameAt, InternalMorphKeyFrameList *keyFrames);
+    void calculateFrames(const IKeyframe::Index &frameAt, InternalMorphKeyFrameList *keyFrames);
 
     IEncoding *m_encoding;
     Hash<HashString, InternalMorphKeyFrameList *> m_name2keyframes;

@@ -49,9 +49,9 @@ namespace vmd
 
 BaseAnimation::BaseAnimation()
     : m_lastIndex(0),
-      m_maxFrameIndex(0.0f),
-      m_currentFrameIndex(0.0f),
-      m_previousFrameIndex(0.0f)
+      m_maxFrameIndex(0),
+      m_currentFrameIndex(0),
+      m_previousFrameIndex(0)
 {
 }
 
@@ -64,13 +64,13 @@ BaseAnimation::~BaseAnimation()
     m_previousFrameIndex = 0.0f;
 }
 
-void BaseAnimation::advance(float deltaFrame)
+void BaseAnimation::advance(const IKeyframe::Index &deltaFrame)
 {
     seek(m_currentFrameIndex);
     m_currentFrameIndex += deltaFrame;
 }
 
-void BaseAnimation::rewind(float target, float deltaFrame)
+void BaseAnimation::rewind(const IKeyframe::Index &target, const IKeyframe::Index &deltaFrame)
 {
     m_currentFrameIndex = m_previousFrameIndex + deltaFrame - m_maxFrameIndex + target;
     m_previousFrameIndex = target;
@@ -94,7 +94,7 @@ void BaseAnimation::deleteKeyframe(IKeyframe *&frame)
     frame = 0;
 }
 
-void BaseAnimation::deleteKeyframes(int frameIndex)
+void BaseAnimation::deleteKeyframes(const IKeyframe::Index &frameIndex)
 {
     const int nframes = m_keyframes.count();
     Array<IKeyframe *> framesToRemove;

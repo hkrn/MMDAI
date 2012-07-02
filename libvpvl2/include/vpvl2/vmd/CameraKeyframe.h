@@ -68,8 +68,8 @@ public:
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
-    float distance() const { return m_distance; }
-    float fovy() const { return m_fovy; }
+    const Scalar &distance() const { return m_distance; }
+    const Scalar &fov() const { return m_fov; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &angle() const { return m_angle; }
     bool isPerspective() const { return !m_noPerspective; }
@@ -77,8 +77,8 @@ public:
     const float *const *interpolationTable() const { return m_interpolationTable; }
     Type type() const { return IKeyframe::kCamera; }
 
-    void setDistance(float value);
-    void setFovy(float value);
+    void setDistance(const Scalar &value);
+    void setFov(const Scalar &value);
     void setPosition(const Vector3 &value);
     void setAngle(const Vector3 &value);
     void setPerspective(bool value);
@@ -90,7 +90,7 @@ private:
 
     mutable CameraKeyframe *m_ptr;
     float m_distance;
-    float m_fovy;
+    float m_fov;
     Vector3 m_position;
     Vector3 m_angle;
     bool m_noPerspective;

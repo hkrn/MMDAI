@@ -59,7 +59,7 @@ InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, SceneMo
     setDefault(m_cameraIP.y);
     setDefault(m_cameraIP.z);
     setDefault(m_cameraIP.rotation);
-    setDefault(m_cameraIP.fovy);
+    setDefault(m_cameraIP.fov);
     setDefault(m_cameraIP.distance);
     int max = kMax + 1;
     setMinimumSize(max, max);
@@ -97,7 +97,7 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
             keyframe->getInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
             keyframe->getInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
             keyframe->getInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kFovy, m_cameraIP.fovy);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kFov, m_cameraIP.fov);
             keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
             updateValues(true);
             enabled = true;
@@ -141,7 +141,7 @@ void InterpolationGraphWidget::save()
         keyframe->setInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
         keyframe->setInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
         keyframe->setInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
-        keyframe->setInterpolationParameter(ICameraKeyframe::kFovy, m_cameraIP.fovy);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kFov, m_cameraIP.fov);
     }
     if (!m_cameraKeyframes.isEmpty())
         m_sceneMotionModel->setKeyframes(m_cameraKeyframes, SceneMotionModel::LightKeyframePairList());
@@ -255,7 +255,7 @@ void InterpolationGraphWidget::applyAll()
         m_cameraIP.y = v;
         m_cameraIP.z = v;
         m_cameraIP.rotation = v;
-        m_cameraIP.fovy = v;
+        m_cameraIP.fov = v;
         m_cameraIP.distance = v;
     }
 }
@@ -309,7 +309,7 @@ void InterpolationGraphWidget::updateValues(bool import)
             setValue(m_cameraIP.distance, import);
             break;
         case 5:
-            setValue(m_cameraIP.fovy, import);
+            setValue(m_cameraIP.fov, import);
             break;
         case -1:
             /* ignore */

@@ -51,6 +51,7 @@ class IString;
 class VPVL2_API IKeyframe
 {
 public:
+    typedef double Index;
     enum Type {
         kBone,
         kCamera,
@@ -105,12 +106,12 @@ public:
     /**
      * キーフレームのフレーム番号を返します。
      *
-     * 返す値の型は float ですが、小数点はつきません。
+     * 返す値の型は double ですが、小数点はつきません。
      *
-     * @return float
+     * @return Index
      * @sa setFrameIndex
      */
-    virtual float frameIndex() const = 0;
+    virtual const IKeyframe::Index &frameIndex() const = 0;
 
     /**
      * キーフレームの動作対象となる名前を設定します。
@@ -126,10 +127,10 @@ public:
     /**
      * キーフレームのフレーム番号を設定します。
      *
-     * @param float
+     * @param Index
      * @sa frameIndex
      */
-    virtual void setFrameIndex(float value) = 0;
+    virtual void setFrameIndex(const IKeyframe::Index &value) = 0;
 
     /**
      * キーフレームの型を返します。

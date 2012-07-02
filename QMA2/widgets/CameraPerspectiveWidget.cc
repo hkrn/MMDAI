@@ -284,15 +284,13 @@ void CameraPerspectiveWidget::updateRotationZ(double value)
 
 void CameraPerspectiveWidget::updateFovy(double value)
 {
-    float fovy = static_cast<float>(value);
-    m_currentFovy = fovy;
+    m_currentFovy = Scalar(value);
     emit cameraPerspectiveDidChange(createCamera());
 }
 
 void CameraPerspectiveWidget::updateDistance(double value)
 {
-    float distance = static_cast<float>(value);
-    m_currentDistance = distance;
+    m_currentDistance = Scalar(value);
     emit cameraPerspectiveDidChange(createCamera());
 }
 

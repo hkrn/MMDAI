@@ -104,7 +104,7 @@ void MorphAnimation::read(const uint8_t *data, int size)
     }
 }
 
-void MorphAnimation::seek(float frameAt)
+void MorphAnimation::seek(const IKeyframe::Index &frameAt)
 {
     if (!m_model)
         return;
@@ -181,7 +181,7 @@ MorphKeyframe *MorphAnimation::frameAt(int i) const
     return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<MorphKeyframe *>(m_keyframes[i]) : 0;
 }
 
-MorphKeyframe *MorphAnimation::findKeyframe(int frameIndex, const IString *name) const
+MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::Index &frameIndex, const IString *name) const
 {
     if (!name)
         return 0;
@@ -196,14 +196,14 @@ MorphKeyframe *MorphAnimation::findKeyframe(int frameIndex, const IString *name)
     return 0;
 }
 
-void MorphAnimation::calculateFrames(float frameAt, InternalMorphKeyFrameList *keyframes)
+void MorphAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalMorphKeyFrameList *keyFrames)
 {
-    Array<MorphKeyframe *> &kframes = keyframes->keyframes;
+    Array<MorphKeyframe *> &kframes = keyFrames->keyframes;
     const int nframes = kframes.count();
     MorphKeyframe *lastKeyFrame = kframes.at(nframes - 1);
-    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    const IKeyframe::Index &currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
-    int k1 = 0, k2 = 0, lastIndex = keyframes->lastIndex;
+    int k1 = 0, k2 = 0, lastIndex = keyFrames->lastIndex;
     if (currentFrame >= kframes.at(lastIndex)->frameIndex()) {
         for (int i = lastIndex; i < nframes; i++) {
             if (currentFrame <= kframes.at(i)->frameIndex()) {
@@ -224,19 +224,19 @@ void MorphAnimation::calculateFrames(float frameAt, InternalMorphKeyFrameList *k
     if (k2 >= nframes)
         k2 = nframes - 1;
     k1 = k2 <= 1 ? 0 : k2 - 1;
-    keyframes->lastIndex = k1;
+    keyFrames->lastIndex = k1;
 
     const MorphKeyframe *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
-    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
+    const IKeyframe::Index &frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     float weightFrom = keyFrameFrom->weight();
     float weightTo = keyFrameTo->weight();
 
     if (frameIndexFrom != frameIndexTo) {
         const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
-        keyframes->weight = internal::lerp(weightFrom, weightTo, w);
+        keyFrames->weight = internal::lerp(weightFrom, weightTo, w);
     }
     else {
-        keyframes->weight = weightFrom;
+        keyFrames->weight = weightFrom;
     }
     m_previousFrameIndex = m_currentFrameIndex;
     m_currentFrameIndex = frameAt;

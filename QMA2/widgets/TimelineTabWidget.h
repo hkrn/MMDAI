@@ -41,6 +41,7 @@
 #include <QtGui/QAbstractItemView>
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2 {
 class IBone;
@@ -92,7 +93,7 @@ public slots:
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
-    void motionDidSeek(float frameIndex, bool forceCameraUpdate);
+    void motionDidSeek(const vpvl2::IKeyframe::Index &frameIndex, bool forceCameraUpdate);
     void currentTabDidChange(int type);
     void currentModelDidChange(vpvl2::IModel *model);
     void editModeDidSet(SceneWidget::EditMode mode);

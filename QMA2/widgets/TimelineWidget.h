@@ -39,6 +39,7 @@
 
 #include <QtCore/QModelIndex>
 #include <QtGui/QWidget>
+#include "vpvl2/IKeyframe.h"
 
 class MotionBaseModel;
 class TimelineHeaderView;
@@ -69,11 +70,11 @@ public:
     TimelineTreeView *treeView() const { return m_treeView; }
 
 public slots:
-    void setCurrentFrameIndex(float frameIndex);
+    void setCurrentFrameIndex(const vpvl2::IKeyframe::Index &frameIndex);
     void setCurrentFrameIndex(int frameIndex);
 
 signals:
-    void motionDidSeek(float column, bool forceCameraUpdate);
+    void motionDidSeek(const vpvl2::IKeyframe::Index &column, bool forceCameraUpdate);
 
 private slots:
     void retranslate();

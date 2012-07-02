@@ -65,34 +65,34 @@ public:
     virtual ~BaseAnimation();
 
     virtual void read(const uint8_t *data, int size) = 0;
-    virtual void seek(float frameAt) = 0;
-    void advance(float deltaFrame);
-    void rewind(float target, float deltaFrame);
+    virtual void seek(const IKeyframe::Index &frameAt) = 0;
+    void advance(const IKeyframe::Index &deltaFrame);
+    void rewind(const IKeyframe::Index &target, const IKeyframe::Index &deltaFrame);
     void reset();
     void addKeyframe(IKeyframe *frame);
     void deleteKeyframe(IKeyframe *&frame);
-    void deleteKeyframes(int frameIndex);
+    void deleteKeyframes(const IKeyframe::Index &frameIndex);
 
     int countKeyframes() const { return m_keyframes.count(); }
-    float previousIndex() const { return m_previousFrameIndex; }
-    float currentIndex() const { return m_currentFrameIndex; }
-    float maxIndex() const { return m_maxFrameIndex; }
+    const IKeyframe::Index &previousIndex() const { return m_previousFrameIndex; }
+    const IKeyframe::Index &currentIndex() const { return m_currentFrameIndex; }
+    const IKeyframe::Index &maxIndex() const { return m_maxFrameIndex; }
 
 protected:
     template<typename T>
-    static int findKeyframeIndex(int key, const Array<T *> &keyframes) {
+    static int findKeyframeIndex(const IKeyframe::Index &key, const Array<T *> &keyframes) {
         int min = 0, max = keyframes.count() - 1;
         while (min < max) {
             int mid = (min + max) / 2;
             const T *keyframe = keyframes[mid];
-            const int frameIndex = int(keyframe->frameIndex());
+            const IKeyframe::Index &frameIndex = int(keyframe->frameIndex());
             if (frameIndex < key)
                 min = mid + 1;
             else
                 max = mid;
         }
         if (min == max) {
-            const int frameIndex = keyframes[min]->frameIndex();
+            const IKeyframe::Index &frameIndex = keyframes[min]->frameIndex();
             if (frameIndex == key)
                 return min;
         }
@@ -101,9 +101,9 @@ protected:
 
     Array<IKeyframe *> m_keyframes;
     int m_lastIndex;
-    float m_maxFrameIndex;
-    float m_currentFrameIndex;
-    float m_previousFrameIndex;
+    IKeyframe::Index m_maxFrameIndex;
+    IKeyframe::Index m_currentFrameIndex;
+    IKeyframe::Index m_previousFrameIndex;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

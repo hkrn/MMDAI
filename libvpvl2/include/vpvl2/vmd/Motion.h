@@ -112,12 +112,12 @@ public:
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void setParentModel(IModel *model);
-    void seek(float frameIndex);
-    void advance(float delta);
+    void seek(const IKeyframe::Index &frameIndex);
+    void advance(const IKeyframe::Index &delta);
     void reload();
     void reset();
-    float maxFrameIndex() const;
-    bool isReachedTo(float frameIndex) const;
+    const IKeyframe::Index &maxFrameIndex() const;
+    bool isReachedTo(const IKeyframe::Index &atEnd) const;
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);
 

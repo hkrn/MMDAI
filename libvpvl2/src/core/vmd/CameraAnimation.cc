@@ -120,7 +120,7 @@ void CameraAnimation::read(const uint8_t *data, int size)
     }
 }
 
-void CameraAnimation::seek(float frameAt)
+void CameraAnimation::seek(const IKeyframe::Index &frameAt)
 {
     const int nframes = m_keyframes.count();
     CameraKeyframe *lastKeyFrame = reinterpret_cast<CameraKeyframe *>(m_keyframes[nframes - 1]);
@@ -152,9 +152,9 @@ void CameraAnimation::seek(float frameAt)
     const CameraKeyframe *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
     CameraKeyframe *keyFrameForInterpolation = const_cast<CameraKeyframe *>(keyFrameTo);
     float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
-    float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fovy();
+    float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fov();
     Vector3 positionFrom = keyFrameFrom->position(), angleFrom = keyFrameFrom->angle();
-    float distanceTo = keyFrameTo->distance(), fovyTo = keyFrameTo->fovy();
+    float distanceTo = keyFrameTo->distance(), fovyTo = keyFrameTo->fov();
     Vector3 positionTo = keyFrameTo->position(), angleTo = keyFrameTo->angle();
     if (frameIndexFrom != frameIndexTo) {
         if (currentFrame <= frameIndexFrom) {
@@ -227,7 +227,7 @@ void CameraAnimation::update()
     }
 }
 
-CameraKeyframe *CameraAnimation::findKeyframe(int frameIndex) const
+CameraKeyframe *CameraAnimation::findKeyframe(const IKeyframe::Index &frameIndex) const
 {
     int index = findKeyframeIndex(frameIndex, m_keyframes);
     return index != -1 ? reinterpret_cast<CameraKeyframe *>(m_keyframes[index]) : 0;

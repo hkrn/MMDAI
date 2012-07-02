@@ -46,6 +46,7 @@
 #include "VPDFile.h"
 
 #include <vpvl2/Common.h>
+#include <vpvl2/IKeyframe.h>
 #include <vpvl2/Scene.h>
 
 namespace vpvl2 {
@@ -116,7 +117,7 @@ public:
     Handles *handles() const { return m_handles; }
     EditMode editMode() const { return m_editMode; }
     const QList<vpvl2::IBone *> &selectedBones() const { return m_selectedBones; }
-    float currentFrameIndex() const { return m_frameIndex; }
+    const vpvl2::IKeyframe::Index &currentFrameIndex() const { return m_frameIndex; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
@@ -142,8 +143,8 @@ public slots:
     void translateScene(const vpvl2::Vector3 &delta);
     void translateModel(const vpvl2::Vector3 &delta);
     void translateModel(vpvl2::IModel *model, const vpvl2::Vector3 &delta);
-    void advanceMotion(float delta);
-    void seekMotion(float frameIndex, bool forceCameraUpdate);
+    void advanceMotion(const vpvl2::IKeyframe::Index &delta);
+    void seekMotion(const vpvl2::IKeyframe::Index &frameIndex, bool forceCameraUpdate);
     void resetMotion();
     void setCameraPerspective(const QSharedPointer<vpvl2::Scene::ICamera> &camera);
     void setModelEdgeOffset(double value);
@@ -177,7 +178,7 @@ signals:
     void handleDidMoveRelative(const vpvl2::Vector3 &position, vpvl2::IBone *bone, int mode);
     void handleDidRotate(const vpvl2::Scalar &angle, vpvl2::IBone *bone, int mode);
     void bonesDidSelect(const QList<vpvl2::IBone *> &bones);
-    void motionDidSeek(float frameIndex);
+    void motionDidSeek(const vpvl2::IKeyframe::Index &frameIndex);
     void undoDidRequest();
     void redoDidRequest();
 
@@ -282,7 +283,7 @@ private:
     EditMode m_editMode;
     float m_lastDistance;
     float m_prevElapsed;
-    float m_frameIndex;
+    vpvl2::IKeyframe::Index m_frameIndex;
     int m_frameCount;
     int m_currentFPS;
     int m_interval;

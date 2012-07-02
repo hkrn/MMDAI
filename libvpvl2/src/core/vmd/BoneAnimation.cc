@@ -132,7 +132,7 @@ void BoneAnimation::read(const uint8_t *data, int size)
     }
 }
 
-void BoneAnimation::seek(float frameAt)
+void BoneAnimation::seek(const IKeyframe::Index &frameAt)
 {
     if (!m_model)
         return;
@@ -161,7 +161,7 @@ BoneKeyframe *BoneAnimation::frameAt(int i) const
     return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<BoneKeyframe *>(m_keyframes[i]) : 0;
 }
 
-BoneKeyframe *BoneAnimation::findKeyframe(int frameIndex, const IString *name) const
+BoneKeyframe *BoneAnimation::findKeyframe(const IKeyframe::Index &frameIndex, const IString *name) const
 {
     if (!name)
         return 0;
@@ -215,12 +215,12 @@ void BoneAnimation::buildInternalKeyFrameList(IModel *model)
     }
 }
 
-void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *keyFrames)
+void BoneAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalBoneKeyFrameList *keyFrames)
 {
     Array<BoneKeyframe *> &keyframes = keyFrames->keyframes;
     const int nframes = keyframes.count();
     IBoneKeyframe *lastKeyFrame = keyframes[nframes - 1];
-    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    const IKeyframe::Index &currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0, lastIndex = keyFrames->lastIndex;
     if (currentFrame >= keyframes[lastIndex]->frameIndex()) {
@@ -247,7 +247,7 @@ void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *key
 
     const BoneKeyframe *keyFrameFrom = keyframes.at(k1),
             *keyFrameTo = keyframes.at(k2);
-    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
+    const IKeyframe::Index &frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     BoneKeyframe *keyFrameForInterpolation = const_cast<BoneKeyframe *>(keyFrameTo);
     const Vector3 &positionFrom = keyFrameFrom->position();
     const Quaternion &rotationFrom = keyFrameFrom->rotation();
@@ -264,8 +264,8 @@ void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *key
             keyFrames->rotation = rotationTo;
         }
         else {
-            const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
-            float x = 0, y = 0, z = 0;
+            const Scalar w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
+            Scalar x = 0, y = 0, z = 0;
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 2, z);

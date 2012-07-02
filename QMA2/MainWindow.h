@@ -182,8 +182,8 @@ private:
     vpvl2::IBone *m_bone;
     vpvl2::Vector3 m_position;
     vpvl2::Vector3 m_angle;
-    float m_fovy;
-    float m_distance;
+    vpvl2::Scalar m_fovy;
+    vpvl2::Scalar m_distance;
     int m_currentFPS;
 
     QDockWidget *m_timelineDockWidget;

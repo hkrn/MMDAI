@@ -128,7 +128,7 @@ public:
      * @param float
      * @sa advance
      */
-    virtual void seek(float frameIndex) = 0;
+    virtual void seek(const IKeyframe::Index &frameIndex) = 0;
 
     /**
      * モーションを指定されたフレームの位置分進めます。
@@ -139,7 +139,7 @@ public:
      * @param float
      * @sa seek
      */
-    virtual void advance(float delta) = 0;
+    virtual void advance(const IKeyframe::Index &delta) = 0;
 
     /**
      * モーションを最初の位置にリセットします。
@@ -153,7 +153,7 @@ public:
      * @return float
      * @sa isReachedTo
      */
-    virtual float maxFrameIndex() const = 0;
+    virtual const IKeyframe::Index &maxFrameIndex() const = 0;
 
     /**
      * モーションが指定されたフレームの位置まで進んでいるかを返します。
@@ -161,7 +161,7 @@ public:
      * @return bool
      * @sa maxFrameIndex
      */
-    virtual bool isReachedTo(float frameIndex) const = 0;
+    virtual bool isReachedTo(const IKeyframe::Index &frameIndex) const = 0;
 
     /**
      * キーフレームを追加します。

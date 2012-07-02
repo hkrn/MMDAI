@@ -133,7 +133,7 @@ QItemSelection MotionBaseModel::selectKeyframesFromItemSelection(const QItemSele
     return newSelection;
 }
 
-void MotionBaseModel::setFrameIndex(int newIndex)
+void MotionBaseModel::setFrameIndex(const vpvl2::IKeyframe::Index &newIndex)
 {
     int oldIndex = m_frameIndex;
     if (oldIndex != newIndex) {

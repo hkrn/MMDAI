@@ -91,11 +91,11 @@ void LightAnimation::read(const uint8_t *data, int size)
     }
 }
 
-void LightAnimation::seek(float frameAt)
+void LightAnimation::seek(const IKeyframe::Index &frameAt)
 {
     const int nframes = m_keyframes.count();
     LightKeyframe *lastKeyFrame = reinterpret_cast<LightKeyframe *>(m_keyframes[nframes - 1]);
-    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    const IKeyframe::Index &currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
     if (currentFrame >= m_keyframes[m_lastIndex]->frameIndex()) {
@@ -121,7 +121,7 @@ void LightAnimation::seek(float frameAt)
     m_lastIndex = k1;
 
     const LightKeyframe *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
-    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
+    const IKeyframe::Index &frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
     const Vector3 &colorFrom = keyFrameFrom->color(), &directionFrom = keyFrameFrom->direction();
     const Vector3 &colorTo = keyFrameTo->color(), &directionTo = keyFrameTo->direction();
 

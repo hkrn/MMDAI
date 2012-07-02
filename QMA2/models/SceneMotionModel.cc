@@ -467,7 +467,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
                 cameraKeyframe->setDefaultInterpolationParameter();
                 cameraKeyframe->setPosition(camera->position());
                 cameraKeyframe->setAngle(camera->angle());
-                cameraKeyframe->setFovy(camera->fov());
+                cameraKeyframe->setFov(camera->fov());
                 cameraKeyframe->setDistance(camera->distance());
                 cameraKeyframes.append(CameraKeyframePair(frameIndex, CameraKeyframePtr(cameraKeyframe.take())));
             }

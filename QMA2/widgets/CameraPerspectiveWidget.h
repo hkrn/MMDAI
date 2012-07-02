@@ -115,8 +115,8 @@ private:
     QDoubleSpinBox *m_fovy;
     QDoubleSpinBox *m_distance;
     QPushButton *m_initializeButton;
-    float m_currentFovy;
-    float m_currentDistance;
+    vpvl2::Scalar m_currentFovy;
+    vpvl2::Scalar m_currentDistance;
     bool m_enableFollowingModel;
     bool m_enableFollowingBone;
 

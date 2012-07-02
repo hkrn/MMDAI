@@ -42,6 +42,7 @@
 #include <QtGui/QAbstractItemView>
 #include <QtGui/QUndoStack>
 #include <QtGui/QUndoGroup>
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2 {
 class IMotion;
@@ -103,11 +104,11 @@ public:
     virtual bool forceCameraUpdate() const = 0;
 
     vpvl2::IMotion *currentMotion() const { return m_motion; }
-    void setFrameIndex(int newIndex);
+    void setFrameIndex(const vpvl2::IKeyframe::Index &newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }
     int maxFrameCount() const { return m_frameIndexColumnOffset; }
-    float frameIndex() const { return m_frameIndex; }
+    const vpvl2::IKeyframe::Index &frameIndex() const { return m_frameIndex; }
     bool canFetchMore(const QModelIndex & /* parent */) const;
     void fetchMore(const QModelIndex &parent);
     int frameIndexColumnMax() const;
@@ -122,7 +123,7 @@ public slots:
 
 signals:
     void motionDidModify(bool value);
-    void frameIndexDidChange(int newFrameIndex, int oldFrameIndex);
+    void frameIndexDidChange(const vpvl2::IKeyframe::Index &newFrameIndex, const vpvl2::IKeyframe::Index &oldFrameIndex);
     void frameIndexColumnMaxDidChange(int newValue, int oldValue);
 
 protected:
@@ -131,7 +132,7 @@ protected:
 
     vpvl2::IMotion *m_motion;
     QUndoGroup *m_undo;
-    int m_frameIndex;
+    vpvl2::IKeyframe::Index m_frameIndex;
     int m_frameIndexColumnMax;
     int m_frameIndexColumnOffset;
     bool m_modified;

@@ -654,7 +654,7 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
     return ptr;
 }
 
-void SceneWidget::advanceMotion(float delta)
+void SceneWidget::advanceMotion(const IKeyframe::Index &delta)
 {
     if (delta <= 0)
         return;
@@ -665,7 +665,7 @@ void SceneWidget::advanceMotion(float delta)
     updateScene();
 }
 
-void SceneWidget::seekMotion(float frameIndex, bool forceCameraUpdate)
+void SceneWidget::seekMotion(const IKeyframe::Index &frameIndex, bool forceCameraUpdate)
 {
     /*
        渡された値が同じフレーム位置の場合は何もしない
