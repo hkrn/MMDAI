@@ -1371,15 +1371,21 @@ IMotion *SceneLoader::newCameraMotion() const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
     QScopedPointer<IMotion> newCameraMotion(m_factory->createMotion());
-    QScopedPointer<ICameraKeyframe> frame(m_factory->createCameraKeyframe());
+    QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factory->createCameraKeyframe());
+    QScopedPointer<ILightKeyframe> lightKeyframe(m_factory->createLightKeyframe());
     Scene::ICamera *camera = m_project->camera();
-    frame->setDefaultInterpolationParameter();
-    frame->setPosition(camera->position());
-    frame->setAngle(camera->angle());
-    frame->setFovy(camera->fov());
-    frame->setDistance(camera->distance());
-    newCameraMotion->addKeyframe(frame.take());
+    Scene::ILight *light = m_project->light();
+    cameraKeyframe->setDefaultInterpolationParameter();
+    cameraKeyframe->setPosition(camera->position());
+    cameraKeyframe->setAngle(camera->angle());
+    cameraKeyframe->setFovy(camera->fov());
+    cameraKeyframe->setDistance(camera->distance());
+    lightKeyframe->setColor(light->color());
+    lightKeyframe->setDirection(light->direction());
+    newCameraMotion->addKeyframe(cameraKeyframe.take());
+    newCameraMotion->addKeyframe(lightKeyframe.take());
     newCameraMotion->update(IKeyframe::kCamera);
+    newCameraMotion->update(IKeyframe::kLight);
     return newCameraMotion.take();
 }
 

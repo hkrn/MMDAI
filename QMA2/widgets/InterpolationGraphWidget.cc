@@ -90,7 +90,7 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
         }
     }
     else if (m_type == kCamera) {
-        const SceneMotionModel::CameraKeyFramePairList &keyframes = m_sceneMotionModel->keyframesFromModelIndices(indices);
+        const SceneMotionModel::CameraKeyframePairList &keyframes = m_sceneMotionModel->keyframesFromModelIndices(indices);
         if (!keyframes.isEmpty()) {
             ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes.first().second.data());
             keyframe->getInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
@@ -134,7 +134,7 @@ void InterpolationGraphWidget::save()
     }
     if (!m_boneKeyframes.isEmpty())
         m_boneMotionModel->setKeyframes(m_boneKeyframes);
-    foreach (const SceneMotionModel::CameraKeyFramePair &pair, m_cameraKeyframes) {
+    foreach (const SceneMotionModel::CameraKeyframePair &pair, m_cameraKeyframes) {
         ICameraKeyframe *keyframe = pair.second.data();
         keyframe->setInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
         keyframe->setInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
@@ -144,7 +144,7 @@ void InterpolationGraphWidget::save()
         keyframe->setInterpolationParameter(ICameraKeyframe::kFovy, m_cameraIP.fovy);
     }
     if (!m_cameraKeyframes.isEmpty())
-        m_sceneMotionModel->setKeyframes(m_cameraKeyframes);
+        m_sceneMotionModel->setKeyframes(m_cameraKeyframes, SceneMotionModel::LightKeyframePairList());
 }
 
 void InterpolationGraphWidget::setX1(int value)

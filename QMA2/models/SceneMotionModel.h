@@ -55,12 +55,12 @@ class SceneMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl2::ICameraKeyframe> CameraKeyFramePtr;
-    typedef QPair<int, CameraKeyFramePtr> CameraKeyFramePair;
-    typedef QList<CameraKeyFramePair> CameraKeyFramePairList;
-    typedef QSharedPointer<vpvl2::ILightKeyframe> LightKeyFramePtr;
-    typedef QPair<int, LightKeyFramePtr> LightKeyFramePair;
-    typedef QList<LightKeyFramePair> LightKeyFramePairList;
+    typedef QSharedPointer<vpvl2::ICameraKeyframe> CameraKeyframePtr;
+    typedef QPair<int, CameraKeyframePtr> CameraKeyframePair;
+    typedef QList<CameraKeyframePair> CameraKeyframePairList;
+    typedef QSharedPointer<vpvl2::ILightKeyframe> LightKeyframePtr;
+    typedef QPair<int, LightKeyframePtr> LightKeyframePair;
+    typedef QList<LightKeyframePair> LightKeyframePairList;
 
     explicit SceneMotionModel(vpvl2::Factory *factory,
                               QUndoGroup *undo,
@@ -79,9 +79,9 @@ public:
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
     void pasteKeyframesByFrameIndex(int frameIndex);
     const QString nameFromModelIndex(const QModelIndex &index) const;
-    CameraKeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
+    CameraKeyframePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
-    void setKeyframes(const CameraKeyFramePairList &frames);
+    void setKeyframes(const CameraKeyframePairList &cameraKeyframes, const LightKeyframePairList &lightKeyframes);
     void setActiveUndoStack();
     void refreshScene();
     vpvl2::Factory *factory() const { return m_factory; }
@@ -104,6 +104,7 @@ protected:
 private:
     const SceneWidget *m_sceneWidget;
     QModelIndex m_cameraIndex;
+    QModelIndex m_lightIndex;
     QUndoStack *m_stack;
     Values m_cameraData;
     Values m_lightData;
