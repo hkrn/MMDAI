@@ -184,7 +184,7 @@ void TestVMDMotion::saveCameraKeyframe()
     frame.setInterpolationParameter(CameraKeyframe::kZ, pz);
     frame.setInterpolationParameter(CameraKeyframe::kRotation, pr);
     frame.setInterpolationParameter(CameraKeyframe::kDistance, pd);
-    frame.setInterpolationParameter(CameraKeyframe::kFovy, pf);
+    frame.setInterpolationParameter(CameraKeyframe::kFov, pf);
     // write a camera frame to data and read it
     uint8_t data[CameraKeyframe::strideSize()];
     frame.write(data);
@@ -304,7 +304,7 @@ void TestVMDMotion::parseBoneKeyframe()
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QVERIFY(frame.name()->equals(&str));
-    QCOMPARE(frame.frameIndex(), 1.0f);
+    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
 #ifdef VPVL2_COORDINATE_OPENGL
     QVERIFY(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
     QVERIFY(frame.rotation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
@@ -333,7 +333,7 @@ void TestVMDMotion::parseCameraKeyframe()
     QCOMPARE(size_t(bytes.size()), CameraKeyframe::strideSize());
     CameraKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    QCOMPARE(frame.frameIndex(), 1.0f);
+    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
 #ifdef VPVL2_COORDINATE_OPENGL
     QCOMPARE(frame.distance(), -1.0f);
     QVERIFY(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
@@ -363,8 +363,8 @@ void TestVMDMotion::parseMorphKeyframe()
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QVERIFY(frame.name()->equals(&str));
-    QCOMPARE(frame.frameIndex(), 1.0f);
-    QCOMPARE(frame.weight(), 0.5f);
+    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
+    QCOMPARE(frame.weight(), IMorph::Weight(0.5));
 }
 
 void TestVMDMotion::parseLightKeyframe()
@@ -380,7 +380,7 @@ void TestVMDMotion::parseLightKeyframe()
     QCOMPARE(size_t(bytes.size()), LightKeyframe::strideSize());
     LightKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    QCOMPARE(frame.frameIndex(), 1.0f);
+    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
     QVERIFY(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
 #ifdef VPVL2_COORDINATE_OPENGL
     QVERIFY(frame.direction() == Vector3(0.5f, 0.6f, -0.7f));
@@ -426,7 +426,7 @@ void TestVMDMotion::cameraInterpolation()
     frame.setInterpolationParameter(CameraKeyframe::kZ, pz);
     frame.setInterpolationParameter(CameraKeyframe::kRotation, pr);
     frame.setInterpolationParameter(CameraKeyframe::kDistance, pd);
-    frame.setInterpolationParameter(CameraKeyframe::kFovy, pf);
+    frame.setInterpolationParameter(CameraKeyframe::kFov, pf);
     testCameraInterpolationMatrix(p, frame);
 }
 
@@ -621,7 +621,7 @@ void TestVMDMotion::testCameraInterpolationMatrix(const QuadWord p[], const Came
     frame.getInterpolationParameter(CameraKeyframe::kDistance, actual);
     CompareQuadWord(actual, expected);
     expected = p[5];
-    frame.getInterpolationParameter(CameraKeyframe::kFovy, actual);
+    frame.getInterpolationParameter(CameraKeyframe::kFov, actual);
     CompareQuadWord(actual, expected);
 }
 

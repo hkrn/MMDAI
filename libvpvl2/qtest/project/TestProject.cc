@@ -300,7 +300,7 @@ void TestProject::testBoneAnimation(const IMotion *motion)
     const String bar("bar"), baz("baz");
     QuadWord q;
     QCOMPARE(ba.countKeyframes(), 2);
-    QCOMPARE(ba.frameAt(0)->frameIndex(), 1.0f);
+    QCOMPARE(ba.frameAt(0)->frameIndex(), IKeyframe::Index(1));
     QVERIFY(ba.frameAt(0)->name()->equals(&bar));
     QCOMPARE(ba.frameAt(0)->position(), Vector3(1, 2, -3));
     QCOMPARE(ba.frameAt(0)->rotation(), Quaternion(-1, -2, 3, 4));
@@ -310,7 +310,7 @@ void TestProject::testBoneAnimation(const IMotion *motion)
         ba.frameAt(0)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
         QCOMPARE(q, QuadWord(offset + 1, offset + 2, offset + 3, offset + 4));
     }
-    QCOMPARE(ba.frameAt(1)->frameIndex(), 2.0f);
+    QCOMPARE(ba.frameAt(1)->frameIndex(), IKeyframe::Index(2));
     QVERIFY(ba.frameAt(1)->name()->equals(&baz));
     QCOMPARE(ba.frameAt(1)->position(), Vector3(3, 1, -2));
     QCOMPARE(ba.frameAt(1)->rotation(), Quaternion(-4, -3, 2, 1));
@@ -327,12 +327,12 @@ void TestProject::testMorphAnimation(const IMotion *motion)
     const vmd::MorphAnimation &ma = static_cast<const vmd::Motion *>(motion)->morphAnimation();
     String bar("bar"), baz("baz");
     QCOMPARE(ma.countKeyframes(), 2);
-    QCOMPARE(ma.frameAt(0)->frameIndex(), 1.0f);
+    QCOMPARE(ma.frameAt(0)->frameIndex(), IKeyframe::Index(1));
     QVERIFY(ma.frameAt(0)->name()->equals(&bar));
-    QCOMPARE(ma.frameAt(0)->weight(), 0.0f);
-    QCOMPARE(ma.frameAt(1)->frameIndex(), 2.0f);
+    QCOMPARE(ma.frameAt(0)->weight(), IMorph::Weight(0));
+    QCOMPARE(ma.frameAt(1)->frameIndex(), IKeyframe::Index(2));
     QVERIFY(ma.frameAt(1)->name()->equals(&baz));
-    QCOMPARE(ma.frameAt(1)->weight(), 1.0f);
+    QCOMPARE(ma.frameAt(1)->weight(), IMorph::Weight(1));
 }
 
 void TestProject::testCameraAnimation(const IMotion *motion)
@@ -340,7 +340,7 @@ void TestProject::testCameraAnimation(const IMotion *motion)
     const vmd::CameraAnimation &ca = static_cast<const vmd::Motion *>(motion)->cameraAnimation();
     QuadWord q;
     QCOMPARE(ca.countKeyframes(), 2);
-    QCOMPARE(ca.frameAt(0)->frameIndex(), 1.0f);
+    QCOMPARE(ca.frameAt(0)->frameIndex(), IKeyframe::Index(1));
     QCOMPARE(ca.frameAt(0)->position(), Vector3(1, 2, -3));
     const Vector3 &angle1 = ca.frameAt(0)->angle();
     QVERIFY(qFuzzyCompare(angle1.x(), -degree(1)));
@@ -353,7 +353,7 @@ void TestProject::testCameraAnimation(const IMotion *motion)
         ca.frameAt(0)->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
         QCOMPARE(q, QuadWord(offset + 1, offset + 2, offset + 3, offset + 4));
     }
-    QCOMPARE(ca.frameAt(1)->frameIndex(), 2.0f);
+    QCOMPARE(ca.frameAt(1)->frameIndex(), IKeyframe::Index(2));
     QCOMPARE(ca.frameAt(1)->position(), Vector3(3, 1, -2));
     const Vector3 &angle2 = ca.frameAt(1)->angle();
     QVERIFY(qFuzzyCompare(angle2.x(), -degree(3)));
@@ -372,10 +372,10 @@ void TestProject::testLightAnimation(const IMotion *motion)
 {
     const vmd::LightAnimation &la = static_cast<const vmd::Motion *>(motion)->lightAnimation();
     QCOMPARE(la.countKeyframes(), 2);
-    QCOMPARE(la.frameAt(0)->frameIndex(), 1.0f);
+    QCOMPARE(la.frameAt(0)->frameIndex(), IKeyframe::Index(1));
     QCOMPARE(la.frameAt(0)->color(), Vector3(1, 2, 3));
     QCOMPARE(la.frameAt(0)->direction(), Vector3(1, 2, 3));
-    QCOMPARE(la.frameAt(1)->frameIndex(), 2.0f);
+    QCOMPARE(la.frameAt(1)->frameIndex(), IKeyframe::Index(2));
     QCOMPARE(la.frameAt(1)->color(), Vector3(3, 1, 2));
     QCOMPARE(la.frameAt(1)->direction(), Vector3(3, 1, 2));
 }
