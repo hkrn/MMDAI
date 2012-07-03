@@ -390,20 +390,6 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
 {
-    vpvl::Asset *asset = m_model->ptr();
-    const btScalar &scaleFactor = asset->scaleFactor();
-    aiVector3D aiS, aiP;
-    aiQuaternion aiQ;
-    node->mTransformation.Decompose(aiS, aiQ, aiP);
-    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
-    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
-                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
-    if (const IBone *bone = m_model->parentBone()) {
-        const Transform &boneTransform = bone->worldTransform();
-        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
-        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
-        transform.setBasis(boneBasis.scaled(scaleVector));
-    }
     static const AssetVertex v;
     const uint8_t *basePtr = reinterpret_cast<const uint8_t *>(&v.position);
     const GLvoid *vertexPtr = 0;
@@ -442,20 +428,6 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
 
 void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)
 {
-    vpvl::Asset *asset = m_model->ptr();
-    const btScalar &scaleFactor = asset->scaleFactor();
-    aiVector3D aiS, aiP;
-    aiQuaternion aiQ;
-    node->mTransformation.Decompose(aiS, aiQ, aiP);
-    const vpvl::Vector3 scaleVector(aiS.x * scaleFactor, aiS.y * scaleFactor, aiS.z * scaleFactor);
-    Transform transform(btMatrix3x3(Quaternion(aiQ.x, aiQ.y, aiQ.z, aiQ.w) * asset->rotation()).scaled(scaleVector),
-                        Vector3(aiP.x,aiP.y, aiP.z) + asset->position());
-    if (const vpvl::Bone *bone = asset->parentBone()) {
-        const Transform &boneTransform = bone->localTransform();
-        const btMatrix3x3 &boneBasis = boneTransform.getBasis();
-        transform.setOrigin(boneTransform.getOrigin() + boneBasis * transform.getOrigin());
-        transform.setBasis(boneBasis.scaled(scaleVector));
-    }
     const GLvoid *vertexPtr = 0;
     const size_t stride = sizeof(AssetVertex);
     const unsigned int nmeshes = node->mNumMeshes;
