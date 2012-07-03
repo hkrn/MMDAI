@@ -351,7 +351,7 @@ public:
           isVertexShaderSkinning(false)
     {
 #ifdef VPVL2_LINK_QT
-    initializeGLFunctions();
+        initializeGLFunctions();
 #endif
     }
     virtual ~PrivateContext() {
@@ -450,69 +450,34 @@ bool PMDRenderEngine::upload(const IString *dir)
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegate);
     ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_delegate);
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_delegate);
-    IString *vertexShaderSource = 0;
-    IString *fragmentShaderSource = 0;
-    const bool isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
-    m_context->isVertexShaderSkinning = isVertexShaderSkinning;
-    if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeWithSkinningVertexShader, m_model, dir, context);
-    else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeVertexShader, m_model, dir, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kEdgeFragmentShader, m_model, dir, context);
-    edgeProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
-    edgeProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
-    ret = edgeProgram->linkProgram(context);
-    delete vertexShaderSource;
-    delete fragmentShaderSource;
-    if (!ret) {
-        delete m_context;
-        m_context = 0;
-        return ret;
+    m_context->isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
+    if (!createProgram(edgeProgram, dir,
+                       IRenderDelegate::kEdgeVertexShader,
+                       IRenderDelegate::kEdgeWithSkinningVertexShader,
+                       IRenderDelegate::kEdgeFragmentShader,
+                       context)) {
+        return releaseContext0(context);
     }
-    if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelWithSkinningVertexShader, m_model, dir, context);
-    else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, dir, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, dir, context);
-    modelProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
-    modelProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
-    ret = modelProgram->linkProgram(context);
-    delete vertexShaderSource;
-    delete fragmentShaderSource;
-    if (!ret) {
-        delete m_context;
-        m_context = 0;
-        return ret;
+    if (!createProgram(modelProgram, dir,
+                       IRenderDelegate::kModelVertexShader,
+                       IRenderDelegate::kModelWithSkinningVertexShader,
+                       IRenderDelegate::kModelFragmentShader,
+                       context)) {
+        return releaseContext0(context);
     }
-    if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowWithSkinningVertexShader, m_model, dir, context);
-    else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowVertexShader, m_model, dir, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kShadowFragmentShader, m_model, dir, context);
-    shadowProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
-    shadowProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
-    ret = shadowProgram->linkProgram(context);
-    delete vertexShaderSource;
-    delete fragmentShaderSource;
-    if (!ret) {
-        delete m_context;
-        m_context = 0;
-        return ret;
+    if (!createProgram(shadowProgram, dir,
+                       IRenderDelegate::kShadowVertexShader,
+                       IRenderDelegate::kShadowWithSkinningVertexShader,
+                       IRenderDelegate::kShadowFragmentShader,
+                       context)) {
+        return releaseContext0(context);
     }
-    if (isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotWithSkinningVertexShader, m_model, dir, context);
-    else
-        vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, dir, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, dir, context);
-    zplotProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
-    zplotProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
-    ret = zplotProgram->linkProgram(context);
-    delete vertexShaderSource;
-    delete fragmentShaderSource;
-    if (!ret) {
-        delete m_context;
-        m_context = 0;
-        return ret;
+    if (!createProgram(zplotProgram, dir,
+                       IRenderDelegate::kZPlotVertexShader,
+                       IRenderDelegate::kZPlotWithSkinningVertexShader,
+                       IRenderDelegate::kZPlotFragmentShader,
+                       context)) {
+        return releaseContext0(context);
     }
     PMDModel *model = m_model->ptr();
     glGenBuffers(kVertexBufferObjectMax, m_context->vertexBufferObjects);
@@ -535,7 +500,7 @@ bool PMDRenderEngine::upload(const IString *dir)
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model vertices to the vertex buffer object (ID=%d)",
          m_context->vertexBufferObjects[kModelVertices]);
-    if (isVertexShaderSkinning)
+    if (m_context->isVertexShaderSkinning)
         m_model->getSkinningMeshes(m_context->mesh);
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
@@ -546,21 +511,35 @@ bool PMDRenderEngine::upload(const IString *dir)
     texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
-        IString *primary = m_delegate->toUnicode(material->mainTextureName());
-        IString *second = m_delegate->toUnicode(material->subTextureName());
         PMDModelMaterialPrivate &materialPrivate = materialPrivates[i];
         materialPrivate.mainTextureID = 0;
         materialPrivate.subTextureID = 0;
-        if (m_delegate->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
+        const uint8_t *mainTextureName = material->mainTextureName();
+        if (*mainTextureName) {
+            IString *primary = m_delegate->toUnicode(mainTextureName);
+            ret = m_delegate->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context);
+            delete primary;
+            if (ret) {
+                materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a primary texture (ID=%d)", textureID);
+            }
+            else {
+                return releaseContext0(context);
+            }
         }
-        if (m_delegate->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.subTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
+        const uint8_t *subTextureName = material->subTextureName();
+        if (*subTextureName) {
+            IString *second = m_delegate->toUnicode(subTextureName);
+            ret = m_delegate->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context);
+            delete second;
+            if (ret) {
+                materialPrivate.subTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a secondary texture (ID=%d)", textureID);
+            }
+            else {
+                return releaseContext0(context);
+            }
         }
-        delete primary;
-        delete second;
         hasSingleSphere |= material->isMainSphereModulate() && !material->isSubSphereAdd();
         hasMultipleSphere |= material->isSubSphereAdd();
     }
@@ -573,20 +552,28 @@ bool PMDRenderEngine::upload(const IString *dir)
     m_context->hasSingleSphereMap = hasSingleSphere;
     m_context->hasMultipleSphereMap = hasMultipleSphere;
     IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
-    if (m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context)) {
+    ret = m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context);
+    delete s;
+    if (ret) {
         m_context->toonTextures[0] = textureID = *static_cast<const GLuint *>(texture.object);
         log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
     }
-    delete s;
+    else {
+        return releaseContext0(context);
+    }
     static const int nToonTextures = PMDModel::kCustomTextureMax - 1;
     for (int i = 0; i < nToonTextures; i++) {
         const uint8_t *name = model->toonTexture(i);
         s = m_delegate->toUnicode(name);
-        if (m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context)) {
+        ret = m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context);
+        delete s;
+        if (ret) {
             m_context->toonTextures[i + 1] = textureID = *static_cast<const GLuint *>(texture.object);
             log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
         }
-        delete s;
+        else {
+            return releaseContext0(context);
+        }
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
@@ -885,6 +872,34 @@ void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
+}
+
+bool PMDRenderEngine::createProgram(BaseShaderProgram *program,
+                                    const IString *dir,
+                                    IRenderDelegate::ShaderType vertexShaderType,
+                                    IRenderDelegate::ShaderType vertexSkinningShaderType,
+                                    IRenderDelegate::ShaderType fragmentShaderType,
+                                    void *context)
+{
+    IString *vertexShaderSource = 0;
+    IString *fragmentShaderSource = 0;
+    if (m_context->isVertexShaderSkinning)
+        vertexShaderSource = m_delegate->loadShaderSource(vertexSkinningShaderType, m_model, dir, context);
+    else
+        vertexShaderSource = m_delegate->loadShaderSource(vertexShaderType, m_model, dir, context);
+    fragmentShaderSource = m_delegate->loadShaderSource(fragmentShaderType, m_model, dir, context);
+    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
+    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
+    bool ok = program->linkProgram(context);
+    delete vertexShaderSource;
+    delete fragmentShaderSource;
+    return ok;
+}
+
+bool PMDRenderEngine::releaseContext0(void *context)
+{
+    m_delegate->releaseContext(m_model, context);
+    return false;
 }
 
 } /* namespace gl2 */

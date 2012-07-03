@@ -100,20 +100,23 @@ public:
     };
     struct Texture {
         Texture()
-            : width(0),
+            : async(true),
+              width(0),
               height(0),
               object(0)
         {
         }
         ~Texture() {
+            async = true;
             width = 0;
             height = 0;
             object = 0;
         }
 
+        bool async;
         int width;
         int height;
-        const void *object;
+        void *object;
     };
 
     virtual ~IRenderDelegate() {}

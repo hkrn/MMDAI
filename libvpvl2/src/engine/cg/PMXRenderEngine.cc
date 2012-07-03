@@ -79,28 +79,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
 
 PMXRenderEngine::~PMXRenderEngine()
 {
-    glDeleteBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
-    if (m_materialContexts) {
-        const Array<pmx::Material *> &modelMaterials = m_model->materials();
-        const int nmaterials = modelMaterials.count();
-        for (int i = 0; i < nmaterials; i++) {
-            MaterialContext &materialPrivate = m_materialContexts[i];
-            glDeleteTextures(1, &materialPrivate.mainTextureID);
-            glDeleteTextures(1, &materialPrivate.sphereTextureID);
-        }
-        delete[] m_materialContexts;
-        m_materialContexts = 0;
-    }
-#ifdef VPVL2_ENABLE_OPENCL
-    delete m_accelerator;
-    m_accelerator = 0;
-#endif
-    m_delegate = 0;
-    m_scene = 0;
-    m_model = 0;
-    m_accelerator = 0;
-    m_cullFaceState = false;
-    m_isVertexShaderSkinning = false;
+    release();
 }
 
 IModel *PMXRenderEngine::model() const
@@ -419,6 +398,39 @@ void PMXRenderEngine::handleError(CGcontext context, CGerror error, void *data)
     PMXRenderEngine *engine = static_cast<PMXRenderEngine *>(data);
     Q_UNUSED(context)
     engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
+}
+
+bool PMXRenderEngine::releaseContext0(void *context)
+{
+    m_delegate->releaseContext(m_model, context);
+    release();
+    return false;
+}
+
+void PMXRenderEngine::release()
+{
+    glDeleteBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
+    if (m_materialContexts) {
+        const Array<pmx::Material *> &modelMaterials = m_model->materials();
+        const int nmaterials = modelMaterials.count();
+        for (int i = 0; i < nmaterials; i++) {
+            MaterialContext &materialPrivate = m_materialContexts[i];
+            glDeleteTextures(1, &materialPrivate.mainTextureID);
+            glDeleteTextures(1, &materialPrivate.sphereTextureID);
+        }
+        delete[] m_materialContexts;
+        m_materialContexts = 0;
+    }
+#ifdef VPVL2_ENABLE_OPENCL
+    delete m_accelerator;
+    m_accelerator = 0;
+#endif
+    m_delegate = 0;
+    m_scene = 0;
+    m_model = 0;
+    m_accelerator = 0;
+    m_cullFaceState = false;
+    m_isVertexShaderSkinning = false;
 }
 
 } /* namespace gl2 */

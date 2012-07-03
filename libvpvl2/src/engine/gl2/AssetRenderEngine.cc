@@ -347,28 +347,43 @@ bool AssetRenderEngine::upload(const IString *dir)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_context->textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    if (m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                    ret = m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context);
+                    delete mainTexturePath;
+                    if (ret) {
                         m_context->textures[mainTexture] = textureID = *static_cast<const GLuint *>(texture.object);
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                     }
-                    delete mainTexturePath;
+                    else {
+                        m_delegate->releaseContext(m_model, context);
+                        return ret;
+                    }
                 }
                 if (m_context->textures[subTexture] == 0) {
                     IString *subTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    if (m_delegate->uploadTexture(subTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                    ret = m_delegate->uploadTexture(subTexturePath, dir, IRenderDelegate::kTexture2D, texture, context);
+                    delete subTexturePath;
+                    if (ret) {
                         m_context->textures[subTexture] = textureID = *static_cast<const GLuint *>(texture.object);
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
                     }
-                    delete subTexturePath;
+                    else {
+                        m_delegate->releaseContext(m_model, context);
+                        return ret;
+                    }
                 }
             }
             else if (m_context->textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                if (m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                ret = m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context);
+                delete mainTexturePath;
+                if (ret) {
                     m_context->textures[mainTexture] = textureID = *static_cast<const GLuint *>(texture.object);
                     log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                 }
-                delete mainTexturePath;
+                else {
+                    m_delegate->releaseContext(m_model, context);
+                    return ret;
+                }
             }
             textureIndex++;
         }

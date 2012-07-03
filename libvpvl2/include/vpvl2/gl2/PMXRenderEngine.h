@@ -76,6 +76,8 @@ class Model;
 namespace gl2
 {
 
+class BaseShaderProgram;
+
 class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
@@ -109,6 +111,14 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
+    bool createProgram(BaseShaderProgram *program,
+                       const IString *dir,
+                       IRenderDelegate::ShaderType vertexShaderType,
+                       IRenderDelegate::ShaderType vertexSkinningShaderType,
+                       IRenderDelegate::ShaderType fragmentShaderType,
+                       void *context);
+    bool releaseContext0(void *context);
+
     const Scene *m_scene;
     cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_model;
