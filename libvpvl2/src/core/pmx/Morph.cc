@@ -448,7 +448,7 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Morph::setWeight(const IMorph::Weight &value)
+void Morph::setWeight(const IMorph::WeightPrecision &value)
 {
     m_weight = value;
     int nmorphs;

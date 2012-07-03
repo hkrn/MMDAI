@@ -62,15 +62,15 @@ public:
     Category category() const;
     Type type() const;
     bool hasParent() const;
-    const Weight &weight() const;
-    void setWeight(const Weight &value);
+    const WeightPrecision &weight() const;
+    void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 
     IEncoding *m_encoding;
     IString *m_name;
     vpvl::Face *m_morph;
     Category m_category;
-    Weight m_weight;
+    WeightPrecision m_weight;
     int m_index;
 };
 

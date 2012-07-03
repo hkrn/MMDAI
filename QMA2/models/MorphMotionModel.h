@@ -67,8 +67,8 @@ public:
     const QString nameFromModelIndex(const QModelIndex &index) const;
 
     void setKeyframes(const KeyFramePairList &keyframes);
-    void setWeight(vpvl2::IMorph::Weight &value);
-    void setWeight(const vpvl2::IMorph::Weight &value, vpvl2::IMorph *morph);
+    void setWeight(vpvl2::IMorph::WeightPrecision &value);
+    void setWeight(const vpvl2::IMorph::WeightPrecision &value, vpvl2::IMorph *morph);
     vpvl2::IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
     bool isMorphSelected() const { return m_model != 0 && selectedMorph() != 0; }
     vpvl2::Factory *factory() const { return m_factory; }

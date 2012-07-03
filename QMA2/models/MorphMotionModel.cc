@@ -617,13 +617,13 @@ void MorphMotionModel::selectMorphs(const QList<IMorph *> &morphs)
     emit morphsDidSelect(morphs);
 }
 
-void MorphMotionModel::setWeight(IMorph::Weight &value)
+void MorphMotionModel::setWeight(IMorph::WeightPrecision &value)
 {
     if (!m_selectedMorphs.isEmpty())
         setWeight(value, m_selectedMorphs.last());
 }
 
-void MorphMotionModel::setWeight(const IMorph::Weight &value, IMorph *morph)
+void MorphMotionModel::setWeight(const IMorph::WeightPrecision &value, IMorph *morph)
 {
     if (morph) {
         /* 一度頂点がリセットされるので、頂点モーフのみ更新を行う */

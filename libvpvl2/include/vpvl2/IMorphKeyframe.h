@@ -67,7 +67,7 @@ public:
      * @return float
      * @sa setWeight
      */
-    virtual const IMorph::Weight &weight() const = 0;
+    virtual const IMorph::WeightPrecision &weight() const = 0;
 
     /**
      * 変形係数を設定します。
@@ -77,7 +77,7 @@ public:
      * @param float
      * @sa weight
      */
-    virtual void setWeight(const IMorph::Weight &value) = 0;
+    virtual void setWeight(const IMorph::WeightPrecision &value) = 0;
 };
 
 }

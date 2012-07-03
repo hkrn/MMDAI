@@ -118,7 +118,7 @@ void MorphKeyframe::setName(const IString *value)
     internal::setString(value, m_name);
 }
 
-void MorphKeyframe::setWeight(const IMorph::Weight &value)
+void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 {
     m_weight = value;
 }

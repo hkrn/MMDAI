@@ -90,12 +90,12 @@ bool Morph::hasParent() const
     return false;
 }
 
-const IMorph::Weight &Morph::weight() const
+const IMorph::WeightPrecision &Morph::weight() const
 {
     return m_weight;
 }
 
-void Morph::setWeight(const Weight &value)
+void Morph::setWeight(const WeightPrecision &value)
 {
     m_weight = value;
     m_morph->setWeight(value);

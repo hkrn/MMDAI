@@ -51,7 +51,7 @@ class IString;
 class VPVL2_API IMorph
 {
 public:
-    typedef double Weight;
+    typedef double WeightPrecision;
     enum Type {
         kUnknown = -1,
         kGroup,
@@ -117,7 +117,7 @@ public:
      * @return float
      * @sa setWeight
      */
-    virtual const Weight &weight() const = 0;
+    virtual const WeightPrecision &weight() const = 0;
 
     /**
      * 係数 value に基づいて変形を行います。
@@ -127,7 +127,7 @@ public:
      * @param float
      * @sa weight
      */
-    virtual void setWeight(const Weight &value) = 0;
+    virtual void setWeight(const WeightPrecision &value) = 0;
 };
 
 }
