@@ -52,7 +52,7 @@ class MorphAnimationKeyframePredication
 {
 public:
     bool operator()(const BaseKeyframe *left, const BaseKeyframe *right) const {
-        return left->frameIndex() < right->frameIndex();
+        return left->timeIndex() < right->timeIndex();
     }
 };
 
@@ -104,7 +104,7 @@ void MorphAnimation::read(const uint8_t *data, int size)
     }
 }
 
-void MorphAnimation::seek(const IKeyframe::Index &frameAt)
+void MorphAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 {
     if (!m_model)
         return;
@@ -118,8 +118,8 @@ void MorphAnimation::seek(const IKeyframe::Index &frameAt)
         IMorph *morph = frames->morph;
         morph->setWeight(frames->weight);
     }
-    m_previousFrameIndex = m_currentFrameIndex;
-    m_currentFrameIndex = frameAt;
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = frameAt;
 }
 
 void MorphAnimation::setParentModel(IModel *model)
@@ -162,7 +162,7 @@ void MorphAnimation::buildInternalNodes(IModel *model)
         InternalMorphKeyFrameList *keyframes = *m_name2keyframes.value(i);
         Array<MorphKeyframe *> &frames = keyframes->keyframes;
         frames.sort(MorphAnimationKeyframePredication());
-        btSetMax(m_maxFrameIndex, frames[frames.count() - 1]->frameIndex());
+        btSetMax(m_maxTimeIndex, frames[frames.count() - 1]->timeIndex());
     }
 }
 
@@ -181,7 +181,7 @@ MorphKeyframe *MorphAnimation::frameAt(int i) const
     return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<MorphKeyframe *>(m_keyframes[i]) : 0;
 }
 
-MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::Index &frameIndex, const IString *name) const
+MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
 {
     if (!name)
         return 0;
@@ -190,23 +190,23 @@ MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::Index &frameIndex, 
     if (ptr) {
         const InternalMorphKeyFrameList *node = *ptr;
         const Array<MorphKeyframe *> &frames = node->keyframes;
-        int index = findKeyframeIndex(frameIndex, frames);
+        int index = findKeyframeIndex(timeIndex, frames);
         return index != -1 ? frames[index] : 0;
     }
     return 0;
 }
 
-void MorphAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalMorphKeyFrameList *keyFrames)
+void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalMorphKeyFrameList *keyFrames)
 {
     Array<MorphKeyframe *> &kframes = keyFrames->keyframes;
     const int nframes = kframes.count();
     MorphKeyframe *lastKeyFrame = kframes.at(nframes - 1);
-    const IKeyframe::Index &currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    const IKeyframe::TimeIndex &currentFrame = btMin(frameAt, lastKeyFrame->timeIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0, lastIndex = keyFrames->lastIndex;
-    if (currentFrame >= kframes.at(lastIndex)->frameIndex()) {
+    if (currentFrame >= kframes.at(lastIndex)->timeIndex()) {
         for (int i = lastIndex; i < nframes; i++) {
-            if (currentFrame <= kframes.at(i)->frameIndex()) {
+            if (currentFrame <= kframes.at(i)->timeIndex()) {
                 k2 = i;
                 break;
             }
@@ -214,7 +214,7 @@ void MorphAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalMo
     }
     else {
         for (int i = 0; i <= lastIndex && i < nframes; i++) {
-            if (currentFrame <= m_keyframes.at(i)->frameIndex()) {
+            if (currentFrame <= m_keyframes.at(i)->timeIndex()) {
                 k2 = i;
                 break;
             }
@@ -227,19 +227,19 @@ void MorphAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalMo
     keyFrames->lastIndex = k1;
 
     const MorphKeyframe *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
-    const IKeyframe::Index &frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
+    const IKeyframe::TimeIndex &timeIndexFrom = keyFrameFrom->timeIndex(), timeIndexTo = keyFrameTo->timeIndex();
     const IMorph::WeightPrecision &weightFrom = keyFrameFrom->weight();
     const IMorph::WeightPrecision &weightTo = keyFrameTo->weight();
 
-    if (frameIndexFrom != frameIndexTo) {
-        const IKeyframe::SmoothPrecision &w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
+    if (timeIndexFrom != timeIndexTo) {
+        const IKeyframe::SmoothPrecision &w = (currentFrame - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
         keyFrames->weight = internal::lerp(weightFrom, weightTo, w);
     }
     else {
         keyFrames->weight = weightFrom;
     }
-    m_previousFrameIndex = m_currentFrameIndex;
-    m_currentFrameIndex = frameAt;
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = frameAt;
 }
 
 }

@@ -48,38 +48,38 @@ namespace vmd
 {
 
 BaseAnimation::BaseAnimation()
-    : m_lastIndex(0),
-      m_maxFrameIndex(0),
-      m_currentFrameIndex(0),
-      m_previousFrameIndex(0)
+    : m_lastTimeIndex(0),
+      m_maxTimeIndex(0),
+      m_currentTimeIndex(0),
+      m_previousTimeIndex(0)
 {
 }
 
 BaseAnimation::~BaseAnimation()
 {
     m_keyframes.releaseAll();
-    m_lastIndex = 0;
-    m_maxFrameIndex = 0.0f;
-    m_currentFrameIndex = 0.0f;
-    m_previousFrameIndex = 0.0f;
+    m_lastTimeIndex = 0;
+    m_maxTimeIndex = 0.0f;
+    m_currentTimeIndex = 0.0f;
+    m_previousTimeIndex = 0.0f;
 }
 
-void BaseAnimation::advance(const IKeyframe::Index &deltaFrame)
+void BaseAnimation::advance(const IKeyframe::TimeIndex &deltaFrame)
 {
-    seek(m_currentFrameIndex);
-    m_currentFrameIndex += deltaFrame;
+    seek(m_currentTimeIndex);
+    m_currentTimeIndex += deltaFrame;
 }
 
-void BaseAnimation::rewind(const IKeyframe::Index &target, const IKeyframe::Index &deltaFrame)
+void BaseAnimation::rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaFrame)
 {
-    m_currentFrameIndex = m_previousFrameIndex + deltaFrame - m_maxFrameIndex + target;
-    m_previousFrameIndex = target;
+    m_currentTimeIndex = m_previousTimeIndex + deltaFrame - m_maxTimeIndex + target;
+    m_previousTimeIndex = target;
 }
 
 void BaseAnimation::reset()
 {
-    m_currentFrameIndex = 0.0f;
-    m_previousFrameIndex = 0.0f;
+    m_currentTimeIndex = 0.0f;
+    m_previousTimeIndex = 0.0f;
 }
 
 void BaseAnimation::addKeyframe(IKeyframe *frame)
@@ -94,13 +94,13 @@ void BaseAnimation::deleteKeyframe(IKeyframe *&frame)
     frame = 0;
 }
 
-void BaseAnimation::deleteKeyframes(const IKeyframe::Index &frameIndex)
+void BaseAnimation::deleteKeyframes(const IKeyframe::TimeIndex &timeIndex)
 {
     const int nframes = m_keyframes.count();
     Array<IKeyframe *> framesToRemove;
     for (int i = 0; i < nframes; i++) {
         IKeyframe *frame = m_keyframes[i];
-        if (frame->frameIndex() == frameIndex)
+        if (frame->timeIndex() == timeIndex)
             framesToRemove.add(frame);
     }
     const int nFramesToRemove = framesToRemove.count();

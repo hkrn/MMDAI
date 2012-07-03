@@ -65,45 +65,45 @@ public:
     virtual ~BaseAnimation();
 
     virtual void read(const uint8_t *data, int size) = 0;
-    virtual void seek(const IKeyframe::Index &frameAt) = 0;
-    void advance(const IKeyframe::Index &deltaFrame);
-    void rewind(const IKeyframe::Index &target, const IKeyframe::Index &deltaFrame);
+    virtual void seek(const IKeyframe::TimeIndex &frameAt) = 0;
+    void advance(const IKeyframe::TimeIndex &deltaFrame);
+    void rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaFrame);
     void reset();
     void addKeyframe(IKeyframe *frame);
     void deleteKeyframe(IKeyframe *&frame);
-    void deleteKeyframes(const IKeyframe::Index &frameIndex);
+    void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex);
 
     int countKeyframes() const { return m_keyframes.count(); }
-    const IKeyframe::Index &previousIndex() const { return m_previousFrameIndex; }
-    const IKeyframe::Index &currentIndex() const { return m_currentFrameIndex; }
-    const IKeyframe::Index &maxIndex() const { return m_maxFrameIndex; }
+    const IKeyframe::TimeIndex &previousTimeIndex() const { return m_previousTimeIndex; }
+    const IKeyframe::TimeIndex &currentTimeIndex() const { return m_currentTimeIndex; }
+    const IKeyframe::TimeIndex &maxTimeIndex() const { return m_maxTimeIndex; }
 
 protected:
     template<typename T>
-    static int findKeyframeIndex(const IKeyframe::Index &key, const Array<T *> &keyframes) {
+    static int findKeyframeIndex(const IKeyframe::TimeIndex &key, const Array<T *> &keyframes) {
         int min = 0, max = keyframes.count() - 1;
         while (min < max) {
             int mid = (min + max) / 2;
             const T *keyframe = keyframes[mid];
-            const IKeyframe::Index &frameIndex = int(keyframe->frameIndex());
-            if (frameIndex < key)
+            const IKeyframe::TimeIndex &timeIndex = int(keyframe->timeIndex());
+            if (timeIndex < key)
                 min = mid + 1;
             else
                 max = mid;
         }
         if (min == max) {
-            const IKeyframe::Index &frameIndex = keyframes[min]->frameIndex();
-            if (frameIndex == key)
+            const IKeyframe::TimeIndex &timeIndex = keyframes[min]->timeIndex();
+            if (timeIndex == key)
                 return min;
         }
         return -1;
     }
 
     Array<IKeyframe *> m_keyframes;
-    int m_lastIndex;
-    IKeyframe::Index m_maxFrameIndex;
-    IKeyframe::Index m_currentFrameIndex;
-    IKeyframe::Index m_previousFrameIndex;
+    int m_lastTimeIndex;
+    IKeyframe::TimeIndex m_maxTimeIndex;
+    IKeyframe::TimeIndex m_currentTimeIndex;
+    IKeyframe::TimeIndex m_previousTimeIndex;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };

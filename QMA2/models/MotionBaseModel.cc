@@ -40,12 +40,12 @@
 
 #include "MotionBaseModel.h"
 
-int MotionBaseModel::toFrameIndex(const QModelIndex &index)
+int MotionBaseModel::toTimeIndex(const QModelIndex &index)
 {
-    return toFrameIndex(index.column());
+    return toTimeIndex(index.column());
 }
 
-int MotionBaseModel::toFrameIndex(int modelColumnIndex)
+int MotionBaseModel::toTimeIndex(int modelColumnIndex)
 {
     // column index 0 is row header
     return qMax(modelColumnIndex - 1, 0);
@@ -61,7 +61,7 @@ MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent)
     : QAbstractTableModel(parent),
       m_motion(0),
       m_undo(undo),
-      m_frameIndex(0),
+      m_timeIndex(0),
       m_frameIndexColumnMax(kFrameIndexColumnMinimum),
       m_frameIndexColumnOffset(kFrameIndexColumnMinimum),
       m_modified(false)
@@ -133,12 +133,12 @@ QItemSelection MotionBaseModel::selectKeyframesFromItemSelection(const QItemSele
     return newSelection;
 }
 
-void MotionBaseModel::setFrameIndex(const vpvl2::IKeyframe::Index &newIndex)
+void MotionBaseModel::setTimeIndex(const vpvl2::IKeyframe::TimeIndex &newIndex)
 {
-    int oldIndex = m_frameIndex;
+    int oldIndex = m_timeIndex;
     if (oldIndex != newIndex) {
-        m_frameIndex = newIndex;
-        emit frameIndexDidChange(newIndex, oldIndex);
+        m_timeIndex = newIndex;
+        emit timeIndexDidChange(newIndex, oldIndex);
     }
 }
 
@@ -180,7 +180,7 @@ void MotionBaseModel::setFrameIndexColumnMax(int newValue)
 
 void MotionBaseModel::setFrameIndexColumnMax(vpvl2::IMotion *motion)
 {
-    setFrameIndexColumnMax0(motion->maxFrameIndex());
+    setFrameIndexColumnMax0(motion->maxTimeIndex());
 }
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)

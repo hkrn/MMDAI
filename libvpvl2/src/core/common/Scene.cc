@@ -421,7 +421,7 @@ void Scene::removeMotion(IMotion *motion)
     m_context->motions.remove(motion);
 }
 
-void Scene::advance(const IKeyframe::Index &delta)
+void Scene::advance(const IKeyframe::TimeIndex &delta)
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
@@ -456,13 +456,13 @@ void Scene::advance(const IKeyframe::Index &delta)
     updateCamera();
 }
 
-void Scene::seek(const IKeyframe::Index &frameIndex)
+void Scene::seek(const IKeyframe::TimeIndex &timeIndex)
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
-        motion->seek(frameIndex);
+        motion->seek(timeIndex);
     }
     updateModels();
     updateRenderEngines();
@@ -471,7 +471,7 @@ void Scene::seek(const IKeyframe::Index &frameIndex)
     if (cameraMotion) {
         vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
         if (animation->countKeyframes() > 0) {
-            animation->seek(frameIndex);
+            animation->seek(timeIndex);
             camera.setPosition(animation->position());
             camera.setAngle(animation->angle());
             camera.setFov(animation->fovy());
@@ -483,7 +483,7 @@ void Scene::seek(const IKeyframe::Index &frameIndex)
     if (lightMotion) {
         vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
         if (animation->countKeyframes() > 0) {
-            animation->seek(frameIndex);
+            animation->seek(timeIndex);
             light.setColor(animation->color());
             light.setDirection(animation->direction());
         }
@@ -523,13 +523,13 @@ void Scene::setPreferredFPS(const Scalar &value)
     m_context->preferredFPS = value;
 }
 
-bool Scene::isReachedTo(const IKeyframe::Index &frameIndex) const
+bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
-        if (!motion->isReachedTo(frameIndex))
+        if (!motion->isReachedTo(timeIndex))
             return false;
     }
     return true;
@@ -539,10 +539,10 @@ float Scene::maxFrameIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
-    IKeyframe::Index maxFrameIndex = 0;
+    IKeyframe::TimeIndex maxFrameIndex = 0;
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
-        btSetMax(maxFrameIndex, motion->maxFrameIndex());
+        btSetMax(maxFrameIndex, motion->maxTimeIndex());
     }
     return maxFrameIndex;
 }

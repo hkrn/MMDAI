@@ -71,11 +71,11 @@ public:
     ~BoneAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(const IKeyframe::Index &frameAt);
+    void seek(const IKeyframe::TimeIndex &frameAt);
     void reset();
     void setParentModel(IModel *model);
     BoneKeyframe *frameAt(int i) const;
-    BoneKeyframe *findKeyframe(const IKeyframe::Index &frameIndex, const IString *name) const;
+    BoneKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
 
     bool isNullFrameEnabled() const { return m_enableNullFrame; }
     void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
@@ -91,7 +91,7 @@ private:
                             int at,
                             IKeyframe::SmoothPrecision &value);
     void buildInternalKeyFrameList(IModel *model);
-    void calculateFrames(const IKeyframe::Index &frameAt, InternalBoneKeyFrameList *keyFrames);
+    void calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalBoneKeyFrameList *keyFrames);
 
     IEncoding *m_encoding;
     Hash<HashString, InternalBoneKeyFrameList *> m_name2keyframes;

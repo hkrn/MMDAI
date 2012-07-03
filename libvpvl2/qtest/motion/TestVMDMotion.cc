@@ -130,7 +130,7 @@ void TestVMDMotion::saveBoneKeyframe()
     Vector3 pos(1, 2, 3);
     Quaternion rot(4, 5, 6, 7);
     // initialize the bone frame to be copied
-    frame.setFrameIndex(42);
+    frame.setTimeIndex(42);
     frame.setName(&str);
     frame.setPosition(pos);
     frame.setRotation(rot);
@@ -149,14 +149,14 @@ void TestVMDMotion::saveBoneKeyframe()
     newFrame.read(data);
     // compare read bone frame
     QVERIFY(newFrame.name()->equals(frame.name()));
-    QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
+    QCOMPARE(newFrame.timeIndex(), frame.timeIndex());
     QVERIFY(newFrame.position() == pos);
     QVERIFY(newFrame.rotation() == rot);
     testBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
     QVERIFY(cloned->name()->equals(frame.name()));
-    QCOMPARE(cloned->frameIndex(), frame.frameIndex());
+    QCOMPARE(cloned->timeIndex(), frame.timeIndex());
     QVERIFY(cloned->position() == pos);
     QVERIFY(cloned->rotation() == rot);
     testBoneInterpolationMatrix(p, *static_cast<BoneKeyframe *>(cloned.data()));
@@ -167,7 +167,7 @@ void TestVMDMotion::saveCameraKeyframe()
     CameraKeyframe frame, newFrame;
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
     // initialize the camera frame to be copied
-    frame.setFrameIndex(42);
+    frame.setTimeIndex(42);
     frame.setPosition(pos);
     frame.setAngle(angle);
     frame.setDistance(7);
@@ -189,7 +189,7 @@ void TestVMDMotion::saveCameraKeyframe()
     uint8_t data[CameraKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
-    QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
+    QCOMPARE(newFrame.timeIndex(), frame.timeIndex());
     QVERIFY(newFrame.position() == frame.position());
     // compare read camera frame
     // for radian and degree calculation
@@ -201,7 +201,7 @@ void TestVMDMotion::saveCameraKeyframe()
     testCameraInterpolationMatrix(p, frame);
     // cloned camera frame shold be copied with deep
     QScopedPointer<ICameraKeyframe> cloned(frame.clone());
-    QCOMPARE(cloned->frameIndex(), frame.frameIndex());
+    QCOMPARE(cloned->timeIndex(), frame.timeIndex());
     QVERIFY(cloned->position() == frame.position());
     // for radian and degree calculation
     QVERIFY(qFuzzyCompare(cloned->angle().x(), frame.angle().x()));
@@ -219,7 +219,7 @@ void TestVMDMotion::saveMorphKeyframe()
     MorphKeyframe frame(&encoding), newFrame(&encoding);
     // initialize the morph frame to be copied
     frame.setName(&str);
-    frame.setFrameIndex(42);
+    frame.setTimeIndex(42);
     frame.setWeight(0.5);
     // write a morph frame to data and read it
     uint8_t data[MorphKeyframe::strideSize()];
@@ -227,12 +227,12 @@ void TestVMDMotion::saveMorphKeyframe()
     newFrame.read(data);
     // compare read morph frame
     QVERIFY(newFrame.name()->equals(frame.name()));
-    QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
+    QCOMPARE(newFrame.timeIndex(), frame.timeIndex());
     QCOMPARE(newFrame.weight(), frame.weight());
     // cloned morph frame shold be copied with deep
     QScopedPointer<IMorphKeyframe> cloned(frame.clone());
     QVERIFY(cloned->name()->equals(frame.name()));
-    QCOMPARE(cloned->frameIndex(), frame.frameIndex());
+    QCOMPARE(cloned->timeIndex(), frame.timeIndex());
     QCOMPARE(cloned->weight(), frame.weight());
 }
 
@@ -241,7 +241,7 @@ void TestVMDMotion::saveLightKeyframe()
     LightKeyframe frame, newFrame;
     Vector3 color(0.1, 0.2, 0.3), direction(4, 5, 6);
     // initialize the light frame to be copied
-    frame.setFrameIndex(42);
+    frame.setTimeIndex(42);
     frame.setColor(color);
     frame.setDirection(direction);
     // write a light frame to data and read it
@@ -249,12 +249,12 @@ void TestVMDMotion::saveLightKeyframe()
     frame.write(data);
     newFrame.read(data);
     // compare read light frame
-    QCOMPARE(newFrame.frameIndex(), frame.frameIndex());
+    QCOMPARE(newFrame.timeIndex(), frame.timeIndex());
     QVERIFY(newFrame.color() == frame.color());
     QVERIFY(newFrame.direction() == frame.direction());
     // cloned morph frame shold be copied with deep
     QScopedPointer<ILightKeyframe> cloned(frame.clone());
-    QCOMPARE(cloned->frameIndex(), frame.frameIndex());
+    QCOMPARE(cloned->timeIndex(), frame.timeIndex());
     QVERIFY(cloned->color() == frame.color());
     QVERIFY(cloned->direction() == frame.direction());
 }
@@ -304,7 +304,7 @@ void TestVMDMotion::parseBoneKeyframe()
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QVERIFY(frame.name()->equals(&str));
-    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
+    QCOMPARE(frame.timeIndex(), IKeyframe::TimeIndex(1.0));
 #ifdef VPVL2_COORDINATE_OPENGL
     QVERIFY(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
     QVERIFY(frame.rotation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
@@ -333,7 +333,7 @@ void TestVMDMotion::parseCameraKeyframe()
     QCOMPARE(size_t(bytes.size()), CameraKeyframe::strideSize());
     CameraKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
+    QCOMPARE(frame.timeIndex(), IKeyframe::TimeIndex(1.0));
 #ifdef VPVL2_COORDINATE_OPENGL
     QCOMPARE(frame.distance(), -1.0f);
     QVERIFY(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
@@ -363,8 +363,8 @@ void TestVMDMotion::parseMorphKeyframe()
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     QVERIFY(frame.name()->equals(&str));
-    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
-    QCOMPARE(frame.weight(), IMorph::Weight(0.5));
+    QCOMPARE(frame.timeIndex(), IKeyframe::TimeIndex(1.0));
+    QCOMPARE(frame.weight(), IMorph::WeightPrecision(0.5));
 }
 
 void TestVMDMotion::parseLightKeyframe()
@@ -380,7 +380,7 @@ void TestVMDMotion::parseLightKeyframe()
     QCOMPARE(size_t(bytes.size()), LightKeyframe::strideSize());
     LightKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    QCOMPARE(frame.frameIndex(), IKeyframe::Index(1.0));
+    QCOMPARE(frame.timeIndex(), IKeyframe::TimeIndex(1.0));
     QVERIFY(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
 #ifdef VPVL2_COORDINATE_OPENGL
     QVERIFY(frame.direction() == Vector3(0.5f, 0.6f, -0.7f));
@@ -439,7 +439,7 @@ void TestVMDMotion::mutateBoneKeyframes() const
     Motion motion(&model, &encoding);
     QCOMPARE(motion.countKeyframes(IKeyframe::kBone), 0);
     QScopedPointer<IBoneKeyframe> frame(new BoneKeyframe(&encoding));
-    frame->setFrameIndex(42);
+    frame->setTimeIndex(42);
     frame->setName(&s);
     // add a bone keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
@@ -449,10 +449,10 @@ void TestVMDMotion::mutateBoneKeyframes() const
     QCOMPARE(motion.findBoneKeyframeAt(-1), static_cast<IBoneKeyframe *>(0));
     QCOMPARE(motion.findBoneKeyframeAt(0), frame.data());
     QCOMPARE(motion.findBoneKeyframeAt(1), static_cast<IBoneKeyframe *>(0));
-    // find a bone keyframe with frameIndex and name
+    // find a bone keyframe with timeIndex and name
     QCOMPARE(motion.findBoneKeyframe(42, &s), frame.take());
     QScopedPointer<IBoneKeyframe> frame2(new BoneKeyframe(&encoding));
-    frame2->setFrameIndex(42);
+    frame2->setTimeIndex(42);
     frame2->setName(&s2);
     // replaced bone frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());
@@ -478,7 +478,7 @@ void TestVMDMotion::mutateCameraKeyframes() const
     Motion motion(&model, &encoding);
     QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 0);
     QScopedPointer<ICameraKeyframe> frame(new CameraKeyframe());
-    frame->setFrameIndex(42);
+    frame->setTimeIndex(42);
     frame->setDistance(42);
     // add a camera keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
@@ -488,10 +488,10 @@ void TestVMDMotion::mutateCameraKeyframes() const
     QCOMPARE(motion.findCameraKeyframeAt(-1), static_cast<ICameraKeyframe *>(0));
     QCOMPARE(motion.findCameraKeyframeAt(0), frame.data());
     QCOMPARE(motion.findCameraKeyframeAt(1), static_cast<ICameraKeyframe *>(0));
-    // find a camera keyframe with frameIndex
+    // find a camera keyframe with timeIndex
     QCOMPARE(motion.findCameraKeyframe(42), frame.take());
     QScopedPointer<ICameraKeyframe> frame2(new CameraKeyframe());
-    frame2->setFrameIndex(42);
+    frame2->setTimeIndex(42);
     frame2->setDistance(84);
     // replaced camera frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());
@@ -516,7 +516,7 @@ void TestVMDMotion::mutateLightKeyframes() const
     Motion motion(&model, &encoding);
     QCOMPARE(motion.countKeyframes(IKeyframe::kCamera), 0);
     QScopedPointer<ILightKeyframe> frame(new LightKeyframe());
-    frame->setFrameIndex(42);
+    frame->setTimeIndex(42);
     frame->setColor(Vector3(1, 0, 0));
     // add a light keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
@@ -526,10 +526,10 @@ void TestVMDMotion::mutateLightKeyframes() const
     QCOMPARE(motion.findLightKeyframeAt(-1), static_cast<ILightKeyframe *>(0));
     QCOMPARE(motion.findLightKeyframeAt(0), frame.data());
     QCOMPARE(motion.findLightKeyframeAt(1), static_cast<ILightKeyframe *>(0));
-    // find a light keyframe with frameIndex
+    // find a light keyframe with timeIndex
     QCOMPARE(motion.findLightKeyframe(42), frame.take());
     QScopedPointer<ILightKeyframe> frame2(new LightKeyframe());
-    frame2->setFrameIndex(42);
+    frame2->setTimeIndex(42);
     frame2->setColor(Vector3(0, 0, 1));
     // replaced light frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());
@@ -556,7 +556,7 @@ void TestVMDMotion::mutateMorphKeyframes() const
     Motion motion(&model, &encoding);
     QCOMPARE(motion.countKeyframes(IKeyframe::kMorph), 0);
     QScopedPointer<IMorphKeyframe> frame(new MorphKeyframe(&encoding));
-    frame->setFrameIndex(42);
+    frame->setTimeIndex(42);
     frame->setName(&s);
     // add a morph keyframe (don't forget updating motion!)
     motion.addKeyframe(frame.data());
@@ -568,7 +568,7 @@ void TestVMDMotion::mutateMorphKeyframes() const
     QCOMPARE(motion.findMorphKeyframeAt(1), static_cast<IMorphKeyframe *>(0));
     QCOMPARE(motion.findMorphKeyframe(42, &s), frame.take());
     QScopedPointer<IMorphKeyframe> frame2(new MorphKeyframe(&encoding));
-    frame2->setFrameIndex(42);
+    frame2->setTimeIndex(42);
     frame2->setName(&s2);
     // replaced morph frame should be one keyframe (don't forget updating motion!)
     motion.replaceKeyframe(frame2.data());

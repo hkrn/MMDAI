@@ -48,9 +48,9 @@ namespace vmd
 
 #pragma pack(push, 1)
 
-struct CameraKeyFrameChunk
+struct CameraKeyframeChunk
 {
-    int frameIndex;
+    int timeIndex;
     float distance;
     float position[3];
     float angle[3];
@@ -74,7 +74,7 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
 
 size_t CameraKeyframe::strideSize()
 {
-    return sizeof(CameraKeyFrameChunk);
+    return sizeof(CameraKeyframeChunk);
 }
 
 CameraKeyframe::CameraKeyframe()
@@ -119,7 +119,7 @@ void CameraKeyframe::setDefaultInterpolationParameter()
 
 void CameraKeyframe::read(const uint8_t *data)
 {
-    CameraKeyFrameChunk chunk;
+    CameraKeyframeChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
 #ifdef VPVL2_BUILD_IOS
     float pos[3], angle[3];
@@ -130,7 +130,7 @@ void CameraKeyframe::read(const uint8_t *data)
     float *angle = chunk.angle;
 #endif
 
-    setFrameIndex(static_cast<float>(chunk.frameIndex));
+    setTimeIndex(static_cast<float>(chunk.timeIndex));
     setFov(static_cast<float>(chunk.viewAngle));
     setPerspective(chunk.noPerspective == 0);
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -155,8 +155,8 @@ void CameraKeyframe::read(const uint8_t *data)
 
 void CameraKeyframe::write(uint8_t *data) const
 {
-    CameraKeyFrameChunk chunk;
-    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    CameraKeyframeChunk chunk;
+    chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.viewAngle = static_cast<int>(m_fov);
     chunk.noPerspective = m_noPerspective ? 1 : 0;
     chunk.position[0] = m_position.x();
@@ -190,7 +190,7 @@ ICameraKeyframe *CameraKeyframe::clone() const
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->m_frameIndex = m_frameIndex;
+    frame->m_timeIndex = m_timeIndex;
     frame->m_distance = m_distance;
     frame->m_fov = m_fov;
     frame->m_position = m_position;

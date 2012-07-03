@@ -239,7 +239,7 @@ void PMDMotionModel::updateModel(IModel *model, bool seek)
     if (model) {
         model->performUpdate(m_lightDirection);
         if (seek)
-            emit frameIndexDidChange(m_frameIndex, m_frameIndex);
+            emit timeIndexDidChange(m_timeIndex, m_timeIndex);
     }
 }
 
@@ -264,7 +264,7 @@ void PMDMotionModel::setActiveUndoStack()
 
 int PMDMotionModel::maxFrameIndex() const
 {
-    return m_motion ? m_motion->maxFrameIndex() : 0;
+    return m_motion ? m_motion->maxTimeIndex() : 0;
 }
 
 bool PMDMotionModel::forceCameraUpdate() const

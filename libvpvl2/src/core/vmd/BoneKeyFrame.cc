@@ -48,10 +48,10 @@ namespace vmd
 
 #pragma pack(push, 1)
 
-struct BoneKeyFrameChunk
+struct BoneKeyframeChunk
 {
     uint8_t name[BoneKeyframe::kNameSize];
-    int frameIndex;
+    int timeIndex;
     float position[3];
     float rotation[4];
     int8_t interpolationTable[BoneKeyframe::kTableSize];
@@ -72,7 +72,7 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
 
 size_t BoneKeyframe::strideSize()
 {
-    return sizeof(BoneKeyFrameChunk);
+    return sizeof(BoneKeyframeChunk);
 }
 
 BoneKeyframe::BoneKeyframe(IEncoding *encoding)
@@ -113,7 +113,7 @@ void BoneKeyframe::setDefaultInterpolationParameter()
 
 void BoneKeyframe::read(const uint8_t *data)
 {
-    BoneKeyFrameChunk chunk;
+    BoneKeyframeChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
 #ifdef VPVL2_BUILD_IOS
     float pos[3], rot[4];
@@ -124,7 +124,7 @@ void BoneKeyframe::read(const uint8_t *data)
     float *rot = chunk.rotation;
 #endif
     internal::setStringDirect(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
-    setFrameIndex(static_cast<float>(chunk.frameIndex));
+    setTimeIndex(static_cast<float>(chunk.timeIndex));
 #ifdef VPVL2_COORDINATE_OPENGL
     setPosition(Vector3(pos[0], pos[1], -pos[2]));
     setRotation(Quaternion(-rot[0], -rot[1], rot[2], rot[3]));
@@ -145,11 +145,11 @@ void BoneKeyframe::read(const uint8_t *data)
 
 void BoneKeyframe::write(uint8_t *data) const
 {
-    BoneKeyFrameChunk chunk;
+    BoneKeyframeChunk chunk;
     uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
     m_encoding->disposeByteArray(name);
-    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
     chunk.rotation[2] = m_rotation.z();
@@ -181,7 +181,7 @@ IBoneKeyframe *BoneKeyframe::clone() const
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->setFrameIndex(m_frameIndex);
+    frame->setTimeIndex(m_timeIndex);
     frame->setPosition(m_position);
     frame->setRotation(m_rotation);
     frame->m_parameter = m_parameter;

@@ -48,10 +48,10 @@ namespace vmd
 
 #pragma pack(push, 1)
 
-struct MorphKeyFrameChunk
+struct MorphKeyframeChunk
 {
     uint8_t name[MorphKeyframe::kNameSize];
-    int frameIndex;
+    int timeIndex;
     float weight;
 };
 
@@ -59,7 +59,7 @@ struct MorphKeyFrameChunk
 
 size_t MorphKeyframe::strideSize()
 {
-    return sizeof(MorphKeyFrameChunk);
+    return sizeof(MorphKeyframeChunk);
 }
 
 MorphKeyframe::MorphKeyframe(IEncoding *encoding)
@@ -75,10 +75,10 @@ MorphKeyframe::~MorphKeyframe()
 
 void MorphKeyframe::read(const uint8_t *data)
 {
-    MorphKeyFrameChunk chunk;
+    MorphKeyframeChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
     internal::setStringDirect(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
-    setFrameIndex(static_cast<float>(chunk.frameIndex));
+    setTimeIndex(static_cast<float>(chunk.timeIndex));
 #ifdef VPVL2_BUILD_IOS
     float weight;
     memcpy(&weight, &chunk.weight, sizeof(weight));
@@ -90,11 +90,11 @@ void MorphKeyframe::read(const uint8_t *data)
 
 void MorphKeyframe::write(uint8_t *data) const
 {
-    MorphKeyFrameChunk chunk;
+    MorphKeyframeChunk chunk;
     uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
     m_encoding->disposeByteArray(name);
-    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.weight = m_weight;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
@@ -108,7 +108,7 @@ IMorphKeyframe *MorphKeyframe::clone() const
 {
     MorphKeyframe *frame = new MorphKeyframe(m_encoding);
     frame->setName(m_name);
-    frame->setFrameIndex(m_frameIndex);
+    frame->setTimeIndex(m_timeIndex);
     frame->setWeight(m_weight);
     return frame;
 }

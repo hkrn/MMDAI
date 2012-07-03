@@ -116,13 +116,13 @@ public:
     void addMotion(IMotion *motion);
     void deleteModel(vpvl2::IModel *&model);
     void removeMotion(IMotion *motion);
-    void advance(const IKeyframe::Index &delta);
-    void seek(const IKeyframe::Index &frameIndex);
+    void advance(const IKeyframe::TimeIndex &delta);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
     void updateModels();
     void updateRenderEngines();
     void updateCamera();
     void setPreferredFPS(const Scalar &value);
-    bool isReachedTo(const IKeyframe::Index &frameIndex) const;
+    bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
     float maxFrameIndex() const;
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;

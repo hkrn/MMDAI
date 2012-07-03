@@ -260,12 +260,12 @@ void TimelineTreeView::mouseReleaseEvent(QMouseEvent *event)
         const QModelIndex &index = indexAt(event->pos());
         if (index.isValid()) {
             selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            m->setFrameIndex(MotionBaseModel::toFrameIndex(index));
+            m->setTimeIndex(MotionBaseModel::toTimeIndex(index));
         }
     }
     else {
         const QModelIndex &index = indexAt(mapFromGlobal(m_rubberBandRect.topLeft()));
-        m->setFrameIndex(MotionBaseModel::toFrameIndex(index));
+        m->setTimeIndex(MotionBaseModel::toTimeIndex(index));
     }
     m_rubberBand->hide();
 }
@@ -319,7 +319,7 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
                             sm->select(child, QItemSelectionModel::Select);
                         }
                         else {
-                            int frameIndex = PMDMotionModel::toFrameIndex(column);
+                            int frameIndex = PMDMotionModel::toTimeIndex(column);
                             const QModelIndex &child = pmm->frameIndexToModelIndex(item->child(i), frameIndex);
                             indices.append(child);
                             sm->select(child, QItemSelectionModel::Select);
@@ -366,6 +366,6 @@ void TimelineHeaderView::mousePressEvent(QMouseEvent *e)
 {
     /* setMovable(false) にすると何故か sectionPressed が効かなくなるので mousePressEvent でシグナルを発行する */
     int modelIndex = logicalIndexAt(e->pos());
-    emit frameIndexDidSelect(MotionBaseModel::toFrameIndex(modelIndex));
+    emit frameIndexDidSelect(MotionBaseModel::toTimeIndex(modelIndex));
     QHeaderView::mousePressEvent(e);
 }

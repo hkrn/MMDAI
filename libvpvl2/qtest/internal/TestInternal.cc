@@ -60,9 +60,9 @@ TestInternal::TestInternal()
 
 void TestInternal::lerp()
 {
-    QCOMPARE(internal::lerp(4, 2, 0), 4.0f);
-    QCOMPARE(internal::lerp(4, 2, 1), 2.0f);
-    QCOMPARE(internal::lerp(4, 2, 0.5), 3.0f);
+    QCOMPARE(internal::lerp(4, 2, 0), 4.0);
+    QCOMPARE(internal::lerp(4, 2, 1), 2.0);
+    QCOMPARE(internal::lerp(4, 2, 0.5), 3.0);
 }
 
 void TestInternal::size8()

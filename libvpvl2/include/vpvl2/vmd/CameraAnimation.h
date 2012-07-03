@@ -66,9 +66,9 @@ public:
     ~CameraAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(const IKeyframe::Index &frameAt);
+    void seek(const IKeyframe::TimeIndex &frameAt);
     void update();
-    CameraKeyframe *findKeyframe(const IKeyframe::Index &frameIndex) const;
+    CameraKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     CameraKeyframe *frameAt(int i) const;
 
     const Vector3 &position() const { return m_position; }

@@ -1352,7 +1352,7 @@ protected:
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             IMotion *motion = motions[i];
-            if (motion->isReachedTo(motion->maxFrameIndex())) {
+            if (motion->isReachedTo(motion->maxTimeIndex())) {
                 motion->reset();
                 m_currentFrameIndex = 0;
             }
@@ -1550,7 +1550,7 @@ private:
     }
     IMotion *createMotionAsync(const QString &path, IModel *model) const {
         QByteArray bytes;
-        if (model && UISlurpFile(path, bytes)) {
+        if (UISlurpFile(path, bytes)) {
             bool ok = true;
             IMotion *motion = m_factory->createMotion(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), model, ok);
             motion->seek(0);

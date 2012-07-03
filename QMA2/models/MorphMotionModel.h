@@ -61,8 +61,8 @@ public:
     ~MorphMotionModel();
 
     void saveMotion(vpvl2::IMotion *motion);
-    void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
-    void pasteKeyframesByFrameIndex(int frameIndex);
+    void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
+    void pasteKeyframesByTimeIndex(int timeIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     const QString nameFromModelIndex(const QModelIndex &index) const;
 

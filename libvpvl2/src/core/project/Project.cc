@@ -289,7 +289,7 @@ public:
                 const std::string &name = delegate->toStdFromString(frame->name());
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
-                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
                 const Vector3 &position = frame->position();
                 internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
@@ -326,7 +326,7 @@ public:
                 const std::string &name = delegate->toStdFromString(frame->name());
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
-                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
                 internal::snprintf(buffer, sizeof(buffer), "%.4f", frame->weight());
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("weight"), VPVL2_CAST_XC(buffer)));
@@ -340,7 +340,7 @@ public:
             for (int j = 0; j < nframes; j++) {
                 const vmd::CameraKeyframe *frame = static_cast<vmd::CameraKeyframe *>(ca.frameAt(j));
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
                 const Vector3 &position = frame->position();
                 internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
@@ -384,7 +384,7 @@ public:
             for (int j = 0; j < nframes; j++) {
                 const vmd::LightKeyframe *frame = static_cast<vmd::LightKeyframe *>(la.frameAt(j));
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->frameIndex()));
+                internal::snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
                 const Vector3 &color = frame->color();
                 internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", color.x(), color.y(), color.z());
@@ -659,7 +659,7 @@ public:
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setFrameIndex(internal::stringToFloat(value.c_str()));
+                        keyframe->setTimeIndex(internal::stringToFloat(value.c_str()));
                     }
                     else if (strncmp(attributeName, "position", 8) == 0) {
                         newString(attributes, index, value);
@@ -714,7 +714,7 @@ public:
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setFrameIndex(internal::stringToFloat(value.c_str()));
+                        keyframe->setTimeIndex(internal::stringToFloat(value.c_str()));
                     }
                     else if (strncmp(attributeName, "weight", 6) == 0) {
                         newString(attributes, index, value);
@@ -737,7 +737,7 @@ public:
                     }
                     else if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setFrameIndex(internal::stringToFloat(value.c_str()));
+                        keyframe->setTimeIndex(internal::stringToFloat(value.c_str()));
                     }
                     else if (strncmp(attributeName, "angle", 5) == 0) {
                         newString(attributes, index, value);
@@ -789,7 +789,7 @@ public:
                     attributeName[sizeof(attributeName) - 1] = 0;
                     if (strncmp(attributeName, "index", 5) == 0) {
                         newString(attributes, index, value);
-                        keyframe->setFrameIndex(internal::stringToFloat(value.c_str()));
+                        keyframe->setTimeIndex(internal::stringToFloat(value.c_str()));
                     }
                     else if (strncmp(attributeName, "color", 5) == 0) {
                         newString(attributes, index, value);

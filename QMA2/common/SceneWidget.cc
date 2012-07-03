@@ -139,7 +139,7 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_editMode(kSelect),
     m_lastDistance(0.0f),
     m_prevElapsed(0.0f),
-    m_frameIndex(0.0f),
+    m_timeIndex(0.0f),
     m_frameCount(0),
     m_currentFPS(0),
     m_interval(1000.0f / Scene::defaultFPS()),
@@ -270,7 +270,7 @@ void SceneWidget::loadProject(const QString &filename)
     m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
     m_enableUpdateGL = true;
     /* 0フレーム目で読み込んだ時シークされないため、強制シークを行うために m_frameIndex を -1 にする */
-    m_frameIndex = -1;
+    m_timeIndex = -1;
     seekMotion(0, true);
     startAutomaticRendering();
     QApplication::alert(this);
@@ -446,7 +446,7 @@ IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
         QList<IModel *> models;
         motion = m_loader->loadModelMotion(path, models);
         if (motion) {
-            m_frameIndex = -1;
+            m_timeIndex = -1;
             seekMotion(0, false);
             emit fileDidLoad(path);
         }
@@ -508,7 +508,7 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
                 else {
                     m_loader->setModelMotion(motion, model);
                 }
-                m_frameIndex = -1;
+                m_timeIndex = -1;
                 seekMotion(0, false);
                 emit fileDidLoad(path);
             }
@@ -658,7 +658,7 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
     return ptr;
 }
 
-void SceneWidget::advanceMotion(const IKeyframe::Index &delta)
+void SceneWidget::advanceMotion(const IKeyframe::TimeIndex &delta)
 {
     if (delta <= 0)
         return;
@@ -669,13 +669,13 @@ void SceneWidget::advanceMotion(const IKeyframe::Index &delta)
     updateScene();
 }
 
-void SceneWidget::seekMotion(const IKeyframe::Index &frameIndex, bool forceCameraUpdate)
+void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate)
 {
     /*
        渡された値が同じフレーム位置の場合は何もしない
        (シグナルスロット処理の関係でモーフスライダーが動かなくなってしまうため)
      */
-    if (frameIndex == m_frameIndex)
+    if (timeIndex == m_timeIndex)
         return;
     /*
        advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある。
@@ -690,16 +690,16 @@ void SceneWidget::seekMotion(const IKeyframe::Index &frameIndex, bool forceCamer
         IMotion *lightMotion = light->motion();
         camera->setMotion(0);
         light->setMotion(0);
-        scene->seek(frameIndex);
+        scene->seek(timeIndex);
         camera->setMotion(cameraMotion);
         light->setMotion(lightMotion);
     }
     else {
-        scene->seek(frameIndex);
+        scene->seek(timeIndex);
     }
-    m_frameIndex = frameIndex;
-    m_background->setFrameIndex(frameIndex);
-    emit motionDidSeek(frameIndex);
+    m_timeIndex = timeIndex;
+    m_background->setFrameIndex(timeIndex);
+    emit motionDidSeek(timeIndex);
     updateScene();
 }
 
@@ -712,7 +712,7 @@ void SceneWidget::resetMotion()
         IMotion *motion = motions[i];
         motion->reset();
     }
-    m_frameIndex = 0;
+    m_timeIndex = 0;
     m_background->setFrameIndex(0);
     updateScene();
     emit motionDidSeek(0.0f);

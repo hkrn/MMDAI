@@ -73,11 +73,11 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     int maxFrameIndex() const;
     bool forceCameraUpdate() const;
-    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
+    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const;
 
     void saveMotion(vpvl2::IMotion *motion);
-    void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
-    void pasteKeyframesByFrameIndex(int frameIndex);
+    void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
+    void pasteKeyframesByTimeIndex(int timeIndex);
     const QString nameFromModelIndex(const QModelIndex &index) const;
     CameraKeyframePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 

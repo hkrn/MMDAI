@@ -70,16 +70,16 @@ public:
     ~BoneMotionModel();
 
     void saveMotion(vpvl2::IMotion *motion);
-    void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
-    void pasteKeyframesByFrameIndex(int frameIndex);
-    void pasteReversedFrame(int frameIndex);
+    void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
+    void pasteKeyframesByTimeIndex(int timeIndex);
+    void pasteReversedFrame(int timeIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
     const QString nameFromModelIndex(const QModelIndex &index) const;
-    const QModelIndexList modelIndicesFromBones(const QList<vpvl2::IBone *> &bones, int frameIndex) const;
+    const QModelIndexList modelIndicesFromBones(const QList<vpvl2::IBone *> &bones, int timeIndex) const;
     KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
-    void loadPose(VPDFilePtr pose, vpvl2::IModel *model, int frameIndex);
-    void savePose(VPDFile *pose, vpvl2::IModel *model, int frameIndex);
+    void loadPose(VPDFilePtr pose, vpvl2::IModel *model, int timeIndex);
+    void savePose(VPDFile *pose, vpvl2::IModel *model, int timeIndex);
     void setKeyframes(const KeyFramePairList &keyframes);
     void resetBone(ResetType type);
     void resetAllBones();

@@ -112,28 +112,28 @@ public:
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void setParentModel(IModel *model);
-    void seek(const IKeyframe::Index &frameIndex);
-    void advance(const IKeyframe::Index &delta);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
+    void advance(const IKeyframe::TimeIndex &delta);
     void reload();
     void reset();
-    const IKeyframe::Index &maxFrameIndex() const;
-    bool isReachedTo(const IKeyframe::Index &atEnd) const;
+    const IKeyframe::TimeIndex &maxTimeIndex() const;
+    bool isReachedTo(const IKeyframe::TimeIndex &atEnd) const;
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
-    IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const;
+    IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
     IBoneKeyframe *findBoneKeyframeAt(int index) const;
-    ICameraKeyframe *findCameraKeyframe(int frameIndex) const;
+    ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     ICameraKeyframe *findCameraKeyframeAt(int index) const;
-    ILightKeyframe *findLightKeyframe(int frameIndex) const;
+    ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     ILightKeyframe *findLightKeyframeAt(int index) const;
-    IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const;
+    IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
     IMorphKeyframe *findMorphKeyframeAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
-    void deleteKeyframes(int frameIndex, IKeyframe::Type type);
+    void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
 
     const IString *name() const {

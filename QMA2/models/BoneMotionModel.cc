@@ -187,7 +187,7 @@ public:
                 newBoneKeyframe->setName(&s);
                 newBoneKeyframe->setPosition(bone->position);
                 newBoneKeyframe->setRotation(rotation);
-                newBoneKeyframe->setFrameIndex(m_frameIndex);
+                newBoneKeyframe->setTimeIndex(m_frameIndex);
                 QByteArray bytes(newBoneKeyframe->estimateSize(), '0');
                 newBoneKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 m_bmm->setData(modelIndex, bytes, Qt::EditRole);
@@ -303,10 +303,10 @@ public:
                  * ※ 置換の現実装は find => delete => add なので find の探索コストがネックになるため多いと時間がかかる
                  */
                 const QModelIndex &modelIndex = m_bmm->frameIndexToModelIndex(m_keys[key], frameIndex);
-                if (boneKeyframe->frameIndex() >= 0) {
+                if (boneKeyframe->timeIndex() >= 0) {
                     QByteArray bytes(boneKeyframe->estimateSize(), '0');
                     newBoneKeyframe.reset(boneKeyframe->clone());
-                    newBoneKeyframe->setFrameIndex(frameIndex);
+                    newBoneKeyframe->setTimeIndex(frameIndex);
                     newBoneKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
                     m_motion->replaceKeyframe(newBoneKeyframe.take());
                     m_bmm->setData(modelIndex, bytes);
@@ -545,7 +545,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
     IModel *model = selectedModel();
     /* モデルのインデックスを参照し、存在するボーンに対してボーンの現在の値からボーンのキーフレームにコピーする */
     foreach (const QModelIndex &index, indices) {
-        int frameIndex = toFrameIndex(index);
+        int frameIndex = toTimeIndex(index);
         if (frameIndex >= 0) {
             const QString &name = nameFromModelIndex(index);
             internal::String s(name);
@@ -578,7 +578,7 @@ void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices
                     KeyFramePtr newKeyframe(m_factory->createBoneKeyframe());
                     newKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                     /* 予め差分をとっておき、pasteKeyframes でペースト先の差分をたすようにする */
-                    int diff = newKeyframe->frameIndex() - frameIndex;
+                    int diff = newKeyframe->timeIndex() - frameIndex;
                     m_copiedKeyframes.append(KeyFramePair(diff, newKeyframe));
                 }
             }
@@ -586,7 +586,7 @@ void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices
     }
 }
 
-void BoneMotionModel::pasteKeyframesByFrameIndex(int frameIndex)
+void BoneMotionModel::pasteKeyframesByTimeIndex(int frameIndex)
 {
     /* m_frames が #copyFrames でコピーされていること前提 */
     if (m_model && m_motion && !m_copiedKeyframes.isEmpty()) {
@@ -704,7 +704,7 @@ BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(con
 {
     KeyFramePairList keyframes;
     foreach (const QModelIndex &index, indices) {
-        int frameIndex = toFrameIndex(index);
+        int frameIndex = toTimeIndex(index);
         TreeItem *treeItem = static_cast<TreeItem *>(index.internalPointer());
         if (treeItem->isRoot()) {
             continue;
@@ -874,7 +874,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, IModel *model)
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
             const QString &key = internal::toQStringFromBoneKeyframe(keyframe);
             if (keys.contains(key)) {
-                int frameIndex = static_cast<int>(keyframe->frameIndex());
+                int frameIndex = static_cast<int>(keyframe->timeIndex());
                 QByteArray bytes(keyframe->estimateSize(), '0');
                 ITreeItem *item = keys[key];
                 /* この時点で新しい QModelIndex が作成される */
@@ -883,7 +883,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, IModel *model)
                 newKeyframe->setName(keyframe->name());
                 newKeyframe->setPosition(keyframe->position());
                 newKeyframe->setRotation(keyframe->rotation());
-                newKeyframe->setFrameIndex(frameIndex);
+                newKeyframe->setTimeIndex(frameIndex);
                 QuadWord v;
                 for (int i = 0; i < IBoneKeyframe::kMax; i++) {
                     IBoneKeyframe::InterpolationType type = static_cast<IBoneKeyframe::InterpolationType>(i);
@@ -938,12 +938,12 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (IBone *bone = item->bone()) {
-                IBoneKeyframe *keyframeToDelete = m_motion->findBoneKeyframe(toFrameIndex(index), bone->name());
+                IBoneKeyframe *keyframeToDelete = m_motion->findBoneKeyframe(toTimeIndex(index), bone->name());
                 if (keyframeToDelete) {
                     KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
-                    clonedKeyframe->setFrameIndex(-1);
-                    keyframes.append(KeyFramePair(keyframeToDelete->frameIndex(), clonedKeyframe));
+                    clonedKeyframe->setTimeIndex(-1);
+                    keyframes.append(KeyFramePair(keyframeToDelete->timeIndex(), clonedKeyframe));
                 }
             }
         }
@@ -974,7 +974,7 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
                     newRotation.normalize();
                 keyframe->setPosition(keyframe->position() * position);
                 keyframe->setRotation(newRotation);
-                keyframes.append(KeyFramePair(toFrameIndex(index), keyframe));
+                keyframes.append(KeyFramePair(toTimeIndex(index), keyframe));
             }
         }
     }

@@ -70,18 +70,18 @@ public:
     TimelineTreeView *treeView() const { return m_treeView; }
 
 public slots:
-    void setCurrentFrameIndex(const vpvl2::IKeyframe::Index &frameIndex);
-    void setCurrentFrameIndex(int frameIndex);
+    void setCurrentTimeIndex(const vpvl2::IKeyframe::TimeIndex &timeIndex);
+    void setCurrentTimeIndex(int timeIndex);
 
 signals:
-    void motionDidSeek(const vpvl2::IKeyframe::Index &column, bool forceCameraUpdate);
+    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &column, bool forceCameraUpdate);
 
 private slots:
     void retranslate();
-    void setCurrentFrameIndexBySpinBox();
-    void setCurrentFrameIndexAndExpandBySpinBox();
-    void setCurrentFrameIndexAndSelect(int frameIndex);
-    void setCurrentFrameIndex(const QModelIndex &index);
+    void setCurrentTimeIndexBySpinBox();
+    void setCurrentTimeIndexAndExpandBySpinBox();
+    void setCurrentTimeIndexAndSelect(int frameIndex);
+    void setCurrentTimeIndex(const QModelIndex &index);
     void adjustFrameColumnSize(int value);
 
 private:

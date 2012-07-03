@@ -88,7 +88,7 @@ public:
 
     QVariant data(const QModelIndex &index, int role) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const;
+    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const;
 
     virtual void saveTransform() = 0;
     virtual void commitTransform() = 0;

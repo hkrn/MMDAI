@@ -53,12 +53,12 @@ class VPVL2_API IKeyframe
 public:
 #ifdef VPVL2_ENABLE_GLES2
     typedef float SmoothPrecision;
-    typedef float Index;
+    typedef float TimeIndex;
 #else
     typedef double SmoothPrecision;
-    typedef double Index;
+    typedef double TimeIndex;
 #endif
-    typedef int Layer;
+    typedef int LayerIndex;
     enum Type {
         kBone,
         kCamera,
@@ -116,9 +116,9 @@ public:
      * 返す値の型は double ですが、小数点はつきません。
      *
      * @return Index
-     * @sa setFrameIndex
+     * @sa setTimeIndex
      */
-    virtual const Index &frameIndex() const = 0;
+    virtual const TimeIndex &timeIndex() const = 0;
 
     /**
      * キーフレームのレイヤー番号を返します。
@@ -126,7 +126,7 @@ public:
      * @return Layer
      * @sa setLayerIndex
      */
-    virtual const Layer &layerIndex() const = 0;
+    virtual const LayerIndex &layerIndex() const = 0;
 
     /**
      * キーフレームの動作対象となる名前を設定します。
@@ -143,9 +143,9 @@ public:
      * キーフレームのフレーム番号を設定します。
      *
      * @param Index
-     * @sa frameIndex
+     * @sa timeIndex
      */
-    virtual void setFrameIndex(const Index &value) = 0;
+    virtual void setTimeIndex(const TimeIndex &value) = 0;
 
     /**
      * キーフレームのレイヤー番号を設定します。
@@ -153,7 +153,7 @@ public:
      * @param Layer
      * @sa layerIndex
      */
-    virtual void setLayerIndex(const Layer &value) = 0;
+    virtual void setLayerIndex(const LayerIndex &value) = 0;
 
     /**
      * キーフレームの型を返します。

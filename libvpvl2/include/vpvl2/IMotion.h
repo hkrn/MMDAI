@@ -128,7 +128,7 @@ public:
      * @param float
      * @sa advance
      */
-    virtual void seek(const IKeyframe::Index &frameIndex) = 0;
+    virtual void seek(const IKeyframe::TimeIndex &timeIndex) = 0;
 
     /**
      * モーションを指定されたフレームの位置分進めます。
@@ -139,7 +139,7 @@ public:
      * @param float
      * @sa seek
      */
-    virtual void advance(const IKeyframe::Index &delta) = 0;
+    virtual void advance(const IKeyframe::TimeIndex &delta) = 0;
 
     /**
      * モーションを最初の位置にリセットします。
@@ -153,7 +153,7 @@ public:
      * @return float
      * @sa isReachedTo
      */
-    virtual const IKeyframe::Index &maxFrameIndex() const = 0;
+    virtual const IKeyframe::TimeIndex &maxTimeIndex() const = 0;
 
     /**
      * モーションが指定されたフレームの位置まで進んでいるかを返します。
@@ -161,7 +161,7 @@ public:
      * @return bool
      * @sa maxFrameIndex
      */
-    virtual bool isReachedTo(const IKeyframe::Index &frameIndex) const = 0;
+    virtual bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const = 0;
 
     /**
      * キーフレームを追加します。
@@ -188,12 +188,12 @@ public:
      *
      * 見つかった場合は IBoneKeyframe インスタンスを、見つからない場合は 0 を返します。
      *
-     * @param frameIndex
+     * @param timeIndex
      * @param name
      * @return IBoneKeyframe
      * @sa findBoneKeyframeAt
      */
-    virtual IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const = 0;
+    virtual IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const = 0;
 
     /**
      * キーフレームの配列の添字からボーン該当するキーフレームの全てを返します。
@@ -211,11 +211,11 @@ public:
      *
      * 見つかった場合は ICameraKeyframe インスタンスを、見つからない場合は 0 を返します。
      *
-     * @param frameIndex
+     * @param timeIndex
      * @return IBoneKeyframe
      * @sa findCameraKeyframeAt
      */
-    virtual ICameraKeyframe *findCameraKeyframe(int frameIndex) const = 0;
+    virtual ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex) const = 0;
 
     /**
      * キーフレームの配列の添字からカメラのキーフレームを返します。
@@ -233,11 +233,11 @@ public:
      *
      * 見つかった場合は ILightKeyframe インスタンスを、見つからない場合は 0 を返します。
      *
-     * @param frameIndex
+     * @param timeIndex
      * @return ILightKeyframe
      * @sa findLightKeyframeAt
      */
-    virtual ILightKeyframe *findLightKeyframe(int frameIndex) const = 0;
+    virtual ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex) const = 0;
 
     /**
      * キーフレームの配列の位置から照明のキーフレームを返します。
@@ -255,12 +255,12 @@ public:
      *
      * 見つかった場合は IMorphKeyframe インスタンスを、見つからない場合は 0 を返します。
      *
-     * @param frameIndex
+     * @param timeIndex
      * @param name
      * @return IMorphKeyframe
      * @sa findMorphKeyframeAt
      */
-    virtual IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const = 0;
+    virtual IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const = 0;
 
     /**
      * キーフレームの配列の添字からモーフのキーフレームを返します。
@@ -300,7 +300,7 @@ public:
      * @param int
      * @param IKeyframe::Type
      */
-    virtual void deleteKeyframes(int frameIndex, IKeyframe::Type type) = 0;
+    virtual void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type) = 0;
 
     /**
      * 指定されたキーフレームの型の情報を更新します。

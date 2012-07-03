@@ -81,9 +81,9 @@ public:
     static const int kFrameIndexColumnStep = 5;
     static const int kFrameIndexColumnMinimum = 31; /* 1 for header */
 
-    static int toFrameIndex(const QModelIndex &index);
-    static int toFrameIndex(int modelColumnIndex);
-    static int toModelIndex(int frameIndex);
+    static int toTimeIndex(const QModelIndex &index);
+    static int toTimeIndex(int modelColumnIndex);
+    static int toModelIndex(int timeIndex);
 
     MotionBaseModel(QUndoGroup *undo, QObject *parent = 0);
     virtual ~MotionBaseModel();
@@ -92,23 +92,23 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
     QModelIndex parent(const QModelIndex &child) const;
     int rowCount(const QModelIndex &parent) const;
-    void cutKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex);
+    void cutKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
     QItemSelection selectKeyframesFromItemSelection(const QItemSelection &selection);
 
-    virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int frameIndex) const = 0;
+    virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const = 0;
     virtual const QString nameFromModelIndex(const QModelIndex &index) const = 0;
     virtual void saveMotion(vpvl2::IMotion *motion) = 0;
-    virtual void copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex) = 0;
-    virtual void pasteKeyframesByFrameIndex(int frameIndex) = 0;
+    virtual void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex) = 0;
+    virtual void pasteKeyframesByTimeIndex(int timeIndex) = 0;
     virtual int maxFrameIndex() const = 0;
     virtual bool forceCameraUpdate() const = 0;
 
     vpvl2::IMotion *currentMotion() const { return m_motion; }
-    void setFrameIndex(const vpvl2::IKeyframe::Index &newIndex);
+    void setTimeIndex(const vpvl2::IKeyframe::TimeIndex &newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }
     int maxFrameCount() const { return m_frameIndexColumnOffset; }
-    const vpvl2::IKeyframe::Index &frameIndex() const { return m_frameIndex; }
+    const vpvl2::IKeyframe::TimeIndex &timeIndex() const { return m_timeIndex; }
     bool canFetchMore(const QModelIndex & /* parent */) const;
     void fetchMore(const QModelIndex &parent);
     int frameIndexColumnMax() const;
@@ -123,7 +123,7 @@ public slots:
 
 signals:
     void motionDidModify(bool value);
-    void frameIndexDidChange(const vpvl2::IKeyframe::Index &newFrameIndex, const vpvl2::IKeyframe::Index &oldFrameIndex);
+    void timeIndexDidChange(const vpvl2::IKeyframe::TimeIndex &newFrameIndex, const vpvl2::IKeyframe::TimeIndex &oldFrameIndex);
     void frameIndexColumnMaxDidChange(int newValue, int oldValue);
 
 protected:
@@ -132,7 +132,7 @@ protected:
 
     vpvl2::IMotion *m_motion;
     QUndoGroup *m_undo;
-    vpvl2::IKeyframe::Index m_frameIndex;
+    vpvl2::IKeyframe::TimeIndex m_timeIndex;
     int m_frameIndexColumnMax;
     int m_frameIndexColumnOffset;
     bool m_modified;
