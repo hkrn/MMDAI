@@ -53,6 +53,7 @@ class VPVL2_API IKeyframe
 public:
     typedef double Index;
     typedef int Layer;
+    typedef double SmoothPrecision;
     enum Type {
         kBone,
         kCamera,

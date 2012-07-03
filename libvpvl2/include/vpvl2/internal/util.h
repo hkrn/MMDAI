@@ -41,6 +41,7 @@
 
 #include "vpvl2/config.h"
 #include "vpvl2/Common.h"
+#include "vpvl2/IKeyframe.h"
 #include "vpvl2/IString.h"
 #include <string.h>
 
@@ -56,19 +57,25 @@ namespace internal
 static const int kCurrentVersion = VPVL2_VERSION;
 static const char *const kCurrentVersionString = VPVL2_VERSION_STRING;
 
-static inline float spline1(const float t, const float p1, const float p2)
+static inline float spline1(const IKeyframe::SmoothPrecision &t,
+                            const IKeyframe::SmoothPrecision &p1,
+                            const IKeyframe::SmoothPrecision &p2)
 {
     return ((1 + 3 * p1 - 3 * p2) * t * t * t + (3 * p2 - 6 * p1) * t * t + 3 * p1 * t);
 }
 
-static inline float spline2(const float t, const float p1, const float p2)
+static inline float spline2(const IKeyframe::SmoothPrecision &t,
+                            const IKeyframe::SmoothPrecision &p1,
+                            const IKeyframe::SmoothPrecision &p2)
 {
     return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
 }
 
-static inline float lerp(float x, float y, float t)
+static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &x,
+                                              const IKeyframe::SmoothPrecision &y,
+                                              const IKeyframe::SmoothPrecision &t)
 {
-    return x * (1.0f - t) + y * t;
+    return x * (1.0 - t) + y * t;
 }
 
 static inline void readBytes(size_t size, uint8_t *&ptr, size_t &rest)
@@ -341,17 +348,22 @@ static inline void toggleFlag(int value, bool enable, uint16_t &flags)
         flags &= ~value;
 }
 
-static inline void buildInterpolationTable(float x1, float x2, float y1, float y2, int size, float *&table)
+static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
+                                           const IKeyframe::SmoothPrecision &x2,
+                                           const IKeyframe::SmoothPrecision &y1,
+                                           const IKeyframe::SmoothPrecision &y2,
+                                           int size,
+                                           IKeyframe::SmoothPrecision *&table)
 {
     assert(table && size > 0);
     for (int i = 0; i < size; i++) {
-        const float in = float(i) / size;
+        const IKeyframe::SmoothPrecision &in = IKeyframe::SmoothPrecision(i) / size;
         float t = in;
         while (1) {
-            const float v = spline1(t, x1, x2) - in;
+            const IKeyframe::SmoothPrecision &v = spline1(t, x1, x2) - in;
             if (btFabs(v) < 0.0001f)
                 break;
-            const float tt = spline2(t, x1, x2);
+            const IKeyframe::SmoothPrecision &tt = spline2(t, x1, x2);
             if (btFuzzyZero(tt))
                 break;
             t -= v / tt;

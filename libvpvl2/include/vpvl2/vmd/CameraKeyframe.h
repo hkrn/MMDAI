@@ -74,7 +74,7 @@ public:
     const Vector3 &angle() const { return m_angle; }
     bool isPerspective() const { return !m_noPerspective; }
     const bool *linear() const { return m_linear; }
-    const float *const *interpolationTable() const { return m_interpolationTable; }
+    const IKeyframe::SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
     Type type() const { return IKeyframe::kCamera; }
 
     void setDistance(const Scalar &value);
@@ -95,7 +95,7 @@ private:
     Vector3 m_angle;
     bool m_noPerspective;
     bool m_linear[6];
-    float *m_interpolationTable[6];
+    IKeyframe::SmoothPrecision *m_interpolationTable[6];
     int8_t m_rawInterpolationTable[kTableSize];
     InterpolationParameter m_parameter;
 

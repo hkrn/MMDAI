@@ -72,7 +72,7 @@ public:
     const Vector3 &position() const { return m_position; }
     const Quaternion &rotation() const { return m_rotation; }
     const bool *linear() const { return m_linear; }
-    const float *const *interpolationTable() const { return m_interpolationTable; }
+    const SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
     bool isIKEnabled() const { return m_enableIK; }
     Type type() const { return IKeyframe::kBone; }
 
@@ -92,7 +92,7 @@ private:
     Quaternion m_rotation;
     bool m_linear[4];
     bool m_enableIK;
-    float *m_interpolationTable[4];
+    SmoothPrecision *m_interpolationTable[4];
     int8_t m_rawInterpolationTable[kTableSize];
     InterpolationParameter m_parameter;
 

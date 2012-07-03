@@ -77,15 +77,15 @@ public:
     const Scalar &fovy() const { return m_fovy; }
 
 private:
-    static float weightValue(const CameraKeyframe *keyFrame,
-                             float w,
-                             int at);
+    static const IKeyframe::SmoothPrecision weightValue(const CameraKeyframe *keyFrame,
+                                                        const IKeyframe::SmoothPrecision &w,
+                                                        int at);
     static void lerpVector3(const CameraKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
-                            float w,
+                            const IKeyframe::SmoothPrecision &w,
                             int at,
-                            float &value);
+                            IKeyframe::SmoothPrecision &value);
 
     Vector3 m_position;
     Vector3 m_angle;

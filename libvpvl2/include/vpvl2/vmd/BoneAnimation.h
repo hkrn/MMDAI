@@ -81,15 +81,15 @@ public:
     void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
-    static float weightValue(const BoneKeyframe *keyFrame,
-                             float w,
-                             int at);
+    static const IKeyframe::SmoothPrecision weightValue(const BoneKeyframe *keyFrame,
+                                                        const IKeyframe::SmoothPrecision &w,
+                                                        int at);
     static void lerpVector3(const BoneKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
-                            float w,
+                            const IKeyframe::SmoothPrecision &w,
                             int at,
-                            float &value);
+                            IKeyframe::SmoothPrecision &value);
     void buildInternalKeyFrameList(IModel *model);
     void calculateFrames(const IKeyframe::Index &frameAt, InternalBoneKeyFrameList *keyFrames);
 

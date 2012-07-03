@@ -126,7 +126,7 @@ void LightAnimation::seek(const IKeyframe::Index &frameAt)
     const Vector3 &colorTo = keyFrameTo->color(), &directionTo = keyFrameTo->direction();
 
     if (frameIndexFrom != frameIndexTo) {
-        const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
+        const IKeyframe::SmoothPrecision &w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
         m_color.setInterpolate3(colorFrom, colorTo, w);
         m_direction.setInterpolate3(directionFrom, directionTo, w);
     }

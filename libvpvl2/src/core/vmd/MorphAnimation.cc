@@ -228,11 +228,11 @@ void MorphAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalMo
 
     const MorphKeyframe *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
     const IKeyframe::Index &frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
-    float weightFrom = keyFrameFrom->weight();
-    float weightTo = keyFrameTo->weight();
+    const IMorph::Weight &weightFrom = keyFrameFrom->weight();
+    const IMorph::Weight &weightTo = keyFrameTo->weight();
 
     if (frameIndexFrom != frameIndexTo) {
-        const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
+        const IKeyframe::SmoothPrecision &w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
         keyFrames->weight = internal::lerp(weightFrom, weightTo, w);
     }
     else {

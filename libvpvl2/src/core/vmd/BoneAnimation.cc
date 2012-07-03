@@ -81,27 +81,29 @@ struct BoneAnimation::InternalBoneKeyFrameList {
     }
 };
 
-float BoneAnimation::weightValue(const BoneKeyframe *keyFrame, float w, int at)
+const IKeyframe::SmoothPrecision BoneAnimation::weightValue(const BoneKeyframe *keyFrame,
+                                                            const IKeyframe::SmoothPrecision &w,
+                                                            int at)
 {
     const uint16_t index = static_cast<int16_t>(w * BoneKeyframe::kTableSize);
-    const float *v = keyFrame->interpolationTable()[at];
+    const IKeyframe::SmoothPrecision *v = keyFrame->interpolationTable()[at];
     return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyframe::kTableSize - index);
 }
 
 void BoneAnimation::lerpVector3(const BoneKeyframe *keyFrame,
                                 const Vector3 &from,
                                 const Vector3 &to,
-                                float w,
+                                const IKeyframe::SmoothPrecision &w,
                                 int at,
-                                float &value)
+                                IKeyframe::SmoothPrecision &value)
 {
-    const float valueFrom = static_cast<const Scalar *>(from)[at];
-    const float valueTo = static_cast<const Scalar *>(to)[at];
+    const IKeyframe::SmoothPrecision &valueFrom = from[at];
+    const IKeyframe::SmoothPrecision &valueTo = to[at];
     if (keyFrame->linear()[at]) {
         value = internal::lerp(valueFrom, valueTo, w);
     }
     else {
-        const float w2 = weightValue(keyFrame, w, at);
+        const IKeyframe::SmoothPrecision &w2 = weightValue(keyFrame, w, at);
         value = internal::lerp(valueFrom, valueTo, w2);
     }
 }
@@ -264,8 +266,8 @@ void BoneAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalBon
             keyFrames->rotation = rotationTo;
         }
         else {
-            const Scalar w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
-            Scalar x = 0, y = 0, z = 0;
+            const IKeyframe::SmoothPrecision &w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
+            IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 2, z);
@@ -274,7 +276,7 @@ void BoneAnimation::calculateFrames(const IKeyframe::Index &frameAt, InternalBon
                 keyFrames->rotation = rotationFrom.slerp(rotationTo, w);
             }
             else {
-                const float w2 = weightValue(keyFrameForInterpolation, w, 3);
+                const IKeyframe::SmoothPrecision &w2 = weightValue(keyFrameForInterpolation, w, 3);
                 keyFrames->rotation = rotationFrom.slerp(rotationTo, w2);
             }
         }
