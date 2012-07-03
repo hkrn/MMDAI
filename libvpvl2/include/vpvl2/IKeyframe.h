@@ -51,9 +51,14 @@ class IString;
 class VPVL2_API IKeyframe
 {
 public:
-    typedef double Index;
-    typedef int Layer;
+#ifdef VPVL2_ENABLE_GLES2
+    typedef float SmoothPrecision;
+    typedef float Index;
+#else
     typedef double SmoothPrecision;
+    typedef double Index;
+#endif
+    typedef int Layer;
     enum Type {
         kBone,
         kCamera,

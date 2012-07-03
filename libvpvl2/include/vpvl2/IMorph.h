@@ -51,7 +51,11 @@ class IString;
 class VPVL2_API IMorph
 {
 public:
+#ifdef VPVL2_ENABLE_GLES2
+    typedef float WeightPrecision;
+#else
     typedef double WeightPrecision;
+#endif
     enum Type {
         kUnknown = -1,
         kGroup,
