@@ -113,12 +113,12 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
     connect(mmm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_morphTimeline->treeView(), SLOT(updateFrozenTreeView()));
     connect(smm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneTimeline->treeView(), SLOT(updateFrozenTreeView()));
     /* フレームが切り替わったら現在のフレーム位置を設定し直す */
-    connect(bmm, SIGNAL(frameIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
-            m_boneTimeline, SLOT(setCurrentFrameIndex(vpvl2::IKeyframe::TimeIndex)));
-    connect(mmm, SIGNAL(frameIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
-            m_morphTimeline, SLOT(setCurrentFrameIndex(vpvl2::IKeyframe::TimeIndex)));
-    connect(smm, SIGNAL(frameIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
-            m_sceneTimeline, SLOT(setCurrentFrameIndex(vpvl2::IKeyframe::TimeIndex)));
+    connect(bmm, SIGNAL(timeIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
+            m_boneTimeline, SLOT(setCurrentTimeIndex(vpvl2::IKeyframe::TimeIndex)));
+    connect(mmm, SIGNAL(timeIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
+            m_morphTimeline, SLOT(setCurrentTimeIndex(vpvl2::IKeyframe::TimeIndex)));
+    connect(smm, SIGNAL(timeIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
+            m_sceneTimeline, SLOT(setCurrentTimeIndex(vpvl2::IKeyframe::TimeIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
