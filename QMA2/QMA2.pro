@@ -135,12 +135,13 @@ linux-* {
                     ../bullet/release/lib/libBulletSoftBody.so.* \
                     ../bullet/release/lib/libLinearMath.so.* \
                     ../libvpvl/release/lib/libvpvl.so.* \
-                    ../assimp/release/lib/libassimp.so.2 \
-                    ../portaudio/build/scons/posix/libportaudio.so \
-                    ../libav/libavcodec/libavcodec.so.* \
-                    ../libav/libavformat/libavformat.so.* \
-                    ../libav/libavutil/libavutil.so.* \
-                    ../libav/libswscale/libswscale.so.* \
+                    ../libvpvl2/release/lib/libvpvl2.so.* \
+                    ../assimp/release/lib/libassimp.so \
+                    ../portaudio/build/scons/posix/libportaudio.so.* \
+                    ../libav/libav_release/lib/libavcodec.so.* \
+                    ../libav/libav_release/lib/libavformat.so.* \
+                    ../libav/libav_release/lib/libavutil.so.* \
+                    ../libav/libav_release/lib/libswscale.so.* \
                     $$[QT_INSTALL_LIBS]/libQtCore.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtGui.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtOpenGL.so.4
