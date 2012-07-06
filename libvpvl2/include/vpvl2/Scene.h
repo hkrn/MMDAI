@@ -127,7 +127,8 @@ public:
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;
     const Array<IRenderEngine *> &renderEngines() const;
-    IRenderEngine *renderEngine(IModel *model) const;
+    IModel *findModel(const IString *name) const;
+    IRenderEngine *findRenderEngine(IModel *model) const;
     ILight *light() const;
     ICamera *camera() const;
     const Scalar &preferredFPS() const;

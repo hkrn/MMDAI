@@ -229,7 +229,7 @@ struct Scene::PrivateContext {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         effectContext = cgCreateContext();
         cgSetParameterSettingMode(effectContext, CG_DEFERRED_PARAMETER_SETTING);
-        cgGLSetDebugMode(CG_TRUE);
+        cgGLSetDebugMode(CG_FALSE);
         cgGLSetManageTextureParameters(effectContext, CG_TRUE);
         cgGLRegisterStates(effectContext);
 #endif
@@ -288,6 +288,7 @@ struct Scene::PrivateContext {
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
     Hash<HashPtr, IRenderEngine *> model2engine;
+    Hash<HashPtr, IModel *> name2model;
     Array<IModel *> models;
     Array<IMotion *> motions;
     Array<IRenderEngine *> engines;
@@ -393,7 +394,8 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
     }
     m_context->models.add(model);
     m_context->engines.add(engine);
-    m_context->model2engine.insert(HashPtr(model), engine);
+    m_context->model2engine.insert(model, engine);
+    m_context->name2model.insert(model->name(), model);
 }
 
 void Scene::addMotion(IMotion *motion)
@@ -562,9 +564,15 @@ const Array<IRenderEngine *> &Scene::renderEngines() const
     return m_context->engines;
 }
 
-IRenderEngine *Scene::renderEngine(IModel *model) const
+IModel *Scene::findModel(const IString *name) const
 {
-    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(HashPtr(model)));
+    IModel **model = const_cast<IModel **>(m_context->name2model.find(name));
+    return model ? *model : 0;
+}
+
+IRenderEngine *Scene::findRenderEngine(IModel *model) const
+{
+    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(model));
     return engine ? *engine : 0;
 }
 

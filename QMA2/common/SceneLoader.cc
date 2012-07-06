@@ -1462,7 +1462,7 @@ void SceneLoader::renderModels()
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
         if (IModel *model = m_project->model(uuidString)) {
-            IRenderEngine *engine = m_project->renderEngine(model);
+            IRenderEngine *engine = m_project->findRenderEngine(model);
             if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
                 engine->renderShadow();
             }
@@ -1529,7 +1529,7 @@ void SceneLoader::renderZPlot()
         const Project::UUID &uuidString = uuid.toString().toStdString();
         IModel *model = m_project->model(uuidString);
         if (model && isSelfShadowEnabled(model)) {
-            IRenderEngine *engine = m_project->renderEngine(model);
+            IRenderEngine *engine = m_project->findRenderEngine(model);
             engine->renderZPlot();
         }
     }
