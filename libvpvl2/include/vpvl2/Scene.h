@@ -118,6 +118,7 @@ public:
     void removeMotion(IMotion *motion);
     void advance(const IKeyframe::TimeIndex &delta);
     void seek(const IKeyframe::TimeIndex &timeIndex);
+    void updateModel(IModel *model) const;
     void updateModels();
     void updateRenderEngines();
     void updateCamera();

@@ -493,14 +493,25 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex)
     updateCamera();
 }
 
+void Scene::updateModel(IModel *model) const
+{
+    if (model) {
+        const ICamera *c = camera();
+        const Vector3 &cameraPosition = c->position() + Vector3(0, 0, c->distance());
+        model->performUpdate(cameraPosition, light()->direction());
+    }
+}
+
 void Scene::updateModels()
 {
+    const ICamera *c = camera();
+    const Vector3 &cameraPosition = camera()->position() + Vector3(0, 0, c->distance());
     const Vector3 &lightDirection = light()->direction();
     const Array<IModel *> &models = m_context->models;
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         IModel *model = models[i];
-        model->performUpdate(lightDirection);
+        model->performUpdate(cameraPosition, lightDirection);
     }
 }
 

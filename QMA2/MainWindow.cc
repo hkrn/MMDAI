@@ -1334,8 +1334,8 @@ void MainWindow::connectSceneLoader()
     const Vector3 &direction = light->direction();
     lightWidget->setColor(light->color());
     lightWidget->setDirection(direction);
-    m_boneMotionModel->setLightDirection(direction);
-    m_morphMotionModel->setLightDirection(direction);
+    m_boneMotionModel->setScene(scene);
+    m_morphMotionModel->setScene(scene);
     connect(loader, SIGNAL(lightColorDidSet(vpvl2::Vector3)), lightWidget, SLOT(setColor(vpvl2::Vector3)));
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));

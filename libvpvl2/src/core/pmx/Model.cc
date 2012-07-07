@@ -280,7 +280,7 @@ void Model::resetVertices()
     }
 }
 
-void Model::performUpdate(const Vector3 &lightDirection)
+void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection)
 {
     // update local transform matrix
     const int nbones = m_bones.count();
@@ -318,6 +318,7 @@ void Model::performUpdate(const Vector3 &lightDirection)
         Bone *bone = m_APSOrderedBones[i];
         bone->performUpdateLocalTransform();
     }
+    const Scalar &esf = edgeScaleFactor(cameraPosition);
     // skinning
     if (m_enableSkinning) {
         const int nmaterials = m_materials.count();
@@ -334,7 +335,7 @@ void Model::performUpdate(const Vector3 &lightDirection)
                 const float edgeSize = vertex->edgeSize();
                 vertex->performSkinning(v.position, v.normal);
                 v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5);
-                v.edge = v.position + v.normal * edgeSize * materialEdgeSize * 0.03;
+                v.edge = v.position + v.normal * edgeSize * materialEdgeSize * esf;
                 v.uva1 = vertex->uv(1);
                 v.uva2 = vertex->uv(2);
                 v.uva3 = vertex->uv(3);
@@ -349,6 +350,8 @@ void Model::performUpdate(const Vector3 &lightDirection)
             Vertex *vertex = m_vertices[i];
             SkinnedVertex &v = m_skinnedVertices[i];
             v.position = vertex->origin() + vertex->delta();
+            v.normal[3] = vertex->edgeSize();
+            v.edge[3] = i;
         }
     }
 }
@@ -655,6 +658,16 @@ const void *Model::vertexPtr() const
 const void *Model::indicesPtr() const
 {
     return &m_skinnedIndices[0];
+}
+
+const Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+{
+    Scalar length = 0;
+    if (m_bones.count() > 1) {
+        IBone *bone = m_bones.at(1);
+        length = (cameraPosition - bone->worldTransform().getOrigin()).length();
+    }
+    return length / 1000.0;
 }
 
 void Model::setName(const IString *value)

@@ -48,6 +48,7 @@ class IBone;
 class IModel;
 class IMorph;
 class IMotion;
+class Scene;
 }
 
 class QUndoCommand;
@@ -61,7 +62,7 @@ class PMDMotionModel : public MotionBaseModel
 public:
     class State {
     public:
-        State(vpvl2::IModel *model, PMDMotionModel *parent);
+        State(const vpvl2::Scene *scene, vpvl2::IModel *model);
         ~State();
         void restore() const;
         void save();
@@ -76,7 +77,7 @@ public:
         typedef QPair<vpvl2::Vector3, vpvl2::Quaternion> Transform;
         typedef QPair<vpvl2::IBone *, Transform> Bone;
         typedef QPair<vpvl2::IMorph *, vpvl2::Scalar> Morph;
-        PMDMotionModel *m_parent;
+        const vpvl2::Scene *m_scene;
         vpvl2::IModel *m_model;
         QList<Bone> m_bones;
         QList<Morph> m_morphs;
@@ -99,17 +100,17 @@ public:
     void setActiveUndoStack();
     int maxFrameIndex() const;
     bool forceCameraUpdate() const;
+    void setScene(const vpvl2::Scene *value);
 
     vpvl2::IModel *selectedModel() const { return m_model; }
     const Keys keys() const { return m_keys[m_model]; }
-    const vpvl2::Vector3 &lightDirection() const { return m_lightDirection; }
+    const vpvl2::Scene *scene() const { return m_scene; }
 
 public slots:
     virtual void loadMotion(vpvl2::IMotion *motion, vpvl2::IModel *model) = 0;
     virtual void setPMDModel(vpvl2::IModel *model) = 0;
     virtual void removeModel() = 0;
     void markAsNew(vpvl2::IModel *model);
-    void setLightDirection(const vpvl2::Vector3 &value);
 
 signals:
     void modelDidChange(vpvl2::IModel *model);
@@ -125,6 +126,7 @@ protected:
     RootPtr rootPtr(vpvl2::IModel *model) const { return m_roots[model]; }
     ITreeItem *root() const { return rootPtr().data(); }
 
+    const vpvl2::Scene *m_scene;
     vpvl2::IModel *m_model;
     vpvl2::Vector3 m_lightDirection;
 

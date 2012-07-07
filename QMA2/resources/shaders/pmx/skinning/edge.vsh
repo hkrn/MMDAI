@@ -51,7 +51,7 @@ void main() {
     int type = int(inPosition.w);
     vec3 position = performSkinning(inPosition.xyz, type).xyz;
     vec3 normal = normalize(performSkinning(inNormal, type).xyz);
-    vec3 edge = position + normal * inEdgeSize * edgeSize * 0.03;
+    vec3 edge = position + normal * inEdgeSize * edgeSize;
     gl_Position = modelViewProjectionMatrix * vec4(edge, 1.0);
 }
 

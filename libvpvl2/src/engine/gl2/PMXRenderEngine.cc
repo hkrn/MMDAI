@@ -117,6 +117,7 @@ public:
           m_colorUniformLocation(0),
           m_edgeSizeUniformLocation(0),
           m_opacityUniformLocation(0),
+          m_normalAttributeLocation(0),
           m_edgeAttributeLocation(0),
           m_boneIndicesAttributeLocation(0),
           m_boneWeightsAttributeLocation(0),
@@ -127,6 +128,7 @@ public:
         m_colorUniformLocation = 0;
         m_edgeSizeUniformLocation = 0;
         m_opacityUniformLocation = 0;
+        m_normalAttributeLocation = 0;
         m_edgeAttributeLocation = 0;
         m_boneIndicesAttributeLocation = 0;
         m_boneWeightsAttributeLocation = 0;
@@ -141,6 +143,10 @@ public:
     }
     void setOpacity(const Scalar &value) {
         glUniform1f(m_opacityUniformLocation, value);
+    }
+    void setNormal(const GLvoid *ptr, GLsizei stride) {
+        glEnableVertexAttribArray(m_normalAttributeLocation);
+        glVertexAttribPointer(m_normalAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setVertexEdgeSize(const GLvoid *ptr, GLsizei stride) {
         glEnableVertexAttribArray(m_edgeAttributeLocation);
@@ -164,6 +170,7 @@ protected:
         m_colorUniformLocation = glGetUniformLocation(m_program, "color");
         m_edgeSizeUniformLocation = glGetUniformLocation(m_program, "edgeSize");
         m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
+        m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
         m_edgeAttributeLocation = glGetAttribLocation(m_program, "inEdgeSize");
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
@@ -174,6 +181,7 @@ private:
     GLuint m_colorUniformLocation;
     GLuint m_edgeSizeUniformLocation;
     GLuint m_opacityUniformLocation;
+    GLuint m_normalAttributeLocation;
     GLuint m_edgeAttributeLocation;
     GLuint m_boneIndicesAttributeLocation;
     GLuint m_boneWeightsAttributeLocation;
@@ -647,7 +655,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_context->vertexBufferObjects[kModelVertices], context);
 #endif
-    m_model->performUpdate(m_scene->light()->direction());
+    m_model->performUpdate(m_scene->camera()->position(), m_scene->light()->direction());
     m_model->setVisible(true);
     update();
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_model->name()->toByteArray());
@@ -834,9 +842,6 @@ void PMXRenderEngine::renderEdge()
     edgeProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
-    size_t offset = pmx::Model::strideOffset(pmx::Model::kEdgeVertexStride);
-    size_t size   = pmx::Model::strideSize(pmx::Model::kEdgeVertexStride);
-    edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     float matrix4x4[16];
     m_delegate->getMatrix(matrix4x4, m_model,
                           IRenderDelegate::kWorldMatrix
@@ -846,15 +851,32 @@ void PMXRenderEngine::renderEdge()
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setOpacity(m_model->opacity());
     const Array<pmx::Material *> &materials = m_model->materials();
-    const size_t boneIndexOffset = m_model->strideOffset(pmx::Model::kBoneIndexStride),
-            boneWeightOffset = m_model->strideOffset(pmx::Model::kBoneWeightStride),
-            boneStride = m_model->strideSize(pmx::Model::kVertexStride);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
+    size_t offset, size;
+    Scalar edgeScaleFactor;
     if (isVertexShaderSkinning) {
-        offset = pmx::Model::strideOffset(pmx::Model::kEdgeSizeStride);
-        size   = pmx::Model::strideSize(pmx::Model::kEdgeSizeStride);
+        const Scene::ICamera *camera = m_scene->camera();
+        size_t boneIndexOffset = m_model->strideOffset(pmx::Model::kBoneIndexStride);
+        size_t boneWeightOffset = m_model->strideOffset(pmx::Model::kBoneWeightStride);
+        size_t boneStride = m_model->strideSize(pmx::Model::kVertexStride);
+        edgeScaleFactor = m_model->edgeScaleFactor(camera->position() + Vector3(0, 0, camera->distance()));
+        offset = m_model->strideOffset(pmx::Model::kEdgeSizeStride);
+        size = m_model->strideSize(pmx::Model::kEdgeSizeStride);
         edgeProgram->setVertexEdgeSize(reinterpret_cast<const GLvoid *>(offset), size);
+        offset = pmx::Model::strideOffset(pmx::Model::kVertexStride);
+        size   = pmx::Model::strideSize(pmx::Model::kVertexStride);
+        edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
+        offset = pmx::Model::strideOffset(pmx::Model::kNormalStride);
+        size   = pmx::Model::strideSize(pmx::Model::kNormalStride);
+        edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(offset), size);
+        edgeProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
+        edgeProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
+    }
+    else {
+        offset = pmx::Model::strideOffset(pmx::Model::kEdgeVertexStride);
+        size   = pmx::Model::strideSize(pmx::Model::kEdgeVertexStride);
+        edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     }
     offset = 0; size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glCullFace(GL_FRONT);
@@ -865,10 +887,8 @@ void PMXRenderEngine::renderEdge()
         if (material->isEdgeDrawn()) {
             if (isVertexShaderSkinning) {
                 const pmx::Model::SkinningMeshes &mesh = m_context->mesh;
-                edgeProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
-                edgeProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
                 edgeProgram->setBoneMatrices(mesh.matrices[i], mesh.bones[i].size());
-                edgeProgram->setSize(material->edgeSize());
+                edgeProgram->setSize(material->edgeSize() * edgeScaleFactor);
             }
             glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
         }

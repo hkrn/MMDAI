@@ -607,8 +607,8 @@ void SceneWidget::insertPoseToSelectedModel()
                                                               tr("VPD file (*.vpd)"),
                                                               m_settings),
                                                model);
-    if (!ptr.isNull() && model)
-        model->performUpdate(m_loader->scene()->light()->direction());
+    if (!ptr.isNull())
+        m_loader->scene()->updateModel(model);
 }
 
 void SceneWidget::setBackgroundImage()
@@ -892,8 +892,8 @@ void SceneWidget::loadFile(const QString &file)
     else if (extension == "vpd") {
         IModel *model = m_loader->selectedModel();
         VPDFilePtr ptr = insertPoseToSelectedModel(file, model);
-        if (!ptr.isNull() && model)
-            model->performUpdate(m_loader->scene()->light()->direction());
+        if (!ptr.isNull())
+            m_loader->scene()->updateModel(model);
     }
     /* アクセサリ情報ファイル */
     else if (extension == "vac") {
@@ -1510,6 +1510,7 @@ void SceneWidget::updateFPS()
 void SceneWidget::updateScene()
 {
     m_loader->updateMatrices(QSizeF(size()));
+    m_loader->scene()->updateModels();
     m_loader->scene()->updateRenderEngines();
     if (m_enableUpdateGL)
         updateGL();

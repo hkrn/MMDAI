@@ -144,7 +144,7 @@ public:
     size_t estimateSize() const;
 
     void resetVertices();
-    void performUpdate(const Vector3 &lightDirection);
+    void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection);
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
@@ -161,6 +161,7 @@ public:
 
     const void *vertexPtr() const;
     const void *indicesPtr() const;
+    const Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
 
     Type type() const { return kPMX; }
     const Array<Vertex *> &vertices() const { return m_vertices; }

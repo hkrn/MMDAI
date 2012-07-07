@@ -178,7 +178,7 @@ void Model::resetVertices()
 {
 }
 
-void Model::performUpdate(const Vector3 &lightDirection)
+void Model::performUpdate(const Vector3 & /* cameraPosition */, const Vector3 &lightDirection)
 {
     m_model.setLightPosition(-lightDirection);
     m_model.updateImmediate();

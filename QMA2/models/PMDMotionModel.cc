@@ -42,8 +42,8 @@
 
 using namespace vpvl2;
 
-PMDMotionModel::State::State(IModel *model, PMDMotionModel *parent)
-    : m_parent(parent),
+PMDMotionModel::State::State(const Scene *scene, IModel *model)
+    : m_scene(scene),
       m_model(model)
 {
 }
@@ -66,7 +66,7 @@ void PMDMotionModel::State::restore() const
         IMorph *m = morph.first;
         m->setWeight(morph.second);
     }
-    m_model->performUpdate(m_parent->lightDirection());
+    m_scene->updateModel(m_model);
 }
 
 void PMDMotionModel::State::save()
@@ -138,7 +138,7 @@ void PMDMotionModel::State::resetBones()
         bone->setPosition(kZeroV3);
         bone->setRotation(Quaternion::getIdentity());
     }
-    m_model->performUpdate(m_parent->lightDirection());
+    m_scene->updateModel(m_model);
 }
 
 void PMDMotionModel::State::resetMorphs()
@@ -151,7 +151,7 @@ void PMDMotionModel::State::resetMorphs()
         IMorph *morph = morphs[i];
         morph->setWeight(0);
     }
-    m_model->performUpdate(m_parent->lightDirection());
+    m_scene->updateModel(m_model);
 }
 
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
@@ -229,15 +229,10 @@ void PMDMotionModel::markAsNew(IModel *model)
         setModified(false);
 }
 
-void PMDMotionModel::setLightDirection(const Vector3 &value)
-{
-    m_lightDirection = value;
-}
-
 void PMDMotionModel::updateModel(IModel *model, bool seek)
 {
     if (model) {
-        model->performUpdate(m_lightDirection);
+        m_scene->updateModel(model);
         if (seek)
             emit timeIndexDidChange(m_timeIndex, m_timeIndex);
     }
@@ -270,6 +265,11 @@ int PMDMotionModel::maxFrameIndex() const
 bool PMDMotionModel::forceCameraUpdate() const
 {
     return false;
+}
+
+void PMDMotionModel::setScene(const Scene *value)
+{
+    m_scene = value;
 }
 
 void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys &keys)
