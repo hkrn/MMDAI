@@ -190,7 +190,7 @@ public:
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return kZeroV3; }
-    const Scalar &edgeWidth() const { return 1.0; }
+    const Scalar &edgeWidth() const { static const float kOne = 1.0; return kOne; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
     void setPosition(const Vector3 &value) { m_position = value; }
