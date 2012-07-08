@@ -178,10 +178,31 @@ void Model::resetVertices()
 {
 }
 
-void Model::performUpdate(const Vector3 & /* cameraPosition */, const Vector3 &lightDirection)
+void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection)
 {
     m_model.setLightPosition(-lightDirection);
     m_model.updateImmediate();
+    if (m_enableSkinning) {
+        /* override edge process */
+        const size_t &stride = m_model.strideSize(vpvl::PMDModel::kEdgeVerticesStride);
+        const Scalar &edgeWidth = m_model.edgeOffset(), &esf = edgeScaleFactor(cameraPosition);
+        const vpvl::VertexList &vertices = m_model.vertices();
+        const int nvertices = vertices.count();
+        uint8_t *verticesPtr = const_cast<uint8_t *>(static_cast<const uint8_t *>(m_model.verticesPointer()));
+        size_t vertexOffset = m_model.strideOffset(vpvl::PMDModel::kVerticesStride),
+                normalOffset = m_model.strideOffset(vpvl::PMDModel::kNormalsStride),
+                edgeOffset = m_model.strideOffset(vpvl::PMDModel::kEdgeVerticesStride);
+        for (int i = 0; i < nvertices; i++) {
+            const vpvl::Vertex *vertex = vertices[i];
+            const Vector3 &position = *reinterpret_cast<const Vector3 *>(verticesPtr + vertexOffset);
+            const Vector3 &normal = *reinterpret_cast<const Vector3 *>(verticesPtr + normalOffset);
+            Vector3 &edge = *reinterpret_cast<Vector3 *>(verticesPtr + edgeOffset);
+            edge = vertex->isEdgeEnabled() ? position + normal * edgeWidth * esf : kZeroV3;
+            vertexOffset += stride;
+            normalOffset += stride;
+            edgeOffset += stride;
+        }
+    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
@@ -271,6 +292,16 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
         center = (min + max) * 0.5;
         radius = (max - min).length() * 0.5;
     }
+}
+
+const Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+{
+    Scalar length = 0;
+    if (m_bones.count() > 1) {
+        IBone *bone = m_bones.at(1);
+        length = (cameraPosition - bone->worldTransform().getOrigin()).length();
+    }
+    return (length / 1000.0);
 }
 
 void Model::setName(const IString *value)
