@@ -71,10 +71,7 @@ private:
     cl_mem m_boneIndicesBuffer;
     cl_mem m_boneMatricesBuffer;
     size_t m_localWGSizeForPerformSkinning;
-    float *m_materialEdgeSize;
     float *m_boneTransform;
-    float *m_boneWeights;
-    int *m_boneIndices;
     bool m_isBufferAllocated;
 };
 

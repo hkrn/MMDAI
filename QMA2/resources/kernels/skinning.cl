@@ -22,7 +22,9 @@ __kernel
 void performSkinning(const __global float16 *localMatrices,
                      const __global float *boneWeights,
                      const __global int2 *boneIndices,
+                     const __global float *edgeOffset,
                      const float4 lightDirection,
+                     const float edgeScaleFactor,
                      const int nvertices,
                      const int strideSize,
                      const int offsetPosition,
@@ -34,8 +36,10 @@ void performSkinning(const __global float16 *localMatrices,
     int id = get_global_id(0);
     if (id < nvertices) {
         int strideOffset = strideSize * id;
-        float4 position = (float4)(vertices[strideOffset + offsetPosition].xyz, 1.0);
-        float4 normal = (float4)(vertices[strideOffset + offsetNormal].xyz, 0.0);
+        float4 position4 = vertices[strideOffset + offsetPosition];
+        float4 normal4 = vertices[strideOffset + offsetNormal];
+        float4 position = (float4)(position4.xyz, 1.0);
+        float4 normal = (float4)(normal4.xyz, 0.0);
         int2 boneIndex = boneIndices[id];
         float weight = boneWeights[id];
         float16 transform1 = localMatrices[boneIndex.x];
@@ -50,7 +54,7 @@ void performSkinning(const __global float16 *localMatrices,
         vertices[strideOffset + offsetPosition] = position2;
         vertices[strideOffset + offsetNormal] = normal2;
         vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
-        vertices[strideOffset + offsetEdge] = position2 + normal2 * vertices[strideOffset + offsetEdge];
+        vertices[strideOffset + offsetEdge] = position2 + normal2 * edgeOffset[id] * edgeScaleFactor;
     }
 }
 

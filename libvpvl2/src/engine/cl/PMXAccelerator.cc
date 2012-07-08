@@ -54,13 +54,12 @@ PMXAccelerator::PMXAccelerator(Context *context)
       m_program(0),
       m_performSkinningKernel(0),
       m_verticesBuffer(0),
+      m_materialEdgeSizeBuffer(0),
       m_boneWeightsBuffer(0),
       m_boneIndicesBuffer(0),
       m_boneMatricesBuffer(0),
       m_localWGSizeForPerformSkinning(0),
       m_boneTransform(0),
-      m_boneWeights(0),
-      m_boneIndices(0),
       m_isBufferAllocated(false)
 {
 }
@@ -80,14 +79,8 @@ PMXAccelerator::~PMXAccelerator()
     clReleaseMemObject(m_boneWeightsBuffer);
     m_boneWeightsBuffer = 0;
     m_localWGSizeForPerformSkinning = 0;
-    delete[] m_materialEdgeSize;
-    m_materialEdgeSize = 0;
     delete[] m_boneTransform;
     m_boneTransform = 0;
-    delete[] m_boneWeights;
-    m_boneWeights = 0;
-    delete[] m_boneIndices;
-    m_boneIndices = 0;
     m_isBufferAllocated = false;
 }
 
@@ -135,6 +128,7 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
 {
     cl_int err;
     cl_context computeContext = m_context->computeContext();
+    clReleaseMemObject(m_verticesBuffer);
     m_verticesBuffer = clCreateFromGLBuffer(computeContext,
                                             CL_MEM_READ_WRITE,
                                             buffer,
@@ -148,15 +142,17 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
     const Array<pmx::Vertex *> &vertices = model->vertices();
     const int nvertices = vertices.count();
     const int nVerticesAlloc = nvertices * kMaxBonesPerVertex;
-    m_boneIndices = new int[nVerticesAlloc];
-    m_boneWeights = new float[nVerticesAlloc];
-    m_materialEdgeSize = new float[nvertices];
+    Array<int> boneIndices;
+    Array<float> boneWeights, materialEdgeSize;
+    boneIndices.resize(nVerticesAlloc);
+    boneWeights.resize(nVerticesAlloc);
+    materialEdgeSize.resize(nvertices);
     for (int i = 0; i < nvertices; i++) {
         const pmx::Vertex *vertex = vertices[i];
         for (int j = 0; j < kMaxBonesPerVertex; j++) {
             const pmx::Bone *bone = vertex->bone(j);
-            m_boneIndices[i * kMaxBonesPerVertex + j] = bone ? bone->index() : -1;
-            m_boneWeights[i * kMaxBonesPerVertex + j] = vertex->weight(j);
+            boneIndices[i * kMaxBonesPerVertex + j] = bone ? bone->index() : -1;
+            boneWeights[i * kMaxBonesPerVertex + j] = vertex->weight(j);
         }
     }
     const Array<int> &indices = model->indices();
@@ -169,31 +165,37 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
         const float edgeSize = material->edgeSize();
         for (int j = offset; j < offsetTo; j++) {
             const int index = indices[j];
-            m_materialEdgeSize[index] = edgeSize;
+            materialEdgeSize[index] = edgeSize;
         }
         offset += nindices;
     }
+    delete[] m_boneTransform;
     m_boneTransform = new float[nBoneMatricesAllocs];
+    clReleaseMemObject(m_materialEdgeSizeBuffer);
     m_materialEdgeSizeBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating materialEdgeSizeBuffer: %d", err);
         return;
     }
+    clReleaseMemObject(m_boneMatricesBuffer);
     m_boneMatricesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
         return;
     }
+    clReleaseMemObject(m_boneIndicesBuffer);
     m_boneIndicesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneIndicesBuffer: %d", err);
         return;
     }
+    clReleaseMemObject(m_boneWeightsBuffer);
     m_boneWeightsBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneWeightsBuffer: %d", err);
         return;
     }
+    clReleaseMemObject(m_boneMatricesBuffer);
     m_boneMatricesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
@@ -211,17 +213,17 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
         return;
     }
     cl_command_queue queue = m_context->commandQueue();
-    err = clEnqueueWriteBuffer(queue, m_materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float), m_materialEdgeSize, 0, 0, 0);
+    err = clEnqueueWriteBuffer(queue, m_materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float), &materialEdgeSize[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write materialEdgeSizeBuffer: %d", err);
         return;
     }
-    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(int), m_boneIndices, 0, 0, 0);
+    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(int), &boneIndices[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneIndicesBuffer: %d", err);
         return;
     }
-    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(float), m_boneWeights, 0, 0, 0);
+    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(float), &boneWeights[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneWeightsBuffer: %d", err);
         return;

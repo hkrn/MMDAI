@@ -39,6 +39,7 @@
 
 #define SOFTWARE_BONE_TRANSFORM
 
+#include "vpvl2/Scene.h"
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/pmd/Model.h"
 
@@ -56,7 +57,7 @@ public:
     bool isAvailable() const;
     bool createKernelProgram();
     void uploadModel(pmd::Model *model, GLuint buffer, void *context);
-    void updateModel(pmd::Model *model);
+    void updateModel(pmd::Model *model, const Scene *scene);
 
 private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
@@ -65,13 +66,12 @@ private:
     cl_program m_program;
     cl_kernel m_performSkinningKernel;
     cl_mem m_verticesBuffer;
+    cl_mem m_edgeOffsetBuffer;
     cl_mem m_boneMatricesBuffer;
     cl_mem m_boneWeightsBuffer;
     cl_mem m_boneIndicesBuffer;
     size_t m_localWGSizeForPerformSkinning;
-    float *m_boneWeights;
     float *m_boneTransform;
-    int *m_boneIndices;
     bool m_isBufferAllocated;
 };
 
