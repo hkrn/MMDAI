@@ -173,7 +173,6 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
         }
         offset += nindices;
     }
-    // TODO: perform morph skinning
     m_boneTransform = new float[nBoneMatricesAllocs];
     m_materialEdgeSizeBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
@@ -282,7 +281,8 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
         return;
     }
     const Scene::ICamera *camera = scene->camera();
-    const Scalar &edgeScaleFactor = model->edgeScaleFactor(camera->position() + Vector3(0, 0, camera->distance()));
+    const Vector3 &cameraPosition = camera->position() + Vector3(0, 0, camera->distance());
+    const Scalar &edgeScaleFactor = model->edgeScaleFactor(cameraPosition) * model->edgeWidth();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(edgeScaleFactor), &edgeScaleFactor);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (edgeScaleFactor): %d", argumentIndex, err);
