@@ -660,7 +660,7 @@ const void *Model::indicesPtr() const
     return &m_skinnedIndices[0];
 }
 
-const Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
     Scalar length = 0;
     if (m_bones.count() > 1) {

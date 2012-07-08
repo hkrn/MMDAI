@@ -81,9 +81,9 @@ struct BoneAnimation::InternalBoneKeyFrameList {
     }
 };
 
-const IKeyframe::SmoothPrecision BoneAnimation::weightValue(const BoneKeyframe *keyFrame,
-                                                            const IKeyframe::SmoothPrecision &w,
-                                                            int at)
+IKeyframe::SmoothPrecision BoneAnimation::weightValue(const BoneKeyframe *keyFrame,
+                                                      const IKeyframe::SmoothPrecision &w,
+                                                      int at)
 {
     const uint16_t index = static_cast<int16_t>(w * BoneKeyframe::kTableSize);
     const IKeyframe::SmoothPrecision *v = keyFrame->interpolationTable()[at];

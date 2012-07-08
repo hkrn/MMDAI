@@ -77,9 +77,9 @@ public:
     const Scalar &fovy() const { return m_fovy; }
 
 private:
-    static const IKeyframe::SmoothPrecision weightValue(const CameraKeyframe *keyFrame,
-                                                        const IKeyframe::SmoothPrecision &w,
-                                                        int at);
+    static IKeyframe::SmoothPrecision weightValue(const CameraKeyframe *keyFrame,
+                                                  const IKeyframe::SmoothPrecision &w,
+                                                  int at);
     static void lerpVector3(const CameraKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,

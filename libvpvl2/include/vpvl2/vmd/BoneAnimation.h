@@ -81,9 +81,9 @@ public:
     void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
-    static const IKeyframe::SmoothPrecision weightValue(const BoneKeyframe *keyFrame,
-                                                        const IKeyframe::SmoothPrecision &w,
-                                                        int at);
+    static IKeyframe::SmoothPrecision weightValue(const BoneKeyframe *keyFrame,
+                                                  const IKeyframe::SmoothPrecision &w,
+                                                  int at);
     static void lerpVector3(const BoneKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,

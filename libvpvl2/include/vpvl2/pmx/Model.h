@@ -161,7 +161,7 @@ public:
 
     const void *vertexPtr() const;
     const void *indicesPtr() const;
-    const Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
+    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
 
     Type type() const { return kPMX; }
     const Array<Vertex *> &vertices() const { return m_vertices; }

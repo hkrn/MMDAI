@@ -63,9 +63,9 @@ namespace vpvl2
 namespace vmd
 {
 
-const IKeyframe::SmoothPrecision CameraAnimation::weightValue(const CameraKeyframe *keyFrame,
-                                                              const IKeyframe::SmoothPrecision &w,
-                                                              int at)
+IKeyframe::SmoothPrecision CameraAnimation::weightValue(const CameraKeyframe *keyFrame,
+                                                        const IKeyframe::SmoothPrecision &w,
+                                                        int at)
 {
     const uint16_t index = static_cast<int16_t>(w * CameraKeyframe::kTableSize);
     const IKeyframe::SmoothPrecision *v = keyFrame->interpolationTable()[at];

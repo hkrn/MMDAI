@@ -697,7 +697,6 @@ public:
     void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir) {
         const CGannotation resourceType = cgGetNamedParameterAnnotation(parameter, "ResourceType");
         int flags;
-        GLenum textureEnum;
         if (cgIsAnnotation(resourceType)) {
             const char *typeName = cgGetStringAnnotationValue(resourceType);
             const CGtype samplerType = cgGetParameterType(sampler);
@@ -706,11 +705,9 @@ public:
             }
             else if (VPVL2_CG_STREQ_CONST(typeName, "3D") && samplerType == CG_SAMPLER3D) {
                 flags = IRenderDelegate::kTexture3D;
-                textureEnum = GL_TEXTURE_3D;
             }
             else if (VPVL2_CG_STREQ_CONST(typeName, "2D") && samplerType == CG_SAMPLER2D) {
                 flags = IRenderDelegate::kTexture2D;
-                textureEnum = GL_TEXTURE_2D;
             }
             else {
                 return;
@@ -718,7 +715,6 @@ public:
         }
         else {
             flags = IRenderDelegate::kTexture2D;
-            textureEnum = GL_TEXTURE_2D;
         }
         const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
         IRenderDelegate::Texture texture;
@@ -1579,17 +1575,15 @@ private:
         if (script) {
             const int nstates = script->size();
             int stateIndex = 0, nloop = 0, backStateIndex = 0;
-            GLuint frameBufferObject, depthBuffer, stencilBuffer;
+            GLuint depthBuffer, stencilBuffer;
             Vector4 v4;
             while (stateIndex < nstates) {
                 const ScriptState &state = script->at(stateIndex);
                 switch (state.type) {
                 case ScriptState::kClearColor:
-                    frameBufferObject = state.frameBufferObject;
                     glClear(GL_COLOR_BUFFER_BIT);
                     break;
                 case ScriptState::kClearDepth:
-                    frameBufferObject = state.frameBufferObject;
                     glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                     break;
                 case ScriptState::kClearSetColor:
@@ -1761,7 +1755,6 @@ private:
             std::istringstream stream(s);
             std::string segment;
             bool renderColorTarget0DidSet = false,
-                    renderDepthStencilTargetDidSet = false,
                     useRenderBuffer = false;
             while (std::getline(stream, segment, ';')) {
                 std::string::size_type offset = segment.find("=");
@@ -1809,7 +1802,6 @@ private:
                                                                      ScriptState::kRenderDepthStencilTarget,
                                                                      newState);
                         useRenderBuffer = newState.frameBufferObject > 0;
-                        renderDepthStencilTargetDidSet = true;
                     }
                     else if (command == "ClearSetColor") {
                         setStateFromParameter(effect, value, CG_FLOAT4, ScriptState::kClearSetColor, newState);

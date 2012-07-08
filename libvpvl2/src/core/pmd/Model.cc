@@ -294,7 +294,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
     }
 }
 
-const Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
     Scalar length = 0;
     if (m_bones.count() > 1) {
