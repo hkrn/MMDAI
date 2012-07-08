@@ -2,10 +2,13 @@
 invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
+uniform float edgeWidth;
 attribute vec3 inPosition;
-attribute vec3 inNormal; // unused
+attribute vec3 inNormal;
+attribute float inEdgeOffset;
 varying vec4 outColor;
 const float kOne = 1.0;
+const float kZero = 0.0;
 
 attribute vec3 inBoneIndicesAndWeights;
 const int kMaxBones = 128;
@@ -22,7 +25,9 @@ vec4 performLinearBlendSkinning(const vec4 position) {
 
 void main() {
     outColor = color;
-    vec4 position = performLinearBlendSkinning(vec4(inPosition, kOne));
-    gl_Position = modelViewProjectionMatrix * position;
+    vec3 position = performLinearBlendSkinning(vec4(inPosition, kOne)).xyz;
+    vec3 normal = normalize(performLinearBlendSkinning(vec4(inNormal, kZero)).xyz);
+    vec3 edge = (position + normal * edgeWidth) * inEdgeOffset;
+    gl_Position = modelViewProjectionMatrix * vec4(edge, kOne);
 }
 

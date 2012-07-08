@@ -119,6 +119,7 @@ public:
     };
     void getSkinningMeshes(SkinningMeshes &meshes) const;
     void updateSkinningMeshes(SkinningMeshes &meshes) const;
+    void overrideEdgeVerticesOffset();
     void setSkinnningEnable(bool value);
 
 private:

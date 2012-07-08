@@ -440,6 +440,22 @@ void Model::updateSkinningMeshes(SkinningMeshes &meshes) const
     }
 }
 
+void Model::overrideEdgeVerticesOffset()
+{
+    const size_t &stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
+    const vpvl::VertexList &vertices = m_model.vertices();
+    const int nvertices = vertices.count();
+    uint8_t *verticesPtr = const_cast<uint8_t *>(static_cast<const uint8_t *>(m_model.verticesPointer()));
+    size_t edgeOffset = m_model.strideOffset(vpvl::PMDModel::kEdgeVerticesStride);
+    for (int i = 0; i < nvertices; i++) {
+        const vpvl::Vertex *vertex = vertices[i];
+        const Scalar &w = vertex->isEdgeEnabled() ? 1.0 : 0.0;
+        Vector3 &edge = *reinterpret_cast<Vector3 *>(verticesPtr + edgeOffset);
+        edge.setValue(w, w, w);
+        edgeOffset += stride;
+    }
+}
+
 void Model::setSkinnningEnable(bool value)
 {
     m_enableSkinning = value;
