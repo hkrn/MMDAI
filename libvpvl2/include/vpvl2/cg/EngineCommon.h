@@ -60,6 +60,26 @@
 #define VPVL2_CG_STREQ_CONST(s, c) (0 == strncmp((s), (c), (sizeof(c)) - 1))
 #define VPVL2_CG_GET_SUFFIX(s, c) (s + (sizeof(c) - 1))
 
+namespace
+{
+
+using namespace vpvl2;
+
+static const Scalar kWidth = 1, kHeight = 1;
+static const Vector4 kVertices[] = {
+    btVector4(-kWidth,  kHeight,  0,  0),
+    btVector4(-kWidth, -kHeight,  0,  1),
+    btVector4( kWidth, -kHeight,  1,  1),
+    btVector4( kWidth,  kHeight,  1,  0)
+};
+static const size_t kVertexStride = sizeof(kVertices[0]);
+static const int kIndices[] = { 0, 1, 2, 3 };
+static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertices[0]);
+static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
+static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
+
+}
+
 namespace vpvl2
 {
 namespace cg
@@ -644,16 +664,20 @@ class RenderColorTargetSemantic : public BaseParameter
 {
 public:
     struct Texture {
-        Texture(int w, int h, int d, GLuint i)
+        Texture(int w, int h, int d, CGparameter p, CGparameter s, GLuint i)
             : width(w),
               height(h),
               depth(d),
+              parameter(p),
+              sampler(s),
               id(i)
         {
         }
         int width;
         int height;
         int depth;
+        CGparameter parameter;
+        CGparameter sampler;
         GLuint id;
     };
 
@@ -709,7 +733,7 @@ public:
                 textureID = *static_cast<const GLuint *>(texture.object);
                 cgGLSetTextureParameter(sampler, textureID);
                 cgSetSamplerState(sampler);
-                Texture t(texture.width, texture.height, 0, textureID);
+                Texture t(texture.width, texture.height, 0, parameter, sampler, textureID);
                 m_name2texture.insert(cgGetParameterName(parameter), t);
                 m_textures.add(textureID);
             }
@@ -720,10 +744,10 @@ public:
             case IRenderDelegate::kTextureCube:
                 break;
             case IRenderDelegate::kTexture3D:
-                textureID = generateTexture3D0(parameter);
+                textureID = generateTexture3D0(parameter, sampler);
                 break;
             case IRenderDelegate::kTexture2D:
-                textureID = generateTexture2D0(parameter);
+                textureID = generateTexture2D0(parameter, sampler);
                 break;
             case IRenderDelegate::kToonTexture:
             case IRenderDelegate::kGenerateTextureMipmap:
@@ -734,6 +758,7 @@ public:
         }
         if (cgIsParameter(sampler) && textureID > 0) {
             m_parameters.add(parameter);
+            cgGLSetupSampler(sampler, textureID);
             cgGLSetTextureParameter(sampler, textureID);
             cgSetSamplerState(sampler);
         }
@@ -756,42 +781,42 @@ protected:
         }
         return enableGeneratingMipmap;
     }
-    virtual void generateTexture2D(const CGparameter parameter, GLuint texture, int width, int height) {
+    virtual void generateTexture2D(const CGparameter parameter, const CGparameter sampler, GLuint texture, int width, int height) {
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
         if (isMimapEnabled(parameter))
             glGenerateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
-        Texture t(width, height, 0, texture);
+        Texture t(width, height, 0, parameter, sampler, texture);
         m_name2texture.insert(cgGetParameterName(parameter), t);
     }
-    virtual void generateTexture3D(const CGparameter parameter, GLuint texture, int width, int height, int depth) {
+    virtual void generateTexture3D(const CGparameter parameter, const CGparameter sampler, GLuint texture, int width, int height, int depth) {
         glBindTexture(GL_TEXTURE_3D, texture);
         glTexImage3D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
         if (isMimapEnabled(parameter))
             glGenerateMipmap(GL_TEXTURE_3D);
         glBindTexture(GL_TEXTURE_3D, 0);
-        Texture t(width, height, depth, texture);
+        Texture t(width, height, depth, parameter, sampler, texture);
         m_name2texture.insert(cgGetParameterName(parameter), t);
     }
 
 private:
-    GLuint generateTexture2D0(const CGparameter parameter) {
+    GLuint generateTexture2D0(const CGparameter parameter, const CGparameter sampler) {
         int width, height;
         getSize2(parameter, width, height);
         GLuint texture;
         glGenTextures(1, &texture);
         m_textures.add(texture);
-        generateTexture2D(parameter, texture, width, height);
+        generateTexture2D(parameter, sampler, texture, width, height);
         return texture;
     }
-    GLuint generateTexture3D0(const CGparameter parameter) {
+    GLuint generateTexture3D0(const CGparameter parameter, const CGparameter sampler) {
         int width, height, depth;
         getSize3(parameter, width, height, depth);
         GLuint texture;
         glGenTextures(1, &texture);
         m_textures.add(texture);
-        generateTexture3D(parameter, texture, width, height, depth);
+        generateTexture3D(parameter, sampler, texture, width, height, depth);
         return texture;
     }
     void getSize2(const CGparameter parameter, int &width, int &height) {
@@ -884,7 +909,7 @@ public:
     }
 
 protected:
-    void generateTexture2D(const CGparameter parameter, GLuint /* texture */, int width, int height) {
+    void generateTexture2D(const CGparameter parameter, const CGparameter /* sampler */, GLuint /* texture */, int width, int height) {
         GLuint renderBuffer;
         glGenRenderbuffers(1, &renderBuffer);
         glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
@@ -1044,6 +1069,8 @@ public:
             GLuint *frameBufferObject = m_techniqueFrameBuffers.getAtIndex(i);
             glDeleteFramebuffers(1, frameBufferObject);
         }
+        glDeleteBuffers(1, &m_verticesBuffer);
+        glDeleteBuffers(1, &m_indicesBuffer);
         if (cgIsEffect(effect))
             cgDestroyEffect(effect);
         effect = 0;
@@ -1187,6 +1214,7 @@ public:
             addTechniquePasses(technique);
             technique = cgGetNextTechnique(technique);
         }
+        initializeBuffer();
         return true;
     }
     CGtechnique findTechnique(const char *pass,
@@ -1207,22 +1235,39 @@ public:
     }
     void executeScriptExternal() {
         if (m_scriptOrder == kPostProcess)
-            executeScript(&m_externalScript, 0, 0, 0);
+            executeScript(&m_externalScript, 0, 0, 0, 0);
     }
     bool hasTechniques(ScriptOrderType order) const {
-        return m_scriptOrder == order ? m_techniqueScripts.size() : 0;
+        return m_scriptOrder == order ? m_techniqueScripts.size() > 0 : false;
     }
-    void executeTechniquePasses(const CGtechnique technique, const GLsizei count, const GLenum type, const GLvoid *ptr) {
+    void executeProcess(const IModel *model, ScriptOrderType order) {
+        if (!model || !isAttached() || m_scriptOrder != order)
+            return;
+        glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+        glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
+        glTexCoordPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        setZeroGeometryParameters(model);
+        CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
+        executeTechniquePasses(technique, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+    void executeTechniquePasses(const CGtechnique technique, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) {
         if (cgIsTechnique(technique)) {
             const Script *tss = m_techniqueScripts.find(technique);
-            executeScript(tss, count, type, ptr);
+            executeScript(tss, mode, count, type, ptr);
             const Passes *passes = m_techniquePasses.find(technique);
             if (passes) {
                 const int npasses = passes->size();
                 for (int i = 0; i < npasses; i++) {
                     CGpass pass = passes->at(i);
                     const Script *pss = m_passScripts.find(pass);
-                    executeScript(pss, count, type, ptr);
+                    executeScript(pss, mode, count, type, ptr);
                 }
             }
         }
@@ -1492,10 +1537,10 @@ private:
             state.parameter = parameter;
         }
     }
-    static void executePass(CGpass pass, GLsizei count, GLenum type, const GLvoid *ptr) {
+    static void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) {
         if (cgIsPass(pass)) {
             cgSetPassState(pass);
-            glDrawElements(GL_TRIANGLES, count, type, ptr);
+            glDrawElements(mode, count, type, ptr);
             cgResetPassState(pass);
         }
     }
@@ -1530,7 +1575,7 @@ private:
             glViewport(0, 0, viewport.x(), viewport.y());
         }
     }
-    void executeScript(const Script *script, const GLsizei count, const GLenum type, const GLvoid *ptr) {
+    void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) {
         if (script) {
             const int nstates = script->size();
             int stateIndex = 0, nloop = 0, backStateIndex = 0;
@@ -1590,16 +1635,16 @@ private:
                     break;
                 case ScriptState::kDrawBuffer:
                     if (m_scriptClass != kObject) {
-                        executePass(state.pass, count, type, ptr);
+                        executePass(state.pass, mode, count, type, ptr);
                     }
                     break;
                 case ScriptState::kDrawGeometry:
                     if (m_scriptClass != kScene) {
-                        executePass(state.pass, count, type, ptr);
+                        executePass(state.pass, mode, count, type, ptr);
                     }
                     break;
                 case ScriptState::kPass:
-                    executeScript(m_passScripts.find(state.pass), count, type, ptr);
+                    executeScript(m_passScripts.find(state.pass), mode, count, type, ptr);
                     break;
                 case ScriptState::kScriptExternal:
                 case ScriptState::kUnknown:
@@ -1961,6 +2006,16 @@ private:
         }
         return true;
     }
+    void initializeBuffer() {
+        glGenBuffers(1, &m_verticesBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(kVertices), kVertices, GL_STATIC_DRAW);
+        glGenBuffers(1, &m_indicesBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
 
 #ifndef __APPLE__
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
@@ -1976,6 +2031,8 @@ private:
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
     btHashMap<btHashPtr, GLuint> m_techniqueFrameBuffers;
+    GLuint m_verticesBuffer;
+    GLuint m_indicesBuffer;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };

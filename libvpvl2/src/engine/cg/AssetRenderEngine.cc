@@ -261,12 +261,12 @@ void AssetRenderEngine::preparePostProcess()
 
 void AssetRenderEngine::performPreProcess()
 {
-    renderModel(Effect::kPreProcess);
+    m_effect.executeProcess(m_model, Effect::kPreProcess);
 }
 
 void AssetRenderEngine::performPostProcess()
 {
-    renderModel(Effect::kPostProcess);
+    m_effect.executeProcess(m_model, Effect::kPostProcess);
 }
 
 void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -415,7 +415,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             glEnableClientState(GL_VERTEX_ARRAY);
             glEnableClientState(GL_NORMAL_ARRAY);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, 0);
+            m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -448,7 +448,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             const int nindices = indices.size();
             glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
             glEnableClientState(GL_VERTEX_ARRAY);
-            m_effect.executeTechniquePasses(technique, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
+            m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
             glDisableClientState(GL_VERTEX_ARRAY);
         }
     }
