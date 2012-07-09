@@ -372,8 +372,7 @@ void MaterialTextureSemantic::setTexture(GLuint value)
 {
     if (cgIsParameter(m_baseParameter)) {
         if (value) {
-            cgGLSetTextureParameter(m_baseParameter, value);
-            cgSetSamplerState(m_baseParameter);
+            cgGLSetupSampler(m_baseParameter, value);
         }
         else {
             cgGLSetTextureParameter(m_baseParameter, 0);
@@ -699,8 +698,6 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter, CGparameter 
     if (cgIsParameter(sampler) && textureID > 0) {
         m_parameters.add(parameter);
         cgGLSetupSampler(sampler, textureID);
-        cgGLSetTextureParameter(sampler, textureID);
-        cgSetSamplerState(sampler);
     }
 }
 
@@ -975,8 +972,7 @@ void AnimatedTextureSemantic::update()
         GLuint texture = 0;
         m_delegate->getAnimatedTexture(resourceName, offset, speed, seek, &texture);
         if (texture) {
-            cgGLSetTextureParameter(parameter, texture);
-            cgSetSamplerState(parameter);
+            cgGLSetupSampler(parameter, texture);
         }
     }
 }
