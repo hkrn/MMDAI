@@ -1084,6 +1084,7 @@ public:
         static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
         CGeffect value = static_cast<CGeffect>(e->internalPointer());
         CGparameter parameter = cgGetFirstEffectParameter(value);
+        delete m_effect;
         m_effect = e;
         while (parameter) {
             const char *semantic = cgGetParameterSemantic(parameter);
