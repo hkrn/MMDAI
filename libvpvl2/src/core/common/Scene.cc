@@ -432,7 +432,7 @@ IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDel
     if (source)
         effect = cgCreateEffect(m_context->effectContext, reinterpret_cast<const char *>(source->toByteArray()), 0);
     delete source;
-    return cgIsEffect(effect) ? new Effect(m_context->effectContext, effect) : 0;
+    return new Effect(m_context->effectContext, cgIsEffect(effect) ? effect : 0);
 #else
     return 0;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */

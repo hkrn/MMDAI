@@ -990,9 +990,9 @@ bool Effect::attachEffect(IEffect *e, const IString *dir)
     static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
     delete m_effect;
     m_effect = e;
-    if (!e)
-        return false;
     CGeffect value = static_cast<CGeffect>(e->internalPointer());
+    if (!cgIsEffect(value))
+        return false;
     CGparameter parameter = cgGetFirstEffectParameter(value);
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
