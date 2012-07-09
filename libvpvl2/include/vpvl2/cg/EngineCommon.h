@@ -70,6 +70,7 @@ class Util
 public:
     static bool toBool(const CGannotation annotation);
     static int toInt(const CGannotation annotation);
+    static float toFloat(const CGannotation annotation);
     static bool isPassEquals(const CGannotation annotation, const char *target);
     static bool isIntegerParameter(const CGparameter parameter);
 
@@ -230,7 +231,7 @@ public:
     ~TimeSemantic();
 
     void addParameter(CGparameter parameter);
-    void setValue();
+    void update();
 
 private:
     const IRenderDelegate *m_delegate;
@@ -243,7 +244,7 @@ private:
 class ControlObjectSemantic : public BaseParameter
 {
 public:
-    ControlObjectSemantic(const IRenderDelegate *delegate);
+    ControlObjectSemantic(const Scene *scene, const IRenderDelegate *delegate);
     ~ControlObjectSemantic();
 
     void addParameter(CGparameter parameter);
@@ -252,6 +253,7 @@ public:
 private:
     void setParameter(const IModel *model, const CGparameter parameter);
 
+    const Scene *m_scene;
     const IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
 
@@ -329,12 +331,6 @@ private:
 class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 {
 public:
-    CGannotation clearColor;
-    CGannotation clearDepth;
-    CGannotation antiAlias;
-    CGannotation description;
-    CGannotation defaultEffect;
-
     OffscreenRenderTargetSemantic(IRenderDelegate *delegate);
     ~OffscreenRenderTargetSemantic();
 
@@ -347,31 +343,31 @@ private:
 class AnimatedTextureSemantic : public BaseParameter
 {
 public:
-    CGannotation resourceName;
-    CGannotation offset;
-    CGannotation speed;
-    CGannotation seekVariable;
-
-    AnimatedTextureSemantic();
+    AnimatedTextureSemantic(IRenderDelegate *delegate);
     ~AnimatedTextureSemantic();
 
     void addParameter(CGparameter parameter);
+    void update();
 
 private:
+    IRenderDelegate *m_delegate;
+    Array<CGparameter> m_parameters;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(AnimatedTextureSemantic)
 };
 
 class TextureValueSemantic : public BaseParameter
 {
 public:
-    CGannotation textureName;
-
     TextureValueSemantic();
     ~TextureValueSemantic();
 
     void addParameter(CGparameter parameter);
+    void update();
 
 private:
+    Array<CGparameter> m_parameters;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(TextureValueSemantic)
 };
 
@@ -398,7 +394,7 @@ public:
         kPostProcess
     };
 
-    Effect(IRenderDelegate *delegate);
+    Effect(const Scene *scene, IRenderDelegate *delegate);
     ~Effect();
 
     bool attachEffect(IEffect *e, const IString *dir);
@@ -421,7 +417,7 @@ public:
                                   int extraLightFlags = 0);
     void setZeroGeometryParameters(const IModel *model);
     void updateModelGeometryParameters(const Scene *scene, const IModel *model);
-    void updateViewportParameters();
+    void updateSceneParameters();
 
     bool isAttached() const { return m_effect != 0; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }

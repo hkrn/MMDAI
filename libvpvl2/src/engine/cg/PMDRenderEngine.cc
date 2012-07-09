@@ -64,7 +64,7 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       m_accelerator(accelerator),
       m_model(model),
       m_context(effectContext),
-      m_effect(delegate),
+      m_effect(scene, delegate),
       m_materialContexts(0),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
@@ -201,7 +201,7 @@ void PMDRenderEngine::update()
         m_accelerator->updateModel(m_model, m_scene);
 #endif
     m_effect.updateModelGeometryParameters(m_scene, m_model);
-    m_effect.updateViewportParameters();
+    m_effect.updateSceneParameters();
 }
 
 void PMDRenderEngine::renderModel()

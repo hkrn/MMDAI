@@ -175,7 +175,7 @@ public:
 
     virtual void getElapsed(float &value, bool sync) const = 0;
 
-    virtual IModel *findModel(const char *name) const = 0;
+    virtual void getAnimatedTexture(const char *name, float offset, float speed, float seek, void *texture) = 0;
 
     /**
      * 指定されたフォーマットと可変引数を用いてロギングを行います。

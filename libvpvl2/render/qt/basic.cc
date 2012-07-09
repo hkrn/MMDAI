@@ -606,8 +606,8 @@ public:
             getToonColorInternal(createPath(&s, name), value);
         }
     }
-    IModel *findModel(const char * /* name */) const {
-        return 0;
+    void getAnimatedTexture(const char * /* name */, float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
+        // not implemented
     }
     void getMatrix(float value[], const IModel *model, int flags) const {
         QMatrix4x4 m;

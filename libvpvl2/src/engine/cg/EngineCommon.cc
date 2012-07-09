@@ -79,6 +79,13 @@ int Util::toInt(const CGannotation annotation)
     return nvalues > 0 ? values[0] : 0;
 }
 
+float Util::toFloat(const CGannotation annotation)
+{
+    int nvalues = 0;
+    const float *values = cgGetFloatAnnotationValues(annotation, &nvalues);
+    return nvalues > 0 ? values[0] : 0;
+}
+
 bool Util::isPassEquals(const CGannotation annotation, const char *target)
 {
     if (!cgIsAnnotation(annotation))
@@ -444,7 +451,7 @@ void TimeSemantic::addParameter(CGparameter parameter)
     BaseParameter::connectParameter(parameter, m_syncDisabled);
 }
 
-void TimeSemantic::setValue()
+void TimeSemantic::update()
 {
     float value = 0;
     if (cgIsParameter(m_syncEnabled)) {
@@ -459,14 +466,16 @@ void TimeSemantic::setValue()
 
 /* ControlObjectSemantic */
 
-ControlObjectSemantic::ControlObjectSemantic(const IRenderDelegate *delegate)
+ControlObjectSemantic::ControlObjectSemantic(const Scene *scene, const IRenderDelegate *delegate)
     : BaseParameter(),
+      m_scene(scene),
       m_delegate(delegate)
 {
 }
 
 ControlObjectSemantic::~ControlObjectSemantic()
 {
+    m_scene = 0;
     m_delegate = 0;
 }
 
@@ -490,7 +499,9 @@ void ControlObjectSemantic::update(const IModel *self)
             // TODO
         }
         else {
-            IModel *model = m_delegate->findModel(name);
+            IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(name));
+            IModel *model = m_scene->findModel(s);
+            delete s;
             setParameter(model, parameter);
         }
     }
@@ -620,7 +631,8 @@ RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderDelegate *delegate)
 #endif
 }
 
-RenderColorTargetSemantic::~RenderColorTargetSemantic() {
+RenderColorTargetSemantic::~RenderColorTargetSemantic()
+{
     const int ntextures = m_textures.count();
     glDeleteTextures(ntextures, &m_textures[0]);
 }
@@ -898,12 +910,7 @@ void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter param
 /* OffscreenRenderTargetSemantic */
 
 OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(IRenderDelegate *delegate)
-    : RenderColorTargetSemantic(delegate),
-      clearColor(0),
-      clearDepth(0),
-      antiAlias(0),
-      description(0),
-      defaultEffect(0)
+    : RenderColorTargetSemantic(delegate)
 {
 }
 
@@ -914,40 +921,69 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 void OffscreenRenderTargetSemantic::addParameter(CGparameter parameter, CGparameter sampler, const IString *dir)
 {
     RenderColorTargetSemantic::addParameter(parameter, sampler, dir);
+    /*
     clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
     clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
     antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
     description = cgGetNamedParameterAnnotation(parameter, "Description");
     defaultEffect = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
+    */
 }
 
 /* AnimatedTextureSemantic */
 
-AnimatedTextureSemantic::AnimatedTextureSemantic()
-    : resourceName(0),
-      offset(0),
-      speed(0),
-      seekVariable(0)
+AnimatedTextureSemantic::AnimatedTextureSemantic(IRenderDelegate *delegate)
+    : m_delegate(delegate)
 {
 }
 
 AnimatedTextureSemantic::~AnimatedTextureSemantic()
 {
+    m_delegate = 0;
 }
 
 void AnimatedTextureSemantic::addParameter(CGparameter parameter)
 {
-    BaseParameter::addParameter(parameter);
-    resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
-    offset = cgGetNamedParameterAnnotation(parameter, "Offset");
-    speed = cgGetNamedParameterAnnotation(parameter, "Speed");
-    seekVariable = cgGetNamedParameterAnnotation(parameter, "SeekVariable");
+    CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "ResourceName");
+    if (cgIsAnnotation(annotation) && cgGetParameterType(parameter) == CG_TEXTURE) {
+        m_parameters.add(parameter);
+    }
+}
+
+void AnimatedTextureSemantic::update()
+{
+    const int nparameters = m_parameters.count();
+    for (int i = 0; i < nparameters; i++) {
+        CGparameter parameter = m_parameters[i];
+        const CGannotation resourceNameAnnotation = cgGetNamedParameterAnnotation(parameter, "ResourceName");
+        const CGannotation offsetAnnotation = cgGetNamedParameterAnnotation(parameter, "Offset");
+        const CGannotation speedAnnotation = cgGetNamedParameterAnnotation(parameter, "Speed");
+        const CGannotation seekVariableAnnotation = cgGetNamedParameterAnnotation(parameter, "SeekVariable");
+        const char *resourceName = cgGetStringAnnotationValue(resourceNameAnnotation);
+        float offset = Util::toFloat(offsetAnnotation);
+        float speed = Util::toFloat(speedAnnotation);
+        const char *seekVariable = cgGetStringAnnotationValue(seekVariableAnnotation);
+        float seek;
+        if (seekVariable) {
+            CGeffect effect = cgGetParameterEffect(parameter);
+            CGparameter seekParameter = cgGetNamedEffectParameter(effect, seekVariable);
+            cgGLGetParameter1f(seekParameter, &seek);
+        }
+        else {
+            m_delegate->getTime(seek, true);
+        }
+        GLuint texture = 0;
+        m_delegate->getAnimatedTexture(resourceName, offset, speed, seek, &texture);
+        if (texture) {
+            cgGLSetTextureParameter(parameter, texture);
+            cgSetSamplerState(parameter);
+        }
+    }
 }
 
 /* TextureValueSemantic */
 
 TextureValueSemantic::TextureValueSemantic()
-    : textureName(0)
 {
 }
 
@@ -957,14 +993,40 @@ TextureValueSemantic::~TextureValueSemantic()
 
 void TextureValueSemantic::addParameter(CGparameter parameter)
 {
-    BaseParameter::addParameter(parameter);
-    textureName = cgGetNamedParameterAnnotation(parameter, "TextureName");
+    const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "TextureName");
+    int ndimensions = cgGetArrayDimension(parameter);
+    bool isFloat4 = cgGetParameterType(parameter) == CG_FLOAT4;
+    bool isValidDimension = ndimensions == 1 || ndimensions == 2;
+    if (cgIsAnnotation(annotation) && isFloat4 && isValidDimension) {
+        const char *name = cgGetStringAnnotationValue(annotation);
+        const CGeffect effect = cgGetParameterEffect(parameter);
+        const CGparameter textureParameter = cgGetNamedEffectParameter(effect, name);
+        if (cgGetParameterType(textureParameter) == CG_TEXTURE) {
+            m_parameters.add(parameter);
+        }
+    }
+}
+
+void TextureValueSemantic::update()
+{
+    const int nparameters = m_parameters.count();
+    for (int i = 0; i < nparameters; i++) {
+        CGparameter parameter = m_parameters[i];
+        GLuint texture = cgGLGetTextureParameter(parameter);
+        int size = cgGetArrayTotalSize(parameter);
+        float *pixels = new float[size * 4];
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        cgGLSetParameter4fv(parameter, pixels);
+        delete[] pixels;
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /* Effect */
 
 
-Effect::Effect(IRenderDelegate *delegate)
+Effect::Effect(const Scene *scene, IRenderDelegate *delegate)
     : world(delegate, IRenderDelegate::kWorldMatrix),
       view(delegate, IRenderDelegate::kViewMatrix),
       projection(delegate, IRenderDelegate::kProjectionMatrix),
@@ -973,9 +1035,10 @@ Effect::Effect(IRenderDelegate *delegate)
       worldViewProjection(delegate, IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
       time(delegate),
       elapsedTime(delegate),
-      controlObject(delegate),
+      controlObject(scene, delegate),
       renderColorTarget(delegate),
       renderDepthStencilTarget(delegate),
+      animatedTexture(delegate),
       offscreenRenderTarget(delegate),
       index(0),
       #ifndef __APPLE__
@@ -1279,7 +1342,7 @@ void Effect::updateModelGeometryParameters(const Scene *scene, const IModel *mod
     controlObject.update(model);
 }
 
-void Effect::updateViewportParameters()
+void Effect::updateSceneParameters()
 {
     Vector3 viewport;
     m_delegate->getViewport(viewport);
@@ -1293,8 +1356,10 @@ void Effect::updateViewportParameters()
     middleMouseDown.setValue(position);
     m_delegate->getMousePosition(position, IRenderDelegate::kMouseRightPressPosition);
     rightMouseDown.setValue(position);
-    time.setValue();
-    elapsedTime.setValue();
+    time.update();
+    elapsedTime.update();
+    textureValue.update();
+    animatedTexture.update();
 }
 
 bool Effect::testTechnique(const CGtechnique technique,

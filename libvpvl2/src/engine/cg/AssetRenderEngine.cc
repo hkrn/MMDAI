@@ -86,7 +86,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
       m_scene(scene),
       m_model(model),
       m_context(context),
-      m_effect(delegate),
+      m_effect(scene, delegate),
       m_cullFaceState(true)
 {
 #ifdef VPVL2_LINK_QT
@@ -204,7 +204,7 @@ void AssetRenderEngine::update()
     if (!m_model->isVisible() || !m_effect.isAttached())
         return;
     m_effect.updateModelGeometryParameters(m_scene, m_model);
-    m_effect.updateViewportParameters();
+    m_effect.updateSceneParameters();
 }
 
 void AssetRenderEngine::renderModel()
