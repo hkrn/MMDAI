@@ -711,14 +711,42 @@ bool RenderColorTargetSemantic::isMimapEnabled(const CGparameter parameter) cons
     return enableGeneratingMipmap;
 }
 
+void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter, GLenum &internal, GLenum &format) const
+{
+    CGannotation formatAnnotation = cgGetNamedParameterAnnotation(parameter, "Format");
+    const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
+    internal = GL_RGBA8;
+    format = GL_RGBA;
+    if (VPVL2_CG_STREQ_CONST(formatString, "A32B32G32R32F")) {
+        internal = GL_RGBA32F_ARB;
+    }
+    else if (VPVL2_CG_STREQ_CONST(formatString, "A16B16G16R16F")) {
+        internal = GL_RGBA16F_ARB;
+    }
+    else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_R32F")) {
+        internal = GL_R32F;
+        format = GL_R;
+    }
+    else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_G32R32F")) {
+        internal = GL_RG32F;
+        format = GL_RG;
+    }
+    else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_G16R16")) {
+        internal = GL_RG16;
+        format = GL_RG;
+    }
+}
+
 void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   const CGparameter sampler,
                                                   GLuint texture,
                                                   int width,
                                                   int height)
 {
+    GLenum internal, format;
+    getTextureFormat(parameter, internal, format);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, GL_UNSIGNED_BYTE, 0);
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -733,8 +761,10 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
                                                   int height,
                                                   int depth)
 {
-    glBindTexture(GL_TEXTURE_3D, texture);
-    glTexImage3D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    GLenum internal, format;
+    getTextureFormat(parameter, internal, format);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage3D(GL_TEXTURE_2D, 0, internal, width, height, depth, 0, format, GL_UNSIGNED_BYTE, 0);
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);

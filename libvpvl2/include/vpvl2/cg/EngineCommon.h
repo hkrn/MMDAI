@@ -290,6 +290,7 @@ public:
 
 protected:
     bool isMimapEnabled(const CGparameter parameter) const;
+    void getTextureFormat(const CGparameter parameter, GLenum &internal, GLenum &format) const;
     virtual void generateTexture2D(const CGparameter parameter, const CGparameter sampler, GLuint texture, int width, int height);
     virtual void generateTexture3D(const CGparameter parameter, const CGparameter sampler, GLuint texture, int width, int height, int depth);
 

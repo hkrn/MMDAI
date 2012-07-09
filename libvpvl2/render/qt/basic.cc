@@ -68,8 +68,10 @@ BT_DECLARE_HANDLE(aiScene);
 #include "vpvl2/pmx/Vertex.h"
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/pmd/Model.h"
-
 #include "vpvl2/vmd/Motion.h"
+
+/* to cast IEffect#internalPointer and IEffect#internalContext */
+#include <Cg/cg.h>
 
 using namespace vpvl2;
 
@@ -1588,6 +1590,10 @@ private:
         dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         IEffect *effect = future2.result();
+        if (!effect->internalPointer()) {
+            CGcontext c = static_cast<CGcontext>(effect->internalContext());
+            qDebug() << cgGetLastListing(c);
+        }
         engine->setEffect(effect, &s);
         engine->upload(&s);
         m_scene.addModel(model, engine);
