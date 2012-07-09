@@ -1548,6 +1548,9 @@ private:
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         return m_factory->createModel(data, bytes.size(), ok);
     }
+    IEffect *createEffectAsync(const String *path, const IModel *model) {
+        return m_scene.createEffect(path, model, m_delegate);
+    }
     IMotion *createMotionAsync(const QString &path, IModel *model) const {
         QByteArray bytes;
         if (UISlurpFile(path, bytes)) {
@@ -1581,7 +1584,10 @@ private:
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
         String s(info.absoluteDir().absolutePath());
-        IEffect *effect = m_scene.createEffect(&s, model, m_delegate);
+        const QFuture<IEffect *> &future2 = QtConcurrent::run(this, &UI::createEffectAsync, &s, model);
+        dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        IEffect *effect = future2.result();
         engine->setEffect(effect, &s);
         engine->upload(&s);
         m_scene.addModel(model, engine);
