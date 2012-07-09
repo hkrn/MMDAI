@@ -214,6 +214,27 @@ private:
     Scalar m_zfar;
 };
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+class Effect : public IEffect {
+public:
+    Effect(CGcontext context, CGeffect effect)
+        : m_context(context),
+          m_effect(effect)
+    {
+    }
+    ~Effect() {
+        cgDestroyEffect(m_effect);
+    }
+
+    void *internalContext() const { return m_context; }
+    void *internalPointer() const { return m_effect; }
+
+private:
+    const CGcontext m_context;
+    const CGeffect m_effect;
+};
+#endif
+
 }
 
 namespace vpvl2
@@ -401,6 +422,20 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
 void Scene::addMotion(IMotion *motion)
 {
     m_context->motions.add(motion);
+}
+
+IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate)
+{
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    CGeffect effect = 0;
+    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
+    if (source)
+        effect = cgCreateEffect(m_context->effectContext, reinterpret_cast<const char *>(source->toByteArray()), 0);
+    delete source;
+    return cgIsEffect(effect) ? new Effect(m_context->effectContext, effect) : 0;
+#else
+    return 0;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
 }
 
 void Scene::deleteModel(IModel *&model)

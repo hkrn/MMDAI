@@ -82,6 +82,7 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
+    void setEffect(IEffect *effect, const IString *dir);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
@@ -89,7 +90,6 @@ protected:
     IRenderDelegate *m_delegate;
 
 private:
-    static void handleError(CGcontext context, CGerror error, void *data);
     bool releaseContext0(void *context);
     void release();
 

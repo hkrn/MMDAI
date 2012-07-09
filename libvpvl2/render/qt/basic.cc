@@ -1581,6 +1581,8 @@ private:
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
         String s(info.absoluteDir().absolutePath());
+        IEffect *effect = m_scene.createEffect(&s, model, m_delegate);
+        engine->setEffect(effect, &s);
         engine->upload(&s);
         m_scene.addModel(model, engine);
 #if 0

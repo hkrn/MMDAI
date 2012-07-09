@@ -967,6 +967,11 @@ void PMXRenderEngine::performPostProcess()
     /* do nothing */
 }
 
+void PMXRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */)
+{
+    /* do nothing */
+}
+
 void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)
 {
     va_list ap;

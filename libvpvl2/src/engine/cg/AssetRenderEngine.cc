@@ -37,7 +37,6 @@
 #include "vpvl2/cg/AssetRenderEngine.h"
 
 #ifdef VPVL2_LINK_ASSIMP
-#include "vpvl2/gl2/AssetRenderEngine.h"
 
 #include "vpvl/Bone.h"
 #include "vpvl2/asset/Model.h"
@@ -150,17 +149,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     m_delegate->allocateContext(m_model, context);
-    IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
-    CGeffect effect = 0;
-    cgSetErrorHandler(&AssetRenderEngine::handleError, this);
-    if (source)
-        effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
-    delete source;
-    if (!cgIsEffect(effect)) {
-        log0(context, IRenderDelegate::kLogWarning, "CG effect compile error\n%s", cgGetLastListing(m_context));
-        return false;
-    }
-    m_effect.attachEffect(effect, dir);
     m_effect.useToon.setValue(false);
     m_effect.parthf.setValue(false);
     m_effect.transp.setValue(false);
@@ -219,7 +207,24 @@ void AssetRenderEngine::update()
 
 void AssetRenderEngine::renderModel()
 {
-    renderModel(Effect::kStandard);
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+        return;
+    vpvl::Asset *asset = m_model->ptr();
+    if (btFuzzyZero(asset->opacity()))
+        return;
+    const ILight *light = m_scene->light();
+    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
+    if (depthTexturePtr && light->hasFloatTexture()) {
+        const GLuint depthTexture = *depthTexturePtr;
+        m_effect.depthTexture.setTexture(depthTexture);
+    }
+    m_effect.setModelMatrixParameters(m_model);
+    const aiScene *a = asset->getScene();
+    renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
+    if (!m_cullFaceState) {
+        glEnable(GL_CULL_FACE);
+        m_cullFaceState = true;
+    }
 }
 
 void AssetRenderEngine::renderEdge()
@@ -269,34 +274,17 @@ void AssetRenderEngine::performPostProcess()
     m_effect.executeProcess(m_model, Effect::kPostProcess);
 }
 
+void AssetRenderEngine::setEffect(IEffect *effect, const IString *dir)
+{
+    m_effect.attachEffect(effect, dir);
+}
+
 void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
 {
     va_list ap;
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
-}
-
-void AssetRenderEngine::renderModel(Effect::ScriptOrderType type)
-{
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != type)
-        return;
-    vpvl::Asset *asset = m_model->ptr();
-    if (btFuzzyZero(asset->opacity()))
-        return;
-    const ILight *light = m_scene->light();
-    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
-    if (depthTexturePtr && light->hasFloatTexture()) {
-        const GLuint depthTexture = *depthTexturePtr;
-        m_effect.depthTexture.setTexture(depthTexture);
-    }
-    m_effect.setModelMatrixParameters(m_model);
-    const aiScene *a = asset->getScene();
-    renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
-    if (!m_cullFaceState) {
-        glEnable(GL_CULL_FACE);
-        m_cullFaceState = true;
-    }
 }
 
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
@@ -538,13 +526,6 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         glDisable(GL_CULL_FACE);
         m_cullFaceState = false;
     }
-}
-
-void AssetRenderEngine::handleError(CGcontext context, CGerror error, void *data)
-{
-    AssetRenderEngine *engine = static_cast<AssetRenderEngine *>(data);
-    Q_UNUSED(context)
-    engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
 }
 
 } /* namespace cg */

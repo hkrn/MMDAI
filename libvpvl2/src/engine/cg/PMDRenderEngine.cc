@@ -88,17 +88,6 @@ bool PMDRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-    IString *source = m_delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, m_model, dir, context);
-    CGeffect effect = 0;
-    cgSetErrorHandler(&PMDRenderEngine::handleError, this);
-    if (source)
-        effect = cgCreateEffect(m_context, reinterpret_cast<const char *>(source->toByteArray()), 0);
-    delete source;
-    if (!cgIsEffect(effect)) {
-        log0(context, IRenderDelegate::kLogWarning, "CG effect compile error\n%s", cgGetLastListing(m_context));
-        return releaseContext0(context);
-    }
-    m_effect.attachEffect(effect, dir);
     m_effect.useToon.setValue(true);
     m_effect.parthf.setValue(false);
     m_effect.transp.setValue(false);
@@ -215,7 +204,7 @@ void PMDRenderEngine::update()
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     PMDModel *model = m_model->ptr();
@@ -431,19 +420,17 @@ void PMDRenderEngine::performPostProcess()
     m_effect.executeProcess(m_model, Effect::kPostProcess);
 }
 
+void PMDRenderEngine::setEffect(IEffect *effect, const IString *dir)
+{
+    m_effect.attachEffect(effect, dir);
+}
+
 void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
 {
     va_list ap;
     va_start(ap, format);
     m_delegate->log(context, level, format, ap);
     va_end(ap);
-}
-
-void PMDRenderEngine::handleError(CGcontext context, CGerror error, void *data)
-{
-    PMDRenderEngine *engine = static_cast<PMDRenderEngine *>(data);
-    Q_UNUSED(context)
-    engine->log0(0, IRenderDelegate::kLogWarning, "CGerror: %s", cgGetErrorString(error));
 }
 
 bool PMDRenderEngine::releaseContext0(void *context)

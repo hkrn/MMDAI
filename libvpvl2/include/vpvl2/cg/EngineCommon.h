@@ -41,6 +41,7 @@
 #include "vpvl2/Scene.h"
 #include "vpvl2/IBone.h"
 #include "vpvl2/ICamera.h"
+#include "vpvl2/IEffect.h"
 #include "vpvl2/ILight.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMorph.h"
@@ -1030,8 +1031,7 @@ public:
     };
 
     Effect(IRenderDelegate *delegate)
-        : effect(0),
-          world(delegate, IRenderDelegate::kWorldMatrix),
+        : world(delegate, IRenderDelegate::kWorldMatrix),
           view(delegate, IRenderDelegate::kViewMatrix),
           projection(delegate, IRenderDelegate::kProjectionMatrix),
           worldView(delegate, IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix),
@@ -1047,6 +1047,7 @@ public:
       #ifndef __APPLE__
           glDrawBuffers(0),
       #endif /* __APPLE__ */
+          m_effect(0),
           m_delegate(delegate),
           m_scriptOutput(kColor),
           m_scriptClass(kObject),
@@ -1069,20 +1070,21 @@ public:
         }
         glDeleteBuffers(1, &m_verticesBuffer);
         glDeleteBuffers(1, &m_indicesBuffer);
-        if (cgIsEffect(effect))
-            cgDestroyEffect(effect);
-        effect = 0;
+        delete m_effect;
+        m_effect = 0;
         m_delegate = 0;
     }
 
-    bool attachEffect(CGeffect value, const IString *dir) {
+    bool attachEffect(IEffect *e, const IString *dir) {
         static const char kWorldSemantic[] = "WORLD";
         static const char kViewSemantic[] = "VIEW";
         static const char kProjectionSemantic[] = "PROJECTION";
         static const char kWorldViewSemantic[] = "WORLDVIEW";
         static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
         static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
+        CGeffect value = static_cast<CGeffect>(e->internalPointer());
         CGparameter parameter = cgGetFirstEffectParameter(value);
+        m_effect = e;
         while (parameter) {
             const char *semantic = cgGetParameterSemantic(parameter);
             if (VPVL2_CG_STREQ_CONST(semantic, "VIEWPORTPIXELSIZE")) {
@@ -1206,7 +1208,6 @@ public:
             }
             parameter = cgGetNextParameter(parameter);
         }
-        effect = value;
         CGtechnique technique = cgGetFirstTechnique(value);
         while (technique) {
             addTechniquePasses(technique);
@@ -1337,12 +1338,11 @@ public:
         elapsedTime.setValue();
     }
 
-    bool isAttached() const { return cgIsEffect(effect) == CG_TRUE; }
+    bool isAttached() const { return m_effect != 0; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
     ScriptClassType scriptClass() const { return m_scriptClass; }
     ScriptOrderType scriptOrder() const { return m_scriptOrder; }
 
-    CGeffect effect;
     MatrixSemantic world;
     MatrixSemantic view;
     MatrixSemantic projection;
@@ -1696,6 +1696,7 @@ private:
             static const char kMultipleTechniques[] = "Technique=Technique?";
             static const char kSingleTechnique[] = "Technique=";
             m_techniques.clear();
+            CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
             if (VPVL2_CG_STREQ_CONST(value, kMultipleTechniques)) {
                 const std::string s(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
                 std::istringstream stream(s);
@@ -1756,6 +1757,7 @@ private:
             ScriptState lastState, newState;
             std::istringstream stream(s);
             std::string segment;
+            CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
             bool renderColorTarget0DidSet = false,
                     useRenderBuffer = false;
             while (std::getline(stream, segment, ';')) {
@@ -1863,6 +1865,7 @@ private:
             std::string segment;
             Script scriptExternalStates;
             ScriptState lastState, newState;
+            CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
             bool useScriptExternal = m_scriptOrder == kPostProcess,
                     renderColorTarget0DidSet = false,
                     renderDepthStencilTargetDidSet = false,
@@ -2014,6 +2017,7 @@ private:
 #ifndef __APPLE__
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
 #endif /* __APPLE__ */
+    IEffect *m_effect;
     IRenderDelegate *m_delegate;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;

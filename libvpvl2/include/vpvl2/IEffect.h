@@ -44,6 +44,9 @@ class IEffect
 {
 public:
     virtual ~IEffect() {}
+
+    virtual void *internalContext() const = 0;
+    virtual void *internalPointer() const = 0;
 };
 
 } /* namespace vpvl2 */

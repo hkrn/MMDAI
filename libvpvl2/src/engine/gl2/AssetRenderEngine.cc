@@ -423,6 +423,11 @@ void AssetRenderEngine::performPostProcess()
     /* do nothing */
 }
 
+void AssetRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */)
+{
+    /* do nothing */
+}
+
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context)
 {
     bool ret = true;

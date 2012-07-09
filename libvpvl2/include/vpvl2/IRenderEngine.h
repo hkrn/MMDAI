@@ -42,6 +42,7 @@
 namespace vpvl2
 {
 
+class IEffect;
 class IString;
 
 class VPVL2_API IRenderEngine
@@ -61,6 +62,7 @@ public:
     virtual void preparePostProcess() = 0;
     virtual void performPreProcess() = 0;
     virtual void performPostProcess() = 0;
+    virtual void setEffect(IEffect *effect, const IString *dir) = 0;
 };
 
 } /* namespace vpvl2 */
