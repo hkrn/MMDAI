@@ -40,6 +40,8 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/Scene.h"
 #include "vpvl2/IBone.h"
+#include "vpvl2/ICamera.h"
+#include "vpvl2/ILight.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMorph.h"
 #include "vpvl2/IRenderDelegate.h"
@@ -1294,7 +1296,7 @@ public:
         useSpheremap.setValue(false);
     }
     void updateModelGeometryParameters(const Scene *scene, const IModel *model) {
-        const Scene::ILight *light = scene->light();
+        const ILight *light = scene->light();
         const Vector3 &lightColor = light->color();
         if (model->type() == IModel::kAsset) {
             const Vector3 &ac = Vector3(0.7, 0.7, 0.7) - lightColor;
@@ -1312,7 +1314,7 @@ public:
         const Vector3 &lightDirection = light->direction();
         position.setLightValue(-lightDirection);
         direction.setLightValue(lightDirection.normalized());
-        const Scene::ICamera *camera = scene->camera();
+        const ICamera *camera = scene->camera();
         const Vector3 &cameraPosition = camera->modelViewTransform().getOrigin();
         position.setCameraValue(cameraPosition);
         direction.setCameraValue((cameraPosition - camera->position()).normalized());

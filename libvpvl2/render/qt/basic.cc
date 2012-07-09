@@ -616,7 +616,7 @@ public:
                 m *= m_cameraViewMatrix;
             if (flags & IRenderDelegate::kWorldMatrix) {
                 static const Vector3 plane(0.0f, 1.0f, 0.0f);
-                const Scene::ILight *light = m_scene->light();
+                const ILight *light = m_scene->light();
                 const Vector3 &direction = light->direction();
                 const Scalar dot = plane.dot(-direction);
                 QMatrix4x4 shadowMatrix;
@@ -837,7 +837,7 @@ public:
         for (int i = 0; i < 16; i++)
             m_cameraViewMatrix.data()[i] = matrix[i];
         m_cameraProjectionMatrix.setToIdentity();
-        Scene::ICamera *camera = m_scene->camera();
+        ICamera *camera = m_scene->camera();
         m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / float(size.height()), camera->znear(), camera->zfar());
     }
     void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection) {
@@ -1283,10 +1283,10 @@ public:
             m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
         else if (m_settings->value("enable.vss", false).toBool())
             m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
-        Scene::ICamera *camera = m_scene.camera();
+        ICamera *camera = m_scene.camera();
         camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
         camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
-        Scene::ILight *light = m_scene.light();
+        ILight *light = m_scene.light();
         light->setToonEnable(m_settings->value("enable.toon", true).toBool());
         light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
         if (m_fbo) {
@@ -1304,14 +1304,14 @@ public:
         }
     }
     void rotate(float x, float y) {
-        Scene::ICamera *camera = m_scene.camera();
+        ICamera *camera = m_scene.camera();
         Vector3 angle = camera->angle();
         angle.setX(angle.x() + x);
         angle.setY(angle.y() + y);
         camera->setAngle(angle);
     }
     void translate(float x, float y) {
-        Scene::ICamera *camera = m_scene.camera();
+        ICamera *camera = m_scene.camera();
         const Vector3 &diff = camera->modelViewTransform() * Vector3(x, y, 0);
         Vector3 position = camera->position() + diff;
         camera->setPosition(position + diff);
@@ -1323,7 +1323,7 @@ protected:
         glCullFace(GL_BACK);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
-        Scene::ILight *light = m_scene.light();
+        ILight *light = m_scene.light();
         QGLFramebufferObjectFormat format;
         format.setAttachment(QGLFramebufferObject::Depth);
 #if GL_ARB_texture_float
@@ -1385,7 +1385,7 @@ protected:
     }
     void wheelEvent(QWheelEvent *event) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
-        Scene::ICamera *camera = m_scene.camera();
+        ICamera *camera = m_scene.camera();
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             const qreal step = 1.0;
             camera->setFov(qMax(event->delta() > 0 ? camera->fov() - step : camera->fov() + step, 0.0));

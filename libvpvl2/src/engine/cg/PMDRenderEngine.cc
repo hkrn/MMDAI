@@ -222,7 +222,7 @@ void PMDRenderEngine::renderModel()
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
     const Scalar &modelOpacity = m_model->opacity();
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_scene->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
             hasShadowMap = depthTexturePtr ? true : false;

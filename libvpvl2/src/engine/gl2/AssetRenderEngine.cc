@@ -627,7 +627,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kCameraMatrix);
     program->setModelMatrix(matrix4x4);
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_scene->light();
     program->setLightColor(light->color());
     program->setLightDirection(light->direction());
     program->setOpacity(m_model->opacity());

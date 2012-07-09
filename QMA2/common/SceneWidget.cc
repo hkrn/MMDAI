@@ -160,8 +160,8 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_grid = new Grid();
     m_plane = new PlaneWorld();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
-    connect(this, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
-            this, SLOT(updatePlaneWorld(const vpvl2::Scene::ICamera*)));
+    connect(this, SIGNAL(cameraPerspectiveDidSet(const vpvl2::ICamera*)),
+            this, SLOT(updatePlaneWorld(const vpvl2::ICamera*)));
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
     setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
@@ -684,8 +684,8 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
     Scene *scene = m_loader->scene();
     if (!forceCameraUpdate) {
         /* 一旦カメラと照明のモーションを外してモデルのモーションのみ動かすようにする */
-        Scene::ICamera *camera = scene->camera();
-        Scene::ILight *light = scene->light();
+        ICamera *camera = scene->camera();
+        ILight *light = scene->light();
         IMotion *cameraMotion = camera->motion();
         IMotion *lightMotion = light->motion();
         camera->setMotion(0);
@@ -764,14 +764,14 @@ void SceneWidget::deleteSelectedModel()
 
 void SceneWidget::resetCamera()
 {
-    Scene::ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->scene()->camera();
     camera->resetDefault();
     emit cameraPerspectiveDidSet(camera);
 }
 
-void SceneWidget::setCameraPerspective(const QSharedPointer<Scene::ICamera> &camera)
+void SceneWidget::setCameraPerspective(const QSharedPointer<ICamera> &camera)
 {
-    Scene::ICamera *c1 = camera.data(), *c2 = m_loader->scene()->camera();
+    ICamera *c1 = camera.data(), *c2 = m_loader->scene()->camera();
     c2->copyFrom(c1);
     emit cameraPerspectiveDidSet(c2);
 }
@@ -809,7 +809,7 @@ void SceneWidget::selectBones(const QList<IBone *> &bones)
 
 void SceneWidget::rotateScene(const Vector3 &delta)
 {
-    Scene::ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->scene()->camera();
     camera->setAngle(camera->angle() + delta);
     emit cameraPerspectiveDidSet(camera);
 }
@@ -830,7 +830,7 @@ void SceneWidget::rotateModel(IModel *model, const Quaternion &delta)
 
 void SceneWidget::translateScene(const Vector3 &delta)
 {
-    Scene::ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->scene()->camera();
     camera->setPosition(camera->position() + camera->modelViewTransform().getBasis().inverse() * delta);
     emit cameraPerspectiveDidSet(camera);
 }
@@ -859,7 +859,7 @@ void SceneWidget::resetModelPosition()
     }
 }
 
-void SceneWidget::updatePlaneWorld(const Scene::ICamera *camera)
+void SceneWidget::updatePlaneWorld(const ICamera *camera)
 {
     Transform transform = camera->modelViewTransform().inverse();
     transform.setOrigin(kZeroV3);
@@ -919,7 +919,7 @@ void SceneWidget::setEditMode(SceneWidget::EditMode value)
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
-    Scene::ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->scene()->camera();
     Scalar fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
         Scalar fovy = camera->fov();
@@ -1166,7 +1166,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-            Scene::ILight *light = m_loader->scene()->light();
+            ILight *light = m_loader->scene()->light();
             const Vector3 &direction = light->direction();
             Quaternion rx(0.0f, diff.y() * radian(0.1f), 0.0f),
                     ry(0.0f, diff.x() * radian(0.1f), 0.0f);
@@ -1400,7 +1400,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
 {
     const Qt::GestureState state = event->state();
     QPinchGesture::ChangeFlags flags = event->changeFlags();
-    Scene::ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->scene()->camera();
     /* 回転ジェスチャー */
     if (m_enableRotateGesture && flags & QPinchGesture::RotationAngleChanged) {
         qreal value = event->rotationAngle() - event->lastRotationAngle();

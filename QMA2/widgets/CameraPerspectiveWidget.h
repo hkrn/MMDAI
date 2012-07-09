@@ -59,10 +59,10 @@ public:
     explicit CameraPerspectiveWidget(QWidget *parent = 0);
 
 public slots:
-    void setCameraPerspective(const vpvl2::Scene::ICamera *camera);
+    void setCameraPerspective(const vpvl2::ICamera *camera);
 
 signals:
-    void cameraPerspectiveDidChange(const QSharedPointer<vpvl2::Scene::ICamera> &camera);
+    void cameraPerspectiveDidChange(const QSharedPointer<vpvl2::ICamera> &camera);
     void cameraPerspectiveDidReset();
 
 private slots:
@@ -87,7 +87,7 @@ private slots:
     void setPositionFromBone(const QList<vpvl2::IBone *> &bones);
 
 private:
-    QSharedPointer<vpvl2::Scene::ICamera> createCamera() const;
+    QSharedPointer<vpvl2::ICamera> createCamera() const;
 
     vpvl2::Vector3 m_currentPosition;
     vpvl2::Vector3 m_currentAngle;

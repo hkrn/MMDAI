@@ -74,7 +74,7 @@ namespace
 
 using namespace vpvl2;
 
-class Light : public Scene::ILight {
+class Light : public ILight {
 public:
     Light() :
         m_motion(0),
@@ -135,7 +135,7 @@ private:
     bool m_hasFloatTexture;
     void *m_depthTexture;
 };
-class Camera : public Scene::ICamera {
+class Camera : public ICamera {
 public:
     Camera()
         : m_motion(0),
@@ -298,12 +298,12 @@ struct Scene::PrivateContext {
     Scalar preferredFPS;
 };
 
-Scene::ICamera *Scene::createCamera()
+ICamera *Scene::createCamera()
 {
     return new Camera();
 }
 
-Scene::ILight *Scene::createLight()
+ILight *Scene::createLight()
 {
     return new Light();
 }
@@ -587,12 +587,12 @@ IRenderEngine *Scene::findRenderEngine(IModel *model) const
     return engine ? *engine : 0;
 }
 
-Scene::ILight *Scene::light() const
+ILight *Scene::light() const
 {
     return &m_context->light;
 }
 
-Scene::ICamera *Scene::camera() const
+ICamera *Scene::camera() const
 {
     return &m_context->camera;
 }

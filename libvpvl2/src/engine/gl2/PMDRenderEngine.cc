@@ -650,7 +650,7 @@ void PMDRenderEngine::renderModel()
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_scene->light();
     void *texture = light->depthTexture();
     GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
@@ -748,7 +748,7 @@ void PMDRenderEngine::renderShadow()
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
-    Scene::ILight *light = m_scene->light();
+    ILight *light = m_scene->light();
     shadowProgram->setLightColor(light->color());
     shadowProgram->setLightDirection(light->direction());
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -836,7 +836,7 @@ void PMDRenderEngine::renderEdge()
         const size_t boneOffset = model->strideOffset(PMDModel::kBoneAttributesStride),
                 boneStride = model->strideSize(PMDModel::kVerticesStride);
         const vpvl::MaterialList &materials = model->materials();
-        const Scene::ICamera *camera = m_scene->camera();
+        const ICamera *camera = m_scene->camera();
         const Vector3 &cameraPosition = camera->position() + Vector3(0, 0, camera->distance());
         const int nmaterials = materials.count();
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);

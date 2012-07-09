@@ -146,7 +146,7 @@ public slots:
     void advanceMotion(const vpvl2::IKeyframe::TimeIndex &delta);
     void seekMotion(const vpvl2::IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate);
     void resetMotion();
-    void setCameraPerspective(const QSharedPointer<vpvl2::Scene::ICamera> &camera);
+    void setCameraPerspective(const QSharedPointer<vpvl2::ICamera> &camera);
     void setModelEdgeOffset(double value);
     void setModelOpacity(const vpvl2::Scalar &value);
     void setModelEdgeColor(const QColor &color);
@@ -167,7 +167,7 @@ signals:
     void newMotionDidSet(vpvl2::IModel *model);
     void modelDidMove(const vpvl2::Vector3 &lastPosition);
     void modelDidRotate(const vpvl2::Quaternion &lastRotation);
-    void cameraPerspectiveDidSet(const vpvl2::Scene::ICamera *camera);
+    void cameraPerspectiveDidSet(const vpvl2::ICamera *camera);
     void fpsDidUpdate(int fps);
     void sceneDidPlay();
     void sceneDidPause();
@@ -221,7 +221,7 @@ private slots:
     void setCamera();
     void resetCamera();
     void resetModelPosition();
-    void updatePlaneWorld(const vpvl2::Scene::ICamera *camera);
+    void updatePlaneWorld(const vpvl2::ICamera *camera);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void openErrorDialogIfFailed(bool loadingProjectFailed);
     void zoomIn() { zoom(true, Qt::NoModifier); }

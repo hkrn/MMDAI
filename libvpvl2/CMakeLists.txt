@@ -20,10 +20,13 @@ set(vpvl2_public_headers
     include/vpvl2/vpvl2.h
     include/vpvl2/IBone.h
     include/vpvl2/IBoneKeyframe.h
+    include/vpvl2/ICamera.h
     include/vpvl2/ICameraKeyframe.h
+    include/vpvl2/IEffect.h
     include/vpvl2/IEncoding.h
     include/vpvl2/IKeyframe.h
     include/vpvl2/ILabel.h
+    include/vpvl2/ILight.h
     include/vpvl2/ILightKeyframe.h
     include/vpvl2/IModel.h
     include/vpvl2/IMorph.h

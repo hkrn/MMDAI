@@ -196,7 +196,7 @@ void PMXRenderEngine::renderModel()
     const Array<pmx::Material *> &materials = m_model->materials();
     const size_t indexStride = m_model->strideSize(pmx::Model::kIndexStride);
     const Scalar &modelOpacity = m_model->opacity();
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_scene->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
             hasShadowMap = depthTexturePtr ? true : false;

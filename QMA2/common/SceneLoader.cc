@@ -152,7 +152,7 @@ public:
                 m *= m_cameraViewMatrix;
             if (flags & IRenderDelegate::kWorldMatrix) {
                 static const Vector3 plane(0.0f, 1.0f, 0.0f);
-                const Scene::ILight *light = m_scene->light();
+                const ILight *light = m_scene->light();
                 const Vector3 &direction = light->direction();
                 const Scalar dot = plane.dot(-direction);
                 QMatrix4x4 shadowMatrix;
@@ -408,7 +408,7 @@ public:
         for (int i = 0; i < 16; i++)
             m_cameraViewMatrix.data()[i] = matrix[i];
         m_cameraProjectionMatrix.setToIdentity();
-        Scene::ICamera *camera = m_scene->camera();
+        ICamera *camera = m_scene->camera();
         m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / size.height(), camera->znear(), camera->zfar());
     }
     void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection) {
@@ -920,7 +920,7 @@ void SceneLoader::deleteAsset(IModel *asset)
 void SceneLoader::deleteCameraMotion()
 {
     /* カメラモーションをシーンから解除及び削除し、最初の視点に戻しておく */
-    Scene::ICamera *camera = m_project->camera();
+    ICamera *camera = m_project->camera();
     camera->setMotion(0);
     camera->resetDefault();
     m_project->removeMotion(m_camera);
@@ -1377,8 +1377,8 @@ IMotion *SceneLoader::newCameraMotion() const
     QScopedPointer<IMotion> newCameraMotion(m_factory->createMotion());
     QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factory->createCameraKeyframe());
     QScopedPointer<ILightKeyframe> lightKeyframe(m_factory->createLightKeyframe());
-    Scene::ICamera *camera = m_project->camera();
-    Scene::ILight *light = m_project->light();
+    ICamera *camera = m_project->camera();
+    ILight *light = m_project->light();
     cameraKeyframe->setDefaultInterpolationParameter();
     cameraKeyframe->setPosition(camera->position());
     cameraKeyframe->setAngle(camera->angle());
@@ -1552,7 +1552,7 @@ void SceneLoader::renderZPlotToTexture()
 void SceneLoader::releaseDepthTexture()
 {
     m_depthBuffer->release();
-    Scene::ILight *light = m_project->light();
+    ILight *light = m_project->light();
     light->setDepthTexture(&m_depthBufferID);
     light->setDepthTextureSize(Vector3(m_depthBuffer->width(), m_depthBuffer->height(), 0));
     light->setSoftShadowEnable(isSoftShadowEnabled());

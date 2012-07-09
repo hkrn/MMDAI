@@ -1319,18 +1319,18 @@ void MainWindow::connectSceneLoader()
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     Scene *scene = m_sceneWidget->sceneLoader()->scene();
-    Scene::ICamera *camera = scene->camera();
+    ICamera *camera = scene->camera();
     cameraWidget->setCameraPerspective(camera);
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<vpvl2::Scene::ICamera>)),
-            m_sceneWidget, SLOT(setCameraPerspective(QSharedPointer<vpvl2::Scene::ICamera>)));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<vpvl2::ICamera>)),
+            m_sceneWidget, SLOT(setCameraPerspective(QSharedPointer<vpvl2::ICamera>)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(refreshScene()));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)),
-            cameraWidget, SLOT(setCameraPerspective(const vpvl2::Scene::ICamera*)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::ICamera*)),
+            cameraWidget, SLOT(setCameraPerspective(const vpvl2::ICamera*)));
     connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), cameraWidget, SLOT(setPositionFromModel(vpvl2::Vector3)));
     connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), cameraWidget, SLOT(setPositionFromBone(QList<vpvl2::IBone*>)));
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
-    Scene::ILight *light = scene->light();
+    ILight *light = scene->light();
     const Vector3 &direction = light->direction();
     lightWidget->setColor(light->color());
     lightWidget->setDirection(direction);
@@ -1377,7 +1377,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::Scene::ICamera*)), m_boneMotionModel, SLOT(setCamera(const vpvl2::Scene::ICamera*)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::ICamera*)), m_boneMotionModel, SLOT(setCamera(const vpvl2::ICamera*)));
     connect(m_sceneWidget, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));

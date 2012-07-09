@@ -34,69 +34,16 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_SCENE_H_
-#define VPVL2_SCENE_H_
-
-#include "vpvl2/Common.h"
-#include "vpvl2/IKeyframe.h"
+#ifndef VPVL2_IEFFECT_H_
+#define VPVL2_IEFFECT_H_
 
 namespace vpvl2
 {
 
-class ICamera;
-class IEncoding;
-class ILight;
-class IModel;
-class IMotion;
-class IRenderDelegate;
-class IRenderEngine;
-
-class VPVL2_API Scene
+class IEffect
 {
 public:
-    enum AccelerationType {
-        kSoftwareFallback,
-        kOpenCLAccelerationType1,
-        kVertexShaderAccelerationType1
-    };
-
-    static ICamera *createCamera();
-    static ILight *createLight();
-    static bool isAcceleratorSupported();
-    static const Scalar &defaultFPS();
-
-    Scene();
-    virtual ~Scene();
-
-    IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model) const;
-    void addModel(IModel *model, IRenderEngine *engine);
-    void addMotion(IMotion *motion);
-    void deleteModel(vpvl2::IModel *&model);
-    void removeMotion(IMotion *motion);
-    void advance(const IKeyframe::TimeIndex &delta);
-    void seek(const IKeyframe::TimeIndex &timeIndex);
-    void updateModel(IModel *model) const;
-    void updateModels();
-    void updateRenderEngines();
-    void updateCamera();
-    void setPreferredFPS(const Scalar &value);
-    bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
-    float maxFrameIndex() const;
-    const Array<IModel *> &models() const;
-    const Array<IMotion *> &motions() const;
-    const Array<IRenderEngine *> &renderEngines() const;
-    IModel *findModel(const IString *name) const;
-    IRenderEngine *findRenderEngine(IModel *model) const;
-    ILight *light() const;
-    ICamera *camera() const;
-    const Scalar &preferredFPS() const;
-
-    AccelerationType accelerationType() const;
-    void setAccelerationType(AccelerationType value);
-
-private:
-    struct PrivateContext;
-    PrivateContext *m_context;
+    virtual ~IEffect() {}
 };
 
 } /* namespace vpvl2 */

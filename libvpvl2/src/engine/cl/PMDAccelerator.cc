@@ -266,7 +266,7 @@ void PMDAccelerator::updateModel(pmd::Model *model, const Scene *scene)
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (lightDirection): %d", argumentIndex, err);
         return;
     }
-    const Scene::ICamera *camera = scene->camera();
+    const ICamera *camera = scene->camera();
     const Vector3 &cameraPosition = camera->position() + Vector3(0, 0, camera->distance());
     const Scalar &edgeScaleFactor = model->edgeScaleFactor(cameraPosition) * model->edgeWidth();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(edgeScaleFactor), &edgeScaleFactor);

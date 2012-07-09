@@ -284,7 +284,7 @@ void AssetRenderEngine::renderModel(Effect::ScriptOrderType type)
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
         return;
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_scene->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;

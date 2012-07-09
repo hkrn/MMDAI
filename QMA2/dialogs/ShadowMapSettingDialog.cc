@@ -46,7 +46,7 @@ using namespace vpvl2;
 ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *parent)
     : QDialog(parent)
 {
-    const Scene::ICamera *camera = loader->scene()->camera();
+    const ICamera *camera = loader->scene()->camera();
     const Scalar zfar = camera->zfar();
     m_sizeLabel = new QLabel();
     m_sizeComboBox = new QComboBox();

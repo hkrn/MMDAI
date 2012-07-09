@@ -1165,7 +1165,7 @@ void BoneMotionModel::selectBones(const QList<IBone *> &bones)
     }
 }
 
-void BoneMotionModel::setCamera(const Scene::ICamera *camera)
+void BoneMotionModel::setCamera(const ICamera *camera)
 {
     m_viewTransform = camera->modelViewTransform();
 }

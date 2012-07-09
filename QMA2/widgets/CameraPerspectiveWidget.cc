@@ -158,7 +158,7 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
     setLayout(mainLayout);
 }
 
-void CameraPerspectiveWidget::setCameraPerspective(const Scene::ICamera *camera)
+void CameraPerspectiveWidget::setCameraPerspective(const ICamera *camera)
 {
     disconnect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
     disconnect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
@@ -296,7 +296,7 @@ void CameraPerspectiveWidget::updateDistance(double value)
 
 void CameraPerspectiveWidget::initializeCamera()
 {
-    QScopedPointer<Scene::ICamera> camera(Scene::createCamera());
+    QScopedPointer<ICamera> camera(Scene::createCamera());
     m_currentAngle = camera->angle();
     m_currentPosition = camera->position();
     m_currentFovy = camera->fov();
@@ -328,9 +328,9 @@ void CameraPerspectiveWidget::setPositionFromBone(const QList<IBone *> &bones)
     }
 }
 
-QSharedPointer<Scene::ICamera> CameraPerspectiveWidget::createCamera() const
+QSharedPointer<ICamera> CameraPerspectiveWidget::createCamera() const
 {
-    QSharedPointer<Scene::ICamera> camera(Scene::createCamera());
+    QSharedPointer<ICamera> camera(Scene::createCamera());
     camera->setAngle(m_currentAngle);
     camera->setPosition(m_currentPosition);
     camera->setFov(m_currentFovy);

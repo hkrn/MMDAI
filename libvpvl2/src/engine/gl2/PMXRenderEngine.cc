@@ -719,7 +719,7 @@ void PMXRenderEngine::renderModel()
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_scene->light();
     void *texture = light->depthTexture();
     GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
@@ -800,7 +800,7 @@ void PMXRenderEngine::renderShadow()
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_scene->light();
     shadowProgram->setLightColor(light->color());
     shadowProgram->setLightDirection(light->direction());
     size_t offset = pmx::Model::strideOffset(pmx::Model::kVertexStride);
@@ -856,7 +856,7 @@ void PMXRenderEngine::renderEdge()
     size_t offset, size;
     Scalar edgeScaleFactor;
     if (isVertexShaderSkinning) {
-        const Scene::ICamera *camera = m_scene->camera();
+        const ICamera *camera = m_scene->camera();
         size_t boneIndexOffset = m_model->strideOffset(pmx::Model::kBoneIndexStride);
         size_t boneWeightOffset = m_model->strideOffset(pmx::Model::kBoneWeightStride);
         size_t boneStride = m_model->strideSize(pmx::Model::kVertexStride);

@@ -112,7 +112,7 @@ signals:
     void bonesDidSelect(const QList<vpvl2::IBone *> &bones);
 
 private slots:
-    void setCamera(const vpvl2::Scene::ICamera *camera);
+    void setCamera(const vpvl2::ICamera *camera);
 
 private:
     void translateInternal(const vpvl2::Vector3 &position, const vpvl2::Vector3 &delta, vpvl2::IBone *bone, int flags);
