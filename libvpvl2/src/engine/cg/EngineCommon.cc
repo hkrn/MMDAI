@@ -988,10 +988,12 @@ bool Effect::attachEffect(IEffect *e, const IString *dir)
     static const char kWorldViewSemantic[] = "WORLDVIEW";
     static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
     static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
-    CGeffect value = static_cast<CGeffect>(e->internalPointer());
-    CGparameter parameter = cgGetFirstEffectParameter(value);
     delete m_effect;
     m_effect = e;
+    if (!e)
+        return false;
+    CGeffect value = static_cast<CGeffect>(e->internalPointer());
+    CGparameter parameter = cgGetFirstEffectParameter(value);
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
         if (VPVL2_CG_STREQ_CONST(semantic, "VIEWPORTPIXELSIZE")) {
