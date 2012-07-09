@@ -141,6 +141,8 @@ IModel *AssetRenderEngine::model() const
 
 bool AssetRenderEngine::upload(const IString *dir)
 {
+    if (!m_model || !m_effect.isAttached())
+        return false;
     bool ret = true;
     vpvl::Asset *asset = m_model->ptr();
     const aiScene *scene = asset->getScene();

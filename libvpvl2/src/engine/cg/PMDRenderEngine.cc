@@ -86,6 +86,8 @@ IModel *PMDRenderEngine::model() const
 
 bool PMDRenderEngine::upload(const IString *dir)
 {
+    if (!m_model || !m_effect.isAttached())
+        return false;
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
     m_effect.useToon.setValue(true);
