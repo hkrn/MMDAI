@@ -606,8 +606,29 @@ public:
             getToonColorInternal(createPath(&s, name), value);
         }
     }
-    void getAnimatedTexture(const char * /* name */, float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
-        // not implemented
+    void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) {
+        GLuint textureID = *static_cast<GLuint *>(texture);
+        const QString &path = m_texture2paths[textureID];
+        QMovie movie;
+        movie.setFileName(path);
+        if (movie.isValid()) {
+            offset *= Scene::defaultFPS();
+            int frameCount = movie.frameCount();
+            offset = qBound(0, int(offset), frameCount);
+            int left = int(seek * speed * Scene::defaultFPS() + frameCount - offset);
+            int right = qMax(int(frameCount - offset), 1);
+            int frameIndex = left % right + int(offset);
+            movie.setCacheMode(QMovie::CacheAll);
+            if (movie.jumpToFrame(frameIndex)) {
+                QTransform transform;
+                transform.scale(1, -1);
+                const QImage &image = movie.currentImage();
+                const QImage &textureImage = QGLWidget::convertToGLFormat(image.transformed(transform));
+                glBindTexture(GL_TEXTURE_2D, textureID);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(), GL_RGBA, GL_UNSIGNED_BYTE, textureImage.constBits());
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
+        }
     }
     void getMatrix(float value[], const IModel *model, int flags) const {
         QMatrix4x4 m;
@@ -940,6 +961,7 @@ private:
             cache.width = image.width();
             cache.height = image.height();
             cache.id = textureID;
+            m_texture2paths.insert(textureID, path);
             setTextureID(cache, isToon, texture);
             addTextureCache(privateContext, path, cache);
             qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
@@ -962,6 +984,7 @@ private:
     QGLWidget *m_context;
     QSize m_viewport;
     QHash<const IModel *, QString> m_model2filename;
+    QHash<GLuint, QString> m_texture2paths;
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;

@@ -673,7 +673,8 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter, CGparameter 
             cgGLSetTextureParameter(sampler, textureID);
             cgSetSamplerState(sampler);
             Texture t(texture.width, texture.height, 0, parameter, sampler, textureID);
-            m_name2texture.insert(cgGetParameterName(parameter), t);
+            m_name2textures.insert(cgGetParameterName(parameter), t);
+            m_path2parameters.insert(name, parameter);
             m_textures.add(textureID);
         }
         delete s;
@@ -703,7 +704,13 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter, CGparameter 
 
 const RenderColorTargetSemantic::Texture *RenderColorTargetSemantic::findTexture(const char *name) const
 {
-    return m_name2texture.find(name);
+    return m_name2textures.find(name);
+}
+
+const CGparameter RenderColorTargetSemantic::findParameter(const char *name) const
+{
+    const CGparameter *ref = m_path2parameters.find(name);
+    return ref ? *ref : 0;
 }
 
 bool RenderColorTargetSemantic::isMimapEnabled(const CGparameter parameter) const
@@ -760,7 +767,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
         glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     Texture t(width, height, 0, parameter, sampler, texture);
-    m_name2texture.insert(cgGetParameterName(parameter), t);
+    m_name2textures.insert(cgGetParameterName(parameter), t);
 }
 
 void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
@@ -778,7 +785,7 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
     Texture t(width, height, depth, parameter, sampler, texture);
-    m_name2texture.insert(cgGetParameterName(parameter), t);
+    m_name2textures.insert(cgGetParameterName(parameter), t);
 }
 
 GLuint RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter, const CGparameter sampler)
@@ -947,7 +954,7 @@ void AnimatedTextureSemantic::addParameter(CGparameter parameter)
     }
 }
 
-void AnimatedTextureSemantic::update()
+void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColorTarget)
 {
     const int nparameters = m_parameters.count();
     for (int i = 0; i < nparameters; i++) {
@@ -957,10 +964,11 @@ void AnimatedTextureSemantic::update()
         const CGannotation speedAnnotation = cgGetNamedParameterAnnotation(parameter, "Speed");
         const CGannotation seekVariableAnnotation = cgGetNamedParameterAnnotation(parameter, "SeekVariable");
         const char *resourceName = cgGetStringAnnotationValue(resourceNameAnnotation);
-        float offset = Util::toFloat(offsetAnnotation);
-        float speed = Util::toFloat(speedAnnotation);
+        float offset = Util::toFloat(offsetAnnotation), speed = 1, seek;
         const char *seekVariable = cgGetStringAnnotationValue(seekVariableAnnotation);
-        float seek;
+        if (cgIsAnnotation(speedAnnotation)) {
+            speed = Util::toFloat(speedAnnotation);
+        }
         if (seekVariable) {
             CGeffect effect = cgGetParameterEffect(parameter);
             CGparameter seekParameter = cgGetNamedEffectParameter(effect, seekVariable);
@@ -969,10 +977,11 @@ void AnimatedTextureSemantic::update()
         else {
             m_delegate->getTime(seek, true);
         }
-        GLuint texture = 0;
-        m_delegate->getAnimatedTexture(resourceName, offset, speed, seek, &texture);
-        if (texture) {
-            cgGLSetupSampler(parameter, texture);
+        const CGparameter texParam = renderColorTarget.findParameter(resourceName);
+        const RenderColorTargetSemantic::Texture *t = renderColorTarget.findTexture(cgGetParameterName(texParam));
+        if (t) {
+            GLuint textureID = t->id;
+            m_delegate->uploadAnimatedTexture(offset, speed, seek, &textureID);
         }
     }
 }
@@ -1355,7 +1364,7 @@ void Effect::updateSceneParameters()
     time.update();
     elapsedTime.update();
     textureValue.update();
-    animatedTexture.update();
+    animatedTexture.update(renderColorTarget);
 }
 
 bool Effect::testTechnique(const CGtechnique technique,

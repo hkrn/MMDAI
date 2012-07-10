@@ -289,6 +289,7 @@ public:
 
     void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir);
     const Texture *findTexture(const char *name) const;
+    const CGparameter findParameter(const char *name) const;
 
 protected:
     bool isMimapEnabled(const CGparameter parameter) const;
@@ -305,7 +306,8 @@ private:
     IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
-    Hash<HashString, Texture> m_name2texture;
+    Hash<HashString, Texture> m_name2textures;
+    Hash<HashString, CGparameter> m_path2parameters;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderColorTargetSemantic)
 };
@@ -347,7 +349,7 @@ public:
     ~AnimatedTextureSemantic();
 
     void addParameter(CGparameter parameter);
-    void update();
+    void update(const RenderColorTargetSemantic &renderColorTarget);
 
 private:
     IRenderDelegate *m_delegate;
