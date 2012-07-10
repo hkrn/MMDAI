@@ -509,7 +509,6 @@ void ControlObjectSemantic::update(const IModel *self)
 void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter parameter)
 {
     float matrix4x4[16];
-    Transform::getIdentity().getOpenGLMatrix(matrix4x4);
     const CGtype type = cgGetParameterType(parameter);
     if (model) {
         const CGannotation itemAnnotation = cgGetNamedParameterAnnotation(parameter, "item");
@@ -590,6 +589,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 cgSetParameter4fv(parameter, model->position());
                 break;
             case CG_FLOAT4x4:
+                m_delegate->getMatrix(matrix4x4, model, IRenderDelegate::kWorldMatrix | IRenderDelegate::kCameraMatrix);
                 cgSetMatrixParameterfr(parameter, matrix4x4);
                 break;
             default:
@@ -611,6 +611,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
             cgSetParameter4f(parameter, 0, 0, 0, 1);
             break;
         case CG_FLOAT4x4:
+            Transform::getIdentity().getOpenGLMatrix(matrix4x4);
             cgSetMatrixParameterfr(parameter, matrix4x4);
             break;
         default:
