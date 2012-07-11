@@ -564,6 +564,7 @@ public:
     }
     ~Delegate()
     {
+        qDeleteAll(m_texture2movies);
     }
 
     void allocateContext(const IModel *model, void *&context) {
@@ -608,21 +609,27 @@ public:
     }
     void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) {
         GLuint textureID = *static_cast<GLuint *>(texture);
-        const QString &path = m_texture2paths[textureID];
-        QMovie movie;
-        movie.setFileName(path);
-        if (movie.isValid()) {
+        QMovie *movie = 0;
+        if (m_texture2movies.contains(textureID)) {
+            movie = m_texture2movies[textureID];
+        }
+        else {
+            const QString &path = m_texture2paths[textureID];
+            m_texture2movies.insert(textureID, new QMovie(path));
+            movie = m_texture2movies[textureID];
+            movie->setCacheMode(QMovie::CacheAll);
+        }
+        if (movie->isValid()) {
             offset *= Scene::defaultFPS();
-            int frameCount = movie.frameCount();
+            int frameCount = movie->frameCount();
             offset = qBound(0, int(offset), frameCount);
             int left = int(seek * speed * Scene::defaultFPS() + frameCount - offset);
             int right = qMax(int(frameCount - offset), 1);
             int frameIndex = left % right + int(offset);
-            movie.setCacheMode(QMovie::CacheAll);
-            if (movie.jumpToFrame(frameIndex)) {
+            if (movie->jumpToFrame(frameIndex)) {
                 QTransform transform;
                 transform.scale(1, -1);
-                const QImage &image = movie.currentImage();
+                const QImage &image = movie->currentImage();
                 const QImage &textureImage = QGLWidget::convertToGLFormat(image.transformed(transform));
                 glBindTexture(GL_TEXTURE_2D, textureID);
                 glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(), GL_RGBA, GL_UNSIGNED_BYTE, textureImage.constBits());
@@ -985,6 +992,7 @@ private:
     QSize m_viewport;
     QHash<const IModel *, QString> m_model2filename;
     QHash<GLuint, QString> m_texture2paths;
+    QHash<GLuint, QMovie *> m_texture2movies;
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;
