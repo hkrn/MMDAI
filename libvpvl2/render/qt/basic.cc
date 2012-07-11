@@ -1617,6 +1617,7 @@ private:
         model->joinWorld(&m_world);
         IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
         String s(info.absoluteDir().absolutePath());
+#ifdef VPVL2_ENABLE_NVIDIA_CG
         const QFuture<IEffect *> &future2 = QtConcurrent::run(this, &UI::createEffectAsync, &s, model);
         dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -1626,6 +1627,7 @@ private:
             qDebug() << cgGetLastListing(c);
         }
         engine->setEffect(effect, &s);
+#endif
         engine->upload(&s);
         m_scene.addModel(model, engine);
 #if 0
