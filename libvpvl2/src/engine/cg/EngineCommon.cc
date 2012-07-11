@@ -56,6 +56,7 @@ static const int kIndices[] = { 0, 1, 2, 3 };
 static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertices[0]);
 static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
 static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
+static const int kBaseRenderColorTargetIndex = GL_COLOR_ATTACHMENT1;
 
 }
 
@@ -637,11 +638,15 @@ RenderColorTargetSemantic::~RenderColorTargetSemantic()
     glDeleteTextures(ntextures, &m_textures[0]);
 }
 
-void RenderColorTargetSemantic::addParameter(CGparameter parameter, CGparameter sampler, const IString *dir)
+void RenderColorTargetSemantic::addParameter(CGparameter parameter,
+                                             CGparameter sampler,
+                                             const IString *dir,
+                                             bool enableResourceName,
+                                             bool enableAllTextureTypes)
 {
     const CGannotation resourceType = cgGetNamedParameterAnnotation(parameter, "ResourceType");
     int flags;
-    if (cgIsAnnotation(resourceType)) {
+    if (enableAllTextureTypes && cgIsAnnotation(resourceType)) {
         const char *typeName = cgGetStringAnnotationValue(resourceType);
         const CGtype samplerType = cgGetParameterType(sampler);
         if (VPVL2_CG_STREQ_CONST(typeName, "CUBE") && samplerType == CG_SAMPLERCUBE) {
@@ -661,18 +666,18 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter, CGparameter 
         flags = IRenderDelegate::kTexture2D;
     }
     const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
-    IRenderDelegate::Texture texture;
     GLuint textureID = 0;
-    texture.object = &textureID;
-    if (cgIsAnnotation(resourceName)) {
+    if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
         IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t*>(name));
         if (isMimapEnabled(parameter))
             flags |= IRenderDelegate::kGenerateTextureMipmap;
+        IRenderDelegate::Texture texture;
+        texture.async = false;
+        texture.object = &textureID;
         if (m_delegate->uploadTexture(s, dir, flags, texture, 0)) {
             textureID = *static_cast<const GLuint *>(texture.object);
-            cgGLSetTextureParameter(sampler, textureID);
-            cgSetSamplerState(sampler);
+            cgGLSetupSampler(sampler, textureID);
             Texture t(texture.width, texture.height, 0, parameter, sampler, textureID);
             m_name2textures.insert(cgGetParameterName(parameter), t);
             m_path2parameters.insert(name, parameter);
@@ -925,7 +930,7 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 
 void OffscreenRenderTargetSemantic::addParameter(CGparameter parameter, CGparameter sampler, const IString *dir)
 {
-    RenderColorTargetSemantic::addParameter(parameter, sampler, dir);
+    RenderColorTargetSemantic::addParameter(parameter, sampler, dir, false, false);
     /*
     clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
     clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
@@ -1030,7 +1035,6 @@ void TextureValueSemantic::update()
 }
 
 /* Effect */
-
 
 Effect::Effect(const Scene *scene, IRenderDelegate *delegate)
     : world(delegate, IRenderDelegate::kWorldMatrix),
@@ -1171,7 +1175,7 @@ bool Effect::attachEffect(IEffect *e, const IString *dir)
             textureValue.addParameter(parameter);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERDEPTHSTENCILTARGET")) {
-            renderDepthStencilTarget.addParameter(parameter, 0, dir);
+            renderDepthStencilTarget.addParameter(parameter, 0, dir, false, false);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, "STANDARDSGLOBAL")) {
             setStandardsGlobal(parameter);
@@ -1473,7 +1477,7 @@ void Effect::setFrameBufferTexture(const ScriptState &state) {
     GLuint texture = state.texture;
     const int index = state.type - ScriptState::kRenderColorTarget0;
     if (texture > 0) {
-        const int target = GL_COLOR_ATTACHMENT0 + index;
+        const int target = kBaseRenderColorTargetIndex + index;
         glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
         if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
             m_renderColorTargets.push_back(target);
@@ -1491,7 +1495,7 @@ void Effect::setFrameBufferTexture(const ScriptState &state) {
     else {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         for (int i = 0; i < 4; i++) {
-            const int target = GL_COLOR_ATTACHMENT0 + i;
+            const int target = kBaseRenderColorTargetIndex + i;
             glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, 0, 0);
             m_renderColorTargets.remove(target);
         }
@@ -1669,7 +1673,7 @@ void Effect::setTextureParameters(CGparameter parameter, const IString *dir)
                     break;
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERCOLORTARGET")) {
-                    renderColorTarget.addParameter(textureParameter, parameter, dir);
+                    renderColorTarget.addParameter(textureParameter, parameter, dir, false, false);
                     break;
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, "OFFSCREENRENDERTARGET")) {
@@ -1677,7 +1681,7 @@ void Effect::setTextureParameters(CGparameter parameter, const IString *dir)
                     break;
                 }
                 else {
-                    renderColorTarget.addParameter(textureParameter, parameter, dir);
+                    renderColorTarget.addParameter(textureParameter, parameter, dir, true, true);
                 }
             }
             sa = cgGetNextStateAssignment(sa);

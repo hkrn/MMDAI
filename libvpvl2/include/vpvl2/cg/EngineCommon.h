@@ -287,7 +287,11 @@ public:
     RenderColorTargetSemantic(IRenderDelegate *delegate);
     ~RenderColorTargetSemantic();
 
-    void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir);
+    void addParameter(CGparameter parameter,
+                      CGparameter sampler,
+                      const IString *dir,
+                      bool enableResourceName,
+                      bool enableAllTextureTypes);
     const Texture *findTexture(const char *name) const;
     const CGparameter findParameter(const char *name) const;
 
