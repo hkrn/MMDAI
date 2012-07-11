@@ -713,7 +713,7 @@ const RenderColorTargetSemantic::Texture *RenderColorTargetSemantic::findTexture
     return m_name2textures.find(name);
 }
 
-const CGparameter RenderColorTargetSemantic::findParameter(const char *name) const
+CGparameter RenderColorTargetSemantic::findParameter(const char *name) const
 {
     const CGparameter *ref = m_path2parameters.find(name);
     return ref ? *ref : 0;

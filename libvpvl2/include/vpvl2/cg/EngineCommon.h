@@ -293,7 +293,7 @@ public:
                       bool enableResourceName,
                       bool enableAllTextureTypes);
     const Texture *findTexture(const char *name) const;
-    const CGparameter findParameter(const char *name) const;
+    CGparameter findParameter(const char *name) const;
 
 protected:
     bool isMimapEnabled(const CGparameter parameter) const;
