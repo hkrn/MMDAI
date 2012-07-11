@@ -295,13 +295,14 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
   include(${QT_USE_FILE})
   target_link_libraries(vpvl2 ${QT_LIBRARIES})
-  if(VPVL2_LINK_QT_WITH_OPENCV)
-    find_package(OpenCV)
-    set(vpvl2_qt_sources render/qt/extended.cc)
-    add_executable(vpvl2_qt ${vpvl2_qt_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
-    target_link_libraries(vpvl2_qt ${OpenCV_LIBS})
-  elseif(VPVL2_BUILD_QT_RENDERER)
-    set(vpvl2_qt_sources render/qt/basic.cc)
+  if(VPVL2_BUILD_QT_RENDERER)
+    set(vpvl2_qt_sources render/qt/main.cc
+                         render/qt/DDSTexture.cc
+                         render/qt/Delegate.cc
+                         render/qt/Encoding.cc
+                         render/qt/String0.cc
+                         render/qt/UI.cc)
+    include_directories(render/qt)
     add_executable(vpvl2_qt ${vpvl2_qt_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
     target_link_libraries(vpvl2_qt vpvl2 ${QT_LIBRARIES})
   endif()
