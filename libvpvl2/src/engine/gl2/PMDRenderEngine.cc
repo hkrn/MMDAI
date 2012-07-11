@@ -68,7 +68,6 @@ public:
     }
 
     void setBoneIndicesAndWeights(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneIndicesAndWeightsAttributeLocation);
         glVertexAttribPointer(m_boneIndicesAndWeightsAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setBoneMatrices(const Scalar *value, size_t size) {
@@ -80,6 +79,7 @@ protected:
         ZPlotProgram::getLocations();
         m_boneIndicesAndWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneIndicesAndWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        enableAttribute(m_boneIndicesAndWeightsAttributeLocation);
     }
 
 private:
@@ -112,14 +112,12 @@ public:
     }
 
     void setEdgeOffset(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_edgeOffsetAttributeLocation);
         glVertexAttribPointer(m_edgeOffsetAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setColor(const Vector3 &value) {
         glUniform4fv(m_colorUniformLocation, 1, value);
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_normalAttributeLocation);
         glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setOpacity(const Scalar &value) {
@@ -129,7 +127,6 @@ public:
         glUniform1f(m_edgeWidthUniformLocation, value);
     }
     void setBoneIndicesAndWeights(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneIndicesAndWeightsAttributeLocation);
         glVertexAttribPointer(m_boneIndicesAndWeightsAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setBoneMatrices(const Scalar *value, size_t size) {
@@ -146,6 +143,9 @@ protected:
         m_edgeWidthUniformLocation = glGetUniformLocation(m_program, "edgeWidth");
         m_boneIndicesAndWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneIndicesAndWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        enableAttribute(m_edgeOffsetAttributeLocation);
+        enableAttribute(m_normalAttributeLocation);
+        enableAttribute(m_boneIndicesAndWeightsAttributeLocation);
     }
 
 private:
@@ -173,7 +173,6 @@ public:
     }
 
     void setBoneIndicesAndWeights(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneIndicesAndWeightsAttributeLocation);
         glVertexAttribPointer(m_boneIndicesAndWeightsAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setBoneMatrices(const Scalar *value, size_t size) {
@@ -185,6 +184,7 @@ protected:
         ObjectProgram::getLocations();
         m_boneIndicesAndWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneIndicesAndWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        enableAttribute(m_boneIndicesAndWeightsAttributeLocation);
     }
 
 private:
@@ -274,7 +274,6 @@ public:
         glUniform1i(m_toonTextureUniformLocation, 1);
     }
     void setBoneIndicesAndWeights(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_boneIndicesAndWeightsAttributeLocation);
         glVertexAttribPointer(m_boneIndicesAndWeightsAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setBoneMatrices(const Scalar *value, size_t size) {
@@ -298,6 +297,7 @@ protected:
         m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
         m_boneIndicesAndWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneIndicesAndWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        enableAttribute(m_boneIndicesAndWeightsAttributeLocation);
     }
 
 private:

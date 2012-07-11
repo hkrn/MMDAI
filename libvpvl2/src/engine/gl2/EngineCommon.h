@@ -65,6 +65,7 @@ namespace gl2
 
 const GLsizei kShadowMappingTextureWidth = 1024;
 const GLsizei kShadowMappingTextureHeight = 1024;
+const GLuint kAddressNotFound = GLuint(-1);
 
 class BaseShaderProgram
         #ifdef VPVL2_LINK_QT
@@ -169,14 +170,18 @@ public:
         glUniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
     }
     void setPosition(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_positionAttributeLocation);
         glVertexAttribPointer(m_positionAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void enableAttribute(GLuint value) {
+        if (value != kAddressNotFound)
+            glEnableVertexAttribArray(value);
     }
 
 protected:
     virtual void getLocations() {
         m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
         m_positionAttributeLocation = glGetAttribLocation(m_program, "inPosition");
+        enableAttribute(m_positionAttributeLocation);
     }
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
         va_list ap;
@@ -240,7 +245,6 @@ public:
         glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_normalAttributeLocation);
         glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setNormalMatrix(const float value[16]) {
@@ -252,7 +256,6 @@ public:
         glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, m);
     }
     void setTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glEnableVertexAttribArray(m_texCoordAttributeLocation);
         glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setMainTexture(GLuint value) {
@@ -303,6 +306,8 @@ protected:
         m_depthTextureSizeUniformLocation = glGetUniformLocation(m_program, "depthTextureSize");
         m_enableSoftShadowUniformLocation = glGetUniformLocation(m_program, "useSoftShadow");
         m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
+        enableAttribute(m_normalAttributeLocation);
+        enableAttribute(m_texCoordAttributeLocation);
     }
 
 private:
