@@ -212,8 +212,8 @@ if(VPVL2_OPENGL_RENDERER)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg vpvl2_gl_sources)
     list(APPEND vpvl2_internal_headers
          include/vpvl2/cg/AssetRenderEngine.h
-         include/vpvl2/cg/EngineCommon.h
          include/vpvl2/cg/Effect.h
+         include/vpvl2/cg/EffectEngine.h
          include/vpvl2/cg/PMDRenderEngine.h
          include/vpvl2/cg/PMXRenderEngine.h
     )

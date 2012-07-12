@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "vpvl2/cg/EngineCommon.h"
+#include "vpvl2/cg/EffectEngine.h"
 
 #include "vpvl2/Common.h"
 #include "vpvl2/Scene.h"

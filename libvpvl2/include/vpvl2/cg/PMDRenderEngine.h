@@ -38,7 +38,7 @@
 #define VPVL2_CG2_PMDRENDERENGINE_H_
 
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/cg/EngineCommon.h"
+#include "vpvl2/cg/EffectEngine.h"
 #include "vpvl2/pmd/Model.h"
 
 namespace vpvl2

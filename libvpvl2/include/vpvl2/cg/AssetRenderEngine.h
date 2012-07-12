@@ -40,7 +40,7 @@
 #include "vpvl2/Common.h"
 #ifdef VPVL2_LINK_ASSIMP
 
-#include "vpvl2/cg/EngineCommon.h"
+#include "vpvl2/cg/EffectEngine.h"
 
 #include <assimp.h>
 #include <aiScene.h>
