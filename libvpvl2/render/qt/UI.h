@@ -74,6 +74,7 @@ public:
     void translate(float x, float y);
 
 protected:
+    void closeEvent(QCloseEvent *event);
     void initializeGL();
     void timerEvent(QTimerEvent *event);
     void mousePressEvent(QMouseEvent *event);

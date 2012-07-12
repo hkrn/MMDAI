@@ -425,6 +425,14 @@ void UI::translate(float x, float y) {
     camera->setPosition(position + diff);
 }
 
+void UI::closeEvent(QCloseEvent *event)
+{
+    QThreadPool *pool = QThreadPool::globalInstance();
+    if (pool->activeThreadCount() > 0)
+        pool->waitForDone();
+    event->accept();
+}
+
 void UI::initializeGL() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
