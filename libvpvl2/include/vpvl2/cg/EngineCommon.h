@@ -38,30 +38,21 @@
 #define VPVL2_CG_ENGINECOMMON_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/Scene.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/ICamera.h"
-#include "vpvl2/IEffect.h"
-#include "vpvl2/ILight.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/IString.h"
-
-#include <string>
-#include <sstream>
+#include "vpvl2/cg/Effect.h"
 
 #ifdef VPVL2_LINK_QT
-#include <QtOpenGL/QtOpenGL>
 #include <QtOpenGL/QGLFunctions>
 #endif /* VPVL_LINK_QT */
 
-#include <Cg/cg.h>
-#include <Cg/cgGL.h>
-
 namespace vpvl2
 {
+class IModel;
+class IRenderDelegate;
+class IString;
+class Scene;
+
 namespace cg
 {
 
@@ -377,7 +368,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(TextureValueSemantic)
 };
 
-class Effect
+class EffectEngine
         #ifdef VPVL2_LINK_QT
         : protected QGLFunctions
         #endif
@@ -400,8 +391,8 @@ public:
         kPostProcess
     };
 
-    Effect(const Scene *scene, IRenderDelegate *delegate);
-    ~Effect();
+    EffectEngine(const Scene *scene, IRenderDelegate *delegate);
+    ~EffectEngine();
 
     bool attachEffect(IEffect *e, const IString *dir);
     CGtechnique findTechnique(const char *pass,
@@ -571,7 +562,7 @@ private:
 #ifndef __APPLE__
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
 #endif /* __APPLE__ */
-    IEffect *m_effect;
+    Effect *m_effect;
     IRenderDelegate *m_delegate;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
@@ -586,7 +577,7 @@ private:
     GLuint m_verticesBuffer;
     GLuint m_indicesBuffer;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(EffectEngine)
 };
 
 } /* namespace gl2 */

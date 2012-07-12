@@ -38,8 +38,9 @@
 
 #ifdef VPVL2_LINK_ASSIMP
 
-#include "vpvl/Bone.h"
+#include "vpvl2/vpvl2.h"
 #include "vpvl2/asset/Model.h"
+#include "vpvl/Bone.h"
 
 namespace vpvl2
 {
@@ -209,7 +210,7 @@ void AssetRenderEngine::update()
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
@@ -241,7 +242,7 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
@@ -253,12 +254,12 @@ void AssetRenderEngine::renderZPlot()
 
 bool AssetRenderEngine::hasPreProcess() const
 {
-    return m_effect.hasTechniques(Effect::kPreProcess);
+    return m_effect.hasTechniques(EffectEngine::kPreProcess);
 }
 
 bool AssetRenderEngine::hasPostProcess() const
 {
-    return m_effect.hasTechniques(Effect::kPostProcess);
+    return m_effect.hasTechniques(EffectEngine::kPostProcess);
 }
 
 void AssetRenderEngine::preparePostProcess()
@@ -268,12 +269,12 @@ void AssetRenderEngine::preparePostProcess()
 
 void AssetRenderEngine::performPreProcess()
 {
-    m_effect.executeProcess(m_model, Effect::kPreProcess);
+    m_effect.executeProcess(m_model, EffectEngine::kPreProcess);
 }
 
 void AssetRenderEngine::performPostProcess()
 {
-    m_effect.executeProcess(m_model, Effect::kPostProcess);
+    m_effect.executeProcess(m_model, EffectEngine::kPostProcess);
 }
 
 void AssetRenderEngine::setEffect(IEffect *effect, const IString *dir)

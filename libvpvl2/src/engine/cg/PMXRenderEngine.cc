@@ -181,7 +181,7 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -256,7 +256,7 @@ void PMXRenderEngine::renderModel()
 
 void PMXRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
@@ -288,7 +288,7 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderShadow()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
     m_effect.setZeroGeometryParameters(m_model);
@@ -317,7 +317,7 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
@@ -348,12 +348,12 @@ void PMXRenderEngine::renderZPlot()
 
 bool PMXRenderEngine::hasPreProcess() const
 {
-    return m_effect.hasTechniques(Effect::kPreProcess);
+    return m_effect.hasTechniques(EffectEngine::kPreProcess);
 }
 
 bool PMXRenderEngine::hasPostProcess() const
 {
-    return m_effect.hasTechniques(Effect::kPostProcess);
+    return m_effect.hasTechniques(EffectEngine::kPostProcess);
 }
 
 void PMXRenderEngine::preparePostProcess()
@@ -363,12 +363,12 @@ void PMXRenderEngine::preparePostProcess()
 
 void PMXRenderEngine::performPreProcess()
 {
-    m_effect.executeProcess(m_model, Effect::kPreProcess);
+    m_effect.executeProcess(m_model, EffectEngine::kPreProcess);
 }
 
 void PMXRenderEngine::performPostProcess()
 {
-    m_effect.executeProcess(m_model, Effect::kPostProcess);
+    m_effect.executeProcess(m_model, EffectEngine::kPostProcess);
 }
 
 void PMXRenderEngine::setEffect(IEffect *effect, const IString *dir)

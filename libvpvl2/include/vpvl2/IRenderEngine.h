@@ -42,6 +42,7 @@
 namespace vpvl2
 {
 
+class IModel;
 class IEffect;
 class IString;
 

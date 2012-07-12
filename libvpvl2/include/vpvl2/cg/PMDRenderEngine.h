@@ -37,6 +37,7 @@
 #ifndef VPVL2_CG2_PMDRENDERENGINE_H_
 #define VPVL2_CG2_PMDRENDERENGINE_H_
 
+#include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/EngineCommon.h"
 #include "vpvl2/pmd/Model.h"
 
@@ -113,7 +114,7 @@ private:
     cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_model;
     CGcontext m_context;
-    Effect m_effect;
+    EffectEngine m_effect;
     MaterialContext *m_materialContexts;
     pmd::Model::SkinningMeshes m_mesh;
     Color m_toonTextureColors[vpvl::PMDModel::kCustomTextureMax];

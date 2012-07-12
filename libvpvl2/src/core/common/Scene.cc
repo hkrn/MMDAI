@@ -49,6 +49,7 @@
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/AssetRenderEngine.h"
+#include "vpvl2/cg/Effect.h"
 #include "vpvl2/cg/PMDRenderEngine.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
 #else
@@ -213,27 +214,6 @@ private:
     Scalar m_znear;
     Scalar m_zfar;
 };
-
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-class Effect : public IEffect {
-public:
-    Effect(CGcontext context, CGeffect effect)
-        : m_context(context),
-          m_effect(effect)
-    {
-    }
-    ~Effect() {
-        cgDestroyEffect(m_effect);
-    }
-
-    void *internalContext() const { return m_context; }
-    void *internalPointer() const { return m_effect; }
-
-private:
-    const CGcontext m_context;
-    const CGeffect m_effect;
-};
-#endif
 
 }
 
@@ -432,7 +412,7 @@ IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDel
     if (source)
         effect = cgCreateEffect(m_context->effectContext, reinterpret_cast<const char *>(source->toByteArray()), 0);
     delete source;
-    return new Effect(m_context->effectContext, cgIsEffect(effect) ? effect : 0);
+    return new cg::Effect(m_context->effectContext, cgIsEffect(effect) ? effect : 0);
 #else
     return 0;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */

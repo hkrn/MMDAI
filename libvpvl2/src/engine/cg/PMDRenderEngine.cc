@@ -206,7 +206,7 @@ void PMDRenderEngine::update()
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     PMDModel *model = m_model->ptr();
@@ -307,7 +307,7 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
@@ -337,7 +337,7 @@ void PMDRenderEngine::renderEdge()
 
 void PMDRenderEngine::renderShadow()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
     m_effect.setZeroGeometryParameters(m_model);
@@ -367,7 +367,7 @@ void PMDRenderEngine::renderShadow()
 
 void PMDRenderEngine::renderZPlot()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != Effect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
         return;
     m_effect.setModelMatrixParameters(m_model);
     m_effect.setZeroGeometryParameters(m_model);
@@ -399,12 +399,12 @@ void PMDRenderEngine::renderZPlot()
 
 bool PMDRenderEngine::hasPreProcess() const
 {
-    return m_effect.hasTechniques(Effect::kPreProcess);
+    return m_effect.hasTechniques(EffectEngine::kPreProcess);
 }
 
 bool PMDRenderEngine::hasPostProcess() const
 {
-    return m_effect.hasTechniques(Effect::kPostProcess);
+    return m_effect.hasTechniques(EffectEngine::kPostProcess);
 }
 
 void PMDRenderEngine::preparePostProcess()
@@ -414,12 +414,12 @@ void PMDRenderEngine::preparePostProcess()
 
 void PMDRenderEngine::performPreProcess()
 {
-    m_effect.executeProcess(m_model, Effect::kPreProcess);
+    m_effect.executeProcess(m_model, EffectEngine::kPreProcess);
 }
 
 void PMDRenderEngine::performPostProcess()
 {
-    m_effect.executeProcess(m_model, Effect::kPostProcess);
+    m_effect.executeProcess(m_model, EffectEngine::kPostProcess);
 }
 
 void PMDRenderEngine::setEffect(IEffect *effect, const IString *dir)

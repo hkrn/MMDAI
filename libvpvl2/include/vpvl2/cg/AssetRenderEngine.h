@@ -132,7 +132,7 @@ private:
     const Scene *m_scene;
     asset::Model *m_model;
     CGcontext m_context;
-    Effect m_effect;
+    EffectEngine m_effect;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, AssetVertices> m_vertices;
     std::map<const struct aiMesh *, AssetIndices> m_indices;

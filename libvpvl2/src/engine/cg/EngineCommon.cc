@@ -36,6 +36,25 @@
 
 #include "vpvl2/cg/EngineCommon.h"
 
+#include "vpvl2/Common.h"
+#include "vpvl2/Scene.h"
+#include "vpvl2/IBone.h"
+#include "vpvl2/ICamera.h"
+#include "vpvl2/IEffect.h"
+#include "vpvl2/ILight.h"
+#include "vpvl2/IModel.h"
+#include "vpvl2/IMorph.h"
+#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderEngine.h"
+#include "vpvl2/IString.h"
+
+#include <string>
+#include <sstream>
+
+#ifdef VPVL2_LINK_QT
+#include <QtOpenGL/QtOpenGL>
+#endif /* VPVL_LINK_QT */
+
 #define VPVL2_CG_STREQ_CONST(s, c) (0 == strncmp((s), (c), (sizeof(c)) - 1))
 #define VPVL2_CG_GET_SUFFIX(s, c) (s + (sizeof(c) - 1))
 
@@ -1036,7 +1055,7 @@ void TextureValueSemantic::update()
 
 /* Effect */
 
-Effect::Effect(const Scene *scene, IRenderDelegate *delegate)
+EffectEngine::EffectEngine(const Scene *scene, IRenderDelegate *delegate)
     : world(delegate, IRenderDelegate::kWorldMatrix),
       view(delegate, IRenderDelegate::kViewMatrix),
       projection(delegate, IRenderDelegate::kProjectionMatrix),
@@ -1069,7 +1088,7 @@ Effect::Effect(const Scene *scene, IRenderDelegate *delegate)
 #endif /* VPVL2_LINK_QT */
 }
 
-Effect::~Effect()
+EffectEngine::~EffectEngine()
 {
     const int nTechniqueFrameBuffers = m_techniqueFrameBuffers.size();
     for (int i = 0; i < nTechniqueFrameBuffers; i++) {
@@ -1083,7 +1102,7 @@ Effect::~Effect()
     m_delegate = 0;
 }
 
-bool Effect::attachEffect(IEffect *e, const IString *dir)
+bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
 {
     static const char kWorldSemantic[] = "WORLD";
     static const char kViewSemantic[] = "VIEW";
@@ -1092,8 +1111,8 @@ bool Effect::attachEffect(IEffect *e, const IString *dir)
     static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
     static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
     delete m_effect;
-    m_effect = e;
-    CGeffect value = static_cast<CGeffect>(e->internalPointer());
+    m_effect = static_cast<Effect *>(effect);
+    CGeffect value = static_cast<CGeffect>(effect->internalPointer());
     if (!cgIsEffect(value))
         return false;
     CGparameter parameter = cgGetFirstEffectParameter(value);
@@ -1218,6 +1237,8 @@ bool Effect::attachEffect(IEffect *e, const IString *dir)
                 setTextureParameters(parameter, dir);
             }
         }
+        if (Effect::isInteractiveParameter(parameter))
+            m_effect->addInteractiveParameter(parameter);
         parameter = cgGetNextParameter(parameter);
     }
     CGtechnique technique = cgGetFirstTechnique(value);
@@ -1229,7 +1250,7 @@ bool Effect::attachEffect(IEffect *e, const IString *dir)
     return true;
 }
 
-CGtechnique Effect::findTechnique(const char *pass,
+CGtechnique EffectEngine::findTechnique(const char *pass,
                                   int offset,
                                   int nmaterials,
                                   bool hasTexture,
@@ -1246,18 +1267,18 @@ CGtechnique Effect::findTechnique(const char *pass,
     return technique;
 }
 
-void Effect::executeScriptExternal()
+void EffectEngine::executeScriptExternal()
 {
     if (m_scriptOrder == kPostProcess)
         executeScript(&m_externalScript, 0, 0, 0, 0);
 }
 
-bool Effect::hasTechniques(ScriptOrderType order) const
+bool EffectEngine::hasTechniques(ScriptOrderType order) const
 {
     return m_scriptOrder == order ? m_techniqueScripts.size() > 0 : false;
 }
 
-void Effect::executeProcess(const IModel *model, ScriptOrderType order)
+void EffectEngine::executeProcess(const IModel *model, ScriptOrderType order)
 {
     if (!model || !isAttached() || m_scriptOrder != order)
         return;
@@ -1276,7 +1297,7 @@ void Effect::executeProcess(const IModel *model, ScriptOrderType order)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Effect::executeTechniquePasses(const CGtechnique technique,
+void EffectEngine::executeTechniquePasses(const CGtechnique technique,
                                     const GLenum mode,
                                     const GLsizei count,
                                     const GLenum type,
@@ -1297,7 +1318,7 @@ void Effect::executeTechniquePasses(const CGtechnique technique,
     }
 }
 
-void Effect::setModelMatrixParameters(const IModel *model,
+void EffectEngine::setModelMatrixParameters(const IModel *model,
                                       int extraCameraFlags,
                                       int extraLightFlags)
 {
@@ -1309,7 +1330,7 @@ void Effect::setModelMatrixParameters(const IModel *model,
     worldViewProjection.setMatrices(model, extraCameraFlags, extraLightFlags);
 }
 
-void Effect::setZeroGeometryParameters(const IModel *model)
+void EffectEngine::setZeroGeometryParameters(const IModel *model)
 {
     edgeColor.setGeometryColor(model->edgeColor());
     toonColor.setGeometryColor(kZeroC);
@@ -1325,7 +1346,7 @@ void Effect::setZeroGeometryParameters(const IModel *model)
     useSpheremap.setValue(false);
 }
 
-void Effect::updateModelGeometryParameters(const Scene *scene, const IModel *model)
+void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IModel *model)
 {
     const ILight *light = scene->light();
     const Vector3 &lightColor = light->color();
@@ -1352,7 +1373,7 @@ void Effect::updateModelGeometryParameters(const Scene *scene, const IModel *mod
     controlObject.update(model);
 }
 
-void Effect::updateSceneParameters()
+void EffectEngine::updateSceneParameters()
 {
     Vector3 viewport;
     m_delegate->getViewport(viewport);
@@ -1372,7 +1393,7 @@ void Effect::updateSceneParameters()
     animatedTexture.update(renderColorTarget);
 }
 
-bool Effect::testTechnique(const CGtechnique technique,
+bool EffectEngine::testTechnique(const CGtechnique technique,
                            const char *pass,
                            int offset,
                            int nmaterials,
@@ -1396,7 +1417,7 @@ bool Effect::testTechnique(const CGtechnique technique,
     return ok == 1;
 }
 
-bool Effect::containsSubset(const CGannotation annotation, int subset, int nmaterials)
+bool EffectEngine::containsSubset(const CGannotation annotation, int subset, int nmaterials)
 {
     if (!cgIsAnnotation(annotation))
         return true;
@@ -1421,7 +1442,7 @@ bool Effect::containsSubset(const CGannotation annotation, int subset, int nmate
     return false;
 }
 
-void Effect::setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
+void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
                                                    const std::string &value,
                                                    GLuint frameBufferObject,
                                                    ScriptState::Type type,
@@ -1437,7 +1458,7 @@ void Effect::setStateFromRenderColorTargetSemantic(const RenderColorTargetSemant
     }
 }
 
-void Effect::setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
+void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
                                                           const std::string &value,
                                                           GLuint frameBufferObject,
                                                           ScriptState::Type type,
@@ -1452,7 +1473,7 @@ void Effect::setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStenc
     }
 }
 
-void Effect::setStateFromParameter(const CGeffect effect,
+void EffectEngine::setStateFromParameter(const CGeffect effect,
                                    const std::string &value,
                                    CGtype testType,
                                    ScriptState::Type type,
@@ -1465,7 +1486,7 @@ void Effect::setStateFromParameter(const CGeffect effect,
     }
 }
 
-void Effect::executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) {
+void EffectEngine::executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) {
     if (cgIsPass(pass)) {
         cgSetPassState(pass);
         glDrawElements(mode, count, type, ptr);
@@ -1473,7 +1494,7 @@ void Effect::executePass(CGpass pass, const GLenum mode, const GLsizei count, co
     }
 }
 
-void Effect::setFrameBufferTexture(const ScriptState &state) {
+void EffectEngine::setFrameBufferTexture(const ScriptState &state) {
     GLuint texture = state.texture;
     const int index = state.type - ScriptState::kRenderColorTarget0;
     if (texture > 0) {
@@ -1505,7 +1526,7 @@ void Effect::setFrameBufferTexture(const ScriptState &state) {
     }
 }
 
-void Effect::executeScript(const Script *script,
+void EffectEngine::executeScript(const Script *script,
                            const GLenum mode,
                            const GLsizei count,
                            const GLenum type,
@@ -1589,7 +1610,7 @@ void Effect::executeScript(const Script *script,
     }
 }
 
-void Effect::addTechniquePasses(const CGtechnique technique)
+void EffectEngine::addTechniquePasses(const CGtechnique technique)
 {
     GLuint frameBufferObject;
     Passes passes;
@@ -1599,7 +1620,7 @@ void Effect::addTechniquePasses(const CGtechnique technique)
     }
 }
 
-void Effect::setStandardsGlobal(const CGparameter parameter)
+void EffectEngine::setStandardsGlobal(const CGparameter parameter)
 {
     float version;
     cgGLGetParameter1f(parameter, &version);
@@ -1654,7 +1675,7 @@ void Effect::setStandardsGlobal(const CGparameter parameter)
     }
 }
 
-void Effect::setTextureParameters(CGparameter parameter, const IString *dir)
+void EffectEngine::setTextureParameters(CGparameter parameter, const IString *dir)
 {
     const CGtype type = cgGetParameterType(parameter);
     if (type == CG_SAMPLER2D || type == CG_SAMPLER3D || type == CG_SAMPLERCUBE) {
@@ -1678,6 +1699,7 @@ void Effect::setTextureParameters(CGparameter parameter, const IString *dir)
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, "OFFSCREENRENDERTARGET")) {
                     offscreenRenderTarget.addParameter(textureParameter, parameter, dir);
+                    m_effect->addOffscreenRenderTarget(parameter);
                     break;
                 }
                 else {
@@ -1689,7 +1711,7 @@ void Effect::setTextureParameters(CGparameter parameter, const IString *dir)
     }
 }
 
-bool Effect::parsePassScript(const CGpass pass, GLuint frameBufferObject)
+bool EffectEngine::parsePassScript(const CGpass pass, GLuint frameBufferObject)
 {
     if (m_passScripts[pass])
         return true;
@@ -1800,7 +1822,7 @@ bool Effect::parsePassScript(const CGpass pass, GLuint frameBufferObject)
     return true;
 }
 
-bool Effect::parseTechniqueScript(const CGtechnique technique, GLuint &frameBufferObject, Passes &passes)
+bool EffectEngine::parseTechniqueScript(const CGtechnique technique, GLuint &frameBufferObject, Passes &passes)
 {
     if (!cgIsTechnique(technique) || !cgValidateTechnique(technique))
         return false;
@@ -1951,7 +1973,7 @@ bool Effect::parseTechniqueScript(const CGtechnique technique, GLuint &frameBuff
     return true;
 }
 
-void Effect::initializeBuffer()
+void EffectEngine::initializeBuffer()
 {
     glGenBuffers(1, &m_verticesBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);

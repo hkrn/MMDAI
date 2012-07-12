@@ -34,25 +34,63 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_IEFFECT_H_
-#define VPVL2_IEFFECT_H_
+#ifndef VPVL2_CG_EFFECT_H_
+#define VPVL2_CG_EFFECT_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IEffect.h"
+
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
 
 namespace vpvl2
 {
-
-class IEffect
+namespace cg
 {
-public:
-    virtual ~IEffect() {}
 
-    virtual void *internalContext() const = 0;
-    virtual void *internalPointer() const = 0;
-    virtual void getOffscreenRenderTargets(Array<void *> &value) const = 0;
-    virtual void getInteractiveParameters(Array<void *> &value) const = 0;
+class Effect : public IEffect {
+public:
+    static bool isInteractiveParameter(CGparameter value) {
+        CGannotation name = cgGetNamedParameterAnnotation(value, "UIName");
+        CGannotation widget = cgGetNamedParameterAnnotation(value, "UIWidget");
+        return cgIsAnnotation(name) && cgIsAnnotation(widget);
+    }
+
+    Effect(CGcontext context, CGeffect effect)
+        : m_context(context),
+          m_effect(effect)
+    {
+    }
+    ~Effect() {
+        cgDestroyEffect(m_effect);
+    }
+
+    void addOffscreenRenderTarget(CGparameter value) {
+        m_offscreenParameters.add(value);
+    }
+    void addInteractiveParameter(CGparameter value) {
+        m_interactiveParameters.add(value);
+    }
+
+    void *internalContext() const { return m_context; }
+    void *internalPointer() const { return m_effect; }
+    void getOffscreenRenderTargets(Array<void *> &value) const {
+        value.copy(m_offscreenParameters);
+    }
+    void getInteractiveParameters(Array<void *> &value) const {
+        value.copy(m_interactiveParameters);
+    }
+
+private:
+    const CGcontext m_context;
+    const CGeffect m_effect;
+    Array<void *> m_offscreenParameters;
+    Array<void *> m_interactiveParameters;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };
 
+} /* namespace cg */
 } /* namespace vpvl2 */
 
 #endif

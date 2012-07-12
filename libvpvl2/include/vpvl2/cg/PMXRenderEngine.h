@@ -37,6 +37,7 @@
 #ifndef VPVL2_CG2_PMXRENDERENGINE_H_
 #define VPVL2_CG2_PMXRENDERENGINE_H_
 
+#include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/EngineCommon.h"
 #include "vpvl2/pmx/Model.h"
 
@@ -118,7 +119,7 @@ private:
     cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_model;
     CGcontext m_context;
-    Effect m_effect;
+    EffectEngine m_effect;
     pmx::Model::SkinningMeshes m_mesh;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     MaterialContext *m_materialContexts;

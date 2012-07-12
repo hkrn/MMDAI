@@ -213,6 +213,7 @@ if(VPVL2_OPENGL_RENDERER)
     list(APPEND vpvl2_internal_headers
          include/vpvl2/cg/AssetRenderEngine.h
          include/vpvl2/cg/EngineCommon.h
+         include/vpvl2/cg/Effect.h
          include/vpvl2/cg/PMDRenderEngine.h
          include/vpvl2/cg/PMXRenderEngine.h
     )
