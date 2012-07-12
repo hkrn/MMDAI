@@ -71,6 +71,7 @@ BT_DECLARE_HANDLE(aiScene);
 
 /* to cast IEffect#internalPointer and IEffect#internalContext */
 #include <Cg/cg.h>
+#include <Cg/cgGL.h>
 
 using namespace vpvl2;
 using namespace vpvl2::render::qt;
@@ -374,6 +375,7 @@ UI::~UI() {
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
+    qDeleteAll(m_effectCaches);
     delete m_fbo;
     delete m_factory;
     delete m_encoding;
@@ -588,6 +590,44 @@ void UI::paintGL() {
 #endif
     }
     {
+        GLuint fbo, rbo;
+        glGenFramebuffers(1, &fbo);
+        glGenRenderbuffers(1, &rbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+        foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
+            const CGparameter parameter = static_cast<CGparameter>(offscreen.first);
+            GLuint textureID = cgGLGetTextureParameter(parameter);
+            GLint width, height;
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glViewport(0, 0, width, height);
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                const IModel *model = engine->model();
+                const IString *name = model->name();
+                const QString &n = name ? static_cast<const String *>(name)->value() : m_delegate->findModelPath(model);
+                foreach (const EffectAttachment &attachment, offscreen.second) {
+                    IEffect *effect = attachment.second;
+                    if (attachment.first.exactMatch(n) && effect) {
+                        //engine->setEffect(effect, 0);
+                        break;
+                    }
+                }
+                engine->renderModel();
+                engine->renderEdge();
+            }
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glDeleteRenderbuffers(1, &rbo);
+        glDeleteFramebuffers(1, &fbo);
         glViewport(0, 0, width(), height());
         glEnable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
@@ -672,8 +712,40 @@ IModel *UI::createModelAsync(const QString &path) const {
     return m_factory->createModel(data, bytes.size(), ok);
 }
 
-IEffect *UI::createEffectAsync(const String *path, const IModel *model) {
-    return m_scene.createEffect(path, model, m_delegate);
+IEffect *UI::createEffectAsync(const IString *path) {
+    IEffect *effect = 0;
+    const QString &key = static_cast<const String *>(path)->value();
+    m_effectCacheLock.lock();
+    if (m_effectCaches.contains(key)) {
+        effect = m_effectCaches[key];
+    }
+    else {
+        m_effectCacheLock.unlock();
+        effect = m_scene.createEffect(path, m_delegate);
+        if (!effect->internalPointer())
+            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        m_effectCacheLock.lock();
+        m_effectCaches.insert(key, effect);
+    }
+    m_effectCacheLock.unlock();
+    return effect;
+}
+
+IEffect *UI::createEffectAsync(const IModel *model, const IString *dir) {
+    IEffect *effect = 0;
+    const QString &key = m_delegate->effectFilePath(model, dir);
+    m_effectCacheLock.lock();
+    if (m_effectCaches.contains(key)) {
+        effect = m_effectCaches[key];
+    }
+    else {
+        effect = m_scene.createEffect(dir, model, m_delegate);
+        if (!effect->internalPointer())
+            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        m_effectCaches.insert(key, effect);
+    }
+    m_effectCacheLock.unlock();
+    return effect;
 }
 
 IMotion *UI::createMotionAsync(const QString &path, IModel *model) const {
@@ -705,13 +777,13 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
         qWarning("Failed parsing the model: %d", model->error());
         return 0;
     }
-    m_delegate->addModelFilename(model, info.fileName());
+    m_delegate->addModelPath(model, info.fileName());
     model->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
     model->joinWorld(&m_world);
     IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
-    String s(info.absoluteDir().absolutePath());
+    String s1(info.absoluteDir().absolutePath());
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(this, &UI::createEffectAsync, &s, model);
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(this, &UI::createEffectAsync, model, &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IEffect *effect = future2.result();
@@ -719,9 +791,40 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
         CGcontext c = static_cast<CGcontext>(effect->internalContext());
         qDebug() << cgGetLastListing(c);
     }
-    engine->setEffect(effect, &s);
+    else {
+        const QDir &baseDir = info.dir();
+        Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
+        engine->setEffect(effect, &s1);
+        effect->getOffscreenRenderTargets(offscreenRenderTargets);
+        const int nOffscreenRenderTargets = offscreenRenderTargets.count();
+        for (int i = 0; i < nOffscreenRenderTargets; i++) {
+            const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
+            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.texture);
+            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
+            const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
+            QList<EffectAttachment> attachments;
+            foreach (const QString &line, defaultEffect) {
+                const QStringList &pair = line.split('=');
+                if (pair.size() == 2) {
+                    const QString &value = pair.at(1).trimmed();
+                    QRegExp regexp(pair.at(0).trimmed(), Qt::CaseSensitive, QRegExp::Wildcard);
+                    if (value != "hide" && value != "none") {
+                        QString path = baseDir.absoluteFilePath(value);
+                        path.replace(QRegExp(".fx$"), ".cgfx");
+                        String s2(path);
+                        const QFuture<IEffect *> &future3 = QtConcurrent::run(this, &UI::createEffectAsync, &s2);
+                        attachments.append(EffectAttachment(regexp, future3.result()));
+                    }
+                    else {
+                        attachments.append(EffectAttachment(regexp, 0));
+                    }
+                }
+            }
+            m_offscreens.append(OffscreenRenderTarget(renderTarget.sampler, attachments));
+        }
+    }
 #endif
-    engine->upload(&s);
+    engine->upload(&s1);
     m_scene.addModel(model, engine);
 #if 0
     pmx::Model *pmx = dynamic_cast<pmx::Model*>(model);

@@ -45,11 +45,15 @@ namespace vpvl2
 class IEffect
 {
 public:
+    struct OffscreenRenderTarget {
+        void *texture;
+        void *sampler;
+    };
     virtual ~IEffect() {}
 
     virtual void *internalContext() const = 0;
     virtual void *internalPointer() const = 0;
-    virtual void getOffscreenRenderTargets(Array<void *> &value) const = 0;
+    virtual void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const = 0;
     virtual void getInteractiveParameters(Array<void *> &value) const = 0;
 };
 

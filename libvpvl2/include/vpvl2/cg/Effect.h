@@ -65,8 +65,11 @@ public:
         cgDestroyEffect(m_effect);
     }
 
-    void addOffscreenRenderTarget(CGparameter value) {
-        m_offscreenParameters.add(value);
+    void addOffscreenRenderTarget(CGparameter texture, CGparameter sampler) {
+        OffscreenRenderTarget target;
+        target.texture = texture;
+        target.sampler = sampler;
+        m_offscreenRenderTargets.add(target);
     }
     void addInteractiveParameter(CGparameter value) {
         m_interactiveParameters.add(value);
@@ -74,8 +77,8 @@ public:
 
     void *internalContext() const { return m_context; }
     void *internalPointer() const { return m_effect; }
-    void getOffscreenRenderTargets(Array<void *> &value) const {
-        value.copy(m_offscreenParameters);
+    void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const {
+        value.copy(m_offscreenRenderTargets);
     }
     void getInteractiveParameters(Array<void *> &value) const {
         value.copy(m_interactiveParameters);
@@ -84,7 +87,7 @@ public:
 private:
     const CGcontext m_context;
     const CGeffect m_effect;
-    Array<void *> m_offscreenParameters;
+    Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<void *> m_interactiveParameters;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)

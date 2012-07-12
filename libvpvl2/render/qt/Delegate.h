@@ -80,13 +80,16 @@ public:
     void getMousePosition(Vector4 &value, MousePositionType type) const;
     void log(void *context, LogLevel level, const char *format, va_list ap);
     IString *loadKernelSource(KernelType type, void *context);
+    IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
 
     void updateMatrices(const QSize &size);
     void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection);
     void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type);
-    void addModelFilename(const IModel *model, const QString &filename);
+    void addModelPath(const IModel *model, const QString &filename);
+    const QString findModelPath(const IModel *model) const;
+    const QString effectFilePath(const IModel *model, const IString *dir) const;
 
 private:
     static const QString createPath(const IString *dir, const QString &name);
@@ -99,11 +102,12 @@ private:
     const QSettings *m_settings;
     const Scene *m_scene;
     const QDir m_systemDir;
+    mutable QMutex m_model2PathLock;
     QGLWidget *m_context;
     QSize m_viewport;
-    QHash<const IModel *, QString> m_model2filename;
-    QHash<GLuint, QString> m_texture2paths;
-    QHash<GLuint, QMovie *> m_texture2movies;
+    QHash<const IModel *, QString> m_model2Paths;
+    QHash<GLuint, QString> m_texture2Paths;
+    QHash<GLuint, QMovie *> m_texture2Movies;
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;

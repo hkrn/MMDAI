@@ -404,6 +404,20 @@ void Scene::addMotion(IMotion *motion)
     m_context->motions.add(motion);
 }
 
+IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
+{
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    CGeffect effect = 0;
+    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
+    if (source)
+        effect = cgCreateEffect(m_context->effectContext, reinterpret_cast<const char *>(source->toByteArray()), 0);
+    delete source;
+    return new cg::Effect(m_context->effectContext, cgIsEffect(effect) ? effect : 0);
+#else
+    return 0;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+}
+
 IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate)
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG

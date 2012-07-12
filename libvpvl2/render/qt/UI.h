@@ -88,7 +88,8 @@ private:
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
     IModel *createModelAsync(const QString &path) const;
-    IEffect *createEffectAsync(const String *path, const IModel *model);
+    IEffect *createEffectAsync(const IString *path);
+    IEffect *createEffectAsync(const IModel *model, const IString *dir);
     IMotion *createMotionAsync(const QString &path, IModel *model) const;
     IModel *addModel(const QString &path, QProgressDialog &dialog);
     IMotion *addMotion(const QString &path, IModel *model);
@@ -107,6 +108,11 @@ private:
     QPoint m_prevPos;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;
+    typedef QPair<QRegExp, IEffect *> EffectAttachment;
+    typedef QPair<void *, QList<EffectAttachment> > OffscreenRenderTarget;
+    QList<OffscreenRenderTarget> m_offscreens;
+    QHash<QString, IEffect *> m_effectCaches;
+    QMutex m_effectCacheLock;
     Delegate *m_delegate;
     Scene m_scene;
     Factory *m_factory;

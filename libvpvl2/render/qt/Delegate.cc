@@ -75,7 +75,7 @@ Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *con
 
 Delegate::~Delegate()
 {
-    qDeleteAll(m_texture2movies);
+    qDeleteAll(m_texture2Movies);
 }
 
 void Delegate::allocateContext(const IModel *model, void *&context)
@@ -130,13 +130,13 @@ void Delegate::uploadAnimatedTexture(float offset, float speed, float seek, void
 {
     GLuint textureID = *static_cast<GLuint *>(texture);
     QMovie *movie = 0;
-    if (m_texture2movies.contains(textureID)) {
-        movie = m_texture2movies[textureID];
+    if (m_texture2Movies.contains(textureID)) {
+        movie = m_texture2Movies[textureID];
     }
     else {
-        const QString &path = m_texture2paths[textureID];
-        m_texture2movies.insert(textureID, new QMovie(path));
-        movie = m_texture2movies[textureID];
+        const QString &path = m_texture2Paths[textureID];
+        m_texture2Movies.insert(textureID, new QMovie(path));
+        movie = m_texture2Movies[textureID];
         movie->setCacheMode(QMovie::CacheAll);
     }
     if (movie->isValid()) {
@@ -299,30 +299,22 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
     }
 }
 
+IString *Delegate::loadShaderSource(ShaderType type, const IString *path)
+{
+    if (type == kModelEffectTechniques) {
+        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, static_cast<const String *>(path)->value());
+        const QString &source = future.result();
+        return !source.isNull() ? new (std::nothrow) String(source) : 0;
+    }
+    return 0;
+}
+
 IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
 {
     QString file;
     if (type == kModelEffectTechniques) {
-        QDir d(static_cast<const String *>(dir)->value());
-        if (m_model2filename.contains(model)) {
-            QFileInfo info(d.absoluteFilePath(m_model2filename[model]));
-            QRegExp regexp("^.+\\[([^\\]]+)\\]$");
-            const QString &name = info.baseName();
-            const QString &basename = regexp.exactMatch(name) ? regexp.capturedTexts().at(1) : name;
-            const QString &cgfx = d.absoluteFilePath(basename + ".cgfx");
-            if (QFile::exists(cgfx)) {
-                const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, cgfx);
-                const QString &source = future.result();
-                return !source.isNull() ? new (std::nothrow) String(source) : 0;
-            }
-            const QString &fx = d.absoluteFilePath(basename + ".fx");
-            if (QFile::exists(fx)) {
-                const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, fx);
-                const QString &source = future.result();
-                return !source.isNull() ? new (std::nothrow) String(source) : 0;
-            }
-        }
-        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, d.absoluteFilePath("effect.fx"));
+        const QString &filename = effectFilePath(model, dir);
+        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, filename);
         const QString &source = future.result();
         return !source.isNull() ? new (std::nothrow) String(source) : 0;
     }
@@ -437,10 +429,38 @@ void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositio
     }
 }
 
-void Delegate::addModelFilename(const IModel *model, const QString &filename)
+void Delegate::addModelPath(const IModel *model, const QString &filename)
 {
-    if (model)
-        m_model2filename.insert(model, filename);
+    if (model) {
+        qDebug() << filename;
+        m_model2PathLock.lock();
+        m_model2Paths.insert(model, filename);
+        m_model2PathLock.unlock();
+    }
+}
+
+const QString Delegate::findModelPath(const IModel *model) const
+{
+    m_model2PathLock.lock();
+    const QString s = m_model2Paths[model];
+    m_model2PathLock.unlock();
+    return s;
+}
+
+const QString Delegate::effectFilePath(const IModel *model, const IString *dir) const
+{
+    QDir d(static_cast<const String *>(dir)->value());
+    const QString &s = findModelPath(model);
+    if (!s.isEmpty()) {
+        QFileInfo info(d.absoluteFilePath(s));
+        const QRegExp regexp("^.+\\[([^\\]]+)\\]$");
+        const QString &name = info.baseName();
+        const QString &basename = regexp.exactMatch(name) ? regexp.capturedTexts().at(1) : name;
+        const QString &cgfx = d.absoluteFilePath(basename + ".cgfx");
+        if (QFile::exists(cgfx))
+            return cgfx;
+    }
+    return d.absoluteFilePath("default.cgfx");
 }
 
 const QString Delegate::createPath(const IString *dir, const QString &name)
@@ -521,7 +541,7 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
         cache.width = image.width();
         cache.height = image.height();
         cache.id = textureID;
-        m_texture2paths.insert(textureID, path);
+        m_texture2Paths.insert(textureID, path);
         setTextureID(cache, isToon, texture);
         addTextureCache(privateContext, path, cache);
         qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",

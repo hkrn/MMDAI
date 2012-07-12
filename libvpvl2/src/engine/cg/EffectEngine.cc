@@ -755,9 +755,11 @@ bool RenderColorTargetSemantic::isMimapEnabled(const CGparameter parameter) cons
 void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter, GLenum &internal, GLenum &format) const
 {
     CGannotation formatAnnotation = cgGetNamedParameterAnnotation(parameter, "Format");
-    const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
     internal = GL_RGBA8;
     format = GL_RGBA;
+    const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
+    if (!formatString)
+        return;
     if (VPVL2_CG_STREQ_CONST(formatString, "A32B32G32R32F")) {
         internal = GL_RGBA32F_ARB;
     }
@@ -1097,7 +1099,6 @@ EffectEngine::~EffectEngine()
     }
     glDeleteBuffers(1, &m_verticesBuffer);
     glDeleteBuffers(1, &m_indicesBuffer);
-    delete m_effect;
     m_effect = 0;
     m_delegate = 0;
 }
@@ -1110,7 +1111,6 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
     static const char kWorldViewSemantic[] = "WORLDVIEW";
     static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
     static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
-    delete m_effect;
     m_effect = static_cast<Effect *>(effect);
     CGeffect value = static_cast<CGeffect>(effect->internalPointer());
     if (!cgIsEffect(value))
@@ -1251,11 +1251,11 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
 }
 
 CGtechnique EffectEngine::findTechnique(const char *pass,
-                                  int offset,
-                                  int nmaterials,
-                                  bool hasTexture,
-                                  bool hasSphereMap,
-                                  bool useToon) const
+                                        int offset,
+                                        int nmaterials,
+                                        bool hasTexture,
+                                        bool hasSphereMap,
+                                        bool useToon) const
 {
     CGtechnique technique = 0;
     const int ntechniques = m_techniques.size();
@@ -1298,10 +1298,10 @@ void EffectEngine::executeProcess(const IModel *model, ScriptOrderType order)
 }
 
 void EffectEngine::executeTechniquePasses(const CGtechnique technique,
-                                    const GLenum mode,
-                                    const GLsizei count,
-                                    const GLenum type,
-                                    const GLvoid *ptr)
+                                          const GLenum mode,
+                                          const GLsizei count,
+                                          const GLenum type,
+                                          const GLvoid *ptr)
 {
     if (cgIsTechnique(technique)) {
         const Script *tss = m_techniqueScripts.find(technique);
@@ -1319,8 +1319,8 @@ void EffectEngine::executeTechniquePasses(const CGtechnique technique,
 }
 
 void EffectEngine::setModelMatrixParameters(const IModel *model,
-                                      int extraCameraFlags,
-                                      int extraLightFlags)
+                                            int extraCameraFlags,
+                                            int extraLightFlags)
 {
     world.setMatrices(model, extraCameraFlags, extraLightFlags);
     view.setMatrices(model, extraCameraFlags, extraLightFlags);
@@ -1394,12 +1394,12 @@ void EffectEngine::updateSceneParameters()
 }
 
 bool EffectEngine::testTechnique(const CGtechnique technique,
-                           const char *pass,
-                           int offset,
-                           int nmaterials,
-                           bool hasTexture,
-                           bool hasSphereMap,
-                           bool useToon)
+                                 const char *pass,
+                                 int offset,
+                                 int nmaterials,
+                                 bool hasTexture,
+                                 bool hasSphereMap,
+                                 bool useToon)
 {
     if (cgValidateTechnique(technique) == CG_FALSE)
         return false;
@@ -1443,10 +1443,10 @@ bool EffectEngine::containsSubset(const CGannotation annotation, int subset, int
 }
 
 void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
-                                                   const std::string &value,
-                                                   GLuint frameBufferObject,
-                                                   ScriptState::Type type,
-                                                   ScriptState &state)
+                                                         const std::string &value,
+                                                         GLuint frameBufferObject,
+                                                         ScriptState::Type type,
+                                                         ScriptState &state)
 {
     state.type = type;
     if (!value.empty()) {
@@ -1459,10 +1459,10 @@ void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTarget
 }
 
 void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
-                                                          const std::string &value,
-                                                          GLuint frameBufferObject,
-                                                          ScriptState::Type type,
-                                                          ScriptState &state)
+                                                                const std::string &value,
+                                                                GLuint frameBufferObject,
+                                                                ScriptState::Type type,
+                                                                ScriptState &state)
 {
     state.type = type;
     if (!value.empty()) {
@@ -1474,10 +1474,10 @@ void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDept
 }
 
 void EffectEngine::setStateFromParameter(const CGeffect effect,
-                                   const std::string &value,
-                                   CGtype testType,
-                                   ScriptState::Type type,
-                                   ScriptState &state)
+                                         const std::string &value,
+                                         CGtype testType,
+                                         ScriptState::Type type,
+                                         ScriptState &state)
 {
     CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
     if (cgIsParameter(parameter) && cgGetParameterType(parameter) == testType) {
@@ -1527,10 +1527,10 @@ void EffectEngine::setFrameBufferTexture(const ScriptState &state) {
 }
 
 void EffectEngine::executeScript(const Script *script,
-                           const GLenum mode,
-                           const GLsizei count,
-                           const GLenum type,
-                           const GLvoid *ptr)
+                                 const GLenum mode,
+                                 const GLsizei count,
+                                 const GLenum type,
+                                 const GLvoid *ptr)
 {
     if (script) {
         const int nstates = script->size();
@@ -1687,24 +1687,21 @@ void EffectEngine::setTextureParameters(CGparameter parameter, const IString *di
                 const char *semantic = cgGetParameterSemantic(textureParameter);
                 if (VPVL2_CG_STREQ_CONST(semantic, "MATERIALTEXTURE")) {
                     materialTexture.addParameter(parameter);
-                    break;
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, "MATERIALSPHEREMAP")) {
                     materialSphereMap.addParameter(parameter);
-                    break;
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERCOLORTARGET")) {
                     renderColorTarget.addParameter(textureParameter, parameter, dir, false, false);
-                    break;
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, "OFFSCREENRENDERTARGET")) {
                     offscreenRenderTarget.addParameter(textureParameter, parameter, dir);
-                    m_effect->addOffscreenRenderTarget(parameter);
-                    break;
+                    m_effect->addOffscreenRenderTarget(textureParameter, parameter);
                 }
                 else {
                     renderColorTarget.addParameter(textureParameter, parameter, dir, true, true);
                 }
+                break;
             }
             sa = cgGetNextStateAssignment(sa);
         }
