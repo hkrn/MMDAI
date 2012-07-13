@@ -768,7 +768,7 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter, GL
     }
     else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_R32F")) {
         internal = GL_R32F;
-        format = GL_R;
+        format = GL_RED;
     }
     else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_G32R32F")) {
         internal = GL_RG32F;
