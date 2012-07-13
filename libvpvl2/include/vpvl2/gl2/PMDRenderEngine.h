@@ -105,7 +105,8 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
-    void setEffect(IEffect *effect, const IString *dir, bool restrict);
+    IEffect *effect(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);

@@ -895,7 +895,12 @@ void PMDRenderEngine::performPostProcess()
     /* do nothing */
 }
 
-void PMDRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */, bool  /* restrict */)
+IEffect *PMDRenderEngine::effect(IEffect::ScriptOrderType /* type */) const
+{
+    return 0;
+}
+
+void PMDRenderEngine::setEffect(IEffect::ScriptOrderType /* type */, IEffect * /* effect */, const IString * /* dir */)
 {
     /* do nothing */
 }

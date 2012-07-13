@@ -1080,7 +1080,7 @@ EffectEngine::EffectEngine(const Scene *scene, IRenderDelegate *delegate)
       m_delegate(delegate),
       m_scriptOutput(kColor),
       m_scriptClass(kObject),
-      m_scriptOrder(kStandard)
+      m_scriptOrder(IEffect::kStandard)
 {
 #ifdef VPVL2_LINK_QT
     const QGLContext *context = QGLContext::currentContext();
@@ -1270,16 +1270,16 @@ CGtechnique EffectEngine::findTechnique(const char *pass,
 
 void EffectEngine::executeScriptExternal()
 {
-    if (m_scriptOrder == kPostProcess)
+    if (m_scriptOrder == IEffect::kPostProcess)
         executeScript(&m_externalScript, 0, 0, 0, 0);
 }
 
-bool EffectEngine::hasTechniques(ScriptOrderType order) const
+bool EffectEngine::hasTechniques(IEffect::ScriptOrderType order) const
 {
     return m_scriptOrder == order ? m_techniqueScripts.size() > 0 : false;
 }
 
-void EffectEngine::executeProcess(const IModel *model, ScriptOrderType order)
+void EffectEngine::executeProcess(const IModel *model, IEffect::ScriptOrderType order)
 {
     if (!model || !m_effect || m_scriptOrder != order)
         return;
@@ -1644,13 +1644,13 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter)
     if (cgIsAnnotation(scriptOrderAnnotation)) {
         const char *value = cgGetStringAnnotationValue(scriptOrderAnnotation);
         if (VPVL2_CG_STREQ_CONST(value, "standard")) {
-            m_scriptOrder = kStandard;
+            m_scriptOrder = IEffect::kStandard;
         }
         else if (VPVL2_CG_STREQ_CONST(value, "preprocess")) {
-            m_scriptOrder = kPreProcess;
+            m_scriptOrder = IEffect::kPreProcess;
         }
         else if (VPVL2_CG_STREQ_CONST(value, "postprocess")) {
-            m_scriptOrder = kPostProcess;
+            m_scriptOrder = IEffect::kPostProcess;
         }
     }
     const CGannotation scriptAnnotation = cgGetNamedParameterAnnotation(parameter, "Script");
@@ -1833,7 +1833,7 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, GLuint &fra
         Script scriptExternalStates;
         ScriptState lastState, newState;
         CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
-        bool useScriptExternal = m_scriptOrder == kPostProcess,
+        bool useScriptExternal = m_scriptOrder == IEffect::kPostProcess,
                 renderColorTarget0DidSet = false,
                 renderDepthStencilTargetDidSet = false,
                 useRenderBuffer = false;

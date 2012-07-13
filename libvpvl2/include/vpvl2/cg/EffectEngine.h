@@ -385,11 +385,6 @@ public:
         kScene,
         kSceneOrObject
     };
-    enum ScriptOrderType {
-        kPreProcess,
-        kStandard,
-        kPostProcess
-    };
 
     EffectEngine(const Scene *scene, IRenderDelegate *delegate);
     ~EffectEngine();
@@ -402,8 +397,8 @@ public:
                               bool hasSphereMap,
                               bool useToon) const;
     void executeScriptExternal();
-    bool hasTechniques(ScriptOrderType order) const;
-    void executeProcess(const IModel *model, ScriptOrderType order);
+    bool hasTechniques(IEffect::ScriptOrderType order) const;
+    void executeProcess(const IModel *model, IEffect::ScriptOrderType order);
     void executeTechniquePasses(const CGtechnique technique,
                                 const GLenum mode,
                                 const GLsizei count,
@@ -419,7 +414,7 @@ public:
     IEffect *effect() const { return m_effect; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
     ScriptClassType scriptClass() const { return m_scriptClass; }
-    ScriptOrderType scriptOrder() const { return m_scriptOrder; }
+    IEffect::ScriptOrderType scriptOrder() const { return m_scriptOrder; }
 
     MatrixSemantic world;
     MatrixSemantic view;
@@ -566,7 +561,7 @@ private:
     IRenderDelegate *m_delegate;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
-    ScriptOrderType m_scriptOrder;
+    IEffect::ScriptOrderType m_scriptOrder;
     Techniques m_techniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;

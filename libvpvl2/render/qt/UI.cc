@@ -647,13 +647,20 @@ void UI::renderOffscreen()
             foreach (const EffectAttachment &attachment, offscreen.second) {
                 IEffect *effect = attachment.second;
                 if (attachment.first.exactMatch(n) && effect) {
-                    engine->setEffect(effect, 0, true);
+                    engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
                     break;
                 }
             }
             engine->renderModel();
             engine->renderEdge();
         }
+#if 0
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
+        image.save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
+        glBindTexture(GL_TEXTURE_2D, 0);
+#endif
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -672,20 +679,28 @@ void UI::renderWindow()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
+        IEffect *effect = engine->effect(IEffect::kPostProcess);
+        engine->setEffect(IEffect::kPostProcess, effect, 0);
         engine->preparePostProcess();
     }
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
+        IEffect *effect = engine->effect(IEffect::kPreProcess);
+        engine->setEffect(IEffect::kPreProcess, effect, 0);
         engine->performPreProcess();
     }
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
+        IEffect *effect = engine->effect(IEffect::kStandard);
+        engine->setEffect(IEffect::kStandard, effect, 0);
         engine->renderModel();
         engine->renderEdge();
         engine->renderShadow();
     }
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
+        IEffect *effect = engine->effect(IEffect::kPostProcess);
+        engine->setEffect(IEffect::kPostProcess, effect, 0);
         engine->performPostProcess();
     }
 }
@@ -831,7 +846,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
         const QDir &baseDir = info.dir();
         const QRegExp fxRegExp(".fx$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        engine->setEffect(effect, &s1, false);
+        engine->setEffect(IEffect::kAutoDetection, effect, &s1);
         effect->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
         for (int i = 0; i < nOffscreenRenderTargets; i++) {

@@ -181,7 +181,7 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
+    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -256,7 +256,7 @@ void PMXRenderEngine::renderModel()
 
 void PMXRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
+    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model);
     m_current->setZeroGeometryParameters(m_model);
@@ -288,7 +288,7 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderShadow()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
+    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
     m_current->setZeroGeometryParameters(m_model);
@@ -317,7 +317,7 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
+    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model);
     m_current->setZeroGeometryParameters(m_model);
@@ -348,12 +348,12 @@ void PMXRenderEngine::renderZPlot()
 
 bool PMXRenderEngine::hasPreProcess() const
 {
-    return m_current->hasTechniques(EffectEngine::kPreProcess);
+    return m_current->hasTechniques(IEffect::kPreProcess);
 }
 
 bool PMXRenderEngine::hasPostProcess() const
 {
-    return m_current->hasTechniques(EffectEngine::kPostProcess);
+    return m_current->hasTechniques(IEffect::kPostProcess);
 }
 
 void PMXRenderEngine::preparePostProcess()
@@ -363,38 +363,58 @@ void PMXRenderEngine::preparePostProcess()
 
 void PMXRenderEngine::performPreProcess()
 {
-    m_current->executeProcess(m_model, EffectEngine::kPreProcess);
+    m_current->executeProcess(m_model, IEffect::kPreProcess);
 }
 
 void PMXRenderEngine::performPostProcess()
 {
-    m_current->executeProcess(m_model, EffectEngine::kPostProcess);
+    m_current->executeProcess(m_model, IEffect::kPostProcess);
 }
 
-void PMXRenderEngine::setEffect(IEffect *effect, const IString *dir, bool restrict)
+IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const
 {
-    if (effect) {
-        EffectEngine **value = const_cast<EffectEngine **>(m_effects.find(effect)), *ee;
-        if (value) {
-            ee = *value;
-            bool attachable = restrict ? ee->scriptOrder() == EffectEngine::kStandard : true;
-            m_current = attachable ? ee : 0;
+    EffectEngine **ee = const_cast<EffectEngine **>(m_effects.find(type));
+    return ee ? (*ee)->effect() : 0;
+}
+
+void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir)
+{
+    if (type == IEffect::kStandardOffscreen) {
+        const int neffects = m_oseffects.count();
+        bool found = false;
+        EffectEngine *ee;
+        for (int i = 0; i < neffects; i++) {
+            ee = m_oseffects[i];
+            if (ee->effect() == effect) {
+                found = true;
+                break;
+            }
         }
-        else {
+        if (found) {
+            m_current = ee;
+        }
+        else if (effect) {
+            EffectEngine *previous = m_current;
             m_current = new EffectEngine(m_scene, m_delegate);
             m_current->attachEffect(effect, dir);
-            bool attachable = restrict ? m_current->scriptOrder() == EffectEngine::kStandard : true;
-            if (attachable) {
-                m_effects.insert(effect, m_current);
-            }
+            if (m_current->scriptOrder() == IEffect::kStandard)
+                m_oseffects.add(m_current);
             else {
                 delete m_current;
-                m_current = 0;
+                m_current = previous;
             }
         }
     }
     else {
-        m_current = 0;
+        EffectEngine **ee = const_cast<EffectEngine **>(m_effects.find(type));
+        if (ee) {
+            m_current = *ee;
+        }
+        else if (effect) {
+            m_current = new EffectEngine(m_scene, m_delegate);
+            m_current->attachEffect(effect, dir);
+            m_effects.insert(type == IEffect::kAutoDetection ? m_current->scriptOrder() : type, m_current);
+        }
     }
 }
 
@@ -431,9 +451,8 @@ void PMXRenderEngine::release()
     delete m_accelerator;
     m_accelerator = 0;
 #endif
-    m_effects.remove(m_current->effect());
     m_effects.releaseAll();
-    delete m_current;
+    m_oseffects.releaseAll();
     m_current = 0;
     m_delegate = 0;
     m_scene = 0;

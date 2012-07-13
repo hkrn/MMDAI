@@ -45,6 +45,14 @@ namespace vpvl2
 class IEffect
 {
 public:
+    enum ScriptOrderType {
+        kPreProcess,
+        kStandard,
+        kStandardOffscreen,
+        kPostProcess,
+        kAutoDetection,
+        kMaxScriptOrderType
+    };
     struct OffscreenRenderTarget {
         void *textureParameter;
         void *samplerParameter;
