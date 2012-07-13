@@ -73,9 +73,10 @@ bool DDSTexture::parse(const uint8_t *data, size_t size, GLuint &textureID)
         if (!m_header.isValidCapacity()) {
             return false;
         }
-        m_header.correct();
         uint8_t *ptr;
+        m_header.correct();
         m_header.getDataPointer(data, ptr);
+        size -= ptr - data;
         glGenTextures(1, &textureID);
         if (m_header.hasCubemap()) {
             size_t offset = 0;
@@ -110,12 +111,16 @@ bool DDSTexture::parse(const uint8_t *data, size_t size, GLuint &textureID)
         // volume
         else if (m_header.hasVolume()) {
             glBindTexture(GL_TEXTURE_3D, textureID);
-            setVolumeTexture(ptr);
+            setVolumeTexture(ptr, size);
             glBindTexture(GL_TEXTURE_3D, 0);
             return true;
         }
         // texture
         else {
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            setTexture(ptr, size);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            return true;
         }
     }
     return false;
@@ -125,47 +130,77 @@ void DDSTexture::setCubeTexture(const uint8_t *ptr, GLenum target, size_t &offse
 {
     uint32_t width = m_header.width(), height = m_header.height();
     GLenum format, internal, type;
-    m_header.getTextureFormat(internal, format, type);
+    size_t bitCount;
     offset = 0;
-    if (m_header.hasMipmap()) {
-        int level = 0;
-        while (height > 1) {
-            glTexImage2D(target, level, internal, width, height, 0, format, type, ptr + offset);
-            offset += m_header.estimateSize(level);
-            width  >>= 1;
-            height >>= 1;
-            btSetMax(width, uint32_t(1));
-            btSetMax(height, uint32_t(1));
-            level++;
+    if (m_header.validateTextureFormat(internal, format, type, bitCount)) {
+        if (m_header.hasMipmap()) {
+            int level = 0;
+            while (height > 1) {
+                glTexImage2D(target, level, internal, width, height, 0, format, type, ptr + offset);
+                offset += m_header.estimateSize(level);
+                width  >>= 1;
+                height >>= 1;
+                btSetMax(width, uint32_t(1));
+                btSetMax(height, uint32_t(1));
+                level++;
+            }
         }
-    }
-    else {
-        glTexImage2D(target, 0, internal, width, height, 0, format, type, ptr);
-        offset += m_header.estimateSize(0);
+        else {
+            glTexImage2D(target, 0, internal, width, height, 0, format, type, ptr);
+            offset += m_header.estimateSize(0);
+        }
     }
 }
 
-void DDSTexture::setVolumeTexture(const uint8_t *ptr)
+void DDSTexture::setVolumeTexture(const uint8_t *ptr, size_t size)
 {
     uint32_t width = m_header.width(), height = m_header.height(), depth = m_header.depth();
     GLenum format, internal, type;
-    m_header.getTextureFormat(internal, format, type);
-    if (m_header.hasMipmap()) {
-        uint32_t mipmapCount = m_header.width();
-        size_t offset = 0;
-        for (uint32_t i = 0; i < mipmapCount; i++) {
-            glTexImage3D(GL_TEXTURE_3D, i, internal, width, height, depth, 0, format, type, ptr);
-            offset += m_header.estimateSize(i);
-            width  >>= 1;
-            height >>= 1;
-            depth  >>= 1;
-            btSetMax(width, uint32_t(1));
-            btSetMax(height, uint32_t(1));
-            btSetMax(depth, uint32_t(1));
+    size_t bitCount;
+    if (m_header.validateTextureFormat(internal, format, type, bitCount)) {
+        size_t actualSize = bitCount * width * height * depth;
+        if (m_header.hasMipmap() && size > actualSize) {
+            uint32_t mipmapCount = m_header.width();
+            size_t offset = 0;
+            for (uint32_t i = 0; i < mipmapCount; i++) {
+                glTexImage3D(GL_TEXTURE_3D, i, internal, width, height, depth, 0, format, type, ptr);
+                offset += m_header.estimateSize(i);
+                width  >>= 1;
+                height >>= 1;
+                depth  >>= 1;
+                btSetMax(width, uint32_t(1));
+                btSetMax(height, uint32_t(1));
+                btSetMax(depth, uint32_t(1));
+            }
+        }
+        else if (actualSize == size) {
+            glTexImage3D(GL_TEXTURE_3D, 0, internal, width, height, depth, 0, format, type, ptr);
         }
     }
-    else {
-        glTexImage3D(GL_TEXTURE_3D, 0, internal, width, height, depth, 0, format, type, ptr);
+}
+
+void DDSTexture::setTexture(const uint8_t *ptr, size_t size)
+{
+    uint32_t width = m_header.width(), height = m_header.height();
+    GLenum format, internal, type;
+    size_t bitCount;
+    if (m_header.validateTextureFormat(internal, format, type, bitCount)) {
+        size_t actualSize = bitCount * width * height;
+        if (m_header.hasMipmap() && size > actualSize) {
+            uint32_t mipmapCount = m_header.width();
+            size_t offset = 0;
+            for (uint32_t i = 0; i < mipmapCount; i++) {
+                glTexImage2D(GL_TEXTURE_2D, i, internal, width, height, 0, format, type, ptr);
+                offset += m_header.estimateSize(i);
+                width  >>= 1;
+                height >>= 1;
+                btSetMax(width, uint32_t(1));
+                btSetMax(height, uint32_t(1));
+            }
+        }
+        else if (actualSize == size) {
+            glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, type, ptr);
+        }
     }
 }
 

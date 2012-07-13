@@ -57,7 +57,8 @@ public:
 
 private:
     void setCubeTexture(const uint8_t *ptr, GLenum target, size_t &offset);
-    void setVolumeTexture(const uint8_t *ptr);
+    void setVolumeTexture(const uint8_t *ptr, size_t size);
+    void setTexture(const uint8_t *ptr, size_t size);
 
     struct Header {
         enum Flags {
@@ -179,43 +180,50 @@ private:
             btSetMax(description.mipmapCount, uint32_t(1));
         }
         void getDataPointer(const uint8_t *data, uint8_t *&ptr) const {
-            ptr = const_cast<uint8_t *>(data) + description.size;
+            ptr = const_cast<uint8_t *>(data) + sizeof(magic) + description.size;
         }
-        void getTextureFormat(GLenum &internal, GLenum &format, GLenum &type) const {
+        bool validateTextureFormat(GLenum &internal, GLenum &format, GLenum &type, size_t &bitCount) const {
             const Header::Description::PixelFormat &pf = description.pixelFormat;
-            switch (pf.bitsCount) {
+            bitCount = pf.bitsCount;
+            switch (bitCount) {
             case 32:
                 internal = GL_RGBA8;
                 format   = GL_RGBA;
                 type     = GL_UNSIGNED_BYTE;
-                return;
+                bitCount /= 8;
+                return true;
             case 24:
                 internal = GL_RGB8;
                 format   = GL_RGB;
                 type     = GL_UNSIGNED_BYTE;
-                return;
+                bitCount /= 8;
+                return true;
             case 16:
                 switch (pf.bitmask.green) {
                 case 0x00f0:
                     internal = GL_RGBA16;
                     format   = GL_RGBA;
                     type     = GL_UNSIGNED_SHORT_4_4_4_4;
-                    return;
+                    bitCount /= 8;
+                    return true;
                 case 0x07e0:
                     internal = GL_RGB16;
                     format   = GL_RGB;
                     type     = GL_UNSIGNED_SHORT_5_6_5;
-                    return;
+                    bitCount /= 8;
+                    return true;
                 case 0x03e0:
                     internal = GL_RGBA16;
                     format   = GL_RGBA;
                     type     = GL_UNSIGNED_SHORT_5_5_5_1;
-                    return;
+                    bitCount /= 8;
+                    return true;
                 case 0x0000:
                     internal = GL_LUMINANCE8_ALPHA8;
                     format   = GL_LUMINANCE_ALPHA;
                     type     = GL_UNSIGNED_BYTE;
-                    return;
+                    bitCount /= 8;
+                    return true;
                 }
             case 8:
                 if (pf.bitmask.alpha) {
@@ -227,11 +235,14 @@ private:
                     format   = GL_RED;
                 }
                 type = GL_UNSIGNED_BYTE;
-                return;
+                bitCount /= 8;
+                return true;
             }
             internal = GL_NONE;
             format   = GL_NONE;
             type     = GL_UNSIGNED_BYTE;
+            bitCount = 0;
+            return false;
         }
     } m_header;
     QGLWidget *m_context;
