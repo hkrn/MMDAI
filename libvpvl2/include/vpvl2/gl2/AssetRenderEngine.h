@@ -117,7 +117,7 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
-    void setEffect(IEffect *effect, const IString *dir);
+    void setEffect(IEffect *effect, const IString *dir, bool restrict);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);

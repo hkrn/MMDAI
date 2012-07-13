@@ -46,8 +46,8 @@ class IEffect
 {
 public:
     struct OffscreenRenderTarget {
-        void *texture;
-        void *sampler;
+        void *textureParameter;
+        void *samplerParameter;
     };
     virtual ~IEffect() {}
 

@@ -85,9 +85,9 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
       #endif /* VPVL2_LINK_QT */
       m_delegate(delegate),
       m_scene(scene),
+      m_current(0),
       m_model(model),
       m_context(context),
-      m_effect(scene, delegate),
       m_cullFaceState(true)
 {
 #ifdef VPVL2_LINK_QT
@@ -129,6 +129,10 @@ AssetRenderEngine::~AssetRenderEngine()
         }
     }
     deleteRecurse(scene, scene->mRootNode);
+    m_effects.remove(m_current->effect());
+    m_effects.releaseAll();
+    delete m_current;
+    m_current = 0;
     m_context = 0;
     m_model = 0;
     m_delegate = 0;
@@ -142,7 +146,7 @@ IModel *AssetRenderEngine::model() const
 
 bool AssetRenderEngine::upload(const IString *dir)
 {
-    if (!m_model || !m_effect.isAttached())
+    if (!m_model || !m_current)
         return false;
     bool ret = true;
     vpvl::Asset *asset = m_model->ptr();
@@ -152,10 +156,10 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     m_delegate->allocateContext(m_model, context);
-    m_effect.useToon.setValue(false);
-    m_effect.parthf.setValue(false);
-    m_effect.transp.setValue(false);
-    m_effect.opadd.setValue(false);
+    m_current->useToon.setValue(false);
+    m_current->parthf.setValue(false);
+    m_current->transp.setValue(false);
+    m_current->opadd.setValue(false);
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
     texture.object = &textureID;
@@ -202,15 +206,15 @@ bool AssetRenderEngine::upload(const IString *dir)
 
 void AssetRenderEngine::update()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model->isVisible() || !m_current)
         return;
-    m_effect.updateModelGeometryParameters(m_scene, m_model);
-    m_effect.updateSceneParameters();
+    m_current->updateModelGeometryParameters(m_scene, m_model);
+    m_current->updateSceneParameters();
 }
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
+    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
         return;
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
@@ -219,9 +223,9 @@ void AssetRenderEngine::renderModel()
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
-        m_effect.depthTexture.setTexture(depthTexture);
+        m_current->depthTexture.setTexture(depthTexture);
     }
-    m_effect.setModelMatrixParameters(m_model);
+    m_current->setModelMatrixParameters(m_model);
     const aiScene *a = asset->getScene();
     renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
     if (!m_cullFaceState) {
@@ -242,44 +246,66 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
+    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
         return;
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))
         return;
-    m_effect.setModelMatrixParameters(m_model);
+    m_current->setModelMatrixParameters(m_model);
     const aiScene *a = asset->getScene();
     renderZPlotRecurse(a, a->mRootNode);
 }
 
 bool AssetRenderEngine::hasPreProcess() const
 {
-    return m_effect.hasTechniques(EffectEngine::kPreProcess);
+    return m_current->hasTechniques(EffectEngine::kPreProcess);
 }
 
 bool AssetRenderEngine::hasPostProcess() const
 {
-    return m_effect.hasTechniques(EffectEngine::kPostProcess);
+    return m_current->hasTechniques(EffectEngine::kPostProcess);
 }
 
 void AssetRenderEngine::preparePostProcess()
 {
-    m_effect.executeScriptExternal();
+    m_current->executeScriptExternal();
 }
 
 void AssetRenderEngine::performPreProcess()
 {
-    m_effect.executeProcess(m_model, EffectEngine::kPreProcess);
+    m_current->executeProcess(m_model, EffectEngine::kPreProcess);
 }
 
 void AssetRenderEngine::performPostProcess()
 {
-    m_effect.executeProcess(m_model, EffectEngine::kPostProcess);
+    m_current->executeProcess(m_model, EffectEngine::kPostProcess);
 }
 
-void AssetRenderEngine::setEffect(IEffect *effect, const IString *dir)
+void AssetRenderEngine::setEffect(IEffect *effect, const IString *dir, bool restrict)
 {
-    m_effect.attachEffect(effect, dir);
+    if (effect) {
+        EffectEngine **value = const_cast<EffectEngine **>(m_effects.find(effect)), *ee;
+        if (value) {
+            ee = *value;
+            bool attachable = restrict ? ee->scriptOrder() == EffectEngine::kStandard : true;
+            m_current = attachable ? ee : 0;
+        }
+        else {
+            m_current = new EffectEngine(m_scene, m_delegate);
+            m_current->attachEffect(effect, dir);
+            bool attachable = restrict ? m_current->scriptOrder() == EffectEngine::kStandard : true;
+            if (attachable) {
+                m_effects.insert(effect, m_current);
+            }
+            else {
+                delete m_current;
+                m_current = 0;
+            }
+        }
+    }
+    else {
+        m_current = 0;
+    }
 }
 
 void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -296,7 +322,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     const unsigned int nmeshes = node->mNumMeshes;
     int totalIndices = 0;
     AssetVertex assetVertex;
-    m_effect.subsetCount.setValue(nmeshes);
+    m_current->subsetCount.setValue(nmeshes);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
@@ -355,7 +381,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, nindices * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
         totalIndices += nindices;
     }
-    m_effect.vertexCount.setValue(totalIndices);
+    m_current->vertexCount.setValue(totalIndices);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], context);
@@ -397,7 +423,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         const char *target = hasShadowMap ? "object_ss" : "object";
-        CGtechnique technique = m_effect.findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+        CGtechnique technique = m_current->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         if (cgIsTechnique(technique)) {
             const int nindices = indices.size();
             glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
@@ -406,7 +432,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             glEnableClientState(GL_VERTEX_ARRAY);
             glEnableClientState(GL_NORMAL_ARRAY);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -434,12 +460,12 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         const AssetIndices &indices = m_indices[mesh];
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
-        CGtechnique technique = m_effect.findTechnique("zplot", i, nmeshes, false, false, false);
+        CGtechnique technique = m_current->findTechnique("zplot", i, nmeshes, false, false, false);
         if (cgIsTechnique(technique)) {
             const int nindices = indices.size();
             glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
             glEnableClientState(GL_VERTEX_ARRAY);
-            m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
+            m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
             glDisableClientState(GL_VERTEX_ARRAY);
         }
     }
@@ -462,23 +488,23 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
             textureID = m_textures[subTexture];
             isAdditive = subTexture.find(".spa") != std::string::npos;
-            m_effect.materialSphereMap.setTexture(textureID);
-            m_effect.spadd.setValue(isAdditive);
-            m_effect.useSpheremap.setValue(true);
+            m_current->materialSphereMap.setTexture(textureID);
+            m_current->spadd.setValue(isAdditive);
+            m_current->useSpheremap.setValue(true);
             hasSphereMap = true;
         }
         textureID = m_textures[mainTexture];
         if (textureID > 0) {
-            m_effect.materialTexture.setTexture(textureID);
-            m_effect.useTexture.setValue(true);
+            m_current->materialTexture.setTexture(textureID);
+            m_current->useTexture.setValue(true);
             hasTexture = true;
         }
     }
     else {
-        m_effect.materialTexture.setTexture(0);
-        m_effect.materialSphereMap.setTexture(0);
-        m_effect.useTexture.setValue(false);
-        m_effect.useSpheremap.setValue(false);
+        m_current->materialTexture.setTexture(0);
+        m_current->materialSphereMap.setTexture(0);
+        m_current->useTexture.setValue(false);
+        m_current->useSpheremap.setValue(false);
     }
     // * ambient = diffuse
     // * specular / 10
@@ -491,15 +517,15 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else {
         color.setValue(0, 0, 0, 1);
     }
-    m_effect.emissive.setGeometryColor(color);
+    m_current->emissive.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
         color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
     }
     else {
         color.setValue(0, 0, 0, 1);
     }
-    m_effect.ambient.setGeometryColor(color);
-    m_effect.diffuse.setGeometryColor(color);
+    m_current->ambient.setGeometryColor(color);
+    m_current->diffuse.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
         static const float kDivide = 10.0;
         color.setValue(specular.r / kDivide, specular.g / kDivide, specular.b / kDivide, specular.a);
@@ -507,18 +533,18 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else {
         color.setValue(0, 0, 0, 1);
     }
-    m_effect.specular.setGeometryColor(color);
+    m_current->specular.setGeometryColor(color);
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
     if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
-        m_effect.specularPower.setGeometryValue(shininess * strength);
+        m_current->specularPower.setGeometryValue(shininess * strength);
     }
     else if (ret1 == aiReturn_SUCCESS) {
-        m_effect.specularPower.setGeometryValue(shininess);
+        m_current->specularPower.setGeometryValue(shininess);
     }
     else {
-        m_effect.specularPower.setGeometryValue(1);
+        m_current->specularPower.setGeometryValue(1);
     }
     int twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_cullFaceState) {

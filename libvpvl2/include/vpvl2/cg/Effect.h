@@ -67,8 +67,8 @@ public:
 
     void addOffscreenRenderTarget(CGparameter texture, CGparameter sampler) {
         OffscreenRenderTarget target;
-        target.texture = texture;
-        target.sampler = sampler;
+        target.textureParameter = texture;
+        target.samplerParameter = sampler;
         m_offscreenRenderTargets.add(target);
     }
     void addInteractiveParameter(CGparameter value) {

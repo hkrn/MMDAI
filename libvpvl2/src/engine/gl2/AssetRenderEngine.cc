@@ -423,7 +423,7 @@ void AssetRenderEngine::performPostProcess()
     /* do nothing */
 }
 
-void AssetRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */)
+void AssetRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */, bool  /* restrict */)
 {
     /* do nothing */
 }

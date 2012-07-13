@@ -95,7 +95,7 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
-    void setEffect(IEffect *effect, const IString *dir);
+    void setEffect(IEffect *effect, const IString *dir, bool restrict);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
@@ -130,9 +130,10 @@ private:
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
 
     const Scene *m_scene;
+    EffectEngine *m_current;
     asset::Model *m_model;
     CGcontext m_context;
-    EffectEngine m_effect;
+    Hash<HashPtr, EffectEngine *> m_effects;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, AssetVertices> m_vertices;
     std::map<const struct aiMesh *, AssetIndices> m_indices;

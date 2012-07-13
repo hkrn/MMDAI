@@ -38,6 +38,7 @@
 #define VPVL2_RENDER_QT_UI_H_
 
 #include "vpvl2/Scene.h"
+#include "vpvl2/IEffect.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <btBulletCollisionCommon.h>
@@ -52,7 +53,6 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 namespace vpvl2
 {
 class Factory;
-class IEffect;
 class IModel;
 class IMotion;
 
@@ -85,6 +85,9 @@ protected:
     void paintGL();
 
 private:
+    void renderDepth();
+    void renderOffscreen();
+    void renderWindow();
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
     IModel *createModelAsync(const QString &path) const;
@@ -109,7 +112,7 @@ private:
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;
     typedef QPair<QRegExp, IEffect *> EffectAttachment;
-    typedef QPair<void *, QList<EffectAttachment> > OffscreenRenderTarget;
+    typedef QPair<IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
     QList<OffscreenRenderTarget> m_offscreens;
     QHash<QString, IEffect *> m_effectCaches;
     QMutex m_effectCacheLock;

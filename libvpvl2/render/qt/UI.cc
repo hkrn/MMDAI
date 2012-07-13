@@ -534,14 +534,21 @@ void UI::paintGL() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         return;
     }
-    const Array<IRenderEngine *> &engines = m_scene.renderEngines();
-    const int nengines = engines.count();
+    renderDepth();
+    renderOffscreen();
+    renderWindow();
+}
+
+void UI::renderDepth()
+{
     if (m_scene.light()->depthTexture()) {
         glDisable(GL_BLEND);
         m_fbo->bind();
         Vector3 target = kZeroV3, center;
         Scalar maxRadius = 0, radius;
+        const Array<IRenderEngine *> &engines = m_scene.renderEngines();
         const Array<IModel *> &models = m_scene.models();
+        const int nengines = engines.count();
         const int nmodels = models.count();
         Array<Scalar> radiusArray;
         Array<Vector3> centerArray;
@@ -589,68 +596,97 @@ void UI::paintGL() {
         m_delegate->setLightMatrices(lightWorldMatrix, lightViewMatrix, lightProjectionMatrix);
 #endif
     }
-    {
-        GLuint fbo, rbo;
-        glGenFramebuffers(1, &fbo);
-        glGenRenderbuffers(1, &rbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-        foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
-            const CGparameter parameter = static_cast<CGparameter>(offscreen.first);
-            GLuint textureID = cgGLGetTextureParameter(parameter);
-            GLint width, height;
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-            glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            glViewport(0, 0, width, height);
-            for (int i = 0; i < nengines; i++) {
-                IRenderEngine *engine = engines[i];
-                const IModel *model = engine->model();
-                const IString *name = model->name();
-                const QString &n = name ? static_cast<const String *>(name)->value() : m_delegate->findModelPath(model);
-                foreach (const EffectAttachment &attachment, offscreen.second) {
-                    IEffect *effect = attachment.second;
-                    if (attachment.first.exactMatch(n) && effect) {
-                        //engine->setEffect(effect, 0);
-                        break;
-                    }
-                }
-                engine->renderModel();
-                engine->renderEdge();
+}
+
+void UI::renderOffscreen()
+{
+    GLuint fbo, rbo;
+    const Array<IRenderEngine *> &engines = m_scene.renderEngines();
+    const int nengines = engines.count();
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &rbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
+        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
+        const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
+        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+        GLuint textureID = cgGLGetTextureParameter(sampler);
+        GLint width, height;
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+        CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
+        if (cgIsAnnotation(clearColor)) {
+            int nvalues;
+            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+            if (nvalues == 4) {
+                glClearColor(color[0], color[1], color[2], color[3]);
             }
         }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        glDeleteRenderbuffers(1, &rbo);
-        glDeleteFramebuffers(1, &fbo);
-        glViewport(0, 0, width(), height());
-        glEnable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-        glClearColor(0, 0, 1, 1);
+        CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
+        if (cgIsAnnotation(clearDepth)) {
+            int nvalues;
+            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
+            if (nvalues == 1) {
+                glClearDepth(depth[0]);
+            }
+        }
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
-            engine->preparePostProcess();
-        }
-        for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
-            engine->performPreProcess();
-        }
-        for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
+            const IModel *model = engine->model();
+            const IString *name = model->name();
+            const QString &n = name ? static_cast<const String *>(name)->value() : m_delegate->findModelPath(model);
+            foreach (const EffectAttachment &attachment, offscreen.second) {
+                IEffect *effect = attachment.second;
+                if (attachment.first.exactMatch(n) && effect) {
+                    engine->setEffect(effect, 0, true);
+                    break;
+                }
+            }
             engine->renderModel();
             engine->renderEdge();
-            engine->renderShadow();
         }
-        for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
-            engine->performPostProcess();
-        }
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glDeleteRenderbuffers(1, &rbo);
+    glDeleteFramebuffers(1, &fbo);
+}
+
+void UI::renderWindow()
+{
+    const Array<IRenderEngine *> &engines = m_scene.renderEngines();
+    const int nengines = engines.count();
+    glViewport(0, 0, width(), height());
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0, 0, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->preparePostProcess();
+    }
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->performPreProcess();
+    }
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->renderModel();
+        engine->renderEdge();
+        engine->renderShadow();
+    }
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->performPostProcess();
     }
 }
 
@@ -789,17 +825,18 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
     IEffect *effect = future2.result();
     if (!effect->internalPointer()) {
         CGcontext c = static_cast<CGcontext>(effect->internalContext());
-        qDebug() << cgGetLastListing(c);
+        qWarning() << cgGetLastListing(c);
     }
     else {
         const QDir &baseDir = info.dir();
+        const QRegExp fxRegExp(".fx$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        engine->setEffect(effect, &s1);
+        engine->setEffect(effect, &s1, false);
         effect->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
         for (int i = 0; i < nOffscreenRenderTargets; i++) {
             const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
-            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.texture);
+            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
             const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
             const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
             QList<EffectAttachment> attachments;
@@ -810,7 +847,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
                     QRegExp regexp(pair.at(0).trimmed(), Qt::CaseSensitive, QRegExp::Wildcard);
                     if (value != "hide" && value != "none") {
                         QString path = baseDir.absoluteFilePath(value);
-                        path.replace(QRegExp(".fx$"), ".cgfx");
+                        path.replace(fxRegExp, ".cgfx");
                         String s2(path);
                         const QFuture<IEffect *> &future3 = QtConcurrent::run(this, &UI::createEffectAsync, &s2);
                         attachments.append(EffectAttachment(regexp, future3.result()));
@@ -820,7 +857,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
                     }
                 }
             }
-            m_offscreens.append(OffscreenRenderTarget(renderTarget.sampler, attachments));
+            m_offscreens.append(OffscreenRenderTarget(renderTarget, attachments));
         }
     }
 #endif

@@ -63,7 +63,7 @@ public:
     virtual void preparePostProcess() = 0;
     virtual void performPreProcess() = 0;
     virtual void performPostProcess() = 0;
-    virtual void setEffect(IEffect *effect, const IString *dir) = 0;
+    virtual void setEffect(IEffect *effect, const IString *dir, bool restrict) = 0;
 };
 
 } /* namespace vpvl2 */

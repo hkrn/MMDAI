@@ -83,7 +83,7 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
-    void setEffect(IEffect *effect, const IString *dir);
+    void setEffect(IEffect *effect, const IString *dir, bool restrict);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
@@ -111,14 +111,15 @@ private:
     };
 
     const Scene *m_scene;
+    EffectEngine *m_current;
     cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_model;
     CGcontext m_context;
-    EffectEngine m_effect;
     MaterialContext *m_materialContexts;
     pmd::Model::SkinningMeshes m_mesh;
     Color m_toonTextureColors[vpvl::PMDModel::kCustomTextureMax];
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
+    Hash<HashPtr, EffectEngine *> m_effects;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
 

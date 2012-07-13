@@ -895,7 +895,7 @@ void PMDRenderEngine::performPostProcess()
     /* do nothing */
 }
 
-void PMDRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */)
+void PMDRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */, bool  /* restrict */)
 {
     /* do nothing */
 }

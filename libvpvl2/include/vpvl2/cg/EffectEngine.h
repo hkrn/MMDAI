@@ -416,7 +416,7 @@ public:
     void updateModelGeometryParameters(const Scene *scene, const IModel *model);
     void updateSceneParameters();
 
-    bool isAttached() const { return m_effect != 0; }
+    IEffect *effect() const { return m_effect; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
     ScriptClassType scriptClass() const { return m_scriptClass; }
     ScriptOrderType scriptOrder() const { return m_scriptOrder; }

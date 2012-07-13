@@ -432,7 +432,6 @@ void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositio
 void Delegate::addModelPath(const IModel *model, const QString &filename)
 {
     if (model) {
-        qDebug() << filename;
         m_model2PathLock.lock();
         m_model2Paths.insert(model, filename);
         m_model2PathLock.unlock();

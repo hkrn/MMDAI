@@ -83,7 +83,7 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
-    void setEffect(IEffect *effect, const IString *dir);
+    void setEffect(IEffect *effect, const IString *dir, bool restrict);
 
     //static bool isAcceleratorSupported();
     bool isAcceleratorAvailable() const;
@@ -116,13 +116,14 @@ private:
     };
 
     const Scene *m_scene;
+    EffectEngine *m_current;
     cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_model;
     CGcontext m_context;
-    EffectEngine m_effect;
     pmx::Model::SkinningMeshes m_mesh;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     MaterialContext *m_materialContexts;
+    Hash<HashPtr, EffectEngine *> m_effects;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
 

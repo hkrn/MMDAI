@@ -789,6 +789,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
     GLenum internal, format;
     getTextureFormat(parameter, internal, format);
     glBindTexture(GL_TEXTURE_2D, texture);
+    while (glGetError()) {}
     glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, GL_UNSIGNED_BYTE, 0);
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -839,7 +840,7 @@ GLuint RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter
 
 void RenderColorTargetSemantic::getSize2(const CGparameter parameter, int &width, int &height)
 {
-    const CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewportRatio");
+    const CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewPortRatio");
     int nvalues = 0;
     if (cgIsAnnotation(viewportRatioAnnotation)) {
         const float *values = cgGetFloatAnnotationValues(viewportRatioAnnotation, &nvalues);
@@ -1280,7 +1281,7 @@ bool EffectEngine::hasTechniques(ScriptOrderType order) const
 
 void EffectEngine::executeProcess(const IModel *model, ScriptOrderType order)
 {
-    if (!model || !isAttached() || m_scriptOrder != order)
+    if (!model || !m_effect || m_scriptOrder != order)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);

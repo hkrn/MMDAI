@@ -61,10 +61,10 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       #endif /* VPVL_LINK_QT */
       m_delegate(delegate),
       m_scene(scene),
+      m_current(0),
       m_accelerator(accelerator),
       m_model(model),
       m_context(effectContext),
-      m_effect(scene, delegate),
       m_materialContexts(0),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
@@ -86,14 +86,14 @@ IModel *PMDRenderEngine::model() const
 
 bool PMDRenderEngine::upload(const IString *dir)
 {
-    if (!m_model || !m_effect.isAttached())
+    if (!m_model || !m_current)
         return false;
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-    m_effect.useToon.setValue(true);
-    m_effect.parthf.setValue(false);
-    m_effect.transp.setValue(false);
-    m_effect.opadd.setValue(false);
+    m_current->useToon.setValue(true);
+    m_current->parthf.setValue(false);
+    m_current->transp.setValue(false);
+    m_current->opadd.setValue(false);
     PMDModel *model = m_model->ptr();
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kEdgeIndices]);
@@ -109,7 +109,7 @@ bool PMDRenderEngine::upload(const IString *dir)
          "Binding indices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelIndices]);
     const int nvertices = model->vertices().count();
-    m_effect.vertexCount.setValue(nvertices);
+    m_current->vertexCount.setValue(nvertices);
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, nvertices * model->strideSize(PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
@@ -123,7 +123,7 @@ bool PMDRenderEngine::upload(const IString *dir)
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
     MaterialContext *materialContexts = m_materialContexts = new MaterialContext[nmaterials];
-    m_effect.subsetCount.setValue(nmaterials);
+    m_current->subsetCount.setValue(nmaterials);
     texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
@@ -169,7 +169,7 @@ bool PMDRenderEngine::upload(const IString *dir)
         m_delegate->getToonColor(s, dir, m_toonTextureColors[i + 1], context);
         delete s;
     }
-    m_effect.setModelMatrixParameters(m_model);
+    m_current->setModelMatrixParameters(m_model);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
@@ -185,7 +185,7 @@ bool PMDRenderEngine::upload(const IString *dir)
 
 void PMDRenderEngine::update()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached())
+    if (!m_model || !m_model->isVisible() || !m_current)
         return;
     PMDModel *model = m_model->ptr();
     model->setLightPosition(-m_scene->light()->direction());
@@ -200,15 +200,15 @@ void PMDRenderEngine::update()
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->updateModel(m_model, m_scene);
 #endif
-    m_effect.updateModelGeometryParameters(m_scene, m_model);
-    m_effect.updateSceneParameters();
+    m_current->updateModelGeometryParameters(m_scene, m_model);
+    m_current->updateSceneParameters();
 }
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
         return;
-    m_effect.setModelMatrixParameters(m_model);
+    m_current->setModelMatrixParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -221,7 +221,7 @@ void PMDRenderEngine::renderModel()
     size_t offset = 0;
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
-        m_effect.depthTexture.setTexture(depthTexture);
+        m_current->depthTexture.setTexture(depthTexture);
     }
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
@@ -235,7 +235,7 @@ void PMDRenderEngine::renderModel()
                       reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)));
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     Color diffuseColor(0, 0, 0, 1);
-    m_effect.edgeColor.setGeometryColor(m_model->edgeColor());
+    m_current->edgeColor.setGeometryColor(m_model->edgeColor());
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
@@ -243,42 +243,42 @@ void PMDRenderEngine::renderModel()
         const Color &toonColor = m_toonTextureColors[material->toonID()];
         const Color &diffuse = material->diffuse();
         diffuseColor.setValue(diffuse.x(), diffuse.y(), diffuse.z(), diffuse.w() * materialOpacity);
-        m_effect.ambient.setGeometryColor(diffuseColor);
-        m_effect.diffuse.setGeometryColor(diffuseColor);
-        m_effect.emissive.setGeometryColor(material->ambient());
-        m_effect.specular.setGeometryColor(material->specular());
-        m_effect.specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
-        m_effect.toonColor.setGeometryColor(toonColor);
+        m_current->ambient.setGeometryColor(diffuseColor);
+        m_current->diffuse.setGeometryColor(diffuseColor);
+        m_current->emissive.setGeometryColor(material->ambient());
+        m_current->specular.setGeometryColor(material->specular());
+        m_current->specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
+        m_current->toonColor.setGeometryColor(toonColor);
         bool useTexture = false, useSphereMap = false, spadd = false;
         if (materialContext.mainTextureID > 0) {
             if (material->isMainSphereAdd()) {
-                m_effect.materialSphereMap.setTexture(materialContext.mainTextureID);
+                m_current->materialSphereMap.setTexture(materialContext.mainTextureID);
                 spadd = true;
                 useSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
-                m_effect.materialSphereMap.setTexture(materialContext.mainTextureID);
+                m_current->materialSphereMap.setTexture(materialContext.mainTextureID);
                 useSphereMap = true;
             }
             else {
-                m_effect.materialTexture.setTexture(materialContext.mainTextureID);
+                m_current->materialTexture.setTexture(materialContext.mainTextureID);
                 useTexture = true;
             }
         }
         if (!useSphereMap) {
             if (material->isSubSphereAdd()) {
-                m_effect.materialSphereMap.setTexture(materialContext.subTextureID);
+                m_current->materialSphereMap.setTexture(materialContext.subTextureID);
                 spadd = true;
                 useSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
-                m_effect.materialSphereMap.setTexture(materialContext.subTextureID);
+                m_current->materialSphereMap.setTexture(materialContext.subTextureID);
                 useSphereMap = true;
             }
         }
-        m_effect.useTexture.setValue(useTexture);
-        m_effect.useSpheremap.setValue(useSphereMap);
-        m_effect.spadd.setValue(spadd);
+        m_current->useTexture.setValue(useTexture);
+        m_current->useSpheremap.setValue(useSphereMap);
+        m_current->spadd.setValue(spadd);
         if ((hasModelTransparent && m_cullFaceState) ||
                 (!btFuzzyZero(materialOpacity - 1.0f) && m_cullFaceState)) {
             glDisable(GL_CULL_FACE);
@@ -290,8 +290,8 @@ void PMDRenderEngine::renderModel()
         }
         const int nindices = material->countIndices();
         const char *const target = hasShadowMap ? "object_ss" : "object";
-        CGtechnique technique = m_effect.findTechnique(target, i, nmaterials, useTexture, useSphereMap, true);
-        m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        CGtechnique technique = m_current->findTechnique(target, i, nmaterials, useTexture, useSphereMap, true);
+        m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -307,10 +307,10 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
         return;
-    m_effect.setModelMatrixParameters(m_model);
-    m_effect.setZeroGeometryParameters(m_model);
+    m_current->setModelMatrixParameters(m_model);
+    m_current->setZeroGeometryParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -325,8 +325,8 @@ void PMDRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_effect.findTechnique("edge", i, nmaterials, false, false, true);
-        m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        CGtechnique technique = m_current->findTechnique("edge", i, nmaterials, false, false, true);
+        m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);
@@ -337,10 +337,10 @@ void PMDRenderEngine::renderEdge()
 
 void PMDRenderEngine::renderShadow()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
         return;
-    m_effect.setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
-    m_effect.setZeroGeometryParameters(m_model);
+    m_current->setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
+    m_current->setZeroGeometryParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -355,8 +355,8 @@ void PMDRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_effect.findTechnique("shadow", i, nmaterials, false, false, true);
-        m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        CGtechnique technique = m_current->findTechnique("shadow", i, nmaterials, false, false, true);
+        m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);
@@ -367,10 +367,10 @@ void PMDRenderEngine::renderShadow()
 
 void PMDRenderEngine::renderZPlot()
 {
-    if (!m_model || !m_model->isVisible() || !m_effect.isAttached() || m_effect.scriptOrder() != EffectEngine::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != EffectEngine::kStandard)
         return;
-    m_effect.setModelMatrixParameters(m_model);
-    m_effect.setZeroGeometryParameters(m_model);
+    m_current->setModelMatrixParameters(m_model);
+    m_current->setZeroGeometryParameters(m_model);
     PMDModel *model = m_model->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -386,8 +386,8 @@ void PMDRenderEngine::renderZPlot()
         const Material *material = materials[i];
         const int nindices = material->countIndices();
         if (!btFuzzyZero(material->opacity() - 0.98)) {
-            CGtechnique technique = m_effect.findTechnique("zplot", i, nmaterials, false, false, true);
-            m_effect.executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+            CGtechnique technique = m_current->findTechnique("zplot", i, nmaterials, false, false, true);
+            m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         }
         offset += nindices * indexStride;
     }
@@ -399,32 +399,54 @@ void PMDRenderEngine::renderZPlot()
 
 bool PMDRenderEngine::hasPreProcess() const
 {
-    return m_effect.hasTechniques(EffectEngine::kPreProcess);
+    return m_current->hasTechniques(EffectEngine::kPreProcess);
 }
 
 bool PMDRenderEngine::hasPostProcess() const
 {
-    return m_effect.hasTechniques(EffectEngine::kPostProcess);
+    return m_current->hasTechniques(EffectEngine::kPostProcess);
 }
 
 void PMDRenderEngine::preparePostProcess()
 {
-    m_effect.executeScriptExternal();
+    m_current->executeScriptExternal();
 }
 
 void PMDRenderEngine::performPreProcess()
 {
-    m_effect.executeProcess(m_model, EffectEngine::kPreProcess);
+    m_current->executeProcess(m_model, EffectEngine::kPreProcess);
 }
 
 void PMDRenderEngine::performPostProcess()
 {
-    m_effect.executeProcess(m_model, EffectEngine::kPostProcess);
+    m_current->executeProcess(m_model, EffectEngine::kPostProcess);
 }
 
-void PMDRenderEngine::setEffect(IEffect *effect, const IString *dir)
+void PMDRenderEngine::setEffect(IEffect *effect, const IString *dir, bool restrict)
 {
-    m_effect.attachEffect(effect, dir);
+    if (effect) {
+        EffectEngine **value = const_cast<EffectEngine **>(m_effects.find(effect)), *ee;
+        if (value) {
+            ee = *value;
+            bool attachable = restrict ? ee->scriptOrder() == EffectEngine::kStandard : true;
+            m_current = attachable ? ee : 0;
+        }
+        else {
+            m_current = new EffectEngine(m_scene, m_delegate);
+            m_current->attachEffect(effect, dir);
+            bool attachable = restrict ? m_current->scriptOrder() == EffectEngine::kStandard : true;
+            if (attachable) {
+                m_effects.insert(effect, m_current);
+            }
+            else {
+                delete m_current;
+                m_current = 0;
+            }
+        }
+    }
+    else {
+        m_current = 0;
+    }
 }
 
 void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -460,6 +482,10 @@ void PMDRenderEngine::release()
     delete m_accelerator;
     m_accelerator = 0;
 #endif
+    m_effects.remove(m_current->effect());
+    m_effects.releaseAll();
+    delete m_current;
+    m_current = 0;
     m_delegate = 0;
     m_scene = 0;
     m_model = 0;

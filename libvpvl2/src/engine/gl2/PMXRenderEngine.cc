@@ -967,7 +967,7 @@ void PMXRenderEngine::performPostProcess()
     /* do nothing */
 }
 
-void PMXRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */)
+void PMXRenderEngine::setEffect(IEffect * /* effect */, const IString * /* dir */, bool  /* restrict */)
 {
     /* do nothing */
 }
