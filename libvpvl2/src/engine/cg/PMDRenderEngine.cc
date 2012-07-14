@@ -86,14 +86,8 @@ IModel *PMDRenderEngine::model() const
 
 bool PMDRenderEngine::upload(const IString *dir)
 {
-    if (!m_model || !m_current)
-        return false;
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-    m_current->useToon.setValue(true);
-    m_current->parthf.setValue(false);
-    m_current->transp.setValue(false);
-    m_current->opadd.setValue(false);
     PMDModel *model = m_model->ptr();
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kEdgeIndices]);
@@ -109,7 +103,6 @@ bool PMDRenderEngine::upload(const IString *dir)
          "Binding indices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelIndices]);
     const int nvertices = model->vertices().count();
-    m_current->vertexCount.setValue(nvertices);
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBufferData(GL_ARRAY_BUFFER, nvertices * model->strideSize(PMDModel::kVerticesStride),
                  model->verticesPointer(), GL_DYNAMIC_DRAW);
@@ -123,7 +116,6 @@ bool PMDRenderEngine::upload(const IString *dir)
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
     MaterialContext *materialContexts = m_materialContexts = new MaterialContext[nmaterials];
-    m_current->subsetCount.setValue(nmaterials);
     texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
@@ -169,7 +161,6 @@ bool PMDRenderEngine::upload(const IString *dir)
         m_delegate->getToonColor(s, dir, m_toonTextureColors[i + 1], context);
         delete s;
     }
-    m_current->setModelMatrixParameters(m_model);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
@@ -469,6 +460,15 @@ void PMDRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             m_current = new EffectEngine(m_scene, dir, einstance, m_delegate);
             m_effects.insert(type == IEffect::kAutoDetection ? m_current->scriptOrder() : type, m_current);
         }
+    }
+    if (m_current) {
+        m_current->useToon.setValue(true);
+        m_current->parthf.setValue(false);
+        m_current->transp.setValue(false);
+        m_current->opadd.setValue(false);
+        m_current->vertexCount.setValue(m_model->count(IModel::kVertex));
+        m_current->subsetCount.setValue(m_model->count(IModel::kMaterial));
+        m_current->setModelMatrixParameters(m_model);
     }
 }
 

@@ -140,6 +140,8 @@ private:
     std::map<const struct aiMesh *, AssetVertices> m_vertices;
     std::map<const struct aiMesh *, AssetIndices> m_indices;
     std::map<const struct aiMesh *, AssetVBO> m_vbo;
+    int m_nvertices;
+    int m_nmeshes;
     bool m_cullFaceState;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)

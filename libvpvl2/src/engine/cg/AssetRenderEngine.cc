@@ -88,6 +88,8 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
       m_current(0),
       m_model(model),
       m_context(context),
+      m_nvertices(0),
+      m_nmeshes(0),
       m_cullFaceState(true)
 {
 #ifdef VPVL2_LINK_QT
@@ -98,37 +100,39 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
 AssetRenderEngine::~AssetRenderEngine()
 {
     const aiScene *scene = m_model->ptr()->getScene();
-    const unsigned int nmaterials = scene->mNumMaterials;
-    std::string texture, mainTexture, subTexture;
-    aiString texturePath;
-    for (unsigned int i = 0; i < nmaterials; i++) {
-        aiMaterial *material = scene->mMaterials[i];
-        aiReturn found = AI_SUCCESS;
-        GLuint textureID;
-        int textureIndex = 0;
-        while (found == AI_SUCCESS) {
-            found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-            if (found != AI_SUCCESS)
-                break;
-            texture = texturePath.data;
-            if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                Textures::const_iterator sub = m_textures.find(subTexture);
-                if (sub != m_textures.end()) {
-                    textureID = sub->second;
-                    glDeleteTextures(1, &textureID);
-                    m_textures.erase(subTexture);
+    if (scene) {
+        const unsigned int nmaterials = scene->mNumMaterials;
+        std::string texture, mainTexture, subTexture;
+        aiString texturePath;
+        for (unsigned int i = 0; i < nmaterials; i++) {
+            aiMaterial *material = scene->mMaterials[i];
+            aiReturn found = AI_SUCCESS;
+            GLuint textureID;
+            int textureIndex = 0;
+            while (found == AI_SUCCESS) {
+                found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+                if (found != AI_SUCCESS)
+                    break;
+                texture = texturePath.data;
+                if (SplitTexturePath(texture, mainTexture, subTexture)) {
+                    Textures::const_iterator sub = m_textures.find(subTexture);
+                    if (sub != m_textures.end()) {
+                        textureID = sub->second;
+                        glDeleteTextures(1, &textureID);
+                        m_textures.erase(subTexture);
+                    }
                 }
+                Textures::const_iterator main = m_textures.find(mainTexture);
+                if (main != m_textures.end()) {
+                    textureID = main->second;
+                    glDeleteTextures(1, &textureID);
+                    m_textures.erase(mainTexture);
+                }
+                textureIndex++;
             }
-            Textures::const_iterator main = m_textures.find(mainTexture);
-            if (main != m_textures.end()) {
-                textureID = main->second;
-                glDeleteTextures(1, &textureID);
-                m_textures.erase(mainTexture);
-            }
-            textureIndex++;
         }
+        deleteRecurse(scene, scene->mRootNode);
     }
-    deleteRecurse(scene, scene->mRootNode);
     m_effects.releaseAll();
     m_oseffects.releaseAll();
     m_current = 0;
@@ -136,6 +140,9 @@ AssetRenderEngine::~AssetRenderEngine()
     m_model = 0;
     m_delegate = 0;
     m_scene = 0;
+    m_nvertices = 0;
+    m_nmeshes = 0;
+    m_cullFaceState = false;
 }
 
 IModel *AssetRenderEngine::model() const
@@ -145,8 +152,6 @@ IModel *AssetRenderEngine::model() const
 
 bool AssetRenderEngine::upload(const IString *dir)
 {
-    if (!m_model || !m_current)
-        return false;
     bool ret = true;
     vpvl::Asset *asset = m_model->ptr();
     const aiScene *scene = asset->getScene();
@@ -155,10 +160,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     m_delegate->allocateContext(m_model, context);
-    m_current->useToon.setValue(false);
-    m_current->parthf.setValue(false);
-    m_current->transp.setValue(false);
-    m_current->opadd.setValue(false);
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
     texture.object = &textureID;
@@ -328,6 +329,14 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             m_effects.insert(type == IEffect::kAutoDetection ? m_current->scriptOrder() : type, m_current);
         }
     }
+    if (m_current) {
+        m_current->useToon.setValue(false);
+        m_current->parthf.setValue(false);
+        m_current->transp.setValue(false);
+        m_current->opadd.setValue(false);
+        m_current->subsetCount.setValue(m_nmeshes);
+        m_current->vertexCount.setValue(m_nvertices);
+    }
 }
 
 void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
@@ -344,7 +353,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     const unsigned int nmeshes = node->mNumMeshes;
     int totalIndices = 0;
     AssetVertex assetVertex;
-    m_current->subsetCount.setValue(nmeshes);
+    m_nmeshes = nmeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
@@ -403,7 +412,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, nindices * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
         totalIndices += nindices;
     }
-    m_current->vertexCount.setValue(totalIndices);
+    m_nvertices = totalIndices;
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], context);

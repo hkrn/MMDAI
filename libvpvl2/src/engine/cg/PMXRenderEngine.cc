@@ -89,14 +89,8 @@ IModel *PMXRenderEngine::model() const
 
 bool PMXRenderEngine::upload(const IString *dir)
 {
-    if (!m_model || !m_current)
-        return false;
     void *context = 0;
     m_delegate->allocateContext(m_model, context);
-    m_current->useToon.setValue(true);
-    m_current->parthf.setValue(false);
-    m_current->transp.setValue(false);
-    m_current->opadd.setValue(false);
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     size_t size = pmx::Model::strideSize(pmx::Model::kIndexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
@@ -111,7 +105,6 @@ bool PMXRenderEngine::upload(const IString *dir)
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model vertices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelVertices]);
-    m_current->vertexCount.setValue(nvertices);
     if (m_isVertexShaderSkinning)
         m_model->getSkinningMesh(m_mesh);
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -119,7 +112,6 @@ bool PMXRenderEngine::upload(const IString *dir)
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
-    m_current->subsetCount.setValue(nmaterials);
     texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const pmx::Material *material = materials[i];
@@ -418,6 +410,15 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             m_current = new EffectEngine(m_scene, dir, einstance, m_delegate);
             m_effects.insert(type == IEffect::kAutoDetection ? m_current->scriptOrder() : type, m_current);
         }
+    }
+    if (m_current) {
+        m_current->useToon.setValue(true);
+        m_current->parthf.setValue(false);
+        m_current->transp.setValue(false);
+        m_current->opadd.setValue(false);
+        m_current->vertexCount.setValue(m_model->count(IModel::kVertex));
+        m_current->subsetCount.setValue(m_model->count(IModel::kMaterial));
+        m_current->setModelMatrixParameters(m_model);
     }
 }
 
