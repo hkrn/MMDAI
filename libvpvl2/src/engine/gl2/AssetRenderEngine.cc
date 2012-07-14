@@ -246,37 +246,39 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate, const Scene *sce
 AssetRenderEngine::~AssetRenderEngine()
 {
     const aiScene *scene = m_model->ptr()->getScene();
-    const unsigned int nmaterials = scene->mNumMaterials;
-    std::string texture, mainTexture, subTexture;
-    aiString texturePath;
-    for (unsigned int i = 0; i < nmaterials; i++) {
-        aiMaterial *material = scene->mMaterials[i];
-        aiReturn found = AI_SUCCESS;
-        GLuint textureID;
-        int textureIndex = 0;
-        while (found == AI_SUCCESS) {
-            found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-            if (found != AI_SUCCESS)
-                break;
-            texture = texturePath.data;
-            if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
-                if (sub != m_context->textures.end()) {
-                    textureID = sub->second;
-                    glDeleteTextures(1, &textureID);
-                    m_context->textures.erase(subTexture);
+    if (scene) {
+        const unsigned int nmaterials = scene->mNumMaterials;
+        std::string texture, mainTexture, subTexture;
+        aiString texturePath;
+        for (unsigned int i = 0; i < nmaterials; i++) {
+            aiMaterial *material = scene->mMaterials[i];
+            aiReturn found = AI_SUCCESS;
+            GLuint textureID;
+            int textureIndex = 0;
+            while (found == AI_SUCCESS) {
+                found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+                if (found != AI_SUCCESS)
+                    break;
+                texture = texturePath.data;
+                if (SplitTexturePath(texture, mainTexture, subTexture)) {
+                    PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
+                    if (sub != m_context->textures.end()) {
+                        textureID = sub->second;
+                        glDeleteTextures(1, &textureID);
+                        m_context->textures.erase(subTexture);
+                    }
                 }
+                PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
+                if (main != m_context->textures.end()) {
+                    textureID = main->second;
+                    glDeleteTextures(1, &textureID);
+                    m_context->textures.erase(mainTexture);
+                }
+                textureIndex++;
             }
-            PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
-            if (main != m_context->textures.end()) {
-                textureID = main->second;
-                glDeleteTextures(1, &textureID);
-                m_context->textures.erase(mainTexture);
-            }
-            textureIndex++;
         }
+        deleteRecurse(scene, scene->mRootNode);
     }
-    deleteRecurse(scene, scene->mRootNode);
     delete m_context;
     m_context = 0;
     m_model = 0;
