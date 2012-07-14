@@ -600,6 +600,7 @@ void UI::renderDepth()
 
 void UI::renderOffscreen()
 {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     GLuint fbo, rbo;
     const Array<IRenderEngine *> &engines = m_scene.renderEngines();
     const int nengines = engines.count();
@@ -642,7 +643,7 @@ void UI::renderOffscreen()
             const QString &n = name ? static_cast<const String *>(name)->value() : m_delegate->findModelPath(model);
             foreach (const EffectAttachment &attachment, offscreen.second) {
                 IEffect *effect = attachment.second;
-                if (attachment.first.exactMatch(n) && effect) {
+                if (attachment.first.exactMatch(n)) {
                     engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
                     break;
                 }
@@ -662,6 +663,7 @@ void UI::renderOffscreen()
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glDeleteRenderbuffers(1, &rbo);
     glDeleteFramebuffers(1, &fbo);
+#endif
 }
 
 void UI::renderWindow()
@@ -761,27 +763,32 @@ IModel *UI::createModelAsync(const QString &path) const {
 
 IEffect *UI::createEffectAsync(const IString *path) {
     IEffect *effect = 0;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     const QString &key = static_cast<const String *>(path)->value();
-    m_effectCacheLock.lock();
+    m_effectCachesLock.lock();
     if (m_effectCaches.contains(key)) {
         effect = m_effectCaches[key];
     }
     else {
-        m_effectCacheLock.unlock();
+        m_effectCachesLock.unlock();
         effect = m_scene.createEffect(path, m_delegate);
         if (!effect->internalPointer())
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
-        m_effectCacheLock.lock();
+        m_effectCachesLock.lock();
         m_effectCaches.insert(key, effect);
     }
-    m_effectCacheLock.unlock();
+    m_effectCachesLock.unlock();
+#else
+    Q_UNUSED(path)
+#endif
     return effect;
 }
 
 IEffect *UI::createEffectAsync(const IModel *model, const IString *dir) {
     IEffect *effect = 0;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     const QString &key = m_delegate->effectFilePath(model, dir);
-    m_effectCacheLock.lock();
+    m_effectCachesLock.lock();
     if (m_effectCaches.contains(key)) {
         effect = m_effectCaches[key];
     }
@@ -790,8 +797,13 @@ IEffect *UI::createEffectAsync(const IModel *model, const IString *dir) {
         if (!effect->internalPointer())
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
         m_effectCaches.insert(key, effect);
+        setEffectOwner(effect, model);
     }
-    m_effectCacheLock.unlock();
+    m_effectCachesLock.unlock();
+#else
+    Q_UNUSED(model)
+    Q_UNUSED(dir)
+#endif
     return effect;
 }
 
@@ -809,40 +821,69 @@ IMotion *UI::createMotionAsync(const QString &path, IModel *model) const {
     return 0;
 }
 
+const QString UI::effectOwner(IEffect *effect) const
+{
+    m_effectOwnersLock.lock();
+    const QString name = m_effectOwners[effect];
+    m_effectOwnersLock.unlock();
+    return name;
+}
+
+void UI::setEffectOwner(IEffect *effect, const IModel *model)
+{
+    const String *name = static_cast<const String *>(model->name());
+    const QString &n = name ? name->value() : m_delegate->findModelPath(model);
+    m_effectOwnersLock.lock();
+    m_effectOwners.insert(effect, n);
+    m_effectOwnersLock.unlock();
+}
+
 IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
     const QFileInfo info(path);
     const QFuture<IModel *> &future = QtConcurrent::run(this, &UI::createModelAsync, path);
     dialog.setLabelText(QString("Loading %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    IModel *model = future.result();
+    QScopedPointer<IModel> modelPtr(future.result());
     dialog.setValue(dialog.value() + 1);
-    if (!model || future.isCanceled()) {
-        delete model;
+    if (!modelPtr || future.isCanceled()) {
         return 0;
     }
-    if (model->error() != IModel::kNoError) {
-        qWarning("Failed parsing the model: %d", model->error());
+    if (modelPtr->error() != IModel::kNoError) {
+        qWarning("Failed parsing the model: %d", modelPtr->error());
         return 0;
     }
-    m_delegate->addModelPath(model, info.fileName());
-    model->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
-    model->joinWorld(&m_world);
-    IRenderEngine *engine = m_scene.createRenderEngine(m_delegate, model);
+    QScopedPointer<IRenderEngine> enginePtr(m_scene.createRenderEngine(m_delegate, modelPtr.data()));
     String s1(info.absoluteDir().absolutePath());
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+    IModel *model = 0;
+    IRenderEngine *engine = 0;
+    if (enginePtr->upload(&s1)) {
+        modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
+        modelPtr->joinWorld(&m_world);
+        m_scene.addModel(modelPtr.data(), enginePtr.data());
+        m_delegate->addModelPath(modelPtr.data(), info.fileName());
+        model = modelPtr.take();
+        engine = enginePtr.take();
+    }
+    else {
+        modelPtr.reset();
+        enginePtr.reset();
+        return 0;
+    }
     const QFuture<IEffect *> &future2 = QtConcurrent::run(this, &UI::createEffectAsync, model, &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    IEffect *effect = future2.result();
-    if (!effect->internalPointer()) {
-        CGcontext c = static_cast<CGcontext>(effect->internalContext());
+    QScopedPointer<IEffect> effectPtr(future2.result());
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    if (!effectPtr->internalPointer()) {
+        CGcontext c = static_cast<CGcontext>(effectPtr->internalContext());
         qWarning() << cgGetLastListing(c);
     }
     else {
         const QDir &baseDir = info.dir();
         const QRegExp fxRegExp(".fx$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        engine->setEffect(IEffect::kAutoDetection, effect, &s1);
+        IEffect *effect = effectPtr.data();
+        engine->setEffect(IEffect::kAutoDetection, effectPtr.take(), &s1);
         effect->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
         for (int i = 0; i < nOffscreenRenderTargets; i++) {
@@ -854,8 +895,11 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
             foreach (const QString &line, defaultEffect) {
                 const QStringList &pair = line.split('=');
                 if (pair.size() == 2) {
+                    const QString &key = pair.at(0).trimmed();
                     const QString &value = pair.at(1).trimmed();
-                    QRegExp regexp(pair.at(0).trimmed(), Qt::CaseSensitive, QRegExp::Wildcard);
+                    QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                    if (key == "self")
+                        regexp.setPattern(effectOwner(effect));
                     if (value != "hide" && value != "none") {
                         QString path = baseDir.absoluteFilePath(value);
                         path.replace(fxRegExp, ".cgfx");
@@ -871,11 +915,11 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
             m_offscreens.append(OffscreenRenderTarget(renderTarget, attachments));
         }
     }
+#else
+    Q_UNUSED(effectPtr)
 #endif
-    engine->upload(&s1);
-    m_scene.addModel(model, engine);
 #if 0
-    pmx::Model *pmx = dynamic_cast<pmx::Model*>(model);
+    pmx::Model *pmx = dynamic_cast<pmx::Model*>(res);
     if (pmx) {
         const Array<pmx::Material *> &materials = pmx->materials();
         const int nmaterials = materials.count();
