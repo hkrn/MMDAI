@@ -63,7 +63,7 @@ namespace qt
 class Delegate;
 class String;
 
-class UI : public QGLWidget
+class UI : public QGLWidget, protected QGLFunctions
 {
 public:
     UI();
