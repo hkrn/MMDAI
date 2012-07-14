@@ -65,10 +65,12 @@ public:
         cgDestroyEffect(m_effect);
     }
 
-    void addOffscreenRenderTarget(CGparameter texture, CGparameter sampler) {
+    void addOffscreenRenderTarget(CGparameter texture, CGparameter sampler, size_t width, size_t height) {
         OffscreenRenderTarget target;
         target.textureParameter = texture;
         target.samplerParameter = sampler;
+        target.width = width;
+        target.height = height;
         m_offscreenRenderTargets.add(target);
     }
     void addInteractiveParameter(CGparameter value) {

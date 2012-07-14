@@ -783,8 +783,8 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter, GL
 void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   const CGparameter sampler,
                                                   GLuint texture,
-                                                  int width,
-                                                  int height)
+                                                  size_t width,
+                                                  size_t height)
 {
     GLenum internal, format;
     getTextureFormat(parameter, internal, format);
@@ -801,9 +801,9 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
 void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
                                                   const CGparameter sampler,
                                                   GLuint texture,
-                                                  int width,
-                                                  int height,
-                                                  int depth)
+                                                  size_t width,
+                                                  size_t height,
+                                                  size_t depth)
 {
     GLenum internal, format;
     getTextureFormat(parameter, internal, format);
@@ -818,7 +818,7 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
 
 GLuint RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter, const CGparameter sampler)
 {
-    int width, height;
+    size_t width, height;
     getSize2(parameter, width, height);
     GLuint texture;
     glGenTextures(1, &texture);
@@ -829,7 +829,7 @@ GLuint RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter
 
 GLuint RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter, const CGparameter sampler)
 {
-    int width, height, depth;
+    size_t width, height, depth;
     getSize3(parameter, width, height, depth);
     GLuint texture;
     glGenTextures(1, &texture);
@@ -838,7 +838,7 @@ GLuint RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter
     return texture;
 }
 
-void RenderColorTargetSemantic::getSize2(const CGparameter parameter, int &width, int &height)
+void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &width, size_t &height)
 {
     const CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewPortRatio");
     int nvalues = 0;
@@ -872,11 +872,11 @@ void RenderColorTargetSemantic::getSize2(const CGparameter parameter, int &width
     }
     Vector3 viewport;
     m_delegate->getViewport(viewport);
-    width = btMax(1, int(viewport.x()));
-    height = btMax(1, int(viewport.y()));
+    width = btMax(size_t(1), size_t(viewport.x()));
+    height = btMax(size_t(1), size_t(viewport.y()));
 }
 
-void RenderColorTargetSemantic::getSize3(const CGparameter parameter, int &width, int &height, int &depth)
+void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth)
 {
     int nvalues = 0;
     const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
@@ -893,15 +893,15 @@ void RenderColorTargetSemantic::getSize3(const CGparameter parameter, int &width
     const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
     const CGannotation depthAnnotation = cgGetNamedParameterAnnotation(parameter, "Depth");
     if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation) && cgIsAnnotation(depthAnnotation)) {
-        width = btMax(1, Util::toInt(widthAnnotation));
-        height = btMax(1, Util::toInt(heightAnnotation));
-        depth = btMax(1, Util::toInt(depthAnnotation));
+        width = btMax(size_t(1), size_t(Util::toInt(widthAnnotation)));
+        height = btMax(size_t(1), size_t(Util::toInt(heightAnnotation)));
+        depth = btMax(size_t(1), size_t(Util::toInt(depthAnnotation)));
         return;
     }
     Vector3 viewport;
     m_delegate->getViewport(viewport);
-    width = btMax(1, int(viewport.x()));
-    height = btMax(1, int(viewport.y()));
+    width = btMax(size_t(1), size_t(viewport.x()));
+    height = btMax(size_t(1), size_t(viewport.y()));
     depth = 24;
 }
 
@@ -927,8 +927,8 @@ GLuint RenderDepthStencilTargetSemantic::findRenderBuffer(const char *name) cons
 void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                          const CGparameter /* sampler */,
                                                          GLuint /* texture */,
-                                                         int width,
-                                                         int height)
+                                                         size_t width,
+                                                         size_t height)
 {
     GLuint renderBuffer;
     glGenRenderbuffers(1, &renderBuffer);
@@ -941,8 +941,9 @@ void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter param
 
 /* OffscreenRenderTargetSemantic */
 
-OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(IRenderDelegate *delegate)
-    : RenderColorTargetSemantic(delegate)
+OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(Effect *effect, IRenderDelegate *delegate)
+    : RenderColorTargetSemantic(delegate),
+      m_effect(effect)
 {
 }
 
@@ -953,6 +954,16 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 void OffscreenRenderTargetSemantic::addParameter(CGparameter parameter, CGparameter sampler, const IString *dir)
 {
     RenderColorTargetSemantic::addParameter(parameter, sampler, dir, false, false);
+}
+
+void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter parameter,
+                                                      const CGparameter sampler,
+                                                      GLuint texture,
+                                                      size_t width,
+                                                      size_t height)
+{
+    RenderColorTargetSemantic::generateTexture2D(parameter, sampler, texture, width, height);
+    m_effect->addOffscreenRenderTarget(parameter, sampler, width, height);
 }
 
 /* AnimatedTextureSemantic */
@@ -1051,7 +1062,7 @@ void TextureValueSemantic::update()
 
 /* Effect */
 
-EffectEngine::EffectEngine(const Scene *scene, IRenderDelegate *delegate)
+EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate)
     : world(delegate, IRenderDelegate::kWorldMatrix),
       view(delegate, IRenderDelegate::kViewMatrix),
       projection(delegate, IRenderDelegate::kProjectionMatrix),
@@ -1064,7 +1075,7 @@ EffectEngine::EffectEngine(const Scene *scene, IRenderDelegate *delegate)
       renderColorTarget(delegate),
       renderDepthStencilTarget(delegate),
       animatedTexture(delegate),
-      offscreenRenderTarget(delegate),
+      offscreenRenderTarget(effect, delegate),
       index(0),
       #ifndef __APPLE__
       glDrawBuffers(0),
@@ -1082,6 +1093,7 @@ EffectEngine::EffectEngine(const Scene *scene, IRenderDelegate *delegate)
     glDrawBuffers = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
 #endif /* __APPLE__ */
 #endif /* VPVL2_LINK_QT */
+    attachEffect(effect, dir);
 }
 
 EffectEngine::~EffectEngine()
@@ -1690,7 +1702,6 @@ void EffectEngine::setTextureParameters(CGparameter parameter, const IString *di
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, "OFFSCREENRENDERTARGET")) {
                     offscreenRenderTarget.addParameter(textureParameter, parameter, dir);
-                    m_effect->addOffscreenRenderTarget(textureParameter, parameter);
                 }
                 else {
                     renderColorTarget.addParameter(textureParameter, parameter, dir, true, true);

@@ -289,14 +289,23 @@ public:
 protected:
     bool isMimapEnabled(const CGparameter parameter) const;
     void getTextureFormat(const CGparameter parameter, GLenum &internal, GLenum &format) const;
-    virtual void generateTexture2D(const CGparameter parameter, const CGparameter sampler, GLuint texture, int width, int height);
-    virtual void generateTexture3D(const CGparameter parameter, const CGparameter sampler, GLuint texture, int width, int height, int depth);
+    virtual void generateTexture2D(const CGparameter parameter,
+                                   const CGparameter sampler,
+                                   GLuint texture,
+                                   size_t width,
+                                   size_t height);
+    virtual void generateTexture3D(const CGparameter parameter,
+                                   const CGparameter sampler,
+                                   GLuint texture,
+                                   size_t width,
+                                   size_t height,
+                                   size_t depth);
 
 private:
     GLuint generateTexture2D0(const CGparameter parameter, const CGparameter sampler);
     GLuint generateTexture3D0(const CGparameter parameter, const CGparameter sampler);
-    void getSize2(const CGparameter parameter, int &width, int &height);
-    void getSize3(const CGparameter parameter, int &width, int &height, int &depth);
+    void getSize2(const CGparameter parameter, size_t &width, size_t &height);
+    void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth);
 
     IRenderDelegate *m_delegate;
     Array<CGparameter> m_parameters;
@@ -316,7 +325,11 @@ public:
     GLuint findRenderBuffer(const char *name) const;
 
 protected:
-    void generateTexture2D(const CGparameter parameter, const CGparameter /* sampler */, GLuint /* texture */, int width, int height);
+    void generateTexture2D(const CGparameter parameter,
+                           const CGparameter sampler,
+                           GLuint texture,
+                           size_t width,
+                           size_t height);
 
 private:
     Array<GLuint> m_renderBuffers;
@@ -328,12 +341,20 @@ private:
 class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 {
 public:
-    OffscreenRenderTargetSemantic(IRenderDelegate *delegate);
+    OffscreenRenderTargetSemantic(Effect *effect, IRenderDelegate *delegate);
     ~OffscreenRenderTargetSemantic();
 
     void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir);
 
+protected:
+    void generateTexture2D(const CGparameter parameter,
+                           const CGparameter sampler,
+                           GLuint texture,
+                           size_t width,
+                           size_t height);
+
 private:
+    Effect *m_effect;
     VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenRenderTargetSemantic)
 };
 
@@ -386,7 +407,7 @@ public:
         kSceneOrObject
     };
 
-    EffectEngine(const Scene *scene, IRenderDelegate *delegate);
+    EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate);
     ~EffectEngine();
 
     bool attachEffect(IEffect *e, const IString *dir);

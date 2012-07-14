@@ -611,11 +611,8 @@ void UI::renderOffscreen()
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
         const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+        size_t width = renderTarget.width, height = renderTarget.height;
         GLuint textureID = cgGLGetTextureParameter(sampler);
-        GLint width, height;
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
@@ -636,7 +633,6 @@ void UI::renderOffscreen()
                 glClearDepth(depth[0]);
             }
         }
-        glBindTexture(GL_TEXTURE_2D, 0);
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {

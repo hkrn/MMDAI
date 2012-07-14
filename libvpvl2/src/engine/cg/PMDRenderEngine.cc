@@ -427,19 +427,20 @@ void PMDRenderEngine::performPostProcess()
 
 IEffect *PMDRenderEngine::effect(IEffect::ScriptOrderType type) const
 {
-    EffectEngine **ee = const_cast<EffectEngine **>(m_effects.find(type));
+    const EffectEngine *const *ee = m_effects.find(type);
     return ee ? (*ee)->effect() : 0;
 }
 
 void PMDRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir)
 {
+    Effect *einstance = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
         EffectEngine *ee;
         for (int i = 0; i < neffects; i++) {
             ee = m_oseffects[i];
-            if (ee->effect() == effect) {
+            if (ee->effect() == einstance) {
                 found = true;
                 break;
             }
@@ -447,12 +448,12 @@ void PMDRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         if (found) {
             m_current = ee;
         }
-        else if (effect) {
+        else if (einstance) {
             EffectEngine *previous = m_current;
-            m_current = new EffectEngine(m_scene, m_delegate);
-            m_current->attachEffect(effect, dir);
-            if (m_current->scriptOrder() == IEffect::kStandard)
+            m_current = new EffectEngine(m_scene, dir, einstance, m_delegate);
+            if (m_current->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_current);
+            }
             else {
                 delete m_current;
                 m_current = previous;
@@ -464,9 +465,8 @@ void PMDRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         if (ee) {
             m_current = *ee;
         }
-        else if (effect) {
-            m_current = new EffectEngine(m_scene, m_delegate);
-            m_current->attachEffect(effect, dir);
+        else if (einstance) {
+            m_current = new EffectEngine(m_scene, dir, einstance, m_delegate);
             m_effects.insert(type == IEffect::kAutoDetection ? m_current->scriptOrder() : type, m_current);
         }
     }

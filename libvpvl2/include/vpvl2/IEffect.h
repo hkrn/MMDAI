@@ -56,6 +56,8 @@ public:
     struct OffscreenRenderTarget {
         void *textureParameter;
         void *samplerParameter;
+        size_t width;
+        size_t height;
     };
     virtual ~IEffect() {}
 
