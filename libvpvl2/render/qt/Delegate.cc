@@ -518,6 +518,9 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
                 return false;
             }
             TextureCache cache;
+            cache.width = dds.width();
+            cache.height = dds.height();
+            cache.id = textureID;
             setTextureID(cache, isToon, texture);
             addTextureCache(privateContext, path, cache);
             return true;

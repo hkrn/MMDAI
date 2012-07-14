@@ -54,6 +54,8 @@ public:
     ~DDSTexture();
 
     bool parse(const uint8_t *data, size_t size, GLuint &textureID);
+    size_t width() const { return m_header.description.width; }
+    size_t height() const { return m_header.description.height; }
 
 private:
     void setCubeTexture(const uint8_t *ptr, GLenum target, size_t &offset);
