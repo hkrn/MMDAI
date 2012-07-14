@@ -348,27 +348,30 @@ void PMXRenderEngine::renderZPlot()
 
 bool PMXRenderEngine::hasPreProcess() const
 {
-    return m_current->hasTechniques(IEffect::kPreProcess);
+    return m_current ? m_current->hasTechniques(IEffect::kPreProcess) : false;
 }
 
 bool PMXRenderEngine::hasPostProcess() const
 {
-    return m_current->hasTechniques(IEffect::kPostProcess);
+    return m_current ? m_current->hasTechniques(IEffect::kPostProcess) : false;
 }
 
 void PMXRenderEngine::preparePostProcess()
 {
-    m_current->executeScriptExternal();
+    if (m_current)
+        m_current->executeScriptExternal();
 }
 
 void PMXRenderEngine::performPreProcess()
 {
-    m_current->executeProcess(m_model, IEffect::kPreProcess);
+    if (m_current)
+        m_current->executeProcess(m_model, IEffect::kPreProcess);
 }
 
 void PMXRenderEngine::performPostProcess()
 {
-    m_current->executeProcess(m_model, IEffect::kPostProcess);
+    if (m_current)
+        m_current->executeProcess(m_model, IEffect::kPostProcess);
 }
 
 IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const

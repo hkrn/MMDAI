@@ -399,27 +399,30 @@ void PMDRenderEngine::renderZPlot()
 
 bool PMDRenderEngine::hasPreProcess() const
 {
-    return m_current->hasTechniques(IEffect::kPreProcess);
+    return m_current ? m_current->hasTechniques(IEffect::kPreProcess) : false;
 }
 
 bool PMDRenderEngine::hasPostProcess() const
 {
-    return m_current->hasTechniques(IEffect::kPostProcess);
+    return m_current ? m_current->hasTechniques(IEffect::kPostProcess) : false;
 }
 
 void PMDRenderEngine::preparePostProcess()
 {
-    m_current->executeScriptExternal();
+    if (m_current)
+        m_current->executeScriptExternal();
 }
 
 void PMDRenderEngine::performPreProcess()
 {
-    m_current->executeProcess(m_model, IEffect::kPreProcess);
+    if (m_current)
+        m_current->executeProcess(m_model, IEffect::kPreProcess);
 }
 
 void PMDRenderEngine::performPostProcess()
 {
-    m_current->executeProcess(m_model, IEffect::kPostProcess);
+    if (m_current)
+        m_current->executeProcess(m_model, IEffect::kPostProcess);
 }
 
 IEffect *PMDRenderEngine::effect(IEffect::ScriptOrderType type) const

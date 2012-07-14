@@ -953,13 +953,6 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 void OffscreenRenderTargetSemantic::addParameter(CGparameter parameter, CGparameter sampler, const IString *dir)
 {
     RenderColorTargetSemantic::addParameter(parameter, sampler, dir, false, false);
-    /*
-    clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
-    clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
-    antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
-    description = cgGetNamedParameterAnnotation(parameter, "Description");
-    defaultEffect = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-    */
 }
 
 /* AnimatedTextureSemantic */

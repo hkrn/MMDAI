@@ -257,27 +257,30 @@ void AssetRenderEngine::renderZPlot()
 
 bool AssetRenderEngine::hasPreProcess() const
 {
-    return m_current->hasTechniques(IEffect::kPreProcess);
+    return m_current ? m_current->hasTechniques(IEffect::kPreProcess) : false;
 }
 
 bool AssetRenderEngine::hasPostProcess() const
 {
-    return m_current->hasTechniques(IEffect::kPostProcess);
+    return m_current ? m_current->hasTechniques(IEffect::kPostProcess) : false;
 }
 
 void AssetRenderEngine::preparePostProcess()
 {
-    m_current->executeScriptExternal();
+    if (m_current)
+        m_current->executeScriptExternal();
 }
 
 void AssetRenderEngine::performPreProcess()
 {
-    m_current->executeProcess(m_model, IEffect::kPreProcess);
+    if (m_current)
+        m_current->executeProcess(m_model, IEffect::kPreProcess);
 }
 
 void AssetRenderEngine::performPostProcess()
 {
-    m_current->executeProcess(m_model, IEffect::kPostProcess);
+    if (m_current)
+        m_current->executeProcess(m_model, IEffect::kPostProcess);
 }
 
 IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType type) const
