@@ -125,6 +125,8 @@ private:
     Factory *m_factory;
     IEncoding *m_encoding;
     GLuint m_depthTextureID;
+    GLuint m_frameBufferID;
+    GLuint m_renderBufferID;
     float m_prevElapsed;
     float m_currentFrameIndex;
 };

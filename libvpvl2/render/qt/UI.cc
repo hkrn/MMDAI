@@ -357,6 +357,8 @@ UI::UI()
       m_factory(0),
       m_encoding(0),
       m_depthTextureID(0),
+      m_frameBufferID(0),
+      m_renderBufferID(0),
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {
@@ -371,17 +373,20 @@ UI::UI()
     setMouseTracking(true);
 }
 
-UI::~UI() {
+UI::~UI()
+{
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
-    qDeleteAll(m_effectCaches);
+    glDeleteFramebuffers(1, &m_frameBufferID);
+    glDeleteRenderbuffers(1, &m_renderBufferID);
     delete m_fbo;
     delete m_factory;
     delete m_encoding;
 }
 
-void UI::load(const QString &filename) {
+void UI::load(const QString &filename)
+{
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->setIniCodec("UTF-8");
     m_delegate = new Delegate(m_settings, &m_scene, this);
@@ -411,16 +416,21 @@ void UI::load(const QString &filename) {
     else {
         qFatal("Unable to load scene");
     }
+    glGenFramebuffers(1, &m_frameBufferID);
+    glGenRenderbuffers(1, &m_renderBufferID);
 }
 
-void UI::rotate(float x, float y) {
+void UI::rotate(float x, float y)
+{
     ICamera *camera = m_scene.camera();
     Vector3 angle = camera->angle();
     angle.setX(angle.x() + x);
     angle.setY(angle.y() + y);
     camera->setAngle(angle);
 }
-void UI::translate(float x, float y) {
+
+void UI::translate(float x, float y)
+{
     ICamera *camera = m_scene.camera();
     const Vector3 &diff = camera->modelViewTransform() * Vector3(x, y, 0);
     Vector3 position = camera->position() + diff;
@@ -435,7 +445,8 @@ void UI::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-void UI::initializeGL() {
+void UI::initializeGL()
+{
     initializeGLFunctions();
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -460,7 +471,8 @@ void UI::initializeGL() {
     }
 }
 
-void UI::timerEvent(QTimerEvent *) {
+void UI::timerEvent(QTimerEvent *)
+{
     float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
     float diff = elapsed - m_prevElapsed;
     m_prevElapsed = elapsed;
@@ -482,12 +494,14 @@ void UI::timerEvent(QTimerEvent *) {
     updateGL();
 }
 
-void UI::mousePressEvent(QMouseEvent *event) {
+void UI::mousePressEvent(QMouseEvent *event)
+{
     m_prevPos = event->pos();
     setMousePositions(event);
 }
 
-void UI::mouseMoveEvent(QMouseEvent *event) {
+void UI::mouseMoveEvent(QMouseEvent *event)
+{
     if (event->buttons() & Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = event->modifiers();
         const QPoint &diff = event->pos() - m_prevPos;
@@ -502,11 +516,13 @@ void UI::mouseMoveEvent(QMouseEvent *event) {
     setMousePositions(event);
 }
 
-void UI::mouseReleaseEvent(QMouseEvent *event) {
+void UI::mouseReleaseEvent(QMouseEvent *event)
+{
     setMousePositions(event);
 }
 
-void UI::wheelEvent(QWheelEvent *event) {
+void UI::wheelEvent(QWheelEvent *event)
+{
     Qt::KeyboardModifiers modifiers = event->modifiers();
     ICamera *camera = m_scene.camera();
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
@@ -524,11 +540,13 @@ void UI::wheelEvent(QWheelEvent *event) {
     }
 }
 
-void UI::resizeGL(int w, int h) {
+void UI::resizeGL(int w, int h)
+{
     glViewport(0, 0, w, h);
 }
 
-void UI::paintGL() {
+void UI::paintGL()
+{
     if (!m_delegate) {
         glViewport(0, 0, width(), height());
         glClearColor(0, 0, 1, 1);
@@ -602,13 +620,10 @@ void UI::renderDepth()
 void UI::renderOffscreen()
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    GLuint fbo, rbo;
     const Array<IRenderEngine *> &engines = m_scene.renderEngines();
     const int nengines = engines.count();
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_renderBufferID);
     foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
         const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
@@ -617,8 +632,8 @@ void UI::renderOffscreen()
         GLuint textureID = cgGLGetTextureParameter(sampler);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_renderBufferID);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_renderBufferID);
         CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         if (cgIsAnnotation(clearColor)) {
             int nvalues;
@@ -627,6 +642,9 @@ void UI::renderOffscreen()
                 glClearColor(color[0], color[1], color[2], color[3]);
             }
         }
+        else {
+            glClearColor(1, 1, 1, 1);
+        }
         CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
         if (cgIsAnnotation(clearDepth)) {
             int nvalues;
@@ -634,6 +652,9 @@ void UI::renderOffscreen()
             if (nvalues == 1) {
                 glClearDepth(depth[0]);
             }
+        }
+        else {
+            glClearDepth(0);
         }
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -662,8 +683,6 @@ void UI::renderOffscreen()
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glDeleteRenderbuffers(1, &rbo);
-    glDeleteFramebuffers(1, &fbo);
 #endif
 }
 
@@ -704,7 +723,8 @@ void UI::renderWindow()
     }
 }
 
-void UI::setMousePositions(QMouseEvent *event) {
+void UI::setMousePositions(QMouseEvent *event)
+{
     const QPointF &pos = event->posF();
     const QSizeF &size = geometry().size() / 2;
     const qreal w = size.width(), h = size.height();
@@ -716,7 +736,8 @@ void UI::setMousePositions(QMouseEvent *event) {
     m_delegate->setMousePosition(value, false, IRenderDelegate::kMouseCursorPosition);
 }
 
-bool UI::loadScene() {
+bool UI::loadScene()
+{
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
     Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
@@ -751,7 +772,8 @@ bool UI::loadScene() {
     return true;
 }
 
-IModel *UI::createModelAsync(const QString &path) const {
+IModel *UI::createModelAsync(const QString &path) const
+{
     QByteArray bytes;
     if (!UISlurpFile(path, bytes)) {
         qWarning("Failed loading the model");
@@ -762,7 +784,8 @@ IModel *UI::createModelAsync(const QString &path) const {
     return m_factory->createModel(data, bytes.size(), ok);
 }
 
-IEffect *UI::createEffectAsync(const IString *path) {
+IEffect *UI::createEffectAsync(const IString *path)
+{
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     const QString &key = static_cast<const String *>(path)->value();
@@ -785,7 +808,8 @@ IEffect *UI::createEffectAsync(const IString *path) {
     return effect;
 }
 
-IEffect *UI::createEffectAsync(const IModel *model, const IString *dir) {
+IEffect *UI::createEffectAsync(const IModel *model, const IString *dir)
+{
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     const QString &key = m_delegate->effectFilePath(model, dir);
@@ -808,7 +832,8 @@ IEffect *UI::createEffectAsync(const IModel *model, const IString *dir) {
     return effect;
 }
 
-IMotion *UI::createMotionAsync(const QString &path, IModel *model) const {
+IMotion *UI::createMotionAsync(const QString &path, IModel *model) const
+{
     QByteArray bytes;
     if (UISlurpFile(path, bytes)) {
         bool ok = true;
@@ -839,7 +864,8 @@ void UI::setEffectOwner(IEffect *effect, const IModel *model)
     m_effectOwnersLock.unlock();
 }
 
-IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
+IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
+{
     const QFileInfo info(path);
     const QFuture<IModel *> &future = QtConcurrent::run(this, &UI::createModelAsync, path);
     dialog.setLabelText(QString("Loading %1...").arg(info.fileName()));
@@ -951,14 +977,16 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog) {
     return model;
 }
 
-IMotion *UI::addMotion(const QString &path, IModel *model) {
+IMotion *UI::addMotion(const QString &path, IModel *model)
+{
     IMotion *motion = loadMotion(path, model);
     if (motion)
         m_scene.addMotion(motion);
     return motion;
 }
 
-IMotion *UI::loadMotion(const QString &path, IModel *model) {
+IMotion *UI::loadMotion(const QString &path, IModel *model)
+{
     const QFuture<IMotion *> &future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
     IMotion *motion = future.result();
     if (!motion || future.isCanceled()) {
