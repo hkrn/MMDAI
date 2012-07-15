@@ -65,10 +65,10 @@ using namespace vpvl2;
 
 static const Scalar kWidth = 1, kHeight = 1;
 static const Vector4 kVertices[] = {
-    btVector4(-kWidth,  kHeight,  0,  0),
-    btVector4(-kWidth, -kHeight,  0,  1),
-    btVector4( kWidth, -kHeight,  1,  1),
-    btVector4( kWidth,  kHeight,  1,  0)
+    btVector4(-kWidth,  kHeight,  0,  1),
+    btVector4(-kWidth, -kHeight,  0,  0),
+    btVector4( kWidth, -kHeight,  1,  0),
+    btVector4( kWidth,  kHeight,  1,  1)
 };
 static const size_t kVertexStride = sizeof(kVertices[0]);
 static const int kIndices[] = { 0, 1, 2, 3 };
