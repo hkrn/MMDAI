@@ -61,7 +61,7 @@ namespace render
 namespace qt
 {
 class Delegate;
-class String;
+class CString;
 
 class UI : public QGLWidget, protected QGLFunctions
 {

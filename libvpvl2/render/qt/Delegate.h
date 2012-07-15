@@ -85,6 +85,7 @@ public:
     IString *toUnicode(const uint8_t *value) const;
 
     void updateMatrices(const QSize &size);
+    void setCameraModelMatrix(const QMatrix4x4 &value);
     void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection);
     void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type);
     void addModelPath(const IModel *model, const QString &filename);
@@ -111,6 +112,7 @@ private:
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;
+    QMatrix4x4 m_cameraModelMatrix;
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;

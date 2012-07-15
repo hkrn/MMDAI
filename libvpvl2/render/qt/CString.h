@@ -34,7 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "String0.h"
+#ifndef VPVL2_RENDER_QT_STRING_H_
+#define VPVL2_RENDER_QT_STRING_H_
+
+#include "vpvl2/IString.h"
+#include <QtCore/QString>
 
 namespace vpvl2
 {
@@ -43,61 +47,28 @@ namespace render
 namespace qt
 {
 
-String::String(const QString &s)
-    : m_bytes(s.toUtf8()),
-      m_value(s)
-{
-}
+class CString : public IString {
+public:
+    CString(const QString &s);
+    ~CString();
 
-String::~String()
-{
-}
+    bool startsWith(const IString *value) const;
+    bool contains(const IString *value) const;
+    bool endsWith(const IString *value) const;
+    IString *clone() const;
+    const HashString toHashString() const;
+    bool equals(const IString *value) const;
+    const QString &value() const;
+    const uint8_t *toByteArray() const;
+    size_t length() const;
 
-bool String::startsWith(const IString *value) const
-{
-    return m_value.startsWith(static_cast<const String *>(value)->m_value);
-}
-
-bool String::contains(const IString *value) const
-{
-    return m_value.contains(static_cast<const String *>(value)->m_value);
-}
-
-bool String::endsWith(const IString *value) const
-{
-    return m_value.endsWith(static_cast<const String *>(value)->m_value);
-}
-
-IString *String::clone() const
-{
-    return new String(m_value);
-}
-
-const HashString String::toHashString() const
-{
-    return HashString(m_bytes.constData());
-}
-
-bool String::equals(const IString *value) const
-{
-    return m_value == static_cast<const String *>(value)->m_value;
-}
-
-const QString &String::value() const
-{
-    return m_value;
-}
-
-const uint8_t *String::toByteArray() const
-{
-    return reinterpret_cast<const uint8_t *>(m_bytes.constData());
-}
-
-size_t String::length() const
-{
-    return m_bytes.length();
-}
+private:
+    const QByteArray m_bytes;
+    const QString m_value;
+};
 
 }
 }
 }
+
+#endif

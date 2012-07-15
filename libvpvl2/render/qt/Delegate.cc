@@ -36,7 +36,7 @@
 
 #include "DDSTexture.h"
 #include "Delegate.h"
-#include "String0.h"
+#include "CString.h"
 #include "Util.h"
 
 #include <vpvl2/vpvl2.h>
@@ -106,7 +106,7 @@ bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags,
             ret = uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context);
         }
         if (!ret) {
-            String s(m_systemDir.absolutePath());
+            CString s(m_systemDir.absolutePath());
             ret = uploadTextureInternal(createPath(&s, name), texture, true, mipmap, context);
         }
         return ret;
@@ -121,7 +121,7 @@ void Delegate::getToonColor(const IString *name, const IString *dir, Color &valu
         getToonColorInternal(path, value);
     }
     else {
-        String s(m_systemDir.absolutePath());
+        CString s(m_systemDir.absolutePath());
         getToonColorInternal(createPath(&s, name), value);
     }
 }
@@ -182,6 +182,7 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
                 }
             }
             m *= shadowMatrix;
+            m *= m_cameraModelMatrix;
             m.scale(model->scaleFactor());
         }
     }
@@ -201,6 +202,7 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
                     worldMatrix.data()[i] = matrix[i];
                 m *= worldMatrix;
             }
+            m *= m_cameraModelMatrix;
             m.scale(model->scaleFactor());
         }
     }
@@ -292,7 +294,7 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
         qDebug("Loaded a kernel: %s", qPrintable(path));
-        return new(std::nothrow) String(source);
+        return new(std::nothrow) CString(source);
     }
     else {
         return 0;
@@ -302,9 +304,9 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
 IString *Delegate::loadShaderSource(ShaderType type, const IString *path)
 {
     if (type == kModelEffectTechniques) {
-        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, static_cast<const String *>(path)->value());
+        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, static_cast<const CString *>(path)->value());
         const QString &source = future.result();
-        return !source.isNull() ? new (std::nothrow) String(source) : 0;
+        return !source.isNull() ? new (std::nothrow) CString(source) : 0;
     }
     return 0;
 }
@@ -316,7 +318,7 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
         const QString &filename = effectFilePath(model, dir);
         const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, filename);
         const QString &source = future.result();
-        return !source.isNull() ? new (std::nothrow) String(source) : 0;
+        return !source.isNull() ? new (std::nothrow) CString(source) : 0;
     }
     switch (model->type()) {
     case IModel::kAsset:
@@ -376,7 +378,7 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
         qDebug("Loaded a shader: %s", qPrintable(path));
-        return new(std::nothrow) String("#version 120\n" + source);
+        return new(std::nothrow) CString("#version 120\n" + source);
     }
     else {
         return 0;
@@ -387,19 +389,24 @@ IString *Delegate::toUnicode(const uint8_t *value) const
 {
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     const QString &s = codec->toUnicode(reinterpret_cast<const char *>(value));
-    return new(std::nothrow) String(s);
+    return new(std::nothrow) CString(s);
 }
 
 void Delegate::updateMatrices(const QSize &size)
 {
     float matrix[16];
-    m_viewport = size;
-    m_scene->camera()->modelViewTransform().getOpenGLMatrix(matrix);
+    ICamera *camera = m_scene->camera();
+    camera->modelViewTransform().getOpenGLMatrix(matrix);
     for (int i = 0; i < 16; i++)
         m_cameraViewMatrix.data()[i] = matrix[i];
     m_cameraProjectionMatrix.setToIdentity();
-    ICamera *camera = m_scene->camera();
     m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / float(size.height()), camera->znear(), camera->zfar());
+    m_viewport = size;
+}
+
+void Delegate::setCameraModelMatrix(const QMatrix4x4 &value)
+{
+    m_cameraModelMatrix = value;
 }
 
 void Delegate::setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection)
@@ -448,7 +455,7 @@ const QString Delegate::findModelPath(const IModel *model) const
 
 const QString Delegate::effectFilePath(const IModel *model, const IString *dir) const
 {
-    QDir d(static_cast<const String *>(dir)->value());
+    QDir d(static_cast<const CString *>(dir)->value());
     const QString &s = findModelPath(model);
     if (!s.isEmpty()) {
         QFileInfo info(d.absoluteFilePath(s));
@@ -464,14 +471,14 @@ const QString Delegate::effectFilePath(const IModel *model, const IString *dir) 
 
 const QString Delegate::createPath(const IString *dir, const QString &name)
 {
-    const QDir d(static_cast<const String *>(dir)->value());
+    const QDir d(static_cast<const CString *>(dir)->value());
     return d.absoluteFilePath(name);
 }
 
 const QString Delegate::createPath(const IString *dir, const IString *name)
 {
-    const QDir d(static_cast<const String *>(dir)->value());
-    return d.absoluteFilePath(static_cast<const String *>(name)->value());
+    const QDir d(static_cast<const CString *>(dir)->value());
+    return d.absoluteFilePath(static_cast<const CString *>(name)->value());
 }
 
 void Delegate::setTextureID(const TextureCache &cache, bool isToon, Texture &output)

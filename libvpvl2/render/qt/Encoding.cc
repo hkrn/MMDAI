@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "Encoding.h"
-#include "String0.h"
+#include "CString.h"
 
 #include <QtCore/QtCore>
 
@@ -62,35 +62,35 @@ const IString *Encoding::stringConstant(ConstantType value) const
 {
     switch (value) {
     case kLeft: {
-        static const String s("左");
+        static const CString s("左");
         return &s;
     }
     case kRight: {
-        static const String s("右");
+        static const CString s("右");
         return &s;
     }
     case kFinger: {
-        static const String s("指");
+        static const CString s("指");
         return &s;
     }
     case kElbow: {
-        static const String s("ひじ");
+        static const CString s("ひじ");
         return &s;
     }
     case kArm: {
-        static const String s("腕");
+        static const CString s("腕");
         return &s;
     }
     case kWrist: {
-        static const String s("手首");
+        static const CString s("手首");
         return &s;
     }
     case kCenter: {
-        static const String s("センター");
+        static const CString s("センター");
         return &s;
     }
     default: {
-        static const String s("");
+        static const CString s("");
         return &s;
     }
     }
@@ -102,13 +102,13 @@ IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec co
     const char *str = reinterpret_cast<const char *>(value);
     switch (codec) {
     case IString::kShiftJIS:
-        s = new String(m_sjis->toUnicode(str, size));
+        s = new CString(m_sjis->toUnicode(str, size));
         break;
     case IString::kUTF8:
-        s = new String(m_utf8->toUnicode(str, size));
+        s = new CString(m_utf8->toUnicode(str, size));
         break;
     case IString::kUTF16:
-        s = new String(m_utf16->toUnicode(str, size));
+        s = new CString(m_utf16->toUnicode(str, size));
         break;
     }
     return s;
@@ -122,7 +122,7 @@ IString *Encoding::toString(const uint8_t *value, IString::Codec codec, size_t m
 
 uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
 {
-    const String *s = static_cast<const String *>(value);
+    const CString *s = static_cast<const CString *>(value);
     QByteArray bytes;
     switch (codec) {
     case IString::kShiftJIS:

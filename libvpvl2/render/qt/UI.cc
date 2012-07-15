@@ -37,7 +37,7 @@
 #include "UI.h"
 #include "Delegate.h"
 #include "Encoding.h"
-#include "String0.h"
+#include "CString.h"
 #include "Util.h"
 
 #include <vpvl2/vpvl2.h>
@@ -91,7 +91,7 @@ QDebug operator<<(QDebug debug, const Color &v)
 QDebug operator<<(QDebug debug, const IString *str)
 {
     if (str) {
-        debug.nospace() << static_cast<const String *>(str)->value();
+        debug.nospace() << static_cast<const CString *>(str)->value();
     }
     else {
         debug.nospace() << "(null)";
@@ -624,6 +624,15 @@ void UI::renderOffscreen()
     const int nengines = engines.count();
     glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
     glBindRenderbuffer(GL_RENDERBUFFER, m_renderBufferID);
+    QMatrix4x4 m;
+    QSize s;
+    ICamera *camera = m_scene.camera();
+    Vector3 cameraPosition = camera->position(),
+            cameraPositionInversed(-cameraPosition.x(), -cameraPosition.y(), cameraPosition.z());
+    m.scale(-1, -1, 1);
+    camera->setPosition(cameraPositionInversed);
+    m_scene.updateCamera();
+    m_delegate->setCameraModelMatrix(m);
     foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
         const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
@@ -656,13 +665,16 @@ void UI::renderOffscreen()
         else {
             glClearDepth(0);
         }
+        s.setWidth(width);
+        s.setHeight(height);
+        m_delegate->updateMatrices(s);
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
             const IModel *model = engine->model();
             const IString *name = model->name();
-            const QString &n = name ? static_cast<const String *>(name)->value() : m_delegate->findModelPath(model);
+            const QString &n = name ? static_cast<const CString *>(name)->value() : m_delegate->findModelPath(model);
             foreach (const EffectAttachment &attachment, offscreen.second) {
                 IEffect *effect = attachment.second;
                 if (attachment.first.exactMatch(n)) {
@@ -681,6 +693,11 @@ void UI::renderOffscreen()
         glBindTexture(GL_TEXTURE_2D, 0);
 #endif
     }
+    m.setToIdentity();
+    camera->setPosition(cameraPosition);
+    m_scene.updateCamera();
+    m_delegate->setCameraModelMatrix(m);
+    m_delegate->updateMatrices(size());
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 #endif
@@ -788,7 +805,7 @@ IEffect *UI::createEffectAsync(const IString *path)
 {
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    const QString &key = static_cast<const String *>(path)->value();
+    const QString &key = static_cast<const CString *>(path)->value();
     m_effectCachesLock.lock();
     if (m_effectCaches.contains(key)) {
         effect = m_effectCaches[key];
@@ -857,7 +874,7 @@ const QString UI::effectOwner(IEffect *effect) const
 
 void UI::setEffectOwner(IEffect *effect, const IModel *model)
 {
-    const String *name = static_cast<const String *>(model->name());
+    const CString *name = static_cast<const CString *>(model->name());
     const QString &n = name ? name->value() : m_delegate->findModelPath(model);
     m_effectOwnersLock.lock();
     m_effectOwners.insert(effect, n);
@@ -880,7 +897,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         return 0;
     }
     QScopedPointer<IRenderEngine> enginePtr(m_scene.createRenderEngine(m_delegate, modelPtr.data()));
-    String s1(info.absoluteDir().absolutePath());
+    CString s1(info.absoluteDir().absolutePath());
     IModel *model = 0;
     IRenderEngine *engine = 0;
     if (enginePtr->upload(&s1)) {
@@ -930,7 +947,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                     if (value != "hide" && value != "none") {
                         QString path = baseDir.absoluteFilePath(value);
                         path.replace(fxRegExp, ".cgfx");
-                        String s2(path);
+                        CString s2(path);
                         const QFuture<IEffect *> &future3 = QtConcurrent::run(this, &UI::createEffectAsync, &s2);
                         attachments.append(EffectAttachment(regexp, future3.result()));
                     }
