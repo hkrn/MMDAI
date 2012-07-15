@@ -624,15 +624,10 @@ void UI::renderOffscreen()
     const int nengines = engines.count();
     glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
     glBindRenderbuffer(GL_RENDERBUFFER, m_renderBufferID);
-    QMatrix4x4 m;
+    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    glDrawBuffers(nbuffers, buffers);
     QSize s;
-    ICamera *camera = m_scene.camera();
-    Vector3 cameraPosition = camera->position(),
-            cameraPositionInversed(-cameraPosition.x(), -cameraPosition.y(), cameraPosition.z());
-    m.scale(-1, -1, 1);
-    camera->setPosition(cameraPositionInversed);
-    m_scene.updateCamera();
-    m_delegate->setCameraModelMatrix(m);
     foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
         const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
@@ -693,10 +688,6 @@ void UI::renderOffscreen()
         glBindTexture(GL_TEXTURE_2D, 0);
 #endif
     }
-    m.setToIdentity();
-    camera->setPosition(cameraPosition);
-    m_scene.updateCamera();
-    m_delegate->setCameraModelMatrix(m);
     m_delegate->updateMatrices(size());
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
