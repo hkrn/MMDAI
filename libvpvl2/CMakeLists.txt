@@ -298,10 +298,10 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   target_link_libraries(vpvl2 ${QT_LIBRARIES})
   if(VPVL2_BUILD_QT_RENDERER)
     set(vpvl2_qt_sources render/qt/main.cc
+                         render/qt/CString.cc
                          render/qt/DDSTexture.cc
                          render/qt/Delegate.cc
                          render/qt/Encoding.cc
-                         render/qt/String0.cc
                          render/qt/UI.cc)
     include_directories(render/qt)
     add_executable(vpvl2_qt ${vpvl2_qt_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
