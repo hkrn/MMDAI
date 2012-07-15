@@ -75,7 +75,7 @@ static const int kIndices[] = { 0, 1, 2, 3 };
 static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertices[0]);
 static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
 static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
-static const int kBaseRenderColorTargetIndex = GL_COLOR_ATTACHMENT1;
+static const int kBaseRenderColorTargetIndex = GL_COLOR_ATTACHMENT0;
 
 }
 
