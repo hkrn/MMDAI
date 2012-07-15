@@ -284,6 +284,20 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
+    IEffect *compileEffect(IString *source) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        CGeffect effect = 0;
+        if (source) {
+            static const char *kCompilerArguments[] = { "version=120", "userTexCoord", 0 };
+            effect = cgCreateEffect(effectContext, reinterpret_cast<const char *>(source->toByteArray()), kCompilerArguments);
+        }
+        delete source;
+        return new cg::Effect(effectContext, cgIsEffect(effect) ? effect : 0);
+#else
+        delete source;
+        return 0;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+    }
 
     cl::Context *computeContext;
     Scene::AccelerationType accelerationType;
@@ -406,30 +420,14 @@ void Scene::addMotion(IMotion *motion)
 
 IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
 {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    CGeffect effect = 0;
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
-    if (source)
-        effect = cgCreateEffect(m_context->effectContext, reinterpret_cast<const char *>(source->toByteArray()), 0);
-    delete source;
-    return new cg::Effect(m_context->effectContext, cgIsEffect(effect) ? effect : 0);
-#else
-    return 0;
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
+    return m_context->compileEffect(source);
 }
 
 IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate)
 {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    CGeffect effect = 0;
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
-    if (source)
-        effect = cgCreateEffect(m_context->effectContext, reinterpret_cast<const char *>(source->toByteArray()), 0);
-    delete source;
-    return new cg::Effect(m_context->effectContext, cgIsEffect(effect) ? effect : 0);
-#else
-    return 0;
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
+    return m_context->compileEffect(source);
 }
 
 void Scene::deleteModel(IModel *&model)
