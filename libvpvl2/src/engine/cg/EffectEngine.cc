@@ -1494,9 +1494,11 @@ void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTarget
     state.type = type;
     if (!value.empty()) {
         const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(value.c_str());
-        state.texture = texture->id;
-        state.width = texture->width;
-        state.height = texture->height;
+        if (texture) {
+            state.texture = texture->id;
+            state.width = texture->width;
+            state.height = texture->height;
+        }
         state.frameBufferObject = frameBufferObject;
     }
 }
