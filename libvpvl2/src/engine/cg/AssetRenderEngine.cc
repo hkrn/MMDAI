@@ -155,6 +155,8 @@ bool AssetRenderEngine::upload(const IString *dir)
     bool ret = true;
     vpvl::Asset *asset = m_model->ptr();
     const aiScene *scene = asset->getScene();
+    if (!scene)
+        return false;
     const unsigned int nmaterials = scene->mNumMaterials;
     void *context = 0;
     aiString texturePath;
