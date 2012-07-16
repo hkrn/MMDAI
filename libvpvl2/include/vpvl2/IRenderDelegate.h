@@ -42,6 +42,7 @@
 namespace vpvl2
 {
 
+class IEffect;
 class IModel;
 class IString;
 
@@ -314,6 +315,9 @@ public:
      * @param sync
      */
     virtual void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) = 0;
+
+    virtual IModel *effectOwner(const IEffect *effect) const = 0;
+
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };
 

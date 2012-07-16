@@ -121,6 +121,18 @@ bool Util::isIntegerParameter(const CGparameter parameter)
             cgGetParameterType(parameter) == CG_FLOAT;
 }
 
+const std::string Util::trim(const std::string &value)
+{
+    std::string::const_iterator stringFrom = value.begin(), tail = value.end() - 1, stringTo = tail;
+    while (isspace(*stringFrom) && (stringFrom != value.end()))
+        ++stringFrom;
+    while (isspace(*stringTo) && (stringTo != value.begin()))
+        --stringTo;
+    if (stringTo == tail)
+        ++stringTo;
+    return std::string(stringFrom, stringTo);
+}
+
 /* BasicParameter */
 
 BaseParameter::BaseParameter()
@@ -485,10 +497,11 @@ void TimeSemantic::update()
 
 /* ControlObjectSemantic */
 
-ControlObjectSemantic::ControlObjectSemantic(const Scene *scene, const IRenderDelegate *delegate)
+ControlObjectSemantic::ControlObjectSemantic(const IEffect *effect, const Scene *scene, const IRenderDelegate *delegate)
     : BaseParameter(),
       m_scene(scene),
-      m_delegate(delegate)
+      m_delegate(delegate),
+      m_effect(effect)
 {
 }
 
@@ -515,11 +528,15 @@ void ControlObjectSemantic::update(const IModel *self)
             setParameter(self, parameter);
         }
         else if (VPVL2_CG_STREQ_CONST(name, "(OffscreenOwner)")) {
-            // TODO
+            IEffect *parent = m_effect->parentEffect();
+            if (parent) {
+                const IModel *model = m_delegate->effectOwner(parent);
+                setParameter(model, parameter);
+            }
         }
         else {
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(name));
-            IModel *model = m_scene->findModel(s);
+            const IModel *model = m_scene->findModel(s);
             delete s;
             setParameter(model, parameter);
         }
@@ -529,7 +546,7 @@ void ControlObjectSemantic::update(const IModel *self)
 void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter parameter)
 {
     float matrix4x4[16];
-    const CGtype type = cgGetParameterType(parameter);
+    const CGtype parameterType = cgGetParameterType(parameter);
     if (model) {
         const CGannotation itemAnnotation = cgGetNamedParameterAnnotation(parameter, "item");
         if (cgIsAnnotation(itemAnnotation)) {
@@ -540,7 +557,6 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 IBone *bone = model->findBone(s);
                 IMorph *morph = model->findMorph(s);
                 delete s;
-                CGtype parameterType = cgGetParameterType(parameter);
                 if (bone) {
                     switch (parameterType) {
                     case CG_FLOAT3:
@@ -597,7 +613,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
             }
         }
         else {
-            switch (type) {
+            switch (parameterType) {
             case CG_BOOL:
                 cgSetParameter1i(parameter, model->isVisible());
                 break;
@@ -1092,7 +1108,7 @@ EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effec
       worldViewProjection(delegate, IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
       time(delegate),
       elapsedTime(delegate),
-      controlObject(scene, delegate),
+      controlObject(effect, scene, delegate),
       renderColorTarget(delegate),
       renderDepthStencilTarget(delegate),
       animatedTexture(delegate),
@@ -1753,8 +1769,8 @@ bool EffectEngine::parsePassScript(const CGpass pass, GLuint frameBufferObject)
         while (std::getline(stream, segment, ';')) {
             std::string::size_type offset = segment.find("=");
             if (offset != std::string::npos) {
-                const std::string &command = segment.substr(0, offset);
-                const std::string &value = segment.substr(offset + 1);
+                const std::string &command = Util::trim(segment.substr(0, offset));
+                const std::string &value = Util::trim(segment.substr(offset + 1));
                 newState.enterLoop = lastState.enterLoop;
                 if (command == "RenderColorTarget" || command == "RenderColorTarget0") {
                     setStateFromRenderColorTargetSemantic(renderColorTarget,
@@ -1866,8 +1882,8 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, GLuint &fra
         while (std::getline(stream, segment, ';')) {
             std::string::size_type offset = segment.find("=");
             if (offset != std::string::npos) {
-                const std::string &command = segment.substr(0, offset);
-                const std::string &value = segment.substr(offset + 1);
+                const std::string &command = Util::trim(segment.substr(0, offset));
+                const std::string &value = Util::trim(segment.substr(offset + 1));
                 newState.enterLoop = lastState.enterLoop;
                 if (command == "RenderColorTarget" || command == "RenderColorTarget0") {
                     setStateFromRenderColorTargetSemantic(renderColorTarget,

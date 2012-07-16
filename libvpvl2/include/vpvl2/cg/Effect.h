@@ -58,7 +58,8 @@ public:
 
     Effect(CGcontext context, CGeffect effect)
         : m_context(context),
-          m_effect(effect)
+          m_effect(effect),
+          m_parentEffect(0)
     {
     }
     ~Effect() {
@@ -85,12 +86,15 @@ public:
     void getInteractiveParameters(Array<void *> &value) const {
         value.copy(m_interactiveParameters);
     }
+    IEffect *parentEffect() const { return m_parentEffect; }
+    void setParentEffect(IEffect *value) { m_parentEffect = value; }
 
 private:
     const CGcontext m_context;
     const CGeffect m_effect;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<void *> m_interactiveParameters;
+    IEffect *m_parentEffect;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };

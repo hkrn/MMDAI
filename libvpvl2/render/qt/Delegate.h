@@ -83,6 +83,7 @@ public:
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
+    IModel *offscreenEffectOwner(const IEffect *effect) const;
 
     void updateMatrices(const QSize &size);
     void setCameraModelMatrix(const QMatrix4x4 &value);
@@ -91,6 +92,9 @@ public:
     void addModelPath(const IModel *model, const QString &filename);
     const QString findModelPath(const IModel *model) const;
     const QString effectFilePath(const IModel *model, const IString *dir) const;
+    IModel *effectOwner(const IEffect *effect) const;
+    const QString effectOwnerName(const IEffect *effect) const;
+    void setEffectOwner(const IEffect *effect, IModel *model);
 
 private:
     static const QString createPath(const IString *dir, const QString &name);
@@ -104,11 +108,15 @@ private:
     const Scene *m_scene;
     const QDir m_systemDir;
     mutable QMutex m_model2PathLock;
+    mutable QMutex m_effectOwnersLock;
+    mutable QMutex m_effect2modelsLock;
     QGLWidget *m_context;
     QSize m_viewport;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QMovie *> m_texture2Movies;
+    QHash<const IEffect *, QString> m_effectOwners;
+    QHash<const IEffect *, IModel *> m_effect2models;
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;

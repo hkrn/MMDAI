@@ -64,6 +64,7 @@ public:
     static float toFloat(const CGannotation annotation);
     static bool isPassEquals(const CGannotation annotation, const char *target);
     static bool isIntegerParameter(const CGparameter parameter);
+    static const std::string trim(const std::string &value);
 
 private:
     Util() {}
@@ -235,7 +236,7 @@ private:
 class ControlObjectSemantic : public BaseParameter
 {
 public:
-    ControlObjectSemantic(const Scene *scene, const IRenderDelegate *delegate);
+    ControlObjectSemantic(const IEffect *effect, const Scene *scene, const IRenderDelegate *delegate);
     ~ControlObjectSemantic();
 
     void addParameter(CGparameter parameter);
@@ -246,6 +247,7 @@ private:
 
     const Scene *m_scene;
     const IRenderDelegate *m_delegate;
+    const IEffect *m_effect;
     Array<CGparameter> m_parameters;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ControlObjectSemantic)

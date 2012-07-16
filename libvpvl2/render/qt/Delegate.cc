@@ -469,6 +469,34 @@ const QString Delegate::effectFilePath(const IModel *model, const IString *dir) 
     return d.absoluteFilePath("default.cgfx");
 }
 
+IModel *Delegate::effectOwner(const IEffect *effect) const
+{
+    m_effect2modelsLock.lock();
+    IModel *model = m_effect2models[effect];
+    m_effect2modelsLock.unlock();
+    return model;
+}
+
+const QString Delegate::effectOwnerName(const IEffect *effect) const
+{
+    m_effectOwnersLock.lock();
+    const QString name = m_effectOwners[effect];
+    m_effectOwnersLock.unlock();
+    return name;
+}
+
+void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
+{
+    const CString *name = static_cast<const CString *>(model->name());
+    const QString &n = name ? name->value() : findModelPath(model);
+    m_effectOwnersLock.lock();
+    m_effectOwners.insert(effect, n);
+    m_effectOwnersLock.unlock();
+    m_effect2modelsLock.lock();
+    m_effect2models.insert(effect, model);
+    m_effect2modelsLock.unlock();
+}
+
 const QString Delegate::createPath(const IString *dir, const QString &name)
 {
     const QDir d(static_cast<const CString *>(dir)->value());

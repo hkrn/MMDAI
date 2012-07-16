@@ -92,13 +92,11 @@ private:
     bool loadScene();
     IModel *createModelAsync(const QString &path) const;
     IEffect *createEffectAsync(const IString *path);
-    IEffect *createEffectAsync(const IModel *model, const IString *dir);
+    IEffect *createEffectAsync(IModel *model, const IString *dir);
     IMotion *createMotionAsync(const QString &path, IModel *model) const;
     IModel *addModel(const QString &path, QProgressDialog &dialog);
     IMotion *addMotion(const QString &path, IModel *model);
     IMotion *loadMotion(const QString &path, IModel *model);
-    const QString effectOwner(IEffect *effect) const;
-    void setEffectOwner(IEffect *effect, const IModel *model);
 
 #ifndef VPVL2_NO_BULLET
     btDefaultCollisionConfiguration m_config;
@@ -117,9 +115,7 @@ private:
     typedef QPair<IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
     QList<OffscreenRenderTarget> m_offscreens;
     QHash<QString, IEffect *> m_effectCaches;
-    QHash<IEffect *, QString> m_effectOwners;
     mutable QMutex m_effectCachesLock;
-    mutable QMutex m_effectOwnersLock;
     Delegate *m_delegate;
     Scene m_scene;
     Factory *m_factory;

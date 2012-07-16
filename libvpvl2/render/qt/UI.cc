@@ -677,6 +677,7 @@ void UI::renderOffscreen()
                     break;
                 }
             }
+            engine->update();
             engine->renderModel();
             engine->renderEdge();
         }
@@ -816,7 +817,7 @@ IEffect *UI::createEffectAsync(const IString *path)
     return effect;
 }
 
-IEffect *UI::createEffectAsync(const IModel *model, const IString *dir)
+IEffect *UI::createEffectAsync(IModel *model, const IString *dir)
 {
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -830,7 +831,7 @@ IEffect *UI::createEffectAsync(const IModel *model, const IString *dir)
         if (!effect->internalPointer())
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
         m_effectCaches.insert(key, effect);
-        setEffectOwner(effect, model);
+        m_delegate->setEffectOwner(effect, model);
     }
     m_effectCachesLock.unlock();
 #else
@@ -853,23 +854,6 @@ IMotion *UI::createMotionAsync(const QString &path, IModel *model) const
         qWarning("Failed parsing the model motion, skipped...");
     }
     return 0;
-}
-
-const QString UI::effectOwner(IEffect *effect) const
-{
-    m_effectOwnersLock.lock();
-    const QString name = m_effectOwners[effect];
-    m_effectOwnersLock.unlock();
-    return name;
-}
-
-void UI::setEffectOwner(IEffect *effect, const IModel *model)
-{
-    const CString *name = static_cast<const CString *>(model->name());
-    const QString &n = name ? name->value() : m_delegate->findModelPath(model);
-    m_effectOwnersLock.lock();
-    m_effectOwners.insert(effect, n);
-    m_effectOwnersLock.unlock();
 }
 
 IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
@@ -933,14 +917,18 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                     const QString &key = pair.at(0).trimmed();
                     const QString &value = pair.at(1).trimmed();
                     QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
-                    if (key == "self")
-                        regexp.setPattern(effectOwner(effect));
+                    if (key == "self") {
+                        const QString &name = m_delegate->effectOwnerName(effect);
+                        regexp.setPattern(name);
+                    }
                     if (value != "hide" && value != "none") {
                         QString path = baseDir.absoluteFilePath(value);
                         path.replace(fxRegExp, ".cgfx");
                         CString s2(path);
                         const QFuture<IEffect *> &future3 = QtConcurrent::run(this, &UI::createEffectAsync, &s2);
-                        attachments.append(EffectAttachment(regexp, future3.result()));
+                        IEffect *offscreenEffect = future3.result();
+                        offscreenEffect->setParentEffect(effect);
+                        attachments.append(EffectAttachment(regexp, offscreenEffect));
                     }
                     else {
                         attachments.append(EffectAttachment(regexp, 0));

@@ -65,6 +65,8 @@ public:
     virtual void *internalPointer() const = 0;
     virtual void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const = 0;
     virtual void getInteractiveParameters(Array<void *> &value) const = 0;
+    virtual IEffect *parentEffect() const = 0;
+    virtual void setParentEffect(IEffect *value) = 0;
 };
 
 } /* namespace vpvl2 */
