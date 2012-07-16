@@ -805,8 +805,10 @@ IEffect *UI::createEffectAsync(const IString *path)
     else {
         m_effectCachesLock.unlock();
         effect = m_scene.createEffect(path, m_delegate);
-        if (!effect->internalPointer())
+        if (!effect->internalPointer()) {
+            qWarning("%s cannot be compiled", qPrintable(key)) ;
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        }
         m_effectCachesLock.lock();
         m_effectCaches.insert(key, effect);
     }
@@ -899,7 +901,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     }
     else {
         const QDir &baseDir = info.dir();
-        const QRegExp fxRegExp(".fx$");
+        static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
         IEffect *effect = effectPtr.data();
         engine->setEffect(IEffect::kAutoDetection, effectPtr.take(), &s1);
@@ -923,7 +925,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                     }
                     if (value != "hide" && value != "none") {
                         QString path = baseDir.absoluteFilePath(value);
-                        path.replace(fxRegExp, ".cgfx");
+                        path.replace(kExtensionReplaceRegExp, ".cgfx");
                         CString s2(path);
                         const QFuture<IEffect *> &future3 = QtConcurrent::run(this, &UI::createEffectAsync, &s2);
                         IEffect *offscreenEffect = future3.result();
