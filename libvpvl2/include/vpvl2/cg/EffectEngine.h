@@ -288,7 +288,10 @@ public:
 
 protected:
     bool isMimapEnabled(const CGparameter parameter) const;
-    void getTextureFormat(const CGparameter parameter, GLenum &internal, GLenum &format) const;
+    void getTextureFormat(const CGparameter parameter,
+                          GLenum &internal,
+                          GLenum &format,
+                          GLenum &type) const;
     virtual void generateTexture2D(const CGparameter parameter,
                                    const CGparameter sampler,
                                    GLuint texture,

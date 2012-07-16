@@ -752,31 +752,53 @@ bool RenderColorTargetSemantic::isMimapEnabled(const CGparameter parameter) cons
     return enableGeneratingMipmap;
 }
 
-void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter, GLenum &internal, GLenum &format) const
+void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
+                                                 GLenum &internal,
+                                                 GLenum &format,
+                                                 GLenum &type) const
 {
     CGannotation formatAnnotation = cgGetNamedParameterAnnotation(parameter, "Format");
     internal = GL_RGBA8;
     format = GL_RGBA;
+    type = GL_UNSIGNED_BYTE;
     const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
     if (!formatString)
         return;
-    if (VPVL2_CG_STREQ_CONST(formatString, "A32B32G32R32F")) {
+    static const char kPrefix[] = "D3DFMT_";
+    const char *ptr = VPVL2_CG_STREQ_CONST(formatString, kPrefix)
+            ? VPVL2_CG_GET_SUFFIX(formatString, kPrefix) : formatString;
+    if (VPVL2_CG_STREQ_CONST(ptr, "A32B32G32R32F")) {
         internal = GL_RGBA32F_ARB;
+        type = GL_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(formatString, "A16B16G16R16F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, "A16B16G16R16F")) {
         internal = GL_RGBA16F_ARB;
+        type = GL_HALF_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_R32F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, "R32F")) {
         internal = GL_R32F;
         format = GL_RED;
+        type = GL_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_G32R32F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, "R16F")) {
+        internal = GL_R16F;
+        format = GL_RG;
+        type = GL_HALF_FLOAT;
+    }
+    else if (VPVL2_CG_STREQ_CONST(ptr, "G32R32F")) {
         internal = GL_RG32F;
         format = GL_RG;
+        type = GL_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(formatString, "D3DFMT_G16R16")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, "G16R16F")) {
+        internal = GL_RG16F;
+        format = GL_RG;
+        type = GL_HALF_FLOAT;
+    }
+    else if (VPVL2_CG_STREQ_CONST(formatString, "G16R16")) {
         internal = GL_RG16;
         format = GL_RG;
+        type = GL_UNSIGNED_SHORT;
     }
 }
 
@@ -786,11 +808,10 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   size_t width,
                                                   size_t height)
 {
-    GLenum internal, format;
-    getTextureFormat(parameter, internal, format);
+    GLenum internal, format, type;
+    getTextureFormat(parameter, internal, format, type);
     glBindTexture(GL_TEXTURE_2D, texture);
-    while (glGetError()) {}
-    glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, type, 0);
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -805,10 +826,10 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
                                                   size_t height,
                                                   size_t depth)
 {
-    GLenum internal, format;
-    getTextureFormat(parameter, internal, format);
+    GLenum internal, format, type;
+    getTextureFormat(parameter, internal, format, type);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage3D(GL_TEXTURE_2D, 0, internal, width, height, depth, 0, format, GL_UNSIGNED_BYTE, 0);
+    glTexImage3D(GL_TEXTURE_2D, 0, internal, width, height, depth, 0, format, type, 0);
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
