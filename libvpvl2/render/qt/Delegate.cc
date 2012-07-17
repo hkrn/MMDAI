@@ -147,10 +147,8 @@ void Delegate::uploadAnimatedTexture(float offset, float speed, float seek, void
         int right = qMax(int(frameCount - offset), 1);
         int frameIndex = left % right + int(offset);
         if (movie->jumpToFrame(frameIndex)) {
-            QTransform transform;
-            transform.scale(1, -1);
             const QImage &image = movie->currentImage();
-            const QImage &textureImage = QGLWidget::convertToGLFormat(image.transformed(transform));
+            const QImage &textureImage = QGLWidget::convertToGLFormat(image.mirrored());
             glBindTexture(GL_TEXTURE_2D, textureID);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(), GL_RGBA, GL_UNSIGNED_BYTE, textureImage.constBits());
             glBindTexture(GL_TEXTURE_2D, 0);
