@@ -667,6 +667,8 @@ void UI::renderOffscreen()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
+            if (engine->hasPreProcess() || engine->hasPostProcess())
+                continue;
             const IModel *model = engine->model();
             const IString *name = model->name();
             const QString &n = name ? static_cast<const CString *>(name)->value() : m_delegate->findModelPath(model);
@@ -685,7 +687,7 @@ void UI::renderOffscreen()
         glBindTexture(GL_TEXTURE_2D, textureID);
         QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
-        image.save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
+        image.rgbSwapped().mirrored().save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
         glBindTexture(GL_TEXTURE_2D, 0);
 #endif
     }
@@ -702,7 +704,7 @@ void UI::renderWindow()
     glViewport(0, 0, width(), height());
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0, 0, 1, 1);
+    glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
@@ -750,13 +752,7 @@ bool UI::loadScene()
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
     Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
-    // addModel(QDir(kStageDir).absoluteFilePath(kStageName));
-    // addModel(kStage2Name, kStageDir);
 #endif
-    const QString &modelPath = QDir(m_settings->value("dir.model").toString())
-            .absoluteFilePath(m_settings->value("file.model").toString());
-    const QString &assetPath = QDir(m_settings->value("dir.asset").toString())
-            .absoluteFilePath(m_settings->value("file.asset").toString());
     const QString &modelMotionPath = QDir(m_settings->value("dir.motion").toString())
             .absoluteFilePath(m_settings->value("file.motion").toString());
     const QString &cameraMotionPath = QDir(m_settings->value("dir.camera").toString())
@@ -764,14 +760,27 @@ bool UI::loadScene()
     QProgressDialog dialog(this);
     dialog.setWindowModality(Qt::ApplicationModal);
     dialog.setLabelText("Loading scene...");
-    dialog.setMaximum(4);
+    dialog.setMaximum(-1);
     dialog.show();
-    IModel *model = addModel(modelPath, dialog);
-    if (model)
-        addMotion(modelMotionPath, model);
-    qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    dialog.setValue(dialog.value() + 1);
-    addModel(assetPath, dialog);
+    int nmodels = m_settings->beginReadArray("models");
+    for (int i = 0; i < nmodels; i++) {
+        m_settings->setArrayIndex(i);
+        const QString &path = m_settings->value("path").toString();
+        IModel *model = addModel(path, dialog);
+        if (model)
+            addMotion(modelMotionPath, model);
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+    m_settings->endArray();
+    int nassets = m_settings->beginReadArray("assets");
+    for (int i = 0; i < nassets; i++) {
+        m_settings->setArrayIndex(i);
+        const QString &path = m_settings->value("path").toString();
+        IModel *model = addModel(path, dialog);
+        Q_UNUSED(model)
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+    m_settings->endArray();
     IMotion *cameraMotion = loadMotion(cameraMotionPath, 0);
     if (cameraMotion)
         m_scene.camera()->setMotion(cameraMotion);
@@ -805,8 +814,9 @@ IEffect *UI::createEffectAsync(const IString *path)
     else {
         m_effectCachesLock.unlock();
         effect = m_scene.createEffect(path, m_delegate);
+        qDebug("Loading an effect: %s", qPrintable(key));
         if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(key)) ;
+            qWarning("%s cannot be compiled", qPrintable(key));
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
         }
         m_effectCachesLock.lock();
@@ -830,8 +840,12 @@ IEffect *UI::createEffectAsync(IModel *model, const IString *dir)
     }
     else {
         effect = m_scene.createEffect(dir, model, m_delegate);
-        if (!effect->internalPointer())
+        const IString *name = model->name();
+        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
+        if (!effect->internalPointer()) {
+            qWarning("%s cannot be compiled", qPrintable(key)) ;
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        }
         m_effectCaches.insert(key, effect);
         m_delegate->setEffectOwner(effect, model);
     }

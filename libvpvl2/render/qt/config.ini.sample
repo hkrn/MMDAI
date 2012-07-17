@@ -2,17 +2,28 @@
 ; * ";" または "#" はコメント行として無視される
 ; 以下 ";" がついている設定は省略可能であり、値はデフォルト値となっている
 
+;
+; 読み込むモデルを指定。Qt の QSettings の配列形式に準拠。size に読み込むモデル数を指定。
+; models/1/path, models/2/path のように真ん中に添字を入れる。添字は 1 からはじまる。
+;
+models/size = 2
+models/1/path = /path/to/foo.pmd
+models/2/path = /path/to/bar.pmx
+
+;
+; 読み込むアクセサリまたはエフェクトを指定。説明は上の読み込むモデルの指定と同じ
+;
+assets/size = 2
+assets/1/path = /path/to/foo.x
+assets/2/path = /path/to/bar.x
+
 ; 各種ファイルを読み込むのディレクトリ
-dir.model = ./res/lat
 dir.motion = ./res
 dir.camera = ./res
-dir.asset = ./res
 
 ; 読み込むファイル名 (ディレクトリ名は付けない)
-file.model = miku.pmx
 file.motion = motion.vmd
 file.camera = camera.vmd
-file.asset = stage.x
 
 ; トゥーンテクスチャ、シェーダ及びカーネルのソースがあるディレクトリ先
 ; dir.system.toon = ../../QMA2/resources/images
