@@ -1077,15 +1077,18 @@ const std::string &Project::globalSetting(const std::string &key) const
 
 const std::string &Project::modelSetting(const IModel *model, const std::string &key) const
 {
-    switch (model->type()) {
-    case IModel::kAsset:
-        return containsModel(model) ? m_context->localAssetSettings[model][key] : PrivateContext::kEmpty;
-    case IModel::kPMD:
-    case IModel::kPMX:
-        return containsModel(model) ? m_context->localModelSettings[model][key] : PrivateContext::kEmpty;
-    default:
-        return PrivateContext::kEmpty;
+    if (model) {
+        switch (model->type()) {
+        case IModel::kAsset:
+            return containsModel(model) ? m_context->localAssetSettings[model][key] : PrivateContext::kEmpty;
+        case IModel::kPMD:
+        case IModel::kPMX:
+            return containsModel(model) ? m_context->localModelSettings[model][key] : PrivateContext::kEmpty;
+        default:
+            return PrivateContext::kEmpty;
+        }
     }
+    return PrivateContext::kEmpty;
 }
 
 const Project::UUIDList Project::modelUUIDs() const
