@@ -52,83 +52,81 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 
 namespace vpvl2
 {
-class Factory;
-class IModel;
-class IMotion;
+    class Factory;
+    class IModel;
+    class IMotion;
 
-namespace render
-{
-namespace qt
-{
-class Delegate;
-class CString;
+    namespace render
+    {
+    namespace qt
+    {
+    class Delegate;
+    class CString;
 
-class UI : public QGLWidget, protected QGLFunctions
-{
-public:
-    UI();
-    ~UI();
+    class UI : public QGLWidget, protected QGLFunctions
+    {
+    public:
+        UI();
+        ~UI();
 
-    void load(const QString &filename);
-    void rotate(float x, float y);
-    void translate(float x, float y);
+        void load(const QString &filename);
+        void rotate(float x, float y);
+        void translate(float x, float y);
 
-protected:
-    void closeEvent(QCloseEvent *event);
-    void initializeGL();
-    void timerEvent(QTimerEvent *event);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
-    void wheelEvent(QWheelEvent *event);
-    void resizeGL(int w, int h);
-    void paintGL();
+    protected:
+        void closeEvent(QCloseEvent *event);
+        void initializeGL();
+        void timerEvent(QTimerEvent *event);
+        void mousePressEvent(QMouseEvent *event);
+        void mouseMoveEvent(QMouseEvent *event);
+        void mouseReleaseEvent(QMouseEvent *event);
+        void wheelEvent(QWheelEvent *event);
+        void resizeGL(int w, int h);
+        void paintGL();
 
-private:
-    void renderDepth();
-    void renderOffscreen();
-    void renderWindow();
-    void setMousePositions(QMouseEvent *event);
-    bool loadScene();
-    IModel *createModelAsync(const QString &path) const;
-    IEffect *createEffectAsync(const IString *path);
-    IEffect *createEffectAsync(IModel *model, const IString *dir);
-    IMotion *createMotionAsync(const QString &path, IModel *model) const;
-    IModel *addModel(const QString &path, QProgressDialog &dialog);
-    IMotion *addMotion(const QString &path, IModel *model);
-    IMotion *loadMotion(const QString &path, IModel *model);
+    private:
+        void renderDepth();
+        void renderOffscreen();
+        void renderWindow();
+        void setMousePositions(QMouseEvent *event);
+        bool loadScene();
+        IModel *createModelAsync(const QString &path) const;
+        IEffect *createEffectAsync(const IString *path);
+        IEffect *createEffectAsync(IModel *model, const IString *dir);
+        IMotion *createMotionAsync(const QString &path, IModel *model) const;
+        IModel *addModel(const QString &path, QProgressDialog &dialog);
+        IMotion *addMotion(const QString &path, IModel *model);
+        IMotion *loadMotion(const QString &path, IModel *model);
 
 #ifndef VPVL2_NO_BULLET
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher m_dispatcher;
-    btAxisSweep3 m_broadphase;
-    btSequentialImpulseConstraintSolver m_solver;
-    btDiscreteDynamicsWorld m_world;
+        btDefaultCollisionConfiguration m_config;
+        btCollisionDispatcher m_dispatcher;
+        btAxisSweep3 m_broadphase;
+        btSequentialImpulseConstraintSolver m_solver;
+        btDiscreteDynamicsWorld m_world;
 #endif /* VPVL2_NO_BULLET */
-    QSettings *m_settings;
-    QElapsedTimer m_timer;
-    QGLFramebufferObject *m_fbo;
-    QPoint m_prevPos;
-    QMatrix4x4 m_projectionMatrix;
-    QMatrix4x4 m_modelViewMatrix;
-    typedef QPair<QRegExp, IEffect *> EffectAttachment;
-    typedef QPair<IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
-    QList<OffscreenRenderTarget> m_offscreens;
-    QHash<QString, IEffect *> m_effectCaches;
-    mutable QMutex m_effectCachesLock;
-    Delegate *m_delegate;
-    Scene m_scene;
-    Factory *m_factory;
-    IEncoding *m_encoding;
-    GLuint m_depthTextureID;
-    GLuint m_frameBufferID;
-    GLuint m_renderBufferID;
-    float m_prevElapsed;
-    float m_currentFrameIndex;
-};
+        QSettings *m_settings;
+        QElapsedTimer m_timer;
+        QGLFramebufferObject *m_fbo;
+        QPoint m_prevPos;
+        QMatrix4x4 m_projectionMatrix;
+        QMatrix4x4 m_modelViewMatrix;
+        typedef QPair<QRegExp, IEffect *> EffectAttachment;
+        typedef QPair<IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
+        QList<OffscreenRenderTarget> m_offscreens;
+        QHash<QString, IEffect *> m_effectCaches;
+        mutable QMutex m_effectCachesLock;
+        Delegate *m_delegate;
+        Scene m_scene;
+        Factory *m_factory;
+        IEncoding *m_encoding;
+        GLuint m_depthTextureID;
+        float m_prevElapsed;
+        float m_currentFrameIndex;
+    };
 
-}
-}
+    }
+    }
 }
 
 #endif

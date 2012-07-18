@@ -76,6 +76,7 @@ static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertice
 static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
 static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
 static const int kBaseRenderColorTargetIndex = GL_COLOR_ATTACHMENT0;
+static const bool kEnableRTAA = false;
 
 }
 
@@ -955,10 +956,9 @@ RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
     glDeleteRenderbuffers(nRenderBuffers, &m_renderBuffers[0]);
 }
 
-GLuint RenderDepthStencilTargetSemantic::findRenderBuffer(const char *name) const
+const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic::findRenderBuffer(const char *name) const
 {
-    GLuint *renderBuffer = const_cast<GLuint *>(m_name2buffer.find(name));
-    return renderBuffer ? *renderBuffer : 0;
+    return m_name2buffer.find(name);
 }
 
 void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter parameter,
@@ -973,7 +973,8 @@ void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter param
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     m_renderBuffers.add(renderBuffer);
-    m_name2buffer.insert(cgGetParameterName(parameter), renderBuffer);
+    Buffer buffer(width, height, parameter, renderBuffer);
+    m_name2buffer.insert(cgGetParameterName(parameter), buffer);
 }
 
 /* OffscreenRenderTargetSemantic */
@@ -1444,7 +1445,7 @@ bool EffectEngine::testTechnique(const CGtechnique technique,
                                  bool hasSphereMap,
                                  bool useToon)
 {
-    if (cgValidateTechnique(technique) == CG_FALSE)
+    if (!cgIsTechniqueValidated(technique) && cgValidateTechnique(technique) == CG_FALSE)
         return false;
     int ok = 1;
     const CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
@@ -1511,9 +1512,12 @@ void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDept
 {
     state.type = type;
     if (!value.empty()) {
-        GLuint renderBuffer = semantic.findRenderBuffer(value.c_str());
-        state.depthBuffer = renderBuffer;
-        state.stencilBuffer = renderBuffer;
+        const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findRenderBuffer(value.c_str());
+        const GLuint id = buffer->id;
+        state.width = buffer->width;
+        state.height = buffer->height;
+        state.depthBuffer = id;
+        state.stencilBuffer = id;
         state.frameBufferObject = frameBufferObject;
     }
 }
@@ -1531,7 +1535,8 @@ void EffectEngine::setStateFromParameter(const CGeffect effect,
     }
 }
 
-void EffectEngine::executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) {
+void EffectEngine::executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr)
+{
     if (cgIsPass(pass)) {
         cgSetPassState(pass);
         glDrawElements(mode, count, type, ptr);
@@ -1539,7 +1544,8 @@ void EffectEngine::executePass(CGpass pass, const GLenum mode, const GLsizei cou
     }
 }
 
-void EffectEngine::setFrameBufferTexture(const ScriptState &state) {
+void EffectEngine::setFrameBufferTexture(const ScriptState &state)
+{
     GLuint texture = state.texture;
     const int index = state.type - ScriptState::kRenderColorTarget0;
     if (texture > 0) {
@@ -1547,19 +1553,13 @@ void EffectEngine::setFrameBufferTexture(const ScriptState &state) {
         glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
         if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
             m_renderColorTargets.push_back(target);
-#ifndef __APPLE__
-            if (glDrawBuffers) {
-#endif /* __APPLE__ */
-                glDrawBuffers(m_renderColorTargets.size(), &m_renderColorTargets[0]);
-#ifndef __APPLE__
-            }
-#endif /* __APPLE__ */
+            m_delegate->setRenderTarget(&m_renderColorTargets[0], m_renderColorTargets.size());
         }
-        glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, texture, 0);
+        m_delegate->bindRenderTarget(&texture, state.width, state.height, kEnableRTAA);
         glViewport(0, 0, state.width, state.height);
     }
     else {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        m_delegate->bindRenderTarget(0, state.width, state.height, kEnableRTAA);
         for (int i = 0; i < 4; i++) {
             const int target = kBaseRenderColorTargetIndex + i;
             glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, 0, 0);
@@ -1623,14 +1623,7 @@ void EffectEngine::executeScript(const Script *script,
             case ScriptState::kRenderDepthStencilTarget:
                 depthBuffer = state.depthBuffer;
                 stencilBuffer = state.stencilBuffer;
-                if (depthBuffer > 0 && stencilBuffer > 0) {
-                    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
-                    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilBuffer);
-                }
-                else {
-                    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-                    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
-                }
+                m_delegate->bindRenderDepthStencilTarget(&depthBuffer, &stencilBuffer, state.width, state.height, kEnableRTAA);
                 break;
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {
@@ -1865,8 +1858,9 @@ bool EffectEngine::parsePassScript(const CGpass pass, GLuint frameBufferObject)
 
 bool EffectEngine::parseTechniqueScript(const CGtechnique technique, GLuint &frameBufferObject, Passes &passes)
 {
-    if (!cgIsTechnique(technique) || !cgValidateTechnique(technique))
+    if (!cgIsTechnique(technique) || !cgValidateTechnique(technique)) {
         return false;
+    }
     const CGannotation scriptAnnotation = cgGetNamedTechniqueAnnotation(technique, "Script");
     Script techniqueScriptStates;
     if (cgIsAnnotation(scriptAnnotation)) {

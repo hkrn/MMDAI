@@ -84,6 +84,9 @@ public:
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
     IModel *offscreenEffectOwner(const IEffect *effect) const;
+    void setRenderTarget(const void *targets, const int ntargets);
+    void bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA);
+    void bindRenderDepthStencilTarget(void *depth, void *stencil, size_t width, size_t height, bool enableAA);
 
     void updateMatrices(const QSize &size);
     void setCameraModelMatrix(const QMatrix4x4 &value);
@@ -95,8 +98,47 @@ public:
     IModel *effectOwner(const IEffect *effect) const;
     const QString effectOwnerName(const IEffect *effect) const;
     void setEffectOwner(const IEffect *effect, IModel *model);
+    void createRenderTargets();
+    void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
 
 private:
+    class FrameBufferObject : protected QGLFunctions {
+    public:
+        FrameBufferObject()
+            : fbo(0),
+              depth(0),
+              fboAA(0),
+              colorAA(0),
+              depthAA(0),
+              samples(0)
+        {
+        }
+        ~FrameBufferObject() {
+            glDeleteFramebuffers(1, &fbo);
+            glDeleteRenderbuffers(1, &depth);
+            glDeleteFramebuffers(1, &fboAA);
+            glDeleteRenderbuffers(1, &colorAA);
+            glDeleteRenderbuffers(1, &depthAA);
+        }
+        void create() {
+            initializeGLFunctions();
+            glGenFramebuffers(1, &fbo);
+            glGenRenderbuffers(1, &depth);
+            glGetIntegerv(GL_MAX_SAMPLES, &samples);
+            if (samples > 0) {
+                glGenFramebuffers(1, &fboAA);
+                glGenRenderbuffers(1, &colorAA);
+                glGenRenderbuffers(1, &depthAA);
+            }
+        }
+
+        GLuint fbo;
+        GLuint depth;
+        GLuint fboAA;
+        GLuint colorAA;
+        GLuint depthAA;
+        int samples;
+    };
     static const QString createPath(const IString *dir, const QString &name);
     static const QString createPath(const IString *dir, const IString *name);
     static void setTextureID(const TextureCache &cache, bool isToon, Texture &output);
@@ -128,6 +170,7 @@ private:
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
+    FrameBufferObject m_buffer;
 };
 
 }

@@ -357,8 +357,6 @@ UI::UI()
       m_factory(0),
       m_encoding(0),
       m_depthTextureID(0),
-      m_frameBufferID(0),
-      m_renderBufferID(0),
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {
@@ -378,8 +376,6 @@ UI::~UI()
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
-    glDeleteFramebuffers(1, &m_frameBufferID);
-    glDeleteRenderbuffers(1, &m_renderBufferID);
     delete m_fbo;
     delete m_factory;
     delete m_encoding;
@@ -390,6 +386,7 @@ void UI::load(const QString &filename)
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->setIniCodec("UTF-8");
     m_delegate = new Delegate(m_settings, &m_scene, this);
+    m_delegate->createRenderTargets();
     m_delegate->updateMatrices(size());
     resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
     m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
@@ -416,8 +413,6 @@ void UI::load(const QString &filename)
     else {
         qFatal("Unable to load scene");
     }
-    glGenFramebuffers(1, &m_frameBufferID);
-    glGenRenderbuffers(1, &m_renderBufferID);
 }
 
 void UI::rotate(float x, float y)
@@ -622,23 +617,27 @@ void UI::renderOffscreen()
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     const Array<IRenderEngine *> &engines = m_scene.renderEngines();
     const int nengines = engines.count();
-    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferID);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_renderBufferID);
+    QSize s;
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    glDrawBuffers(nbuffers, buffers);
-    QSize s;
+    m_delegate->setRenderTarget(buffers, nbuffers);
     foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
         const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+        bool enableAA = false;
+        if (cgIsAnnotation(antiAlias)) {
+            int nvalues;
+            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
+            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+        }
         size_t width = renderTarget.width, height = renderTarget.height;
         GLuint textureID = cgGLGetTextureParameter(sampler);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_renderBufferID);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_renderBufferID);
-        CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
+        m_delegate->bindOffscreenRenderTarget(textureID, width, height, enableAA);
+        //m_delegate->bindRenderTarget(textureID, width, height, enableAA);
+        //m_delegate->bindRenderDepthStencilTarget(width, height, enableAA);
+        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         if (cgIsAnnotation(clearColor)) {
             int nvalues;
             const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
@@ -649,7 +648,7 @@ void UI::renderOffscreen()
         else {
             glClearColor(1, 1, 1, 1);
         }
-        CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
+        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
         if (cgIsAnnotation(clearDepth)) {
             int nvalues;
             const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
@@ -683,17 +682,9 @@ void UI::renderOffscreen()
             engine->renderModel();
             engine->renderEdge();
         }
-#if 0
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
-        image.rgbSwapped().mirrored().save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
-        glBindTexture(GL_TEXTURE_2D, 0);
-#endif
+        m_delegate->bindOffscreenRenderTarget(0, width, height, enableAA);
     }
     m_delegate->updateMatrices(size());
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
 #endif
 }
 

@@ -324,10 +324,24 @@ private:
 class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
 {
 public:
+    struct Buffer {
+        Buffer(int w, int h, CGparameter p, GLuint i)
+            : width(w),
+              height(h),
+              parameter(p),
+              id(i)
+        {
+        }
+        int width;
+        int height;
+        CGparameter parameter;
+        GLuint id;
+    };
+
     RenderDepthStencilTargetSemantic(IRenderDelegate *delegate);
     ~RenderDepthStencilTargetSemantic();
 
-    GLuint findRenderBuffer(const char *name) const;
+    const Buffer *findRenderBuffer(const char *name) const;
 
 protected:
     void generateTexture2D(const CGparameter parameter,
@@ -338,7 +352,7 @@ protected:
 
 private:
     Array<GLuint> m_renderBuffers;
-    Hash<HashString, GLuint> m_name2buffer;
+    Hash<HashString, Buffer> m_name2buffer;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderDepthStencilTargetSemantic)
 };

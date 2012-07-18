@@ -318,6 +318,12 @@ public:
 
     virtual IModel *effectOwner(const IEffect *effect) const = 0;
 
+    virtual void setRenderTarget(const void *targets, const int ntargets) = 0;
+
+    virtual void bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
+
+    virtual void bindRenderDepthStencilTarget(void *depth, void *stencil, size_t width, size_t height, bool enableAA) = 0;
+
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };
 
