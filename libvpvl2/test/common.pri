@@ -1,4 +1,3 @@
-QT += testlib
 QT -= gui
 CONFIG   += console
 CONFIG   -= app_bundle
@@ -22,3 +21,4 @@ linux-* {
 LIBS += -L../../debug/lib -lvpvl2_debug -L../../../bullet/debug/lib \
         -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 INCLUDEPATH += ../../include ../../debug/include ../../../bullet/src /opt/local/include/libxml2 /usr/include/libxml2
+
