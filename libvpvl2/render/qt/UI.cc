@@ -635,8 +635,6 @@ void UI::renderOffscreen()
         size_t width = renderTarget.width, height = renderTarget.height;
         GLuint textureID = cgGLGetTextureParameter(sampler);
         m_delegate->bindOffscreenRenderTarget(textureID, width, height, enableAA);
-        //m_delegate->bindRenderTarget(textureID, width, height, enableAA);
-        //m_delegate->bindRenderDepthStencilTarget(width, height, enableAA);
         const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         if (cgIsAnnotation(clearColor)) {
             int nvalues;
@@ -682,7 +680,7 @@ void UI::renderOffscreen()
             engine->renderModel();
             engine->renderEdge();
         }
-        m_delegate->bindOffscreenRenderTarget(0, width, height, enableAA);
+        m_delegate->releaseOffscreenRenderTarget(textureID, width, height, enableAA);
     }
     m_delegate->updateMatrices(size());
 #endif

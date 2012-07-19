@@ -86,7 +86,9 @@ public:
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     void setRenderTarget(const void *targets, const int ntargets);
     void bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA);
-    void bindRenderDepthStencilTarget(void *depth, void *stencil, size_t width, size_t height, bool enableAA);
+    void bindRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
+    void releaseRenderTarget(void *texture, size_t width, size_t height, bool enableAA);
+    void releaseRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
 
     void updateMatrices(const QSize &size);
     void setCameraModelMatrix(const QMatrix4x4 &value);
@@ -100,51 +102,18 @@ public:
     void setEffectOwner(const IEffect *effect, IModel *model);
     void createRenderTargets();
     void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
+    void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
 
 private:
-    class FrameBufferObject : protected QGLFunctions {
-    public:
-        FrameBufferObject()
-            : fbo(0),
-              depth(0),
-              fboAA(0),
-              colorAA(0),
-              depthAA(0),
-              samples(0)
-        {
-        }
-        ~FrameBufferObject() {
-            glDeleteFramebuffers(1, &fbo);
-            glDeleteRenderbuffers(1, &depth);
-            glDeleteFramebuffers(1, &fboAA);
-            glDeleteRenderbuffers(1, &colorAA);
-            glDeleteRenderbuffers(1, &depthAA);
-        }
-        void create() {
-            initializeGLFunctions();
-            glGenFramebuffers(1, &fbo);
-            glGenRenderbuffers(1, &depth);
-            glGetIntegerv(GL_MAX_SAMPLES, &samples);
-            if (samples > 0) {
-                glGenFramebuffers(1, &fboAA);
-                glGenRenderbuffers(1, &colorAA);
-                glGenRenderbuffers(1, &depthAA);
-            }
-        }
+    class FrameBufferObject;
 
-        GLuint fbo;
-        GLuint depth;
-        GLuint fboAA;
-        GLuint colorAA;
-        GLuint depthAA;
-        int samples;
-    };
     static const QString createPath(const IString *dir, const QString &name);
     static const QString createPath(const IString *dir, const IString *name);
     static void setTextureID(const TextureCache &cache, bool isToon, Texture &output);
     static void addTextureCache(PrivateContext *context, const QString &path, const TextureCache &texture);
     bool uploadTextureInternal(const QString &path, Texture &texture, bool isToon, bool mipmap, void *context);
     void getToonColorInternal(const QString &path, Color &value);
+    FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
     const QSettings *m_settings;
     const Scene *m_scene;
@@ -157,6 +126,7 @@ private:
     QHash<const IModel *, QString> m_model2Paths;
     QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QMovie *> m_texture2Movies;
+    QHash<GLuint, FrameBufferObject *> m_renderTargets;
     QHash<const IEffect *, QString> m_effectOwners;
     QHash<const IEffect *, IModel *> m_effect2models;
     QMatrix4x4 m_lightWorldMatrix;
@@ -170,7 +140,8 @@ private:
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
-    FrameBufferObject m_buffer;
+    GLuint m_previousTextureID;
+    int m_msaaSamples;
 };
 
 }

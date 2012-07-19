@@ -530,6 +530,15 @@ private:
             height = 0;
             enterLoop = false;
         }
+        void inherit(const ScriptState &other) {
+            texture = other.texture;
+            depthBuffer = other.depthBuffer;
+            stencilBuffer = other.stencilBuffer;
+            width = other.width;
+            height = other.height;
+            enterLoop = other.enterLoop;
+        }
+
         enum Type {
             kUnknown,
             kRenderColorTarget0,
@@ -555,8 +564,8 @@ private:
         GLuint texture;
         GLuint depthBuffer;
         GLuint stencilBuffer;
-        int width;
-        int height;
+        size_t width;
+        size_t height;
         bool enterLoop;
     };
     typedef btAlignedObjectArray<ScriptState> Script;
@@ -585,7 +594,8 @@ private:
                                       ScriptState::Type type,
                                       ScriptState &state);
     static void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
-    void setFrameBufferTexture(const ScriptState &state);
+    void setRenderTargetFromState(const ScriptState &state);
+    void setRenderDepthStencilTargetFromState(const ScriptState &state);
     void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
     void addTechniquePasses(const CGtechnique technique);
     void setStandardsGlobal(const CGparameter parameter);

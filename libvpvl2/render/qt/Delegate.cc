@@ -53,6 +53,47 @@ namespace render
 namespace qt
 {
 
+class Delegate::FrameBufferObject : protected QGLFunctions {
+public:
+    FrameBufferObject(size_t width, size_t height, int samples)
+        : fbo(0),
+          depth(0),
+          fboAA(0),
+          colorAA(0),
+          depthAA(0),
+          samples(samples)
+    {
+        initializeGLFunctions();
+        glGenFramebuffers(1, &fbo);
+        glGenRenderbuffers(1, &depth);
+        glBindRenderbuffer(GL_RENDERBUFFER, depth);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        if (samples > 0) {
+            glGenFramebuffers(1, &fboAA);
+            glGenRenderbuffers(1, &colorAA);
+            glGenRenderbuffers(1, &depthAA);
+            glBindRenderbuffer(GL_RENDERBUFFER, colorAA);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_RGBA8, width, height);
+            glBindRenderbuffer(GL_RENDERBUFFER, depthAA);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT24, width, height);
+        }
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+    ~FrameBufferObject() {
+        glDeleteFramebuffers(1, &fbo);
+        glDeleteRenderbuffers(1, &depth);
+        glDeleteFramebuffers(1, &fboAA);
+        glDeleteRenderbuffers(1, &colorAA);
+        glDeleteRenderbuffers(1, &depthAA);
+    }
+    GLuint fbo;
+    GLuint depth;
+    GLuint fboAA;
+    GLuint colorAA;
+    GLuint depthAA;
+    int samples;
+};
+
 QString Delegate::readAllAsync(const QString &path)
 {
     QByteArray bytes;
@@ -68,7 +109,9 @@ Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *con
     : m_settings(settings),
       m_scene(scene),
       m_systemDir(m_settings->value("dir.system.toon", "../../QMA2/resources/images").toString()),
-      m_context(context)
+      m_context(context),
+      m_previousTextureID(0),
+      m_msaaSamples(0)
 {
     m_timer.start();
 }
@@ -497,7 +540,7 @@ void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
 
 void Delegate::createRenderTargets()
 {
-    m_buffer.create();
+    glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
 }
 
 void Delegate::setRenderTarget(const void *targets, const int ntargets)
@@ -507,100 +550,125 @@ void Delegate::setRenderTarget(const void *targets, const int ntargets)
 
 void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA)
 {
-    if (texture) {
-        GLuint textureID = *static_cast<GLuint *>(texture);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_buffer.fbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
-        const int nsamples = m_buffer.samples;
-        if (nsamples > 0 && enableAA) {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_buffer.fboAA);
-            glBindRenderbuffer(GL_RENDERBUFFER, m_buffer.colorAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, nsamples, GL_RGBA8, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_buffer.colorAA);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        }
-    }
-    else {
-        if (m_buffer.samples > 0 && enableAA) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_buffer.fboAA);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_buffer.fbo);
-            glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        }
+    GLuint textureID = *static_cast<const GLuint *>(texture);
+    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
+    if (buffer) {
+        if (m_previousTextureID > 0 && m_previousTextureID != textureID) {
+            if (buffer->fboAA && enableAA) {
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->fboAA);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->fbo);
+                glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            }
 #if 0
-        width = 640; height = 480;
-        static int fileID = 0;
-        QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
-        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
-        image.rgbSwapped().mirrored().save(QString("%1/framebuffer.png").arg(QDir::homePath()).arg(fileID++));
+            QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+            glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            image.rgbSwapped().mirrored().save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
+            image.pixel(0, 0);
 #endif
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+        if (enableAA && buffer->fboAA) {
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fboAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, buffer->colorAA);
+        }
+        m_previousTextureID = textureID;
     }
 }
 
-void Delegate::bindRenderDepthStencilTarget(void *depth, void *stencil, size_t width, size_t height, bool enableAA)
+void Delegate::releaseRenderTarget(void *texture, size_t /* width */, size_t /* height */, bool /* enableAA */)
 {
-    GLuint depthBuffer = depth ? *static_cast<GLuint *>(depth) : 0;
-    GLuint stencilBuffer = stencil ? *static_cast<GLuint *>(stencil) : 0;
-    if (depthBuffer > 0 && stencilBuffer > 0) {
+    GLuint textureID = *static_cast<const GLuint *>(texture);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    m_previousTextureID = textureID;
+}
+
+void Delegate::bindRenderDepthStencilTarget(void *texture,
+                                            void *depth,
+                                            void *stencil,
+                                            size_t width,
+                                            size_t height,
+                                            bool enableAA)
+{
+    GLuint textureID = *static_cast<const GLuint *>(texture);
+    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
+    if (buffer) {
+        GLuint depthBuffer = *static_cast<GLuint *>(depth);
+        GLuint stencilBuffer = *static_cast<GLuint *>(stencil);
+        glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilBuffer);
-        const int nsamples = m_buffer.samples;
-        if (nsamples > 0 && enableAA) {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_buffer.fboAA);
-            glBindRenderbuffer(GL_RENDERBUFFER, m_buffer.depthAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, nsamples, GL_DEPTH_COMPONENT24, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_buffer.depthAA);
+        if (enableAA && buffer->fboAA) {
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fboAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer->depthAA);
         }
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
-    else {
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
-        const int nsamples = m_buffer.samples;
-        if (nsamples > 0 && enableAA) {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_buffer.fboAA);
+}
+
+void Delegate::releaseRenderDepthStencilTarget(void *texture,
+                                               void * /* depth */,
+                                               void * /* stencil */,
+                                               size_t width,
+                                               size_t height,
+                                               bool enableAA)
+{
+    GLuint textureID = *static_cast<const GLuint *>(texture);
+    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
+    if (buffer) {
+        if (enableAA && buffer->fboAA) {
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fboAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        else {
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
     }
 }
 
 void Delegate::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
 {
-    if (textureID > 0) {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_buffer.fbo);
+    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
+    if (buffer) {
+        glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
-        glBindRenderbuffer(GL_RENDERBUFFER, m_buffer.depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_buffer.depth);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_buffer.depth);
-        const int nsamples = m_buffer.samples;
-        if (nsamples > 0 && enableAA) {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_buffer.fboAA);
-            glBindRenderbuffer(GL_RENDERBUFFER, m_buffer.colorAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, nsamples, GL_RGBA8, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_buffer.colorAA);
-            glBindRenderbuffer(GL_RENDERBUFFER, m_buffer.depthAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, nsamples, GL_DEPTH_COMPONENT24, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_buffer.depthAA);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer->depth);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffer->depth);
+        if (enableAA && buffer->fboAA) {
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fboAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, buffer->colorAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer->depthAA);
         }
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
-    else {
-        if (m_buffer.samples > 0 && enableAA) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_buffer.fboAA);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_buffer.fbo);
+}
+
+void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
+{
+    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
+    if (buffer) {
+        if (enableAA && buffer->fboAA) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->fboAA);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->fbo);
             glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         }
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
 #if 0
         QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+        glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
-        image.rgbSwapped().mirrored().save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
-#endif
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        image.rgbSwapped().mirrored().save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
+        image.pixel(0, 0);
+#endif
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 const QString Delegate::createPath(const IString *dir, const QString &name)
@@ -701,6 +769,22 @@ void Delegate::getToonColorInternal(const QString &path, Color &value)
         const QColor color(rgb);
         value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     }
+}
+
+Delegate::FrameBufferObject *Delegate::findRenderTarget(const GLuint textureID, size_t width, size_t height)
+{
+    FrameBufferObject *buffer = 0;
+    if (textureID > 0) {
+        if (!m_renderTargets.contains(textureID)) {
+            QScopedPointer<FrameBufferObject> ptr(new FrameBufferObject(width, height, m_msaaSamples));
+            m_renderTargets.insert(textureID, ptr.data());
+            buffer = ptr.take();
+        }
+        else {
+            buffer = m_renderTargets[textureID];
+        }
+    }
+    return buffer;
 }
 
 }

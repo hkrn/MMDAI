@@ -322,7 +322,21 @@ public:
 
     virtual void bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
 
-    virtual void bindRenderDepthStencilTarget(void *depth, void *stencil, size_t width, size_t height, bool enableAA) = 0;
+    virtual void releaseRenderTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
+
+    virtual void bindRenderDepthStencilTarget(void *texture,
+                                              void *depth,
+                                              void *stencil,
+                                              size_t width,
+                                              size_t height,
+                                              bool enableAA) = 0;
+
+    virtual void releaseRenderDepthStencilTarget(void *texture,
+                                                 void *depth,
+                                                 void *stencil,
+                                                 size_t width,
+                                                 size_t height,
+                                                 bool enableAA) = 0;
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };
