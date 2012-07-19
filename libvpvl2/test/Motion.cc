@@ -13,6 +13,11 @@
 #include "vpvl2/vmd/Motion.h"
 #include "Common.h"
 
+#include <gmock/gmock.h>
+#include "mock/Bone.h"
+#include "mock/Model.h"
+#include "mock/Morph.h"
+
 using namespace ::testing;
 using namespace vpvl2::pmx;
 using namespace vpvl2::vmd;
@@ -430,44 +435,50 @@ TEST(Motion, CameraInterpolation)
 
 TEST(Motion, AddAndRemoveBoneKeyframes)
 {
-    /*
     Encoding encoding;
-    String s("bone"), s2("bone2");
-    Model model(&encoding);
+    String name("bone");
+    MockIModel model;
+    MockIBone bone;
     Motion motion(&model, &encoding);
     EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
+    // mock bone
+    EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
     QScopedPointer<IBoneKeyframe> frame(new BoneKeyframe(&encoding));
     frame->setTimeIndex(42);
-    frame->setName(&s);
-    // add a bone keyframe (don't forget updating motion!)
-    motion.addKeyframe(frame.data());
-    motion.update(IKeyframe::kBone);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
-    // boudary check of findBoneKeyframeAt
-    EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(-1));
-    EXPECT_EQ(frame.data(), motion.findBoneKeyframeAt(0));
-    EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
-    // find a bone keyframe with timeIndex and name
-    EXPECT_EQ(frame.take(), motion.findBoneKeyframe(42, &s));
+    frame->setName(&name);
+    {
+        // add a bone keyframe (don't forget updating motion!)
+        motion.addKeyframe(frame.data());
+        motion.update(IKeyframe::kBone);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
+        // boudary check of findBoneKeyframeAt
+        EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(-1));
+        EXPECT_EQ(frame.data(), motion.findBoneKeyframeAt(0));
+        EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
+        // find a bone keyframe with timeIndex and name
+        EXPECT_EQ(frame.take(), motion.findBoneKeyframe(42, &name));
+    }
     QScopedPointer<IBoneKeyframe> frame2(new BoneKeyframe(&encoding));
     frame2->setTimeIndex(42);
-    frame2->setName(&s2);
-    // replaced bone frame should be one keyframe (don't forget updating motion!)
-    motion.replaceKeyframe(frame2.data());
-    motion.update(IKeyframe::kBone);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
-    // no longer be find previous bone keyframe
-    EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &s));
-    EXPECT_EQ(frame2.data(), motion.findBoneKeyframe(42, &s2));
-    IKeyframe *keyframeToDelete = frame2.take();
-    // delete bone keyframe and set it null (don't forget updating motion!)
-    motion.deleteKeyframe(keyframeToDelete);
-    motion.update(IKeyframe::kBone);
-    // bone keyframes should be empty
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
-    EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &s2));
-    EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
-    */
+    frame2->setName(&name);
+    {
+        // replaced bone frame should be one keyframe (don't forget updating motion!)
+        motion.replaceKeyframe(frame2.data());
+        motion.update(IKeyframe::kBone);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
+        // no longer be find previous bone keyframe
+        EXPECT_EQ(frame2.data(), motion.findBoneKeyframe(42, &name));
+    }
+    {
+        IKeyframe *keyframeToDelete = frame2.take();
+        // delete bone keyframe and set it null (don't forget updating motion!)
+        motion.deleteKeyframe(keyframeToDelete);
+        motion.update(IKeyframe::kBone);
+        // bone keyframes should be empty
+        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
+        EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &name));
+        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+    }
 }
 
 TEST(Motion, AddAndRemoveCameraKeyframes)
@@ -479,33 +490,39 @@ TEST(Motion, AddAndRemoveCameraKeyframes)
     QScopedPointer<ICameraKeyframe> frame(new CameraKeyframe());
     frame->setTimeIndex(42);
     frame->setDistance(42);
-    // add a camera keyframe (don't forget updating motion!)
-    motion.addKeyframe(frame.data());
-    motion.update(IKeyframe::kCamera);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
-    // boudary check of findCameraKeyframeAt
-    EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(-1));
-    EXPECT_EQ(frame.data(), motion.findCameraKeyframeAt(0));
-    EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
-    // find a camera keyframe with timeIndex
-    EXPECT_EQ(frame.take(), motion.findCameraKeyframe(42));
+    {
+        // add a camera keyframe (don't forget updating motion!)
+        motion.addKeyframe(frame.data());
+        motion.update(IKeyframe::kCamera);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
+        // boudary check of findCameraKeyframeAt
+        EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(-1));
+        EXPECT_EQ(frame.data(), motion.findCameraKeyframeAt(0));
+        EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
+        // find a camera keyframe with timeIndex
+        EXPECT_EQ(frame.take(), motion.findCameraKeyframe(42));
+    }
     QScopedPointer<ICameraKeyframe> frame2(new CameraKeyframe());
     frame2->setTimeIndex(42);
     frame2->setDistance(84);
-    // replaced camera frame should be one keyframe (don't forget updating motion!)
-    motion.replaceKeyframe(frame2.data());
-    motion.update(IKeyframe::kCamera);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
-    // no longer be find previous camera keyframe
-    EXPECT_EQ(84.0f, motion.findCameraKeyframe(42)->distance());
-    IKeyframe *keyframeToDelete = frame2.take();
-    // delete camera keyframe and set it null (don't forget updating motion!)
-    motion.deleteKeyframe(keyframeToDelete);
-    motion.update(IKeyframe::kCamera);
-    // camera keyframes should be empty
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
-    EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42));
-    EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+    {
+        // replaced camera frame should be one keyframe (don't forget updating motion!)
+        motion.replaceKeyframe(frame2.data());
+        motion.update(IKeyframe::kCamera);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
+        // no longer be find previous camera keyframe
+        EXPECT_EQ(84.0f, motion.findCameraKeyframe(42)->distance());
+    }
+    {
+        IKeyframe *keyframeToDelete = frame2.take();
+        // delete camera keyframe and set it null (don't forget updating motion!)
+        motion.deleteKeyframe(keyframeToDelete);
+        motion.update(IKeyframe::kCamera);
+        // camera keyframes should be empty
+        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+        EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42));
+        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+    }
 }
 
 TEST(Motion, AddAndRemoveLightKeyframes)
@@ -517,72 +534,84 @@ TEST(Motion, AddAndRemoveLightKeyframes)
     QScopedPointer<ILightKeyframe> frame(new LightKeyframe());
     frame->setTimeIndex(42);
     frame->setColor(Vector3(1, 0, 0));
-    // add a light keyframe (don't forget updating motion!)
-    motion.addKeyframe(frame.data());
-    motion.update(IKeyframe::kLight);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
-    // boudary check of findLightKeyframeAt
-    EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(-1));
-    EXPECT_EQ(frame.data(), motion.findLightKeyframeAt(0));
-    EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(1));
-    // find a light keyframe with timeIndex
-    EXPECT_EQ(frame.take(), motion.findLightKeyframe(42));
+    {
+        // add a light keyframe (don't forget updating motion!)
+        motion.addKeyframe(frame.data());
+        motion.update(IKeyframe::kLight);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
+        // boudary check of findLightKeyframeAt
+        EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(-1));
+        EXPECT_EQ(frame.data(), motion.findLightKeyframeAt(0));
+        EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(1));
+        // find a light keyframe with timeIndex
+        EXPECT_EQ(frame.take(), motion.findLightKeyframe(42));
+    }
     QScopedPointer<ILightKeyframe> frame2(new LightKeyframe());
     frame2->setTimeIndex(42);
     frame2->setColor(Vector3(0, 0, 1));
-    // replaced light frame should be one keyframe (don't forget updating motion!)
-    motion.replaceKeyframe(frame2.data());
-    motion.update(IKeyframe::kLight);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
-    // no longer be find previous light keyframe
-    EXPECT_EQ(1.0f, motion.findLightKeyframe(42)->color().z());
-    IKeyframe *keyframeToDelete = frame2.take();
-    // delete light keyframe and set it null (don't forget updating motion!)
-    motion.deleteKeyframe(keyframeToDelete);
-    motion.update(IKeyframe::kLight);
-    // light keyframes should be empty
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
-    EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframe(42));
-    EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+    {
+        // replaced light frame should be one keyframe (don't forget updating motion!)
+        motion.replaceKeyframe(frame2.data());
+        motion.update(IKeyframe::kLight);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
+        // no longer be find previous light keyframe
+        EXPECT_EQ(1.0f, motion.findLightKeyframe(42)->color().z());
+    }
+    {
+        IKeyframe *keyframeToDelete = frame2.take();
+        // delete light keyframe and set it null (don't forget updating motion!)
+        motion.deleteKeyframe(keyframeToDelete);
+        motion.update(IKeyframe::kLight);
+        // light keyframes should be empty
+        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
+        EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframe(42));
+        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+    }
 }
 
 TEST(Motion, AddAndRemoveMorphKeyframes)
 {
-    /*
     Encoding encoding;
-    String s("morph"), s2("morph2");
-    Model model(&encoding);
+    String name("morph");
+    MockIModel model;
+    MockIMorph morph;
     Motion motion(&model, &encoding);
     EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
+    // mock morph
+    EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
     QScopedPointer<IMorphKeyframe> frame(new MorphKeyframe(&encoding));
     frame->setTimeIndex(42);
-    frame->setName(&s);
-    // add a morph keyframe (don't forget updating motion!)
-    motion.addKeyframe(frame.data());
-    motion.update(IKeyframe::kMorph);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
-    // boudary check of findMorphKeyframeAt
-    EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
-    EXPECT_EQ(frame.data(), motion.findMorphKeyframeAt(0));
-    EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
-    EXPECT_EQ(frame.take(), motion.findMorphKeyframe(42, &s));
+    frame->setName(&name);
+    {
+        // add a morph keyframe (don't forget updating motion!)
+        motion.addKeyframe(frame.data());
+        motion.update(IKeyframe::kMorph);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
+        // boudary check of findMorphKeyframeAt
+        EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
+        EXPECT_EQ(frame.data(), motion.findMorphKeyframeAt(0));
+        EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
+        EXPECT_EQ(frame.take(), motion.findMorphKeyframe(42, &name));
+    }
     QScopedPointer<IMorphKeyframe> frame2(new MorphKeyframe(&encoding));
     frame2->setTimeIndex(42);
-    frame2->setName(&s2);
-    // replaced morph frame should be one keyframe (don't forget updating motion!)
-    motion.replaceKeyframe(frame2.data());
-    motion.update(IKeyframe::kMorph);
-    EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
-    // no longer be find previous morph keyframe
-    EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &s));
-    EXPECT_EQ(frame2.data(), motion.findMorphKeyframe(42, &s2));
-    IKeyframe *keyframeToDelete = frame2.take();
-    // delete light keyframe and set it null (don't forget updating motion!)
-    motion.deleteKeyframe(keyframeToDelete);
-    motion.update(IKeyframe::kMorph);
-    // morph keyframes should be empty
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
-    EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &s2));
-    EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
-    */
+    frame2->setName(&name);
+    {
+        // replaced morph frame should be one keyframe (don't forget updating motion!)
+        motion.replaceKeyframe(frame2.data());
+        motion.update(IKeyframe::kMorph);
+        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
+        // no longer be find previous morph keyframe
+        EXPECT_EQ(frame2.data(), motion.findMorphKeyframe(42, &name));
+    }
+    {
+        IKeyframe *keyframeToDelete = frame2.take();
+        // delete light keyframe and set it null (don't forget updating motion!)
+        motion.deleteKeyframe(keyframeToDelete);
+        motion.update(IKeyframe::kMorph);
+        // morph keyframes should be empty
+        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
+        EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name));
+        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+    }
 }
