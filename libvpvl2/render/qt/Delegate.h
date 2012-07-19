@@ -50,7 +50,7 @@ namespace render
 namespace qt
 {
 
-class Delegate : public IRenderDelegate
+class Delegate : public IRenderDelegate, protected QGLFunctions
 {
 public:
     struct TextureCache {

@@ -46,6 +46,13 @@
 
 using namespace vpvl2;
 
+namespace
+{
+PFNGLBLITFRAMEBUFFERPROC glBlitFramebufferPROC;
+PFNGLDRAWBUFFERSPROC glDrawBuffersPROC;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
+}
+
 namespace vpvl2
 {
 namespace render
@@ -63,7 +70,8 @@ public:
           depthAA(0),
           samples(samples)
     {
-        initializeGLFunctions();
+        const QGLContext *context = QGLContext::currentContext();
+        initializeGLFunctions(context);
         glGenFramebuffers(1, &fbo);
         glGenRenderbuffers(1, &depth);
         glBindRenderbuffer(GL_RENDERBUFFER, depth);
@@ -73,9 +81,9 @@ public:
             glGenRenderbuffers(1, &colorAA);
             glGenRenderbuffers(1, &depthAA);
             glBindRenderbuffer(GL_RENDERBUFFER, colorAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_RGBA8, width, height);
+            glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, samples, GL_RGBA8, width, height);
             glBindRenderbuffer(GL_RENDERBUFFER, depthAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT24, width, height);
+            glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT24, width, height);
         }
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
@@ -540,12 +548,17 @@ void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
 
 void Delegate::createRenderTargets()
 {
+    const QGLContext *context = QGLContext::currentContext();
+    initializeGLFunctions(context);
     glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+    glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(context->getProcAddress("glBlitFramebuffer"));
+    glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
+    glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(context->getProcAddress("glRenderbufferStorageMultisample"));
 }
 
 void Delegate::setRenderTarget(const void *targets, const int ntargets)
 {
-    glDrawBuffers(ntargets, static_cast<const GLuint *>(targets));
+    glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
 }
 
 void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA)
@@ -557,7 +570,7 @@ void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool
             if (buffer->fboAA && enableAA) {
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->fboAA);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->fbo);
-                glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                glBlitFramebufferPROC(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
             }
 #if 0
             QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
@@ -657,7 +670,7 @@ void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size
         if (enableAA && buffer->fboAA) {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->fboAA);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->fbo);
-            glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            glBlitFramebufferPROC(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         }
 #if 0
         QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
