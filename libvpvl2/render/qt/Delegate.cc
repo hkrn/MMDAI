@@ -42,15 +42,20 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderDelegate.h>
 #include <QtCore/QtCore>
-#include <QtGui/QtGui>
 
 using namespace vpvl2;
 
 namespace
 {
+#ifdef __APPLE__
+#define glBlitFramebufferPROC glBlitFramebuffer
+#define glDrawBuffersPROC glDrawBuffers
+#define glRenderbufferStorageMultisamplePROC glRenderbufferStorageMultisample
+#else
 PFNGLBLITFRAMEBUFFERPROC glBlitFramebufferPROC;
 PFNGLDRAWBUFFERSPROC glDrawBuffersPROC;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
+#endif
 }
 
 namespace vpvl2
@@ -68,6 +73,8 @@ public:
           fboAA(0),
           colorAA(0),
           depthAA(0),
+          width(width),
+          height(height),
           samples(samples)
     {
         const QGLContext *context = QGLContext::currentContext();
@@ -94,11 +101,19 @@ public:
         glDeleteRenderbuffers(1, &colorAA);
         glDeleteRenderbuffers(1, &depthAA);
     }
+    void blit() {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, fboAA);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+        glBlitFramebufferPROC(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    }
+
     GLuint fbo;
     GLuint depth;
     GLuint fboAA;
     GLuint colorAA;
     GLuint depthAA;
+    size_t width;
+    size_t height;
     int samples;
 };
 
@@ -118,7 +133,7 @@ Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *con
       m_scene(scene),
       m_systemDir(m_settings->value("dir.system.toon", "../../QMA2/resources/images").toString()),
       m_context(context),
-      m_previousTextureID(0),
+      m_previousFrameBuffer(0),
       m_msaaSamples(0)
 {
     m_timer.start();
@@ -551,9 +566,11 @@ void Delegate::createRenderTargets()
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);
     glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+#ifndef __APPLE__
     glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(context->getProcAddress("glBlitFramebuffer"));
     glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
     glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(context->getProcAddress("glRenderbufferStorageMultisample"));
+#endif
 }
 
 void Delegate::setRenderTarget(const void *targets, const int ntargets)
@@ -561,23 +578,21 @@ void Delegate::setRenderTarget(const void *targets, const int ntargets)
     glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
 }
 
+//#define DEBUG_OUTPUT_TEXTURE
+
 void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
     if (buffer) {
-        if (m_previousTextureID > 0 && m_previousTextureID != textureID) {
-            if (buffer->fboAA && enableAA) {
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->fboAA);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->fbo);
-                glBlitFramebufferPROC(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-            }
-#if 0
+        if (enableAA && m_previousFrameBuffer) {
+            m_previousFrameBuffer->blit();
+#ifdef DEBUG_OUTPUT_TEXTURE
             QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
-            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_previousFrameBuffer->fbo);
             glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            image.rgbSwapped().mirrored().save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
+            image.rgbSwapped().mirrored().save(QString("%1/fboAA%2.png").arg(QDir::homePath()).arg(buffer->fboAA));
             image.pixel(0, 0);
 #endif
         }
@@ -586,16 +601,30 @@ void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool
         if (enableAA && buffer->fboAA) {
             glBindFramebuffer(GL_FRAMEBUFFER, buffer->fboAA);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, buffer->colorAA);
+            m_previousFrameBuffer = buffer;
         }
-        m_previousTextureID = textureID;
     }
 }
 
-void Delegate::releaseRenderTarget(void *texture, size_t /* width */, size_t /* height */, bool /* enableAA */)
+void Delegate::releaseRenderTarget(void *texture, size_t width, size_t height, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
+    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
+    if (buffer) {
+        if (enableAA && m_previousFrameBuffer) {
+            m_previousFrameBuffer->blit();
+            m_previousFrameBuffer = 0;
+        }
+#ifdef DEBUG_OUTPUT_TEXTURE
+        QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+        glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        image.rgbSwapped().mirrored().save(QString("%1/fbo%2.png").arg(QDir::homePath()).arg(buffer->fbo));
+        image.pixel(0, 0);
+#endif
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    m_previousTextureID = textureID;
 }
 
 void Delegate::bindRenderDepthStencilTarget(void *texture,
@@ -672,12 +701,12 @@ void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffer->fbo);
             glBlitFramebufferPROC(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         }
-#if 0
+#ifdef DEBUG_OUTPUT_TEXTURE
         QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
         glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        image.rgbSwapped().mirrored().save(QString("%1/texture%2.png").arg(QDir::homePath()).arg(textureID));
+        image.rgbSwapped().mirrored().save(QString("%1/offscreen%2.png").arg(QDir::homePath()).arg(buffer->fbo));
         image.pixel(0, 0);
 #endif
     }

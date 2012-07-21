@@ -1499,8 +1499,19 @@ void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTarget
             state.texture = texture->id;
             state.width = texture->width;
             state.height = texture->height;
+            m_target2textures.insert(type, texture);
         }
         state.frameBufferObject = frameBufferObject;
+    }
+    else {
+        const RenderColorTargetSemantic::Texture **texturePtr = m_target2textures.find(type);
+        if (texturePtr) {
+            const RenderColorTargetSemantic::Texture *texture = *texturePtr;
+            state.texture = texture->id;
+            state.width = texture->width;
+            state.height = texture->height;
+            m_target2textures.remove(type);
+        }
     }
 }
 
@@ -1513,12 +1524,27 @@ void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDept
     state.type = type;
     if (!value.empty()) {
         const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findRenderBuffer(value.c_str());
-        const GLuint id = buffer->id;
-        state.width = buffer->width;
-        state.height = buffer->height;
-        state.depthBuffer = id;
-        state.stencilBuffer = id;
-        state.frameBufferObject = frameBufferObject;
+        if (buffer) {
+            const GLuint id = buffer->id;
+            state.width = buffer->width;
+            state.height = buffer->height;
+            state.depthBuffer = id;
+            state.stencilBuffer = id;
+            state.frameBufferObject = frameBufferObject;
+            m_target2buffers.insert(type, buffer);
+        }
+    }
+    else {
+        const RenderDepthStencilTargetSemantic::Buffer **bufferPtr = m_target2buffers.find(type);
+        if (bufferPtr) {
+            const RenderDepthStencilTargetSemantic::Buffer *buffer = *bufferPtr;
+            const GLuint id = buffer->id;
+            state.width = buffer->width;
+            state.height = buffer->height;
+            state.depthBuffer = id;
+            state.stencilBuffer = id;
+            m_target2buffers.remove(type);
+        }
     }
 }
 
@@ -1549,8 +1575,8 @@ void EffectEngine::setRenderTargetFromState(const ScriptState &state)
     GLuint texture = state.texture;
     size_t width = state.width, height = state.height;
     const int index = state.type - ScriptState::kRenderColorTarget0;
+    const int target = kBaseRenderColorTargetIndex + index;
     if (state.frameBufferObject > 0) {
-        const int target = kBaseRenderColorTargetIndex + index;
         glBindFramebuffer(GL_FRAMEBUFFER, state.frameBufferObject);
         if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
             m_renderColorTargets.push_back(target);
@@ -1560,13 +1586,10 @@ void EffectEngine::setRenderTargetFromState(const ScriptState &state)
         glViewport(0, 0, width, height);
     }
     else {
-        m_delegate->releaseRenderTarget(&texture, width, height, kEnableRTAA);
-        for (int i = 0; i < 4; i++) {
-            const int target = kBaseRenderColorTargetIndex + i;
-            glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, 0, 0);
-            m_renderColorTargets.remove(target);
-        }
         Vector3 viewport;
+        m_delegate->releaseRenderTarget(&texture, width, height, kEnableRTAA);
+        m_renderColorTargets.remove(target);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, 0, 0);
         m_delegate->getViewport(viewport);
         glViewport(0, 0, viewport.x(), viewport.y());
     }
@@ -1775,7 +1798,6 @@ bool EffectEngine::parsePassScript(const CGpass pass, GLuint frameBufferObject)
     const CGannotation scriptAnnotation = cgGetNamedPassAnnotation(pass, "Script");
     Script passScriptStates;
     if (cgIsAnnotation(scriptAnnotation)) {
-        static const ScriptState kNullScriptState;
         const std::string s(cgGetStringAnnotationValue(scriptAnnotation));
         ScriptState lastState, newState;
         std::istringstream stream(s);
@@ -1866,9 +1888,6 @@ bool EffectEngine::parsePassScript(const CGpass pass, GLuint frameBufferObject)
                     passScriptStates.push_back(newState);
                     newState.reset();
                 }
-                if (!useRenderBuffer && !useDepthStencilBuffer) {
-                    lastState.inherit(kNullScriptState);
-                }
             }
         }
     }
@@ -1892,7 +1911,6 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, GLuint &fra
     const CGannotation scriptAnnotation = cgGetNamedTechniqueAnnotation(technique, "Script");
     Script techniqueScriptStates;
     if (cgIsAnnotation(scriptAnnotation)) {
-        static const ScriptState kNullScriptState;
         const std::string s(cgGetStringAnnotationValue(scriptAnnotation));
         std::istringstream stream(s);
         std::string segment;
@@ -2010,9 +2028,6 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, GLuint &fra
                     else
                         techniqueScriptStates.push_back(newState);
                     newState.reset();
-                }
-                if (!useRenderBuffer && !useDepthStencilBuffer) {
-                    lastState.inherit(kNullScriptState);
                 }
             }
         }

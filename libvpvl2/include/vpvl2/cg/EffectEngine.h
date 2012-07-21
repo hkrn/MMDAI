@@ -615,6 +615,8 @@ private:
     Techniques m_techniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;
+    btHashMap<btHashInt, const RenderColorTargetSemantic::Texture *> m_target2textures;
+    btHashMap<btHashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2buffers;
     btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;

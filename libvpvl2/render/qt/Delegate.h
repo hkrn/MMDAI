@@ -136,11 +136,11 @@ private:
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;
+    FrameBufferObject *m_previousFrameBuffer;
     Vector4 m_mouseCursorPosition;
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
-    GLuint m_previousTextureID;
     int m_msaaSamples;
 };
 
