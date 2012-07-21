@@ -620,7 +620,6 @@ void UI::renderOffscreen()
     QSize s;
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    m_delegate->setRenderTarget(buffers, nbuffers);
     foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
         const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
@@ -635,6 +634,7 @@ void UI::renderOffscreen()
         size_t width = renderTarget.width, height = renderTarget.height;
         GLuint textureID = cgGLGetTextureParameter(sampler);
         m_delegate->bindOffscreenRenderTarget(textureID, width, height, enableAA);
+        m_delegate->setRenderColorTargets(buffers, nbuffers);
         const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         if (cgIsAnnotation(clearColor)) {
             int nvalues;

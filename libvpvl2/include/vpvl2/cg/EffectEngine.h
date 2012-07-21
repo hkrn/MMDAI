@@ -501,43 +501,13 @@ public:
 
 private:
     struct ScriptState {
-        ScriptState()
-            : type(kUnknown),
-              parameter(0),
-              pass(0),
-              frameBufferObject(0),
-              texture(0),
-              depthBuffer(0),
-              stencilBuffer(0),
-              width(0),
-              height(0),
-              enterLoop(false)
-        {
-        }
-        ~ScriptState() {
-            reset();
-        }
+        ScriptState();
+        ~ScriptState();
 
-        void reset() {
-            type = kUnknown;
-            parameter = 0;
-            pass = 0;
-            texture = 0;
-            frameBufferObject = 0;
-            depthBuffer = 0;
-            stencilBuffer = 0;
-            width = 0;
-            height = 0;
-            enterLoop = false;
-        }
-        void inherit(const ScriptState &other) {
-            texture = other.texture;
-            depthBuffer = other.depthBuffer;
-            stencilBuffer = other.stencilBuffer;
-            width = other.width;
-            height = other.height;
-            enterLoop = other.enterLoop;
-        }
+        void reset();
+        void setFromState(const ScriptState &other);
+        void setFromTexture(const RenderColorTargetSemantic::Texture *t);
+        void setFromBuffer(const RenderDepthStencilTargetSemantic::Buffer *b);
 
         enum Type {
             kUnknown,
@@ -594,7 +564,7 @@ private:
                                       ScriptState::Type type,
                                       ScriptState &state);
     static void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
-    void setRenderTargetFromState(const ScriptState &state);
+    void setRenderColorTargetFromState(const ScriptState &state);
     void setRenderDepthStencilTargetFromState(const ScriptState &state);
     void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
     void addTechniquePasses(const CGtechnique technique);

@@ -318,11 +318,11 @@ public:
 
     virtual IModel *effectOwner(const IEffect *effect) const = 0;
 
-    virtual void setRenderTarget(const void *targets, const int ntargets) = 0;
+    virtual void setRenderColorTargets(const void *targets, const int ntargets) = 0;
 
-    virtual void bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
+    virtual void bindRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
 
-    virtual void releaseRenderTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
+    virtual void releaseRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
 
     virtual void bindRenderDepthStencilTarget(void *texture,
                                               void *depth,

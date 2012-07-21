@@ -84,10 +84,10 @@ public:
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
     IModel *offscreenEffectOwner(const IEffect *effect) const;
-    void setRenderTarget(const void *targets, const int ntargets);
-    void bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA);
+    void setRenderColorTargets(const void *targets, const int ntargets);
+    void bindRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA);
     void bindRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
-    void releaseRenderTarget(void *texture, size_t width, size_t height, bool enableAA);
+    void releaseRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA);
     void releaseRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
 
     void updateMatrices(const QSize &size);
