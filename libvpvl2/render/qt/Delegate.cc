@@ -100,6 +100,7 @@ public:
         glDeleteFramebuffers(1, &fboAA);
         glDeleteRenderbuffers(1, &colorAA);
         glDeleteRenderbuffers(1, &depthAA);
+        fbo = depth = fboAA = colorAA = depthAA = width = height = samples = 0;
     }
     void blit() {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, fboAA);
@@ -142,6 +143,20 @@ Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *con
 Delegate::~Delegate()
 {
     qDeleteAll(m_texture2Movies);
+    qDeleteAll(m_renderTargets);
+    m_lightWorldMatrix.setToIdentity();
+    m_lightViewMatrix.setToIdentity();
+    m_lightProjectionMatrix.setToIdentity();
+    m_cameraModelMatrix.setToIdentity();
+    m_cameraViewMatrix.setToIdentity();
+    m_cameraProjectionMatrix.setToIdentity();
+    m_mouseCursorPosition.setZero();
+    m_mouseLeftPressPosition.setZero();
+    m_mouseMiddlePressPosition.setZero();
+    m_mouseRightPressPosition.setZero();
+    m_context = 0;
+    m_previousFrameBuffer = 0;
+    m_msaaSamples = 0;
 }
 
 void Delegate::allocateContext(const IModel *model, void *&context)
@@ -503,17 +518,15 @@ void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositio
 void Delegate::addModelPath(const IModel *model, const QString &filename)
 {
     if (model) {
-        m_model2PathLock.lock();
+        QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
         m_model2Paths.insert(model, filename);
-        m_model2PathLock.unlock();
     }
 }
 
 const QString Delegate::findModelPath(const IModel *model) const
 {
-    m_model2PathLock.lock();
+    QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
     const QString s = m_model2Paths[model];
-    m_model2PathLock.unlock();
     return s;
 }
 
@@ -535,17 +548,15 @@ const QString Delegate::effectFilePath(const IModel *model, const IString *dir) 
 
 IModel *Delegate::effectOwner(const IEffect *effect) const
 {
-    m_effect2modelsLock.lock();
+    QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
     IModel *model = m_effect2models[effect];
-    m_effect2modelsLock.unlock();
     return model;
 }
 
 const QString Delegate::effectOwnerName(const IEffect *effect) const
 {
-    m_effectOwnersLock.lock();
+    QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
     const QString name = m_effectOwners[effect];
-    m_effectOwnersLock.unlock();
     return name;
 }
 
@@ -553,12 +564,14 @@ void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
 {
     const CString *name = static_cast<const CString *>(model->name());
     const QString &n = name ? name->value() : findModelPath(model);
-    m_effectOwnersLock.lock();
-    m_effectOwners.insert(effect, n);
-    m_effectOwnersLock.unlock();
-    m_effect2modelsLock.lock();
-    m_effect2models.insert(effect, model);
-    m_effect2modelsLock.unlock();
+    {
+        QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
+        m_effectOwners.insert(effect, n);
+    }
+    {
+        QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
+        m_effect2models.insert(effect, model);
+    }
 }
 
 void Delegate::createRenderTargets()
@@ -573,14 +586,14 @@ void Delegate::createRenderTargets()
 #endif
 }
 
-void Delegate::setRenderTarget(const void *targets, const int ntargets)
+void Delegate::setRenderColorTargets(const void *targets, const int ntargets)
 {
     glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
 }
 
 //#define DEBUG_OUTPUT_TEXTURE
 
-void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool enableAA)
+void Delegate::bindRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -592,10 +605,26 @@ void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool
             glBindFramebuffer(GL_FRAMEBUFFER, m_previousFrameBuffer->fbo);
             glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            image.rgbSwapped().mirrored().save(QString("%1/fboAA%2.png").arg(QDir::homePath()).arg(buffer->fboAA));
+            image.rgbSwapped().mirrored().save(QString("%1/texture%2_fbo%3_AA.png")
+                                               .arg(QDir::homePath())
+                                               .arg(textureID)
+                                               .arg(m_previousFrameBuffer->fboAA));
             image.pixel(0, 0);
 #endif
         }
+#ifdef DEBUG_OUTPUT_TEXTURE
+        else {
+            QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+            glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+            glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            image.rgbSwapped().mirrored().save(QString("%1/texture%2_fbo%3.png")
+                                               .arg(QDir::homePath())
+                                               .arg(textureID)
+                                               .arg(buffer->fbo));
+            image.pixel(0, 0);
+        }
+#endif
         glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
         if (enableAA && buffer->fboAA) {
@@ -606,7 +635,7 @@ void Delegate::bindRenderTarget(void *texture, size_t width, size_t height, bool
     }
 }
 
-void Delegate::releaseRenderTarget(void *texture, size_t width, size_t height, bool enableAA)
+void Delegate::releaseRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -620,7 +649,10 @@ void Delegate::releaseRenderTarget(void *texture, size_t width, size_t height, b
         glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        image.rgbSwapped().mirrored().save(QString("%1/fbo%2.png").arg(QDir::homePath()).arg(buffer->fbo));
+        image.rgbSwapped().mirrored().save(QString("%1/texture%2_fbo%3.png")
+                                           .arg(QDir::homePath())
+                                           .arg(textureID)
+                                           .arg(buffer->fbo));
         image.pixel(0, 0);
 #endif
     }
@@ -706,7 +738,10 @@ void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size
         glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        image.rgbSwapped().mirrored().save(QString("%1/offscreen%2.png").arg(QDir::homePath()).arg(buffer->fbo));
+        image.rgbSwapped().mirrored().save(QString("%1/texture%2_offscreen%3.png")
+                                           .arg(QDir::homePath())
+                                           .arg(textureID)
+                                           .arg(buffer->fbo));
         image.pixel(0, 0);
 #endif
     }
