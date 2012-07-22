@@ -1566,7 +1566,7 @@ void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
             m_renderColorTargets.push_back(target);
             m_delegate->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
         }
-        m_delegate->bindRenderColorTarget(&texture, width, height, kEnableRTAA);
+        m_delegate->bindRenderColorTarget(&texture, width, height, index, kEnableRTAA);
         glViewport(0, 0, width, height);
     }
     else {
@@ -1575,8 +1575,7 @@ void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
         const int nRenderColorTargets = m_renderColorTargets.size();
         if (nRenderColorTargets > 0 && target != kBaseRenderColorTargetIndex)
             m_delegate->setRenderColorTargets(&m_renderColorTargets[0], nRenderColorTargets);
-        m_delegate->releaseRenderColorTarget(&texture, width, height, kEnableRTAA);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, 0, 0);
+        m_delegate->releaseRenderColorTarget(&texture, width, height, index, kEnableRTAA);
         m_delegate->getViewport(viewport);
         glViewport(0, 0, viewport.x(), viewport.y());
     }

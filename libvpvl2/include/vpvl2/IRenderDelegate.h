@@ -320,9 +320,9 @@ public:
 
     virtual void setRenderColorTargets(const void *targets, const int ntargets) = 0;
 
-    virtual void bindRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
+    virtual void bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
 
-    virtual void releaseRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA) = 0;
+    virtual void releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
 
     virtual void bindRenderDepthStencilTarget(void *texture,
                                               void *depth,
