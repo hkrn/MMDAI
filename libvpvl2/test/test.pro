@@ -6,13 +6,20 @@ CONFIG += console
 CONFIG -= app_bundle
 TEMPLATE = app
 
-LIBS += -L/Users/hkrn/src/gtest-1.6.0/release -lgtest -lgtest_main \
-        -L/Users/hkrn/src/gmock-1.6.0/release -lgmock -lgmock_main \
+LIBS += -L../test/gtest-1.6.0/debug -lgtest -lgtest_main \
+        -L../test/gmock-1.6.0/debug -lgmock -lgmock_main \
         -L../debug/lib -lvpvl2_debug -L../../bullet/debug/lib \
         -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
-INCLUDEPATH += /Users/hkrn/src/gtest-1.6.0/include /Users/hkrn/src/gmock-1.6.0/include \
+INCLUDEPATH += ../test/gtest-1.6.0/include ../test/gmock-1.6.0/include \
                ../include ../debug/include \
                ../../bullet/src /opt/local/include/libxml2 /usr/include/libxml2
+
+linux-* {
+  QMAKE_RPATHDIR += \$\$ORIGIN
+  QMAKE_RPATHDIR += \$\$ORIGIN/lib
+  VPVL2_TEST_RPATH = $$join(QMAKE_RPATHDIR, ":")
+  QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${VPVL2_TEST_RPATH}\'
+}
 
 HEADERS += Common.h \
     mock/Bone.h \
