@@ -1,6 +1,7 @@
 #include <QtCore/QtCore>
 #include <gtest/gtest.h>
 #include <vpvl2/internal/util.h>
+#include <limits>
 #include "Common.h"
 
 using namespace ::testing;
@@ -137,68 +138,68 @@ TEST(Internal, SizeText)
 
 TEST(Internal, ReadWriteSignedIndex8)
 {
-    int8_t expected = INT8_MIN;
+    int8_t expected = std::numeric_limits<int8_t>::min();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    EXPECT_EQ(INT8_MIN, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
+    EXPECT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(Internal, ReadWriteSignedIndex16)
 {
-    int16_t expected = INT16_MIN;
+    int16_t expected = std::numeric_limits<int16_t>::min();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    EXPECT_EQ(INT16_MIN, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
+    EXPECT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(Internal, ReadWriteSignedIndex32)
 {
-    int expected = INT_MIN;
+    int expected = std::numeric_limits<int>::min();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    EXPECT_EQ(INT_MIN, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
+    EXPECT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(Internal, ReadWriteUnsignedIndex8)
 {
-    uint8_t expected = UINT8_MAX;
+    uint8_t expected = std::numeric_limits<uint8_t>::max();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    EXPECT_EQ(UINT8_MAX, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
+    EXPECT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(Internal, ReadWriteUnsignedIndex16)
 {
-    uint16_t expected = UINT16_MAX;
+    uint16_t expected = std::numeric_limits<uint16_t>::max();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    EXPECT_EQ(UINT16_MAX, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
+    EXPECT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(Internal, ReadWriteUnsignedIndex32)
 {
-    int expected = INT_MAX;
+    int expected = std::numeric_limits<int>::max();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    EXPECT_EQ(INT_MAX, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
+    EXPECT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(Internal, SetAndGetPosition)
