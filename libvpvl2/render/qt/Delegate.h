@@ -85,9 +85,9 @@ public:
     IString *toUnicode(const uint8_t *value) const;
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     void setRenderColorTargets(const void *targets, const int ntargets);
-    void bindRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA);
+    void bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA);
     void bindRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
-    void releaseRenderColorTarget(void *texture, size_t width, size_t height, bool enableAA);
+    void releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA);
     void releaseRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
 
     void updateMatrices(const QSize &size);
@@ -129,6 +129,7 @@ private:
     QHash<GLuint, FrameBufferObject *> m_renderTargets;
     QHash<const IEffect *, QString> m_effectOwners;
     QHash<const IEffect *, IModel *> m_effect2models;
+    QList<FrameBufferObject *> m_previousFrameBuffers;
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;
@@ -136,7 +137,6 @@ private:
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;
-    FrameBufferObject *m_previousFrameBuffer;
     Vector4 m_mouseCursorPosition;
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
