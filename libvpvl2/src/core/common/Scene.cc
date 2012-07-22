@@ -440,9 +440,9 @@ void Scene::deleteModel(IModel *&model)
         m_context->engines.remove(engine);
         m_context->model2engine.remove(key);
         delete engine;
-        delete model;
-        model = 0;
     }
+    delete model;
+    model = 0;
 }
 
 void Scene::removeMotion(IMotion *motion)

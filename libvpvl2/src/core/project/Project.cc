@@ -116,6 +116,7 @@ public:
         : delegate(delegate),
           factory(factory),
           currentString(0),
+          currentAsset(0),
           currentModel(0),
           currentMotion(0),
           state(kInitial),
@@ -144,6 +145,8 @@ public:
         motions.clear();
         delete currentString;
         currentString = 0;
+        delete currentAsset;
+        currentAsset = 0;
         delete currentModel;
         currentModel = 0;
         delete currentMotion;
@@ -572,6 +575,7 @@ public:
                 }
             }
             if (self->state == kModels && equals(prefix, localname, "model")) {
+                delete self->currentModel;
                 self->currentModel = self->factory->createModel(IModel::kPMD);
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     if (equals(attributes[index], "uuid")) {
@@ -582,6 +586,7 @@ public:
                 self->pushState(kModel);
             }
             else if (self->state == kAssets && equals(prefix, localname, "asset")) {
+                delete self->currentAsset;
                 self->currentAsset = self->factory->createModel(IModel::kAsset);
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     if (equals(attributes[index], "uuid")) {
@@ -616,6 +621,7 @@ public:
                     }
                 }
                 if (!found) {
+                    delete self->currentMotion;
                     self->currentMotion = self->factory->createMotion();
                     self->pushState(kAnimation);
                 }
@@ -888,10 +894,15 @@ public:
             case kAsset:
                 if (equals(prefix, localname, "asset")) {
                     if (!self->uuid.empty()) {
-                        if (self->uuid != Project::kNullUUID)
-                            self->assets[self->uuid] = self->currentAsset;
-                        else
+                        if (self->uuid != Project::kNullUUID) {
+                            /* delete the previous asset before assigning to prevent memory leak */
+                            IModel *&assetPtr = self->assets[self->uuid];
+                            delete assetPtr;
+                            assetPtr = self->currentAsset;
+                        }
+                        else {
                             delete self->currentAsset;
+                        }
                         self->currentAsset = 0;
                     }
                     self->popState(kAssets);
@@ -902,10 +913,15 @@ public:
             case kModel:
                 if (equals(prefix, localname, "model")) {
                     if (!self->uuid.empty()) {
-                        if (self->uuid != Project::kNullUUID)
-                            self->models[self->uuid] = self->currentModel;
-                        else
+                        if (self->uuid != Project::kNullUUID) {
+                            /* delete the previous model before assigning to prevent memory leak */
+                            IModel *&modelPtr = self->models[self->uuid];
+                            delete modelPtr;
+                            modelPtr = self->currentModel;
+                        }
+                        else {
                             delete self->currentModel;
+                        }
                         self->currentModel = 0;
                     }
                     self->popState(kModels);
