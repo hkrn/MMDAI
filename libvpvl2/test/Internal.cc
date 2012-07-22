@@ -78,40 +78,6 @@ TEST(Internal, Size32)
     EXPECT_EQ(size_t(0), rest);
 }
 
-TEST(Internal, StringEquals)
-{
-    const char *foo = "foo", *bar = "bar";
-    const uint8_t *baz = reinterpret_cast<const uint8_t *>(foo),
-            *qux = reinterpret_cast<const uint8_t *>(bar);
-    EXPECT_TRUE(vpvl2::internal::stringEquals(foo, foo, 3));
-    EXPECT_FALSE(vpvl2::internal::stringEquals(foo, bar, 3));
-    EXPECT_TRUE(vpvl2::internal::stringEquals(baz, baz, 3));
-    EXPECT_FALSE(vpvl2::internal::stringEquals(baz, qux, 3));
-}
-
-TEST(Internal, StringToInt)
-{
-    EXPECT_EQ(42, vpvl2::internal::stringToInt("42"));
-    EXPECT_EQ(0, vpvl2::internal::stringToInt("test"));
-}
-
-TEST(Internal, StringToFloat)
-{
-    EXPECT_EQ(4.2f, vpvl2::internal::stringToFloat("4.2"));
-    EXPECT_EQ(4.2f, vpvl2::internal::stringToFloat("4.2f"));
-    EXPECT_EQ(0.0f, vpvl2::internal::stringToFloat("test"));
-}
-
-TEST(Internal, ZeroFill)
-{
-    float src[] = { 1, 2, 3, 4, 5 };
-    float dst[] = { 0, 0, 0, 0, 0 };
-    vpvl2::internal::zerofill(src, sizeof(float) * 5);
-    for (int i = 0; i < 5; i++) {
-        EXPECT_EQ(dst[i], src[i]);
-    }
-}
-
 TEST(Internal, ClearAll)
 {
     Array<int *> array;

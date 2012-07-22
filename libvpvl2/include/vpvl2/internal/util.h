@@ -373,47 +373,6 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
     table[size] = 1.0f;
 }
 
-static inline bool stringEquals(const uint8_t *s1, const uint8_t *s2, size_t max)
-{
-    assert(s1 && s2);
-    return strncmp(reinterpret_cast<const char *>(s1), reinterpret_cast<const char *>(s2), max) == 0;
-}
-
-static inline bool stringEquals(const char *s1, const char *s2, size_t max)
-{
-    assert(s1 && s2);
-    return strncmp(s1, s2, max) == 0;
-}
-
-static inline char *stringToken(char *str, const char *delim, char **ptr)
-{
-    assert(delim);
-#if defined(__MINGW32__)
-    return strtok(str, delim);
-#elif defined(WIN32)
-    return strtok_s(str, delim, ptr);
-#else
-    return strtok_r(str, delim, ptr);
-#endif
-}
-
-static inline int stringToInt(const char *str)
-{
-    assert(str);
-    return atoi(str);
-}
-
-static inline float stringToFloat(const char *str)
-{
-    assert(str);
-    char *p = 0;
-#if defined(WIN32)
-    return static_cast<float>(strtod(str, &p));
-#else
-    return strtof(str, &p);
-#endif
-}
-
 static inline void zerofill(void *ptr, size_t size)
 {
     assert(ptr && size > 0);
@@ -422,16 +381,6 @@ static inline void zerofill(void *ptr, size_t size)
 #else
     memset(ptr, 0, size);
 #endif
-}
-
-static inline int snprintf(uint8_t *buffer, size_t size, const char *format, ...)
-{
-    assert(buffer && size > 0);
-    va_list ap;
-    va_start(ap, format);
-    int ret = vsnprintf(reinterpret_cast<char *>(buffer), size, format, ap);
-    va_end(ap);
-    return ret;
 }
 
 }
