@@ -530,13 +530,13 @@ private:
         } type;
         CGparameter parameter;
         CGpass pass;
-        GLuint frameBufferObject;
         GLuint texture;
         GLuint depthBuffer;
         GLuint stencilBuffer;
         size_t width;
         size_t height;
         bool enterLoop;
+        bool isRenderTargetBound;
     };
     typedef btAlignedObjectArray<ScriptState> Script;
 
@@ -550,12 +550,10 @@ private:
     static bool containsSubset(const CGannotation annotation, int subset, int nmaterials);
     void setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
                                                const std::string &value,
-                                               GLuint frameBufferObject,
                                                ScriptState::Type type,
                                                ScriptState &state);
     void setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
                                                       const std::string &value,
-                                                      GLuint frameBufferObject,
                                                       ScriptState::Type type,
                                                       ScriptState &state);
     static void setStateFromParameter(const CGeffect effect,
@@ -570,8 +568,8 @@ private:
     void addTechniquePasses(const CGtechnique technique);
     void setStandardsGlobal(const CGparameter parameter);
     void setTextureParameters(CGparameter parameter, const IString *dir);
-    bool parsePassScript(const CGpass pass, GLuint frameBufferObject);
-    bool parseTechniqueScript(const CGtechnique technique, GLuint &frameBufferObject, Passes &passes);
+    bool parsePassScript(const CGpass pass);
+    bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
     void initializeBuffer();
 
 #ifndef __APPLE__
@@ -590,7 +588,6 @@ private:
     btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
-    btHashMap<btHashPtr, GLuint> m_techniqueFrameBuffers;
     GLuint m_verticesBuffer;
     GLuint m_indicesBuffer;
 
