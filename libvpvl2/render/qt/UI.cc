@@ -69,9 +69,11 @@ BT_DECLARE_HANDLE(aiScene);
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/vmd/Motion.h"
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
 /* to cast IEffect#internalPointer and IEffect#internalContext */
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
+#endif
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
@@ -792,61 +794,6 @@ IModel *UI::createModelAsync(const QString &path) const
     return m_factory->createModel(data, bytes.size(), ok);
 }
 
-IEffect *UI::createEffectAsync(const IString *path)
-{
-    IEffect *effect = 0;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    const QString &key = static_cast<const CString *>(path)->value();
-    m_effectCachesLock.lock();
-    if (m_effectCaches.contains(key)) {
-        effect = m_effectCaches[key];
-    }
-    else {
-        m_effectCachesLock.unlock();
-        effect = m_scene.createEffect(path, m_delegate);
-        qDebug("Loading an effect: %s", qPrintable(key));
-        if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(key));
-            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
-        }
-        m_effectCachesLock.lock();
-        m_effectCaches.insert(key, effect);
-    }
-    m_effectCachesLock.unlock();
-#else
-    Q_UNUSED(path)
-#endif
-    return effect;
-}
-
-IEffect *UI::createEffectAsync(IModel *model, const IString *dir)
-{
-    IEffect *effect = 0;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    const QString &key = m_delegate->effectFilePath(model, dir);
-    m_effectCachesLock.lock();
-    if (m_effectCaches.contains(key)) {
-        effect = m_effectCaches[key];
-    }
-    else {
-        effect = m_scene.createEffect(dir, model, m_delegate);
-        const IString *name = model->name();
-        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
-        if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(key)) ;
-            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
-        }
-        m_effectCaches.insert(key, effect);
-        m_delegate->setEffectOwner(effect, model);
-    }
-    m_effectCachesLock.unlock();
-#else
-    Q_UNUSED(model)
-    Q_UNUSED(dir)
-#endif
-    return effect;
-}
-
 IMotion *UI::createMotionAsync(const QString &path, IModel *model) const
 {
     QByteArray bytes;
@@ -894,7 +841,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         enginePtr.reset();
         return 0;
     }
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(this, &UI::createEffectAsync, model, &s1);
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, model, &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     QScopedPointer<IEffect> effectPtr(future2.result());
@@ -931,7 +878,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                         QString path = baseDir.absoluteFilePath(value);
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
                         CString s2(path);
-                        const QFuture<IEffect *> &future3 = QtConcurrent::run(this, &UI::createEffectAsync, &s2);
+                        const QFuture<IEffect *> &future3 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, &s2);
                         IEffect *offscreenEffect = future3.result();
                         offscreenEffect->setParentEffect(effect);
                         attachments.append(EffectAttachment(regexp, offscreenEffect));

@@ -118,8 +118,6 @@ namespace vpvl2
         typedef QPair<QRegExp, IEffect *> EffectAttachment;
         typedef QPair<IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
         QList<OffscreenRenderTarget> m_offscreens;
-        QHash<QString, IEffect *> m_effectCaches;
-        mutable QMutex m_effectCachesLock;
         vpvl2::qt::Delegate *m_delegate;
         Scene m_scene;
         Factory *m_factory;

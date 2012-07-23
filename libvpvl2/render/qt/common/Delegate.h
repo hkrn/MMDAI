@@ -71,7 +71,7 @@ public:
     static QString readAllAsync(const QString &path);
     static QImage loadImageAsync(const QString &path);
 
-    Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context);
+    Delegate(const QSettings *settings, Scene *scene, QGLWidget *context);
     ~Delegate();
 
     void allocateContext(const IModel *model, void *&context);
@@ -112,6 +112,8 @@ public:
     void createRenderTargets();
     void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
+    IEffect *createEffectAsync(const IString *path);
+    IEffect *createEffectAsync(IModel *model, const IString *dir);
 
 private:
     class FrameBufferObject;
@@ -128,11 +130,12 @@ private:
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
     const QSettings *m_settings;
-    const Scene *m_scene;
     const QDir m_systemDir;
+    Scene *m_scene;
     mutable QMutex m_model2PathLock;
     mutable QMutex m_effectOwnersLock;
     mutable QMutex m_effect2modelsLock;
+    mutable QMutex m_effectCachesLock;
     QGLWidget *m_context;
     Archive *m_archive;
     QSizeF m_viewport;
@@ -140,6 +143,7 @@ private:
     QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QMovie *> m_texture2Movies;
     QHash<GLuint, FrameBufferObject *> m_renderTargets;
+    QHash<const QString, IEffect *> m_effectCaches;
     QHash<const IEffect *, QString> m_effectOwners;
     QHash<const IEffect *, IModel *> m_effect2models;
     QList<FrameBufferObject *> m_previousFrameBufferPtrs;

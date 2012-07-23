@@ -44,6 +44,12 @@
 #include <vpvl2/IRenderDelegate.h>
 #include <QtCore/QtCore>
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+/* to cast IEffect#internalPointer and IEffect#internalContext */
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
+#endif
+
 namespace
 {
 typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
@@ -231,11 +237,11 @@ QGLContext::BindOptions Delegate::textureBindOptions(bool enableMipmap)
     return options;
 }
 
-Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context)
+Delegate::Delegate(const QSettings *settings, Scene *scene, QGLWidget *context)
     : m_settings(settings),
       m_scene(scene),
-      m_systemDir(m_settings->value("dir.system.toon", "../../VPVM/resources/images").toString()),
       m_context(context),
+      m_systemDir(m_settings->value("dir.system.toon", "../../VPVM/resources/images").toString()),
       m_archive(0),
       m_msaaSamples(0)
 {
@@ -887,6 +893,61 @@ void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size
 #endif
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+IEffect *Delegate::createEffectAsync(const IString *path)
+{
+    IEffect *effect = 0;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    const QString &key = static_cast<const CString *>(path)->value();
+    QMutexLocker locker(&m_effectCachesLock);
+    if (m_effectCaches.contains(key)) {
+        effect = m_effectCaches[key];
+    }
+    else {
+        locker.unlock();
+        effect = m_scene->createEffect(path, this);
+        qDebug("Loading an effect: %s", qPrintable(key));
+        if (!effect->internalPointer()) {
+            qWarning("%s cannot be compiled", qPrintable(key));
+            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        }
+        locker.relock();
+        m_effectCaches.insert(key, effect);
+    }
+#else
+    Q_UNUSED(path)
+#endif
+    return effect;
+}
+
+IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
+{
+    IEffect *effect = 0;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    const QString &key = effectFilePath(model, dir);
+    QMutexLocker locker(&m_effectCachesLock);
+    if (m_effectCaches.contains(key)) {
+        effect = m_effectCaches[key];
+    }
+    else {
+        locker.unlock();
+        effect = m_scene->createEffect(dir, model, this);
+        const IString *name = model->name();
+        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
+        if (!effect->internalPointer()) {
+            qWarning("%s cannot be compiled", qPrintable(key)) ;
+            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        }
+        locker.relock();
+        m_effectCaches.insert(key, effect);
+        setEffectOwner(effect, model);
+    }
+#else
+    Q_UNUSED(model)
+    Q_UNUSED(dir)
+#endif
+    return effect;
 }
 
 const QString Delegate::createPath(const IString *dir, const QString &name)
