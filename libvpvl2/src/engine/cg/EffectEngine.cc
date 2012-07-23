@@ -671,7 +671,8 @@ RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderDelegate *delegate)
 RenderColorTargetSemantic::~RenderColorTargetSemantic()
 {
     const int ntextures = m_textures.count();
-    glDeleteTextures(ntextures, &m_textures[0]);
+    if (ntextures > 0)
+        glDeleteTextures(ntextures, &m_textures[0]);
 }
 
 void RenderColorTargetSemantic::addParameter(CGparameter parameter,
@@ -953,7 +954,8 @@ RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderDelega
 RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 {
     const int nRenderBuffers = m_renderBuffers.count();
-    glDeleteRenderbuffers(nRenderBuffers, &m_renderBuffers[0]);
+    if (nRenderBuffers > 0)
+        glDeleteRenderbuffers(nRenderBuffers, &m_renderBuffers[0]);
 }
 
 const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic::findRenderBuffer(const char *name) const
