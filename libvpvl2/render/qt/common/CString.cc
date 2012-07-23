@@ -38,8 +38,6 @@
 
 namespace vpvl2
 {
-namespace render
-{
 namespace qt
 {
 
@@ -98,6 +96,5 @@ size_t CString::length() const
     return m_bytes.length();
 }
 
-}
 }
 }

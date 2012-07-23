@@ -34,15 +34,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_RENDER_QT_DDSTEXTURE_H_
-#define VPVL2_RENDER_QT_DDSTExTURE_H_
+#ifndef VPVL2_QT_DDSTEXTURE_H_
+#define VPVL2_QT_DDSTExTURE_H_
 
 #include <QtOpenGL/QtOpenGL>
 #include <LinearMath/btMinMax.h>
 
 namespace vpvl2
-{
-namespace render
 {
 namespace qt
 {
@@ -250,7 +248,6 @@ private:
     QGLWidget *m_context;
 };
 
-}
 }
 }
 

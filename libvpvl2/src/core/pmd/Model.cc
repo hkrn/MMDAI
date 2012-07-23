@@ -65,6 +65,7 @@ Model::~Model()
 {
     m_bones.releaseAll();
     m_morphs.releaseAll();
+    m_labels.releaseAll();
     m_encoding = 0;
     delete m_name;
     m_name = 0;

@@ -60,8 +60,6 @@ PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
 
 namespace vpvl2
 {
-namespace render
-{
 namespace qt
 {
 
@@ -134,7 +132,7 @@ QImage Delegate::loadImageAsync(const QString &path)
 Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context)
     : m_settings(settings),
       m_scene(scene),
-      m_systemDir(m_settings->value("dir.system.toon", "../../QMA2/resources/images").toString()),
+      m_systemDir(m_settings->value("dir.system.toon", "../../VPVM/resources/images").toString()),
       m_context(context),
       m_msaaSamples(0)
 {
@@ -147,7 +145,7 @@ Delegate::~Delegate()
 {
     qDeleteAll(m_texture2Movies);
     qDeleteAll(m_renderTargets);
-    qDeleteAll(m_previousFrameBuffers);
+    //qDeleteAll(m_previousFrameBuffers);
     m_lightWorldMatrix.setToIdentity();
     m_lightViewMatrix.setToIdentity();
     m_lightProjectionMatrix.setToIdentity();
@@ -371,7 +369,7 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
     default:
         break;
     }
-    const QString &path = QDir(m_settings->value("dir.system.kernels", "../../QMA2/resources/kernels").toString()).absoluteFilePath(file);
+    const QString &path = QDir(m_settings->value("dir.system.kernels", "../../VPVM/resources/kernels").toString()).absoluteFilePath(file);
     const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
@@ -455,7 +453,7 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
     default:
         break;
     }
-    const QString &path = QDir(m_settings->value("dir.system.shaders", "../../QMA2/resources/shaders").toString()).absoluteFilePath(file);
+    const QString &path = QDir(m_settings->value("dir.system.shaders", "../../VPVM/resources/shaders").toString()).absoluteFilePath(file);
     const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
@@ -872,9 +870,8 @@ Delegate::FrameBufferObject *Delegate::findRenderTarget(const GLuint textureID, 
     FrameBufferObject *buffer = 0;
     if (textureID > 0) {
         if (!m_renderTargets.contains(textureID)) {
-            QScopedPointer<FrameBufferObject> ptr(new FrameBufferObject(width, height, m_msaaSamples, textureID));
-            m_renderTargets.insert(textureID, ptr.data());
-            buffer = ptr.take();
+            m_renderTargets.insert(textureID, new FrameBufferObject(width, height, m_msaaSamples, textureID));
+            buffer = m_renderTargets[textureID];
         }
         else {
             buffer = m_renderTargets[textureID];
@@ -883,6 +880,5 @@ Delegate::FrameBufferObject *Delegate::findRenderTarget(const GLuint textureID, 
     return buffer;
 }
 
-}
 }
 }

@@ -56,12 +56,16 @@ namespace vpvl2
     class IModel;
     class IMotion;
 
+    namespace qt
+    {
+    class CString;
+    class Delegate;
+    }
+
     namespace render
     {
     namespace qt
     {
-    class Delegate;
-    class CString;
 
     class UI : public QGLWidget, protected QGLFunctions
     {
@@ -116,7 +120,7 @@ namespace vpvl2
         QList<OffscreenRenderTarget> m_offscreens;
         QHash<QString, IEffect *> m_effectCaches;
         mutable QMutex m_effectCachesLock;
-        Delegate *m_delegate;
+        vpvl2::qt::Delegate *m_delegate;
         Scene m_scene;
         Factory *m_factory;
         IEncoding *m_encoding;

@@ -74,7 +74,7 @@ BT_DECLARE_HANDLE(aiScene);
 #include <Cg/cgGL.h>
 
 using namespace vpvl2;
-using namespace vpvl2::render::qt;
+using namespace vpvl2::qt;
 
 QDebug operator<<(QDebug debug, const Vector3 &v)
 {
@@ -376,6 +376,7 @@ UI::~UI()
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
+    delete m_delegate;
     delete m_fbo;
     delete m_factory;
     delete m_encoding;

@@ -39,8 +39,6 @@
 
 namespace vpvl2
 {
-namespace render
-{
 namespace qt
 {
 
@@ -204,6 +202,5 @@ void DDSTexture::setTexture(const uint8_t *ptr, size_t size)
     }
 }
 
-}
 }
 }

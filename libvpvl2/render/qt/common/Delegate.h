@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_RENDER_QT_DELEGATE_H_
-#define VPVL2_RENDER_QT_DELEGATE_H_
+#ifndef VPVL2_QT_DELEGATE_H_
+#define VPVL2_QT_DELEGATE_H_
 
 #include <vpvl2/IRenderDelegate.h>
 
@@ -45,8 +45,6 @@ namespace vpvl2
 {
 class Scene;
 
-namespace render
-{
 namespace qt
 {
 
@@ -144,7 +142,6 @@ private:
     int m_msaaSamples;
 };
 
-}
 }
 }
 

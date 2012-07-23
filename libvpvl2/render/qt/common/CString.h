@@ -34,38 +34,37 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_RENDER_QT_ENCODING_H_
-#define VPVL2_RENDER_QT_ENCODING_H_
+#ifndef VPVL2_QT_STRING_H_
+#define VPVL2_QT_STRING_H_
 
-#include "vpvl2/IEncoding.h"
-
-class QTextCodec;
+#include "vpvl2/IString.h"
+#include <QtCore/QString>
 
 namespace vpvl2
-{
-namespace render
 {
 namespace qt
 {
 
-class Encoding : public IEncoding {
+class CString : public IString {
 public:
-    Encoding();
-    ~Encoding();
+    CString(const QString &s);
+    ~CString();
 
-    const IString *stringConstant(ConstantType value) const;
-    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const;
-    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const;
-    uint8_t *toByteArray(const IString *value, IString::Codec codec) const;
-    void disposeByteArray(uint8_t *value) const;
+    bool startsWith(const IString *value) const;
+    bool contains(const IString *value) const;
+    bool endsWith(const IString *value) const;
+    IString *clone() const;
+    const HashString toHashString() const;
+    bool equals(const IString *value) const;
+    const QString &value() const;
+    const uint8_t *toByteArray() const;
+    size_t length() const;
 
 private:
-    QTextCodec *m_sjis;
-    QTextCodec *m_utf8;
-    QTextCodec *m_utf16;
+    const QByteArray m_bytes;
+    const QString m_value;
 };
 
-}
 }
 }
 
