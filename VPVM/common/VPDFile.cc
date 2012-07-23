@@ -36,10 +36,13 @@
 
 #include "VPDFile.h"
 #include "util.h"
+
 #include <vpvl2/vpvl2.h>
 #include <QtCore/QtCore>
+#include "CString.h"
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 enum InternalParseState
 {
@@ -201,7 +204,7 @@ void VPDFile::save(QTextStream &stream)
 void VPDFile::makePose(IModel *model)
 {
     foreach (Bone *b, m_bones) {
-        internal::String s(b->name);
+        CString s(b->name);
         IBone *bone = model->findBone(&s);
         if (bone) {
             const Vector3 &pos = b->position;

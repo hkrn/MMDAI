@@ -58,54 +58,16 @@ namespace internal {
 
 using namespace vpvl2;
 
-class String : public IString {
-public:
-    explicit String(const QString &s, IString::Codec codec = IString::kUTF8);
-    ~String();
-
-    bool startsWith(const IString *value) const;
-    bool contains(const IString *value) const;
-    bool endsWith(const IString *value) const;
-    IString *clone() const;
-    const HashString toHashString() const;
-    bool equals(const IString *value) const;
-    const QString &value() const;
-    const uint8_t *toByteArray() const;
-    size_t length() const;
-
-private:
-    const QByteArray m_bytes;
-    const QString m_value;
-    const IString::Codec m_codec;
-};
-
-class Encoding : public IEncoding {
-public:
-    Encoding();
-    ~Encoding();
-
-    const IString *stringConstant(ConstantType value) const;
-    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const;
-    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const;
-    uint8_t *toByteArray(const IString *value, IString::Codec codec) const;
-    void disposeByteArray(uint8_t *value) const;
-
-private:
-    const QTextCodec *m_sjis;
-    const QTextCodec *m_utf8;
-    const QTextCodec *m_utf16;
-};
-
 QTextCodec *getTextCodec();
 const QByteArray toByteArrayFromQString(const QString &value);
 const QString toQStringFromBytes(const uint8_t *value);
-const QString toQStringFromString(const vpvl2::IString *value);
-const QString toQStringFromModel(const vpvl2::IModel *value);
-const QString toQStringFromMotion(const vpvl2::IMotion *value);
-const QString toQStringFromBone(const vpvl2::IBone *value);
-const QString toQStringFromMorph(const vpvl2::IMorph *value);
-const QString toQStringFromBoneKeyframe(const vpvl2::IBoneKeyframe *value);
-const QString toQStringFromMorphKeyframe(const vpvl2::IMorphKeyframe *value);
+const QString toQStringFromString(const IString *value);
+const QString toQStringFromModel(const IModel *value);
+const QString toQStringFromMotion(const IMotion *value);
+const QString toQStringFromBone(const IBone *value);
+const QString toQStringFromMorph(const IMorph *value);
+const QString toQStringFromBoneKeyframe(const IBoneKeyframe *value);
+const QString toQStringFromMorphKeyframe(const IMorphKeyframe *value);
 
 }
 

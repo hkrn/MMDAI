@@ -82,7 +82,8 @@ CONFIG(release, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/release/lib \
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
-                      -L$${VPVL2_PATH}/release/lib
+                      -L$${VPVL2_PATH}/release/lib \
+                      -lCg -lCgGL
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
   LIBS             += -lassimp -lvpvl -lvpvl2 -lvpvl2qtcommon

@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <qglobal.h>
+#include "CString.h"
 #include "Archive.h"
 #include "Delegate.h"
 
@@ -169,10 +170,10 @@ public:
     ~ProjectDelegate() {}
 
     const std::string toStdFromString(const IString *value) const {
-        return static_cast<const internal::String *>(value)->value().toStdString();
+        return static_cast<const CString *>(value)->value().toStdString();
     }
     const IString *toStringFromStd(const std::string &value) const {
-        return new(std::nothrow) internal::String(QString::fromStdString(value));
+        return new(std::nothrow) CString(QString::fromStdString(value));
     }
     void error(const char *format, va_list ap) {
         qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
@@ -290,7 +291,7 @@ void SceneLoader::addEffect(IModel *model, IRenderEngine *engine, const IString 
         qWarning("Loading effect failed: %s", cgGetLastListing(c));
     }
     else {
-        const QDir baseDir(static_cast<const internal::String *>(dir)->value());
+        const QDir baseDir(static_cast<const CString *>(dir)->value());
         static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
         IEffect *effect = effectPtr.data();
@@ -316,7 +317,7 @@ void SceneLoader::addEffect(IModel *model, IRenderEngine *engine, const IString 
                     if (value != "hide" && value != "none") {
                         QString path = baseDir.absoluteFilePath(value);
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
-                        internal::String s2(path);
+                        CString s2(path);
                         const QFuture<IEffect *> &future3 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, &s2);
                         IEffect *offscreenEffect = future3.result();
                         offscreenEffect->setParentEffect(effect);
@@ -343,7 +344,7 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
     /* モデル名が空っぽの場合はファイル名から補完しておく */
     const QString &key = internal::toQStringFromModel(model).trimmed();
     if (key.isEmpty()) {
-        internal::String s(key);
+        CString s(key);
         model->setName(&s);
     }
     /*
@@ -351,7 +352,7 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
     IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
-    internal::String d(dir.absolutePath());
+    CString d(dir.absolutePath());
     engine->upload(&d);
     /* モデルを SceneLoader にヒモ付けする */
     const QString &path = dir.absoluteFilePath(baseName);
@@ -555,10 +556,10 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
         if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             QFileInfo fileInfo(filename);
-            internal::String name(fileInfo.baseName());
+            CString name(fileInfo.baseName());
             asset->setName(&name);
             IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, asset);
-            internal::String s(fileInfo.absoluteDir().path());
+            CString s(fileInfo.absoluteDir().path());
             engine->upload(&s);
             m_renderDelegate->setArchive(0);
             uuid = QUuid::createUuid();
@@ -606,7 +607,7 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
         IModel *assetPtr = asset.data();
         if (loadAsset(dir.absoluteFilePath(filename), uuid, assetPtr)) {
             if (!name.isEmpty()) {
-                internal::String s(name);
+                CString s(name);
                 asset->setName(&s);
             }
             if (!filename.isEmpty()) {
@@ -627,7 +628,7 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
                 asset->setRotation(Quaternion(x, y, z));
             }
             if (!bone.isEmpty() && m_model) {
-                internal::String s(name);
+                CString s(name);
                 IBone *bone = m_model->findBone(&s);
                 asset->setParentBone(bone);
             }
@@ -774,7 +775,7 @@ void SceneLoader::loadProject(const QString &path)
             const QString &filename = QString::fromStdString(uri);
             if (loadModel(filename, model)) {
                 const QFileInfo fileInfo(filename);
-                internal::String d(fileInfo.absolutePath());
+                CString d(fileInfo.absolutePath());
                 IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
                 engine->upload(&d);
                 sceneObject->setAccelerationType(modelAccelerationType(model));
@@ -812,7 +813,7 @@ void SceneLoader::loadProject(const QString &path)
                     continue;
                 }
                 else if (type == IModel::kAsset) {
-                    internal::String s(fileInfo.baseName().toUtf8());
+                    CString s(fileInfo.baseName().toUtf8());
                     model->setName(&s);
                     m_renderDelegate->setArchive(0);
                     m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
@@ -1662,7 +1663,7 @@ IBone *SceneLoader::assetParentBone(IModel *asset) const
     IModel *model = 0;
     if (m_project && (model = assetParentModel(asset))) {
         const QString &name = QString::fromStdString(m_project->modelSetting(asset, "parent.bone"));
-        internal::String s(name);
+        CString s(name);
         return model->findBone(&s);
     }
     return 0;

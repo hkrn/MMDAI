@@ -48,8 +48,10 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include "CString.h"
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 TimelineTabWidget::TimelineTabWidget(QSettings *settings,
                                      BoneMotionModel *bmm,
@@ -213,7 +215,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toTimeIndex(index);
-            internal::String s(name);
+            CString s(name);
             frame.reset(factory->createBoneKeyframe());
             frame->setName(&s);
             frame->setDefaultInterpolationParameter();
@@ -234,7 +236,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toTimeIndex(index);
-            internal::String s(name);
+            CString s(name);
             frame.reset(factory->createMorphKeyframe());
             frame->setName(&s);
             frame->setWeight(0);

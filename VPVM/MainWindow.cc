@@ -71,8 +71,10 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include "Encoding.h"
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 namespace {
 
@@ -149,7 +151,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_distance(0.0f),
     m_currentFPS(-1)
 {
-    m_encoding = new internal::Encoding();
+    m_encoding = new Encoding();
     m_factory = new vpvl2::Factory(m_encoding);
     m_undo = new QUndoGroup(this);
     m_sceneWidget = new SceneWidget(m_encoding, m_factory, &m_settings);

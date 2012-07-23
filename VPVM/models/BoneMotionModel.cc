@@ -41,8 +41,10 @@
 #include "models/BoneMotionModel.h"
 
 #include <vpvl2/vpvl2.h>
+#include "CString.h"
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 namespace
 {
@@ -180,7 +182,7 @@ public:
                  */
                 const Vector4 &v = bone->rotation;
                 const QModelIndex &modelIndex = m_bmm->frameIndexToModelIndex(m_keys[key], m_frameIndex);
-                internal::String s(key);
+                CString s(key);
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
                 newBoneKeyframe.reset(factory->createBoneKeyframe());
                 newBoneKeyframe->setDefaultInterpolationParameter();
@@ -548,7 +550,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
         int frameIndex = toTimeIndex(index);
         if (frameIndex >= 0) {
             const QString &name = nameFromModelIndex(index);
-            internal::String s(name);
+            CString s(name);
             IBone *bone = model->findBone(&s);
             if (bone) {
                 /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
@@ -630,7 +632,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
                         key.replace(right, left);
                     else if (isLeft)
                         key.replace(left, right);
-                    internal::String s(key);
+                    CString s(key);
                     newKeyframe = KeyFramePtr(keyframe->clone());
                     newKeyframe->setName(&s);
                     Vector3 position = newKeyframe->position();
@@ -803,7 +805,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
                 /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
                 if (label->isSpecial()) {
                     /* 特殊枠でかつ先頭ボーンかどうか */
-                    static const internal::String kRoot("Root");
+                    static const CString kRoot("Root");
                     if (nchildren > 0 && label->name()->equals(&kRoot)) {
                         const IBone *bone = label->bone(0);
                         if (bone) {

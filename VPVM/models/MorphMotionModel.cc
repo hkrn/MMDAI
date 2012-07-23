@@ -36,9 +36,12 @@
 
 #include "common/util.h"
 #include "models/MorphMotionModel.h"
+
 #include <vpvl2/vpvl2.h>
+#include "CString.h"
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 namespace
 {
@@ -295,7 +298,7 @@ static IMorph *UIMorphFromModelIndex(const QModelIndex &index, IModel *model)
 {
     /* QModelIndex -> TreeIndex -> ByteArray -> Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-    const internal::String s(item->name());
+    const CString s(item->name());
     return model->findMorph(&s);
 }
 
@@ -338,7 +341,7 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
         int frameIndex = toTimeIndex(index);
         if (frameIndex >= 0) {
             const QString &name = nameFromModelIndex(index);
-            internal::String s(name);
+            CString s(name);
             IMorph *morph = model->findMorph(&s);
             if (morph) {
                 KeyFramePtr keyframe(m_factory->createMorphKeyframe());
