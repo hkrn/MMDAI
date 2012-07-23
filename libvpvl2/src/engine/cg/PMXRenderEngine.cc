@@ -129,7 +129,11 @@ bool PMXRenderEngine::upload(const IString *dir)
         }
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
-            snprintf(buf, sizeof(buf), "toon%d.bmp", material->toonTextureIndex());
+            int index = material->toonTextureIndex();
+            if (index == 0)
+                snprintf(buf, sizeof(buf), "toon%d.bmp", index);
+            else
+                snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(buf));
             m_delegate->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
             delete s;
