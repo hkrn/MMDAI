@@ -297,17 +297,21 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   include(${QT_USE_FILE})
   target_link_libraries(vpvl2 ${QT_LIBRARIES})
   if(VPVL2_BUILD_QT_RENDERER)
-    set(vpvl2qtcommon_sources render/qt/common/CString.cc
+    set(vpvl2qtcommon_sources render/qt/common/Archive.cc
+                              render/qt/common/CString.cc
                               render/qt/common/DDSTexture.cc
                               render/qt/common/Delegate.cc
-                              render/qt/common/Encoding.cc)
-    set(vpvl2qtcommon_headers render/qt/common/CString.h
+                              render/qt/common/Encoding.cc
+                              render/qt/unzip/ioapi.c
+                              render/qt/unzip/unzip.c)
+    set(vpvl2qtcommon_headers render/qt/common/Archive.h
+                              render/qt/common/CString.h
                               render/qt/common/DDSTexture.h
                               render/qt/common/Delegate.h
                               render/qt/common/Encoding.h)
     set(vpvl2_qt_sources render/qt/main.cc
                          render/qt/UI.cc)
-    include_directories(render/qt ${VPVL2_LIB_TYPE} render/qt render/qt/common)
+    include_directories(render/qt ${VPVL2_LIB_TYPE} render/qt render/qt/common render/qt/unzip)
     add_library(vpvl2qtcommon ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
     target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
     set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
@@ -318,6 +322,9 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
                                                    SOVERSION ${VPVL2_VERSION_COMPATIBLE})
     add_executable(vpvl2_qt ${vpvl2_qt_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
     target_link_libraries(vpvl2_qt vpvl2 vpvl2qtcommon ${QT_LIBRARIES})
+    if(APPLE)
+      add_definitions(-DUSE_FILE32API)
+     endif()
   endif()
 endif()
 

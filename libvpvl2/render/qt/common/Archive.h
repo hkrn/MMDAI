@@ -34,14 +34,19 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef ARCHIVE_H
-#define ARCHIVE_H
+#ifndef VPVL2_QT_ARCHIVE_H
+#define VPVL2_QT_ARCHIVE_H
 
 #include "unzip/unzip.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>
 #include <QtCore/QString>
+
+namespace vpvl2
+{
+namespace qt
+{
 
 class Archive
 {
@@ -75,5 +80,8 @@ private:
     QTextCodec *m_codec;
     QHash<QString, QByteArray> m_entries;
 };
+
+}
+}
 
 #endif // ARCHIVE_H

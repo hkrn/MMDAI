@@ -46,7 +46,8 @@ namespace vpvl2
 namespace qt
 {
 
-class Encoding : public IEncoding {
+class Encoding : public IEncoding
+{
 public:
     Encoding();
     ~Encoding();

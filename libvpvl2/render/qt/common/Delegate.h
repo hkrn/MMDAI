@@ -47,11 +47,19 @@ class Scene;
 
 namespace qt
 {
+class Archive;
 
 class Delegate : public IRenderDelegate, protected QGLFunctions
 {
 public:
     struct TextureCache {
+        TextureCache() {}
+        TextureCache(int w, int h, GLuint i)
+            : width(w),
+              height(h),
+              id(i)
+        {
+        }
         int width;
         int height;
         GLuint id;
@@ -88,8 +96,11 @@ public:
     void releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA);
     void releaseRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
 
-    void updateMatrices(const QSize &size);
+    void setArchive(Archive *value);
+    void updateMatrices(const QSizeF &size);
+    void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
     void setCameraModelMatrix(const QMatrix4x4 &value);
+    void getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
     void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection);
     void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type);
     void addModelPath(const IModel *model, const QString &filename);
@@ -109,6 +120,9 @@ private:
     static const QString createPath(const IString *dir, const IString *name);
     static void setTextureID(const TextureCache &cache, bool isToon, Texture &output);
     static void addTextureCache(PrivateContext *context, const QString &path, const TextureCache &texture);
+    static QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr);
+    static QImage loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr);
+    static QGLContext::BindOptions textureBindOptions(bool enableMipmap);
     bool uploadTextureInternal(const QString &path, Texture &texture, bool isToon, bool mipmap, void *context);
     void getToonColorInternal(const QString &path, Color &value);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
@@ -120,14 +134,15 @@ private:
     mutable QMutex m_effectOwnersLock;
     mutable QMutex m_effect2modelsLock;
     QGLWidget *m_context;
-    QSize m_viewport;
+    Archive *m_archive;
+    QSizeF m_viewport;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QMovie *> m_texture2Movies;
     QHash<GLuint, FrameBufferObject *> m_renderTargets;
     QHash<const IEffect *, QString> m_effectOwners;
     QHash<const IEffect *, IModel *> m_effect2models;
-    QList<FrameBufferObject *> m_previousFrameBuffers;
+    QList<FrameBufferObject *> m_previousFrameBufferPtrs;
     QMatrix4x4 m_lightWorldMatrix;
     QMatrix4x4 m_lightViewMatrix;
     QMatrix4x4 m_lightProjectionMatrix;

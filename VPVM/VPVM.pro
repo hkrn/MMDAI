@@ -1,7 +1,7 @@
 QT += core gui opengl
 TARGET = MMDAI2
 TEMPLATE = app
-DEFINES += IS_QMA2
+DEFINES += IS_VPVM
 
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
@@ -46,6 +46,8 @@ LIBS += -lBulletCollision \
 # VPVL and others configuration
 INCLUDEPATH +=  $${VPVL_PATH}/include \
                 $${VPVL2_PATH}/include \
+                $${VPVL2_PATH}/render/qt \
+                $${VPVL2_PATH}/render/qt/common \
                 $${ASSIMP_PATH}/include \
                 $${BULLET_PATH}/src
 
@@ -69,7 +71,7 @@ CONFIG(debug, debug|release) {
                       -L$${VPVL2_PATH}/debug/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
                       $${VPVL2_PATH}/debug/include
-  LIBS             += -lassimp -lvpvl_debug -lvpvl2_debug
+  LIBS             += -lassimp -lvpvl_debug -lvpvl2_debug -lvpvl2qtcommon_debug
 }
 CONFIG(release, debug|release) {
   exists(../libav/libav_release/lib):LIBS += -L../libav/libav_release/lib
@@ -83,7 +85,7 @@ CONFIG(release, debug|release) {
                       -L$${VPVL2_PATH}/release/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
-  LIBS             += -lassimp -lvpvl -lvpvl2
+  LIBS             += -lassimp -lvpvl -lvpvl2 -lvpvl2qtcommon
 }
 macx:LIBS += -framework OpenCL -framework CoreServices -framework OpenCL -framework CoreAudio -framework AudioToolbox -framework AudioUnit
 linux-*:LIBS += -lGLU
@@ -100,7 +102,7 @@ unix {
   UI_DIR = $${OUT_PWD}/.uic
 }
 
-translations.files = resources/translations/MMDAI2_ja.qm \
+translations.files = resources/translations/VPVM_ja.qm \
                      $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
 win32 {
   RC_FILE = resources/icons/app.rc
@@ -114,7 +116,6 @@ macx {
   QMAKE_INFO_PLIST = resources/Info.plist
   translations.path = Contents/Resources
   QMAKE_BUNDLE_DATA += translations
-  DEFINES += USE_FILE32API
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
@@ -192,9 +193,6 @@ SOURCES += main.cc \
     video/AVCommon.cc \
     video/AudioPlayer.cc \
     dialogs/RenderOrderDialog.cc \
-    unzip/unzip.c \
-    unzip/ioapi.c \
-    common/Archive.cc \
     widgets/SceneLightWidget.cc \
     widgets/ModelSettingWidget.cc \
     dialogs/ShadowMapSettingDialog.cc \
@@ -245,9 +243,6 @@ HEADERS  += \
     video/AVCommon.h \
     video/AudioPlayer.h \
     dialogs/RenderOrderDialog.h \
-    unzip/unzip.h \
-    unzip/ioapi.h \
-    common/Archive.h \
     widgets/SceneLightWidget.h \
     widgets/ModelSettingWidget.h \
     dialogs/ShadowMapSettingDialog.h \
@@ -255,5 +250,5 @@ HEADERS  += \
     dialogs/BackgroundImageSettingDialog.h
 
 CODECFORTR = UTF-8
-RESOURCES += resources/QMA2.qrc
-TRANSLATIONS += resources/translations/MMDAI2.ts
+RESOURCES += resources/VPVM.qrc
+TRANSLATIONS += resources/translations/VPVM.ts

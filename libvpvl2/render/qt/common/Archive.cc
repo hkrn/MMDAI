@@ -38,6 +38,11 @@
 
 #include <QtCore/QtCore>
 
+namespace vpvl2
+{
+namespace qt
+{
+
 Archive::Archive()
     : m_file(0),
       m_error(kNone),
@@ -200,4 +205,7 @@ const QStringList Archive::entryNames() const
 const QByteArray Archive::data(const QString &name) const
 {
     return m_entries[name];
+}
+
+}
 }

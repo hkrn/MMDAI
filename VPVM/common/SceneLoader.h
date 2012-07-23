@@ -61,6 +61,9 @@ class IModel;
 class IMotion;
 class IRenderDelegate;
 class Project;
+namespace qt {
+class Delegate;
+}
 }
 
 class QGLFramebufferObject;
@@ -246,7 +249,7 @@ private:
     QMap<QString, vpvl2::IModel*> m_name2assets;
     QMatrix4x4 m_projection;
     vpvl2::IEncoding *m_encoding;
-    vpvl2::IRenderDelegate *m_renderDelegate;
+    vpvl2::qt::Delegate *m_renderDelegate;
     vpvl2::Factory *m_factory;
     vpvl2::Project *m_project;
     vpvl2::Project::IDelegate *m_projectDelegate;

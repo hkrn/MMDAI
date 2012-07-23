@@ -45,7 +45,8 @@ namespace vpvl2
 namespace qt
 {
 
-class CString : public IString {
+class CString : public IString
+{
 public:
     CString(const QString &s);
     ~CString();

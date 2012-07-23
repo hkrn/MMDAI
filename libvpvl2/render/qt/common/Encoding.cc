@@ -39,8 +39,6 @@
 
 #include <QtCore/QtCore>
 
-using namespace vpvl2;
-
 namespace vpvl2
 {
 namespace qt

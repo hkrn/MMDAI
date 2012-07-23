@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "Archive.h"
 #include "DDSTexture.h"
 #include "Delegate.h"
 #include "CString.h"
@@ -43,10 +44,9 @@
 #include <vpvl2/IRenderDelegate.h>
 #include <QtCore/QtCore>
 
-using namespace vpvl2;
-
 namespace
 {
+typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
 #ifdef __APPLE__
 #define glBlitFramebufferPROC glBlitFramebuffer
 #define glDrawBuffersPROC glDrawBuffers
@@ -126,7 +126,109 @@ QString Delegate::readAllAsync(const QString &path)
 
 QImage Delegate::loadImageAsync(const QString &path)
 {
-    return QGLWidget::convertToGLFormat(QImage(path).rgbSwapped());
+    QImage image(path);
+    if (!image.isNull()) {
+        return QGLWidget::convertToGLFormat(image.rgbSwapped());
+    }
+    else {
+        ByteArrayPtr ptr; //(new uint8_t[1]);
+        return QGLWidget::convertToGLFormat(loadTGA(path, ptr));
+    }
+}
+
+QImage Delegate::loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr)
+{
+    QFile file(path);
+    if (file.open(QFile::ReadOnly) && file.size() > 18) {
+        return loadTGA(file.readAll(), dataPtr);
+    }
+    else {
+        qWarning("Cannot open file %s: %s", qPrintable(path), qPrintable(file.errorString()));
+        return QImage();
+    }
+}
+
+QImage Delegate::loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr)
+{
+    uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
+    uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
+    uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
+    if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
+        qWarning("Loaded TGA image type is not full color");
+        return QImage();
+    }
+    uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
+    uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
+    uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
+    uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
+    if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
+        qWarning("Invalid TGA image (width=%d, height=%d, depth=%d)",
+                 width, height, depth);
+        return QImage();
+    }
+    int component = depth >> 3;
+    uint8_t *body = ptr + 18 + field;
+    /* if RLE compressed, uncompress it */
+    size_t datalen = width * height * component;
+    ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
+    if (type == 10) {
+        uint8_t *uncompressed = uncompressedPtr.data();
+        uint8_t *src = body;
+        uint8_t *dst = uncompressed;
+        while (static_cast<size_t>(dst - uncompressed) < datalen) {
+            int16_t len = (*src & 0x7f) + 1;
+            if (*src & 0x80) {
+                src++;
+                for (int i = 0; i < len; i++) {
+                    memcpy(dst, src, component);
+                    dst += component;
+                }
+                src += component;
+            }
+            else {
+                src++;
+                memcpy(dst, src, component * len);
+                dst += component * len;
+                src += component * len;
+            }
+        }
+        /* will load from uncompressed data */
+        body = uncompressed;
+    }
+    /* prepare texture data area */
+    datalen = (width * height) * 4;
+    dataPtr.reset(new uint8_t[datalen]);
+    ptr = dataPtr.data();
+    for (uint16_t h = 0; h < height; h++) {
+        uint8_t *line = NULL;
+        if (flags & 0x20) /* from up to bottom */
+            line = body + h * width * component;
+        else /* from bottom to up */
+            line = body + (height - 1 - h) * width * component;
+        for (uint16_t w = 0; w < width; w++) {
+            uint32_t index = 0;
+            if (flags & 0x10)/* from right to left */
+                index = (width - 1 - w) * component;
+            else /* from left to right */
+                index = w * component;
+            /* BGR or BGRA -> ARGB */
+            *ptr++ = line[index + 2];
+            *ptr++ = line[index + 1];
+            *ptr++ = line[index + 0];
+            *ptr++ = (depth == 32) ? line[index + 3] : 255;
+        }
+    }
+    return QImage(dataPtr.data(), width, height, QImage::Format_ARGB32);
+}
+
+QGLContext::BindOptions Delegate::textureBindOptions(bool enableMipmap)
+{
+    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
+            | QGLContext::InvertedYBindOption
+            | QGLContext::PremultipliedAlphaBindOption;
+    if (enableMipmap)
+        options |= QGLContext::MipmapBindOption;
+    return options;
 }
 
 Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *context)
@@ -134,10 +236,11 @@ Delegate::Delegate(const QSettings *settings, const Scene *scene, QGLWidget *con
       m_scene(scene),
       m_systemDir(m_settings->value("dir.system.toon", "../../VPVM/resources/images").toString()),
       m_context(context),
+      m_archive(0),
       m_msaaSamples(0)
 {
     for (int i = 0; i < 4; i++)
-        m_previousFrameBuffers.insert(i, 0);
+        m_previousFrameBufferPtrs.insert(i, 0);
     m_timer.start();
 }
 
@@ -145,7 +248,7 @@ Delegate::~Delegate()
 {
     qDeleteAll(m_texture2Movies);
     qDeleteAll(m_renderTargets);
-    //qDeleteAll(m_previousFrameBuffers);
+    delete m_archive;
     m_lightWorldMatrix.setToIdentity();
     m_lightViewMatrix.setToIdentity();
     m_lightProjectionMatrix.setToIdentity();
@@ -157,6 +260,7 @@ Delegate::~Delegate()
     m_mouseMiddlePressPosition.setZero();
     m_mouseRightPressPosition.setZero();
     m_context = 0;
+    m_archive = 0;
     m_msaaSamples = 0;
 }
 
@@ -472,7 +576,13 @@ IString *Delegate::toUnicode(const uint8_t *value) const
     return new(std::nothrow) CString(s);
 }
 
-void Delegate::updateMatrices(const QSize &size)
+void Delegate::setArchive(Archive *value)
+{
+    delete m_archive;
+    m_archive = value;
+}
+
+void Delegate::updateMatrices(const QSizeF &size)
 {
     float matrix[16];
     ICamera *camera = m_scene->camera();
@@ -480,13 +590,27 @@ void Delegate::updateMatrices(const QSize &size)
     for (int i = 0; i < 16; i++)
         m_cameraViewMatrix.data()[i] = matrix[i];
     m_cameraProjectionMatrix.setToIdentity();
-    m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / float(size.height()), camera->znear(), camera->zfar());
+    m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / size.height(), camera->znear(), camera->zfar());
     m_viewport = size;
+}
+
+void Delegate::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+{
+    world = m_cameraModelMatrix;
+    view = m_cameraViewMatrix;
+    projection = m_cameraProjectionMatrix;
 }
 
 void Delegate::setCameraModelMatrix(const QMatrix4x4 &value)
 {
     m_cameraModelMatrix = value;
+}
+
+void Delegate::getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+{
+    world = m_lightWorldMatrix;
+    view = m_lightViewMatrix;
+    projection = m_lightProjectionMatrix;
 }
 
 void Delegate::setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection)
@@ -599,7 +723,7 @@ void Delegate::bindRenderColorTarget(void *texture, size_t width, size_t height,
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
     if (buffer) {
-        FrameBufferObject *fbo = m_previousFrameBuffers[index];
+        FrameBufferObject *fbo = m_previousFrameBufferPtrs[index];
         if (enableAA && fbo) {
             fbo->blit();
 #ifdef DEBUG_OUTPUT_TEXTURE
@@ -643,7 +767,7 @@ void Delegate::bindRenderColorTarget(void *texture, size_t width, size_t height,
         if (enableAA && buffer->fboAA) {
             glBindFramebuffer(GL_FRAMEBUFFER, buffer->fboAA);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, target, GL_RENDERBUFFER, buffer->colorAA);
-            m_previousFrameBuffers.insert(index, buffer);
+            m_previousFrameBufferPtrs.insert(index, buffer);
         }
     }
 }
@@ -653,7 +777,7 @@ void Delegate::releaseRenderColorTarget(void *texture, size_t width, size_t heig
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
     if (buffer) {
-        FrameBufferObject *fbo = m_previousFrameBuffers[index];
+        FrameBufferObject *fbo = m_previousFrameBufferPtrs[index];
         if (enableAA && fbo) {
             fbo->blit();
             fbo = 0;
@@ -809,7 +933,35 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
         setTextureID(privateContext->textureCache[path], isToon, texture);
         return true;
     }
-    if (path.endsWith(".dds")) {
+    /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
+    if (m_archive && !path.startsWith(":/")) {
+        QByteArray suffix = info.suffix().toLower().toUtf8();
+        if (suffix == "sph" || suffix == "spa")
+            suffix.setRawData("bmp", 3);
+        const QByteArray &bytes = m_archive->data(path);
+        QImage image;
+        ByteArrayPtr ptr;
+        image.loadFromData(bytes, suffix.constData());
+        if (image.isNull() && suffix == "tga" && bytes.length() > 18) {
+            image = loadTGA(bytes, ptr);
+        }
+        else {
+            image = image.rgbSwapped();
+        }
+        if (image.isNull()) {
+            qWarning("Loading texture %s (zipped) cannot decode", qPrintable(info.fileName()));
+            return false;
+        }
+        GLuint textureID = m_context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
+        TextureCache cache(image.width(), image.height(), textureID);
+        m_texture2Paths.insert(textureID, path);
+        setTextureID(cache, isToon, texture);
+        addTextureCache(privateContext, path, cache);
+        qDebug("Loaded a zipped texture (ID=%d, width=%d, height=%d): \"%s\"",
+               textureID, image.width(), image.height(), qPrintable(path));
+        return textureID != 0;
+    }
+    else if (path.endsWith(".dds")) {
         QFile file(path);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
@@ -820,10 +972,7 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
                 qDebug("Cannot parse a DDS texture %s", qPrintable(path));
                 return false;
             }
-            TextureCache cache;
-            cache.width = dds.width();
-            cache.height = dds.height();
-            cache.id = textureID;
+            TextureCache cache(dds.width(), dds.height(), textureID);
             setTextureID(cache, isToon, texture);
             addTextureCache(privateContext, path, cache);
             return true;
@@ -836,16 +985,8 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
     else {
         const QFuture<QImage> &future = QtConcurrent::run(&Delegate::loadImageAsync, path);
         const QImage &image = future.result();
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
-                | QGLContext::InvertedYBindOption
-                | QGLContext::PremultipliedAlphaBindOption;
-        if (mipmap)
-            options |= QGLContext::MipmapBindOption;
-        GLuint textureID = m_context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, options);
-        TextureCache cache;
-        cache.width = image.width();
-        cache.height = image.height();
-        cache.id = textureID;
+        GLuint textureID = m_context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
+        TextureCache cache(image.width(), image.height(), textureID);
         m_texture2Paths.insert(textureID, path);
         setTextureID(cache, isToon, texture);
         addTextureCache(privateContext, path, cache);

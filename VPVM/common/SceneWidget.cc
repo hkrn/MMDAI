@@ -1002,7 +1002,7 @@ void SceneWidget::initializeGL()
     m_handles = new Handles(m_loader, s);
     m_info = new InfoPanel(s);
     m_debugDrawer = new DebugDrawer();
-#ifdef IS_QMA2
+#ifdef IS_VPVM
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
@@ -1031,7 +1031,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_clickOrigin = pos;
     m_handles->setPoint2D(pos);
     Vector3 znear, zfar, hit;
-#ifdef IS_QMA2
+#ifdef IS_VPVM
     QRectF rect;
     makeRay(pos, znear, zfar);
     m_loader->setMousePosition(event, geometry());
@@ -1247,7 +1247,7 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void SceneWidget::paintGL()
 {
-#ifdef IS_QMA2
+#ifdef IS_VPVM
     Scene *scene = m_loader->scene();
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     if (m_editMode != kSelect) {
