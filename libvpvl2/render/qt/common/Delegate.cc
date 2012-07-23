@@ -137,7 +137,7 @@ QImage Delegate::loadImageAsync(const QString &path)
         return QGLWidget::convertToGLFormat(image.rgbSwapped());
     }
     else {
-        ByteArrayPtr ptr; //(new uint8_t[1]);
+        ByteArrayPtr ptr;
         return QGLWidget::convertToGLFormat(loadTGA(path, ptr));
     }
 }
@@ -237,11 +237,11 @@ QGLContext::BindOptions Delegate::textureBindOptions(bool enableMipmap)
     return options;
 }
 
-Delegate::Delegate(const QSettings *settings, Scene *scene, QGLWidget *context)
+Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
     : m_settings(settings),
       m_scene(scene),
       m_context(context),
-      m_systemDir(m_settings->value("dir.system.toon", "../../VPVM/resources/images").toString()),
+      m_systemDir(m_settings.value("dir.system.toon", "../../VPVM/resources/images")),
       m_archive(0),
       m_msaaSamples(0)
 {
@@ -314,7 +314,8 @@ void Delegate::getToonColor(const IString *name, const IString *dir, Color &valu
     }
     else {
         CString s(m_systemDir.absolutePath());
-        getToonColorInternal(createPath(&s, name), value);
+        const QString &fallback = createPath(&s, name);
+        getToonColorInternal(fallback, value);
     }
 }
 
@@ -479,7 +480,7 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
     default:
         break;
     }
-    const QString &path = QDir(m_settings->value("dir.system.kernels", "../../VPVM/resources/kernels").toString()).absoluteFilePath(file);
+    const QString &path = QDir(m_settings.value("dir.system.kernels", "../../VPVM/resources/kernels")).absoluteFilePath(file);
     const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
@@ -563,7 +564,7 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
     default:
         break;
     }
-    const QString &path = QDir(m_settings->value("dir.system.shaders", "../../VPVM/resources/shaders").toString()).absoluteFilePath(file);
+    const QString &path = QDir(m_settings.value("dir.system.shaders", "../../VPVM/resources/shaders")).absoluteFilePath(file);
     const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
@@ -1013,7 +1014,7 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
             qWarning("Loading texture %s (zipped) cannot decode", qPrintable(info.fileName()));
             return false;
         }
-        GLuint textureID = m_context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
+        GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
         TextureCache cache(image.width(), image.height(), textureID);
         m_texture2Paths.insert(textureID, path);
         setTextureID(cache, isToon, texture);
@@ -1059,11 +1060,14 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
 
 void Delegate::getToonColorInternal(const QString &path, Color &value)
 {
-    const QImage image(path);
+    QImage image(path);
     if (!image.isNull()) {
         const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
         const QColor color(rgb);
         value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    }
+    else {
+        value.setValue(0, 0, 0, 1);
     }
 }
 

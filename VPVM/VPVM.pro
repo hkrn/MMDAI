@@ -64,7 +64,7 @@ CONFIG(debug, debug|release) {
   exists(../libav/libav_debug/include):INCLUDEPATH += ../libav/libav_debug/include
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
                       -L$${BULLET_PATH}/msvc-build/lib/debug
-  macx:LIBS        += -framework OpenCL
+  macx:LIBS        += -framework OpenCL -framework Cg
   unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
                       -L$${BULLET_PATH}/debug/lib \
                       -L$${VPVL_PATH}/debug/lib \

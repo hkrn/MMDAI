@@ -990,11 +990,9 @@ void SceneWidget::initializeGL()
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-    /* アルファブレンドとカリングを初期状態から有効にする */
+    /* 背面カリングを有効にする */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
     m_loader = new SceneLoader(m_encoding, m_factory, this);
     connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
@@ -1251,7 +1249,7 @@ void SceneWidget::paintGL()
     Scene *scene = m_loader->scene();
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     if (m_editMode != kSelect) {
-        m_loader->renderZPlotToTexture();
+        //m_loader->renderZPlotToTexture();
         scene->light()->setToonEnable(true);
     }
     else {
@@ -1260,7 +1258,7 @@ void SceneWidget::paintGL()
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     qglClearColor(m_loader->screenColor());
     glViewport(0, 0, width(), height());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     m_background->draw();
     m_grid->draw(m_loader, m_loader->isGridVisible());
     m_loader->renderModels();

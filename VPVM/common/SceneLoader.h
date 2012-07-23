@@ -48,6 +48,7 @@
 
 #include "VPDFile.h"
 
+#include <vpvl2/IEffect.h>
 #include <vpvl2/Common.h>
 #include <vpvl2/Project.h>
 
@@ -236,6 +237,7 @@ private slots:
     void setProjectDirtyFalse();
 
 private:
+    void addEffect(vpvl2::IModel *model, vpvl2::IRenderEngine *engine, const vpvl2::IString *dir);
     void insertModel(vpvl2::IModel *model, const QString &name);
     void insertMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void commitAssetProperties();
@@ -248,6 +250,9 @@ private:
     QGLFramebufferObject *m_depthBuffer;
     QMap<QString, vpvl2::IModel*> m_name2assets;
     QMatrix4x4 m_projection;
+    typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
+    typedef QPair<vpvl2::IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
+    QList<OffscreenRenderTarget> m_offscreens;
     vpvl2::IEncoding *m_encoding;
     vpvl2::qt::Delegate *m_renderDelegate;
     vpvl2::Factory *m_factory;

@@ -388,7 +388,11 @@ void UI::load(const QString &filename)
 {
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->setIniCodec("UTF-8");
-    m_delegate = new Delegate(m_settings, &m_scene, this);
+    QHash<QString, QString> settings;
+    foreach (const QString &key, m_settings->allKeys()) {
+        settings.insert(key, m_settings->value(key).toString());
+    }
+    m_delegate = new Delegate(settings, &m_scene, this);
     m_delegate->createRenderTargets();
     m_delegate->updateMatrices(size());
     resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());

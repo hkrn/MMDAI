@@ -47,6 +47,12 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderDelegate.h>
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+/* to cast IEffect#internalPointer and IEffect#internalContext */
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
+#endif
+
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
@@ -157,6 +163,25 @@ private:
     const bool m_useOrderAttr;
 };
 
+class ProjectDelegate : public Project::IDelegate {
+public:
+    ProjectDelegate() {}
+    ~ProjectDelegate() {}
+
+    const std::string toStdFromString(const IString *value) const {
+        return static_cast<const internal::String *>(value)->value().toStdString();
+    }
+    const IString *toStringFromStd(const std::string &value) const {
+        return new(std::nothrow) internal::String(QString::fromStdString(value));
+    }
+    void error(const char *format, va_list ap) {
+        qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
+    }
+    void warning(const char *format, va_list ap) {
+        qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
+    }
+};
+
 /*
  * ZIP またはファイルを読み込む。複数のファイルが入る ZIP の場合 extensions に
  * 該当するもので一番先に見つかったファイルのみを読み込む
@@ -222,11 +247,15 @@ SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *conte
       m_camera(0),
       m_depthBufferID(0)
 {
-    QSettings settings;
+    QHash<QString, QString> settings;
+    settings.insert("dir.system.kernels", ":kernels");
+    settings.insert("dir.system.shaders", ":shaders");
+    settings.insert("dir.system.toon", ":textures");
     m_world = new internal::World();
-    m_projectDelegate = 0; //new qt::Delegate(context);
+    m_projectDelegate = new ProjectDelegate();
     createProject();
-    m_renderDelegate = new Delegate(&settings, scene(), context);
+    m_renderDelegate = new Delegate(settings, scene(), context);
+    m_renderDelegate->createRenderTargets();
 }
 
 SceneLoader::~SceneLoader()
@@ -245,6 +274,68 @@ SceneLoader::~SceneLoader()
     m_world = 0;
     delete m_encoding;
     m_encoding = 0;
+}
+
+void SceneLoader::addEffect(IModel *model, IRenderEngine *engine, const IString *dir)
+{
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, model, dir);
+    /* progress dialog */
+    QScopedPointer<IEffect> effectPtr(future2.result());
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    if (effectPtr.isNull()) {
+        qWarning("Effect pointer seems null");
+    }
+    else if (!effectPtr->internalPointer()) {
+        CGcontext c = static_cast<CGcontext>(effectPtr->internalContext());
+        qWarning("Loading effect failed: %s", cgGetLastListing(c));
+    }
+    else {
+        const QDir baseDir(static_cast<const internal::String *>(dir)->value());
+        static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
+        Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
+        IEffect *effect = effectPtr.data();
+        engine->setEffect(IEffect::kAutoDetection, effectPtr.take(), dir);
+        effect->getOffscreenRenderTargets(offscreenRenderTargets);
+        const int nOffscreenRenderTargets = offscreenRenderTargets.count();
+        for (int i = 0; i < nOffscreenRenderTargets; i++) {
+            const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
+            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
+            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
+            const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
+            QList<EffectAttachment> attachments;
+            foreach (const QString &line, defaultEffect) {
+                const QStringList &pair = line.split('=');
+                if (pair.size() == 2) {
+                    const QString &key = pair.at(0).trimmed();
+                    const QString &value = pair.at(1).trimmed();
+                    QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                    if (key == "self") {
+                        const QString &name = m_renderDelegate->effectOwnerName(effect);
+                        regexp.setPattern(name);
+                    }
+                    if (value != "hide" && value != "none") {
+                        QString path = baseDir.absoluteFilePath(value);
+                        path.replace(kExtensionReplaceRegExp, ".cgfx");
+                        internal::String s2(path);
+                        const QFuture<IEffect *> &future3 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, &s2);
+                        IEffect *offscreenEffect = future3.result();
+                        offscreenEffect->setParentEffect(effect);
+                        attachments.append(EffectAttachment(regexp, offscreenEffect));
+                    }
+                    else {
+                        attachments.append(EffectAttachment(regexp, 0));
+                    }
+                }
+            }
+            m_offscreens.append(OffscreenRenderTarget(renderTarget, attachments));
+        }
+    }
+#else
+    Q_UNUSED(model)
+    Q_UNUSED(dir)
+    Q_UNUSED(engine)
+    Q_UNUSED(effectPtr)
+#endif
 }
 
 void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid)
@@ -269,6 +360,7 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
     m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
     m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
     m_project->setModelSetting(model, "selected", "false");
+    addEffect(model, engine, &d);
 #ifndef IS_VPVM
     if (isPhysicsEnabled())
         m_world->addModel(model);
@@ -868,21 +960,60 @@ void SceneLoader::release()
 
 void SceneLoader::renderModels()
 {
-    UIEnableMultisample();
-    /* 順番にそってレンダリング開始 */
+    //UIEnableMultisample();
     const int nobjects = m_renderOrderList.count();
+    /* ポストプロセスの前処理 */
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
         if (IModel *model = m_project->model(uuidString)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
+            IEffect *effect = engine->effect(IEffect::kPostProcess);
+            engine->setEffect(IEffect::kPostProcess, effect, 0);
+            engine->preparePostProcess();
+        }
+    }
+    /* プリプロセス */
+    for (int i = 0; i < nobjects; i++) {
+        const QUuid &uuid = m_renderOrderList[i];
+        const Project::UUID &uuidString = uuid.toString().toStdString();
+        if (IModel *model = m_project->model(uuidString)) {
+            IRenderEngine *engine = m_project->findRenderEngine(model);
+            IEffect *effect = engine->effect(IEffect::kPreProcess);
+            engine->setEffect(IEffect::kPreProcess, effect, 0);
+            engine->performPreProcess();
+        }
+    }
+    /* 通常の描写 */
+    for (int i = 0; i < nobjects; i++) {
+        const QUuid &uuid = m_renderOrderList[i];
+        const Project::UUID &uuidString = uuid.toString().toStdString();
+        if (IModel *model = m_project->model(uuidString)) {
+            IRenderEngine *engine = m_project->findRenderEngine(model);
+            IEffect *effect = engine->effect(IEffect::kStandard);
+            engine->setEffect(IEffect::kStandard, effect, 0);
             if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
                 engine->renderShadow();
             }
-            engine->renderEdge();
             engine->renderModel();
+            engine->renderEdge();
         }
     }
+    /* ポストプロセス */
+    for (int i = 0; i < nobjects; i++) {
+        const QUuid &uuid = m_renderOrderList[i];
+        const Project::UUID &uuidString = uuid.toString().toStdString();
+        if (IModel *model = m_project->model(uuidString)) {
+            IRenderEngine *engine = m_project->findRenderEngine(model);
+            IEffect *effect = engine->effect(IEffect::kPostProcess);
+            engine->setEffect(IEffect::kPostProcess, effect, 0);
+            engine->performPostProcess();
+        }
+    }
+    /* Cg でリセットされてしまうため、アルファブレンドを有効にする */
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void SceneLoader::setLightViewProjectionMatrix()

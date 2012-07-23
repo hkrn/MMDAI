@@ -71,7 +71,7 @@ public:
     static QString readAllAsync(const QString &path);
     static QImage loadImageAsync(const QString &path);
 
-    Delegate(const QSettings *settings, Scene *scene, QGLWidget *context);
+    Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context);
     ~Delegate();
 
     void allocateContext(const IModel *model, void *&context);
@@ -129,7 +129,7 @@ private:
     void getToonColorInternal(const QString &path, Color &value);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
-    const QSettings *m_settings;
+    const QHash<QString, QString> m_settings;
     const QDir m_systemDir;
     Scene *m_scene;
     mutable QMutex m_model2PathLock;

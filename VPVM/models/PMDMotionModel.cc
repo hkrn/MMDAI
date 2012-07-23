@@ -156,6 +156,7 @@ void PMDMotionModel::State::resetMorphs()
 
 PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
     MotionBaseModel(undo, parent),
+    m_scene(0),
     m_model(0),
     m_lightDirection(kZeroV3)
 {
