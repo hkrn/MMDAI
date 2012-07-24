@@ -116,7 +116,11 @@ namespace vpvl2
         QMatrix4x4 m_projectionMatrix;
         QMatrix4x4 m_modelViewMatrix;
         typedef QPair<QRegExp, IEffect *> EffectAttachment;
-        typedef QPair<IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
+        typedef struct {
+            IEffect::OffscreenRenderTarget renderTarget;
+            QList<EffectAttachment> attachments;
+            GLuint textureID;
+        } OffscreenRenderTarget;
         QList<OffscreenRenderTarget> m_offscreens;
         vpvl2::qt::Delegate *m_delegate;
         Scene m_scene;

@@ -905,7 +905,7 @@ IEffect *Delegate::createEffectAsync(const IString *path)
     if (m_effectCaches.contains(key)) {
         effect = m_effectCaches[key];
     }
-    else {
+    else if (QFile::exists(key)) {
         locker.unlock();
         effect = m_scene->createEffect(path, this);
         qDebug("Loading an effect: %s", qPrintable(key));
@@ -928,10 +928,11 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     const QString &key = effectFilePath(model, dir);
     QMutexLocker locker(&m_effectCachesLock);
+    qDebug() << key;
     if (m_effectCaches.contains(key)) {
         effect = m_effectCaches[key];
     }
-    else {
+    else if (QFile::exists(key)) {
         locker.unlock();
         effect = m_scene->createEffect(dir, model, this);
         const IString *name = model->name();

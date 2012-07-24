@@ -628,8 +628,7 @@ void UI::renderOffscreen()
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
     foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
-        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.first;
-        const CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
+        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
         const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
         bool enableAA = false;
@@ -639,7 +638,7 @@ void UI::renderOffscreen()
             enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
         }
         size_t width = renderTarget.width, height = renderTarget.height;
-        GLuint textureID = cgGLGetTextureParameter(sampler);
+        GLuint textureID = offscreen.textureID;
         m_delegate->bindOffscreenRenderTarget(textureID, width, height, enableAA);
         m_delegate->setRenderColorTargets(buffers, nbuffers);
         const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
@@ -676,7 +675,7 @@ void UI::renderOffscreen()
             const IModel *model = engine->model();
             const IString *name = model->name();
             const QString &n = name ? static_cast<const CString *>(name)->value() : m_delegate->findModelPath(model);
-            foreach (const EffectAttachment &attachment, offscreen.second) {
+            foreach (const EffectAttachment &attachment, offscreen.attachments) {
                 IEffect *effect = attachment.second;
                 if (attachment.first.exactMatch(n)) {
                     engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
@@ -828,39 +827,39 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         qWarning("Failed parsing the model: %d", modelPtr->error());
         return 0;
     }
-    QScopedPointer<IRenderEngine> enginePtr(m_scene.createRenderEngine(m_delegate, modelPtr.data()));
+    m_delegate->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
-    IModel *model = 0;
-    IRenderEngine *engine = 0;
-    if (enginePtr->upload(&s1)) {
-        modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
-        modelPtr->joinWorld(&m_world);
-        m_scene.addModel(modelPtr.data(), enginePtr.data());
-        m_delegate->addModelPath(modelPtr.data(), info.fileName());
-        model = modelPtr.take();
-        engine = enginePtr.take();
-    }
-    else {
-        modelPtr.reset();
-        enginePtr.reset();
-        return 0;
-    }
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, model, &s1);
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     QScopedPointer<IEffect> effectPtr(future2.result());
+    int flags = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    if (!effectPtr->internalPointer()) {
+    if (effectPtr.isNull()) {
+        qWarning() << "Effect" <<  m_delegate->effectFilePath(modelPtr.data(), &s1) << "does not exists";
+    }
+    else if (!effectPtr->internalPointer()) {
         CGcontext c = static_cast<CGcontext>(effectPtr->internalContext());
         qWarning() << cgGetLastListing(c);
     }
     else {
+        flags = Scene::kEffectCapable;
+    }
+#else
+    Q_UNUSED(effectPtr)
+#endif
+    IModel *model = 0;
+    QScopedPointer<IRenderEngine> enginePtr(m_scene.createRenderEngine(m_delegate, modelPtr.data(), flags));
+    if (enginePtr->upload(&s1)) {
+        modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
+        modelPtr->joinWorld(&m_world);
+        m_scene.addModel(modelPtr.data(), enginePtr.data());
+#ifdef VPVL2_ENABLE_NVIDIA_CG
         const QDir &baseDir = info.dir();
         static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        IEffect *effect = effectPtr.data();
-        engine->setEffect(IEffect::kAutoDetection, effectPtr.take(), &s1);
-        effect->getOffscreenRenderTargets(offscreenRenderTargets);
+        enginePtr->setEffect(IEffect::kAutoDetection, effectPtr.data(), &s1);
+        effectPtr->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
         for (int i = 0; i < nOffscreenRenderTargets; i++) {
             const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
@@ -875,7 +874,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                     const QString &value = pair.at(1).trimmed();
                     QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
                     if (key == "self") {
-                        const QString &name = m_delegate->effectOwnerName(effect);
+                        const QString &name = m_delegate->effectOwnerName(effectPtr.data());
                         regexp.setPattern(name);
                     }
                     if (value != "hide" && value != "none") {
@@ -884,7 +883,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                         CString s2(path);
                         const QFuture<IEffect *> &future3 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, &s2);
                         IEffect *offscreenEffect = future3.result();
-                        offscreenEffect->setParentEffect(effect);
+                        offscreenEffect->setParentEffect(effectPtr.data());
                         attachments.append(EffectAttachment(regexp, offscreenEffect));
                     }
                     else {
@@ -892,12 +891,21 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                     }
                 }
             }
-            m_offscreens.append(OffscreenRenderTarget(renderTarget, attachments));
+            CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
+            OffscreenRenderTarget offscreen;
+            offscreen.attachments = attachments;
+            offscreen.renderTarget = renderTarget;
+            offscreen.textureID = cgGLGetTextureParameter(sampler);
+            m_offscreens.append(offscreen);
         }
-    }
-#else
-    Q_UNUSED(effectPtr)
+        model = modelPtr.take();
+        enginePtr.take();
+        effectPtr.take();
 #endif
+    }
+    else {
+        return 0;
+    }
 #if 0
     pmx::Model *pmx = dynamic_cast<pmx::Model*>(res);
     if (pmx) {
