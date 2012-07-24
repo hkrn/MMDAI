@@ -350,7 +350,7 @@ Scene::~Scene()
     m_context = 0;
 }
 
-IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model) const
+IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model, int flags) const
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
@@ -359,10 +359,11 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
 #ifdef VPVL2_LINK_ASSIMP
         asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        engine = new cg::AssetRenderEngine(delegate, this, m_context->effectContext, m);
-#else
-        engine = new gl2::AssetRenderEngine(delegate, this, m);
+        if (flags & kEffectCapable)
+            engine = new cg::AssetRenderEngine(delegate, this, m_context->effectContext, m);
+        else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+            engine = new gl2::AssetRenderEngine(delegate, this, m);
 #endif /* VPVL2_LINK_ASSIMP */
         break;
     }
@@ -370,20 +371,22 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
         cl::PMDAccelerator *accelerator = m_context->createPMDAccelerator(delegate);
         pmd::Model *m = static_cast<pmd::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
-#else
-        engine = new gl2::PMDRenderEngine(delegate, this, accelerator, m);
+        if (flags & kEffectCapable)
+            engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+        else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+            engine = new gl2::PMDRenderEngine(delegate, this, accelerator, m);
         break;
     }
     case IModel::kPMX: {
         cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate);
         pmx::Model *m = static_cast<pmx::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
-#else
-        engine = new gl2::PMXRenderEngine(delegate, this, accelerator, m);
+        if (flags & kEffectCapable)
+            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+        else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, m);
         break;
     }
     default:

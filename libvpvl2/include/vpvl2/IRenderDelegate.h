@@ -190,6 +190,20 @@ public:
     virtual void log(void *context, LogLevel level, const char *format, va_list ap) = 0;
 
     /**
+     * 指定された形式のエフェクトのソースを読み込みます。
+     *
+     * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
+     * model の type メソッドを用いて読み込むシェーダの切り替えを行います。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     * このメソッドは Cg 専用でオフスクリーンに割り当てられたエフェクトの読み込みに利用します。
+     *
+     * @param type
+     * @param path
+     * @return IString
+     */
+    virtual IString *loadShaderSource(ShaderType type, const IString *path) = 0;
+
+    /**
      * 指定された形式の (OpenGL の) シェーダのソースを読み込みます。
      *
      * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
@@ -227,20 +241,6 @@ public:
     virtual IString *toUnicode(const uint8_t *str) const = 0;
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    /**
-     * 指定された形式のエフェクトのソースを読み込みます。
-     *
-     * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
-     * model の type メソッドを用いて読み込むシェーダの切り替えを行います。
-     * 処理中は例外を投げないように処理を行う必要があります。
-     * このメソッドは Cg 専用でオフスクリーンに割り当てられたエフェクトの読み込みに利用します。
-     *
-     * @param type
-     * @param path
-     * @return IString
-     */
-    virtual IString *loadShaderSource(ShaderType type, const IString *path) = 0;
-
     /**
      * トゥーン色を取得します。
      *

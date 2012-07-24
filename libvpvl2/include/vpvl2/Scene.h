@@ -58,7 +58,12 @@ public:
     enum AccelerationType {
         kSoftwareFallback,
         kOpenCLAccelerationType1,
-        kVertexShaderAccelerationType1
+        kVertexShaderAccelerationType1,
+        kMaxAccelerationType
+    };
+    enum RenderEngineTypeFlags {
+        kEffectCapable = 0x1,
+        kMaxRenderEngineTypeFlags
     };
 
     static ICamera *createCamera();
@@ -69,7 +74,7 @@ public:
     Scene();
     virtual ~Scene();
 
-    IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model) const;
+    IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model, int flags) const;
     void addModel(IModel *model, IRenderEngine *engine);
     void addMotion(IMotion *motion);
     IEffect *createEffect(const IString *path, IRenderDelegate *delegate);
