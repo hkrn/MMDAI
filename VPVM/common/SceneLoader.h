@@ -98,7 +98,8 @@ public:
     vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
     void release();
     void releaseDepthTexture();
-    void renderModels();
+    void renderWindow();
+    void renderOffscreen(const QSize &size);
     void renderZPlot();
     void renderZPlotToTexture();
     void setLightViewProjectionMatrix();
@@ -216,6 +217,7 @@ public slots:
     void setSoftwareSkinningEnable(bool value);
 
 signals:
+    void projectDidInitialized();
     void projectDidCount(int value);
     void projectDidProceed(int value);
     void projectDidLoad(bool loaded);
@@ -237,7 +239,7 @@ private slots:
     void setProjectDirtyFalse();
 
 private:
-    void addEffect(vpvl2::IModel *model, vpvl2::IRenderEngine *engine, const vpvl2::IString *dir);
+    vpvl2::IRenderEngine *createModelEngine(vpvl2::IModel *model, const QDir &dir);
     void insertModel(vpvl2::IModel *model, const QString &name);
     void insertMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void commitAssetProperties();
@@ -251,7 +253,11 @@ private:
     QMap<QString, vpvl2::IModel*> m_name2assets;
     QMatrix4x4 m_projection;
     typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
-    typedef QPair<vpvl2::IEffect::OffscreenRenderTarget, QList<EffectAttachment> > OffscreenRenderTarget;
+    typedef struct {
+        vpvl2::IEffect::OffscreenRenderTarget renderTarget;
+        QList<EffectAttachment> attachments;
+        GLuint textureID;
+    } OffscreenRenderTarget;
     QList<OffscreenRenderTarget> m_offscreens;
     vpvl2::IEncoding *m_encoding;
     vpvl2::qt::Delegate *m_renderDelegate;

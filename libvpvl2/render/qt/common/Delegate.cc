@@ -239,9 +239,9 @@ QGLContext::BindOptions Delegate::textureBindOptions(bool enableMipmap)
 
 Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
     : m_settings(settings),
+      m_systemDir(m_settings.value("dir.system.toon", "../../VPVM/resources/images")),
       m_scene(scene),
       m_context(context),
-      m_systemDir(m_settings.value("dir.system.toon", "../../VPVM/resources/images")),
       m_archive(0),
       m_msaaSamples(0)
 {
@@ -252,8 +252,9 @@ Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWid
 
 Delegate::~Delegate()
 {
-    qDeleteAll(m_texture2Movies);
+    setScenePtr(0);
     qDeleteAll(m_renderTargets);
+    m_renderTargets.clear();
     delete m_archive;
     m_lightWorldMatrix.setToIdentity();
     m_lightViewMatrix.setToIdentity();
@@ -589,6 +590,17 @@ void Delegate::setArchive(Archive *value)
     m_archive = value;
 }
 
+void Delegate::setScenePtr(Scene *value)
+{
+    QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker)
+    qDeleteAll(m_texture2Movies);
+    qDeleteAll(m_effectCaches);
+    m_texture2Movies.clear();
+    m_effectCaches.clear();
+    m_model2Paths.clear();
+    m_scene = value;
+}
+
 void Delegate::updateMatrices(const QSizeF &size)
 {
     float matrix[16];
@@ -903,6 +915,7 @@ IEffect *Delegate::createEffectAsync(const IString *path)
     const QString &key = static_cast<const CString *>(path)->value();
     QMutexLocker locker(&m_effectCachesLock);
     if (m_effectCaches.contains(key)) {
+        qDebug("Fetched an effect from cache: %s", qPrintable(key));
         effect = m_effectCaches[key];
     }
     else if (QFile::exists(key)) {
@@ -916,6 +929,9 @@ IEffect *Delegate::createEffectAsync(const IString *path)
         locker.relock();
         m_effectCaches.insert(key, effect);
     }
+    else {
+        qDebug("Cannot load an effect: %s", qPrintable(key));
+    }
 #else
     Q_UNUSED(path)
 #endif
@@ -926,16 +942,16 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
 {
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+    const IString *name = model->name();
     const QString &key = effectFilePath(model, dir);
     QMutexLocker locker(&m_effectCachesLock);
-    qDebug() << key;
     if (m_effectCaches.contains(key)) {
+        qDebug("Fetched an effect from cache: %s", qPrintable(key));
         effect = m_effectCaches[key];
     }
     else if (QFile::exists(key)) {
         locker.unlock();
         effect = m_scene->createEffect(dir, model, this);
-        const IString *name = model->name();
         qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(key)) ;
@@ -944,6 +960,9 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
         locker.relock();
         m_effectCaches.insert(key, effect);
         setEffectOwner(effect, model);
+    }
+    else {
+        qDebug("Cannot load an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
     }
 #else
     Q_UNUSED(model)

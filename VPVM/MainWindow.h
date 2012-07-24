@@ -139,6 +139,7 @@ private slots:
     void openUndoView();
     void makeBonesSelectable();
     void disconnectInitialSlots();
+    void resetSceneToModels();
 
 private:
     bool saveMotionAs(QString &filename);

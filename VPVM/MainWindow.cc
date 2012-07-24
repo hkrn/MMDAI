@@ -1293,6 +1293,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
     connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,vpvl2::IModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
     connect(loader, SIGNAL(cameraMotionDidSet(vpvl2::IMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
+    connect(loader, SIGNAL(projectDidInitialized()), this, SLOT(resetSceneToModels()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget, SLOT(refreshScene()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl2::IModel*)));
@@ -1334,8 +1335,8 @@ void MainWindow::connectSceneLoader()
     const Vector3 &direction = light->direction();
     lightWidget->setColor(light->color());
     lightWidget->setDirection(direction);
-    m_boneMotionModel->setScene(scene);
-    m_morphMotionModel->setScene(scene);
+    m_boneMotionModel->setScenePtr(scene);
+    m_morphMotionModel->setScenePtr(scene);
     connect(loader, SIGNAL(lightColorDidSet(vpvl2::Vector3)), lightWidget, SLOT(setColor(vpvl2::Vector3)));
     connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));
@@ -1828,4 +1829,11 @@ void MainWindow::disconnectInitialSlots()
     disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoader(), SLOT(setProjectDirtyFalse()));
     disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel, SLOT(markAsNew()));
     disconnect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSlots()));
+}
+
+void MainWindow::resetSceneToModels()
+{
+    Scene *scene = m_sceneWidget->sceneLoader()->scene();
+    m_boneMotionModel->setScenePtr(scene);
+    m_morphMotionModel->setScenePtr(scene);
 }

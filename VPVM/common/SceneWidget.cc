@@ -1256,12 +1256,14 @@ void SceneWidget::paintGL()
         scene->light()->setToonEnable(false);
     }
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
+    const QSize &s = size();
     qglClearColor(m_loader->screenColor());
-    glViewport(0, 0, width(), height());
+    m_loader->renderOffscreen(s);
+    glViewport(0, 0, s.width(), s.height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     m_background->draw();
     m_grid->draw(m_loader, m_loader->isGridVisible());
-    m_loader->renderModels();
+    m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;
     if (!m_selectedBones.isEmpty())

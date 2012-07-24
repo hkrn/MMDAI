@@ -277,68 +277,6 @@ SceneLoader::~SceneLoader()
     m_encoding = 0;
 }
 
-void SceneLoader::addEffect(IModel *model, IRenderEngine *engine, const IString *dir)
-{
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, model, dir);
-    /* progress dialog */
-    QScopedPointer<IEffect> effectPtr(future2.result());
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    if (effectPtr.isNull()) {
-        qWarning("Effect pointer seems null");
-    }
-    else if (!effectPtr->internalPointer()) {
-        CGcontext c = static_cast<CGcontext>(effectPtr->internalContext());
-        qWarning("Loading effect failed: %s", cgGetLastListing(c));
-    }
-    else {
-        const QDir baseDir(static_cast<const CString *>(dir)->value());
-        static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
-        Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        IEffect *effect = effectPtr.data();
-        engine->setEffect(IEffect::kAutoDetection, effectPtr.take(), dir);
-        effect->getOffscreenRenderTargets(offscreenRenderTargets);
-        const int nOffscreenRenderTargets = offscreenRenderTargets.count();
-        for (int i = 0; i < nOffscreenRenderTargets; i++) {
-            const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
-            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
-            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-            const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
-            QList<EffectAttachment> attachments;
-            foreach (const QString &line, defaultEffect) {
-                const QStringList &pair = line.split('=');
-                if (pair.size() == 2) {
-                    const QString &key = pair.at(0).trimmed();
-                    const QString &value = pair.at(1).trimmed();
-                    QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
-                    if (key == "self") {
-                        const QString &name = m_renderDelegate->effectOwnerName(effect);
-                        regexp.setPattern(name);
-                    }
-                    if (value != "hide" && value != "none") {
-                        QString path = baseDir.absoluteFilePath(value);
-                        path.replace(kExtensionReplaceRegExp, ".cgfx");
-                        CString s2(path);
-                        const QFuture<IEffect *> &future3 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, &s2);
-                        IEffect *offscreenEffect = future3.result();
-                        offscreenEffect->setParentEffect(effect);
-                        attachments.append(EffectAttachment(regexp, offscreenEffect));
-                    }
-                    else {
-                        attachments.append(EffectAttachment(regexp, 0));
-                    }
-                }
-            }
-            m_offscreens.append(OffscreenRenderTarget(renderTarget, attachments));
-        }
-    }
-#else
-    Q_UNUSED(model)
-    Q_UNUSED(dir)
-    Q_UNUSED(engine)
-    Q_UNUSED(effectPtr)
-#endif
-}
-
 void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid)
 {
     /* モデル名が空っぽの場合はファイル名から補完しておく */
@@ -347,28 +285,103 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
         CString s(key);
         model->setName(&s);
     }
+    const QString &path = dir.absoluteFilePath(baseName);
+    m_renderDelegate->addModelPath(model, path);
+    IRenderEngine *engine = createModelEngine(model, dir);
+    if (engine) {
+        /* モデルを SceneLoader にヒモ付けする */
+        uuid = QUuid::createUuid();
+        m_project->addModel(model, engine, uuid.toString().toStdString());
+        m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
+        m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
+        m_project->setModelSetting(model, "selected", "false");
+        m_renderOrderList.add(uuid);
+#ifndef IS_VPVM
+        if (isPhysicsEnabled())
+            m_world->addModel(model);
+#endif
+        emit modelDidAdd(model, uuid);
+    }
+}
+
+IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
+{
+    const CString d(dir.absolutePath());
+    const QFuture<IEffect *> &future = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, model, &d);
+    /* progress dialog */
+    QScopedPointer<IEffect> effectPtr(future.result());
+    int flags = 0;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    if (effectPtr.isNull()) {
+        qWarning("Loaded effect pointer seems null");
+    }
+    else if (!effectPtr->internalPointer()) {
+        CGcontext c = static_cast<CGcontext>(effectPtr->internalContext());
+        qWarning("Loading an effect failed: %s", cgGetLastListing(c));
+    }
+    else {
+        flags = Scene::kEffectCapable;
+    }
+#endif
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
-    IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
-    CString d(dir.absolutePath());
-    engine->upload(&d);
-    /* モデルを SceneLoader にヒモ付けする */
-    const QString &path = dir.absoluteFilePath(baseName);
-    uuid = QUuid::createUuid();
-    m_project->addModel(model, engine, uuid.toString().toStdString());
-    m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
-    m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
-    m_project->setModelSetting(model, "selected", "false");
-    addEffect(model, engine, &d);
-#ifndef IS_VPVM
-    if (isPhysicsEnabled())
-        m_world->addModel(model);
+    QScopedPointer<IRenderEngine> enginePtr(m_project->createRenderEngine(m_renderDelegate, model, flags));
+    if (enginePtr->upload(&d)) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        if (!effectPtr.isNull()) {
+            static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
+            Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
+            /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
+            enginePtr->setEffect(IEffect::kAutoDetection, effectPtr.data(), &d);
+            effectPtr->getOffscreenRenderTargets(offscreenRenderTargets);
+            const int nOffscreenRenderTargets = offscreenRenderTargets.count();
+            /* オフスクリーンレンダーターゲットの設定 */
+            for (int i = 0; i < nOffscreenRenderTargets; i++) {
+                const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
+                const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
+                const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
+                const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
+                QList<EffectAttachment> attachments;
+                foreach (const QString &line, defaultEffect) {
+                    const QStringList &pair = line.split('=');
+                    if (pair.size() == 2) {
+                        const QString &key = pair.at(0).trimmed();
+                        const QString &value = pair.at(1).trimmed();
+                        QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                        if (key == "self") {
+                            const QString &name = m_renderDelegate->effectOwnerName(effectPtr.data());
+                            regexp.setPattern(name);
+                        }
+                        if (value != "hide" && value != "none") {
+                            QString path = dir.absoluteFilePath(value);
+                            path.replace(kExtensionReplaceRegExp, ".cgfx");
+                            CString s2(path);
+                            const QFuture<IEffect *> &future3 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, &s2);
+                            IEffect *offscreenEffect = future3.result();
+                            offscreenEffect->setParentEffect(effectPtr.data());
+                            attachments.append(EffectAttachment(regexp, offscreenEffect));
+                        }
+                        else {
+                            attachments.append(EffectAttachment(regexp, 0));
+                        }
+                    }
+                }
+                CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
+                OffscreenRenderTarget offscreen;
+                offscreen.attachments = attachments;
+                offscreen.renderTarget = renderTarget;
+                offscreen.textureID = cgGLGetTextureParameter(sampler);
+                m_offscreens.append(offscreen);
+            }
+        }
 #endif
-    m_renderOrderList.add(uuid);
-    m_renderDelegate->setArchive(0);
-    emit modelDidAdd(model, uuid);
+        m_renderDelegate->setArchive(0);
+        effectPtr.take();
+        return enginePtr.take();
+    }
+    return 0;
 }
 
 QList<IModel *> SceneLoader::allModels() const
@@ -407,6 +420,11 @@ void SceneLoader::createProject()
         m_project->setGlobalSetting("physics.enabled", "true");
         m_project->setGlobalSetting("shadow.texture.soft", "true");
         m_project->setDirty(false);
+        if (m_renderDelegate) {
+            m_offscreens.clear();
+            m_renderDelegate->setScenePtr(m_project);
+        }
+        emit projectDidInitialized();
     }
 }
 
@@ -558,21 +576,21 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
             QFileInfo fileInfo(filename);
             CString name(fileInfo.baseName());
             asset->setName(&name);
-            IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, asset);
-            CString s(fileInfo.absoluteDir().path());
-            engine->upload(&s);
-            m_renderDelegate->setArchive(0);
-            uuid = QUuid::createUuid();
-            m_project->addModel(asset, engine, uuid.toString().toStdString());
-            m_project->setModelSetting(asset, Project::kSettingNameKey, fileInfo.baseName().toStdString());
-            m_project->setModelSetting(asset, Project::kSettingURIKey, filename.toStdString());
-            m_project->setModelSetting(asset, "selected", "false");
-            m_renderOrderList.add(uuid);
-            setAssetPosition(asset, asset->position());
-            setAssetRotation(asset, asset->rotation());
-            setAssetOpacity(asset, asset->opacity());
-            setAssetScaleFactor(asset, asset->scaleFactor());
-            emit assetDidAdd(asset, uuid);
+            m_renderDelegate->addModelPath(asset, filename);
+            IRenderEngine *engine = createModelEngine(asset, fileInfo.dir());
+            if (engine) {
+                uuid = QUuid::createUuid();
+                m_project->addModel(asset, engine, uuid.toString().toStdString());
+                m_project->setModelSetting(asset, Project::kSettingNameKey, fileInfo.baseName().toStdString());
+                m_project->setModelSetting(asset, Project::kSettingURIKey, filename.toStdString());
+                m_project->setModelSetting(asset, "selected", "false");
+                m_renderOrderList.add(uuid);
+                setAssetPosition(asset, asset->position());
+                setAssetRotation(asset, asset->rotation());
+                setAssetOpacity(asset, asset->opacity());
+                setAssetScaleFactor(asset, asset->scaleFactor());
+                emit assetDidAdd(asset, uuid);
+            }
         }
         else if (allocated) {
             delete asset;
@@ -775,51 +793,52 @@ void SceneLoader::loadProject(const QString &path)
             const QString &filename = QString::fromStdString(uri);
             if (loadModel(filename, model)) {
                 const QFileInfo fileInfo(filename);
-                CString d(fileInfo.absolutePath());
-                IRenderEngine *engine = m_project->createRenderEngine(m_renderDelegate, model);
-                engine->upload(&d);
-                sceneObject->setAccelerationType(modelAccelerationType(model));
-                sceneObject->addModel(model, engine);
-                IModel::Type type = model->type();
-                if (type == IModel::kPMD || type == IModel::kPMX) {
-                    m_renderDelegate->setArchive(0);
-                    /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
-                    const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
-                    model->setEdgeColor(color);
-                    model->setEdgeWidth(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
-                    model->setPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
-                    const std::string &os = m_project->modelSetting(model, "opacity");
-                    model->setOpacity(os.empty() ? 1 : QString::fromStdString(os).toFloat());
-                    /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
-                    const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV3);
-                    rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
-                    model->setRotation(rotation);
-                    const QUuid modelUUID(modelUUIDString.c_str());
-                    m_renderOrderList.add(modelUUID);
-                    emit modelDidAdd(model, modelUUID);
-                    if (isModelSelected(model))
-                        setSelectedModel(model);
-                    /* モデルに属するモーションを取得し、追加する */
-                    for (int i = 0; i < nmotions; i++) {
-                        IMotion *motion = motions[i];
-                        if (motion->parentModel() == model) {
-                            const Project::UUID &motionUUIDString = m_project->motionUUID(motion);
-                            const QUuid motionUUID(motionUUIDString.c_str());
-                            motion->setParentModel(model);
-                            emit motionDidAdd(motion, model, motionUUID);
+                m_renderDelegate->addModelPath(model, filename);
+                IRenderEngine *engine = createModelEngine(model, fileInfo.absoluteDir());
+                if (engine) {
+                    sceneObject->addModel(model, engine);
+                    sceneObject->setAccelerationType(modelAccelerationType(model));
+                    IModel::Type type = model->type();
+                    if (type == IModel::kPMD || type == IModel::kPMX) {
+                        m_renderDelegate->setArchive(0);
+                        /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
+                        const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
+                        model->setEdgeColor(color);
+                        model->setEdgeWidth(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
+                        model->setPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
+                        const std::string &os = m_project->modelSetting(model, "opacity");
+                        model->setOpacity(os.empty() ? 1 : QString::fromStdString(os).toFloat());
+                        /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
+                        const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV3);
+                        rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
+                        model->setRotation(rotation);
+                        const QUuid modelUUID(modelUUIDString.c_str());
+                        m_renderOrderList.add(modelUUID);
+                        emit modelDidAdd(model, modelUUID);
+                        if (isModelSelected(model))
+                            setSelectedModel(model);
+                        /* モデルに属するモーションを取得し、追加する */
+                        for (int i = 0; i < nmotions; i++) {
+                            IMotion *motion = motions[i];
+                            if (motion->parentModel() == model) {
+                                const Project::UUID &motionUUIDString = m_project->motionUUID(motion);
+                                const QUuid motionUUID(motionUUIDString.c_str());
+                                motion->setParentModel(model);
+                                emit motionDidAdd(motion, model, motionUUID);
+                            }
                         }
+                        emit projectDidProceed(++progress);
+                        continue;
                     }
-                    emit projectDidProceed(++progress);
-                    continue;
-                }
-                else if (type == IModel::kAsset) {
-                    CString s(fileInfo.baseName().toUtf8());
-                    model->setName(&s);
-                    m_renderDelegate->setArchive(0);
-                    m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
-                    assets.append(model);
-                    emit projectDidProceed(++progress);
-                    continue;
+                    else if (type == IModel::kAsset) {
+                        CString s(fileInfo.baseName().toUtf8());
+                        model->setName(&s);
+                        m_renderDelegate->setArchive(0);
+                        m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
+                        assets.append(model);
+                        emit projectDidProceed(++progress);
+                        continue;
+                    }
                 }
             }
             /* 読み込みに失敗したモデルは後で Project から削除するため失敗したリストに追加する */
@@ -959,7 +978,7 @@ void SceneLoader::release()
     m_model = 0;
 }
 
-void SceneLoader::renderModels()
+void SceneLoader::renderWindow()
 {
     //UIEnableMultisample();
     const int nobjects = m_renderOrderList.count();
@@ -1011,10 +1030,87 @@ void SceneLoader::renderModels()
             engine->performPostProcess();
         }
     }
-    /* Cg でリセットされてしまうため、アルファブレンドを有効にする */
+    /* Cg でリセットされてしまうため、アルファブレンドを再度有効にする */
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void SceneLoader::renderOffscreen(const QSize &size)
+{
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    QSize s;
+    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    const int nobjects = m_renderOrderList.count();
+    foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
+        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
+        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+        bool enableAA = false;
+        if (cgIsAnnotation(antiAlias)) {
+            int nvalues;
+            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
+            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+        }
+        size_t width = renderTarget.width, height = renderTarget.height;
+        GLuint textureID = offscreen.textureID;
+        m_renderDelegate->bindOffscreenRenderTarget(textureID, width, height, enableAA);
+        m_renderDelegate->setRenderColorTargets(buffers, nbuffers);
+        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
+        if (cgIsAnnotation(clearColor)) {
+            int nvalues;
+            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+            if (nvalues == 4) {
+                glClearColor(color[0], color[1], color[2], color[3]);
+            }
+        }
+        else {
+            glClearColor(1, 1, 1, 1);
+        }
+        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
+        if (cgIsAnnotation(clearDepth)) {
+            int nvalues;
+            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
+            if (nvalues == 1) {
+                glClearDepth(depth[0]);
+            }
+        }
+        else {
+            glClearDepth(0);
+        }
+        s.setWidth(width);
+        s.setHeight(height);
+        m_renderDelegate->updateMatrices(s);
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        for (int i = 0; i < nobjects; i++) {
+            const QUuid &uuid = m_renderOrderList[i];
+            const Project::UUID &uuidString = uuid.toString().toStdString();
+            if (IModel *model = m_project->model(uuidString)) {
+                IRenderEngine *engine = m_project->findRenderEngine(model);
+                if (engine->hasPreProcess() || engine->hasPostProcess())
+                    continue;
+                const IModel *model = engine->model();
+                const IString *name = model->name();
+                const QString &n = name ? static_cast<const CString *>(name)->value()
+                                        : m_renderDelegate->findModelPath(model);
+                foreach (const EffectAttachment &attachment, offscreen.attachments) {
+                    IEffect *effect = attachment.second;
+                    if (attachment.first.exactMatch(n)) {
+                        engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
+                        break;
+                    }
+                }
+                engine->update();
+                engine->renderModel();
+                engine->renderEdge();
+            }
+        }
+        m_renderDelegate->releaseOffscreenRenderTarget(textureID, width, height, enableAA);
+    }
+    m_renderDelegate->updateMatrices(size);
+#endif
 }
 
 void SceneLoader::setLightViewProjectionMatrix()

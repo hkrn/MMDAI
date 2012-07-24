@@ -100,7 +100,7 @@ public:
     void setActiveUndoStack();
     int maxFrameIndex() const;
     bool forceCameraUpdate() const;
-    void setScene(const vpvl2::Scene *value);
+    void setScenePtr(const vpvl2::Scene *value);
 
     vpvl2::IModel *selectedModel() const { return m_model; }
     const Keys keys() const { return m_keys[m_model]; }

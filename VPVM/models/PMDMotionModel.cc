@@ -268,7 +268,7 @@ bool PMDMotionModel::forceCameraUpdate() const
     return false;
 }
 
-void PMDMotionModel::setScene(const Scene *value)
+void PMDMotionModel::setScenePtr(const Scene *value)
 {
     m_scene = value;
 }
