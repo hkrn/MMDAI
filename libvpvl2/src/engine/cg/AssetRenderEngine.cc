@@ -471,6 +471,8 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         }
     }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         renderRecurse(scene, node->mChildren[i], hasShadowMap);
