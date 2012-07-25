@@ -599,7 +599,7 @@ bool PMDRenderEngine::upload(const IString *dir)
 
 void PMDRenderEngine::update()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model || !m_model->isVisible() || !m_context)
         return;
     PMDModel *model = m_model->ptr();
     model->setLightPosition(-m_scene->light()->direction());
@@ -620,7 +620,7 @@ void PMDRenderEngine::update()
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model || !m_model->isVisible() || !m_context)
         return;
     PMDModel *model = m_model->ptr();
     ModelProgram *modelProgram = m_context->modelProgram;
@@ -729,7 +729,7 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderShadow()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model || !m_model->isVisible() || !m_context)
         return;
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     PMDModel *model = m_model->ptr();
@@ -773,7 +773,7 @@ void PMDRenderEngine::renderShadow()
 
 void PMDRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_context)
+    if (!m_model || !m_model->isVisible() || !m_context)
         return;
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
     PMDModel *model = m_model->ptr();
@@ -814,7 +814,7 @@ void PMDRenderEngine::renderZPlot()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()) || !m_context)
+    if (!m_model || !m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()) || !m_context)
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     PMDModel *model = m_model->ptr();

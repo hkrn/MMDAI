@@ -665,7 +665,7 @@ bool PMXRenderEngine::upload(const IString *dir)
 
 void PMXRenderEngine::update()
 {
-    if (!m_context)
+    if (!m_model || !m_model->isVisible() || !m_context)
         return;
     size_t size = pmx::Model::strideSize(pmx::Model::kVertexStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -836,7 +836,7 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderEdge()
 {
-    if (!m_model || !m_model->isVisible() || !m_context)
+    if (!m_model || !m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()) || !m_context)
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();

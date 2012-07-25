@@ -298,7 +298,8 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model || !m_model->isVisible() || btFuzzyZero(m_model->edgeWidth())
+            || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model);
     m_current->setZeroGeometryParameters(m_model);

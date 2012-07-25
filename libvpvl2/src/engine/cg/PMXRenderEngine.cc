@@ -161,7 +161,7 @@ bool PMXRenderEngine::upload(const IString *dir)
 
 void PMXRenderEngine::update()
 {
-    if (!m_model->isVisible() || !m_current)
+    if (!m_model || !m_model->isVisible() || !m_current)
         return;
     size_t size = pmx::Model::strideSize(pmx::Model::kVertexStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
@@ -179,7 +179,7 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
@@ -254,7 +254,8 @@ void PMXRenderEngine::renderModel()
 
 void PMXRenderEngine::renderEdge()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model || !m_model->isVisible() || btFuzzyZero(m_model->edgeWidth())
+            || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model);
     m_current->setZeroGeometryParameters(m_model);
@@ -286,7 +287,7 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderShadow()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
     m_current->setZeroGeometryParameters(m_model);
@@ -315,7 +316,7 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderZPlot()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
         return;
     m_current->setModelMatrixParameters(m_model);
     m_current->setZeroGeometryParameters(m_model);
