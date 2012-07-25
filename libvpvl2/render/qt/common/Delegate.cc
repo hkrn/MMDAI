@@ -974,13 +974,17 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
 const QString Delegate::createPath(const IString *dir, const QString &name)
 {
     const QDir d(static_cast<const CString *>(dir)->value());
-    return d.absoluteFilePath(name);
+    QString path = d.absoluteFilePath(name);
+    path.replace(0x5c, '/');
+    return path;
 }
 
 const QString Delegate::createPath(const IString *dir, const IString *name)
 {
     const QDir d(static_cast<const CString *>(dir)->value());
-    return d.absoluteFilePath(static_cast<const CString *>(name)->value());
+    QString path = d.absoluteFilePath(static_cast<const CString *>(name)->value());
+    path.replace(0x5c, '/');
+    return path;
 }
 
 void Delegate::setTextureID(const TextureCache &cache, bool isToon, Texture &output)
