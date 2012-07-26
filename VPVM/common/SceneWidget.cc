@@ -228,7 +228,7 @@ void SceneWidget::clear()
     stop();
     clearSelectedBones();
     setSelectedModel(0);
-    m_loader->release();
+    m_loader->releaseProject();
     m_loader->createProject();
 }
 

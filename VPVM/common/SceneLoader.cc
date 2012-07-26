@@ -261,7 +261,7 @@ SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *conte
 
 SceneLoader::~SceneLoader()
 {
-    release();
+    releaseProject();
     m_depthBufferID = 0;
     delete m_factory;
     m_factory = 0;
@@ -767,7 +767,7 @@ VPDFilePtr SceneLoader::loadModelPose(const QString &path, IModel *model)
 
 void SceneLoader::loadProject(const QString &path)
 {
-    release();
+    releaseProject();
     createProject();
     bool ret = m_project->load(path.toLocal8Bit().constData());
     if (ret) {
@@ -956,9 +956,8 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
     return newModelMotion.take();
 }
 
-void SceneLoader::release()
+void SceneLoader::releaseProject()
 {
-    /* やっていることは削除ではなくシグナル発行すること以外 Renderer::releaseProject と同じ */
     const Project::UUIDList &motionUUIDs = m_project->motionUUIDs();
     for (Project::UUIDList::const_iterator it = motionUUIDs.begin(); it != motionUUIDs.end(); it++) {
         const Project::UUID &motionUUID = *it;
@@ -970,8 +969,11 @@ void SceneLoader::release()
     for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         const Project::UUID &modelUUID = *it;
         IModel *model = m_project->model(modelUUID);
-        if (model)
+        IModel::Type type = model->type();
+        if (type == IModel::kPMD || type == IModel::kPMX)
             emit modelWillDelete(model, QUuid(modelUUID.c_str()));
+        else if (type == IModel::kAsset)
+            emit assetWillDelete(model, QUuid(modelUUID.c_str()));
     }
     m_renderOrderList.clear();
     deleteCameraMotion();

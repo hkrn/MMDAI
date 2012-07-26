@@ -96,7 +96,7 @@ public:
     VPDFilePtr loadModelPose(const QString &path, vpvl2::IModel *model);
     vpvl2::IMotion *newCameraMotion() const;
     vpvl2::IMotion *newModelMotion(vpvl2::IModel *model) const;
-    void release();
+    void releaseProject();
     void releaseDepthTexture();
     void renderWindow();
     void renderOffscreen(const QSize &size);
