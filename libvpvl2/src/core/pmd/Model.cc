@@ -148,6 +148,14 @@ bool Model::load(const uint8_t *data, size_t size)
                 m_name2morphs.insert(morph->name()->toHashString(), morph);
             }
         }
+        /* set vertex ID to bone attribute */
+        const int nvertices = m_model.vertices().count();
+        uint8_t *ptr = static_cast<uint8_t *>(const_cast<void *>(m_model.boneAttributesPointer()));
+        size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
+        for (int i = 0; i < nvertices; i++) {
+            Vector3 *v = reinterpret_cast<Vector3 *>(ptr + i * stride);
+            v->setW(i);
+        }
         delete m_name;
         m_name = m_encoding->toString(m_model.name(), IString::kShiftJIS, vpvl::PMDModel::kNameSize);
         delete m_englishName;
