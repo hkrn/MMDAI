@@ -309,14 +309,18 @@ IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
     const CString d(dir.absolutePath());
     const QFuture<IEffect *> &future = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, model, &d);
     /* progress dialog */
-    QScopedPointer<IEffect> effectPtr(future.result());
+    /*
+     * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
+     * プロジェクトの新規作成毎またはデストラクタで解放するため、解放する必要はない(むしろ解放してはいけない)
+     */
+    IEffect *effect = future.result();
     int flags = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    if (effectPtr.isNull()) {
+    if (!effect) {
         qWarning("Loaded effect pointer seems null");
     }
-    else if (!effectPtr->internalPointer()) {
-        CGcontext c = static_cast<CGcontext>(effectPtr->internalContext());
+    else if (!effect->internalPointer()) {
+        CGcontext c = static_cast<CGcontext>(effect->internalContext());
         qWarning("Loading an effect failed: %s", cgGetLastListing(c));
     }
     else {
@@ -330,12 +334,12 @@ IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
     QScopedPointer<IRenderEngine> enginePtr(m_project->createRenderEngine(m_renderDelegate, model, flags));
     if (enginePtr->upload(&d)) {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (!effectPtr.isNull()) {
+        if (effect) {
             static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
             Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
             /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
-            enginePtr->setEffect(IEffect::kAutoDetection, effectPtr.data(), &d);
-            effectPtr->getOffscreenRenderTargets(offscreenRenderTargets);
+            enginePtr->setEffect(IEffect::kAutoDetection, effect, &d);
+            effect->getOffscreenRenderTargets(offscreenRenderTargets);
             const int nOffscreenRenderTargets = offscreenRenderTargets.count();
             /* オフスクリーンレンダーターゲットの設定 */
             for (int i = 0; i < nOffscreenRenderTargets; i++) {
@@ -351,7 +355,7 @@ IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
                         const QString &value = pair.at(1).trimmed();
                         QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
                         if (key == "self") {
-                            const QString &name = m_renderDelegate->effectOwnerName(effectPtr.data());
+                            const QString &name = m_renderDelegate->effectOwnerName(effect);
                             regexp.setPattern(name);
                         }
                         if (value != "hide" && value != "none") {
@@ -360,7 +364,7 @@ IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
                             CString s2(path);
                             const QFuture<IEffect *> &future3 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, &s2);
                             IEffect *offscreenEffect = future3.result();
-                            offscreenEffect->setParentEffect(effectPtr.data());
+                            offscreenEffect->setParentEffect(effect);
                             attachments.append(EffectAttachment(regexp, offscreenEffect));
                         }
                         else {
@@ -378,7 +382,6 @@ IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
         }
 #endif
         m_renderDelegate->setArchive(0);
-        effectPtr.take();
         return enginePtr.take();
     }
     return 0;

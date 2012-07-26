@@ -832,21 +832,21 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    QScopedPointer<IEffect> effectPtr(future2.result());
+    IEffect *effect = future2.result();
     int flags = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    if (effectPtr.isNull()) {
+    if (!effect) {
         qWarning() << "Effect" <<  m_delegate->effectFilePath(modelPtr.data(), &s1) << "does not exists";
     }
-    else if (!effectPtr->internalPointer()) {
-        CGcontext c = static_cast<CGcontext>(effectPtr->internalContext());
+    else if (!effect->internalPointer()) {
+        CGcontext c = static_cast<CGcontext>(effect->internalContext());
         qWarning() << cgGetLastListing(c);
     }
     else {
         flags = Scene::kEffectCapable;
     }
 #else
-    Q_UNUSED(effectPtr)
+    Q_UNUSED(effect)
 #endif
     IModel *model = 0;
     QScopedPointer<IRenderEngine> enginePtr(m_scene.createRenderEngine(m_delegate, modelPtr.data(), flags));
@@ -858,8 +858,8 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         const QDir &baseDir = info.dir();
         static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        enginePtr->setEffect(IEffect::kAutoDetection, effectPtr.data(), &s1);
-        effectPtr->getOffscreenRenderTargets(offscreenRenderTargets);
+        enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
+        effect->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
         for (int i = 0; i < nOffscreenRenderTargets; i++) {
             const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
@@ -874,7 +874,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                     const QString &value = pair.at(1).trimmed();
                     QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
                     if (key == "self") {
-                        const QString &name = m_delegate->effectOwnerName(effectPtr.data());
+                        const QString &name = m_delegate->effectOwnerName(effect);
                         regexp.setPattern(name);
                     }
                     if (value != "hide" && value != "none") {
@@ -883,7 +883,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
                         CString s2(path);
                         const QFuture<IEffect *> &future3 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, &s2);
                         IEffect *offscreenEffect = future3.result();
-                        offscreenEffect->setParentEffect(effectPtr.data());
+                        offscreenEffect->setParentEffect(effect);
                         attachments.append(EffectAttachment(regexp, offscreenEffect));
                     }
                     else {
@@ -900,7 +900,6 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         }
         model = modelPtr.take();
         enginePtr.take();
-        effectPtr.take();
 #endif
     }
     else {
