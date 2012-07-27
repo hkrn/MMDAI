@@ -605,7 +605,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                     const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
                     cgSetParameter3fv(parameter, rotationDegree);
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Sr") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, "Si") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, model->scaleFactor());
                 }
                 else if (VPVL2_CG_STREQ_CONST(item, "Tr") && parameterType == CG_FLOAT) {
@@ -1330,6 +1330,7 @@ void EffectEngine::executeProcess(const IModel *model, IEffect::ScriptOrderType 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     setZeroGeometryParameters(model);
+    diffuse.setGeometryColor(Color(0, 0, 0, model->opacity())); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
     executeTechniquePasses(technique, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
