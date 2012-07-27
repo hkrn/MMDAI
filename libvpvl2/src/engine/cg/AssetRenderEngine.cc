@@ -556,10 +556,10 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     }
     m_current->emissive.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
-        color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+        color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a * m_model->opacity());
     }
     else {
-        color.setValue(0, 0, 0, 1);
+        color.setValue(0, 0, 0, m_model->opacity());
     }
     m_current->ambient.setGeometryColor(color);
     m_current->diffuse.setGeometryColor(color);
