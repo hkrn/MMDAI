@@ -89,7 +89,8 @@ public:
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
-    IModel *offscreenEffectOwner(const IEffect *effect) const;
+    IModel *effectOwner(const IEffect *effect) const;
+    IModel *findModel(const IString *name) const;
     void setRenderColorTargets(const void *targets, const int ntargets);
     void bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA);
     void bindRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
@@ -104,15 +105,15 @@ public:
     void getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
     void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection);
     void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type);
-    void addModelPath(const IModel *model, const QString &filename);
+    void addModelPath(IModel *model, const QString &filename);
     const QString findModelPath(const IModel *model) const;
     const QString effectFilePath(const IModel *model, const IString *dir) const;
-    IModel *effectOwner(const IEffect *effect) const;
     const QString effectOwnerName(const IEffect *effect) const;
     void setEffectOwner(const IEffect *effect, IModel *model);
     void createRenderTargets();
     void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
+    IModel *offscreenEffectOwner(const IEffect *effect) const;
     IEffect *createEffectAsync(const IString *path);
     IEffect *createEffectAsync(IModel *model, const IString *dir);
 
@@ -141,6 +142,7 @@ private:
     Archive *m_archive;
     QSizeF m_viewport;
     QHash<const IModel *, QString> m_model2Paths;
+    QHash<const QString, IModel *> m_filename2Models;
     QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QMovie *> m_texture2Movies;
     QHash<GLuint, FrameBufferObject *> m_renderTargets;

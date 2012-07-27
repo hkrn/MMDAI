@@ -316,6 +316,8 @@ public:
      */
     virtual void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) = 0;
 
+    virtual IModel *findModel(const IString *name) const = 0;
+
     virtual IModel *effectOwner(const IEffect *effect) const = 0;
 
     virtual void setRenderColorTargets(const void *targets, const int ntargets) = 0;

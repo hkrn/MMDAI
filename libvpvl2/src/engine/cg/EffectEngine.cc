@@ -537,7 +537,7 @@ void ControlObjectSemantic::update(const IModel *self)
         }
         else {
             IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(name));
-            const IModel *model = m_scene->findModel(s);
+            const IModel *model = m_delegate->findModel(s);
             delete s;
             setParameter(model, parameter);
         }

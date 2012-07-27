@@ -659,9 +659,11 @@ void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositio
     }
 }
 
-void Delegate::addModelPath(const IModel *model, const QString &filename)
+void Delegate::addModelPath(IModel *model, const QString &filename)
 {
     if (model) {
+        QFileInfo finfo(filename);
+        m_filename2Models.insert(finfo.fileName(), model);
         QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
         m_model2Paths.insert(model, filename);
     }
@@ -688,6 +690,16 @@ const QString Delegate::effectFilePath(const IModel *model, const IString *dir) 
             return cgfx;
     }
     return d.absoluteFilePath("default.cgfx");
+}
+
+IModel *Delegate::findModel(const IString *name) const
+{
+    IModel *model = m_scene->findModel(name);
+    if (!model) {
+        const QString &s = static_cast<const CString *>(name)->value();
+        model = m_filename2Models[s];
+    }
+    return model;
 }
 
 IModel *Delegate::effectOwner(const IEffect *effect) const
