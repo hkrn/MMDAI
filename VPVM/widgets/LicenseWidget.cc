@@ -74,8 +74,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     aboutIconLabel->setText(
                 "<div style='font-size:10px'>" +
                 tr("MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
-                   "VOCALOID is the trademark of YAMAHA Corporation."
-                   "").arg(qApp->applicationName()) + "</div>");
+                   "VOCALOID is the trademark of YAMAHA Corporation.") + "</div>");
     aboutIconLabel->setWordWrap(true);
     aboutIconLabel->setOpenExternalLinks(true);
     aboutIconLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
