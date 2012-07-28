@@ -73,8 +73,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     QLabel *aboutIconLabel = new QLabel;
     aboutIconLabel->setText(
                 "<div style='font-size:10px'>" +
-                tr("%1's icon is based on <a href='http://innoce.nobody.jp/'>Lat's Miku model</a>.<br>"
-                   "MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
+                tr("MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
                    "VOCALOID is the trademark of YAMAHA Corporation."
                    "").arg(qApp->applicationName()) + "</div>");
     aboutIconLabel->setWordWrap(true);
@@ -86,6 +85,7 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+    addLibrary("Cg", "EULA", "http://www.nvidia.com/", "Cg");
     addLibrary("minizip", "zlib", "http://www.winimage.com/zLibDll/minizip.html", "minizip");
     addLibrary("PortAudio", "MIT", "http://portaudio.com", "PortAudio");
     addLibrary("libav", "LGPL", "http://libav.org", "libav");
