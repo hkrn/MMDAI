@@ -107,7 +107,7 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
     app.installTranslator(translator);
     translators.append(QTranslatorPtr(translator));
     translator = new QTranslator();
-    translator->load("MMDAI2_" + locale, dir);
+    translator->load("VPVM_" + locale, dir);
     app.installTranslator(translator);
     translators.append(QTranslatorPtr(translator));
 }
