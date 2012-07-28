@@ -64,7 +64,6 @@ CONFIG(debug, debug|release) {
   exists(../libav/libav_debug/include):INCLUDEPATH += ../libav/libav_debug/include
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
                       -L$${BULLET_PATH}/msvc-build/lib/debug
-  macx:LIBS        += -framework OpenCL -framework Cg
   unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
                       -L$${BULLET_PATH}/debug/lib \
                       -L$${VPVL_PATH}/debug/lib \
@@ -78,18 +77,21 @@ CONFIG(release, debug|release) {
   exists(../libav/libav_release/include):INCLUDEPATH += ../libav/libav_release/include
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
                       -L$${BULLET_PATH}/msvc-build/lib/release
-  macx:LIBS        += -framework OpenCL
   unix:LIBS        += -L$${ASSIMP_PATH}/release/lib \
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
-                      -L$${VPVL2_PATH}/release/lib \
-                      -lCg -lCgGL
+                      -L$${VPVL2_PATH}/release/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
   LIBS             += -lassimp -lvpvl -lvpvl2 -lvpvl2qtcommon
 }
-macx:LIBS += -framework OpenCL -framework CoreServices -framework OpenCL -framework CoreAudio -framework AudioToolbox -framework AudioUnit
-linux-*:LIBS += -lGLU
+macx:LIBS += -framework OpenCL \
+             -framework CoreServices \
+             -framework Cg \
+             -framework CoreAudio \
+             -framework AudioToolbox \
+             -framework AudioUnit
+linux-*:LIBS += -lGLU -lCg -lCgGL
 
 # based on QtCreator's qmake spec
 DEFINES += QT_NO_CAST_TO_ASCII
