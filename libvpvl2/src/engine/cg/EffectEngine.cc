@@ -59,6 +59,8 @@
 #define VPVL2_CG_GET_SUFFIX(s, c) (s + VPVL2_CG_GET_LENGTH_CONST(c))
 #define VPVL2_CG_STREQ_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
     0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
+#define VPVL2_CG_STREQ_SUFFIX(s, l, c) (l >= VPVL2_CG_GET_LENGTH_CONST(c) && \
+    0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
 
 namespace
 {
@@ -796,7 +798,7 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
     if (!formatString)
         return;
     static const char kPrefix[] = "D3DFMT_";
-    const char *ptr = VPVL2_CG_STREQ_CONST(formatString, VPVL2_CG_GET_LENGTH_CONST(kPrefix), kPrefix)
+    const char *ptr = VPVL2_CG_STREQ_SUFFIX(formatString, VPVL2_CG_GET_LENGTH_CONST(kPrefix), kPrefix)
             ? VPVL2_CG_GET_SUFFIX(formatString, kPrefix) : formatString;
     const size_t len = strlen(ptr);
     if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
@@ -1177,22 +1179,22 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
         if (VPVL2_CG_STREQ_CONST(semantic, slen, "VIEWPORTPIXELSIZE")) {
             viewportPixelSize.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kWorldViewProjectionSemantic)) {
+        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldViewProjectionSemantic)) {
             worldViewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kWorldViewSemantic)) {
+        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldViewSemantic)) {
             worldView.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kViewProjectionSemantic)) {
+        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kViewProjectionSemantic)) {
             viewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kViewProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kWorldSemantic)) {
+        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldSemantic)) {
             world.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kViewSemantic)) {
+        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kViewSemantic)) {
             view.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kViewSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kProjectionSemantic)) {
+        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kProjectionSemantic)) {
             projection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kProjectionSemantic));
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "DIFFUSE")) {
@@ -1748,7 +1750,7 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter)
         static const char kSingleTechnique[] = "Technique=";
         m_techniques.clear();
         CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
-        if (VPVL2_CG_STREQ_CONST(value, len, kMultipleTechniques)) {
+        if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniques)) {
             const std::string s(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
             std::istringstream stream(s);
             std::string segment;
@@ -1757,7 +1759,7 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter)
                 addTechniquePasses(technique);
             }
         }
-        else if (VPVL2_CG_STREQ_CONST(value, len, kSingleTechnique)) {
+        else if (VPVL2_CG_STREQ_SUFFIX(value, len, kSingleTechnique)) {
             CGtechnique technique = cgGetNamedTechnique(effect, VPVL2_CG_GET_SUFFIX(value, kSingleTechnique));
             addTechniquePasses(technique);
         }
