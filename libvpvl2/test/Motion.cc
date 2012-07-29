@@ -29,10 +29,10 @@ const char *kTestString = "012345678901234";
 
 static void CompareQuadWord(const QuadWord &actual, const QuadWord &expected)
 {
-    EXPECT_FLOAT_EQ(expected.x(), actual.x());
-    EXPECT_FLOAT_EQ(expected.y(), actual.y());
-    EXPECT_FLOAT_EQ(expected.z(), actual.z());
-    EXPECT_FLOAT_EQ(expected.w(), actual.w());
+    ASSERT_FLOAT_EQ(expected.x(), actual.x());
+    ASSERT_FLOAT_EQ(expected.y(), actual.y());
+    ASSERT_FLOAT_EQ(expected.z(), actual.z());
+    ASSERT_FLOAT_EQ(expected.w(), actual.w());
 }
 
 static void CompareBoneInterpolationMatrix(const QuadWord p[], const BoneKeyframe &frame)
@@ -82,8 +82,8 @@ TEST(Motion, ParseEmpty)
     Motion motion(&model, &encoding);
     Motion::DataInfo info;
     // parsing empty should be error
-    EXPECT_FALSE(motion.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
-    EXPECT_EQ(Motion::kInvalidHeaderError, motion.error());
+    ASSERT_FALSE(motion.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
+    ASSERT_EQ(Motion::kInvalidHeaderError, motion.error());
 }
 
 TEST(Motion, ParseFile)
@@ -98,12 +98,12 @@ TEST(Motion, ParseFile)
         Motion motion(&model, &encoding);
         Motion::DataInfo result;
         // valid model motion should be loaded successfully
-        EXPECT_TRUE(motion.preparse(data, size, result));
-        EXPECT_TRUE(motion.load(data, size));
-        EXPECT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
-        EXPECT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
-        EXPECT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
-        EXPECT_EQ(Motion::kNoError, motion.error());
+        ASSERT_TRUE(motion.preparse(data, size, result));
+        ASSERT_TRUE(motion.load(data, size));
+        ASSERT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
+        ASSERT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
+        ASSERT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
+        ASSERT_EQ(Motion::kNoError, motion.error());
     }
 }
 
@@ -119,12 +119,12 @@ TEST(Motion, ParseCamera)
         Motion motion(&model, &encoding);
         Motion::DataInfo result;
         // valid camera motion should be loaded successfully
-        EXPECT_TRUE(motion.preparse(data, size, result));
-        EXPECT_TRUE(motion.load(data, size));
-        EXPECT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
-        EXPECT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
-        EXPECT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
-        EXPECT_EQ(Motion::kNoError, motion.error());
+        ASSERT_TRUE(motion.preparse(data, size, result));
+        ASSERT_TRUE(motion.load(data, size));
+        ASSERT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
+        ASSERT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
+        ASSERT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
+        ASSERT_EQ(Motion::kNoError, motion.error());
     }
 }
 
@@ -154,17 +154,17 @@ TEST(Motion, SaveBoneKeyframe)
     frame.write(data);
     newFrame.read(data);
     // compare read bone frame
-    EXPECT_TRUE(newFrame.name()->equals(frame.name()));
-    EXPECT_EQ(frame.timeIndex(), newFrame.timeIndex());
-    EXPECT_TRUE(newFrame.position() == pos);
-    EXPECT_TRUE(newFrame.rotation() == rot);
+    ASSERT_TRUE(newFrame.name()->equals(frame.name()));
+    ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
+    ASSERT_TRUE(newFrame.position() == pos);
+    ASSERT_TRUE(newFrame.rotation() == rot);
     CompareBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
-    EXPECT_TRUE(cloned->name()->equals(frame.name()));
-    EXPECT_EQ(frame.timeIndex(), cloned->timeIndex());
-    EXPECT_TRUE(cloned->position() == pos);
-    EXPECT_TRUE(cloned->rotation() == rot);
+    ASSERT_TRUE(cloned->name()->equals(frame.name()));
+    ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
+    ASSERT_TRUE(cloned->position() == pos);
+    ASSERT_TRUE(cloned->rotation() == rot);
     CompareBoneInterpolationMatrix(p, *static_cast<BoneKeyframe *>(cloned.data()));
 }
 
@@ -195,26 +195,26 @@ TEST(Motion, SaveCameraKeyframe)
     uint8_t data[CameraKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
-    EXPECT_EQ(frame.timeIndex(), newFrame.timeIndex());
-    EXPECT_TRUE(newFrame.position() == frame.position());
+    ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
+    ASSERT_TRUE(newFrame.position() == frame.position());
     // compare read camera frame
     // for radian and degree calculation
-    EXPECT_TRUE(qFuzzyCompare(newFrame.angle().x(), frame.angle().x()));
-    EXPECT_TRUE(qFuzzyCompare(newFrame.angle().y(), frame.angle().y()));
-    EXPECT_TRUE(qFuzzyCompare(newFrame.angle().z(), frame.angle().z()));
-    EXPECT_TRUE(newFrame.distance() == frame.distance());
-    EXPECT_TRUE(newFrame.fov() == frame.fov());
+    ASSERT_TRUE(qFuzzyCompare(newFrame.angle().x(), frame.angle().x()));
+    ASSERT_TRUE(qFuzzyCompare(newFrame.angle().y(), frame.angle().y()));
+    ASSERT_TRUE(qFuzzyCompare(newFrame.angle().z(), frame.angle().z()));
+    ASSERT_TRUE(newFrame.distance() == frame.distance());
+    ASSERT_TRUE(newFrame.fov() == frame.fov());
     CompareCameraInterpolationMatrix(p, frame);
     // cloned camera frame shold be copied with deep
     QScopedPointer<ICameraKeyframe> cloned(frame.clone());
-    EXPECT_EQ(frame.timeIndex(), cloned->timeIndex());
-    EXPECT_TRUE(cloned->position() == frame.position());
+    ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
+    ASSERT_TRUE(cloned->position() == frame.position());
     // for radian and degree calculation
-    EXPECT_TRUE(qFuzzyCompare(cloned->angle().x(), frame.angle().x()));
-    EXPECT_TRUE(qFuzzyCompare(cloned->angle().y(), frame.angle().y()));
-    EXPECT_TRUE(qFuzzyCompare(cloned->angle().z(), frame.angle().z()));
-    EXPECT_TRUE(cloned->distance() == frame.distance());
-    EXPECT_TRUE(cloned->fov() == frame.fov());
+    ASSERT_TRUE(qFuzzyCompare(cloned->angle().x(), frame.angle().x()));
+    ASSERT_TRUE(qFuzzyCompare(cloned->angle().y(), frame.angle().y()));
+    ASSERT_TRUE(qFuzzyCompare(cloned->angle().z(), frame.angle().z()));
+    ASSERT_TRUE(cloned->distance() == frame.distance());
+    ASSERT_TRUE(cloned->fov() == frame.fov());
     CompareCameraInterpolationMatrix(p, *static_cast<CameraKeyframe *>(cloned.data()));
 }
 
@@ -232,14 +232,14 @@ TEST(Motion, SaveMorphKeyframe)
     frame.write(data);
     newFrame.read(data);
     // compare read morph frame
-    EXPECT_TRUE(newFrame.name()->equals(frame.name()));
-    EXPECT_EQ(frame.timeIndex(), newFrame.timeIndex());
-    EXPECT_EQ(frame.weight(), newFrame.weight());
+    ASSERT_TRUE(newFrame.name()->equals(frame.name()));
+    ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
+    ASSERT_EQ(frame.weight(), newFrame.weight());
     // cloned morph frame shold be copied with deep
     QScopedPointer<IMorphKeyframe> cloned(frame.clone());
-    EXPECT_TRUE(cloned->name()->equals(frame.name()));
-    EXPECT_EQ(frame.timeIndex(), cloned->timeIndex());
-    EXPECT_EQ(frame.weight(), cloned->weight());
+    ASSERT_TRUE(cloned->name()->equals(frame.name()));
+    ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
+    ASSERT_EQ(frame.weight(), cloned->weight());
 }
 
 TEST(Motion, SaveLightKeyframe)
@@ -255,14 +255,14 @@ TEST(Motion, SaveLightKeyframe)
     frame.write(data);
     newFrame.read(data);
     // compare read light frame
-    EXPECT_EQ(frame.timeIndex(), newFrame.timeIndex());
-    EXPECT_TRUE(newFrame.color() == frame.color());
-    EXPECT_TRUE(newFrame.direction() == frame.direction());
+    ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
+    ASSERT_TRUE(newFrame.color() == frame.color());
+    ASSERT_TRUE(newFrame.direction() == frame.direction());
     // cloned morph frame shold be copied with deep
     QScopedPointer<ILightKeyframe> cloned(frame.clone());
-    EXPECT_EQ(frame.timeIndex(), cloned->timeIndex());
-    EXPECT_TRUE(cloned->color() == frame.color());
-    EXPECT_TRUE(cloned->direction() == frame.direction());
+    ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
+    ASSERT_TRUE(cloned->color() == frame.color());
+    ASSERT_TRUE(cloned->direction() == frame.direction());
 }
 
 TEST(Motion, SaveMotion)
@@ -284,7 +284,7 @@ TEST(Motion, SaveMotion)
         file2.setAutoRemove(true);
         file2.write(reinterpret_cast<const char *>(newData.data()), newSize);
         // just compare written size
-        EXPECT_EQ(size, newSize);
+        ASSERT_EQ(size, newSize);
     }
 }
 
@@ -301,19 +301,19 @@ TEST(Motion, ParseBoneKeyframe)
               ;
     for (int i = 0; i < BoneKeyframe::kTableSize; i++)
         stream << quint8(0);
-    EXPECT_EQ(BoneKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(BoneKeyframe::strideSize(), size_t(bytes.size()));
     Encoding encoding;
     BoneKeyframe frame(&encoding);
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    EXPECT_TRUE(frame.name()->equals(&str));
-    EXPECT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
+    ASSERT_TRUE(frame.name()->equals(&str));
+    ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
-    EXPECT_TRUE(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
-    EXPECT_TRUE(frame.rotation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
+    ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
+    ASSERT_TRUE(frame.rotation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
 #else
-    EXPECT_TRUE(frame.position() == Vector3(2.0f, 3.0f, 4.0f));
-    EXPECT_TRUE(frame.rotation() == Quaternion(5.0f, 6.0f, 7.0f, 8.0f));
+    ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, 4.0f));
+    ASSERT_TRUE(frame.rotation() == Quaternion(5.0f, 6.0f, 7.0f, 8.0f));
 #endif
 }
 
@@ -333,20 +333,20 @@ TEST(Motion, ParseCameraKeyframe)
     stream << quint32(8)           // view angle (fovy)
            << quint8(1)            // no perspective
               ;
-    EXPECT_EQ(CameraKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(CameraKeyframe::strideSize(), size_t(bytes.size()));
     CameraKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    EXPECT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
+    ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
-    EXPECT_EQ(-1.0f, frame.distance());
-    EXPECT_TRUE(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
-    EXPECT_TRUE(frame.angle() == Vector3(-degree(5.0f), -degree(6.0f), degree(7.0f)));
+    ASSERT_EQ(-1.0f, frame.distance());
+    ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
+    ASSERT_TRUE(frame.angle() == Vector3(-degree(5.0f), -degree(6.0f), degree(7.0f)));
 #else
-    EXPECT_EQ(1.0f, frame.distance());
-    EXPECT_TRUE(frame.position() == Vector3(2.0f, 3.0f, 4.0f));
-    EXPECT_TRUE(frame.angle() == Vector3(degree(5.0f), degree(6.0f), degree(7.0f)));
+    ASSERT_EQ(1.0f, frame.distance());
+    ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, 4.0f));
+    ASSERT_TRUE(frame.angle() == Vector3(degree(5.0f), degree(6.0f), degree(7.0f)));
 #endif
-    EXPECT_EQ(8.0f, frame.fov());
+    ASSERT_EQ(8.0f, frame.fov());
     // TODO: perspective flag
 }
 
@@ -360,14 +360,14 @@ TEST(Motion, ParseMorphKeyframe)
     stream << quint32(1) // frame index
            << 0.5f       // weight
               ;
-    EXPECT_EQ(MorphKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(MorphKeyframe::strideSize(), size_t(bytes.size()));
     Encoding encoding;
     MorphKeyframe frame(&encoding);
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    EXPECT_TRUE(frame.name()->equals(&str));
-    EXPECT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
-    EXPECT_EQ(IMorph::WeightPrecision(0.5), frame.weight());
+    ASSERT_TRUE(frame.name()->equals(&str));
+    ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
+    ASSERT_EQ(IMorph::WeightPrecision(0.5), frame.weight());
 }
 
 TEST(Motion, ParseLightKeyframe)
@@ -380,15 +380,15 @@ TEST(Motion, ParseLightKeyframe)
            << 0.2f << 0.3f << 0.4f // color
            << 0.5f << 0.6f << 0.7f // direction
               ;
-    EXPECT_EQ(LightKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(LightKeyframe::strideSize(), size_t(bytes.size()));
     LightKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
-    EXPECT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
-    EXPECT_TRUE(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
+    ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
+    ASSERT_TRUE(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
 #ifdef VPVL2_COORDINATE_OPENGL
-    EXPECT_TRUE(frame.direction() == Vector3(0.5f, 0.6f, -0.7f));
+    ASSERT_TRUE(frame.direction() == Vector3(0.5f, 0.6f, -0.7f));
 #else
-    EXPECT_TRUE(frame.direction() == Vector3(0.5f, 0.6f, 0.7f));
+    ASSERT_TRUE(frame.direction() == Vector3(0.5f, 0.6f, 0.7f));
 #endif
 }
 
@@ -440,7 +440,7 @@ TEST(Motion, AddAndRemoveBoneKeyframes)
     MockIModel model;
     MockIBone bone;
     Motion motion(&model, &encoding);
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
     // mock bone
     EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
     QScopedPointer<IBoneKeyframe> frame(new BoneKeyframe(&encoding));
@@ -450,13 +450,13 @@ TEST(Motion, AddAndRemoveBoneKeyframes)
         // add a bone keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());
         motion.update(IKeyframe::kBone);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
         // boudary check of findBoneKeyframeAt
-        EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(-1));
-        EXPECT_EQ(frame.data(), motion.findBoneKeyframeAt(0));
-        EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
+        ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(-1));
+        ASSERT_EQ(frame.data(), motion.findBoneKeyframeAt(0));
+        ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
         // find a bone keyframe with timeIndex and name
-        EXPECT_EQ(frame.take(), motion.findBoneKeyframe(42, &name));
+        ASSERT_EQ(frame.take(), motion.findBoneKeyframe(42, &name));
     }
     QScopedPointer<IBoneKeyframe> frame2(new BoneKeyframe(&encoding));
     frame2->setTimeIndex(42);
@@ -465,9 +465,9 @@ TEST(Motion, AddAndRemoveBoneKeyframes)
         // replaced bone frame should be one keyframe (don't forget updating motion!)
         motion.replaceKeyframe(frame2.data());
         motion.update(IKeyframe::kBone);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
         // no longer be find previous bone keyframe
-        EXPECT_EQ(frame2.data(), motion.findBoneKeyframe(42, &name));
+        ASSERT_EQ(frame2.data(), motion.findBoneKeyframe(42, &name));
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -475,9 +475,9 @@ TEST(Motion, AddAndRemoveBoneKeyframes)
         motion.deleteKeyframe(keyframeToDelete);
         motion.update(IKeyframe::kBone);
         // bone keyframes should be empty
-        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
-        EXPECT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &name));
-        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &name));
+        ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }
 
@@ -486,7 +486,7 @@ TEST(Motion, AddAndRemoveCameraKeyframes)
     Encoding encoding;
     Model model(&encoding);
     Motion motion(&model, &encoding);
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
     QScopedPointer<ICameraKeyframe> frame(new CameraKeyframe());
     frame->setTimeIndex(42);
     frame->setDistance(42);
@@ -494,13 +494,13 @@ TEST(Motion, AddAndRemoveCameraKeyframes)
         // add a camera keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());
         motion.update(IKeyframe::kCamera);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
         // boudary check of findCameraKeyframeAt
-        EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(-1));
-        EXPECT_EQ(frame.data(), motion.findCameraKeyframeAt(0));
-        EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
+        ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(-1));
+        ASSERT_EQ(frame.data(), motion.findCameraKeyframeAt(0));
+        ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
         // find a camera keyframe with timeIndex
-        EXPECT_EQ(frame.take(), motion.findCameraKeyframe(42));
+        ASSERT_EQ(frame.take(), motion.findCameraKeyframe(42));
     }
     QScopedPointer<ICameraKeyframe> frame2(new CameraKeyframe());
     frame2->setTimeIndex(42);
@@ -509,9 +509,9 @@ TEST(Motion, AddAndRemoveCameraKeyframes)
         // replaced camera frame should be one keyframe (don't forget updating motion!)
         motion.replaceKeyframe(frame2.data());
         motion.update(IKeyframe::kCamera);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
         // no longer be find previous camera keyframe
-        EXPECT_EQ(84.0f, motion.findCameraKeyframe(42)->distance());
+        ASSERT_EQ(84.0f, motion.findCameraKeyframe(42)->distance());
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -519,9 +519,9 @@ TEST(Motion, AddAndRemoveCameraKeyframes)
         motion.deleteKeyframe(keyframeToDelete);
         motion.update(IKeyframe::kCamera);
         // camera keyframes should be empty
-        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
-        EXPECT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42));
-        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+        ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42));
+        ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }
 
@@ -530,7 +530,7 @@ TEST(Motion, AddAndRemoveLightKeyframes)
     Encoding encoding;
     Model model(&encoding);
     Motion motion(&model, &encoding);
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
     QScopedPointer<ILightKeyframe> frame(new LightKeyframe());
     frame->setTimeIndex(42);
     frame->setColor(Vector3(1, 0, 0));
@@ -538,13 +538,13 @@ TEST(Motion, AddAndRemoveLightKeyframes)
         // add a light keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());
         motion.update(IKeyframe::kLight);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
         // boudary check of findLightKeyframeAt
-        EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(-1));
-        EXPECT_EQ(frame.data(), motion.findLightKeyframeAt(0));
-        EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(1));
+        ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(-1));
+        ASSERT_EQ(frame.data(), motion.findLightKeyframeAt(0));
+        ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(1));
         // find a light keyframe with timeIndex
-        EXPECT_EQ(frame.take(), motion.findLightKeyframe(42));
+        ASSERT_EQ(frame.take(), motion.findLightKeyframe(42));
     }
     QScopedPointer<ILightKeyframe> frame2(new LightKeyframe());
     frame2->setTimeIndex(42);
@@ -553,9 +553,9 @@ TEST(Motion, AddAndRemoveLightKeyframes)
         // replaced light frame should be one keyframe (don't forget updating motion!)
         motion.replaceKeyframe(frame2.data());
         motion.update(IKeyframe::kLight);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
         // no longer be find previous light keyframe
-        EXPECT_EQ(1.0f, motion.findLightKeyframe(42)->color().z());
+        ASSERT_EQ(1.0f, motion.findLightKeyframe(42)->color().z());
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -563,9 +563,9 @@ TEST(Motion, AddAndRemoveLightKeyframes)
         motion.deleteKeyframe(keyframeToDelete);
         motion.update(IKeyframe::kLight);
         // light keyframes should be empty
-        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
-        EXPECT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframe(42));
-        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
+        ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframe(42));
+        ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }
 
@@ -576,7 +576,7 @@ TEST(Motion, AddAndRemoveMorphKeyframes)
     MockIModel model;
     MockIMorph morph;
     Motion motion(&model, &encoding);
-    EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
     // mock morph
     EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
     QScopedPointer<IMorphKeyframe> frame(new MorphKeyframe(&encoding));
@@ -586,12 +586,12 @@ TEST(Motion, AddAndRemoveMorphKeyframes)
         // add a morph keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());
         motion.update(IKeyframe::kMorph);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
         // boudary check of findMorphKeyframeAt
-        EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
-        EXPECT_EQ(frame.data(), motion.findMorphKeyframeAt(0));
-        EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
-        EXPECT_EQ(frame.take(), motion.findMorphKeyframe(42, &name));
+        ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
+        ASSERT_EQ(frame.data(), motion.findMorphKeyframeAt(0));
+        ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
+        ASSERT_EQ(frame.take(), motion.findMorphKeyframe(42, &name));
     }
     QScopedPointer<IMorphKeyframe> frame2(new MorphKeyframe(&encoding));
     frame2->setTimeIndex(42);
@@ -600,9 +600,9 @@ TEST(Motion, AddAndRemoveMorphKeyframes)
         // replaced morph frame should be one keyframe (don't forget updating motion!)
         motion.replaceKeyframe(frame2.data());
         motion.update(IKeyframe::kMorph);
-        EXPECT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
         // no longer be find previous morph keyframe
-        EXPECT_EQ(frame2.data(), motion.findMorphKeyframe(42, &name));
+        ASSERT_EQ(frame2.data(), motion.findMorphKeyframe(42, &name));
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -610,8 +610,8 @@ TEST(Motion, AddAndRemoveMorphKeyframes)
         motion.deleteKeyframe(keyframeToDelete);
         motion.update(IKeyframe::kMorph);
         // morph keyframes should be empty
-        EXPECT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
-        EXPECT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name));
-        EXPECT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
+        ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name));
+        ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }

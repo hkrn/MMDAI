@@ -22,25 +22,25 @@ namespace
 
 static void Compare(const Vector3 &expected, const Vector3 &actual)
 {
-    EXPECT_FLOAT_EQ(expected.x(), actual.x());
-    EXPECT_FLOAT_EQ(expected.y(), actual.y());
-    EXPECT_FLOAT_EQ(expected.z(), actual.z());
+    ASSERT_FLOAT_EQ(expected.x(), actual.x());
+    ASSERT_FLOAT_EQ(expected.y(), actual.y());
+    ASSERT_FLOAT_EQ(expected.z(), actual.z());
 }
 
 static void Compare(const Vector4 &expected, const Vector4 &actual)
 {
-    EXPECT_FLOAT_EQ(expected.x(), actual.x());
-    EXPECT_FLOAT_EQ(expected.y(), actual.y());
-    EXPECT_FLOAT_EQ(expected.z(), actual.z());
-    EXPECT_FLOAT_EQ(expected.w(), actual.w());
+    ASSERT_FLOAT_EQ(expected.x(), actual.x());
+    ASSERT_FLOAT_EQ(expected.y(), actual.y());
+    ASSERT_FLOAT_EQ(expected.z(), actual.z());
+    ASSERT_FLOAT_EQ(expected.w(), actual.w());
 }
 
 static void Compare(const Quaternion &expected, const Quaternion &actual)
 {
-    EXPECT_FLOAT_EQ(expected.x(), actual.x());
-    EXPECT_FLOAT_EQ(expected.y(), actual.y());
-    EXPECT_FLOAT_EQ(expected.z(), actual.z());
-    EXPECT_FLOAT_EQ(expected.w(), actual.w());
+    ASSERT_FLOAT_EQ(expected.x(), actual.x());
+    ASSERT_FLOAT_EQ(expected.y(), actual.y());
+    ASSERT_FLOAT_EQ(expected.z(), actual.z());
+    ASSERT_FLOAT_EQ(expected.w(), actual.w());
 }
 
 static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bones)
@@ -68,8 +68,8 @@ static void CompareVertex(const Vertex &expected, const Vertex &vertex2, const A
     Compare(vertex2.texcoord(), expected.texcoord());
     Compare(vertex2.uv(0), expected.uv(0));
     Compare(kZeroV4, expected.uv(1));
-    EXPECT_EQ(expected.type(), vertex2.type());
-    EXPECT_EQ(expected.edgeSize(), vertex2.edgeSize());
+    ASSERT_EQ(expected.type(), vertex2.type());
+    ASSERT_EQ(expected.edgeSize(), vertex2.edgeSize());
     if (expected.type() == Vertex::kSdef) {
         Compare(vertex2.sdefC(), expected.sdefC());
         Compare(vertex2.sdefR0(), expected.sdefR0());
@@ -85,13 +85,13 @@ static void CompareVertex(const Vertex &expected, const Vertex &vertex2, const A
     Vertex::loadVertices(vertices, bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
-        EXPECT_EQ(expected.bone(i), bones[i]);
-        EXPECT_TRUE(bones[i]->index() != -1);
+        ASSERT_EQ(expected.bone(i), bones[i]);
+        ASSERT_TRUE(bones[i]->index() != -1);
         if (nbones == 4)
-            EXPECT_FLOAT_EQ(vertex2.weight(i), 0.2f + 0.1f * i);
+            ASSERT_FLOAT_EQ(vertex2.weight(i), 0.2f + 0.1f * i);
     }
     if (nbones == 2)
-        EXPECT_FLOAT_EQ(vertex2.weight(0), 0.2f);
+        ASSERT_FLOAT_EQ(vertex2.weight(0), 0.2f);
 }
 
 static void TestReadWriteBone(size_t indexSize)
@@ -135,34 +135,34 @@ static void TestReadWriteBone(size_t indexSize)
     bone.write(data.data(), info);
     bone2.read(data.data(), info, read);
     // compare read bone
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(bone2.name()->equals(bone.name()));
-    EXPECT_TRUE(bone2.englishName()->equals(bone.englishName()));
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(bone2.name()->equals(bone.name()));
+    ASSERT_TRUE(bone2.englishName()->equals(bone.englishName()));
     Compare(bone2.origin(), bone.origin());
     Compare(bone2.destinationOrigin(), bone.destinationOrigin());
     Compare(bone2.axis(), bone.axis());
     Compare(bone2.axisX(), bone.axisX());
     Compare(bone2.axisZ(), bone.axisZ());
-    EXPECT_EQ(bone.layerIndex(), bone2.layerIndex());
-    EXPECT_EQ(bone.externalIndex(), bone2.externalIndex());
-    EXPECT_TRUE(bone2.isRotateable());
-    EXPECT_TRUE(bone2.isMovable());
-    EXPECT_TRUE(bone2.isVisible());
-    EXPECT_TRUE(bone2.isInteractive());
-    EXPECT_TRUE(bone2.hasInverseKinematics());
-    EXPECT_TRUE(bone2.hasPositionInherence());
-    EXPECT_TRUE(bone2.hasRotationInherence());
-    EXPECT_TRUE(bone2.hasFixedAxes());
-    EXPECT_TRUE(bone2.hasLocalAxes());
-    EXPECT_TRUE(bone2.isTransformedAfterPhysicsSimulation());
-    EXPECT_TRUE(bone2.isTransformedByExternalParent());
+    ASSERT_EQ(bone.layerIndex(), bone2.layerIndex());
+    ASSERT_EQ(bone.externalIndex(), bone2.externalIndex());
+    ASSERT_TRUE(bone2.isRotateable());
+    ASSERT_TRUE(bone2.isMovable());
+    ASSERT_TRUE(bone2.isVisible());
+    ASSERT_TRUE(bone2.isInteractive());
+    ASSERT_TRUE(bone2.hasInverseKinematics());
+    ASSERT_TRUE(bone2.hasPositionInherence());
+    ASSERT_TRUE(bone2.hasRotationInherence());
+    ASSERT_TRUE(bone2.hasFixedAxes());
+    ASSERT_TRUE(bone2.hasLocalAxes());
+    ASSERT_TRUE(bone2.isTransformedAfterPhysicsSimulation());
+    ASSERT_TRUE(bone2.isTransformedByExternalParent());
     Array<Bone *> bones, apb, bpb;
     bones.add(&parent);
     bones.add(&bone2);
     Bone::loadBones(bones, bpb, apb);
-    EXPECT_EQ(&parent, bone2.parentBone());
-    EXPECT_EQ(&parent, bone2.parentInherenceBone());
-    EXPECT_EQ(&parent, bone2.targetBone());
+    ASSERT_EQ(&parent, bone2.parentBone());
+    ASSERT_EQ(&parent, bone2.parentInherenceBone());
+    ASSERT_EQ(&parent, bone2.targetBone());
 }
 
 static void TestReadWriteJoint(size_t indexSize)
@@ -195,20 +195,20 @@ static void TestReadWriteJoint(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     joint.write(data.data(), info);
     joint2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
+    ASSERT_EQ(size, read);
     // compare read joint
-    EXPECT_TRUE(joint2.name()->equals(joint.name()));
-    EXPECT_TRUE(joint2.englishName()->equals(joint.englishName()));
-    EXPECT_EQ(joint.position(), joint2.position());
-    EXPECT_EQ(joint.rotation(), joint2.rotation());
-    EXPECT_EQ(joint.positionLowerLimit(), joint2.positionLowerLimit());
-    EXPECT_EQ(joint.rotationLowerLimit(), joint2.rotationLowerLimit());
-    EXPECT_EQ(joint.positionUpperLimit(), joint2.positionUpperLimit());
-    EXPECT_EQ(joint.rotationUpperLimit(), joint2.rotationUpperLimit());
-    EXPECT_EQ(joint.positionStiffness(), joint2.positionStiffness());
-    EXPECT_EQ(joint.rotationStiffness(), joint2.rotationStiffness());
-    EXPECT_EQ(body.index(), joint2.rigidBodyIndex1());
-    EXPECT_EQ(body2.index(), joint2.rigidBodyIndex2());
+    ASSERT_TRUE(joint2.name()->equals(joint.name()));
+    ASSERT_TRUE(joint2.englishName()->equals(joint.englishName()));
+    ASSERT_EQ(joint.position(), joint2.position());
+    ASSERT_EQ(joint.rotation(), joint2.rotation());
+    ASSERT_EQ(joint.positionLowerLimit(), joint2.positionLowerLimit());
+    ASSERT_EQ(joint.rotationLowerLimit(), joint2.rotationLowerLimit());
+    ASSERT_EQ(joint.positionUpperLimit(), joint2.positionUpperLimit());
+    ASSERT_EQ(joint.rotationUpperLimit(), joint2.rotationUpperLimit());
+    ASSERT_EQ(joint.positionStiffness(), joint2.positionStiffness());
+    ASSERT_EQ(joint.rotationStiffness(), joint2.rotationStiffness());
+    ASSERT_EQ(body.index(), joint2.rigidBodyIndex1());
+    ASSERT_EQ(body2.index(), joint2.rigidBodyIndex2());
 }
 
 static void TestReadWriteMaterial(size_t indexSize)
@@ -241,20 +241,20 @@ static void TestReadWriteMaterial(size_t indexSize)
     material.write(data.data(), info);
     material2.read(data.data(), info, read);
     // compare read material
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(material2.name()->equals(material.name()));
-    EXPECT_TRUE(material2.englishName()->equals(material.englishName()));
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(material2.name()->equals(material.name()));
+    ASSERT_TRUE(material2.englishName()->equals(material.englishName()));
     Compare(material2.ambient(), material.ambient());
     Compare(material2.diffuse(), material.diffuse());
     Compare(material2.specular(), material.specular());
     Compare(material2.edgeColor(), material.edgeColor());
-    EXPECT_EQ(material.sphereTextureRenderMode(), material2.sphereTextureRenderMode());
-    EXPECT_EQ(material.shininess(), material2.shininess());
-    EXPECT_EQ(material.edgeSize(), material2.edgeSize());
-    EXPECT_EQ(material.textureIndex(), material2.textureIndex());
-    EXPECT_EQ(material.sphereTextureIndex(), material2.sphereTextureIndex());
-    EXPECT_EQ(material.toonTextureIndex(), material2.toonTextureIndex());
-    EXPECT_EQ(material.indices(), material2.indices());
+    ASSERT_EQ(material.sphereTextureRenderMode(), material2.sphereTextureRenderMode());
+    ASSERT_EQ(material.shininess(), material2.shininess());
+    ASSERT_EQ(material.edgeSize(), material2.edgeSize());
+    ASSERT_EQ(material.textureIndex(), material2.textureIndex());
+    ASSERT_EQ(material.sphereTextureIndex(), material2.sphereTextureIndex());
+    ASSERT_EQ(material.toonTextureIndex(), material2.toonTextureIndex());
+    ASSERT_EQ(material.indices(), material2.indices());
 }
 
 static void TestReadWriteBoneMorph(size_t indexSize)
@@ -285,19 +285,19 @@ static void TestReadWriteBoneMorph(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
     morph2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(morph2.name()->equals(morph.name()));
-    EXPECT_TRUE(morph2.englishName()->equals(morph.englishName()));
-    EXPECT_EQ(morph.category(), morph2.category());
-    EXPECT_EQ(morph.type(), morph2.type());
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(morph2.name()->equals(morph.name()));
+    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_EQ(morph.category(), morph2.category());
+    ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Bone *> &bones = morph2.bones();
-    EXPECT_EQ(bones.count(), 2);
+    ASSERT_EQ(bones.count(), 2);
     Compare(bones[0]->position, bone1->position);
     Compare(bones[0]->rotation, bone1->rotation);
-    EXPECT_EQ(bone1->index, bones[0]->index);
+    ASSERT_EQ(bone1->index, bones[0]->index);
     Compare(bones[1]->position, bone2->position);
     Compare(bones[1]->rotation, bone2->rotation);
-    EXPECT_EQ(bone2->index, bones[1]->index);
+    ASSERT_EQ(bone2->index, bones[1]->index);
     // delete bone1 and bone2 at Morph destructor
     bone1.take();
     bone2.take();
@@ -329,17 +329,17 @@ static void TestReadWriteGroupMorph(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
     morph2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(morph2.name()->equals(morph.name()));
-    EXPECT_TRUE(morph2.englishName()->equals(morph.englishName()));
-    EXPECT_EQ(morph.category(), morph2.category());
-    EXPECT_EQ(morph.type(), morph2.type());
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(morph2.name()->equals(morph.name()));
+    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_EQ(morph.category(), morph2.category());
+    ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Group *> &groups = morph2.groups();
-    EXPECT_EQ(groups.count(), 2);
-    EXPECT_EQ(group1->weight, groups[0]->weight);
-    EXPECT_EQ(group1->index, groups[0]->index);
-    EXPECT_EQ(group2->weight, groups[1]->weight);
-    EXPECT_EQ(group2->index, groups[1]->index);
+    ASSERT_EQ(groups.count(), 2);
+    ASSERT_EQ(group1->weight, groups[0]->weight);
+    ASSERT_EQ(group1->index, groups[0]->index);
+    ASSERT_EQ(group2->weight, groups[1]->weight);
+    ASSERT_EQ(group2->index, groups[1]->index);
     // delete group1 and group2 at Morph destructor
     group1.take();
     group2.take();
@@ -389,13 +389,13 @@ static void TestReadWriteMaterialMorph(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
     morph2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(morph2.name()->equals(morph.name()));
-    EXPECT_TRUE(morph2.englishName()->equals(morph.englishName()));
-    EXPECT_EQ(morph.category(), morph2.category());
-    EXPECT_EQ(morph.type(), morph2.type());
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(morph2.name()->equals(morph.name()));
+    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_EQ(morph.category(), morph2.category());
+    ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Material *> &materials = morph2.materials();
-    EXPECT_EQ(materials.count(), 2);
+    ASSERT_EQ(materials.count(), 2);
     Compare(materials[0]->ambient, material1->ambient);
     Compare(materials[0]->diffuse, material1->diffuse);
     Compare(materials[0]->specular, material1->specular);
@@ -403,10 +403,10 @@ static void TestReadWriteMaterialMorph(size_t indexSize)
     Compare(materials[0]->sphereTextureWeight, material1->sphereTextureWeight);
     Compare(materials[0]->textureWeight, material1->textureWeight);
     Compare(materials[0]->toonTextureWeight, material1->toonTextureWeight);
-    EXPECT_EQ(material1->edgeSize, materials[0]->edgeSize);
-    EXPECT_EQ(material1->shininess, materials[0]->shininess);
-    EXPECT_EQ(material1->operation, materials[0]->operation);
-    EXPECT_EQ(material1->index, materials[0]->index);
+    ASSERT_EQ(material1->edgeSize, materials[0]->edgeSize);
+    ASSERT_EQ(material1->shininess, materials[0]->shininess);
+    ASSERT_EQ(material1->operation, materials[0]->operation);
+    ASSERT_EQ(material1->index, materials[0]->index);
     Compare(materials[1]->ambient, material2->ambient);
     Compare(materials[1]->diffuse, material2->diffuse);
     Compare(materials[1]->specular, material2->specular);
@@ -414,10 +414,10 @@ static void TestReadWriteMaterialMorph(size_t indexSize)
     Compare(materials[1]->sphereTextureWeight, material2->sphereTextureWeight);
     Compare(materials[1]->textureWeight, material2->textureWeight);
     Compare(materials[1]->toonTextureWeight, material2->toonTextureWeight);
-    EXPECT_EQ(material2->edgeSize, materials[1]->edgeSize);
-    EXPECT_EQ(material2->shininess, materials[1]->shininess);
-    EXPECT_EQ(material2->operation, materials[1]->operation);
-    EXPECT_EQ(material2->index, materials[1]->index);
+    ASSERT_EQ(material2->edgeSize, materials[1]->edgeSize);
+    ASSERT_EQ(material2->shininess, materials[1]->shininess);
+    ASSERT_EQ(material2->operation, materials[1]->operation);
+    ASSERT_EQ(material2->index, materials[1]->index);
     // delete material1 and mateiral2 at Morph destructor
     material1.take();
     material2.take();
@@ -453,21 +453,21 @@ static void TestReadWriteRigidBody(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     body.write(data.data(), info);
     body2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(body2.name()->equals(body.name()));
-    EXPECT_TRUE(body2.englishName()->equals(body.englishName()));
-    EXPECT_EQ(bone.index(), body2.boneIndex());
-    EXPECT_EQ(body.angularDamping(), body2.angularDamping());
-    EXPECT_EQ(body.collisionGroupID(), body2.collisionGroupID());
-    EXPECT_EQ(body.collisionGroupMask(), body2.collisionGroupMask());
-    EXPECT_EQ(body.friction(), body2.friction());
-    EXPECT_EQ(body.linearDamping(), body2.linearDamping());
-    EXPECT_EQ(body.mass(), body2.mass());
-    EXPECT_EQ(body.position(), body2.position());
-    EXPECT_EQ(body.restitution(), body2.restitution());
-    EXPECT_EQ(body.rotation(), body2.rotation());
-    EXPECT_EQ(body.size(), body2.size());
-    EXPECT_EQ(bone.index(), body2.boneIndex());
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(body2.name()->equals(body.name()));
+    ASSERT_TRUE(body2.englishName()->equals(body.englishName()));
+    ASSERT_EQ(bone.index(), body2.boneIndex());
+    ASSERT_EQ(body.angularDamping(), body2.angularDamping());
+    ASSERT_EQ(body.collisionGroupID(), body2.collisionGroupID());
+    ASSERT_EQ(body.collisionGroupMask(), body2.collisionGroupMask());
+    ASSERT_EQ(body.friction(), body2.friction());
+    ASSERT_EQ(body.linearDamping(), body2.linearDamping());
+    ASSERT_EQ(body.mass(), body2.mass());
+    ASSERT_EQ(body.position(), body2.position());
+    ASSERT_EQ(body.restitution(), body2.restitution());
+    ASSERT_EQ(body.rotation(), body2.rotation());
+    ASSERT_EQ(body.size(), body2.size());
+    ASSERT_EQ(bone.index(), body2.boneIndex());
 }
 
 static void TestReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
@@ -496,19 +496,19 @@ static void TestReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
     morph2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(morph2.name()->equals(morph.name()));
-    EXPECT_TRUE(morph2.englishName()->equals(morph.englishName()));
-    EXPECT_EQ(morph.category(), morph2.category());
-    EXPECT_EQ(morph.type(), morph2.type());
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(morph2.name()->equals(morph.name()));
+    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_EQ(morph.category(), morph2.category());
+    ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::UV *> &uvs = morph2.uvs();
-    EXPECT_EQ(uvs.count(), 2);
+    ASSERT_EQ(uvs.count(), 2);
     Compare(uvs[0]->position, uv1->position);
-    EXPECT_EQ(type - pmx::Morph::kTexCoord, uvs[0]->offset);
-    EXPECT_EQ(uv1->index, uvs[0]->index);
+    ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[0]->offset);
+    ASSERT_EQ(uv1->index, uvs[0]->index);
     Compare(uvs[1]->position, uv2->position);
-    EXPECT_EQ(type - pmx::Morph::kTexCoord, uvs[1]->offset);
-    EXPECT_EQ(uv2->index, uvs[1]->index);
+    ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[1]->offset);
+    ASSERT_EQ(uv2->index, uvs[1]->index);
     // delete uv1 and uv2 at Morph destructor
     uv1.take();
     uv2.take();
@@ -540,17 +540,17 @@ static void TestReadWriteVertexMorph(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
     morph2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
-    EXPECT_TRUE(morph2.name()->equals(morph.name()));
-    EXPECT_TRUE(morph2.englishName()->equals(morph.englishName()));
-    EXPECT_EQ(morph.category(), morph2.category());
-    EXPECT_EQ(morph.type(), morph2.type());
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(morph2.name()->equals(morph.name()));
+    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_EQ(morph.category(), morph2.category());
+    ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Vertex *> &vertices = morph2.vertices();
-    EXPECT_EQ(vertices.count(), 2);
+    ASSERT_EQ(vertices.count(), 2);
     Compare(vertices[0]->position, vertex1->position);
-    EXPECT_EQ(vertex1->index, vertices[0]->index);
+    ASSERT_EQ(vertex1->index, vertices[0]->index);
     Compare(vertices[1]->position, vertex2->position);
-    EXPECT_EQ(vertex2->index, vertices[1]->index);
+    ASSERT_EQ(vertex2->index, vertices[1]->index);
     // delete vertex1 and vertex2 at Morph destructor
     vertex1.take();
     vertex2.take();
@@ -571,7 +571,7 @@ static void TestReadWriteVertexBdef1(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     vertex.write(data.data(), info);
     vertex2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
+    ASSERT_EQ(size, read);
     CompareVertex(vertex, vertex2, bones);
 }
 
@@ -592,7 +592,7 @@ static void TestReadWriteVertexBdef2(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     vertex.write(data.data(), info);
     vertex2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
+    ASSERT_EQ(size, read);
     CompareVertex(vertex, vertex2, bones);
 }
 
@@ -617,7 +617,7 @@ static void TestReadWriteVertexBdef4(size_t indexSize)
     uint8_t *data = new uint8_t[size];
     vertex.write(data, info);
     vertex2.read(data, info, read);
-    EXPECT_EQ(size, read);
+    ASSERT_EQ(size, read);
     CompareVertex(vertex, vertex2, bones);
     delete[] data;
 }
@@ -639,7 +639,7 @@ static void TestReadWriteVertexSdef(size_t indexSize)
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     vertex.write(data.data(), info);
     vertex2.read(data.data(), info, read);
-    EXPECT_EQ(size, read);
+    ASSERT_EQ(size, read);
     CompareVertex(vertex, vertex2, bones);
 }
 
@@ -769,8 +769,8 @@ TEST(Model, ParseEmpty)
     Encoding encoding;
     Model model(&encoding);
     Model::DataInfo info;
-    EXPECT_FALSE(model.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
-    EXPECT_EQ(Model::kInvalidHeaderError, model.error());
+    ASSERT_FALSE(model.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
+    ASSERT_EQ(Model::kInvalidHeaderError, model.error());
 }
 
 TEST(Model, ParseFile)
@@ -783,8 +783,8 @@ TEST(Model, ParseFile)
         const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         const size_t size = file.size();
-        EXPECT_TRUE(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
-        EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(data), size));
+        ASSERT_TRUE(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
+        ASSERT_TRUE(model.load(reinterpret_cast<const uint8_t *>(data), size));
     }
     else {
         // QSKIP("Require a model to test this", SkipSingle);
@@ -794,17 +794,17 @@ TEST(Model, ParseFile)
 TEST(Bone, DefaultFlags)
 {
     Bone bone;
-    EXPECT_FALSE(bone.isMovable());
-    EXPECT_FALSE(bone.isRotateable());
-    EXPECT_FALSE(bone.isVisible());
-    EXPECT_FALSE(bone.isInteractive());
-    EXPECT_FALSE(bone.hasInverseKinematics());
-    EXPECT_FALSE(bone.hasPositionInherence());
-    EXPECT_FALSE(bone.hasRotationInherence());
-    EXPECT_FALSE(bone.hasFixedAxes());
-    EXPECT_FALSE(bone.hasLocalAxes());
-    EXPECT_FALSE(bone.isTransformedAfterPhysicsSimulation());
-    EXPECT_FALSE(bone.isTransformedByExternalParent());
+    ASSERT_FALSE(bone.isMovable());
+    ASSERT_FALSE(bone.isRotateable());
+    ASSERT_FALSE(bone.isVisible());
+    ASSERT_FALSE(bone.isInteractive());
+    ASSERT_FALSE(bone.hasInverseKinematics());
+    ASSERT_FALSE(bone.hasPositionInherence());
+    ASSERT_FALSE(bone.hasRotationInherence());
+    ASSERT_FALSE(bone.hasFixedAxes());
+    ASSERT_FALSE(bone.hasLocalAxes());
+    ASSERT_FALSE(bone.isTransformedAfterPhysicsSimulation());
+    ASSERT_FALSE(bone.isTransformedByExternalParent());
 }
 
 TEST(Vertex, Boundary)
@@ -817,12 +817,12 @@ TEST(Vertex, Boundary)
     vertex.setWeight( 4, 0.1);
     vertex.setBone(-1, bone);
     vertex.setBone( 4, bone);
-    EXPECT_EQ(vertex.uv(-1).x(), 0.0f);
-    EXPECT_EQ(vertex.uv(4).x(), 0.0f);
-    EXPECT_EQ(vertex.bone(-1), static_cast<IBone *>(0));
-    EXPECT_EQ(vertex.bone(4), static_cast<IBone *>(0));
-    EXPECT_EQ(vertex.weight(-1), 0.0f);
-    EXPECT_EQ(vertex.weight(4), 0.0f);
+    ASSERT_EQ(vertex.uv(-1).x(), 0.0f);
+    ASSERT_EQ(vertex.uv(4).x(), 0.0f);
+    ASSERT_EQ(vertex.bone(-1), static_cast<IBone *>(0));
+    ASSERT_EQ(vertex.bone(4), static_cast<IBone *>(0));
+    ASSERT_EQ(vertex.weight(-1), 0.0f);
+    ASSERT_EQ(vertex.weight(4), 0.0f);
     delete bone;
 }
 
@@ -1019,54 +1019,54 @@ TEST(Material, MergeShininess)
     morph.operation = 0;
     material.setShininess(0.8);
     material.mergeMorph(&morph, 0.0);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.8f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.8f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.8f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.8f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.8f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.8f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.8f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.8f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.8f);
     material.resetMorph();
     // mod (0.0)
     morph.shininess = 0.0;
     material.mergeMorph(&morph, 0.0);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.8f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.6f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.6f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.4f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.4f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.2f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.2f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.0f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.0f);
     material.resetMorph();
     // add (0.2)
     morph.shininess = 0.2;
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    EXPECT_EQ(material.shininess(), 0.8f);
+    ASSERT_EQ(material.shininess(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.85f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.85f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.9f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.9f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.95f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.95f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.shininess(), 1.0f);
+    ASSERT_FLOAT_EQ(material.shininess(), 1.0f);
     // add (0.6)
     morph.shininess = 0.6;
     material.mergeMorph(&morph, 0.0);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.8f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.shininess(), 0.95f);
+    ASSERT_FLOAT_EQ(material.shininess(), 0.95f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.shininess(), 1.1f);
+    ASSERT_FLOAT_EQ(material.shininess(), 1.1f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.shininess(), 1.25f);
+    ASSERT_FLOAT_EQ(material.shininess(), 1.25f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.shininess(), 1.4f);
+    ASSERT_FLOAT_EQ(material.shininess(), 1.4f);
 }
 
 TEST(Material, MergeEdgeColor)
@@ -1139,52 +1139,52 @@ TEST(Material, MergeEdgeSize)
     morph.operation = 0;
     material.setEdgeSize(0.8);
     material.mergeMorph(&morph, 0.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.resetMorph();
     // mod (1.0)
     morph.edgeSize = 0.0;
     material.mergeMorph(&morph, 0.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.6f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.6f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.4f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.4f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.2f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.2f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.0f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.0f);
     material.resetMorph();
     // add (0.2)
     morph.edgeSize = 0.2;
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.85f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.85f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.9f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.9f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.95f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.95f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 1.0f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 1.0f);
     // add (0.6)
     morph.edgeSize = 0.6;
     material.mergeMorph(&morph, 0.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.8f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.8f);
     material.mergeMorph(&morph, 0.25);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 0.95f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 0.95f);
     material.mergeMorph(&morph, 0.5);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 1.1f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 1.1f);
     material.mergeMorph(&morph, 0.75);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 1.25f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 1.25f);
     material.mergeMorph(&morph, 1.0);
-    EXPECT_FLOAT_EQ(material.edgeSize(), 1.4f);
+    ASSERT_FLOAT_EQ(material.edgeSize(), 1.4f);
 }
