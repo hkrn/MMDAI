@@ -333,54 +333,9 @@ IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
      */
     QScopedPointer<IRenderEngine> enginePtr(m_project->createRenderEngine(m_renderDelegate, model, flags));
     if (enginePtr->upload(&d)) {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (effect) {
-            static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
-            Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-            /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
-            enginePtr->setEffect(IEffect::kAutoDetection, effect, &d);
-            effect->getOffscreenRenderTargets(offscreenRenderTargets);
-            const int nOffscreenRenderTargets = offscreenRenderTargets.count();
-            /* オフスクリーンレンダーターゲットの設定 */
-            for (int i = 0; i < nOffscreenRenderTargets; i++) {
-                const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
-                const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
-                const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-                const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
-                QList<EffectAttachment> attachments;
-                foreach (const QString &line, defaultEffect) {
-                    const QStringList &pair = line.split('=');
-                    if (pair.size() == 2) {
-                        const QString &key = pair.at(0).trimmed();
-                        const QString &value = pair.at(1).trimmed();
-                        QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
-                        if (key == "self") {
-                            const QString &name = m_renderDelegate->effectOwnerName(effect);
-                            regexp.setPattern(name);
-                        }
-                        if (value != "hide" && value != "none") {
-                            QString path = dir.absoluteFilePath(value);
-                            path.replace(kExtensionReplaceRegExp, ".cgfx");
-                            CString s2(path);
-                            const QFuture<IEffect *> &future3 = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, &s2);
-                            IEffect *offscreenEffect = future3.result();
-                            offscreenEffect->setParentEffect(effect);
-                            attachments.append(EffectAttachment(regexp, offscreenEffect));
-                        }
-                        else {
-                            attachments.append(EffectAttachment(regexp, 0));
-                        }
-                    }
-                }
-                CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
-                OffscreenRenderTarget offscreen;
-                offscreen.attachments = attachments;
-                offscreen.renderTarget = renderTarget;
-                offscreen.textureID = cgGLGetTextureParameter(sampler);
-                m_offscreens.append(offscreen);
-            }
-        }
-#endif
+        /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
+        enginePtr->setEffect(IEffect::kAutoDetection, effect, &d);
+        m_renderDelegate->parseOffscreenSemantic(effect, dir);
         m_renderDelegate->setArchive(0);
         return enginePtr.take();
     }
@@ -423,10 +378,8 @@ void SceneLoader::createProject()
         m_project->setGlobalSetting("physics.enabled", "true");
         m_project->setGlobalSetting("shadow.texture.soft", "true");
         m_project->setDirty(false);
-        if (m_renderDelegate) {
-            m_offscreens.clear();
+        if (m_renderDelegate)
             m_renderDelegate->setScenePtr(m_project);
-        }
         emit projectDidInitialized();
     }
 }
@@ -1048,7 +1001,7 @@ void SceneLoader::renderOffscreen(const QSize &size)
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
     const int nobjects = m_renderOrderList.count();
-    foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
+    foreach (const Delegate::OffscreenRenderTarget &offscreen, m_renderDelegate->offscreenRenderTargets()) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
         const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
@@ -1100,7 +1053,7 @@ void SceneLoader::renderOffscreen(const QSize &size)
                 const IString *name = model->name();
                 const QString &n = name ? static_cast<const CString *>(name)->value()
                                         : m_renderDelegate->findModelPath(model);
-                foreach (const EffectAttachment &attachment, offscreen.attachments) {
+                foreach (const Delegate::EffectAttachment &attachment, offscreen.attachments) {
                     IEffect *effect = attachment.second;
                     if (attachment.first.exactMatch(n)) {
                         engine->setEffect(IEffect::kStandardOffscreen, effect, 0);

@@ -252,13 +252,6 @@ private:
     QGLFramebufferObject *m_depthBuffer;
     QMap<QString, vpvl2::IModel*> m_name2assets;
     QMatrix4x4 m_projection;
-    typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
-    typedef struct {
-        vpvl2::IEffect::OffscreenRenderTarget renderTarget;
-        QList<EffectAttachment> attachments;
-        GLuint textureID;
-    } OffscreenRenderTarget;
-    QList<OffscreenRenderTarget> m_offscreens;
     vpvl2::IEncoding *m_encoding;
     vpvl2::qt::Delegate *m_renderDelegate;
     vpvl2::Factory *m_factory;

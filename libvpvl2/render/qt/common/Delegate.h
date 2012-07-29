@@ -37,6 +37,7 @@
 #ifndef VPVL2_QT_DELEGATE_H_
 #define VPVL2_QT_DELEGATE_H_
 
+#include <vpvl2/IEffect.h>
 #include <vpvl2/IRenderDelegate.h>
 
 #include <QtOpenGL/QtOpenGL>
@@ -67,6 +68,12 @@ public:
     struct PrivateContext {
         QHash<QString, TextureCache> textureCache;
     };
+    typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
+    typedef struct {
+        IEffect::OffscreenRenderTarget renderTarget;
+        QList<EffectAttachment> attachments;
+        GLuint textureID;
+    } OffscreenRenderTarget;
 
     static QString readAllAsync(const QString &path);
     static QImage loadImageAsync(const QString &path);
@@ -113,9 +120,12 @@ public:
     void createRenderTargets();
     void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
+    void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     IEffect *createEffectAsync(const IString *path);
     IEffect *createEffectAsync(IModel *model, const IString *dir);
+
+    const QList<OffscreenRenderTarget> &offscreenRenderTargets() const { return m_offscreens; }
 
 private:
     class FrameBufferObject;
@@ -141,6 +151,7 @@ private:
     QGLWidget *m_context;
     Archive *m_archive;
     QSizeF m_viewport;
+    QList<OffscreenRenderTarget> m_offscreens;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<const QString, IModel *> m_filename2Models;
     QHash<GLuint, QString> m_texture2Paths;

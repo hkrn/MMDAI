@@ -592,12 +592,13 @@ void Delegate::setArchive(Archive *value)
 
 void Delegate::setScenePtr(Scene *value)
 {
+    m_offscreens.clear();
+    m_model2Paths.clear();
     QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker)
     qDeleteAll(m_texture2Movies);
     qDeleteAll(m_effectCaches);
     m_texture2Movies.clear();
     m_effectCaches.clear();
-    m_model2Paths.clear();
     m_scene = value;
 }
 
@@ -918,6 +919,59 @@ void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size
 #endif
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
+{
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        if (effect) {
+            static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
+            Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
+            effect->getOffscreenRenderTargets(offscreenRenderTargets);
+            const int nOffscreenRenderTargets = offscreenRenderTargets.count();
+            /* オフスクリーンレンダーターゲットの設定 */
+            for (int i = 0; i < nOffscreenRenderTargets; i++) {
+                const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
+                const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
+                const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
+                const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
+                QList<EffectAttachment> attachments;
+                foreach (const QString &line, defaultEffect) {
+                    const QStringList &pair = line.split('=');
+                    if (pair.size() == 2) {
+                        const QString &key = pair.at(0).trimmed();
+                        const QString &value = pair.at(1).trimmed();
+                        QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                        if (key == "self") {
+                            const QString &name = effectOwnerName(effect);
+                            regexp.setPattern(name);
+                        }
+                        if (value != "hide" && value != "none") {
+                            QString path = dir.absoluteFilePath(value);
+                            path.replace(kExtensionReplaceRegExp, ".cgfx");
+                            CString s2(path);
+                            const QFuture<IEffect *> &future = QtConcurrent::run(this, &Delegate::createEffectAsync, &s2);
+                            IEffect *offscreenEffect = future.result();
+                            offscreenEffect->setParentEffect(effect);
+                            attachments.append(EffectAttachment(regexp, offscreenEffect));
+                        }
+                        else {
+                            attachments.append(EffectAttachment(regexp, 0));
+                        }
+                    }
+                }
+                CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
+                OffscreenRenderTarget offscreen;
+                offscreen.attachments = attachments;
+                offscreen.renderTarget = renderTarget;
+                offscreen.textureID = cgGLGetTextureParameter(sampler);
+                m_offscreens.append(offscreen);
+            }
+        }
+#else
+    Q_UNUSED(effect)
+    Q_UNUSED(dir)
+#endif
 }
 
 IEffect *Delegate::createEffectAsync(const IString *path)
