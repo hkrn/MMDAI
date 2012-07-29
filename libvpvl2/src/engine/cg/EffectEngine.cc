@@ -94,7 +94,7 @@ bool Util::toBool(const CGannotation annotation)
 {
     int nvalues = 0;
     const CGbool *values = cgGetBoolAnnotationValues(annotation, &nvalues);
-    return nvalues > 0 ? values[0] == CG_TRUE : 0;
+    return nvalues > 0 ? values[0] == CG_TRUE : false;
 }
 
 int Util::toInt(const CGannotation annotation)
@@ -116,7 +116,7 @@ bool Util::isPassEquals(const CGannotation annotation, const char *target)
     if (!cgIsAnnotation(annotation))
         return true;
     const char *s = cgGetStringAnnotationValue(annotation);
-    return strcmp(s, target) == 0;
+    return s ? strcmp(s, target) == 0 : false;
 }
 
 bool Util::isIntegerParameter(const CGparameter parameter)
@@ -366,7 +366,7 @@ void MaterialSemantic::addParameter(CGparameter parameter)
         CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
         if (cgIsAnnotation(annotation)) {
             const char *aname = cgGetStringAnnotationValue(annotation);
-            const size_t alen = strlen(name);
+            const size_t alen = strlen(aname);
             if (VPVL2_CG_STREQ_CONST(aname, alen,  "Geometry")) {
                 BaseParameter::connectParameter(parameter, m_geometry);
             }
@@ -1173,6 +1173,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
     if (!cgIsEffect(value))
         return false;
     CGparameter parameter = cgGetFirstEffectParameter(value);
+    bool ownTechniques = false, foundSAS = false;
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
         const size_t slen = strlen(semantic);
@@ -1254,8 +1255,9 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
             renderDepthStencilTarget.addParameter(parameter, 0, dir, false, false);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
-            setStandardsGlobal(parameter);
+        else if (!foundSAS && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
+            setStandardsGlobal(parameter, ownTechniques);
+            foundSAS = true;
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
         }
@@ -1264,7 +1266,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
         }
         else {
             const char *name = cgGetParameterName(parameter);
-            const size_t nlen = strlen(semantic);
+            const size_t nlen = strlen(name);
             if (VPVL2_CG_STREQ_CONST(name, nlen, "parthf")) {
                 parthf.addParameter(parameter);
             }
@@ -1300,10 +1302,12 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
             m_effect->addInteractiveParameter(parameter);
         parameter = cgGetNextParameter(parameter);
     }
-    CGtechnique technique = cgGetFirstTechnique(value);
-    while (technique) {
-        addTechniquePasses(technique);
-        technique = cgGetNextTechnique(technique);
+    if (!ownTechniques) {
+        CGtechnique technique = cgGetFirstTechnique(value);
+        while (technique) {
+            addTechniquePasses(technique);
+            technique = cgGetNextTechnique(technique);
+        }
     }
     initializeBuffer();
     return true;
@@ -1708,7 +1712,7 @@ void EffectEngine::addTechniquePasses(const CGtechnique technique)
     }
 }
 
-void EffectEngine::setStandardsGlobal(const CGparameter parameter)
+void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTechniques)
 {
     float version;
     cgGLGetParameter1f(parameter, &version);
@@ -1758,10 +1762,12 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter)
                 CGtechnique technique = cgGetNamedTechnique(effect, segment.c_str());
                 addTechniquePasses(technique);
             }
+            ownTechniques = true;
         }
         else if (VPVL2_CG_STREQ_SUFFIX(value, len, kSingleTechnique)) {
             CGtechnique technique = cgGetNamedTechnique(effect, VPVL2_CG_GET_SUFFIX(value, kSingleTechnique));
             addTechniquePasses(technique);
+            ownTechniques = true;
         }
     }
 }

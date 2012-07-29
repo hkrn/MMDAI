@@ -1,0 +1,17 @@
+float SAS : STANDARDSGLOBAL <
+    string ScriptClass = "standard";
+	string ScriptOrder = "object";
+	string Script = "Technique=Technique?test1:test2:test3";
+> = float(0.8);
+
+technique test1 {
+	pass null {}
+}
+
+technique test2 {
+	pass null {}
+}
+
+technique test3 {
+	pass null {}
+}

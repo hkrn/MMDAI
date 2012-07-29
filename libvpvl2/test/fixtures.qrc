@@ -1,5 +1,13 @@
 <RCC>
     <qresource prefix="/effects">
         <file alias="matrices.cgfx">resources/effects/matrices.cgfx</file>
+        <file alias="util.cgfx">resources/effects/util.cgfx</file>
+        <file alias="materials.cgfx">resources/effects/materials.cgfx</file>
+        <file alias="geometries.cgfx">resources/effects/geometries.cgfx</file>
+        <file alias="times.cgfx">resources/effects/times.cgfx</file>
+        <file alias="specials.cgfx">resources/effects/specials.cgfx</file>
+        <file alias="preprocess.cgfx">resources/effects/preprocess.cgfx</file>
+        <file alias="standard.cgfx">resources/effects/standard.cgfx</file>
+        <file alias="postprocess.cgfx">resources/effects/postprocess.cgfx</file>
     </qresource>
 </RCC>

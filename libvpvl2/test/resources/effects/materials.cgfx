@@ -1,0 +1,16 @@
+float4 MaterialAmbient : AMBIENT < string Object = "Geometry"; > = float4(0.01, 0.02, 0.03, 0.04);
+float4 MaterialDiffuse : DIFFUSE < string Object = "Geometry"; > = float4(0.05, 0.06, 0.07, 0.08);
+float4 MaterialEmissive : EMISSIVE < string Object = "Geometry"; > = float4(0.09, 0.10, 0.11, 0.12);
+float4 MaterialSpecular : SPECULAR < string Object = "Geometry"; > = float4(0.13, 0.14, 0.15, 0.16);
+float  MaterialSpecularPower : SPECULARPOWER < string Object = "Geometry"; > = float(0.17);
+float4 MaterialToon : TOONCOLOR < string Object ="Geometry"; > = float4(0.18, 0.19, 0.20, 0.21);
+
+float4 LightAmbient : AMBIENT < string Object = "Light"; > = float4(0.22, 0.23, 0.24, 0.25);
+float4 LightDiffuse : DIFFUSE < string Object = "Light"; > = float4(0.26, 0.27, 0.28, 0.29);
+float4 LightSpecular : SPECULAR < string Object = "Light"; > = float4(0.30, 0.31, 0.32, 0.33);
+
+/* same value as geometry */
+// float4 LightEmissive : EMISSIVE <string Object = "Light"> = float4(0.09, 0.10, 0.11, 0.12);
+// float  LightSpecularPower : SPECULARPOWER < string Object = "Light"; > = float(0.17);
+// float4 LightToon : TOONCOLOR < string Object ="Light"; > = float4(0.18, 0.19. 0.20, 0.21);
+

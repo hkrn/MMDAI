@@ -1,0 +1,5 @@
+float4 CameraDirection : _DIRECTION < string Object = "Camera"; > = float4(0.01, 0.02, 0.03, 0.04);
+float4 CameraPosition : _POSITION < string Object = "Camera"; > = float4(0.05, 0.06, 0.07, 0.08);
+float4 LightDirection : _DIRECTION < string Object = "Light"; > = float4(0.09, 0.10, 0.11, 0.12);
+float4 LightPosition : _POSITION < string Object = "Light"; > = float4(0.13, 0.14, 0.15, 0.16);
+

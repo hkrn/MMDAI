@@ -78,6 +78,7 @@ public:
     virtual ~BaseParameter();
 
     void addParameter(CGparameter parameter);
+    CGparameter baseParameter() const { return m_baseParameter; } /* for test */
 
 protected:
     static void connectParameter(const CGparameter sourceParameter, CGparameter &destinationParameter);
@@ -180,6 +181,9 @@ public:
     void setLightColor(const Vector3 &value);
     void setLightValue(const Scalar &value);
 
+    CGparameter geometryParameter() const { return m_geometry; } /* for test */
+    CGparameter lightParameter() const { return m_light; } /* for test */
+
 private:
     CGparameter m_geometry;
     CGparameter m_light;
@@ -209,6 +213,9 @@ public:
     void setCameraValue(const Vector3 &value);
     void setLightValue(const Vector3 &value);
 
+    CGparameter cameraParameter() const { return m_camera; } /* for test */
+    CGparameter lightParameter() const { return m_light; } /* for test */
+
 private:
     CGparameter m_camera;
     CGparameter m_light;
@@ -224,6 +231,9 @@ public:
 
     void addParameter(CGparameter parameter);
     void update();
+
+    CGparameter syncEnabledParameter() const { return m_syncEnabled; } /* for test */
+    CGparameter syncDisabledParameter() const { return m_syncDisabled; } /* for test */
 
 private:
     const IRenderDelegate *m_delegate;
@@ -425,6 +435,45 @@ public:
         kScene,
         kSceneOrObject
     };
+    struct ScriptState {
+        ScriptState();
+        ~ScriptState();
+
+        void reset();
+        void setFromState(const ScriptState &other);
+        void setFromTexture(const RenderColorTargetSemantic::Texture *t);
+        void setFromBuffer(const RenderDepthStencilTargetSemantic::Buffer *b);
+
+        enum Type {
+            kUnknown,
+            kRenderColorTarget0,
+            kRenderColorTarget1,
+            kRenderColorTarget2,
+            kRenderColorTarget3,
+            kRenderDepthStencilTarget,
+            kClearSetColor,
+            kClearSetDepth,
+            kClearColor,
+            kClearDepth,
+            kScriptExternal,
+            kPass,
+            kLoopByCount,
+            kLoopEnd,
+            kLoopGetIndex,
+            kDrawGeometry,
+            kDrawBuffer
+        } type;
+        CGparameter parameter;
+        CGpass pass;
+        GLuint texture;
+        GLuint depthBuffer;
+        GLuint stencilBuffer;
+        size_t width;
+        size_t height;
+        bool enterLoop;
+        bool isRenderTargetBound;
+    };
+    typedef btAlignedObjectArray<ScriptState> Script;
 
     EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate);
     ~EffectEngine();
@@ -455,6 +504,8 @@ public:
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
     ScriptClassType scriptClass() const { return m_scriptClass; }
     IEffect::ScriptOrderType scriptOrder() const { return m_scriptOrder; }
+
+    const Techniques &techniques() const { return m_techniques; } /* for test */
 
     MatrixSemantic world;
     MatrixSemantic view;
@@ -500,46 +551,6 @@ public:
     CGparameter index;
 
 private:
-    struct ScriptState {
-        ScriptState();
-        ~ScriptState();
-
-        void reset();
-        void setFromState(const ScriptState &other);
-        void setFromTexture(const RenderColorTargetSemantic::Texture *t);
-        void setFromBuffer(const RenderDepthStencilTargetSemantic::Buffer *b);
-
-        enum Type {
-            kUnknown,
-            kRenderColorTarget0,
-            kRenderColorTarget1,
-            kRenderColorTarget2,
-            kRenderColorTarget3,
-            kRenderDepthStencilTarget,
-            kClearSetColor,
-            kClearSetDepth,
-            kClearColor,
-            kClearDepth,
-            kScriptExternal,
-            kPass,
-            kLoopByCount,
-            kLoopEnd,
-            kLoopGetIndex,
-            kDrawGeometry,
-            kDrawBuffer
-        } type;
-        CGparameter parameter;
-        CGpass pass;
-        GLuint texture;
-        GLuint depthBuffer;
-        GLuint stencilBuffer;
-        size_t width;
-        size_t height;
-        bool enterLoop;
-        bool isRenderTargetBound;
-    };
-    typedef btAlignedObjectArray<ScriptState> Script;
-
     static bool testTechnique(const CGtechnique technique,
                               const char *pass,
                               int offset,
@@ -566,7 +577,7 @@ private:
     void setRenderDepthStencilTargetFromState(const ScriptState &state);
     void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
     void addTechniquePasses(const CGtechnique technique);
-    void setStandardsGlobal(const CGparameter parameter);
+    void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
     void setTextureParameters(CGparameter parameter, const IString *dir);
     bool parsePassScript(const CGpass pass);
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
