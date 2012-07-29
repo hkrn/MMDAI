@@ -168,7 +168,7 @@ static void TestLightAnimation(const IMotion *motion)
 
 }
 
-TEST(Project, Load)
+TEST(ProjectTest, Load)
 {
     Delegate delegate;
     Encoding encoding;
@@ -190,7 +190,7 @@ TEST(Project, Load)
     TestLightAnimation(motion);
 }
 
-TEST(Project, Save)
+TEST(ProjectTest, Save)
 {
     Delegate delegate;
     Encoding encoding;
@@ -218,7 +218,7 @@ TEST(Project, Save)
     TestLightAnimation(motion);
 }
 
-TEST(Project, HandleAssets)
+TEST(ProjectTest, HandleAssets)
 {
     const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
@@ -248,7 +248,7 @@ TEST(Project, HandleAssets)
     ASSERT_FALSE(ptr);
 }
 
-TEST(Project, HandleModels)
+TEST(ProjectTest, HandleModels)
 {
     const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
@@ -278,7 +278,7 @@ TEST(Project, HandleModels)
     ASSERT_FALSE(ptr);
 }
 
-TEST(Project, HandleMotions)
+TEST(ProjectTest, HandleMotions)
 {
     const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
@@ -300,7 +300,7 @@ TEST(Project, HandleMotions)
     ASSERT_TRUE(project.isDirty());
 }
 
-TEST(Project, HandleNullUUID)
+TEST(ProjectTest, HandleNullUUID)
 {
     Delegate delegate;
     Encoding encoding;

@@ -75,7 +75,7 @@ static void CompareCameraInterpolationMatrix(const QuadWord p[], const CameraKey
 
 }
 
-TEST(Motion, ParseEmpty)
+TEST(MotionTest, ParseEmpty)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -86,7 +86,7 @@ TEST(Motion, ParseEmpty)
     ASSERT_EQ(Motion::kInvalidHeaderError, motion.error());
 }
 
-TEST(Motion, ParseFile)
+TEST(MotionTest, ParseFile)
 {
     QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
@@ -107,7 +107,7 @@ TEST(Motion, ParseFile)
     }
 }
 
-TEST(Motion, ParseCamera)
+TEST(MotionTest, ParseCamera)
 {
     QFile file("camera.vmd");
     if (file.open(QFile::ReadOnly)) {
@@ -128,7 +128,7 @@ TEST(Motion, ParseCamera)
     }
 }
 
-TEST(Motion, SaveBoneKeyframe)
+TEST(MotionTest, SaveBoneKeyframe)
 {
     Encoding encoding;
     String str(kTestString);
@@ -168,7 +168,7 @@ TEST(Motion, SaveBoneKeyframe)
     CompareBoneInterpolationMatrix(p, *static_cast<BoneKeyframe *>(cloned.data()));
 }
 
-TEST(Motion, SaveCameraKeyframe)
+TEST(MotionTest, SaveCameraKeyframe)
 {
     CameraKeyframe frame, newFrame;
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
@@ -218,7 +218,7 @@ TEST(Motion, SaveCameraKeyframe)
     CompareCameraInterpolationMatrix(p, *static_cast<CameraKeyframe *>(cloned.data()));
 }
 
-TEST(Motion, SaveMorphKeyframe)
+TEST(MotionTest, SaveMorphKeyframe)
 {
     Encoding encoding;
     String str(kTestString);
@@ -242,7 +242,7 @@ TEST(Motion, SaveMorphKeyframe)
     ASSERT_EQ(frame.weight(), cloned->weight());
 }
 
-TEST(Motion, SaveLightKeyframe)
+TEST(MotionTest, SaveLightKeyframe)
 {
     LightKeyframe frame, newFrame;
     Vector3 color(0.1, 0.2, 0.3), direction(4, 5, 6);
@@ -265,7 +265,7 @@ TEST(Motion, SaveLightKeyframe)
     ASSERT_TRUE(cloned->direction() == frame.direction());
 }
 
-TEST(Motion, SaveMotion)
+TEST(MotionTest, SaveMotion)
 {
     QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
@@ -288,7 +288,7 @@ TEST(Motion, SaveMotion)
     }
 }
 
-TEST(Motion, ParseBoneKeyframe)
+TEST(MotionTest, ParseBoneKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -317,7 +317,7 @@ TEST(Motion, ParseBoneKeyframe)
 #endif
 }
 
-TEST(Motion, ParseCameraKeyframe)
+TEST(MotionTest, ParseCameraKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -350,7 +350,7 @@ TEST(Motion, ParseCameraKeyframe)
     // TODO: perspective flag
 }
 
-TEST(Motion, ParseMorphKeyframe)
+TEST(MotionTest, ParseMorphKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -370,7 +370,7 @@ TEST(Motion, ParseMorphKeyframe)
     ASSERT_EQ(IMorph::WeightPrecision(0.5), frame.weight());
 }
 
-TEST(Motion, ParseLightKeyframe)
+TEST(MotionTest, ParseLightKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -392,7 +392,7 @@ TEST(Motion, ParseLightKeyframe)
 #endif
 }
 
-TEST(Motion, BoneInterpolation)
+TEST(MotionTest, BoneInterpolation)
 {
     Encoding encoding;
     BoneKeyframe frame(&encoding);
@@ -411,7 +411,7 @@ TEST(Motion, BoneInterpolation)
     CompareBoneInterpolationMatrix(p, frame);
 }
 
-TEST(Motion, CameraInterpolation)
+TEST(MotionTest, CameraInterpolation)
 {
     CameraKeyframe frame;
     QuadWord n;
@@ -433,7 +433,7 @@ TEST(Motion, CameraInterpolation)
     CompareCameraInterpolationMatrix(p, frame);
 }
 
-TEST(Motion, AddAndRemoveBoneKeyframes)
+TEST(MotionTest, AddAndRemoveBoneKeyframes)
 {
     Encoding encoding;
     String name("bone");
@@ -481,7 +481,7 @@ TEST(Motion, AddAndRemoveBoneKeyframes)
     }
 }
 
-TEST(Motion, AddAndRemoveCameraKeyframes)
+TEST(MotionTest, AddAndRemoveCameraKeyframes)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -525,7 +525,7 @@ TEST(Motion, AddAndRemoveCameraKeyframes)
     }
 }
 
-TEST(Motion, AddAndRemoveLightKeyframes)
+TEST(MotionTest, AddAndRemoveLightKeyframes)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -569,7 +569,7 @@ TEST(Motion, AddAndRemoveLightKeyframes)
     }
 }
 
-TEST(Motion, AddAndRemoveMorphKeyframes)
+TEST(MotionTest, AddAndRemoveMorphKeyframes)
 {
     Encoding encoding;
     String name("morph");

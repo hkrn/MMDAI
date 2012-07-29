@@ -7,14 +7,14 @@
 using namespace ::testing;
 using namespace vpvl2;
 
-TEST(Internal, Lerp)
+TEST(InternalTest, Lerp)
 {
     ASSERT_EQ(4.0, vpvl2::internal::lerp(4, 2, 0));
     ASSERT_EQ(2.0, vpvl2::internal::lerp(4, 2, 1));
     ASSERT_EQ(3.0, vpvl2::internal::lerp(4, 2, 0.5));
 }
 
-TEST(Internal, Size8)
+TEST(InternalTest, Size8)
 {
     QByteArray bytes;
     QBuffer buffer(&bytes);
@@ -35,7 +35,7 @@ TEST(Internal, Size8)
     ASSERT_EQ(size_t(0), rest);
 }
 
-TEST(Internal, Size16)
+TEST(InternalTest, Size16)
 {
     QByteArray bytes;
     QBuffer buffer(&bytes);
@@ -57,7 +57,7 @@ TEST(Internal, Size16)
     ASSERT_EQ(size_t(0), rest);
 }
 
-TEST(Internal, Size32)
+TEST(InternalTest, Size32)
 {
     QByteArray bytes;
     QBuffer buffer(&bytes);
@@ -79,7 +79,7 @@ TEST(Internal, Size32)
     ASSERT_EQ(size_t(0), rest);
 }
 
-TEST(Internal, ClearAll)
+TEST(InternalTest, ClearAll)
 {
     Array<int *> array;
     array.add(new int(1));
@@ -97,7 +97,7 @@ TEST(Internal, ClearAll)
     ASSERT_EQ(0, hash.count());
 }
 
-TEST(Internal, Version)
+TEST(InternalTest, Version)
 {
     ASSERT_TRUE(isLibraryVersionCorrect(VPVL2_VERSION));
     ASSERT_FALSE(isLibraryVersionCorrect(
@@ -107,17 +107,17 @@ TEST(Internal, Version)
     ASSERT_STREQ(VPVL2_VERSION_STRING, libraryVersionString());
 }
 
-TEST(Internal, Radian2Degree)
+TEST(InternalTest, Radian2Degree)
 {
     ASSERT_EQ(180.0f, degree(radian(180.0f)));
 }
 
-TEST(Internal, Degree2Radian)
+TEST(InternalTest, Degree2Radian)
 {
     ASSERT_EQ(kPI, radian(degree(kPI)));
 }
 
-TEST(Internal, SizeText)
+TEST(InternalTest, SizeText)
 {
     QByteArray bytes;
     QBuffer buffer(&bytes);
@@ -136,7 +136,7 @@ TEST(Internal, SizeText)
     ASSERT_TRUE(qstrncmp("test", reinterpret_cast<const char *>(text), expected) == 0);
 }
 
-TEST(Internal, ReadWriteSignedIndex8)
+TEST(InternalTest, ReadWriteSignedIndex8)
 {
     int8_t expected = std::numeric_limits<int8_t>::min();
     QByteArray bytes;
@@ -147,7 +147,7 @@ TEST(Internal, ReadWriteSignedIndex8)
     ASSERT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
-TEST(Internal, ReadWriteSignedIndex16)
+TEST(InternalTest, ReadWriteSignedIndex16)
 {
     int16_t expected = std::numeric_limits<int16_t>::min();
     QByteArray bytes;
@@ -158,7 +158,7 @@ TEST(Internal, ReadWriteSignedIndex16)
     ASSERT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
-TEST(Internal, ReadWriteSignedIndex32)
+TEST(InternalTest, ReadWriteSignedIndex32)
 {
     int expected = std::numeric_limits<int>::min();
     QByteArray bytes;
@@ -169,7 +169,7 @@ TEST(Internal, ReadWriteSignedIndex32)
     ASSERT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
-TEST(Internal, ReadWriteUnsignedIndex8)
+TEST(InternalTest, ReadWriteUnsignedIndex8)
 {
     uint8_t expected = std::numeric_limits<uint8_t>::max();
     QByteArray bytes;
@@ -180,7 +180,7 @@ TEST(Internal, ReadWriteUnsignedIndex8)
     ASSERT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
-TEST(Internal, ReadWriteUnsignedIndex16)
+TEST(InternalTest, ReadWriteUnsignedIndex16)
 {
     uint16_t expected = std::numeric_limits<uint16_t>::max();
     QByteArray bytes;
@@ -191,7 +191,7 @@ TEST(Internal, ReadWriteUnsignedIndex16)
     ASSERT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
-TEST(Internal, ReadWriteUnsignedIndex32)
+TEST(InternalTest, ReadWriteUnsignedIndex32)
 {
     int expected = std::numeric_limits<int>::max();
     QByteArray bytes;
@@ -202,7 +202,7 @@ TEST(Internal, ReadWriteUnsignedIndex32)
     ASSERT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
-TEST(Internal, SetAndGetPosition)
+TEST(InternalTest, SetAndGetPosition)
 {
     Vector3 v(0.1, 0.2, 0.3);
     float f[3];
@@ -213,7 +213,7 @@ TEST(Internal, SetAndGetPosition)
     ASSERT_EQ(0.3f, btFabs(v.z()));
 }
 
-TEST(Internal, SetAndGetRotation)
+TEST(InternalTest, SetAndGetRotation)
 {
     Quaternion q(0.1, 0.2, 0.3, 0.4);
     float f[4];
@@ -225,7 +225,7 @@ TEST(Internal, SetAndGetRotation)
     ASSERT_EQ(0.4f, q.w());
 }
 
-TEST(Internal, WriteNullString)
+TEST(InternalTest, WriteNullString)
 {
     QByteArray bytes;
     size_t size = vpvl2::internal::estimateSize(0);
@@ -236,7 +236,7 @@ TEST(Internal, WriteNullString)
     ASSERT_EQ(0, vpvl2::internal::readSignedIndex(ptr, sizeof(int)));
 }
 
-TEST(Internal, WriteNotNullString)
+TEST(InternalTest, WriteNotNullString)
 {
     QByteArray bytes;
     String str("Hello World");
@@ -249,14 +249,14 @@ TEST(Internal, WriteNotNullString)
     ASSERT_EQ(0, qstrncmp(reinterpret_cast<const char *>(str.toByteArray()), reinterpret_cast<const char *>(ptr), length));
 }
 
-TEST(Internal, EstimateSize)
+TEST(InternalTest, EstimateSize)
 {
     String str("Hello World");
     ASSERT_EQ(size_t(4), vpvl2::internal::estimateSize(0));
     ASSERT_EQ(size_t(4) + str.length(), vpvl2::internal::estimateSize(&str));
 }
 
-TEST(Internal, SetString)
+TEST(InternalTest, SetString)
 {
     IString *value = 0;
     vpvl2::internal::setString(0, value);
@@ -268,7 +268,7 @@ TEST(Internal, SetString)
     delete value;
 }
 
-TEST(Internal, SetStringDirect)
+TEST(InternalTest, SetStringDirect)
 {
     IString *value = 0;
     vpvl2::internal::setStringDirect(0, value);
@@ -279,7 +279,7 @@ TEST(Internal, SetStringDirect)
     ASSERT_TRUE(value->equals(&str));
 }
 
-TEST(Internal, ToggleFlag)
+TEST(InternalTest, ToggleFlag)
 {
     uint16_t flag = 0;
     vpvl2::internal::toggleFlag(0x0002, true, flag);

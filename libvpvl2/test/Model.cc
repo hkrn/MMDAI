@@ -645,126 +645,126 @@ static void TestReadWriteVertexSdef(size_t indexSize)
 
 }
 
-TEST(Bone, ReadWrite)
+TEST(BoneTest, ReadWrite)
 {
     TestReadWriteBone(1);
     TestReadWriteBone(2);
     TestReadWriteBone(4);
 }
 
-TEST(Joint, ReadWrite)
+TEST(JointTest, ReadWrite)
 {
     TestReadWriteJoint(1);
     TestReadWriteJoint(2);
     TestReadWriteJoint(4);
 }
 
-TEST(Material, ReadWrite)
+TEST(MaterialTest, ReadWrite)
 {
     TestReadWriteMaterial(1);
     TestReadWriteMaterial(2);
     TestReadWriteMaterial(4);
 }
 
-TEST(Morph, ReadWriteBone)
+TEST(MorphTest, ReadWriteBone)
 {
     TestReadWriteBoneMorph(1);
     TestReadWriteBoneMorph(2);
     TestReadWriteBoneMorph(4);
 }
 
-TEST(Morph, ReadWriteGroup)
+TEST(MorphTest, ReadWriteGroup)
 {
     TestReadWriteGroupMorph(1);
     TestReadWriteGroupMorph(2);
     TestReadWriteGroupMorph(4);
 }
 
-TEST(Morph, ReadWriteMaterial)
+TEST(MorphTest, ReadWriteMaterial)
 {
     TestReadWriteMaterialMorph(1);
     TestReadWriteMaterialMorph(2);
     TestReadWriteMaterialMorph(4);
 }
 
-TEST(RigidBody, ReadWrite)
+TEST(RigidBodyTest, ReadWrite)
 {
     TestReadWriteRigidBody(1);
     TestReadWriteRigidBody(2);
     TestReadWriteRigidBody(4);
 }
 
-TEST(Morph, ReadWriteTexCoord)
+TEST(MorphTest, ReadWriteTexCoord)
 {
     TestReadWriteUVMorph(1, pmx::Morph::kTexCoord);
     TestReadWriteUVMorph(2, pmx::Morph::kTexCoord);
     TestReadWriteUVMorph(4, pmx::Morph::kTexCoord);
 }
 
-TEST(Morph, ReadWriteUVA1)
+TEST(MorphTest, ReadWriteUVA1)
 {
     TestReadWriteUVMorph(1, pmx::Morph::kUVA1);
     TestReadWriteUVMorph(2, pmx::Morph::kUVA1);
     TestReadWriteUVMorph(4, pmx::Morph::kUVA1);
 }
 
-TEST(Morph, ReadWriteUVA2)
+TEST(MorphTest, ReadWriteUVA2)
 {
     TestReadWriteUVMorph(1, pmx::Morph::kUVA2);
     TestReadWriteUVMorph(2, pmx::Morph::kUVA2);
     TestReadWriteUVMorph(4, pmx::Morph::kUVA2);
 }
 
-TEST(Morph, ReadWriteUVA3)
+TEST(MorphTest, ReadWriteUVA3)
 {
     TestReadWriteUVMorph(1, pmx::Morph::kUVA3);
     TestReadWriteUVMorph(2, pmx::Morph::kUVA3);
     TestReadWriteUVMorph(4, pmx::Morph::kUVA3);
 }
 
-TEST(Morph, ReadWriteUVA4)
+TEST(MorphTest, ReadWriteUVA4)
 {
     TestReadWriteUVMorph(1, pmx::Morph::kUVA4);
     TestReadWriteUVMorph(2, pmx::Morph::kUVA4);
     TestReadWriteUVMorph(4, pmx::Morph::kUVA4);
 }
 
-TEST(Morph, ReadWriteVertex)
+TEST(MorphTest, ReadWriteVertex)
 {
     TestReadWriteVertexMorph(1);
     TestReadWriteVertexMorph(2);
     TestReadWriteVertexMorph(4);
 }
 
-TEST(Vertex, ReadWriteBdef1)
+TEST(VertexTest, ReadWriteBdef1)
 {
     TestReadWriteVertexBdef1(1);
     TestReadWriteVertexBdef1(2);
     TestReadWriteVertexBdef1(4);
 }
 
-TEST(Vertex, ReadWriteBdef2)
+TEST(VertexTest, ReadWriteBdef2)
 {
     TestReadWriteVertexBdef2(1);
     TestReadWriteVertexBdef2(2);
     TestReadWriteVertexBdef2(4);
 }
 
-TEST(Vertex, ReadWriteBdef4)
+TEST(VertexTest, ReadWriteBdef4)
 {
     TestReadWriteVertexBdef4(1);
     TestReadWriteVertexBdef4(2);
     TestReadWriteVertexBdef4(4);
 }
 
-TEST(Vertex, ReadWriteSdef)
+TEST(VertexTest, ReadWriteSdef)
 {
     TestReadWriteVertexSdef(1);
     TestReadWriteVertexSdef(2);
     TestReadWriteVertexSdef(4);
 }
 
-TEST(Model, ParseEmpty)
+TEST(ModelTest, ParseEmpty)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -773,7 +773,7 @@ TEST(Model, ParseEmpty)
     ASSERT_EQ(Model::kInvalidHeaderError, model.error());
 }
 
-TEST(Model, ParseFile)
+TEST(ModelTest, ParseFile)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -791,7 +791,7 @@ TEST(Model, ParseFile)
     }
 }
 
-TEST(Bone, DefaultFlags)
+TEST(BoneTest, DefaultFlags)
 {
     Bone bone;
     ASSERT_FALSE(bone.isMovable());
@@ -807,7 +807,7 @@ TEST(Bone, DefaultFlags)
     ASSERT_FALSE(bone.isTransformedByExternalParent());
 }
 
-TEST(Vertex, Boundary)
+TEST(VertexTest, Boundary)
 {
     Vertex vertex;
     Bone *bone = new Bone();
@@ -826,7 +826,7 @@ TEST(Vertex, Boundary)
     delete bone;
 }
 
-TEST(Material, MergeAmbientColor)
+TEST(MaterialTest, MergeAmbientColor)
 {
     Material material;
     Morph::Material morph;
@@ -888,7 +888,7 @@ TEST(Material, MergeAmbientColor)
     Compare(Color(1.4, 1.4, 1.4, 1.0), material.ambient());
 }
 
-TEST(Material, MergeDiffuseColor)
+TEST(MaterialTest, MergeDiffuseColor)
 {
     Material material;
     Morph::Material morph;
@@ -949,7 +949,7 @@ TEST(Material, MergeDiffuseColor)
     Compare(Color(1.4, 1.4, 1.4, 1.4), material.diffuse());
 }
 
-TEST(Material, MergeSpecularColor)
+TEST(MaterialTest, MergeSpecularColor)
 {
     Material material;
     Morph::Material morph;
@@ -1010,7 +1010,7 @@ TEST(Material, MergeSpecularColor)
     Compare(Color(1.4, 1.4, 1.4, 1.0), material.specular());
 }
 
-TEST(Material, MergeShininess)
+TEST(MaterialTest, MergeShininess)
 {
     Material material;
     Morph::Material morph;
@@ -1069,7 +1069,7 @@ TEST(Material, MergeShininess)
     ASSERT_FLOAT_EQ(material.shininess(), 1.4f);
 }
 
-TEST(Material, MergeEdgeColor)
+TEST(MaterialTest, MergeEdgeColor)
 {
     Material material;
     Morph::Material morph;
@@ -1130,7 +1130,7 @@ TEST(Material, MergeEdgeColor)
     Compare(Color(1.4, 1.4, 1.4, 1.4), material.edgeColor());
 }
 
-TEST(Material, MergeEdgeSize)
+TEST(MaterialTest, MergeEdgeSize)
 {
     Material material;
     Morph::Material morph;
