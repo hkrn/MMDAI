@@ -55,8 +55,10 @@
 #include <QtOpenGL/QtOpenGL>
 #endif /* VPVL_LINK_QT */
 
-#define VPVL2_CG_STREQ_CONST(s, c) (0 == strncmp((s), (c), (sizeof(c)) - 1))
-#define VPVL2_CG_GET_SUFFIX(s, c) (s + (sizeof(c) - 1))
+#define VPVL2_CG_GET_LENGTH_CONST(s) (sizeof(s) - 1)
+#define VPVL2_CG_GET_SUFFIX(s, c) (s + VPVL2_CG_GET_LENGTH_CONST(c))
+#define VPVL2_CG_STREQ_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
+    0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
 
 namespace
 {
@@ -153,11 +155,14 @@ void BaseParameter::addParameter(CGparameter parameter)
 
 void BaseParameter::connectParameter(const CGparameter sourceParameter, CGparameter &destinationParameter)
 {
-    if (destinationParameter) {
-        cgConnectParameter(sourceParameter, destinationParameter);
-    }
-    else {
-        destinationParameter = sourceParameter;
+    /* prevent infinite reference loop */
+    if (sourceParameter != destinationParameter) {
+        if (destinationParameter) {
+            cgConnectParameter(sourceParameter, destinationParameter);
+        }
+        else {
+            destinationParameter = sourceParameter;
+        }
     }
 }
 
@@ -267,10 +272,11 @@ void MatrixSemantic::addParameter(CGparameter parameter, const char *suffix)
     }
     else {
         const char *name = cgGetStringAnnotationValue(annotation);
-        if (VPVL2_CG_STREQ_CONST(name, "Camera")) {
+        const size_t len = strlen(name);
+        if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
             setParameter(parameter, suffix, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
         }
-        else if (VPVL2_CG_STREQ_CONST(name, "Light")) {
+        else if (VPVL2_CG_STREQ_CONST(name, len, "Light")) {
             setParameter(parameter, suffix, m_lightInversed, m_lightTransposed, m_lightInverseTransposed, m_light);
         }
     }
@@ -306,13 +312,14 @@ void MatrixSemantic::setParameter(const CGparameter sourceParameter,
     static const char kInverseTranspose[] = "INVERSETRANSPOSE";
     static const char kTranspose[] = "TRANSPOSE";
     static const char kInverse[] = "INVERSE";
-    if (VPVL2_CG_STREQ_CONST(suffix, kInverseTranspose)) {
+    const size_t len = strlen(suffix);
+    if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseTranspose)) {
         BaseParameter::connectParameter(sourceParameter, inversetransposed);
     }
-    else if (VPVL2_CG_STREQ_CONST(suffix, kTranspose)) {
+    else if (VPVL2_CG_STREQ_CONST(suffix, len, kTranspose)) {
         BaseParameter::connectParameter(sourceParameter, transposed);
     }
-    else if (VPVL2_CG_STREQ_CONST(suffix, kInverse)) {
+    else if (VPVL2_CG_STREQ_CONST(suffix, len, kInverse)) {
         BaseParameter::connectParameter(sourceParameter, inverse);
     }
     else {
@@ -347,19 +354,21 @@ MaterialSemantic::~MaterialSemantic()
 void MaterialSemantic::addParameter(CGparameter parameter)
 {
     const char *name = cgGetParameterSemantic(parameter);
-    if (VPVL2_CG_STREQ_CONST(name, "SPECULARPOWER")
-            || VPVL2_CG_STREQ_CONST(name, "EMISSIVE")
-            || VPVL2_CG_STREQ_CONST(name, "TOONCOLOR")) {
+    const size_t nlen = strlen(name);
+    if (VPVL2_CG_STREQ_CONST(name, nlen, "SPECULARPOWER")
+            || VPVL2_CG_STREQ_CONST(name, nlen, "EMISSIVE")
+            || VPVL2_CG_STREQ_CONST(name, nlen, "TOONCOLOR")) {
         BaseParameter::connectParameter(parameter, m_geometry);
     }
     else {
         CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
         if (cgIsAnnotation(annotation)) {
-            const char *name = cgGetStringAnnotationValue(annotation);
-            if (VPVL2_CG_STREQ_CONST(name, "Geometry")) {
+            const char *aname = cgGetStringAnnotationValue(annotation);
+            const size_t alen = strlen(name);
+            if (VPVL2_CG_STREQ_CONST(aname, alen,  "Geometry")) {
                 BaseParameter::connectParameter(parameter, m_geometry);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "Light")) {
+            else if (VPVL2_CG_STREQ_CONST(aname, alen, "Light")) {
                 BaseParameter::connectParameter(parameter, m_light);
             }
         }
@@ -433,10 +442,11 @@ void GeometrySemantic::addParameter(CGparameter parameter)
     CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
     if (cgIsAnnotation(annotation)) {
         const char *name = cgGetStringAnnotationValue(annotation);
-        if (VPVL2_CG_STREQ_CONST(name, "Camera")) {
+        const size_t len = strlen(name);
+        if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
             BaseParameter::connectParameter(parameter, m_camera);
         }
-        else if (VPVL2_CG_STREQ_CONST(name, "Light")) {
+        else if (VPVL2_CG_STREQ_CONST(name, len, "Light")) {
             BaseParameter::connectParameter(parameter, m_light);
         }
     }
@@ -525,10 +535,11 @@ void ControlObjectSemantic::update(const IModel *self)
         CGparameter parameter = m_parameters[i];
         CGannotation nameAnnotation = cgGetNamedParameterAnnotation(parameter, "name");
         const char *name = cgGetStringAnnotationValue(nameAnnotation);
-        if (VPVL2_CG_STREQ_CONST(name, "(self)")) {
+        const size_t len = strlen(name);
+        if (VPVL2_CG_STREQ_CONST(name, len, "(self)")) {
             setParameter(self, parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(name, "(OffscreenOwner)")) {
+        else if (VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
             IEffect *parent = m_effect->parentEffect();
             if (parent) {
                 const IModel *model = m_delegate->effectOwner(parent);
@@ -552,6 +563,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
         const CGannotation itemAnnotation = cgGetNamedParameterAnnotation(parameter, "item");
         if (cgIsAnnotation(itemAnnotation)) {
             const char *item = cgGetStringAnnotationValue(itemAnnotation);
+            const size_t len = strlen(item);
             const IModel::Type type = model->type();
             if (type == IModel::kPMD || type == IModel::kPMX) {
                 const IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(item));
@@ -580,35 +592,35 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 const Vector3 &position = model->position();
                 const Quaternion &rotation = model->rotation();
                 const CGtype parameterType = cgGetParameterType(parameter);
-                if (VPVL2_CG_STREQ_CONST(item, "X") && parameterType == CG_FLOAT) {
+                if (VPVL2_CG_STREQ_CONST(item, len, "X") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, position.x());
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Y") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Y") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, position.y());
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Z") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Z") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, position.z());
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "XYZ") && parameterType == CG_FLOAT3) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "XYZ") && parameterType == CG_FLOAT3) {
                     cgSetParameter3fv(parameter, position);
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Rx") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Rx") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, btDegrees(rotation.x()));
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Ry") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Ry") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, btDegrees(rotation.y()));
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Rz") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Rz") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, btDegrees(rotation.z()));
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Rxyz") && parameterType == CG_FLOAT3) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Rxyz") && parameterType == CG_FLOAT3) {
                     const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
                     cgSetParameter3fv(parameter, rotationDegree);
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Si") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Si") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, model->scaleFactor());
                 }
-                else if (VPVL2_CG_STREQ_CONST(item, "Tr") && parameterType == CG_FLOAT) {
+                else if (VPVL2_CG_STREQ_CONST(item, len, "Tr") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, model->opacity());
                 }
             }
@@ -685,14 +697,15 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
     int flags;
     if (enableAllTextureTypes && cgIsAnnotation(resourceType)) {
         const char *typeName = cgGetStringAnnotationValue(resourceType);
+        const size_t len = strlen(typeName);
         const CGtype samplerType = cgGetParameterType(sampler);
-        if (VPVL2_CG_STREQ_CONST(typeName, "CUBE") && samplerType == CG_SAMPLERCUBE) {
+        if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == CG_SAMPLERCUBE) {
             flags = IRenderDelegate::kTextureCube;
         }
-        else if (VPVL2_CG_STREQ_CONST(typeName, "3D") && samplerType == CG_SAMPLER3D) {
+        else if (VPVL2_CG_STREQ_CONST(typeName, len, "3D") && samplerType == CG_SAMPLER3D) {
             flags = IRenderDelegate::kTexture3D;
         }
-        else if (VPVL2_CG_STREQ_CONST(typeName, "2D") && samplerType == CG_SAMPLER2D) {
+        else if (VPVL2_CG_STREQ_CONST(typeName, len, "2D") && samplerType == CG_SAMPLER2D) {
             flags = IRenderDelegate::kTexture2D;
         }
         else {
@@ -783,37 +796,38 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
     if (!formatString)
         return;
     static const char kPrefix[] = "D3DFMT_";
-    const char *ptr = VPVL2_CG_STREQ_CONST(formatString, kPrefix)
+    const char *ptr = VPVL2_CG_STREQ_CONST(formatString, VPVL2_CG_GET_LENGTH_CONST(kPrefix), kPrefix)
             ? VPVL2_CG_GET_SUFFIX(formatString, kPrefix) : formatString;
-    if (VPVL2_CG_STREQ_CONST(ptr, "A32B32G32R32F")) {
+    const size_t len = strlen(ptr);
+    if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
         internal = GL_RGBA32F_ARB;
         type = GL_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(ptr, "A16B16G16R16F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
         internal = GL_RGBA16F_ARB;
         type = GL_HALF_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(ptr, "R32F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R32F")) {
         internal = GL_R32F;
         format = GL_RED;
         type = GL_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(ptr, "R16F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R16F")) {
         internal = GL_R16F;
         format = GL_RG;
         type = GL_HALF_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(ptr, "G32R32F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "G32R32F")) {
         internal = GL_RG32F;
         format = GL_RG;
         type = GL_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(ptr, "G16R16F")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16F")) {
         internal = GL_RG16F;
         format = GL_RG;
         type = GL_HALF_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(formatString, "G16R16")) {
+    else if (VPVL2_CG_STREQ_CONST(formatString, len, "G16R16")) {
         internal = GL_RG16;
         format = GL_RG;
         type = GL_UNSIGNED_SHORT;
@@ -1159,119 +1173,121 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
     CGparameter parameter = cgGetFirstEffectParameter(value);
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
-        if (VPVL2_CG_STREQ_CONST(semantic, "VIEWPORTPIXELSIZE")) {
+        const size_t slen = strlen(semantic);
+        if (VPVL2_CG_STREQ_CONST(semantic, slen, "VIEWPORTPIXELSIZE")) {
             viewportPixelSize.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, kWorldViewProjectionSemantic)) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kWorldViewProjectionSemantic)) {
             worldViewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, kWorldViewSemantic)) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kWorldViewSemantic)) {
             worldView.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, kViewProjectionSemantic)) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kViewProjectionSemantic)) {
             viewProjection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kViewProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, kWorldSemantic)) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kWorldSemantic)) {
             world.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kWorldSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, kViewSemantic)) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kViewSemantic)) {
             view.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kViewSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, kProjectionSemantic)) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, kProjectionSemantic)) {
             projection.addParameter(parameter, VPVL2_CG_GET_SUFFIX(semantic, kProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "DIFFUSE")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "DIFFUSE")) {
             diffuse.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "AMBIENT")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "AMBIENT")) {
             ambient.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "EMISSIVE")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "EMISSIVE")) {
             emissive.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "SPECULARPOWER")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SPECULARPOWER")) {
             specularPower.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "SPECULAR")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SPECULAR")) {
             specular.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "TOONCOLOR")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TOONCOLOR")) {
             toonColor.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "EDGECOLOR")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "EDGECOLOR")) {
             edgeColor.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "_POSITION")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_POSITION")) {
             position.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "_DIRECTION")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_DIRECTION")) {
             direction.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "TIME")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TIME")) {
             time.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "ELAPSEDTIME")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ELAPSEDTIME")) {
             elapsedTime.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "MOUSEPOSITION")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MOUSEPOSITION")) {
             mousePosition.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "LEFTMOUSEDOWN")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "LEFTMOUSEDOWN")) {
             leftMouseDown.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "MIDDLEMOUSEDOWN")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MIDDLEMOUSEDOWN")) {
             middleMouseDown.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "RIGHTMOUSEDOWN")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RIGHTMOUSEDOWN")) {
             rightMouseDown.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "CONTROLOBJECT")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "CONTROLOBJECT")) {
             controlObject.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "ANIMATEDTEXTURE")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ANIMATEDTEXTURE")) {
             animatedTexture.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "TEXTUREVALUE")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXTUREVALUE")) {
             textureValue.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERDEPTHSTENCILTARGET")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
             renderDepthStencilTarget.addParameter(parameter, 0, dir, false, false);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "STANDARDSGLOBAL")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
             setStandardsGlobal(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "_INDEX")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, "TEXUNIT0")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXUNIT0")) {
             depthTexture.addParameter(parameter);
         }
         else {
             const char *name = cgGetParameterName(parameter);
-            if (VPVL2_CG_STREQ_CONST(name, "parthf")) {
+            const size_t nlen = strlen(semantic);
+            if (VPVL2_CG_STREQ_CONST(name, nlen, "parthf")) {
                 parthf.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "spadd")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "spadd")) {
                 spadd.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "transp")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "transp")) {
                 transp.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "use_texture")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "use_texture")) {
                 useTexture.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name,"use_spheremap")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "use_spheremap")) {
                 useSpheremap.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "use_toon")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "use_toon")) {
                 useToon.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "opadd")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "opadd")) {
                 opadd.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "VertexCount")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "VertexCount")) {
                 vertexCount.addParameter(parameter);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, "SubsetCount")) {
+            else if (VPVL2_CG_STREQ_CONST(name, nlen, "SubsetCount")) {
                 subsetCount.addParameter(parameter);
             }
             else {
@@ -1699,37 +1715,40 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter)
     const CGannotation scriptClassAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptClass");
     if (cgIsAnnotation(scriptClassAnnotation)) {
         const char *value = cgGetStringAnnotationValue(scriptClassAnnotation);
-        if (VPVL2_CG_STREQ_CONST(value, "object")) {
+        const size_t len = strlen(value);
+        if (VPVL2_CG_STREQ_CONST(value, len, "object")) {
             m_scriptClass = kObject;
         }
-        else if (VPVL2_CG_STREQ_CONST(value, "scene")) {
+        else if (VPVL2_CG_STREQ_CONST(value, len, "scene")) {
             m_scriptClass = kScene;
         }
-        else if (VPVL2_CG_STREQ_CONST(value, "sceneorobject")) {
+        else if (VPVL2_CG_STREQ_CONST(value, len, "sceneorobject")) {
             m_scriptClass = kSceneOrObject;
         }
     }
     const CGannotation scriptOrderAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptOrder");
     if (cgIsAnnotation(scriptOrderAnnotation)) {
         const char *value = cgGetStringAnnotationValue(scriptOrderAnnotation);
-        if (VPVL2_CG_STREQ_CONST(value, "standard")) {
+        const size_t len = strlen(value);
+        if (VPVL2_CG_STREQ_CONST(value, len, "standard")) {
             m_scriptOrder = IEffect::kStandard;
         }
-        else if (VPVL2_CG_STREQ_CONST(value, "preprocess")) {
+        else if (VPVL2_CG_STREQ_CONST(value, len, "preprocess")) {
             m_scriptOrder = IEffect::kPreProcess;
         }
-        else if (VPVL2_CG_STREQ_CONST(value, "postprocess")) {
+        else if (VPVL2_CG_STREQ_CONST(value, len, "postprocess")) {
             m_scriptOrder = IEffect::kPostProcess;
         }
     }
     const CGannotation scriptAnnotation = cgGetNamedParameterAnnotation(parameter, "Script");
     if (cgIsAnnotation(scriptAnnotation)) {
         const char *value = cgGetStringAnnotationValue(scriptAnnotation);
+        const size_t len = strlen(value);
         static const char kMultipleTechniques[] = "Technique=Technique?";
         static const char kSingleTechnique[] = "Technique=";
         m_techniques.clear();
         CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
-        if (VPVL2_CG_STREQ_CONST(value, kMultipleTechniques)) {
+        if (VPVL2_CG_STREQ_CONST(value, len, kMultipleTechniques)) {
             const std::string s(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
             std::istringstream stream(s);
             std::string segment;
@@ -1738,7 +1757,7 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter)
                 addTechniquePasses(technique);
             }
         }
-        else if (VPVL2_CG_STREQ_CONST(value, kSingleTechnique)) {
+        else if (VPVL2_CG_STREQ_CONST(value, len, kSingleTechnique)) {
             CGtechnique technique = cgGetNamedTechnique(effect, VPVL2_CG_GET_SUFFIX(value, kSingleTechnique));
             addTechniquePasses(technique);
         }
@@ -1755,16 +1774,17 @@ void EffectEngine::setTextureParameters(CGparameter parameter, const IString *di
             if (cgIsState(s) && cgGetStateType(s) == CG_TEXTURE) {
                 CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
                 const char *semantic = cgGetParameterSemantic(textureParameter);
-                if (VPVL2_CG_STREQ_CONST(semantic, "MATERIALTEXTURE")) {
+                const size_t len = strlen(semantic);
+                if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
                     materialTexture.addParameter(parameter);
                 }
-                else if (VPVL2_CG_STREQ_CONST(semantic, "MATERIALSPHEREMAP")) {
+                else if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
                     materialSphereMap.addParameter(parameter);
                 }
-                else if (VPVL2_CG_STREQ_CONST(semantic, "RENDERCOLORTARGET")) {
+                else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
                     renderColorTarget.addParameter(textureParameter, parameter, dir, false, false);
                 }
-                else if (VPVL2_CG_STREQ_CONST(semantic, "OFFSCREENRENDERTARGET")) {
+                else if (VPVL2_CG_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
                     offscreenRenderTarget.addParameter(textureParameter, parameter, dir);
                 }
                 else {
@@ -2110,6 +2130,3 @@ void EffectEngine::ScriptState::setFromBuffer(const RenderDepthStencilTargetSema
 
 }
 }
-
-#undef VPVL2_CG_GET_SUFFIX
-#undef VPVL2_CG_STREQ_CONST
