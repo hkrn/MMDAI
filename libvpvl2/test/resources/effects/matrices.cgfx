@@ -1,0 +1,74 @@
+/* Camera */
+float4x4 CW   : WORLD;
+float4x4 CV   : VIEW;
+float4x4 CP   : PROJECTION;
+float4x4 CWV  : WORLDVIEW;
+float4x4 CVP  : VIEWPROJECTION;
+float4x4 CWP  : WORLDPROJECTION;
+float4x4 CWVP : WORLDVIEWPROJECTION;
+
+/* Light */
+float4x4 LW   : WORLD < string Object = "Light"; >;
+float4x4 LV   : VIEW < string Object = "Light"; >;
+float4x4 LP   : PROJECTION < string Object = "Light"; >;
+float4x4 LWV  : WORLDVIEW < string Object = "Light"; >;
+float4x4 LVP  : VIEWPROJECTION < string Object = "Light"; >;
+float4x4 LWP  : WORLDPROJECTION < string Object = "Light"; >;
+float4x4 LWVP : WORLDVIEWPROJECTION < string Object = "Light"; >;
+
+/* Camera (Inversed) */
+float4x4 CWI   : WORLDINVERSE;
+float4x4 CVI   : VIEWINVERSE;
+float4x4 CPI   : PROJECTIONINVERSE;
+float4x4 CWVI  : WORLDVIEWINVERSE;
+float4x4 CVPI  : VIEWPROJECTIONINVERSE;
+float4x4 CWPI  : WORLDPROJECTIONINVERSE;
+float4x4 CWVPI : WORLDVIEWPROJECTIONINVERSE;
+
+/* Light (Inversed) */
+float4x4 LWI   : WORLDINVERSE < string Object = "Light"; >;
+float4x4 LVI   : VIEWINVERSE < string Object = "Light"; >;
+float4x4 LPI   : PROJECTIONINVERSE < string Object = "Light"; >;
+float4x4 LWVI  : WORLDVIEWINVERSE < string Object = "Light"; >;
+float4x4 LVPI  : VIEWPROJECTIONINVERSE < string Object = "Light"; >;
+float4x4 LWPI  : WORLDPROJECTIONINVERSE < string Object = "Light"; >;
+float4x4 LWVPI : WORLDVIEWPROJECTIONINVERSE < string Object = "Light"; >;
+
+/* Camera (Transposed) */
+float4x4 CWT   : WORLDTRANSPOSE;
+float4x4 CVT   : VIEWTRANSPOSE;
+float4x4 CPT   : PROJECTIONTRANSPOSE;
+float4x4 CWVT  : WORLDVIEWTRANSPOSE;
+float4x4 CVPT  : VIEWPROJECTIONTRANSPOSE;
+float4x4 CWPT  : WORLDPROJECTIONTRANSPOSE;
+float4x4 CWVPT : WORLDVIEWPROJECTIONTRANSPOSE;
+
+/* Light (Transposed) */
+float4x4 LWT   : WORLDTRANSPOSE < string Object = "Light"; >;
+float4x4 LVT   : VIEWTRANSPOSE < string Object = "Light"; >;
+float4x4 LPT   : PROJECTIONTRANSPOSE < string Object = "Light"; >;
+float4x4 LWVT  : WORLDVIEWTRANSPOSE < string Object = "Light"; >;
+float4x4 LVPT  : VIEWPROJECTIONTRANSPOSE < string Object = "Light"; >;
+float4x4 LWPT  : WORLDPROJECTIONTRANSPOSE < string Object = "Light"; >;
+float4x4 LWVPT : WORLDVIEWPROJECTIONTRANSPOSE < string Object = "Light"; >;
+
+/* Camera (Inversed and Transposed) */
+float4x4 CWIT   : WORLDINVERSETRANSPOSE;
+float4x4 CVIT   : VIEWINVERSETRANSPOSE;
+float4x4 CPIT   : PROJECTIONINVERSETRANSPOSE;
+float4x4 CWVIT  : WORLDVIEWINVERSETRANSPOSE;
+float4x4 CVPIT  : VIEWPROJECTIONINVERSETRANSPOSE;
+float4x4 CWPIT  : WORLDPROJECTIONINVERSETRANSPOSE;
+float4x4 CWVPIT : WORLDVIEWPROJECTIONINVERSETRANSPOSE;
+
+/* Light (Inversed and Transposed) */
+float4x4 LWIT   : WORLDINVERSETRANSPOSE < string Object = "Light"; >;
+float4x4 LVIT   : VIEWINVERSETRANSPOSE < string Object = "Light"; >;
+float4x4 LPIT   : PROJECTIONINVERSETRANSPOSE < string Object = "Light"; >;
+float4x4 LWVIT  : WORLDVIEWINVERSETRANSPOSE < string Object = "Light"; >;
+float4x4 LVPIT  : VIEWPROJECTIONINVERSETRANSPOSE < string Object = "Light"; >;
+float4x4 LWPIT  : WORLDPROJECTIONINVERSETRANSPOSE < string Object = "Light"; >;
+float4x4 LWVPIT : WORLDVIEWPROJECTIONINVERSETRANSPOSE < string Object = "Light"; >;
+
+#include "common.cgfx"
+

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/effects">
+        <file alias="matrices.cgfx">resources/effects/matrices.cgfx</file>
+    </qresource>
+</RCC>

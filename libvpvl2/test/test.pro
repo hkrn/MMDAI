@@ -1,7 +1,6 @@
-QT += core
-QT -= gui
+QT += core gui opengl
 
-TARGET = testml
+TARGET = test
 CONFIG += console
 CONFIG -= app_bundle
 TEMPLATE = app
@@ -37,9 +36,14 @@ HEADERS += Common.h \
     mock/Morph.h \
     mock/MorphKeyframe.h \
     mock/Motion.h \
+    mock/RenderDelegate.h \
 
 SOURCES += main.cc \
+    Effect.cc \
     Internal.cc \
     Model.cc \
     Motion.cc \
     Project.cc
+
+RESOURCES += \
+    fixtures.qrc

@@ -1,4 +1,5 @@
-#include <QtCore/QtCore>
+#include <QtGui/QApplication>
+#include <QtOpenGL/QtOpenGL>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -6,8 +7,11 @@ using namespace ::testing;
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
-    Q_UNUSED(a)
+    QApplication a(argc, argv); Q_UNUSED(a)
+    QGLWidget widget;
+    widget.show();
+    widget.update();
+    widget.hide();
     InitGoogleTest(&argc, argv);
     InitGoogleMock(&argc, argv);
 
