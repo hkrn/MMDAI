@@ -229,9 +229,9 @@ QImage Delegate::loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr)
 
 QGLContext::BindOptions Delegate::textureBindOptions(bool enableMipmap)
 {
+    // disable premultiplified alpha option
     QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
-            | QGLContext::InvertedYBindOption
-            | QGLContext::PremultipliedAlphaBindOption;
+            | QGLContext::InvertedYBindOption;
     if (enableMipmap)
         options |= QGLContext::MipmapBindOption;
     return options;
