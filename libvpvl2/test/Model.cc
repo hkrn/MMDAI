@@ -1,7 +1,11 @@
 #include <gtest/gtest.h>
+#include <QtCore/QtCore>
 
 #include <btBulletDynamicsCommon.h>
+#include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Encoding.h>
 
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Joint.h"
@@ -12,10 +16,10 @@
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
 
-#include "Common.h"
-
 using namespace ::testing;
+using namespace vpvl2;
 using namespace vpvl2::pmx;
+using namespace vpvl2::qt;
 
 namespace
 {
@@ -99,7 +103,7 @@ static void TestReadWriteBone(size_t indexSize)
     Encoding encoding;
     Bone bone, bone2, parent;
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
@@ -171,7 +175,7 @@ static void TestReadWriteJoint(size_t indexSize)
     Joint joint, joint2;
     RigidBody body, body2;
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.rigidBodyIndexSize = indexSize;
@@ -216,7 +220,7 @@ static void TestReadWriteMaterial(size_t indexSize)
     Encoding encoding;
     Material material, material2;
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.textureIndexSize = indexSize;
@@ -263,7 +267,7 @@ static void TestReadWriteBoneMorph(size_t indexSize)
     Morph morph, morph2;
     QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.boneIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -309,7 +313,7 @@ static void TestReadWriteGroupMorph(size_t indexSize)
     Morph morph, morph2;
     QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.morphIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -351,7 +355,7 @@ static void TestReadWriteMaterialMorph(size_t indexSize)
     Morph morph, morph2;
     QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.materialIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -429,7 +433,7 @@ static void TestReadWriteRigidBody(size_t indexSize)
     RigidBody body, body2;
     Bone bone;
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
@@ -476,7 +480,7 @@ static void TestReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
     Morph morph, morph2;
     QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -520,7 +524,7 @@ static void TestReadWriteVertexMorph(size_t indexSize)
     Morph morph, morph2;
     QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
-    String name("Japanese"), englishName("English");
+    CString name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;

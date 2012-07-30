@@ -11,7 +11,9 @@
 #include "vpvl2/vmd/MorphAnimation.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
-#include "Common.h"
+
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Encoding.h>
 
 #include <gmock/gmock.h>
 #include "mock/Bone.h"
@@ -19,7 +21,9 @@
 #include "mock/Morph.h"
 
 using namespace ::testing;
+using namespace vpvl2;
 using namespace vpvl2::pmx;
+using namespace vpvl2::qt;
 using namespace vpvl2::vmd;
 
 namespace
@@ -131,7 +135,7 @@ TEST(MotionTest, ParseCamera)
 TEST(MotionTest, SaveBoneKeyframe)
 {
     Encoding encoding;
-    String str(kTestString);
+    CString str(kTestString);
     BoneKeyframe frame(&encoding), newFrame(&encoding);
     Vector3 pos(1, 2, 3);
     Quaternion rot(4, 5, 6, 7);
@@ -221,7 +225,7 @@ TEST(MotionTest, SaveCameraKeyframe)
 TEST(MotionTest, SaveMorphKeyframe)
 {
     Encoding encoding;
-    String str(kTestString);
+    CString str(kTestString);
     MorphKeyframe frame(&encoding), newFrame(&encoding);
     // initialize the morph frame to be copied
     frame.setName(&str);
@@ -304,7 +308,7 @@ TEST(MotionTest, ParseBoneKeyframe)
     ASSERT_EQ(BoneKeyframe::strideSize(), size_t(bytes.size()));
     Encoding encoding;
     BoneKeyframe frame(&encoding);
-    String str(kTestString);
+    CString str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     ASSERT_TRUE(frame.name()->equals(&str));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
@@ -363,7 +367,7 @@ TEST(MotionTest, ParseMorphKeyframe)
     ASSERT_EQ(MorphKeyframe::strideSize(), size_t(bytes.size()));
     Encoding encoding;
     MorphKeyframe frame(&encoding);
-    String str(kTestString);
+    CString str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     ASSERT_TRUE(frame.name()->equals(&str));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
@@ -436,7 +440,7 @@ TEST(MotionTest, CameraInterpolation)
 TEST(MotionTest, AddAndRemoveBoneKeyframes)
 {
     Encoding encoding;
-    String name("bone");
+    CString name("bone");
     MockIModel model;
     MockIBone bone;
     Motion motion(&model, &encoding);
@@ -572,7 +576,7 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
 TEST(MotionTest, AddAndRemoveMorphKeyframes)
 {
     Encoding encoding;
-    String name("morph");
+    CString name("morph");
     MockIModel model;
     MockIMorph morph;
     Motion motion(&model, &encoding);

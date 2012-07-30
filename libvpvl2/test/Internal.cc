@@ -1,11 +1,12 @@
 #include <QtCore/QtCore>
 #include <gtest/gtest.h>
 #include <vpvl2/internal/util.h>
+#include <vpvl2/qt/CString.h>
 #include <limits>
-#include "Common.h"
 
 using namespace ::testing;
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 TEST(InternalTest, Lerp)
 {
@@ -239,7 +240,7 @@ TEST(InternalTest, WriteNullString)
 TEST(InternalTest, WriteNotNullString)
 {
     QByteArray bytes;
-    String str("Hello World");
+    CString str("Hello World");
     bytes.resize(vpvl2::internal::estimateSize(&str));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
     vpvl2::internal::writeString(&str, data);
@@ -251,7 +252,7 @@ TEST(InternalTest, WriteNotNullString)
 
 TEST(InternalTest, EstimateSize)
 {
-    String str("Hello World");
+    CString str("Hello World");
     ASSERT_EQ(size_t(4), vpvl2::internal::estimateSize(0));
     ASSERT_EQ(size_t(4) + str.length(), vpvl2::internal::estimateSize(&str));
 }
@@ -261,7 +262,7 @@ TEST(InternalTest, SetString)
     IString *value = 0;
     vpvl2::internal::setString(0, value);
     ASSERT_EQ(static_cast<IString*>(0), value);
-    String str("Hello World");
+    CString str("Hello World");
     vpvl2::internal::setString(&str, value);
     ASSERT_TRUE(value != &str);
     ASSERT_TRUE(value->equals(&str));
@@ -273,7 +274,7 @@ TEST(InternalTest, SetStringDirect)
     IString *value = 0;
     vpvl2::internal::setStringDirect(0, value);
     ASSERT_EQ(static_cast<IString*>(0), value);
-    String str("Hello World");
+    CString str("Hello World");
     vpvl2::internal::setStringDirect(&str, value);
     ASSERT_TRUE(value == &str);
     ASSERT_TRUE(value->equals(&str));

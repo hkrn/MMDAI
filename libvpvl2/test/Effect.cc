@@ -4,13 +4,14 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
 #include <vpvl2/cg/EffectEngine.h>
-#include "Common.h"
+#include <vpvl2/qt/CString.h>
 #include "mock/Model.h"
 #include "mock/RenderDelegate.h"
 
 using namespace ::testing;
 using namespace vpvl2;
 using namespace vpvl2::cg;
+using namespace vpvl2::qt;
 using ::testing::InSequence;
 
 class EffectTest : public ::testing::Test {
@@ -29,11 +30,11 @@ public:
         int cwvp = cw | cv | cp;
         EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwvp)).Times(1);
     }
-    void setSource(MockIRenderDelegate &delegate, const String &mockPath, const QString &effectPath) {
+    void setSource(MockIRenderDelegate &delegate, const CString &mockPath, const QString &effectPath) {
         QFile file(effectPath);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
-            String *source = new String(bytes);
+            CString *source = new CString(bytes);
             EXPECT_CALL(delegate, loadShaderSource(IRenderDelegate::kModelEffectTechniques, &mockPath))
                     .Times(1).WillRepeatedly(Return(source));
         }
@@ -44,7 +45,7 @@ TEST_F(EffectTest, ToBool)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/util.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
@@ -61,7 +62,7 @@ TEST_F(EffectTest, ToFloat)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/util.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
@@ -78,7 +79,7 @@ TEST_F(EffectTest, ToInt)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/util.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
@@ -95,7 +96,7 @@ TEST_F(EffectTest, IsPassEquals)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/util.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
@@ -133,7 +134,7 @@ TEST_F(EffectTest, IsIntegerParameter)
     };
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/util.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
@@ -152,7 +153,7 @@ TEST_F(EffectTest, LoadMatrices)
     MockIRenderDelegate delegate;
     MockIModel model, *modelPtr = &model;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/matrices.cgfx");
     setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix);
     setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix);
@@ -172,7 +173,7 @@ TEST_F(EffectTest, LoadMaterialColors)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/materials.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     ASSERT_TRUE(effect->internalPointer());
@@ -203,7 +204,7 @@ TEST_F(EffectTest, LoadGeometries)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/geometries.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     ASSERT_TRUE(effect->internalPointer());
@@ -223,7 +224,7 @@ TEST_F(EffectTest, LoadTimes)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/times.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     ASSERT_TRUE(effect->internalPointer());
@@ -243,7 +244,7 @@ TEST_F(EffectTest, LoadSpecials)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/specials.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     ASSERT_TRUE(effect->internalPointer());
@@ -273,7 +274,7 @@ TEST_F(EffectTest, LoadSASPreProcess)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/preprocess.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     ASSERT_TRUE(effect->internalPointer());
@@ -290,7 +291,7 @@ TEST_F(EffectTest, LoadSASStandard)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/standard.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     ASSERT_TRUE(effect->internalPointer());
@@ -309,7 +310,7 @@ TEST_F(EffectTest, LoadPostProcess)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    String path("/foo/bar/path");
+    CString path("/foo/bar/path");
     setSource(delegate, path, ":effects/postprocess.cgfx");
     cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
     ASSERT_TRUE(effect->internalPointer());

@@ -14,10 +14,12 @@
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
 
-#include "Common.h"
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Encoding.h>
 
 using namespace ::testing;
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 namespace
 {
@@ -39,12 +41,12 @@ public:
     }
 
     const std::string toStdFromString(const IString *value) const {
-        const std::string s(reinterpret_cast<const char *>(value->toByteArray()), value->length());
+        const std::string &s = static_cast<const CString *>(value)->value().toStdString();
         return s;
     }
     IString *toStringFromStd(const std::string &value) const {
         const QString &s = m_codec->toUnicode(value.c_str());
-        return new String(s);
+        return new CString(s);
     }
     void error(const char *format, va_list ap) {
         fprintf(stderr, "ERROR: ");
@@ -82,7 +84,7 @@ static void TestLocalSettings(const Project &project)
 static void TestBoneAnimation(const IMotion *motion)
 {
     const vmd::BoneAnimation &ba = static_cast<const vmd::Motion *>(motion)->boneAnimation();
-    const String bar("bar"), baz("baz");
+    const CString bar("bar"), baz("baz");
     QuadWord q;
     ASSERT_EQ(2, ba.countKeyframes());
     ASSERT_EQ(IKeyframe::TimeIndex(1), ba.frameAt(0)->timeIndex());
@@ -110,7 +112,7 @@ static void TestBoneAnimation(const IMotion *motion)
 static void TestMorphAnimation(const IMotion *motion)
 {
     const vmd::MorphAnimation &ma = static_cast<const vmd::Motion *>(motion)->morphAnimation();
-    String bar("bar"), baz("baz");
+    CString bar("bar"), baz("baz");
     ASSERT_EQ(2, ma.countKeyframes());
     ASSERT_EQ(IKeyframe::TimeIndex(1), ma.frameAt(0)->timeIndex());
     ASSERT_TRUE(ma.frameAt(0)->name()->equals(&bar));
