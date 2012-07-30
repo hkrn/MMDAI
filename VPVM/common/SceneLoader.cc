@@ -530,14 +530,14 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
         if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             QFileInfo fileInfo(filename);
-            CString name(fileInfo.baseName());
+            CString name(fileInfo.completeBaseName());
             asset->setName(&name);
             m_renderDelegate->addModelPath(asset, filename);
             IRenderEngine *engine = createModelEngine(asset, fileInfo.dir());
             if (engine) {
                 uuid = QUuid::createUuid();
                 m_project->addModel(asset, engine, uuid.toString().toStdString());
-                m_project->setModelSetting(asset, Project::kSettingNameKey, fileInfo.baseName().toStdString());
+                m_project->setModelSetting(asset, Project::kSettingNameKey, fileInfo.completeBaseName().toStdString());
                 m_project->setModelSetting(asset, Project::kSettingURIKey, filename.toStdString());
                 m_project->setModelSetting(asset, "selected", "false");
                 m_renderOrderList.add(uuid);
@@ -787,7 +787,7 @@ void SceneLoader::loadProject(const QString &path)
                         continue;
                     }
                     else if (type == IModel::kAsset) {
-                        CString s(fileInfo.baseName().toUtf8());
+                        CString s(fileInfo.completeBaseName().toUtf8());
                         model->setName(&s);
                         m_renderDelegate->setArchive(0);
                         m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
