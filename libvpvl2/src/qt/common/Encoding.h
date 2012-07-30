@@ -38,6 +38,7 @@
 #define VPVL2_QT_ENCODING_H_
 
 #include "vpvl2/IEncoding.h"
+#include "vpvl2/IString.h"
 
 class QTextCodec;
 
@@ -62,6 +63,8 @@ private:
     QTextCodec *m_sjis;
     QTextCodec *m_utf8;
     QTextCodec *m_utf16;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Encoding)
 };
 
 }

@@ -34,10 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_QT_STRING_H_
-#define VPVL2_QT_STRING_H_
+#ifndef VPVL2_QT_CSTRING_H_
+#define VPVL2_QT_CSTRING_H_
 
+#include "vpvl2/Common.h"
 #include "vpvl2/IString.h"
+
 #include <QtCore/QString>
 
 namespace vpvl2
@@ -64,6 +66,8 @@ public:
 private:
     const QByteArray m_bytes;
     const QString m_value;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(CString)
 };
 
 }

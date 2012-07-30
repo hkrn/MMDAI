@@ -37,8 +37,9 @@
 #ifndef VPVL2_QT_DDSTEXTURE_H_
 #define VPVL2_QT_DDSTExTURE_H_
 
+#include "vpvl2/Common.h"
+
 #include <QtOpenGL/QtOpenGL>
-#include <LinearMath/btMinMax.h>
 
 namespace vpvl2
 {
@@ -246,6 +247,8 @@ private:
         }
     } m_header;
     QGLWidget *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(DDSTexture)
 };
 
 }

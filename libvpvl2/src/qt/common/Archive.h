@@ -37,6 +37,7 @@
 #ifndef VPVL2_QT_ARCHIVE_H
 #define VPVL2_QT_ARCHIVE_H
 
+#include "vpvl2/Common.h"
 #include "unzip.h"
 
 #include <QtCore/QByteArray>
@@ -79,6 +80,8 @@ private:
     ErrorType m_error;
     QTextCodec *m_codec;
     QHash<QString, QByteArray> m_entries;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
 };
 
 }

@@ -37,8 +37,9 @@
 #ifndef VPVL2_QT_DELEGATE_H_
 #define VPVL2_QT_DELEGATE_H_
 
-#include <vpvl2/IEffect.h>
-#include <vpvl2/IRenderDelegate.h>
+#include "vpvl2/Common.h"
+#include "vpvl2/IEffect.h"
+#include "vpvl2/IRenderDelegate.h"
 
 #include <QtOpenGL/QtOpenGL>
 
@@ -173,6 +174,8 @@ private:
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
     int m_msaaSamples;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Delegate)
 };
 
 }
