@@ -37,7 +37,7 @@
 #ifndef VPVL2_QT_ARCHIVE_H
 #define VPVL2_QT_ARCHIVE_H
 
-#include "unzip/unzip.h"
+#include "unzip.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>

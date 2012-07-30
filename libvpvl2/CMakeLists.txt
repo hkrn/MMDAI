@@ -297,21 +297,16 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   include(${QT_USE_FILE})
   target_link_libraries(vpvl2 ${QT_LIBRARIES})
   if(VPVL2_BUILD_QT_RENDERER)
-    set(vpvl2qtcommon_sources render/qt/common/Archive.cc
-                              render/qt/common/CString.cc
-                              render/qt/common/DDSTexture.cc
-                              render/qt/common/Delegate.cc
-                              render/qt/common/Encoding.cc
-                              render/qt/unzip/ioapi.c
-                              render/qt/unzip/unzip.c)
-    set(vpvl2qtcommon_headers render/qt/common/Archive.h
-                              render/qt/common/CString.h
-                              render/qt/common/DDSTexture.h
-                              render/qt/common/Delegate.h
-                              render/qt/common/Encoding.h)
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common vpvl2qtcommon_sources)
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip vpvl2qtcommon_sources)
+    set(vpvl2qtcommon_headers src/qt/common/Archive.h
+                              src/qt/common/CString.h
+                              src/qt/common/DDSTexture.h
+                              src/qt/common/Delegate.h
+                              src/qt/common/Encoding.h)
     set(vpvl2_qt_sources render/qt/main.cc
                          render/qt/UI.cc)
-    include_directories(render/qt ${VPVL2_LIB_TYPE} render/qt render/qt/common render/qt/unzip)
+    include_directories(render/qt ${VPVL2_LIB_TYPE} render/qt src/qt/common src/qt/unzip)
     add_library(vpvl2qtcommon ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
     target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
     set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
