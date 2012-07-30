@@ -34,51 +34,86 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_QT_WORLD_H_
-#define VPVL2_QT_WORLD_H_
-
-#include <vpvl2/Common.h>
-#include <vpvl2/IModel.h>
-#include <vpvl2/Scene.h>
-
-#include <btBulletDynamicsCommon.h>
+#include "vpvl2/qt/World.h"
 
 namespace vpvl2
 {
 namespace qt
 {
 
-const static Vector3 kWorldAabbSize(10000, 10000, 10000);
-
-class World
+World::World()
+    : m_dispatcher(0),
+      m_broadphase(0),
+      m_solver(0),
+      m_world(0),
+      m_preferredFPS(0)
 {
-public:
-    World();
-    ~World();
+    m_dispatcher = new btCollisionDispatcher(&m_config);
+    m_broadphase = new btDbvtBroadphase();
+    m_solver = new btSequentialImpulseConstraintSolver();
+    m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
+    setGravity(Vector3(0.0f, -9.8f, 0.0f));
+    setPreferredFPS(Scene::defaultFPS());
+    // m_world.getSolverInfo().m_numIterations = 10;
+}
 
-    const Vector3 gravity() const;
-    void setGravity(const Vector3 &value);
-    void setPreferredFPS(const Scalar &value);
-    void addModel(vpvl2::IModel *value);
-    void removeModel(vpvl2::IModel *value);
-    void addRigidBody(btRigidBody *value);
-    void removeRigidBody(btRigidBody *value);
+World::~World()
+{
+    delete m_dispatcher;
+    m_dispatcher = 0;
+    delete m_broadphase;
+    m_broadphase = 0;
+    delete m_solver;
+    m_solver = 0;
+    delete m_world;
+    m_world = 0;
+}
 
-    void stepSimulationDefault(const Scalar &substep = 1);
-    void stepSimulationDelta(const Scalar &delta);
+const Vector3 World::gravity() const
+{
+    return m_world->getGravity();
+}
 
-private:
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher *m_dispatcher;
-    btDbvtBroadphase *m_broadphase;
-    btConstraintSolver *m_solver;
-    btDiscreteDynamicsWorld *m_world;
-    Scalar m_preferredFPS;
+void World::setGravity(const Vector3 &value)
+{
+    m_world->setGravity(value);
+}
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(World)
-};
+void World::setPreferredFPS(const Scalar &value)
+{
+    m_preferredFPS = value;
+}
+
+void World::addModel(vpvl2::IModel *value)
+{
+    value->joinWorld(m_world);
+}
+
+void World::removeModel(vpvl2::IModel *value)
+{
+    value->leaveWorld(m_world);
+}
+
+void World::addRigidBody(btRigidBody *value)
+{
+    m_world->addRigidBody(value);
+}
+
+void World::removeRigidBody(btRigidBody *value)
+{
+    m_world->removeRigidBody(value);
+}
+
+void World::stepSimulationDefault(const Scalar &substep)
+{
+    m_world->stepSimulation(1, substep, 1.0 / m_preferredFPS);
+}
+
+void World::stepSimulationDelta(const Scalar &delta)
+{
+    const Scalar &step = delta / m_preferredFPS;
+    m_world->stepSimulation(step, 1.0 / m_preferredFPS);
+}
 
 } /* namespace qt */
 } /* namespace vpvl2 */
-
-#endif // WORLD_H
