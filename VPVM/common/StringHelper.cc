@@ -38,7 +38,7 @@
 
 #include <vpvl2/vpvl2.h>
 #include <QtCore/QtCore>
-#include "CString.h"
+#include "vpvl2/qt/CString.h"
 
 namespace internal {
 
