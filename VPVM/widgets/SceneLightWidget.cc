@@ -140,7 +140,7 @@ void SceneLightWidget::openColorDialog()
 
 void SceneLightWidget::setQColor(const QColor &value)
 {
-    setColor(Color(value.redF(), value.blueF(), value.greenF(), 1.0));
+    setColor(Color(value.redF(), value.greenF(), value.blueF(), 1.0));
     updateColor();
 }
 
