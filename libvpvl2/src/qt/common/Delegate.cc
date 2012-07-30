@@ -34,11 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "Archive.h"
-#include "DDSTexture.h"
-#include "Delegate.h"
-#include "CString.h"
-#include "Util.h"
+#include "vpvl2/qt/Archive.h"
+#include "vpvl2/qt/CString.h"
+#include "vpvl2/qt/DDSTexture.h"
+#include "vpvl2/qt/Delegate.h"
+#include "vpvl2/qt/Util.h"
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderDelegate.h>

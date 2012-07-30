@@ -34,7 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "DDSTexture.h"
+#include "vpvl2/qt/DDSTexture.h"
+
 #include <QtCore/QtCore>
 
 namespace vpvl2

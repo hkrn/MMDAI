@@ -15,49 +15,49 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/common vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
 set(vpvl2_public_headers
-    include/vpvl2/Common.h
-    include/vpvl2/Factory.h
-    include/vpvl2/vpvl2.h
-    include/vpvl2/IBone.h
-    include/vpvl2/IBoneKeyframe.h
-    include/vpvl2/ICamera.h
-    include/vpvl2/ICameraKeyframe.h
-    include/vpvl2/IEffect.h
-    include/vpvl2/IEncoding.h
-    include/vpvl2/IKeyframe.h
-    include/vpvl2/ILabel.h
-    include/vpvl2/ILight.h
-    include/vpvl2/ILightKeyframe.h
-    include/vpvl2/IModel.h
-    include/vpvl2/IMorph.h
-    include/vpvl2/IMorphKeyframe.h
-    include/vpvl2/IMotion.h
-    include/vpvl2/IRenderDelegate.h
-    include/vpvl2/IRenderEngine.h
-    include/vpvl2/IString.h
-    include/vpvl2/Scene.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Common.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vpvl2.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IBone.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IBoneKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ICamera.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ICameraKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IEffect.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IEncoding.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILabel.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILight.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILightKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IModel.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorph.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorphKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMotion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderDelegate.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderEngine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IString.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Scene.h
 )
 set(vpvl2_internal_headers
-    include/vpvl2/internal/util.h
-    include/vpvl2/pmx/Bone.h
-    include/vpvl2/pmx/Joint.h
-    include/vpvl2/pmx/Label.h
-    include/vpvl2/pmx/Material.h
-    include/vpvl2/pmx/Model.h
-    include/vpvl2/pmx/Morph.h
-    include/vpvl2/pmx/RigidBody.h
-    include/vpvl2/pmx/Vertex.h
-    include/vpvl2/vmd/BaseAnimation.h
-    include/vpvl2/vmd/BaseKeyframe.h
-    include/vpvl2/vmd/BoneAnimation.h
-    include/vpvl2/vmd/BoneKeyframe.h
-    include/vpvl2/vmd/CameraAnimation.h
-    include/vpvl2/vmd/CameraKeyframe.h
-    include/vpvl2/vmd/LightAnimation.h
-    include/vpvl2/vmd/LightKeyframe.h
-    include/vpvl2/vmd/MorphAnimation.h
-    include/vpvl2/vmd/MorphKeyframe.h
-    include/vpvl2/vmd/Motion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Label.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Material.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Model.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Morph.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/RigidBody.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Vertex.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/BaseAnimation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/BaseKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/BoneAnimation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/BoneKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/CameraAnimation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/CameraKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/LightAnimation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/LightKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/MorphAnimation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/MorphKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/Motion.h
 )
 
 IF(NOT CMAKE_BUILD_TYPE)
@@ -204,26 +204,26 @@ option(VPVL2_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
 if(VPVL2_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl2_gl_sources)
   list(APPEND vpvl2_internal_headers
-      include/vpvl2/gl2/AssetRenderEngine.h
-      include/vpvl2/gl2/PMDRenderEngine.h
-      include/vpvl2/gl2/PMXRenderEngine.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/AssetRenderEngine.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMDRenderEngine.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMXRenderEngine.h
   )
   if(VPVL2_ENABLE_NVIDIA_CG)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg vpvl2_gl_sources)
     list(APPEND vpvl2_internal_headers
-         include/vpvl2/cg/AssetRenderEngine.h
-         include/vpvl2/cg/Effect.h
-         include/vpvl2/cg/EffectEngine.h
-         include/vpvl2/cg/PMDRenderEngine.h
-         include/vpvl2/cg/PMXRenderEngine.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/AssetRenderEngine.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/Effect.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/EffectEngine.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/PMDRenderEngine.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/PMXRenderEngine.h
     )
   endif()
   if(VPVL2_ENABLE_OPENCL)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cl vpvl2_gl_sources)
     list(APPEND vpvl2_internal_headers
-         include/vpvl2/cl/Context.h
-         include/vpvl2/cl/PMDAccelerator.h
-         include/vpvl2/cl/PMXAccelerator.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/Context.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/PMDAccelerator.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/PMXAccelerator.h
      )
   endif()
   list(APPEND vpvl2_sources ${vpvl2_gl_sources})
@@ -234,7 +234,7 @@ endif()
 option(VPVL2_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
 if(VPVL2_ENABLE_PROJECT)
   list(APPEND vpvl2_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/core/project/Project.cc)
-  list(APPEND vpvl2_public_headers include/vpvl2/Project.h)
+  list(APPEND vpvl2_public_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Project.h)
 endif()
 
 # libvpvl sources
@@ -250,11 +250,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # find libvpvl
 link_vpvl(vpvl2)
 list(APPEND vpvl2_public_headers
-  include/vpvl2/asset/Model.h
-  include/vpvl2/pmd/Bone.h
-  include/vpvl2/pmd/Label.h
-  include/vpvl2/pmd/Model.h
-  include/vpvl2/pmd/Morph.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/asset/Model.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
 )
 
 # find Bullet Physics
@@ -299,14 +299,17 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   if(VPVL2_BUILD_QT_RENDERER)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common vpvl2qtcommon_sources)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip vpvl2qtcommon_sources)
-    set(vpvl2qtcommon_headers src/qt/common/Archive.h
-                              src/qt/common/CString.h
-                              src/qt/common/DDSTexture.h
-                              src/qt/common/Delegate.h
-                              src/qt/common/Encoding.h)
-    set(vpvl2_qt_sources render/qt/main.cc
-                         render/qt/UI.cc)
-    include_directories(render/qt ${VPVL2_LIB_TYPE} render/qt src/qt/common src/qt/unzip)
+    set(vpvl2qtcommon_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Archive.h
+                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h
+                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/DDSTexture.h
+                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Delegate.h
+                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
+                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h)
+    set(vpvl2_qt_sources ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc
+                         ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/UI.cc)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/render/qt
+                        ${CMAKE_CURRENT_SOURCE_DIR}/render/qt
+                        ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt)
     add_library(vpvl2qtcommon ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
     target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
     set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
@@ -397,4 +400,3 @@ else()
   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
       PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
 endif()
-

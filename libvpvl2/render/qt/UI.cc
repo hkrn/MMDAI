@@ -348,14 +348,11 @@ namespace qt
 
 UI::UI()
     : QGLWidget(QGLFormat(QGL::SampleBuffers), 0),
-      #ifndef VPVL2_NO_BULLET
-      m_dispatcher(&m_config),
-      m_broadphase(Vector3(-10000.0f, -10000.0f, -10000.0f), Vector3(10000.0f, 10000.0f, 10000.0f), 1024),
-      m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
-      #endif /* VPVL2_NO_BULLET */
       m_settings(0),
       m_fbo(0),
       m_delegate(0),
+      m_world(0),
+      m_scene(0),
       m_factory(0),
       m_encoding(0),
       m_depthTextureID(0),
@@ -365,10 +362,8 @@ UI::UI()
     Encoding *encoding = new Encoding();
     m_encoding = encoding;
     m_factory = new Factory(encoding);
-#ifndef VPVL2_NO_BULLET
-    m_world.setGravity(btVector3(0.0f, -9.8f * 2.0f, 0.0f));
-    m_world.getSolverInfo().m_numIterations = static_cast<int>(10.0f);
-#endif /* VPVL2_NO_BULLET */
+    m_world = new World();
+    m_scene = new Scene();
     setMinimumSize(320, 240);
     setMouseTracking(true);
 }
@@ -379,9 +374,17 @@ UI::~UI()
     Assimp::DefaultLogger::kill();
 #endif
     delete m_delegate;
+    m_delegate = 0;
     delete m_fbo;
+    m_fbo = 0;
     delete m_factory;
+    m_factory = 0;
     delete m_encoding;
+    m_encoding = 0;
+    delete m_scene;
+    m_scene = 0;
+    delete m_world;
+    m_world = 0;
 }
 
 void UI::load(const QString &filename)
@@ -392,19 +395,19 @@ void UI::load(const QString &filename)
     foreach (const QString &key, m_settings->allKeys()) {
         settings.insert(key, m_settings->value(key).toString());
     }
-    m_delegate = new Delegate(settings, &m_scene, this);
+    m_delegate = new Delegate(settings, m_scene, this);
     m_delegate->createRenderTargets();
     m_delegate->updateMatrices(size());
     resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
-    m_scene.setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
+    m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
     if (m_settings->value("enable.opencl", false).toBool())
-        m_scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+        m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
     else if (m_settings->value("enable.vss", false).toBool())
-        m_scene.setAccelerationType(Scene::kVertexShaderAccelerationType1);
-    ICamera *camera = m_scene.camera();
+        m_scene->setAccelerationType(Scene::kVertexShaderAccelerationType1);
+    ICamera *camera = m_scene->camera();
     camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
     camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
-    ILight *light = m_scene.light();
+    ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
     if (m_fbo) {
@@ -424,7 +427,7 @@ void UI::load(const QString &filename)
 
 void UI::rotate(float x, float y)
 {
-    ICamera *camera = m_scene.camera();
+    ICamera *camera = m_scene->camera();
     Vector3 angle = camera->angle();
     angle.setX(angle.x() + x);
     angle.setY(angle.y() + y);
@@ -433,7 +436,7 @@ void UI::rotate(float x, float y)
 
 void UI::translate(float x, float y)
 {
-    ICamera *camera = m_scene.camera();
+    ICamera *camera = m_scene->camera();
     const Vector3 &diff = camera->modelViewTransform() * Vector3(x, y, 0);
     Vector3 position = camera->position() + diff;
     camera->setPosition(position + diff);
@@ -454,7 +457,7 @@ void UI::initializeGL()
     glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-    ILight *light = m_scene.light();
+    ILight *light = m_scene->light();
     QGLFramebufferObjectFormat format;
     format.setAttachment(QGLFramebufferObject::Depth);
 #if GL_ARB_texture_float
@@ -480,8 +483,8 @@ void UI::timerEvent(QTimerEvent *)
     m_prevElapsed = elapsed;
     if (diff < 0)
         diff = elapsed;
-    m_scene.advance(diff);
-    const Array<IMotion *> &motions = m_scene.motions();
+    m_scene->advance(diff);
+    const Array<IMotion *> &motions = m_scene->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
@@ -490,9 +493,9 @@ void UI::timerEvent(QTimerEvent *)
             m_currentFrameIndex = 0;
         }
     }
-    m_world.stepSimulation(diff * (60.0 / m_scene.preferredFPS()));
+    m_world->stepSimulationDefault();
     m_delegate->updateMatrices(size());
-    m_scene.updateRenderEngines();
+    m_scene->updateRenderEngines();
     updateGL();
 }
 
@@ -526,7 +529,7 @@ void UI::mouseReleaseEvent(QMouseEvent *event)
 void UI::wheelEvent(QWheelEvent *event)
 {
     Qt::KeyboardModifiers modifiers = event->modifiers();
-    ICamera *camera = m_scene.camera();
+    ICamera *camera = m_scene->camera();
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
         const qreal step = 1.0;
         camera->setFov(qMax(event->delta() > 0 ? camera->fov() - step : camera->fov() + step, 0.0));
@@ -562,13 +565,13 @@ void UI::paintGL()
 
 void UI::renderDepth()
 {
-    if (m_scene.light()->depthTexture()) {
+    if (m_scene->light()->depthTexture()) {
         glDisable(GL_BLEND);
         m_fbo->bind();
         Vector3 target = kZeroV3, center;
         Scalar maxRadius = 0, radius;
-        const Array<IRenderEngine *> &engines = m_scene.renderEngines();
-        const Array<IModel *> &models = m_scene.models();
+        const Array<IRenderEngine *> &engines = m_scene->renderEngines();
+        const Array<IModel *> &models = m_scene->models();
         const int nengines = engines.count();
         const int nmodels = models.count();
         Array<Scalar> radiusArray;
@@ -595,7 +598,7 @@ void UI::renderDepth()
         const Scalar &angle = 45;
         const Scalar &distance = maxRadius / btSin(btRadians(angle) * 0.5);
         const Scalar &margin = 50;
-        const Vector3 &eye = -m_scene.light()->direction().normalized() * maxRadius + target;
+        const Vector3 &eye = -m_scene->light()->direction().normalized() * maxRadius + target;
         QMatrix4x4 lightViewMatrix, lightProjectionMatrix;
         lightViewMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
                                QVector3D(target.x(), target.y(), target.z()),
@@ -622,7 +625,7 @@ void UI::renderDepth()
 void UI::renderOffscreen()
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    const Array<IRenderEngine *> &engines = m_scene.renderEngines();
+    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
     const int nengines = engines.count();
     QSize s;
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
@@ -694,7 +697,7 @@ void UI::renderOffscreen()
 
 void UI::renderWindow()
 {
-    const Array<IRenderEngine *> &engines = m_scene.renderEngines();
+    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
     const int nengines = engines.count();
     glViewport(0, 0, width(), height());
     glEnable(GL_BLEND);
@@ -778,10 +781,10 @@ bool UI::loadScene()
     m_settings->endArray();
     IMotion *cameraMotion = loadMotion(cameraMotionPath, 0);
     if (cameraMotion)
-        m_scene.camera()->setMotion(cameraMotion);
+        m_scene->camera()->setMotion(cameraMotion);
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
-    m_scene.seek(0);
+    m_scene->seek(0);
     return true;
 }
 
@@ -849,11 +852,11 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     Q_UNUSED(effect)
 #endif
     IModel *model = 0;
-    QScopedPointer<IRenderEngine> enginePtr(m_scene.createRenderEngine(m_delegate, modelPtr.data(), flags));
+    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_delegate, modelPtr.data(), flags));
     if (enginePtr->upload(&s1)) {
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
-        modelPtr->joinWorld(&m_world);
-        m_scene.addModel(modelPtr.data(), enginePtr.data());
+        m_world->addModel(modelPtr.data());
+        m_scene->addModel(modelPtr.data(), enginePtr.data());
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         const QDir &baseDir = info.dir();
         static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
@@ -941,7 +944,7 @@ IMotion *UI::addMotion(const QString &path, IModel *model)
 {
     IMotion *motion = loadMotion(path, model);
     if (motion)
-        m_scene.addMotion(motion);
+        m_scene->addMotion(motion);
     return motion;
 }
 

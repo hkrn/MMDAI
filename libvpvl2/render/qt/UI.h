@@ -37,15 +37,8 @@
 #ifndef VPVL2_RENDER_QT_UI_H_
 #define VPVL2_RENDER_QT_UI_H_
 
-#include "vpvl2/Scene.h"
 #include "vpvl2/IEffect.h"
-
-#ifndef VPVL2_NO_BULLET
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-#else
-VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
-#endif
+#include "World.h"
 
 #include <QtGui/QtGui>
 #include <QtOpenGL/QtOpenGL>
@@ -53,6 +46,7 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 namespace vpvl2
 {
     class Factory;
+    class Scene;
     class IModel;
     class IMotion;
 
@@ -102,13 +96,6 @@ namespace vpvl2
         IMotion *addMotion(const QString &path, IModel *model);
         IMotion *loadMotion(const QString &path, IModel *model);
 
-#ifndef VPVL2_NO_BULLET
-        btDefaultCollisionConfiguration m_config;
-        btCollisionDispatcher m_dispatcher;
-        btAxisSweep3 m_broadphase;
-        btSequentialImpulseConstraintSolver m_solver;
-        btDiscreteDynamicsWorld m_world;
-#endif /* VPVL2_NO_BULLET */
         QSettings *m_settings;
         QElapsedTimer m_timer;
         QGLFramebufferObject *m_fbo;
@@ -122,8 +109,9 @@ namespace vpvl2
             GLuint textureID;
         } OffscreenRenderTarget;
         QList<OffscreenRenderTarget> m_offscreens;
+        vpvl2::qt::World *m_world;
         vpvl2::qt::Delegate *m_delegate;
-        Scene m_scene;
+        vpvl2::Scene *m_scene;
         Factory *m_factory;
         IEncoding *m_encoding;
         GLuint m_depthTextureID;

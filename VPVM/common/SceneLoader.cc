@@ -35,12 +35,12 @@
 /* ----------------------------------------------------------------- */
 
 #include <qglobal.h>
-#include "CString.h"
-#include "Archive.h"
-#include "Delegate.h"
+#include <vpvl2/qt/Archive.h>
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Delegate.h>
+#include <vpvl2/qt/World.h>
 
 #include "SceneLoader.h"
-#include "World.h"
 #include "util.h"
 
 #include <QtCore/QtCore>
@@ -236,8 +236,8 @@ const QByteArray UILoadFile(const QString &filename,
 
 SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *context)
     : QObject(),
-      m_world(0),
       m_depthBuffer(0),
+      m_world(0),
       m_encoding(encoding),
       m_renderDelegate(0),
       m_factory(factory),
@@ -252,7 +252,7 @@ SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *conte
     settings.insert("dir.system.kernels", ":kernels");
     settings.insert("dir.system.shaders", ":shaders");
     settings.insert("dir.system.toon", ":textures");
-    m_world = new internal::World();
+    m_world = new World();
     m_projectDelegate = new ProjectDelegate();
     createProject();
     m_renderDelegate = new Delegate(settings, scene(), context);
@@ -1949,7 +1949,7 @@ Scene *SceneLoader::scene() const
     return m_project;
 }
 
-internal::World *SceneLoader::world() const
+qt::World *SceneLoader::world() const
 {
     return m_world;
 }

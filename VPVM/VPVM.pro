@@ -46,8 +46,6 @@ LIBS += -lBulletCollision \
 # VPVL and others configuration
 INCLUDEPATH +=  $${VPVL_PATH}/include \
                 $${VPVL2_PATH}/include \
-                $${VPVL2_PATH}/render/qt \
-                $${VPVL2_PATH}/render/qt/common \
                 $${ASSIMP_PATH}/include \
                 $${BULLET_PATH}/src
 
@@ -205,7 +203,6 @@ HEADERS  += \
     common/SceneWidget.h \
     common/Handles.h \
     common/util.h \
-    common/World.h \
     common/SceneLoader.h \
     common/Grid.h \
     common/Application.h \

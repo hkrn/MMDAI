@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "Encoding.h"
-#include "CString.h"
+#include "vpvl2/qt/Encoding.h"
+#include "vpvl2/qt/CString.h"
 
 #include <QtCore/QtCore>
 

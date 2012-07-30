@@ -39,7 +39,7 @@
 
 #include <vpvl2/vpvl2.h>
 #include <QtCore/QtCore>
-#include "CString.h"
+#include "common/CString.h"
 
 using namespace vpvl2;
 using namespace vpvl2::qt;

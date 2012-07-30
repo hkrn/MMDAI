@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "Archive.h"
+#include "vpvl2/qt/Archive.h"
 
 #include <QtCore/QtCore>
 

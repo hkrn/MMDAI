@@ -34,71 +34,57 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef WORLD_H
-#define WORLD_H
+#ifndef VPVL2_QT_ARCHIVE_H
+#define VPVL2_QT_ARCHIVE_H
 
-#include "util.h" /* for internal::kWorldAabbSize */
+#include "vpvl2/Common.h"
+#include "vpvl2/qt/unzip.h"
 
-#include <QtCore/QObject>
-#include <btBulletDynamicsCommon.h>
+#include <QtCore/QByteArray>
+#include <QtCore/QHash>
+#include <QtCore/QString>
 
-namespace internal {
+namespace vpvl2
+{
+namespace qt
+{
 
-class World {
+class Archive
+{
 public:
-    explicit World()
-        : m_dispatcher(&m_config),
-          m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
-          m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
-          m_preferredFPS(0)
-    {
-        setGravity(btVector3(0.0f, -9.8f, 0.0f));
-        setPreferredFPS(Scene::defaultFPS());
-    }
-    ~World()
-    {
-    }
+    enum ErrorType {
+        kNone,
+        kGetCurrentFileError,
+        kGoToNextFileError,
+        kGoToFirstFileError,
+        kOpenCurrentFileError,
+        kReadCurrentFileError,
+        kCloseCurrentFileError
+    };
 
-    const btVector3 gravity() const {
-        return m_world.getGravity();
-    }
-    void setGravity(const btVector3 &value) {
-        m_world.setGravity(value);
-    }
-    void setPreferredFPS(const Scalar &value) {
-        m_preferredFPS = value;
-    }
-    void stepSimulationDefault(const Scalar &substep = 1) {
-        m_world.stepSimulation(1, substep, 1.0 / m_preferredFPS);
-    }
-    void stepSimulationDelta(const Scalar &delta) {
-        const Scalar &step = delta / m_preferredFPS;
-        m_world.stepSimulation(step, 1.0 / m_preferredFPS);
-    }
-    void addModel(vpvl2::IModel *value) {
-        value->joinWorld(&m_world);
-    }
-    void removeModel(vpvl2::IModel *value) {
-        value->leaveWorld(&m_world);
-    }
-    void addRigidBody(btRigidBody *value) {
-        m_world.addRigidBody(value);
-    }
-    void removeRigidBody(btRigidBody *value) {
-        m_world.removeRigidBody(value);
-    }
+    Archive();
+    ~Archive();
+
+    void setTextCodec(QTextCodec *value);
+    bool open(const QString &filename, QStringList &entryNames);
+    bool close();
+    bool uncompress(const QStringList &entryNames);
+    void replaceFilePath(const QString &from, const QString &to);
+    ErrorType error() const;
+    const QStringList entryNames() const;
+    const QByteArray data(const QString &name) const;
 
 private:
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher m_dispatcher;
-    btAxisSweep3 m_broadphase;
-    btSequentialImpulseConstraintSolver m_solver;
-    btDiscreteDynamicsWorld m_world;
-    Scalar m_preferredFPS;
+    unzFile m_file;
+    unz_global_info64 m_header;
+    ErrorType m_error;
+    QTextCodec *m_codec;
+    QHash<QString, QByteArray> m_entries;
 
-    Q_DISABLE_COPY(World)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
 };
 
 }
+}
 
-#endif // WORLD_H
+#endif // ARCHIVE_H

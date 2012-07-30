@@ -35,12 +35,12 @@
 /* ----------------------------------------------------------------- */
 
 #include <qglobal.h>
+#include <vpvl2/qt/World.h>
 
 #include "SceneLoader.h"
 #include "Handles.h"
 #include "SceneWidget.h"
 #include "TextureDrawHelper.h"
-#include "World.h"
 #include "util.h"
 
 #include <vpvl2/vpvl2.h>

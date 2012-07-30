@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "CString.h"
+#include "vpvl2/qt/CString.h"
 
 namespace vpvl2
 {

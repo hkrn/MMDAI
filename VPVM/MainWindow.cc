@@ -71,7 +71,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include "Encoding.h"
+#include <vpvl2/qt/Encoding.h>
 
 using namespace vpvl2;
 using namespace vpvl2::qt;

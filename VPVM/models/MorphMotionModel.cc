@@ -38,7 +38,7 @@
 #include "models/MorphMotionModel.h"
 
 #include <vpvl2/vpvl2.h>
-#include "CString.h"
+#include <vpvl2/qt/CString.h>
 
 using namespace vpvl2;
 using namespace vpvl2::qt;

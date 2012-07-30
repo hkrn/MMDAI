@@ -38,6 +38,7 @@
 
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/World.h>
 
 #include "SceneWidget.h"
 
@@ -49,7 +50,6 @@
 #include "InfoPanel.h"
 #include "SceneLoader.h"
 #include "TextureDrawHelper.h"
-#include "World.h"
 #include "util.h"
 
 #include <QtGui/QtGui>

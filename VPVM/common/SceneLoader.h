@@ -64,6 +64,7 @@ class IRenderDelegate;
 class Project;
 namespace qt {
 class Delegate;
+class World;
 }
 }
 
@@ -166,7 +167,7 @@ public:
     void setAssetParentBone(const vpvl2::IModel *asset, vpvl2::IBone *bone);
 
     vpvl2::Scene *scene() const;
-    internal::World *world() const;
+    vpvl2::qt::World *world() const;
     int maxFrameIndex() const;
 
 public slots:
@@ -248,10 +249,10 @@ private:
     vpvl2::Scene::AccelerationType globalAccelerationType() const;
     vpvl2::Scene::AccelerationType modelAccelerationType(const vpvl2::IModel *model) const;
 
-    internal::World *m_world;
     QGLFramebufferObject *m_depthBuffer;
     QMap<QString, vpvl2::IModel*> m_name2assets;
     QMatrix4x4 m_projection;
+    vpvl2::qt::World *m_world;
     vpvl2::IEncoding *m_encoding;
     vpvl2::qt::Delegate *m_renderDelegate;
     vpvl2::Factory *m_factory;
