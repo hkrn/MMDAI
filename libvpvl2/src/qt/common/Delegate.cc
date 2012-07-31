@@ -730,6 +730,27 @@ void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
     }
 }
 
+void Delegate::removeModel(IModel *model)
+{
+    QMutableHashIterator<const QString, IModel *> it(m_filename2Models);
+    while (it.hasNext()) {
+        it.next();
+        IModel *m = it.value();
+        if (m == model) {
+            it.remove();
+        }
+    }
+    QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
+    QMutableHashIterator<const IEffect *, IModel *> it2(m_effect2models);
+    while (it2.hasNext()) {
+        it2.next();
+        IModel *m = it2.value();
+        if (m == model) {
+            it2.remove();
+        }
+    }
+}
+
 void Delegate::createRenderTargets()
 {
     const QGLContext *context = QGLContext::currentContext();

@@ -393,6 +393,7 @@ void SceneLoader::deleteAsset(IModel *asset)
         /* 削除対象が選択中の場合は追加後に commitAssetProperties で落ちることを防ぐために 0 にリセットする */
         if (asset == m_asset)
             m_asset = 0;
+        m_renderDelegate->removeModel(asset);
         m_project->removeModel(asset);
         m_project->deleteModel(asset);
         m_renderOrderList.remove(uuid);
@@ -435,6 +436,7 @@ void SceneLoader::deleteModel(IModel *&model)
                 deleteMotion(motion);
             }
         }
+        m_renderDelegate->removeModel(model);
         m_project->removeModel(model);
         m_project->deleteModel(model);
         m_renderOrderList.remove(uuid);
@@ -819,6 +821,7 @@ void SceneLoader::loadProject(const QString &path)
         }
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
         foreach (IModel *model, lostModels) {
+            m_renderDelegate->removeModel(model);
             m_project->removeModel(model);
             m_project->deleteModel(model);
         }
