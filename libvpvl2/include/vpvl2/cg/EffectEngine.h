@@ -499,6 +499,7 @@ public:
     void setZeroGeometryParameters(const IModel *model);
     void updateModelGeometryParameters(const Scene *scene, const IModel *model);
     void updateSceneParameters();
+    bool validateStandard() const;
 
     IEffect *effect() const { return m_effect; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }

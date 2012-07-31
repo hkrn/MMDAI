@@ -197,7 +197,7 @@ void PMDRenderEngine::update()
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || !m_current->validateStandard())
         return;
     m_current->setModelMatrixParameters(m_model);
     PMDModel *model = m_model->ptr();

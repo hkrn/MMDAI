@@ -216,7 +216,7 @@ void AssetRenderEngine::update()
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model->isVisible() || !m_current || !m_current->validateStandard())
         return;
     vpvl::Asset *asset = m_model->ptr();
     if (btFuzzyZero(asset->opacity()))

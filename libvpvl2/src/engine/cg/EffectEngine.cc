@@ -1457,6 +1457,11 @@ void EffectEngine::updateSceneParameters()
     animatedTexture.update(renderColorTarget);
 }
 
+bool EffectEngine::validateStandard() const
+{
+    return m_scriptOrder == IEffect::kStandard;
+}
+
 bool EffectEngine::testTechnique(const CGtechnique technique,
                                  const char *pass,
                                  int offset,

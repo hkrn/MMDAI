@@ -179,7 +179,7 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_model || !m_model->isVisible() || !m_current || !m_current->validateStandard())
         return;
     m_current->setModelMatrixParameters(m_model);
     const Array<pmx::Material *> &materials = m_model->materials();
