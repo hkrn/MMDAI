@@ -7,6 +7,7 @@
 #include <vpvl2/qt/CString.h>
 #include <vpvl2/qt/Encoding.h>
 
+#include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Joint.h"
 #include "vpvl2/pmx/Label.h"
@@ -1191,4 +1192,36 @@ TEST(MaterialTest, MergeEdgeSize)
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.25f);
     material.mergeMorph(&morph, 1.0);
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.4f);
+}
+
+TEST(Model, ParseRealPMD)
+{
+    QFile file("miku.pmd");
+    if (file.open(QFile::ReadOnly)) {
+        const QByteArray &bytes = file.readAll();
+        Encoding encoding;
+        pmd::Model model(&encoding);
+        EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
+        EXPECT_EQ(IModel::kNoError, model.error());
+        EXPECT_EQ(IModel::kPMD, model.type());
+    }
+    else {
+        // skip
+    }
+}
+
+TEST(Model, ParseRealPMX)
+{
+    QFile file("miku.pmx");
+    if (file.open(QFile::ReadOnly)) {
+        const QByteArray &bytes = file.readAll();
+        Encoding encoding;
+        pmx::Model model(&encoding);
+        EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
+        EXPECT_EQ(IModel::kNoError, model.error());
+        EXPECT_EQ(IModel::kPMX, model.type());
+    }
+    else {
+        // skip
+    }
 }
