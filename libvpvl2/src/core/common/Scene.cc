@@ -288,7 +288,13 @@ struct Scene::PrivateContext {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         CGeffect effect = 0;
         if (source) {
-            static const char *kCompilerArguments[] = { "version=120", "userTexCoord", 0 };
+            static const char *kCompilerArguments[] = {
+                "version=120",
+                "userTexCoord",
+                "ATI_draw_buffers",
+                "EXT_gpu_shader4",
+                0
+            };
             effect = cgCreateEffect(effectContext, reinterpret_cast<const char *>(source->toByteArray()), kCompilerArguments);
         }
         delete source;

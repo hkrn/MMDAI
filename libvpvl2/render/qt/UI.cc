@@ -396,7 +396,7 @@ void UI::load(const QString &filename)
         settings.insert(key, m_settings->value(key).toString());
     }
     m_delegate = new Delegate(settings, m_scene, this);
-    m_delegate->createRenderTargets();
+    m_delegate->createRenderTargets(m_settings->value("effect.msaa", true).toBool());
     m_delegate->updateMatrices(size());
     resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));

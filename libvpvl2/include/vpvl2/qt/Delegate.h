@@ -119,7 +119,7 @@ public:
     const QString effectOwnerName(const IEffect *effect) const;
     void setEffectOwner(const IEffect *effect, IModel *model);
     void removeModel(IModel *model);
-    void createRenderTargets();
+    void createRenderTargets(bool enableMSAA);
     void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);

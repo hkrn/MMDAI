@@ -256,7 +256,7 @@ SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *conte
     m_projectDelegate = new ProjectDelegate();
     createProject();
     m_renderDelegate = new Delegate(settings, scene(), context);
-    m_renderDelegate->createRenderTargets();
+    m_renderDelegate->createRenderTargets(true);
 }
 
 SceneLoader::~SceneLoader()

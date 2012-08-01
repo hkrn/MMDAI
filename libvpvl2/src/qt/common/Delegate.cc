@@ -385,11 +385,18 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
             m *= m_cameraViewMatrix;
         if (flags & IRenderDelegate::kWorldMatrix) {
             const IBone *bone = model->parentBone();
+            Transform transform;
+            transform.setOrigin(model->position());
+            transform.setRotation(model->rotation());
+            QMatrix4x4 worldMatrix;
+            Scalar matrix[16];
+            transform.getOpenGLMatrix(matrix);
+            for (int i = 0; i < 16; i++)
+                worldMatrix.data()[i] = matrix[i];
+            m *= worldMatrix;
             if (bone) {
-                const Transform &transform = bone->worldTransform();
-                Scalar matrix[16];
+                transform = bone->worldTransform();
                 transform.getOpenGLMatrix(matrix);
-                QMatrix4x4 worldMatrix;
                 for (int i = 0; i < 16; i++)
                     worldMatrix.data()[i] = matrix[i];
                 m *= worldMatrix;
@@ -751,11 +758,12 @@ void Delegate::removeModel(IModel *model)
     }
 }
 
-void Delegate::createRenderTargets()
+void Delegate::createRenderTargets(bool enableMSAA)
 {
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);
-    glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+    if (enableMSAA)
+        glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
 #ifndef __APPLE__
     glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(context->getProcAddress("glBlitFramebuffer"));
     glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
