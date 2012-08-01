@@ -630,7 +630,7 @@ void UI::renderOffscreen()
     QSize s;
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    foreach (const OffscreenRenderTarget &offscreen, m_offscreens) {
+    foreach (const Delegate::OffscreenRenderTarget &offscreen, m_delegate->offscreenRenderTargets()) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
         const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
@@ -678,7 +678,7 @@ void UI::renderOffscreen()
             const IModel *model = engine->model();
             const IString *name = model->name();
             const QString &n = name ? static_cast<const CString *>(name)->value() : m_delegate->findModelPath(model);
-            foreach (const EffectAttachment &attachment, offscreen.attachments) {
+            foreach (const Delegate::EffectAttachment &attachment, offscreen.attachments) {
                 IEffect *effect = attachment.second;
                 if (attachment.first.exactMatch(n)) {
                     engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
@@ -858,49 +858,8 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         m_world->addModel(modelPtr.data());
         m_scene->addModel(modelPtr.data(), enginePtr.data());
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        const QDir &baseDir = info.dir();
-        static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
-        Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
-        effect->getOffscreenRenderTargets(offscreenRenderTargets);
-        const int nOffscreenRenderTargets = offscreenRenderTargets.count();
-        for (int i = 0; i < nOffscreenRenderTargets; i++) {
-            const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
-            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
-            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-            const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
-            QList<EffectAttachment> attachments;
-            foreach (const QString &line, defaultEffect) {
-                const QStringList &pair = line.split('=');
-                if (pair.size() == 2) {
-                    const QString &key = pair.at(0).trimmed();
-                    const QString &value = pair.at(1).trimmed();
-                    QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
-                    if (key == "self") {
-                        const QString &name = m_delegate->effectOwnerName(effect);
-                        regexp.setPattern(name);
-                    }
-                    if (value != "hide" && value != "none") {
-                        QString path = baseDir.absoluteFilePath(value);
-                        path.replace(kExtensionReplaceRegExp, ".cgfx");
-                        CString s2(path);
-                        const QFuture<IEffect *> &future3 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, &s2);
-                        IEffect *offscreenEffect = future3.result();
-                        offscreenEffect->setParentEffect(effect);
-                        attachments.append(EffectAttachment(regexp, offscreenEffect));
-                    }
-                    else {
-                        attachments.append(EffectAttachment(regexp, 0));
-                    }
-                }
-            }
-            CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
-            OffscreenRenderTarget offscreen;
-            offscreen.attachments = attachments;
-            offscreen.renderTarget = renderTarget;
-            offscreen.textureID = cgGLGetTextureParameter(sampler);
-            m_offscreens.append(offscreen);
-        }
+        m_delegate->parseOffscreenSemantic(effect, info.absoluteDir());
         model = modelPtr.take();
         enginePtr.take();
 #endif
