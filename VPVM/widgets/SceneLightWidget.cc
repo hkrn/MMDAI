@@ -131,8 +131,8 @@ void SceneLightWidget::updatePosition()
 
 void SceneLightWidget::openColorDialog()
 {
-    QColorDialog dialog;
     const QColor colorToRestore(m_r->value(), m_g->value(), m_b->value());
+    QColorDialog dialog(colorToRestore);
     connect(&dialog, SIGNAL(currentColorChanged(QColor)), SLOT(setQColor(QColor)));
     if (dialog.exec() == QColorDialog::Rejected)
         setQColor(colorToRestore);

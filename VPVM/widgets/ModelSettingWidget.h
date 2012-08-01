@@ -86,7 +86,7 @@ private slots:
 private:
     void disableSignals();
     void enableSignals();
-    void createEdgeColorDialog();
+    void createEdgeColorDialog(const QColor &color);
     QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
 
     QLabel *m_edgeOffsetLabel;

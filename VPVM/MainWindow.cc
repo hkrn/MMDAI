@@ -1765,9 +1765,9 @@ void MainWindow::openRenderOrderDialog()
 
 void MainWindow::openScreenColorDialog()
 {
-    QScopedPointer<QColorDialog> dialog(new QColorDialog());
     SceneLoader *loader = m_sceneWidget->sceneLoader();
     const QColor &before = loader->screenColor();
+    QScopedPointer<QColorDialog> dialog(new QColorDialog(before));
     connect(dialog.data(), SIGNAL(currentColorChanged(QColor)), loader, SLOT(setScreenColor(QColor)));
     if (dialog->exec() == QColorDialog::Rejected)
         loader->setScreenColor(before);
