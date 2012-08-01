@@ -311,7 +311,7 @@ void AssetWidget::updateRotationX(double value)
 {
     if (m_currentAsset) {
         Quaternion rotation = m_currentAsset->rotation();
-        rotation.setX(radian(value));
+        rotation.setRotation(Vector3(1, 0, 0), radian(value));
         m_currentAsset->setRotation(rotation);
     }
 }
@@ -320,7 +320,7 @@ void AssetWidget::updateRotationY(double value)
 {
     if (m_currentAsset) {
         Quaternion rotation = m_currentAsset->rotation();
-        rotation.setY(radian(value));
+        rotation.setRotation(Vector3(0, 1, 0), radian(value));
         m_currentAsset->setRotation(rotation);
     }
 }
@@ -329,7 +329,7 @@ void AssetWidget::updateRotationZ(double value)
 {
     if (m_currentAsset) {
         Quaternion rotation = m_currentAsset->rotation();
-        rotation.setZ(radian(value));
+        rotation.setRotation(Vector3(0, 0, 1), radian(value));
         m_currentAsset->setRotation(rotation);
     }
 }
