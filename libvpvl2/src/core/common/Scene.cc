@@ -289,10 +289,8 @@ struct Scene::PrivateContext {
         CGeffect effect = 0;
         if (source) {
             static const char *kCompilerArguments[] = {
-                "version=120",
-                "userTexCoord",
-                "ATI_draw_buffers",
-                "EXT_gpu_shader4",
+                "-DVPVM",
+                "-DVPVM_VERSION=" VPVL_VERSION_STRING,
                 0
             };
             effect = cgCreateEffect(effectContext, reinterpret_cast<const char *>(source->toByteArray()), kCompilerArguments);
