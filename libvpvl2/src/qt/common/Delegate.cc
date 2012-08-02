@@ -1103,10 +1103,10 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
 {
     const QFileInfo info(path);
     if (info.isDir())
-        return false;
+        return true; /* skip */
     if (!info.exists()) {
         qWarning("Cannot loading inexist \"%s\"", qPrintable(path));
-        return false;
+        return true; /* skip */
     }
     PrivateContext *privateContext = static_cast<PrivateContext *>(context);
     if (privateContext && privateContext->textureCache.contains(path)) {
@@ -1150,7 +1150,7 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
             GLuint textureID;
             if (!dds.parse(data, bytes.size(), textureID)) {
                 qDebug("Cannot parse a DDS texture %s", qPrintable(path));
-                return false;
+                return true; /* skip */
             }
             TextureCache cache(dds.width(), dds.height(), textureID);
             setTextureID(cache, isToon, texture);
@@ -1159,7 +1159,7 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
         }
         else {
             qDebug("Cannot open a DDS texture %s: %s", qPrintable(path), qPrintable(file.errorString()));
-            return false;
+            return true; /* skip */
         }
     }
     else {
