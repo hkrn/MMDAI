@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <QtCore/QtCore>
+#include <tr1/tuple>
 
 #include <btBulletDynamicsCommon.h>
 #include <vpvl2/vpvl2.h>
@@ -18,6 +19,7 @@
 #include "vpvl2/pmx/Vertex.h"
 
 using namespace ::testing;
+using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::pmx;
 using namespace vpvl2::qt;
@@ -99,8 +101,15 @@ static void CompareVertex(const Vertex &expected, const Vertex &vertex2, const A
         ASSERT_FLOAT_EQ(vertex2.weight(0), 0.2f);
 }
 
-static void TestReadWriteBone(size_t indexSize)
+class FragmentTest : public TestWithParam<size_t> {};
+
+class FragmentWithUVTest : public TestWithParam< tuple<size_t, pmx::Morph::Type > > {};
+
+}
+
+TEST_P(FragmentTest, ReadWriteBone)
 {
+    size_t indexSize = GetParam();
     Encoding encoding;
     Bone bone, bone2, parent;
     Model::DataInfo info;
@@ -170,8 +179,9 @@ static void TestReadWriteBone(size_t indexSize)
     ASSERT_EQ(&parent, bone2.targetBone());
 }
 
-static void TestReadWriteJoint(size_t indexSize)
+TEST_P(FragmentTest, ReadWriteJoint)
 {
+    size_t indexSize = GetParam();
     Encoding encoding;
     Joint joint, joint2;
     RigidBody body, body2;
@@ -216,8 +226,9 @@ static void TestReadWriteJoint(size_t indexSize)
     ASSERT_EQ(body2.index(), joint2.rigidBodyIndex2());
 }
 
-static void TestReadWriteMaterial(size_t indexSize)
+TEST_P(FragmentTest, ReadWriteMaterial)
 {
+    size_t indexSize = GetParam();
     Encoding encoding;
     Material material, material2;
     Model::DataInfo info;
@@ -262,8 +273,9 @@ static void TestReadWriteMaterial(size_t indexSize)
     ASSERT_EQ(material.indices(), material2.indices());
 }
 
-static void TestReadWriteBoneMorph(size_t indexSize)
+TEST_P(FragmentTest, ReadWriteBoneMorph)
 {
+    size_t indexSize = GetParam();
     Encoding encoding;
     Morph morph, morph2;
     QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
@@ -308,8 +320,9 @@ static void TestReadWriteBoneMorph(size_t indexSize)
     bone2.take();
 }
 
-static void TestReadWriteGroupMorph(size_t indexSize)
+TEST_P(FragmentTest, ReadWriteGroupMorph)
 {
+    size_t indexSize = GetParam();
     Encoding encoding;
     Morph morph, morph2;
     QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
@@ -350,8 +363,9 @@ static void TestReadWriteGroupMorph(size_t indexSize)
     group2.take();
 }
 
-static void TestReadWriteMaterialMorph(size_t indexSize)
+TEST_P(FragmentTest, ReadWriteMaterialMorph)
 {
+    size_t indexSize = GetParam();
     Encoding encoding;
     Morph morph, morph2;
     QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
@@ -428,8 +442,10 @@ static void TestReadWriteMaterialMorph(size_t indexSize)
     material2.take();
 }
 
-static void TestReadWriteRigidBody(size_t indexSize)
+
+TEST_P(FragmentTest, ReadWriteRigidBody)
 {
+    size_t indexSize = GetParam();
     Encoding encoding;
     RigidBody body, body2;
     Bone bone;
@@ -475,8 +491,144 @@ static void TestReadWriteRigidBody(size_t indexSize)
     ASSERT_EQ(bone.index(), body2.boneIndex());
 }
 
-static void TestReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
+TEST_P(FragmentTest, ReadWriteVertexMorph)
 {
+    size_t indexSize = GetParam();
+    Encoding encoding;
+    Morph morph, morph2;
+    QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
+    Model::DataInfo info;
+    CString name("Japanese"), englishName("English");
+    info.vertexIndexSize = indexSize;
+    info.encoding = &encoding;
+    info.codec = IString::kUTF8;
+    // vertex morph1
+    vertex1->index = 0;
+    vertex1->position.setValue(0.1, 0.2, 0.3);
+    morph.addVertexMorph(vertex1.data());
+    // vertex morph2
+    vertex2->index = 1;
+    vertex2->position.setValue(0.4, 0.5, 0.6);
+    morph.addVertexMorph(vertex2.data());
+    morph.setName(&name);
+    morph.setEnglishName(&englishName);
+    morph.setCategory(IMorph::kOther);
+    morph.setType(pmx::Morph::kVertex);
+    size_t size = morph.estimateSize(info), read;
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    morph.write(data.data(), info);
+    morph2.read(data.data(), info, read);
+    ASSERT_EQ(size, read);
+    ASSERT_TRUE(morph2.name()->equals(morph.name()));
+    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_EQ(morph.category(), morph2.category());
+    ASSERT_EQ(morph.type(), morph2.type());
+    const Array<Morph::Vertex *> &vertices = morph2.vertices();
+    ASSERT_EQ(vertices.count(), 2);
+    Compare(vertices[0]->position, vertex1->position);
+    ASSERT_EQ(vertex1->index, vertices[0]->index);
+    Compare(vertices[1]->position, vertex2->position);
+    ASSERT_EQ(vertex2->index, vertices[1]->index);
+    // delete vertex1 and vertex2 at Morph destructor
+    vertex1.take();
+    vertex2.take();
+}
+
+TEST_P(FragmentTest, ReadWriteVertexBdef1)
+{
+    size_t indexSize = GetParam();
+    Array<Bone *> bones;
+    Vertex vertex, vertex2;
+    Bone bone1;
+    Model::DataInfo info;
+    bone1.setIndex(0);
+    bones.add(&bone1);
+    SetVertex(vertex, Vertex::kBdef1, bones);
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
+    size_t size = vertex.estimateSize(info), read;
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    vertex.write(data.data(), info);
+    vertex2.read(data.data(), info, read);
+    ASSERT_EQ(size, read);
+    CompareVertex(vertex, vertex2, bones);
+}
+
+TEST_P(FragmentTest, ReadWriteVertexBdef2)
+{
+    size_t indexSize = GetParam();
+    Array<Bone *> bones;
+    Vertex vertex, vertex2;
+    Bone bone1, bone2;
+    Model::DataInfo info;
+    bone1.setIndex(0);
+    bones.add(&bone1);
+    bone2.setIndex(1);
+    bones.add(&bone2);
+    SetVertex(vertex, Vertex::kBdef2, bones);
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
+    size_t size = vertex.estimateSize(info), read;
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    vertex.write(data.data(), info);
+    vertex2.read(data.data(), info, read);
+    ASSERT_EQ(size, read);
+    CompareVertex(vertex, vertex2, bones);
+}
+
+TEST_P(FragmentTest, ReadWriteVertexBdef4)
+{
+    size_t indexSize = GetParam();
+    Array<Bone *> bones;
+    Vertex vertex, vertex2;
+    Bone bone1, bone2, bone3, bone4;
+    Model::DataInfo info;
+    bone1.setIndex(0);
+    bones.add(&bone1);
+    bone2.setIndex(1);
+    bones.add(&bone2);
+    bone3.setIndex(2);
+    bones.add(&bone3);
+    bone4.setIndex(3);
+    bones.add(&bone4);
+    SetVertex(vertex, Vertex::kBdef4, bones);
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
+    size_t size = vertex.estimateSize(info), read;
+    uint8_t *data = new uint8_t[size];
+    vertex.write(data, info);
+    vertex2.read(data, info, read);
+    ASSERT_EQ(size, read);
+    CompareVertex(vertex, vertex2, bones);
+    delete[] data;
+}
+
+TEST_P(FragmentTest, ReadWriteVertexSdef)
+{
+    size_t indexSize = GetParam();
+    Array<Bone *> bones;
+    Vertex vertex, vertex2;
+    Bone bone1, bone2;
+    Model::DataInfo info;
+    bone1.setIndex(0);
+    bones.add(&bone1);
+    bone2.setIndex(1);
+    bones.add(&bone2);
+    SetVertex(vertex, Vertex::kSdef, bones);
+    info.additionalUVSize = indexSize;
+    info.boneIndexSize = indexSize;
+    size_t size = vertex.estimateSize(info), read;
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    vertex.write(data.data(), info);
+    vertex2.read(data.data(), info, read);
+    ASSERT_EQ(size, read);
+    CompareVertex(vertex, vertex2, bones);
+}
+
+TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
+{
+    size_t indexSize = get<0>(GetParam());
+    pmx::Morph::Type type = get<1>(GetParam());
     Encoding encoding;
     Morph morph, morph2;
     QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
@@ -519,282 +671,13 @@ static void TestReadWriteUVMorph(size_t indexSize, pmx::Morph::Type type)
     uv2.take();
 }
 
-static void TestReadWriteVertexMorph(size_t indexSize)
-{
-    Encoding encoding;
-    Morph morph, morph2;
-    QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
-    Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
-    info.vertexIndexSize = indexSize;
-    info.encoding = &encoding;
-    info.codec = IString::kUTF8;
-    // vertex morph1
-    vertex1->index = 0;
-    vertex1->position.setValue(0.1, 0.2, 0.3);
-    morph.addVertexMorph(vertex1.data());
-    // vertex morph2
-    vertex2->index = 1;
-    vertex2->position.setValue(0.4, 0.5, 0.6);
-    morph.addVertexMorph(vertex2.data());
-    morph.setName(&name);
-    morph.setEnglishName(&englishName);
-    morph.setCategory(IMorph::kOther);
-    morph.setType(pmx::Morph::kVertex);
-    size_t size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    morph.write(data.data(), info);
-    morph2.read(data.data(), info, read);
-    ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name()->equals(morph.name()));
-    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
-    ASSERT_EQ(morph.category(), morph2.category());
-    ASSERT_EQ(morph.type(), morph2.type());
-    const Array<Morph::Vertex *> &vertices = morph2.vertices();
-    ASSERT_EQ(vertices.count(), 2);
-    Compare(vertices[0]->position, vertex1->position);
-    ASSERT_EQ(vertex1->index, vertices[0]->index);
-    Compare(vertices[1]->position, vertex2->position);
-    ASSERT_EQ(vertex2->index, vertices[1]->index);
-    // delete vertex1 and vertex2 at Morph destructor
-    vertex1.take();
-    vertex2.take();
-}
-
-static void TestReadWriteVertexBdef1(size_t indexSize)
-{
-    Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1;
-    Model::DataInfo info;
-    bone1.setIndex(0);
-    bones.add(&bone1);
-    SetVertex(vertex, Vertex::kBdef1, bones);
-    info.additionalUVSize = indexSize;
-    info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    vertex.write(data.data(), info);
-    vertex2.read(data.data(), info, read);
-    ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
-}
-
-static void TestReadWriteVertexBdef2(size_t indexSize)
-{
-    Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1, bone2;
-    Model::DataInfo info;
-    bone1.setIndex(0);
-    bones.add(&bone1);
-    bone2.setIndex(1);
-    bones.add(&bone2);
-    SetVertex(vertex, Vertex::kBdef2, bones);
-    info.additionalUVSize = indexSize;
-    info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    vertex.write(data.data(), info);
-    vertex2.read(data.data(), info, read);
-    ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
-}
-
-static void TestReadWriteVertexBdef4(size_t indexSize)
-{
-    Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1, bone2, bone3, bone4;
-    Model::DataInfo info;
-    bone1.setIndex(0);
-    bones.add(&bone1);
-    bone2.setIndex(1);
-    bones.add(&bone2);
-    bone3.setIndex(2);
-    bones.add(&bone3);
-    bone4.setIndex(3);
-    bones.add(&bone4);
-    SetVertex(vertex, Vertex::kBdef4, bones);
-    info.additionalUVSize = indexSize;
-    info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    vertex.write(data, info);
-    vertex2.read(data, info, read);
-    ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
-    delete[] data;
-}
-
-static void TestReadWriteVertexSdef(size_t indexSize)
-{
-    Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1, bone2;
-    Model::DataInfo info;
-    bone1.setIndex(0);
-    bones.add(&bone1);
-    bone2.setIndex(1);
-    bones.add(&bone2);
-    SetVertex(vertex, Vertex::kSdef, bones);
-    info.additionalUVSize = indexSize;
-    info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    vertex.write(data.data(), info);
-    vertex2.read(data.data(), info, read);
-    ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
-}
-
-}
-
-TEST(BoneTest, ReadWrite)
-{
-    TestReadWriteBone(1);
-    TestReadWriteBone(2);
-    TestReadWriteBone(4);
-}
-
-TEST(JointTest, ReadWrite)
-{
-    TestReadWriteJoint(1);
-    TestReadWriteJoint(2);
-    TestReadWriteJoint(4);
-}
-
-TEST(MaterialTest, ReadWrite)
-{
-    TestReadWriteMaterial(1);
-    TestReadWriteMaterial(2);
-    TestReadWriteMaterial(4);
-}
-
-TEST(MorphTest, ReadWriteBone)
-{
-    TestReadWriteBoneMorph(1);
-    TestReadWriteBoneMorph(2);
-    TestReadWriteBoneMorph(4);
-}
-
-TEST(MorphTest, ReadWriteGroup)
-{
-    TestReadWriteGroupMorph(1);
-    TestReadWriteGroupMorph(2);
-    TestReadWriteGroupMorph(4);
-}
-
-TEST(MorphTest, ReadWriteMaterial)
-{
-    TestReadWriteMaterialMorph(1);
-    TestReadWriteMaterialMorph(2);
-    TestReadWriteMaterialMorph(4);
-}
-
-TEST(RigidBodyTest, ReadWrite)
-{
-    TestReadWriteRigidBody(1);
-    TestReadWriteRigidBody(2);
-    TestReadWriteRigidBody(4);
-}
-
-TEST(MorphTest, ReadWriteTexCoord)
-{
-    TestReadWriteUVMorph(1, pmx::Morph::kTexCoord);
-    TestReadWriteUVMorph(2, pmx::Morph::kTexCoord);
-    TestReadWriteUVMorph(4, pmx::Morph::kTexCoord);
-}
-
-TEST(MorphTest, ReadWriteUVA1)
-{
-    TestReadWriteUVMorph(1, pmx::Morph::kUVA1);
-    TestReadWriteUVMorph(2, pmx::Morph::kUVA1);
-    TestReadWriteUVMorph(4, pmx::Morph::kUVA1);
-}
-
-TEST(MorphTest, ReadWriteUVA2)
-{
-    TestReadWriteUVMorph(1, pmx::Morph::kUVA2);
-    TestReadWriteUVMorph(2, pmx::Morph::kUVA2);
-    TestReadWriteUVMorph(4, pmx::Morph::kUVA2);
-}
-
-TEST(MorphTest, ReadWriteUVA3)
-{
-    TestReadWriteUVMorph(1, pmx::Morph::kUVA3);
-    TestReadWriteUVMorph(2, pmx::Morph::kUVA3);
-    TestReadWriteUVMorph(4, pmx::Morph::kUVA3);
-}
-
-TEST(MorphTest, ReadWriteUVA4)
-{
-    TestReadWriteUVMorph(1, pmx::Morph::kUVA4);
-    TestReadWriteUVMorph(2, pmx::Morph::kUVA4);
-    TestReadWriteUVMorph(4, pmx::Morph::kUVA4);
-}
-
-TEST(MorphTest, ReadWriteVertex)
-{
-    TestReadWriteVertexMorph(1);
-    TestReadWriteVertexMorph(2);
-    TestReadWriteVertexMorph(4);
-}
-
-TEST(VertexTest, ReadWriteBdef1)
-{
-    TestReadWriteVertexBdef1(1);
-    TestReadWriteVertexBdef1(2);
-    TestReadWriteVertexBdef1(4);
-}
-
-TEST(VertexTest, ReadWriteBdef2)
-{
-    TestReadWriteVertexBdef2(1);
-    TestReadWriteVertexBdef2(2);
-    TestReadWriteVertexBdef2(4);
-}
-
-TEST(VertexTest, ReadWriteBdef4)
-{
-    TestReadWriteVertexBdef4(1);
-    TestReadWriteVertexBdef4(2);
-    TestReadWriteVertexBdef4(4);
-}
-
-TEST(VertexTest, ReadWriteSdef)
-{
-    TestReadWriteVertexSdef(1);
-    TestReadWriteVertexSdef(2);
-    TestReadWriteVertexSdef(4);
-}
-
-TEST(ModelTest, ParseEmpty)
-{
-    Encoding encoding;
-    Model model(&encoding);
-    Model::DataInfo info;
-    ASSERT_FALSE(model.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
-    ASSERT_EQ(Model::kInvalidHeaderError, model.error());
-}
-
-TEST(ModelTest, ParseFile)
-{
-    Encoding encoding;
-    Model model(&encoding);
-    Model::DataInfo info;
-    QFile file("miku.pmx");
-    if (file.open(QFile::ReadOnly)) {
-        const QByteArray &bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        const size_t size = file.size();
-        ASSERT_TRUE(model.preparse(reinterpret_cast<const uint8_t *>(data), size, info));
-        ASSERT_TRUE(model.load(reinterpret_cast<const uint8_t *>(data), size));
-    }
-    else {
-        // QSKIP("Require a model to test this", SkipSingle);
-    }
-}
+INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentTest, Values(1, 2, 4));
+INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentWithUVTest, Combine(Values(1, 2, 4),
+                                                                        Values(pmx::Morph::kTexCoord,
+                                                                               pmx::Morph::kUVA1,
+                                                                               pmx::Morph::kUVA2,
+                                                                               pmx::Morph::kUVA3,
+                                                                               pmx::Morph::kUVA4)));
 
 TEST(BoneTest, DefaultFlags)
 {
@@ -1194,7 +1077,16 @@ TEST(MaterialTest, MergeEdgeSize)
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.4f);
 }
 
-TEST(Model, ParseRealPMD)
+TEST(ModelTest, ParseEmpty)
+{
+    Encoding encoding;
+    Model model(&encoding);
+    Model::DataInfo info;
+    ASSERT_FALSE(model.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
+    ASSERT_EQ(Model::kInvalidHeaderError, model.error());
+}
+
+TEST(ModelTest, ParseRealPMD)
 {
     QFile file("miku.pmd");
     if (file.open(QFile::ReadOnly)) {
@@ -1210,7 +1102,7 @@ TEST(Model, ParseRealPMD)
     }
 }
 
-TEST(Model, ParseRealPMX)
+TEST(ModelTest, ParseRealPMX)
 {
     QFile file("miku.pmx");
     if (file.open(QFile::ReadOnly)) {
