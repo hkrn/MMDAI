@@ -1,0 +1,77 @@
+texture2D RT0 : RENDERCOLORTARGET;
+texture2D RT1 : RENDERCOLORTARGET;;
+texture2D RT2 : RENDERCOLORTARGET;;
+texture2D RT3 : RENDERCOLORTARGET;;
+texture2D RT4 : RENDERDEPTHSTENCILTARGET;
+
+sampler2D RT0S = sampler_state { texture = <RT0>; };
+sampler2D RT1S = sampler_state { texture = <RT1>; };
+sampler2D RT2S = sampler_state { texture = <RT2>; };
+sampler2D RT3S = sampler_state { texture = <RT3>; };
+
+float4 ClearColor = { 0, 0, 0, 1 };
+float  ClearDepth = 0;
+
+technique SyntaxErrors <
+  string Script =
+    " ClearSetColor ClearColor; " // forgotten "=", ignored
+    " Clear = Color "             // forgotten ';', ignored
+	" Clear = Depth; "
+    " UnknownCommand = Unknown; " // should be ignored
+	" Pass = null; "
+	"  ";
+> {
+  pass null {}
+}
+
+/* ignore spaces */
+technique RenderTargets <
+  string Script =
+    " RenderColorTarget = RT0 ; " // same as RenderColorTarget0
+    "  RenderColorTarget1 = RT1  ; "
+    "   RenderColorTarget2 = RT2   ; "
+    "    RenderColorTarget3 = RT3    ; "
+    " RenderDepthStencilTarget = RT4 ; "
+    " ClearSetColor = ClearColor ; "
+    " ClearSetDepth = ClearDepth ; "
+    " Clear = Color ; "
+    " Clear = Depth ; "
+    " Pass = null ; "
+    " RenderColorTarget0 = ; "
+    "  RenderColorTarget1 =  ; "
+    "   RenderColorTarget2 =   ; "
+    "    RenderColorTarget3 =    ; "
+    " RenderDepthStencilTarget = ; ";
+> {
+  pass null {}
+}
+
+technique InvalidRenderTargets <
+  string Script =
+    " RenderColorTarget1 = RT1; " /* ignore all RenderColorTarget[1-3] unless RenderColorTarget0 is set */
+    " RenderColorTarget2 = RT1; "
+    " RenderColorTarget3 = RT1; "
+    " Pass = null; ";
+> {
+  pass null {}
+}
+
+int LoopCountNum = 42;
+int LoopIndexIn;
+int LoopIndexIn2;
+int LoopIndexOut;
+technique Loop <
+  string Script =
+    " LoopGetIndex = LoopIndexOut; "
+	" LoopEnd = ; "
+    " LoopByCount = LoopCountNum ;"
+	" LoopGetIndex = LoopIndexIn ;"
+	" LoopByCount = LoopCountNum ; " // nested loop doesn't support
+	" LoopGetIndex = LoopIndexIn2 ; " // be flatten
+	" LoopEnd = ;"
+	" LoopByCount = LoopCounNum ; "
+	" LoopGetIndex = LoopIndexOut ; ";
+> {
+  pass null {}
+}
+

@@ -30,14 +30,19 @@ public:
         int cwvp = cw | cv | cp;
         EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwvp)).Times(1);
     }
-    void setSource(MockIRenderDelegate &delegate, const CString &mockPath, const QString &effectPath) {
+    cg::Effect *createEffect(const QString &effectPath, Scene &scene, MockIRenderDelegate &delegate, CGeffect &ptr) {
         QFile file(effectPath);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
             CString *source = new CString(bytes);
-            EXPECT_CALL(delegate, loadShaderSource(IRenderDelegate::kModelEffectTechniques, &mockPath))
+            EXPECT_CALL(delegate, getViewport(_)).Times(AnyNumber()).WillRepeatedly(Return());
+            EXPECT_CALL(delegate, loadShaderSource(IRenderDelegate::kModelEffectTechniques, _))
                     .Times(1).WillRepeatedly(Return(source));
+            cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(0, &delegate));
+            ptr = static_cast<CGeffect>(effect->internalPointer());
+            return effect;
         }
+        return 0;
     }
 };
 
@@ -45,11 +50,8 @@ TEST_F(EffectTest, ToBool)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/util.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
-    ASSERT_TRUE(effectPtr);
+    CGeffect effectPtr;
+    createEffect(":effects/util.cgfx", scene, delegate, effectPtr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     ASSERT_TRUE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
     ASSERT_FALSE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue")));
@@ -62,11 +64,8 @@ TEST_F(EffectTest, ToFloat)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/util.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
-    ASSERT_TRUE(effectPtr);
+    CGeffect effectPtr;
+    createEffect(":effects/util.cgfx", scene, delegate, effectPtr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
     ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue")));
@@ -79,11 +78,8 @@ TEST_F(EffectTest, ToInt)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/util.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
-    ASSERT_TRUE(effectPtr);
+    CGeffect effectPtr;
+    createEffect(":effects/util.cgfx", scene, delegate, effectPtr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     ASSERT_EQ(0, Util::toInt(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
     ASSERT_EQ(0, Util::toInt(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue")));
@@ -96,11 +92,8 @@ TEST_F(EffectTest, IsPassEquals)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/util.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
-    ASSERT_TRUE(effectPtr);
+    CGeffect effectPtr;
+    createEffect(":effects/util.cgfx", scene, delegate, effectPtr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     const char target[] = "This is string.";
     ASSERT_TRUE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "NoSuchAnnotation"), target));
@@ -134,11 +127,8 @@ TEST_F(EffectTest, IsIntegerParameter)
     };
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/util.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    CGeffect effectPtr = static_cast<CGeffect>(effect->internalPointer());
-    ASSERT_TRUE(effectPtr);
+    CGeffect effectPtr;
+    createEffect(":effects/util.cgfx", scene, delegate, effectPtr);
     const int nexpects = sizeof(expects) / sizeof(expects[0]);
     for (int i = 0; i < nexpects; i++) {
         Expect &e = expects[i];
@@ -153,8 +143,8 @@ TEST_F(EffectTest, LoadMatrices)
     MockIRenderDelegate delegate;
     MockIModel model, *modelPtr = &model;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/matrices.cgfx");
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/matrices.cgfx", scene, delegate, effectPtr);
     setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix);
     setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix);
     setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix);
@@ -163,9 +153,7 @@ TEST_F(EffectTest, LoadMatrices)
     setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix  | IRenderDelegate::kTransposeMatrix);
     setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
     setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix  | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     engine.setModelMatrixParameters(modelPtr, 0, 0);
 }
 
@@ -173,11 +161,9 @@ TEST_F(EffectTest, LoadMaterialColors)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/materials.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/materials.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     Vector4 v;
     float f;
     cgGLGetParameter4f(engine.ambient.geometryParameter(), v);
@@ -204,11 +190,9 @@ TEST_F(EffectTest, LoadGeometries)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/geometries.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/geometries.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     Vector4 v;
     cgGLGetParameter4f(engine.direction.cameraParameter(), v);
     ASSERT_EQ(Vector4(0.01, 0.02, 0.03, 0.04), v);
@@ -224,11 +208,9 @@ TEST_F(EffectTest, LoadTimes)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/times.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/times.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     float f;
     cgGLGetParameter1f(engine.time.syncDisabledParameter(), &f);
     ASSERT_FLOAT_EQ(0.1, f);
@@ -244,11 +226,9 @@ TEST_F(EffectTest, LoadSpecials)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/specials.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/specials.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     float f;
     cgGLGetParameter1f(engine.parthf.baseParameter(), &f);
     ASSERT_FLOAT_EQ(1.0, f);
@@ -274,28 +254,33 @@ TEST_F(EffectTest, LoadSASPreProcess)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/preprocess.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/preprocess.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     ASSERT_EQ(EffectEngine::kScene, engine.scriptClass());
     ASSERT_EQ(IEffect::kPreProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
     const EffectEngine::Techniques &techniques = engine.techniques();
-    ASSERT_EQ(1, techniques.size());
-    ASSERT_STREQ("test", cgGetTechniqueName(techniques[0]));
+    ASSERT_EQ(3, techniques.size());
+    ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
+    ASSERT_STREQ("test2", cgGetTechniqueName(techniques[1]));
+    ASSERT_STREQ("test3", cgGetTechniqueName(techniques[2]));
+    const EffectEngine::Script *nullScript = engine.findPassScript(cgGetNamedPass(techniques[0], "null"));
+    ASSERT_EQ(1, nullScript->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kDrawBuffer, nullScript->at(0).type);
+    const EffectEngine::Script *nullScript2 = engine.findPassScript(cgGetNamedPass(techniques[1], "null"));
+    ASSERT_FALSE(nullScript2);
+    const EffectEngine::Script *nullScript3 = engine.findPassScript(cgGetNamedPass(techniques[2], "null"));
+    ASSERT_FALSE(nullScript3);
 }
 
 TEST_F(EffectTest, LoadSASStandard)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/standard.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/standard.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -304,21 +289,155 @@ TEST_F(EffectTest, LoadSASStandard)
     ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
     ASSERT_STREQ("test2", cgGetTechniqueName(techniques[1]));
     ASSERT_STREQ("test3", cgGetTechniqueName(techniques[2]));
+    const EffectEngine::Script *nullScript = engine.findPassScript(cgGetNamedPass(techniques[0], "null"));
+    ASSERT_FALSE(nullScript);
+    const EffectEngine::Script *nullScript2 = engine.findPassScript(cgGetNamedPass(techniques[1], "null"));
+    ASSERT_EQ(1, nullScript2->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript2->at(0).type);
+    const EffectEngine::Script *nullScript3 = engine.findPassScript(cgGetNamedPass(techniques[2], "null"));
+    ASSERT_EQ(1, nullScript3->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript3->at(0).type);
 }
 
-TEST_F(EffectTest, LoadPostProcess)
+TEST_F(EffectTest, LoadSASStandard2)
 {
     MockIRenderDelegate delegate;
     Scene scene;
-    CString path("/foo/bar/path");
-    setSource(delegate, path, ":effects/postprocess.cgfx");
-    cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(&path, &delegate));
-    ASSERT_TRUE(effect->internalPointer());
-    EffectEngine engine(&scene, &path, effect, &delegate);
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/standard2.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
+    ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
+    ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
+    const EffectEngine::Techniques &techniques = engine.techniques();
+    ASSERT_EQ(1, techniques.size());
+    ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
+}
+
+TEST_F(EffectTest, LoadSASPostProcess)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/postprocess.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
     ASSERT_EQ(EffectEngine::kSceneOrObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kPostProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
     const EffectEngine::Techniques &techniques = engine.techniques();
-    ASSERT_EQ(1, techniques.size());
-    ASSERT_STREQ("test", cgGetTechniqueName(techniques[0]));
+    ASSERT_EQ(3, techniques.size());
+    ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
+    ASSERT_STREQ("test2", cgGetTechniqueName(techniques[1]));
+    ASSERT_STREQ("test3", cgGetTechniqueName(techniques[2]));
+    const EffectEngine::Script *nullScript = engine.findPassScript(cgGetNamedPass(techniques[0], "null"));
+    ASSERT_EQ(1, nullScript->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kDrawBuffer, nullScript->at(0).type);
+    const EffectEngine::Script *nullScript2 = engine.findPassScript(cgGetNamedPass(techniques[1], "null"));
+    ASSERT_EQ(1, nullScript2->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript2->at(0).type);
+    const EffectEngine::Script *nullScript3 = engine.findPassScript(cgGetNamedPass(techniques[2], "null"));
+    ASSERT_EQ(1, nullScript3->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript3->at(0).type);
+}
+
+TEST_F(EffectTest, ParseSyntaxErrorsScript)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    CGtechnique technique = cgGetNamedTechnique(effectPtr, "SyntaxErrors");
+    ASSERT_TRUE(technique);
+    const EffectEngine::Script *script = engine.findTechniqueScript(technique);
+    ASSERT_TRUE(script);
+    ASSERT_EQ(1, script->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(0).type);
+}
+
+TEST_F(EffectTest, ParseRenderTargetsScript)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    CGtechnique technique = cgGetNamedTechnique(effectPtr, "RenderTargets");
+    ASSERT_TRUE(technique);
+    const EffectEngine::Script *script = engine.findTechniqueScript(technique);
+    ASSERT_TRUE(script);
+    ASSERT_EQ(15, script->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(0).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(0).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(1).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(1).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(2).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(2).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(3).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(3).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(4).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(4).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kClearSetColor, script->at(5).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "ClearColor"), script->at(5).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kClearSetDepth, script->at(6).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "ClearDepth"), script->at(6).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kClearColor, script->at(7).type);
+    ASSERT_EQ(EffectEngine::ScriptState::kClearDepth, script->at(8).type);
+    ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(9).type);
+    ASSERT_EQ(cgGetNamedPass(technique, "null"), script->at(9).pass);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(10).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(10).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(11).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(11).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(12).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(12).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(13).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(13).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(14).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(14).parameter);
+}
+
+TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    CGtechnique technique = cgGetNamedTechnique(effectPtr, "InvalidRenderTargets");
+    ASSERT_TRUE(technique);
+    const EffectEngine::Script *script = engine.findTechniqueScript(technique);
+    ASSERT_TRUE(script);
+    ASSERT_EQ(1, script->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(0).type);
+    ASSERT_EQ(cgGetNamedPass(technique, "null"), script->at(0).pass);
+}
+
+
+TEST_F(EffectTest, ParseLoopScript)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    CGtechnique technique = cgGetNamedTechnique(effectPtr, "Loop");
+    ASSERT_TRUE(technique);
+    const EffectEngine::Script *script = engine.findTechniqueScript(technique);
+    ASSERT_TRUE(script);
+    ASSERT_EQ(4, script->size());
+    ASSERT_EQ(EffectEngine::ScriptState::kLoopByCount, script->at(0).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopCountNum"), script->at(0).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kLoopGetIndex, script->at(1).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn"), script->at(1).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kLoopGetIndex, script->at(2).type);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn2"), script->at(2).parameter);
+    ASSERT_EQ(EffectEngine::ScriptState::kLoopEnd, script->at(3).type);
+    // try executing the script to get the value of LoopIndexIn
+    engine.executeTechniquePasses(technique, 0 , 0, 0, 0);
+    Vector3 value;
+    cgGLGetParameter1f(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn"), value);
+    ASSERT_FLOAT_EQ(42, value.x());
+    cgGLGetParameter1f(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn2"), value);
+    ASSERT_FLOAT_EQ(42, value.x());
 }

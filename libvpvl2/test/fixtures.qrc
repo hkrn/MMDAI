@@ -8,6 +8,8 @@
         <file alias="specials.cgfx">resources/effects/specials.cgfx</file>
         <file alias="preprocess.cgfx">resources/effects/preprocess.cgfx</file>
         <file alias="standard.cgfx">resources/effects/standard.cgfx</file>
+        <file alias="standard2.cgfx">resources/effects/standard2.cgfx</file>
         <file alias="postprocess.cgfx">resources/effects/postprocess.cgfx</file>
+        <file alias="scripts.cgfx">resources/effects/scripts.cgfx</file>
     </qresource>
 </RCC>
