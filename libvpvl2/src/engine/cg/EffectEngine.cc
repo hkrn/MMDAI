@@ -128,14 +128,12 @@ bool Util::isIntegerParameter(const CGparameter parameter)
 
 const std::string Util::trim(const std::string &value)
 {
-    std::string::const_iterator stringFrom = value.begin(), tail = value.end() - 1, stringTo = tail;
+    std::string::const_iterator stringFrom = value.begin(), stringTo = value.end() - 1;
     while (isspace(*stringFrom) && (stringFrom != value.end()))
         ++stringFrom;
     while (isspace(*stringTo) && (stringTo != value.begin()))
         --stringTo;
-    if (stringTo == tail)
-        ++stringTo;
-    return std::string(stringFrom, stringTo);
+    return (stringTo - stringFrom >= 0) ? std::string(stringFrom, ++stringTo) : "";
 }
 
 /* BasicParameter */
@@ -1462,6 +1460,16 @@ bool EffectEngine::validateStandard() const
     return m_scriptOrder == IEffect::kStandard;
 }
 
+const EffectEngine::Script *EffectEngine::findTechniqueScript(const CGtechnique technique) const
+{
+    return m_techniqueScripts.find(technique);
+}
+
+const EffectEngine::Script *EffectEngine::findPassScript(const CGpass pass) const
+{
+    return m_passScripts.find(pass);
+}
+
 bool EffectEngine::testTechnique(const CGtechnique technique,
                                  const char *pass,
                                  int offset,
@@ -1642,7 +1650,7 @@ void EffectEngine::executeScript(const Script *script,
 {
     if (script) {
         const int nstates = script->size();
-        int stateIndex = 0, nloop = 0, backStateIndex = 0;
+        int stateIndex = 0, nloop = 0, currentIndex = 0, backStateIndex = 0;
         Vector4 v4;
         while (stateIndex < nstates) {
             const ScriptState &state = script->at(stateIndex);
@@ -1664,17 +1672,18 @@ void EffectEngine::executeScript(const Script *script,
             case ScriptState::kLoopByCount:
                 cgGLGetParameter1f(state.parameter, v4);
                 backStateIndex = stateIndex + 1;
+                currentIndex = 0;
                 nloop = int(v4.x());
                 break;
             case ScriptState::kLoopEnd:
                 if (--nloop >= 0) {
                     stateIndex = backStateIndex;
+                    ++currentIndex;
                     continue;
                 }
                 break;
             case ScriptState::kLoopGetIndex:
-                cgGLGetParameter1f(state.parameter, v4);
-                nloop = int(v4.x());
+                cgGLSetParameter1f(state.parameter, currentIndex);
                 break;
             case ScriptState::kRenderColorTarget0:
             case ScriptState::kRenderColorTarget1:
@@ -2015,7 +2024,7 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
                 else if (lastState.enterLoop && command == "LoopGetIndex") {
                     CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
                     if (Util::isIntegerParameter(parameter)) {
-                        newState.type = ScriptState::kLoopByCount;
+                        newState.type = ScriptState::kLoopGetIndex;
                         newState.enterLoop = true;
                         newState.parameter = parameter;
                     }
