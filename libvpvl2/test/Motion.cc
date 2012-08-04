@@ -1,5 +1,4 @@
-#include <gtest/gtest.h>
-#include <QtCore/QtCore>
+#include "Common.h"
 
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/BoneAnimation.h"
@@ -12,18 +11,11 @@
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
 
-#include <vpvl2/qt/CString.h>
-#include <vpvl2/qt/Encoding.h>
-
-#include <gmock/gmock.h>
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
 
-using namespace ::testing;
-using namespace vpvl2;
 using namespace vpvl2::pmx;
-using namespace vpvl2::qt;
 using namespace vpvl2::vmd;
 
 namespace
@@ -31,50 +23,42 @@ namespace
 
 const char *kTestString = "012345678901234";
 
-static void CompareQuadWord(const QuadWord &actual, const QuadWord &expected)
-{
-    ASSERT_FLOAT_EQ(expected.x(), actual.x());
-    ASSERT_FLOAT_EQ(expected.y(), actual.y());
-    ASSERT_FLOAT_EQ(expected.z(), actual.z());
-    ASSERT_FLOAT_EQ(expected.w(), actual.w());
-}
-
 static void CompareBoneInterpolationMatrix(const QuadWord p[], const BoneKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
     frame.getInterpolationParameter(BoneKeyframe::kX, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[1];
     frame.getInterpolationParameter(BoneKeyframe::kY, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[2];
     frame.getInterpolationParameter(BoneKeyframe::kZ, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[3];
     frame.getInterpolationParameter(BoneKeyframe::kRotation, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
 }
 
 static void CompareCameraInterpolationMatrix(const QuadWord p[], const CameraKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
     frame.getInterpolationParameter(CameraKeyframe::kX, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[1];
     frame.getInterpolationParameter(CameraKeyframe::kY, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[2];
     frame.getInterpolationParameter(CameraKeyframe::kZ, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[3];
     frame.getInterpolationParameter(CameraKeyframe::kRotation, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[4];
     frame.getInterpolationParameter(CameraKeyframe::kDistance, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
     expected = p[5];
     frame.getInterpolationParameter(CameraKeyframe::kFov, actual);
-    CompareQuadWord(actual, expected);
+    AssertVector(actual, expected);
 }
 
 }
@@ -402,7 +386,7 @@ TEST(MotionTest, BoneInterpolation)
     BoneKeyframe frame(&encoding);
     QuadWord n;
     frame.getInterpolationParameter(BoneKeyframe::kX, n);
-    CompareQuadWord(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
+    AssertVector(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -420,7 +404,7 @@ TEST(MotionTest, CameraInterpolation)
     CameraKeyframe frame;
     QuadWord n;
     frame.getInterpolationParameter(CameraKeyframe::kX, n);
-    CompareQuadWord(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
+    AssertVector(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
             pz(17, 18, 19, 20),

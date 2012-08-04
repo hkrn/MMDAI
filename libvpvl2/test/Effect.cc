@@ -1,35 +1,69 @@
-#include <QtCore/QtCore>
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <tr1/tuple>
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/internal/util.h>
+#include "Common.h"
 #include <vpvl2/cg/EffectEngine.h>
-#include <vpvl2/qt/CString.h>
+#include "mock/Bone.h"
 #include "mock/Model.h"
+#include "mock/Morph.h"
 #include "mock/RenderDelegate.h"
 
-using namespace ::testing;
-using namespace std::tr1;
-using namespace vpvl2;
 using namespace vpvl2::cg;
-using namespace vpvl2::qt;
+
+namespace {
+
+static void AssertParameterFloat(const CGeffect effectPtr, const char *name, float expected)
+{
+    float v;
+    SCOPED_TRACE(name);
+    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
+    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
+    cgGLGetParameter1f(parameter, &v);
+    ASSERT_FLOAT_EQ(expected, v);
+}
+
+static void AssertParameterVector3(const CGeffect effectPtr, const char *name, const Vector3 &expected)
+{
+    Vector3 v;
+    SCOPED_TRACE(name);
+    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
+    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
+    cgGLGetParameter3f(parameter, v);
+    AssertVector(expected, v);
+}
+
+static void AssertParameterVector4(const CGeffect effectPtr, const char *name, const Vector4 &expected)
+{
+    Vector4 v;
+    SCOPED_TRACE(name);
+    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
+    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
+    cgGLGetParameter4f(parameter, v);
+    AssertVector(expected, v);
+}
+
+static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, const float *expected)
+{
+    float v[16] = { 0 };
+    SCOPED_TRACE(name);
+    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
+    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
+    cgGLGetMatrixParameterfr(parameter, v);
+    AssertMatrix(expected, v);
+}
 
 class EffectTest : public ::testing::Test {
 public:
     void setMatrix(MockIRenderDelegate &delegate, const IModel *modelPtr, int flags) {
         int cw = IRenderDelegate::kWorldMatrix | flags;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cw)).Times(1);
+        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cw)).Times(1).WillRepeatedly(Return());
         int cv = IRenderDelegate::kViewMatrix | flags;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cv)).Times(1);
+        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cv)).Times(1).WillRepeatedly(Return());
         int cp = IRenderDelegate::kProjectionMatrix | flags;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cp)).Times(1);
+        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cp)).Times(1).WillRepeatedly(Return());
         int cwv = cw | cv;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwv)).Times(1);
+        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwv)).Times(1).WillRepeatedly(Return());
         int cvp = cv | cp;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cvp)).Times(1);
+        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cvp)).Times(1).WillRepeatedly(Return());
         int cwvp = cw | cv | cp;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwvp)).Times(1);
+        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwvp)).Times(1).WillRepeatedly(Return());
     }
     cg::Effect *createEffect(const QString &effectPath, Scene &scene, MockIRenderDelegate &delegate, CGeffect &ptr) {
         QFile file(effectPath);
@@ -46,6 +80,8 @@ public:
         return 0;
     }
 };
+
+}
 
 TEST_F(EffectTest, ToBool)
 {
@@ -167,24 +203,28 @@ TEST_F(EffectTest, LoadMaterialColors)
     EffectEngine engine(&scene, 0, effect, &delegate);
     Vector4 v;
     float f;
-    cgGLGetParameter4f(engine.ambient.geometryParameter(), v);
-    ASSERT_EQ(Vector4(0.01, 0.02, 0.03, 0.04), v);
-    cgGLGetParameter4f(engine.diffuse.geometryParameter(), v);
-    ASSERT_EQ(Vector4(0.05, 0.06, 0.07, 0.08), v);
-    cgGLGetParameter4f(engine.emissive.geometryParameter(), v);
-    ASSERT_EQ(Vector4(0.09, 0.10, 0.11, 0.12), v);
-    cgGLGetParameter4f(engine.specular.geometryParameter(), v);
-    ASSERT_EQ(Vector4(0.13, 0.14, 0.15, 0.16), v);
-    cgGLGetParameter1f(engine.specularPower.geometryParameter(), &f);
-    ASSERT_FLOAT_EQ(0.17, f);
-    cgGLGetParameter4f(engine.toonColor.geometryParameter(), v);
-    ASSERT_EQ(Vector4(0.18, 0.19, 0.20, 0.21), v);
-    cgGLGetParameter4f(engine.ambient.lightParameter(), v);
-    ASSERT_EQ(Vector4(0.22, 0.23, 0.24, 0.25), v);
-    cgGLGetParameter4f(engine.diffuse.lightParameter(), v);
-    ASSERT_EQ(Vector4(0.26, 0.27, 0.28, 0.29), v);
-    cgGLGetParameter4f(engine.specular.lightParameter(), v);
-    ASSERT_EQ(Vector4(0.30, 0.31, 0.32, 0.33), v);
+    {
+        cgGLGetParameter4f(engine.ambient.geometryParameter(), v);
+        ASSERT_EQ(Vector4(0.01, 0.02, 0.03, 0.04), v);
+        cgGLGetParameter4f(engine.diffuse.geometryParameter(), v);
+        ASSERT_EQ(Vector4(0.05, 0.06, 0.07, 0.08), v);
+        cgGLGetParameter4f(engine.emissive.geometryParameter(), v);
+        ASSERT_EQ(Vector4(0.09, 0.10, 0.11, 0.12), v);
+        cgGLGetParameter4f(engine.specular.geometryParameter(), v);
+        ASSERT_EQ(Vector4(0.13, 0.14, 0.15, 0.16), v);
+        cgGLGetParameter1f(engine.specularPower.geometryParameter(), &f);
+        ASSERT_FLOAT_EQ(0.17, f);
+        cgGLGetParameter4f(engine.toonColor.geometryParameter(), v);
+        ASSERT_EQ(Vector4(0.18, 0.19, 0.20, 0.21), v);
+    }
+    {
+        cgGLGetParameter4f(engine.ambient.lightParameter(), v);
+        ASSERT_EQ(Vector4(0.22, 0.23, 0.24, 0.25), v);
+        cgGLGetParameter4f(engine.diffuse.lightParameter(), v);
+        ASSERT_EQ(Vector4(0.26, 0.27, 0.28, 0.29), v);
+        cgGLGetParameter4f(engine.specular.lightParameter(), v);
+        ASSERT_EQ(Vector4(0.30, 0.31, 0.32, 0.33), v);
+    }
 }
 
 TEST_F(EffectTest, LoadGeometries)
@@ -205,14 +245,133 @@ TEST_F(EffectTest, LoadGeometries)
     ASSERT_EQ(Vector4(0.13, 0.14, 0.15, 0.16), v);
 }
 
-TEST_F(EffectTest, DISABLED_LoadControlObject)
+TEST_F(EffectTest, LoadControlObjectWithoutAsset)
 {
     MockIRenderDelegate delegate;
     Scene scene;
     CGeffect effectPtr;
     cg::Effect *effect = createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr);
     EffectEngine engine(&scene, 0, effect, &delegate);
-    (void) engine;
+    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    engine.controlObject.update(0);
+    AssertParameterFloat(effectPtr, "no_such_asset_bool", 0);
+    AssertParameterFloat(effectPtr, "no_such_asset_float", 0);
+    AssertParameterVector3(effectPtr, "no_such_asset_float3", kZeroV3);
+    AssertParameterVector4(effectPtr, "no_such_asset_float4", kZeroC);
+    AssertParameterMatrix(effectPtr, "no_such_asset_float4x4", kIdentity4x4);
+    AssertParameterFloat(effectPtr, "no_such_X_float", 0);
+    AssertParameterFloat(effectPtr, "no_such_Y_float", 0);
+    AssertParameterFloat(effectPtr, "no_such_Z_float", 0);
+    AssertParameterVector3(effectPtr, "no_such_XYZ_float", kZeroV3);
+    AssertParameterFloat(effectPtr, "no_such_Rx_float", 0);
+    AssertParameterFloat(effectPtr, "no_such_Ry_float", 0);
+    AssertParameterFloat(effectPtr, "no_such_Rz_float", 0);
+    AssertParameterVector3(effectPtr, "no_such_Rxyz_float", kZeroV3);
+    AssertParameterFloat(effectPtr, "no_such_Si_float", 0);
+    AssertParameterFloat(effectPtr, "no_such_Tr_float", 0);
+}
+
+static const float kScaleFactor = 0.1;
+static const float kOpacity = 0.2;
+static const Vector4 kPosition = Vector4(0.01, 0.02, 0.03, 0);
+static const Quaternion kRotation = Quaternion(0.11, 0.12, 0.13, 0.14);
+static void MatrixSetIdentity(float *value, const IModel * /* model */, int /* flags */)
+{
+    memcpy(value, kIdentity4x4, sizeof(kIdentity4x4));
+}
+
+TEST_F(EffectTest, LoadControlObjectWithAsset)
+{
+    MockIRenderDelegate delegate;
+    MockIModel model, *modelPtr = &model;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
+    EXPECT_CALL(model, position()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
+    EXPECT_CALL(model, rotation()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kRotation));
+    EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
+    EXPECT_CALL(model, opacity()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kOpacity));
+    EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kAsset));
+    EXPECT_CALL(delegate, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
+    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    engine.controlObject.update(&model);
+    AssertParameterFloat(effectPtr, "asset_bool", 1);
+    AssertParameterFloat(effectPtr, "asset_float", kScaleFactor);
+    AssertParameterVector3(effectPtr, "asset_float3", kPosition);
+    AssertParameterVector4(effectPtr, "asset_float4", kPosition);
+    AssertParameterMatrix(effectPtr, "asset_float4x4", kIdentity4x4);
+    AssertParameterFloat(effectPtr, "X_float", kPosition.x());
+    AssertParameterFloat(effectPtr, "Y_float", kPosition.y());
+    AssertParameterFloat(effectPtr, "Z_float", kPosition.z());
+    AssertParameterVector3(effectPtr, "XYZ_float", kPosition);
+    AssertParameterFloat(effectPtr, "Rx_float", btDegrees(kRotation.x()));
+    AssertParameterFloat(effectPtr, "Ry_float", btDegrees(kRotation.y()));
+    AssertParameterFloat(effectPtr, "Rz_float", btDegrees(kRotation.z()));
+    AssertParameterVector3(effectPtr, "Rxyz_float", Vector3(btDegrees(kRotation.x()),
+                                                            btDegrees(kRotation.y()),
+                                                            btDegrees(kRotation.z())));
+    AssertParameterFloat(effectPtr, "Si_float", kScaleFactor);
+    AssertParameterFloat(effectPtr, "Tr_float", kOpacity);
+}
+
+TEST_F(EffectTest, LoadControlObjectWithoutModel)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("model"));
+    engine.controlObject.update(0);
+    AssertParameterFloat(effectPtr, "no_such_model_bool", 0);
+    AssertParameterFloat(effectPtr, "no_such_model_float", 0);
+    AssertParameterVector3(effectPtr, "no_such_model_float3", kZeroV3);
+    AssertParameterVector4(effectPtr, "no_such_model_float4", kZeroC);
+    AssertParameterMatrix(effectPtr, "no_such_model_float4x4", kIdentity4x4);
+}
+
+TEST_F(EffectTest, LoadControlObjectWithModel)
+{
+    MockIRenderDelegate delegate;
+    MockIModel model, *modelPtr = &model;
+    MockIBone bone, *bonePtr = &bone;
+    MockIMorph morph, *morphPtr = &morph;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    Transform boneTransform;
+    boneTransform.setIdentity();
+    boneTransform.setOrigin(kPosition);
+    EXPECT_CALL(bone, worldTransform()).Times(AnyNumber()).WillRepeatedly(ReturnRef(boneTransform));
+    EXPECT_CALL(morph, weight()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
+    EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
+    EXPECT_CALL(model, position()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
+    EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
+    EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kPMD));
+    EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));
+    EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
+    EXPECT_CALL(delegate, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
+    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    engine.controlObject.update(&model);
+    AssertParameterFloat(effectPtr, "model_bool", 1);
+    AssertParameterFloat(effectPtr, "model_float", kScaleFactor);
+    AssertParameterVector3(effectPtr, "model_float3", kPosition);
+    AssertParameterVector4(effectPtr, "model_float4", kPosition);
+    AssertParameterMatrix(effectPtr, "model_float4x4", kIdentity4x4);
+    AssertParameterVector3(effectPtr, "bone_float3", kPosition);
+    AssertParameterVector4(effectPtr, "bone_float4", kPosition);
+    float m[16] = { 0 };
+    boneTransform.getOpenGLMatrix(m);
+    AssertParameterMatrix(effectPtr, "bone_float4x4", m);
+    // TODO: implement here
+    // AssertParameterFloat(effectPtr, "model_morph", kScaleFactor);
 }
 
 TEST_F(EffectTest, LoadTimes)

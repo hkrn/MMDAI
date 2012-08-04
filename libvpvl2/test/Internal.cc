@@ -1,7 +1,4 @@
-#include <QtCore/QtCore>
-#include <gtest/gtest.h>
-#include <vpvl2/internal/util.h>
-#include <vpvl2/qt/CString.h>
+#include "Common.h"
 #include <limits>
 
 using namespace ::testing;

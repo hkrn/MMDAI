@@ -39,6 +39,7 @@ HEADERS += mock/Bone.h \
     mock/MorphKeyframe.h \
     mock/Motion.h \
     mock/RenderDelegate.h \
+    Common.h
 
 SOURCES += main.cc \
     Effect.cc \
@@ -46,8 +47,7 @@ SOURCES += main.cc \
     Model.cc \
     Motion.cc \
     Project.cc \
-    String.cc \
-    Encoding.cc
+    String.cc
 
 RESOURCES += \
     fixtures.qrc

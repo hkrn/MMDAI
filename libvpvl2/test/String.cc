@@ -1,10 +1,4 @@
-#include <QtCore/QtCore>
-#include <gtest/gtest.h>
-#include <vpvl2/cg/EffectEngine.h>
-#include <vpvl2/qt/CString.h>
-
-using namespace vpvl2;
-using namespace vpvl2::qt;
+#include "Common.h"
 
 TEST(String, StartsWith)
 {
