@@ -1,6 +1,7 @@
 #include <QtCore/QtCore>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <tr1/tuple>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
 #include <vpvl2/cg/EffectEngine.h>
@@ -9,10 +10,10 @@
 #include "mock/RenderDelegate.h"
 
 using namespace ::testing;
+using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::cg;
 using namespace vpvl2::qt;
-using ::testing::InSequence;
 
 class EffectTest : public ::testing::Test {
 public:
@@ -340,6 +341,66 @@ TEST_F(EffectTest, LoadSASPostProcess)
     ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript3->at(0).type);
 }
 
+TEST_F(EffectTest, FindTechniques)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    ASSERT_STREQ("MainTec7",   cgGetTechniqueName(engine.findTechnique("object",     1, 42, true,  true,  true)));
+    ASSERT_STREQ("MainTec6",   cgGetTechniqueName(engine.findTechnique("object",     2, 42, false, true,  true)));
+    ASSERT_STREQ("MainTec5",   cgGetTechniqueName(engine.findTechnique("object",     3, 42, true,  false, true)));
+    ASSERT_STREQ("MainTec4",   cgGetTechniqueName(engine.findTechnique("object",     4, 42, false, false, true)));
+    ASSERT_STREQ("MainTec3",   cgGetTechniqueName(engine.findTechnique("object",     5, 42, true,  true,  false)));
+    ASSERT_STREQ("MainTec2",   cgGetTechniqueName(engine.findTechnique("object",     6, 42, false, true,  false)));
+    ASSERT_STREQ("MainTec1",   cgGetTechniqueName(engine.findTechnique("object",     7, 42, true,  false, false)));
+    ASSERT_STREQ("MainTec0",   cgGetTechniqueName(engine.findTechnique("object",     8, 42, false, false, false)));
+    ASSERT_STREQ("MainTecBS7", cgGetTechniqueName(engine.findTechnique("object_ss",  9, 42, true,  true,  true)));
+    ASSERT_STREQ("MainTecBS6", cgGetTechniqueName(engine.findTechnique("object_ss", 10, 42, false, true,  true)));
+    ASSERT_STREQ("MainTecBS5", cgGetTechniqueName(engine.findTechnique("object_ss", 11, 42, true,  false, true)));
+    ASSERT_STREQ("MainTecBS4", cgGetTechniqueName(engine.findTechnique("object_ss", 12, 42, false, false, true)));
+    ASSERT_STREQ("MainTecBS3", cgGetTechniqueName(engine.findTechnique("object_ss", 13, 42, true,  true,  false)));
+    ASSERT_STREQ("MainTecBS2", cgGetTechniqueName(engine.findTechnique("object_ss", 14, 42, false, true,  false)));
+    ASSERT_STREQ("MainTecBS1", cgGetTechniqueName(engine.findTechnique("object_ss", 15, 42, true,  false, false)));
+    ASSERT_STREQ("MainTecBS0", cgGetTechniqueName(engine.findTechnique("object_ss", 16, 42, false, false, false)));
+}
+
+class FindTechnique : public EffectTest, public WithParamInterface< tuple<int, int, bool, bool, bool> > {};
+
+TEST_P(FindTechnique, TestEdge)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    ASSERT_STREQ("EdgeTec", cgGetTechniqueName(engine.findTechnique("edge",
+                                                                    get<0>(GetParam()),
+                                                                    get<1>(GetParam()),
+                                                                    get<2>(GetParam()),
+                                                                    get<3>(GetParam()),
+                                                                    get<4>(GetParam()))));
+}
+
+TEST_P(FindTechnique, TestShadow)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    ASSERT_STREQ("ShadowTec", cgGetTechniqueName(engine.findTechnique("shadow",
+                                                                      get<0>(GetParam()),
+                                                                      get<1>(GetParam()),
+                                                                      get<2>(GetParam()),
+                                                                      get<3>(GetParam()),
+                                                                      get<4>(GetParam()))));
+}
+
+INSTANTIATE_TEST_CASE_P(EffectValueTest, FindTechnique,
+                        Combine(Range(-1, 1), Values(2), Bool(), Bool(), Bool()));
+
 TEST_F(EffectTest, ParseSyntaxErrorsScript)
 {
     MockIRenderDelegate delegate;
@@ -412,7 +473,6 @@ TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
     ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(0).type);
     ASSERT_EQ(cgGetNamedPass(technique, "null"), script->at(0).pass);
 }
-
 
 TEST_F(EffectTest, ParseLoopScript)
 {

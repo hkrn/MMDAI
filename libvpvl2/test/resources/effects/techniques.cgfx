@@ -1,0 +1,94 @@
+// for Accessory (Asset)
+technique MainTec0 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTec1 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = false; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTec2 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = true; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTec3 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = true; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+// for PMD/PMX model
+technique MainTec4 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTec5 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = false; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTec6 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = true; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTec7 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = true; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+
+technique EdgeTec < string MMDPass = "edge"; > {
+    pass DrawEdge {
+    }
+}
+
+technique ShadowTec < string MMDPass = "shadow"; > {
+    pass DrawShadow {
+    }
+}
+
+// for Accessory (Asset) with self shadow
+technique MainTecBS0  < string MMDPass = "object_ss"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTecBS1  < string MMDPass = "object_ss"; bool UseTexture = true; bool UseSphereMap = false; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTecBS2  < string MMDPass = "object_ss"; bool UseTexture = false; bool UseSphereMap = true; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTecBS3  < string MMDPass = "object_ss"; bool UseTexture = true; bool UseSphereMap = true; bool UseToon = false; > {
+    pass DrawObject {
+    }
+}
+
+// for PMD/PMX model with self shadow
+technique MainTecBS4  < string MMDPass = "object_ss"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTecBS5  < string MMDPass = "object_ss"; bool UseTexture = true; bool UseSphereMap = false; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTecBS6  < string MMDPass = "object_ss"; bool UseTexture = false; bool UseSphereMap = true; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+
+technique MainTecBS7  < string MMDPass = "object_ss"; bool UseTexture = true; bool UseSphereMap = true; bool UseToon = true; > {
+    pass DrawObject {
+    }
+}
+

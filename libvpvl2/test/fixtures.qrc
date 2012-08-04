@@ -11,5 +11,6 @@
         <file alias="standard2.cgfx">resources/effects/standard2.cgfx</file>
         <file alias="postprocess.cgfx">resources/effects/postprocess.cgfx</file>
         <file alias="scripts.cgfx">resources/effects/scripts.cgfx</file>
+        <file alias="techniques.cgfx">resources/effects/techniques.cgfx</file>
     </qresource>
 </RCC>
