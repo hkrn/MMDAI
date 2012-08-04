@@ -653,7 +653,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
             cgSetParameter1i(parameter, 0);
             break;
         case CG_FLOAT:
-            cgSetParameter1i(parameter, 1);
+            cgSetParameter1i(parameter, 0);
             break;
         case CG_FLOAT3:
         case CG_FLOAT4:

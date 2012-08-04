@@ -205,6 +205,16 @@ TEST_F(EffectTest, LoadGeometries)
     ASSERT_EQ(Vector4(0.13, 0.14, 0.15, 0.16), v);
 }
 
+TEST_F(EffectTest, DISABLED_LoadControlObject)
+{
+    MockIRenderDelegate delegate;
+    Scene scene;
+    CGeffect effectPtr;
+    cg::Effect *effect = createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr);
+    EffectEngine engine(&scene, 0, effect, &delegate);
+    (void) engine;
+}
+
 TEST_F(EffectTest, LoadTimes)
 {
     MockIRenderDelegate delegate;
