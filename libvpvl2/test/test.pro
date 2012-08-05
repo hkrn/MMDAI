@@ -48,7 +48,8 @@ SOURCES += main.cc \
     Motion.cc \
     Project.cc \
     String.cc \
-    Encoding.cc
+    Encoding.cc \
+    Archive.cc
 
 RESOURCES += \
     fixtures.qrc
