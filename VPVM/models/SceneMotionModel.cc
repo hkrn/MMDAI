@@ -603,6 +603,7 @@ void SceneMotionModel::removeMotion()
     m_undo->setActiveStack(0);
     delete m_stack;
     m_stack = 0;
+    m_motion = 0;
     m_cameraData.clear();
     m_lightData.clear();
     setModified(false);
