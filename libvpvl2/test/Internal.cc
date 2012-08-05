@@ -1,10 +1,6 @@
 #include "Common.h"
 #include <limits>
 
-using namespace ::testing;
-using namespace vpvl2;
-using namespace vpvl2::qt;
-
 TEST(InternalTest, Lerp)
 {
     ASSERT_EQ(4.0, vpvl2::internal::lerp(4, 2, 0));

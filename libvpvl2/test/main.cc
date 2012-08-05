@@ -7,7 +7,8 @@ using namespace ::testing;
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv); Q_UNUSED(a)
+    QApplication a(argc, argv); Q_UNUSED(a);
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     QGLWidget widget;
     widget.show();
     widget.update();

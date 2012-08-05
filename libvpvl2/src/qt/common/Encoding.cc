@@ -118,24 +118,31 @@ IString *Encoding::toString(const uint8_t *value, IString::Codec codec, size_t m
 
 uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
 {
-    const CString *s = static_cast<const CString *>(value);
-    QByteArray bytes;
-    switch (codec) {
-    case IString::kShiftJIS:
-        bytes = m_sjis->fromUnicode(s->value());
-        break;
-    case IString::kUTF8:
-        bytes = m_utf8->fromUnicode(s->value());
-        break;
-    case IString::kUTF16:
-        bytes = m_utf16->fromUnicode(s->value());
-        break;
+    if (value) {
+        const CString *s = static_cast<const CString *>(value);
+        QByteArray bytes;
+        switch (codec) {
+        case IString::kShiftJIS:
+            bytes = m_sjis->fromUnicode(s->value());
+            break;
+        case IString::kUTF8:
+            bytes = m_utf8->fromUnicode(s->value());
+            break;
+        case IString::kUTF16:
+            bytes = m_utf16->fromUnicode(s->value());
+            break;
+        }
+        size_t size = bytes.length();
+        uint8_t *data = new uint8_t[size + 1];
+        memcpy(data, bytes.constData(), size);
+        data[size] = 0;
+        return data;
     }
-    size_t size = bytes.length();
-    uint8_t *data = new uint8_t[size + 1];
-    memcpy(data, bytes.constData(), size);
-    data[size] = 0;
-    return data;
+    else {
+        uint8_t *s = new uint8_t[1];
+        s[0] = 0;
+        return s;
+    }
 }
 
 void Encoding::disposeByteArray(uint8_t *value) const
