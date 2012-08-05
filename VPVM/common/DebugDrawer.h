@@ -37,6 +37,7 @@
 #ifndef DEBUGDRAWER_H
 #define DEBUGDRAWER_H
 
+#include "vpvl2/qt/CString.h"
 #include "SceneLoader.h"
 #include "SceneWidget.h"
 #include "util.h"
@@ -48,6 +49,7 @@
 namespace internal {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 class DebugDrawer : public btIDebugDraw
 {
@@ -71,7 +73,12 @@ public:
     void draw3dText(const btVector3 & /* location */, const char *textString) {
         fprintf(stderr, "[INFO]: %s\n", textString);
     }
-    void drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int /* lifeTime */, const btVector3 &color) {
+    void drawContactPoint(const btVector3 &PointOnB,
+                          const btVector3 &normalOnB,
+                          btScalar distance,
+                          int /* lifeTime */,
+                          const btVector3 &color)
+    {
         QVector3D lines[2];
         setLine(PointOnB, PointOnB + normalOnB * distance, lines);
         m_program.setUniformValue("color", QColor::fromRgbF(color.x(), color.y(), color.z()));
@@ -85,7 +92,11 @@ public:
         m_program.setAttributeArray("inPosition", lines);
         glDrawArrays(GL_LINES, 0, 2);
     }
-    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &fromColor, const btVector3 & /* toColor */) {
+    void drawLine(const btVector3 &from,
+                  const btVector3 &to,
+                  const btVector3 &fromColor,
+                  const btVector3 & /* toColor */)
+    {
         QVector3D lines[2];
         setLine(from, to, lines);
         m_program.setUniformValue("color", QColor::fromRgbF(fromColor.x(), fromColor.y(), fromColor.z()));
@@ -106,6 +117,7 @@ public:
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
         m_program.link();
+        m_program.enableAttributeArray("inPosition");
     }
     void setVisible(bool value) {
         m_visible = value;
@@ -122,7 +134,7 @@ public:
         }
     }
 
-    void drawModelBones(IModel *model, SceneLoader *loader, const BoneSet &selectedBones) {
+    void drawModelBones(const IModel *model, const SceneLoader *loader, const BoneSet &selectedBones) {
         if (!model || !m_visible || !m_program.isLinked())
             return;
         Array<IBone *> bones;
@@ -131,7 +143,6 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         prepare(loader);
-        m_program.enableAttributeArray("inPosition");
         /* IK ボーンの収集 */
         BoneSet bonesForIK;
         Array<IBone *> linkedBones;
@@ -149,13 +160,17 @@ public:
                 }
             }
         }
+        const IBone *specialBone = findSpecialBone(model);
+        const Vector3 &origin = specialBone ? specialBone->worldTransform().getOrigin() : kZeroV3;
         /* ボーンの表示(レンダリング) */
         for (int i = 0; i < nbones; i++) {
-            IBone *bone = bones[i];
+            const IBone *bone = bones[i];
             /* 操作不可能の場合はスキップ */
             if (!bone->isInteractive())
                 continue;
-            drawBone(bone, selectedBones, bonesForIK);
+            /* 全ての親ボーンもとい特殊枠にあるボーンへの接続表示対策 */
+            bool skipDrawingLine = (bone->destinationOrigin() == origin);
+            drawBone(bone, selectedBones, bonesForIK, skipDrawingLine);
         }
         m_program.release();
         glEnable(GL_DEPTH_TEST);
@@ -177,11 +192,10 @@ public:
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
         prepare(loader);
-        m_program.enableAttributeArray("inPosition");
         /* ボーン表示 */
         BoneSet selectedBones;
         selectedBones.insert(bone);
-        drawBone(bone, selectedBones, BoneSet());
+        drawBone(bone, selectedBones, BoneSet(), false);
         /* 軸表示 */
         static const Scalar kLength = 2.0;
         static const Vector3 kRed   = Vector3(1, 0, 0);
@@ -191,8 +205,8 @@ public:
             /* モデルビュー行列を元に軸表示 */
             const Transform &transform = bone->worldTransform();
             const Vector3 &origin = bone->worldTransform().getOrigin();
-            QMatrix4x4 view, projection;
-            loader->getCameraMatrices(view, projection);
+            QMatrix4x4 world, view, projection;
+            loader->getCameraMatrices(world, view, projection);
             drawLine(origin, transform * (internal::vec2vec(view.row(0)) * kLength), kRed);
             drawLine(origin, transform * (internal::vec2vec(view.row(1)) * kLength), kGreen);
             drawLine(origin, transform * (internal::vec2vec(view.row(2)) * kLength), kBlue);
@@ -230,34 +244,21 @@ public:
 
 private:
     void prepare(const SceneLoader *loader) {
-        QMatrix4x4 view, projection;
-        loader->getCameraMatrices(view, projection);
+        QMatrix4x4 world, view, projection;
+        loader->getCameraMatrices(world, view, projection);
         m_program.bind();
-        m_program.setUniformValue("modelViewProjectionMatrix", projection * view);
+        m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());
     }
-    void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK) {
-        const Vector3 &dest = bone->destinationOrigin();
-        if (!bone || !bone->isVisible() || dest.isZero())
-            return;
-        Transform tr = Transform::getIdentity();
-        Array<Vector3> vertices;
-        static const int indices[] = {
-            0, 1, 2, 3
-        };
+    void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK, bool skipDrawingLine) {
         static const QColor kColorRed = QColor::fromRgbF(1.0, 0.0, 0.0);
         static const QColor kColorOrange = QColor::fromRgbF(1.0, 0.75, 0.0);
         static const QColor kColorBlue = QColor::fromRgbF(0.0, 0.0, 1.0);
+        static const Scalar sphereRadius = 0.2f;
+        if (!bone || !bone->isVisible())
+            return;
+        const Vector3 &dest = bone->destinationOrigin();
         const Vector3 &origin = bone->worldTransform().getOrigin();
-        const Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
-        const Scalar &sphereRadius = 0.2f;
-        /* ボーン接続を表示するための頂点設定 */
-        tr.setOrigin(Vector3(coneRadius, 0.0f, 0.0f));
-        vertices.add(tr * origin);
-        vertices.add(dest);
-        tr.setOrigin(Vector3(-coneRadius, 0.0f, 0.0f));
-        vertices.add(tr * origin);
-        vertices.add(dest);
         /* 選択中の場合は赤色で表示 */
         if (selected.contains(bone)) {
             drawSphere(origin, sphereRadius, Vector3(1.0f, 0.0f, 0.0f));
@@ -278,12 +279,45 @@ private:
             drawSphere(origin, sphereRadius, Vector3(0.0f, 0.0f, 1.0f));
             m_program.setUniformValue("color", kColorBlue);
         }
-        /* 描写 */
-        m_program.setAttributeArray("inPosition",
-                                    reinterpret_cast<const GLfloat *>(&vertices[0]),
-                                    3,
-                                    sizeof(Vector3));
-        glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
+        if (!skipDrawingLine) {
+            /* 描写 */
+            Transform tr = Transform::getIdentity();
+            Array<Vector3> vertices;
+            static const int indices[] = {
+                0, 1, 2, 3
+            };
+            const Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
+            /* ボーン接続を表示するための頂点設定 */
+            tr.setOrigin(Vector3(coneRadius, 0.0f, 0.0f));
+            vertices.add(tr * origin);
+            vertices.add(dest);
+            tr.setOrigin(Vector3(-coneRadius, 0.0f, 0.0f));
+            vertices.add(tr * origin);
+            vertices.add(dest);
+            m_program.setAttributeArray("inPosition",
+                                        reinterpret_cast<const GLfloat *>(&vertices[0]),
+                                        3,
+                                        sizeof(Vector3));
+            glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
+        }
+    }
+    const IBone *findSpecialBone(const IModel *model) const {
+        Array<ILabel *> labels;
+        model->getLabels(labels);
+        const int nlabels = labels.count();
+        for (int i = 0; i < nlabels; i++) {
+            const ILabel *label = labels[i];
+            const int nchildren = label->count();
+            if (label->isSpecial()) {
+                /* 特殊枠でかつ先頭ボーンかどうか */
+                static const CString kRoot("Root");
+                if (nchildren > 0 && label->name()->equals(&kRoot)) {
+                    const IBone *bone = label->bone(0);
+                    return bone;
+                }
+            }
+        }
+        return 0;
     }
 
     QGLShaderProgram m_program;
