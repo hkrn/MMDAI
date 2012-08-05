@@ -289,18 +289,22 @@ void Delegate::releaseContext(const IModel *model, void *&context)
 
 bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
 {
-    bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
+    bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap, ok = false;
     if (flags & IRenderDelegate::kTexture2D) {
-        return uploadTextureInternal(createPath(dir, name), texture, false, mipmap, context);
+        const QString &path = createPath(dir, name);
+        return uploadTextureInternal(path, texture, false, false, mipmap, ok, context);
     }
     else if (flags & IRenderDelegate::kToonTexture) {
         bool ret = false;
         if (dir) {
-            ret = uploadTextureInternal(createPath(dir, name), texture, true, mipmap, context);
+            const QString &path = createPath(dir, name);
+            ret = uploadTextureInternal(path, texture, true, false, mipmap, ok, context);
         }
-        if (!ret) {
+        if (!ok) {
             CString s(m_systemDir.absolutePath());
-            ret = uploadTextureInternal(createPath(&s, name), texture, true, mipmap, context);
+            const QString &path = createPath(&s, name);
+            ret = uploadTextureInternal(path, texture, true, true, mipmap, ok, context);
+            qDebug("Loaded a system texture: %s", qPrintable(path));
         }
         return ret;
     }
@@ -310,13 +314,14 @@ bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags,
 void Delegate::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
 {
     const QString &path = createPath(dir, name);
-    if (QFile::exists(path)) {
-        getToonColorInternal(path, value);
+    bool ok = false;
+    if (m_archive || QFile::exists(path)) {
+        getToonColorInternal(path, false, value, ok);
     }
-    else {
+    if (!ok) {
         CString s(m_systemDir.absolutePath());
         const QString &fallback = createPath(&s, name);
-        getToonColorInternal(fallback, value);
+        getToonColorInternal(fallback, true, value, ok);
     }
 }
 
@@ -1099,28 +1104,33 @@ void Delegate::addTextureCache(PrivateContext *context, const QString &path, con
         context->textureCache.insert(path, texture);
 }
 
-bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool isToon, bool mipmap, void *context)
+bool Delegate::uploadTextureInternal(const QString &path,
+                                     Texture &texture,
+                                     bool isToon,
+                                     bool isSystem,
+                                     bool mipmap,
+                                     bool &ok,
+                                     void *context)
 {
     const QFileInfo info(path);
-    if (info.isDir())
-        return true; /* skip */
-    if (!info.exists()) {
-        qWarning("Cannot loading inexist \"%s\"", qPrintable(path));
-        return true; /* skip */
-    }
     PrivateContext *privateContext = static_cast<PrivateContext *>(context);
+    /* テクスチャのキャッシュを検索する */
     if (privateContext && privateContext->textureCache.contains(path)) {
         setTextureID(privateContext->textureCache[path], isToon, texture);
+        ok = true;
         return true;
     }
-    /* ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く) */
-    if (m_archive && !path.startsWith(":/")) {
+    /*
+     * ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く)
+     * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
+     */
+    if (m_archive && !isSystem) {
         QByteArray suffix = info.suffix().toLower().toUtf8();
         if (suffix == "sph" || suffix == "spa")
             suffix.setRawData("bmp", 3);
         const QByteArray &bytes = m_archive->data(path);
-        QImage image;
         ByteArrayPtr ptr;
+        QImage image;
         image.loadFromData(bytes, suffix.constData());
         if (image.isNull() && suffix == "tga" && bytes.length() > 18) {
             image = loadTGA(bytes, ptr);
@@ -1129,8 +1139,9 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
             image = image.rgbSwapped();
         }
         if (image.isNull()) {
-            qWarning("Loading texture %s (zipped) cannot decode", qPrintable(info.fileName()));
-            return false;
+            qWarning("Loading texture %s (zipped) cannot decode, ignored.", qPrintable(info.fileName()));
+            ok = false;
+            return true;
         }
         GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
         TextureCache cache(image.width(), image.height(), textureID);
@@ -1139,9 +1150,19 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
         addTextureCache(privateContext, path, cache);
         qDebug("Loaded a zipped texture (ID=%d, width=%d, height=%d): \"%s\"",
                textureID, image.width(), image.height(), qPrintable(path));
-        return textureID != 0;
+        ok = textureID != 0;
+        return ok;
     }
-    else if (path.endsWith(".dds")) {
+    if (info.isDir()) {
+        ok = false;
+        return true; /* skip */
+    }
+    if (!info.exists()) {
+        qWarning("Cannot loading inexist \"%s\"", qPrintable(path));
+        ok = false;
+        return true; /* skip */
+    }
+    if (path.endsWith(".dds")) {
         QFile file(path);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
@@ -1150,15 +1171,18 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
             GLuint textureID;
             if (!dds.parse(data, bytes.size(), textureID)) {
                 qDebug("Cannot parse a DDS texture %s", qPrintable(path));
+                ok = false;
                 return true; /* skip */
             }
             TextureCache cache(dds.width(), dds.height(), textureID);
             setTextureID(cache, isToon, texture);
             addTextureCache(privateContext, path, cache);
-            return true;
+            ok = true;
+            return ok;
         }
         else {
             qDebug("Cannot open a DDS texture %s: %s", qPrintable(path), qPrintable(file.errorString()));
+            ok = false;
             return true; /* skip */
         }
     }
@@ -1172,20 +1196,30 @@ bool Delegate::uploadTextureInternal(const QString &path, Texture &texture, bool
         addTextureCache(privateContext, path, cache);
         qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
                textureID, image.width(), image.height(), qPrintable(path));
-        return textureID != 0;
+        ok = textureID != 0;
+        return ok;
     }
 }
 
-void Delegate::getToonColorInternal(const QString &path, Color &value)
+void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
 {
     QImage image(path);
+    if (!isSystem && m_archive) {
+        QByteArray suffix = QFileInfo(path).suffix().toLower().toUtf8();
+        if (suffix == "sph" || suffix == "spa")
+            suffix.setRawData("bmp", 3);
+        const QByteArray &bytes = m_archive->data(path);
+        image.loadFromData(bytes, suffix.constData());
+    }
     if (!image.isNull()) {
         const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
         const QColor color(rgb);
         value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+        ok = true;
     }
     else {
         value.setValue(0, 0, 0, 1);
+        ok = false;
     }
 }
 

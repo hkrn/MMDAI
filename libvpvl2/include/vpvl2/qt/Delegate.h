@@ -139,8 +139,15 @@ private:
     static QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr);
     static QImage loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr);
     static QGLContext::BindOptions textureBindOptions(bool enableMipmap);
-    bool uploadTextureInternal(const QString &path, Texture &texture, bool isToon, bool mipmap, void *context);
-    void getToonColorInternal(const QString &path, Color &value);
+    QImage createImageFromArchive(const QFileInfo &info);
+    bool uploadTextureInternal(const QString &path,
+                               Texture &texture,
+                               bool isToon,
+                               bool isSystem,
+                               bool mipmap,
+                               bool &ok,
+                               void *context);
+    void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
     const QHash<QString, QString> m_settings;
