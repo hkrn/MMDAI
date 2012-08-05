@@ -782,10 +782,11 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
     GLdouble modelviewMatrixd[16], projectionMatrixd[16];
     const GLint viewport[4] = { 0, 0, width(), height() };
-    QMatrix4x4 view, projection;
-    m_loader->getCameraMatrices(view, projection);
+    QMatrix4x4 world, view, projection;
+    m_loader->getCameraMatrices(world, view, projection);
+    const QMatrix4x4 worldview = view * world;
     for (int i = 0; i < 16; i++) {
-        modelviewMatrixd[i] = view.constData()[i];
+        modelviewMatrixd[i] = worldview.constData()[i];
         projectionMatrixd[i] = projection.constData()[i];
     }
     GLdouble wx = input.x(), wy = height() - input.y(), cx, cy, cz, fx, fy, fz;

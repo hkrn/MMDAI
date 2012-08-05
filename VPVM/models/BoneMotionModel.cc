@@ -802,13 +802,13 @@ void BoneMotionModel::setPMDModel(IModel *model)
             for (int i = 0; i < nlabels; i++) {
                 const ILabel *label = labels[i];
                 const int nchildren = label->count();
-                /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
                 if (label->isSpecial()) {
                     /* 特殊枠でかつ先頭ボーンかどうか */
                     static const CString kRoot("Root");
                     if (nchildren > 0 && label->name()->equals(&kRoot)) {
                         const IBone *bone = label->bone(0);
                         if (bone) {
+                            /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
                             const QString &category = internal::toQStringFromBone(bone).trimmed();
                             parent.reset(new TreeItem(category, 0, false, true, r));
                         }

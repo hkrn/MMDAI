@@ -85,7 +85,7 @@ public:
     vpvl2::IMotion *findMotion(const QUuid &uuid) const;
     const QUuid findUUID(vpvl2::IModel *model) const;
     void getBoundingSphere(vpvl2::Vector3 &center, vpvl2::Scalar &radius) const;
-    void getCameraMatrices(QMatrix4x4 &view, QMatrix4x4 &projection) const;
+    void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, vpvl2::IModel *&asset);
     vpvl2::IModel *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);

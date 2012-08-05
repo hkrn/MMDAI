@@ -204,9 +204,9 @@ static void UIInitializeRenderingModel(const SceneLoader *loader,
                                        QGLShaderProgram *program)
 {
     QGLFunctions func(QGLContext::currentContext());
-    QMatrix4x4 view, projection;
-    loader->getCameraMatrices(view, projection);
-    program->setUniformValue("modelViewProjectionMatrix", projection * view);
+    QMatrix4x4 world, view, projection;
+    loader->getCameraMatrices(world, view, projection);
+    program->setUniformValue("modelViewProjectionMatrix", projection * view * world);
     int boneMatrix = program->uniformLocation("boneMatrix");
     float matrix[16];
     transform.getOpenGLMatrix(matrix);

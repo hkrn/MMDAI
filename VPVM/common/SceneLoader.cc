@@ -504,9 +504,8 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
     }
 }
 
-void SceneLoader::getCameraMatrices(QMatrix4x4 &view, QMatrix4x4 &projection) const
+void SceneLoader::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection) const
 {
-    QMatrix4x4 world;
     m_renderDelegate->getCameraMatrices(world, view, projection);
 }
 
@@ -653,7 +652,9 @@ bool SceneLoader::loadModel(const QString &filename, IModel *&model)
             model = m_factory->createModel(type);
             allocated = true;
         }
-        if (!model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+        const uint8_t *dataPtr = reinterpret_cast<const uint8_t *>(bytes.constData());
+        size_t size = bytes.size();
+        if (!model->load(dataPtr, size)) {
             if (allocated) {
                 delete model;
                 model = 0;

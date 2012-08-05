@@ -115,9 +115,9 @@ public:
             QGLFunctions func(QGLContext::currentContext());
             func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
             func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-            QMatrix4x4 view, projection;
-            loader->getCameraMatrices(view, projection);
-            m_program.setUniformValue("modelViewProjectionMatrix", projection * view);
+            QMatrix4x4 world, view, projection;
+            loader->getCameraMatrices(world, view, projection);
+            m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
             int inPosition = m_program.attributeLocation("inPosition");
             m_program.enableAttributeArray(inPosition);
             m_program.setAttributeBuffer(inPosition, GL_FLOAT, 0, 3, sizeof(Vertex));
