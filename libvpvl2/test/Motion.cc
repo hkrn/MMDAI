@@ -11,53 +11,54 @@
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
 
+#include "vpvl2/mvd/Motion.h"
+
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
 
 using namespace vpvl2::pmx;
-using namespace vpvl2::vmd;
 
 namespace
 {
 
 const char *kTestString = "012345678901234";
 
-static void CompareBoneInterpolationMatrix(const QuadWord p[], const BoneKeyframe &frame)
+static void CompareBoneInterpolationMatrix(const QuadWord p[], const vmd::BoneKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
-    frame.getInterpolationParameter(BoneKeyframe::kX, actual);
+    frame.getInterpolationParameter(vmd::BoneKeyframe::kX, actual);
     AssertVector(actual, expected);
     expected = p[1];
-    frame.getInterpolationParameter(BoneKeyframe::kY, actual);
+    frame.getInterpolationParameter(vmd::BoneKeyframe::kY, actual);
     AssertVector(actual, expected);
     expected = p[2];
-    frame.getInterpolationParameter(BoneKeyframe::kZ, actual);
+    frame.getInterpolationParameter(vmd::BoneKeyframe::kZ, actual);
     AssertVector(actual, expected);
     expected = p[3];
-    frame.getInterpolationParameter(BoneKeyframe::kRotation, actual);
+    frame.getInterpolationParameter(vmd::BoneKeyframe::kRotation, actual);
     AssertVector(actual, expected);
 }
 
-static void CompareCameraInterpolationMatrix(const QuadWord p[], const CameraKeyframe &frame)
+static void CompareCameraInterpolationMatrix(const QuadWord p[], const vmd::CameraKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
-    frame.getInterpolationParameter(CameraKeyframe::kX, actual);
+    frame.getInterpolationParameter(vmd::CameraKeyframe::kX, actual);
     AssertVector(actual, expected);
     expected = p[1];
-    frame.getInterpolationParameter(CameraKeyframe::kY, actual);
+    frame.getInterpolationParameter(vmd::CameraKeyframe::kY, actual);
     AssertVector(actual, expected);
     expected = p[2];
-    frame.getInterpolationParameter(CameraKeyframe::kZ, actual);
+    frame.getInterpolationParameter(vmd::CameraKeyframe::kZ, actual);
     AssertVector(actual, expected);
     expected = p[3];
-    frame.getInterpolationParameter(CameraKeyframe::kRotation, actual);
+    frame.getInterpolationParameter(vmd::CameraKeyframe::kRotation, actual);
     AssertVector(actual, expected);
     expected = p[4];
-    frame.getInterpolationParameter(CameraKeyframe::kDistance, actual);
+    frame.getInterpolationParameter(vmd::CameraKeyframe::kDistance, actual);
     AssertVector(actual, expected);
     expected = p[5];
-    frame.getInterpolationParameter(CameraKeyframe::kFov, actual);
+    frame.getInterpolationParameter(vmd::CameraKeyframe::kFov, actual);
     AssertVector(actual, expected);
 }
 
@@ -67,11 +68,11 @@ TEST(MotionTest, ParseEmpty)
 {
     Encoding encoding;
     Model model(&encoding);
-    Motion motion(&model, &encoding);
-    Motion::DataInfo info;
+    vmd::Motion motion(&model, &encoding);
+    vmd::Motion::DataInfo info;
     // parsing empty should be error
     ASSERT_FALSE(motion.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
-    ASSERT_EQ(Motion::kInvalidHeaderError, motion.error());
+    ASSERT_EQ(vmd::Motion::kInvalidHeaderError, motion.error());
 }
 
 TEST(MotionTest, ParseFile)
@@ -83,15 +84,15 @@ TEST(MotionTest, ParseFile)
         size_t size = bytes.size();
         Encoding encoding;
         Model model(&encoding);
-        Motion motion(&model, &encoding);
-        Motion::DataInfo result;
+        vmd::Motion motion(&model, &encoding);
+        vmd::Motion::DataInfo result;
         // valid model motion should be loaded successfully
         ASSERT_TRUE(motion.preparse(data, size, result));
         ASSERT_TRUE(motion.load(data, size));
         ASSERT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
         ASSERT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
         ASSERT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
-        ASSERT_EQ(Motion::kNoError, motion.error());
+        ASSERT_EQ(vmd::Motion::kNoError, motion.error());
     }
 }
 
@@ -104,15 +105,15 @@ TEST(MotionTest, ParseCamera)
         size_t size = bytes.size();
         Encoding encoding;
         Model model(&encoding);
-        Motion motion(&model, &encoding);
-        Motion::DataInfo result;
+        vmd::Motion motion(&model, &encoding);
+        vmd::Motion::DataInfo result;
         // valid camera motion should be loaded successfully
         ASSERT_TRUE(motion.preparse(data, size, result));
         ASSERT_TRUE(motion.load(data, size));
         ASSERT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
         ASSERT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
         ASSERT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
-        ASSERT_EQ(Motion::kNoError, motion.error());
+        ASSERT_EQ(vmd::Motion::kNoError, motion.error());
     }
 }
 
@@ -120,7 +121,7 @@ TEST(MotionTest, SaveBoneKeyframe)
 {
     Encoding encoding;
     CString str(kTestString);
-    BoneKeyframe frame(&encoding), newFrame(&encoding);
+    vmd::BoneKeyframe frame(&encoding), newFrame(&encoding);
     Vector3 pos(1, 2, 3);
     Quaternion rot(4, 5, 6, 7);
     // initialize the bone frame to be copied
@@ -133,12 +134,12 @@ TEST(MotionTest, SaveBoneKeyframe)
             pz(16, 17, 18, 19),
             pr(20, 21, 22, 23);
     QuadWord p[] = { px, py, pz, pr };
-    frame.setInterpolationParameter(BoneKeyframe::kX, px);
-    frame.setInterpolationParameter(BoneKeyframe::kY, py);
-    frame.setInterpolationParameter(BoneKeyframe::kZ, pz);
-    frame.setInterpolationParameter(BoneKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kX, px);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kY, py);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kZ, pz);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kRotation, pr);
     // write a bone frame to data and read it
-    uint8_t data[BoneKeyframe::strideSize()];
+    uint8_t data[vmd::BoneKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     // compare read bone frame
@@ -153,12 +154,12 @@ TEST(MotionTest, SaveBoneKeyframe)
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_TRUE(cloned->position() == pos);
     ASSERT_TRUE(cloned->rotation() == rot);
-    CompareBoneInterpolationMatrix(p, *static_cast<BoneKeyframe *>(cloned.data()));
+    CompareBoneInterpolationMatrix(p, *static_cast<vmd::BoneKeyframe *>(cloned.data()));
 }
 
 TEST(MotionTest, SaveCameraKeyframe)
 {
-    CameraKeyframe frame, newFrame;
+    vmd::CameraKeyframe frame, newFrame;
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
     // initialize the camera frame to be copied
     frame.setTimeIndex(42);
@@ -173,14 +174,14 @@ TEST(MotionTest, SaveCameraKeyframe)
             pd(25, 26, 27, 28),
             pf(29, 30, 31, 32);
     QuadWord p[] = { px, py, pz, pr, pd, pf };
-    frame.setInterpolationParameter(CameraKeyframe::kX, px);
-    frame.setInterpolationParameter(CameraKeyframe::kY, py);
-    frame.setInterpolationParameter(CameraKeyframe::kZ, pz);
-    frame.setInterpolationParameter(CameraKeyframe::kRotation, pr);
-    frame.setInterpolationParameter(CameraKeyframe::kDistance, pd);
-    frame.setInterpolationParameter(CameraKeyframe::kFov, pf);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kX, px);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kY, py);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kZ, pz);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kDistance, pd);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kFov, pf);
     // write a camera frame to data and read it
-    uint8_t data[CameraKeyframe::strideSize()];
+    uint8_t data[vmd::CameraKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
@@ -203,20 +204,20 @@ TEST(MotionTest, SaveCameraKeyframe)
     ASSERT_TRUE(qFuzzyCompare(cloned->angle().z(), frame.angle().z()));
     ASSERT_TRUE(cloned->distance() == frame.distance());
     ASSERT_TRUE(cloned->fov() == frame.fov());
-    CompareCameraInterpolationMatrix(p, *static_cast<CameraKeyframe *>(cloned.data()));
+    CompareCameraInterpolationMatrix(p, *static_cast<vmd::CameraKeyframe *>(cloned.data()));
 }
 
 TEST(MotionTest, SaveMorphKeyframe)
 {
     Encoding encoding;
     CString str(kTestString);
-    MorphKeyframe frame(&encoding), newFrame(&encoding);
+    vmd::MorphKeyframe frame(&encoding), newFrame(&encoding);
     // initialize the morph frame to be copied
     frame.setName(&str);
     frame.setTimeIndex(42);
     frame.setWeight(0.5);
     // write a morph frame to data and read it
-    uint8_t data[MorphKeyframe::strideSize()];
+    uint8_t data[vmd::MorphKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     // compare read morph frame
@@ -232,14 +233,14 @@ TEST(MotionTest, SaveMorphKeyframe)
 
 TEST(MotionTest, SaveLightKeyframe)
 {
-    LightKeyframe frame, newFrame;
+    vmd::LightKeyframe frame, newFrame;
     Vector3 color(0.1, 0.2, 0.3), direction(4, 5, 6);
     // initialize the light frame to be copied
     frame.setTimeIndex(42);
     frame.setColor(color);
     frame.setDirection(direction);
     // write a light frame to data and read it
-    uint8_t data[LightKeyframe::strideSize()];
+    uint8_t data[vmd::LightKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     // compare read light frame
@@ -262,7 +263,7 @@ TEST(MotionTest, SaveMotion)
         size_t size = bytes.size();
         Encoding encoding;
         Model model(&encoding);
-        Motion motion(&model, &encoding);
+        vmd::Motion motion(&model, &encoding);
         motion.load(data, size);
         size_t newSize = motion.estimateSize();
         QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
@@ -282,16 +283,16 @@ TEST(MotionTest, ParseBoneKeyframe)
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream.writeRawData(kTestString, BoneKeyframe::kNameSize);
+    stream.writeRawData(kTestString, vmd::BoneKeyframe::kNameSize);
     stream << quint32(1)                   // frame index
            << 2.0f << 3.0f << 4.0f         // position
            << 5.0f << 6.0f << 7.0f << 8.0f // rotation
               ;
-    for (int i = 0; i < BoneKeyframe::kTableSize; i++)
+    for (int i = 0; i < vmd::BoneKeyframe::kTableSize; i++)
         stream << quint8(0);
-    ASSERT_EQ(BoneKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(vmd::BoneKeyframe::strideSize(), size_t(bytes.size()));
     Encoding encoding;
-    BoneKeyframe frame(&encoding);
+    vmd::BoneKeyframe frame(&encoding);
     CString str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     ASSERT_TRUE(frame.name()->equals(&str));
@@ -316,13 +317,13 @@ TEST(MotionTest, ParseCameraKeyframe)
            << 2.0f << 3.0f << 4.0f // position
            << 5.0f << 6.0f << 7.0f // angle
               ;
-    for (int i = 0; i < CameraKeyframe::kTableSize; i++)
+    for (int i = 0; i < vmd::CameraKeyframe::kTableSize; i++)
         stream << quint8(0);
     stream << quint32(8)           // view angle (fovy)
            << quint8(1)            // no perspective
               ;
-    ASSERT_EQ(CameraKeyframe::strideSize(), size_t(bytes.size()));
-    CameraKeyframe frame;
+    ASSERT_EQ(vmd::CameraKeyframe::strideSize(), size_t(bytes.size()));
+    vmd::CameraKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -344,13 +345,13 @@ TEST(MotionTest, ParseMorphKeyframe)
     QDataStream stream(&bytes, QIODevice::WriteOnly);
     stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream.writeRawData(kTestString, MorphKeyframe::kNameSize);
+    stream.writeRawData(kTestString, vmd::MorphKeyframe::kNameSize);
     stream << quint32(1) // frame index
            << 0.5f       // weight
               ;
-    ASSERT_EQ(MorphKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(vmd::MorphKeyframe::strideSize(), size_t(bytes.size()));
     Encoding encoding;
-    MorphKeyframe frame(&encoding);
+    vmd::MorphKeyframe frame(&encoding);
     CString str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     ASSERT_TRUE(frame.name()->equals(&str));
@@ -368,8 +369,8 @@ TEST(MotionTest, ParseLightKeyframe)
            << 0.2f << 0.3f << 0.4f // color
            << 0.5f << 0.6f << 0.7f // direction
               ;
-    ASSERT_EQ(LightKeyframe::strideSize(), size_t(bytes.size()));
-    LightKeyframe frame;
+    ASSERT_EQ(vmd::LightKeyframe::strideSize(), size_t(bytes.size()));
+    vmd::LightKeyframe frame;
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
     ASSERT_TRUE(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
@@ -383,27 +384,27 @@ TEST(MotionTest, ParseLightKeyframe)
 TEST(MotionTest, BoneInterpolation)
 {
     Encoding encoding;
-    BoneKeyframe frame(&encoding);
+    vmd::BoneKeyframe frame(&encoding);
     QuadWord n;
-    frame.getInterpolationParameter(BoneKeyframe::kX, n);
+    frame.getInterpolationParameter(vmd::BoneKeyframe::kX, n);
     AssertVector(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
             pr(20, 21, 22, 23);
     QuadWord p[] = { px, py, pz, pr };
-    frame.setInterpolationParameter(BoneKeyframe::kX, px);
-    frame.setInterpolationParameter(BoneKeyframe::kY, py);
-    frame.setInterpolationParameter(BoneKeyframe::kZ, pz);
-    frame.setInterpolationParameter(BoneKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kX, px);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kY, py);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kZ, pz);
+    frame.setInterpolationParameter(vmd::BoneKeyframe::kRotation, pr);
     CompareBoneInterpolationMatrix(p, frame);
 }
 
 TEST(MotionTest, CameraInterpolation)
 {
-    CameraKeyframe frame;
+    vmd::CameraKeyframe frame;
     QuadWord n;
-    frame.getInterpolationParameter(CameraKeyframe::kX, n);
+    frame.getInterpolationParameter(vmd::CameraKeyframe::kX, n);
     AssertVector(n, QuadWord(0.0f, 0.0f, 0.0f, 0.0f));
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
@@ -412,12 +413,12 @@ TEST(MotionTest, CameraInterpolation)
             pd(25, 26, 27, 28),
             pf(29, 30, 31, 32);
     QuadWord p[] = { px, py, pz, pr, pd, pf };
-    frame.setInterpolationParameter(CameraKeyframe::kX, px);
-    frame.setInterpolationParameter(CameraKeyframe::kY, py);
-    frame.setInterpolationParameter(CameraKeyframe::kZ, pz);
-    frame.setInterpolationParameter(CameraKeyframe::kRotation, pr);
-    frame.setInterpolationParameter(CameraKeyframe::kDistance, pd);
-    frame.setInterpolationParameter(CameraKeyframe::kFov, pf);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kX, px);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kY, py);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kZ, pz);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kDistance, pd);
+    frame.setInterpolationParameter(vmd::CameraKeyframe::kFov, pf);
     CompareCameraInterpolationMatrix(p, frame);
 }
 
@@ -427,11 +428,11 @@ TEST(MotionTest, AddAndRemoveBoneKeyframes)
     CString name("bone");
     MockIModel model;
     MockIBone bone;
-    Motion motion(&model, &encoding);
+    vmd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
     // mock bone
     EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
-    QScopedPointer<IBoneKeyframe> frame(new BoneKeyframe(&encoding));
+    QScopedPointer<IBoneKeyframe> frame(new vmd::BoneKeyframe(&encoding));
     frame->setTimeIndex(42);
     frame->setName(&name);
     {
@@ -446,7 +447,7 @@ TEST(MotionTest, AddAndRemoveBoneKeyframes)
         // find a bone keyframe with timeIndex and name
         ASSERT_EQ(frame.take(), motion.findBoneKeyframe(42, &name));
     }
-    QScopedPointer<IBoneKeyframe> frame2(new BoneKeyframe(&encoding));
+    QScopedPointer<IBoneKeyframe> frame2(new vmd::BoneKeyframe(&encoding));
     frame2->setTimeIndex(42);
     frame2->setName(&name);
     {
@@ -473,9 +474,9 @@ TEST(MotionTest, AddAndRemoveCameraKeyframes)
 {
     Encoding encoding;
     Model model(&encoding);
-    Motion motion(&model, &encoding);
+    vmd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
-    QScopedPointer<ICameraKeyframe> frame(new CameraKeyframe());
+    QScopedPointer<ICameraKeyframe> frame(new vmd::CameraKeyframe());
     frame->setTimeIndex(42);
     frame->setDistance(42);
     {
@@ -490,7 +491,7 @@ TEST(MotionTest, AddAndRemoveCameraKeyframes)
         // find a camera keyframe with timeIndex
         ASSERT_EQ(frame.take(), motion.findCameraKeyframe(42));
     }
-    QScopedPointer<ICameraKeyframe> frame2(new CameraKeyframe());
+    QScopedPointer<ICameraKeyframe> frame2(new vmd::CameraKeyframe());
     frame2->setTimeIndex(42);
     frame2->setDistance(84);
     {
@@ -517,9 +518,9 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
 {
     Encoding encoding;
     Model model(&encoding);
-    Motion motion(&model, &encoding);
+    vmd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
-    QScopedPointer<ILightKeyframe> frame(new LightKeyframe());
+    QScopedPointer<ILightKeyframe> frame(new vmd::LightKeyframe());
     frame->setTimeIndex(42);
     frame->setColor(Vector3(1, 0, 0));
     {
@@ -534,7 +535,7 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
         // find a light keyframe with timeIndex
         ASSERT_EQ(frame.take(), motion.findLightKeyframe(42));
     }
-    QScopedPointer<ILightKeyframe> frame2(new LightKeyframe());
+    QScopedPointer<ILightKeyframe> frame2(new vmd::LightKeyframe());
     frame2->setTimeIndex(42);
     frame2->setColor(Vector3(0, 0, 1));
     {
@@ -563,11 +564,11 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
     CString name("morph");
     MockIModel model;
     MockIMorph morph;
-    Motion motion(&model, &encoding);
+    vmd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
     // mock morph
     EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
-    QScopedPointer<IMorphKeyframe> frame(new MorphKeyframe(&encoding));
+    QScopedPointer<IMorphKeyframe> frame(new vmd::MorphKeyframe(&encoding));
     frame->setTimeIndex(42);
     frame->setName(&name);
     {
@@ -581,7 +582,7 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
         ASSERT_EQ(frame.take(), motion.findMorphKeyframe(42, &name));
     }
-    QScopedPointer<IMorphKeyframe> frame2(new MorphKeyframe(&encoding));
+    QScopedPointer<IMorphKeyframe> frame2(new vmd::MorphKeyframe(&encoding));
     frame2->setTimeIndex(42);
     frame2->setName(&name);
     {
@@ -601,5 +602,21 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
+    }
+}
+
+TEST(MotionTest, ParseMVD)
+{
+    QFile file("motion.mvd");
+    if (file.open(QFile::ReadOnly)) {
+        QByteArray bytes = file.readAll();
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        size_t size = bytes.size();
+        Encoding encoding;
+        Model model(&encoding);
+        mvd::Motion motion(&model, &encoding);
+        mvd::Motion::DataInfo result;
+        // valid model motion should be loaded successfully
+        ASSERT_TRUE(motion.preparse(data, size, result));
     }
 }

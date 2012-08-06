@@ -12,6 +12,7 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 project(libvpvl2)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/common vpvl2_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
 set(vpvl2_public_headers
@@ -39,6 +40,7 @@ set(vpvl2_public_headers
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/Motion.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Label.h
