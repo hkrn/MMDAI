@@ -96,9 +96,9 @@ struct NameSectionHeader {
 
 struct BoneSectionHeader {
     int key;
-    int size;
-    int count;
-    int layerSize;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
+    int sizeOfLayer;
 };
 
 struct Interpolation {
@@ -111,7 +111,7 @@ struct InterpolationPair {
     Interpolation second;
 };
 
-struct BoneFrame {
+struct BoneKeyframe {
     int layerIndex;
     uint64_t timeIndex;
     float position[3];
@@ -124,12 +124,12 @@ struct BoneFrame {
 
 struct MorphSecionHeader {
     int key;
-    int size;
-    int count;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
     int reserved;
 };
 
-struct MorphFrame {
+struct MorphKeyframe {
     uint64_t timeIndex;
     float weight;
     InterpolationPair weightIP;
@@ -137,13 +137,13 @@ struct MorphFrame {
 
 struct ModelSectionHeader {
     int reserved;
-    int size;
-    int count;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
     int sizeOfIK;
     int countOfIK;
 };
 
-struct ModelFrame {
+struct ModelKeyframe {
     uint64_t timeIndex;
     uint8_t visible;
     uint8_t shadow;
@@ -157,12 +157,12 @@ struct ModelFrame {
 
 struct AssetSectionHeader {
     int reserved;
-    int size;
-    int count;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
     int reserved2;
 };
 
-struct AssetFrame {
+struct AssetKeyframe {
     uint64_t timeIndex;
     uint8_t visible;
     uint8_t shadow;
@@ -176,8 +176,8 @@ struct AssetFrame {
 
 struct EffectSectionHeader {
     int reserved;
-    int size;
-    int count;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
     int parameterSize;
     int parameterCount;
 };
@@ -187,7 +187,7 @@ struct EffectParameter {
     int type;
 };
 
-struct EffectFrame {
+struct EffectKeyframe {
     uint64_t timeIndex;
     uint8_t visible;
     uint8_t addBlend;
@@ -201,12 +201,12 @@ struct EffectFrame {
 
 struct CameraSectionHeader {
     int reserved;
-    int size;
-    int count;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
     int layerSize;
 };
 
-struct CameraFrame {
+struct CameraKeyframe {
     int layerIndex;
     uint64_t timeIndex;
     float radius;
@@ -222,12 +222,12 @@ struct CameraFrame {
 
 struct LightSectionHeader {
     int reserved;
-    int size;
-    int count;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
     int reserved2;
 };
 
-struct LightFrame {
+struct LightKeyframe {
     uint64_t timeIndex;
     float position[3];
     float direction[3];
@@ -236,12 +236,12 @@ struct LightFrame {
 
 struct ProjectSectionHeader {
     int reserved;
-    int size;
-    int count;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
     int reserved2;
 };
 
-struct ProjectFrame {
+struct ProjectKeyframe {
     uint64_t timeIndex;
     float gravityFactor;
     float gravityDirection[3];
@@ -321,7 +321,6 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         if (!internal::validateSize(ptr, sizeof(sectionHeader), rest)) {
             return false;
         }
-        fprintf(stderr, "%d:%d\n", sectionHeader.type, sectionHeader.minor);
         switch (static_cast<SectionType>(sectionHeader.type)) {
         case kNameListSection: {
             const NameSectionHeader &nameSectionHeader = *reinterpret_cast<const NameSectionHeader *>(ptr);
@@ -332,8 +331,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
                 return false;
             }
             static int keyIndex;
-            const int nitems = nameSectionHeader.count;
-            for (int i = 0; i < nitems; i++) {
+            const int nkeyframes = nameSectionHeader.count;
+            for (int i = 0; i < nkeyframes; i++) {
                 if (!internal::validateSize(ptr, sizeof(keyIndex), rest)) {
                     return false;
                 }
@@ -348,14 +347,14 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, sizeof(boneSectionHeader), rest)) {
                 return false;
             }
-            if (!internal::validateSize(ptr, boneSectionHeader.layerSize, rest)) {
+            if (!internal::validateSize(ptr, boneSectionHeader.sizeOfLayer, rest)) {
                 return false;
             }
-            static BoneFrame frame;
-            const int nitems = boneSectionHeader.count;
-            const size_t reserved = boneSectionHeader.size - sizeof(frame);
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            static BoneKeyframe keyframe;
+            const int nkeyframes = boneSectionHeader.countOfKeyframes;
+            const size_t reserved = boneSectionHeader.sizeOfKeyframe - sizeof(keyframe);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
                 if (!internal::validateSize(ptr, reserved, rest)) {
@@ -372,11 +371,11 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, morphSectionHeader.reserved, rest)) {
                 return false;
             }
-            static MorphFrame frame;
-            const int nitems = morphSectionHeader.count;
-            const size_t reserved = morphSectionHeader.size - sizeof(frame);
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            static MorphKeyframe keyframe;
+            const int nkeyframes = morphSectionHeader.countOfKeyframes;
+            const size_t reserved = morphSectionHeader.sizeOfKeyframe - sizeof(keyframe);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
                 if (!internal::validateSize(ptr, reserved, rest)) {
@@ -390,22 +389,20 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, sizeof(modelSectionHeader), rest)) {
                 return false;
             }
-            if (!internal::validateSize(ptr, modelSectionHeader.reserved, rest)) {
+            const int countOfIK = modelSectionHeader.countOfIK;
+            if (!internal::validateSize(ptr, countOfIK * sizeof(int), rest)) {
                 return false;
             }
             const int sizeOfIK = modelSectionHeader.sizeOfIK;
-            if (!internal::validateSize(ptr, sizeOfIK * sizeof(int), rest)) {
-                return false;
-            }
-            const int countOfIK = modelSectionHeader.countOfIK;
             if (!internal::validateSize(ptr, sizeOfIK - 4 * (countOfIK + 1), rest)) {
                 return false;
             }
-            static ModelFrame frame;
-            const int nitems = modelSectionHeader.count;
-            const size_t reserved = modelSectionHeader.size - sizeof(frame) + countOfIK;
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            static ModelKeyframe keyframe;
+            const int nkeyframes = modelSectionHeader.countOfKeyframes;
+            const size_t adjust = sectionHeader.minor == 1 ? 4 : 0;
+            const size_t reserved = modelSectionHeader.sizeOfKeyframe - ((sizeof(keyframe) - adjust) + countOfIK);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
                 if (!internal::validateSize(ptr, sizeof(uint8_t), countOfIK, rest)) {
@@ -425,36 +422,40 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, assetSectionHeader.reserved2, rest)) {
                 return false;
             }
-            static AssetFrame frame;
-            const int nitems = assetSectionHeader.count;
-            size_t reserved = assetSectionHeader.size - sizeof(frame);
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            static AssetKeyframe keyframe;
+            const int nkeyframes = assetSectionHeader.countOfKeyframes;
+            const size_t reserved = assetSectionHeader.sizeOfKeyframe - sizeof(keyframe);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
-                if (!internal::sizeText(ptr, rest, namePtr, reserved)) {
+                if (!internal::validateSize(ptr, reserved, rest)) {
                     return false;
                 }
             }
             break;
         }
         case kEffectSection: {
-            /* XXX: VARIABLE */
             const EffectSectionHeader &effectSectionHeader = *reinterpret_cast<const EffectSectionHeader *>(ptr);
             if (!internal::validateSize(ptr, sizeof(effectSectionHeader), rest)) {
                 return false;
             }
-            if (!internal::validateSize(ptr, effectSectionHeader.reserved, rest)) {
+            const int nparameters = effectSectionHeader.parameterCount;
+            const size_t parameterArraySize = nparameters * sizeof(int);
+            if (!internal::validateSize(ptr, parameterArraySize, rest)) {
                 return false;
             }
-            static EffectFrame frame;
-            const int nitems = effectSectionHeader.count;
-            size_t reserved = effectSectionHeader.size - sizeof(frame);
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            if (!internal::validateSize(ptr, effectSectionHeader.parameterSize - 8 * nparameters - 4, rest)) {
+                return false;
+            }
+            static EffectKeyframe keyframe;
+            const int nkeyframes = effectSectionHeader.countOfKeyframes;
+            const size_t reserved = effectSectionHeader.sizeOfKeyframe - (sizeof(keyframe) + parameterArraySize);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
-                if (!internal::sizeText(ptr, rest, namePtr, reserved)) {
+                if (!internal::validateSize(ptr, reserved, rest)) {
                     return false;
                 }
             }
@@ -468,14 +469,14 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, cameraSectionHeader.layerSize, rest)) {
                 return false;
             }
-            static CameraFrame frame;
-            const int nitems = cameraSectionHeader.count;
-            size_t reserved = cameraSectionHeader.size - sizeof(frame);
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            static CameraKeyframe keyframe;
+            const int nkeyframes = cameraSectionHeader.countOfKeyframes;
+            const size_t reserved = cameraSectionHeader.sizeOfKeyframe - sizeof(keyframe);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
-                if (!internal::sizeText(ptr, rest, namePtr, reserved)) {
+                if (!internal::validateSize(ptr, reserved, rest)) {
                     return false;
                 }
             }
@@ -489,14 +490,14 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, lightSectionHeader.reserved2, rest)) {
                 return false;
             }
-            static LightFrame frame;
-            const int nitems = lightSectionHeader.count;
-            size_t reserved = lightSectionHeader.size - sizeof(frame);
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            static LightKeyframe keyframe;
+            const int nkeyframes = lightSectionHeader.countOfKeyframes;
+            const size_t reserved = lightSectionHeader.sizeOfKeyframe - sizeof(keyframe);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
-                if (!internal::sizeText(ptr, rest, namePtr, reserved)) {
+                if (!internal::validateSize(ptr, reserved, rest)) {
                     return false;
                 }
             }
@@ -510,14 +511,14 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, projectSectionHeader.reserved2, rest)) {
                 return false;
             }
-            static EffectFrame frame;
-            const int nitems = projectSectionHeader.count;
-            size_t reserved = projectSectionHeader.size - sizeof(frame);
-            for (int i = 0; i < nitems; i++) {
-                if (!internal::validateSize(ptr, sizeof(frame), rest)) {
+            static EffectKeyframe keyframe;
+            const int nkeyframes = projectSectionHeader.countOfKeyframes;
+            const size_t reserved = projectSectionHeader.sizeOfKeyframe - sizeof(keyframe);
+            for (int i = 0; i < nkeyframes; i++) {
+                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
                     return false;
                 }
-                if (!internal::sizeText(ptr, rest, namePtr, reserved)) {
+                if (!internal::validateSize(ptr, reserved, rest)) {
                     return false;
                 }
             }
