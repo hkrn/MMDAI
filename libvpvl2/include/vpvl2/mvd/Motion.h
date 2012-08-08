@@ -49,6 +49,16 @@ namespace vpvl2
 namespace mvd
 {
 
+struct Interpolation {
+    uint8_t x;
+    uint8_t y;
+};
+
+struct InterpolationPair {
+    Interpolation first;
+    Interpolation second;
+};
+
 class VPVL2_API Motion : public IMotion
 {
 public:
@@ -66,9 +76,39 @@ public:
         kMaxErrors
     };
 
+    enum SectionType {
+        kNameListSection = 0,
+        kBoneSection     = 16,
+        kMorphSection    = 32,
+        kModelSection    = 64,
+        kAssetSection    = 80,
+        kEffectSection   = 88,
+        kCameraSection   = 96,
+        kLightSection    = 112,
+        kProjectSection  = 128,
+        kEndOfFile       = 255
+    };
+    enum EffectParameterType {
+        kNoneEffectParameter,
+        kBoolEffectParameter,
+        kIntegerEffectParameter,
+        kStringEffectParameter,
+        kFloatEffectParameter,
+        kFloat2EffectParameter,
+        kFloat3EffectParameter,
+        kFloat4EffectParameter
+    };
     struct DataInfo
     {
-        const uint8_t *basePtr;
+        uint8_t *basePtr;
+        uint8_t *namePtr;
+        size_t nameSize;
+        uint8_t *name2Ptr;
+        size_t name2Size;
+        uint8_t *reservedPtr;
+        size_t reservedSize;
+        uint8_t *sectionStartPtr;
+        uint8_t *endPtr;
     };
     static const uint8_t *kSignature;
 

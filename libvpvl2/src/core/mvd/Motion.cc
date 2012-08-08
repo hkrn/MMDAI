@@ -37,11 +37,15 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/vmd/BoneKeyframe.h"
-#include "vpvl2/vmd/CameraKeyframe.h"
-#include "vpvl2/vmd/LightKeyframe.h"
-#include "vpvl2/vmd/MorphKeyframe.h"
+#include "vpvl2/mvd/AssetKeyframe.h"
+#include "vpvl2/mvd/BoneKeyframe.h"
+#include "vpvl2/mvd/CameraKeyframe.h"
+#include "vpvl2/mvd/EffectKeyframe.h"
+#include "vpvl2/mvd/LightKeyframe.h"
+#include "vpvl2/mvd/ModelKeyframe.h"
+#include "vpvl2/mvd/MorphKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
+#include "vpvl2/mvd/ProjectKeyframe.h"
 
 namespace vpvl2
 {
@@ -49,30 +53,6 @@ namespace mvd
 {
 
 const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Motion Vector Data file");
-
-enum SectionType {
-    kNameListSection = 0,
-    kBoneSection     = 16,
-    kMorphSection    = 32,
-    kModelSection    = 64,
-    kAssetSection    = 80,
-    kEffectSection   = 88,
-    kCameraSection   = 96,
-    kLightSection    = 112,
-    kProjectSection  = 128,
-    kEndOfFile       = 255
-};
-
-enum EffectParameterType {
-    kNoneEffectParameter,
-    kBoolEffectParameter,
-    kIntegerEffectParameter,
-    kStringEffectParameter,
-    kFloatEffectParameter,
-    kFloat2EffectParameter,
-    kFloat3EffectParameter,
-    kFloat4EffectParameter
-};
 
 #pragma pack(push, 1)
 
@@ -101,38 +81,11 @@ struct BoneSectionHeader {
     int sizeOfLayer;
 };
 
-struct Interpolation {
-    uint8_t x;
-    uint8_t y;
-};
-
-struct InterpolationPair {
-    Interpolation first;
-    Interpolation second;
-};
-
-struct BoneKeyframe {
-    int layerIndex;
-    uint64_t timeIndex;
-    float position[3];
-    float rotation[4];
-    InterpolationPair x;
-    InterpolationPair y;
-    InterpolationPair z;
-    InterpolationPair r;
-};
-
 struct MorphSecionHeader {
     int key;
     int sizeOfKeyframe;
     int countOfKeyframes;
     int reserved;
-};
-
-struct MorphKeyframe {
-    uint64_t timeIndex;
-    float weight;
-    InterpolationPair weightIP;
 };
 
 struct ModelSectionHeader {
@@ -143,35 +96,11 @@ struct ModelSectionHeader {
     int countOfIK;
 };
 
-struct ModelKeyframe {
-    uint64_t timeIndex;
-    uint8_t visible;
-    uint8_t shadow;
-    uint8_t addBlend;
-    uint8_t physics;
-    uint8_t physicsStillMode;
-    uint8_t reserved[3];
-    float edgeWidth;
-    uint8_t edgeColor[4];
-};
-
 struct AssetSectionHeader {
     int reserved;
     int sizeOfKeyframe;
     int countOfKeyframes;
     int reserved2;
-};
-
-struct AssetKeyframe {
-    uint64_t timeIndex;
-    uint8_t visible;
-    uint8_t shadow;
-    uint8_t addBlend;
-    uint8_t reserved;
-    float scaleFactor;
-    float opacity;
-    int modelID;
-    int boneID;
 };
 
 struct EffectSectionHeader {
@@ -187,37 +116,11 @@ struct EffectParameter {
     int type;
 };
 
-struct EffectKeyframe {
-    uint64_t timeIndex;
-    uint8_t visible;
-    uint8_t addBlend;
-    uint8_t shadow;
-    uint8_t reserved;
-    float scaleFactor;
-    float opacity;
-    int modelID;
-    int boneID;
-};
-
 struct CameraSectionHeader {
     int reserved;
     int sizeOfKeyframe;
     int countOfKeyframes;
     int layerSize;
-};
-
-struct CameraKeyframe {
-    int layerIndex;
-    uint64_t timeIndex;
-    float radius;
-    float position[3];
-    float rotation[3];
-    float fov;
-    uint8_t perspective;
-    InterpolationPair positionIP;
-    InterpolationPair rotationIP;
-    InterpolationPair distanceIP;
-    InterpolationPair fovIP;
 };
 
 struct LightSectionHeader {
@@ -227,27 +130,11 @@ struct LightSectionHeader {
     int reserved2;
 };
 
-struct LightKeyframe {
-    uint64_t timeIndex;
-    float position[3];
-    float direction[3];
-    uint8_t enabled;
-};
-
 struct ProjectSectionHeader {
     int reserved;
     int sizeOfKeyframe;
     int countOfKeyframes;
     int reserved2;
-};
-
-struct ProjectKeyframe {
-    uint64_t timeIndex;
-    float gravityFactor;
-    float gravityDirection[3];
-    int shadowMode;
-    float shadowDistance;
-    float shadowDepth;
 };
 
 #pragma pack(pop)
@@ -299,11 +186,11 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     uint8_t *namePtr;
     size_t nNameSize;
     /* object name */
-    if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+    if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
         return false;
     }
     /* object name2 */
-    if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+    if (!internal::sizeText(ptr, rest, info.name2Ptr, info.name2Size)) {
         return false;
     }
     /* scene FPS */
@@ -311,9 +198,11 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     /* reserved */
-    if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+    if (!internal::sizeText(ptr, rest, info.reservedPtr, info.reservedSize)) {
         return false;
     }
+    info.sectionStartPtr = ptr;
+
     /* sections */
     bool ret = false;
     while (rest > 0) {
@@ -342,6 +231,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             }
             break;
         }
+#if 0
         case kBoneSection: {
             const BoneSectionHeader &boneSectionHeader = *reinterpret_cast<const BoneSectionHeader *>(ptr);
             if (!internal::validateSize(ptr, sizeof(boneSectionHeader), rest)) {
@@ -350,7 +240,6 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!internal::validateSize(ptr, boneSectionHeader.sizeOfLayer, rest)) {
                 return false;
             }
-            static BoneKeyframe keyframe;
             const int nkeyframes = boneSectionHeader.countOfKeyframes;
             const size_t reserved = boneSectionHeader.sizeOfKeyframe - sizeof(keyframe);
             for (int i = 0; i < nkeyframes; i++) {
@@ -524,13 +413,16 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             }
             break;
         }
+#endif
         case kEndOfFile: {
             ret = true;
             rest = 0;
+            info.endPtr = ptr;
             break;
         }
         default:
             rest = 0;
+            info.endPtr = 0;
             break;
         }
     }
