@@ -54,11 +54,15 @@ public:
     ModelKeyframe(IEncoding *encoding);
     ~ModelKeyframe();
 
-    bool preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info);
+    static size_t size();
+    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_t countOfIK, Motion::DataInfo &info);
+
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     // IModelKeyframe *clone() const;
+    void setName(const IString *value);
+    Type type() const;
 
 private:
     IEncoding *m_encoding;
@@ -66,8 +70,8 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelKeyframe)
 };
 
-}
-}
+} /* namespace mvd */
+} /* namespace vpvl2 */
 
 #endif
 

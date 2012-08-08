@@ -70,9 +70,21 @@ AssetKeyframe::~AssetKeyframe()
 {
 }
 
-bool AssetKeyframe::preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info)
+size_t AssetKeyframe::size()
 {
-    return false;
+    static AssetKeyframeChunk keyframe;
+    return sizeof(keyframe);
+}
+
+bool AssetKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
+        return false;
+    }
+    return true;
 }
 
 void AssetKeyframe::read(const uint8_t *data)
@@ -95,5 +107,14 @@ IAssetKeyframe *AssetKeyframe::clone() const
 }
 */
 
+void AssetKeyframe::setName(const IString *value)
+{
 }
+
+IKeyframe::Type AssetKeyframe::type() const
+{
+    return kAsset;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

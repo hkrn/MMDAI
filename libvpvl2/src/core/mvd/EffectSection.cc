@@ -34,45 +34,80 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_MVD_ASSETKEYFRAME_H_
-#define VPVL2_MVD_ASSETKEYFRAME_H_
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 
-// #include "vpvl2/IAssetKeyframe.h"
-#include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/mvd/EffectKeyframe.h"
+#include "vpvl2/mvd/EffectSection.h"
 
 namespace vpvl2
 {
-class IEncoding;
-
 namespace mvd
 {
 
-class VPVL2_API AssetKeyframe : public vmd::BaseKeyframe
-{
-public:
-    AssetKeyframe(IEncoding *encoding);
-    ~AssetKeyframe();
+#pragma pack(push, 1)
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
-
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
-    // IAssetKeyframe *clone() const;
-
-    void setName(const IString *value);
-    Type type() const;
-
-private:
-    IEncoding *m_encoding;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(AssetKeyframe)
+struct EffectSectionHeader {
+    int reserved;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
+    int parameterSize;
+    int parameterCount;
 };
+
+struct EffectParameter {
+    int pid;
+    int type;
+};
+
+#pragma pack(pop)
+
+EffectSection::EffectSection(IEncoding *encoding)
+    : BaseSection(),
+      m_encoding(encoding)
+{
+}
+
+EffectSection::~EffectSection()
+{
+}
+
+bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+{
+    const EffectSectionHeader &header = *reinterpret_cast<const EffectSectionHeader *>(ptr);
+    if (!internal::validateSize(ptr, sizeof(header), rest)) {
+        return false;
+    }
+    const int nparameters = header.parameterCount;
+    const size_t parameterArraySize = nparameters * sizeof(int);
+    if (!internal::validateSize(ptr, parameterArraySize, rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, header.parameterSize - 8 * nparameters - 4, rest)) {
+        return false;
+    }
+    const int nkeyframes = header.countOfKeyframes;
+    const size_t reserved = header.sizeOfKeyframe - (EffectKeyframe::size() + parameterArraySize);
+    for (int i = 0; i < nkeyframes; i++) {
+        if (!EffectKeyframe::preparse(ptr, rest, reserved, info)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void EffectSection::read(const uint8_t *data)
+{
+}
+
+void EffectSection::write(uint8_t *data) const
+{
+}
+
+size_t EffectSection::estimateSize() const
+{
+    return 0;
+}
 
 } /* namespace mvd */
 } /* namespace vpvl2 */
-
-#endif
-

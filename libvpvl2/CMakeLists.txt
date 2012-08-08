@@ -41,14 +41,23 @@ set(vpvl2_public_headers
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetSection.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/BaseSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/BoneKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/BoneSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/CameraKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/CameraSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/EffectKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/EffectSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/LightKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/LightSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ModelKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ModelSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/MorphKeyframe.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/MorphSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/Motion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Label.h

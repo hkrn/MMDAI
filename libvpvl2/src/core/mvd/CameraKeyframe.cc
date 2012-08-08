@@ -72,9 +72,21 @@ CameraKeyframe::~CameraKeyframe()
 {
 }
 
-bool CameraKeyframe::preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info)
+size_t CameraKeyframe::size()
 {
-    return false;
+    static CameraKeyframeChunk keyframe;
+    return sizeof(keyframe);
+}
+
+bool CameraKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
+        return false;
+    }
+    return true;
 }
 
 void CameraKeyframe::read(const uint8_t *data)
@@ -152,5 +164,14 @@ void CameraKeyframe::setPerspective(bool value)
 {
 }
 
+void CameraKeyframe::setName(const IString * /* value */)
+{
 }
+
+IKeyframe::Type CameraKeyframe::type() const
+{
+    return kCamera;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

@@ -34,12 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_MVD_ASSETKEYFRAME_H_
-#define VPVL2_MVD_ASSETKEYFRAME_H_
+#ifndef VPVL2_MVD_EFFECTSECTION_H_
+#define VPVL2_MVD_EFFECTSECTION_H_
 
-// #include "vpvl2/IAssetKeyframe.h"
-#include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/mvd/BaseSection.h"
 
 namespace vpvl2
 {
@@ -48,27 +46,22 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API AssetKeyframe : public vmd::BaseKeyframe
+class VPVL2_API EffectSection : public BaseSection
 {
 public:
-    AssetKeyframe(IEncoding *encoding);
-    ~AssetKeyframe();
+    EffectSection(IEncoding *encoding);
+    ~EffectSection();
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+    static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
-    // IAssetKeyframe *clone() const;
-
-    void setName(const IString *value);
-    Type type() const;
 
 private:
     IEncoding *m_encoding;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(AssetKeyframe)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(EffectSection)
 };
 
 } /* namespace mvd */

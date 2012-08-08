@@ -69,10 +69,18 @@ BoneKeyframe::~BoneKeyframe()
 {
 }
 
-bool BoneKeyframe::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+size_t BoneKeyframe::size()
 {
     static BoneKeyframeChunk keyframe;
-    if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
+    return sizeof(keyframe);
+}
+
+bool BoneKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
         return false;
     }
     return true;
@@ -126,5 +134,14 @@ void BoneKeyframe::setRotation(const Quaternion &value)
 {
 }
 
+void BoneKeyframe::setName(const IString *value)
+{
 }
+
+IKeyframe::Type BoneKeyframe::type() const
+{
+    return kBone;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

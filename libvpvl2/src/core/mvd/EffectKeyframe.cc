@@ -70,9 +70,21 @@ EffectKeyframe::~EffectKeyframe()
 {
 }
 
-bool EffectKeyframe::preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info)
+size_t EffectKeyframe::size()
 {
-    return false;
+    static EffectKeyframeChunk keyframe;
+    return sizeof(keyframe);
+}
+
+bool EffectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
+        return false;
+    }
+    return true;
 }
 
 void EffectKeyframe::read(const uint8_t *data)
@@ -95,5 +107,14 @@ IEffectKeyframe *EffectKeyframe::clone() const
 }
 */
 
+void EffectKeyframe::setName(const IString * /* value */)
+{
 }
+
+IKeyframe::Type EffectKeyframe::type() const
+{
+    return kEffect;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

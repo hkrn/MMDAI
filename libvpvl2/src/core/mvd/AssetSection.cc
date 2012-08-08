@@ -34,45 +34,69 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_MVD_ASSETKEYFRAME_H_
-#define VPVL2_MVD_ASSETKEYFRAME_H_
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 
-// #include "vpvl2/IAssetKeyframe.h"
-#include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/mvd/AssetKeyframe.h"
+#include "vpvl2/mvd/AssetSection.h"
 
 namespace vpvl2
 {
-class IEncoding;
-
 namespace mvd
 {
 
-class VPVL2_API AssetKeyframe : public vmd::BaseKeyframe
-{
-public:
-    AssetKeyframe(IEncoding *encoding);
-    ~AssetKeyframe();
+#pragma pack(push, 1)
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
-
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
-    // IAssetKeyframe *clone() const;
-
-    void setName(const IString *value);
-    Type type() const;
-
-private:
-    IEncoding *m_encoding;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(AssetKeyframe)
+struct AssetSectionHeader {
+    int reserved;
+    int sizeOfKeyframe;
+    int countOfKeyframes;
+    int reserved2;
 };
+
+#pragma pack(pop)
+
+AssetSection::AssetSection(IEncoding *encoding)
+    : BaseSection(),
+      m_encoding(encoding)
+{
+}
+
+AssetSection::~AssetSection()
+{
+}
+
+bool AssetSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+{
+    const AssetSectionHeader &header = *reinterpret_cast<const AssetSectionHeader *>(ptr);
+    if (!internal::validateSize(ptr, sizeof(header), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, header.reserved2, rest)) {
+        return false;
+    }
+    const int nkeyframes = header.countOfKeyframes;
+    const size_t reserved = header.sizeOfKeyframe - AssetKeyframe::size();
+    for (int i = 0; i < nkeyframes; i++) {
+        if (!AssetKeyframe::preparse(ptr, rest, reserved, info)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void AssetSection::read(const uint8_t *data)
+{
+}
+
+void AssetSection::write(uint8_t *data) const
+{
+}
+
+size_t AssetSection::estimateSize() const
+{
+    return 0;
+}
 
 } /* namespace mvd */
 } /* namespace vpvl2 */
-
-#endif
-

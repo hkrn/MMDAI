@@ -70,9 +70,24 @@ ModelKeyframe::~ModelKeyframe()
 {
 }
 
-bool ModelKeyframe::preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info)
+size_t ModelKeyframe::size()
 {
-    return false;
+    static ModelKeyframeChunk keyframe;
+    return sizeof(keyframe);
+}
+
+bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_t countOfIK, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, sizeof(uint8_t), countOfIK, rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
+        return false;
+    }
+    return true;
 }
 
 void ModelKeyframe::read(const uint8_t *data)
@@ -95,5 +110,14 @@ IModelKeyframe *ModelKeyframe::clone() const
 }
 */
 
+void ModelKeyframe::setName(const IString *value)
+{
 }
+
+IKeyframe::Type ModelKeyframe::type() const
+{
+    return kModel;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

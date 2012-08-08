@@ -67,9 +67,21 @@ ProjectKeyframe::~ProjectKeyframe()
 {
 }
 
-bool ProjectKeyframe::preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info)
+size_t ProjectKeyframe::size()
 {
-    return false;
+    static ProjectKeyframeChunk keyframe;
+    return sizeof(keyframe);
+}
+
+bool ProjectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
+        return false;
+    }
+    return true;
 }
 
 void ProjectKeyframe::read(const uint8_t *data)
@@ -92,5 +104,14 @@ IProjectKeyframe *ProjectKeyframe::clone() const
 }
 */
 
+void ProjectKeyframe::setName(const IString * /* value */)
+{
 }
+
+IKeyframe::Type ProjectKeyframe::type() const
+{
+    return kProject;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

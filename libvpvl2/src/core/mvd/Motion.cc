@@ -37,15 +37,15 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/mvd/AssetKeyframe.h"
-#include "vpvl2/mvd/BoneKeyframe.h"
-#include "vpvl2/mvd/CameraKeyframe.h"
-#include "vpvl2/mvd/EffectKeyframe.h"
-#include "vpvl2/mvd/LightKeyframe.h"
-#include "vpvl2/mvd/ModelKeyframe.h"
-#include "vpvl2/mvd/MorphKeyframe.h"
+#include "vpvl2/mvd/AssetSection.h"
+#include "vpvl2/mvd/BoneSection.h"
+#include "vpvl2/mvd/CameraSection.h"
+#include "vpvl2/mvd/EffectSection.h"
+#include "vpvl2/mvd/LightSection.h"
+#include "vpvl2/mvd/ModelSection.h"
+#include "vpvl2/mvd/MorphSection.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/mvd/ProjectKeyframe.h"
+#include "vpvl2/mvd/ProjectSection.h"
 
 namespace vpvl2
 {
@@ -72,69 +72,6 @@ struct NameSectionHeader {
     int reserved2;
     int count;
     int reserved3;
-};
-
-struct BoneSectionHeader {
-    int key;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int sizeOfLayer;
-};
-
-struct MorphSecionHeader {
-    int key;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved;
-};
-
-struct ModelSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int sizeOfIK;
-    int countOfIK;
-};
-
-struct AssetSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved2;
-};
-
-struct EffectSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int parameterSize;
-    int parameterCount;
-};
-
-struct EffectParameter {
-    int pid;
-    int type;
-};
-
-struct CameraSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int layerSize;
-};
-
-struct LightSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved2;
-};
-
-struct ProjectSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved2;
 };
 
 #pragma pack(pop)
@@ -231,189 +168,55 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             }
             break;
         }
-#if 0
         case kBoneSection: {
-            const BoneSectionHeader &boneSectionHeader = *reinterpret_cast<const BoneSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(boneSectionHeader), rest)) {
+            if (!BoneSection::preparse(ptr, rest, info)) {
                 return false;
-            }
-            if (!internal::validateSize(ptr, boneSectionHeader.sizeOfLayer, rest)) {
-                return false;
-            }
-            const int nkeyframes = boneSectionHeader.countOfKeyframes;
-            const size_t reserved = boneSectionHeader.sizeOfKeyframe - sizeof(keyframe);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
             }
             break;
         }
         case kMorphSection: {
-            const MorphSecionHeader &morphSectionHeader = *reinterpret_cast<const MorphSecionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(morphSectionHeader), rest)) {
+            if (!MorphSection::preparse(ptr, rest, info)) {
                 return false;
-            }
-            if (!internal::validateSize(ptr, morphSectionHeader.reserved, rest)) {
-                return false;
-            }
-            static MorphKeyframe keyframe;
-            const int nkeyframes = morphSectionHeader.countOfKeyframes;
-            const size_t reserved = morphSectionHeader.sizeOfKeyframe - sizeof(keyframe);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
             }
             break;
         }
         case kModelSection: {
-            const ModelSectionHeader &modelSectionHeader = *reinterpret_cast<const ModelSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(modelSectionHeader), rest)) {
-                return false;
-            }
-            const int countOfIK = modelSectionHeader.countOfIK;
-            if (!internal::validateSize(ptr, countOfIK * sizeof(int), rest)) {
-                return false;
-            }
-            const int sizeOfIK = modelSectionHeader.sizeOfIK;
-            if (!internal::validateSize(ptr, sizeOfIK - 4 * (countOfIK + 1), rest)) {
-                return false;
-            }
-            static ModelKeyframe keyframe;
-            const int nkeyframes = modelSectionHeader.countOfKeyframes;
             const size_t adjust = sectionHeader.minor == 1 ? 4 : 0;
-            const size_t reserved = modelSectionHeader.sizeOfKeyframe - ((sizeof(keyframe) - adjust) + countOfIK);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, sizeof(uint8_t), countOfIK, rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
+            if (!ModelSection::preparse(ptr, rest, adjust, info)) {
+                return false;
             }
             break;
         }
         case kAssetSection: {
-            const AssetSectionHeader &assetSectionHeader = *reinterpret_cast<const AssetSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(assetSectionHeader), rest)) {
+            if (!AssetSection::preparse(ptr, rest, info)) {
                 return false;
-            }
-            if (!internal::validateSize(ptr, assetSectionHeader.reserved2, rest)) {
-                return false;
-            }
-            static AssetKeyframe keyframe;
-            const int nkeyframes = assetSectionHeader.countOfKeyframes;
-            const size_t reserved = assetSectionHeader.sizeOfKeyframe - sizeof(keyframe);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
             }
             break;
         }
         case kEffectSection: {
-            const EffectSectionHeader &effectSectionHeader = *reinterpret_cast<const EffectSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(effectSectionHeader), rest)) {
+            if (!EffectSection::preparse(ptr, rest, info)) {
                 return false;
-            }
-            const int nparameters = effectSectionHeader.parameterCount;
-            const size_t parameterArraySize = nparameters * sizeof(int);
-            if (!internal::validateSize(ptr, parameterArraySize, rest)) {
-                return false;
-            }
-            if (!internal::validateSize(ptr, effectSectionHeader.parameterSize - 8 * nparameters - 4, rest)) {
-                return false;
-            }
-            static EffectKeyframe keyframe;
-            const int nkeyframes = effectSectionHeader.countOfKeyframes;
-            const size_t reserved = effectSectionHeader.sizeOfKeyframe - (sizeof(keyframe) + parameterArraySize);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
             }
             break;
         }
         case kCameraSection: {
-            const CameraSectionHeader &cameraSectionHeader = *reinterpret_cast<const CameraSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(cameraSectionHeader), rest)) {
+            if (!CameraSection::preparse(ptr, rest, info)) {
                 return false;
-            }
-            if (!internal::validateSize(ptr, cameraSectionHeader.layerSize, rest)) {
-                return false;
-            }
-            static CameraKeyframe keyframe;
-            const int nkeyframes = cameraSectionHeader.countOfKeyframes;
-            const size_t reserved = cameraSectionHeader.sizeOfKeyframe - sizeof(keyframe);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
             }
             break;
         }
         case kLightSection: {
-            const LightSectionHeader lightSectionHeader = *reinterpret_cast<const LightSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(lightSectionHeader), rest)) {
+            if (!LightSection::preparse(ptr, rest, info)) {
                 return false;
-            }
-            if (!internal::validateSize(ptr, lightSectionHeader.reserved2, rest)) {
-                return false;
-            }
-            static LightKeyframe keyframe;
-            const int nkeyframes = lightSectionHeader.countOfKeyframes;
-            const size_t reserved = lightSectionHeader.sizeOfKeyframe - sizeof(keyframe);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
             }
             break;
         }
         case kProjectSection: {
-            const ProjectSectionHeader &projectSectionHeader = *reinterpret_cast<const ProjectSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(projectSectionHeader), rest)) {
+            if (!ProjectSection::preparse(ptr, rest, info)) {
                 return false;
-            }
-            if (!internal::validateSize(ptr, projectSectionHeader.reserved2, rest)) {
-                return false;
-            }
-            static EffectKeyframe keyframe;
-            const int nkeyframes = projectSectionHeader.countOfKeyframes;
-            const size_t reserved = projectSectionHeader.sizeOfKeyframe - sizeof(keyframe);
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyframe), rest)) {
-                    return false;
-                }
-                if (!internal::validateSize(ptr, reserved, rest)) {
-                    return false;
-                }
             }
             break;
         }
-#endif
         case kEndOfFile: {
             ret = true;
             rest = 0;
@@ -678,6 +481,6 @@ void Motion::release()
     m_name = 0;
 }
 
-}
-}
+} /* namespace mvd */
+} /* namespace vpvl2 */
 

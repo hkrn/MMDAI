@@ -64,9 +64,21 @@ MorphKeyframe::~MorphKeyframe()
 {
 }
 
-bool MorphKeyframe::preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info)
+size_t MorphKeyframe::size()
 {
-    return false;
+    static MorphKeyframeChunk keyframe;
+    return sizeof(keyframe);
+}
+
+bool MorphKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
+        return false;
+    }
+    return true;
 }
 
 void MorphKeyframe::read(const uint8_t *data)
@@ -96,5 +108,14 @@ void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 {
 }
 
+void MorphKeyframe::setName(const IString * /* value */)
+{
 }
+
+IMorphKeyframe::Type MorphKeyframe::type() const
+{
+    return kMorph;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

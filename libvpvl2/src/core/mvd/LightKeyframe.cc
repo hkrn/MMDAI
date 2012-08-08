@@ -65,9 +65,21 @@ LightKeyframe::~LightKeyframe()
 {
 }
 
-bool LightKeyframe::preparse(const uint8_t *data, size_t &rest, Motion::DataInfo &info)
+size_t LightKeyframe::size()
 {
-    return false;
+    static LightKeyframeChunk keyframe;
+    return sizeof(keyframe);
+}
+
+bool LightKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+{
+    if (!internal::validateSize(ptr, size(), rest)) {
+        return false;
+    }
+    if (!internal::validateSize(ptr, reserved, rest)) {
+        return false;
+    }
+    return true;
 }
 
 void LightKeyframe::read(const uint8_t *data)
@@ -106,5 +118,14 @@ void LightKeyframe::setDirection(const Vector3 &value)
 {
 }
 
+void LightKeyframe::setName(const IString * /* value */)
+{
 }
+
+IKeyframe::Type LightKeyframe::type() const
+{
+    return kLight;
 }
+
+} /* namespace mvd */
+} /* namespace vpvl2 */

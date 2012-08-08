@@ -54,7 +54,9 @@ public:
     BoneKeyframe(IEncoding *encoding);
     ~BoneKeyframe();
 
-    bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
+    static size_t size();
+    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
@@ -66,6 +68,8 @@ public:
     const Quaternion &rotation() const;
     void setPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
+    void setName(const IString *value);
+    Type type() const;
 
 private:
     IEncoding *m_encoding;
@@ -73,8 +77,8 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneKeyframe)
 };
 
-}
-}
+} /* namespace mvd */
+} /* namespace vpvl2 */
 
 #endif
 
