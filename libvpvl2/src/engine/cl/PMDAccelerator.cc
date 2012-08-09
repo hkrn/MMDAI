@@ -51,7 +51,7 @@ using namespace vpvl;
 static const char kProgramCompileFlags[] = "-cl-fast-relaxed-math -DMAC -DGUID_ARG";
 
 PMDAccelerator::PMDAccelerator(Context *context)
-    : m_context(context),
+    : m_contextRef(context),
       m_program(0),
       m_performSkinningKernel(0),
       m_verticesBuffer(0),
@@ -85,28 +85,29 @@ PMDAccelerator::~PMDAccelerator()
     m_boneWeightsBuffer = 0;
     m_localWGSizeForPerformSkinning = 0;
     m_isBufferAllocated = false;
+    m_contextRef = 0;
 }
 
 bool PMDAccelerator::isAvailable() const
 {
-    return m_context->isAvailable() && m_program;
+    return m_contextRef->isAvailable() && m_program;
 }
 
 bool PMDAccelerator::createKernelProgram()
 {
     cl_int err;
-    const IString *source = m_context->renderDelegate()->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
+    const IString *source = m_contextRef->renderDelegate()->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
     const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
     const size_t sourceSize = source->length();
     clReleaseProgram(m_program);
-    cl_context context = m_context->computeContext();
+    cl_context context = m_contextRef->computeContext();
     m_program = clCreateProgramWithSource(context, 1, &sourceText, &sourceSize, &err);
     delete source;
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed creating an OpenCL program: %d", err);
         return false;
     }
-    cl_device_id device = m_context->hostDevice();
+    cl_device_id device = m_contextRef->hostDevice();
     err = clBuildProgram(m_program, 1, &device, kProgramCompileFlags, 0, 0);
     if (err != CL_SUCCESS) {
         size_t buildLogSize;
@@ -130,7 +131,7 @@ bool PMDAccelerator::createKernelProgram()
 void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context)
 {
     cl_int err;
-    cl_context computeContext = m_context->computeContext();
+    cl_context computeContext = m_contextRef->computeContext();
     clReleaseMemObject(m_verticesBuffer);
     m_verticesBuffer = clCreateFromGLBuffer(computeContext,
                                           CL_MEM_READ_WRITE,
@@ -183,7 +184,7 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
         log0(context, IRenderDelegate::kLogWarning, "Failed creating edgeOffsetBuffer: %d", err);
         return;
     }
-    cl_device_id device = m_context->hostDevice();
+    cl_device_id device = m_contextRef->hostDevice();
     err = clGetKernelWorkGroupInfo(m_performSkinningKernel,
                                    device,
                                    CL_KERNEL_WORK_GROUP_SIZE,
@@ -194,7 +195,7 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
         log0(context, IRenderDelegate::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
         return;
     }
-    cl_command_queue queue = m_context->commandQueue();
+    cl_command_queue queue = m_contextRef->commandQueue();
     err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int) * 2, &boneIndices[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write BoneIndicesBuffer: %d", err);
@@ -230,7 +231,7 @@ void PMDAccelerator::updateModel(pmd::Model *model, const Scene *scene)
     size_t nsize = (nbones * sizeof(float)) << 4;
     cl_int err;
     size_t local, global;
-    cl_command_queue queue = m_context->commandQueue();
+    cl_command_queue queue = m_contextRef->commandQueue();
     err = clEnqueueWriteBuffer(queue, m_boneMatricesBuffer, CL_TRUE, 0, nsize, m_boneTransform, 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write output matrices buffer: %d", err);
@@ -330,7 +331,7 @@ void PMDAccelerator::log0(void *context, IRenderDelegate::LogLevel level, const 
 {
     va_list ap;
     va_start(ap, format);
-    m_context->renderDelegate()->log(context, level, format, ap);
+    m_contextRef->renderDelegate()->log(context, level, format, ap);
     va_end(ap);
 }
 

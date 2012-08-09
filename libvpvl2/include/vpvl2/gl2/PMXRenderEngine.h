@@ -122,7 +122,7 @@ private:
     bool releaseContext0(void *context);
 
     const Scene *m_sceneRef;
-    cl::PMXAccelerator *m_acceleratorRef;
+    cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_modelRef;
     PrivateContext *m_context;
 

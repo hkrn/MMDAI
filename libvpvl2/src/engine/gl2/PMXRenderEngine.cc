@@ -504,7 +504,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       #endif /* VPVL2_LINK_QT */
       m_delegateRef(delegate),
       m_sceneRef(scene),
-      m_acceleratorRef(accelerator),
+      m_accelerator(accelerator),
       m_modelRef(model),
       m_context(0)
 {
@@ -523,12 +523,11 @@ PMXRenderEngine::~PMXRenderEngine()
     }
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
-    m_accelerator = 0;
 #endif
     m_delegateRef = 0;
     m_sceneRef = 0;
     m_modelRef = 0;
-    m_acceleratorRef = 0;
+    m_accelerator = 0;
 }
 
 IModel *PMXRenderEngine::model() const
@@ -653,7 +652,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->uploadModel(m_model, m_context->vertexBufferObjects[kModelVertices], context);
+        m_accelerator->uploadModel(m_modelRef, m_context->vertexBufferObjects[kModelVertices], context);
 #endif
     m_modelRef->performUpdate(m_sceneRef->camera()->position(), m_sceneRef->light()->direction());
     m_modelRef->setVisible(true);
@@ -675,7 +674,7 @@ void PMXRenderEngine::update()
         m_modelRef->updateSkinningMesh(m_context->mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->updateModel(m_model, m_scene);
+        m_accelerator->updateModel(m_modelRef, m_sceneRef);
 #endif
 }
 

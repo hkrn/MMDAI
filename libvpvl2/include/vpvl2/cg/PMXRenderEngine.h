@@ -118,7 +118,7 @@ private:
 
     const Scene *m_sceneRef;
     EffectEngine *m_currentRef;
-    cl::PMXAccelerator *m_acceleratorRef;
+    cl::PMXAccelerator *m_accelerator;
     pmx::Model *m_modelRef;
     CGcontext m_contextRef;
     pmx::Model::SkinningMeshes m_mesh;

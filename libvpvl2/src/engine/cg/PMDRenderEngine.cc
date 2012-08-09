@@ -62,7 +62,7 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       m_delegateRef(delegate),
       m_sceneRef(scene),
       m_currentRef(0),
-      m_acceleratorRef(accelerator),
+      m_accelerator(accelerator),
       m_modelRef(model),
       m_contextRef(effectContext),
       m_materialContexts(0),
@@ -163,7 +163,7 @@ bool PMDRenderEngine::upload(const IString *dir)
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
+        m_accelerator->uploadModel(m_modelRef, m_vertexBufferObjects[kModelVertices], context);
 #endif
     m_sceneRef->updateModel(m_modelRef);
     update();
@@ -189,7 +189,7 @@ void PMDRenderEngine::update()
         m_modelRef->updateSkinningMeshes(m_mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->updateModel(m_model, m_scene);
+        m_accelerator->updateModel(m_modelRef, m_sceneRef);
 #endif
     m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
     m_currentRef->updateSceneParameters();

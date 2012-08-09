@@ -62,7 +62,7 @@ public:
 private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
 
-    Context *m_context;
+    Context *m_contextRef;
     cl_program m_program;
     cl_kernel m_performSkinningKernel;
     cl_mem m_verticesBuffer;

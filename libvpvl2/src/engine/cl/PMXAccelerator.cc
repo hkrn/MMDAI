@@ -50,7 +50,7 @@ static const int kMaxBonesPerVertex = 4;
 static const char kProgramCompileFlags[] = "-cl-fast-relaxed-math -DMAC -DGUID_ARG";
 
 PMXAccelerator::PMXAccelerator(Context *context)
-    : m_context(context),
+    : m_contextRef(context),
       m_program(0),
       m_performSkinningKernel(0),
       m_verticesBuffer(0),
@@ -82,28 +82,29 @@ PMXAccelerator::~PMXAccelerator()
     delete[] m_boneTransform;
     m_boneTransform = 0;
     m_isBufferAllocated = false;
+    m_contextRef = 0;
 }
 
 bool PMXAccelerator::isAvailable() const
 {
-    return m_context->isAvailable() && m_program;
+    return m_contextRef->isAvailable() && m_program;
 }
 
 bool PMXAccelerator::createKernelProgram()
 {
     cl_int err;
-    const IString *source = m_context->renderDelegate()->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
+    const IString *source = m_contextRef->renderDelegate()->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
     const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
     const size_t sourceSize = source->length();
     clReleaseProgram(m_program);
-    cl_context context = m_context->computeContext();
+    cl_context context = m_contextRef->computeContext();
     m_program = clCreateProgramWithSource(context, 1, &sourceText, &sourceSize, &err);
     delete source;
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed creating an OpenCL program: %d", err);
         return false;
     }
-    cl_device_id device = m_context->hostDevice();
+    cl_device_id device = m_contextRef->hostDevice();
     err = clBuildProgram(m_program, 1, &device, kProgramCompileFlags, 0, 0);
     if (err != CL_SUCCESS) {
         size_t buildLogSize;
@@ -127,7 +128,7 @@ bool PMXAccelerator::createKernelProgram()
 void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *context)
 {
     cl_int err;
-    cl_context computeContext = m_context->computeContext();
+    cl_context computeContext = m_contextRef->computeContext();
     clReleaseMemObject(m_verticesBuffer);
     m_verticesBuffer = clCreateFromGLBuffer(computeContext,
                                             CL_MEM_READ_WRITE,
@@ -201,7 +202,7 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
         return;
     }
-    cl_device_id device = m_context->hostDevice();
+    cl_device_id device = m_contextRef->hostDevice();
     err = clGetKernelWorkGroupInfo(m_performSkinningKernel,
                                    device,
                                    CL_KERNEL_WORK_GROUP_SIZE,
@@ -212,7 +213,7 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
         log0(context, IRenderDelegate::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
         return;
     }
-    cl_command_queue queue = m_context->commandQueue();
+    cl_command_queue queue = m_contextRef->commandQueue();
     err = clEnqueueWriteBuffer(queue, m_materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float), &materialEdgeSize[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write materialEdgeSizeBuffer: %d", err);
@@ -246,7 +247,7 @@ void PMXAccelerator::updateModel(const pmx::Model *model, const Scene *scene)
     size_t nsize = (nbones * sizeof(float)) << 4;
     cl_int err;
     size_t local, global;
-    cl_command_queue queue = m_context->commandQueue();
+    cl_command_queue queue = m_contextRef->commandQueue();
     /* force flushing OpenGL commands to acquire GL objects by OpenCL */
     glFinish();
     clEnqueueAcquireGLObjects(queue, 1, &m_verticesBuffer, 0, 0, 0);
@@ -351,7 +352,7 @@ void PMXAccelerator::log0(void *context, IRenderDelegate::LogLevel level, const 
 {
     va_list ap;
     va_start(ap, format);
-    m_context->renderDelegate()->log(context, level, format, ap);
+    m_contextRef->renderDelegate()->log(context, level, format, ap);
     va_end(ap);
 }
 

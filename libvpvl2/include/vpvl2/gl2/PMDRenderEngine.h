@@ -123,7 +123,7 @@ private:
     bool releaseContext0(void *context);
 
     const Scene *m_sceneRef;
-    cl::PMDAccelerator *m_acceleratorRef;
+    cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_modelRef;
     PrivateContext *m_context;
 

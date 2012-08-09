@@ -113,7 +113,7 @@ private:
 
     const Scene *m_sceneRef;
     EffectEngine *m_currentRef;
-    cl::PMDAccelerator *m_acceleratorRef;
+    cl::PMDAccelerator *m_accelerator;
     pmd::Model *m_modelRef;
     CGcontext m_contextRef;
     MaterialContext *m_materialContexts;

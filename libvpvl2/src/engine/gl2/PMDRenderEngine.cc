@@ -415,7 +415,7 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       #endif /* VPVL_LINK_QT */
       m_delegateRef(delegate),
       m_sceneRef(scene),
-      m_acceleratorRef(accelerator),
+      m_accelerator(accelerator),
       m_modelRef(model),
       m_context(0)
 {
@@ -434,7 +434,6 @@ PMDRenderEngine::~PMDRenderEngine()
     }
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
-    m_accelerator = 0;
 #endif
     m_modelRef = 0;
     m_delegateRef = 0;
@@ -586,7 +585,7 @@ bool PMDRenderEngine::upload(const IString *dir)
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->uploadModel(m_model, m_context->vertexBufferObjects[kModelVertices], context);
+        m_accelerator->uploadModel(m_modelRef, m_context->vertexBufferObjects[kModelVertices], context);
 #endif
     update();
     IString *modelName = m_delegateRef->toUnicode(model->name());
@@ -614,7 +613,7 @@ void PMDRenderEngine::update()
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->updateModel(m_model, m_scene);
+        m_accelerator->updateModel(m_modelRef, m_sceneRef);
 #endif
 }
 
