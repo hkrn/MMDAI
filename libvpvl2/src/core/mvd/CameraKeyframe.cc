@@ -62,14 +62,26 @@ struct CameraKeyframeChunk {
 
 #pragma pack(pop)
 
-CameraKeyframe::CameraKeyframe(IEncoding *encoding)
+CameraKeyframe::CameraKeyframe()
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_ptr(0),
+      m_position(kZeroV3),
+      m_angle(kZeroV3),
+      m_distance(0),
+      m_fov(0),
+      m_noPerspective(false)
 {
 }
 
 CameraKeyframe::~CameraKeyframe()
 {
+    delete m_ptr;
+    m_ptr = 0;
+    m_position.setZero();
+    m_angle.setZero();
+    m_distance = 0;
+    m_fov = 0;
+    m_noPerspective = false;
 }
 
 size_t CameraKeyframe::size()
@@ -91,6 +103,12 @@ bool CameraKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Moti
 
 void CameraKeyframe::read(const uint8_t *data)
 {
+    const CameraKeyframeChunk *chunk = reinterpret_cast<const CameraKeyframeChunk *>(data);
+    internal::setPosition(chunk->position, m_position);
+    internal::setPositionRaw(chunk->rotation, m_angle);
+    m_angle.setValue(-degree(m_angle[0]), -degree(m_angle[1]), degree(m_angle[2]));
+    setTimeIndex(chunk->timeIndex);
+    setLayerIndex(chunk->layerIndex);
 }
 
 void CameraKeyframe::write(uint8_t *data) const
@@ -104,7 +122,17 @@ size_t CameraKeyframe::estimateSize() const
 
 ICameraKeyframe *CameraKeyframe::clone() const
 {
-    return 0;
+    CameraKeyframe *frame = m_ptr = new CameraKeyframe();
+    frame->setTimeIndex(m_timeIndex);
+    frame->setLayerIndex(m_layerIndex);
+    frame->setDistance(m_distance);
+    frame->setFov(m_fov);
+    frame->setPosition(m_position);
+    frame->setAngle(m_angle);
+    frame->setPerspective(!m_noPerspective);
+    frame->m_parameter = m_parameter;
+    m_ptr = 0;
+    return frame;
 }
 
 void CameraKeyframe::setDefaultInterpolationParameter()
@@ -121,47 +149,52 @@ void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord 
 
 const Vector3 &CameraKeyframe::position() const
 {
-    return kZeroV3;
+    return m_position;
 }
 
 const Vector3 &CameraKeyframe::angle() const
 {
-    return kZeroV3;
+    return m_angle;
 }
 
 const Scalar &CameraKeyframe::distance() const
 {
-    return 0;
+    return m_distance;
 }
 
 const Scalar &CameraKeyframe::fov() const
 {
-    return 0;
+    return m_fov;
 }
 
 bool CameraKeyframe::isPerspective() const
 {
-    return false;
+    return !m_noPerspective;
 }
 
 void CameraKeyframe::setPosition(const Vector3 &value)
 {
+    m_position = value;
 }
 
 void CameraKeyframe::setAngle(const Vector3 &value)
 {
+    m_angle = value;
 }
 
 void CameraKeyframe::setDistance(const Scalar &value)
 {
+    m_distance = value;
 }
 
 void CameraKeyframe::setFov(const Scalar &value)
 {
+    m_fov = value;
 }
 
 void CameraKeyframe::setPerspective(bool value)
 {
+    m_noPerspective = !value;
 }
 
 void CameraKeyframe::setName(const IString * /* value */)

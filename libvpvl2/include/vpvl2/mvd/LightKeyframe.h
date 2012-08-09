@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API LightKeyframe : public vmd::BaseKeyframe, public ILightKeyframe
 {
 public:
-    LightKeyframe(IEncoding *encoding);
+    LightKeyframe();
     ~LightKeyframe();
 
     static size_t size();
@@ -69,7 +69,9 @@ public:
     Type type() const;
 
 private:
-    IEncoding *m_encoding;
+    mutable LightKeyframe *m_ptr;
+    Vector3 m_color;
+    Vector3 m_direction;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(LightKeyframe)
 };

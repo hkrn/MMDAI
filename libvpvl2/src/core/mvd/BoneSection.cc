@@ -39,6 +39,7 @@
 
 #include "vpvl2/mvd/BoneKeyframe.h"
 #include "vpvl2/mvd/BoneSection.h"
+#include "vpvl2/mvd/NameListSection.h"
 
 namespace vpvl2
 {
@@ -51,18 +52,21 @@ struct BoneSectionHeader {
     int key;
     int sizeOfKeyframe;
     int countOfKeyframes;
-    int sizeOfLayer;
+    int countOfLayers;
 };
 
 #pragma pack(pop)
 
 BoneSection::BoneSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+    : BaseSection(nameListSectionRef),
+      m_keyframeListPtr(0),
+      m_keyframePtr(0)
 {
 }
 
 BoneSection::~BoneSection()
 {
+    release();
 }
 
 bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -71,7 +75,7 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
-    if (!internal::validateSize(ptr, header.sizeOfLayer, rest)) {
+    if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
@@ -84,8 +88,40 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     return true;
 }
 
+void BoneSection::release()
+{
+    if (m_keyframeListPtr) {
+        m_keyframeListPtr->releaseAll();
+        delete m_keyframeListPtr;
+        m_keyframeListPtr = 0;
+    }
+    delete m_keyframePtr;
+    m_keyframePtr = 0;
+    const int nitems = m_allKeyframes.count();
+    for (int i = 0; i < nitems; i++) {
+        BoneKeyframeList **keyframes = const_cast<BoneKeyframeList **>(m_allKeyframes.value(i));
+        (*keyframes)->releaseAll();
+    }
+    m_allKeyframes.releaseAll();
+}
+
 void BoneSection::read(const uint8_t *data)
 {
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    const BoneSectionHeader &header = *reinterpret_cast<const BoneSectionHeader *>(ptr);
+    const size_t sizeOfKeyframe = header.sizeOfKeyframe;
+    const int nkeyframes = header.countOfKeyframes;
+    ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
+    m_keyframeListPtr = new BoneKeyframeList();
+    for (int i = 0; i < nkeyframes; i++) {
+        m_keyframePtr = new BoneKeyframe(m_nameListSectionRef);
+        m_keyframePtr->read(ptr);
+        m_keyframeListPtr->add(m_keyframePtr);
+        ptr += sizeOfKeyframe;
+    }
+    m_allKeyframes.insert(header.key, m_keyframeListPtr);
+    m_keyframeListPtr = 0;
+    m_keyframePtr = 0;
 }
 
 void BoneSection::write(uint8_t *data) const

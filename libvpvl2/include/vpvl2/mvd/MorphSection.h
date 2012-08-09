@@ -45,6 +45,7 @@ class IEncoding;
 
 namespace mvd
 {
+class MorphKeyframe;
 
 class VPVL2_API MorphSection : public BaseSection
 {
@@ -54,11 +55,17 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
+    void release();
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
 
 private:
+    typedef Array<MorphKeyframe *> MorphKeyframeList;
+    MorphKeyframeList *m_keyframeListPtr;
+    MorphKeyframe *m_keyframePtr;
+    Hash<btHashInt, MorphKeyframeList *> m_allKeyframes;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphSection)
 };
 

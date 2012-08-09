@@ -57,12 +57,14 @@ struct LightSectionHeader {
 #pragma pack(pop)
 
 LightSection::LightSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+    : BaseSection(nameListSectionRef),
+      m_keyframePtr(0)
 {
 }
 
 LightSection::~LightSection()
 {
+    release();
 }
 
 bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -84,8 +86,25 @@ bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     return true;
 }
 
+void LightSection::release()
+{
+    delete m_keyframePtr;
+    m_keyframePtr = 0;
+}
+
 void LightSection::read(const uint8_t *data)
 {
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    const LightSectionHeader &header = *reinterpret_cast<const LightSectionHeader *>(ptr);
+    const size_t sizeOfKeyframe = header.sizeOfKeyframe;
+    const int nkeyframes = header.countOfKeyframes;
+    ptr += sizeof(header);
+    for (int i = 0; i < nkeyframes; i++) {
+        m_keyframePtr = new LightKeyframe();
+        m_keyframePtr->read(ptr);
+        m_keyframes.add(m_keyframePtr);
+        ptr += sizeOfKeyframe;
+    }
 }
 
 void LightSection::write(uint8_t *data) const

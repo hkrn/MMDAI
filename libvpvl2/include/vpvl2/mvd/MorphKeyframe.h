@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API MorphKeyframe : public vmd::BaseKeyframe, public IMorphKeyframe
 {
 public:
-    MorphKeyframe(IEncoding *encoding);
+    MorphKeyframe(NameListSection *nameListSectionRef);
     ~MorphKeyframe();
 
     static size_t size();
@@ -67,7 +67,9 @@ public:
     Type type() const;
 
 private:
-    IEncoding *m_encoding;
+    mutable MorphKeyframe *m_ptr;
+    NameListSection *m_nameListSectionRef;
+    IMorph::WeightPrecision m_weight;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)
 };

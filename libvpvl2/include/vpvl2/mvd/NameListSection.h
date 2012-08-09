@@ -54,7 +54,7 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
-    void read(const uint8_t *data, Motion::DataInfo &info);
+    void read(const uint8_t *data, const IString::Codec &codec);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
 

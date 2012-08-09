@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API BoneKeyframe : public vmd::BaseKeyframe, public IBoneKeyframe
 {
 public:
-    BoneKeyframe(IEncoding *encoding);
+    BoneKeyframe(NameListSection *nameListSectionRef);
     ~BoneKeyframe();
 
     static size_t size();
@@ -72,7 +72,11 @@ public:
     Type type() const;
 
 private:
-    IEncoding *m_encoding;
+    mutable BoneKeyframe *m_ptr;
+    NameListSection *m_nameListSectionRef;
+    Vector3 m_position;
+    Quaternion m_rotation;
+    InterpolationParameter m_parameter;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneKeyframe)
 };

@@ -49,20 +49,26 @@ namespace mvd
 struct LightKeyframeChunk {
     uint64_t timeIndex;
     float position[3];
-    float direction[3];
+    float color[3];
     uint8_t enabled;
 };
 
 #pragma pack(pop)
 
-LightKeyframe::LightKeyframe(IEncoding *encoding)
+LightKeyframe::LightKeyframe()
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_ptr(0),
+      m_color(kZeroV3),
+      m_direction(kZeroV3)
 {
 }
 
 LightKeyframe::~LightKeyframe()
 {
+    delete m_ptr;
+    m_ptr = 0;
+    m_color.setZero();
+    m_direction.setZero();
 }
 
 size_t LightKeyframe::size()
@@ -84,6 +90,10 @@ bool LightKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motio
 
 void LightKeyframe::read(const uint8_t *data)
 {
+    const LightKeyframeChunk *chunk = reinterpret_cast<const LightKeyframeChunk *>(data);
+    internal::setPosition(chunk->position, m_direction);
+    internal::setPositionRaw(chunk->color, m_color);
+    setTimeIndex(chunk->timeIndex);
 }
 
 void LightKeyframe::write(uint8_t *data) const
@@ -97,25 +107,32 @@ size_t LightKeyframe::estimateSize() const
 
 ILightKeyframe *LightKeyframe::clone() const
 {
-    return 0;
+    LightKeyframe *frame = m_ptr = new LightKeyframe();
+    frame->setTimeIndex(m_timeIndex);
+    frame->setColor(m_color);
+    frame->setDirection(m_direction);
+    m_ptr = 0;
+    return frame;
 }
 
 const Vector3 &LightKeyframe::color() const
 {
-    return kZeroV3;
+    return m_color;
 }
 
 const Vector3 &LightKeyframe::direction() const
 {
-    return kZeroV3;
+    return m_direction;
 }
 
 void LightKeyframe::setColor(const Vector3 &value)
 {
+    m_color = value;
 }
 
 void LightKeyframe::setDirection(const Vector3 &value)
 {
+    m_direction = value;
 }
 
 void LightKeyframe::setName(const IString * /* value */)

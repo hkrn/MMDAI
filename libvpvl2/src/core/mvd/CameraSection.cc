@@ -51,18 +51,20 @@ struct CameraSectionHeader {
     int reserved;
     int sizeOfKeyframe;
     int countOfKeyframes;
-    int layerSize;
+    int countOfLayers;
 };
 
 #pragma pack(pop)
 
 CameraSection::CameraSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+    : BaseSection(nameListSectionRef),
+      m_keyframePtr(0)
 {
 }
 
 CameraSection::~CameraSection()
 {
+    release();
 }
 
 bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -71,7 +73,7 @@ bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
-    if (!internal::validateSize(ptr, header.layerSize, rest)) {
+    if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
@@ -84,8 +86,25 @@ bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
     return true;
 }
 
+void CameraSection::release()
+{
+    delete m_keyframePtr;
+    m_keyframePtr = 0;
+}
+
 void CameraSection::read(const uint8_t *data)
 {
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    const CameraSectionHeader &header = *reinterpret_cast<const CameraSectionHeader *>(ptr);
+    const size_t sizeOfkeyframe = header.sizeOfKeyframe;
+    const int nkeyframes = header.countOfKeyframes;
+    ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
+    for (int i = 0; i < nkeyframes; i++) {
+        m_keyframePtr = new CameraKeyframe();
+        m_keyframePtr->read(ptr);
+        m_keyframes.add(m_keyframePtr);
+        ptr += sizeOfkeyframe;
+    }
 }
 
 void CameraSection::write(uint8_t *data) const

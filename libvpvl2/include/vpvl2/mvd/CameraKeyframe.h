@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API CameraKeyframe : public vmd::BaseKeyframe, public ICameraKeyframe
 {
 public:
-    CameraKeyframe(IEncoding *encoding);
+    CameraKeyframe();
     ~CameraKeyframe();
 
     static size_t size();
@@ -78,7 +78,13 @@ public:
     Type type() const;
 
 private:
-    IEncoding *m_encoding;
+    mutable CameraKeyframe *m_ptr;
+    Vector3 m_position;
+    Vector3 m_angle;
+    float m_distance;
+    float m_fov;
+    bool m_noPerspective;
+    InterpolationParameter m_parameter;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraKeyframe)
 };

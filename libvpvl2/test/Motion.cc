@@ -618,5 +618,6 @@ TEST(MotionTest, ParseMVD)
         mvd::Motion::DataInfo result;
         // valid model motion should be loaded successfully
         ASSERT_TRUE(motion.preparse(data, size, result));
+        ASSERT_TRUE(motion.load(data, size));
     }
 }

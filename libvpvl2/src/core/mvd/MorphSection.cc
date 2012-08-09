@@ -39,6 +39,7 @@
 
 #include "vpvl2/mvd/MorphKeyframe.h"
 #include "vpvl2/mvd/MorphSection.h"
+#include "vpvl2/mvd/NameListSection.h"
 
 namespace vpvl2
 {
@@ -57,12 +58,15 @@ struct MorphSecionHeader {
 #pragma pack(pop)
 
 MorphSection::MorphSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+    : BaseSection(nameListSectionRef),
+      m_keyframeListPtr(0),
+      m_keyframePtr(0)
 {
 }
 
 MorphSection::~MorphSection()
 {
+    release();
 }
 
 bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -84,8 +88,40 @@ bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     return true;
 }
 
+void MorphSection::release()
+{
+    if (m_keyframeListPtr) {
+        m_keyframeListPtr->releaseAll();
+        delete m_keyframeListPtr;
+        m_keyframeListPtr = 0;
+    }
+    delete m_keyframePtr;
+    m_keyframePtr = 0;
+    const int nitems = m_allKeyframes.count();
+    for (int i = 0; i < nitems; i++) {
+        MorphKeyframeList **keyframes = const_cast<MorphKeyframeList **>(m_allKeyframes.value(i));
+        (*keyframes)->releaseAll();
+    }
+    m_allKeyframes.releaseAll();
+}
+
 void MorphSection::read(const uint8_t *data)
 {
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    const MorphSecionHeader &header = *reinterpret_cast<const MorphSecionHeader *>(ptr);
+    const size_t sizeOfKeyframe = header.sizeOfKeyframe;
+    const int nkeyframes = header.countOfKeyframes;
+    m_keyframeListPtr = new MorphKeyframeList();
+    ptr += sizeof(header);
+    for (int i = 0; i < nkeyframes; i++) {
+        m_keyframePtr = new MorphKeyframe(m_nameListSectionRef);
+        m_keyframePtr->read(ptr);
+        m_keyframeListPtr->add(m_keyframePtr);
+        ptr += sizeOfKeyframe;
+    }
+    m_allKeyframes.insert(header.key, m_keyframeListPtr);
+    m_keyframeListPtr = 0;
+    m_keyframePtr = 0;
 }
 
 void MorphSection::write(uint8_t *data) const

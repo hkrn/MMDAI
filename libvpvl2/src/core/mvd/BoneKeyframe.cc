@@ -59,14 +59,21 @@ struct BoneKeyframeChunk {
 
 #pragma pack(pop)
 
-BoneKeyframe::BoneKeyframe(IEncoding *encoding)
+BoneKeyframe::BoneKeyframe(NameListSection *nameListSectionRef)
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_ptr(0),
+      m_nameListSectionRef(nameListSectionRef),
+      m_position(kZeroV3),
+      m_rotation(Quaternion::getIdentity())
 {
 }
 
 BoneKeyframe::~BoneKeyframe()
 {
+    m_ptr = 0;
+    m_nameListSectionRef = 0;
+    m_position.setZero();
+    m_rotation.setValue(0, 0, 0, 1);
 }
 
 size_t BoneKeyframe::size()
@@ -88,6 +95,11 @@ bool BoneKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion
 
 void BoneKeyframe::read(const uint8_t *data)
 {
+    const BoneKeyframeChunk *chunk = reinterpret_cast<const BoneKeyframeChunk *>(data);
+    internal::setPosition(chunk->position, m_position);
+    internal::setRotation(chunk->rotation, m_rotation);
+    setTimeIndex(chunk->timeIndex);
+    setLayerIndex(chunk->layerIndex);
 }
 
 void BoneKeyframe::write(uint8_t *data) const
@@ -101,7 +113,15 @@ size_t BoneKeyframe::estimateSize() const
 
 IBoneKeyframe *BoneKeyframe::clone() const
 {
-    return 0;
+    BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_nameListSectionRef);
+    frame->setName(m_name);
+    frame->setTimeIndex(m_timeIndex);
+    frame->setLayerIndex(m_layerIndex);
+    frame->setPosition(m_position);
+    frame->setRotation(m_rotation);
+    frame->m_parameter = m_parameter;
+    m_ptr = 0;
+    return frame;
 }
 
 void BoneKeyframe::setDefaultInterpolationParameter()
@@ -118,20 +138,22 @@ void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &v
 
 const Vector3 &BoneKeyframe::position() const
 {
-    return kZeroV3;
+    return m_position;
 }
 
 const Quaternion &BoneKeyframe::rotation() const
 {
-    return Quaternion::getIdentity();
+    return m_rotation;
 }
 
 void BoneKeyframe::setPosition(const Vector3 &value)
 {
+    m_position = value;
 }
 
 void BoneKeyframe::setRotation(const Quaternion &value)
 {
+    m_rotation = value;
 }
 
 void BoneKeyframe::setName(const IString *value)

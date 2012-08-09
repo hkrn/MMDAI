@@ -116,6 +116,7 @@ public:
         uint8_t *reservedPtr;
         size_t reservedSize;
         uint8_t *sectionStartPtr;
+        uint8_t *nameListSectionPtr;
         Array<uint8_t *> assetSectionPtrs;
         Array<uint8_t *> boneSectionPtrs;
         Array<uint8_t *> cameraSectionPtrs;

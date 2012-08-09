@@ -45,6 +45,7 @@ class IEncoding;
 
 namespace mvd
 {
+class CameraKeyframe;
 
 class VPVL2_API CameraSection : public BaseSection
 {
@@ -54,11 +55,15 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
+    void release();
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
 
 private:
+    CameraKeyframe *m_keyframePtr;
+    Array<CameraKeyframe *> m_keyframes;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraSection)
 };
 

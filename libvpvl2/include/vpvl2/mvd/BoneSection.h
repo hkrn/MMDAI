@@ -45,6 +45,7 @@ class IEncoding;
 
 namespace mvd
 {
+class BoneKeyframe;
 
 class VPVL2_API BoneSection : public BaseSection
 {
@@ -54,11 +55,17 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
+    void release();
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
 
 private:
+    typedef Array<BoneKeyframe *> BoneKeyframeList;
+    BoneKeyframeList *m_keyframeListPtr;
+    BoneKeyframe *m_keyframePtr;
+    Hash<btHashInt, BoneKeyframeList *> m_allKeyframes;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneSection)
 };
 

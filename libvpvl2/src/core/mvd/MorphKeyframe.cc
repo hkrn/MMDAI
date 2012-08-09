@@ -54,14 +54,20 @@ struct MorphKeyframeChunk {
 
 #pragma pack(pop)
 
-MorphKeyframe::MorphKeyframe(IEncoding *encoding)
+MorphKeyframe::MorphKeyframe(NameListSection *nameListSectionRef)
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_ptr(0),
+      m_nameListSectionRef(nameListSectionRef),
+      m_weight(0)
 {
 }
 
 MorphKeyframe::~MorphKeyframe()
 {
+    delete m_ptr;
+    m_ptr = 0;
+    m_nameListSectionRef = 0;
+    m_weight = 0;
 }
 
 size_t MorphKeyframe::size()
@@ -83,6 +89,9 @@ bool MorphKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motio
 
 void MorphKeyframe::read(const uint8_t *data)
 {
+    const MorphKeyframeChunk *chunk = reinterpret_cast<const MorphKeyframeChunk *>(data);
+    setWeight(chunk->weight);
+    setTimeIndex(chunk->timeIndex);
 }
 
 void MorphKeyframe::write(uint8_t *data) const
@@ -96,16 +105,21 @@ size_t MorphKeyframe::estimateSize() const
 
 IMorphKeyframe *MorphKeyframe::clone() const
 {
-    return 0;
+    MorphKeyframe *frame = m_ptr = new MorphKeyframe(m_nameListSectionRef);
+    frame->setTimeIndex(m_timeIndex);
+    frame->setWeight(m_weight);
+    m_ptr = 0;
+    return frame;
 }
 
 const IMorph::WeightPrecision &MorphKeyframe::weight() const
 {
-    return 0;
+    return m_weight;
 }
 
 void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 {
+    m_weight = value;
 }
 
 void MorphKeyframe::setName(const IString * /* value */)

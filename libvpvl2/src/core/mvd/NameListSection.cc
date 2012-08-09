@@ -90,7 +90,7 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
     return true;
 }
 
-void NameListSection::read(const uint8_t *data, Motion::DataInfo &info)
+void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
     const NameSectionHeader &header = *reinterpret_cast<const NameSectionHeader *>(ptr);
@@ -101,7 +101,7 @@ void NameListSection::read(const uint8_t *data, Motion::DataInfo &info)
     for (int i = 0; i < nkeyframes; i++) {
         int keyIndex = internal::readUnsignedIndex(ptr, 4);
         internal::sizeText(ptr, rest, namePtr, nNameSize);
-        m_names.add(m_encoding->toString(namePtr, info.codec, nNameSize));
+        m_names.add(m_encoding->toString(namePtr, codec, nNameSize));
         IString *s = m_names[i];
         m_key2values.insert(keyIndex, s);
         m_value2keys.insert(s, keyIndex);
