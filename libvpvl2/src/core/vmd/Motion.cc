@@ -526,8 +526,6 @@ void Motion::release()
 {
     delete m_name;
     m_name = 0;
-    m_modelRef = 0;
-    m_encodingRef = 0;
     m_error = kNoError;
     m_active = false;
 }
