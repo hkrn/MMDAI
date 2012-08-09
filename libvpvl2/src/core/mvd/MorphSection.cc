@@ -56,9 +56,8 @@ struct MorphSecionHeader {
 
 #pragma pack(pop)
 
-MorphSection::MorphSection(IEncoding *encoding)
-    : BaseSection(),
-      m_encoding(encoding)
+MorphSection::MorphSection(NameListSection *nameListSectionRef)
+    : BaseSection(nameListSectionRef)
 {
 }
 

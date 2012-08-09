@@ -56,9 +56,8 @@ struct AssetSectionHeader {
 
 #pragma pack(pop)
 
-AssetSection::AssetSection(IEncoding *encoding)
-    : BaseSection(),
-      m_encoding(encoding)
+AssetSection::AssetSection(NameListSection *nameListSectionRef)
+    : BaseSection(nameListSectionRef)
 {
 }
 

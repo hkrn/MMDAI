@@ -45,15 +45,23 @@ class IEncoding;
 
 namespace mvd
 {
+class NameListSection;
 
 class VPVL2_API BaseSection
 {
 public:
+    BaseSection(NameListSection *nameListSectionRef)
+        : m_nameListSectionRef(nameListSectionRef)
+    {
+    }
     virtual ~BaseSection() {}
 
     virtual void read(const uint8_t *data) = 0;
     virtual void write(uint8_t *data) const = 0;
     virtual size_t estimateSize() const = 0;
+
+protected:
+    NameListSection *m_nameListSectionRef;
 };
 
 } /* namespace mvd */

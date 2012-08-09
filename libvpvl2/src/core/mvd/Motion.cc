@@ -45,6 +45,7 @@
 #include "vpvl2/mvd/ModelSection.h"
 #include "vpvl2/mvd/MorphSection.h"
 #include "vpvl2/mvd/Motion.h"
+#include "vpvl2/mvd/NameListSection.h"
 #include "vpvl2/mvd/ProjectSection.h"
 
 namespace vpvl2
@@ -67,22 +68,34 @@ struct SectionHeader {
     uint8_t minor;
 };
 
-struct NameSectionHeader {
-    int reserved;
-    int reserved2;
-    int count;
-    int reserved3;
-};
-
 #pragma pack(pop)
 
-Motion::Motion(IModel *model, IEncoding *encoding)
-    : m_model(model),
-      m_encoding(encoding),
+Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
+    : m_assetSection(0),
+      m_boneSection(0),
+      m_cameraSection(0),
+      m_effectSection(0),
+      m_lightSection(0),
+      m_modelSection(0),
+      m_morphSection(0),
+      m_nameListSection(0),
+      m_projectSection(0),
+      m_modelRef(modelRef),
+      m_encodingRef(encodingRef),
       m_name(0),
+      m_name2(0),
       m_error(kNoError),
       m_active(true)
 {
+    m_nameListSection = new NameListSection(encodingRef);
+    m_assetSection = new AssetSection(m_nameListSection);
+    m_boneSection = new BoneSection(m_nameListSection);
+    m_cameraSection = new CameraSection(m_nameListSection);
+    m_effectSection = new EffectSection(m_nameListSection);
+    m_lightSection = new LightSection(m_nameListSection);
+    m_modelSection = new ModelSection(m_nameListSection);
+    m_morphSection = new MorphSection(m_nameListSection);
+    m_projectSection = new ProjectSection(m_nameListSection);
 }
 
 Motion::~Motion()
@@ -117,11 +130,10 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_error = kInvalidEncodingError;
         return false;
     }
+    info.codec = header.encoding == 0 ? IString::kUTF16 : IString::kUTF8;
     ptr += sizeof(header);
     rest -= sizeof(header);
 
-    uint8_t *namePtr;
-    size_t nNameSize;
     /* object name */
     if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
         return false;
@@ -147,37 +159,27 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         if (!internal::validateSize(ptr, sizeof(sectionHeader), rest)) {
             return false;
         }
+        uint8_t *startPtr = ptr;
         switch (static_cast<SectionType>(sectionHeader.type)) {
         case kNameListSection: {
-            const NameSectionHeader &nameSectionHeader = *reinterpret_cast<const NameSectionHeader *>(ptr);
-            if (!internal::validateSize(ptr, sizeof(nameSectionHeader), rest)) {
+            if (!NameListSection::preparse(ptr, rest, info)) {
                 return false;
             }
-            if (!internal::validateSize(ptr, nameSectionHeader.reserved3, rest)) {
-                return false;
-            }
-            static int keyIndex;
-            const int nkeyframes = nameSectionHeader.count;
-            for (int i = 0; i < nkeyframes; i++) {
-                if (!internal::validateSize(ptr, sizeof(keyIndex), rest)) {
-                    return false;
-                }
-                if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
-                    return false;
-                }
-            }
+            m_nameListSection->read(startPtr, info);
             break;
         }
         case kBoneSection: {
             if (!BoneSection::preparse(ptr, rest, info)) {
                 return false;
             }
+            info.boneSectionPtrs.add(startPtr);
             break;
         }
         case kMorphSection: {
             if (!MorphSection::preparse(ptr, rest, info)) {
                 return false;
             }
+            info.morphSectionPtrs.add(startPtr);
             break;
         }
         case kModelSection: {
@@ -185,41 +187,48 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!ModelSection::preparse(ptr, rest, adjust, info)) {
                 return false;
             }
+            info.modelSectionPtrs.add(startPtr);
             break;
         }
         case kAssetSection: {
             if (!AssetSection::preparse(ptr, rest, info)) {
                 return false;
             }
+            info.assetSectionPtrs.add(startPtr);
             break;
         }
         case kEffectSection: {
             if (!EffectSection::preparse(ptr, rest, info)) {
                 return false;
             }
+            info.effectSectionPtrs.add(startPtr);
             break;
         }
         case kCameraSection: {
             if (!CameraSection::preparse(ptr, rest, info)) {
                 return false;
             }
+            info.cameraSectionPtrs.add(startPtr);
             break;
         }
         case kLightSection: {
             if (!LightSection::preparse(ptr, rest, info)) {
                 return false;
             }
+            info.lightSectionPtrs.add(startPtr);
             break;
         }
         case kProjectSection: {
             if (!ProjectSection::preparse(ptr, rest, info)) {
                 return false;
             }
+            info.projectSectionPtrs.add(startPtr);
             break;
         }
         case kEndOfFile: {
             ret = true;
             rest = 0;
+            info.encoding = m_encodingRef;
             info.endPtr = ptr;
             break;
         }
@@ -260,7 +269,7 @@ size_t Motion::estimateSize() const
 
 void Motion::setParentModel(IModel *model)
 {
-    m_model = model;
+    m_modelRef = model;
 }
 
 void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -453,32 +462,115 @@ void Motion::update(IKeyframe::Type type)
 
 void Motion::parseHeader(const DataInfo &info)
 {
+    IEncoding *encoding = info.encoding;
+    internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), m_name);
+    internal::setStringDirect(encoding->toString(info.name2Ptr, info.name2Size, info.codec), m_name2);
 }
 
-void Motion::parseBoneFrames(const DataInfo &info)
+void Motion::parseAssetSections(const DataInfo &info)
 {
+    const Array<uint8_t *> &sections = info.assetSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_assetSection->read(ptr);
+    }
 }
 
-void Motion::parseMorphFrames(const DataInfo &info)
+void Motion::parseBoneSections(const DataInfo &info)
 {
+    const Array<uint8_t *> &sections = info.boneSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_boneSection->read(ptr);
+    }
 }
 
-void Motion::parseCameraFrames(const DataInfo &info)
+void Motion::parseCameraSections(const DataInfo &info)
 {
+    const Array<uint8_t *> &sections = info.cameraSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_cameraSection->read(ptr);
+    }
 }
 
-void Motion::parseLightFrames(const DataInfo &info)
+void Motion::parseEffectSections(const DataInfo &info)
 {
+    const Array<uint8_t *> &sections = info.effectSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_effectSection->read(ptr);
+    }
 }
 
-void Motion::parseSelfShadowFrames(const DataInfo & /* info */)
+void Motion::parseLightSections(const DataInfo &info)
 {
+    const Array<uint8_t *> &sections = info.lightSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_lightSection->read(ptr);
+    }
+}
+
+void Motion::parseModelSections(const DataInfo &info)
+{
+    const Array<uint8_t *> &sections = info.modelSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_modelSection->read(ptr);
+    }
+}
+
+void Motion::parseMorphSections(const DataInfo &info)
+{
+    const Array<uint8_t *> &sections = info.morphSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_morphSection->read(ptr);
+    }
+}
+
+void Motion::parseProjectSections(const DataInfo &info)
+{
+    const Array<uint8_t *> &sections = info.projectSectionPtrs;
+    const int nsections = sections.count();
+    for (int i = 0; i < nsections; i++) {
+        const uint8_t *ptr = sections[i];
+        m_projectSection->read(ptr);
+    }
 }
 
 void Motion::release()
 {
+    delete m_assetSection;
+    m_assetSection = 0;
+    delete m_boneSection;
+    m_boneSection = 0;
+    delete m_cameraSection;
+    m_cameraSection = 0;
+    delete m_effectSection;
+    m_effectSection = 0;
+    delete m_lightSection;
+    m_lightSection = 0;
+    delete m_modelSection;
+    m_modelSection = 0;
+    delete m_morphSection;
+    m_morphSection = 0;
+    delete m_nameListSection;
+    m_nameListSection = 0;
+    delete m_projectSection;
+    m_projectSection = 0;
     delete m_name;
     m_name = 0;
+    delete m_name2;
+    m_name2 = 0;
 }
 
 } /* namespace mvd */

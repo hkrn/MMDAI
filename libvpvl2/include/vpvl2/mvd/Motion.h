@@ -39,10 +39,6 @@
 
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IMotion.h"
-#include "vpvl2/vmd/BoneAnimation.h"
-#include "vpvl2/vmd/CameraAnimation.h"
-#include "vpvl2/vmd/LightAnimation.h"
-#include "vpvl2/vmd/MorphAnimation.h"
 
 namespace vpvl2
 {
@@ -58,6 +54,16 @@ struct InterpolationPair {
     Interpolation first;
     Interpolation second;
 };
+
+class AssetSection;
+class BoneSection;
+class CameraSection;
+class EffectSection;
+class LightSection;
+class ModelSection;
+class MorphSection;
+class NameListSection;
+class ProjectSection;
 
 class VPVL2_API Motion : public IMotion
 {
@@ -100,6 +106,8 @@ public:
     };
     struct DataInfo
     {
+        IEncoding *encoding;
+        IString::Codec codec;
         uint8_t *basePtr;
         uint8_t *namePtr;
         size_t nameSize;
@@ -108,11 +116,19 @@ public:
         uint8_t *reservedPtr;
         size_t reservedSize;
         uint8_t *sectionStartPtr;
+        Array<uint8_t *> assetSectionPtrs;
+        Array<uint8_t *> boneSectionPtrs;
+        Array<uint8_t *> cameraSectionPtrs;
+        Array<uint8_t *> effectSectionPtrs;
+        Array<uint8_t *> lightSectionPtrs;
+        Array<uint8_t *> modelSectionPtrs;
+        Array<uint8_t *> morphSectionPtrs;
+        Array<uint8_t *> projectSectionPtrs;
         uint8_t *endPtr;
     };
     static const uint8_t *kSignature;
 
-    Motion(IModel *model, IEncoding *encoding);
+    Motion(IModel *modelRef, IEncoding *encodingRef);
     ~Motion();
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
@@ -148,7 +164,7 @@ public:
         return m_name;
     }
     IModel *parentModel() const {
-        return m_model;
+        return m_modelRef;
     }
     Error error() const {
         return m_error;
@@ -162,16 +178,29 @@ public:
 
 private:
     void parseHeader(const DataInfo &info);
-    void parseBoneFrames(const DataInfo &info);
-    void parseMorphFrames(const DataInfo &info);
-    void parseCameraFrames(const DataInfo &info);
-    void parseLightFrames(const DataInfo &info);
-    void parseSelfShadowFrames(const DataInfo &info);
+    void parseAssetSections(const DataInfo &info);
+    void parseBoneSections(const DataInfo &info);
+    void parseCameraSections(const DataInfo &info);
+    void parseEffectSections(const DataInfo &info);
+    void parseLightSections(const DataInfo &info);
+    void parseModelSections(const DataInfo &info);
+    void parseMorphSections(const DataInfo &info);
+    void parseProjectSections(const DataInfo &info);
     void release();
 
-    IModel *m_model;
-    IEncoding *m_encoding;
+    AssetSection *m_assetSection;
+    BoneSection *m_boneSection;
+    CameraSection *m_cameraSection;
+    EffectSection *m_effectSection;
+    LightSection *m_lightSection;
+    ModelSection *m_modelSection;
+    MorphSection *m_morphSection;
+    NameListSection *m_nameListSection;
+    ProjectSection *m_projectSection;
+    IModel *m_modelRef;
+    IEncoding *m_encodingRef;
     IString *m_name;
+    IString *m_name2;
     DataInfo m_result;
     Error m_error;
     bool m_active;

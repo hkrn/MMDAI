@@ -62,9 +62,8 @@ struct EffectParameter {
 
 #pragma pack(pop)
 
-EffectSection::EffectSection(IEncoding *encoding)
-    : BaseSection(),
-      m_encoding(encoding)
+EffectSection::EffectSection(NameListSection *nameListSectionRef)
+    : BaseSection(nameListSectionRef)
 {
 }
 

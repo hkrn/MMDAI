@@ -49,7 +49,7 @@ namespace mvd
 class VPVL2_API CameraSection : public BaseSection
 {
 public:
-    CameraSection(IEncoding *encoding);
+    CameraSection(NameListSection *nameListSectionRef);
     ~CameraSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
@@ -59,8 +59,6 @@ public:
     size_t estimateSize() const;
 
 private:
-    IEncoding *m_encoding;
-
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraSection)
 };
 

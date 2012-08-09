@@ -56,9 +56,8 @@ struct LightSectionHeader {
 
 #pragma pack(pop)
 
-LightSection::LightSection(IEncoding *encoding)
-    : BaseSection(),
-      m_encoding(encoding)
+LightSection::LightSection(NameListSection *nameListSectionRef)
+    : BaseSection(nameListSectionRef)
 {
 }
 

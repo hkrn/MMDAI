@@ -56,9 +56,8 @@ struct CameraSectionHeader {
 
 #pragma pack(pop)
 
-CameraSection::CameraSection(IEncoding *encoding)
-    : BaseSection(),
-      m_encoding(encoding)
+CameraSection::CameraSection(NameListSection *nameListSectionRef)
+    : BaseSection(nameListSectionRef)
 {
 }
 

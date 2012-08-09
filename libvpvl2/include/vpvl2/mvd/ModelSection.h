@@ -49,7 +49,7 @@ namespace mvd
 class VPVL2_API ModelSection : public BaseSection
 {
 public:
-    ModelSection(IEncoding *encoding);
+    ModelSection(NameListSection *nameListSectionRef);
     ~ModelSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, size_t adjust, Motion::DataInfo &info);
@@ -59,8 +59,6 @@ public:
     size_t estimateSize() const;
 
 private:
-    IEncoding *m_encoding;
-
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelSection)
 };
 

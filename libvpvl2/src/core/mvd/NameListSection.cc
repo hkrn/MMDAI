@@ -37,8 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/mvd/ModelKeyframe.h"
-#include "vpvl2/mvd/ModelSection.h"
+#include "vpvl2/mvd/NameListSection.h"
 
 namespace vpvl2
 {
@@ -47,60 +46,87 @@ namespace mvd
 
 #pragma pack(push, 1)
 
-struct ModelSectionHeader {
+struct NameSectionHeader {
     int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int sizeOfIK;
-    int countOfIK;
+    int reserved2;
+    int count;
+    int reserved3;
 };
 
 #pragma pack(pop)
 
-ModelSection::ModelSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+NameListSection::NameListSection(IEncoding *encoding)
+    : m_encoding(encoding)
 {
 }
 
-ModelSection::~ModelSection()
+NameListSection::~NameListSection()
 {
+    m_names.releaseAll();
+    m_encoding = 0;
 }
 
-bool ModelSection::preparse(uint8_t *&ptr, size_t &rest, size_t adjust, Motion::DataInfo &info)
+bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /* info */)
 {
-    const ModelSectionHeader &header = *reinterpret_cast<const ModelSectionHeader *>(ptr);
+    const NameSectionHeader &header = *reinterpret_cast<const NameSectionHeader *>(ptr);
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
-    const int countOfIK = header.countOfIK;
-    if (!internal::validateSize(ptr, countOfIK * sizeof(int), rest)) {
+    if (!internal::validateSize(ptr, header.reserved3, rest)) {
         return false;
     }
-    const int sizeOfIK = header.sizeOfIK;
-    if (!internal::validateSize(ptr, sizeOfIK - 4 * (countOfIK + 1), rest)) {
-        return false;
-    }
-    const int nkeyframes = header.countOfKeyframes;
-    const size_t reserved = header.sizeOfKeyframe - ((ModelKeyframe::size() - adjust) + countOfIK);
+    static int keyIndex;
+    uint8_t *namePtr;
+    size_t nNameSize;
+    const int nkeyframes = header.count;
     for (int i = 0; i < nkeyframes; i++) {
-        if (!ModelKeyframe::preparse(ptr, rest, reserved, countOfIK, info)) {
+        if (!internal::validateSize(ptr, sizeof(keyIndex), rest)) {
+            return false;
+        }
+        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
             return false;
         }
     }
     return true;
 }
 
-void ModelSection::read(const uint8_t *data)
+void NameListSection::read(const uint8_t *data, Motion::DataInfo &info)
+{
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    const NameSectionHeader &header = *reinterpret_cast<const NameSectionHeader *>(ptr);
+    size_t rest = SIZE_MAX;
+    uint8_t *namePtr;
+    size_t nNameSize;
+    const int nkeyframes = header.count;
+    for (int i = 0; i < nkeyframes; i++) {
+        int keyIndex = internal::readUnsignedIndex(ptr, 4);
+        internal::sizeText(ptr, rest, namePtr, nNameSize);
+        m_names.add(m_encoding->toString(namePtr, info.codec, nNameSize));
+        IString *s = m_names[i];
+        m_key2values.insert(keyIndex, s);
+        m_value2keys.insert(s, keyIndex);
+    }
+}
+
+void NameListSection::write(uint8_t *data) const
 {
 }
 
-void ModelSection::write(uint8_t *data) const
-{
-}
-
-size_t ModelSection::estimateSize() const
+size_t NameListSection::estimateSize() const
 {
     return 0;
+}
+
+int NameListSection::key(const IString *value)
+{
+    const int *key = m_value2keys.find(value);
+    return key ? *key : -1;
+}
+
+const IString *NameListSection::value(int key)
+{
+    IString **value = const_cast<IString **>(m_key2values.find(key));
+    return value ? *value : 0;
 }
 
 } /* namespace mvd */

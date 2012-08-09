@@ -56,9 +56,8 @@ struct BoneSectionHeader {
 
 #pragma pack(pop)
 
-BoneSection::BoneSection(IEncoding *encoding)
-    : BaseSection(),
-      m_encoding(encoding)
+BoneSection::BoneSection(NameListSection *nameListSectionRef)
+    : BaseSection(nameListSectionRef)
 {
 }
 
@@ -82,7 +81,7 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
             return false;
         }
     }
-    return false;
+    return true;
 }
 
 void BoneSection::read(const uint8_t *data)

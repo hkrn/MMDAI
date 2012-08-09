@@ -56,6 +56,7 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/MorphKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/MorphSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/Motion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/NameListSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h

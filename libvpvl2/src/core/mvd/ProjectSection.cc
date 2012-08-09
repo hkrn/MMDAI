@@ -56,9 +56,8 @@ struct ProjectSectionHeader {
 
 #pragma pack(pop)
 
-ProjectSection::ProjectSection(IEncoding *encoding)
-    : BaseSection(),
-      m_encoding(encoding)
+ProjectSection::ProjectSection(NameListSection *nameListSectionRef)
+    : BaseSection(nameListSectionRef)
 {
 }
 
