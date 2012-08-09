@@ -155,7 +155,7 @@ private:
                       CGparameter &baseParameter);
     void setMatrix(const IModel *model, CGparameter parameter, int flags);
 
-    const IRenderDelegate *m_delegate;
+    const IRenderDelegate *m_delegateRef;
     CGparameter m_camera;
     CGparameter m_cameraInversed;
     CGparameter m_cameraTransposed;
@@ -236,7 +236,7 @@ public:
     CGparameter syncDisabledParameter() const { return m_syncDisabled; } /* for test */
 
 private:
-    const IRenderDelegate *m_delegate;
+    const IRenderDelegate *m_delegateRef;
     CGparameter m_syncEnabled;
     CGparameter m_syncDisabled;
 
@@ -255,9 +255,9 @@ public:
 private:
     void setParameter(const IModel *model, const CGparameter parameter);
 
-    const Scene *m_scene;
-    const IRenderDelegate *m_delegate;
-    const IEffect *m_effect;
+    const Scene *m_sceneRef;
+    const IRenderDelegate *m_delegateRef;
+    const IEffect *m_effectRef;
     Array<CGparameter> m_parameters;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ControlObjectSemantic)
@@ -322,7 +322,7 @@ private:
     void getSize2(const CGparameter parameter, size_t &width, size_t &height);
     void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
     Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
     Hash<HashString, Texture> m_name2textures;
@@ -383,7 +383,7 @@ protected:
                            size_t height);
 
 private:
-    Effect *m_effect;
+    Effect *m_effectRef;
     VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenRenderTargetSemantic)
 };
 
@@ -397,7 +397,7 @@ public:
     void update(const RenderColorTargetSemantic &renderColorTarget);
 
 private:
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
     Array<CGparameter> m_parameters;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AnimatedTextureSemantic)
@@ -503,7 +503,7 @@ public:
     const Script *findTechniqueScript(const CGtechnique technique) const;
     const Script *findPassScript(const CGpass pass) const;
 
-    IEffect *effect() const { return m_effect; }
+    IEffect *effect() const { return m_effectRef; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
     ScriptClassType scriptClass() const { return m_scriptClass; }
     IEffect::ScriptOrderType scriptOrder() const { return m_scriptOrder; }
@@ -589,16 +589,16 @@ private:
 #ifndef __APPLE__
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
 #endif /* __APPLE__ */
-    Effect *m_effect;
-    IRenderDelegate *m_delegate;
+    Effect *m_effectRef;
+    IRenderDelegate *m_delegateRef;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     IEffect::ScriptOrderType m_scriptOrder;
     Techniques m_techniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;
-    btHashMap<btHashInt, const RenderColorTargetSemantic::Texture *> m_target2textures;
-    btHashMap<btHashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2buffers;
+    btHashMap<btHashInt, const RenderColorTargetSemantic::Texture *> m_target2textureRefs;
+    btHashMap<btHashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2bufferRefs;
     btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;

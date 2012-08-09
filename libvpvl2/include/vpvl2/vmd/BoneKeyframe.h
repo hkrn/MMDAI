@@ -87,7 +87,7 @@ private:
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
     mutable BoneKeyframe *m_ptr;
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     Vector3 m_position;
     Quaternion m_rotation;
     bool m_linear[4];

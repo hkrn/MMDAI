@@ -80,8 +80,8 @@ struct InternalMorphKeyFrameList {
 
 MorphAnimation::MorphAnimation(IEncoding *encoding)
     : BaseAnimation(),
-      m_encoding(encoding),
-      m_model(0),
+      m_encodingRef(encoding),
+      m_modelRef(0),
       m_enableNullFrame(false)
 {
 }
@@ -89,7 +89,7 @@ MorphAnimation::MorphAnimation(IEncoding *encoding)
 MorphAnimation::~MorphAnimation()
 {
     m_name2keyframes.releaseAll();
-    m_model = 0;
+    m_modelRef = 0;
 }
 
 void MorphAnimation::read(const uint8_t *data, int size)
@@ -97,7 +97,7 @@ void MorphAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        MorphKeyframe *frame = new MorphKeyframe(m_encoding);
+        MorphKeyframe *frame = new MorphKeyframe(m_encodingRef);
         m_keyframes.add(frame);
         frame->read(ptr);
         ptr += frame->estimateSize();
@@ -106,10 +106,10 @@ void MorphAnimation::read(const uint8_t *data, int size)
 
 void MorphAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 {
-    if (!m_model)
+    if (!m_modelRef)
         return;
     const int nnodes = m_name2keyframes.count();
-    m_model->resetVertices();
+    m_modelRef->resetVertices();
     for (int i = 0; i < nnodes; i++) {
         InternalMorphKeyFrameList *frames = *m_name2keyframes.value(i);
         if (m_enableNullFrame && frames->isNull())
@@ -125,7 +125,7 @@ void MorphAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 void MorphAnimation::setParentModel(IModel *model)
 {
     buildInternalNodes(model);
-    m_model = model;
+    m_modelRef = model;
 }
 
 void MorphAnimation::buildInternalNodes(IModel *model)

@@ -93,9 +93,9 @@ private:
     void buildInternalKeyFrameList(IModel *model);
     void calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalBoneKeyFrameList *keyFrames);
 
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     Hash<HashString, InternalBoneKeyFrameList *> m_name2keyframes;
-    IModel *m_model;
+    IModel *m_modelRef;
     bool m_enableNullFrame;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneAnimation)

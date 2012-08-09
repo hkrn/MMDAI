@@ -74,8 +74,8 @@ public:
     size_t estimateSize(const Model::DataInfo &info) const;
 
     btGeneric6DofSpringConstraint *constraint() const { return m_constraint; }
-    RigidBody *rigidBody1() const { return m_rigidBody1; }
-    RigidBody *rigidBody2() const { return m_rigidBody2; }
+    RigidBody *rigidBody1() const { return m_rigidBody1Ref; }
+    RigidBody *rigidBody2() const { return m_rigidBody2Ref; }
     int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
     int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
     const IString *name() const { return m_name; }
@@ -107,8 +107,8 @@ public:
 
 private:
     btGeneric6DofSpringConstraint *m_constraint;
-    RigidBody *m_rigidBody1;
-    RigidBody *m_rigidBody2;
+    RigidBody *m_rigidBody1Ref;
+    RigidBody *m_rigidBody2Ref;
     IString *m_name;
     IString *m_englishName;
     Vector3 m_position;

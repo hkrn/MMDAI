@@ -59,12 +59,12 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       #else
     :
       #endif /* VPVL_LINK_QT */
-      m_delegate(delegate),
-      m_scene(scene),
-      m_current(0),
-      m_accelerator(accelerator),
-      m_model(model),
-      m_context(effectContext),
+      m_delegateRef(delegate),
+      m_sceneRef(scene),
+      m_currentRef(0),
+      m_acceleratorRef(accelerator),
+      m_modelRef(model),
+      m_contextRef(effectContext),
       m_materialContexts(0),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
@@ -81,14 +81,14 @@ PMDRenderEngine::~PMDRenderEngine()
 
 IModel *PMDRenderEngine::model() const
 {
-    return m_model;
+    return m_modelRef;
 }
 
 bool PMDRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
-    m_delegate->allocateContext(m_model, context);
-    PMDModel *model = m_model->ptr();
+    m_delegateRef->allocateContext(m_modelRef, context);
+    PMDModel *model = m_modelRef->ptr();
     glGenBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
@@ -112,7 +112,7 @@ bool PMDRenderEngine::upload(const IString *dir)
          "Binding model vertices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelVertices]);
     if (m_isVertexShaderSkinning)
-        m_model->getSkinningMeshes(m_mesh);
+        m_modelRef->getSkinningMeshes(m_mesh);
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
@@ -126,8 +126,8 @@ bool PMDRenderEngine::upload(const IString *dir)
         materialContext.subTextureID = 0;
         const uint8_t *mainTextureName = material->mainTextureName();
         if (*mainTextureName) {
-            IString *primary = m_delegate->toUnicode(mainTextureName);
-            bool ret = m_delegate->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context);
+            IString *primary = m_delegateRef->toUnicode(mainTextureName);
+            bool ret = m_delegateRef->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context);
             delete primary;
             if (ret) {
                 materialContext.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
@@ -139,8 +139,8 @@ bool PMDRenderEngine::upload(const IString *dir)
         }
         const uint8_t *subTextureName = material->subTextureName();
         if (*subTextureName) {
-            IString *second = m_delegate->toUnicode(subTextureName);
-            bool ret = m_delegate->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context);
+            IString *second = m_delegateRef->toUnicode(subTextureName);
+            bool ret = m_delegateRef->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context);
             delete second;
             if (ret) {
                 materialContext.subTextureID = textureID = *static_cast<const GLuint *>(texture.object);
@@ -151,60 +151,60 @@ bool PMDRenderEngine::upload(const IString *dir)
             }
         }
     }
-    IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
-    m_delegate->getToonColor(s, dir, m_toonTextureColors[0], context);
+    IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
+    m_delegateRef->getToonColor(s, dir, m_toonTextureColors[0], context);
     delete s;
     static const int nToonTextures = PMDModel::kCustomTextureMax - 1;
     for (int i = 0; i < nToonTextures; i++) {
         const uint8_t *name = model->toonTexture(i);
-        s = m_delegate->toUnicode(name);
-        m_delegate->getToonColor(s, dir, m_toonTextureColors[i + 1], context);
+        s = m_delegateRef->toUnicode(name);
+        m_delegateRef->getToonColor(s, dir, m_toonTextureColors[i + 1], context);
         delete s;
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->uploadModel(m_model, m_vertexBufferObjects[kModelVertices], context);
 #endif
-    m_scene->updateModel(m_model);
+    m_sceneRef->updateModel(m_modelRef);
     update();
-    IString *modelName = m_delegate->toUnicode(model->name());
+    IString *modelName = m_delegateRef->toUnicode(model->name());
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", modelName->toByteArray());
     delete modelName;
-    m_delegate->releaseContext(m_model, context);
+    m_delegateRef->releaseContext(m_modelRef, context);
     return true;
 }
 
 void PMDRenderEngine::update()
 {
-    if (!m_model || !m_model->isVisible() || !m_current)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
         return;
-    PMDModel *model = m_model->ptr();
-    model->setLightPosition(-m_scene->light()->direction());
+    PMDModel *model = m_modelRef->ptr();
+    model->setLightPosition(-m_sceneRef->light()->direction());
     int nvertices = model->vertices().count();
     size_t strideSize = model->strideSize(PMDModel::kVerticesStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBufferSubData(GL_ARRAY_BUFFER, 0, nvertices * strideSize, model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     if (m_isVertexShaderSkinning)
-        m_model->updateSkinningMeshes(m_mesh);
+        m_modelRef->updateSkinningMeshes(m_mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->updateModel(m_model, m_scene);
 #endif
-    m_current->updateModelGeometryParameters(m_scene, m_model);
-    m_current->updateSceneParameters();
+    m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
+    m_currentRef->updateSceneParameters();
 }
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model || !m_model->isVisible() || !m_current || !m_current->validateStandard())
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
         return;
-    m_current->setModelMatrixParameters(m_model);
-    PMDModel *model = m_model->ptr();
+    m_currentRef->setModelMatrixParameters(m_modelRef);
+    PMDModel *model = m_modelRef->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
-    const Scalar &modelOpacity = m_model->opacity();
-    const ILight *light = m_scene->light();
+    const Scalar &modelOpacity = m_modelRef->opacity();
+    const ILight *light = m_sceneRef->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
             hasShadowMap = depthTexturePtr ? true : false;
@@ -212,7 +212,7 @@ void PMDRenderEngine::renderModel()
     size_t offset = 0;
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
-        m_current->depthTexture.setTexture(depthTexture);
+        m_currentRef->depthTexture.setTexture(depthTexture);
     }
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelVertices]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBufferObjects[kModelIndices]);
@@ -226,7 +226,7 @@ void PMDRenderEngine::renderModel()
                       reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)));
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     Color diffuseColor(0, 0, 0, 1);
-    m_current->edgeColor.setGeometryColor(m_model->edgeColor());
+    m_currentRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
@@ -234,42 +234,42 @@ void PMDRenderEngine::renderModel()
         const Color &toonColor = m_toonTextureColors[material->toonID()];
         const Color &diffuse = material->diffuse();
         diffuseColor.setValue(diffuse.x(), diffuse.y(), diffuse.z(), diffuse.w() * materialOpacity);
-        m_current->ambient.setGeometryColor(diffuseColor);
-        m_current->diffuse.setGeometryColor(diffuseColor);
-        m_current->emissive.setGeometryColor(material->ambient());
-        m_current->specular.setGeometryColor(material->specular());
-        m_current->specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
-        m_current->toonColor.setGeometryColor(toonColor);
+        m_currentRef->ambient.setGeometryColor(diffuseColor);
+        m_currentRef->diffuse.setGeometryColor(diffuseColor);
+        m_currentRef->emissive.setGeometryColor(material->ambient());
+        m_currentRef->specular.setGeometryColor(material->specular());
+        m_currentRef->specularPower.setGeometryValue(btMax(material->shiness(), 1.0f));
+        m_currentRef->toonColor.setGeometryColor(toonColor);
         bool useTexture = false, useSphereMap = false, spadd = false;
         if (materialContext.mainTextureID > 0) {
             if (material->isMainSphereAdd()) {
-                m_current->materialSphereMap.setTexture(materialContext.mainTextureID);
+                m_currentRef->materialSphereMap.setTexture(materialContext.mainTextureID);
                 spadd = true;
                 useSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
-                m_current->materialSphereMap.setTexture(materialContext.mainTextureID);
+                m_currentRef->materialSphereMap.setTexture(materialContext.mainTextureID);
                 useSphereMap = true;
             }
             else {
-                m_current->materialTexture.setTexture(materialContext.mainTextureID);
+                m_currentRef->materialTexture.setTexture(materialContext.mainTextureID);
                 useTexture = true;
             }
         }
         if (!useSphereMap) {
             if (material->isSubSphereAdd()) {
-                m_current->materialSphereMap.setTexture(materialContext.subTextureID);
+                m_currentRef->materialSphereMap.setTexture(materialContext.subTextureID);
                 spadd = true;
                 useSphereMap = true;
             }
             else if (material->isSubSphereModulate()) {
-                m_current->materialSphereMap.setTexture(materialContext.subTextureID);
+                m_currentRef->materialSphereMap.setTexture(materialContext.subTextureID);
                 useSphereMap = true;
             }
         }
-        m_current->useTexture.setValue(useTexture);
-        m_current->useSpheremap.setValue(useSphereMap);
-        m_current->spadd.setValue(spadd);
+        m_currentRef->useTexture.setValue(useTexture);
+        m_currentRef->useSpheremap.setValue(useSphereMap);
+        m_currentRef->spadd.setValue(spadd);
         if ((hasModelTransparent && m_cullFaceState) ||
                 (!btFuzzyZero(materialOpacity - 1.0f) && m_cullFaceState)) {
             glDisable(GL_CULL_FACE);
@@ -281,8 +281,8 @@ void PMDRenderEngine::renderModel()
         }
         const int nindices = material->countIndices();
         const char *const target = hasShadowMap ? "object_ss" : "object";
-        CGtechnique technique = m_current->findTechnique(target, i, nmaterials, useTexture, useSphereMap, true);
-        m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, useTexture, useSphereMap, true);
+        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -298,12 +298,12 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model || !m_model->isVisible() || btFuzzyZero(m_model->edgeWidth())
-            || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth())
+            || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
-    m_current->setModelMatrixParameters(m_model);
-    m_current->setZeroGeometryParameters(m_model);
-    PMDModel *model = m_model->ptr();
+    m_currentRef->setModelMatrixParameters(m_modelRef);
+    m_currentRef->setZeroGeometryParameters(m_modelRef);
+    PMDModel *model = m_modelRef->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
     const int nmaterials = materials.count();
@@ -317,8 +317,8 @@ void PMDRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_current->findTechnique("edge", i, nmaterials, false, false, true);
-        m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        CGtechnique technique = m_currentRef->findTechnique("edge", i, nmaterials, false, false, true);
+        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);
@@ -329,11 +329,11 @@ void PMDRenderEngine::renderEdge()
 
 void PMDRenderEngine::renderShadow()
 {
-    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
-    m_current->setModelMatrixParameters(m_model, IRenderDelegate::kShadowMatrix);
-    m_current->setZeroGeometryParameters(m_model);
-    PMDModel *model = m_model->ptr();
+    m_currentRef->setModelMatrixParameters(m_modelRef, IRenderDelegate::kShadowMatrix);
+    m_currentRef->setZeroGeometryParameters(m_modelRef);
+    PMDModel *model = m_modelRef->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
     const int nmaterials = materials.count();
@@ -347,8 +347,8 @@ void PMDRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        CGtechnique technique = m_current->findTechnique("shadow", i, nmaterials, false, false, true);
-        m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+        CGtechnique technique = m_currentRef->findTechnique("shadow", i, nmaterials, false, false, true);
+        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);
@@ -359,11 +359,11 @@ void PMDRenderEngine::renderShadow()
 
 void PMDRenderEngine::renderZPlot()
 {
-    if (!m_model || !m_model->isVisible() || !m_current || m_current->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
-    m_current->setModelMatrixParameters(m_model);
-    m_current->setZeroGeometryParameters(m_model);
-    PMDModel *model = m_model->ptr();
+    m_currentRef->setModelMatrixParameters(m_modelRef);
+    m_currentRef->setZeroGeometryParameters(m_modelRef);
+    PMDModel *model = m_modelRef->ptr();
     const MaterialList &materials = model->materials();
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride);
     const int nmaterials = materials.count();
@@ -378,8 +378,8 @@ void PMDRenderEngine::renderZPlot()
         const Material *material = materials[i];
         const int nindices = material->countIndices();
         if (!btFuzzyZero(material->opacity() - 0.98)) {
-            CGtechnique technique = m_current->findTechnique("zplot", i, nmaterials, false, false, true);
-            m_current->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
+            CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmaterials, false, false, true);
+            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         }
         offset += nindices * indexStride;
     }
@@ -391,30 +391,30 @@ void PMDRenderEngine::renderZPlot()
 
 bool PMDRenderEngine::hasPreProcess() const
 {
-    return m_current ? m_current->hasTechniques(IEffect::kPreProcess) : false;
+    return m_currentRef ? m_currentRef->hasTechniques(IEffect::kPreProcess) : false;
 }
 
 bool PMDRenderEngine::hasPostProcess() const
 {
-    return m_current ? m_current->hasTechniques(IEffect::kPostProcess) : false;
+    return m_currentRef ? m_currentRef->hasTechniques(IEffect::kPostProcess) : false;
 }
 
 void PMDRenderEngine::preparePostProcess()
 {
-    if (m_current)
-        m_current->executeScriptExternal();
+    if (m_currentRef)
+        m_currentRef->executeScriptExternal();
 }
 
 void PMDRenderEngine::performPreProcess()
 {
-    if (m_current)
-        m_current->executeProcess(m_model, IEffect::kPreProcess);
+    if (m_currentRef)
+        m_currentRef->executeProcess(m_modelRef, IEffect::kPreProcess);
 }
 
 void PMDRenderEngine::performPostProcess()
 {
-    if (m_current)
-        m_current->executeProcess(m_model, IEffect::kPostProcess);
+    if (m_currentRef)
+        m_currentRef->executeProcess(m_modelRef, IEffect::kPostProcess);
 }
 
 IEffect *PMDRenderEngine::effect(IEffect::ScriptOrderType type) const
@@ -438,38 +438,38 @@ void PMDRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             }
         }
         if (found) {
-            m_current = ee;
+            m_currentRef = ee;
         }
         else if (einstance) {
-            EffectEngine *previous = m_current;
-            m_current = new EffectEngine(m_scene, dir, einstance, m_delegate);
-            if (m_current->scriptOrder() == IEffect::kStandard) {
-                m_oseffects.add(m_current);
+            EffectEngine *previous = m_currentRef;
+            m_currentRef = new EffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            if (m_currentRef->scriptOrder() == IEffect::kStandard) {
+                m_oseffects.add(m_currentRef);
             }
             else {
-                delete m_current;
-                m_current = previous;
+                delete m_currentRef;
+                m_currentRef = previous;
             }
         }
     }
     else {
         EffectEngine **ee = const_cast<EffectEngine **>(m_effects.find(type));
         if (ee) {
-            m_current = *ee;
+            m_currentRef = *ee;
         }
         else if (einstance) {
-            m_current = new EffectEngine(m_scene, dir, einstance, m_delegate);
-            m_effects.insert(type == IEffect::kAutoDetection ? m_current->scriptOrder() : type, m_current);
+            m_currentRef = new EffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
         }
     }
-    if (m_current) {
-        m_current->useToon.setValue(true);
-        m_current->parthf.setValue(false);
-        m_current->transp.setValue(false);
-        m_current->opadd.setValue(false);
-        m_current->vertexCount.setValue(m_model->count(IModel::kVertex));
-        m_current->subsetCount.setValue(m_model->count(IModel::kMaterial));
-        m_current->setModelMatrixParameters(m_model);
+    if (m_currentRef) {
+        m_currentRef->useToon.setValue(true);
+        m_currentRef->parthf.setValue(false);
+        m_currentRef->transp.setValue(false);
+        m_currentRef->opadd.setValue(false);
+        m_currentRef->vertexCount.setValue(m_modelRef->count(IModel::kVertex));
+        m_currentRef->subsetCount.setValue(m_modelRef->count(IModel::kMaterial));
+        m_currentRef->setModelMatrixParameters(m_modelRef);
     }
 }
 
@@ -477,13 +477,13 @@ void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
 {
     va_list ap;
     va_start(ap, format);
-    m_delegate->log(context, level, format, ap);
+    m_delegateRef->log(context, level, format, ap);
     va_end(ap);
 }
 
 bool PMDRenderEngine::releaseContext0(void *context)
 {
-    m_delegate->releaseContext(m_model, context);
+    m_delegateRef->releaseContext(m_modelRef, context);
     release();
     return false;
 }
@@ -492,7 +492,7 @@ void PMDRenderEngine::release()
 {
     glDeleteBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     if (m_materialContexts) {
-        const vpvl::MaterialList &modelMaterials = m_model->ptr()->materials();
+        const vpvl::MaterialList &modelMaterials = m_modelRef->ptr()->materials();
         const int nmaterials = modelMaterials.count();
         for (int i = 0; i < nmaterials; i++) {
             MaterialContext &materialPrivate = m_materialContexts[i];
@@ -508,11 +508,11 @@ void PMDRenderEngine::release()
 #endif
     m_effects.releaseAll();
     m_oseffects.releaseAll();
-    m_current = 0;
-    m_delegate = 0;
-    m_scene = 0;
-    m_model = 0;
-    m_context = 0;
+    m_currentRef = 0;
+    m_delegateRef = 0;
+    m_sceneRef = 0;
+    m_modelRef = 0;
+    m_contextRef = 0;
     m_cullFaceState = false;
     m_isVertexShaderSkinning = false;
 }

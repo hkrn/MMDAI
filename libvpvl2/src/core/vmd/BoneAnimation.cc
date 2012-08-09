@@ -110,8 +110,8 @@ void BoneAnimation::lerpVector3(const BoneKeyframe *keyFrame,
 
 BoneAnimation::BoneAnimation(IEncoding *encoding)
     : BaseAnimation(),
-      m_encoding(encoding),
-      m_model(0),
+      m_encodingRef(encoding),
+      m_modelRef(0),
       m_enableNullFrame(false)
 {
 }
@@ -119,7 +119,7 @@ BoneAnimation::BoneAnimation(IEncoding *encoding)
 BoneAnimation::~BoneAnimation()
 {
     m_name2keyframes.releaseAll();
-    m_model = 0;
+    m_modelRef = 0;
 }
 
 void BoneAnimation::read(const uint8_t *data, int size)
@@ -127,7 +127,7 @@ void BoneAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        BoneKeyframe *frame = new BoneKeyframe(m_encoding);
+        BoneKeyframe *frame = new BoneKeyframe(m_encodingRef);
         m_keyframes.add(frame);
         frame->read(ptr);
         ptr += frame->estimateSize();
@@ -136,7 +136,7 @@ void BoneAnimation::read(const uint8_t *data, int size)
 
 void BoneAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 {
-    if (!m_model)
+    if (!m_modelRef)
         return;
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
@@ -155,7 +155,7 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 void BoneAnimation::setParentModel(IModel *model)
 {
     buildInternalKeyFrameList(model);
-    m_model = model;
+    m_modelRef = model;
 }
 
 BoneKeyframe *BoneAnimation::frameAt(int i) const

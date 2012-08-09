@@ -86,8 +86,8 @@ struct Model::SkinnedVertex {
 };
 
 Model::Model(IEncoding *encoding)
-    : m_world(0),
-      m_encoding(encoding),
+    : m_worldRef(0),
+      m_encodingRef(encoding),
       m_skinnedVertices(0),
       m_skinnedIndices(0),
       m_name(0),
@@ -300,7 +300,7 @@ void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDir
         bone->performUpdateLocalTransform();
     }
     // physics simulation
-    if (m_world) {
+    if (m_worldRef) {
         const int nRigidBodies = m_rigidBodies.count();
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_rigidBodies[i];
@@ -372,7 +372,7 @@ void Model::joinWorld(btDiscreteDynamicsWorld *world)
         Joint *joint = m_joints[i];
         world->addConstraint(joint->constraint());
     }
-    m_world = world;
+    m_worldRef = world;
 #endif /* VPVL2_NO_BULLET */
 }
 
@@ -392,19 +392,19 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *world)
         Joint *joint = m_joints[i];
         world->removeConstraint(joint->constraint());
     }
-    m_world = 0;
+    m_worldRef = 0;
 #endif /* VPVL2_NO_BULLET */
 }
 
 IBone *Model::findBone(const IString *value) const
 {
-    IBone **bone = const_cast<IBone **>(m_name2bones.find(value->toHashString()));
+    IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(value->toHashString()));
     return bone ? *bone : 0;
 }
 
 IMorph *Model::findMorph(const IString *value) const
 {
-    IMorph **morph = const_cast<IMorph **>(m_name2morphs.find(value->toHashString()));
+    IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(value->toHashString()));
     return morph ? *morph : 0;
 }
 
@@ -490,7 +490,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
     center.setZero();
     radius = 0;
-    IBone *bone = findBone(m_encoding->stringConstant(IEncoding::kCenter));
+    IBone *bone = findBone(m_encodingRef->stringConstant(IEncoding::kCenter));
     if (bone) {
         const Vector3 &centerPosition = bone->worldTransform().getOrigin();
         const int nvertices = m_vertices.count();
@@ -640,7 +640,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.endPtr = ptr;
-    info.encoding = m_encoding;
+    info.encoding = m_encodingRef;
 
     return rest == 0;
 }
@@ -692,7 +692,7 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::release()
 {
-    leaveWorld(m_world);
+    leaveWorld(m_worldRef);
     internal::zerofill(&m_info, sizeof(m_info));
     m_vertices.releaseAll();
     m_textures.releaseAll();
@@ -724,9 +724,9 @@ void Model::parseNamesAndComments(const DataInfo &info)
 {
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), m_name);
-    internal::setStringDirect(m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec), m_englishName);
-    internal::setStringDirect(m_encoding->toString(info.commentPtr, info.commentSize, info.codec), m_comment);
-    internal::setStringDirect(m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), m_englishComment);
+    internal::setStringDirect(m_encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), m_englishName);
+    internal::setStringDirect(m_encodingRef->toString(info.commentPtr, info.commentSize, info.codec), m_comment);
+    internal::setStringDirect(m_encodingRef->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), m_englishComment);
 }
 
 void Model::parseVertices(const DataInfo &info)
@@ -777,7 +777,7 @@ void Model::parseTextures(const DataInfo &info)
     size_t nTextureSize, rest = SIZE_MAX;
     for(int i = 0; i < ntextures; i++) {
         internal::sizeText(ptr, rest, texturePtr, nTextureSize);
-        m_textures.add(m_encoding->toString(texturePtr, nTextureSize, info.codec));
+        m_textures.add(m_encodingRef->toString(texturePtr, nTextureSize, info.codec));
     }
 }
 
@@ -819,8 +819,8 @@ void Model::parseBones(const DataInfo &info)
         bone->read(ptr, info, size);
         bone->performTransform();
         bone->performUpdateLocalTransform();
-        m_name2bones.insert(bone->name()->toHashString(), bone);
-        m_name2bones.insert(bone->englishName()->toHashString(), bone);
+        m_name2boneRefs.insert(bone->name()->toHashString(), bone);
+        m_name2boneRefs.insert(bone->englishName()->toHashString(), bone);
         ptr += size;
     }
 }
@@ -834,8 +834,8 @@ void Model::parseMorphs(const DataInfo &info)
         Morph *morph = new Morph();
         m_morphs.add(morph);
         morph->read(ptr, info, size);
-        m_name2morphs.insert(morph->name()->toHashString(), morph);
-        m_name2morphs.insert(morph->englishName()->toHashString(), morph);
+        m_name2morphRefs.insert(morph->name()->toHashString(), morph);
+        m_name2morphRefs.insert(morph->englishName()->toHashString(), morph);
         ptr += size;
     }
 }

@@ -57,8 +57,8 @@ namespace vmd
 const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
 
 Motion::Motion(IModel *model, IEncoding *encoding)
-    : m_model(model),
-      m_encoding(encoding),
+    : m_modelRef(model),
+      m_encodingRef(encoding),
       m_name(0),
       m_boneMotion(encoding),
       m_morphMotion(encoding),
@@ -172,9 +172,9 @@ bool Motion::load(const uint8_t *data, size_t size)
 void Motion::save(uint8_t *data) const
 {
     internal::writeBytes(kSignature, kSignatureSize, data);
-    uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
+    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(data, name, kNameSize);
-    m_encoding->disposeByteArray(name);
+    m_encodingRef->disposeByteArray(name);
     data += kNameSize;
     int nBoneFrames = m_boneMotion.countKeyframes();
     internal::writeBytes(reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames), data);
@@ -230,7 +230,7 @@ void Motion::setParentModel(IModel *model)
 {
     m_boneMotion.setParentModel(model);
     m_morphMotion.setParentModel(model);
-    m_model = model;
+    m_modelRef = model;
     if (model) {
         const IString *name = model->name();
         if (name)
@@ -265,8 +265,8 @@ void Motion::advance(const IKeyframe::TimeIndex &delta)
 void Motion::reload()
 {
     /* rebuild internal keyframe nodes */
-    m_boneMotion.setParentModel(m_model);
-    m_morphMotion.setParentModel(m_model);
+    m_boneMotion.setParentModel(m_modelRef);
+    m_morphMotion.setParentModel(m_modelRef);
     reset();
 }
 
@@ -475,7 +475,7 @@ void Motion::update(IKeyframe::Type type)
 {
     switch (type) {
     case IKeyframe::kBone:
-        m_boneMotion.setParentModel(m_model);
+        m_boneMotion.setParentModel(m_modelRef);
         break;
     case IKeyframe::kCamera:
         m_cameraMotion.update();
@@ -484,7 +484,7 @@ void Motion::update(IKeyframe::Type type)
         m_lightMotion.update();
         break;
     case IKeyframe::kMorph:
-        m_morphMotion.setParentModel(m_model);
+        m_morphMotion.setParentModel(m_modelRef);
         break;
     default:
         break;
@@ -493,19 +493,19 @@ void Motion::update(IKeyframe::Type type)
 
 void Motion::parseHeader(const DataInfo &info)
 {
-    m_name = m_encoding->toString(info.namePtr, IString::kShiftJIS, kNameSize);
+    m_name = m_encodingRef->toString(info.namePtr, IString::kShiftJIS, kNameSize);
 }
 
 void Motion::parseBoneFrames(const DataInfo &info)
 {
     m_boneMotion.read(info.boneKeyframePtr, info.boneKeyframeCount);
-    m_boneMotion.setParentModel(m_model);
+    m_boneMotion.setParentModel(m_modelRef);
 }
 
 void Motion::parseMorphFrames(const DataInfo &info)
 {
     m_morphMotion.read(info.morphKeyframePtr, info.morphKeyframeCount);
-    m_morphMotion.setParentModel(m_model);
+    m_morphMotion.setParentModel(m_modelRef);
 }
 
 void Motion::parseCameraFrames(const DataInfo &info)
@@ -526,6 +526,10 @@ void Motion::release()
 {
     delete m_name;
     m_name = 0;
+    m_modelRef = 0;
+    m_encodingRef = 0;
+    m_error = kNoError;
+    m_active = false;
 }
 
 }

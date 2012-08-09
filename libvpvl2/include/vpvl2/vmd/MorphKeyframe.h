@@ -71,7 +71,7 @@ public:
     void setWeight(const IMorph::WeightPrecision &value);
 
 private:
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     IMorph::WeightPrecision m_weight;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)

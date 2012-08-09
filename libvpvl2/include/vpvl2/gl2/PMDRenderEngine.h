@@ -111,7 +111,7 @@ public:
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
     bool createProgram(BaseShaderProgram *program,
@@ -122,9 +122,9 @@ private:
                        void *context);
     bool releaseContext0(void *context);
 
-    const Scene *m_scene;
-    cl::PMDAccelerator *m_accelerator;
-    pmd::Model *m_model;
+    const Scene *m_sceneRef;
+    cl::PMDAccelerator *m_acceleratorRef;
+    pmd::Model *m_modelRef;
     PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMDRenderEngine)

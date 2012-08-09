@@ -46,11 +46,11 @@ namespace asset
 {
 
 Model::Model(IEncoding *encoding)
-    : m_encoding(encoding),
+    : m_encodingRef(encoding),
       m_name(0),
       m_comment(0),
-      m_parentModel(0),
-      m_parentBone(0)
+      m_parentModelRef(0),
+      m_parentBoneRef(0)
 {
 }
 
@@ -60,9 +60,9 @@ Model::~Model()
     m_comment = 0;
     delete m_name;
     m_name = 0;
-    m_parentBone = 0;
-    m_parentModel = 0;
-    m_encoding = 0;
+    m_parentBoneRef = 0;
+    m_parentModelRef = 0;
+    m_encodingRef = 0;
 }
 
 bool Model::load(const uint8_t *data, size_t size)

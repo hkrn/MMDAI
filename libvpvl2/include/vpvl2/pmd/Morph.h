@@ -66,9 +66,9 @@ public:
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     IString *m_name;
-    vpvl::Face *m_morph;
+    vpvl::Face *m_morphRef;
     Category m_category;
     WeightPrecision m_weight;
     int m_index;

@@ -413,10 +413,10 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
       #else
     :
       #endif /* VPVL_LINK_QT */
-      m_delegate(delegate),
-      m_scene(scene),
-      m_accelerator(accelerator),
-      m_model(model),
+      m_delegateRef(delegate),
+      m_sceneRef(scene),
+      m_acceleratorRef(accelerator),
+      m_modelRef(model),
       m_context(0)
 {
     m_context = new PrivateContext();
@@ -428,7 +428,7 @@ PMDRenderEngine::PMDRenderEngine(IRenderDelegate *delegate,
 PMDRenderEngine::~PMDRenderEngine()
 {
     if (m_context) {
-        m_context->releaseMaterials(m_model->ptr());
+        m_context->releaseMaterials(m_modelRef->ptr());
         delete m_context;
         m_context = 0;
     }
@@ -436,14 +436,14 @@ PMDRenderEngine::~PMDRenderEngine()
     delete m_accelerator;
     m_accelerator = 0;
 #endif
-    m_model = 0;
-    m_delegate = 0;
-    m_scene = 0;
+    m_modelRef = 0;
+    m_delegateRef = 0;
+    m_sceneRef = 0;
 }
 
 IModel *PMDRenderEngine::model() const
 {
-    return m_model;
+    return m_modelRef;
 }
 
 bool PMDRenderEngine::upload(const IString *dir)
@@ -452,12 +452,12 @@ bool PMDRenderEngine::upload(const IString *dir)
     void *context = 0;
     if (!m_context)
         m_context = new PrivateContext();
-    m_delegate->allocateContext(m_model, context);
-    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_delegate);
-    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegate);
-    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_delegate);
-    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_delegate);
-    m_context->isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
+    m_delegateRef->allocateContext(m_modelRef, context);
+    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_delegateRef);
+    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegateRef);
+    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_delegateRef);
+    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_delegateRef);
+    m_context->isVertexShaderSkinning = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
     if (!createProgram(edgeProgram, dir,
                        IRenderDelegate::kEdgeVertexShader,
                        IRenderDelegate::kEdgeWithSkinningVertexShader,
@@ -486,7 +486,7 @@ bool PMDRenderEngine::upload(const IString *dir)
                        context)) {
         return releaseContext0(context);
     }
-    PMDModel *model = m_model->ptr();
+    PMDModel *model = m_modelRef->ptr();
     glGenBuffers(kVertexBufferObjectMax, m_context->vertexBufferObjects);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kEdgeIndices]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, model->edgeIndicesCount() * model->strideSize(PMDModel::kEdgeIndicesStride),
@@ -509,7 +509,7 @@ bool PMDRenderEngine::upload(const IString *dir)
          "Binding model vertices to the vertex buffer object (ID=%d)",
          m_context->vertexBufferObjects[kModelVertices]);
     if (m_context->isVertexShaderSkinning) {
-        m_model->getSkinningMeshes(m_context->mesh);
+        m_modelRef->getSkinningMeshes(m_context->mesh);
     }
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
@@ -525,8 +525,8 @@ bool PMDRenderEngine::upload(const IString *dir)
         materialPrivate.subTextureID = 0;
         const uint8_t *mainTextureName = material->mainTextureName();
         if (*mainTextureName) {
-            IString *primary = m_delegate->toUnicode(mainTextureName);
-            ret = m_delegate->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context);
+            IString *primary = m_delegateRef->toUnicode(mainTextureName);
+            ret = m_delegateRef->uploadTexture(primary, dir, IRenderDelegate::kTexture2D, texture, context);
             delete primary;
             if (ret) {
                 materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
@@ -538,8 +538,8 @@ bool PMDRenderEngine::upload(const IString *dir)
         }
         const uint8_t *subTextureName = material->subTextureName();
         if (*subTextureName) {
-            IString *second = m_delegate->toUnicode(subTextureName);
-            ret = m_delegate->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context);
+            IString *second = m_delegateRef->toUnicode(subTextureName);
+            ret = m_delegateRef->uploadTexture(second, dir, IRenderDelegate::kTexture2D, texture, context);
             delete second;
             if (ret) {
                 materialPrivate.subTextureID = textureID = *static_cast<const GLuint *>(texture.object);
@@ -560,8 +560,8 @@ bool PMDRenderEngine::upload(const IString *dir)
          hasMultipleSphere ? "true" : "false");
     m_context->hasSingleSphereMap = hasSingleSphere;
     m_context->hasMultipleSphereMap = hasMultipleSphere;
-    IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
-    ret = m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context);
+    IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>("toon0.bmp"));
+    ret = m_delegateRef->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context);
     delete s;
     if (ret) {
         m_context->toonTextures[0] = textureID = *static_cast<const GLuint *>(texture.object);
@@ -573,8 +573,8 @@ bool PMDRenderEngine::upload(const IString *dir)
     static const int nToonTextures = PMDModel::kCustomTextureMax - 1;
     for (int i = 0; i < nToonTextures; i++) {
         const uint8_t *name = model->toonTexture(i);
-        s = m_delegate->toUnicode(name);
-        ret = m_delegate->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context);
+        s = m_delegateRef->toUnicode(name);
+        ret = m_delegateRef->uploadTexture(s, dir, IRenderDelegate::kToonTexture, texture, context);
         delete s;
         if (ret) {
             m_context->toonTextures[i + 1] = textureID = *static_cast<const GLuint *>(texture.object);
@@ -589,28 +589,28 @@ bool PMDRenderEngine::upload(const IString *dir)
         m_accelerator->uploadModel(m_model, m_context->vertexBufferObjects[kModelVertices], context);
 #endif
     update();
-    IString *modelName = m_delegate->toUnicode(model->name());
+    IString *modelName = m_delegateRef->toUnicode(model->name());
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", modelName->toByteArray());
     delete modelName;
-    m_delegate->releaseContext(m_model, context);
+    m_delegateRef->releaseContext(m_modelRef, context);
 
     return ret;
 }
 
 void PMDRenderEngine::update()
 {
-    if (!m_model || !m_model->isVisible() || !m_context)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    PMDModel *model = m_model->ptr();
-    model->setLightPosition(-m_scene->light()->direction());
+    PMDModel *model = m_modelRef->ptr();
+    model->setLightPosition(-m_sceneRef->light()->direction());
     int nvertices = model->vertices().count();
     size_t strideSize = model->strideSize(PMDModel::kVerticesStride);
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
     glBufferSubData(GL_ARRAY_BUFFER, 0, nvertices * strideSize, model->verticesPointer());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     if (m_context->isVertexShaderSkinning) {
-        m_model->updateSkinningMeshes(m_context->mesh);
-        m_model->overrideEdgeVerticesOffset();
+        m_modelRef->updateSkinningMeshes(m_context->mesh);
+        m_modelRef->overrideEdgeVerticesOffset();
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
@@ -620,9 +620,9 @@ void PMDRenderEngine::update()
 
 void PMDRenderEngine::renderModel()
 {
-    if (!m_model || !m_model->isVisible() || !m_context)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    PMDModel *model = m_model->ptr();
+    PMDModel *model = m_modelRef->ptr();
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -633,24 +633,24 @@ void PMDRenderEngine::renderModel()
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kTextureCoordsStride)),
                               model->strideSize(PMDModel::kTextureCoordsStride));
     float matrix4x4[16];
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kCameraMatrix);
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
-    const ILight *light = m_scene->light();
+    const ILight *light = m_sceneRef->light();
     void *texture = light->depthTexture();
     GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
@@ -658,8 +658,8 @@ void PMDRenderEngine::renderModel()
     modelProgram->setToonEnable(light->isToonEnabled());
     modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
     modelProgram->setDepthTextureSize(light->depthTextureSize());
-    modelProgram->setCameraPosition(m_scene->camera()->position());
-    const Scalar &modelOpacity = m_model->opacity();
+    modelProgram->setCameraPosition(m_sceneRef->camera()->position());
+    const Scalar &modelOpacity = m_modelRef->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0);
     modelProgram->setOpacity(modelOpacity);
     const MaterialList &materials = model->materials();
@@ -729,26 +729,26 @@ void PMDRenderEngine::renderModel()
 
 void PMDRenderEngine::renderShadow()
 {
-    if (!m_model || !m_model->isVisible() || !m_context)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
     ShadowProgram *shadowProgram = m_context->shadowProgram;
-    PMDModel *model = m_model->ptr();
+    PMDModel *model = m_modelRef->ptr();
     shadowProgram->bind();
     const MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
-    const bool isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
+    const bool isVertexShaderSkinning = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
     const size_t indexStride = model->strideSize(vpvl::PMDModel::kIndicesStride),
             boneOffset = model->strideOffset(PMDModel::kBoneAttributesStride),
             boneStride = model->strideSize(PMDModel::kVerticesStride);
     float matrix4x4[16];
     size_t offset = 0;
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
-    ILight *light = m_scene->light();
+    ILight *light = m_sceneRef->light();
     shadowProgram->setLightColor(light->color());
     shadowProgram->setLightDirection(light->direction());
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -773,13 +773,13 @@ void PMDRenderEngine::renderShadow()
 
 void PMDRenderEngine::renderZPlot()
 {
-    if (!m_model || !m_model->isVisible() || !m_context)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
-    PMDModel *model = m_model->ptr();
+    PMDModel *model = m_modelRef->ptr();
     float matrix4x4[16];
     zplotProgram->bind();
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kLightMatrix);
@@ -791,7 +791,7 @@ void PMDRenderEngine::renderZPlot()
     glCullFace(GL_FRONT);
     const vpvl::MaterialList &materials = model->materials();
     const int nmaterials = materials.count();
-    const bool isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
+    const bool isVertexShaderSkinning = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
     const size_t boneOffset = model->strideOffset(PMDModel::kBoneAttributesStride),
             boneStride = model->strideSize(PMDModel::kVerticesStride);
     size_t offset = 0, size = model->strideSize(vpvl::PMDModel::kIndicesStride);
@@ -814,15 +814,15 @@ void PMDRenderEngine::renderZPlot()
 
 void PMDRenderEngine::renderEdge()
 {
-    if (!m_model || !m_model->isVisible() || btFuzzyZero(m_model->edgeWidth()) || !m_context)
+    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth()) || !m_context)
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
-    PMDModel *model = m_model->ptr();
+    PMDModel *model = m_modelRef->ptr();
     edgeProgram->bind();
-    edgeProgram->setColor(m_model->edgeColor());
-    edgeProgram->setOpacity(m_model->opacity());
+    edgeProgram->setColor(m_modelRef->edgeColor());
+    edgeProgram->setOpacity(m_modelRef->opacity());
     float matrix4x4[16];
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
@@ -830,13 +830,13 @@ void PMDRenderEngine::renderEdge()
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     glDisable(GL_BLEND);
-    const bool isVertexShaderSkinning = m_scene->accelerationType() == Scene::kVertexShaderAccelerationType1;
+    const bool isVertexShaderSkinning = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
     if (isVertexShaderSkinning) {
         const pmd::Model::SkinningMeshes &mesh = m_context->mesh;
         const size_t boneOffset = model->strideOffset(PMDModel::kBoneAttributesStride),
                 boneStride = model->strideSize(PMDModel::kVerticesStride);
         const vpvl::MaterialList &materials = model->materials();
-        const ICamera *camera = m_scene->camera();
+        const ICamera *camera = m_sceneRef->camera();
         const Vector3 &cameraPosition = camera->position() + Vector3(0, 0, camera->distance());
         const int nmaterials = materials.count();
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
@@ -848,7 +848,7 @@ void PMDRenderEngine::renderEdge()
         edgeProgram->setEdgeOffset(reinterpret_cast<const GLvoid *>(model->strideOffset(PMDModel::kEdgeVerticesStride)),
                                    model->strideSize(PMDModel::kVerticesStride));
         edgeProgram->setBoneIndicesAndWeights(reinterpret_cast<const GLvoid *>(boneOffset), boneStride);
-        edgeProgram->setEdgeWidth(m_model->edgeScaleFactor(cameraPosition) * m_model->edgeWidth());
+        edgeProgram->setEdgeWidth(m_modelRef->edgeScaleFactor(cameraPosition) * m_modelRef->edgeWidth());
         size_t offset = 0, size = model->strideSize(vpvl::PMDModel::kIndicesStride);
         for (int i = 0; i < nmaterials; i++) {
             const vpvl::Material *material = materials[i];
@@ -909,7 +909,7 @@ void PMDRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
 {
     va_list ap;
     va_start(ap, format);
-    m_delegate->log(context, level, format, ap);
+    m_delegateRef->log(context, level, format, ap);
     va_end(ap);
 }
 
@@ -923,10 +923,10 @@ bool PMDRenderEngine::createProgram(BaseShaderProgram *program,
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
     if (m_context->isVertexShaderSkinning)
-        vertexShaderSource = m_delegate->loadShaderSource(vertexSkinningShaderType, m_model, dir, context);
+        vertexShaderSource = m_delegateRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, dir, context);
     else
-        vertexShaderSource = m_delegate->loadShaderSource(vertexShaderType, m_model, dir, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(fragmentShaderType, m_model, dir, context);
+        vertexShaderSource = m_delegateRef->loadShaderSource(vertexShaderType, m_modelRef, dir, context);
+    fragmentShaderSource = m_delegateRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, context);
     program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     bool ok = program->linkProgram(context);
@@ -937,7 +937,7 @@ bool PMDRenderEngine::createProgram(BaseShaderProgram *program,
 
 bool PMDRenderEngine::releaseContext0(void *context)
 {
-    m_delegate->releaseContext(m_model, context);
+    m_delegateRef->releaseContext(m_modelRef, context);
     return false;
 }
 

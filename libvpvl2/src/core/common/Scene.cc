@@ -306,8 +306,8 @@ struct Scene::PrivateContext {
     cl::Context *computeContext;
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
-    Hash<HashPtr, IRenderEngine *> model2engine;
-    Hash<HashPtr, IModel *> name2model;
+    Hash<HashPtr, IRenderEngine *> model2engineRef;
+    Hash<HashPtr, IModel *> name2modelRef;
     Array<IModel *> models;
     Array<IMotion *> motions;
     Array<IRenderEngine *> engines;
@@ -416,8 +416,8 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
     }
     m_context->models.add(model);
     m_context->engines.add(engine);
-    m_context->model2engine.insert(model, engine);
-    m_context->name2model.insert(model->name(), model);
+    m_context->model2engineRef.insert(model, engine);
+    m_context->name2modelRef.insert(model->name(), model);
 }
 
 void Scene::addMotion(IMotion *motion)
@@ -440,12 +440,12 @@ IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDel
 void Scene::deleteModel(IModel *&model)
 {
     const HashPtr key(model);
-    IRenderEngine **enginePtr = const_cast<IRenderEngine **>(m_context->model2engine.find(key));
+    IRenderEngine **enginePtr = const_cast<IRenderEngine **>(m_context->model2engineRef.find(key));
     if (enginePtr) {
         IRenderEngine *engine = *enginePtr;
         m_context->models.remove(model);
         m_context->engines.remove(engine);
-        m_context->model2engine.remove(key);
+        m_context->model2engineRef.remove(key);
         delete engine;
     }
     delete model;
@@ -611,13 +611,13 @@ const Array<IRenderEngine *> &Scene::renderEngines() const
 
 IModel *Scene::findModel(const IString *name) const
 {
-    IModel **model = const_cast<IModel **>(m_context->name2model.find(name));
+    IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name));
     return model ? *model : 0;
 }
 
 IRenderEngine *Scene::findRenderEngine(IModel *model) const
 {
-    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(model));
+    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engineRef.find(model));
     return engine ? *engine : 0;
 }
 

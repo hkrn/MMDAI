@@ -101,7 +101,7 @@ public:
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
     typedef std::map<std::string, GLuint> Textures;
@@ -130,10 +130,10 @@ private:
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
 
-    const Scene *m_scene;
-    EffectEngine *m_current;
-    asset::Model *m_model;
-    CGcontext m_context;
+    const Scene *m_sceneRef;
+    EffectEngine *m_currentRef;
+    asset::Model *m_modelRef;
+    CGcontext m_contextRef;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
     std::map<std::string, GLuint> m_textures;

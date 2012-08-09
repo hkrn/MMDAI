@@ -90,8 +90,8 @@ public:
     const Scalar &scaleFactor() const { return m_asset.scaleFactor(); }
     const Vector3 &edgeColor() const { return kZeroV3; }
     const Scalar &edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
-    IModel *parentModel() const { return m_parentModel; }
-    IBone *parentBone() const { return m_parentBone; }
+    IModel *parentModel() const { return m_parentModelRef; }
+    IBone *parentBone() const { return m_parentBoneRef; }
     void setName(const IString *value);
     void setEnglishName(const IString *value) { setName(value); }
     void setComment(const IString *value);
@@ -102,8 +102,8 @@ public:
     void setScaleFactor(const Scalar &value) { m_asset.setScaleFactor(value); }
     void setEdgeColor(const Vector3 & /* value */) {}
     void setEdgeWidth(const Scalar & /* value */) {}
-    void setParentModel(IModel *value) { m_parentModel = value; }
-    void setParentBone(IBone *value) { m_parentBone = value; }
+    void setParentModel(IModel *value) { m_parentModelRef = value; }
+    void setParentBone(IBone *value) { m_parentBoneRef = value; }
 
     vpvl::Asset *ptr() { return &m_asset; }
 
@@ -113,13 +113,13 @@ private:
 #endif
 
     vpvl::Asset m_asset;
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_comment;
     Array<IBone *> m_bones;
     Array<IMorph *> m_morphs;
-    IModel *m_parentModel;
-    IBone *m_parentBone;
+    IModel *m_parentModelRef;
+    IBone *m_parentBoneRef;
 };
 
 } /* namespace asset */

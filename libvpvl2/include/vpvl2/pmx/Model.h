@@ -233,8 +233,8 @@ private:
     void parseRigidBodies(const DataInfo &info);
     void parseJoints(const DataInfo &info);
 
-    btDiscreteDynamicsWorld *m_world;
-    IEncoding *m_encoding;
+    btDiscreteDynamicsWorld *m_worldRef;
+    IEncoding *m_encodingRef;
     Array<Vertex *> m_vertices;
     Array<int> m_indices;
     Array<IString *> m_textures;
@@ -246,8 +246,8 @@ private:
     Array<Label *> m_labels;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
-    Hash<HashString, IBone *> m_name2bones;
-    Hash<HashString, IMorph *> m_name2morphs;
+    Hash<HashString, IBone *> m_name2boneRefs;
+    Hash<HashString, IMorph *> m_name2morphRefs;
     SkinnedVertex *m_skinnedVertices;
     int *m_skinnedIndices;
     IString *m_name;

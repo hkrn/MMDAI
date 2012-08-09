@@ -97,7 +97,7 @@ Vertex::Vertex()
     for (int i = 0; i < 4; i++) {
         m_originUVs[i].setZero();
         m_morphUVs[i].setZero();
-        m_bones[i] = 0;
+        m_boneRefs[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
     }
@@ -118,7 +118,7 @@ Vertex::~Vertex()
     for (int i = 0; i < 4; i++) {
         m_originUVs[i].setZero();
         m_morphUVs[i].setZero();
-        m_bones[i] = 0;
+        m_boneRefs[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
     }
@@ -180,10 +180,10 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 if (boneIndex >= nbones)
                     return false;
                 else
-                    vertex->m_bones[0] = bones[boneIndex];
+                    vertex->m_boneRefs[0] = bones[boneIndex];
             }
             else {
-                vertex->m_bones[0] = &kNullBone;
+                vertex->m_boneRefs[0] = &kNullBone;
             }
             break;
         }
@@ -196,10 +196,10 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     if (boneIndex >= nbones)
                         return false;
                     else
-                        vertex->m_bones[j] = bones[boneIndex];
+                        vertex->m_boneRefs[j] = bones[boneIndex];
                 }
                 else {
-                    vertex->m_bones[j] = &kNullBone;
+                    vertex->m_boneRefs[j] = &kNullBone;
                 }
             }
             break;
@@ -211,10 +211,10 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     if (boneIndex >= nbones)
                         return false;
                     else
-                        vertex->m_bones[j] = bones[boneIndex];
+                        vertex->m_boneRefs[j] = bones[boneIndex];
                 }
                 else {
-                    vertex->m_bones[j] = &kNullBone;
+                    vertex->m_boneRefs[j] = &kNullBone;
                 }
             }
             break;
@@ -403,15 +403,15 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
     const Vector3 &vertexPosition = m_origin + m_morphDelta;
     switch (m_type) {
     case kBdef1: {
-        const Transform &transform = m_bones[0]->localTransform();
+        const Transform &transform = m_boneRefs[0]->localTransform();
         position = transform * vertexPosition;
         normal = transform.getBasis() * m_normal;
         break;
     }
     case kBdef2:
     case kSdef: {
-        const Transform &transformA = m_bones[0]->localTransform();
-        const Transform &transformB = m_bones[1]->localTransform();
+        const Transform &transformA = m_boneRefs[0]->localTransform();
+        const Transform &transformB = m_boneRefs[1]->localTransform();
         const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
         const Vector3 &v2 = transformB * vertexPosition;
@@ -422,10 +422,10 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
         break;
     }
     case kBdef4: {
-        const Transform &transformA = m_bones[0]->localTransform();
-        const Transform &transformB = m_bones[1]->localTransform();
-        const Transform &transformC = m_bones[2]->localTransform();
-        const Transform &transformD = m_bones[3]->localTransform();
+        const Transform &transformA = m_boneRefs[0]->localTransform();
+        const Transform &transformB = m_boneRefs[1]->localTransform();
+        const Transform &transformC = m_boneRefs[2]->localTransform();
+        const Transform &transformD = m_boneRefs[3]->localTransform();
         const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
         const Vector3 &v2 = transformB * vertexPosition;
@@ -455,7 +455,7 @@ float Vertex::weight(int index) const
 
 Bone *Vertex::bone(int index) const
 {
-    return index >= 0 && index < 4 ? m_bones[index] : 0;
+    return index >= 0 && index < 4 ? m_boneRefs[index] : 0;
 }
 
 void Vertex::setOrigin(const Vector3 &value)
@@ -498,7 +498,7 @@ void Vertex::setWeight(int index, float weight)
 void Vertex::setBone(int index, Bone *value)
 {
     if (index >= 0 && index < 4) {
-        m_bones[index] = value;
+        m_boneRefs[index] = value;
         m_boneIndices[index] = value->index();
     }
 }

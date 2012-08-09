@@ -110,10 +110,10 @@ struct Bone::IKLink {
 };
 
 Bone::Bone()
-    : m_parentBone(0),
-      m_targetBone(0),
-      m_parentInherenceBone(0),
-      m_destinationOriginBone(0),
+    : m_parentBoneRef(0),
+      m_targetBoneRef(0),
+      m_parentInherenceBoneRef(0),
+      m_destinationOriginBoneRef(0),
       m_name(0),
       m_englishName(0),
       m_rotation(Quaternion::getIdentity()),
@@ -153,9 +153,9 @@ Bone::~Bone()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
-    m_parentBone = 0;
-    m_targetBone = 0;
-    m_parentInherenceBone = 0;
+    m_parentBoneRef = 0;
+    m_targetBoneRef = 0;
+    m_parentInherenceBoneRef = 0;
     m_origin.setZero();
     m_offset.setZero();
     m_position.setZero();
@@ -271,7 +271,7 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
             else {
                 Bone *parent = bones[parentBoneID];
                 bone->m_offset -= parent->m_origin;
-                bone->m_parentBone = parent;
+                bone->m_parentBoneRef = parent;
             }
         }
         const int destinationOriginBoneID = bone->m_destinationOriginBoneIndex;
@@ -279,21 +279,21 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
             if (destinationOriginBoneID >= nbones)
                 return false;
             else
-                bone->m_destinationOriginBone = bones[destinationOriginBoneID];
+                bone->m_destinationOriginBoneRef = bones[destinationOriginBoneID];
         }
         const int targetBoneID = bone->m_targetBoneIndex;
         if (targetBoneID >= 0) {
             if (targetBoneID >= nbones)
                 return false;
             else
-                bone->m_targetBone = bones[targetBoneID];
+                bone->m_targetBoneRef = bones[targetBoneID];
         }
         const int parentBoneBiasID = bone->m_parentInherenceBoneIndex;
         if (parentBoneBiasID >= 0) {
             if (parentBoneBiasID >= nbones)
                 return false;
             else
-                bone->m_parentInherenceBone = bones[parentBoneBiasID];
+                bone->m_parentInherenceBoneRef = bones[parentBoneBiasID];
         }
         if (bone->hasInverseKinematics()) {
             const int nIK = bone->m_IKLinks.count();
@@ -514,7 +514,7 @@ void Bone::performFullTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
     if (hasRotationInherence()) {
-        Bone *parentBone = m_parentInherenceBone;
+        Bone *parentBone = m_parentInherenceBoneRef;
         if (parentBone) {
             if (parentBone->hasRotationInherence())
                 rotation *= parentBone->m_rotationInherence;
@@ -533,7 +533,7 @@ void Bone::performFullTransform()
     m_localTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
     if (hasPositionInherence()) {
-        Bone *parentBone = m_parentInherenceBone;
+        Bone *parentBone = m_parentInherenceBoneRef;
         if (parentBone) {
             if (parentBone->hasPositionInherence())
                 position += parentBone->m_positionInherence;
@@ -546,8 +546,8 @@ void Bone::performFullTransform()
     }
     position += m_position + m_positionMorph;
     m_localTransform.setOrigin(m_offset + m_position + m_positionMorph);
-    if (m_parentBone) {
-        m_localTransform = m_parentBone->m_localTransform * m_localTransform;
+    if (m_parentBoneRef) {
+        m_localTransform = m_parentBoneRef->m_localTransform * m_localTransform;
     }
     //const Quaternion &value = m_localTransform.getRotation();
     //qDebug("%s(fullTransform): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
@@ -557,8 +557,8 @@ void Bone::performTransform()
 {
     m_localTransform.setRotation(m_rotation);
     m_localTransform.setOrigin(m_offset + m_position);
-    if (m_parentBone)
-        m_localTransform = m_parentBone->m_localTransform * m_localTransform;
+    if (m_parentBoneRef)
+        m_localTransform = m_parentBoneRef->m_localTransform * m_localTransform;
     //const Quaternion &value = m_localTransform.getRotation();
     //qDebug("%s(transform): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
 }
@@ -569,13 +569,13 @@ void Bone::performInverseKinematics()
         return;
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
-    Quaternion rotation, targetRotation = m_targetBone->m_rotation;
+    Quaternion rotation, targetRotation = m_targetBoneRef->m_rotation;
     Matrix3x3 matrix;
     for (int i = 0; i < nloops; i++) {
         for (int j = 0; j < nlinks; j++) {
             IKLink *link = m_IKLinks[j];
             Bone *bone = link->bone;
-            const Vector3 &targetPosition = m_targetBone->m_localTransform.getOrigin();
+            const Vector3 &targetPosition = m_targetBoneRef->m_localTransform.getOrigin();
             const Vector3 &destinationPosition = m_localTransform.getOrigin();
             const Transform &transform = bone->m_localTransform.inverse();
             Vector3 v1 = transform * targetPosition;
@@ -691,7 +691,7 @@ void Bone::performInverseKinematics()
                      << m_targetBone->m_localTransform.getRotation().y()
                      << m_targetBone->m_localTransform.getRotation().z();
 #endif
-            m_targetBone->performTransform();
+            m_targetBoneRef->performTransform();
 #if IK_DEBUG
             qDebug("target2: %s", m_targetBone->name()->toByteArray());
             qDebug() << m_targetBone->m_localTransform.getOrigin().x()
@@ -704,7 +704,7 @@ void Bone::performInverseKinematics()
 #endif
         }
     }
-    m_targetBone->m_rotation = targetRotation;
+    m_targetBoneRef->m_rotation = targetRotation;
 }
 
 void Bone::performUpdateLocalTransform()
@@ -742,8 +742,8 @@ void Bone::setRotation(const Quaternion &value)
 
 const Vector3 Bone::destinationOrigin() const
 {
-    if (m_destinationOriginBone)
-        return m_destinationOriginBone->m_worldTransform.getOrigin();
+    if (m_destinationOriginBoneRef)
+        return m_destinationOriginBoneRef->m_worldTransform.getOrigin();
     else
         return m_worldTransform.getOrigin() + m_worldTransform.getBasis() * m_destinationOrigin;
 }
@@ -779,20 +779,20 @@ void Bone::setSimulated(bool value)
 
 void Bone::setParentBone(Bone *value)
 {
-    m_parentBone = value;
+    m_parentBoneRef = value;
     m_parentBoneIndex = value ? value->index() : -1;
 }
 
 void Bone::setParentInherenceBone(Bone *value, float weight)
 {
-    m_parentInherenceBone = value;
+    m_parentInherenceBoneRef = value;
     m_parentInherenceBoneIndex = value ? value->index() : -1;
     m_weight = weight;
 }
 
 void Bone::setTargetBone(Bone *target, int nloop, float angleConstraint)
 {
-    m_targetBone = target;
+    m_targetBoneRef = target;
     m_targetBoneIndex = target ? target->index() : -1;
     m_nloop = nloop;
     m_angleConstraint = angleConstraint;
@@ -800,7 +800,7 @@ void Bone::setTargetBone(Bone *target, int nloop, float angleConstraint)
 
 void Bone::setDestinationOriginBone(Bone *value)
 {
-    m_destinationOriginBone = value;
+    m_destinationOriginBoneRef = value;
     m_destinationOriginBoneIndex = value ? value->index() : -1;
     internal::toggleFlag(0x0001, value ? true : false, m_flags);
 }

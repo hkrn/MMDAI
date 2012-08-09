@@ -57,13 +57,15 @@ public:
     }
 
     Effect(CGcontext context, CGeffect effect)
-        : m_context(context),
+        : m_contextRef(context),
           m_effect(effect),
-          m_parentEffect(0)
+          m_parentEffectRef(0)
     {
     }
     ~Effect() {
         cgDestroyEffect(m_effect);
+        m_contextRef = 0;
+        m_parentEffectRef = 0;
     }
 
     void addOffscreenRenderTarget(CGparameter texture, CGparameter sampler, size_t width, size_t height) {
@@ -78,7 +80,7 @@ public:
         m_interactiveParameters.add(value);
     }
 
-    void *internalContext() const { return m_context; }
+    void *internalContext() const { return m_contextRef; }
     void *internalPointer() const { return m_effect; }
     void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const {
         value.copy(m_offscreenRenderTargets);
@@ -86,15 +88,15 @@ public:
     void getInteractiveParameters(Array<void *> &value) const {
         value.copy(m_interactiveParameters);
     }
-    IEffect *parentEffect() const { return m_parentEffect; }
-    void setParentEffect(IEffect *value) { m_parentEffect = value; }
+    IEffect *parentEffect() const { return m_parentEffectRef; }
+    void setParentEffect(IEffect *value) { m_parentEffectRef = value; }
 
 private:
-    const CGcontext m_context;
-    const CGeffect m_effect;
+    CGcontext m_contextRef;
+    CGeffect m_effect;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<void *> m_interactiveParameters;
-    IEffect *m_parentEffect;
+    IEffect *m_parentEffectRef;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };

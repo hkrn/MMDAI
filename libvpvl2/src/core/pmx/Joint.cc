@@ -74,8 +74,8 @@ namespace pmx
 
 Joint::Joint()
     : m_constraint(0),
-      m_rigidBody1(0),
-      m_rigidBody2(0),
+      m_rigidBody1Ref(0),
+      m_rigidBody2Ref(0),
       m_name(0),
       m_englishName(0),
       m_position(kZeroV3),
@@ -100,8 +100,8 @@ Joint::~Joint()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
-    m_rigidBody1 = 0;
-    m_rigidBody2 = 0;
+    m_rigidBody1Ref = 0;
+    m_rigidBody2Ref = 0;
     m_position.setZero();
     m_rotation.setZero();
     m_positionLowerLimit.setZero();
@@ -162,16 +162,16 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
             if (rigidBodyIndex1 >= nRigidBodies)
                 return false;
             else
-                joint->m_rigidBody1 = rigidBodies[rigidBodyIndex1];
+                joint->m_rigidBody1Ref = rigidBodies[rigidBodyIndex1];
         }
         const int rigidBodyIndex2 = joint->m_rigidBodyIndex2;
         if (rigidBodyIndex2 >= 0) {
             if (rigidBodyIndex2 >= nRigidBodies)
                 return false;
             else
-                joint->m_rigidBody2 = rigidBodies[rigidBodyIndex2];
+                joint->m_rigidBody2Ref = rigidBodies[rigidBodyIndex2];
         }
-        if (joint->m_rigidBody1 && joint->m_rigidBody2)
+        if (joint->m_rigidBody1Ref && joint->m_rigidBody2Ref)
             joint->m_constraint = joint->createConstraint();
         joint->m_index = i;
     }
@@ -245,13 +245,13 @@ size_t Joint::estimateSize(const Model::DataInfo &info) const
 
 void Joint::setRigidBody1(RigidBody *value)
 {
-    m_rigidBody1 = value;
+    m_rigidBody1Ref = value;
     m_rigidBodyIndex1 = value ? value->index() : -1;
 }
 
 void Joint::setRigidBody2(RigidBody *value)
 {
-    m_rigidBody2 = value;
+    m_rigidBody2Ref = value;
     m_rigidBodyIndex2 = value ? value->index() : -1;
 }
 
@@ -329,7 +329,7 @@ btGeneric6DofSpringConstraint *Joint::createConstraint() const
     transform.setOrigin(m_position);
 #endif /* VPVL2_COORDINATE_OPENGL */
     transform.setBasis(basis);
-    btRigidBody *bodyA = m_rigidBody1->body(), *bodyB = m_rigidBody2->body();
+    btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
     Transform transformA = bodyA->getWorldTransform().inverse() * transform,
             transformB = bodyB->getWorldTransform().inverse() * transform;
     btGeneric6DofSpringConstraint *constraint = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);

@@ -123,7 +123,7 @@ public:
     void setSkinnningEnable(bool value);
 
 private:
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_englishName;
     IString *m_comment;
@@ -132,8 +132,8 @@ private:
     Array<IBone *> m_bones;
     Array<IMorph *> m_morphs;
     Array<ILabel *> m_labels;
-    Hash<HashString, IBone *> m_name2bones;
-    Hash<HashString, IMorph *> m_name2morphs;
+    Hash<HashString, IBone *> m_name2boneRefs;
+    Hash<HashString, IMorph *> m_name2morphRefs;
     Scalar m_opacity;
     Scalar m_scaleFactor;
     Vector3 m_edgeColor;

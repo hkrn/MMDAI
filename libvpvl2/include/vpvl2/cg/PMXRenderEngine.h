@@ -93,7 +93,7 @@ public:
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
     bool releaseContext0(void *context);
@@ -116,11 +116,11 @@ private:
         Color toonTextureColor;
     };
 
-    const Scene *m_scene;
-    EffectEngine *m_current;
-    cl::PMXAccelerator *m_accelerator;
-    pmx::Model *m_model;
-    CGcontext m_context;
+    const Scene *m_sceneRef;
+    EffectEngine *m_currentRef;
+    cl::PMXAccelerator *m_acceleratorRef;
+    pmx::Model *m_modelRef;
+    CGcontext m_contextRef;
     pmx::Model::SkinningMeshes m_mesh;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     MaterialContext *m_materialContexts;

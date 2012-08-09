@@ -84,9 +84,9 @@ private:
     void buildInternalNodes(IModel *model);
     void calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalMorphKeyFrameList *keyFrames);
 
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     Hash<HashString, InternalMorphKeyFrameList *> m_name2keyframes;
-    IModel *m_model;
+    IModel *m_modelRef;
     bool m_enableNullFrame;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphAnimation)

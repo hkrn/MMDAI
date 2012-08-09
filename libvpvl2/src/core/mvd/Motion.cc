@@ -580,6 +580,8 @@ void Motion::release()
     m_name = 0;
     delete m_name2;
     m_name2 = 0;
+    m_error = kNoError;
+    m_active = false;
 }
 
 } /* namespace mvd */

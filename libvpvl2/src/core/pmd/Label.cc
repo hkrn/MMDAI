@@ -43,19 +43,19 @@ namespace pmd
 {
 
 Label::Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)
-    : m_encoding(encoding),
+    : m_encodingRef(encoding),
       m_name(0),
       m_special(special)
 {
-    m_name = m_encoding->toString(name, IString::kShiftJIS, 50);
-    m_bones.copy(bones);
+    m_name = m_encodingRef->toString(name, IString::kShiftJIS, 50);
+    m_boneRefs.copy(bones);
 }
 
 Label::~Label()
 {
     delete m_name;
     m_name = 0;
-    m_encoding = 0;
+    m_encodingRef = 0;
     m_special = false;
 }
 

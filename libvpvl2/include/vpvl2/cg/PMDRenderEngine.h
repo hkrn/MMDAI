@@ -89,7 +89,7 @@ public:
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
     bool releaseContext0(void *context);
@@ -111,11 +111,11 @@ private:
         GLuint subTextureID;
     };
 
-    const Scene *m_scene;
-    EffectEngine *m_current;
-    cl::PMDAccelerator *m_accelerator;
-    pmd::Model *m_model;
-    CGcontext m_context;
+    const Scene *m_sceneRef;
+    EffectEngine *m_currentRef;
+    cl::PMDAccelerator *m_acceleratorRef;
+    pmd::Model *m_modelRef;
+    CGcontext m_contextRef;
     MaterialContext *m_materialContexts;
     pmd::Model::SkinningMeshes m_mesh;
     Color m_toonTextureColors[vpvl::PMDModel::kCustomTextureMax];

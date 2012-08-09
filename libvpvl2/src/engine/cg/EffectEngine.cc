@@ -238,7 +238,7 @@ void Float4Parameter::setValue(const Vector4 &value)
 
 MatrixSemantic::MatrixSemantic(const IRenderDelegate *delegate, int flags)
     : BaseParameter(),
-      m_delegate(delegate),
+      m_delegateRef(delegate),
       m_camera(0),
       m_cameraInversed(0),
       m_cameraTransposed(0),
@@ -253,7 +253,7 @@ MatrixSemantic::MatrixSemantic(const IRenderDelegate *delegate, int flags)
 
 MatrixSemantic::~MatrixSemantic()
 {
-    m_delegate = 0;
+    m_delegateRef = 0;
     m_camera = 0;
     m_cameraInversed = 0;
     m_cameraTransposed = 0;
@@ -331,7 +331,7 @@ void MatrixSemantic::setMatrix(const IModel *model, CGparameter parameter, int f
 {
     if (cgIsParameter(parameter)) {
         float matrix[16];
-        m_delegate->getMatrix(matrix, model, m_flags | flags);
+        m_delegateRef->getMatrix(matrix, model, m_flags | flags);
         cgSetMatrixParameterfr(parameter, matrix);
     }
 }
@@ -468,7 +468,7 @@ void GeometrySemantic::setLightValue(const Vector3 &value)
 
 TimeSemantic::TimeSemantic(const IRenderDelegate *delegate)
     : BaseParameter(),
-      m_delegate(delegate),
+      m_delegateRef(delegate),
       m_syncEnabled(0),
       m_syncDisabled(0)
 {
@@ -476,7 +476,7 @@ TimeSemantic::TimeSemantic(const IRenderDelegate *delegate)
 
 TimeSemantic::~TimeSemantic()
 {
-    m_delegate = 0;
+    m_delegateRef = 0;
     m_syncEnabled = 0;
     m_syncDisabled = 0;
 }
@@ -497,11 +497,11 @@ void TimeSemantic::update()
 {
     float value = 0;
     if (cgIsParameter(m_syncEnabled)) {
-        m_delegate->getTime(value, true);
+        m_delegateRef->getTime(value, true);
         cgSetParameter1f(m_syncEnabled, value);
     }
     if (cgIsParameter(m_syncDisabled)) {
-        m_delegate->getTime(value, false);
+        m_delegateRef->getTime(value, false);
         cgSetParameter1f(m_syncDisabled, value);
     }
 }
@@ -510,16 +510,16 @@ void TimeSemantic::update()
 
 ControlObjectSemantic::ControlObjectSemantic(const IEffect *effect, const Scene *scene, const IRenderDelegate *delegate)
     : BaseParameter(),
-      m_scene(scene),
-      m_delegate(delegate),
-      m_effect(effect)
+      m_sceneRef(scene),
+      m_delegateRef(delegate),
+      m_effectRef(effect)
 {
 }
 
 ControlObjectSemantic::~ControlObjectSemantic()
 {
-    m_scene = 0;
-    m_delegate = 0;
+    m_sceneRef = 0;
+    m_delegateRef = 0;
 }
 
 void ControlObjectSemantic::addParameter(CGparameter parameter)
@@ -540,15 +540,15 @@ void ControlObjectSemantic::update(const IModel *self)
             setParameter(self, parameter);
         }
         else if (VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
-            IEffect *parent = m_effect->parentEffect();
+            IEffect *parent = m_effectRef->parentEffect();
             if (parent) {
-                const IModel *model = m_delegate->effectOwner(parent);
+                const IModel *model = m_delegateRef->effectOwner(parent);
                 setParameter(model, parameter);
             }
         }
         else {
-            IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(name));
-            const IModel *model = m_delegate->findModel(s);
+            IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(name));
+            const IModel *model = m_delegateRef->findModel(s);
             delete s;
             setParameter(model, parameter);
         }
@@ -566,7 +566,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
             const size_t len = strlen(item);
             const IModel::Type type = model->type();
             if (type == IModel::kPMD || type == IModel::kPMX) {
-                const IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(item));
+                const IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
                 IBone *bone = model->findBone(s);
                 IMorph *morph = model->findMorph(s);
                 delete s;
@@ -638,7 +638,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 cgSetParameter4fv(parameter, model->position());
                 break;
             case CG_FLOAT4x4:
-                m_delegate->getMatrix(matrix4x4, model, IRenderDelegate::kWorldMatrix | IRenderDelegate::kCameraMatrix);
+                m_delegateRef->getMatrix(matrix4x4, model, IRenderDelegate::kWorldMatrix | IRenderDelegate::kCameraMatrix);
                 cgSetMatrixParameterfr(parameter, matrix4x4);
                 break;
             default:
@@ -673,7 +673,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
 
 RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderDelegate *delegate)
     : BaseParameter(),
-      m_delegate(delegate)
+      m_delegateRef(delegate)
 {
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
@@ -685,6 +685,7 @@ RenderColorTargetSemantic::~RenderColorTargetSemantic()
     const int ntextures = m_textures.count();
     if (ntextures > 0)
         glDeleteTextures(ntextures, &m_textures[0]);
+    m_delegateRef = 0;
 }
 
 void RenderColorTargetSemantic::addParameter(CGparameter parameter,
@@ -719,13 +720,13 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
     GLuint textureID = 0;
     if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
-        IString *s = m_delegate->toUnicode(reinterpret_cast<const uint8_t*>(name));
+        IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
         if (isMimapEnabled(parameter))
             flags |= IRenderDelegate::kGenerateTextureMipmap;
         IRenderDelegate::Texture texture;
         texture.async = false;
         texture.object = &textureID;
-        if (m_delegate->uploadTexture(s, dir, flags, texture, 0)) {
+        if (m_delegateRef->uploadTexture(s, dir, flags, texture, 0)) {
             textureID = *static_cast<const GLuint *>(texture.object);
             cgGLSetupSampler(sampler, textureID);
             Texture t(texture.width, texture.height, 0, parameter, sampler, textureID);
@@ -899,7 +900,7 @@ void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &wi
         const float *values = cgGetFloatAnnotationValues(viewportRatioAnnotation, &nvalues);
         if (nvalues == 2) {
             Vector3 viewport;
-            m_delegate->getViewport(viewport);
+            m_delegateRef->getViewport(viewport);
             float widthRatio = values[0];
             float heightRatio = values[1];
             width = btMax(1, int(viewport.x() * widthRatio));
@@ -924,7 +925,7 @@ void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &wi
         return;
     }
     Vector3 viewport;
-    m_delegate->getViewport(viewport);
+    m_delegateRef->getViewport(viewport);
     width = btMax(size_t(1), size_t(viewport.x()));
     height = btMax(size_t(1), size_t(viewport.y()));
 }
@@ -952,7 +953,7 @@ void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &wi
         return;
     }
     Vector3 viewport;
-    m_delegate->getViewport(viewport);
+    m_delegateRef->getViewport(viewport);
     width = btMax(size_t(1), size_t(viewport.x()));
     height = btMax(size_t(1), size_t(viewport.y()));
     depth = 24;
@@ -997,12 +998,13 @@ void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter param
 
 OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(Effect *effect, IRenderDelegate *delegate)
     : RenderColorTargetSemantic(delegate),
-      m_effect(effect)
+      m_effectRef(effect)
 {
 }
 
 OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 {
+    m_effectRef = 0;
 }
 
 void OffscreenRenderTargetSemantic::addParameter(CGparameter parameter, CGparameter sampler, const IString *dir)
@@ -1017,19 +1019,19 @@ void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter paramete
                                                       size_t height)
 {
     RenderColorTargetSemantic::generateTexture2D(parameter, sampler, texture, width, height);
-    m_effect->addOffscreenRenderTarget(parameter, sampler, width, height);
+    m_effectRef->addOffscreenRenderTarget(parameter, sampler, width, height);
 }
 
 /* AnimatedTextureSemantic */
 
 AnimatedTextureSemantic::AnimatedTextureSemantic(IRenderDelegate *delegate)
-    : m_delegate(delegate)
+    : m_delegateRef(delegate)
 {
 }
 
 AnimatedTextureSemantic::~AnimatedTextureSemantic()
 {
-    m_delegate = 0;
+    m_delegateRef = 0;
 }
 
 void AnimatedTextureSemantic::addParameter(CGparameter parameter)
@@ -1061,13 +1063,13 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
             cgGLGetParameter1f(seekParameter, &seek);
         }
         else {
-            m_delegate->getTime(seek, true);
+            m_delegateRef->getTime(seek, true);
         }
         const CGparameter texParam = renderColorTarget.findParameter(resourceName);
         const RenderColorTargetSemantic::Texture *t = renderColorTarget.findTexture(cgGetParameterName(texParam));
         if (t) {
             GLuint textureID = t->id;
-            m_delegate->uploadAnimatedTexture(offset, speed, seek, &textureID);
+            m_delegateRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
         }
     }
 }
@@ -1134,8 +1136,8 @@ EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effec
       #ifndef __APPLE__
       glDrawBuffers(0),
       #endif /* __APPLE__ */
-      m_effect(0),
-      m_delegate(delegate),
+      m_effectRef(0),
+      m_delegateRef(delegate),
       m_scriptOutput(kColor),
       m_scriptClass(kObject),
       m_scriptOrder(IEffect::kStandard)
@@ -1154,8 +1156,8 @@ EffectEngine::~EffectEngine()
 {
     glDeleteBuffers(1, &m_verticesBuffer);
     glDeleteBuffers(1, &m_indicesBuffer);
-    m_effect = 0;
-    m_delegate = 0;
+    m_effectRef = 0;
+    m_delegateRef = 0;
 }
 
 bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
@@ -1166,7 +1168,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
     static const char kWorldViewSemantic[] = "WORLDVIEW";
     static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
     static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
-    m_effect = static_cast<Effect *>(effect);
+    m_effectRef = static_cast<Effect *>(effect);
     CGeffect value = static_cast<CGeffect>(effect->internalPointer());
     if (!cgIsEffect(value))
         return false;
@@ -1297,7 +1299,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
             }
         }
         if (Effect::isInteractiveParameter(parameter))
-            m_effect->addInteractiveParameter(parameter);
+            m_effectRef->addInteractiveParameter(parameter);
         parameter = cgGetNextParameter(parameter);
     }
     if (!ownTechniques) {
@@ -1341,7 +1343,7 @@ bool EffectEngine::hasTechniques(IEffect::ScriptOrderType order) const
 
 void EffectEngine::executeProcess(const IModel *model, IEffect::ScriptOrderType order)
 {
-    if (!model || !m_effect || m_scriptOrder != order)
+    if (!model || !m_effectRef || m_scriptOrder != order)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
@@ -1438,16 +1440,16 @@ void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IMode
 void EffectEngine::updateSceneParameters()
 {
     Vector3 viewport;
-    m_delegate->getViewport(viewport);
+    m_delegateRef->getViewport(viewport);
     viewportPixelSize.setValue(viewport);
     Vector4 position;
-    m_delegate->getMousePosition(position, IRenderDelegate::kMouseCursorPosition);
+    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseCursorPosition);
     mousePosition.setValue(position);
-    m_delegate->getMousePosition(position, IRenderDelegate::kMouseLeftPressPosition);
+    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseLeftPressPosition);
     leftMouseDown.setValue(position);
-    m_delegate->getMousePosition(position, IRenderDelegate::kMouseMiddlePressPosition);
+    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseMiddlePressPosition);
     middleMouseDown.setValue(position);
-    m_delegate->getMousePosition(position, IRenderDelegate::kMouseRightPressPosition);
+    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseRightPressPosition);
     rightMouseDown.setValue(position);
     time.update();
     elapsedTime.update();
@@ -1530,16 +1532,16 @@ void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTarget
         const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(value.c_str());
         if (texture) {
             state.setFromTexture(texture);
-            m_target2textures.insert(type, texture);
+            m_target2textureRefs.insert(type, texture);
             bound = true;
         }
     }
     else {
-        const RenderColorTargetSemantic::Texture **texturePtr = m_target2textures.find(type);
+        const RenderColorTargetSemantic::Texture **texturePtr = m_target2textureRefs.find(type);
         if (texturePtr) {
             const RenderColorTargetSemantic::Texture *texture = *texturePtr;
             state.setFromTexture(texture);
-            m_target2textures.remove(type);
+            m_target2textureRefs.remove(type);
         }
     }
     state.isRenderTargetBound = bound;
@@ -1556,16 +1558,16 @@ void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDept
         const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findRenderBuffer(value.c_str());
         if (buffer) {
             state.setFromBuffer(buffer);
-            m_target2buffers.insert(type, buffer);
+            m_target2bufferRefs.insert(type, buffer);
             bound = true;
         }
     }
     else {
-        const RenderDepthStencilTargetSemantic::Buffer **bufferPtr = m_target2buffers.find(type);
+        const RenderDepthStencilTargetSemantic::Buffer **bufferPtr = m_target2bufferRefs.find(type);
         if (bufferPtr) {
             const RenderDepthStencilTargetSemantic::Buffer *buffer = *bufferPtr;
             state.setFromBuffer(buffer);
-            m_target2buffers.remove(type);
+            m_target2bufferRefs.remove(type);
         }
     }
     state.isRenderTargetBound = bound;
@@ -1602,9 +1604,9 @@ void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
     if (state.isRenderTargetBound) {
         if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
             m_renderColorTargets.push_back(target);
-            m_delegate->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+            m_delegateRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
         }
-        m_delegate->bindRenderColorTarget(&texture, width, height, index, kEnableRTAA);
+        m_delegateRef->bindRenderColorTarget(&texture, width, height, index, kEnableRTAA);
         glViewport(0, 0, width, height);
     }
     else {
@@ -1612,9 +1614,9 @@ void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
         m_renderColorTargets.remove(target);
         const int nRenderColorTargets = m_renderColorTargets.size();
         if (nRenderColorTargets > 0 && target != kBaseRenderColorTargetIndex)
-            m_delegate->setRenderColorTargets(&m_renderColorTargets[0], nRenderColorTargets);
-        m_delegate->releaseRenderColorTarget(&texture, width, height, index, kEnableRTAA);
-        m_delegate->getViewport(viewport);
+            m_delegateRef->setRenderColorTargets(&m_renderColorTargets[0], nRenderColorTargets);
+        m_delegateRef->releaseRenderColorTarget(&texture, width, height, index, kEnableRTAA);
+        m_delegateRef->getViewport(viewport);
         glViewport(0, 0, viewport.x(), viewport.y());
     }
 }
@@ -1625,7 +1627,7 @@ void EffectEngine::setRenderDepthStencilTargetFromState(const ScriptState &state
     GLuint depthBuffer = state.depthBuffer;
     GLuint stencilBuffer = state.stencilBuffer;
     if (state.isRenderTargetBound) {
-        m_delegate->bindRenderDepthStencilTarget(&texture,
+        m_delegateRef->bindRenderDepthStencilTarget(&texture,
                                                  &depthBuffer,
                                                  &stencilBuffer,
                                                  state.width,
@@ -1633,7 +1635,7 @@ void EffectEngine::setRenderDepthStencilTargetFromState(const ScriptState &state
                                                  kEnableRTAA);
     }
     else {
-        m_delegate->releaseRenderDepthStencilTarget(&texture,
+        m_delegateRef->releaseRenderDepthStencilTarget(&texture,
                                                     &depthBuffer,
                                                     &stencilBuffer,
                                                     state.width,
@@ -1767,7 +1769,7 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
         static const char kMultipleTechniques[] = "Technique=Technique?";
         static const char kSingleTechnique[] = "Technique=";
         m_techniques.clear();
-        CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
+        CGeffect effect = static_cast<CGeffect>(m_effectRef->internalPointer());
         if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniques)) {
             const std::string s(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
             std::istringstream stream(s);
@@ -1832,7 +1834,7 @@ bool EffectEngine::parsePassScript(const CGpass pass)
         ScriptState lastState, newState;
         std::istringstream stream(s);
         std::string segment;
-        CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
+        CGeffect effect = static_cast<CGeffect>(m_effectRef->internalPointer());
         bool renderColorTarget0DidSet = false,
                 useRenderBuffer = false,
                 useDepthStencilBuffer = false;
@@ -1938,7 +1940,7 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
         std::string segment;
         Script scriptExternalStates;
         ScriptState lastState, newState;
-        CGeffect effect = static_cast<CGeffect>(m_effect->internalPointer());
+        CGeffect effect = static_cast<CGeffect>(m_effectRef->internalPointer());
         bool useScriptExternal = m_scriptOrder == IEffect::kPostProcess,
                 renderColorTarget0DidSet = false,
                 renderDepthStencilTargetDidSet = false,

@@ -78,7 +78,7 @@ size_t BoneKeyframe::strideSize()
 BoneKeyframe::BoneKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
       m_ptr(0),
-      m_encoding(encoding),
+      m_encodingRef(encoding),
       m_position(0.0f, 0.0f, 0.0f),
       m_rotation(Quaternion::getIdentity()),
       m_enableIK(true)
@@ -91,7 +91,7 @@ BoneKeyframe::BoneKeyframe(IEncoding *encoding)
 
 BoneKeyframe::~BoneKeyframe()
 {
-    m_encoding = 0;
+    m_encodingRef = 0;
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_enableIK = false;
@@ -123,7 +123,7 @@ void BoneKeyframe::read(const uint8_t *data)
     float *pos = chunk.position;
     float *rot = chunk.rotation;
 #endif
-    internal::setStringDirect(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
+    internal::setStringDirect(m_encodingRef->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
     setTimeIndex(static_cast<float>(chunk.timeIndex));
 #ifdef VPVL2_COORDINATE_OPENGL
     setPosition(Vector3(pos[0], pos[1], -pos[2]));
@@ -146,9 +146,9 @@ void BoneKeyframe::read(const uint8_t *data)
 void BoneKeyframe::write(uint8_t *data) const
 {
     BoneKeyframeChunk chunk;
-    uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
+    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
-    m_encoding->disposeByteArray(name);
+    m_encodingRef->disposeByteArray(name);
     chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
@@ -176,7 +176,7 @@ size_t BoneKeyframe::estimateSize() const
 
 IBoneKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_encoding);
+    BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_encodingRef);
     frame->setName(m_name);
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),

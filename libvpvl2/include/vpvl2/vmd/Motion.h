@@ -140,7 +140,7 @@ public:
         return m_name;
     }
     IModel *parentModel() const {
-        return m_model;
+        return m_modelRef;
     }
     Error error() const {
         return m_error;
@@ -185,8 +185,8 @@ private:
     void parseSelfShadowFrames(const DataInfo &info);
     void release();
 
-    IModel *m_model;
-    IEncoding *m_encoding;
+    IModel *m_modelRef;
+    IEncoding *m_encodingRef;
     IString *m_name;
     DataInfo m_result;
     BoneAnimation m_boneMotion;
