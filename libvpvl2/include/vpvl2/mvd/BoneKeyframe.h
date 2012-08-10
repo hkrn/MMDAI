@@ -56,6 +56,7 @@ public:
 
     static size_t size();
     static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+    static int interpolationTableSize();
 
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
@@ -71,12 +72,24 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    const Array<SmoothPrecision> &tableForX() const;
+    const Array<SmoothPrecision> &tableForY() const;
+    const Array<SmoothPrecision> &tableForZ() const;
+    const Array<SmoothPrecision> &tableForRotation() const;
+    bool isXLinear() const;
+    bool isYLinear() const;
+    bool isZLinear() const;
+    bool isRotationLinear() const;
+
 private:
     mutable BoneKeyframe *m_ptr;
     NameListSection *m_nameListSectionRef;
     Vector3 m_position;
     Quaternion m_rotation;
-    InterpolationParameter m_parameter;
+    Motion::InterpolationTable m_interpolationX;
+    Motion::InterpolationTable m_interpolationY;
+    Motion::InterpolationTable m_interpolationZ;
+    Motion::InterpolationTable m_interpolationRotation;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneKeyframe)
 };

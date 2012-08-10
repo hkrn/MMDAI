@@ -127,6 +127,16 @@ public:
         Array<uint8_t *> projectSectionPtrs;
         uint8_t *endPtr;
     };
+    struct InterpolationTable {
+        Array<IKeyframe::SmoothPrecision> table;
+        QuadWord parameter;
+        bool linear;
+        InterpolationTable();
+        ~InterpolationTable();
+        void copyParameter(const InterpolationTable &other);
+        void build(const QuadWord &value, int size);
+        void reset();
+    };
     static const uint8_t *kSignature;
 
     Motion(IModel *modelRef, IEncoding *encodingRef);

@@ -57,16 +57,101 @@ struct BoneSectionHeader {
 
 #pragma pack(pop)
 
+struct BoneSection::PrivateContext : public BaseSectionContext {
+    IBone *bone;
+    Vector3 position;
+    Quaternion rotation;
+    PrivateContext()
+        : bone(0),
+          position(kZeroV3),
+          rotation(Quaternion::getIdentity())
+    {
+    }
+    ~PrivateContext() {
+    }
+    void seek(const IKeyframe::TimeIndex &timeIndex) {
+        int fromIndex, toIndex;
+        IKeyframe::TimeIndex currentTimeIndex;
+        findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+        const BoneKeyframe *keyframeFrom = reinterpret_cast<const BoneKeyframe *>(keyframes->at(fromIndex)),
+                *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes->at(toIndex));
+        const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(),
+                timeIndexTo = keyframeTo->timeIndex();
+        BoneKeyframe *keyframeForInterpolation = const_cast<BoneKeyframe *>(keyframeTo);
+        const Vector3 &positionFrom = keyframeFrom->position();
+        const Quaternion &rotationFrom = keyframeFrom->rotation();
+        const Vector3 &positionTo = keyframeTo->position();
+        const Quaternion &rotationTo = keyframeTo->rotation();
+        if (timeIndexFrom != timeIndexTo) {
+            if (currentTimeIndex <= timeIndexFrom) {
+                position = positionFrom;
+                rotation = rotationFrom;
+            }
+            else if (currentTimeIndex >= timeIndexTo) {
+                position = positionTo;
+                rotation = rotationTo;
+            }
+            else {
+                const IKeyframe::SmoothPrecision &weight = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+                IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
+                lerpVector3(keyframeForInterpolation->tableForX(), positionFrom, positionTo,
+                            weight, 0, keyframeForInterpolation->isXLinear(), x);
+                lerpVector3(keyframeForInterpolation->tableForY(), positionFrom, positionTo,
+                            weight, 1, keyframeForInterpolation->isYLinear(), y);
+                lerpVector3(keyframeForInterpolation->tableForZ(), positionFrom, positionTo,
+                            weight, 2, keyframeForInterpolation->isZLinear(), z);
+                position.setValue(x, y, z);
+                if (keyframeForInterpolation->isRotationLinear()) {
+                    rotation = rotationFrom.slerp(rotationTo, weight);
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &weight2 = weightValue(keyframeForInterpolation->tableForRotation(), weight);
+                    rotation = rotationFrom.slerp(rotationTo, weight2);
+                }
+            }
+        }
+        else {
+            position = positionFrom;
+            rotation = rotationFrom;
+        }
+    }
+
+    IKeyframe::SmoothPrecision weightValue(const Array<IKeyframe::SmoothPrecision> &v,
+                                           const IKeyframe::SmoothPrecision &w)
+    {
+        const uint16_t index = static_cast<int16_t>(w * BoneKeyframe::interpolationTableSize());
+        return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyframe::interpolationTableSize() - index);
+    }
+
+    void lerpVector3(const Array<IKeyframe::SmoothPrecision> &table,
+                     const Vector3 &from,
+                     const Vector3 &to,
+                     const IKeyframe::SmoothPrecision &weight,
+                     bool isLinear,
+                     int at,
+                     IKeyframe::SmoothPrecision &value)
+    {
+        const IKeyframe::SmoothPrecision &valueFrom = from[at];
+        const IKeyframe::SmoothPrecision &valueTo = to[at];
+        if (isLinear) {
+            value = internal::lerp(valueFrom, valueTo, weight);
+        }
+        else {
+            const IKeyframe::SmoothPrecision &weight2 = weightValue(table, weight);
+            value = internal::lerp(valueFrom, valueTo, weight2);
+        }
+    }
+};
+
 BoneSection::BoneSection(NameListSection *nameListSectionRef)
     : BaseSection(nameListSectionRef),
-      m_keyframeListPtr(0),
-      m_keyframePtr(0)
+      m_keyframePtr(0),
+      m_contextPtr(0)
 {
 }
 
 BoneSection::~BoneSection()
 {
-    release();
 }
 
 bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -90,18 +175,11 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 
 void BoneSection::release()
 {
-    if (m_keyframeListPtr) {
-        m_keyframeListPtr->releaseAll();
-        delete m_keyframeListPtr;
-        m_keyframeListPtr = 0;
-    }
+    BaseSection::release();
+    delete m_contextPtr;
+    m_contextPtr = 0;
     delete m_keyframePtr;
     m_keyframePtr = 0;
-    const int nitems = m_allKeyframes.count();
-    for (int i = 0; i < nitems; i++) {
-        BoneKeyframeList **keyframes = const_cast<BoneKeyframeList **>(m_allKeyframes.value(i));
-        (*keyframes)->releaseAll();
-    }
     m_allKeyframes.releaseAll();
 }
 
@@ -112,16 +190,20 @@ void BoneSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
-    m_keyframeListPtr = new BoneKeyframeList();
+    m_keyframeListPtr = new KeyframeList();
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new BoneKeyframe(m_nameListSectionRef);
         m_keyframePtr->read(ptr);
         m_keyframeListPtr->add(m_keyframePtr);
         ptr += sizeOfKeyframe;
     }
-    m_allKeyframes.insert(header.key, m_keyframeListPtr);
+    m_keyframeListPtr->sort(KeyframeTimeIndexPredication());
+    m_contextPtr = new PrivateContext();
+    m_contextPtr->keyframes = m_keyframeListPtr;
+    m_allKeyframes.insert(header.key, m_contextPtr);
     m_keyframeListPtr = 0;
     m_keyframePtr = 0;
+    m_contextPtr = 0;
 }
 
 void BoneSection::write(uint8_t *data) const

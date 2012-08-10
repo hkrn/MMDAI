@@ -61,10 +61,10 @@ public:
     size_t estimateSize() const;
 
 private:
-    typedef Array<BoneKeyframe *> BoneKeyframeList;
-    BoneKeyframeList *m_keyframeListPtr;
+    struct PrivateContext;
     BoneKeyframe *m_keyframePtr;
-    Hash<btHashInt, BoneKeyframeList *> m_allKeyframes;
+    PrivateContext *m_contextPtr;
+    Hash<btHashInt, PrivateContext *> m_allKeyframes;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneSection)
 };

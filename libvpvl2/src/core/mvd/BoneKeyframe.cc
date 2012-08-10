@@ -93,6 +93,11 @@ bool BoneKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion
     return true;
 }
 
+int BoneKeyframe::interpolationTableSize()
+{
+    return 256;
+}
+
 void BoneKeyframe::read(const uint8_t *data)
 {
     const BoneKeyframeChunk *chunk = reinterpret_cast<const BoneKeyframeChunk *>(data);
@@ -102,7 +107,7 @@ void BoneKeyframe::read(const uint8_t *data)
     setLayerIndex(chunk->layerIndex);
 }
 
-void BoneKeyframe::write(uint8_t *data) const
+void BoneKeyframe::write(uint8_t * /* data */) const
 {
 }
 
@@ -119,21 +124,60 @@ IBoneKeyframe *BoneKeyframe::clone() const
     frame->setLayerIndex(m_layerIndex);
     frame->setPosition(m_position);
     frame->setRotation(m_rotation);
-    frame->m_parameter = m_parameter;
+    frame->m_interpolationX.copyParameter(m_interpolationX);
+    frame->m_interpolationY.copyParameter(m_interpolationY);
+    frame->m_interpolationZ.copyParameter(m_interpolationZ);
+    frame->m_interpolationRotation.copyParameter(m_interpolationRotation);
     m_ptr = 0;
     return frame;
 }
 
 void BoneKeyframe::setDefaultInterpolationParameter()
 {
+    m_interpolationX.reset();
+    m_interpolationY.reset();
+    m_interpolationZ.reset();
+    m_interpolationRotation.reset();
 }
 
 void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
 {
+    switch (type) {
+    case kX:
+        m_interpolationX.build(value, interpolationTableSize());
+        break;
+    case kY:
+        m_interpolationY.build(value, interpolationTableSize());
+        break;
+    case kZ:
+        m_interpolationZ.build(value, interpolationTableSize());
+        break;
+    case kRotation:
+        m_interpolationRotation.build(value, interpolationTableSize());
+        break;
+    default:
+        break;
+    }
 }
 
 void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
 {
+    switch (type) {
+    case kX:
+        value = m_interpolationX.parameter;
+        break;
+    case kY:
+        value = m_interpolationY.parameter;
+        break;
+    case kZ:
+        value = m_interpolationZ.parameter;
+        break;
+    case kRotation:
+        value = m_interpolationRotation.parameter;
+        break;
+    default:
+        break;
+    }
 }
 
 const Vector3 &BoneKeyframe::position() const
@@ -156,13 +200,53 @@ void BoneKeyframe::setRotation(const Quaternion &value)
     m_rotation = value;
 }
 
-void BoneKeyframe::setName(const IString *value)
+void BoneKeyframe::setName(const IString * /* value */)
 {
 }
 
 IKeyframe::Type BoneKeyframe::type() const
 {
     return kBone;
+}
+
+const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForX() const
+{
+    return m_interpolationX.table;
+}
+
+const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForY() const
+{
+    return m_interpolationY.table;
+}
+
+const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForZ() const
+{
+    return m_interpolationZ.table;
+}
+
+const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForRotation() const
+{
+    return m_interpolationRotation.table;
+}
+
+bool BoneKeyframe::isXLinear() const
+{
+    return m_interpolationX.linear;
+}
+
+bool BoneKeyframe::isYLinear() const
+{
+    return m_interpolationY.linear;
+}
+
+bool BoneKeyframe::isZLinear() const
+{
+    return m_interpolationZ.linear;
+}
+
+bool BoneKeyframe::isRotationLinear() const
+{
+    return m_interpolationRotation.linear;
 }
 
 } /* namespace mvd */

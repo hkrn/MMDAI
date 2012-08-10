@@ -70,6 +70,48 @@ struct SectionHeader {
 
 #pragma pack(pop)
 
+
+Motion::InterpolationTable::InterpolationTable()
+    : parameter(20, 107, 20, 107),
+      linear(true)
+{
+}
+
+Motion::InterpolationTable::~InterpolationTable()
+{
+    parameter.setValue(20, 107, 20, 107);
+    linear = true;
+}
+
+void Motion::InterpolationTable::copyParameter(const InterpolationTable &other)
+{
+    parameter = other.parameter;
+}
+
+void Motion::InterpolationTable::build(const QuadWord &value, int size)
+{
+    if (!btFuzzyZero(value.x() - value.z()) || !btFuzzyZero(value.y() - value.w())) {
+        table.resize(size);
+        const IKeyframe::SmoothPrecision &x1 = value.x() / 127.0, &x2 = value.z() / 127.0;
+        const IKeyframe::SmoothPrecision &y1 = value.z() / 127.0, &y2 = value.w() / 127.0;
+        IKeyframe::SmoothPrecision *ptr = &table[0];
+        internal::buildInterpolationTable(x1, x2, y1, y2, size, ptr);
+        linear = false;
+    }
+    else {
+        table.clear();
+        linear = true;
+    }
+    parameter = value;
+}
+
+void Motion::InterpolationTable::reset()
+{
+    table.clear();
+    linear = true;
+    parameter.setValue(20, 107, 20, 107);
+}
+
 Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
     : m_assetSection(0),
       m_boneSection(0),
