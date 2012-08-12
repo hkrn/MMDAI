@@ -50,18 +50,21 @@ class BoneKeyframe;
 class VPVL2_API BoneSection : public BaseSection
 {
 public:
-    BoneSection(NameListSection *nameListSectionRef);
+    BoneSection(IModel *model, NameListSection *nameListSectionRef);
     ~BoneSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
     void release();
     void read(const uint8_t *data);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
+    size_t countKeyframes() const;
 
 private:
     struct PrivateContext;
+    IModel *m_modelRef;
     BoneKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;
     Hash<btHashInt, PrivateContext *> m_allKeyframes;

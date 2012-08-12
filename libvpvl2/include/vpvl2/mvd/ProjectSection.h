@@ -55,8 +55,10 @@ public:
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
     void read(const uint8_t *data);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
+    size_t countKeyframes() const;
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectSection)

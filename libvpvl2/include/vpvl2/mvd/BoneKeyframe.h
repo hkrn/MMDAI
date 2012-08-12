@@ -72,14 +72,10 @@ public:
     void setName(const IString *value);
     Type type() const;
 
-    const Array<SmoothPrecision> &tableForX() const;
-    const Array<SmoothPrecision> &tableForY() const;
-    const Array<SmoothPrecision> &tableForZ() const;
-    const Array<SmoothPrecision> &tableForRotation() const;
-    bool isXLinear() const;
-    bool isYLinear() const;
-    bool isZLinear() const;
-    bool isRotationLinear() const;
+    const Motion::InterpolationTable &tableForX() const;
+    const Motion::InterpolationTable &tableForY() const;
+    const Motion::InterpolationTable &tableForZ() const;
+    const Motion::InterpolationTable &tableForRotation() const;
 
 private:
     mutable BoneKeyframe *m_ptr;

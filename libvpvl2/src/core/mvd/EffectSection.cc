@@ -95,15 +95,26 @@ bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
     return true;
 }
 
-void EffectSection::read(const uint8_t *data)
+void EffectSection::read(const uint8_t * /* data */)
 {
 }
 
-void EffectSection::write(uint8_t *data) const
+void EffectSection::seek(const IKeyframe::TimeIndex &timeIndex)
+{
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = timeIndex;
+}
+
+void EffectSection::write(uint8_t * /* data */) const
 {
 }
 
 size_t EffectSection::estimateSize() const
+{
+    return 0;
+}
+
+size_t EffectSection::countKeyframes() const
 {
     return 0;
 }

@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API ModelKeyframe : public vmd::BaseKeyframe
 {
 public:
-    ModelKeyframe(IEncoding *encoding);
+    ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKBones);
     ~ModelKeyframe();
 
     static size_t size();
@@ -65,7 +65,8 @@ public:
     Type type() const;
 
 private:
-    IEncoding *m_encoding;
+    NameListSection *m_nameListSectionRef;
+    int m_countOfIKBones;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelKeyframe)
 };

@@ -84,15 +84,26 @@ bool ProjectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &inf
     return true;
 }
 
-void ProjectSection::read(const uint8_t *data)
+void ProjectSection::read(const uint8_t * /* data */)
 {
 }
 
-void ProjectSection::write(uint8_t *data) const
+void ProjectSection::seek(const IKeyframe::TimeIndex &timeIndex)
+{
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = timeIndex;
+}
+
+void ProjectSection::write(uint8_t * /* data */) const
 {
 }
 
 size_t ProjectSection::estimateSize() const
+{
+    return 0;
+}
+
+size_t ProjectSection::countKeyframes() const
 {
     return 0;
 }

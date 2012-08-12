@@ -66,10 +66,13 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    const Motion::InterpolationTable &tableForWeight() const;
+
 private:
     mutable MorphKeyframe *m_ptr;
     NameListSection *m_nameListSectionRef;
     IMorph::WeightPrecision m_weight;
+    Motion::InterpolationTable m_interpolationWeight;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)
 };

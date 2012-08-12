@@ -45,20 +45,31 @@ class IEncoding;
 
 namespace mvd
 {
+class ModelKeyframe;
 
 class VPVL2_API ModelSection : public BaseSection
 {
 public:
-    ModelSection(NameListSection *nameListSectionRef);
+    ModelSection(IModel *model, NameListSection *nameListSectionRef, size_t align);
     ~ModelSection();
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t adjust, Motion::DataInfo &info);
+    static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
+    void release();
     void read(const uint8_t *data);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
+    size_t countKeyframes() const;
 
 private:
+    struct PrivateContext;
+    IModel *m_modelRef;
+    ModelKeyframe *m_keyframePtr;
+    PrivateContext *m_contextPtr;
+    size_t m_adjustAlighment;
+    int m_countOfIKBones;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelSection)
 };
 

@@ -50,21 +50,24 @@ class MorphKeyframe;
 class VPVL2_API MorphSection : public BaseSection
 {
 public:
-    MorphSection(NameListSection *nameListSectionRef);
+    MorphSection(IModel *model, NameListSection *nameListSectionRef);
     ~MorphSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
     void release();
     void read(const uint8_t *data);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
+    size_t countKeyframes() const;
 
 private:
-    typedef Array<MorphKeyframe *> MorphKeyframeList;
-    MorphKeyframeList *m_keyframeListPtr;
+    struct PrivateContext;
+    IModel *m_modelRef;
     MorphKeyframe *m_keyframePtr;
-    Hash<btHashInt, MorphKeyframeList *> m_allKeyframes;
+    PrivateContext *m_contextPtr;
+    Hash<btHashInt, PrivateContext *> m_allKeyframes;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphSection)
 };

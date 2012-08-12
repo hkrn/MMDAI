@@ -60,14 +60,17 @@ struct ModelKeyframeChunk {
 
 #pragma pack(pop)
 
-ModelKeyframe::ModelKeyframe(IEncoding *encoding)
+ModelKeyframe::ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKBones)
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_nameListSectionRef(nameListSectionRef),
+      m_countOfIKBones(countOfIKBones)
 {
 }
 
 ModelKeyframe::~ModelKeyframe()
 {
+    m_nameListSectionRef = 0;
+    m_countOfIKBones = 0;
 }
 
 size_t ModelKeyframe::size()
@@ -92,15 +95,17 @@ bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_
 
 void ModelKeyframe::read(const uint8_t *data)
 {
+    const ModelKeyframeChunk *chunk = reinterpret_cast<const ModelKeyframeChunk *>(data);
+    setTimeIndex(chunk->timeIndex);
 }
 
-void ModelKeyframe::write(uint8_t *data) const
+void ModelKeyframe::write(uint8_t * /* data */) const
 {
 }
 
 size_t ModelKeyframe::estimateSize() const
 {
-    return 0;
+    return size() + m_countOfIKBones;
 }
 
 /*
@@ -110,7 +115,7 @@ IModelKeyframe *ModelKeyframe::clone() const
 }
 */
 
-void ModelKeyframe::setName(const IString *value)
+void ModelKeyframe::setName(const IString * /* value */)
 {
 }
 

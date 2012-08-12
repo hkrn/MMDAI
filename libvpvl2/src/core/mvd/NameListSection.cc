@@ -98,6 +98,7 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     uint8_t *namePtr;
     size_t nNameSize;
     const int nkeyframes = header.count;
+    m_names.resize(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         int keyIndex = internal::readUnsignedIndex(ptr, 4);
         internal::sizeText(ptr, rest, namePtr, nNameSize);
@@ -108,7 +109,7 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     }
 }
 
-void NameListSection::write(uint8_t *data) const
+void NameListSection::write(uint8_t * /* data */) const
 {
 }
 

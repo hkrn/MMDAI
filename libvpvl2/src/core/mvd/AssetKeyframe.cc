@@ -87,17 +87,17 @@ bool AssetKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motio
     return true;
 }
 
-void AssetKeyframe::read(const uint8_t *data)
+void AssetKeyframe::read(const uint8_t * /* data */)
 {
 }
 
-void AssetKeyframe::write(uint8_t *data) const
+void AssetKeyframe::write(uint8_t * /* data */) const
 {
 }
 
 size_t AssetKeyframe::estimateSize() const
 {
-    return 0;
+    return size();
 }
 
 /*
@@ -107,7 +107,7 @@ IAssetKeyframe *AssetKeyframe::clone() const
 }
 */
 
-void AssetKeyframe::setName(const IString *value)
+void AssetKeyframe::setName(const IString * /* value */)
 {
 }
 

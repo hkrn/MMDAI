@@ -57,12 +57,15 @@ public:
 
     void release();
     void read(const uint8_t *data);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
+    size_t countKeyframes() const;
 
 private:
+    struct PrivateContext;
     CameraKeyframe *m_keyframePtr;
-    Array<CameraKeyframe *> m_keyframes;
+    PrivateContext *m_contextPtr;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraSection)
 };

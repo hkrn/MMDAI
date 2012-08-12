@@ -87,17 +87,17 @@ bool EffectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Moti
     return true;
 }
 
-void EffectKeyframe::read(const uint8_t *data)
+void EffectKeyframe::read(const uint8_t * /* data */)
 {
 }
 
-void EffectKeyframe::write(uint8_t *data) const
+void EffectKeyframe::write(uint8_t * /* data */) const
 {
 }
 
 size_t EffectKeyframe::estimateSize() const
 {
-    return 0;
+    return size();
 }
 
 /*

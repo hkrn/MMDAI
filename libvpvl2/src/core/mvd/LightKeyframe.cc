@@ -102,7 +102,7 @@ void LightKeyframe::write(uint8_t *data) const
 
 size_t LightKeyframe::estimateSize() const
 {
-    return 0;
+    return size();
 }
 
 ILightKeyframe *LightKeyframe::clone() const

@@ -94,13 +94,13 @@ void MorphKeyframe::read(const uint8_t *data)
     setTimeIndex(chunk->timeIndex);
 }
 
-void MorphKeyframe::write(uint8_t *data) const
+void MorphKeyframe::write(uint8_t * /* data */) const
 {
 }
 
 size_t MorphKeyframe::estimateSize() const
 {
-    return 0;
+    return size();
 }
 
 IMorphKeyframe *MorphKeyframe::clone() const
@@ -129,6 +129,11 @@ void MorphKeyframe::setName(const IString * /* value */)
 IMorphKeyframe::Type MorphKeyframe::type() const
 {
     return kMorph;
+}
+
+const Motion::InterpolationTable &MorphKeyframe::tableForWeight() const
+{
+    return m_interpolationWeight;
 }
 
 } /* namespace mvd */

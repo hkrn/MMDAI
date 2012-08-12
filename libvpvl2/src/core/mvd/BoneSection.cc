@@ -58,16 +58,22 @@ struct BoneSectionHeader {
 #pragma pack(pop)
 
 struct BoneSection::PrivateContext : public BaseSectionContext {
-    IBone *bone;
+    IBone *boneRef;
     Vector3 position;
     Quaternion rotation;
+    int countOfLayers;
     PrivateContext()
-        : bone(0),
+        : boneRef(0),
           position(kZeroV3),
-          rotation(Quaternion::getIdentity())
+          rotation(Quaternion::getIdentity()),
+          countOfLayers(0)
     {
     }
     ~PrivateContext() {
+        boneRef = 0;
+        position.setZero();
+        rotation.setValue(0, 0, 0, 1);
+        countOfLayers = 0;
     }
     void seek(const IKeyframe::TimeIndex &timeIndex) {
         int fromIndex, toIndex;
@@ -77,7 +83,6 @@ struct BoneSection::PrivateContext : public BaseSectionContext {
                 *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes->at(toIndex));
         const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(),
                 timeIndexTo = keyframeTo->timeIndex();
-        BoneKeyframe *keyframeForInterpolation = const_cast<BoneKeyframe *>(keyframeTo);
         const Vector3 &positionFrom = keyframeFrom->position();
         const Quaternion &rotationFrom = keyframeFrom->rotation();
         const Vector3 &positionTo = keyframeTo->position();
@@ -94,18 +99,16 @@ struct BoneSection::PrivateContext : public BaseSectionContext {
             else {
                 const IKeyframe::SmoothPrecision &weight = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
                 IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
-                lerpVector3(keyframeForInterpolation->tableForX(), positionFrom, positionTo,
-                            weight, 0, keyframeForInterpolation->isXLinear(), x);
-                lerpVector3(keyframeForInterpolation->tableForY(), positionFrom, positionTo,
-                            weight, 1, keyframeForInterpolation->isYLinear(), y);
-                lerpVector3(keyframeForInterpolation->tableForZ(), positionFrom, positionTo,
-                            weight, 2, keyframeForInterpolation->isZLinear(), z);
+                lerp(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
+                lerp(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
+                lerp(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
                 position.setValue(x, y, z);
-                if (keyframeForInterpolation->isRotationLinear()) {
+                const Motion::InterpolationTable &rt = keyframeTo->tableForRotation();
+                if (rt.linear) {
                     rotation = rotationFrom.slerp(rotationTo, weight);
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight2 = weightValue(keyframeForInterpolation->tableForRotation(), weight);
+                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(rt, weight);
                     rotation = rotationFrom.slerp(rotationTo, weight2);
                 }
             }
@@ -114,37 +117,14 @@ struct BoneSection::PrivateContext : public BaseSectionContext {
             position = positionFrom;
             rotation = rotationFrom;
         }
-    }
-
-    IKeyframe::SmoothPrecision weightValue(const Array<IKeyframe::SmoothPrecision> &v,
-                                           const IKeyframe::SmoothPrecision &w)
-    {
-        const uint16_t index = static_cast<int16_t>(w * BoneKeyframe::interpolationTableSize());
-        return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyframe::interpolationTableSize() - index);
-    }
-
-    void lerpVector3(const Array<IKeyframe::SmoothPrecision> &table,
-                     const Vector3 &from,
-                     const Vector3 &to,
-                     const IKeyframe::SmoothPrecision &weight,
-                     bool isLinear,
-                     int at,
-                     IKeyframe::SmoothPrecision &value)
-    {
-        const IKeyframe::SmoothPrecision &valueFrom = from[at];
-        const IKeyframe::SmoothPrecision &valueTo = to[at];
-        if (isLinear) {
-            value = internal::lerp(valueFrom, valueTo, weight);
-        }
-        else {
-            const IKeyframe::SmoothPrecision &weight2 = weightValue(table, weight);
-            value = internal::lerp(valueFrom, valueTo, weight2);
-        }
+        boneRef->setPosition(position);
+        boneRef->setRotation(rotation);
     }
 };
 
-BoneSection::BoneSection(NameListSection *nameListSectionRef)
+BoneSection::BoneSection(IModel *model, NameListSection *nameListSectionRef)
     : BaseSection(nameListSectionRef),
+      m_modelRef(model),
       m_keyframePtr(0),
       m_contextPtr(0)
 {
@@ -190,29 +170,71 @@ void BoneSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
+    delete m_keyframeListPtr;
     m_keyframeListPtr = new KeyframeList();
+    m_keyframeListPtr->reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new BoneKeyframe(m_nameListSectionRef);
         m_keyframePtr->read(ptr);
         m_keyframeListPtr->add(m_keyframePtr);
+        btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
         ptr += sizeOfKeyframe;
     }
     m_keyframeListPtr->sort(KeyframeTimeIndexPredication());
+    delete m_contextPtr;
     m_contextPtr = new PrivateContext();
     m_contextPtr->keyframes = m_keyframeListPtr;
+    m_contextPtr->boneRef = m_modelRef ? m_modelRef->findBone(m_nameListSectionRef->value(header.key)) : 0;
+    m_contextPtr->countOfLayers = header.countOfLayers;
     m_allKeyframes.insert(header.key, m_contextPtr);
     m_keyframeListPtr = 0;
     m_keyframePtr = 0;
     m_contextPtr = 0;
 }
 
-void BoneSection::write(uint8_t *data) const
+void BoneSection::seek(const IKeyframe::TimeIndex &timeIndex)
+{
+    if (m_modelRef) {
+        const int ncontexts = m_allKeyframes.count();
+        for (int i = 0; i < ncontexts; i++) {
+            PrivateContext **context = const_cast<PrivateContext **>(m_allKeyframes.value(i));
+            (*context)->seek(timeIndex);
+        }
+    }
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = timeIndex;
+}
+
+void BoneSection::write(uint8_t * /* data */) const
 {
 }
 
 size_t BoneSection::estimateSize() const
 {
-    return 0;
+    size_t size = 0;
+    const int ncontexts = m_allKeyframes.count();
+    for (int i = 0; i < ncontexts; i++) {
+        const PrivateContext *const *context = m_allKeyframes.value(i);
+        const Array<IKeyframe *> *keyframes = (*context)->keyframes;
+        const int nkeyframes = keyframes->count();
+        size += sizeof(BoneSectionHeader);
+        size += sizeof(uint8_t) * (*context)->countOfLayers;
+        for (int i = 0 ; i < nkeyframes; i++) {
+            size += keyframes->at(i)->estimateSize();
+        }
+    }
+    return size;
+}
+
+size_t BoneSection::countKeyframes() const
+{
+    size_t nkeyframes = 0;
+    const int ncontexts = m_allKeyframes.count();
+    for (int i = 0; i < ncontexts; i++) {
+        const PrivateContext *const *context = m_allKeyframes.value(i);
+        nkeyframes += (*context)->keyframes->count();
+    }
+    return nkeyframes;
 }
 
 } /* namespace mvd */

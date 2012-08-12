@@ -613,7 +613,11 @@ TEST(MotionTest, ParseMVD)
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
         Encoding encoding;
-        Model model(&encoding);
+        MockIModel model;
+        MockIBone bone;
+        MockIMorph morph;
+        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
+        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
         mvd::Motion motion(&model, &encoding);
         mvd::Motion::DataInfo result;
         // valid model motion should be loaded successfully

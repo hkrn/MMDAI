@@ -105,6 +105,10 @@ void BoneKeyframe::read(const uint8_t *data)
     internal::setRotation(chunk->rotation, m_rotation);
     setTimeIndex(chunk->timeIndex);
     setLayerIndex(chunk->layerIndex);
+    setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk->x));
+    setInterpolationParameter(kY, Motion::InterpolationTable::toQuadWord(chunk->y));
+    setInterpolationParameter(kZ, Motion::InterpolationTable::toQuadWord(chunk->z));
+    setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk->r));
 }
 
 void BoneKeyframe::write(uint8_t * /* data */) const
@@ -113,7 +117,7 @@ void BoneKeyframe::write(uint8_t * /* data */) const
 
 size_t BoneKeyframe::estimateSize() const
 {
-    return 0;
+    return size();
 }
 
 IBoneKeyframe *BoneKeyframe::clone() const
@@ -124,10 +128,10 @@ IBoneKeyframe *BoneKeyframe::clone() const
     frame->setLayerIndex(m_layerIndex);
     frame->setPosition(m_position);
     frame->setRotation(m_rotation);
-    frame->m_interpolationX.copyParameter(m_interpolationX);
-    frame->m_interpolationY.copyParameter(m_interpolationY);
-    frame->m_interpolationZ.copyParameter(m_interpolationZ);
-    frame->m_interpolationRotation.copyParameter(m_interpolationRotation);
+    frame->setInterpolationParameter(kX, m_interpolationX.parameter);
+    frame->setInterpolationParameter(kY, m_interpolationY.parameter);
+    frame->setInterpolationParameter(kZ, m_interpolationZ.parameter);
+    frame->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
     m_ptr = 0;
     return frame;
 }
@@ -209,44 +213,24 @@ IKeyframe::Type BoneKeyframe::type() const
     return kBone;
 }
 
-const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForX() const
+const Motion::InterpolationTable &BoneKeyframe::tableForX() const
 {
-    return m_interpolationX.table;
+    return m_interpolationX;
 }
 
-const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForY() const
+const Motion::InterpolationTable &BoneKeyframe::tableForY() const
 {
-    return m_interpolationY.table;
+    return m_interpolationY;
 }
 
-const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForZ() const
+const Motion::InterpolationTable &BoneKeyframe::tableForZ() const
 {
-    return m_interpolationZ.table;
+    return m_interpolationZ;
 }
 
-const Array<IKeyframe::SmoothPrecision> &BoneKeyframe::tableForRotation() const
+const Motion::InterpolationTable &BoneKeyframe::tableForRotation() const
 {
-    return m_interpolationRotation.table;
-}
-
-bool BoneKeyframe::isXLinear() const
-{
-    return m_interpolationX.linear;
-}
-
-bool BoneKeyframe::isYLinear() const
-{
-    return m_interpolationY.linear;
-}
-
-bool BoneKeyframe::isZLinear() const
-{
-    return m_interpolationZ.linear;
-}
-
-bool BoneKeyframe::isRotationLinear() const
-{
-    return m_interpolationRotation.linear;
+    return m_interpolationRotation;
 }
 
 } /* namespace mvd */

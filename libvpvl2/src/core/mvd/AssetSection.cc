@@ -84,15 +84,26 @@ bool AssetSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     return true;
 }
 
-void AssetSection::read(const uint8_t *data)
+void AssetSection::read(const uint8_t * /* data */)
 {
 }
 
-void AssetSection::write(uint8_t *data) const
+void AssetSection::seek(const IKeyframe::TimeIndex &timeIndex)
+{
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = timeIndex;
+}
+
+void AssetSection::write(uint8_t * /* data */) const
 {
 }
 
 size_t AssetSection::estimateSize() const
+{
+    return 0;
+}
+
+size_t AssetSection::countKeyframes() const
 {
     return 0;
 }

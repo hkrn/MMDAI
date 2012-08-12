@@ -56,6 +56,7 @@ public:
 
     static size_t size();
     static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+    static int interpolationTableSize();
 
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
@@ -77,6 +78,11 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    const Motion::InterpolationTable &tableForPosition() const;
+    const Motion::InterpolationTable &tableForRotation() const;
+    const Motion::InterpolationTable &tableForFov() const;
+    const Motion::InterpolationTable &tableForDistance() const;
+
 private:
     mutable CameraKeyframe *m_ptr;
     Vector3 m_position;
@@ -84,7 +90,10 @@ private:
     float m_distance;
     float m_fov;
     bool m_noPerspective;
-    InterpolationParameter m_parameter;
+    Motion::InterpolationTable m_interpolationPosition;
+    Motion::InterpolationTable m_interpolationRotation;
+    Motion::InterpolationTable m_interpolationFov;
+    Motion::InterpolationTable m_interpolationDistance;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraKeyframe)
 };

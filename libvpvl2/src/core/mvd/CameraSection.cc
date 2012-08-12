@@ -56,9 +56,103 @@ struct CameraSectionHeader {
 
 #pragma pack(pop)
 
+struct CameraSection::PrivateContext : public BaseSectionContext {
+    Vector3 position;
+    Vector3 angle;
+    Scalar distance;
+    Scalar fovy;
+    int countOfLayers;
+    PrivateContext()
+        : position(kZeroV3),
+          angle(kZeroV3),
+          distance(0),
+          fovy(0),
+          countOfLayers(0)
+    {
+    }
+    ~PrivateContext() {
+        position.setZero();
+        angle.setZero();
+        distance = 0;
+        fovy = 0;
+        countOfLayers = 0;
+    }
+    void seek(const IKeyframe::TimeIndex &timeIndex) {
+        int fromIndex, toIndex;
+        IKeyframe::TimeIndex currentTimeIndex;
+        findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+        const CameraKeyframe *keyframeFrom = reinterpret_cast<const CameraKeyframe *>(keyframes->at(fromIndex)),
+                *keyframeTo = reinterpret_cast<const CameraKeyframe *>(keyframes->at(toIndex));
+        const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
+        const Scalar &distanceFrom = keyframeFrom->distance(), fovyFrom = keyframeFrom->fov();
+        const Vector3 &positionFrom = keyframeFrom->position(), angleFrom = keyframeFrom->angle();
+        const Scalar &distanceTo = keyframeTo->distance(), fovyTo = keyframeTo->fov();
+        const Vector3 &positionTo = keyframeTo->position(), angleTo = keyframeTo->angle();
+        if (timeIndexFrom != timeIndexTo) {
+            if (currentTimeIndex <= timeIndexFrom) {
+                distance = distanceFrom;
+                position = positionFrom;
+                angle = angleFrom;
+                fovy = fovyFrom;
+            }
+            else if (currentTimeIndex >= timeIndexTo) {
+                distance = distanceTo;
+                position = positionTo;
+                angle = angleTo;
+                fovy = fovyTo;
+            }
+            else if (timeIndexTo - timeIndexFrom <= 1.0f) {
+                distance = distanceFrom;
+                position = positionFrom;
+                angle = angleFrom;
+                fovy = fovyFrom;
+            }
+            else {
+                const IKeyframe::SmoothPrecision &weight = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+                IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
+                lerp(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 0, x);
+                lerp(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 1, y);
+                lerp(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 2, z);
+                position.setValue(x, y, z);
+                const Motion::InterpolationTable &rt = keyframeTo->tableForRotation();
+                if (rt.linear) {
+                    angle = angleFrom.lerp(angleTo, weight);
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(rt, weight);
+                    angle = angleFrom.lerp(angleTo, weight2);
+                }
+                const Motion::InterpolationTable &dt = keyframeTo->tableForDistance();
+                if (dt.linear) {
+                    distance = internal::lerp(distanceFrom, distanceTo, weight);
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(dt, weight);
+                    distance = internal::lerp(distanceFrom, distanceTo, weight2);
+                }
+                const Motion::InterpolationTable &ft = keyframeTo->tableForFov();
+                if (ft.linear) {
+                    fovy = internal::lerp(fovyFrom, fovyTo, weight);
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(ft, weight);
+                    fovy = internal::lerp(fovyFrom, fovyTo, weight2);
+                }
+            }
+        }
+        else {
+            distance = distanceFrom;
+            position = positionFrom;
+            angle = angleFrom;
+            fovy = fovyFrom;
+        }
+    }
+};
+
 CameraSection::CameraSection(NameListSection *nameListSectionRef)
     : BaseSection(nameListSectionRef),
-      m_keyframePtr(0)
+      m_keyframePtr(0),
+      m_contextPtr(0)
 {
 }
 
@@ -90,6 +184,8 @@ void CameraSection::release()
 {
     delete m_keyframePtr;
     m_keyframePtr = 0;
+    delete m_contextPtr;
+    m_contextPtr = 0;
 }
 
 void CameraSection::read(const uint8_t *data)
@@ -99,21 +195,51 @@ void CameraSection::read(const uint8_t *data)
     const size_t sizeOfkeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
+    delete m_contextPtr;
+    m_contextPtr = new PrivateContext();
+    m_contextPtr->countOfLayers = header.countOfLayers;
+    m_contextPtr->keyframes->reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new CameraKeyframe();
         m_keyframePtr->read(ptr);
-        m_keyframes.add(m_keyframePtr);
+        m_contextPtr->keyframes->add(m_keyframePtr);
+        btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
         ptr += sizeOfkeyframe;
     }
+    m_keyframePtr = 0;
 }
 
-void CameraSection::write(uint8_t *data) const
+void CameraSection::seek(const IKeyframe::TimeIndex &timeIndex)
+{
+    if (m_contextPtr)
+        m_contextPtr->seek(timeIndex);
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = timeIndex;
+}
+
+void CameraSection::write(uint8_t * /* data */) const
 {
 }
 
 size_t CameraSection::estimateSize() const
 {
-    return 0;
+    size_t size = 0;
+    size += sizeof(CameraSectionHeader);
+    if (m_contextPtr) {
+        size += sizeof(uint8_t) * m_contextPtr->countOfLayers;
+        const Array<IKeyframe *> *keyframes = m_contextPtr->keyframes;
+        const int nkeyframes = keyframes->count();
+        for (int i = 0; i < nkeyframes; i++) {
+            const IKeyframe *keyframe = keyframes->at(i);
+            size += keyframe->estimateSize();
+        }
+    }
+    return size;
+}
+
+size_t CameraSection::countKeyframes() const
+{
+    return m_contextPtr ? m_contextPtr->keyframes->count() : 0;
 }
 
 } /* namespace mvd */

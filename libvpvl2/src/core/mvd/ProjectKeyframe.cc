@@ -94,7 +94,7 @@ void ProjectKeyframe::write(uint8_t *data) const
 
 size_t ProjectKeyframe::estimateSize() const
 {
-    return 0;
+    return size();
 }
 
 /*

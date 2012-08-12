@@ -99,19 +99,33 @@ void LightSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header);
+    m_keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new LightKeyframe();
         m_keyframePtr->read(ptr);
         m_keyframes.add(m_keyframePtr);
+        btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
         ptr += sizeOfKeyframe;
     }
+    m_keyframes.sort(KeyframeTimeIndexPredication());
 }
 
-void LightSection::write(uint8_t *data) const
+void LightSection::seek(const IKeyframe::TimeIndex &timeIndex)
+{
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = timeIndex;
+}
+
+void LightSection::write(uint8_t * /* data */) const
 {
 }
 
 size_t LightSection::estimateSize() const
+{
+    return 0;
+}
+
+size_t LightSection::countKeyframes() const
 {
     return 0;
 }

@@ -73,7 +73,8 @@ struct SectionHeader {
 
 Motion::InterpolationTable::InterpolationTable()
     : parameter(20, 107, 20, 107),
-      linear(true)
+      linear(true),
+      size(0)
 {
 }
 
@@ -81,21 +82,22 @@ Motion::InterpolationTable::~InterpolationTable()
 {
     parameter.setValue(20, 107, 20, 107);
     linear = true;
+    size = 0;
 }
 
-void Motion::InterpolationTable::copyParameter(const InterpolationTable &other)
+const QuadWord Motion::InterpolationTable::toQuadWord(const InterpolationPair &pair)
 {
-    parameter = other.parameter;
+    return QuadWord(pair.first.x, pair.first.y, pair.second.x, pair.second.y);
 }
 
-void Motion::InterpolationTable::build(const QuadWord &value, int size)
+void Motion::InterpolationTable::build(const QuadWord &value, int s)
 {
     if (!btFuzzyZero(value.x() - value.z()) || !btFuzzyZero(value.y() - value.w())) {
-        table.resize(size);
+        table.resize(s);
         const IKeyframe::SmoothPrecision &x1 = value.x() / 127.0, &x2 = value.z() / 127.0;
-        const IKeyframe::SmoothPrecision &y1 = value.z() / 127.0, &y2 = value.w() / 127.0;
+        const IKeyframe::SmoothPrecision &y1 = value.y() / 127.0, &y2 = value.w() / 127.0;
         IKeyframe::SmoothPrecision *ptr = &table[0];
-        internal::buildInterpolationTable(x1, x2, y1, y2, size, ptr);
+        internal::buildInterpolationTable(x1, x2, y1, y2, s, ptr);
         linear = false;
     }
     else {
@@ -103,6 +105,7 @@ void Motion::InterpolationTable::build(const QuadWord &value, int size)
         linear = true;
     }
     parameter = value;
+    size = s;
 }
 
 void Motion::InterpolationTable::reset()
@@ -216,8 +219,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kModelSection: {
-            const size_t adjust = sectionHeader.minor == 1 ? 4 : 0;
-            if (!ModelSection::preparse(ptr, rest, adjust, info)) {
+            info.adjustAlignment = sectionHeader.minor == 1 ? 4 : 0;
+            if (!ModelSection::preparse(ptr, rest, info)) {
                 return false;
             }
             info.modelSectionPtrs.add(startPtr);
@@ -315,6 +318,14 @@ void Motion::setParentModel(IModel *model)
 
 void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
 {
+    m_assetSection->seek(timeIndex);
+    m_boneSection->seek(timeIndex);
+    m_cameraSection->seek(timeIndex);
+    m_effectSection->seek(timeIndex);
+    m_lightSection->seek(timeIndex);
+    m_modelSection->seek(timeIndex);
+    m_morphSection->seek(timeIndex);
+    m_projectSection->seek(timeIndex);
     m_active = maxTimeIndex() > timeIndex;
 }
 
@@ -333,7 +344,14 @@ void Motion::reset()
 
 const IKeyframe::TimeIndex &Motion::maxTimeIndex() const
 {
-    return 0;
+    return btMax(m_assetSection->maxTimeIndex(),
+                 btMax(m_boneSection->maxTimeIndex(),
+                       btMax(m_cameraSection->maxTimeIndex(),
+                             btMax(m_effectSection->maxTimeIndex(),
+                                   btMax(m_lightSection->maxTimeIndex(),
+                                         btMax(m_modelSection->maxTimeIndex(),
+                                               btMax(m_morphSection->maxTimeIndex(),
+                                                     m_projectSection->maxTimeIndex())))))));
 }
 
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
@@ -356,13 +374,21 @@ void Motion::addKeyframe(IKeyframe *value)
     if (!value)
         return;
     switch (value->type()) {
+    case IKeyframe::kAsset:
+        break;
     case IKeyframe::kBone:
         break;
     case IKeyframe::kCamera:
         break;
+    case IKeyframe::kEffect:
+        break;
     case IKeyframe::kLight:
         break;
+    case IKeyframe::kModel:
+        break;
     case IKeyframe::kMorph:
+        break;
+    case IKeyframe::kProject:
         break;
     default:
         break;
@@ -374,16 +400,28 @@ void Motion::replaceKeyframe(IKeyframe *value)
     if (!value)
         return;
     switch (value->type()) {
+    case IKeyframe::kAsset: {
+        break;
+    }
     case IKeyframe::kBone: {
         break;
     }
     case IKeyframe::kCamera: {
         break;
     }
+    case IKeyframe::kEffect: {
+        break;
+    }
     case IKeyframe::kLight: {
         break;
     }
+    case IKeyframe::kModel: {
+        break;
+    }
     case IKeyframe::kMorph: {
+        break;
+    }
+    case IKeyframe::kProject: {
         break;
     }
     default:
@@ -394,14 +432,22 @@ void Motion::replaceKeyframe(IKeyframe *value)
 int Motion::countKeyframes(IKeyframe::Type value) const
 {
     switch (value) {
+    case IKeyframe::kAsset:
+        return m_assetSection->countKeyframes();
     case IKeyframe::kBone:
-        return 0;
+        return m_boneSection->countKeyframes();
     case IKeyframe::kCamera:
-        return 0;
+        return m_cameraSection->countKeyframes();
+    case IKeyframe::kEffect:
+        return m_effectSection->countKeyframes();
     case IKeyframe::kLight:
-        return 0;
+        return m_lightSection->countKeyframes();
+    case IKeyframe::kModel:
+        return m_modelSection->countKeyframes();
     case IKeyframe::kMorph:
-        return 0;
+        return m_morphSection->countKeyframes();
+    case IKeyframe::kProject:
+        return m_projectSection->countKeyframes();
     default:
         return 0;
     }
@@ -452,16 +498,28 @@ void Motion::deleteKeyframe(IKeyframe *&value)
     if (!value)
         return;
     switch (value->type()) {
+    case IKeyframe::kAsset:
+        value = 0;
+        break;
     case IKeyframe::kBone:
         value = 0;
         break;
     case IKeyframe::kCamera:
         value = 0;
         break;
+    case IKeyframe::kEffect:
+        value = 0;
+        break;
     case IKeyframe::kLight:
         value = 0;
         break;
+    case IKeyframe::kModel:
+        value = 0;
+        break;
     case IKeyframe::kMorph:
+        value = 0;
+        break;
+    case IKeyframe::kProject:
         value = 0;
         break;
     default:
@@ -472,13 +530,21 @@ void Motion::deleteKeyframe(IKeyframe *&value)
 void Motion::deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type)
 {
     switch (type) {
+    case IKeyframe::kAsset:
+        break;
     case IKeyframe::kBone:
         break;
     case IKeyframe::kCamera:
         break;
+    case IKeyframe::kEffect:
+        break;
     case IKeyframe::kLight:
         break;
+    case IKeyframe::kModel:
+        break;
     case IKeyframe::kMorph:
+        break;
+    case IKeyframe::kProject:
         break;
     default:
         break;
@@ -488,13 +554,21 @@ void Motion::deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::T
 void Motion::update(IKeyframe::Type type)
 {
     switch (type) {
+    case IKeyframe::kAsset:
+        break;
     case IKeyframe::kBone:
         break;
     case IKeyframe::kCamera:
         break;
+    case IKeyframe::kEffect:
+        break;
     case IKeyframe::kLight:
         break;
+    case IKeyframe::kModel:
+        break;
     case IKeyframe::kMorph:
+        break;
+    case IKeyframe::kProject:
         break;
     default:
         break;
@@ -525,7 +599,7 @@ void Motion::parseBoneSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.boneSectionPtrs;
     const int nsections = sections.count();
-    m_boneSection = new BoneSection(m_nameListSection);
+    m_boneSection = new BoneSection(m_modelRef, m_nameListSection);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_boneSection->read(ptr);
@@ -569,7 +643,7 @@ void Motion::parseModelSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.modelSectionPtrs;
     const int nsections = sections.count();
-    m_modelSection = new ModelSection(m_nameListSection);
+    m_modelSection = new ModelSection(m_modelRef, m_nameListSection, info.adjustAlignment);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_modelSection->read(ptr);
@@ -580,7 +654,7 @@ void Motion::parseMorphSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.morphSectionPtrs;
     const int nsections = sections.count();
-    m_morphSection = new MorphSection(m_nameListSection);
+    m_morphSection = new MorphSection(m_modelRef, m_nameListSection);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_morphSection->read(ptr);
