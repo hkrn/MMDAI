@@ -245,20 +245,56 @@ void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
     m_active = maxTimeIndex() > timeIndex;
 }
 
-void Motion::advance(const IKeyframe::TimeIndex &delta)
+void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
-    if (delta == 0) {
-        m_boneMotion.advance(delta);
-        m_morphMotion.advance(delta);
+    if (m_cameraMotion.countKeyframes() > 0) {
+        m_cameraMotion.seek(timeIndex);
+        ICamera *camera = scene->camera();
+        camera->setPosition(m_cameraMotion.position());
+        camera->setAngle(m_cameraMotion.angle());
+        camera->setFov(m_cameraMotion.fovy());
+        camera->setDistance(m_cameraMotion.distance());
+    }
+    if (m_lightMotion.countKeyframes() > 0) {
+        m_lightMotion.seek(timeIndex);
+        ILight *light = scene->light();
+        light->setColor(m_lightMotion.color());
+        light->setDirection(m_lightMotion.direction());
+    }
+}
+
+void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
+{
+    if (deltaTimeIndex == 0) {
+        m_boneMotion.advance(deltaTimeIndex);
+        m_morphMotion.advance(deltaTimeIndex);
     }
     else if (m_active) {
         // The motion is active and continue to advance
-        m_boneMotion.advance(delta);
-        m_morphMotion.advance(delta);
+        m_boneMotion.advance(deltaTimeIndex);
+        m_morphMotion.advance(deltaTimeIndex);
         if (m_boneMotion.currentTimeIndex() >= m_boneMotion.maxTimeIndex() &&
                 m_morphMotion.currentTimeIndex() >= m_morphMotion.maxTimeIndex()) {
             m_active = false;
         }
+    }
+}
+
+void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
+{
+    if (m_cameraMotion.countKeyframes() > 0) {
+        m_cameraMotion.advance(deltaTimeIndex);
+        ICamera *camera = scene->camera();
+        camera->setPosition(m_cameraMotion.position());
+        camera->setAngle(m_cameraMotion.angle());
+        camera->setFov(m_cameraMotion.fovy());
+        camera->setDistance(m_cameraMotion.distance());
+    }
+    if (m_lightMotion.countKeyframes() > 0) {
+        m_lightMotion.advance(deltaTimeIndex);
+        ILight *light = scene->light();
+        light->setColor(m_lightMotion.color());
+        light->setDirection(m_lightMotion.direction());
     }
 }
 
@@ -381,8 +417,7 @@ int Motion::countKeyframes(IKeyframe::Type value) const
     }
 }
 
-IKeyframe::LayerIndex Motion::countLayers(const IKeyframe::TimeIndex & /* timeIndex */,
-                                          const IString * /* name */,
+IKeyframe::LayerIndex Motion::countLayers(const IString * /* name */,
                                           IKeyframe::Type /* type */) const
 {
     return 1;

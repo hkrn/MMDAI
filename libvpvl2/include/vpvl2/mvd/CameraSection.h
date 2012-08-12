@@ -67,7 +67,7 @@ public:
     ICameraKeyframe *findKeyframeAt(int index) const;
 
 private:
-    struct PrivateContext;
+    class PrivateContext;
     CameraKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;
 

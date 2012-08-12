@@ -468,27 +468,13 @@ void Scene::advance(const IKeyframe::TimeIndex &delta)
     updateModels();
     updateRenderEngines();
     Camera &camera = m_context->camera;
-    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
-    if (cameraMotion) {
-        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->advance(delta);
-            camera.setPosition(animation->position());
-            camera.setAngle(animation->angle());
-            camera.setFov(animation->fovy());
-            camera.setDistance(animation->distance());
-        }
-    }
+    IMotion *cameraMotion = camera.motion();
+    if (cameraMotion)
+        cameraMotion->advanceScene(delta, this);
     Light &light = m_context->light;
-    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(m_context->light.motion());
-    if (lightMotion) {
-        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->seek(delta);
-            light.setColor(animation->color());
-            light.setDirection(animation->direction());
-        }
-    }
+    IMotion *lightMotion = light.motion();
+    if (lightMotion)
+        lightMotion->advanceScene(delta, this);
     updateCamera();
 }
 
@@ -503,27 +489,13 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex)
     updateModels();
     updateRenderEngines();
     Camera &camera = m_context->camera;
-    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
-    if (cameraMotion) {
-        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->seek(timeIndex);
-            camera.setPosition(animation->position());
-            camera.setAngle(animation->angle());
-            camera.setFov(animation->fovy());
-            camera.setDistance(animation->distance());
-        }
-    }
+    IMotion *cameraMotion = camera.motion();
+    if (cameraMotion)
+        cameraMotion->seekScene(timeIndex, this);
     Light &light = m_context->light;
-    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(camera.motion());
-    if (lightMotion) {
-        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->seek(timeIndex);
-            light.setColor(animation->color());
-            light.setDirection(animation->direction());
-        }
-    }
+    IMotion *lightMotion = light.motion();
+    if (lightMotion)
+        lightMotion->seekScene(timeIndex, this);
     updateCamera();
 }
 

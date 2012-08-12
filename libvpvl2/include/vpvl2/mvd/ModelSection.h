@@ -63,7 +63,7 @@ public:
     size_t countKeyframes() const;
 
 private:
-    struct PrivateContext;
+    class PrivateContext;
     IModel *m_modelRef;
     ModelKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;

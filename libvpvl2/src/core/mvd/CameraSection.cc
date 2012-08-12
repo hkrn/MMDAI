@@ -56,7 +56,8 @@ struct CameraSectionHeader {
 
 #pragma pack(pop)
 
-struct CameraSection::PrivateContext : public BaseSectionContext {
+class CameraSection::PrivateContext : public BaseSectionContext {
+public:
     Vector3 position;
     Vector3 angle;
     Scalar distance;

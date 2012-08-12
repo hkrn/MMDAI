@@ -68,7 +68,7 @@ public:
     IBoneKeyframe *findKeyframeAt(int index) const;
 
 private:
-    struct PrivateContext;
+    class PrivateContext;
     IModel *m_modelRef;
     BoneKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;

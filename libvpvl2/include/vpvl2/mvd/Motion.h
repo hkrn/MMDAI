@@ -156,7 +156,9 @@ public:
     size_t estimateSize() const;
     void setParentModel(IModel *model);
     void seek(const IKeyframe::TimeIndex &timeIndex);
+    void seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene);
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
+    void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene);
     void reload();
     void reset();
     const IKeyframe::TimeIndex &maxTimeIndex() const;
@@ -166,8 +168,7 @@ public:
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
-    IKeyframe::LayerIndex countLayers(const IKeyframe::TimeIndex &timeIndex,
-                                      const IString *name,
+    IKeyframe::LayerIndex countLayers(const vpvl2::IString *name,
                                       IKeyframe::Type type) const;
     IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                     const IString *name,

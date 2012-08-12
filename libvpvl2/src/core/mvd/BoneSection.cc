@@ -57,7 +57,8 @@ struct BoneSectionHeader {
 
 #pragma pack(pop)
 
-struct BoneSection::PrivateContext : public BaseSectionContext {
+class BoneSection::PrivateContext : public BaseSectionContext {
+public:
     IBone *boneRef;
     Vector3 position;
     Quaternion rotation;

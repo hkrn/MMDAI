@@ -321,27 +321,37 @@ void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
 {
     m_assetSection->seek(timeIndex);
     m_boneSection->seek(timeIndex);
+    m_modelSection->seek(timeIndex);
+    m_morphSection->seek(timeIndex);
+    m_active = maxTimeIndex() > timeIndex;
+}
+
+void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
+{
     m_cameraSection->seek(timeIndex);
     m_effectSection->seek(timeIndex);
     m_lightSection->seek(timeIndex);
-    m_modelSection->seek(timeIndex);
-    m_morphSection->seek(timeIndex);
     m_projectSection->seek(timeIndex);
-    m_active = maxTimeIndex() > timeIndex;
+    (void) scene;
 }
 
 void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
 {
     m_assetSection->advance(deltaTimeIndex);
     m_boneSection->advance(deltaTimeIndex);
+    m_modelSection->advance(deltaTimeIndex);
+    m_morphSection->advance(deltaTimeIndex);
+    if (deltaTimeIndex > 0)
+        m_active = isReachedTo(maxTimeIndex());
+}
+
+void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
+{
     m_cameraSection->advance(deltaTimeIndex);
     m_effectSection->advance(deltaTimeIndex);
     m_lightSection->advance(deltaTimeIndex);
-    m_modelSection->advance(deltaTimeIndex);
-    m_morphSection->advance(deltaTimeIndex);
     m_projectSection->advance(deltaTimeIndex);
-    if (deltaTimeIndex > 0)
-        m_active = isReachedTo(maxTimeIndex());
+    (void) scene;
 }
 
 void Motion::reload()
@@ -471,15 +481,14 @@ int Motion::countKeyframes(IKeyframe::Type value) const
     }
 }
 
-IKeyframe::LayerIndex Motion::countLayers(const IKeyframe::TimeIndex &timeIndex,
-                                          const IString *name,
+IKeyframe::LayerIndex Motion::countLayers(const IString *name,
                                           IKeyframe::Type type) const
 {
     switch (type) {
     case IKeyframe::kBone:
-        return 1;
+        return m_boneSection->countLayers(name);
     case IKeyframe::kCamera:
-        return 1;
+        return m_cameraSection->countLayers();
     default:
         return 1;
     }

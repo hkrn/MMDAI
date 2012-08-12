@@ -57,7 +57,8 @@ struct ModelSectionHeader {
 
 #pragma pack(pop)
 
-struct ModelSection::PrivateContext : public BaseSectionContext {
+class ModelSection::PrivateContext : public BaseSectionContext {
+public:
     Array<IBone *> bones;
 };
 

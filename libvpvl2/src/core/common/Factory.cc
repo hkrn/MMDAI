@@ -37,6 +37,7 @@
 #include "vpvl2/vpvl2.h"
 
 #include "vpvl2/asset/Model.h"
+#include "vpvl2/mvd/Motion.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
@@ -113,8 +114,17 @@ IMotion *Factory::createMotion() const
 
 IMotion *Factory::createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const
 {
-    IMotion *motion = m_context->motion = new vmd::Motion(model, m_context->encoding);
-    ok = motion->load(data, size);
+    IMotion *motion = 0;
+    if (size >= sizeof(vmd::Motion::kSignature) &&
+            memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
+        motion = m_context->motion = new vmd::Motion(model, m_context->encoding);
+        ok = motion->load(data, size);
+    }
+    else if (size >= sizeof(mvd::Motion::kSignature) &&
+             memcmp(data, mvd::Motion::kSignature, sizeof(mvd::Motion::kSignature) - 1) == 0) {
+        motion = m_context->motion = new mvd::Motion(model, m_context->encoding);
+        ok = motion->load(data, size);
+    }
     m_context->motion = 0;
     return motion;
 }

@@ -67,7 +67,7 @@ public:
     IMorphKeyframe *findKeyframeAt(int index) const;
 
 private:
-    struct PrivateContext;
+    class PrivateContext;
     IModel *m_modelRef;
     MorphKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;

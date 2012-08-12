@@ -57,7 +57,8 @@ struct MorphSecionHeader {
 
 #pragma pack(pop)
 
-struct MorphSection::PrivateContext : public BaseSectionContext {
+class MorphSection::PrivateContext : public BaseSectionContext {
+public:
     IMorph *morphRef;
     IMorph::WeightPrecision weight;
     PrivateContext()

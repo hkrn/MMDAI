@@ -49,6 +49,7 @@ class ILightKeyframe;
 class IModel;
 class IMorphKeyframe;
 class IString;
+class Scene;
 
 /**
  * モーションをあらわすインターフェースです。
@@ -125,10 +126,20 @@ public:
      *
      * 内部的にはフレームの位置が保存されています。
      *
-     * @param float
+     * @param timeIndex
      * @sa advance
      */
     virtual void seek(const IKeyframe::TimeIndex &timeIndex) = 0;
+
+    /**
+     * モーションを指定されたフレームの位置に移動した上で場面を更新します。
+     *
+     * 場面オブジェクトの更新が行われること以外 seek() と同じです。
+     *
+     * @param timeIndex
+     * @param Scene
+     */
+    virtual void seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene) = 0;
 
     /**
      * モーションを指定されたフレームの位置分進めます。
@@ -136,10 +147,20 @@ public:
      * 前回 advance または seek を呼んだ位置から引数の値を加算してフレームを進めます。
      * 内部的には IMotion::seek() を呼び出しています。
      *
-     * @param float
+     * @param delta
      * @sa seek
      */
-    virtual void advance(const IKeyframe::TimeIndex &delta) = 0;
+    virtual void advance(const IKeyframe::TimeIndex &deltaTimeIndex) = 0;
+
+    /**
+     * モーションを指定されたフレームの位置分進めた上で上で場面を更新します。
+     *
+     * 場面オブジェクトの更新が行われること以外 advance() と同じです。
+     *
+     * @param delta
+     * @param Scene
+     */
+    virtual void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene) = 0;
 
     /**
      * モーションを最初の位置にリセットします。
@@ -191,8 +212,7 @@ public:
      * @param type
      * @return int
      */
-    virtual IKeyframe::LayerIndex countLayers(const IKeyframe::TimeIndex &timeIndex,
-                                              const IString *name,
+    virtual IKeyframe::LayerIndex countLayers(const IString *name,
                                               IKeyframe::Type type) const = 0;
 
     /**
