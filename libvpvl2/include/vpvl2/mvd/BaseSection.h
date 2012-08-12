@@ -73,6 +73,7 @@ public:
     virtual ~BaseSectionContext() {
         if (keyframes) {
             keyframes->releaseAll();
+            delete keyframes;
             keyframes = 0;
         }
         m_lastIndex = 0;

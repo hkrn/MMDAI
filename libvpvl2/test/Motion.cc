@@ -616,8 +616,8 @@ TEST(MotionTest, ParseMVD)
         MockIModel model;
         MockIBone bone;
         MockIMorph morph;
-        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
-        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
+        EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(&bone));
+        EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(&morph));
         mvd::Motion motion(&model, &encoding);
         mvd::Motion::DataInfo result;
         // valid model motion should be loaded successfully

@@ -198,8 +198,9 @@ void CameraSection::read(const uint8_t *data)
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
     delete m_contextPtr;
     m_contextPtr = new PrivateContext();
-    m_contextPtr->countOfLayers = header.countOfLayers;
+    m_contextPtr->keyframes = new PrivateContext::KeyframeCollection();
     m_contextPtr->keyframes->reserve(nkeyframes);
+    m_contextPtr->countOfLayers = header.countOfLayers;
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new CameraKeyframe();
         m_keyframePtr->read(ptr);
