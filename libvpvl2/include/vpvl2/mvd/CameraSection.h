@@ -61,6 +61,10 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;
+    IKeyframe::LayerIndex countLayers() const;
+    ICameraKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                  const IKeyframe::LayerIndex &layerIndex) const;
+    ICameraKeyframe *findKeyframeAt(int index) const;
 
 private:
     struct PrivateContext;

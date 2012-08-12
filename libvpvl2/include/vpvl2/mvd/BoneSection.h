@@ -61,13 +61,19 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;
+    IKeyframe::LayerIndex countLayers(const IString *name) const;
+    IBoneKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                const IString *name,
+                                const IKeyframe::LayerIndex &layerIndex) const;
+    IBoneKeyframe *findKeyframeAt(int index) const;
 
 private:
     struct PrivateContext;
     IModel *m_modelRef;
     BoneKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;
-    Hash<btHashInt, PrivateContext *> m_allKeyframes;
+    Array<IKeyframe *> m_allKeyframeRefs;
+    Hash<btHashInt, PrivateContext *> m_name2contexts;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneSection)
 };

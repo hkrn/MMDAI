@@ -70,9 +70,10 @@ struct SectionHeader {
 
 #pragma pack(pop)
 
+const QuadWord Motion::InterpolationTable::kDefaultParameter = QuadWord(20, 20, 107, 107);
 
 Motion::InterpolationTable::InterpolationTable()
-    : parameter(20, 107, 20, 107),
+    : parameter(kDefaultParameter),
       linear(true),
       size(0)
 {
@@ -80,7 +81,7 @@ Motion::InterpolationTable::InterpolationTable()
 
 Motion::InterpolationTable::~InterpolationTable()
 {
-    parameter.setValue(20, 107, 20, 107);
+    parameter = kDefaultParameter;
     linear = true;
     size = 0;
 }
@@ -92,7 +93,7 @@ const QuadWord Motion::InterpolationTable::toQuadWord(const InterpolationPair &p
 
 void Motion::InterpolationTable::build(const QuadWord &value, int s)
 {
-    if (!btFuzzyZero(value.x() - value.z()) || !btFuzzyZero(value.y() - value.w())) {
+    if (!btFuzzyZero(value.x() - value.y()) || !btFuzzyZero(value.z() - value.w())) {
         table.resize(s);
         const IKeyframe::SmoothPrecision &x1 = value.x() / 127.0, &x2 = value.z() / 127.0;
         const IKeyframe::SmoothPrecision &y1 = value.y() / 127.0, &y2 = value.w() / 127.0;
@@ -112,7 +113,7 @@ void Motion::InterpolationTable::reset()
 {
     table.clear();
     linear = true;
-    parameter.setValue(20, 107, 20, 107);
+    parameter = kDefaultParameter;
 }
 
 Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
@@ -329,8 +330,18 @@ void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
     m_active = maxTimeIndex() > timeIndex;
 }
 
-void Motion::advance(const IKeyframe::TimeIndex &delta)
+void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
 {
+    m_assetSection->advance(deltaTimeIndex);
+    m_boneSection->advance(deltaTimeIndex);
+    m_cameraSection->advance(deltaTimeIndex);
+    m_effectSection->advance(deltaTimeIndex);
+    m_lightSection->advance(deltaTimeIndex);
+    m_modelSection->advance(deltaTimeIndex);
+    m_morphSection->advance(deltaTimeIndex);
+    m_projectSection->advance(deltaTimeIndex);
+    if (deltaTimeIndex > 0)
+        m_active = isReachedTo(maxTimeIndex());
 }
 
 void Motion::reload()
@@ -357,7 +368,14 @@ const IKeyframe::TimeIndex &Motion::maxTimeIndex() const
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
     // force inactive motion is reached
-    return !m_active;
+    return !m_active  || (m_assetSection->currentTimeIndex() >= atEnd &&
+                          m_boneSection->currentTimeIndex() >= atEnd &&
+                          m_cameraSection->currentTimeIndex() >= atEnd &&
+                          m_effectSection->currentTimeIndex() >= atEnd &&
+                          m_lightSection->currentTimeIndex() >= atEnd &&
+                          m_modelSection->currentTimeIndex() >= atEnd &&
+                          m_morphSection->currentTimeIndex() >= atEnd &&
+                          m_projectSection->currentTimeIndex() >= atEnd);
 }
 
 bool Motion::isNullFrameEnabled() const
@@ -453,44 +471,64 @@ int Motion::countKeyframes(IKeyframe::Type value) const
     }
 }
 
-IBoneKeyframe *Motion::findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
+IKeyframe::LayerIndex Motion::countLayers(const IKeyframe::TimeIndex &timeIndex,
+                                          const IString *name,
+                                          IKeyframe::Type type) const
 {
-    return 0;
+    switch (type) {
+    case IKeyframe::kBone:
+        return 1;
+    case IKeyframe::kCamera:
+        return 1;
+    default:
+        return 1;
+    }
+}
+
+IBoneKeyframe *Motion::findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                        const IString *name,
+                                        const IKeyframe::LayerIndex &layerIndex) const
+{
+    return m_boneSection->findKeyframe(timeIndex, name, layerIndex);
 }
 
 IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
 {
-    return 0;
+    return m_boneSection->findKeyframeAt(index);
 }
 
-ICameraKeyframe *Motion::findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex) const
+ICameraKeyframe *Motion::findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                            const IKeyframe::LayerIndex &layerIndex) const
 {
-    return 0;
+    return m_cameraSection->findKeyframe(timeIndex, layerIndex);
 }
 
 ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
 {
-    return 0;
+    return m_cameraSection->findKeyframeAt(index);
 }
 
-ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex) const
+ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                          const IKeyframe::LayerIndex &layerIndex) const
 {
-    return 0;
+    return m_lightSection->findKeyframe(timeIndex, layerIndex);
 }
 
 ILightKeyframe *Motion::findLightKeyframeAt(int index) const
 {
-    return 0;
+    return m_lightSection->findKeyframeAt(index);
 }
 
-IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
+IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                          const IString *name,
+                                          const IKeyframe::LayerIndex &layerIndex) const
 {
-    return 0;
+    return m_morphSection->findKeyframe(timeIndex, name, layerIndex);
 }
 
 IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
 {
-    return 0;
+    return m_morphSection->findKeyframeAt(index);
 }
 
 void Motion::deleteKeyframe(IKeyframe *&value)

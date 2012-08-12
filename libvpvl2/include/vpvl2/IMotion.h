@@ -184,16 +184,31 @@ public:
     virtual int countKeyframes(IKeyframe::Type value) const = 0;
 
     /**
+     * キーフレームの位置と名前からレイヤー数を返します。
+     *
+     * @param timeIndex
+     * @param name
+     * @param type
+     * @return int
+     */
+    virtual IKeyframe::LayerIndex countLayers(const IKeyframe::TimeIndex &timeIndex,
+                                              const IString *name,
+                                              IKeyframe::Type type) const = 0;
+
+    /**
      * キーフレームの位置と名前からボーンのキーフレームを返します。
      *
      * 見つかった場合は IBoneKeyframe インスタンスを、見つからない場合は 0 を返します。
      *
      * @param timeIndex
      * @param name
+     * @param layerIndex
      * @return IBoneKeyframe
      * @sa findBoneKeyframeAt
      */
-    virtual IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const = 0;
+    virtual IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                            const IString *name,
+                                            const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の添字からボーン該当するキーフレームの全てを返します。
@@ -212,10 +227,12 @@ public:
      * 見つかった場合は ICameraKeyframe インスタンスを、見つからない場合は 0 を返します。
      *
      * @param timeIndex
+     * @param layerIndex
      * @return IBoneKeyframe
      * @sa findCameraKeyframeAt
      */
-    virtual ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex) const = 0;
+    virtual ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                                const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の添字からカメラのキーフレームを返します。
@@ -234,10 +251,12 @@ public:
      * 見つかった場合は ILightKeyframe インスタンスを、見つからない場合は 0 を返します。
      *
      * @param timeIndex
+     * @param layerIndex
      * @return ILightKeyframe
      * @sa findLightKeyframeAt
      */
-    virtual ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex) const = 0;
+    virtual ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                              const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の位置から照明のキーフレームを返します。
@@ -257,10 +276,13 @@ public:
      *
      * @param timeIndex
      * @param name
+     * @param layerIndex
      * @return IMorphKeyframe
      * @sa findMorphKeyframeAt
      */
-    virtual IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const = 0;
+    virtual IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                              const IString *name,
+                                              const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の添字からモーフのキーフレームを返します。

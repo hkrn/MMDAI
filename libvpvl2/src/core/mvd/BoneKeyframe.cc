@@ -62,6 +62,7 @@ struct BoneKeyframeChunk {
 BoneKeyframe::BoneKeyframe(NameListSection *nameListSectionRef)
     : BaseKeyframe(),
       m_ptr(0),
+      m_nameRef(0),
       m_nameListSectionRef(nameListSectionRef),
       m_position(kZeroV3),
       m_rotation(Quaternion::getIdentity())
@@ -71,6 +72,7 @@ BoneKeyframe::BoneKeyframe(NameListSection *nameListSectionRef)
 BoneKeyframe::~BoneKeyframe()
 {
     m_ptr = 0;
+    m_nameRef = 0;
     m_nameListSectionRef = 0;
     m_position.setZero();
     m_rotation.setValue(0, 0, 0, 1);
@@ -123,7 +125,7 @@ size_t BoneKeyframe::estimateSize() const
 IBoneKeyframe *BoneKeyframe::clone() const
 {
     BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_nameListSectionRef);
-    frame->setName(m_name);
+    frame->setName(m_nameRef);
     frame->setTimeIndex(m_timeIndex);
     frame->setLayerIndex(m_layerIndex);
     frame->setPosition(m_position);
@@ -204,8 +206,9 @@ void BoneKeyframe::setRotation(const Quaternion &value)
     m_rotation = value;
 }
 
-void BoneKeyframe::setName(const IString * /* value */)
+void BoneKeyframe::setName(const IString *value)
 {
+    m_nameRef = value;
 }
 
 IKeyframe::Type BoneKeyframe::type() const

@@ -133,6 +133,7 @@ public:
         uint8_t *endPtr;
     };
     struct InterpolationTable {
+        static const QuadWord kDefaultParameter;
         typedef Array<IKeyframe::SmoothPrecision> Value;
         Value table;
         QuadWord parameter;
@@ -155,7 +156,7 @@ public:
     size_t estimateSize() const;
     void setParentModel(IModel *model);
     void seek(const IKeyframe::TimeIndex &timeIndex);
-    void advance(const IKeyframe::TimeIndex &delta);
+    void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
     void reload();
     void reset();
     const IKeyframe::TimeIndex &maxTimeIndex() const;
@@ -165,13 +166,22 @@ public:
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
-    IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
+    IKeyframe::LayerIndex countLayers(const IKeyframe::TimeIndex &timeIndex,
+                                      const IString *name,
+                                      IKeyframe::Type type) const;
+    IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                    const IString *name,
+                                    const IKeyframe::LayerIndex &layerIndex) const;
     IBoneKeyframe *findBoneKeyframeAt(int index) const;
-    ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
+    ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                        const IKeyframe::LayerIndex &layerIndex) const;
     ICameraKeyframe *findCameraKeyframeAt(int index) const;
-    ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
+    ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                      const IKeyframe::LayerIndex &layerIndex) const;
     ILightKeyframe *findLightKeyframeAt(int index) const;
-    IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
+    IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                      const IString *name,
+                                      const IKeyframe::LayerIndex &layerIndex) const;
     IMorphKeyframe *findMorphKeyframeAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);

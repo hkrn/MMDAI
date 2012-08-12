@@ -61,7 +61,7 @@ struct CameraSection::PrivateContext : public BaseSectionContext {
     Vector3 angle;
     Scalar distance;
     Scalar fovy;
-    int countOfLayers;
+    IKeyframe::LayerIndex countOfLayers;
     PrivateContext()
         : position(kZeroV3),
           angle(kZeroV3),
@@ -227,7 +227,7 @@ size_t CameraSection::estimateSize() const
     size += sizeof(CameraSectionHeader);
     if (m_contextPtr) {
         size += sizeof(uint8_t) * m_contextPtr->countOfLayers;
-        const Array<IKeyframe *> *keyframes = m_contextPtr->keyframes;
+        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
         const int nkeyframes = keyframes->count();
         for (int i = 0; i < nkeyframes; i++) {
             const IKeyframe *keyframe = keyframes->at(i);
@@ -240,6 +240,37 @@ size_t CameraSection::estimateSize() const
 size_t CameraSection::countKeyframes() const
 {
     return m_contextPtr ? m_contextPtr->keyframes->count() : 0;
+}
+
+IKeyframe::LayerIndex CameraSection::countLayers() const
+{
+    return m_contextPtr ? m_contextPtr->countOfLayers : 0;
+}
+
+ICameraKeyframe *CameraSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                             const IKeyframe::LayerIndex &layerIndex) const
+{
+    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+    const int nkeyframes = keyframes->count();
+    for (int i = 0; i < nkeyframes; i++) {
+        ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes->at(i));
+        if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
+            return keyframe;
+        }
+    }
+    return 0;
+}
+
+ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
+{
+    if (m_contextPtr) {
+        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+        if (index >= 0 && index < keyframes->count()) {
+            ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes->at(index));
+            return keyframe;
+        }
+    }
+    return 0;
 }
 
 } /* namespace mvd */

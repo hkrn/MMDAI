@@ -445,7 +445,7 @@ TEST(MotionTest, AddAndRemoveBoneKeyframes)
         ASSERT_EQ(frame.data(), motion.findBoneKeyframeAt(0));
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
         // find a bone keyframe with timeIndex and name
-        ASSERT_EQ(frame.take(), motion.findBoneKeyframe(42, &name));
+        ASSERT_EQ(frame.take(), motion.findBoneKeyframe(42, &name, 0));
     }
     QScopedPointer<IBoneKeyframe> frame2(new vmd::BoneKeyframe(&encoding));
     frame2->setTimeIndex(42);
@@ -456,7 +456,7 @@ TEST(MotionTest, AddAndRemoveBoneKeyframes)
         motion.update(IKeyframe::kBone);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
         // no longer be find previous bone keyframe
-        ASSERT_EQ(frame2.data(), motion.findBoneKeyframe(42, &name));
+        ASSERT_EQ(frame2.data(), motion.findBoneKeyframe(42, &name, 0));
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -465,7 +465,7 @@ TEST(MotionTest, AddAndRemoveBoneKeyframes)
         motion.update(IKeyframe::kBone);
         // bone keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
-        ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &name));
+        ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &name, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }
@@ -489,7 +489,7 @@ TEST(MotionTest, AddAndRemoveCameraKeyframes)
         ASSERT_EQ(frame.data(), motion.findCameraKeyframeAt(0));
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
         // find a camera keyframe with timeIndex
-        ASSERT_EQ(frame.take(), motion.findCameraKeyframe(42));
+        ASSERT_EQ(frame.take(), motion.findCameraKeyframe(42, 0));
     }
     QScopedPointer<ICameraKeyframe> frame2(new vmd::CameraKeyframe());
     frame2->setTimeIndex(42);
@@ -500,7 +500,7 @@ TEST(MotionTest, AddAndRemoveCameraKeyframes)
         motion.update(IKeyframe::kCamera);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
         // no longer be find previous camera keyframe
-        ASSERT_EQ(84.0f, motion.findCameraKeyframe(42)->distance());
+        ASSERT_EQ(84.0f, motion.findCameraKeyframe(42, 0)->distance());
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -509,7 +509,7 @@ TEST(MotionTest, AddAndRemoveCameraKeyframes)
         motion.update(IKeyframe::kCamera);
         // camera keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
-        ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42));
+        ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }
@@ -533,7 +533,7 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
         ASSERT_EQ(frame.data(), motion.findLightKeyframeAt(0));
         ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(1));
         // find a light keyframe with timeIndex
-        ASSERT_EQ(frame.take(), motion.findLightKeyframe(42));
+        ASSERT_EQ(frame.take(), motion.findLightKeyframe(42, 0));
     }
     QScopedPointer<ILightKeyframe> frame2(new vmd::LightKeyframe());
     frame2->setTimeIndex(42);
@@ -544,7 +544,7 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
         motion.update(IKeyframe::kLight);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
         // no longer be find previous light keyframe
-        ASSERT_EQ(1.0f, motion.findLightKeyframe(42)->color().z());
+        ASSERT_EQ(1.0f, motion.findLightKeyframe(42, 0)->color().z());
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -553,7 +553,7 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
         motion.update(IKeyframe::kLight);
         // light keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
-        ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframe(42));
+        ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframe(42, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }
@@ -580,7 +580,7 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
         ASSERT_EQ(frame.data(), motion.findMorphKeyframeAt(0));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
-        ASSERT_EQ(frame.take(), motion.findMorphKeyframe(42, &name));
+        ASSERT_EQ(frame.take(), motion.findMorphKeyframe(42, &name, 0));
     }
     QScopedPointer<IMorphKeyframe> frame2(new vmd::MorphKeyframe(&encoding));
     frame2->setTimeIndex(42);
@@ -591,7 +591,7 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
         motion.update(IKeyframe::kMorph);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
         // no longer be find previous morph keyframe
-        ASSERT_EQ(frame2.data(), motion.findMorphKeyframe(42, &name));
+        ASSERT_EQ(frame2.data(), motion.findMorphKeyframe(42, &name, 0));
     }
     {
         IKeyframe *keyframeToDelete = frame2.take();
@@ -600,7 +600,7 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
         motion.update(IKeyframe::kMorph);
         // morph keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
-        ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name));
+        ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }

@@ -90,6 +90,7 @@ void LightSection::release()
 {
     delete m_keyframePtr;
     m_keyframePtr = 0;
+    m_allKeyframes.releaseAll();
 }
 
 void LightSection::read(const uint8_t *data)
@@ -99,15 +100,15 @@ void LightSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header);
-    m_keyframes.reserve(nkeyframes);
+    m_allKeyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new LightKeyframe();
         m_keyframePtr->read(ptr);
-        m_keyframes.add(m_keyframePtr);
+        m_allKeyframes.add(m_keyframePtr);
         btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
         ptr += sizeOfKeyframe;
     }
-    m_keyframes.sort(KeyframeTimeIndexPredication());
+    m_allKeyframes.sort(KeyframeTimeIndexPredication());
 }
 
 void LightSection::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -127,6 +128,29 @@ size_t LightSection::estimateSize() const
 
 size_t LightSection::countKeyframes() const
 {
+    return m_allKeyframes.count();
+}
+
+
+ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                           const IKeyframe::LayerIndex &layerIndex) const
+{
+    const int nkeyframes = m_allKeyframes.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        ILightKeyframe *keyframe = reinterpret_cast<ILightKeyframe *>(m_allKeyframes.at(i));
+        if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
+            return keyframe;
+        }
+    }
+    return 0;
+}
+
+ILightKeyframe *LightSection::findKeyframeAt(int index) const
+{
+    if (index >= 0 && index < m_allKeyframes.count()) {
+        ILightKeyframe *keyframe = reinterpret_cast<ILightKeyframe *>(m_allKeyframes.at(index));
+        return keyframe;
+    }
     return 0;
 }
 

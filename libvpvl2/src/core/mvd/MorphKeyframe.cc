@@ -57,6 +57,7 @@ struct MorphKeyframeChunk {
 MorphKeyframe::MorphKeyframe(NameListSection *nameListSectionRef)
     : BaseKeyframe(),
       m_ptr(0),
+      m_nameRef(0),
       m_nameListSectionRef(nameListSectionRef),
       m_weight(0)
 {
@@ -67,6 +68,7 @@ MorphKeyframe::~MorphKeyframe()
     delete m_ptr;
     m_ptr = 0;
     m_nameListSectionRef = 0;
+    m_nameRef = 0;
     m_weight = 0;
 }
 
@@ -122,8 +124,9 @@ void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
     m_weight = value;
 }
 
-void MorphKeyframe::setName(const IString * /* value */)
+void MorphKeyframe::setName(const IString *value)
 {
+    m_nameRef = value;
 }
 
 IMorphKeyframe::Type MorphKeyframe::type() const

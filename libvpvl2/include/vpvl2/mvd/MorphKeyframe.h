@@ -70,6 +70,7 @@ public:
 
 private:
     mutable MorphKeyframe *m_ptr;
+    const IString *m_nameRef;
     NameListSection *m_nameListSectionRef;
     IMorph::WeightPrecision m_weight;
     Motion::InterpolationTable m_interpolationWeight;

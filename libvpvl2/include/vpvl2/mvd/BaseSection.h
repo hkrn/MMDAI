@@ -63,7 +63,8 @@ public:
 class BaseSectionContext
 {
 public:
-    Array<IKeyframe *> *keyframes;
+    typedef Array<IKeyframe *> KeyframeCollection;
+    KeyframeCollection *keyframes;
     BaseSectionContext()
         : keyframes(0),
           m_lastIndex(0)
@@ -168,6 +169,11 @@ public:
     virtual void write(uint8_t *data) const = 0;
     virtual size_t estimateSize() const = 0;
     virtual size_t countKeyframes() const = 0;
+
+    void advance(const IKeyframe::TimeIndex &deltaTimeIndex) {
+        seek(m_currentTimeIndex);
+        m_currentTimeIndex += deltaTimeIndex;
+    }
 
     const IKeyframe::TimeIndex &maxTimeIndex() const { return m_maxTimeIndex; }
     const IKeyframe::TimeIndex &currentTimeIndex() const { return m_currentTimeIndex; }

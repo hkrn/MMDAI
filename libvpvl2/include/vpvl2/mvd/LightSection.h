@@ -61,10 +61,13 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;
+    ILightKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                 const IKeyframe::LayerIndex &layerIndex) const;
+    ILightKeyframe *findKeyframeAt(int index) const;
 
 private:
     LightKeyframe *m_keyframePtr;
-    Array<LightKeyframe *> m_keyframes;
+    Array<LightKeyframe *> m_allKeyframes;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(LightSection)
 };

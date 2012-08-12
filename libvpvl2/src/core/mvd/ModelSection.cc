@@ -129,7 +129,7 @@ void ModelSection::read(const uint8_t *data)
         ptr += sizeof(int);
     }
     ptr += header.sizeOfIKBones - sizeof(int) * (nIKBones + 1);
-    m_contextPtr->keyframes = new Array<IKeyframe *>();
+    m_contextPtr->keyframes = new PrivateContext::KeyframeCollection();
     m_contextPtr->keyframes->reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new ModelKeyframe(m_nameListSectionRef, nIKBones);
@@ -160,7 +160,7 @@ size_t ModelSection::estimateSize() const
     if (m_contextPtr) {
         size += m_countOfIKBones * sizeof(int);
         size += m_adjustAlighment;
-        const Array<IKeyframe *> *keyframes = m_contextPtr->keyframes;
+        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
         const int nkeyframes = keyframes->count();
         for (int i = 0; i < nkeyframes; i++) {
             const IKeyframe *keyframe = keyframes->at(i);

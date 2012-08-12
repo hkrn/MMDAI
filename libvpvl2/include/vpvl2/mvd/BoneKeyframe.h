@@ -79,6 +79,7 @@ public:
 
 private:
     mutable BoneKeyframe *m_ptr;
+    const IString *m_nameRef;
     NameListSection *m_nameListSectionRef;
     Vector3 m_position;
     Quaternion m_rotation;
