@@ -82,12 +82,9 @@ public:
         findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
         const BoneKeyframe *keyframeFrom = reinterpret_cast<const BoneKeyframe *>(keyframes->at(fromIndex)),
                 *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes->at(toIndex));
-        const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(),
-                timeIndexTo = keyframeTo->timeIndex();
-        const Vector3 &positionFrom = keyframeFrom->position();
-        const Quaternion &rotationFrom = keyframeFrom->rotation();
-        const Vector3 &positionTo = keyframeTo->position();
-        const Quaternion &rotationTo = keyframeTo->rotation();
+        const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
+        const Vector3 &positionFrom = keyframeFrom->position(), &positionTo = keyframeTo->position();
+        const Quaternion &rotationFrom = keyframeFrom->rotation(), &rotationTo = keyframeTo->rotation();
         if (timeIndexFrom != timeIndexTo) {
             if (currentTimeIndex <= timeIndexFrom) {
                 position = positionFrom;
@@ -98,18 +95,18 @@ public:
                 rotation = rotationTo;
             }
             else {
-                const IKeyframe::SmoothPrecision &weight = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+                const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
                 IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
-                lerp(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
-                lerp(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
-                lerp(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
+                interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
+                interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
+                interpolate(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
                 position.setValue(x, y, z);
-                const Motion::InterpolationTable &rt = keyframeTo->tableForRotation();
-                if (rt.linear) {
+                const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
+                if (tableForRotation.linear) {
                     rotation = rotationFrom.slerp(rotationTo, weight);
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(rt, weight);
+                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
                     rotation = rotationFrom.slerp(rotationTo, weight2);
                 }
             }

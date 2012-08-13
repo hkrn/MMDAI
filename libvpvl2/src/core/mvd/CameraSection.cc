@@ -109,34 +109,34 @@ public:
                 fovy = fovyFrom;
             }
             else {
-                const IKeyframe::SmoothPrecision &weight = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+                const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
                 IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
-                lerp(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 0, x);
-                lerp(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 1, y);
-                lerp(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 2, z);
+                interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 0, x);
+                interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 1, y);
+                interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 2, z);
                 position.setValue(x, y, z);
-                const Motion::InterpolationTable &rt = keyframeTo->tableForRotation();
-                if (rt.linear) {
+                const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
+                if (tableForRotation.linear) {
                     angle = angleFrom.lerp(angleTo, weight);
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(rt, weight);
+                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
                     angle = angleFrom.lerp(angleTo, weight2);
                 }
-                const Motion::InterpolationTable &dt = keyframeTo->tableForDistance();
-                if (dt.linear) {
+                const Motion::InterpolationTable &tableForDistance = keyframeTo->tableForDistance();
+                if (tableForDistance.linear) {
                     distance = internal::lerp(distanceFrom, distanceTo, weight);
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(dt, weight);
+                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForDistance, weight);
                     distance = internal::lerp(distanceFrom, distanceTo, weight2);
                 }
-                const Motion::InterpolationTable &ft = keyframeTo->tableForFov();
-                if (ft.linear) {
+                const Motion::InterpolationTable &tableForFov = keyframeTo->tableForFov();
+                if (tableForFov.linear) {
                     fovy = internal::lerp(fovyFrom, fovyTo, weight);
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateWeight(ft, weight);
+                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForFov, weight);
                     fovy = internal::lerp(fovyFrom, fovyTo, weight2);
                 }
             }

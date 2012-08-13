@@ -111,19 +111,27 @@ protected:
         fromIndex = toIndex <= 1 ? 0 : toIndex - 1;
         m_lastIndex = fromIndex;
     }
-    static IKeyframe::SmoothPrecision calculateWeight(const Motion::InterpolationTable &t,
-                                                      const IKeyframe::SmoothPrecision &weight)
+    static IKeyframe::SmoothPrecision calculateWeight(const IKeyframe::TimeIndex &currentTimeIndex,
+                                                      const IKeyframe::TimeIndex &timeIndexFrom,
+                                                      const IKeyframe::TimeIndex &timeIndexTo)
+    {
+        const IKeyframe::SmoothPrecision &value = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+        return value;
+    }
+    static IKeyframe::SmoothPrecision calculateInterpolatedWeight(const Motion::InterpolationTable &t,
+                                                                  const IKeyframe::SmoothPrecision &weight)
     {
         const Motion::InterpolationTable::Value &v = t.table;
         const uint16_t index = static_cast<int16_t>(weight * t.size);
-        return v[index] + (v[index + 1] - v[index]) * (weight * t.size - index);
+        const IKeyframe::SmoothPrecision &value = v[index] + (v[index + 1] - v[index]) * (weight * t.size - index);
+        return value;
     }
-    static void lerp(const Motion::InterpolationTable &t,
-                     const Vector3 &from,
-                     const Vector3 &to,
-                     const IKeyframe::SmoothPrecision &weight,
-                     int at,
-                     IKeyframe::SmoothPrecision &value)
+    static void interpolate(const Motion::InterpolationTable &t,
+                            const Vector3 &from,
+                            const Vector3 &to,
+                            const IKeyframe::SmoothPrecision &weight,
+                            int at,
+                            IKeyframe::SmoothPrecision &value)
     {
         const IKeyframe::SmoothPrecision &valueFrom = from[at];
         const IKeyframe::SmoothPrecision &valueTo = to[at];
@@ -131,7 +139,7 @@ protected:
             value = internal::lerp(valueFrom, valueTo, weight);
         }
         else {
-            const IKeyframe::SmoothPrecision &weight2 = calculateWeight(t, weight);
+            const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(t, weight);
             value = internal::lerp(valueFrom, valueTo, weight2);
         }
     }
