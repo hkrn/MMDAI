@@ -47,6 +47,7 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct MorphKeyframeChunk {
+    MorphKeyframeChunk() {}
     uint64_t timeIndex;
     float weight;
     InterpolationPair weightIP;
@@ -74,7 +75,7 @@ MorphKeyframe::~MorphKeyframe()
 
 size_t MorphKeyframe::size()
 {
-    static MorphKeyframeChunk keyframe;
+    static const MorphKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 

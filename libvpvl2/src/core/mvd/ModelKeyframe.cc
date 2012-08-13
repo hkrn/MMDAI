@@ -47,6 +47,7 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct ModelKeyframeChunk {
+    ModelKeyframeChunk() {}
     uint64_t timeIndex;
     uint8_t visible;
     uint8_t shadow;
@@ -75,7 +76,7 @@ ModelKeyframe::~ModelKeyframe()
 
 size_t ModelKeyframe::size()
 {
-    static ModelKeyframeChunk keyframe;
+    static const ModelKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 

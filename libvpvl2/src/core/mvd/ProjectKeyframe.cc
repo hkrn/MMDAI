@@ -47,6 +47,7 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct ProjectKeyframeChunk {
+    ProjectKeyframeChunk() {}
     uint64_t timeIndex;
     float gravityFactor;
     float gravityDirection[3];
@@ -69,7 +70,7 @@ ProjectKeyframe::~ProjectKeyframe()
 
 size_t ProjectKeyframe::size()
 {
-    static ProjectKeyframeChunk keyframe;
+    static const ProjectKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
@@ -84,11 +85,11 @@ bool ProjectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Mot
     return true;
 }
 
-void ProjectKeyframe::read(const uint8_t *data)
+void ProjectKeyframe::read(const uint8_t * /* data */)
 {
 }
 
-void ProjectKeyframe::write(uint8_t *data) const
+void ProjectKeyframe::write(uint8_t * /* data */) const
 {
 }
 

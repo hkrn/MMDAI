@@ -47,6 +47,7 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct EffectKeyframeChunk {
+    EffectKeyframeChunk() {}
     uint64_t timeIndex;
     uint8_t visible;
     uint8_t addBlend;
@@ -72,7 +73,7 @@ EffectKeyframe::~EffectKeyframe()
 
 size_t EffectKeyframe::size()
 {
-    static EffectKeyframeChunk keyframe;
+    static const EffectKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 

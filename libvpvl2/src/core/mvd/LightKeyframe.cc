@@ -47,6 +47,7 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct LightKeyframeChunk {
+    LightKeyframeChunk() {}
     uint64_t timeIndex;
     float position[3];
     float color[3];
@@ -73,7 +74,7 @@ LightKeyframe::~LightKeyframe()
 
 size_t LightKeyframe::size()
 {
-    static LightKeyframeChunk keyframe;
+    static const LightKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
@@ -96,7 +97,7 @@ void LightKeyframe::read(const uint8_t *data)
     setTimeIndex(chunk->timeIndex);
 }
 
-void LightKeyframe::write(uint8_t *data) const
+void LightKeyframe::write(uint8_t * /* data */) const
 {
 }
 

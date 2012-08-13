@@ -47,6 +47,7 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct CameraKeyframeChunk {
+    CameraKeyframeChunk() {}
     int layerIndex;
     uint64_t timeIndex;
     float radius;
@@ -86,7 +87,7 @@ CameraKeyframe::~CameraKeyframe()
 
 size_t CameraKeyframe::size()
 {
-    static CameraKeyframeChunk keyframe;
+    static const CameraKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
