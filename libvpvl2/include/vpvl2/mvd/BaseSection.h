@@ -181,7 +181,7 @@ public:
 
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex) {
         seek(m_currentTimeIndex);
-        m_currentTimeIndex += deltaTimeIndex;
+        saveCurrentTimeIndex(m_currentTimeIndex + deltaTimeIndex);
     }
 
     const IKeyframe::TimeIndex &maxTimeIndex() const { return m_maxTimeIndex; }
@@ -189,6 +189,11 @@ public:
     const IKeyframe::TimeIndex &previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
+    void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {
+        m_previousTimeIndex = m_currentTimeIndex;
+        m_currentTimeIndex = timeIndex;
+    }
+
     typedef Array<IKeyframe *> KeyframeList;
     KeyframeList *m_keyframeListPtr;
     NameListSection *m_nameListSectionRef;

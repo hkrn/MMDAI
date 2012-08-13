@@ -146,8 +146,7 @@ void ModelSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
     if (m_contextPtr && m_modelRef) {
     }
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndex;
+    saveCurrentTimeIndex(timeIndex);
 }
 
 void ModelSection::write(uint8_t * /* data */) const

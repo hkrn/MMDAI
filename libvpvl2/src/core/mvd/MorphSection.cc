@@ -184,8 +184,7 @@ void MorphSection::seek(const IKeyframe::TimeIndex &timeIndex)
             (*context)->seek(timeIndex);
         }
     }
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndex;
+    saveCurrentTimeIndex(timeIndex);
 }
 
 void MorphSection::write(uint8_t * /* data */) const

@@ -101,8 +101,7 @@ void EffectSection::read(const uint8_t * /* data */)
 
 void EffectSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndex;
+    saveCurrentTimeIndex(timeIndex);
 }
 
 void EffectSection::write(uint8_t * /* data */) const

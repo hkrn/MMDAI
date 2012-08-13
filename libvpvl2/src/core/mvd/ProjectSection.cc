@@ -90,8 +90,7 @@ void ProjectSection::read(const uint8_t * /* data */)
 
 void ProjectSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndex;
+    saveCurrentTimeIndex(timeIndex);
 }
 
 void ProjectSection::write(uint8_t * /* data */) const

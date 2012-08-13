@@ -113,8 +113,7 @@ void LightSection::read(const uint8_t *data)
 
 void LightSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndex;
+    saveCurrentTimeIndex(timeIndex);
 }
 
 void LightSection::write(uint8_t * /* data */) const
