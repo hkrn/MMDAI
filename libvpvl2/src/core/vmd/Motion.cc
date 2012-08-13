@@ -425,9 +425,9 @@ IKeyframe::LayerIndex Motion::countLayers(const IString * /* name */,
 
 IBoneKeyframe *Motion::findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                         const IString *name,
-                                        const IKeyframe::LayerIndex & /* layerIndex */) const
+                                        const IKeyframe::LayerIndex &layerIndex) const
 {
-    return m_boneMotion.findKeyframe(timeIndex, name);
+    return layerIndex == 0 ? m_boneMotion.findKeyframe(timeIndex, name) : 0;
 }
 
 IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
@@ -436,9 +436,9 @@ IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
 }
 
 ICameraKeyframe *Motion::findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
-                                            const IKeyframe::LayerIndex & /* layerIndex */) const
+                                            const IKeyframe::LayerIndex &layerIndex) const
 {
-    return m_cameraMotion.findKeyframe(timeIndex);
+    return layerIndex == 0 ? m_cameraMotion.findKeyframe(timeIndex) : 0;
 }
 
 ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
@@ -447,9 +447,9 @@ ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
 }
 
 ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
-                                          const IKeyframe::LayerIndex & /* layerIndex */) const
+                                          const IKeyframe::LayerIndex &layerIndex) const
 {
-    return m_lightMotion.findKeyframe(timeIndex);
+    return layerIndex == 0 ? m_lightMotion.findKeyframe(timeIndex) : 0;
 }
 
 ILightKeyframe *Motion::findLightKeyframeAt(int index) const
@@ -459,9 +459,9 @@ ILightKeyframe *Motion::findLightKeyframeAt(int index) const
 
 IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                           const IString *name,
-                                          const IKeyframe::LayerIndex & /* layerIndex */) const
+                                          const IKeyframe::LayerIndex &layerIndex) const
 {
-    return m_morphMotion.findKeyframe(timeIndex, name);
+    return layerIndex == 0 ? m_morphMotion.findKeyframe(timeIndex, name) : 0;
 }
 
 IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const

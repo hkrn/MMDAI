@@ -444,6 +444,9 @@ TEST(MotionTest, AddAndRemoveBoneKeyframes)
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(-1));
         ASSERT_EQ(frame.data(), motion.findBoneKeyframeAt(0));
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
+        // layer index 0 must be used
+        ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kBone));
+        ASSERT_EQ(0, motion.findMorphKeyframe(42, &name, 1));
         // find a bone keyframe with timeIndex and name
         ASSERT_EQ(frame.take(), motion.findBoneKeyframe(42, &name, 0));
     }
@@ -488,6 +491,9 @@ TEST(MotionTest, AddAndRemoveCameraKeyframes)
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(-1));
         ASSERT_EQ(frame.data(), motion.findCameraKeyframeAt(0));
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
+        // layer index 0 must be used
+        ASSERT_EQ(1, motion.countLayers(0, IKeyframe::kCamera));
+        ASSERT_EQ(0, motion.findCameraKeyframe(42, 1));
         // find a camera keyframe with timeIndex
         ASSERT_EQ(frame.take(), motion.findCameraKeyframe(42, 0));
     }
@@ -519,7 +525,7 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
     Encoding encoding;
     Model model(&encoding);
     vmd::Motion motion(&model, &encoding);
-    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
     QScopedPointer<ILightKeyframe> frame(new vmd::LightKeyframe());
     frame->setTimeIndex(42);
     frame->setColor(Vector3(1, 0, 0));
@@ -532,6 +538,9 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
         ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(-1));
         ASSERT_EQ(frame.data(), motion.findLightKeyframeAt(0));
         ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(1));
+        // layer index 0 must be used
+        ASSERT_EQ(1, motion.countLayers(0, IKeyframe::kLight));
+        ASSERT_EQ(0, motion.findLightKeyframe(42, 1));
         // find a light keyframe with timeIndex
         ASSERT_EQ(frame.take(), motion.findLightKeyframe(42, 0));
     }
@@ -580,6 +589,9 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
         ASSERT_EQ(frame.data(), motion.findMorphKeyframeAt(0));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
+        // layer index 0 must be used
+        ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kMorph));
+        ASSERT_EQ(0, motion.findMorphKeyframe(42, &name, 1));
         ASSERT_EQ(frame.take(), motion.findMorphKeyframe(42, &name, 0));
     }
     QScopedPointer<IMorphKeyframe> frame2(new vmd::MorphKeyframe(&encoding));

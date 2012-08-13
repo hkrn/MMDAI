@@ -205,9 +205,8 @@ public:
     virtual int countKeyframes(IKeyframe::Type value) const = 0;
 
     /**
-     * キーフレームの位置と名前からレイヤー数を返します。
+     * キーフレームの名前と型からレイヤー数を返します。
      *
-     * @param timeIndex
      * @param name
      * @param type
      * @return int
