@@ -47,6 +47,7 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct BoneKeyframeChunk {
+    BoneKeyframeChunk() {}
     int layerIndex;
     uint64_t timeIndex;
     float position[3];
@@ -80,7 +81,7 @@ BoneKeyframe::~BoneKeyframe()
 
 size_t BoneKeyframe::size()
 {
-    static BoneKeyframeChunk keyframe;
+    static const BoneKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
@@ -104,7 +105,7 @@ void BoneKeyframe::read(const uint8_t *data)
 {
     const BoneKeyframeChunk *chunk = reinterpret_cast<const BoneKeyframeChunk *>(data);
     internal::setPosition(chunk->position, m_position);
-    internal::setRotation(chunk->rotation, m_rotation);
+    internal::setRotation2(chunk->rotation, m_rotation);
     setTimeIndex(chunk->timeIndex);
     setLayerIndex(chunk->layerIndex);
     setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk->x));

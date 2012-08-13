@@ -224,6 +224,15 @@ static void inline setRotation(const float *input, Quaternion &output)
 #endif
 }
 
+static void inline setRotation2(const float *input, Quaternion &output)
+{
+#ifdef VPVL2_COORDINATE_OPENGL
+    output.setValue(-input[0], -input[1], input[2], input[3]);
+#else
+    output.setValue(input[0], input[1], input[2], input[3]);
+#endif
+}
+
 static void inline getRotation(const Quaternion &input, float *output)
 {
     output[0] = input.x();
@@ -234,6 +243,19 @@ static void inline getRotation(const Quaternion &input, float *output)
     output[1] = input.y();
     output[2] = input.z();
 #endif
+    output[3] = input.w();
+}
+
+static void inline getRotation2(const Quaternion &input, float *output)
+{
+#ifdef VPVL2_COORDINATE_OPENGL
+    output[0] = -input.x();
+    output[1] = -input.y();
+#else
+    output[0] = input.x();
+    output[1] = input.y();
+#endif
+    output[2] = input.z();
     output[3] = input.w();
 }
 
