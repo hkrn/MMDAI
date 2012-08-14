@@ -624,7 +624,8 @@ IMotion *SceneLoader::loadCameraMotion(const QString &path)
     QScopedPointer<IMotion> motion;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        motion.reset(m_factory->createMotion());
+        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
+        motion.reset(m_factory->createMotion(Factory::findMotionType(ptr, data.size()), 0));
         if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
                 && motion->countKeyframes(IKeyframe::kCamera) > 0) {
             setCameraMotion(motion.data());
@@ -672,7 +673,8 @@ IMotion *SceneLoader::loadModelMotion(const QString &path)
     QScopedPointer<IMotion> motion;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        motion.reset(m_factory->createMotion());
+        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
+        motion.reset(m_factory->createMotion(Factory::findMotionType(ptr, data.size()), 0));
         if (!motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size()))
             motion.reset(0);
     }
@@ -859,7 +861,7 @@ void SceneLoader::loadProject(const QString &path)
 IMotion *SceneLoader::newCameraMotion() const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
-    QScopedPointer<IMotion> newCameraMotion(m_factory->createMotion());
+    QScopedPointer<IMotion> newCameraMotion(m_factory->createMotion(IMotion::kVMD, 0));
     QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factory->createCameraKeyframe());
     QScopedPointer<ILightKeyframe> lightKeyframe(m_factory->createLightKeyframe());
     ICamera *camera = m_project->camera();
@@ -883,7 +885,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
     /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
     QScopedPointer<IMotion> newModelMotion;
     if (model) {
-        newModelMotion.reset(m_factory->createMotion());
+        newModelMotion.reset(m_factory->createMotion(IMotion::kVMD, 0));
         Array<IBone *> bones;
         model->getBones(bones);
         const int nbones = bones.count();

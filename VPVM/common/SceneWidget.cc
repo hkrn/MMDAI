@@ -395,7 +395,7 @@ void SceneWidget::addModel()
     /* モデル追加と共に空のモーションを作成する */
     IModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
                                             tr("Open PMD/PMX file"),
-                                            tr("PMD/PMX file (*.pmd *.pmx *.zip)"),
+                                            tr("Model file (*.pmd *.pmx *.zip)"),
                                             m_settings));
     if (model && !m_playing) {
         setEmptyMotion(model);
@@ -432,7 +432,7 @@ void SceneWidget::insertMotionToAllModels()
     /* モーションを追加したら即座に反映させるために updateMotion を呼んでおく */
     IMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                              tr("Open VMD (for model) file"),
-                                                             tr("VMD file (*.vmd)"),
+                                                             tr("Motion file (*.vmd *.mvd)"),
                                                              m_settings));
     IModel *selected = m_loader->selectedModel();
     if (motion && selected)
@@ -464,7 +464,7 @@ void SceneWidget::insertMotionToSelectedModel()
     if (model) {
         IMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                                      tr("Open VMD (for model) file"),
-                                                                     tr("VMD file (*.vmd)"),
+                                                                     tr("Motion file (*.vmd *.mvd)"),
                                                                      m_settings));
         if (motion)
             refreshMotions();

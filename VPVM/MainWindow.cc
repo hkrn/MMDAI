@@ -469,7 +469,7 @@ void MainWindow::saveCameraMotionAs()
                                                        tr("VMD file (*.vmd)"),
                                                        tr("untitiled_camera_motion.vmd"),
                                                        &m_settings);
-    QScopedPointer<IMotion> motion(m_factory->createMotion());
+    QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
     IMotion *motionPtr = motion.data();
     m_sceneMotionModel->saveMotion(motionPtr);
     saveMotionFile(filename, motionPtr);
@@ -478,7 +478,7 @@ void MainWindow::saveCameraMotionAs()
 bool MainWindow::saveMotionFile(const QString &filename)
 {
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
-    QScopedPointer<IMotion> motion(m_factory->createMotion());
+    QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
     IMotion *motionPtr = motion.data();
     motionPtr->setParentModel(m_sceneWidget->sceneLoader()->selectedModel());
     m_boneMotionModel->saveMotion(motionPtr);
