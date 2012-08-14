@@ -71,36 +71,38 @@ public:
         weight = 0;
     }
     void seek(const IKeyframe::TimeIndex &timeIndex) {
-        int fromIndex, toIndex;
-        IKeyframe::TimeIndex currentTimeIndex;
-        findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
-        const MorphKeyframe *keyframeFrom = reinterpret_cast<const MorphKeyframe *>(keyframes->at(fromIndex)),
-                *keyframeTo = reinterpret_cast<const MorphKeyframe *>(keyframes->at(toIndex));
-        const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
-        const IMorph::WeightPrecision &weightFrom = keyframeFrom->weight(), &weightTo = keyframeTo->weight();
-        if (timeIndexFrom != timeIndexTo) {
-            if (currentTimeIndex <= timeIndexFrom) {
-                weight = weightFrom;
-            }
-            else if (currentTimeIndex >= timeIndexTo) {
-                weight = weightTo;
-            }
-            else {
-                const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
-                const Motion::InterpolationTable &tableForWeight = keyframeTo->tableForWeight();
-                if (tableForWeight.linear) {
-                    weight = internal::lerp(weightFrom, weightTo, w);
+        if (morphRef) {
+            int fromIndex, toIndex;
+            IKeyframe::TimeIndex currentTimeIndex;
+            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            const MorphKeyframe *keyframeFrom = reinterpret_cast<const MorphKeyframe *>(keyframes->at(fromIndex)),
+                    *keyframeTo = reinterpret_cast<const MorphKeyframe *>(keyframes->at(toIndex));
+            const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
+            const IMorph::WeightPrecision &weightFrom = keyframeFrom->weight(), &weightTo = keyframeTo->weight();
+            if (timeIndexFrom != timeIndexTo) {
+                if (currentTimeIndex <= timeIndexFrom) {
+                    weight = weightFrom;
+                }
+                else if (currentTimeIndex >= timeIndexTo) {
+                    weight = weightTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForWeight, w);
-                    weight = internal::lerp(weightFrom, weightTo, weight2);
+                    const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    const Motion::InterpolationTable &tableForWeight = keyframeTo->tableForWeight();
+                    if (tableForWeight.linear) {
+                        weight = internal::lerp(weightFrom, weightTo, w);
+                    }
+                    else {
+                        const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForWeight, w);
+                        weight = internal::lerp(weightFrom, weightTo, weight2);
+                    }
                 }
             }
+            else {
+                weight = weightFrom;
+            }
+            morphRef->setWeight(weight);
         }
-        else {
-            weight = weightFrom;
-        }
-        morphRef->setWeight(weight);
     }
 };
 
@@ -156,6 +158,7 @@ void MorphSection::read(const uint8_t *data)
     delete m_keyframeListPtr;
     m_keyframeListPtr = new KeyframeList();
     m_keyframeListPtr->reserve(nkeyframes);
+    ptr += sizeof(header) + header.reserved;
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new MorphKeyframe(m_nameListSectionRef);
         m_keyframePtr->read(ptr);
