@@ -11,6 +11,9 @@
         <file alias="PortAudio">licenses/PortAudio</file>
         <file alias="minizip">licenses/minizip</file>
         <file alias="Cg">licenses/Cg</file>
+        <file alias="DevIL">licenses/DevIL</file>
+        <file alias="libjpeg">licenses/libjpeg</file>
+        <file alias="libpng">licenses/libpng</file>
     </qresource>
     <qresource prefix="/textures">
         <file alias="toon0.bmp">images/toon0.bmp</file>

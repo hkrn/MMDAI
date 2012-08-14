@@ -20,6 +20,9 @@ exists(../portaudio/build/scons/posix):LIBS += -L../portaudio/build/scons/posix
 exists(../portaudio/build/scons/darwin):LIBS += -L../portaudio/build/scons/darwin
 exists(../portaudio/include):INCLUDEPATH += ../portaudio/include
 
+# DevIL
+exists(../devil/x86_64/lib):LIBS += -L../devil/x86_64/lib
+
 # libxml2
 exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
@@ -41,6 +44,9 @@ LIBS += -lBulletCollision \
         -lavformat \
         -lavutil \
         -lswscale \
+        -lIL \
+        -lILU \
+        -lILUT \
         -lxml2
 
 # VPVL and others configuration

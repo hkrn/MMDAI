@@ -37,6 +37,7 @@
 #include "widgets/LicenseWidget.h"
 
 #include <QtGui/QtGui>
+#include <vpvl2/config.h>
 
 LicenseWidget::LicenseWidget(QWidget *parent) :
     QWidget(parent),
@@ -84,14 +85,23 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     setLayout(layout);
     m_model = model;
 
+#ifdef VPVL2_LINK_DEVIL
+    addLibrary("libpng", "libpng", "http://libpng.org", "libpng");
+    addLibrary("libjpeg", "Custom", "http://ijg.org", "libjpeg");
+    addLibrary("DevIL", "LGPL", "http://openil.sf.net", "DevIL");
+#endif /* VPVL2_LINK_DEVIL */
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     addLibrary("Cg", "EULA", "http://www.nvidia.com/", "Cg");
+#endif /* VPVL2_ENABLE_CG */
     addLibrary("minizip", "zlib", "http://www.winimage.com/zLibDll/minizip.html", "minizip");
     addLibrary("PortAudio", "MIT", "http://portaudio.com", "PortAudio");
     addLibrary("libav", "LGPL", "http://libav.org", "libav");
     addLibrary("zlib", "zlib", "http://zlib.net", "zlib");
     addLibrary("libiconv", "LGPL", "http://www.gnu.org/software/libiconv/", "libiconv");
     addLibrary("libxml2", "MIT", "http://xmlsoft.org", "libxml2");
+#ifdef VPVL2_LINK_ASSIMP
     addLibrary("Open Asset Import Library", "New BSD", "http://assimp.sf.net", "Assimp");
+#endif /* VPVL2_LINK_ASSIMP */
     addLibrary("BulletPhysics", "zlib", "http://bulletphysics.org/wordpress/", "Bullet");
     addLibrary("MMDAgent", "New BSD", "http://mmdagent.jp", "MMDAgent");
     addLibrary("libvpvl", "New BSD", "https://github.com/hkrn/MMDAI/", "libvpvl");
