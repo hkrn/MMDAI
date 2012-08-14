@@ -628,7 +628,7 @@ public:
                 }
                 if (!found) {
                     delete self->currentMotion;
-                    self->currentMotion = self->factory->createMotion();
+                    self->currentMotion = self->factory->createMotion(IMotion::kVMD, 0);
                     self->pushState(kAnimation);
                 }
             }

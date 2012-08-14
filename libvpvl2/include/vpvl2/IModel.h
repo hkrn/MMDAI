@@ -93,9 +93,11 @@ public:
         kVertex
     };
     enum Type {
+        kUnknown,
         kAsset,
         kPMD,
-        kPMX
+        kPMX,
+        kMaxType
     };
     virtual ~IModel() {}
 

@@ -204,6 +204,9 @@ public:
     bool isActive() const {
         return m_active;
     }
+    Type type() const {
+        return kMVD;
+    }
 
 private:
     void parseHeader(const DataInfo &info);

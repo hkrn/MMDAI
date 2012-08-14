@@ -541,6 +541,8 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
     case IModel::kPMX:
         file += "pmx/";
         break;
+    default:
+        break;
     }
     switch (type) {
     case kEdgeVertexShader:

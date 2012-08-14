@@ -58,6 +58,13 @@ class Scene;
 class VPVL2_API IMotion
 {
 public:
+    enum Type {
+        kUnknown,
+        kVMD,
+        kMVD,
+        kMaxType
+    };
+
     virtual ~IMotion() {}
 
     /**
@@ -372,6 +379,13 @@ public:
      * @return IString
      */
     virtual const IString *name() const = 0;
+
+    /**
+     * モーションの型を返します。
+     *
+     * @return Type
+     */
+    virtual Type type() const = 0;
 };
 
 }

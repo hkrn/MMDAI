@@ -65,6 +65,34 @@ struct Factory::PrivateContext
     IMotion *motion;
 };
 
+IModel::Type Factory::findModelType(const uint8_t *data, size_t size)
+{
+    if (size >= 4 && memcmp(data, "PMX ", 4) == 0) {
+        return IModel::kPMX;
+    }
+    else if (size >= 3 && memcmp(data, "Pmd", 3) == 0) {
+        return IModel::kPMD;
+    }
+    else {
+        return IModel::kAsset;
+    }
+}
+
+IMotion::Type Factory::findMotionType(const uint8_t *data, size_t size)
+{
+    if (size >= sizeof(vmd::Motion::kSignature) &&
+            memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
+        return IMotion::kVMD;
+    }
+    else if (size >= sizeof(mvd::Motion::kSignature) &&
+             memcmp(data, mvd::Motion::kSignature, sizeof(mvd::Motion::kSignature) - 1) == 0) {
+        return IMotion::kMVD;
+    }
+    else {
+        return IMotion::kUnknown;
+    }
+}
+
 Factory::Factory(IEncoding *encoding)
     : m_context(0)
 {
@@ -93,39 +121,27 @@ IModel *Factory::createModel(IModel::Type type) const
 
 IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
 {
-    IModel *model = 0;
-    if (size >= 4 && memcmp(data, "PMX ", 4) == 0) {
-        model = new pmx::Model(m_context->encoding);
-    }
-    else if (size >= 3 && memcmp(data, "Pmd", 3) == 0) {
-        model = new pmd::Model(m_context->encoding);
-    }
-    else {
-        model = new asset::Model(m_context->encoding);
-    }
+    IModel *model = createModel(findModelType(data, size));
     ok = model ? model->load(data, size) : false;
     return model;
 }
 
-IMotion *Factory::createMotion() const
+IMotion *Factory::createMotion(IMotion::Type type, IModel *model) const
 {
-    return new vmd::Motion(0, m_context->encoding);
+    switch (type) {
+    case IMotion::kVMD:
+        return new vmd::Motion(model, m_context->encoding);
+    case IMotion::kMVD:
+        return new mvd::Motion(model, m_context->encoding);
+    default:
+        return 0;
+    }
 }
 
 IMotion *Factory::createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const
 {
-    IMotion *motion = 0;
-    if (size >= sizeof(vmd::Motion::kSignature) &&
-            memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
-        motion = m_context->motion = new vmd::Motion(model, m_context->encoding);
-        ok = motion->load(data, size);
-    }
-    else if (size >= sizeof(mvd::Motion::kSignature) &&
-             memcmp(data, mvd::Motion::kSignature, sizeof(mvd::Motion::kSignature) - 1) == 0) {
-        motion = m_context->motion = new mvd::Motion(model, m_context->encoding);
-        ok = motion->load(data, size);
-    }
-    m_context->motion = 0;
+    IMotion *motion = createMotion(findMotionType(data, size), model);
+    ok = motion ? motion->load(data, size) : false;
     return motion;
 }
 
