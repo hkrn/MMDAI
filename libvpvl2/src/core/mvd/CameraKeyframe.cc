@@ -50,7 +50,7 @@ struct CameraKeyframeChunk {
     CameraKeyframeChunk() {}
     int layerIndex;
     uint64_t timeIndex;
-    float radius;
+    float distance;
     float position[3];
     float rotation[3];
     float fov;
@@ -70,7 +70,7 @@ CameraKeyframe::CameraKeyframe()
       m_angle(kZeroV3),
       m_distance(0),
       m_fov(0),
-      m_noPerspective(false)
+      m_perspective(false)
 {
 }
 
@@ -82,7 +82,7 @@ CameraKeyframe::~CameraKeyframe()
     m_angle.setZero();
     m_distance = 0;
     m_fov = 0;
-    m_noPerspective = false;
+    m_perspective = false;
 }
 
 size_t CameraKeyframe::size()
@@ -110,11 +110,19 @@ int CameraKeyframe::interpolationTableSize()
 void CameraKeyframe::read(const uint8_t *data)
 {
     const CameraKeyframeChunk *chunk = reinterpret_cast<const CameraKeyframeChunk *>(data);
+    Vector3 angle;
     internal::setPosition(chunk->position, m_position);
-    internal::setPositionRaw(chunk->rotation, m_angle);
-    m_angle.setValue(-degree(m_angle[0]), -degree(m_angle[1]), degree(m_angle[2]));
+    internal::setPositionRaw(chunk->rotation, angle);
+#ifdef VPVL2_COORDINATE_OPENGL
+    setAngle(Vector3(degree(angle[0]), degree(angle[1]) - 180, degree(angle[2])));
+#else
+    setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
+#endif
+    setDistance(chunk->distance);
     setTimeIndex(chunk->timeIndex);
     setLayerIndex(chunk->layerIndex);
+    setFov(degree(chunk->fov));
+    setPerspective(chunk->perspective);
     setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk->positionIP));
     setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk->rotationIP));
     setInterpolationParameter(kFov, Motion::InterpolationTable::toQuadWord(chunk->fovIP));
@@ -139,7 +147,7 @@ ICameraKeyframe *CameraKeyframe::clone() const
     frame->setFov(m_fov);
     frame->setPosition(m_position);
     frame->setAngle(m_angle);
-    frame->setPerspective(!m_noPerspective);
+    frame->setPerspective(m_perspective);
     frame->setInterpolationParameter(kX, m_interpolationPosition.parameter);
     frame->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
     frame->setInterpolationParameter(kFov, m_interpolationFov.parameter);
@@ -222,7 +230,7 @@ const Scalar &CameraKeyframe::fov() const
 
 bool CameraKeyframe::isPerspective() const
 {
-    return !m_noPerspective;
+    return !m_perspective;
 }
 
 void CameraKeyframe::setPosition(const Vector3 &value)
@@ -247,7 +255,7 @@ void CameraKeyframe::setFov(const Scalar &value)
 
 void CameraKeyframe::setPerspective(bool value)
 {
-    m_noPerspective = !value;
+    m_perspective = value;
 }
 
 void CameraKeyframe::setName(const IString * /* value */)

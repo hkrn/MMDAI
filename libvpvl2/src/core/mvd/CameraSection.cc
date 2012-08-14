@@ -61,13 +61,13 @@ public:
     Vector3 position;
     Vector3 angle;
     Scalar distance;
-    Scalar fovy;
+    Scalar fov;
     IKeyframe::LayerIndex countOfLayers;
     PrivateContext()
         : position(kZeroV3),
           angle(kZeroV3),
           distance(0),
-          fovy(0),
+          fov(0),
           countOfLayers(0)
     {
     }
@@ -75,7 +75,7 @@ public:
         position.setZero();
         angle.setZero();
         distance = 0;
-        fovy = 0;
+        fov = 0;
         countOfLayers = 0;
     }
     void seek(const IKeyframe::TimeIndex &timeIndex) {
@@ -94,19 +94,19 @@ public:
                 distance = distanceFrom;
                 position = positionFrom;
                 angle = angleFrom;
-                fovy = fovyFrom;
+                fov = fovyFrom;
             }
             else if (currentTimeIndex >= timeIndexTo) {
                 distance = distanceTo;
                 position = positionTo;
                 angle = angleTo;
-                fovy = fovyTo;
+                fov = fovyTo;
             }
             else if (timeIndexTo - timeIndexFrom <= 1.0f) {
                 distance = distanceFrom;
                 position = positionFrom;
                 angle = angleFrom;
-                fovy = fovyFrom;
+                fov = fovyFrom;
             }
             else {
                 const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
@@ -133,11 +133,11 @@ public:
                 }
                 const Motion::InterpolationTable &tableForFov = keyframeTo->tableForFov();
                 if (tableForFov.linear) {
-                    fovy = internal::lerp(fovyFrom, fovyTo, weight);
+                    fov = internal::lerp(fovyFrom, fovyTo, weight);
                 }
                 else {
                     const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForFov, weight);
-                    fovy = internal::lerp(fovyFrom, fovyTo, weight2);
+                    fov = internal::lerp(fovyFrom, fovyTo, weight2);
                 }
             }
         }
@@ -145,7 +145,7 @@ public:
             distance = distanceFrom;
             position = positionFrom;
             angle = angleFrom;
-            fovy = fovyFrom;
+            fov = fovyFrom;
         }
     }
 };
@@ -208,6 +208,7 @@ void CameraSection::read(const uint8_t *data)
         btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
         ptr += sizeOfkeyframe;
     }
+    m_contextPtr->keyframes->sort(KeyframeTimeIndexPredication());
     m_keyframePtr = 0;
 }
 
@@ -272,6 +273,26 @@ ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
         }
     }
     return 0;
+}
+
+const Vector3 &CameraSection::position() const
+{
+    return m_contextPtr ? m_contextPtr->position : kZeroV3;
+}
+
+const Vector3 &CameraSection::angle() const
+{
+    return m_contextPtr ? m_contextPtr->angle : kZeroV3;
+}
+
+Scalar CameraSection::fov() const
+{
+    return m_contextPtr ? m_contextPtr->fov : 0;
+}
+
+Scalar CameraSection::distance() const
+{
+    return m_contextPtr ? m_contextPtr->distance : 0;
 }
 
 } /* namespace mvd */

@@ -99,7 +99,7 @@ void LightSection::read(const uint8_t *data)
     const LightSectionHeader &header = *reinterpret_cast<const LightSectionHeader *>(ptr);
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
-    ptr += sizeof(header);
+    ptr += sizeof(header) + header.reserved2;
     m_allKeyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new LightKeyframe();

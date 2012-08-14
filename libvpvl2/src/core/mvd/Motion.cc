@@ -328,11 +328,14 @@ void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
 
 void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
-    m_cameraSection->seek(timeIndex);
-    m_effectSection->seek(timeIndex);
-    m_lightSection->seek(timeIndex);
-    m_projectSection->seek(timeIndex);
-    (void) scene;
+    if (m_cameraSection->countKeyframes() > 0) {
+        m_cameraSection->seek(timeIndex);
+        ICamera *camera = scene->camera();
+        camera->setPosition(m_cameraSection->position());
+        camera->setAngle(m_cameraSection->angle());
+        camera->setFov(m_cameraSection->fov());
+        camera->setDistance(m_cameraSection->distance());
+    }
 }
 
 void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
@@ -347,11 +350,14 @@ void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
 
 void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
 {
-    m_cameraSection->advance(deltaTimeIndex);
-    m_effectSection->advance(deltaTimeIndex);
-    m_lightSection->advance(deltaTimeIndex);
-    m_projectSection->advance(deltaTimeIndex);
-    (void) scene;
+    if (m_cameraSection->countKeyframes() > 0) {
+        m_cameraSection->advance(deltaTimeIndex);
+        ICamera *camera = scene->camera();
+        camera->setPosition(m_cameraSection->position());
+        camera->setAngle(m_cameraSection->angle());
+        camera->setFov(m_cameraSection->fov());
+        camera->setDistance(m_cameraSection->distance());
+    }
 }
 
 void Motion::reload()
@@ -393,7 +399,7 @@ bool Motion::isNullFrameEnabled() const
     return false;
 }
 
-void Motion::setNullFrameEnable(bool value)
+void Motion::setNullFrameEnable(bool /* value */)
 {
 }
 
@@ -574,7 +580,7 @@ void Motion::deleteKeyframe(IKeyframe *&value)
     }
 }
 
-void Motion::deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type)
+void Motion::deleteKeyframes(const IKeyframe::TimeIndex & /* timeIndex */, IKeyframe::Type type)
 {
     switch (type) {
     case IKeyframe::kAsset:

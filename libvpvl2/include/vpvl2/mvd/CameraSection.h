@@ -66,6 +66,11 @@ public:
                                   const IKeyframe::LayerIndex &layerIndex) const;
     ICameraKeyframe *findKeyframeAt(int index) const;
 
+    const Vector3 &position() const;
+    const Vector3 &angle() const;
+    Scalar fov() const;
+    Scalar distance() const;
+
 private:
     class PrivateContext;
     CameraKeyframe *m_keyframePtr;

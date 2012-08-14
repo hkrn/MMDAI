@@ -89,7 +89,7 @@ private:
     Vector3 m_angle;
     float m_distance;
     float m_fov;
-    bool m_noPerspective;
+    bool m_perspective;
     Motion::InterpolationTable m_interpolationPosition;
     Motion::InterpolationTable m_interpolationRotation;
     Motion::InterpolationTable m_interpolationFov;
