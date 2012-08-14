@@ -58,6 +58,7 @@ public:
     void release();
     void read(const uint8_t *data);
     void seek(const IKeyframe::TimeIndex &timeIndex);
+    void setParentModel(IModel *model);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;

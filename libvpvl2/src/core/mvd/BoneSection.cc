@@ -162,6 +162,7 @@ void BoneSection::release()
     delete m_keyframePtr;
     m_keyframePtr = 0;
     m_allKeyframeRefs.clear();
+    m_context2names.clear();
     m_name2contexts.releaseAll();
 }
 
@@ -190,6 +191,7 @@ void BoneSection::read(const uint8_t *data)
     m_contextPtr->boneRef = m_modelRef ? m_modelRef->findBone(m_nameListSectionRef->value(header.key)) : 0;
     m_contextPtr->countOfLayers = header.countOfLayers;
     m_name2contexts.insert(header.key, m_contextPtr);
+    m_context2names.insert(m_contextPtr, header.key);
     m_keyframeListPtr = 0;
     m_keyframePtr = 0;
     m_contextPtr = 0;
@@ -205,6 +207,21 @@ void BoneSection::seek(const IKeyframe::TimeIndex &timeIndex)
         }
     }
     saveCurrentTimeIndex(timeIndex);
+}
+
+void BoneSection::setParentModel(IModel *model)
+{
+    m_modelRef = model;
+    if (model) {
+        const int ncontexts = m_name2contexts.count();
+        for (int i = 0; i < ncontexts; i++) {
+            PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
+            PrivateContext *contextPtr = *context;
+            const int *key = m_context2names.find(contextPtr);
+            IBone *bone = model->findBone(m_nameListSectionRef->value(*key));
+            contextPtr->boneRef = bone;
+        }
+    }
 }
 
 void BoneSection::write(uint8_t * /* data */) const

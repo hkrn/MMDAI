@@ -315,6 +315,9 @@ size_t Motion::estimateSize() const
 void Motion::setParentModel(IModel *model)
 {
     m_modelRef = model;
+    m_boneSection->setParentModel(model);
+    m_modelSection->setParentModel(model);
+    m_morphSection->setParentModel(model);
 }
 
 void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
