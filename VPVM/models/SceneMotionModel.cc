@@ -268,7 +268,7 @@ public:
             }
             else {
                 /* 元フレームのインデックスが 0 未満の時は削除 */
-                IKeyframe *frameToDelete = motion->findCameraKeyframe(frameIndex);
+                IKeyframe *frameToDelete = motion->findCameraKeyframe(frameIndex, 0);
                 motion->deleteKeyframe(frameToDelete);
                 m_smm->setData(modelIndex, QVariant());
             }
@@ -292,7 +292,7 @@ public:
             }
             else {
                 /* 元フレームのインデックスが 0 未満の時は削除 */
-                IKeyframe *frameToDelete = motion->findLightKeyframe(frameIndex);
+                IKeyframe *frameToDelete = motion->findLightKeyframe(frameIndex, 0);
                 motion->deleteKeyframe(frameToDelete);
                 m_smm->setData(modelIndex, QVariant());
             }
@@ -620,14 +620,14 @@ void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
             ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
             if (item->isCategory()) {
                 if (index.row() == m_cameraTreeItem->rowIndex()) {
-                    ICameraKeyframe *frameToDelete = m_motion->findCameraKeyframe(toTimeIndex(index));
+                    ICameraKeyframe *frameToDelete = m_motion->findCameraKeyframe(toTimeIndex(index), 0);
                     CameraKeyframePtr clonedCameraKeyframe(frameToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
                     clonedCameraKeyframe->setTimeIndex(-1);
                     cameraKeyframes.append(CameraKeyframePair(frameToDelete->timeIndex(), clonedCameraKeyframe));
                 }
                 else if (index.row() == m_lightTreeItem->rowIndex()) {
-                    ILightKeyframe *frameToDelete = m_motion->findLightKeyframe(toTimeIndex(index));
+                    ILightKeyframe *frameToDelete = m_motion->findLightKeyframe(toTimeIndex(index), 0);
                     LightKeyframePtr clonedLightKeyframe(frameToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
                     clonedLightKeyframe->setTimeIndex(-1);

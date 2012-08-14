@@ -209,7 +209,7 @@ public:
                 }
                 else {
                     /* 元フレームのインデックスが 0 未満の時は削除 */
-                    IKeyframe *frameToDelete = m_motion->findMorphKeyframe(frameIndex, morphKeyframe->name());
+                    IKeyframe *frameToDelete = m_motion->findMorphKeyframe(frameIndex, morphKeyframe->name(), 0);
                     m_motion->deleteKeyframe(frameToDelete);
                     m_fmm->setData(modelIndex, QVariant());
                 }
@@ -581,7 +581,7 @@ void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (IMorph *morph = item->morph()) {
-                IMorphKeyframe *keyframeToDelete = m_motion->findMorphKeyframe(toTimeIndex(index), morph->name());
+                IMorphKeyframe *keyframeToDelete = m_motion->findMorphKeyframe(toTimeIndex(index), morph->name(), 0);
                 if (keyframeToDelete) {
                     KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */

@@ -315,7 +315,7 @@ public:
                 }
                 else {
                     /* 元フレームのインデックスが 0 未満の時は削除 */
-                    IKeyframe *frameToDelete = m_motion->findBoneKeyframe(frameIndex, boneKeyframe->name());
+                    IKeyframe *frameToDelete = m_motion->findBoneKeyframe(frameIndex, boneKeyframe->name(), 0);
                     m_motion->deleteKeyframe(frameToDelete);
                     m_bmm->setData(modelIndex, QVariant());
                 }
@@ -940,7 +940,7 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
         if (index.isValid() && index.column() > 1) {
             TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
             if (IBone *bone = item->bone()) {
-                IBoneKeyframe *keyframeToDelete = m_motion->findBoneKeyframe(toTimeIndex(index), bone->name());
+                IBoneKeyframe *keyframeToDelete = m_motion->findBoneKeyframe(toTimeIndex(index), bone->name(), 0);
                 if (keyframeToDelete) {
                     KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                     /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
