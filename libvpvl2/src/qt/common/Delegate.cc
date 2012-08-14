@@ -50,6 +50,13 @@
 #include <Cg/cgGL.h>
 #endif
 
+#ifdef VPVL2_LINK_DEVIL
+#define ILUT_USE_OPENGL
+#include <IL/il.h>
+#include <IL/ilu.h>
+#include <IL/ilut.h>
+#endif
+
 namespace
 {
 typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
@@ -773,7 +780,15 @@ void Delegate::createRenderTargets(bool enableMSAA)
     glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(context->getProcAddress("glBlitFramebuffer"));
     glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
     glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(context->getProcAddress("glRenderbufferStorageMultisample"));
-#endif
+#endif /* __APPLE__ */
+#ifdef VPVL2_LINK_DEVIL
+    ilInit();
+    iluInit();
+    ilutInit();
+    ilutRenderer(ILUT_OPENGL);
+    ilEnable(IL_CONV_PAL);
+    ilutEnable(ILUT_OPENGL_CONV);
+#endif /* VPVL2_LINK_DEVIL */
 }
 
 void Delegate::setRenderColorTargets(const void *targets, const int ntargets)
@@ -1162,6 +1177,35 @@ bool Delegate::uploadTextureInternal(const QString &path,
         ok = false;
         return true; /* skip */
     }
+#ifdef VPVL2_LINK_DEVIL
+    ILuint imageID;
+    ilGenImages(1, &imageID);
+    ilBindImage(imageID);
+    if (ilLoadImage(path.toLocal8Bit().constData()) == IL_FALSE) {
+        ILenum error = ilGetError();
+        while (error != IL_NO_ERROR) {
+            qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
+            error = ilGetError();
+        }
+        ilDeleteImages(1, &imageID);
+        ok = false;
+        return true;
+    }
+    iluFlipImage();
+    GLuint textureID = ilutGLBindTexImage();
+    size_t width = ilGetInteger(IL_IMAGE_WIDTH);
+    size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
+    ilBindImage(0);
+    ilDeleteImages(1, &imageID);
+    TextureCache cache(width, height, textureID);
+    m_texture2Paths.insert(textureID, path);
+    setTextureID(cache, isToon, texture);
+    addTextureCache(privateContext, path, cache);
+    qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
+           textureID, width, height, qPrintable(path));
+    ok = textureID != 0;
+    return ok;
+#else
     if (path.endsWith(".dds")) {
         QFile file(path);
         if (file.open(QFile::ReadOnly)) {
@@ -1199,6 +1243,7 @@ bool Delegate::uploadTextureInternal(const QString &path,
         ok = textureID != 0;
         return ok;
     }
+#endif
 }
 
 void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)

@@ -381,6 +381,14 @@ if(VPVL2_ENABLE_PROJECT)
   include_directories(${LIBXML2_INCLUDE_DIR})
 endif()
 
+# link against DevIL
+option(VPVL2_LINK_DEVIL "link against DevIL (default is OFF)" OFF)
+if(VPVL2_BUILD_QT_RENDERER AND VPVL2_LINK_DEVIL)
+  find_package(DevIL REQUIRED)
+  target_link_libraries(vpvl2qtcommon ${IL_LIBRARIES} ${ILU_LIBRARIES} ${ILUT_LIBRARIES})
+  include_directories(${IL_INCLUDE_DIR})
+endif()
+
 # extra renderer program with SDL
 option(VPVL2_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL2_OPENGL_RENDERER required, default is OFF)" OFF)
 if(VPVL2_OPENGL_RENDERER AND VPVL2_BUILD_SDL)
