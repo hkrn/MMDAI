@@ -77,46 +77,48 @@ public:
         countOfLayers = 0;
     }
     void seek(const IKeyframe::TimeIndex &timeIndex) {
-        int fromIndex, toIndex;
-        IKeyframe::TimeIndex currentTimeIndex;
-        findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
-        const BoneKeyframe *keyframeFrom = reinterpret_cast<const BoneKeyframe *>(keyframes->at(fromIndex)),
-                *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes->at(toIndex));
-        const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
-        const Vector3 &positionFrom = keyframeFrom->position(), &positionTo = keyframeTo->position();
-        const Quaternion &rotationFrom = keyframeFrom->rotation(), &rotationTo = keyframeTo->rotation();
-        if (timeIndexFrom != timeIndexTo) {
-            if (currentTimeIndex <= timeIndexFrom) {
+        if (boneRef) {
+            int fromIndex, toIndex;
+            IKeyframe::TimeIndex currentTimeIndex;
+            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            const BoneKeyframe *keyframeFrom = reinterpret_cast<const BoneKeyframe *>(keyframes->at(fromIndex)),
+                    *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes->at(toIndex));
+            const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
+            const Vector3 &positionFrom = keyframeFrom->position(), &positionTo = keyframeTo->position();
+            const Quaternion &rotationFrom = keyframeFrom->rotation(), &rotationTo = keyframeTo->rotation();
+            if (timeIndexFrom != timeIndexTo) {
+                if (currentTimeIndex <= timeIndexFrom) {
+                    position = positionFrom;
+                    rotation = rotationFrom;
+                }
+                else if (currentTimeIndex >= timeIndexTo) {
+                    position = positionTo;
+                    rotation = rotationTo;
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
+                    IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
+                    interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
+                    interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
+                    interpolate(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
+                    position.setValue(x, y, z);
+                    const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
+                    if (tableForRotation.linear) {
+                        rotation = rotationFrom.slerp(rotationTo, weight);
+                    }
+                    else {
+                        const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
+                        rotation = rotationFrom.slerp(rotationTo, weight2);
+                    }
+                }
+            }
+            else {
                 position = positionFrom;
                 rotation = rotationFrom;
             }
-            else if (currentTimeIndex >= timeIndexTo) {
-                position = positionTo;
-                rotation = rotationTo;
-            }
-            else {
-                const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
-                IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
-                interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
-                interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
-                interpolate(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
-                position.setValue(x, y, z);
-                const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
-                if (tableForRotation.linear) {
-                    rotation = rotationFrom.slerp(rotationTo, weight);
-                }
-                else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
-                    rotation = rotationFrom.slerp(rotationTo, weight2);
-                }
-            }
+            boneRef->setPosition(position);
+            boneRef->setRotation(rotation);
         }
-        else {
-            position = positionFrom;
-            rotation = rotationFrom;
-        }
-        boneRef->setPosition(position);
-        boneRef->setRotation(rotation);
     }
 };
 
