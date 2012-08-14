@@ -68,7 +68,6 @@ private:
     ModelKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;
     size_t m_adjustAlighment;
-    int m_countOfIKBones;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelSection)
 };

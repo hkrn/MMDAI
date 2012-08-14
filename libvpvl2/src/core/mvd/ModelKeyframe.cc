@@ -64,14 +64,29 @@ struct ModelKeyframeChunk {
 ModelKeyframe::ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKBones)
     : BaseKeyframe(),
       m_nameListSectionRef(nameListSectionRef),
-      m_countOfIKBones(countOfIKBones)
+      m_edgeColor(kZeroC),
+      m_edgeWidth(0),
+      m_countOfIKBones(countOfIKBones),
+      m_physicsStillMode(0),
+      m_visible(false),
+      m_shadow(false),
+      m_addBlend(false),
+      m_physics(false)
 {
+    m_bonesOfIK.reserve(countOfIKBones);
 }
 
 ModelKeyframe::~ModelKeyframe()
 {
     m_nameListSectionRef = 0;
+    m_edgeColor.setZero();
+    m_edgeWidth = 0;
     m_countOfIKBones = 0;
+    m_physicsStillMode = 0;
+    m_visible = false;
+    m_shadow = false;
+    m_addBlend = false;
+    m_physics = false;
 }
 
 size_t ModelKeyframe::size()
@@ -98,6 +113,16 @@ void ModelKeyframe::read(const uint8_t *data)
 {
     const ModelKeyframeChunk *chunk = reinterpret_cast<const ModelKeyframeChunk *>(data);
     setTimeIndex(chunk->timeIndex);
+    setVisible(chunk->visible);
+    setShadowEnable(chunk->shadow);
+    setAddBlendEnable(chunk->addBlend);
+    setPhysicsEnable(chunk->physics);
+    setPhysicsStillMode(chunk->physicsStillMode);
+    setEdgeWidth(chunk->edgeWidth);
+    const uint8_t *bonesOfIKPtr = data + sizeof(chunk);
+    for (int i = 0; i < m_countOfIKBones; i++) {
+        m_bonesOfIK[i] = bonesOfIKPtr[i] != 0 ? true : false;
+    }
 }
 
 void ModelKeyframe::write(uint8_t * /* data */) const
@@ -115,6 +140,76 @@ IModelKeyframe *ModelKeyframe::clone() const
     return 0;
 }
 */
+
+bool ModelKeyframe::isVisible() const
+{
+    return m_visible;
+}
+
+bool ModelKeyframe::isShadowEnabled() const
+{
+    return m_shadow;
+}
+
+bool ModelKeyframe::isAddBlendEnabled() const
+{
+    return m_addBlend;
+}
+
+bool ModelKeyframe::isPhysicsEnabled() const
+{
+    return m_physics;
+}
+
+uint8_t ModelKeyframe::physicsStillMode() const
+{
+    return m_physicsStillMode;
+}
+
+const Scalar &ModelKeyframe::edgeWidth() const
+{
+    return m_edgeWidth;
+}
+
+const Color &ModelKeyframe::edgeColor() const
+{
+    return m_edgeColor;
+}
+
+void ModelKeyframe::setVisible(bool value)
+{
+    m_visible = value;
+}
+
+void ModelKeyframe::setShadowEnable(bool value)
+{
+    m_shadow = value;
+}
+
+void ModelKeyframe::setAddBlendEnable(bool value)
+{
+    m_addBlend = value;
+}
+
+void ModelKeyframe::setPhysicsEnable(bool value)
+{
+    m_physics = value;
+}
+
+void ModelKeyframe::setPhysicsStillMode(uint8_t value)
+{
+    m_physicsStillMode = value;
+}
+
+void ModelKeyframe::setEdgeWidth(const Scalar &value)
+{
+    m_edgeWidth = value;
+}
+
+void ModelKeyframe::setEdgeColor(const Color &value)
+{
+    m_edgeColor = value;
+}
 
 void ModelKeyframe::setName(const IString * /* value */)
 {

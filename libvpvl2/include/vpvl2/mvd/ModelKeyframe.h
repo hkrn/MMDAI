@@ -61,12 +61,36 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     // IModelKeyframe *clone() const;
+
+    bool isVisible() const;
+    bool isShadowEnabled() const;
+    bool isAddBlendEnabled() const;
+    bool isPhysicsEnabled() const;
+    uint8_t physicsStillMode() const;
+    const Scalar &edgeWidth() const;
+    const Color &edgeColor() const;
+    void setVisible(bool value);
+    void setShadowEnable(bool value);
+    void setAddBlendEnable(bool value);
+    void setPhysicsEnable(bool value);
+    void setPhysicsStillMode(uint8_t value);
+    void setEdgeWidth(const Scalar &value);
+    void setEdgeColor(const Color &value);
+
     void setName(const IString *value);
     Type type() const;
 
 private:
     NameListSection *m_nameListSectionRef;
+    Array<bool> m_bonesOfIK;
+    Color m_edgeColor;
+    Scalar m_edgeWidth;
     int m_countOfIKBones;
+    uint8_t m_physicsStillMode;
+    bool m_visible;
+    bool m_shadow;
+    bool m_addBlend;
+    bool m_physics;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelKeyframe)
 };

@@ -37,6 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#include "vpvl2/mvd/NameListSection.h"
 #include "vpvl2/mvd/ModelKeyframe.h"
 #include "vpvl2/mvd/ModelSection.h"
 
@@ -67,8 +68,7 @@ ModelSection::ModelSection(IModel *model, NameListSection *nameListSectionRef, s
       m_modelRef(model),
       m_keyframePtr(0),
       m_contextPtr(0),
-      m_adjustAlighment(align),
-      m_countOfIKBones(0)
+      m_adjustAlighment(align)
 {
 }
 
@@ -109,31 +109,33 @@ void ModelSection::release()
     delete m_contextPtr;
     m_contextPtr = 0;
     m_adjustAlighment = 0;
-    m_countOfIKBones = 0;
 }
 
 void ModelSection::read(const uint8_t *data)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
     const ModelSectionHeader &header = *reinterpret_cast<const ModelSectionHeader *>(ptr);
-    const size_t sizeOfkeyframe = header.sizeOfKeyframe;
+    const size_t sizeOfkeyframe = header.sizeOfKeyframe + m_adjustAlighment;
     const int nkeyframes = header.countOfKeyframes;
-    const int nIKBones = header.countOfIKBones;
+    const int nBonesOfIK = header.countOfIKBones;
     delete m_contextPtr;
     m_contextPtr = new PrivateContext();
-    m_contextPtr->bones.reserve(nIKBones);
-    m_countOfIKBones = nIKBones;
-    for (int i = 0; i < nIKBones; i++) {
-        int boneID = *reinterpret_cast<int *>(ptr);
-        (void) boneID;
-        m_contextPtr->bones.add(0);
+    m_contextPtr->bones.reserve(nBonesOfIK);
+    ptr += sizeof(header);
+    for (int i = 0; i < nBonesOfIK; i++) {
+        int key = *reinterpret_cast<int *>(ptr);
+        const IString *s = m_nameListSectionRef->value(key);
+        if (s) {
+            IBone *bone = m_modelRef->findBone(m_nameListSectionRef->value(key));
+            m_contextPtr->bones.add(bone);
+        }
         ptr += sizeof(int);
     }
-    ptr += header.sizeOfIKBones - sizeof(int) * (nIKBones + 1);
+    ptr += header.sizeOfIKBones - sizeof(int) * (nBonesOfIK + 1);
     m_contextPtr->keyframes = new PrivateContext::KeyframeCollection();
     m_contextPtr->keyframes->reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = new ModelKeyframe(m_nameListSectionRef, nIKBones);
+        m_keyframePtr = new ModelKeyframe(m_nameListSectionRef, nBonesOfIK);
         m_keyframePtr->read(ptr);
         m_contextPtr->keyframes->add(m_keyframePtr);
         btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
@@ -158,7 +160,7 @@ size_t ModelSection::estimateSize() const
     size_t size = 0;
     size += sizeof(ModelSectionHeader);
     if (m_contextPtr) {
-        size += m_countOfIKBones * sizeof(int);
+        size += m_contextPtr->bones.count() * sizeof(int);
         size += m_adjustAlighment;
         const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
         const int nkeyframes = keyframes->count();
