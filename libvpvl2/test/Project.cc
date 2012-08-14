@@ -277,7 +277,7 @@ TEST(ProjectTest, HandleMotions)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
-    QScopedPointer<IMotion> motion(factory.createMotion());
+    QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
     IMotion *ptr = motion.data();
     ASSERT_FALSE(project.containsMotion(ptr));
     ASSERT_EQ(Project::kNullUUID, project.motionUUID(0));
@@ -316,7 +316,7 @@ TEST(ProjectTest, HandleNullUUID)
     ptr = model.take();
     project.deleteModel(ptr);
     ASSERT_FALSE(ptr);
-    QScopedPointer<IMotion> motion(factory.createMotion());
+    QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
     IMotion *ptr2 = motion.data();
     project.addMotion(ptr2, Project::kNullUUID);
     ASSERT_EQ(size_t(1), project.motionUUIDs().size());
@@ -324,7 +324,7 @@ TEST(ProjectTest, HandleNullUUID)
     ASSERT_EQ(size_t(0), project.motionUUIDs().size());
     model.reset(factory.createModel(IModel::kPMD));
     ptr = model.data();
-    motion.reset(factory.createMotion());
+    motion.reset(factory.createMotion(IMotion::kVMD, 0));
     ptr2 = motion.data();
     project.addModel(ptr, 0, Project::kNullUUID);
     project.addMotion(ptr2, Project::kNullUUID);
