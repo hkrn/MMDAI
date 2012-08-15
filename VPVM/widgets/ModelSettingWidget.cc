@@ -78,19 +78,6 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     m_shadowButtonsGroup->addButton(m_noShadowCheckbox);
     m_shadowButtonsGroup->addButton(m_projectiveShadowCheckbox);
     m_shadowButtonsGroup->addButton(m_selfShadowCheckbox);
-    /* 高速化設定 */
-    m_accelerationGroup = new QGroupBox();
-    m_accelerationGroup->setEnabled(false);
-    m_accelerationButtonsGroup = new QButtonGroup();
-    m_softwareSkinningCheckbox = new QRadioButton();
-    m_softwareSkinningCheckbox->setChecked(true);
-    m_openclSkinningCheckbox = new QRadioButton();
-    connect(m_openclSkinningCheckbox, SIGNAL(toggled(bool)), SIGNAL(openclSkinningDidEnable(bool)));
-    m_vertexShaderSkinningType1SkinningCheckbox = new QRadioButton();
-    connect(m_vertexShaderSkinningType1SkinningCheckbox, SIGNAL(toggled(bool)), SIGNAL(vertexShaderSkinningType1DidEnable(bool)));
-    m_accelerationButtonsGroup->addButton(m_softwareSkinningCheckbox);
-    m_accelerationButtonsGroup->addButton(m_openclSkinningCheckbox);
-    m_accelerationButtonsGroup->addButton(m_vertexShaderSkinningType1SkinningCheckbox);
     /* モデルの位置(X,Y,Z) */
     const Scalar &zfar = 10000;
     QFormLayout *formLayout = new QFormLayout();
@@ -132,12 +119,6 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
     subLayout->addWidget(m_selfShadowCheckbox);
     m_shadowGroup->setLayout(subLayout);
     mainLayout->addWidget(m_shadowGroup);
-    subLayout = new QVBoxLayout();
-    subLayout->addWidget(m_softwareSkinningCheckbox);
-    subLayout->addWidget(m_openclSkinningCheckbox);
-    subLayout->addWidget(m_vertexShaderSkinningType1SkinningCheckbox);
-    m_accelerationGroup->setLayout(subLayout);
-    mainLayout->addWidget(m_accelerationGroup);
     subLayout = new QHBoxLayout();
     subLayout->addWidget(m_positionGroup);
     subLayout->addWidget(m_rotationGroup);
@@ -160,10 +141,6 @@ void ModelSettingWidget::retranslate()
     m_noShadowCheckbox->setText(tr("Disable shadow"));
     m_projectiveShadowCheckbox->setText(tr("Enable projective shadow"));
     m_selfShadowCheckbox->setText(tr("Enable self shadow"));
-    m_accelerationGroup->setTitle("Skinning acceleration");
-    m_softwareSkinningCheckbox->setText(tr("Software skinning"));
-    m_openclSkinningCheckbox->setText(tr("OpenCL skinning"));
-    m_vertexShaderSkinningType1SkinningCheckbox->setText(tr("Vertex shader skinning type1"));
     m_positionGroup->setTitle(tr("Position offset"));
     m_rotationGroup->setTitle(tr("Rotation offset"));
 }
@@ -188,7 +165,6 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_opacitySpinBox->setEnabled(true);
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
         m_shadowGroup->setEnabled(true);
-        m_accelerationGroup->setEnabled(true);
         m_edgeColorDialog->setCurrentColor(c);
         if (loader) {
             m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
@@ -218,7 +194,6 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_edgeOffsetSpinBox->setValue(0.0f);
         m_edgeOffsetSpinBox->setEnabled(false);
         m_shadowGroup->setEnabled(true);
-        m_accelerationGroup->setEnabled(true);
         m_opacitySlider->setEnabled(false);
         m_opacitySpinBox->setEnabled(false);
         m_opacitySpinBox->setValue(0);
