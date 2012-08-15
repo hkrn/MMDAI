@@ -249,11 +249,24 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
+    bool isOpenCLAcceleration() const {
+        return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
+    }
+    cl_uint hostDeviceType() const {
+        switch (accelerationType) {
+        case kOpenCLAccelerationType1:
+            return CL_DEVICE_TYPE_ALL;
+        case kOpenCLAccelerationType2:
+            return CL_DEVICE_TYPE_CPU;
+        default:
+            return CL_DEVICE_TYPE_DEFAULT;
+        }
+    }
     cl::Context *createComputeContext(IRenderDelegate *delegate) {
 #ifdef VPVL2_ENABLE_OPENCL
         if (!computeContext) {
             computeContext = new cl::Context(delegate);
-            computeContext->initializeContext();
+            computeContext->initializeContext(hostDeviceType());
         }
 #else
         (void) delegate;
@@ -263,7 +276,7 @@ struct Scene::PrivateContext {
     cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
         cl::PMDAccelerator *accelerator = 0;
 #ifdef VPVL2_ENABLE_OPENCL
-        if (accelerationType == kOpenCLAccelerationType1) {
+        if (isOpenCLAcceleration()) {
             accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
         }
@@ -275,7 +288,7 @@ struct Scene::PrivateContext {
     cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
         cl::PMXAccelerator *accelerator = 0;
 #ifdef VPVL2_ENABLE_OPENCL
-        if (accelerationType == kOpenCLAccelerationType1) {
+        if (isOpenCLAcceleration()) {
             accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
         }

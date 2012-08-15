@@ -62,7 +62,7 @@ bool Context::isAvailable() const
     return m_context && m_queue;
 }
 
-bool Context::initializeContext()
+bool Context::initializeContext(cl_device_type hostDeviceType)
 {
     if (isAvailable())
         return true;
@@ -90,7 +90,7 @@ bool Context::initializeContext()
         log0(0, IRenderDelegate::kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
     }
     cl_platform_id firstPlatform = platforms[0];
-    err = clGetDeviceIDs(firstPlatform, CL_DEVICE_TYPE_ALL, 1, &m_device, 0);
+    err = clGetDeviceIDs(firstPlatform, hostDeviceType, 1, &m_device, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed getting a OpenCL device: %d", err);
         delete[] platforms;

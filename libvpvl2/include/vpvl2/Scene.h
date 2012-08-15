@@ -59,6 +59,7 @@ public:
         kSoftwareFallback,
         kOpenCLAccelerationType1,
         kVertexShaderAccelerationType1,
+        kOpenCLAccelerationType2,
         kMaxAccelerationType
     };
     enum RenderEngineTypeFlags {
