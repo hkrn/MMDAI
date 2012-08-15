@@ -284,7 +284,8 @@ private:
     QAction *m_actionInsertMotionOnToolBar;
     QAction *m_actionDeleteModelOnToolBar;
     QAction *m_actionSetSoftwareSkinningFallback;
-    QAction *m_actionSetOpenCLSkinning;
+    QAction *m_actionSetOpenCLSkinningType1;
+    QAction *m_actionSetOpenCLSkinningType2;
     QAction *m_actionSetVertexShaderSkinningType1;
     QMenuBar *m_menuBar;
     QMenu *m_menuFile;

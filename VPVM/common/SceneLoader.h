@@ -131,15 +131,16 @@ public:
     const QString backgroundImage() const;
     const QPoint backgroundImagePosition() const;
     bool isBackgroundImageUniformEnabled() const;
-    bool isOpenCLSkinningEnabled() const;
+    bool isOpenCLSkinningType1Enabled() const;
+    bool isOpenCLSkinningType2Enabled() const;
     bool isVertexShaderSkinningType1Enabled() const;
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
     bool isSelfShadowEnabled(const vpvl2::IModel *model) const;
     void setSelfShadowEnable(const vpvl2::IModel *model, bool value);
-    bool isOpenCLSkinningEnabled(const vpvl2::IModel *model) const;
-    void setOpenCLSkinningEnable(const vpvl2::IModel *model, bool value);
+    bool isOpenCLSkinningType1Enabled(const vpvl2::IModel *model) const;
+    void setOpenCLSkinningEnableType1(const vpvl2::IModel *model, bool value);
     bool isVertexShaderSkinningType1Enabled(const vpvl2::IModel *model) const;
     void setVertexShaderSkinningType1Enable(const vpvl2::IModel *model, bool value);
     vpvl2::IModel *selectedModel() const;
@@ -213,7 +214,8 @@ public slots:
     void setBackgroundImagePath(const QString &value);
     void setBackgroundImagePosition(const QPoint &value);
     void setBackgroundImageUniformEnable(bool value);
-    void setOpenCLSkinningEnable(bool value);
+    void setOpenCLSkinningEnableType1(bool value);
+    void setOpenCLSkinningEnableType2(bool value);
     void setVertexShaderSkinningType1Enable(bool value);
     void setSoftwareSkinningEnable(bool value);
 

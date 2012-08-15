@@ -1369,15 +1369,15 @@ void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
         m_project->setModelSetting(model, "shadow.ss", value ? "true" : "false");
 }
 
-bool SceneLoader::isOpenCLSkinningEnabled(const IModel *model) const
+bool SceneLoader::isOpenCLSkinningType1Enabled(const IModel *model) const
 {
     bool enabled = m_project ? m_project->modelSetting(model, "skinning.opencl") == "true" : false;
     return enabled;
 }
 
-void SceneLoader::setOpenCLSkinningEnable(const IModel *model, bool value)
+void SceneLoader::setOpenCLSkinningEnableType1(const IModel *model, bool value)
 {
-    if (m_project && isOpenCLSkinningEnabled(model) != value)
+    if (m_project && isOpenCLSkinningType1Enabled(model) != value)
         m_project->setModelSetting(model, "skinning.opencl", value ? "true" : "false");
 }
 
@@ -1874,18 +1874,33 @@ void SceneLoader::setBackgroundImageUniformEnable(bool value)
     }
 }
 
-bool SceneLoader::isOpenCLSkinningEnabled() const
+bool SceneLoader::isOpenCLSkinningType1Enabled() const
 {
     bool enabled = m_project ? m_project->globalSetting("skinning.opencl") == "true" : false;
     return enabled;
 }
 
-void SceneLoader::setOpenCLSkinningEnable(bool value)
+bool SceneLoader::isOpenCLSkinningType2Enabled() const
 {
-    if (m_project && isOpenCLSkinningEnabled() != value) {
+    bool enabled = m_project ? m_project->globalSetting("skinning.opencl.cpu") == "true" : false;
+    return enabled;
+}
+
+void SceneLoader::setOpenCLSkinningEnableType1(bool value)
+{
+    if (m_project && isOpenCLSkinningType1Enabled() != value) {
         m_project->setGlobalSetting("skinning.opencl", value ? "true" : "false");
         if (value)
             m_project->setAccelerationType(Scene::kOpenCLAccelerationType1);
+    }
+}
+
+void SceneLoader::setOpenCLSkinningEnableType2(bool value)
+{
+    if (m_project && isOpenCLSkinningType2Enabled() != value) {
+        m_project->setGlobalSetting("skinning.opencl.cpu", value ? "true" : "false");
+        if (value)
+            m_project->setAccelerationType(Scene::kOpenCLAccelerationType2);
     }
 }
 
@@ -1932,7 +1947,7 @@ int SceneLoader::globalSetting(const char *key, int def) const
 
 Scene::AccelerationType SceneLoader::globalAccelerationType() const
 {
-    if (isOpenCLSkinningEnabled())
+    if (isOpenCLSkinningType1Enabled())
         return Scene::kOpenCLAccelerationType1;
     else if (isVertexShaderSkinningType1Enabled())
         return Scene::kVertexShaderAccelerationType1;
@@ -1942,7 +1957,7 @@ Scene::AccelerationType SceneLoader::globalAccelerationType() const
 
 Scene::AccelerationType SceneLoader::modelAccelerationType(const IModel *model) const
 {
-    if (isOpenCLSkinningEnabled(model))
+    if (isOpenCLSkinningType1Enabled(model))
         return Scene::kOpenCLAccelerationType1;
     else if (isVertexShaderSkinningType1Enabled(model))
         return Scene::kVertexShaderAccelerationType1;
