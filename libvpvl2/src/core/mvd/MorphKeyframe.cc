@@ -90,15 +90,26 @@ bool MorphKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motio
     return true;
 }
 
+int MorphKeyframe::interpolationTableSize()
+{
+    return 256;
+}
+
 void MorphKeyframe::read(const uint8_t *data)
 {
     const MorphKeyframeChunk *chunk = reinterpret_cast<const MorphKeyframeChunk *>(data);
     setWeight(chunk->weight);
     setTimeIndex(chunk->timeIndex);
+    setInterpolationParameter(kWeight, Motion::InterpolationTable::toQuadWord(chunk->weightIP));
 }
 
-void MorphKeyframe::write(uint8_t * /* data */) const
+void MorphKeyframe::write(uint8_t *data) const
 {
+    MorphKeyframeChunk chunk;
+    chunk.weight = weight();
+    chunk.timeIndex = timeIndex();
+    tableForWeight().getInterpolationPair(chunk.weightIP);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
 }
 
 size_t MorphKeyframe::estimateSize() const
@@ -111,8 +122,32 @@ IMorphKeyframe *MorphKeyframe::clone() const
     MorphKeyframe *frame = m_ptr = new MorphKeyframe(m_nameListSectionRef);
     frame->setTimeIndex(m_timeIndex);
     frame->setWeight(m_weight);
+    frame->setInterpolationParameter(kWeight, m_interpolationWeight.parameter);
     m_ptr = 0;
     return frame;
+}
+
+void MorphKeyframe::setDefaultInterpolationParameter()
+{
+    m_interpolationWeight.reset();
+}
+
+void MorphKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
+{
+    switch (type) {
+    default:
+        m_interpolationWeight.build(value, interpolationTableSize());
+        break;
+    }
+}
+
+void MorphKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
+{
+    switch (type) {
+    default:
+        value = m_interpolationWeight.parameter;
+        break;
+    }
 }
 
 const IMorph::WeightPrecision &MorphKeyframe::weight() const

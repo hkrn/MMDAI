@@ -219,15 +219,39 @@ void CameraSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void CameraSection::write(uint8_t * /* data */) const
+void CameraSection::write(uint8_t *data) const
 {
+    if (m_contextPtr) {
+        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+        const int nkeyframes = keyframes->count();
+        const int nlayers = m_contextPtr->countOfLayers;
+        Motion::SectionTag tag;
+        tag.type = Motion::kCameraSection;
+        tag.minor = 0;
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+        CameraSectionHeader header;
+        header.countOfKeyframes = nkeyframes;
+        header.countOfLayers = nlayers;
+        header.reserved = 0;
+        header.sizeOfKeyframe = CameraKeyframe::size();
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+        for (int i = 0; i < nlayers; i++) {
+            internal::writeSignedIndex(0, sizeof(uint8_t), data);
+        }
+        for (int i = 0; i < nkeyframes; i++) {
+            const IKeyframe *keyframe = keyframes->at(i);
+            keyframe->write(data);
+            data += keyframe->estimateSize();
+        }
+    }
 }
 
 size_t CameraSection::estimateSize() const
 {
     size_t size = 0;
-    size += sizeof(CameraSectionHeader);
     if (m_contextPtr) {
+        size += sizeof(Motion::SectionTag);
+        size += sizeof(CameraSectionHeader);
         size += sizeof(uint8_t) * m_contextPtr->countOfLayers;
         const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
         const int nkeyframes = keyframes->count();

@@ -142,10 +142,20 @@ public:
         InterpolationTable();
         ~InterpolationTable();
         static const QuadWord toQuadWord(const InterpolationPair &pair);
+        void getInterpolationPair(InterpolationPair &pair) const;
         void build(const QuadWord &value, int s);
         void reset();
     };
     static const uint8_t *kSignature;
+
+#pragma pack(push, 1)
+
+    struct SectionTag {
+        uint8_t type;
+        uint8_t minor;
+    };
+
+#pragma pack(pop)
 
     Motion(IModel *modelRef, IEncoding *encodingRef);
     ~Motion();

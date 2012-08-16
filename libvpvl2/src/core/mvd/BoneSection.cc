@@ -216,16 +216,50 @@ void BoneSection::setParentModel(IModel *model)
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
             PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
-            PrivateContext *contextPtr = *context;
-            const int *key = m_context2names.find(contextPtr);
-            IBone *bone = model->findBone(m_nameListSectionRef->value(*key));
-            contextPtr->boneRef = bone;
+            PrivateContext *contextRef = *context;
+            const int *key = m_context2names.find(contextRef);
+            if (key) {
+                IBone *bone = model->findBone(m_nameListSectionRef->value(*key));
+                contextRef->boneRef = bone;
+            }
+            else {
+                contextRef->boneRef = 0;
+            }
         }
     }
 }
 
-void BoneSection::write(uint8_t * /* data */) const
+void BoneSection::write(uint8_t *data) const
 {
+    const int ncontexts = m_name2contexts.count();
+    for (int i = 0; i < ncontexts; i++) {
+        const PrivateContext *const *context = m_name2contexts.value(i);
+        const PrivateContext *contextRef = *context;
+        const IBone *boneRef = contextRef->boneRef;
+        if (boneRef) {
+            const PrivateContext::KeyframeCollection *keyframes = contextRef->keyframes;
+            const int nkeyframes = keyframes->count();
+            const int nlayers = contextRef->countOfLayers;
+            Motion::SectionTag tag;
+            tag.type = Motion::kBoneSection;
+            tag.minor = 0;
+            internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+            BoneSectionHeader header;
+            header.countOfKeyframes = nkeyframes;
+            header.countOfLayers = nlayers;
+            header.key = m_nameListSectionRef->key(boneRef->name());
+            header.sizeOfKeyframe = BoneKeyframe::size();
+            internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+            for (int i = 0; i < nlayers; i++) {
+                internal::writeSignedIndex(0, sizeof(uint8_t), data);
+            }
+            for (int i = 0 ; i < nkeyframes; i++) {
+                IKeyframe *keyframe = keyframes->at(i);
+                keyframe->write(data);
+                data += keyframe->estimateSize();
+            }
+        }
+    }
 }
 
 size_t BoneSection::estimateSize() const
@@ -234,12 +268,16 @@ size_t BoneSection::estimateSize() const
     const int ncontexts = m_name2contexts.count();
     for (int i = 0; i < ncontexts; i++) {
         const PrivateContext *const *context = m_name2contexts.value(i);
-        const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
-        const int nkeyframes = keyframes->count();
-        size += sizeof(BoneSectionHeader);
-        size += sizeof(uint8_t) * (*context)->countOfLayers;
-        for (int i = 0 ; i < nkeyframes; i++) {
-            size += keyframes->at(i)->estimateSize();
+        const PrivateContext *contextRef = *context;
+        if (contextRef->boneRef) {
+            const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
+            const int nkeyframes = keyframes->count();
+            size += sizeof(Motion::SectionTag);
+            size += sizeof(BoneSectionHeader);
+            size += sizeof(uint8_t) * contextRef->countOfLayers;
+            for (int i = 0 ; i < nkeyframes; i++) {
+                size += keyframes->at(i)->estimateSize();
+            }
         }
     }
     return size;

@@ -95,10 +95,17 @@ void LightKeyframe::read(const uint8_t *data)
     internal::setPosition(chunk->position, m_direction);
     internal::setPositionRaw(chunk->color, m_color);
     setTimeIndex(chunk->timeIndex);
+    setEnable(chunk->enabled);
 }
 
-void LightKeyframe::write(uint8_t * /* data */) const
+void LightKeyframe::write(uint8_t *data) const
 {
+    LightKeyframeChunk chunk;
+    internal::getPosition(direction(), chunk.position);
+    internal::getPositionRaw(color(), chunk.color);
+    chunk.timeIndex = timeIndex();
+    chunk.enabled = isEnabled();
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
 }
 
 size_t LightKeyframe::estimateSize() const
@@ -112,6 +119,7 @@ ILightKeyframe *LightKeyframe::clone() const
     frame->setTimeIndex(m_timeIndex);
     frame->setColor(m_color);
     frame->setDirection(m_direction);
+    frame->setEnable(m_enabled);
     m_ptr = 0;
     return frame;
 }
@@ -126,6 +134,11 @@ const Vector3 &LightKeyframe::direction() const
     return m_direction;
 }
 
+bool LightKeyframe::isEnabled() const
+{
+    return m_enabled;
+}
+
 void LightKeyframe::setColor(const Vector3 &value)
 {
     m_color = value;
@@ -134,6 +147,11 @@ void LightKeyframe::setColor(const Vector3 &value)
 void LightKeyframe::setDirection(const Vector3 &value)
 {
     m_direction = value;
+}
+
+void LightKeyframe::setEnable(bool value)
+{
+    m_enabled = value;
 }
 
 void LightKeyframe::setName(const IString * /* value */)

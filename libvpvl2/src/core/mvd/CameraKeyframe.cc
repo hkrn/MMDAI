@@ -129,8 +129,30 @@ void CameraKeyframe::read(const uint8_t *data)
     setInterpolationParameter(kDistance, Motion::InterpolationTable::toQuadWord(chunk->distanceIP));
 }
 
-void CameraKeyframe::write(uint8_t * /* data */) const
+void CameraKeyframe::write(uint8_t *data) const
 {
+    CameraKeyframeChunk chunk;
+    internal::getPosition(position(), chunk.position);
+    const Vector3 &a = angle();
+#ifdef VPVL2_COORDINATE_OPENGL
+    chunk.rotation[0] = radian(a.x());
+    chunk.rotation[1] = radian(a.y() + 180);
+    chunk.rotation[2] = radian(a.z());
+#else
+    chunk.rotation[0] = radian(a.x());
+    chunk.rotation[1] = radian(a.y());
+    chunk.rotation[2] = radian(a.z());
+#endif
+    chunk.distance = distance();
+    chunk.timeIndex = timeIndex();
+    chunk.layerIndex = layerIndex();
+    chunk.fov = fov();
+    chunk.perspective = isPerspective();
+    tableForPosition().getInterpolationPair(chunk.positionIP);
+    tableForRotation().getInterpolationPair(chunk.rotationIP);
+    tableForFov().getInterpolationPair(chunk.fovIP);
+    tableForDistance().getInterpolationPair(chunk.distanceIP);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
 }
 
 size_t CameraKeyframe::estimateSize() const

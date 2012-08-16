@@ -63,11 +63,6 @@ struct Header {
     uint8_t encoding;
 };
 
-struct SectionHeader {
-    uint8_t type;
-    uint8_t minor;
-};
-
 #pragma pack(pop)
 
 const QuadWord Motion::InterpolationTable::kDefaultParameter = QuadWord(20, 20, 107, 107);
@@ -89,6 +84,14 @@ Motion::InterpolationTable::~InterpolationTable()
 const QuadWord Motion::InterpolationTable::toQuadWord(const InterpolationPair &pair)
 {
     return QuadWord(pair.first.x, pair.first.y, pair.second.x, pair.second.y);
+}
+
+void Motion::InterpolationTable::getInterpolationPair(InterpolationPair &pair) const
+{
+    pair.first.x = parameter.x();
+    pair.first.y = parameter.y();
+    pair.second.x = parameter.z();
+    pair.second.y = parameter.w();
 }
 
 void Motion::InterpolationTable::build(const QuadWord &value, int s)
@@ -192,7 +195,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* sections */
     bool ret = false;
     while (rest > 0) {
-        const SectionHeader &sectionHeader = *reinterpret_cast<const SectionHeader *>(ptr);
+        const SectionTag &sectionHeader = *reinterpret_cast<const SectionTag *>(ptr);
         if (!internal::validateSize(ptr, sizeof(sectionHeader), rest)) {
             return false;
         }
@@ -305,6 +308,45 @@ void Motion::save(uint8_t *data) const
     header.version = 1.0;
     header.encoding = 1;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    internal::writeString(m_name, data);
+    internal::writeString(m_name2, data);
+    float fps = 30.0;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&fps), sizeof(fps), data);
+    internal::writeString(0, data);
+    /**
+        kNameListSection = 0,
+        kBoneSection     = 16,
+        kMorphSection    = 32,
+        kModelSection    = 64,
+        kAssetSection    = 80,
+        kEffectSection   = 88,
+        kCameraSection   = 96,
+        kLightSection    = 112,
+        kProjectSection  = 128,
+        kEndOfFile       = 255
+      */
+    m_nameListSection->write(data);
+    data += m_nameListSection->estimateSize();
+    m_boneSection->write(data);
+    data += m_boneSection->estimateSize();
+    m_morphSection->write(data);
+    data += m_morphSection->estimateSize();
+    m_modelSection->write(data);
+    data += m_modelSection->estimateSize();
+    m_assetSection->write(data);
+    data += m_assetSection->estimateSize();
+    m_effectSection->write(data);
+    data += m_effectSection->estimateSize();
+    m_cameraSection->write(data);
+    data += m_cameraSection->estimateSize();
+    m_lightSection->write(data);
+    data += m_lightSection->estimateSize();
+    m_projectSection->write(data);
+    data += m_projectSection->estimateSize();
+    SectionTag eof;
+    eof.type = kEndOfFile;
+    eof.minor = 0;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&eof), sizeof(eof), data);
 }
 
 size_t Motion::estimateSize() const

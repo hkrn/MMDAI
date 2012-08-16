@@ -63,8 +63,10 @@ public:
     ILightKeyframe *clone() const;
     const Vector3 &color() const;
     const Vector3 &direction() const;
+    bool isEnabled() const;
     void setColor(const Vector3 &value);
     void setDirection(const Vector3 &value);
+    void setEnable(bool value);
     void setName(const IString *value);
     Type type() const;
 
@@ -72,6 +74,7 @@ private:
     mutable LightKeyframe *m_ptr;
     Vector3 m_color;
     Vector3 m_direction;
+    bool m_enabled;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(LightKeyframe)
 };

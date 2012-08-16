@@ -199,16 +199,45 @@ void MorphSection::setParentModel(IModel *model)
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
             PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
-            PrivateContext *contextPtr = *context;
-            const int *key = m_context2names.find(contextPtr);
-            IMorph *bone = model->findMorph(m_nameListSectionRef->value(*key));
-            contextPtr->morphRef = bone;
+            PrivateContext *contextRef = *context;
+            const int *key = m_context2names.find(contextRef);
+            if (key) {
+                IMorph *morph = model->findMorph(m_nameListSectionRef->value(*key));
+                contextRef->morphRef = morph;
+            }
+            else {
+                contextRef->morphRef = 0;
+            }
         }
     }
 }
 
-void MorphSection::write(uint8_t * /* data */) const
+void MorphSection::write(uint8_t *data) const
 {
+    const int ncontexts = m_name2contexts.count();
+    for (int i = 0; i < ncontexts; i++) {
+        const PrivateContext *const *context = m_name2contexts.value(i);
+        const PrivateContext *contextRef = *context;
+        const IMorph *morph = contextRef->morphRef;
+        if (morph) {
+            const PrivateContext::KeyframeCollection *keyframes = contextRef->keyframes;
+            const int nkeyframes = keyframes->count();
+            Motion::SectionTag tag;
+            tag.type = Motion::kMorphSection;
+            tag.minor = 0;
+            internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+            MorphSecionHeader header;
+            header.countOfKeyframes = nkeyframes;
+            header.key = m_nameListSectionRef->key(morph->name());
+            header.reserved = 0;
+            internal::writeBytes(reinterpret_cast<const uint8_t *>(&header) ,sizeof(header), data);
+            for (int i = 0 ; i < nkeyframes; i++) {
+                IKeyframe *keyframe = keyframes->at(i);
+                keyframe->write(data);
+                data += keyframe->estimateSize();
+            }
+        }
+    }
 }
 
 size_t MorphSection::estimateSize() const
@@ -219,6 +248,7 @@ size_t MorphSection::estimateSize() const
         const PrivateContext *const *context = m_name2contexts.value(i);
         const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
         const int nkeyframes = keyframes->count();
+        size += sizeof(Motion::SectionTag);
         size += sizeof(MorphSecionHeader);
         for (int i = 0 ; i < nkeyframes; i++) {
             size += keyframes->at(i)->estimateSize();

@@ -125,13 +125,27 @@ void ModelKeyframe::read(const uint8_t *data)
     }
 }
 
-void ModelKeyframe::write(uint8_t * /* data */) const
+void ModelKeyframe::write(uint8_t *data) const
 {
+    ModelKeyframeChunk chunk;
+    chunk.timeIndex = timeIndex();
+    chunk.visible = isVisible();
+    chunk.shadow = isShadowEnabled();
+    chunk.addBlend = isAddBlendEnabled();
+    chunk.physics = isPhysicsEnabled();
+    chunk.physicsStillMode = physicsStillMode();
+    chunk.edgeWidth = edgeWidth();
+    // chunk.edgeColor;
+    internal::zerofill(chunk.reserved, sizeof(chunk.reserved));
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    for (int i = 0; i < m_countOfIKBones; i++) {
+        internal::writeSignedIndex(m_bonesOfIK[i] ? 1 : 0, sizeof(uint8_t), data);
+    }
 }
 
 size_t ModelKeyframe::estimateSize() const
 {
-    return size() + m_countOfIKBones;
+    return size() + sizeof(uint8_t) * m_countOfIKBones;
 }
 
 /*

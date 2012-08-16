@@ -173,17 +173,44 @@ void ModelSection::setParentModel(IModel *model)
     m_contextPtr->bones.copy(bonesOfIK);
 }
 
-void ModelSection::write(uint8_t * /* data */) const
+void ModelSection::write(uint8_t *data) const
 {
+    if (m_contextPtr) {
+        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+        const Array<IBone *> &bones = m_contextPtr->bones;
+        const int nkeyframes = keyframes->count();
+        const int nbones = bones.count();
+        Motion::SectionTag tag;
+        tag.type = Motion::kModelSection;
+        tag.minor = 1;
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+        ModelSectionHeader header;
+        header.countOfIKBones = nbones;
+        header.countOfKeyframes = nkeyframes;
+        header.reserved = 0;
+        header.sizeOfIKBones = 0;
+        header.sizeOfKeyframe = ModelKeyframe::size() - m_adjustAlighment;
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+        for (int i = 0; i < nbones; i++) {
+            const IBone *bone = bones[i];
+            int key = m_nameListSectionRef->key(bone->name());
+            internal::writeSignedIndex(key, sizeof(key), data);
+        }
+        for (int i = 0; i < nkeyframes; i++) {
+            const IKeyframe *keyframe = keyframes->at(i);
+            keyframe->write(data);
+            data += keyframe->estimateSize();
+        }
+    }
 }
 
 size_t ModelSection::estimateSize() const
 {
     size_t size = 0;
-    size += sizeof(ModelSectionHeader);
     if (m_contextPtr) {
+        size += sizeof(Motion::SectionTag);
+        size += sizeof(ModelSectionHeader);
         size += m_contextPtr->bones.count() * sizeof(int);
-        size += m_adjustAlighment;
         const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
         const int nkeyframes = keyframes->count();
         for (int i = 0; i < nkeyframes; i++) {

@@ -109,13 +109,36 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     }
 }
 
-void NameListSection::write(uint8_t * /* data */) const
+void NameListSection::write(uint8_t *data) const
 {
+    Motion::SectionTag tag;
+    tag.type = Motion::kNameListSection;
+    tag.minor = 0;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+    NameSectionHeader header;
+    const int nkeys = m_key2values.count();
+    header.count = nkeys;
+    header.reserved = header.reserved2 = header.reserved3 = 0;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    for (int i = 0; i < nkeys; i++) {
+        const IString *const *name = m_key2values.find(i);
+        internal::writeBytes(reinterpret_cast<const uint8_t *>(&i), sizeof(i), data);
+        internal::writeString(*name, data);
+    }
 }
 
 size_t NameListSection::estimateSize() const
 {
-    return 0;
+    size_t size = 0;
+    size += sizeof(Motion::SectionTag);
+    size += sizeof(NameSectionHeader);
+    const int nkeys = m_key2values.count();
+    for (int i = 0; i < nkeys; i++) {
+        const IString *const *name = m_key2values.find(i);
+        size += sizeof(i);
+        size += internal::estimateSize(*name);
+    }
+    return size;
 }
 
 int NameListSection::key(const IString *value)

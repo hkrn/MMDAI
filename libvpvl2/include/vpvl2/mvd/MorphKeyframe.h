@@ -51,16 +51,24 @@ namespace mvd
 class VPVL2_API MorphKeyframe : public vmd::BaseKeyframe, public IMorphKeyframe
 {
 public:
+    enum InterpolationType {
+        kWeight
+    };
+
     MorphKeyframe(NameListSection *nameListSectionRef);
     ~MorphKeyframe();
 
     static size_t size();
     static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+    static int interpolationTableSize();
 
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     IMorphKeyframe *clone() const;
+    void setDefaultInterpolationParameter();
+    void setInterpolationParameter(InterpolationType type, const QuadWord &value);
+    void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
     const IMorph::WeightPrecision &weight() const;
     void setWeight(const IMorph::WeightPrecision &value);
     void setName(const IString *value);
