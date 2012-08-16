@@ -11,8 +11,6 @@
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
 
-#include "vpvl2/mvd/Motion.h"
-
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
@@ -64,7 +62,7 @@ static void CompareCameraInterpolationMatrix(const QuadWord p[], const vmd::Came
 
 }
 
-TEST(MotionTest, ParseEmpty)
+TEST(VMDMotionTest, ParseEmpty)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -75,7 +73,7 @@ TEST(MotionTest, ParseEmpty)
     ASSERT_EQ(vmd::Motion::kInvalidHeaderError, motion.error());
 }
 
-TEST(MotionTest, ParseFile)
+TEST(VMDMotionTest, ParseFile)
 {
     QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
@@ -96,7 +94,7 @@ TEST(MotionTest, ParseFile)
     }
 }
 
-TEST(MotionTest, ParseCamera)
+TEST(VMDMotionTest, ParseCamera)
 {
     QFile file("camera.vmd");
     if (file.open(QFile::ReadOnly)) {
@@ -117,7 +115,7 @@ TEST(MotionTest, ParseCamera)
     }
 }
 
-TEST(MotionTest, SaveBoneKeyframe)
+TEST(VMDMotionTest, SaveBoneKeyframe)
 {
     Encoding encoding;
     CString str(kTestString);
@@ -157,7 +155,7 @@ TEST(MotionTest, SaveBoneKeyframe)
     CompareBoneInterpolationMatrix(p, *static_cast<vmd::BoneKeyframe *>(cloned.data()));
 }
 
-TEST(MotionTest, SaveCameraKeyframe)
+TEST(VMDMotionTest, SaveCameraKeyframe)
 {
     vmd::CameraKeyframe frame, newFrame;
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
@@ -207,7 +205,7 @@ TEST(MotionTest, SaveCameraKeyframe)
     CompareCameraInterpolationMatrix(p, *static_cast<vmd::CameraKeyframe *>(cloned.data()));
 }
 
-TEST(MotionTest, SaveMorphKeyframe)
+TEST(VMDMotionTest, SaveMorphKeyframe)
 {
     Encoding encoding;
     CString str(kTestString);
@@ -231,7 +229,7 @@ TEST(MotionTest, SaveMorphKeyframe)
     ASSERT_EQ(frame.weight(), cloned->weight());
 }
 
-TEST(MotionTest, SaveLightKeyframe)
+TEST(VMDMotionTest, SaveLightKeyframe)
 {
     vmd::LightKeyframe frame, newFrame;
     Vector3 color(0.1, 0.2, 0.3), direction(4, 5, 6);
@@ -254,7 +252,7 @@ TEST(MotionTest, SaveLightKeyframe)
     ASSERT_TRUE(cloned->direction() == frame.direction());
 }
 
-TEST(MotionTest, SaveMotion)
+TEST(VMDMotionTest, SaveMotion)
 {
     QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
@@ -277,7 +275,7 @@ TEST(MotionTest, SaveMotion)
     }
 }
 
-TEST(MotionTest, ParseBoneKeyframe)
+TEST(VMDMotionTest, ParseBoneKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -306,7 +304,7 @@ TEST(MotionTest, ParseBoneKeyframe)
 #endif
 }
 
-TEST(MotionTest, ParseCameraKeyframe)
+TEST(VMDMotionTest, ParseCameraKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -339,7 +337,7 @@ TEST(MotionTest, ParseCameraKeyframe)
     // TODO: perspective flag
 }
 
-TEST(MotionTest, ParseMorphKeyframe)
+TEST(VMDMotionTest, ParseMorphKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -359,7 +357,7 @@ TEST(MotionTest, ParseMorphKeyframe)
     ASSERT_EQ(IMorph::WeightPrecision(0.5), frame.weight());
 }
 
-TEST(MotionTest, ParseLightKeyframe)
+TEST(VMDMotionTest, ParseLightKeyframe)
 {
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
@@ -381,7 +379,7 @@ TEST(MotionTest, ParseLightKeyframe)
 #endif
 }
 
-TEST(MotionTest, BoneInterpolation)
+TEST(VMDMotionTest, BoneInterpolation)
 {
     Encoding encoding;
     vmd::BoneKeyframe frame(&encoding);
@@ -400,7 +398,7 @@ TEST(MotionTest, BoneInterpolation)
     CompareBoneInterpolationMatrix(p, frame);
 }
 
-TEST(MotionTest, CameraInterpolation)
+TEST(VMDMotionTest, CameraInterpolation)
 {
     vmd::CameraKeyframe frame;
     QuadWord n;
@@ -422,7 +420,7 @@ TEST(MotionTest, CameraInterpolation)
     CompareCameraInterpolationMatrix(p, frame);
 }
 
-TEST(MotionTest, AddAndRemoveBoneKeyframes)
+TEST(VMDMotionTest, AddAndRemoveBoneKeyframes)
 {
     Encoding encoding;
     CString name("bone");
@@ -473,7 +471,7 @@ TEST(MotionTest, AddAndRemoveBoneKeyframes)
     }
 }
 
-TEST(MotionTest, AddAndRemoveCameraKeyframes)
+TEST(VMDMotionTest, AddAndRemoveCameraKeyframes)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -520,7 +518,7 @@ TEST(MotionTest, AddAndRemoveCameraKeyframes)
     }
 }
 
-TEST(MotionTest, AddAndRemoveLightKeyframes)
+TEST(VMDMotionTest, AddAndRemoveLightKeyframes)
 {
     Encoding encoding;
     Model model(&encoding);
@@ -567,7 +565,7 @@ TEST(MotionTest, AddAndRemoveLightKeyframes)
     }
 }
 
-TEST(MotionTest, AddAndRemoveMorphKeyframes)
+TEST(VMDMotionTest, AddAndRemoveMorphKeyframes)
 {
     Encoding encoding;
     CString name("morph");
@@ -614,26 +612,5 @@ TEST(MotionTest, AddAndRemoveMorphKeyframes)
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
-    }
-}
-
-TEST(MotionTest, ParseMVD)
-{
-    QFile file("motion.mvd");
-    if (file.open(QFile::ReadOnly)) {
-        QByteArray bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
-        Encoding encoding;
-        MockIModel model;
-        MockIBone bone;
-        MockIMorph morph;
-        EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(&bone));
-        EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(&morph));
-        mvd::Motion motion(&model, &encoding);
-        mvd::Motion::DataInfo result;
-        // valid model motion should be loaded successfully
-        ASSERT_TRUE(motion.preparse(data, size, result));
-        ASSERT_TRUE(motion.load(data, size));
     }
 }

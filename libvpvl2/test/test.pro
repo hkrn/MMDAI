@@ -45,7 +45,8 @@ SOURCES += main.cc \
     Effect.cc \
     Internal.cc \
     Model.cc \
-    Motion.cc \
+    VMDMotion.cc \
+    MVDMotion.cc \
     Project.cc \
     String.cc \
     Encoding.cc \
