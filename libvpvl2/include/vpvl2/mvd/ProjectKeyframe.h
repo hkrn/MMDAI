@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_MVD_MORPHKEYFRAME_H_
-#define VPVL2_MVD_MORPHKEYFRAME_H_
+#ifndef VPVL2_MVD_PROJECTKEYFRAME_H_
+#define VPVL2_MVD_PROJECTKEYFRAME_H_
 
 // #include "vpvl2/IProjectKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
