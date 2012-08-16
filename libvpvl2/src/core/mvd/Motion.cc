@@ -133,9 +133,19 @@ Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
       m_encodingRef(encodingRef),
       m_name(0),
       m_name2(0),
+      m_reserved(0),
       m_error(kNoError),
       m_active(true)
 {
+    m_nameListSection = new NameListSection(encodingRef);
+    m_assetSection = new AssetSection(m_nameListSection);
+    m_boneSection = new BoneSection(modelRef, m_nameListSection);
+    m_cameraSection = new CameraSection(m_nameListSection);
+    m_effectSection = new EffectSection(m_nameListSection);
+    m_lightSection = new LightSection(m_nameListSection);
+    m_modelSection = new ModelSection(modelRef, m_nameListSection, 0);
+    m_morphSection = new MorphSection(modelRef, m_nameListSection);
+    m_projectSection = new ProjectSection(m_nameListSection);
 }
 
 Motion::~Motion()
@@ -312,19 +322,7 @@ void Motion::save(uint8_t *data) const
     internal::writeString(m_name2, data);
     float fps = 30.0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&fps), sizeof(fps), data);
-    internal::writeString(0, data);
-    /**
-        kNameListSection = 0,
-        kBoneSection     = 16,
-        kMorphSection    = 32,
-        kModelSection    = 64,
-        kAssetSection    = 80,
-        kEffectSection   = 88,
-        kCameraSection   = 96,
-        kLightSection    = 112,
-        kProjectSection  = 128,
-        kEndOfFile       = 255
-      */
+    internal::writeString(m_reserved, data);
     m_nameListSection->write(data);
     data += m_nameListSection->estimateSize();
     m_boneSection->write(data);
@@ -351,7 +349,23 @@ void Motion::save(uint8_t *data) const
 
 size_t Motion::estimateSize() const
 {
-    return sizeof(Header);
+    size_t size = 0;
+    size += sizeof(Header);
+    size += internal::estimateSize(m_name);
+    size += internal::estimateSize(m_name2);
+    size += sizeof(float);
+    size += internal::estimateSize(m_reserved);
+    size += m_nameListSection->estimateSize();
+    size += m_boneSection->estimateSize();
+    size += m_morphSection->estimateSize();
+    size += m_modelSection->estimateSize();
+    size += m_assetSection->estimateSize();
+    size += m_effectSection->estimateSize();
+    size += m_cameraSection->estimateSize();
+    size += m_lightSection->estimateSize();
+    size += m_projectSection->estimateSize();
+    size += sizeof(SectionTag);
+    return size;
 }
 
 void Motion::setParentModel(IModel *model)
@@ -678,6 +692,7 @@ void Motion::parseHeader(const DataInfo &info)
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), m_name);
     internal::setStringDirect(encoding->toString(info.name2Ptr, info.name2Size, info.codec), m_name2);
+    internal::setStringDirect(encoding->toString(info.reservedPtr, info.reservedSize, info.codec), m_reserved);
     m_nameListSection = new NameListSection(m_encodingRef);
     m_nameListSection->read(info.nameListSectionPtr, info.codec);
 }
@@ -794,6 +809,8 @@ void Motion::release()
     m_name = 0;
     delete m_name2;
     m_name2 = 0;
+    delete m_reserved;
+    m_reserved = 0;
     m_error = kNoError;
     m_active = false;
 }

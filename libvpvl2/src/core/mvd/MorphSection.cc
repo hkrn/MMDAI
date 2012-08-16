@@ -232,7 +232,7 @@ void MorphSection::write(uint8_t *data) const
             header.reserved = 0;
             internal::writeBytes(reinterpret_cast<const uint8_t *>(&header) ,sizeof(header), data);
             for (int i = 0 ; i < nkeyframes; i++) {
-                IKeyframe *keyframe = keyframes->at(i);
+                const IKeyframe *keyframe = keyframes->at(i);
                 keyframe->write(data);
                 data += keyframe->estimateSize();
             }
@@ -246,12 +246,16 @@ size_t MorphSection::estimateSize() const
     const int ncontexts = m_name2contexts.count();
     for (int i = 0; i < ncontexts; i++) {
         const PrivateContext *const *context = m_name2contexts.value(i);
-        const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
-        const int nkeyframes = keyframes->count();
-        size += sizeof(Motion::SectionTag);
-        size += sizeof(MorphSecionHeader);
-        for (int i = 0 ; i < nkeyframes; i++) {
-            size += keyframes->at(i)->estimateSize();
+        const PrivateContext *contextPtr = *context;
+        if (contextPtr->morphRef) {
+            const PrivateContext::KeyframeCollection *keyframes = contextPtr->keyframes;
+            const int nkeyframes = keyframes->count();
+            size += sizeof(Motion::SectionTag);
+            size += sizeof(MorphSecionHeader);
+            for (int i = 0 ; i < nkeyframes; i++) {
+                const IKeyframe *keyframe = keyframes->at(i);
+                size += keyframe->estimateSize();
+            }
         }
     }
     return size;

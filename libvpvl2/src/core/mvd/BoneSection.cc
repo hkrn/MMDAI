@@ -254,7 +254,7 @@ void BoneSection::write(uint8_t *data) const
                 internal::writeSignedIndex(0, sizeof(uint8_t), data);
             }
             for (int i = 0 ; i < nkeyframes; i++) {
-                IKeyframe *keyframe = keyframes->at(i);
+                const IKeyframe *keyframe = keyframes->at(i);
                 keyframe->write(data);
                 data += keyframe->estimateSize();
             }
@@ -270,13 +270,14 @@ size_t BoneSection::estimateSize() const
         const PrivateContext *const *context = m_name2contexts.value(i);
         const PrivateContext *contextRef = *context;
         if (contextRef->boneRef) {
-            const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
+            const PrivateContext::KeyframeCollection *keyframes = contextRef->keyframes;
             const int nkeyframes = keyframes->count();
             size += sizeof(Motion::SectionTag);
             size += sizeof(BoneSectionHeader);
             size += sizeof(uint8_t) * contextRef->countOfLayers;
             for (int i = 0 ; i < nkeyframes; i++) {
-                size += keyframes->at(i)->estimateSize();
+                const IKeyframe *keyframe = keyframes->at(i);
+                size += keyframe->estimateSize();
             }
         }
     }
