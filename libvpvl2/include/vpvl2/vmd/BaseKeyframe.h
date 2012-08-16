@@ -51,26 +51,26 @@ class VPVL2_API BaseKeyframe : public virtual IKeyframe
 {
 public:
     BaseKeyframe()
-        : m_name(0),
+        : m_namePtr(0),
           m_timeIndex(0),
           m_layerIndex(0)
     {
     }
     virtual ~BaseKeyframe() {
-        delete m_name;
-        m_name = 0;
+        delete m_namePtr;
+        m_namePtr = 0;
         m_timeIndex = 0;
         m_layerIndex = 0;
     }
 
-    const IString *name() const { return m_name; }
+    const IString *name() const { return m_namePtr; }
     const TimeIndex &timeIndex() const { return m_timeIndex; }
     const LayerIndex &layerIndex() const { return m_layerIndex; }
     void setTimeIndex(const IKeyframe::TimeIndex &value) { m_timeIndex = value; }
     void setLayerIndex(const LayerIndex &value) { m_layerIndex = value; }
 
 protected:
-    IString *m_name;
+    IString *m_namePtr;
     TimeIndex m_timeIndex;
     LayerIndex m_layerIndex;
 

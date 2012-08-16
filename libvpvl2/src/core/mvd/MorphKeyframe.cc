@@ -38,6 +38,7 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/mvd/MorphKeyframe.h"
+#include "vpvl2/mvd/NameListSection.h"
 
 namespace vpvl2
 {
@@ -58,7 +59,6 @@ struct MorphKeyframeChunk {
 MorphKeyframe::MorphKeyframe(NameListSection *nameListSectionRef)
     : BaseKeyframe(),
       m_ptr(0),
-      m_nameRef(0),
       m_nameListSectionRef(nameListSectionRef),
       m_weight(0)
 {
@@ -69,7 +69,7 @@ MorphKeyframe::~MorphKeyframe()
     delete m_ptr;
     m_ptr = 0;
     m_nameListSectionRef = 0;
-    m_nameRef = 0;
+    m_namePtr = 0;
     m_weight = 0;
 }
 
@@ -162,7 +162,8 @@ void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 
 void MorphKeyframe::setName(const IString *value)
 {
-    m_nameRef = value;
+    m_namePtr = const_cast<IString *>(value);
+    m_nameListSectionRef->addName(value);
 }
 
 IMorphKeyframe::Type MorphKeyframe::type() const

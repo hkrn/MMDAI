@@ -77,7 +77,7 @@ void MorphKeyframe::read(const uint8_t *data)
 {
     MorphKeyframeChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    internal::setStringDirect(m_encodingRef->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
+    internal::setStringDirect(m_encodingRef->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_namePtr);
     setTimeIndex(static_cast<float>(chunk.timeIndex));
 #ifdef VPVL2_BUILD_IOS
     float weight;
@@ -91,7 +91,7 @@ void MorphKeyframe::read(const uint8_t *data)
 void MorphKeyframe::write(uint8_t *data) const
 {
     MorphKeyframeChunk chunk;
-    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
     m_encodingRef->disposeByteArray(name);
     chunk.timeIndex = static_cast<int>(m_timeIndex);
@@ -107,7 +107,7 @@ size_t MorphKeyframe::estimateSize() const
 IMorphKeyframe *MorphKeyframe::clone() const
 {
     MorphKeyframe *frame = new MorphKeyframe(m_encodingRef);
-    frame->setName(m_name);
+    frame->setName(m_namePtr);
     frame->setTimeIndex(m_timeIndex);
     frame->setWeight(m_weight);
     return frame;
@@ -115,7 +115,7 @@ IMorphKeyframe *MorphKeyframe::clone() const
 
 void MorphKeyframe::setName(const IString *value)
 {
-    internal::setString(value, m_name);
+    internal::setString(value, m_namePtr);
 }
 
 void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)

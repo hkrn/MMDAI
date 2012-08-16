@@ -243,6 +243,7 @@ private:
     IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_name2;
+    IString *m_reserved;
     DataInfo m_result;
     Error m_error;
     bool m_active;
