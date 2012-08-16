@@ -58,12 +58,14 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
 
-    int key(const IString *value);
-    const IString *value(int key);
+    int key(const IString *value) const;
+    const IString *value(int key) const;
+    void getNames(Array<const IString *> &names) const;
+    void addName(const vpvl2::IString *name);
 
 private:
-    Array<IString *> m_names;
-    Hash<btHashInt, IString *> m_key2values;
+    Array<const IString *> m_names;
+    Hash<btHashInt, const IString *> m_key2values;
     Hash<HashPtr, int> m_value2keys;
     IEncoding *m_encoding;
 

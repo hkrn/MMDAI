@@ -97,13 +97,13 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     size_t rest = SIZE_MAX;
     uint8_t *namePtr;
     size_t nNameSize;
-    const int nkeyframes = header.count;
-    m_names.reserve(nkeyframes);
-    for (int i = 0; i < nkeyframes; i++) {
+    const int nnames = header.count;
+    m_names.reserve(nnames);
+    for (int i = 0; i < nnames; i++) {
         int keyIndex = internal::readUnsignedIndex(ptr, 4);
         internal::sizeText(ptr, rest, namePtr, nNameSize);
         m_names.add(m_encoding->toString(namePtr, codec, nNameSize));
-        IString *s = m_names[i];
+        const IString *s = m_names[i];
         m_key2values.insert(keyIndex, s);
         m_value2keys.insert(s, keyIndex);
     }
@@ -116,14 +116,14 @@ void NameListSection::write(uint8_t *data) const
     tag.minor = 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
     NameSectionHeader header;
-    const int nkeys = m_key2values.count();
-    header.count = nkeys;
+    const int nnames = m_names.count();
+    header.count = nnames;
     header.reserved = header.reserved2 = header.reserved3 = 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
-    for (int i = 0; i < nkeys; i++) {
-        const IString *const *name = m_key2values.find(i);
+    for (int i = 0; i < nnames; i++) {
+        const IString *name = m_names[i];
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&i), sizeof(i), data);
-        internal::writeString(*name, data);
+        internal::writeString(name, data);
     }
 }
 
@@ -132,25 +132,44 @@ size_t NameListSection::estimateSize() const
     size_t size = 0;
     size += sizeof(Motion::SectionTag);
     size += sizeof(NameSectionHeader);
-    const int nkeys = m_key2values.count();
-    for (int i = 0; i < nkeys; i++) {
-        const IString *const *name = m_key2values.find(i);
+    const int nnames = m_names.count();
+    for (int i = 0; i < nnames; i++) {
+        const IString *name = m_names[i];
         size += sizeof(i);
-        size += internal::estimateSize(*name);
+        size += internal::estimateSize(name);
     }
     return size;
 }
 
-int NameListSection::key(const IString *value)
+int NameListSection::key(const IString *value) const
 {
     const int *key = m_value2keys.find(value);
     return key ? *key : -1;
 }
 
-const IString *NameListSection::value(int key)
+const IString *NameListSection::value(int key) const
 {
     const IString *const *value = m_key2values.find(key);
     return value ? *value : 0;
+}
+
+void NameListSection::getNames(Array<const IString *> &names) const
+{
+    const int nnames = m_names.count();
+    for (int i = 0; i < nnames; i++) {
+        names.add(m_names[i]);
+    }
+}
+
+void NameListSection::addName(const IString *name)
+{
+    if (!m_value2keys.find(name)) {
+        int key = m_names.count();
+        m_names.add(name->clone());
+        m_key2values.insert(key, name);
+        m_value2keys.insert(name, key);
+        m_value2keys.insert(m_names[key], key);
+    }
 }
 
 } /* namespace mvd */
