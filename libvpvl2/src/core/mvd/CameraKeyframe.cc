@@ -146,7 +146,7 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.distance = distance();
     chunk.timeIndex = timeIndex();
     chunk.layerIndex = layerIndex();
-    chunk.fov = fov();
+    chunk.fov = radian(fov());
     chunk.perspective = isPerspective();
     tableForPosition().getInterpolationPair(chunk.positionIP);
     tableForRotation().getInterpolationPair(chunk.rotationIP);
