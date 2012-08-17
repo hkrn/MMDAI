@@ -230,6 +230,7 @@ void MorphSection::write(uint8_t *data) const
             header.countOfKeyframes = nkeyframes;
             header.key = m_nameListSectionRef->key(morph->name());
             header.reserved = 0;
+            header.sizeOfKeyframe = MorphKeyframe::size();
             internal::writeBytes(reinterpret_cast<const uint8_t *>(&header) ,sizeof(header), data);
             for (int i = 0 ; i < nkeyframes; i++) {
                 const IKeyframe *keyframe = keyframes->at(i);

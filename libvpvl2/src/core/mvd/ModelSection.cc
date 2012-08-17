@@ -61,7 +61,6 @@ struct ModelSectionHeader {
 class ModelSection::PrivateContext : public BaseSectionContext {
 public:
     Array<IBone *> bones;
-    Array<int> unused;
     int sizeOfIKBones;
 };
 
@@ -131,9 +130,6 @@ void ModelSection::read(const uint8_t *data)
             IBone *bone = m_modelRef->findBone(m_nameListSectionRef->value(key));
             m_contextPtr->bones.add(bone);
         }
-        else {
-            m_contextPtr->unused.add(key);
-        }
         ptr += sizeof(int);
     }
     ptr += header.sizeOfIKBones - sizeof(int) * (nBonesOfIK + 1);
@@ -201,12 +197,6 @@ void ModelSection::write(uint8_t *data) const
             int key = m_nameListSectionRef->key(bone->name());
             internal::writeSignedIndex(key, sizeof(key), data);
         }
-        const Array<int> &unused = m_contextPtr->unused;
-        const int nunused = unused.count();
-        for (int i = 0; i < nunused; i++) {
-            int key = unused[i];
-            internal::writeSignedIndex(key, sizeof(key), data);
-        }
         for (int i = 0; i < nkeyframes; i++) {
             const IKeyframe *keyframe = keyframes->at(i);
             keyframe->write(data);
@@ -221,7 +211,7 @@ size_t ModelSection::estimateSize() const
     if (m_contextPtr) {
         size += sizeof(Motion::SectionTag);
         size += sizeof(ModelSectionHeader);
-        size += (m_contextPtr->bones.count() + m_contextPtr->unused.count()) * sizeof(int);
+        size += m_contextPtr->bones.count() * sizeof(int);
         const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
         const int nkeyframes = keyframes->count();
         for (int i = 0; i < nkeyframes; i++) {
