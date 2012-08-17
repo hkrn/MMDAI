@@ -72,7 +72,7 @@ TEST(MVDMotionTest, ParseEmpty)
     ASSERT_EQ(mvd::Motion::kInvalidHeaderError, motion.error());
 }
 
-TEST(MVDMotionTest, ParseFile)
+TEST(MVDMotionTest, ParseModelMotion)
 {
     QFile file("motion.mvd");
     if (file.open(QFile::ReadOnly)) {
@@ -94,7 +94,7 @@ TEST(MVDMotionTest, ParseFile)
     }
 }
 
-TEST(MVDMotionTest, ParseCamera)
+TEST(MVDMotionTest, ParseCameraMotion)
 {
     QFile file("camera.mvd");
     if (file.open(QFile::ReadOnly)) {
@@ -258,7 +258,7 @@ TEST(MVDMotionTest, SaveLightKeyframe)
 }
 */
 
-TEST(MVDMotionTest, SaveMotion)
+TEST(MVDMotionTest, SaveModelMotion)
 {
     QFile file("motion.mvd");
     if (file.open(QFile::ReadOnly)) {
@@ -269,6 +269,9 @@ TEST(MVDMotionTest, SaveMotion)
         MockIModel model;
         MockIBone bone;
         MockIMorph morph;
+        CString s("name");
+        EXPECT_CALL(bone, name()).Times(AnyNumber()).WillRepeatedly(Return(&s));
+        EXPECT_CALL(morph, name()).Times(AnyNumber()).WillRepeatedly(Return(&s));
         EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(&bone));
         EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(&morph));
         mvd::Motion motion(&model, &encoding);
@@ -276,12 +279,33 @@ TEST(MVDMotionTest, SaveMotion)
         size_t newSize = motion.estimateSize();
         ASSERT_EQ(size, newSize);
         QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
-        motion.save(newData.data());
-        // using temporary file and should be deleted
-        QTemporaryFile file2;
-        file2.setAutoRemove(true);
-        file2.write(reinterpret_cast<const char *>(newData.data()), newSize);
-        // just compare written size
+        uint8_t *ptr = newData.data();
+        mvd::Motion motion2(&model, &encoding);
+        motion2.save(ptr);
+        ASSERT_TRUE(motion2.load(ptr, newSize));
+        //ASSERT_EQ(motion.countKeyframes(IKeyframe::kBone), motion2.countKeyframes(IKeyframe::kBone));
+        //ASSERT_EQ(motion.countKeyframes(IKeyframe::kMorph), motion2.countKeyframes(IKeyframe::kMorph));
+        //ASSERT_EQ(motion.countKeyframes(IKeyframe::kModel), motion2.countKeyframes(IKeyframe::kModel));
+    }
+}
+
+TEST(MVDMotionTest, SaveCameraMotion)
+{
+    QFile file("camera.mvd");
+    if (file.open(QFile::ReadOnly)) {
+        const QByteArray &bytes = file.readAll();
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        size_t size = bytes.size();
+        Encoding encoding;
+        mvd::Motion motion(0, &encoding);
+        ASSERT_TRUE(motion.load(data, size));
+        size_t newSize = motion.estimateSize();
+        QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
+        uint8_t *ptr = newData.data();
+        mvd::Motion motion2(0, &encoding);
+        motion.save(ptr);
+        ASSERT_TRUE(motion2.load(ptr, newSize));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kCamera), motion2.countKeyframes(IKeyframe::kCamera));
     }
 }
 
