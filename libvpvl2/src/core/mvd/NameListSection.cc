@@ -99,8 +99,9 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     size_t nNameSize;
     const int nnames = header.count;
     m_names.reserve(nnames);
+    ptr += sizeof(header) + header.reserved3;
     for (int i = 0; i < nnames; i++) {
-        int keyIndex = internal::readUnsignedIndex(ptr, 4);
+        int keyIndex = internal::readUnsignedIndex(ptr, sizeof(i));
         internal::sizeText(ptr, rest, namePtr, nNameSize);
         m_names.add(m_encoding->toString(namePtr, codec, nNameSize));
         const IString *s = m_names[i];
