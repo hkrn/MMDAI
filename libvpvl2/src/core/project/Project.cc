@@ -680,7 +680,7 @@ public:
             switch (self->state) {
             case kBoneMotion:
             {
-                IBoneKeyframe *keyframe = self->factory->createBoneKeyframe();
+                IBoneKeyframe *keyframe = self->factory->createBoneKeyframe(self->currentMotion);
                 keyframe->setDefaultInterpolationParameter();
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
@@ -740,7 +740,7 @@ public:
             }
             case kMorphMotion:
             {
-                IMorphKeyframe *keyframe = self->factory->createMorphKeyframe();
+                IMorphKeyframe *keyframe = self->factory->createMorphKeyframe(self->currentMotion);
                 for (int i = 0; i < nattributes; i++, index += 5) {
                     strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
                     attributeName[sizeof(attributeName) - 1] = 0;

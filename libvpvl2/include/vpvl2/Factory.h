@@ -92,6 +92,8 @@ public:
     /**
      * 空の Motion インスタンスを返します。
      *
+     * @param type
+     * @param model
      * @return IMotion
      */
     IMotion *createMotion(vpvl2::IMotion::Type type, IModel *model) const;
@@ -116,30 +118,34 @@ public:
     /**
      * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return IBoneKeyframe
      */
-    IBoneKeyframe *createBoneKeyframe() const;
+    IBoneKeyframe *createBoneKeyframe(const IMotion *motion) const;
 
     /**
      * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return ICameraKeyframe
      */
-    ICameraKeyframe *createCameraKeyframe() const;
+    ICameraKeyframe *createCameraKeyframe(const IMotion *motion) const;
 
     /**
      * ILightKeyframe (照明のキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return ILightKeyframe
      */
-    ILightKeyframe *createLightKeyframe() const;
+    ILightKeyframe *createLightKeyframe(const IMotion *motion) const;
 
     /**
      * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return IMorphKeyframe
      */
-    IMorphKeyframe *createMorphKeyframe() const;
+    IMorphKeyframe *createMorphKeyframe(const IMotion *motion) const;
 
 private:
     struct PrivateContext;

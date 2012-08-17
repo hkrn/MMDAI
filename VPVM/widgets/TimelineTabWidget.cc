@@ -173,7 +173,7 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
         MorphMotionModel::KeyFramePairList keyframes;
         QScopedPointer<IMorphKeyframe> keyframe;
         int frameIndex = m_morphTimeline->selectedFrameIndex();
-        keyframe.reset(model->factory()->createMorphKeyframe());
+        keyframe.reset(model->factory()->createMorphKeyframe(model->currentMotion()));
         keyframe->setName(morph->name());
         keyframe->setWeight(morph->weight());
         keyframes.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
@@ -216,7 +216,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
             const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
-            frame.reset(factory->createBoneKeyframe());
+            frame.reset(factory->createBoneKeyframe(model->currentMotion()));
             frame->setName(&s);
             frame->setDefaultInterpolationParameter();
             boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame.take())));
@@ -237,7 +237,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
             const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
-            frame.reset(factory->createMorphKeyframe());
+            frame.reset(factory->createMorphKeyframe(model->currentMotion()));
             frame->setName(&s);
             frame->setWeight(0);
             faceFrames.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(frame.take())));

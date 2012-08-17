@@ -199,24 +199,13 @@ public:
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
 
-    const IString *name() const {
-        return m_name;
-    }
-    IModel *parentModel() const {
-        return m_modelRef;
-    }
-    Error error() const {
-        return m_error;
-    }
-    const DataInfo &result() const {
-        return m_result;
-    }
-    bool isActive() const {
-        return m_active;
-    }
-    Type type() const {
-        return kMVD;
-    }
+    const IString *name() const { return m_name; }
+    IModel *parentModel() const { return m_modelRef; }
+    Error error() const { return m_error; }
+    const DataInfo &result() const { return m_result; }
+    NameListSection *nameListSection() const { return m_nameListSection; }
+    bool isActive() const { return m_active; }
+    Type type() const { return kMVD; }
 
 private:
     void parseHeader(const DataInfo &info);

@@ -862,8 +862,8 @@ IMotion *SceneLoader::newCameraMotion() const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
     QScopedPointer<IMotion> newCameraMotion(m_factory->createMotion(IMotion::kVMD, 0));
-    QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factory->createCameraKeyframe());
-    QScopedPointer<ILightKeyframe> lightKeyframe(m_factory->createLightKeyframe());
+    QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factory->createCameraKeyframe(newCameraMotion.data()));
+    QScopedPointer<ILightKeyframe> lightKeyframe(m_factory->createLightKeyframe(newCameraMotion.data()));
     ICamera *camera = m_project->camera();
     ILight *light = m_project->light();
     cameraKeyframe->setDefaultInterpolationParameter();
@@ -893,7 +893,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
-                boneKeyframe.reset(m_factory->createBoneKeyframe());
+                boneKeyframe.reset(m_factory->createBoneKeyframe(newModelMotion.data()));
                 boneKeyframe->setDefaultInterpolationParameter();
                 boneKeyframe->setName(bone->name());
                 newModelMotion->addKeyframe(boneKeyframe.take());
@@ -906,7 +906,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
         QScopedPointer<IMorphKeyframe> morphKeyframe;
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
-            morphKeyframe.reset(m_factory->createMorphKeyframe());
+            morphKeyframe.reset(m_factory->createMorphKeyframe(newModelMotion.data()));
             morphKeyframe->setName(morph->name());
             newModelMotion->addKeyframe(morphKeyframe.take());
         }

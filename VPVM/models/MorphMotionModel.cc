@@ -163,7 +163,7 @@ public:
         foreach (const ModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.second;
             m_fmm->setData(index.first, bytes, Qt::EditRole);
-            frame.reset(factory->createMorphKeyframe());
+            frame.reset(factory->createMorphKeyframe(m_motion));
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             m_motion->addKeyframe(frame.take());
         }
@@ -320,7 +320,7 @@ void MorphMotionModel::saveMotion(IMotion *motion)
     if (m_model) {
         /* モデルの ByteArray を BoneKeyFrame に読ませて積んでおくだけの簡単な処理 */
         foreach (QVariant value, values()) {
-            IMorphKeyframe *newFrame = m_factory->createMorphKeyframe();
+            IMorphKeyframe *newFrame = m_factory->createMorphKeyframe(motion);
             const QByteArray &bytes = value.toByteArray();
             newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->addKeyframe(newFrame);
@@ -344,7 +344,7 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
             CString s(name);
             IMorph *morph = model->findMorph(&s);
             if (morph) {
-                KeyFramePtr keyframe(m_factory->createMorphKeyframe());
+                KeyFramePtr keyframe(m_factory->createMorphKeyframe(m_motion));
                 keyframe->setName(morph->name());
                 keyframe->setWeight(morph->weight());
                 keyframes.append(KeyFramePair(frameIndex, keyframe));
@@ -363,7 +363,7 @@ void MorphMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indice
             const QVariant &variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 const QByteArray &bytes = variant.toByteArray();
-                KeyFramePtr keyframe(m_factory->createMorphKeyframe());
+                KeyFramePtr keyframe(m_factory->createMorphKeyframe(m_motion));
                 keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                 /* 予め差分をとっておき、pasteKeyframes でペースト先の差分をたすようにする */
                 int diff = keyframe->timeIndex() - frameIndex;
@@ -532,7 +532,7 @@ void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
                 ITreeItem *item = keys[key];
                 /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = frameIndexToModelIndex(item, frameIndex);
-                IMorphKeyframe *newFrame = m_factory->createMorphKeyframe();
+                IMorphKeyframe *newFrame = m_factory->createMorphKeyframe(motion);
                 newFrame->setName(keyframe->name());
                 newFrame->setWeight(keyframe->weight());
                 newFrame->setTimeIndex(frameIndex);
@@ -604,7 +604,7 @@ void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &
             const QVariant &variant = index.data(kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 const QByteArray &bytes = variant.toByteArray();
-                KeyFramePtr keyframe(m_factory->createMorphKeyframe());
+                KeyFramePtr keyframe(m_factory->createMorphKeyframe(m_motion));
                 keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                 keyframe->setWeight(keyframe->weight() * value);
                 keyframes.append(KeyFramePair(toTimeIndex(index), keyframe));

@@ -222,7 +222,7 @@ public:
         foreach (const QModelIndex &index, m_cameraIndices) {
             const QByteArray &bytes = index.data(SceneMotionModel::kBinaryDataRole).toByteArray();
             m_smm->setData(index, bytes, Qt::EditRole);
-            newCameraKeyframe.reset(factory->createCameraKeyframe());
+            newCameraKeyframe.reset(factory->createCameraKeyframe(motion));
             newCameraKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->replaceKeyframe(newCameraKeyframe.take());
         }
@@ -242,7 +242,7 @@ public:
         foreach (const QModelIndex &index, m_cameraIndices) {
             const QByteArray &bytes = index.data(SceneMotionModel::kBinaryDataRole).toByteArray();
             m_smm->setData(index, bytes, Qt::EditRole);
-            newLightKeyframe.reset(factory->createLightKeyframe());
+            newLightKeyframe.reset(factory->createLightKeyframe(motion));
             newLightKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->replaceKeyframe(newLightKeyframe.take());
         }
@@ -430,7 +430,7 @@ void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
         QScopedPointer<ICameraKeyframe> cameraKeyframes;
         foreach (const QVariant &value, m_cameraData) {
             const QByteArray &bytes = value.toByteArray();
-            cameraKeyframes.reset(m_factory->createCameraKeyframe());
+            cameraKeyframes.reset(m_factory->createCameraKeyframe(motion));
             cameraKeyframes->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->addKeyframe(cameraKeyframes.take());
         }
@@ -441,7 +441,7 @@ void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
         QScopedPointer<ILightKeyframe> lightKeyframes;
         foreach (const QVariant &value, m_lightData) {
             const QByteArray &bytes = value.toByteArray();
-            lightKeyframes.reset(m_factory->createLightKeyframe());
+            lightKeyframes.reset(m_factory->createLightKeyframe(motion));
             lightKeyframes->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->addKeyframe(lightKeyframes.take());
         }
@@ -463,7 +463,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
         if (frameIndex >= 0 && item->isCategory()) {
             if (index.row() == m_cameraTreeItem->rowIndex()) {
                 const ICamera *camera = m_sceneWidget->sceneLoader()->scene()->camera();
-                cameraKeyframe.reset(m_factory->createCameraKeyframe());
+                cameraKeyframe.reset(m_factory->createCameraKeyframe(m_motion));
                 cameraKeyframe->setDefaultInterpolationParameter();
                 cameraKeyframe->setPosition(camera->position());
                 cameraKeyframe->setAngle(camera->angle());
@@ -473,7 +473,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
             }
             else if (index.row() == m_lightTreeItem->rowIndex()) {
                 const ILight *light = m_sceneWidget->sceneLoader()->scene()->light();
-                lightKeyframe.reset(m_factory->createLightKeyframe());
+                lightKeyframe.reset(m_factory->createLightKeyframe(m_motion));
                 lightKeyframe->setColor(light->color());
                 lightKeyframe->setDirection(light->direction());
                 lightKeyframes.append(LightKeyframePair(frameIndex, LightKeyframePtr(lightKeyframe.take())));
@@ -497,7 +497,7 @@ void SceneMotionModel::pasteKeyframesByTimeIndex(int frameIndex)
     if (m_cameraIndex.isValid()) {
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
-            CameraKeyframePtr keyframe(m_factory->createCameraKeyframe());
+            CameraKeyframePtr keyframe(m_factory->createCameraKeyframe(m_motion));
             keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
             cameraKeyframes.append(CameraKeyframePair(frameIndex, keyframe));
         }
@@ -506,7 +506,7 @@ void SceneMotionModel::pasteKeyframesByTimeIndex(int frameIndex)
     if (m_lightIndex.isValid()) {
         const QVariant &variant = m_lightIndex.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
-            LightKeyframePtr keyframe(m_factory->createLightKeyframe());
+            LightKeyframePtr keyframe(m_factory->createLightKeyframe(m_motion));
             keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
             lightKeyframes.append(LightKeyframePair(frameIndex, keyframe));
         }
@@ -525,7 +525,7 @@ SceneMotionModel::CameraKeyframePairList SceneMotionModel::keyframesFromModelInd
     foreach (const QModelIndex &index, indices) {
         const QVariant &variant = index.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
-            CameraKeyframePtr keyframe(m_factory->createCameraKeyframe());
+            CameraKeyframePtr keyframe(m_factory->createCameraKeyframe(m_motion));
             keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
             keyframes.append(CameraKeyframePair(MotionBaseModel::toTimeIndex(index), keyframe));
         }
