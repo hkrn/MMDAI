@@ -52,6 +52,7 @@ public:
     NameListSection(IEncoding *encoding);
     ~NameListSection();
 
+    static const int kNotFound;
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
 
     void read(const uint8_t *data, const IString::Codec &codec);
@@ -66,7 +67,7 @@ public:
 private:
     Array<const IString *> m_names;
     Hash<btHashInt, const IString *> m_key2values;
-    Hash<HashPtr, int> m_value2keys;
+    Hash<HashString, int> m_value2keys;
     IEncoding *m_encoding;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(NameListSection)

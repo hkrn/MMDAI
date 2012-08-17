@@ -55,6 +55,8 @@ struct NameSectionHeader {
 
 #pragma pack(pop)
 
+const int NameListSection::kNotFound = -1;
+
 NameListSection::NameListSection(IEncoding *encoding)
     : m_encoding(encoding)
 {
@@ -106,7 +108,7 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
         m_names.add(m_encoding->toString(namePtr, codec, nNameSize));
         const IString *s = m_names[i];
         m_key2values.insert(keyIndex, s);
-        m_value2keys.insert(s, keyIndex);
+        m_value2keys.insert(s->toHashString(), keyIndex);
     }
 }
 
@@ -144,8 +146,11 @@ size_t NameListSection::estimateSize() const
 
 int NameListSection::key(const IString *value) const
 {
-    const int *key = m_value2keys.find(value);
-    return key ? *key : -1;
+    if (value) {
+        const int *key = m_value2keys.find(value->toHashString());
+        return key ? *key : kNotFound;
+    }
+    return kNotFound;
 }
 
 const IString *NameListSection::value(int key) const
@@ -164,12 +169,12 @@ void NameListSection::getNames(Array<const IString *> &names) const
 
 void NameListSection::addName(const IString *name)
 {
-    if (!m_value2keys.find(name)) {
+    const HashString &s = name->toHashString();
+    if (!m_value2keys.find(s)) {
         int key = m_names.count();
         m_names.add(name->clone());
         m_key2values.insert(key, name);
-        m_value2keys.insert(name, key);
-        m_value2keys.insert(m_names[key], key);
+        m_value2keys.insert(s, key);
     }
 }
 
