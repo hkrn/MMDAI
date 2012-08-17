@@ -314,7 +314,8 @@ bool Motion::load(const uint8_t *data, size_t size)
 void Motion::save(uint8_t *data) const
 {
     Header header;
-    memcpy(header.signature, kSignature, sizeof(header.signature));
+    internal::zerofill(&header, sizeof(header));
+    memcpy(header.signature, kSignature, sizeof(header.signature) - 1);
     header.version = 1.0;
     header.encoding = 1;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
