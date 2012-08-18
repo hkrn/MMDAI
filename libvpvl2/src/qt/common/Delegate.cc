@@ -1184,7 +1184,7 @@ bool Delegate::uploadTextureInternal(const QString &path,
             return true;
         }
         GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
-        size_t width = image.width, height = image.height;
+        size_t width = image.width(), height = image.height();
 #endif
         TextureCache cache(width, height, textureID);
         m_texture2Paths.insert(textureID, path);
