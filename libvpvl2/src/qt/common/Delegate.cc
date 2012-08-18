@@ -1146,6 +1146,29 @@ bool Delegate::uploadTextureInternal(const QString &path,
         if (suffix == "sph" || suffix == "spa")
             suffix.setRawData("bmp", 3);
         const QByteArray &bytes = m_archive->data(path);
+#ifdef VPVL2_LINK_DEVIL
+        ILuint imageID;
+        ilGenImages(1, &imageID);
+        ilBindImage(imageID);
+        ILboolean loaded = IL_FALSE;
+        loaded = ilLoadL(ilTypeFromExt(("." + suffix).constData()), bytes.constData(), bytes.size());
+        if (loaded == IL_FALSE) {
+            ILenum error = ilGetError();
+            while (error != IL_NO_ERROR) {
+                qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
+                error = ilGetError();
+            }
+            ilDeleteImages(1, &imageID);
+            ok = false;
+            return true;
+        }
+        iluFlipImage();
+        GLuint textureID = ilutGLBindTexImage();
+        size_t width = ilGetInteger(IL_IMAGE_WIDTH);
+        size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
+        ilBindImage(0);
+        ilDeleteImages(1, &imageID);
+#else
         ByteArrayPtr ptr;
         QImage image;
         image.loadFromData(bytes, suffix.constData());
@@ -1161,12 +1184,14 @@ bool Delegate::uploadTextureInternal(const QString &path,
             return true;
         }
         GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
-        TextureCache cache(image.width(), image.height(), textureID);
+        size_t width = image.width, height = image.height;
+#endif
+        TextureCache cache(width, height, textureID);
         m_texture2Paths.insert(textureID, path);
         setTextureID(cache, isToon, texture);
         addTextureCache(privateContext, path, cache);
         qDebug("Loaded a zipped texture (ID=%d, width=%d, height=%d): \"%s\"",
-               textureID, image.width(), image.height(), qPrintable(path));
+               textureID, int(width), int(height), qPrintable(path));
         ok = textureID != 0;
         return ok;
     }
@@ -1180,6 +1205,7 @@ bool Delegate::uploadTextureInternal(const QString &path,
         return true; /* skip */
     }
 #ifdef VPVL2_LINK_DEVIL
+    Q_UNUSED(mipmap)
     ILuint imageID;
     ilGenImages(1, &imageID);
     ilBindImage(imageID);

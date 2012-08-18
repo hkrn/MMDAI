@@ -62,9 +62,9 @@ namespace
 
 typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
 
-static const QRegExp &kAssetLoadable = QRegExp(".(bmp|jpe?g|png|sp[ah]|tga|x)$");
+static const QRegExp &kAssetLoadable = QRegExp(".(bmp|dds|jpe?g|png|sp[ah]|tga|x)$");
 static const QRegExp &kAssetExtensions = QRegExp(".x$");
-static const QRegExp &kModelLoadable = QRegExp(".(bmp|jpe?g|pm[dx]|png|sp[ah]|tga)$");
+static const QRegExp &kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|sp[ah]|tga)$");
 static const QRegExp &kModelExtensions = QRegExp(".pm[dx]$");
 
 /* 文字列を解析して Vector3 を構築する */
