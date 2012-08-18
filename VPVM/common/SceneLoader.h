@@ -239,6 +239,7 @@ signals:
     void cameraMotionDidSet(vpvl2::IMotion *motion, const QUuid &uuid);
     void lightColorDidSet(const vpvl2::Vector3 &color);
     void lightDirectionDidSet(const vpvl2::Vector3 &position);
+    void preprocessDidPerform();
 
 private slots:
     void setProjectDirtyFalse();

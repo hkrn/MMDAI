@@ -863,6 +863,14 @@ void SceneWidget::updatePlaneWorld(const ICamera *camera)
     m_plane->updateTransform(transform);
 }
 
+void SceneWidget::renderBackgroundObjects()
+{
+    /* 背景画像描写 */
+    m_background->draw();
+    /* グリッドの描写 */
+    m_grid->draw(m_loader, m_loader->isGridVisible());
+}
+
 void SceneWidget::loadFile(const QString &file)
 {
     /* モデルファイル */
@@ -994,6 +1002,7 @@ void SceneWidget::initializeGL()
         qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
         m_loader = new SceneLoader(m_encoding, m_factory, this);
         connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
+        connect(m_loader, SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
     }
 #ifdef IS_VPVM
     const QSize &s = size();
@@ -1268,8 +1277,6 @@ void SceneWidget::paintGL()
     m_loader->renderOffscreen(s);
     glViewport(0, 0, s.width(), s.height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    m_background->draw();
-    m_grid->draw(m_loader, m_loader->isGridVisible());
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;

@@ -968,6 +968,7 @@ void SceneLoader::renderWindow()
             engine->performPreProcess();
         }
     }
+    emit preprocessDidPerform();
     /* 通常の描写 */
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];

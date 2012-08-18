@@ -222,6 +222,7 @@ private slots:
     void resetCamera();
     void resetModelPosition();
     void updatePlaneWorld(const vpvl2::ICamera *camera);
+    void renderBackgroundObjects();
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void openErrorDialogIfFailed(bool loadingProjectFailed);
     void zoomIn() { zoom(true, Qt::NoModifier); }
