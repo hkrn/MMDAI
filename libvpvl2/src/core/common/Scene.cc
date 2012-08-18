@@ -252,6 +252,7 @@ struct Scene::PrivateContext {
     bool isOpenCLAcceleration() const {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
+#ifdef VPVL2_ENABLE_OPENCL
     cl_uint hostDeviceType() const {
         switch (accelerationType) {
         case kOpenCLAccelerationType1:
@@ -262,6 +263,7 @@ struct Scene::PrivateContext {
             return CL_DEVICE_TYPE_DEFAULT;
         }
     }
+#endif
     cl::Context *createComputeContext(IRenderDelegate *delegate) {
 #ifdef VPVL2_ENABLE_OPENCL
         if (!computeContext) {
