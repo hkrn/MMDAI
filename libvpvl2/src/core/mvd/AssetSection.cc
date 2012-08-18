@@ -91,8 +91,7 @@ void AssetSection::read(const uint8_t * /* data */)
 
 void AssetSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndex;
+    saveCurrentTimeIndex(timeIndex);
 }
 
 void AssetSection::write(uint8_t * /* data */) const

@@ -402,6 +402,7 @@ void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
 {
     m_assetSection->advance(deltaTimeIndex);
     m_boneSection->advance(deltaTimeIndex);
+    m_effectSection->advance(deltaTimeIndex);
     m_modelSection->advance(deltaTimeIndex);
     m_morphSection->advance(deltaTimeIndex);
     if (deltaTimeIndex > 0)
@@ -451,15 +452,11 @@ const IKeyframe::TimeIndex &Motion::maxTimeIndex() const
 
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
-    // force inactive motion is reached
     return !m_active  || (m_assetSection->currentTimeIndex() >= atEnd &&
                           m_boneSection->currentTimeIndex() >= atEnd &&
-                          m_cameraSection->currentTimeIndex() >= atEnd &&
                           m_effectSection->currentTimeIndex() >= atEnd &&
-                          m_lightSection->currentTimeIndex() >= atEnd &&
                           m_modelSection->currentTimeIndex() >= atEnd &&
-                          m_morphSection->currentTimeIndex() >= atEnd &&
-                          m_projectSection->currentTimeIndex() >= atEnd);
+                          m_morphSection->currentTimeIndex() >= atEnd);
 }
 
 bool Motion::isNullFrameEnabled() const
