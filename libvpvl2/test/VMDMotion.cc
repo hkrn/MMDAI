@@ -434,6 +434,14 @@ TEST(VMDMotionTest, AddAndRemoveBoneKeyframes)
     frame->setTimeIndex(42);
     frame->setName(&name);
     {
+        // The frame that the layer index is not zero should not be added
+        QScopedPointer<IBoneKeyframe> frame42(new vmd::BoneKeyframe(&encoding));
+        frame42->setLayerIndex(42);
+        motion.addKeyframe(frame42.data());
+        motion.update(IKeyframe::kBone);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
+    }
+    {
         // add a bone keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());
         motion.update(IKeyframe::kBone);
@@ -481,6 +489,14 @@ TEST(VMDMotionTest, AddAndRemoveCameraKeyframes)
     frame->setTimeIndex(42);
     frame->setDistance(42);
     {
+        // The frame that the layer index is not zero should not be added
+        QScopedPointer<ICameraKeyframe> frame42(new vmd::CameraKeyframe());
+        frame42->setLayerIndex(42);
+        motion.addKeyframe(frame42.data());
+        motion.update(IKeyframe::kCamera);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+    }
+    {
         // add a camera keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());
         motion.update(IKeyframe::kCamera);
@@ -527,6 +543,14 @@ TEST(VMDMotionTest, AddAndRemoveLightKeyframes)
     QScopedPointer<ILightKeyframe> frame(new vmd::LightKeyframe());
     frame->setTimeIndex(42);
     frame->setColor(Vector3(1, 0, 0));
+    {
+        // The frame that the layer index is not zero should not be added
+        QScopedPointer<ILightKeyframe> frame42(new vmd::LightKeyframe());
+        frame42->setLayerIndex(42);
+        motion.addKeyframe(frame42.data());
+        motion.update(IKeyframe::kLight);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
+    }
     {
         // add a light keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());
@@ -578,6 +602,14 @@ TEST(VMDMotionTest, AddAndRemoveMorphKeyframes)
     QScopedPointer<IMorphKeyframe> frame(new vmd::MorphKeyframe(&encoding));
     frame->setTimeIndex(42);
     frame->setName(&name);
+    {
+        // The frame that the layer index is not zero should not be added
+        QScopedPointer<IMorphKeyframe> frame42(new vmd::MorphKeyframe(&encoding));
+        frame42->setLayerIndex(42);
+        motion.addKeyframe(frame42.data());
+        motion.update(IKeyframe::kMorph);
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
+    }
     {
         // add a morph keyframe (don't forget updating motion!)
         motion.addKeyframe(frame.data());

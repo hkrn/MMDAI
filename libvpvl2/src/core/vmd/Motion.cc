@@ -339,7 +339,7 @@ void Motion::setNullFrameEnable(bool value)
 
 void Motion::addKeyframe(IKeyframe *value)
 {
-    if (!value)
+    if (!value || value->layerIndex() != 0)
         return;
     switch (value->type()) {
     case IKeyframe::kBone:
@@ -361,7 +361,7 @@ void Motion::addKeyframe(IKeyframe *value)
 
 void Motion::replaceKeyframe(IKeyframe *value)
 {
-    if (!value)
+    if (!value || value->layerIndex() != 0)
         return;
     switch (value->type()) {
     case IKeyframe::kBone: {
@@ -471,7 +471,7 @@ IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
 
 void Motion::deleteKeyframe(IKeyframe *&value)
 {
-    if (!value)
+    if (!value || value->layerIndex() != 0)
         return;
     switch (value->type()) {
     case IKeyframe::kBone:
