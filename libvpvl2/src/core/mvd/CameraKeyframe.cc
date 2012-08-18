@@ -147,7 +147,7 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.timeIndex = timeIndex();
     chunk.layerIndex = layerIndex();
     chunk.fov = radian(fov());
-    chunk.perspective = isPerspective();
+    chunk.perspective = isPerspective() ? 1 : 0;
     tableForPosition().getInterpolationPair(chunk.positionIP);
     tableForRotation().getInterpolationPair(chunk.rotationIP);
     tableForFov().getInterpolationPair(chunk.fovIP);
@@ -252,7 +252,7 @@ const Scalar &CameraKeyframe::fov() const
 
 bool CameraKeyframe::isPerspective() const
 {
-    return !m_perspective;
+    return m_perspective;
 }
 
 void CameraKeyframe::setPosition(const Vector3 &value)
