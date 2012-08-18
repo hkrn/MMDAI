@@ -17,7 +17,7 @@ linux-*:LIBS += -lCg -lCgGL
 
 INCLUDEPATH += ../test/gtest-1.6.0/include ../test/gmock-1.6.0/include \
                ../include ../debug/include ../../libvpvl/include ../../libvpvl/debug/include \
-               ../../bullet/src /opt/local/include/libxml2 /usr/include/libxml2
+               ../../bullet/src ../../assimp/include /opt/local/include/libxml2 /usr/include/libxml2
 
 linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN
@@ -50,7 +50,8 @@ SOURCES += main.cc \
     Project.cc \
     String.cc \
     Encoding.cc \
-    Archive.cc
+    Archive.cc \
+    Factory.cc
 
 RESOURCES += \
     fixtures.qrc
