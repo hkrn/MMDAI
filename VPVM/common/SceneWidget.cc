@@ -1280,6 +1280,7 @@ void SceneWidget::paintGL()
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;
+    IModel *model = m_loader->selectedModel();
     if (!m_selectedBones.isEmpty())
         bone = m_selectedBones.first();
     switch (m_editMode) {
@@ -1289,11 +1290,11 @@ void SceneWidget::paintGL()
             QSet<const IBone *> boneSet;
             foreach (const IBone *bone, m_selectedBones)
                 boneSet.insert(bone);
-            m_debugDrawer->drawModelBones(m_loader->selectedModel(), m_loader, boneSet);
+            m_debugDrawer->drawModelBones(model, m_loader, boneSet);
         }
         /* 右下のハンドルが領域に入ってる場合は軸を表示する */
         if (m_isImageHandleRectIntersect)
-            m_debugDrawer->drawBoneTransform(bone, m_loader, m_handles->modeFromConstraint());
+            m_debugDrawer->drawBoneTransform(bone, model, m_loader, m_handles->modeFromConstraint());
         /*
          * 情報パネルと右下のハンドルを最後にレンダリング(表示上最上位に持っていく)
          * 右下の操作ハンドルはモデルが選択されていない場合は非表示にするように変更
@@ -1304,16 +1305,16 @@ void SceneWidget::paintGL()
         break;
     case kRotate: /* 回転モード */
         /* kRotate と kMove の場合はレンダリングがうまくいかない関係でモデルのハンドルを最後に持ってく */
-        m_debugDrawer->drawMovableBone(bone, m_loader);
+        m_debugDrawer->drawMovableBone(bone, model, m_loader);
         m_handles->drawImageHandles(bone);
         m_info->draw();
-        m_handles->drawRotationHandle();
+        m_handles->drawRotationHandle(model);
         break;
     case kMove: /* 移動モード */
-        m_debugDrawer->drawMovableBone(bone, m_loader);
+        m_debugDrawer->drawMovableBone(bone, model, m_loader);
         m_handles->drawImageHandles(bone);
         m_info->draw();
-        m_handles->drawMoveHandle();
+        m_handles->drawMoveHandle(model);
         break;
     case kNone: /* モデル選択なし */
     default:

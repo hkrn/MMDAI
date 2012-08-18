@@ -128,7 +128,7 @@ public:
                    const btTransform &transform,
                    const btVector3 &color) {
         if (m_program.isLinked()) {
-            prepare(loader);
+            setProgramParameters(loader, 0);
             world->debugDrawObject(transform, shape, color);
             m_program.release();
         }
@@ -142,7 +142,7 @@ public:
         const int nbones = bones.count();
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
-        prepare(loader);
+        setProgramParameters(loader, model);
         /* IK ボーンの収集 */
         BoneSet bonesForIK;
         Array<IBone *> linkedBones;
@@ -175,23 +175,23 @@ public:
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawMovableBone(const IBone *bone, const SceneLoader *loader) {
+    void drawMovableBone(const IBone *bone, const IModel *model, const SceneLoader *loader) {
         if (!bone || !bone->isMovable() || !m_program.isLinked())
             return;
         glDisable(GL_DEPTH_TEST);
-        prepare(loader);
+        setProgramParameters(loader, model);
         m_program.setUniformValue("color", QColor::fromRgbF(0, 1, 1));
         drawSphere(bone->worldTransform().getOrigin(), 0.5, Vector3(0.0f, 1.0f, 1.0f));
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    void drawBoneTransform(const IBone *bone, const SceneLoader *loader, int mode) {
+    void drawBoneTransform(const IBone *bone, const IModel *model, const SceneLoader *loader, int mode) {
         /* 固定軸がある場合は軸表示なし */
         if (!m_visible || !bone || !m_program.isLinked() || bone->hasFixedAxes())
             return;
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
-        prepare(loader);
+        setProgramParameters(loader, model);
         /* ボーン表示 */
         BoneSet selectedBones;
         selectedBones.insert(bone);
@@ -243,9 +243,13 @@ public:
     }
 
 private:
-    void prepare(const SceneLoader *loader) {
+    void setProgramParameters(const SceneLoader *loader, const IModel *model) {
         QMatrix4x4 world, view, projection;
         loader->getCameraMatrices(world, view, projection);
+        if (model) {
+            const Vector3 &position = model->position();
+            world.translate(position.x(), position.y(), position.z());
+        }
         m_program.bind();
         m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
         m_program.setUniformValue("boneMatrix", QMatrix4x4());

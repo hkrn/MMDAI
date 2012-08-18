@@ -135,8 +135,8 @@ public:
                       int &flags,
                       QRectF &rect);
     void drawImageHandles(vpvl2::IBone *bone);
-    void drawRotationHandle();
-    void drawMoveHandle();
+    void drawRotationHandle(const vpvl2::IModel *model);
+    void drawMoveHandle(const vpvl2::IModel *model);
     btScalar angle(const vpvl2::Vector3 &pos) const;
 
     void setPoint3D(const vpvl2::Vector3 &value);

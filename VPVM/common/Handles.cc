@@ -200,12 +200,17 @@ static void UILoadTrackableModel(const aiMesh *mesh,
 }
 
 static void UIInitializeRenderingModel(const SceneLoader *loader,
+                                       const IModel *model,
                                        const Transform &transform,
                                        QGLShaderProgram *program)
 {
     QGLFunctions func(QGLContext::currentContext());
     QMatrix4x4 world, view, projection;
     loader->getCameraMatrices(world, view, projection);
+    if (model) {
+        const Vector3 &position = model->position();
+        world.translate(position.x(), position.y(), position.z());
+    }
     program->setUniformValue("modelViewProjectionMatrix", projection * view * world);
     int boneMatrix = program->uniformLocation("boneMatrix");
     float matrix[16];
@@ -634,13 +639,13 @@ void Handles::drawImageHandles(IBone *bone)
     }
 }
 
-void Handles::drawRotationHandle()
+void Handles::drawRotationHandle(const IModel *model)
 {
     if (!m_visible || !m_program.isLinked() || !m_bone)
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader, modelHandleTransform(), &m_program);
+    UIInitializeRenderingModel(m_loader, model, modelHandleTransform(), &m_program);
     if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
@@ -650,13 +655,13 @@ void Handles::drawRotationHandle()
     glEnable(GL_DEPTH_TEST);
 }
 
-void Handles::drawMoveHandle()
+void Handles::drawMoveHandle(const IModel *model)
 {
     if (!m_visible || !m_program.isLinked() || !m_bone)
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader, modelHandleTransform(), &m_program);
+    UIInitializeRenderingModel(m_loader, model, modelHandleTransform(), &m_program);
     if (m_bone->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);
