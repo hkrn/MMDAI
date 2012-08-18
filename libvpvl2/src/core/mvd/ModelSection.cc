@@ -127,7 +127,7 @@ void ModelSection::read(const uint8_t *data)
         int key = *reinterpret_cast<int *>(ptr);
         const IString *s = m_nameListSectionRef->value(key);
         if (m_modelRef && s) {
-            IBone *bone = m_modelRef->findBone(m_nameListSectionRef->value(key));
+            IBone *bone = m_modelRef->findBone(s);
             m_contextPtr->bones.add(bone);
         }
         ptr += sizeof(int);

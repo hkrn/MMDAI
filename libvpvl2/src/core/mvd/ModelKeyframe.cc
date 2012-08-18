@@ -119,7 +119,7 @@ void ModelKeyframe::read(const uint8_t *data)
     setPhysicsEnable(chunk->physics);
     setPhysicsStillMode(chunk->physicsStillMode);
     setEdgeWidth(chunk->edgeWidth);
-    const uint8_t *bonesOfIKPtr = data + sizeof(chunk);
+    const uint8_t *bonesOfIKPtr = data + size();
     for (int i = 0; i < m_countOfIKBones; i++) {
         m_bonesOfIK[i] = bonesOfIKPtr[i] != 0 ? true : false;
     }
