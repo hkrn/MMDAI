@@ -1183,7 +1183,17 @@ bool Delegate::uploadTextureInternal(const QString &path,
     ILuint imageID;
     ilGenImages(1, &imageID);
     ilBindImage(imageID);
-    if (ilLoadImage(path.toLocal8Bit().constData()) == IL_FALSE) {
+    ILboolean loaded = IL_FALSE;
+    if (!path.startsWith(":textures/")) {
+        loaded = ilLoadImage(path.toLocal8Bit().constData());
+    }
+    else {
+        QFile file(path);
+        file.open(QFile::ReadOnly);
+        const QByteArray &bytes = file.readAll();
+        loaded = ilLoadL(ilTypeFromExt(path.toLocal8Bit().constData()), bytes.constData(), bytes.size());
+    }
+    if (loaded == IL_FALSE) {
         ILenum error = ilGetError();
         while (error != IL_NO_ERROR) {
             qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
