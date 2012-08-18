@@ -518,17 +518,18 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     /* header */
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    Header *header = reinterpret_cast<Header *>(ptr);
+    Header header;
+    internal::getData(ptr, header);
     info.basePtr = ptr;
 
     /* Check the signature and version is correct */
-    if (memcmp(header->signature, "PMX ", 4) != 0) {
+    if (memcmp(header.signature, "PMX ", 4) != 0) {
         m_info.error = kInvalidSignatureError;
         return false;
     }
 
     /* version */
-    if (header->version != 2.0) {
+    if (header.version != 2.0) {
         m_info.error = kInvalidVersionError;
         return false;
     }

@@ -73,10 +73,11 @@ EffectSection::~EffectSection()
 
 bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const EffectSectionHeader &header = *reinterpret_cast<const EffectSectionHeader *>(ptr);
+    EffectSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     const int nparameters = header.parameterCount;
     const size_t parameterArraySize = nparameters * sizeof(int);
     if (!internal::validateSize(ptr, parameterArraySize, rest)) {

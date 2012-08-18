@@ -164,10 +164,11 @@ CameraSection::~CameraSection()
 
 bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const CameraSectionHeader &header = *reinterpret_cast<const CameraSectionHeader *>(ptr);
+    CameraSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
         return false;
     }
@@ -192,7 +193,8 @@ void CameraSection::release()
 void CameraSection::read(const uint8_t *data)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    const CameraSectionHeader &header = *reinterpret_cast<const CameraSectionHeader *>(ptr);
+    CameraSectionHeader header;
+    internal::getData(ptr, header);
     const size_t sizeOfkeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;

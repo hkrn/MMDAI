@@ -91,11 +91,12 @@ bool LightKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motio
 
 void LightKeyframe::read(const uint8_t *data)
 {
-    const LightKeyframeChunk *chunk = reinterpret_cast<const LightKeyframeChunk *>(data);
-    internal::setPosition(chunk->position, m_direction);
-    internal::setPositionRaw(chunk->color, m_color);
-    setTimeIndex(chunk->timeIndex);
-    setEnable(chunk->enabled);
+    LightKeyframeChunk chunk;
+    internal::getData(data, chunk);
+    internal::setPosition(chunk.position, m_direction);
+    internal::setPositionRaw(chunk.color, m_color);
+    setTimeIndex(chunk.timeIndex);
+    setEnable(chunk.enabled);
 }
 
 void LightKeyframe::write(uint8_t *data) const

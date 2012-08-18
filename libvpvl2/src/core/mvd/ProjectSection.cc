@@ -67,10 +67,11 @@ ProjectSection::~ProjectSection()
 
 bool ProjectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const ProjectSectionHeader &header = *reinterpret_cast<const ProjectSectionHeader *>(ptr);
+    ProjectSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved2, rest)) {
         return false;
     }

@@ -206,7 +206,8 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
+    MaterialUnit unit;
+    internal::getData(ptr, unit);
     m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2]);
     m_ambient.calculate();
     m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);

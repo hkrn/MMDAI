@@ -109,24 +109,25 @@ int CameraKeyframe::interpolationTableSize()
 
 void CameraKeyframe::read(const uint8_t *data)
 {
-    const CameraKeyframeChunk *chunk = reinterpret_cast<const CameraKeyframeChunk *>(data);
+    CameraKeyframeChunk chunk;
+    internal::getData(data, chunk);
     Vector3 angle;
-    internal::setPosition(chunk->position, m_position);
-    internal::setPositionRaw(chunk->rotation, angle);
+    internal::setPosition(chunk.position, m_position);
+    internal::setPositionRaw(chunk.rotation, angle);
 #ifdef VPVL2_COORDINATE_OPENGL
     setAngle(Vector3(degree(angle[0]), degree(angle[1]) - 180, degree(angle[2])));
 #else
     setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
 #endif
-    setDistance(chunk->distance);
-    setTimeIndex(chunk->timeIndex);
-    setLayerIndex(chunk->layerIndex);
-    setFov(degree(chunk->fov));
-    setPerspective(chunk->perspective);
-    setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk->positionIP));
-    setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk->rotationIP));
-    setInterpolationParameter(kFov, Motion::InterpolationTable::toQuadWord(chunk->fovIP));
-    setInterpolationParameter(kDistance, Motion::InterpolationTable::toQuadWord(chunk->distanceIP));
+    setDistance(chunk.distance);
+    setTimeIndex(chunk.timeIndex);
+    setLayerIndex(chunk.layerIndex);
+    setFov(degree(chunk.fov));
+    setPerspective(chunk.perspective);
+    setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.positionIP));
+    setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk.rotationIP));
+    setInterpolationParameter(kFov, Motion::InterpolationTable::toQuadWord(chunk.fovIP));
+    setInterpolationParameter(kDistance, Motion::InterpolationTable::toQuadWord(chunk.distanceIP));
 }
 
 void CameraKeyframe::write(uint8_t *data) const

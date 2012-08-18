@@ -121,10 +121,11 @@ MorphSection::~MorphSection()
 
 bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const MorphSecionHeader &header = *reinterpret_cast<const MorphSecionHeader *>(ptr);
+    MorphSecionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved, rest)) {
         return false;
     }
@@ -153,7 +154,8 @@ void MorphSection::release()
 void MorphSection::read(const uint8_t *data)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    const MorphSecionHeader &header = *reinterpret_cast<const MorphSecionHeader *>(ptr);
+    MorphSecionHeader header;
+    internal::getData(ptr, header);
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     delete m_keyframeListPtr;

@@ -265,7 +265,8 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
-    const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
+    RigidBodyUnit unit;
+    internal::getData(ptr, unit);
     m_collisionGroupID = unit.collisionGroupID;
     m_groupID = 0x0001 << m_collisionGroupID;
     m_collisionGroupMask = unit.collsionMask;

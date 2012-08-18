@@ -70,10 +70,11 @@ NameListSection::~NameListSection()
 
 bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /* info */)
 {
-    const NameSectionHeader &header = *reinterpret_cast<const NameSectionHeader *>(ptr);
+    NameSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved3, rest)) {
         return false;
     }
@@ -95,7 +96,8 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
 void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    const NameSectionHeader &header = *reinterpret_cast<const NameSectionHeader *>(ptr);
+    NameSectionHeader header;
+    internal::getData(ptr, header);
     size_t rest = SIZE_MAX;
     uint8_t *namePtr;
     size_t nNameSize;

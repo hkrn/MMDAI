@@ -69,15 +69,16 @@ LightSection::~LightSection()
 
 bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const LightSectionHeader lightSectionHeader = *reinterpret_cast<const LightSectionHeader *>(ptr);
-    if (!internal::validateSize(ptr, sizeof(lightSectionHeader), rest)) {
+    LightSectionHeader header;
+    if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
-    if (!internal::validateSize(ptr, lightSectionHeader.reserved2, rest)) {
+    internal::getData(ptr - sizeof(header), header);
+    if (!internal::validateSize(ptr, header.reserved2, rest)) {
         return false;
     }
-    const int nkeyframes = lightSectionHeader.countOfKeyframes;
-    const size_t reserved = lightSectionHeader.sizeOfKeyframe - LightKeyframe::size();
+    const int nkeyframes = header.countOfKeyframes;
+    const size_t reserved = header.sizeOfKeyframe - LightKeyframe::size();
     for (int i = 0; i < nkeyframes; i++) {
         if (!LightKeyframe::preparse(ptr, rest, reserved, info)) {
             return false;
@@ -96,7 +97,8 @@ void LightSection::release()
 void LightSection::read(const uint8_t *data)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    const LightSectionHeader &header = *reinterpret_cast<const LightSectionHeader *>(ptr);
+    LightSectionHeader header;
+    internal::getData(ptr, header);
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + header.reserved2;

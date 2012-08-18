@@ -370,6 +370,16 @@ static inline void toggleFlag(int value, bool enable, uint16_t &flags)
         flags &= ~value;
 }
 
+template<typename T>
+static inline void getData(const uint8_t *ptr, T &output)
+{
+#ifdef VPVL2_BUILD_IOS
+    memcpy(&output, ptr, sizeof(output));
+#else
+    output = *reinterpret_cast<const T *>(ptr);
+#endif
+}
+
 static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
                                            const IKeyframe::SmoothPrecision &x2,
                                            const IKeyframe::SmoothPrecision &y1,

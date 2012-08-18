@@ -167,7 +167,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.basePtr = ptr;
 
     // Check the signature is valid
-    header = *reinterpret_cast<const Header *>(ptr);
+    internal::getData(ptr, header);
     if (memcmp(header.signature, kSignature, sizeof(kSignature) - 1) != 0) {
         m_error = kInvalidSignatureError;
         return false;
@@ -405,7 +405,7 @@ void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
     m_modelSection->advance(deltaTimeIndex);
     m_morphSection->advance(deltaTimeIndex);
     if (deltaTimeIndex > 0)
-        m_active = isReachedTo(maxTimeIndex());
+        m_active = !isReachedTo(maxTimeIndex());
 }
 
 void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
@@ -426,6 +426,14 @@ void Motion::reload()
 
 void Motion::reset()
 {
+    m_assetSection->seek(0);
+    m_boneSection->seek(0);
+    m_cameraSection->seek(0);
+    m_effectSection->seek(0);
+    m_lightSection->seek(0);
+    m_modelSection->seek(0);
+    m_morphSection->seek(0);
+    m_projectSection->seek(0);
     m_active = true;
 }
 

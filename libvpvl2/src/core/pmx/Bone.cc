@@ -348,28 +348,31 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         m_destinationOriginBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
     }
     else {
-        const BoneUnit &offset = *reinterpret_cast<const BoneUnit *>(ptr);
+        BoneUnit offset;
+        internal::getData(ptr, offset);
         internal::setPosition(offset.vector3, m_destinationOrigin);
         ptr += sizeof(offset);
     }
     /* bone has additional bias */
     if ((flags & 0x0100 || flags & 0x200)) {
         m_parentInherenceBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-        m_weight = *reinterpret_cast<float *>(ptr);
+        internal::getData(ptr, m_weight);
         ptr += sizeof(m_weight);
     }
     /* axis of bone is fixed */
     if (flags & 0x0400) {
-        const BoneUnit &axis = *reinterpret_cast<const BoneUnit *>(ptr);
+        BoneUnit axis;
+        internal::getData(ptr, axis);
         internal::setPosition(axis.vector3, m_fixedAxis);
         ptr += sizeof(axis);
     }
     /* axis of bone is local */
     if (flags & 0x0800) {
-        const BoneUnit &axisX = *reinterpret_cast<const BoneUnit *>(ptr);
+        BoneUnit axisX, axisZ;
+        internal::getData(ptr, axisX);
         internal::setPosition(axisX.vector3, m_axisX);
         ptr += sizeof(axisX);
-        const BoneUnit &axisZ = *reinterpret_cast<const BoneUnit *>(ptr);
+        internal::getData(ptr, axisZ);
         internal::setPosition(axisZ.vector3, m_axisZ);
         ptr += sizeof(axisZ);
     }
@@ -382,7 +385,8 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     if (flags & 0x0020) {
         /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
         m_targetBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-        const IKUnit &iu = *reinterpret_cast<const IKUnit *>(ptr);
+        IKUnit iu;
+        internal::getData(ptr, iu);
         m_nloop = iu.nloop;
         m_angleConstraint = iu.angleConstraint;
         int nlinks = iu.nlinks;
@@ -394,9 +398,10 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
             ik->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
             ptr += sizeof(ik->hasAngleConstraint);
             if (ik->hasAngleConstraint) {
-                const BoneUnit &lower = *reinterpret_cast<const BoneUnit *>(ptr);
+                BoneUnit lower, upper;
+                internal::getData(ptr, lower);
                 ptr += sizeof(lower);
-                const BoneUnit &upper = *reinterpret_cast<const BoneUnit *>(ptr);
+                internal::getData(ptr, upper);
                 ptr += sizeof(upper);
 #ifdef VPVL2_COORDINATE_OPENGL
                 ik->lowerLimit.setValue(-upper.vector3[0], -upper.vector3[1], lower.vector3[2]);

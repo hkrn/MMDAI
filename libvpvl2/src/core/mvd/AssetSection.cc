@@ -67,10 +67,11 @@ AssetSection::~AssetSection()
 
 bool AssetSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const AssetSectionHeader &header = *reinterpret_cast<const AssetSectionHeader *>(ptr);
+    AssetSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved2, rest)) {
         return false;
     }

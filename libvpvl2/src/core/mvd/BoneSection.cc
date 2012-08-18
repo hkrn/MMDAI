@@ -137,10 +137,11 @@ BoneSection::~BoneSection()
 
 bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const BoneSectionHeader &header = *reinterpret_cast<const BoneSectionHeader *>(ptr);
+    BoneSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
         return false;
     }
@@ -169,7 +170,8 @@ void BoneSection::release()
 void BoneSection::read(const uint8_t *data)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    const BoneSectionHeader &header = *reinterpret_cast<const BoneSectionHeader *>(ptr);
+    BoneSectionHeader header;
+    internal::getData(ptr, header);
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;

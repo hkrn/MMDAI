@@ -111,14 +111,15 @@ bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_
 
 void ModelKeyframe::read(const uint8_t *data)
 {
-    const ModelKeyframeChunk *chunk = reinterpret_cast<const ModelKeyframeChunk *>(data);
-    setTimeIndex(chunk->timeIndex);
-    setVisible(chunk->visible);
-    setShadowEnable(chunk->shadow);
-    setAddBlendEnable(chunk->addBlend);
-    setPhysicsEnable(chunk->physics);
-    setPhysicsStillMode(chunk->physicsStillMode);
-    setEdgeWidth(chunk->edgeWidth);
+    ModelKeyframeChunk chunk;
+    internal::getData(data, chunk);
+    setTimeIndex(chunk.timeIndex);
+    setVisible(chunk.visible);
+    setShadowEnable(chunk.shadow);
+    setAddBlendEnable(chunk.addBlend);
+    setPhysicsEnable(chunk.physics);
+    setPhysicsStillMode(chunk.physicsStillMode);
+    setEdgeWidth(chunk.edgeWidth);
     const uint8_t *bonesOfIKPtr = data + size();
     for (int i = 0; i < m_countOfIKBones; i++) {
         m_bonesOfIK[i] = bonesOfIKPtr[i] != 0 ? true : false;

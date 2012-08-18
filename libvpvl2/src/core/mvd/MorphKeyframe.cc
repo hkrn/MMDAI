@@ -97,10 +97,11 @@ int MorphKeyframe::interpolationTableSize()
 
 void MorphKeyframe::read(const uint8_t *data)
 {
-    const MorphKeyframeChunk *chunk = reinterpret_cast<const MorphKeyframeChunk *>(data);
-    setWeight(chunk->weight);
-    setTimeIndex(chunk->timeIndex);
-    setInterpolationParameter(kWeight, Motion::InterpolationTable::toQuadWord(chunk->weightIP));
+    MorphKeyframeChunk chunk;
+    internal::getData(data, chunk);
+    setWeight(chunk.weight);
+    setTimeIndex(chunk.timeIndex);
+    setInterpolationParameter(kWeight, Motion::InterpolationTable::toQuadWord(chunk.weightIP));
 }
 
 void MorphKeyframe::write(uint8_t *data) const

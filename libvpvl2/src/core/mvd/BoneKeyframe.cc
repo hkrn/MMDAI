@@ -103,15 +103,16 @@ int BoneKeyframe::interpolationTableSize()
 
 void BoneKeyframe::read(const uint8_t *data)
 {
-    const BoneKeyframeChunk *chunk = reinterpret_cast<const BoneKeyframeChunk *>(data);
-    internal::setPosition(chunk->position, m_position);
-    internal::setRotation2(chunk->rotation, m_rotation);
-    setTimeIndex(chunk->timeIndex);
-    setLayerIndex(chunk->layerIndex);
-    setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk->x));
-    setInterpolationParameter(kY, Motion::InterpolationTable::toQuadWord(chunk->y));
-    setInterpolationParameter(kZ, Motion::InterpolationTable::toQuadWord(chunk->z));
-    setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk->r));
+    BoneKeyframeChunk chunk;
+    internal::getData(data, chunk);
+    internal::setPosition(chunk.position, m_position);
+    internal::setRotation2(chunk.rotation, m_rotation);
+    setTimeIndex(chunk.timeIndex);
+    setLayerIndex(chunk.layerIndex);
+    setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.x));
+    setInterpolationParameter(kY, Motion::InterpolationTable::toQuadWord(chunk.y));
+    setInterpolationParameter(kZ, Motion::InterpolationTable::toQuadWord(chunk.z));
+    setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk.r));
 }
 
 void BoneKeyframe::write(uint8_t *data) const

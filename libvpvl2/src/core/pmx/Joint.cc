@@ -192,7 +192,8 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     case 0: {
         m_rigidBodyIndex1 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
         m_rigidBodyIndex2 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
-        const JointUnit &unit = *reinterpret_cast<JointUnit *>(ptr);
+        JointUnit unit;
+        internal::getData(ptr, unit);
         internal::setPositionRaw(unit.position, m_position);
         internal::setPositionRaw(unit.rotation, m_rotation);
         internal::setPositionRaw(unit.positionLowerLimit, m_positionLowerLimit);

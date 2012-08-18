@@ -80,10 +80,11 @@ ModelSection::~ModelSection()
 
 bool ModelSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
-    const ModelSectionHeader &header = *reinterpret_cast<const ModelSectionHeader *>(ptr);
+    ModelSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
         return false;
     }
+    internal::getData(ptr - sizeof(header), header);
     const int countOfIK = header.countOfIKBones;
     if (!internal::validateSize(ptr, sizeof(int), countOfIK, rest)) {
         return false;
@@ -115,7 +116,8 @@ void ModelSection::release()
 void ModelSection::read(const uint8_t *data)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    const ModelSectionHeader &header = *reinterpret_cast<const ModelSectionHeader *>(ptr);
+    ModelSectionHeader header;
+    internal::getData(ptr, header);
     const size_t sizeOfKeyframe = header.sizeOfKeyframe + m_adjustAlighment;
     const int nkeyframes = header.countOfKeyframes;
     const int nBonesOfIK = header.countOfIKBones;
