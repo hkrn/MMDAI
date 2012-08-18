@@ -57,9 +57,10 @@ public:
     ExportVideoDialog(SceneLoader *loader,
                       const QSize &min,
                       const QSize &max,
-                      QSettings *settings,
-                      MainWindow *parent);
+                      QSettings *settings);
     ~ExportVideoDialog();
+
+    void setImageConfiguration(bool value);
 
     const QString backgroundAudio() const;
     int sceneWidth() const;

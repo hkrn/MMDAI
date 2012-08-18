@@ -122,6 +122,17 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
 
 }
 
+struct MainWindow::WindowState {
+    QRect mainGeometry;
+    QSize minSize;
+    QSize maxSize;
+    QSize scenesize;
+    QSizePolicy policy;
+    IKeyframe::TimeIndex timeIndex;
+    Scalar preferredFPS;
+    bool isGridVisible;
+};
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_encoding(0),
@@ -1459,30 +1470,16 @@ void MainWindow::saveAssetMetadata()
 
 void MainWindow::exportImage()
 {
-    const QString &filename = internal::openSaveDialog("mainWindow/lastImageDirectory",
-                                                       tr("Export scene as an image"),
-                                                       tr("Image (*.bmp, *.jpg, *.png)"),
-                                                       tr("untitled.png"),
-                                                       &m_settings);
-    if (!filename.isEmpty()) {
+    if (!m_exportingVideoDialog) {
         SceneLoader *loader = m_sceneWidget->sceneLoader();
-        bool isGridVisible = loader->isGridVisible();
-        loader->setGridVisible(false);
-        m_sceneWidget->setHandlesVisible(false);
-        m_sceneWidget->setInfoPanelVisible(false);
-        m_sceneWidget->setBoneWireFramesVisible(false);
-        m_sceneWidget->updateGL();
-        const QImage &image = m_sceneWidget->grabFrameBuffer();
-        loader->setGridVisible(isGridVisible);
-        m_sceneWidget->setHandlesVisible(true);
-        m_sceneWidget->setInfoPanelVisible(true);
-        m_sceneWidget->setBoneWireFramesVisible(true);
-        m_sceneWidget->updateGL();
-        if (!image.isNull())
-            image.save(filename);
-        else
-            qWarning("Failed exporting scene as an image: %s", qPrintable(filename));
+        const QSize min(160, 160);
+        const QSize &max = m_sceneWidget->maximumSize();
+        m_exportingVideoDialog = new ExportVideoDialog(loader, min, max, &m_settings);
     }
+    connect(m_exportingVideoDialog, SIGNAL(settingsDidSave()), this, SLOT(invokeImageExporter()));
+    m_exportingVideoDialog->setImageConfiguration(true);
+    m_exportingVideoDialog->exec();
+    m_exportingVideoDialog->setImageConfiguration(false);
 }
 
 void MainWindow::exportVideo()
@@ -1493,9 +1490,10 @@ void MainWindow::exportVideo()
             if (!m_exportingVideoDialog) {
                 const QSize min(160, 160);
                 const QSize &max = m_sceneWidget->maximumSize();
-                m_exportingVideoDialog = new ExportVideoDialog(loader, min, max, &m_settings, this);
+                m_exportingVideoDialog = new ExportVideoDialog(loader, min, max, &m_settings);
             }
-            m_exportingVideoDialog->show();
+            connect(m_exportingVideoDialog, SIGNAL(settingsDidSave()), this, SLOT(invokeVideoEncoder()));
+            m_exportingVideoDialog->exec();
         }
         else {
             internal::warning(this, tr("No motion to export."),
@@ -1508,8 +1506,33 @@ void MainWindow::exportVideo()
     }
 }
 
+void MainWindow::invokeImageExporter()
+{
+    disconnect(m_exportingVideoDialog, SIGNAL(settingsDidSave()), this, SLOT(invokeImageExporter()));
+    m_exportingVideoDialog->close();
+    const QString &filename = internal::openSaveDialog("mainWindow/lastImageDirectory",
+                                                       tr("Export scene as an image"),
+                                                       tr("Image (*.bmp, *.jpg, *.png)"),
+                                                       tr("untitled.png"),
+                                                       &m_settings);
+    if (!filename.isEmpty()) {
+        WindowState state;
+        QSize videoSize(m_exportingVideoDialog->sceneWidth(), m_exportingVideoDialog->sceneHeight());
+        saveWindowStateAndResize(videoSize, state);
+        m_sceneWidget->updateGL();
+        const QImage &image = m_sceneWidget->grabFrameBuffer();
+        restoreWindowState(state);
+        m_sceneWidget->updateGL();
+        if (!image.isNull())
+            image.save(filename);
+        else
+            qWarning("Failed exporting scene as an image: %s", qPrintable(filename));
+    }
+}
+
 void MainWindow::invokeVideoEncoder()
 {
+    disconnect(m_exportingVideoDialog, SIGNAL(settingsDidSave()), this, SLOT(invokeVideoEncoder()));
     m_exportingVideoDialog->close();
     int fromIndex = m_exportingVideoDialog->fromIndex();
     int toIndex = m_exportingVideoDialog->toIndex();
@@ -1529,13 +1552,11 @@ void MainWindow::invokeVideoEncoder()
                                                        tr("untitled.mov"),
                                                        &m_settings);
     if (!filename.isEmpty()) {
-        QProgressDialog *progress = new QProgressDialog(this);
+        QScopedPointer<QProgressDialog> progress(new QProgressDialog(this));
         progress->setCancelButtonText(tr("Cancel"));
         progress->setWindowModality(Qt::ApplicationModal);
-        const Scalar &fps = m_sceneWidget->sceneLoader()->scene()->preferredFPS();
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
-        const IKeyframe::TimeIndex timeIndex = m_sceneWidget->currentTimeIndex();
         /* 終了するまで待つ */
         if (m_audioDecoder && !m_audioDecoder->isFinished()) {
             m_audioDecoder->stop();
@@ -1556,8 +1577,9 @@ void MainWindow::invokeVideoEncoder()
             sampleRate = 44100;
             bitRate = 64000;
         }
+        const QSize videoSize(width, height);
         m_videoEncoder = new VideoEncoder(filename.toUtf8().constData(),
-                                          QSize(width, height),
+                                          videoSize,
                                           sceneFPS,
                                           m_exportingVideoDialog->videoBitrate(),
                                           bitRate,
@@ -1568,36 +1590,10 @@ void MainWindow::invokeVideoEncoder()
         const QString &exportingFormat = tr("Exporting frame %1 of %2...");
         int maxRangeIndex = toIndex - fromIndex;
         progress->setRange(0, maxRangeIndex);
-        /* 画面を復元するために一時的に情報を保持。mainGeometry はコピーを持たないといけないので参照であってはならない */
-        const QRect mainGeomtry = geometry();
-        const QSize minSize = minimumSize(), maxSize = maximumSize(),
-                videoSize = QSize(width, height), sceneSize = m_sceneWidget->size();
-        QSizePolicy policy = sizePolicy();
-        m_mainToolBar->hide();
-        m_timelineDockWidget->hide();
-        m_sceneDockWidget->hide();
-        m_modelDockWidget->hide();
-        statusBar()->hide();
-        /* 動画書き出し用の設定に変更 */
-        resize(videoSize);
-        setMinimumSize(videoSize);
-        setMaximumSize(videoSize);
-        adjustSize();
-        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        SceneLoader *loader = m_sceneWidget->sceneLoader();
-        bool isGridVisible = loader->isGridVisible();
-        /* レンダリングモードを自動更新から手動更新に変更 */
-        m_sceneWidget->stop();
-        m_sceneWidget->stopAutomaticRendering();
-        loader->startPhysicsSimulation();
-        loader->setGridVisible(m_exportingVideoDialog->includesGrid());
-        /* ハンドルと情報パネルを非表示にし、ウィンドウを指定されたサイズに変更する */
-        m_sceneWidget->setHandlesVisible(false);
-        m_sceneWidget->setInfoPanelVisible(false);
-        m_sceneWidget->setBoneWireFramesVisible(false);
-        m_sceneWidget->resize(videoSize);
+        WindowState state;
+        saveWindowStateAndResize(videoSize, state);
         /* モーションを0フレーム目に移動し、その後指定のキーフレームのインデックスに advance で移動させる */
-        m_sceneWidget->seekMotion(0.0f, true);
+        m_sceneWidget->seekMotion(0.0f, true, true);
         m_sceneWidget->advanceMotion(fromIndex);
         progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
         /* 指定のキーフレームまで動画にフレームの書き出しを行う */
@@ -1654,30 +1650,70 @@ void MainWindow::invokeVideoEncoder()
         }
         m_audioDecoder->stop();
         m_videoEncoder->stop();
-        /* 画面情報を復元 */
-        loader->setGridVisible(isGridVisible);
-        setSizePolicy(policy);
-        setMinimumSize(minSize);
-        setMaximumSize(maxSize);
-        setGeometry(mainGeomtry);
-        statusBar()->show();
-        /* ドック復元 */
-        m_timelineDockWidget->show();
-        m_sceneDockWidget->show();
-        m_modelDockWidget->show();
-        m_mainToolBar->show();
-        /* 情報パネルとハンドルを再表示 */
-        m_sceneWidget->resize(sceneSize);
-        m_sceneWidget->setHandlesVisible(true);
-        m_sceneWidget->setInfoPanelVisible(true);
-        m_sceneWidget->setBoneWireFramesVisible(true);
-        m_sceneWidget->setPreferredFPS(fps);
-        /* レンダリングを手動更新から自動更新に戻す */
-        loader->stopPhysicsSimulation();
-        m_sceneWidget->seekMotion(timeIndex, true);
-        m_sceneWidget->startAutomaticRendering();
-        delete progress;
+        restoreWindowState(state);
     }
+}
+
+void MainWindow::saveWindowStateAndResize(const QSize &videoSize, WindowState &state)
+{
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    /* 画面を復元するために一時的に情報を保持。mainGeometry はコピーを持たないといけないので参照であってはならない */
+    state.mainGeometry = geometry();
+    state.minSize = minimumSize();
+    state.maxSize = maximumSize();
+    state.scenesize = m_sceneWidget->size();
+    state.policy = sizePolicy();
+    state.timeIndex = m_sceneWidget->currentTimeIndex();
+    state.preferredFPS = loader->scene()->preferredFPS();
+    state.isGridVisible = loader->isGridVisible();
+    m_mainToolBar->hide();
+    m_timelineDockWidget->hide();
+    m_sceneDockWidget->hide();
+    m_modelDockWidget->hide();
+    statusBar()->hide();
+    /* 動画書き出し用の設定に変更 */
+    resize(videoSize);
+    setMinimumSize(videoSize);
+    setMaximumSize(videoSize);
+    adjustSize();
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    /* レンダリングモードを自動更新から手動更新に変更 */
+    m_sceneWidget->stop();
+    m_sceneWidget->stopAutomaticRendering();
+    loader->startPhysicsSimulation();
+    loader->setGridVisible(m_exportingVideoDialog->includesGrid());
+    /* ハンドルと情報パネルを非表示にし、ウィンドウを指定されたサイズに変更する */
+    m_sceneWidget->setHandlesVisible(false);
+    m_sceneWidget->setInfoPanelVisible(false);
+    m_sceneWidget->setBoneWireFramesVisible(false);
+    m_sceneWidget->resize(videoSize);
+}
+
+void MainWindow::restoreWindowState(const WindowState &state)
+{
+    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    /* 画面情報を復元 */
+    loader->setGridVisible(state.isGridVisible);
+    setSizePolicy(state.policy);
+    setMinimumSize(state.minSize);
+    setMaximumSize(state.maxSize);
+    setGeometry(state.mainGeometry);
+    statusBar()->show();
+    /* ドック復元 */
+    m_timelineDockWidget->show();
+    m_sceneDockWidget->show();
+    m_modelDockWidget->show();
+    m_mainToolBar->show();
+    /* 情報パネルとハンドルを再表示 */
+    m_sceneWidget->resize(state.scenesize);
+    m_sceneWidget->setHandlesVisible(true);
+    m_sceneWidget->setInfoPanelVisible(true);
+    m_sceneWidget->setBoneWireFramesVisible(true);
+    m_sceneWidget->setPreferredFPS(state.preferredFPS);
+    /* レンダリングを手動更新から自動更新に戻す */
+    loader->stopPhysicsSimulation();
+    m_sceneWidget->seekMotion(state.timeIndex, true, true);
+    m_sceneWidget->startAutomaticRendering();
 }
 
 void MainWindow::addNewMotion()

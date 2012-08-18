@@ -124,6 +124,7 @@ private slots:
     void saveAssetMetadata();
     void exportImage();
     void exportVideo();
+    void invokeImageExporter();
     void invokeVideoEncoder();
     void addNewMotion();
     void invokePlayer();
@@ -142,6 +143,7 @@ private slots:
     void resetSceneToModels();
 
 private:
+    struct WindowState;
     bool saveMotionAs(QString &filename);
     bool saveMotionFile(const QString &filename);
     bool saveMotionFile(const QString &filename, vpvl2::IMotion *motion);
@@ -156,6 +158,8 @@ private:
     void connectWidgets();
     void updateInformation();
     void updateWindowTitle();
+    void saveWindowStateAndResize(const QSize &videoSize, WindowState &state);
+    void restoreWindowState(const WindowState &state);
 
     vpvl2::IEncoding *m_encoding;
     vpvl2::Factory *m_factory;

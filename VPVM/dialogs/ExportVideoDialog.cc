@@ -47,8 +47,7 @@
 ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
                                      const QSize &min,
                                      const QSize &max,
-                                     QSettings *settings,
-                                     MainWindow *parent)
+                                     QSettings *settings)
     : QDialog(),
       m_loader(loader),
       m_settings(settings)
@@ -96,7 +95,6 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
     mainLayout->addLayout(gridLayout);
     mainLayout->addWidget(m_includeGridBox, 0, Qt::AlignCenter);
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    connect(this, SIGNAL(settingsDidSave()), parent, SLOT(invokeVideoEncoder()));
     connect(buttons, SIGNAL(accepted()), this, SLOT(saveSettings()));
     connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
     mainLayout->addWidget(buttons);
@@ -128,6 +126,14 @@ void ExportVideoDialog::saveSettings()
     m_loader->setSceneFPSForEncodeVideo(sceneFPS());
     m_loader->setGridIncluded(includesGrid());
     emit settingsDidSave();
+}
+
+void ExportVideoDialog::setImageConfiguration(bool value)
+{
+    m_pathEdit->setEnabled(!value);
+    m_fromIndexBox->setEnabled(!value);
+    m_toIndexBox->setEnabled(!value);
+    m_sceneFPSBox->setEnabled(!value);
 }
 
 const QString ExportVideoDialog::backgroundAudio() const
