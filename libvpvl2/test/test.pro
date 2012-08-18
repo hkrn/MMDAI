@@ -42,16 +42,16 @@ HEADERS += mock/Bone.h \
     Common.h
 
 SOURCES += main.cc \
-    Effect.cc \
-    Internal.cc \
-    Model.cc \
-    VMDMotion.cc \
-    MVDMotion.cc \
-    Project.cc \
-    String.cc \
-    Encoding.cc \
-    Archive.cc \
-    Factory.cc
+    EffectTest.cc \
+    InternalTest.cc \
+    ModelTest.cc \
+    VMDMotionTest.cc \
+    MVDMotionTest.cc \
+    ProjectTest.cc \
+    StringTest.cc \
+    EncodingTest.cc \
+    ArchiveTest.cc \
+    FactoryTest.cc
 
 RESOURCES += \
     fixtures.qrc
