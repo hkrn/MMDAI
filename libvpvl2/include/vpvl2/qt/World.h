@@ -58,6 +58,8 @@ public:
 
     const Vector3 gravity() const;
     void setGravity(const Vector3 &value);
+    unsigned long randSeed() const;
+    void setRandSeed(unsigned long value);
     void setPreferredFPS(const Scalar &value);
     void addModel(vpvl2::IModel *value);
     void removeModel(vpvl2::IModel *value);
@@ -71,7 +73,7 @@ private:
     btDefaultCollisionConfiguration m_config;
     btCollisionDispatcher *m_dispatcher;
     btDbvtBroadphase *m_broadphase;
-    btConstraintSolver *m_solver;
+    btSequentialImpulseConstraintSolver *m_solver;
     btDiscreteDynamicsWorld *m_world;
     Scalar m_preferredFPS;
 

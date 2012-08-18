@@ -54,7 +54,6 @@ World::World()
     m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
     setGravity(Vector3(0.0f, -9.8f, 0.0f));
     setPreferredFPS(Scene::defaultFPS());
-    // m_world.getSolverInfo().m_numIterations = 10;
 }
 
 World::~World()
