@@ -269,9 +269,7 @@ void SceneWidget::loadProject(const QString &filename)
     m_background->setImagePosition(m_loader->backgroundImagePosition());
     m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
     m_enableUpdateGL = true;
-    /* 0フレーム目で読み込んだ時シークされないため、強制シークを行うために m_frameIndex を -1 にする */
-    m_timeIndex = -1;
-    seekMotion(0, true);
+    seekMotion(0, true, true);
     startAutomaticRendering();
     QApplication::alert(this);
 }
@@ -446,8 +444,7 @@ IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
         QList<IModel *> models;
         motion = m_loader->loadModelMotion(path, models);
         if (motion) {
-            m_timeIndex = -1;
-            seekMotion(0, false);
+            seekMotion(0, false, true);
             emit fileDidLoad(path);
         }
         else {
@@ -508,8 +505,7 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
                 else {
                     m_loader->setModelMotion(motion, model);
                 }
-                m_timeIndex = -1;
-                seekMotion(0, false);
+                seekMotion(0, false, true);
                 emit fileDidLoad(path);
             }
             else {
@@ -669,13 +665,13 @@ void SceneWidget::advanceMotion(const IKeyframe::TimeIndex &delta)
     updateScene();
 }
 
-void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate)
+void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame)
 {
     /*
        渡された値が同じフレーム位置の場合は何もしない
        (シグナルスロット処理の関係でモーフスライダーが動かなくなってしまうため)
      */
-    if (timeIndex == m_timeIndex)
+    if (!forceEvenSame && timeIndex == m_timeIndex)
         return;
     /*
        advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある。
@@ -987,36 +983,46 @@ void SceneWidget::dropEvent(QDropEvent *event)
 void SceneWidget::initializeGL()
 {
     initializeGLFunctions(context());
-    qDebug("VPVL2 version: %s (%d)", VPVL2_VERSION_STRING, VPVL2_VERSION);
-    qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
-    qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
-    qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     /* 背面カリングを有効にする */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
-    m_loader = new SceneLoader(m_encoding, m_factory, this);
-    connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
-    const QSize &s = size();
-    m_handles = new Handles(m_loader, s);
-    m_info = new InfoPanel(s);
-    m_debugDrawer = new DebugDrawer();
+    if (!m_loader) {
+        qDebug("VPVL2 version: %s (%d)", VPVL2_VERSION_STRING, VPVL2_VERSION);
+        qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
+        qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
+        qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
+        m_loader = new SceneLoader(m_encoding, m_factory, this);
+        connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
+    }
 #ifdef IS_VPVM
+    const QSize &s = size();
+    if (!m_handles) {
+        m_handles = new Handles(m_loader, s);
+        /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
+        m_handles->load();
+    }
+    if (!m_info) {
+        m_info = new InfoPanel(s);
+        /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
+        m_info->load();
+    }
+    if (!m_debugDrawer) {
+        m_debugDrawer = new DebugDrawer();
+        /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
+        m_debugDrawer->load();
+    }
+    if (!m_background) {
+        m_background = new BackgroundImage(s);
+    }
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
-    /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
-    m_handles->load();
-    /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
-    m_info->load();
-    /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
-    m_debugDrawer->load();
-#endif
-    m_background = new BackgroundImage(s);
     m_loader->updateDepthBuffer(QSize());
     m_info->setModel(0);
     m_info->setBones(QList<IBone *>(), "");
     m_info->setFPS(0.0f);
     m_info->update();
+#endif
     m_timer.start();
     startAutomaticRendering();
     emit initailizeGLContextDidDone();

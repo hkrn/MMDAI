@@ -94,7 +94,7 @@ void ScenePlayer::start()
     m_sceneWidget->setPreferredFPS(sceneFPS);
     m_sceneWidget->sceneLoader()->startPhysicsSimulation();
     /* 場面を開始位置にシーク */
-    m_sceneWidget->seekMotion(m_dialog->fromIndex(), true);
+    m_sceneWidget->seekMotion(m_dialog->fromIndex(), true, true);
     /* ハンドルも情報パネルも消す */
     m_sceneWidget->setHandlesVisible(false);
     m_sceneWidget->setInfoPanelVisible(false);
@@ -148,7 +148,7 @@ void ScenePlayer::stop()
     m_sceneWidget->resetMotion();
     m_sceneWidget->setPreferredFPS(m_prevSceneFPS);
     /* フレーム位置を再生前に戻す */
-    m_sceneWidget->seekMotion(m_prevFrameIndex, true);
+    m_sceneWidget->seekMotion(m_prevFrameIndex, true, true);
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidget->startAutomaticRendering();
     m_totalStep = 0;
@@ -213,7 +213,7 @@ void ScenePlayer::renderSceneFrame0(float step)
             loader->stopPhysicsSimulation();
             m_sceneWidget->resetMotion();
             loader->startPhysicsSimulation();
-            m_sceneWidget->seekMotion(value, true);
+            m_sceneWidget->seekMotion(value, true, true);
             m_totalStep = 0.0f;
             value = 0;
         }

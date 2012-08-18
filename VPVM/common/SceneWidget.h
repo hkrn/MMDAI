@@ -144,7 +144,7 @@ public slots:
     void translateModel(const vpvl2::Vector3 &delta);
     void translateModel(vpvl2::IModel *model, const vpvl2::Vector3 &delta);
     void advanceMotion(const vpvl2::IKeyframe::TimeIndex &delta);
-    void seekMotion(const vpvl2::IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate);
+    void seekMotion(const vpvl2::IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame);
     void resetMotion();
     void setCameraPerspective(const QSharedPointer<vpvl2::ICamera> &camera);
     void setModelEdgeOffset(double value);
@@ -239,8 +239,8 @@ private slots:
     void translateModelLeft() { translateModel(vpvl2::Vector3(-0.5f, 0.0f, 0.0f)); }
     void translateModelRight() { translateModel(vpvl2::Vector3(0.5f, 0.0f, 0.0f)); }
     void revertSelectedModel() { setSelectedModel(0); }
-    void refreshScene() { seekMotion(m_timeIndex, true); }
-    void refreshMotions() { seekMotion(m_timeIndex, false); }
+    void refreshScene() { seekMotion(m_timeIndex, true, false); }
+    void refreshMotions() { seekMotion(m_timeIndex, false, false); }
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
