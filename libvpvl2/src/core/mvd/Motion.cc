@@ -97,7 +97,7 @@ void Motion::InterpolationTable::getInterpolationPair(InterpolationPair &pair) c
 void Motion::InterpolationTable::build(const QuadWord &value, int s)
 {
     if (!btFuzzyZero(value.x() - value.y()) || !btFuzzyZero(value.z() - value.w())) {
-        table.resize(s);
+        table.resize(s + 1);
         const IKeyframe::SmoothPrecision &x1 = value.x() / 127.0, &x2 = value.z() / 127.0;
         const IKeyframe::SmoothPrecision &y1 = value.y() / 127.0, &y2 = value.w() / 127.0;
         IKeyframe::SmoothPrecision *ptr = &table[0];
