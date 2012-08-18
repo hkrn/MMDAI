@@ -79,6 +79,16 @@ void World::setGravity(const Vector3 &value)
     m_world->setGravity(value);
 }
 
+unsigned long World::randSeed() const
+{
+    return m_solver->getRandSeed();
+}
+
+void World::setRandSeed(unsigned long value)
+{
+    m_solver->setRandSeed(value);
+}
+
 void World::setPreferredFPS(const Scalar &value)
 {
     m_preferredFPS = value;

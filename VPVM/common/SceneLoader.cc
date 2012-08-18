@@ -1323,6 +1323,13 @@ const Vector3 SceneLoader::worldGravity() const
     return gravity;
 }
 
+unsigned long SceneLoader::worldRandSeed() const
+{
+    if (m_project)
+        return QVariant(QString::fromStdString(m_project->globalSetting("physics.randseed"))).toULongLong();    else
+        return 0;
+}
+
 const QColor SceneLoader::screenColor() const
 {
     QColor color(255, 255, 255);
@@ -1342,6 +1349,14 @@ void SceneLoader::setWorldGravity(const Vector3 &value)
         str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
         m_world->setGravity(value);
         m_project->setGlobalSetting("physics.gravity", str.toStdString());
+    }
+}
+
+void SceneLoader::setWorldRandSeed(unsigned long value)
+{
+    if (m_project) {
+        m_world->setRandSeed(value);
+        m_project->setGlobalSetting("physics.randseed", QVariant(qulonglong(value)).toString().toStdString());
     }
 }
 

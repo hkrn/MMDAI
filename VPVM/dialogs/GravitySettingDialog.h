@@ -42,6 +42,7 @@
 
 class QDoubleSpinBox;
 class QLabel;
+class QSpinBox;
 class SceneLoader;
 
 class GravitySettingDialog : public QDialog
@@ -54,6 +55,7 @@ public:
 
 signals:
     void worldGravityDidSet(const vpvl2::Vector3 &value);
+    void worldRandSeedDidSet(unsigned long value);
 
 private slots:
     void emitSignal();
@@ -64,6 +66,7 @@ private:
     QDoubleSpinBox *m_axisX;
     QDoubleSpinBox *m_axisY;
     QDoubleSpinBox *m_axisZ;
+    QSpinBox *m_randSeed;
 };
 
 #endif // GRAVITYSETTINGDIALOG_H

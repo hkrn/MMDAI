@@ -113,6 +113,7 @@ public:
     bool isGridVisible() const;
     bool isPhysicsEnabled() const;
     const vpvl2::Vector3 worldGravity() const;
+    unsigned long worldRandSeed() const;
     const QColor screenColor() const;
     int frameIndexPlayFrom() const;
     int frameIndexPlayTo() const;
@@ -187,6 +188,7 @@ public slots:
     void setModelMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
     void setRenderOrderList(const QList<QUuid> &value);
     void setWorldGravity(const vpvl2::Vector3 &value);
+    void setWorldRandSeed(unsigned long value);
     void sort(bool useOrderAttr = false);
     void startPhysicsSimulation();
     void stopPhysicsSimulation();

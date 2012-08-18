@@ -58,11 +58,18 @@ GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent)
     subLayout->addWidget(m_axisZ);
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addLayout(subLayout);
+    m_randSeed = new QSpinBox();
+    m_randSeed->setValue(loader->worldRandSeed());
+    subLayout = new QHBoxLayout();
+    subLayout->addWidget(new QLabel("Rand seed"), 0, Qt::AlignRight);
+    subLayout->addWidget(m_randSeed, 0, Qt::AlignLeft);
+    mainLayout->addLayout(subLayout);
     QDialogButtonBox *button = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(button, SIGNAL(accepted()), SLOT(accept()));
     connect(button, SIGNAL(rejected()), SLOT(reject()));
     connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
     connect(this, SIGNAL(worldGravityDidSet(vpvl2::Vector3)), loader, SLOT(setWorldGravity(vpvl2::Vector3)));
+    connect(this, SIGNAL(worldRandSeedDidSet(ulong)), loader, SLOT(setRandSeed(ulong)));
     mainLayout->addWidget(button);
     setWindowTitle(tr("Gravity setting"));
     setLayout(mainLayout);
@@ -76,6 +83,7 @@ void GravitySettingDialog::emitSignal()
 {
     const Vector3 value(m_axisX->value(), m_axisY->value(), m_axisZ->value());
     emit worldGravityDidSet(value);
+    emit worldRandSeedDidSet(m_randSeed->value());
 }
 
 QDoubleSpinBox *GravitySettingDialog::createSpinBox(double value) const
