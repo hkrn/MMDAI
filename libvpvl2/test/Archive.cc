@@ -76,7 +76,6 @@ TEST(ArchiveTest, UncompressWithReplaceIfMatch)
     ASSERT_TRUE(archive.uncompress(extractEntries));
     archive.replaceFilePath("path/to", "/PATH/TO/");
     extractEntries.clear(); extractEntries << "/PATH/TO/entry.txt";
-    qDebug() << archive.entryNames();
     ASSERT_TRUE(archive.entryNames() == extractEntries);
     ASSERT_STREQ("entry.txt\n", archive.data("/PATH/TO/entry.txt").constData());
 }

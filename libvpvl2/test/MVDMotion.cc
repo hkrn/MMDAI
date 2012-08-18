@@ -258,6 +258,22 @@ TEST(MVDMotionTest, SaveLightKeyframe)
 }
 */
 
+ACTION_P(FindBone, bones)
+{
+    MockIBone *bone = new MockIBone();
+    EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
+    bones->append(bone);
+    return bone;
+}
+
+ACTION_P(FindMorph, morphs)
+{
+    MockIMorph *morph = new MockIMorph();
+    EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
+    morphs->append(morph);
+    return morph;
+}
+
 TEST(MVDMotionTest, SaveModelMotion)
 {
     QFile file("motion.mvd");
@@ -267,13 +283,10 @@ TEST(MVDMotionTest, SaveModelMotion)
         size_t size = bytes.size();
         Encoding encoding;
         MockIModel model;
-        MockIBone bone;
-        MockIMorph morph;
-        CString s("name");
-        EXPECT_CALL(bone, name()).Times(AnyNumber()).WillRepeatedly(Return(&s));
-        EXPECT_CALL(morph, name()).Times(AnyNumber()).WillRepeatedly(Return(&s));
-        EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(&bone));
-        EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(&morph));
+        QList<IBone *> bones;
+        QList<IMorph *> morphs;
+        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
+        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
         mvd::Motion motion(&model, &encoding);
         ASSERT_TRUE(motion.load(data, size));
         size_t newSize = motion.estimateSize();
@@ -281,11 +294,13 @@ TEST(MVDMotionTest, SaveModelMotion)
         QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
         uint8_t *ptr = newData.data();
         mvd::Motion motion2(&model, &encoding);
-        motion2.save(ptr);
+        motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));
-        //ASSERT_EQ(motion.countKeyframes(IKeyframe::kBone), motion2.countKeyframes(IKeyframe::kBone));
-        //ASSERT_EQ(motion.countKeyframes(IKeyframe::kMorph), motion2.countKeyframes(IKeyframe::kMorph));
-        //ASSERT_EQ(motion.countKeyframes(IKeyframe::kModel), motion2.countKeyframes(IKeyframe::kModel));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kBone), motion2.countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kMorph), motion2.countKeyframes(IKeyframe::kMorph));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kModel), motion2.countKeyframes(IKeyframe::kModel));
+        qDeleteAll(bones);
+        qDeleteAll(morphs);
     }
 }
 
