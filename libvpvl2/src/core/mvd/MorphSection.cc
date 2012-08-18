@@ -183,6 +183,7 @@ void MorphSection::read(const uint8_t *data)
 void MorphSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
     if (m_modelRef) {
+        m_modelRef->resetVertices();
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
             PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
