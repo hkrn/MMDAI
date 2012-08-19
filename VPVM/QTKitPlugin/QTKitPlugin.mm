@@ -147,6 +147,7 @@ bool QTKitHandler::jumpToImage(int imageNumber)
     if (m_movie != nil) {
         const QTTime &timeToSeek = QTMakeTimeWithTimeInterval(imageNumber / kFPS);
         [m_movie setCurrentTime:timeToSeek];
+        m_frameIndex = imageNumber;
         return true;
     }
     return false;
@@ -155,8 +156,7 @@ bool QTKitHandler::jumpToImage(int imageNumber)
 bool QTKitHandler::jumpToNextImage()
 {
     if (m_movie != nil && m_frameCount > m_frameIndex) {
-        m_frameIndex++;
-        jumpToImage(m_frameIndex);
+        jumpToImage(m_frameIndex + 1);
         return true;
     }
     return false;
