@@ -70,7 +70,13 @@ public:
         QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
         context->deleteTexture(m_backgroundTexture);
         QFileInfo info(filename);
-        if (info.suffix().toLower() == "mng") {
+        const QString &suffix = info.suffix().toLower();
+        QStringList movies;
+        movies << "mng";
+#ifdef Q_OS_MACX
+        movies << "avi" << "mp4" << "m4v" << "mov";
+#endif
+        if (movies.contains(suffix)) {
             m_movie.setFileName(filename);
             m_movie.jumpToFrame(0);
             m_backgroundImageFilename = filename;

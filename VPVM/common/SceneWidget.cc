@@ -609,9 +609,14 @@ void SceneWidget::insertPoseToSelectedModel()
 
 void SceneWidget::setBackgroundImage()
 {
+
     const QString &filename = openFileDialog("sceneWidget/lastBackgroundImageDirectory",
                                              tr("Open background image file"),
+                                         #ifdef Q_OS_MACX
+                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.avi *.m4v *.mp4 *.mov *.mng)"),
+                                         #else
                                              tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)"),
+                                         #endif
                                              m_settings);
     if (!filename.isEmpty())
         setBackgroundImage(filename);
