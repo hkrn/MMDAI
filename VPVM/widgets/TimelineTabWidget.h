@@ -93,7 +93,7 @@ public slots:
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
-    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate);
+    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate, bool forceEvenSame);
     void currentTabDidChange(int type);
     void currentModelDidChange(vpvl2::IModel *model);
     void editModeDidSet(SceneWidget::EditMode mode);

@@ -102,9 +102,9 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
             SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             SLOT(selectBonesByItemSelection(QItemSelection)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
-    connect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
-    connect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
-    connect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
+    connect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    connect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    connect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
     connect(m_boneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(m_sceneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(bmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleBoneEnable(vpvl2::IModel*)));
@@ -184,15 +184,15 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
 void TimelineTabWidget::setCurrentFrameIndex(int value)
 {
     /* 二重呼出になってしまうため、一時的に motionDidSeek シグナルを止める */
-    disconnect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
-    disconnect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
-    disconnect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
+    disconnect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
     m_boneTimeline->setCurrentTimeIndex(value);
     m_morphTimeline->setCurrentTimeIndex(value);
     m_sceneTimeline->setCurrentTimeIndex(value);
-    connect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
-    connect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
-    connect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool)));
+    connect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    connect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    connect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
 }
 
 void TimelineTabWidget::setCurrentFrameIndexZero()

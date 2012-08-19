@@ -74,7 +74,7 @@ public slots:
     void setCurrentTimeIndex(int timeIndex);
 
 signals:
-    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &column, bool forceCameraUpdate);
+    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &column, bool forceCameraUpdate, bool forceEvenSame);
 
 private slots:
     void retranslate();

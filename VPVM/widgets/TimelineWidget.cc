@@ -251,7 +251,7 @@ void TimelineWidget::setCurrentTimeIndex(const QModelIndex &index)
     m_treeView->scrollTo(index);
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
-    emit motionDidSeek(frameIndex, model->forceCameraUpdate());
+    emit motionDidSeek(frameIndex, model->forceCameraUpdate(), false);
 }
 
 void TimelineWidget::adjustFrameColumnSize(int value)
