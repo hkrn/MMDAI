@@ -9,14 +9,17 @@ CMakeScripts
 cmake_install.cmake*
 config.h
 debug*
+devil*
 *.dir
 gmock-*
 gtest-*
 hts_engine_API-*
 install_manifest.txt
 ipch
+jpeg-*
 julius-*
 libav*
+libpng*
 Makefile*
 moc_*
 nacl
