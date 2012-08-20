@@ -442,14 +442,22 @@ void Scene::addMotion(IMotion *motion)
 
 IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
 {
+#ifdef VPVL2_OPENGL_RENDERER
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
     return m_context->compileEffect(source);
+#else
+	return 0;
+#endif /* VPVL2_OPENGL_RENDERER */
 }
 
 IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate)
 {
+#ifdef VPVL2_OPENGL_RENDERER
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
     return m_context->compileEffect(source);
+#else
+	return 0;
+#endif /* VPVL2_OPENGL_RENDERER */
 }
 
 void Scene::deleteModel(IModel *&model)
