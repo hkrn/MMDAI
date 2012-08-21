@@ -599,10 +599,12 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setDepthTexture(0);
     }
     int wireframe, twoside;
+#ifndef VPVL2_ENABLE_GLES2
     if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
         m_context->cullFaceState = true;

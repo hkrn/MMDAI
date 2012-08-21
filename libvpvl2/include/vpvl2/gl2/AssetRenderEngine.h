@@ -50,7 +50,7 @@
 #endif /* VPVL_LINK_QT */
 
 #if defined(VPVL2_ENABLE_GLES2)
-#include <GLES/gl2.h>
+#include <GLES2/gl2.h>
 #elif defined(VPVL2_BUILD_IOS)
 #include <OpenGLES/ES2/gl.h>
 #else
