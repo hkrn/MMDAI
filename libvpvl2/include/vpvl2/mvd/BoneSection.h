@@ -62,6 +62,11 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;
+    void addKeyframe(IKeyframe *keyframe);
+    void deleteKeyframe(IKeyframe *&keyframe);
+    void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                      const IKeyframe::LayerIndex &layerIndex,
+                      Array<IKeyframe *> &keyframes);
     IKeyframe::LayerIndex countLayers(const IString *name) const;
     IBoneKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                 const IString *name,
@@ -69,6 +74,8 @@ public:
     IBoneKeyframe *findKeyframeAt(int index) const;
 
 private:
+    void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes);
+
     class PrivateContext;
     IModel *m_modelRef;
     BoneKeyframe *m_keyframePtr;

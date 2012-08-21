@@ -418,6 +418,31 @@ int Motion::countKeyframes(IKeyframe::Type value) const
     }
 }
 
+void Motion::getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                          const IKeyframe::LayerIndex &layerIndex,
+                          IKeyframe::Type type,
+                          Array<IKeyframe *> &keyframes)
+{
+    if (layerIndex != -1 && layerIndex != 0)
+        return;
+    switch (type) {
+    case IKeyframe::kBone:
+        m_boneMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    case IKeyframe::kCamera:
+        m_cameraMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    case IKeyframe::kLight:
+        m_lightMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    case IKeyframe::kMorph:
+        m_morphMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    default:
+        break;
+    }
+}
+
 IKeyframe::LayerIndex Motion::countLayers(const IString * /* name */,
                                           IKeyframe::Type /* type */) const
 {
@@ -472,7 +497,8 @@ IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
 
 void Motion::deleteKeyframe(IKeyframe *&value)
 {
-    if (!value || value->layerIndex() != 0)
+    /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
+    if (!value || value->timeIndex() == 0)
         return;
     switch (value->type()) {
     case IKeyframe::kBone:
@@ -494,26 +520,6 @@ void Motion::deleteKeyframe(IKeyframe *&value)
         m_morphMotion.deleteKeyframe(value);
         update(IKeyframe::kMorph);
         value = 0;
-        break;
-    default:
-        break;
-    }
-}
-
-void Motion::deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type)
-{
-    switch (type) {
-    case IKeyframe::kBone:
-        m_boneMotion.deleteKeyframes(timeIndex);
-        break;
-    case IKeyframe::kCamera:
-        m_cameraMotion.deleteKeyframes(timeIndex);
-        break;
-    case IKeyframe::kLight:
-        m_lightMotion.deleteKeyframes(timeIndex);
-        break;
-    case IKeyframe::kMorph:
-        m_morphMotion.deleteKeyframes(timeIndex);
         break;
     default:
         break;

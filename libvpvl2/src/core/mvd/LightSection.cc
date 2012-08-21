@@ -132,6 +132,21 @@ size_t LightSection::countKeyframes() const
     return m_allKeyframes.count();
 }
 
+void LightSection::addKeyframe(IKeyframe * /* keyframe */)
+{
+}
+
+void LightSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    delete keyframe;
+    keyframe = 0;
+}
+
+void LightSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
+                                const IKeyframe::LayerIndex & /* layerIndex */,
+                                Array<IKeyframe *> & /* keyframes */)
+{
+}
 
 ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                            const IKeyframe::LayerIndex &layerIndex) const

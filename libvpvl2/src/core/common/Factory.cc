@@ -209,4 +209,17 @@ IMorphKeyframe *Factory::createMorphKeyframe(const IMotion *motion) const
     return 0;
 }
 
+IMotion *Factory::convertMotion(IMotion *source, IMotion::Type destType) const
+{
+    IMotion::Type sourceType = source->type();
+    if (sourceType == destType) {
+        return source->clone();
+    }
+    else if (sourceType == IMotion::kVMD && destType == IMotion::kMVD) {
+    }
+    else if (sourceType == IMotion::kMVD && destType == IMotion::kVMD) {
+    }
+    return 0;
+}
+
 }

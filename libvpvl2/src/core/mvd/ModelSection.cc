@@ -229,5 +229,21 @@ size_t ModelSection::countKeyframes() const
     return m_contextPtr ? m_contextPtr->keyframes->count() : 0;
 }
 
+void ModelSection::addKeyframe(IKeyframe * /* keyframe */)
+{
+}
+
+void ModelSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    delete keyframe;
+    keyframe = 0;
+}
+
+void ModelSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
+                                const IKeyframe::LayerIndex & /* layerIndex */,
+                                Array<IKeyframe *> & /* keyframes */)
+{
+}
+
 } /* namespace mvd */
 } /* namespace vpvl2 */

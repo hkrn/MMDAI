@@ -94,22 +94,13 @@ void BaseAnimation::deleteKeyframe(IKeyframe *&frame)
     frame = 0;
 }
 
-void BaseAnimation::deleteKeyframes(const IKeyframe::TimeIndex &timeIndex)
+void BaseAnimation::getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes)
 {
-    const int nframes = m_keyframes.count();
-    Array<IKeyframe *> framesToRemove;
-    for (int i = 0; i < nframes; i++) {
-        IKeyframe *frame = m_keyframes[i];
-        if (frame->timeIndex() == timeIndex)
-            framesToRemove.add(frame);
-    }
-    const int nFramesToRemove = framesToRemove.count();
-    if (nFramesToRemove) {
-        for (int i = 0; i < nFramesToRemove; i++) {
-            IKeyframe *frame = framesToRemove[i];
-            m_keyframes.remove(frame);
-            delete frame;
-        }
+    const int nkeyframes = m_keyframes.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = m_keyframes[i];
+        if (keyframe->timeIndex() == timeIndex)
+            keyframes.add(keyframe);
     }
 }
 

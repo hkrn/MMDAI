@@ -59,6 +59,11 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;
+    void addKeyframe(IKeyframe *keyframe);
+    void deleteKeyframe(IKeyframe *&keyframe);
+    void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                      const IKeyframe::LayerIndex &layerIndex,
+                      Array<IKeyframe *> &keyframes);
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectSection)

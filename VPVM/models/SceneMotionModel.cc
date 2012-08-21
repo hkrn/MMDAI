@@ -211,8 +211,15 @@ public:
     virtual void undo() {
         /* 処理したキーフレームを一旦削除 */
         IMotion *motion = m_smm->currentMotion();
+        Array<IKeyframe *> keyframes;
         foreach (int frameIndex, m_cameraFrameIndices) {
-            motion->deleteKeyframes(frameIndex, IKeyframe::kCamera);
+            keyframes.clear();
+            motion->getKeyframes(frameIndex, 0, IKeyframe::kCamera, keyframes);
+            const int nkeyframes = keyframes.count();
+            for (int i = 0; i < nkeyframes; i++) {
+                IKeyframe *keyframe = keyframes[i];
+                motion->deleteKeyframe(keyframe);
+            }
             const QModelIndex &index = m_smm->frameIndexToModelIndex(m_cameraTreeItem, frameIndex);
             m_smm->setData(index, QVariant());
         }
@@ -233,7 +240,13 @@ public:
         motion->update(IKeyframe::kCamera);
         /* 処理したキーフレームを一旦削除 */
         foreach (int frameIndex, m_lightFrameIndices) {
-            motion->deleteKeyframes(frameIndex, IKeyframe::kLight);
+            keyframes.clear();
+            motion->getKeyframes(frameIndex, 0, IKeyframe::kLight, keyframes);
+            const int nkeyframes = keyframes.count();
+            for (int i = 0; i < nkeyframes; i++) {
+                IKeyframe *keyframe = keyframes[i];
+                motion->deleteKeyframe(keyframe);
+            }
             const QModelIndex &index = m_smm->frameIndexToModelIndex(m_lightTreeItem, frameIndex);
             m_smm->setData(index, QVariant());
         }

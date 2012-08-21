@@ -221,6 +221,11 @@ public:
     virtual IKeyframe::LayerIndex countLayers(const IString *name,
                                               IKeyframe::Type type) const = 0;
 
+    virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                              const IKeyframe::LayerIndex &layerIndex,
+                              IKeyframe::Type type,
+                              Array<IKeyframe *> &keyframes) = 0;
+
     /**
      * キーフレームの位置と名前からボーンのキーフレームを返します。
      *
@@ -341,14 +346,6 @@ public:
      * @param IKeyframe
      */
     virtual void deleteKeyframe(IKeyframe *&value) = 0;
-
-    /**
-     * 指定されたキーフレームのインデックスにあるキーフレームを全て削除します。
-     *
-     * @param int
-     * @param IKeyframe::Type
-     */
-    virtual void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type) = 0;
 
     /**
      * 指定されたキーフレームの型の情報を更新します。

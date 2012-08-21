@@ -148,8 +148,15 @@ public:
     void undo() {
         /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
         const PMDMotionModel::TreeItemList &items = m_keys.values();
+        Array<IKeyframe *> keyframes;
         foreach (int frameIndex, m_frameIndices) {
-            m_motion->deleteKeyframes(frameIndex, IKeyframe::kMorph);
+            keyframes.clear();
+            m_motion->getKeyframes(frameIndex, 0, IKeyframe::kMorph, keyframes);
+            const int nkeyframes = keyframes.count();
+            for (int i = 0; i < nkeyframes; i++) {
+                IKeyframe *keyframe = keyframes[i];
+                m_motion->deleteKeyframe(keyframe);
+            }
             foreach (PMDMotionModel::ITreeItem *item, items) {
                 const QModelIndex &index = m_fmm->frameIndexToModelIndex(item, frameIndex);
                 m_fmm->setData(index, QVariant());

@@ -71,7 +71,7 @@ public:
     void reset();
     void addKeyframe(IKeyframe *frame);
     void deleteKeyframe(IKeyframe *&frame);
-    void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex);
+    void getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes);
 
     int countKeyframes() const { return m_keyframes.count(); }
     const IKeyframe::TimeIndex &previousTimeIndex() const { return m_previousTimeIndex; }

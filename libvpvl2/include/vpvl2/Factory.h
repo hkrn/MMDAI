@@ -147,6 +147,8 @@ public:
      */
     IMorphKeyframe *createMorphKeyframe(const IMotion *motion) const;
 
+    IMotion *convertMotion(IMotion *source, IMotion::Type destType) const;
+
 private:
     struct PrivateContext;
     PrivateContext *m_context;

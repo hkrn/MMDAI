@@ -176,14 +176,12 @@ void BoneSection::read(const uint8_t *data)
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
     delete m_keyframeListPtr;
-    m_keyframeListPtr = new KeyframeList();
+    m_keyframeListPtr = new BaseSectionContext::KeyframeCollection();
     m_keyframeListPtr->reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new BoneKeyframe(m_nameListSectionRef);
         m_keyframePtr->read(ptr);
-        m_keyframeListPtr->add(m_keyframePtr);
-        m_allKeyframeRefs.add(m_keyframePtr);
-        btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
+        addKeyframe0(m_keyframePtr, m_keyframeListPtr);
         ptr += sizeOfKeyframe;
     }
     m_keyframeListPtr->sort(KeyframeTimeIndexPredication());
@@ -297,6 +295,48 @@ IKeyframe::LayerIndex BoneSection::countLayers(const IString *name) const
     return context ? (*context)->countOfLayers : 0;
 }
 
+void BoneSection::addKeyframe(IKeyframe *keyframe)
+{
+    int key = m_nameListSectionRef->key(keyframe->name());
+    PrivateContext *const *context = m_name2contexts.find(key);
+    if (context) {
+        PrivateContext *contextPtr = *context;
+        addKeyframe0(keyframe, contextPtr->keyframes);
+    }
+    else {
+        PrivateContext *contextPtr = m_contextPtr = new PrivateContext();
+        BaseSectionContext::KeyframeCollection *kc = contextPtr->keyframes = new BaseSectionContext::KeyframeCollection();
+        addKeyframe0(keyframe, kc);
+        m_name2contexts.insert(key, contextPtr);
+        m_context2names.insert(contextPtr, key);
+        m_contextPtr = 0;
+    }
+}
+
+void BoneSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    int key = m_nameListSectionRef->key(keyframe->name());
+    PrivateContext *const *context = m_name2contexts.find(key);
+    if (context) {
+        PrivateContext *contextPtr = *context;
+        contextPtr->keyframes->remove(keyframe);
+        m_allKeyframeRefs.remove(keyframe);
+        if (contextPtr->keyframes->count() == 0) {
+            m_name2contexts.remove(key);
+            m_context2names.remove(contextPtr);
+            delete contextPtr;
+        }
+        delete keyframe;
+        keyframe = 0;
+    }
+}
+
+void BoneSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
+                               const IKeyframe::LayerIndex & /* layerIndex */,
+                               Array<IKeyframe *> & /* keyframes */)
+{
+}
+
 IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                          const IString *name,
                                          const IKeyframe::LayerIndex &layerIndex) const
@@ -322,6 +362,13 @@ IBoneKeyframe *BoneSection::findKeyframeAt(int index) const
         return keyframe;
     }
     return 0;
+}
+
+void BoneSection::addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes)
+{
+    keyframes->add(keyframe);
+    m_allKeyframeRefs.add(keyframe);
+    btSetMax(m_maxTimeIndex, keyframe->timeIndex());
 }
 
 } /* namespace mvd */

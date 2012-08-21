@@ -140,7 +140,13 @@ public:
 
     virtual void undo() {
         /* 現在のフレームを削除しておき、さらに全てのボーンのモデルのデータを空にしておく(=削除) */
-        m_motion->deleteKeyframes(m_frameIndex, IKeyframe::kBone);
+        Array<IKeyframe *> keyframes;
+        m_motion->getKeyframes(m_frameIndex, 0, IKeyframe::kBone, keyframes);
+        const int nkeyframes = keyframes.count();
+        for (int i = 0; i < nkeyframes; i++) {
+            IKeyframe *keyframe = keyframes[i];
+            m_motion->deleteKeyframe(keyframe);
+        }
         foreach (PMDMotionModel::ITreeItem *item, m_keys.values()) {
             const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, m_frameIndex);
             m_bmm->setData(index, QVariant());
@@ -254,8 +260,15 @@ public:
     virtual void undo() {
         /* 対象のキーフレームのインデックスを全て削除、さらにモデルのデータも削除 */
         const BoneMotionModel::TreeItemList &items = m_keys.values();
+        Array<IKeyframe *> keyframes;
         foreach (int frameIndex, m_frameIndices) {
-            m_motion->deleteKeyframes(frameIndex, IKeyframe::kBone);
+            keyframes.clear();
+            m_motion->getKeyframes(frameIndex, 0, IKeyframe::kBone, keyframes);
+            const int nkeyframes = keyframes.count();
+            for (int i = 0; i < nkeyframes; i++) {
+                IKeyframe *keyframe = keyframes[i];
+                m_motion->deleteKeyframe(keyframe);
+            }
             foreach (PMDMotionModel::ITreeItem *item, items) {
                 const QModelIndex &index = m_bmm->frameIndexToModelIndex(item, frameIndex);
                 m_bmm->setData(index, QVariant());

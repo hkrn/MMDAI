@@ -270,6 +270,22 @@ size_t CameraSection::countKeyframes() const
     return m_contextPtr ? m_contextPtr->keyframes->count() : 0;
 }
 
+void CameraSection::addKeyframe(IKeyframe * /* keyframe */)
+{
+}
+
+void CameraSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    delete keyframe;
+    keyframe = 0;
+}
+
+void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
+                                 const IKeyframe::LayerIndex & /* layerIndex */,
+                                 Array<IKeyframe *> & /* keyframes */)
+{
+}
+
 IKeyframe::LayerIndex CameraSection::countLayers() const
 {
     return m_contextPtr ? m_contextPtr->countOfLayers : 0;

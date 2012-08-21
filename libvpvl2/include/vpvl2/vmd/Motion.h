@@ -125,6 +125,10 @@ public:
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
+    void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                      const IKeyframe::LayerIndex &layerIndex,
+                      IKeyframe::Type type,
+                      Array<IKeyframe *> &keyframes);
     IKeyframe::LayerIndex countLayers(const IString *name,
                                       IKeyframe::Type type) const;
     IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,

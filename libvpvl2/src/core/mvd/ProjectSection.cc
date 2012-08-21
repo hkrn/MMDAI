@@ -108,5 +108,21 @@ size_t ProjectSection::countKeyframes() const
     return 0;
 }
 
+void ProjectSection::addKeyframe(IKeyframe * /* keyframe */)
+{
+}
+
+void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    delete keyframe;
+    keyframe = 0;
+}
+
+void ProjectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
+                                  const IKeyframe::LayerIndex & /* layerIndex */,
+                                  Array<IKeyframe *> & /* keyframes */)
+{
+}
+
 } /* namespace mvd */
 } /* namespace vpvl2 */

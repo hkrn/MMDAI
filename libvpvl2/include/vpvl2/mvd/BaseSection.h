@@ -178,6 +178,11 @@ public:
     virtual void write(uint8_t *data) const = 0;
     virtual size_t estimateSize() const = 0;
     virtual size_t countKeyframes() const = 0;
+    virtual void addKeyframe(IKeyframe *keyframe) = 0;
+    virtual void deleteKeyframe(IKeyframe *&keyframe) = 0;
+    virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                              const IKeyframe::LayerIndex &layerIndex,
+                              Array<IKeyframe *> &keyframes) = 0;
 
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex) {
         seek(m_currentTimeIndex);
@@ -194,8 +199,7 @@ protected:
         m_currentTimeIndex = timeIndex;
     }
 
-    typedef Array<IKeyframe *> KeyframeList;
-    KeyframeList *m_keyframeListPtr;
+    BaseSectionContext::KeyframeCollection *m_keyframeListPtr;
     NameListSection *m_nameListSectionRef;
     IKeyframe::TimeIndex m_maxTimeIndex;
     IKeyframe::TimeIndex m_currentTimeIndex;

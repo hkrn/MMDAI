@@ -159,7 +159,7 @@ void MorphSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     delete m_keyframeListPtr;
-    m_keyframeListPtr = new KeyframeList();
+    m_keyframeListPtr = new BaseSectionContext::KeyframeCollection();
     m_keyframeListPtr->reserve(nkeyframes);
     ptr += sizeof(header) + header.reserved;
     for (int i = 0; i < nkeyframes; i++) {
@@ -270,6 +270,48 @@ size_t MorphSection::countKeyframes() const
     return m_allKeyframeRefs.count();
 }
 
+void MorphSection::addKeyframe(IKeyframe *keyframe)
+{
+    int key = m_nameListSectionRef->key(keyframe->name());
+    PrivateContext *const *context = m_name2contexts.find(key);
+    if (context) {
+        PrivateContext *contextPtr = *context;
+        addKeyframe0(keyframe, contextPtr->keyframes);
+    }
+    else {
+        PrivateContext *contextPtr = m_contextPtr = new PrivateContext();
+        BaseSectionContext::KeyframeCollection *kc = contextPtr->keyframes = new BaseSectionContext::KeyframeCollection();
+        addKeyframe0(keyframe, kc);
+        m_name2contexts.insert(key, contextPtr);
+        m_context2names.insert(contextPtr, key);
+        m_contextPtr = 0;
+    }
+}
+
+void MorphSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    int key = m_nameListSectionRef->key(keyframe->name());
+    PrivateContext *const *context = m_name2contexts.find(key);
+    if (context) {
+        PrivateContext *contextPtr = *context;
+        contextPtr->keyframes->remove(keyframe);
+        m_allKeyframeRefs.remove(keyframe);
+        if (contextPtr->keyframes->count() == 0) {
+            m_name2contexts.remove(key);
+            m_context2names.remove(contextPtr);
+            delete contextPtr;
+        }
+        delete keyframe;
+        keyframe = 0;
+    }
+}
+
+void MorphSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
+                                const IKeyframe::LayerIndex & /* layerIndex */,
+                                Array<IKeyframe *> & /* keyframes */)
+{
+}
+
 IMorphKeyframe *MorphSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                            const IString *name,
                                            const IKeyframe::LayerIndex &layerIndex) const
@@ -296,6 +338,14 @@ IMorphKeyframe *MorphSection::findKeyframeAt(int index) const
     }
     return 0;
 }
+
+void MorphSection::addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes)
+{
+    keyframes->add(keyframe);
+    m_allKeyframeRefs.add(keyframe);
+    btSetMax(m_maxTimeIndex, keyframe->timeIndex());
+}
+
 
 } /* namespace mvd */
 } /* namespace vpvl2 */

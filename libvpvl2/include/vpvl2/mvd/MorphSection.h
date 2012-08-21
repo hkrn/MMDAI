@@ -62,12 +62,19 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;
+    void addKeyframe(IKeyframe *keyframe);
+    void deleteKeyframe(IKeyframe *&keyframe);
+    void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                      const IKeyframe::LayerIndex &layerIndex,
+                      Array<IKeyframe *> &keyframes);
     IMorphKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                  const IString *name,
                                  const IKeyframe::LayerIndex &layerIndex) const;
     IMorphKeyframe *findKeyframeAt(int index) const;
 
 private:
+    void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes);
+
     class PrivateContext;
     IModel *m_modelRef;
     MorphKeyframe *m_keyframePtr;
