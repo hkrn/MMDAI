@@ -366,7 +366,6 @@ TEST(MVDMotionTest, CameraInterpolation)
     CompareCameraInterpolationMatrix(p, frame);
 }
 
-/*
 TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
 {
     Encoding encoding;
@@ -377,40 +376,36 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
     // mock bone
     EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
-    QScopedPointer<IBoneKeyframe> frame(new mvd::BoneKeyframe(&encoding));
-    frame->setTimeIndex(42);
-    frame->setName(&name);
+    QScopedPointer<IBoneKeyframe> keyframePtr(new mvd::BoneKeyframe(motion.nameListSection()));
+    keyframePtr->setTimeIndex(42);
+    keyframePtr->setName(&name);
     {
-        // add a bone keyframe (don't forget updating motion!)
-        motion.addKeyframe(frame.data());
-        motion.update(IKeyframe::kBone);
+        // add a bone keyframe
+        motion.addKeyframe(keyframePtr.data());
+        IKeyframe *keyframe = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
         // boudary check of findBoneKeyframeAt
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(-1));
-        ASSERT_EQ(frame.data(), motion.findBoneKeyframeAt(0));
+        ASSERT_EQ(keyframe, motion.findBoneKeyframeAt(0));
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
         // layer index 0 must be used
         ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kBone));
         ASSERT_EQ(0, motion.findMorphKeyframe(42, &name, 1));
         // find a bone keyframe with timeIndex and name
-        ASSERT_EQ(frame.take(), motion.findBoneKeyframe(42, &name, 0));
+        ASSERT_EQ(keyframe, motion.findBoneKeyframe(42, &name, 0));
     }
-    QScopedPointer<IBoneKeyframe> frame2(new mvd::BoneKeyframe(&encoding));
-    frame2->setTimeIndex(42);
-    frame2->setName(&name);
+    keyframePtr.reset(new mvd::BoneKeyframe(motion.nameListSection()));
+    keyframePtr->setTimeIndex(42);
+    keyframePtr->setName(&name);
     {
-        // replaced bone frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(frame2.data());
-        motion.update(IKeyframe::kBone);
+        // replaced bone frame should be one keyframe
+        motion.replaceKeyframe(keyframePtr.data());
+        IKeyframe *keyframeToDelete = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
         // no longer be find previous bone keyframe
-        ASSERT_EQ(frame2.data(), motion.findBoneKeyframe(42, &name, 0));
-    }
-    {
-        IKeyframe *keyframeToDelete = frame2.take();
-        // delete bone keyframe and set it null (don't forget updating motion!)
+        ASSERT_EQ(keyframeToDelete, motion.findBoneKeyframe(42, &name, 0));
+        // delete bone keyframe and set it null
         motion.deleteKeyframe(keyframeToDelete);
-        motion.update(IKeyframe::kBone);
         // bone keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &name, 0));
@@ -424,40 +419,36 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
     Model model(&encoding);
     mvd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
-    QScopedPointer<ICameraKeyframe> frame(new mvd::CameraKeyframe());
-    frame->setTimeIndex(42);
-    frame->setDistance(42);
+    QScopedPointer<ICameraKeyframe> keyframePtr(new mvd::CameraKeyframe());
+    keyframePtr->setTimeIndex(42);
+    keyframePtr->setDistance(42);
     {
-        // add a camera keyframe (don't forget updating motion!)
-        motion.addKeyframe(frame.data());
-        motion.update(IKeyframe::kCamera);
+        // add a camera keyframe
+        motion.addKeyframe(keyframePtr.data());
+        IKeyframe *keyframe = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
         // boudary check of findCameraKeyframeAt
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(-1));
-        ASSERT_EQ(frame.data(), motion.findCameraKeyframeAt(0));
+        ASSERT_EQ(keyframe, motion.findCameraKeyframeAt(0));
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
         // layer index 0 must be used
         ASSERT_EQ(1, motion.countLayers(0, IKeyframe::kCamera));
         ASSERT_EQ(0, motion.findCameraKeyframe(42, 1));
         // find a camera keyframe with timeIndex
-        ASSERT_EQ(frame.take(), motion.findCameraKeyframe(42, 0));
+        ASSERT_EQ(keyframe, motion.findCameraKeyframe(42, 0));
     }
-    QScopedPointer<ICameraKeyframe> frame2(new mvd::CameraKeyframe());
-    frame2->setTimeIndex(42);
-    frame2->setDistance(84);
+    keyframePtr.reset(new mvd::CameraKeyframe());
+    keyframePtr->setTimeIndex(42);
+    keyframePtr->setDistance(84);
     {
-        // replaced camera frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(frame2.data());
-        motion.update(IKeyframe::kCamera);
+        // replaced camera frame should be one keyframe
+        motion.replaceKeyframe(keyframePtr.data());
+        IKeyframe *keyframeToDelete = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
         // no longer be find previous camera keyframe
         ASSERT_EQ(84.0f, motion.findCameraKeyframe(42, 0)->distance());
-    }
-    {
-        IKeyframe *keyframeToDelete = frame2.take();
         // delete camera keyframe and set it null (don't forget updating motion!)
         motion.deleteKeyframe(keyframeToDelete);
-        motion.update(IKeyframe::kCamera);
         // camera keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42, 0));
@@ -465,6 +456,7 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
     }
 }
 
+/*
 TEST(MVDMotionTest, AddAndRemoveLightKeyframes)
 {
     Encoding encoding;
@@ -511,6 +503,7 @@ TEST(MVDMotionTest, AddAndRemoveLightKeyframes)
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
 }
+*/
 
 TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
 {
@@ -522,39 +515,35 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
     // mock morph
     EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
-    QScopedPointer<IMorphKeyframe> frame(new mvd::MorphKeyframe(&encoding));
-    frame->setTimeIndex(42);
-    frame->setName(&name);
+    QScopedPointer<IMorphKeyframe> keyframePtr(new mvd::MorphKeyframe(motion.nameListSection()));
+    keyframePtr->setTimeIndex(42);
+    keyframePtr->setName(&name);
     {
-        // add a morph keyframe (don't forget updating motion!)
-        motion.addKeyframe(frame.data());
-        motion.update(IKeyframe::kMorph);
+        // add a morph keyframe
+        motion.addKeyframe(keyframePtr.data());
+        IKeyframe *keyframe = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
         // boudary check of findMorphKeyframeAt
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
-        ASSERT_EQ(frame.data(), motion.findMorphKeyframeAt(0));
+        ASSERT_EQ(keyframe, motion.findMorphKeyframeAt(0));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
         // layer index 0 must be used
         ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kMorph));
         ASSERT_EQ(0, motion.findMorphKeyframe(42, &name, 1));
-        ASSERT_EQ(frame.take(), motion.findMorphKeyframe(42, &name, 0));
+        ASSERT_EQ(keyframe, motion.findMorphKeyframe(42, &name, 0));
     }
-    QScopedPointer<IMorphKeyframe> frame2(new mvd::MorphKeyframe(&encoding));
-    frame2->setTimeIndex(42);
-    frame2->setName(&name);
+    keyframePtr.reset(new mvd::MorphKeyframe(motion.nameListSection()));
+    keyframePtr->setTimeIndex(42);
+    keyframePtr->setName(&name);
     {
-        // replaced morph frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(frame2.data());
-        motion.update(IKeyframe::kMorph);
+        // replaced morph frame should be one keyframe
+        motion.replaceKeyframe(keyframePtr.data());
+        IKeyframe *keyframeToDelete = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
         // no longer be find previous morph keyframe
-        ASSERT_EQ(frame2.data(), motion.findMorphKeyframe(42, &name, 0));
-    }
-    {
-        IKeyframe *keyframeToDelete = frame2.take();
-        // delete light keyframe and set it null (don't forget updating motion!)
+        ASSERT_EQ(keyframeToDelete, motion.findMorphKeyframe(42, &name, 0));
+        // delete light keyframe and set it null
         motion.deleteKeyframe(keyframeToDelete);
-        motion.update(IKeyframe::kMorph);
         // morph keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name, 0));
@@ -562,4 +551,14 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
     }
 }
 
-*/
+TEST(MVDMotionTest, AddAndRemoveNullKeyframe)
+{
+    /* should happen nothing */
+    Encoding encoding;
+    MockIModel model;
+    IKeyframe *nullKeyframe = 0;
+    mvd::Motion motion(&model, &encoding);
+    motion.addKeyframe(nullKeyframe);
+    motion.replaceKeyframe(nullKeyframe);
+    motion.deleteKeyframe(nullKeyframe);
+}

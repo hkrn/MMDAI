@@ -68,7 +68,7 @@ public:
           angle(kZeroV3),
           distance(0),
           fov(0),
-          countOfLayers(0)
+          countOfLayers(1)
     {
     }
     ~PrivateContext() {
@@ -271,9 +271,11 @@ size_t CameraSection::countKeyframes() const
 
 void CameraSection::addKeyframe(IKeyframe *keyframe)
 {
-    if (m_contextPtr) {
-        addKeyframe0(keyframe, m_contextPtr->keyframes);
+    if (!m_contextPtr) {
+        m_contextPtr = new PrivateContext();
+        m_contextPtr->keyframes = new PrivateContext::KeyframeCollection();
     }
+    addKeyframe0(keyframe, m_contextPtr->keyframes);
 }
 
 void CameraSection::deleteKeyframe(IKeyframe *&keyframe)

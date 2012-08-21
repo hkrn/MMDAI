@@ -512,9 +512,15 @@ void Motion::replaceKeyframe(IKeyframe *value)
         break;
     }
     case IKeyframe::kBone: {
+        IKeyframe *prev = m_boneSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
+        m_boneSection->deleteKeyframe(prev);
+        m_boneSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kCamera: {
+        IKeyframe *prev = m_cameraSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        m_cameraSection->deleteKeyframe(prev);
+        m_cameraSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kEffect: {
@@ -527,6 +533,9 @@ void Motion::replaceKeyframe(IKeyframe *value)
         break;
     }
     case IKeyframe::kMorph: {
+        IKeyframe *prev = m_morphSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
+        m_morphSection->deleteKeyframe(prev);
+        m_morphSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kProject: {

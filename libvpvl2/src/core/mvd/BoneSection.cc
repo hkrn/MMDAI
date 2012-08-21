@@ -67,7 +67,7 @@ public:
         : boneRef(0),
           position(kZeroV3),
           rotation(Quaternion::getIdentity()),
-          countOfLayers(0)
+          countOfLayers(1)
     {
     }
     ~PrivateContext() {
@@ -305,6 +305,7 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
     }
     else {
         PrivateContext *contextPtr = m_contextPtr = new PrivateContext();
+        contextPtr->boneRef = m_modelRef->findBone(keyframe->name());
         BaseSectionContext::KeyframeCollection *kc = contextPtr->keyframes = new BaseSectionContext::KeyframeCollection();
         addKeyframe0(keyframe, kc);
         m_name2contexts.insert(key, contextPtr);
