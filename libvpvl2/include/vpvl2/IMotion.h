@@ -358,6 +358,13 @@ public:
     virtual void update(IKeyframe::Type type) = 0;
 
     /**
+     * モーションのコピーを作成します。
+     *
+     * @return IMotion
+     */
+    virtual IMotion *clone() const = 0;
+
+    /**
      * キーフレーム数が1つしかない場合でも反映させるかを指定します
      *
      * @return bool

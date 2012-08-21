@@ -145,6 +145,7 @@ public:
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
+    IMotion *clone() const;
 
     const IString *name() const {
         return m_name;
@@ -198,6 +199,7 @@ private:
     void parseSelfShadowFrames(const DataInfo &info);
     void release();
 
+    mutable IMotion *m_motionPtr;
     IModel *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_name;

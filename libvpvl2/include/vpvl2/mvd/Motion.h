@@ -198,6 +198,7 @@ public:
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
+    IMotion *clone() const;
 
     const IString *name() const { return m_name; }
     IModel *parentModel() const { return m_modelRef; }
@@ -219,6 +220,7 @@ private:
     void parseProjectSections(const DataInfo &info);
     void release();
 
+    mutable IMotion *m_motionPtr;
     AssetSection *m_assetSection;
     BoneSection *m_boneSection;
     CameraSection *m_cameraSection;

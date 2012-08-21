@@ -120,7 +120,8 @@ void Motion::InterpolationTable::reset()
 }
 
 Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
-    : m_assetSection(0),
+    : m_motionPtr(0),
+      m_assetSection(0),
       m_boneSection(0),
       m_cameraSection(0),
       m_effectSection(0),
@@ -693,6 +694,14 @@ void Motion::update(IKeyframe::Type type)
     }
 }
 
+IMotion *Motion::clone() const
+{
+    IMotion *motion = m_motionPtr = new Motion(m_modelRef, m_encodingRef);
+    // TODO: implement this
+    m_motionPtr = 0;
+    return motion;
+}
+
 void Motion::parseHeader(const DataInfo &info)
 {
     IEncoding *encoding = info.encoding;
@@ -793,6 +802,8 @@ void Motion::parseProjectSections(const DataInfo &info)
 
 void Motion::release()
 {
+    delete m_motionPtr;
+    m_motionPtr = 0;
     delete m_assetSection;
     m_assetSection = 0;
     delete m_boneSection;

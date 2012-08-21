@@ -266,12 +266,28 @@ TEST(VMDMotionTest, SaveMotion)
         size_t newSize = motion.estimateSize();
         QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
         motion.save(newData.data());
-        // using temporary file and should be deleted
-        QTemporaryFile file2;
-        file2.setAutoRemove(true);
-        file2.write(reinterpret_cast<const char *>(newData.data()), newSize);
         // just compare written size
         ASSERT_EQ(size, newSize);
+    }
+}
+
+TEST(VMDMotionTest, CloneMotion)
+{
+    QFile file("motion.vmd");
+    if (file.open(QFile::ReadOnly)) {
+        QByteArray bytes = file.readAll();
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        size_t size = bytes.size();
+        Encoding encoding;
+        Model model(&encoding);
+        vmd::Motion motion(&model, &encoding);
+        motion.load(data, size);
+        QByteArray bytes2(motion.estimateSize(), 0);
+        motion.save(reinterpret_cast<uint8_t *>(bytes2.data()));
+        QScopedPointer<IMotion> motion2(motion.clone());
+        QByteArray bytes3(motion2->estimateSize(), 0);
+        motion2->save(reinterpret_cast<uint8_t *>(bytes3.data()));
+        ASSERT_STREQ(bytes2.constData(), bytes3.constData());
     }
 }
 

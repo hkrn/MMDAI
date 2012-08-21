@@ -57,7 +57,8 @@ namespace vmd
 const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
 
 Motion::Motion(IModel *model, IEncoding *encoding)
-    : m_modelRef(model),
+    : m_motionPtr(0),
+      m_modelRef(model),
       m_encodingRef(encoding),
       m_name(0),
       m_boneMotion(encoding),
@@ -539,6 +540,33 @@ void Motion::update(IKeyframe::Type type)
     }
 }
 
+IMotion *Motion::clone() const
+{
+    IMotion *dest = m_motionPtr = new Motion(m_modelRef, m_encodingRef);
+    const int nbkeyframes = m_boneMotion.countKeyframes();
+    for (int i = 0; i < nbkeyframes; i++) {
+        BoneKeyframe *keyframe = m_boneMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    const int nckeyframes = m_cameraMotion.countKeyframes();
+    for (int i = 0; i < nckeyframes; i++) {
+        CameraKeyframe *keyframe = m_cameraMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    const int nlkeyframes = m_lightMotion.countKeyframes();
+    for (int i = 0; i < nlkeyframes; i++) {
+        LightKeyframe *keyframe = m_lightMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    const int nmkeyframes = m_morphMotion.countKeyframes();
+    for (int i = 0; i < nmkeyframes; i++) {
+        MorphKeyframe *keyframe = m_morphMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    m_motionPtr = 0;
+    return dest;
+}
+
 void Motion::parseHeader(const DataInfo &info)
 {
     m_name = m_encodingRef->toString(info.namePtr, IString::kShiftJIS, kNameSize);
@@ -574,6 +602,8 @@ void Motion::release()
 {
     delete m_name;
     m_name = 0;
+    delete m_motionPtr;
+    m_motionPtr = 0;
     m_error = kNoError;
     m_active = false;
 }
