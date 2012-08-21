@@ -77,6 +77,8 @@ public:
     Scalar distance() const;
 
 private:
+    void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes);
+
     class PrivateContext;
     CameraKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;

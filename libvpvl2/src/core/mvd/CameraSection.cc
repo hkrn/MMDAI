@@ -206,8 +206,7 @@ void CameraSection::read(const uint8_t *data)
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new CameraKeyframe();
         m_keyframePtr->read(ptr);
-        m_contextPtr->keyframes->add(m_keyframePtr);
-        btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
+        addKeyframe0(m_keyframePtr, m_contextPtr->keyframes);
         ptr += sizeOfkeyframe;
     }
     m_contextPtr->keyframes->sort(KeyframeTimeIndexPredication());
@@ -270,14 +269,20 @@ size_t CameraSection::countKeyframes() const
     return m_contextPtr ? m_contextPtr->keyframes->count() : 0;
 }
 
-void CameraSection::addKeyframe(IKeyframe * /* keyframe */)
+void CameraSection::addKeyframe(IKeyframe *keyframe)
 {
+    if (m_contextPtr) {
+        addKeyframe0(keyframe, m_contextPtr->keyframes);
+    }
 }
 
 void CameraSection::deleteKeyframe(IKeyframe *&keyframe)
 {
-    delete keyframe;
-    keyframe = 0;
+    if (m_contextPtr) {
+        m_contextPtr->keyframes->remove(keyframe);
+        delete keyframe;
+        keyframe = 0;
+    }
 }
 
 void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
@@ -335,6 +340,12 @@ Scalar CameraSection::fov() const
 Scalar CameraSection::distance() const
 {
     return m_contextPtr ? m_contextPtr->distance : 0;
+}
+
+void CameraSection::addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes)
+{
+    keyframes->add(keyframe);
+    btSetMax(m_maxTimeIndex, keyframe->timeIndex());
 }
 
 } /* namespace mvd */
