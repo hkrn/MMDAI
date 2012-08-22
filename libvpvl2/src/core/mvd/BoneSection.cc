@@ -178,9 +178,12 @@ void BoneSection::read(const uint8_t *data)
     delete m_keyframeListPtr;
     m_keyframeListPtr = new BaseSectionContext::KeyframeCollection();
     m_keyframeListPtr->reserve(nkeyframes);
+    const int key = header.key;
+    const IString *name = m_nameListSectionRef->value(key);
     for (int i = 0; i < nkeyframes; i++) {
         m_keyframePtr = new BoneKeyframe(m_nameListSectionRef);
         m_keyframePtr->read(ptr);
+        m_keyframePtr->setName(name);
         addKeyframe0(m_keyframePtr, m_keyframeListPtr);
         ptr += sizeOfKeyframe;
     }
@@ -188,10 +191,10 @@ void BoneSection::read(const uint8_t *data)
     delete m_contextPtr;
     m_contextPtr = new PrivateContext();
     m_contextPtr->keyframes = m_keyframeListPtr;
-    m_contextPtr->boneRef = m_modelRef ? m_modelRef->findBone(m_nameListSectionRef->value(header.key)) : 0;
+    m_contextPtr->boneRef = m_modelRef ? m_modelRef->findBone(name) : 0;
     m_contextPtr->countOfLayers = header.countOfLayers;
-    m_name2contexts.insert(header.key, m_contextPtr);
-    m_context2names.insert(m_contextPtr, header.key);
+    m_name2contexts.insert(key, m_contextPtr);
+    m_context2names.insert(m_contextPtr, key);
     m_keyframeListPtr = 0;
     m_keyframePtr = 0;
     m_contextPtr = 0;

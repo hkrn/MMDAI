@@ -14,7 +14,9 @@
 #include "vpvl2/vmd/CameraKeyframe.h"
 #include "vpvl2/vmd/LightKeyframe.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
+#include "mock/Bone.h"
 #include "mock/Model.h"
+#include "mock/Morph.h"
 
 TEST(FactoryTest, CreateEmptyModels)
 {
@@ -94,3 +96,70 @@ TEST(FactoryTest, CreateEmptyMorphKeyframes)
     QScopedPointer<IMorphKeyframe> mmk(factory.createMorphKeyframe(mvd.data()));
     ASSERT_TRUE(dynamic_cast<mvd::MorphKeyframe *>(mmk.data()));
 }
+
+class MotionConversionTest : public TestWithParam< tuple<QString, IMotion::Type > > {};
+
+ACTION_P(FindBone, bones)
+{
+    MockIBone *bone = new MockIBone();
+    EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
+    bones->append(bone);
+    return bone;
+}
+
+ACTION_P(FindMorph, morphs)
+{
+    MockIMorph *morph = new MockIMorph();
+    EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
+    morphs->append(morph);
+    return morph;
+}
+
+TEST_P(MotionConversionTest, ConvertModelMotion)
+{
+    QFile file("motion." + get<0>(GetParam()));
+    if (file.open(QFile::ReadOnly)) {
+        QByteArray bytes = file.readAll();
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        size_t size = bytes.size();
+        Encoding encoding;
+        Factory factory(&encoding);
+        MockIModel model;
+        QList<IBone *> bones;
+        QList<IMorph *> morphs;
+        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
+        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
+        bool ok;
+        QScopedPointer<IMotion> source(factory.createMotion(data, size, &model, ok));
+        ASSERT_TRUE(ok);
+        IMotion::Type type = get<1>(GetParam());
+        QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
+        ASSERT_EQ(dest->type(), type);
+        ASSERT_EQ(source->countKeyframes(IKeyframe::kBone), dest->countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(source->countKeyframes(IKeyframe::kMorph), dest->countKeyframes(IKeyframe::kMorph));
+        qDeleteAll(bones);
+        qDeleteAll(morphs);
+    }
+}
+
+TEST_P(MotionConversionTest, ConvertCameraMotion)
+{
+    QFile file("camera." + get<0>(GetParam()));
+    if (file.open(QFile::ReadOnly)) {
+        QByteArray bytes = file.readAll();
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        size_t size = bytes.size();
+        Encoding encoding;
+        Factory factory(&encoding);
+        bool ok;
+        QScopedPointer<IMotion> source(factory.createMotion(data, size, 0, ok));
+        ASSERT_TRUE(ok);
+        IMotion::Type type = get<1>(GetParam());
+        QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
+        ASSERT_EQ(dest->type(), type);
+        ASSERT_EQ(source->countKeyframes(IKeyframe::kCamera), dest->countKeyframes(IKeyframe::kCamera));
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(FactoryInstance, MotionConversionTest,
+                        Combine(Values("vmd", "mvd"), Values(IMotion::kVMD, IMotion::kMVD)));

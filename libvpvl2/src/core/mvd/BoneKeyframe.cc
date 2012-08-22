@@ -220,7 +220,7 @@ void BoneKeyframe::setRotation(const Quaternion &value)
 
 void BoneKeyframe::setName(const IString *value)
 {
-    m_namePtr = const_cast<IString *>(value);
+    internal::setString(value, m_namePtr);
     m_nameListSectionRef->addName(value);
 }
 

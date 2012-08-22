@@ -119,6 +119,19 @@ void Motion::InterpolationTable::reset()
     parameter = kDefaultParameter;
 }
 
+//
+// implemented
+// - Bone
+// - Camera
+// - Morph
+//
+// NOT implemented
+// - Asset
+// - Effect
+// - Light
+// - Model
+// - Project
+
 Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
     : m_motionPtr(0),
       m_assetSection(0),
@@ -726,7 +739,26 @@ void Motion::update(IKeyframe::Type type)
 IMotion *Motion::clone() const
 {
     IMotion *motion = m_motionPtr = new Motion(m_modelRef, m_encodingRef);
-    // TODO: implement this
+    int nBoneKeyframes = countKeyframes(IKeyframe::kBone);
+    for (int i = 0; i < nBoneKeyframes; i++) {
+        IBoneKeyframe *keyframe = findBoneKeyframeAt(i);
+        motion->addKeyframe(keyframe->clone());
+    }
+    int nCameraKeyframes = countKeyframes(IKeyframe::kCamera);
+    for (int i = 0; i < nCameraKeyframes; i++) {
+        ICameraKeyframe *keyframe = findCameraKeyframeAt(i);
+        motion->addKeyframe(keyframe->clone());
+    }
+    int nLightKeyframe = countKeyframes(IKeyframe::kLight);
+    for (int i = 0; i < nLightKeyframe; i++) {
+        ILightKeyframe *keyframe = findLightKeyframeAt(i);
+        motion->addKeyframe(keyframe->clone());
+    }
+    int nMorphKeyframes = countKeyframes(IKeyframe::kMorph);
+    for (int i = 0; i < nMorphKeyframes; i++) {
+        IMorphKeyframe *keyframe = findMorphKeyframeAt(i);
+        motion->addKeyframe(keyframe->clone());
+    }
     m_motionPtr = 0;
     return motion;
 }
