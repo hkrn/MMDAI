@@ -467,8 +467,8 @@ void MainWindow::saveMotionAs()
 bool MainWindow::saveMotionAs(QString &filename)
 {
     filename = internal::openSaveDialog("mainWindow/lastModelMotionDirectory",
-                                        tr("Save model motion as a VMD file"),
-                                        tr("VMD file (*.vmd)"),
+                                        tr("Save model motion as a VMD/MVD file"),
+                                        tr("Model motion file (*.vmd *.mvd)"),
                                         tr("untitiled_model_motion.vmd"),
                                         &m_settings);
     return !filename.isEmpty() ? saveMotionFile(filename) : false;
@@ -477,8 +477,8 @@ bool MainWindow::saveMotionAs(QString &filename)
 void MainWindow::saveCameraMotionAs()
 {
     const QString &filename = internal::openSaveDialog("mainWindow/lastCameraMotionDirectory",
-                                                       tr("Save camera motion as a VMD file"),
-                                                       tr("VMD file (*.vmd)"),
+                                                       tr("Save camera motion as a VMD/MVD file"),
+                                                       tr("Camera motion file (*.vmd *.mvd)"),
                                                        tr("untitiled_camera_motion.vmd"),
                                                        &m_settings);
     QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
@@ -500,10 +500,11 @@ bool MainWindow::saveMotionFile(const QString &filename)
 
 bool MainWindow::saveMotionFile(const QString &filename, IMotion *motion)
 {
-    typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
-    size_t size = motion->estimateSize();
-    ByteArrayPtr buffer(new uint8_t[size]);
-    motion->save(buffer.data());
+    IMotion::Type type = filename.endsWith(".mvd") ? IMotion::kMVD : IMotion::kVMD;
+    QScopedPointer<IMotion> newMotion(m_factory->convertMotion(motion, type));
+    size_t size = newMotion->estimateSize();
+    QScopedArrayPointer<uint8_t> buffer(new uint8_t[size]);
+    newMotion->save(buffer.data());
     QFile file(filename);
     bool ret = true;
     if (file.open(QFile::WriteOnly)) {
