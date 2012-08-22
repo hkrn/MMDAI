@@ -73,7 +73,6 @@ BoneKeyframe::BoneKeyframe(NameListSection *nameListSectionRef)
 BoneKeyframe::~BoneKeyframe()
 {
     m_ptr = 0;
-    m_namePtr = 0;
     m_nameListSectionRef = 0;
     m_position.setZero();
     m_rotation.setValue(0, 0, 0, 1);

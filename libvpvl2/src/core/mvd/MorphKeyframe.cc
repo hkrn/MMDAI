@@ -69,7 +69,6 @@ MorphKeyframe::~MorphKeyframe()
     delete m_ptr;
     m_ptr = 0;
     m_nameListSectionRef = 0;
-    m_namePtr = 0;
     m_weight = 0;
 }
 
