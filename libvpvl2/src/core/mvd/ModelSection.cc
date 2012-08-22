@@ -156,24 +156,26 @@ void ModelSection::seek(const IKeyframe::TimeIndex &timeIndex)
 
 void ModelSection::setParentModel(IModel *model)
 {
-    m_contextPtr->bones.clear();
-    Array<IBone *> allBones, bonesOfIK;
-    model->getBones(allBones);
-    const int nbones = allBones.count();
-    for (int i = 0; i < nbones; i++) {
-        IBone *bone = allBones[i];
-        if (bone->hasInverseKinematics()) {
-            bonesOfIK.add(bone);
+    if (m_contextPtr) {
+        m_contextPtr->bones.clear();
+        Array<IBone *> allBones, bonesOfIK;
+        model->getBones(allBones);
+        const int nbones = allBones.count();
+        for (int i = 0; i < nbones; i++) {
+            IBone *bone = allBones[i];
+            if (bone->hasInverseKinematics()) {
+                bonesOfIK.add(bone);
+            }
         }
+        // TODO: resize IK bone state in all keyframes
+        BaseSectionContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+        const int nkeyframes = keyframes->count();
+        for (int i = 0; i < nkeyframes; i++) {
+            ModelKeyframe *keyframe = reinterpret_cast<ModelKeyframe *>(keyframes->at(i));
+            (void) keyframe;
+        }
+        m_contextPtr->bones.copy(bonesOfIK);
     }
-    // TODO: resize IK bone state in all keyframes
-    BaseSectionContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-    const int nkeyframes = keyframes->count();
-    for (int i = 0; i < nkeyframes; i++) {
-        ModelKeyframe *keyframe = reinterpret_cast<ModelKeyframe *>(keyframes->at(i));
-        (void) keyframe;
-    }
-    m_contextPtr->bones.copy(bonesOfIK);
 }
 
 void ModelSection::write(uint8_t *data) const
