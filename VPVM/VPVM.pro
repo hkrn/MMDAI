@@ -3,36 +3,17 @@ TARGET = MMDAI2
 TEMPLATE = app
 DEFINES += IS_VPVM
 
-# CMake prefix path (mainly for win32)
-exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
-exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L "$$(CMAKE_PREFIX_PATH)/lib"
-
-# Linux, Darwin(OSX), etc...
-exists(/usr/local/lib):LIBS += -L/usr/local/lib
-exists(/usr/local/include):INCLUDEPATH += /usr/local/include
-
-# libxml2
-exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
-exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
-
-# PortAudio
-exists(../portaudio/build/scons/posix):LIBS += -L../portaudio/build/scons/posix
-exists(../portaudio/build/scons/darwin):LIBS += -L../portaudio/build/scons/darwin
-exists(../portaudio/include):INCLUDEPATH += ../portaudio/include
-
-# DevIL
-exists(../devil/x86_64/lib):LIBS += -L../devil/x86_64/lib
-
-# libxml2
-exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
-exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
-
 # libvpvl and base libraries (MMDAgent for win32)
 ASSIMP_PATH = ../assimp
 BULLET_PATH = ../bullet
 VPVL_PATH = ../libvpvl
 VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
+LIBAV_PATH = ../libav
+LIBJPEG_PATH = ../libjpeg
+LIBPNG_PATH = ../libpng
+DEVIL_PATH = ../devil
+PORTAUDIO_PATH = ../portaudio
 
 # Required libraries
 LIBS += -lBulletCollision \
@@ -44,10 +25,29 @@ LIBS += -lBulletCollision \
         -lavformat \
         -lavutil \
         -lswscale \
+                -ljpeg \
+                -lpng \
         -lIL \
         -lILU \
         -lILUT \
         -lxml2
+
+# CMake prefix path (mainly for win32)
+exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
+exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L "$$(CMAKE_PREFIX_PATH)/lib"
+
+# libxml2
+exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
+exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
+
+# PortAudio
+exists($${PORTAUDIO_PATH}/build/scons/posix):LIBS += -L$${PORTAUDIO_PATH}/build/scons/posix
+exists($${PORTAUDIO_PATH}/build/scons/darwin):LIBS += -L$${PORTAUDIO_PATH}/build/scons/darwin
+exists($${PORTAUDIO_PATH}/include):INCLUDEPATH += $${PORTAUDIO_PATH}/include
+
+# libxml2
+exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
+exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # VPVL and others configuration
 INCLUDEPATH +=  $${VPVL_PATH}/include \
@@ -64,30 +64,48 @@ win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  exists(../libav/libav_debug/lib):LIBS += -L../libav/libav_debug/lib
-  exists(../libav/libav_debug/include):INCLUDEPATH += ../libav/libav_debug/include
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
                       -L$${BULLET_PATH}/msvc-build/lib/debug
   unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
                       -L$${BULLET_PATH}/debug/lib \
                       -L$${VPVL_PATH}/debug/lib \
-                      -L$${VPVL2_PATH}/debug/lib
+                      -L$${VPVL2_PATH}/debug/lib \
+                      -L$${LIBAV_PATH}/libav_debug/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
                       $${VPVL2_PATH}/debug/include
   LIBS             += -lassimp -lvpvl_debug -lvpvl2_debug -lvpvl2qtcommon_debug
+  INCLUDEPATH      += $${LIBAV_PATH}/libav_debug/include
+  macx {
+    # libjpeg and libpng
+    LIBS += -L$${LIBJPEG_PATH}/debug_universal/lib \
+                -L$${LIBPNG_PATH}/debug_universal/lib \
+                        -L$${DEVIL_PATH}/debug_universal/lib
+    INCLUDE += -I$${LIBJPEG_PATH}/release_x86_64/include \
+               -I$${LIBPNG_PATH}/release_x86_64/include \
+               -I$${DEVIL_PATH}/release_x86_64/include
+  }
 }
 CONFIG(release, debug|release) {
-  exists(../libav/libav_release/lib):LIBS += -L../libav/libav_release/lib
-  exists(../libav/libav_release/include):INCLUDEPATH += ../libav/libav_release/include
   win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
                       -L$${BULLET_PATH}/msvc-build/lib/release
   unix:LIBS        += -L$${ASSIMP_PATH}/release/lib \
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
-                      -L$${VPVL2_PATH}/release/lib
+                      -L$${VPVL2_PATH}/release/lib \
+                      -L$${LIBAV_PATH}/libav_release/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
   LIBS             += -lassimp -lvpvl -lvpvl2 -lvpvl2qtcommon
+  INCLUDEPATH      += $${LIBAV_PATH}/libav_release/include
+  macx {
+    # libjpeg and libpng
+    LIBS += -L$${LIBJPEG_PATH}/release_universal/lib \
+                -L$${LIBPNG_PATH}/release_universal/lib \
+                        -L$${DEVIL_PATH}/release_universal/lib
+    INCLUDE += -I$${LIBJPEG_PATH}/release_x86_64/include \
+                   -I$${LIBPNG_PATH}/release_x86_64/include \
+                   -I$${DEVIL_PATH}/release_x86_64/include
+  }
 }
 macx:LIBS += -framework OpenCL \
              -framework CoreServices \
@@ -137,18 +155,18 @@ linux-* {
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
   libraries.path = /lib
-  libraries.files = ../bullet/release/lib/libBulletCollision.so.* \
-                    ../bullet/release/lib/libBulletDynamics.so.* \
-                    ../bullet/release/lib/libBulletSoftBody.so.* \
-                    ../bullet/release/lib/libLinearMath.so.* \
-                    ../libvpvl/release/lib/libvpvl.so.* \
-                    ../libvpvl2/release/lib/libvpvl2.so.* \
-                    ../assimp/release/lib/libassimp.so \
-                    ../portaudio/build/scons/posix/libportaudio.so.* \
-                    ../libav/libav_release/lib/libavcodec.so.* \
-                    ../libav/libav_release/lib/libavformat.so.* \
-                    ../libav/libav_release/lib/libavutil.so.* \
-                    ../libav/libav_release/lib/libswscale.so.* \
+  libraries.files = $${BULET_PATH}/release/lib/libBulletCollision.so.* \
+                    $${BULET_PATH}/release/lib/libBulletDynamics.so.* \
+                    $${BULET_PATH}/release/lib/libBulletSoftBody.so.* \
+                    $${BULET_PATH}/release/lib/libLinearMath.so.* \
+                    $${VPVL_PATH}/release/lib/libvpvl.so.* \
+                    $${VPVL2_PATH}/release/lib/libvpvl2.so.* \
+                    $${ASSIMP_PATH}/release/lib/libassimp.so \
+                    $${PORTAUDIO_PATH}/build/scons/posix/libportaudio.so.* \
+                    $${LIBAV_PATH}/libav_release/libavcodec.so.* \
+                    $${LIBAV_PATH}/libav_release/libavformat.so.* \
+                    $${LIBAV_PATH}/libav_release/libavutil.so.* \
+                    $${LIBAV_PATH}/libav_release/libswscale.so.* \
                     $$[QT_INSTALL_LIBS]/libQtCore.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtGui.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtOpenGL.so.4

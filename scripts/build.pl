@@ -44,6 +44,13 @@ my $ASSIMP_DIRECTORY = 'assimp';
 my $PORTAUDIO_CHECKOUT_URI = 'https://subversion.assembla.com/svn/portaudio/portaudio/trunk';
 my $PORTAUDIO_DIRECTORY = 'portaudio';
 my $PORTAUDIO_REVISION = 1788;
+my $LIBJPEG_CHECKOUT_URI = 'http://www.ijg.org/files/jpegsrc.v8d.tar.gz';
+my $LIBJPEG_DIRECTORY = 'libjpeg';
+my $LIBPNG_CHECKOUT_URI = 'git://libpng.git.sourceforge.net/gitroot/libpng/libpng';
+my $LIBPNG_DIRECTORY = 'libpng';
+my $LIBPNG_TAG = 'v1.5.12';
+my $DEVIL_CHECKOUT_URI = 'https://openil.svn.sourceforge.net/svnroot/openil/tags/release-1.7.8';
+my $DEVIL_DIRECTORY = 'devil';
 my $LIBAV_CHECKOUT_URI = 'git://git.libav.org/libav.git';
 my $LIBAV_DIRECTORY = 'libav';
 my $LIBAV_TAG = 'v0.8.3';
@@ -64,25 +71,24 @@ my $CMAKE_VPVL_ARGS = [
     '-DVPVL_OPENGL_RENDERER:BOOL=OFF',
     '-DVPVL_ENABLE_GLSL:BOOL=OFF',
     '-DVPVL_ENABLE_NVIDIA_CG:BOOL=OFF',
-    '-DVPVL_LINK_ASSIMP:BOOL=ON',
-    '-DVPVL_BUILD_SDL:BOOL=OFF',
-    '-DVPVL_LINK_QT:BOOL=OFF',
-    '-DVPVL_BUILD_QT_RENDERER:BOOL=OFF',
-    '-DVPVL_BUILD_QT_WITH_OPENCV:BOOL=OFF',
     '-DVPVL_ENABLE_OPENCL:BOOL=OFF',
+    '-DVPVL_LINK_ASSIMP:BOOL=ON',
+    '-DVPVL_LINK_QT:BOOL=OFF',
+    '-DVPVL_BUILD_SDL:BOOL=OFF',
+    '-DVPVL_BUILD_QT_RENDERER:BOOL=OFF',
     '-DCMAKE_CXX_FLAGS=-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings',
 ];
 my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_ENABLE_NVIDIA_CG:BOOL=' . ($opt_cg ? 'ON' : 'OFF'),
     '-DVPVL2_ENABLE_OPENCL:BOOL=' . ($opt_opencl ? 'ON' : 'OFF'),
     '-DVPVL2_ENABLE_PROJECT:BOOL=ON',
-    '-DVPVL2_OPENGL_RENDERER:BOOL=ON',
     '-DVPVL2_ENABLE_GLSL:BOOL=ON',
+    '-DVPVL2_OPENGL_RENDERER:BOOL=ON',
     '-DVPVL2_LINK_ASSIMP:BOOL=ON',
-    '-DVPVL2_BUILD_SDL:BOOL=OFF',
     '-DVPVL2_LINK_QT:BOOL=ON',
+	'-DVPVL2_LINK_DEVIL:BOOL=ON',
+    '-DVPVL2_BUILD_SDL:BOOL=OFF',
     '-DVPVL2_BUILD_QT_RENDERER:BOOL=ON',
-    '-DVPVL2_BUILD_QT_WITH_OPENCV:BOOL=OFF',
     '-DCMAKE_CXX_FLAGS=-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings',
 ];
 my $SCONS_PORTAUDIO_ARGS = [
@@ -91,6 +97,54 @@ my $SCONS_PORTAUDIO_ARGS = [
     'enableStatic=' . ($opt_static ? 'True' : 'False'),
     'enableDebug=' . ($opt_prod ? 'False' : 'True'),
     'enableDebugOutput=' . ($opt_prod ? 'False' : 'True'),
+];
+my $CONFIGURE_LIBJPEG_ARGS = [
+    '--enable-shared',
+    '--disable-static',
+];
+my $CONFIGURE_LIBPNG_ARGS = [
+    '--enable-shared',
+    '--disable-static',
+];
+my $CONFIGURE_DEVIL_ARGS = [
+    '--enable-ILU=yes',
+    '--enable-ILUT=yes',
+    '--enable-blp=no',
+    '--enable-dcx=no',
+    '--enable-dicom=no',
+    '--enable-doom=no',
+    '--enable-fits=no',
+    '--enable-gif=no',
+    '--enable-icns=no',
+    '--enable-icon=no',
+    '--enable-iff=no',
+    '--enable-ilbm=no',
+    '--enable-iwi=no',
+    '--enable-lif=no',
+    '--enable-mdl=no',
+    '--enable-mp3=no',
+    '--enable-pcd=no',
+    '--enable-pcx=no',
+    '--enable-pic=no',
+    '--enable-pix=no',
+    '--enable-pnm=no',
+    '--enable-psd=no',
+    '--enable-psp=no',
+    '--enable-pxr=no',
+    '--enable-raw=no',
+    '--enable-rot=no',
+    '--enable-sgi=no',
+    '--enable-sun=no',
+    '--enable-texture=no',
+    '--enable-tpl=no',
+    '--enable-utx=no',
+    '--enable-vtf=no',
+    '--enable-wal=no',
+    '--enable-wbmp=no',
+    '--enable-wdp=no',
+    '--enable-xpm=no',
+    '--disable-sdltest',
+    '--disable-x11',
 ];
 my $CONFIGURE_LIBAV_ARGS = [
     '--enable-shared',
@@ -166,10 +220,54 @@ sub build_with_configure {
     my ($directory, $configure_args, $do_install, $do_clean) = @_;
     my @args = @$configure_args;
     chdir $directory;
+    system 'make clean 2&>1'; # ensure cleaning compiled object files
     system './configure', @args;
     system 'make', '-j' . $opt_num_cpu;
     system 'make', 'install' if $do_install;
     system 'make', 'clean' if $do_clean;
+}
+
+sub make_universal_binary {
+    my ($path_i386, $path_x86_64, $path_universal, $library) = @_;
+    if ($opt_march) {
+        my $i386_file = File::Spec->catfile($path_i386, 'lib', $library);
+        my $x86_64_file = File::Spec->catfile($path_x86_64, 'lib', $library);
+        my $universal_file = File::Spec->catfile($path_universal, 'lib', $library);
+        system 'lipo', '-create', '-output', $universal_file, '-arch', 'i386', $i386_file, '-arch', 'x86_64', $x86_64_file;
+    }
+}
+
+sub make_library {
+    my ($base_directory, $directory, $configure_args, $output_filenames) = @_;
+    my $path_i386;
+    if ($opt_march) {
+        $path_i386 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_i386');
+        make_path $path_i386 unless -d $path_i386;
+		my $orig_cflags = $ENV{'CFLAGS32'} || $ENV{'CFLAGS'} || '';
+		my $orig_cxxflags = $ENV{'CXXFLAGS32'} || $ENV{'CXXFLAGS'} || '';
+		my $orig_ldflags = $ENV{'LDFLAGS32'} || $ENV{'LDFLAGS'} || '';
+		$ENV{'CFLAGS'} = $orig_cflags . ' -arch i386';
+		$ENV{'CXXFLAGS'} = $orig_cxxflags . ' -arch i386';
+		$ENV{'LDFLAGS'} = $orig_ldflags . ' -arch i386';
+        build_with_configure $directory, [ '--prefix=' . $path_i386, @$configure_args ], 1, 1;
+		$ENV{'CFLAGS'} = $orig_cflags;
+		$ENV{'CXXFLAGS'} = $orig_cxxflags;
+		$ENV{'LDFLAGS'} = $orig_ldflags;
+        chdir $base_directory;
+    }
+	$ENV{'CFLAGS'} = $ENV{'CFLAGS64'} || $ENV{'CFLAGS'} || '';
+	$ENV{'CXXFLAGS'} = $ENV{'CXXFLAGS64'} || $ENV{'CXXFLAGS'} || '';
+	$ENV{'LDFLAGS'} = $ENV{'LDFLAGS64'} || $ENV{'LDFLAGS'} || '';
+    my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_x86_64');
+    make_path $path_x86_64 unless -d $path_x86_64;
+	build_with_configure $directory, [ '--prefix=' . $path_x86_64, @$configure_args ], 1, 1;
+    chdir $base_directory;
+    my $path_universal = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_universal');
+    my $path_universal_lib = File::Spec->catdir($path_universal, 'lib');
+	make_path $path_universal_lib unless -d $path_universal_lib;
+    foreach my $output_filename (@$output_filenames) {
+        make_universal_binary($path_i386, $path_x86_64, $path_universal, $output_filename);
+    }
 }
 
 # clone MMDAI sources
@@ -207,6 +305,58 @@ system 'svn', 'checkout', '-r', $PORTAUDIO_REVISION, $PORTAUDIO_CHECKOUT_URI, $P
 build_with_scons $PORTAUDIO_DIRECTORY, $SCONS_PORTAUDIO_ARGS;
 chdir $base_directory;
 
+# checkout libjpeg
+unless (-d $LIBJPEG_DIRECTORY) {
+	system 'wget', $LIBJPEG_CHECKOUT_URI;
+	system 'tar', '-xvzf', 'jpegsrc.v8d.tar.gz';
+	system 'mv', 'jpeg-8d', $LIBJPEG_DIRECTORY;
+}
+
+make_library($base_directory, $LIBJPEG_DIRECTORY, $CONFIGURE_LIBJPEG_ARGS, [ 'libjpeg.dylib' ]);
+
+# checkout libpng
+system 'git', 'clone', $LIBPNG_CHECKOUT_URI, $LIBPNG_DIRECTORY unless -d $LIBPNG_DIRECTORY;
+chdir $LIBPNG_DIRECTORY;
+system 'git', 'checkout', $LIBPNG_TAG;
+chdir $base_directory;
+make_library($base_directory, $LIBPNG_DIRECTORY, $CONFIGURE_LIBPNG_ARGS, [ 'libpng.dylib' ]);
+
+# checkout devil
+unless (-d $DEVIL_DIRECTORY) {
+    system 'svn', 'checkout', $DEVIL_CHECKOUT_URI, $DEVIL_DIRECTORY;
+	chdir $DEVIL_DIRECTORY;
+	system './autogen.sh';
+	chdir $base_directory;
+}
+
+my $libjpeg_path = File::Spec->catdir($base_directory, $LIBJPEG_DIRECTORY);
+my $libjpeg_lib32_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_i386');
+my $libjpeg_lib64_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_x86_64');
+my $libpng_path = File::Spec->catdir($base_directory, $LIBPNG_DIRECTORY);
+my $libpng_lib32_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_i386');
+my $libpng_lib64_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_x86_64');
+my $ldflags32 = '-L' . $libjpeg_lib32_path . '/lib -L' . $libpng_lib32_path . '/lib';
+my $cflags32  = $ldflags32 . ' -I' . $libjpeg_lib32_path . '/include -I' . $libpng_lib32_path . '/include'; 
+my $ldflags64 = '-L' . $libjpeg_lib64_path . '/lib -L' . $libpng_lib64_path . '/lib';
+my $cflags64 = $ldflags64 . ' -I' . $libjpeg_lib32_path . '/include -I' . $libpng_lib32_path . '/include'; 
+
+# save current environment variables
+my %env_backup = %ENV;
+$ENV{'PATH'} = '/usr/bin:/bin';
+$ENV{'PKG_CONFIG_PATH'} = '/usr/lib/pkgconfig';
+if ($opt_march) {
+	$cflags32 .= ' -arch i386';
+	$cflags64 .= ' -arch x86_64';
+}
+$ENV{'CFLAGS32'} = $ENV{'CXXFLAGS32'} = $cflags32;
+$ENV{'LDFLAGS32'} = $ldflags32;
+$ENV{'CFLAGS64'} = $ENV{'CXXFLAGS64'} = $cflags64;
+$ENV{'LDFLAGS64'} = $ldflags64;
+chdir $base_directory;
+make_library($base_directory, $DEVIL_DIRECTORY, $CONFIGURE_DEVIL_ARGS, [ 'libIL.dylib', 'libILU.dylib', 'libILUT.dylib' ]);
+%ENV = %env_backup;
+
+# checkout libav
 system 'git', 'clone', $LIBAV_CHECKOUT_URI, $LIBAV_DIRECTORY unless -d $LIBAV_DIRECTORY;
 chdir $LIBAV_DIRECTORY;
 system 'git', 'checkout', $LIBAV_TAG;
@@ -240,10 +390,7 @@ if ($opt_march) {
     make_path $path_universal_lib unless -d $path_universal_lib;
     my @libraries = ('libavcodec.dylib', 'libavformat.dylib', 'libavutil.dylib', 'libswscale.dylib');
     foreach my $library (@libraries) {
-        my $i386_file = File::Spec->catfile($path_i386, 'lib', $library);
-        my $x86_64_file = File::Spec->catfile($path_x86_64, 'lib', $library);
-        my $universal_file = File::Spec->catfile($path_universal, 'lib', $library);
-        system 'lipo', '-create', '-output', $universal_file, '-arch', 'i386', $i386_file, '-arch', 'x86_64', $x86_64_file;
+        make_universal_binary($path_i386, $path_x86_64, $path_universal, $library);
     }
     # link include directory
     system 'ln', '-s', File::Spec->catdir($path_i386, 'include'), File::Spec->catdir($path_universal, 'include');
