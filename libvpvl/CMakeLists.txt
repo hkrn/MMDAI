@@ -48,7 +48,7 @@ ENDIF()
 # declarations of function
 function(link_bullet target)
   get_build_type(BULLET_BUILD_TYPE)
-  set(BULLET_LIBRARY_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/alchemy/lib")
+  set(BULLET_LIBRARY_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/${BULLET_BUILD_TYPE}/lib")
   # find from MMDAI/bullet or environment variables
   find_path(BULLET_INCLUDE_DIRS btBulletDynamicsCommon.h PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../bullet/src" $ENV{BULLET_INCLUDE_DIR})
   include_directories(${BULLET_INCLUDE_DIRS})

@@ -25,8 +25,8 @@ LIBS += -lBulletCollision \
         -lavformat \
         -lavutil \
         -lswscale \
-                -ljpeg \
-                -lpng \
+        -ljpeg \
+        -lpng \
         -lIL \
         -lILU \
         -lILUT \
@@ -70,16 +70,16 @@ CONFIG(debug, debug|release) {
                       -L$${BULLET_PATH}/debug/lib \
                       -L$${VPVL_PATH}/debug/lib \
                       -L$${VPVL2_PATH}/debug/lib \
-                      -L$${LIBAV_PATH}/libav_debug/lib
+                      -L$${LIBAV_PATH}/debug_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
                       $${VPVL2_PATH}/debug/include
   LIBS             += -lassimp -lvpvl_debug -lvpvl2_debug -lvpvl2qtcommon_debug
   INCLUDEPATH      += $${LIBAV_PATH}/libav_debug/include
   macx {
     # libjpeg and libpng
-    LIBS += -L$${LIBJPEG_PATH}/debug_universal/lib \
-                -L$${LIBPNG_PATH}/debug_universal/lib \
-                        -L$${DEVIL_PATH}/debug_universal/lib
+    LIBS += -L$${LIBJPEG_PATH}/debug_native/lib \
+                -L$${LIBPNG_PATH}/debug_native/lib \
+                        -L$${DEVIL_PATH}/debug_native/lib
     INCLUDE += -I$${LIBJPEG_PATH}/release_x86_64/include \
                -I$${LIBPNG_PATH}/release_x86_64/include \
                -I$${DEVIL_PATH}/release_x86_64/include
@@ -92,16 +92,16 @@ CONFIG(release, debug|release) {
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib \
-                      -L$${LIBAV_PATH}/libav_release/lib
+                      -L$${LIBAV_PATH}/release_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
   LIBS             += -lassimp -lvpvl -lvpvl2 -lvpvl2qtcommon
-  INCLUDEPATH      += $${LIBAV_PATH}/libav_release/include
+  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include
   macx {
     # libjpeg and libpng
-    LIBS += -L$${LIBJPEG_PATH}/release_universal/lib \
-                -L$${LIBPNG_PATH}/release_universal/lib \
-                        -L$${DEVIL_PATH}/release_universal/lib
+    LIBS += -L$${LIBJPEG_PATH}/release_native/lib \
+                -L$${LIBPNG_PATH}/release_native/lib \
+                        -L$${DEVIL_PATH}/release_native/lib
     INCLUDE += -I$${LIBJPEG_PATH}/release_x86_64/include \
                    -I$${LIBPNG_PATH}/release_x86_64/include \
                    -I$${DEVIL_PATH}/release_x86_64/include
