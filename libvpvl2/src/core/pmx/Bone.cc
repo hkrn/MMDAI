@@ -830,7 +830,7 @@ void Bone::setOrigin(const Vector3 &value)
 
 void Bone::setDestinationOrigin(const Vector3 &value)
 {
-    m_offset = value;
+    m_destinationOrigin = value;
     internal::toggleFlag(0x0001, false, m_flags);
 }
 

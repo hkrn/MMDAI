@@ -88,7 +88,6 @@ TEST_P(FragmentTest, ReadWriteBone)
     parent.setIndex(0);
     bone.setName(&name);
     bone.setEnglishName(&englishName);
-    bone.setDestinationOrigin(Vector3(0.01, 0.02, 0.03));
     bone.setOrigin(Vector3(0.11, 0.12, 0.13));
     bone.setIndex(1);
     bone.setDestinationOrigin(Vector3(0.21, 0.22, 0.23));
@@ -120,7 +119,7 @@ TEST_P(FragmentTest, ReadWriteBone)
     ASSERT_TRUE(bone2.name()->equals(bone.name()));
     ASSERT_TRUE(bone2.englishName()->equals(bone.englishName()));
     AssertVector(bone2.origin(), bone.origin());
-    AssertVector(bone2.destinationOrigin(), bone.destinationOrigin());
+    AssertVector(bone2.destinationOrigin() - bone.origin(), bone.destinationOrigin());
     AssertVector(bone2.axis(), bone.axis());
     AssertVector(bone2.axisX(), bone.axisX());
     AssertVector(bone2.axisZ(), bone.axisZ());
