@@ -7,15 +7,21 @@ libvpvl/libvpvl2/QMA のビルド方法
     - 5.10.1 以降
   - Subversion
   - git
+  - wget
+  - scons
+    - portaudio のビルドに必要
+  - yasm
+    - libav のビルドに必要
   - CMake
-    - 2.8 以降
+    - 2.8 以降。以下のライブラリのビルドに必要
+	  - bullet
+	  - assimp
+	  - libvpvl
+	  - libvpvl2
   - Qt
     - 4.8 以降
     - QtSDK 入れた方が楽
       - ただし MacOSX ユニバーサルバイナリ作成時だけソースビルドが必要
-  - MacPorts
-    - OSX の場合のみ
-	  - DevIL のチェックアウト後の autogen.sh の実行で autoconf が必要なため
 
 一度目は一回 build.pl をダウンロードします。build.pl は実行したディレクトリに MMDAI と関連のライブラリがチェックアウトされるため、二回目以降はは以下のように実行します。 
 

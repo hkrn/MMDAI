@@ -228,39 +228,55 @@ sub build_with_configure {
 }
 
 sub make_universal_binary {
-    my ($path_i386, $path_x86_64, $path_universal, $library) = @_;
+    my ($path_i386, $path_x86_64, $path_universal, $libraries) = @_;
     if ($opt_march) {
-        my $i386_file = File::Spec->catfile($path_i386, 'lib', $library);
-        my $x86_64_file = File::Spec->catfile($path_x86_64, 'lib', $library);
-        my $universal_file = File::Spec->catfile($path_universal, 'lib', $library);
-        system 'lipo', '-create', '-output', $universal_file, '-arch', 'i386', $i386_file, '-arch', 'x86_64', $x86_64_file;
+        my $dh;
+        my $path_universal_lib = File::Spec->catdir($path_universal, 'lib');
+        opendir $dh, $path_universal_lib;
+        my @files = map { File::Spec->catfile($path_universal_lib, $_) }
+            grep { my $file = $_; scalar(grep { $file eq $_ } @$libraries) == 0 }
+            File::Spec->no_upwards(readdir $dh);
+        closedir $dh;
+        foreach my $library (@$libraries) {
+            my $i386_file = File::Spec->catfile($path_i386, 'lib', $library);
+            my $x86_64_file = File::Spec->catfile($path_x86_64, 'lib', $library);
+            my $universal_file = File::Spec->catfile($path_universal_lib, $library);
+            system 'lipo', '-create', '-output', $universal_file, '-arch', 'i386', $i386_file, '-arch', 'x86_64', $x86_64_file;
+        }
+        for my $file (@files) {
+            -f $file and unlink $file;
+            -l $file and unlink $file;
+        }
     }
 }
 
 sub make_library {
     my ($base_directory, $directory, $configure_args, $output_filenames) = @_;
-    my $path_i386;
     if ($opt_march) {
-        $path_i386 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_i386');
+        my $path_i386 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_i386');
+        my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_native');
         make_path $path_i386 unless -d $path_i386;
-        my $orig_cflags = $ENV{'CFLAGS32'} || $ENV{'CFLAGS'} || '';
-        my $orig_cxxflags = $ENV{'CXXFLAGS32'} || $ENV{'CXXFLAGS'} || '';
-        my $orig_ldflags = $ENV{'LDFLAGS32'} || $ENV{'LDFLAGS'} || '';
-        $ENV{'CFLAGS'} = $orig_cflags . ' -arch i386';
-        $ENV{'CXXFLAGS'} = $orig_cxxflags . ' -arch i386';
-        $ENV{'LDFLAGS'} = $orig_ldflags . ' -arch i386';
+        my $orig_cflags = $ENV{'CFLAGS'} || '';
+        my $orig_cxxflags = $ENV{'CXXFLAGS'} || '';
+        my $orig_ldflags = $ENV{'LDFLAGS'} || '';
+        $ENV{'CFLAGS'} = ($ENV{'CFLAGS32'} || '') . ' -arch i386';
+        $ENV{'CXXFLAGS'} = ($ENV{'CXXFLAGS32'} || '') . ' -arch i386';
+        $ENV{'LDFLAGS'} = ($ENV{'LDFLAGS32'} || '') . ' -arch i386';
         build_with_configure $directory, [ '--prefix=' . $path_i386, @$configure_args ], 1, 1;
         chdir $base_directory;
-        $ENV{'CFLAGS'} = $ENV{'CFLAGS64'} || $ENV{'CFLAGS'} || '';
-        $ENV{'CXXFLAGS'} = $ENV{'CXXFLAGS64'} || $ENV{'CXXFLAGS'} || '';
-        $ENV{'LDFLAGS'} = $ENV{'LDFLAGS64'} || $ENV{'LDFLAGS'} || '';
-        my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_native');
+        $ENV{'CFLAGS'} = $orig_cflags;
+        $ENV{'CXXLAGS'} = $orig_cxxflags;
+        $ENV{'LDLAGS'} = $orig_ldflags;
+        $ENV{'CFLAGS'} = ($ENV{'CFLAGS64'} || '') . ' -arch x86_64';
+        $ENV{'CXXFLAGS'} = ($ENV{'CXXFLAGS64'} || '') . ' -arch x86_64';
+        $ENV{'LDFLAGS'} = ($ENV{'LDFLAGS64'} || '') . ' -arch x86_64';
         make_path $path_x86_64 unless -d $path_x86_64;
         build_with_configure $directory, [ '--prefix=' . $path_x86_64, @$configure_args ], 1, 1;
         chdir $base_directory;
-        foreach my $output_filename (@$output_filenames) {
-            make_universal_binary($path_i386, $path_x86_64, $path_x86_64, $output_filename);
-        }
+        make_universal_binary($path_i386, $path_x86_64, $path_x86_64, $output_filenames);
+        $ENV{'CFLAGS'} = $orig_cflags;
+        $ENV{'CXXLAGS'} = $orig_cxxflags;
+        $ENV{'LDLAGS'} = $orig_ldflags;
     }
     else {
         my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_native');
@@ -305,34 +321,34 @@ system 'svn', 'checkout', '-r', $PORTAUDIO_REVISION, $PORTAUDIO_CHECKOUT_URI, $P
 build_with_scons $PORTAUDIO_DIRECTORY, $SCONS_PORTAUDIO_ARGS;
 chdir $base_directory;
 
+# save current environment variables
+my %env_backup = %ENV;
+$ENV{'PATH'} = '/usr/bin:/bin';
+$ENV{'PKG_CONFIG_PATH'} = '/usr/lib/pkgconfig';
+
 # checkout libjpeg
 unless (-d $LIBJPEG_DIRECTORY) {
     system 'wget', $LIBJPEG_CHECKOUT_URI;
     system 'tar', '-xvzf', 'jpegsrc.v8d.tar.gz';
     system 'mv', 'jpeg-8d', $LIBJPEG_DIRECTORY;
 }
-
-#make_library($base_directory, $LIBJPEG_DIRECTORY, $CONFIGURE_LIBJPEG_ARGS, [ 'libjpeg.dylib' ]);
+make_library($base_directory, $LIBJPEG_DIRECTORY, $CONFIGURE_LIBJPEG_ARGS, [ 'libjpeg.dylib', 'libjpeg.8.dylib' ]);
 
 # checkout libpng
 system 'git', 'clone', $LIBPNG_CHECKOUT_URI, $LIBPNG_DIRECTORY unless -d $LIBPNG_DIRECTORY;
 chdir $LIBPNG_DIRECTORY;
 system 'git', 'checkout', $LIBPNG_TAG;
 chdir $base_directory;
-#make_library($base_directory, $LIBPNG_DIRECTORY, $CONFIGURE_LIBPNG_ARGS, [ 'libpng.dylib' ]);
+make_library($base_directory, $LIBPNG_DIRECTORY, $CONFIGURE_LIBPNG_ARGS, [ 'libpng.dylib', 'libpng15.15.dylib' ]);
 
 # checkout devil
 unless (-d $DEVIL_DIRECTORY) {
     system 'wget', $DEVIL_CHECKOUT_URI;
-	system 'tar', '-jxvf', 'DevIL-1.7.8.tar.gz';
-	system 'mv', 'devil-1.7.8', $DEVIL_DIRECTORY;
+    system 'tar', '-jxvf', 'DevIL-1.7.8.tar.gz';
+    system 'mv', 'devil-1.7.8', $DEVIL_DIRECTORY;
     chdir $base_directory;
 }
 
-# save current environment variables
-my %env_backup = %ENV;
-$ENV{'PATH'} = '/usr/bin:/bin';
-$ENV{'PKG_CONFIG_PATH'} = '/usr/lib/pkgconfig';
 if ($opt_march) {
     my $libjpeg_path = File::Spec->catdir($base_directory, $LIBJPEG_DIRECTORY);
     my $libjpeg_lib32_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_i386');
@@ -344,15 +360,14 @@ if ($opt_march) {
     my $cflags32  = $ldflags32 . ' -I' . $libjpeg_lib32_path . '/include -I' . $libpng_lib32_path . '/include'; 
     my $ldflags64 = '-L' . $libjpeg_lib64_path . '/lib -L' . $libpng_lib64_path . '/lib';
     my $cflags64 = $ldflags64 . ' -I' . $libjpeg_lib32_path . '/include -I' . $libpng_lib32_path . '/include'; 
-    $cflags32 .= ' -arch i386';
-    $cflags64 .= ' -arch x86_64';
     $ENV{'CFLAGS32'} = $ENV{'CXXFLAGS32'} = $cflags32;
     $ENV{'LDFLAGS32'} = $ldflags32;
     $ENV{'CFLAGS64'} = $ENV{'CXXFLAGS64'} = $cflags64;
     $ENV{'LDFLAGS64'} = $ldflags64;
 }
 chdir $base_directory;
-make_library($base_directory, $DEVIL_DIRECTORY, $CONFIGURE_DEVIL_ARGS, [ 'libIL.dylib', 'libILU.dylib', 'libILUT.dylib' ]);
+make_library($base_directory, $DEVIL_DIRECTORY, $CONFIGURE_DEVIL_ARGS,
+    [ 'libIL.dylib', 'libIL.1.dylib', 'libILU.dylib', 'libILU.1.dylib', 'libILUT.dylib', 'libILUT.1.dylib' ]);
 %ENV = %env_backup;
 
 # checkout libav
@@ -370,34 +385,31 @@ if ($opt_march) {
         '--arch=i386',
         '--cc=clang -m32',
     );
+    push @i386_args, '--disable-debug' if $opt_prod;
     make_path $path_i386 unless -d $path_i386;
     build_with_configure $LIBAV_DIRECTORY, \@i386_args, 1, 1;
     chdir $base_directory;
     # build libav for x86_64
     my @x86_64_args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_x86_64 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY . '_x86_64');
+    my $path_x86_64 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY . '_native');
     push @x86_64_args, (
         '--prefix=' . $path_x86_64,
         '--arch=x86_64',
+        '--cc=clang',
     );
+    push @x86_64_args, '--disable-debug' if $opt_prod;
     make_path $path_x86_64 unless -d $path_x86_64;
     build_with_configure $LIBAV_DIRECTORY, \@x86_64_args, 1, 1;
     chdir $base_directory;
     # create universal binary with lipo
-    my $path_universal = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY);
-    my $path_universal_lib = File::Spec->catdir($path_universal, 'lib');
-    make_path $path_universal_lib unless -d $path_universal_lib;
-    my @libraries = ('libavcodec.dylib', 'libavformat.dylib', 'libavutil.dylib', 'libswscale.dylib');
-    foreach my $library (@libraries) {
-        make_universal_binary($path_i386, $path_x86_64, $path_universal, $library);
-    }
-    # link include directory
-    system 'ln', '-s', File::Spec->catdir($path_i386, 'include'), File::Spec->catdir($path_universal, 'include');
+    make_universal_binary($path_i386, $path_x86_64, $path_x86_64,
+        ['libavcodec.dylib', 'libavformat.dylib', 'libavutil.dylib', 'libswscale.dylib']);
 }
 else {
     my @args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_libav = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, 'libav_' . $BUILD_DIRECTORY);
+    my $path_libav = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY . '_native');
     push @args, '--prefix=' . $path_libav;
+    push @args, '--disable-debug' if $opt_prod;
     build_with_configure $LIBAV_DIRECTORY, \@args, 1, 1;
 }
 chdir $base_directory;

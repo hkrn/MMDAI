@@ -64,47 +64,42 @@ win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/debug \
-                      -L$${BULLET_PATH}/msvc-build/lib/debug
   unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
                       -L$${BULLET_PATH}/debug/lib \
                       -L$${VPVL_PATH}/debug/lib \
                       -L$${VPVL2_PATH}/debug/lib \
-                      -L$${LIBAV_PATH}/debug_native/lib
+                      -L$${LIBAV_PATH}/debug_native/lib \
+                      -L$${DEVIL_PATH}/debug_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
                       $${VPVL2_PATH}/debug/include
   LIBS             += -lassimp -lvpvl_debug -lvpvl2_debug -lvpvl2qtcommon_debug
-  INCLUDEPATH      += $${LIBAV_PATH}/libav_debug/include
+  INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
   macx {
     # libjpeg and libpng
     LIBS += -L$${LIBJPEG_PATH}/debug_native/lib \
-                -L$${LIBPNG_PATH}/debug_native/lib \
-                        -L$${DEVIL_PATH}/debug_native/lib
-    INCLUDE += -I$${LIBJPEG_PATH}/release_x86_64/include \
-               -I$${LIBPNG_PATH}/release_x86_64/include \
-               -I$${DEVIL_PATH}/release_x86_64/include
+            -L$${LIBPNG_PATH}/debug_native/lib
+    INCLUDEPATH += -I$${LIBJPEG_PATH}/release_native/include \
+                   -I$${LIBPNG_PATH}/release_native/include
   }
 }
 CONFIG(release, debug|release) {
-  win32:LIBS       += -L$${VPVL2_PATH}/msvc-build/lib/release \
-                      -L$${BULLET_PATH}/msvc-build/lib/release
   unix:LIBS        += -L$${ASSIMP_PATH}/release/lib \
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib \
-                      -L$${LIBAV_PATH}/release_native/lib
+                      -L$${LIBAV_PATH}/release_native/lib \
+                      -L$${DEVIL_PATH}/release_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
   LIBS             += -lassimp -lvpvl -lvpvl2 -lvpvl2qtcommon
-  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include
+  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
+                      $${DEVIL_PATH}/release_native/include
   macx {
     # libjpeg and libpng
     LIBS += -L$${LIBJPEG_PATH}/release_native/lib \
-                -L$${LIBPNG_PATH}/release_native/lib \
-                        -L$${DEVIL_PATH}/release_native/lib
-    INCLUDE += -I$${LIBJPEG_PATH}/release_x86_64/include \
-                   -I$${LIBPNG_PATH}/release_x86_64/include \
-                   -I$${DEVIL_PATH}/release_x86_64/include
+            -L$${LIBPNG_PATH}/release_native/lib
+    INCLUDEPATH += $${LIBJPEG_PATH}/release_native/include \
+                   $${LIBPNG_PATH}/release_native/include
   }
 }
 macx:LIBS += -framework OpenCL \
@@ -163,10 +158,13 @@ linux-* {
                     $${VPVL2_PATH}/release/lib/libvpvl2.so.* \
                     $${ASSIMP_PATH}/release/lib/libassimp.so \
                     $${PORTAUDIO_PATH}/build/scons/posix/libportaudio.so.* \
-                    $${LIBAV_PATH}/libav_release/libavcodec.so.* \
-                    $${LIBAV_PATH}/libav_release/libavformat.so.* \
-                    $${LIBAV_PATH}/libav_release/libavutil.so.* \
-                    $${LIBAV_PATH}/libav_release/libswscale.so.* \
+                    $${LIBAV_PATH}/release_native/libavcodec.so.* \
+                    $${LIBAV_PATH}/release_native/libavformat.so.* \
+                    $${LIBAV_PATH}/release_native/libavutil.so.* \
+                    $${LIBAV_PATH}/release_native/libswscale.so.* \
+                    $${DEVIL_PATH}/release_native/libIL.so.* \
+                    $${DEVIL_PATH}/release_native/libILU.so.* \
+                    $${DEVIL_PATH}/release_native/libILUT.so.* \
                     $$[QT_INSTALL_LIBS]/libQtCore.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtGui.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtOpenGL.so.4
