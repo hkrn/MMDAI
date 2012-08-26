@@ -67,7 +67,8 @@ public:
         kLight,
         kModel,
         kMorph,
-        kProject
+        kProject,
+        kMaxKeyframeType
     };
     virtual ~IKeyframe() {}
 

@@ -66,7 +66,7 @@ public:
         kRotation,
         kDistance,
         kFov,
-        kMax
+        kMaxInterpolationType
     };
     virtual ~ICameraKeyframe() {}
 

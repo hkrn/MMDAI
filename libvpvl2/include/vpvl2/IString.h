@@ -53,7 +53,8 @@ public:
     enum Codec {
         kShiftJIS,
         kUTF8,
-        kUTF16
+        kUTF16,
+        kMaxCodecType
     };
     virtual ~IString() {}
 

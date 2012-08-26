@@ -80,7 +80,7 @@ public:
         kInvalidLabelsError,
         kInvalidRigidBodiesError,
         kInvalidJointsError,
-        kMaxErrors
+        kMaxErrorType
     };
     enum Object {
         kBone,
@@ -90,14 +90,15 @@ public:
         kMaterial,
         kMorph,
         kRigidBody,
-        kVertex
+        kVertex,
+        kMaxObjectType
     };
     enum Type {
         kUnknown,
         kAsset,
         kPMD,
         kPMX,
-        kMaxType
+        kMaxModelType
     };
     virtual ~IModel() {}
 

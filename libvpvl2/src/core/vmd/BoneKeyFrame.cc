@@ -97,7 +97,7 @@ BoneKeyframe::~BoneKeyframe()
     m_enableIK = false;
     delete m_ptr;
     m_ptr = 0;
-    for (int i = 0; i < kMax; i++)
+    for (int i = 0; i < kMaxInterpolationType; i++)
         delete[] m_interpolationTable[i];
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
@@ -107,7 +107,7 @@ BoneKeyframe::~BoneKeyframe()
 
 void BoneKeyframe::setDefaultInterpolationParameter()
 {
-    for (int i = 0; i < kMax; i++)
+    for (int i = 0; i < kMaxInterpolationType; i++)
         setInterpolationParameter(static_cast<InterpolationType>(i), kDefaultInterpolationParameterValue);
 }
 
@@ -136,7 +136,7 @@ void BoneKeyframe::read(const uint8_t *data)
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
                         sizeof(chunk.interpolationTable));
     QuadWord v;
-    for (int i = 0; i < kMax; i++) {
+    for (int i = 0; i < kMaxInterpolationType; i++) {
         getValueFromTable(m_rawInterpolationTable, i, v);
         setInterpolationParameterInternal(static_cast<InterpolationType>(i), v);
     }
@@ -206,7 +206,7 @@ void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadW
         // y1 => QuadWord#y():1
         // x2 => QuadWord#z():2
         // y2 => QuadWord#w():3
-        int index = i * kMax;
+        int index = i * kMaxInterpolationType;
         table[index + kX] = static_cast<int8_t>(m_parameter.x[i]);
         table[index + kY] = static_cast<int8_t>(m_parameter.y[i]);
         table[index + kZ] = static_cast<int8_t>(m_parameter.z[i]);
@@ -219,10 +219,10 @@ void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadW
 
 void BoneKeyframe::setInterpolationTable(const int8_t *table)
 {
-    for (int i = 0; i < kMax; i++)
+    for (int i = 0; i < kMaxInterpolationType; i++)
         m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;
     QuadWord v;
-    for (int i = 0; i < kMax; i++) {
+    for (int i = 0; i < kMaxInterpolationType; i++) {
         getValueFromTable(table, i, v);
         delete[] m_interpolationTable[i];
         if (m_linear[i]) {

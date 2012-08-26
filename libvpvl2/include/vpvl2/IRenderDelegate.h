@@ -78,7 +78,8 @@ public:
         kMouseCursorPosition,
         kMouseLeftPressPosition,
         kMouseMiddlePressPosition,
-        kMouseRightPressPosition
+        kMouseRightPressPosition,
+        kMaxMousePositionType
     };
     enum MatrixTypeFlags {
         kWorldMatrix        = 0x001,

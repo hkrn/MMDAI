@@ -66,14 +66,16 @@ public:
         kUVA2,
         kUVA3,
         kUVA4,
-        kMaterial
+        kMaterial,
+        kMaxMorphType
     };
     enum Category {
         kReserved,
         kEyeblow,
         kEye,
         kLip,
-        kOther
+        kOther,
+        kMaxCategoryType
     };
 
     virtual ~IMorph() {}

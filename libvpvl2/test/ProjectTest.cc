@@ -82,7 +82,7 @@ static void TestBoneAnimation(const IMotion *motion)
     ASSERT_EQ(Vector3(1, 2, -3), ba.frameAt(0)->position());
     ASSERT_EQ(Quaternion(-1, -2, 3, 4), ba.frameAt(0)->rotation());
     // ASSERT_TRUE(ba.frameAt(0)->isIKEnabled());
-    for (int i = 0; i < IBoneKeyframe::kMax; i++) {
+    for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
         int offset = i * 4;
         ba.frameAt(0)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q);
@@ -92,8 +92,8 @@ static void TestBoneAnimation(const IMotion *motion)
     ASSERT_EQ(Vector3(3, 1, -2), ba.frameAt(1)->position());
     ASSERT_EQ(Quaternion(-4, -3, 2, 1), ba.frameAt(1)->rotation());
     // ASSERT_FALSE(ba.frameAt(1)->isIKEnabled());
-    for (int i = IBoneKeyframe::kMax - 1; i >= 0; i--) {
-        int offset = (IBoneKeyframe::kMax - 1 - i) * 4;
+    for (int i = IBoneKeyframe::kMaxInterpolationType - 1; i >= 0; i--) {
+        int offset = (IBoneKeyframe::kMaxInterpolationType - 1 - i) * 4;
         ba.frameAt(1)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q);
     }
@@ -125,7 +125,7 @@ static void TestCameraAnimation(const IMotion *motion)
     ASSERT_TRUE(qFuzzyCompare(angle1.z(), -degree(3)));
     ASSERT_EQ(15.0f, ca.frameAt(0)->fov());
     ASSERT_EQ(150.0f, ca.frameAt(0)->distance());
-    for (int i = 0; i < ICameraKeyframe::kMax; i++) {
+    for (int i = 0; i < ICameraKeyframe::kMaxInterpolationType; i++) {
         int offset = i * 4;
         ca.frameAt(0)->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q);
@@ -138,8 +138,8 @@ static void TestCameraAnimation(const IMotion *motion)
     ASSERT_TRUE(qFuzzyCompare(angle2.z(), -degree(2)));
     ASSERT_EQ(30.0f, ca.frameAt(1)->fov());
     ASSERT_EQ(300.0f, ca.frameAt(1)->distance());
-    for (int i = ICameraKeyframe::kMax - 1; i >= 0; i--) {
-        int offset = (ICameraKeyframe::kMax - 1 - i) * 4;
+    for (int i = ICameraKeyframe::kMaxInterpolationType - 1; i >= 0; i--) {
+        int offset = (ICameraKeyframe::kMaxInterpolationType - 1 - i) * 4;
         ca.frameAt(1)->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q);
     }

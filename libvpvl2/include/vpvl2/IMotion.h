@@ -62,7 +62,7 @@ public:
         kUnknown,
         kVMD,
         kMVD,
-        kMaxType
+        kMaxMotionType
     };
 
     virtual ~IMotion() {}
