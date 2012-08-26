@@ -900,7 +900,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, IModel *model)
                 newKeyframe->setRotation(keyframe->rotation());
                 newKeyframe->setTimeIndex(frameIndex);
                 QuadWord v;
-                for (int i = 0; i < IBoneKeyframe::kMax; i++) {
+                for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
                     IBoneKeyframe::InterpolationType type = static_cast<IBoneKeyframe::InterpolationType>(i);
                     keyframe->getInterpolationParameter(type, v);
                     newKeyframe->setInterpolationParameter(type, v);
