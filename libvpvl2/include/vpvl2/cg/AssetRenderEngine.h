@@ -44,6 +44,7 @@
 
 #include <assimp.h>
 #include <aiScene.h>
+#include <map>
 
 class btDynamicsWorld;
 class btIDebugDraw;

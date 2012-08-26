@@ -42,6 +42,8 @@
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
 
+#include <string>
+
 #ifdef VPVL2_LINK_QT
 #include <QtOpenGL/QGLFunctions>
 #endif /* VPVL_LINK_QT */
