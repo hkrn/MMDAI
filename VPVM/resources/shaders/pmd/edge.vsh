@@ -1,9 +1,13 @@
 /* pmd/edge.vsh */
-invariant gl_Position;
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
+//invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
-attribute vec3 inPosition;
-varying vec4 outColor;
+in vec3 inPosition;
+out vec4 outColor;
 const float kOne = 1.0;
 
 void main() {

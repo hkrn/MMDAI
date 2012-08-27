@@ -1,4 +1,7 @@
 /* asset/zplot.fsh based on three.js */
+#if __VERSION__ < 130
+#define in varying
+#endif
 #ifdef GL_ES
 presicion highp float;
 #endif

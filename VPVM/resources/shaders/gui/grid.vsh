@@ -1,8 +1,12 @@
 /* gui/grid.vsh */
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
 uniform mat4 modelViewProjectionMatrix;
-attribute vec3 inPosition;
-attribute vec3 inColor;
-varying vec3 outColor;
+in vec3 inPosition;
+in vec3 inColor;
+out vec3 outColor;
 
 void main() {
     outColor = inColor;

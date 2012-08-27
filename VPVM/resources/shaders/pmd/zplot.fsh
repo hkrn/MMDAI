@@ -1,4 +1,10 @@
 /* pmd/zplot.fsh based on three.js */
+#if __VERSION__ < 130
+#define in varying
+#define outPixelColor gl_FragColor
+#else
+out vec4 outPixelColor;
+#endif
 #ifdef GL_ES
 precision highp float;
 #endif
@@ -12,7 +18,7 @@ vec4 packDepth(const float depth) {
 }
 
 void main() {
-    gl_FragColor = packDepth(gl_FragCoord.z);
+    outPixelColor = packDepth(gl_FragCoord.z);
     //float z = gl_FragCoord.z / gl_FragCoord.w;
     //gl_FragColor = vec4(z, 0, 0, 1);
 }

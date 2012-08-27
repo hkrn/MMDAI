@@ -1,4 +1,8 @@
 /* asset/model.vsh */
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
 invariant gl_Position;
 uniform mat4 modelMatrix;
 uniform mat4 viewProjectionMatrix;
@@ -11,14 +15,14 @@ uniform vec3 cameraPosition;
 uniform bool isMainSphereMap;
 uniform bool isSubSphereMap;
 uniform bool hasDepthTexture;
-attribute vec3 inPosition;
-attribute vec3 inNormal;
-attribute vec2 inTexCoord;
-varying vec4 outColor;
-varying vec4 outTexCoord;
-varying vec4 outShadowCoord;
-varying vec3 outEyeView;
-varying vec3 outNormal;
+in vec3 inPosition;
+in vec3 inNormal;
+in vec2 inTexCoord;
+out vec4 outColor;
+out vec4 outTexCoord;
+out vec4 outShadowCoord;
+out vec3 outEyeView;
+out vec3 outNormal;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);

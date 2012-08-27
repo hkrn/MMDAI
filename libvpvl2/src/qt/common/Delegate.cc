@@ -772,7 +772,7 @@ void Delegate::removeModel(IModel *model)
     }
 }
 
-void Delegate::createRenderTargets(bool enableMSAA)
+void Delegate::initialize(bool enableMSAA)
 {
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);

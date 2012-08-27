@@ -1,8 +1,12 @@
 /* gui/texture.vsh */
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
 uniform mat4 modelViewProjectionMatrix;
-attribute vec2 inPosition;
-attribute vec2 inTexCoord;
-varying vec2 outTexCoord;
+in vec2 inPosition;
+in vec2 inTexCoord;
+out vec2 outTexCoord;
 
 void main() {
     outTexCoord = inTexCoord;

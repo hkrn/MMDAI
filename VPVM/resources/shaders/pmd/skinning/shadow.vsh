@@ -1,10 +1,14 @@
 /* pmd/shadow.vsh */
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
 invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
-attribute vec3 inPosition;
+in vec3 inPosition;
 const float kOne = 1.0;
 
-attribute vec3 inBoneIndicesAndWeights;
+in vec3 inBoneIndicesAndWeights;
 const int kMaxBones = 128;
 uniform mat4 boneMatrices[kMaxBones];
 

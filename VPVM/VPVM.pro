@@ -142,6 +142,7 @@ macx {
   CONFIG(release, debug|release) {
     CONFIG += x86 x86_64
   }
+  LIBS += -framework Cocoa
 }
 linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN

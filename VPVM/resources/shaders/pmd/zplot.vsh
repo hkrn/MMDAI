@@ -1,7 +1,11 @@
 /* pmd/zplot.vsh */
-invariant gl_Position;
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
+//invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
-attribute vec3 inPosition;
+in vec3 inPosition;
 const float kOne = 1.0;
 
 void main() {

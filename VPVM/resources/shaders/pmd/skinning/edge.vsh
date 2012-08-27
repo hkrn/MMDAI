@@ -1,16 +1,20 @@
 /* pmd/edge.vsh */
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
 invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 uniform vec4 color;
 uniform float edgeWidth;
-attribute vec3 inPosition;
-attribute vec3 inNormal;
-attribute float inEdgeOffset;
-varying vec4 outColor;
+in vec3 inPosition;
+in vec3 inNormal;
+in float inEdgeOffset;
+out vec4 outColor;
 const float kOne = 1.0;
 const float kZero = 0.0;
 
-attribute vec3 inBoneIndicesAndWeights;
+in vec3 inBoneIndicesAndWeights;
 const int kMaxBones = 128;
 uniform mat4 boneMatrices[kMaxBones];
 

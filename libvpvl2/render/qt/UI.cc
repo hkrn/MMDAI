@@ -35,10 +35,11 @@
 /* ----------------------------------------------------------------- */
 
 #include "UI.h"
-#include "Delegate.h"
-#include "Encoding.h"
-#include "CString.h"
-#include "Util.h"
+#include <vpvl2/qt/CustomGLContext.h>
+#include <vpvl2/qt/Delegate.h>
+#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Util.h>
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderDelegate.h>
@@ -347,7 +348,7 @@ namespace qt
 {
 
 UI::UI()
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), 0),
+    : QGLWidget(new CustomGLContext(QGLFormat(QGL::SampleBuffers)), 0),
       m_settings(0),
       m_fbo(0),
       m_world(0),
@@ -396,7 +397,7 @@ void UI::load(const QString &filename)
         settings.insert(key, m_settings->value(key).toString());
     }
     m_delegate = new Delegate(settings, m_scene, this);
-    m_delegate->createRenderTargets(m_settings->value("effect.msaa", true).toBool());
+    m_delegate->initialize(m_settings->value("effect.msaa", true).toBool());
     m_delegate->updateMatrices(size());
     resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
@@ -453,6 +454,10 @@ void UI::closeEvent(QCloseEvent *event)
 void UI::initializeGL()
 {
     initializeGLFunctions();
+    qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
+    qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
+    qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
+    qDebug("GL_SHADING_LANGUAGE_VERSION: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

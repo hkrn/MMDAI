@@ -1,4 +1,8 @@
 /* asset/model.fsh */
+#if __VERSION__ < 130
+#define in varying
+#define texture(samp, uv) texture2D((samp), (uv))
+#endif
 uniform bool hasMainTexture;
 uniform bool hasSubTexture;
 uniform bool isMainAdditive;
@@ -11,11 +15,11 @@ uniform vec3 lightDirection;
 uniform vec3 materialSpecular;
 uniform float materialShininess;
 uniform float opacity;
-varying vec4 outColor;
-varying vec4 outTexCoord;
-varying vec4 outShadowCoord;
-varying vec3 outEyeView;
-varying vec3 outNormal;
+out vec4 outColor;
+out vec4 outTexCoord;
+out vec4 outShadowCoord;
+out vec3 outEyeView;
+out vec3 outNormal;
 const float kDepthThreshold = 0.00002;
 const float kOne = 1.0;
 const float kZero = 0.0;
@@ -31,23 +35,23 @@ void main() {
     vec3 normal = normalize(outNormal);
     if (hasMainTexture) {
         if (isMainAdditive) {
-            color.rgb += texture2D(mainTexture, outTexCoord.xy).rgb;
+            color.rgb += texture(mainTexture, outTexCoord.xy).rgb;
         }
         else {
-            color *= texture2D(mainTexture, outTexCoord.xy);
+            color *= texture(mainTexture, outTexCoord.xy);
         }
     }
     if (hasSubTexture) {
         if (isSubAdditive) {
-            color.rgb += texture2D(subTexture, outTexCoord.zw).rgb;
+            color.rgb += texture(subTexture, outTexCoord.zw).rgb;
         }
         else {
-            color *= texture2D(subTexture, outTexCoord.zw);
+            color *= texture(subTexture, outTexCoord.zw);
         }
     }
     if (hasDepthTexture) {
         vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
-        vec4 depth4 = texture2D(depthTexture, shadowCoord.xy);
+        vec4 depth4 = texture(depthTexture, shadowCoord.xy);
         float depth = unpackDepth(depth4) + kDepthThreshold;
         if (depth < shadowCoord.z)
             color.rgb *= 0.8;

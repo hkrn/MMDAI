@@ -141,7 +141,7 @@ function(link_assimp target)
       target_link_libraries(${target} ${ASSIMP_LIBRARY})
     else()
       message(FATAL_ERROR "Required Open Asset Import Library is not found.")
-	endif()
+        endif()
   endif()
 endfunction()
 
@@ -319,6 +319,7 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip vpvl2qtcommon_sources)
     set(vpvl2qtcommon_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Archive.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h
+                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/DDSTexture.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Delegate.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
@@ -340,6 +341,10 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
     target_link_libraries(vpvl2_qt vpvl2 vpvl2qtcommon ${QT_LIBRARIES})
     if(APPLE)
       add_definitions(-DUSE_FILE32API)
+	  find_library(COCOA_LIBRARY Cocoa)
+	  find_path(COCOA_INCLUDE_DIR Cocoa/Cocoa.h)
+	  target_link_libraries(vpvl2qtcommon ${COCOA_LIBRARY})
+	  include_directories(${COCOA_INCLUDE_DIR})
      endif()
   endif()
 endif()
@@ -389,7 +394,6 @@ endif()
 option(VPVL2_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL2_OPENGL_RENDERER required, default is OFF)" OFF)
 if(VPVL2_OPENGL_RENDERER AND VPVL2_BUILD_SDL)
   find_package(SDL REQUIRED)
-  find_package(SDL_image REQUIRED)
   set(vpvl2_sdl_sources render/sdl/main.cc)
   if(APPLE)
     list(APPEND vpvl2_sdl_sources render/sdl/SDLMain.m render/sdl/SDLMain.h)

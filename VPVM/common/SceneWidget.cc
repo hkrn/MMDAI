@@ -38,6 +38,7 @@
 
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/World.h>
 
 #include "SceneWidget.h"
@@ -59,7 +60,7 @@
 #include <OpenGL/glu.h>
 #else
 #include <GL/glu.h>
-#endif
+#endif /* Q_OS_DARWIN */
 
 using namespace vpvl2;
 using namespace internal;
@@ -121,41 +122,41 @@ private:
     btRigidBody *m_body;
 };
 
-SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent) :
-    QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-    m_loader(0),
-    m_settings(settings),
-    m_background(0),
-    m_encoding(encoding),
-    m_factory(factory),
-    m_currentSelectedBone(0),
-    m_lastBonePosition(kZeroV3),
-    m_totalDelta(0.0f),
-    m_debugDrawer(0),
-    m_grid(0),
-    m_info(0),
-    m_plane(0),
-    m_handles(0),
-    m_editMode(kSelect),
-    m_lastDistance(0.0f),
-    m_prevElapsed(0.0f),
-    m_timeIndex(0.0f),
-    m_frameCount(0),
-    m_currentFPS(0),
-    m_interval(1000.0f / Scene::defaultFPS()),
-    m_internalTimerID(0),
-    m_handleFlags(0),
-    m_playing(false),
-    m_enableBoneMove(false),
-    m_enableBoneRotate(false),
-    m_showModelDialog(false),
-    m_lockTouchEvent(false),
-    m_enableMoveGesture(false),
-    m_enableRotateGesture(false),
-    m_enableScaleGesture(false),
-    m_enableUndoGesture(false),
-    m_enableUpdateGL(true),
-    m_isImageHandleRectIntersect(false)
+SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent)
+    : QGLWidget(new qt::CustomGLContext(QGLFormat(QGL::SampleBuffers)), parent),
+      m_loader(0),
+      m_settings(settings),
+      m_background(0),
+      m_encoding(encoding),
+      m_factory(factory),
+      m_currentSelectedBone(0),
+      m_lastBonePosition(kZeroV3),
+      m_totalDelta(0.0f),
+      m_debugDrawer(0),
+      m_grid(0),
+      m_info(0),
+      m_plane(0),
+      m_handles(0),
+      m_editMode(kSelect),
+      m_lastDistance(0.0f),
+      m_prevElapsed(0.0f),
+      m_timeIndex(0.0f),
+      m_frameCount(0),
+      m_currentFPS(0),
+      m_interval(1000.0f / Scene::defaultFPS()),
+      m_internalTimerID(0),
+      m_handleFlags(0),
+      m_playing(false),
+      m_enableBoneMove(false),
+      m_enableBoneRotate(false),
+      m_showModelDialog(false),
+      m_lockTouchEvent(false),
+      m_enableMoveGesture(false),
+      m_enableRotateGesture(false),
+      m_enableScaleGesture(false),
+      m_enableUndoGesture(false),
+      m_enableUpdateGL(true),
+      m_isImageHandleRectIntersect(false)
 {
     m_grid = new Grid();
     m_plane = new PlaneWorld();

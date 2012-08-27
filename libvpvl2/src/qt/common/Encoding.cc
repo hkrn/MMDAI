@@ -106,6 +106,8 @@ IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec co
     case IString::kUTF16:
         s = new CString(m_utf16->toUnicode(str, size));
         break;
+    default:
+        break;
     }
     return s;
 }
@@ -130,6 +132,8 @@ uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
             break;
         case IString::kUTF16:
             bytes = m_utf16->fromUnicode(s->value());
+            break;
+        default:
             break;
         }
         size_t size = bytes.length();

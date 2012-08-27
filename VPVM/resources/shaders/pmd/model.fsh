@@ -1,4 +1,11 @@
 /* pmd/model.fsh (unpackDepth and soft shadow based on three.js) */
+#if __VERSION__ < 130
+#define in varying
+#define outPixelColor gl_FragColor
+#define texture(samp, uv) texture2D((samp), (uv))
+#else
+out vec4 outPixelColor;
+#endif
 uniform bool useToon;
 uniform bool useSoftShadow;
 uniform bool hasMainTexture;
@@ -16,11 +23,11 @@ uniform vec3 lightDirection;
 uniform vec2 depthTextureSize;
 uniform float materialShininess;
 uniform float opacity;
-varying vec4 outColor;
-varying vec4 outTexCoord;
-varying vec4 outShadowCoord;
-varying vec3 outEyeView;
-varying vec3 outNormal;
+in vec4 outColor;
+in vec4 outTexCoord;
+in vec4 outShadowCoord;
+in vec3 outEyeView;
+in vec3 outNormal;
 const float kOne = 1.0;
 const float kZero = 0.0;
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
@@ -34,18 +41,18 @@ float unpackDepth(const vec4 value) {
 vec4 applyTexture(vec4 color) {
     if (hasMainTexture) {
         if (isMainAdditive) {
-            color.rgb += texture2D(mainTexture, outTexCoord.xy).rgb;
+            color.rgb += texture(mainTexture, outTexCoord.xy).rgb;
         }
         else {
-            color *= texture2D(mainTexture, outTexCoord.xy);
+            color *= texture(mainTexture, outTexCoord.xy);
         }
     }
     if (hasSubTexture) {
         if (isSubAdditive) {
-            color.rgb += texture2D(subTexture, outTexCoord.zw).rgb;
+            color.rgb += texture(subTexture, outTexCoord.zw).rgb;
         }
         else {
-            color.rgb *= texture2D(subTexture, outTexCoord.zw).rgb;
+            color.rgb *= texture(subTexture, outTexCoord.zw).rgb;
         }
     }
     return color;
@@ -57,7 +64,7 @@ void main() {
     if (useToon) {
         const vec3 kOne3 = vec3(kOne, kOne, kOne);
         const vec2 kToonColorCoord = vec2(kZero, kOne);
-        vec3 toonColor = texture2D(toonTexture, kToonColorCoord).rgb;
+        vec3 toonColor = texture(toonTexture, kToonColorCoord).rgb;
         float ldotn = dot(normal, -lightDirection);
         if (hasDepthTexture) {
             vec3 shadowCoord = outShadowCoord.xyz / outShadowCoord.w;
@@ -71,23 +78,23 @@ void main() {
                 float dy0 = -kSubPixel * ypoffset;
                 float dx1 = kSubPixel * xpoffset;
                 float dy1 = kSubPixel * ypoffset;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx0, dy0)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(dx0, dy0)));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(0.0, dy0)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(0.0, dy0)));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx1, dy0)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(dx1, dy0)));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx0, 0.0)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(dx0, 0.0)));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx1, 0.0)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(dx1, 0.0)));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx0, dy1)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(dx0, dy1)));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(0.0, dy1)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(0.0, dy1)));
                 if (depth < shadowCoord.z) shadow += kDelta;
-                depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy + vec2(dx1, dy1)));
+                depth = unpackDepth(texture(depthTexture, shadowCoord.xy + vec2(dx1, dy1)));
                 if (depth < shadowCoord.z) shadow += kDelta;
                 vec4 shadowColor = applyTexture(materialColor);
                 shadowColor.rgb *= toonColor;
@@ -95,7 +102,7 @@ void main() {
             }
             else {
                 const float kDepthThreshold = 0.00002;
-                float depth = unpackDepth(texture2D(depthTexture, shadowCoord.xy)) + kDepthThreshold;
+                float depth = unpackDepth(texture(depthTexture, shadowCoord.xy)) + kDepthThreshold;
                 if (depth < shadowCoord.z) {
                     vec4 shadow = applyTexture(materialColor);
                     shadow.rgb *= toonColor;
@@ -112,6 +119,6 @@ void main() {
     float hdotn = max(dot(halfVector, normal), kZero);
     color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
     color.a *= opacity;
-    gl_FragColor = color;
+    outPixelColor = color;
 }
 
