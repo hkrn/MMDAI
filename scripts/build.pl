@@ -252,13 +252,13 @@ sub make_universal_binary {
 
 sub make_library {
     my ($base_directory, $directory, $configure_args, $output_filenames) = @_;
+    my $orig_cflags = $ENV{'CFLAGS'} || '';
+    my $orig_cxxflags = $ENV{'CXXFLAGS'} || '';
+    my $orig_ldflags = $ENV{'LDFLAGS'} || '';
     if ($opt_march) {
         my $path_i386 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_i386');
         my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_native');
         make_path $path_i386 unless -d $path_i386;
-        my $orig_cflags = $ENV{'CFLAGS'} || '';
-        my $orig_cxxflags = $ENV{'CXXFLAGS'} || '';
-        my $orig_ldflags = $ENV{'LDFLAGS'} || '';
         $ENV{'CFLAGS'} = ($ENV{'CFLAGS32'} || '') . ' -arch i386';
         $ENV{'CXXFLAGS'} = ($ENV{'CXXFLAGS32'} || '') . ' -arch i386';
         $ENV{'LDFLAGS'} = ($ENV{'LDFLAGS32'} || '') . ' -arch i386';
@@ -274,16 +274,19 @@ sub make_library {
         build_with_configure $directory, [ '--prefix=' . $path_x86_64, @$configure_args ], 1, 1;
         chdir $base_directory;
         make_universal_binary($path_i386, $path_x86_64, $path_x86_64, $output_filenames);
-        $ENV{'CFLAGS'} = $orig_cflags;
-        $ENV{'CXXLAGS'} = $orig_cxxflags;
-        $ENV{'LDLAGS'} = $orig_ldflags;
     }
     else {
+        $ENV{'CFLAGS'} = $ENV{'CFLAGS64'} || '';
+        $ENV{'CXXFLAGS'} = $ENV{'CXXFLAGS64'} || '';
+        $ENV{'LDFLAGS'} = $ENV{'LDFLAGS64'} || '';
         my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_native');
         make_path $path_x86_64 unless -d $path_x86_64;
         build_with_configure $directory, [ '--prefix=' . $path_x86_64, @$configure_args ], 1, 1;
         chdir $base_directory;
     }
+    $ENV{'CFLAGS'} = $orig_cflags;
+    $ENV{'CXXLAGS'} = $orig_cxxflags;
+    $ENV{'LDLAGS'} = $orig_ldflags;
 }
 
 # clone MMDAI sources
@@ -349,19 +352,27 @@ unless (-d $DEVIL_DIRECTORY) {
     chdir $base_directory;
 }
 
+my $libjpeg_path = File::Spec->catdir($base_directory, $LIBJPEG_DIRECTORY);
+my $libpng_path = File::Spec->catdir($base_directory, $LIBPNG_DIRECTORY);
 if ($opt_march) {
-    my $libjpeg_path = File::Spec->catdir($base_directory, $LIBJPEG_DIRECTORY);
     my $libjpeg_lib32_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_i386');
     my $libjpeg_lib64_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_native');
-    my $libpng_path = File::Spec->catdir($base_directory, $LIBPNG_DIRECTORY);
     my $libpng_lib32_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_i386');
     my $libpng_lib64_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_native');
     my $ldflags32 = '-L' . $libjpeg_lib32_path . '/lib -L' . $libpng_lib32_path . '/lib';
     my $cflags32  = $ldflags32 . ' -I' . $libjpeg_lib32_path . '/include -I' . $libpng_lib32_path . '/include'; 
     my $ldflags64 = '-L' . $libjpeg_lib64_path . '/lib -L' . $libpng_lib64_path . '/lib';
-    my $cflags64 = $ldflags64 . ' -I' . $libjpeg_lib32_path . '/include -I' . $libpng_lib32_path . '/include'; 
+    my $cflags64 = $ldflags64 . ' -I' . $libjpeg_lib64_path . '/include -I' . $libpng_lib64_path . '/include'; 
     $ENV{'CFLAGS32'} = $ENV{'CXXFLAGS32'} = $cflags32;
     $ENV{'LDFLAGS32'} = $ldflags32;
+    $ENV{'CFLAGS64'} = $ENV{'CXXFLAGS64'} = $cflags64;
+    $ENV{'LDFLAGS64'} = $ldflags64;
+}
+else {
+    my $libjpeg_lib64_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_native');
+    my $libpng_lib64_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_native');
+    my $ldflags64 = '-L' . $libjpeg_lib64_path . '/lib -L' . $libpng_lib64_path . '/lib';
+    my $cflags64 = $ldflags64 . ' -I' . $libjpeg_lib64_path . '/include -I' . $libpng_lib64_path . '/include'; 
     $ENV{'CFLAGS64'} = $ENV{'CXXFLAGS64'} = $cflags64;
     $ENV{'LDFLAGS64'} = $ldflags64;
 }
