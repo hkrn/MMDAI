@@ -15,6 +15,45 @@ using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
+namespace vpvl2 {
+
+inline std::ostream& operator <<(std::ostream &os, const Vector3 &value)
+{
+    return os << "Vector3(x=" << value.x()
+              << ", y=" << value.y()
+              << ", z=" << value.z()
+              << ")";
+}
+
+inline std::ostream& operator <<(std::ostream &os, const Vector4 &value)
+{
+    return os << "Vector4(x=" << value.x()
+              << ", y=" << value.y()
+              << ", z=" << value.z()
+              << ", w=" << value.w()
+              << ")";
+}
+
+inline std::ostream& operator <<(std::ostream &os, const Quaternion &value)
+{
+    return os << "Quaternion(x=" << value.x()
+              << ", y=" << value.y()
+              << ", z=" << value.z()
+              << ", w=" << value.w()
+              << ")";
+}
+
+inline std::ostream& operator <<(std::ostream &os, const QuadWord &value)
+{
+    return os << "QuadWord(x=" << value.x()
+              << ", y=" << value.y()
+              << ", z=" << value.z()
+              << ", w=" << value.w()
+              << ")";
+}
+
+}
+
 namespace {
 
 static const float kIdentity4x4[] = {
@@ -24,35 +63,56 @@ static const float kIdentity4x4[] = {
     0, 0, 0, 1
 };
 
-static inline void AssertVector(const Vector3 &expected, const Vector3 &actual)
+static const float kEpsilon = 0.000001;
+
+static inline AssertionResult testVector(const Vector3 &expected, const Vector3 &actual)
 {
-    ASSERT_FLOAT_EQ(expected.x(), actual.x());
-    ASSERT_FLOAT_EQ(expected.y(), actual.y());
-    ASSERT_FLOAT_EQ(expected.z(), actual.z());
+    if (!btEqual(expected.x() - actual.x(), kEpsilon))
+        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.y() - actual.y(), kEpsilon))
+        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.z() - actual.z(), kEpsilon))
+        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
+    return AssertionSuccess();
 }
 
-static inline void AssertVector(const Vector4 &expected, const Vector4 &actual)
+static inline AssertionResult testVector(const Vector4 &expected, const Vector4 &actual)
 {
-    ASSERT_FLOAT_EQ(expected.x(), actual.x());
-    ASSERT_FLOAT_EQ(expected.y(), actual.y());
-    ASSERT_FLOAT_EQ(expected.z(), actual.z());
-    ASSERT_FLOAT_EQ(expected.w(), actual.w());
+    if (!btEqual(expected.x() - actual.x(), kEpsilon))
+        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.y() - actual.y(), kEpsilon))
+        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.z() - actual.z(), kEpsilon))
+        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.w() - actual.w(), kEpsilon))
+        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
+    return AssertionSuccess();
 }
 
-static inline void AssertVector(const Quaternion &expected, const Quaternion &actual)
+static inline AssertionResult testVector(const Quaternion &expected, const Quaternion &actual)
 {
-    ASSERT_FLOAT_EQ(expected.x(), actual.x());
-    ASSERT_FLOAT_EQ(expected.y(), actual.y());
-    ASSERT_FLOAT_EQ(expected.z(), actual.z());
-    ASSERT_FLOAT_EQ(expected.w(), actual.w());
+    if (!btEqual(expected.x() - actual.x(), kEpsilon))
+        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.y() - actual.y(), kEpsilon))
+        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.z() - actual.z(), kEpsilon))
+        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.w() - actual.w(), kEpsilon))
+        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
+    return AssertionSuccess();
 }
 
-static inline void AssertVector(const QuadWord &actual, const QuadWord &expected)
+static inline AssertionResult testVector(const QuadWord &actual, const QuadWord &expected)
 {
-    ASSERT_FLOAT_EQ(expected.x(), actual.x());
-    ASSERT_FLOAT_EQ(expected.y(), actual.y());
-    ASSERT_FLOAT_EQ(expected.z(), actual.z());
-    ASSERT_FLOAT_EQ(expected.w(), actual.w());
+    if (!btEqual(expected.x() - actual.x(), kEpsilon))
+        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.y() - actual.y(), kEpsilon))
+        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.z() - actual.z(), kEpsilon))
+        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.w() - actual.w(), kEpsilon))
+        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
+    return AssertionSuccess();
 }
 
 static inline void AssertMatrix(const float *expected, const float *actual)

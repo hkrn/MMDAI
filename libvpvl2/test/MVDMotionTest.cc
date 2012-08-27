@@ -31,32 +31,32 @@ static void CompareBoneInterpolationMatrix(const QuadWord p[], const mvd::BoneKe
 {
     QuadWord actual, expected = p[0];
     frame.getInterpolationParameter(mvd::BoneKeyframe::kX, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
     expected = p[1];
     frame.getInterpolationParameter(mvd::BoneKeyframe::kY, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
     expected = p[2];
     frame.getInterpolationParameter(mvd::BoneKeyframe::kZ, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
     expected = p[3];
     frame.getInterpolationParameter(mvd::BoneKeyframe::kRotation, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
 }
 
 static void CompareCameraInterpolationMatrix(const QuadWord p[], const mvd::CameraKeyframe &frame)
 {
     QuadWord actual, expected = p[2];
     frame.getInterpolationParameter(mvd::CameraKeyframe::kX, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
     expected = p[3];
     frame.getInterpolationParameter(mvd::CameraKeyframe::kRotation, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
     expected = p[4];
     frame.getInterpolationParameter(mvd::CameraKeyframe::kDistance, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
     expected = p[5];
     frame.getInterpolationParameter(mvd::CameraKeyframe::kFov, actual);
-    AssertVector(actual, expected);
+    ASSERT_TRUE(testVector(expected, actual));
 }
 
 }
@@ -142,16 +142,16 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     ASSERT_EQ(0, nameList.key(&str));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.layerIndex(), newFrame.layerIndex());
-    AssertVector(newFrame.position(), pos);
-    AssertVector(newFrame.rotation(), rot);
+    ASSERT_TRUE(testVector(pos, newFrame.position()));
+    ASSERT_TRUE(testVector(rot, newFrame.rotation()));
     CompareBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
     // ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.layerIndex(), cloned->layerIndex());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
-    AssertVector(cloned->position(), pos);
-    AssertVector(cloned->rotation(), rot);
+    ASSERT_TRUE(testVector(pos, cloned->position()));
+    ASSERT_TRUE(testVector(rot, cloned->rotation()));
     CompareBoneInterpolationMatrix(p, *static_cast<mvd::BoneKeyframe *>(cloned.data()));
 }
 
@@ -185,7 +185,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     newFrame.read(ptr.data());
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.layerIndex(), newFrame.layerIndex());
-    AssertVector(newFrame.position(), frame.position());
+    ASSERT_TRUE(testVector(frame.position(), newFrame.position()));
     // compare read camera frame
     // for radian and degree calculation
     ASSERT_FLOAT_EQ(newFrame.angle().x(), frame.angle().x());
@@ -198,7 +198,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     QScopedPointer<ICameraKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_EQ(frame.layerIndex(), cloned->layerIndex());
-    AssertVector(cloned->position(), frame.position());
+    ASSERT_TRUE(testVector(frame.position(), cloned->position()));
     // for radian and degree calculation
     ASSERT_FLOAT_EQ(cloned->angle().x(), frame.angle().x());
     ASSERT_FLOAT_EQ(cloned->angle().y(), frame.angle().y());
@@ -331,7 +331,7 @@ TEST(MVDMotionTest, BoneInterpolation)
     mvd::BoneKeyframe frame(&nameList);
     QuadWord n;
     frame.getInterpolationParameter(mvd::BoneKeyframe::kX, n);
-    AssertVector(n, mvd::Motion::InterpolationTable::kDefaultParameter);
+    ASSERT_TRUE(testVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -349,7 +349,7 @@ TEST(MVDMotionTest, CameraInterpolation)
     mvd::CameraKeyframe frame;
     QuadWord n;
     frame.getInterpolationParameter(mvd::CameraKeyframe::kX, n);
-    AssertVector(n, mvd::Motion::InterpolationTable::kDefaultParameter);
+    ASSERT_TRUE(testVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
             pz(17, 18, 19, 20),

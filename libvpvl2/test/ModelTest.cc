@@ -37,22 +37,22 @@ static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bo
 
 static void CompareVertex(const Vertex &expected, const Vertex &vertex2, const Array<Bone *> &bones)
 {
-    AssertVector(vertex2.origin(), expected.origin());
-    AssertVector(vertex2.normal(), expected.normal());
-    AssertVector(vertex2.texcoord(), expected.texcoord());
-    AssertVector(vertex2.uv(0), expected.uv(0));
-    AssertVector(kZeroV4, expected.uv(1));
+    ASSERT_TRUE(testVector(expected.origin(), vertex2.origin()));
+    ASSERT_TRUE(testVector(expected.normal(), vertex2.normal()));
+    ASSERT_TRUE(testVector(expected.texcoord(), vertex2.texcoord()));
+    ASSERT_TRUE(testVector(expected.uv(0), vertex2.uv(0)));
+    ASSERT_TRUE(testVector(expected.uv(1), kZeroV4));
     ASSERT_EQ(expected.type(), vertex2.type());
     ASSERT_EQ(expected.edgeSize(), vertex2.edgeSize());
     if (expected.type() == Vertex::kSdef) {
-        AssertVector(vertex2.sdefC(), expected.sdefC());
-        AssertVector(vertex2.sdefR0(), expected.sdefR0());
-        AssertVector(vertex2.sdefR1(), expected.sdefR1());
+        ASSERT_TRUE(testVector(expected.sdefC(), vertex2.sdefC()));
+        ASSERT_TRUE(testVector(expected.sdefR0(), vertex2.sdefR0()));
+        ASSERT_TRUE(testVector(expected.sdefR1(), vertex2.sdefR1()));
     }
     else {
-        AssertVector(kZeroV3, vertex2.sdefC());
-        AssertVector(kZeroV3, vertex2.sdefR0());
-        AssertVector(kZeroV3, vertex2.sdefR1());
+        ASSERT_TRUE(testVector(vertex2.sdefC(), kZeroV3));
+        ASSERT_TRUE(testVector(vertex2.sdefR0(), kZeroV3));
+        ASSERT_TRUE(testVector(vertex2.sdefR1(), kZeroV3));
     }
     Array<Vertex *> vertices;
     vertices.add(const_cast<Vertex *>(&expected));
@@ -118,11 +118,11 @@ TEST_P(FragmentTest, ReadWriteBone)
     ASSERT_EQ(size, read);
     ASSERT_TRUE(bone2.name()->equals(bone.name()));
     ASSERT_TRUE(bone2.englishName()->equals(bone.englishName()));
-    AssertVector(bone2.origin(), bone.origin());
-    AssertVector(bone2.destinationOrigin() - bone.origin(), bone.destinationOrigin());
-    AssertVector(bone2.axis(), bone.axis());
-    AssertVector(bone2.axisX(), bone.axisX());
-    AssertVector(bone2.axisZ(), bone.axisZ());
+    ASSERT_TRUE(testVector(bone.origin(), bone2.origin()));
+    ASSERT_TRUE(testVector(bone.destinationOrigin(), bone2.destinationOrigin() - bone.origin()));
+    ASSERT_TRUE(testVector(bone.axis(), bone2.axis()));
+    ASSERT_TRUE(testVector(bone.axisX(), bone2.axisX()));
+    ASSERT_TRUE(testVector(bone.axisZ(), bone2.axisZ()));
     ASSERT_EQ(bone.layerIndex(), bone2.layerIndex());
     ASSERT_EQ(bone.externalIndex(), bone2.externalIndex());
     ASSERT_TRUE(bone2.isRotateable());
@@ -226,10 +226,10 @@ TEST_P(FragmentTest, ReadWriteMaterial)
     ASSERT_EQ(size, read);
     ASSERT_TRUE(material2.name()->equals(material.name()));
     ASSERT_TRUE(material2.englishName()->equals(material.englishName()));
-    AssertVector(material2.ambient(), material.ambient());
-    AssertVector(material2.diffuse(), material.diffuse());
-    AssertVector(material2.specular(), material.specular());
-    AssertVector(material2.edgeColor(), material.edgeColor());
+    ASSERT_TRUE(testVector(material.ambient(), material2.ambient()));
+    ASSERT_TRUE(testVector(material.diffuse(), material2.diffuse()));
+    ASSERT_TRUE(testVector(material.specular(), material2.specular()));
+    ASSERT_TRUE(testVector(material.edgeColor(), material2.edgeColor()));
     ASSERT_EQ(material.sphereTextureRenderMode(), material2.sphereTextureRenderMode());
     ASSERT_EQ(material.shininess(), material2.shininess());
     ASSERT_EQ(material.edgeSize(), material2.edgeSize());
@@ -275,11 +275,11 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Bone *> &bones = morph2.bones();
     ASSERT_EQ(bones.count(), 2);
-    AssertVector(bones[0]->position, bone1->position);
-    AssertVector(bones[0]->rotation, bone1->rotation);
+    ASSERT_TRUE(testVector(bone1->position, bones[0]->position));
+    ASSERT_TRUE(testVector(bone1->rotation, bones[0]->rotation));
     ASSERT_EQ(bone1->index, bones[0]->index);
-    AssertVector(bones[1]->position, bone2->position);
-    AssertVector(bones[1]->rotation, bone2->rotation);
+    ASSERT_TRUE(testVector(bone2->position, bones[1]->position));
+    ASSERT_TRUE(testVector(bone2->rotation, bones[1]->rotation));
     ASSERT_EQ(bone2->index, bones[1]->index);
     // delete bone1 and bone2 at Morph destructor
     bone1.take();
@@ -381,24 +381,24 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Material *> &materials = morph2.materials();
     ASSERT_EQ(materials.count(), 2);
-    AssertVector(materials[0]->ambient, material1->ambient);
-    AssertVector(materials[0]->diffuse, material1->diffuse);
-    AssertVector(materials[0]->specular, material1->specular);
-    AssertVector(materials[0]->edgeColor, material1->edgeColor);
-    AssertVector(materials[0]->sphereTextureWeight, material1->sphereTextureWeight);
-    AssertVector(materials[0]->textureWeight, material1->textureWeight);
-    AssertVector(materials[0]->toonTextureWeight, material1->toonTextureWeight);
+    ASSERT_TRUE(testVector(material1->ambient, materials[0]->ambient));
+    ASSERT_TRUE(testVector(material1->diffuse, materials[0]->diffuse));
+    ASSERT_TRUE(testVector(material1->specular, materials[0]->specular));
+    ASSERT_TRUE(testVector(material1->edgeColor, materials[0]->edgeColor));
+    ASSERT_TRUE(testVector(material1->sphereTextureWeight, materials[0]->sphereTextureWeight));
+    ASSERT_TRUE(testVector(material1->textureWeight, materials[0]->textureWeight));
+    ASSERT_TRUE(testVector(material1->toonTextureWeight, materials[0]->toonTextureWeight));
     ASSERT_EQ(material1->edgeSize, materials[0]->edgeSize);
     ASSERT_EQ(material1->shininess, materials[0]->shininess);
     ASSERT_EQ(material1->operation, materials[0]->operation);
     ASSERT_EQ(material1->index, materials[0]->index);
-    AssertVector(materials[1]->ambient, material2->ambient);
-    AssertVector(materials[1]->diffuse, material2->diffuse);
-    AssertVector(materials[1]->specular, material2->specular);
-    AssertVector(materials[1]->edgeColor, material2->edgeColor);
-    AssertVector(materials[1]->sphereTextureWeight, material2->sphereTextureWeight);
-    AssertVector(materials[1]->textureWeight, material2->textureWeight);
-    AssertVector(materials[1]->toonTextureWeight, material2->toonTextureWeight);
+    ASSERT_TRUE(testVector(material2->ambient, materials[1]->ambient));
+    ASSERT_TRUE(testVector(material2->diffuse, materials[1]->diffuse));
+    ASSERT_TRUE(testVector(material2->specular, materials[1]->specular));
+    ASSERT_TRUE(testVector(material2->edgeColor, materials[1]->edgeColor));
+    ASSERT_TRUE(testVector(material2->sphereTextureWeight, materials[1]->sphereTextureWeight));
+    ASSERT_TRUE(testVector(material2->textureWeight, materials[1]->textureWeight));
+    ASSERT_TRUE(testVector(material2->toonTextureWeight, materials[1]->toonTextureWeight));
     ASSERT_EQ(material2->edgeSize, materials[1]->edgeSize);
     ASSERT_EQ(material2->shininess, materials[1]->shininess);
     ASSERT_EQ(material2->operation, materials[1]->operation);
@@ -491,9 +491,9 @@ TEST_P(FragmentTest, ReadWriteVertexMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Vertex *> &vertices = morph2.vertices();
     ASSERT_EQ(vertices.count(), 2);
-    AssertVector(vertices[0]->position, vertex1->position);
+    ASSERT_TRUE(testVector(vertex1->position, vertices[0]->position));
     ASSERT_EQ(vertex1->index, vertices[0]->index);
-    AssertVector(vertices[1]->position, vertex2->position);
+    ASSERT_TRUE(testVector(vertex2->position, vertices[1]->position));
     ASSERT_EQ(vertex2->index, vertices[1]->index);
     // delete vertex1 and vertex2 at Morph destructor
     vertex1.take();
@@ -626,10 +626,10 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::UV *> &uvs = morph2.uvs();
     ASSERT_EQ(uvs.count(), 2);
-    AssertVector(uvs[0]->position, uv1->position);
+    ASSERT_TRUE(testVector(uv1->position, uvs[0]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[0]->offset);
     ASSERT_EQ(uv1->index, uvs[0]->index);
-    AssertVector(uvs[1]->position, uv2->position);
+    ASSERT_TRUE(testVector(uv2->position, uvs[1]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[1]->offset);
     ASSERT_EQ(uv2->index, uvs[1]->index);
     // delete uv1 and uv2 at Morph destructor
@@ -689,57 +689,57 @@ TEST(MaterialTest, MergeAmbientColor)
     morph.operation = 0;
     material.setAmbient(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.resetMorph();
     // mod (0.0)
     morph.ambient.setValue(0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.6, 0.6, 0.6, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.4, 0.4, 0.4, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.2, 0.2, 0.2, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.0, 0.0, 0.0, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 1.0), material.ambient()));
     material.resetMorph();
     // add (0.2)
     morph.ambient.setValue(0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.85, 0.85, 0.85, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.9, 0.9, 0.9, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.0, 1.0, 1.0, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.ambient()));
     material.resetMorph();
     // add (0.6)
     morph.ambient.setValue(0.6, 0.6, 0.6);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(1.1, 1.1, 1.1, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(1.25, 1.25, 1.25, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.4, 1.4, 1.4, 1.0), material.ambient());
+    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.0), material.ambient()));
 }
 
 TEST(MaterialTest, MergeDiffuseColor)
@@ -751,56 +751,56 @@ TEST(MaterialTest, MergeDiffuseColor)
     morph.operation = 0;
     material.setDiffuse(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.resetMorph();
     // mod (0.0)
     morph.diffuse.setValue(0.0, 0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.6, 0.6, 0.6, 0.6), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 0.6), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.4, 0.4, 0.4, 0.4), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 0.4), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.2, 0.2, 0.2, 0.2), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 0.2), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.0, 0.0, 0.0, 0.0), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 0.0), material.diffuse()));
     material.resetMorph();
     // add (0.2)
     morph.diffuse.setValue(0.2, 0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.85, 0.85, 0.85, 0.85), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 0.85), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.9, 0.9, 0.9, 0.9), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 0.9), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.0, 1.0, 1.0, 1.0), material.diffuse());
+    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.diffuse()));
     material.resetMorph();
     // add (0.6)
     morph.diffuse.setValue(0.6, 0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(1.1, 1.1, 1.1, 1.1), material.diffuse());
+    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.1), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(1.25, 1.25, 1.25, 1.25), material.diffuse());
+    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.25), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.4, 1.4, 1.4, 1.4), material.diffuse());
+    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.4), material.diffuse()));
 }
 
 TEST(MaterialTest, MergeSpecularColor)
@@ -812,56 +812,56 @@ TEST(MaterialTest, MergeSpecularColor)
     morph.operation = 0;
     material.setSpecular(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.resetMorph();
     // mod (0.0)
     morph.specular.setValue(0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.6, 0.6, 0.6, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.4, 0.4, 0.4, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.2, 0.2, 0.2, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.0, 0.0, 0.0, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 1.0), material.specular()));
     material.resetMorph();
     // add (0.2)
     morph.specular.setValue(0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.85, 0.85, 0.85, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.9, 0.9, 0.9, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.95, 0.95, 0.95, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.0, 1.0, 1.0, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.specular()));
     material.resetMorph();
     // add (0.6)
     morph.specular.setValue(0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.95, 0.95, 0.95, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(1.1, 1.1, 1.1, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(1.25, 1.25, 1.25, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.4, 1.4, 1.4, 1.0), material.specular());
+    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.0), material.specular()));
 }
 
 TEST(MaterialTest, MergeShininess)
@@ -932,56 +932,56 @@ TEST(MaterialTest, MergeEdgeColor)
     morph.operation = 0;
     material.setEdgeColor(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.resetMorph();
     // mod (0.0)
     morph.edgeColor.setValue(0.0, 0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.6, 0.6, 0.6, 0.6), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 0.6), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.4, 0.4, 0.4, 0.4), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 0.4), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.2, 0.2, 0.2, 0.2), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 0.2), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(0.0, 0.0, 0.0, 0.0), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 0.0), material.edgeColor()));
     material.resetMorph();
     // add (0.2)
     morph.edgeColor.setValue(0.2, 0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.85, 0.85, 0.85, 0.85), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 0.85), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(0.9, 0.9, 0.9, 0.9), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 0.9), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.0, 1.0, 1.0, 1.0), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.edgeColor()));
     material.resetMorph();
     // add (0.6)
     morph.edgeColor.setValue(0.6, 0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
-    AssertVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    AssertVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    AssertVector(Color(1.1, 1.1, 1.1, 1.1), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.1), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    AssertVector(Color(1.25, 1.25, 1.25, 1.25), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.25), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    AssertVector(Color(1.4, 1.4, 1.4, 1.4), material.edgeColor());
+    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.4), material.edgeColor()));
 }
 
 TEST(MaterialTest, MergeEdgeSize)

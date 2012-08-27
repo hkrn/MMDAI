@@ -26,7 +26,7 @@ static void AssertParameterVector3(const CGeffect effectPtr, const char *name, c
     const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
     ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
     cgGLGetParameter3f(parameter, v);
-    AssertVector(expected, v);
+    ASSERT_TRUE(testVector(expected, v));
 }
 
 static void AssertParameterVector4(const CGeffect effectPtr, const char *name, const Vector4 &expected)
@@ -36,7 +36,7 @@ static void AssertParameterVector4(const CGeffect effectPtr, const char *name, c
     const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
     ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
     cgGLGetParameter4f(parameter, v);
-    AssertVector(expected, v);
+    ASSERT_TRUE(testVector(expected, v));
 }
 
 static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, const float *expected)
