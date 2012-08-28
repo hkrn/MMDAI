@@ -206,7 +206,7 @@ void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDir
             const Vector3 &position = *reinterpret_cast<const Vector3 *>(verticesPtr + vertexOffset);
             const Vector3 &normal = *reinterpret_cast<const Vector3 *>(verticesPtr + normalOffset);
             Vector3 &edge = *reinterpret_cast<Vector3 *>(verticesPtr + edgeOffset);
-            edge = vertex->isEdgeEnabled() ? position + normal * edgeWidth * esf : kZeroV3;
+            edge = vertex->isEdgeEnabled() ? (position + normal * edgeWidth * esf) : position;
             vertexOffset += stride;
             normalOffset += stride;
             edgeOffset += stride;
