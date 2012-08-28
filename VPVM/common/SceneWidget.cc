@@ -313,8 +313,10 @@ void SceneWidget::setBackgroundImage(const QString &filename)
 
 void SceneWidget::setModelEdgeOffset(double value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModel()) {
         m_loader->setModelEdgeOffset(model, static_cast<float>(value));
+        m_loader->scene()->updateModel(model);
+    }
     refreshMotions();
 }
 
