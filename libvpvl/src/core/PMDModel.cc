@@ -78,6 +78,16 @@ struct State
     Array<float> weights;
 };
 
+class BonePredication {
+public:
+    bool operator()(const Bone *left, const Bone *right) const {
+        if (left->hasParent() == right->hasParent()) {
+            return left->id() < right->id();
+        }
+        return right->hasParent();
+    }
+};
+
 PMDModel::PMDModel()
     : m_baseBone(0),
       m_baseFace(0),
@@ -740,8 +750,9 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
         // In english names, the base face is not includes.
         const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * Face::kNameSize : 0;
         const size_t englishBoneCategoryNameSize = kBoneCategoryNameSize * nBoneFrames;
-        const size_t required = englishBoneNamesSize + englishFaceNamesSize + englishBoneCategoryNameSize;
-        if ((required + kNameSize + kCommentSize) > rest) {
+        const size_t required = kNameSize + kCommentSize
+                + englishBoneNamesSize + englishFaceNamesSize + englishBoneCategoryNameSize;
+        if (required > rest) {
             m_error = kEnglishNamesError;
             return false;
         }
@@ -795,7 +806,7 @@ bool PMDModel::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     info.constranitsCount = nConstranits;
 
-    return true;
+    return rest == 0;
 }
 
 bool PMDModel::load(const uint8_t *data, size_t size)
@@ -1248,39 +1259,13 @@ void PMDModel::release()
 
 void PMDModel::sortBones()
 {
-    const int nbones = m_bones.count();
-    if (nbones > 0) {
-        delete[] m_orderedBones;
-        m_orderedBones = new Bone*[nbones];
-        int k = 0;
-        for (int i = 0; i < nbones; i++) {
-            Bone *bone = m_bones[i];
-            if (!bone->hasParent())
-                m_orderedBones[k++] = bone;
-        }
-        int l = k;
-        for (int i = 0; i < nbones; i++) {
-            Bone *bone = m_bones[i];
-            if (bone->hasParent())
-                m_orderedBones[l++] = bone;
-        }
-        int i = 0;
-        do {
-            for (int j = k; j < nbones; j++) {
-                for (l = 0; l < j; l++) {
-                    if (m_orderedBones[l] == m_orderedBones[j]->parent())
-                        break;
-                }
-                if (l >= j) {
-                    Bone *bone = m_orderedBones[j];
-                    if (j < nbones - 1)
-                        memmove(m_orderedBones[j], m_orderedBones[j+1], sizeof(Bone *) * (nbones - 1 - j));
-                    m_orderedBones[nbones - 1] = bone;
-                    i = 1;
-                }
-            }
-        } while (i != 0);
-    }
+    BoneList bones;
+    bones.copy(m_bones);
+    bones.sort(BonePredication());
+    delete[] m_orderedBones;
+    const int nbones = bones.count();
+    m_orderedBones = new Bone*[nbones];
+    memcpy(m_orderedBones, &bones[0], sizeof(Bone *) * nbones);
 }
 
 size_t PMDModel::strideSize(StrideType type) const
