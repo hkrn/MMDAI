@@ -1494,7 +1494,7 @@ void MainWindow::exportVideo()
                 m_exportingVideoDialog = new ExportVideoDialog(loader, min, max, &m_settings);
             }
             connect(m_exportingVideoDialog, SIGNAL(settingsDidSave()), this, SLOT(invokeVideoEncoder()));
-            m_exportingVideoDialog->exec();
+            m_exportingVideoDialog->open();
         }
         else {
             internal::warning(this, tr("No motion to export."),
