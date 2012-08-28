@@ -1345,9 +1345,9 @@ void SceneWidget::timerEvent(QTimerEvent *event)
             updateFPS();
         }
         else {
-            /* 非再生中(編集中)はモーションを一切動かさず、カメラの更新だけ行う */
+            /* 非再生中(編集中)はモーションを一切動かさず、カメラとレンダリングエンジンの状態更新だけ行う */
             Scene *scene = m_loader->scene();
-            scene->update(Scene::kUpdateCamera);
+            scene->update(Scene::kUpdateCamera | Scene::kUpdateRenderEngines);
         }
         updateScene();
     }
