@@ -488,7 +488,7 @@ void UI::timerEvent(QTimerEvent *)
     m_prevElapsed = elapsed;
     if (diff < 0)
         diff = elapsed;
-    m_scene->advance(diff);
+    m_scene->advance(diff, Scene::kUpdateAll);
     const Array<IMotion *> &motions = m_scene->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
@@ -500,7 +500,7 @@ void UI::timerEvent(QTimerEvent *)
     }
     m_world->stepSimulationDefault();
     m_delegate->updateMatrices(size());
-    m_scene->updateRenderEngines();
+    m_scene->update(Scene::kUpdateAll);
     updateGL();
 }
 
@@ -789,7 +789,8 @@ bool UI::loadScene()
         m_scene->camera()->setMotion(cameraMotion);
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
-    m_scene->seek(0);
+    m_scene->seek(0, Scene::kUpdateAll);
+    m_scene->update(Scene::kUpdateAll);
     return true;
 }
 

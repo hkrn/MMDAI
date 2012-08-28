@@ -249,6 +249,26 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
+    void updateModels() {
+        const Vector3 &cameraPosition = camera.position() + Vector3(0, 0, camera.distance());
+        const Vector3 &lightDirection = light.direction();
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            IModel *model = models[i];
+            model->performUpdate(cameraPosition, lightDirection);
+        }
+    }
+    void updateRenderEngines() {
+        const int nengines = engines.count();
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
+            engine->update();
+        }
+    }
+    void updateCamera() {
+        camera.updateTransform();
+    }
+
     bool isOpenCLAcceleration() const {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
@@ -446,7 +466,7 @@ IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
     return m_context->compileEffect(source);
 #else
-	return 0;
+    return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }
 
@@ -456,7 +476,7 @@ IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDel
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
     return m_context->compileEffect(source);
 #else
-	return 0;
+    return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }
 
@@ -480,46 +500,52 @@ void Scene::removeMotion(IMotion *motion)
     m_context->motions.remove(motion);
 }
 
-void Scene::advance(const IKeyframe::TimeIndex &delta)
+void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
 {
-    const Array<IMotion *> &motions = m_context->motions;
-    const int nmotions = motions.count();
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
-        motion->advance(delta);
+    if (flags & kUpdateCamera) {
+        Camera &camera = m_context->camera;
+        IMotion *cameraMotion = camera.motion();
+        if (cameraMotion)
+            cameraMotion->advanceScene(delta, this);
     }
-    updateModels();
-    updateRenderEngines();
-    Camera &camera = m_context->camera;
-    IMotion *cameraMotion = camera.motion();
-    if (cameraMotion)
-        cameraMotion->advanceScene(delta, this);
-    Light &light = m_context->light;
-    IMotion *lightMotion = light.motion();
-    if (lightMotion)
-        lightMotion->advanceScene(delta, this);
-    updateCamera();
+    if (flags & kUpdateLight) {
+        Light &light = m_context->light;
+        IMotion *lightMotion = light.motion();
+        if (lightMotion)
+            lightMotion->advanceScene(delta, this);
+    }
+    if (flags & kUpdateModels) {
+        const Array<IMotion *> &motions = m_context->motions;
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *motion = motions[i];
+            motion->advance(delta);
+        }
+    }
 }
 
-void Scene::seek(const IKeyframe::TimeIndex &timeIndex)
+void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
 {
-    const Array<IMotion *> &motions = m_context->motions;
-    const int nmotions = motions.count();
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
-        motion->seek(timeIndex);
+    if (flags & kUpdateCamera) {
+        Camera &camera = m_context->camera;
+        IMotion *cameraMotion = camera.motion();
+        if (cameraMotion)
+            cameraMotion->seekScene(timeIndex, this);
     }
-    updateModels();
-    updateRenderEngines();
-    Camera &camera = m_context->camera;
-    IMotion *cameraMotion = camera.motion();
-    if (cameraMotion)
-        cameraMotion->seekScene(timeIndex, this);
-    Light &light = m_context->light;
-    IMotion *lightMotion = light.motion();
-    if (lightMotion)
-        lightMotion->seekScene(timeIndex, this);
-    updateCamera();
+    if (flags & kUpdateLight) {
+        Light &light = m_context->light;
+        IMotion *lightMotion = light.motion();
+        if (lightMotion)
+            lightMotion->seekScene(timeIndex, this);
+    }
+    if (flags & kUpdateModels) {
+        const Array<IMotion *> &motions = m_context->motions;
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *motion = motions[i];
+            motion->seek(timeIndex);
+        }
+    }
 }
 
 void Scene::updateModel(IModel *model) const
@@ -531,33 +557,17 @@ void Scene::updateModel(IModel *model) const
     }
 }
 
-void Scene::updateModels()
+void Scene::update(int flags)
 {
-    const ICamera *c = camera();
-    const Vector3 &cameraPosition = camera()->position() + Vector3(0, 0, c->distance());
-    const Vector3 &lightDirection = light()->direction();
-    const Array<IModel *> &models = m_context->models;
-    const int nmodels = models.count();
-    for (int i = 0; i < nmodels; i++) {
-        IModel *model = models[i];
-        model->performUpdate(cameraPosition, lightDirection);
+    if (flags & kUpdateCamera) {
+        m_context->updateCamera();
     }
-}
-
-void Scene::updateRenderEngines()
-{
-    const Array<IRenderEngine *> &renderEngines = m_context->engines;
-    const int nRenderEngines = renderEngines.count();
-    for (int i = 0; i < nRenderEngines; i++) {
-        IRenderEngine *engine = renderEngines[i];
-        engine->update();
+    if (flags & kUpdateModels) {
+        m_context->updateModels();
     }
-}
-
-void Scene::updateCamera()
-{
-    Camera &camera = m_context->camera;
-    camera.updateTransform();
+    if (flags & kUpdateRenderEngines) {
+        m_context->updateRenderEngines();
+    }
 }
 
 void Scene::setPreferredFPS(const Scalar &value)

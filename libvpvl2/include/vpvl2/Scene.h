@@ -63,8 +63,16 @@ public:
         kMaxAccelerationType
     };
     enum RenderEngineTypeFlags {
-        kEffectCapable = 0x1,
-        kMaxRenderEngineTypeFlags
+        kEffectCapable            = 0x1,
+        kMaxRenderEngineTypeFlags = 0x2
+    };
+    enum UpdateTypeFlags {
+        kUpdateModels        = 0x1,
+        kUpdateRenderEngines = 0x2,
+        kUpdateCamera        = 0x4,
+        kUpdateLight         = 0x8,
+        kUpdateAll           = kUpdateModels | kUpdateRenderEngines | kUpdateCamera | kUpdateLight,
+        kMaxUpdateTypeFlags  = kUpdateAll + 1
     };
 
     static ICamera *createCamera();
@@ -82,12 +90,10 @@ public:
     IEffect *createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate);
     void deleteModel(vpvl2::IModel *&model);
     void removeMotion(IMotion *motion);
-    void advance(const IKeyframe::TimeIndex &delta);
-    void seek(const IKeyframe::TimeIndex &timeIndex);
+    void advance(const IKeyframe::TimeIndex &delta, int flags);
+    void seek(const IKeyframe::TimeIndex &timeIndex, int flags);
     void updateModel(IModel *model) const;
-    void updateModels();
-    void updateRenderEngines();
-    void updateCamera();
+    void update(int flags);
     void setPreferredFPS(const Scalar &value);
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
     float maxFrameIndex() const;

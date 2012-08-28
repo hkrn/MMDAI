@@ -665,7 +665,8 @@ void SceneWidget::advanceMotion(const IKeyframe::TimeIndex &delta)
     if (delta <= 0)
         return;
     Scene *scene = m_loader->scene();
-    scene->advance(delta);
+    scene->advance(delta, Scene::kUpdateAll);
+    scene->update(Scene::kUpdateAll);
     if (m_loader->isPhysicsEnabled())
         m_loader->world()->stepSimulationDelta(delta);
     updateScene();
@@ -684,21 +685,9 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
        force でカメラと照明を強制的に動かすことが出来る(例として場面タブからシークした場合)。
      */
     Scene *scene = m_loader->scene();
-    if (!forceCameraUpdate) {
-        /* 一旦カメラと照明のモーションを外してモデルのモーションのみ動かすようにする */
-        ICamera *camera = scene->camera();
-        ILight *light = scene->light();
-        IMotion *cameraMotion = camera->motion();
-        IMotion *lightMotion = light->motion();
-        camera->setMotion(0);
-        light->setMotion(0);
-        scene->seek(timeIndex);
-        camera->setMotion(cameraMotion);
-        light->setMotion(lightMotion);
-    }
-    else {
-        scene->seek(timeIndex);
-    }
+    int flags = forceCameraUpdate ? Scene::kUpdateAll : Scene::kUpdateModels | Scene::kUpdateRenderEngines;
+    scene->seek(timeIndex, flags);
+    scene->update(flags);
     m_timeIndex = timeIndex;
     m_background->setFrameIndex(timeIndex);
     emit motionDidSeek(timeIndex);
@@ -716,8 +705,10 @@ void SceneWidget::resetMotion()
     }
     m_timeIndex = 0;
     m_background->setFrameIndex(0);
-    updateScene();
+    scene->seek(0, Scene::kUpdateAll);
+    scene->update(Scene::kUpdateAll);
     emit motionDidSeek(0.0f);
+    updateScene();
 }
 
 void SceneWidget::setCamera()
@@ -1356,9 +1347,9 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         else {
             /* 非再生中(編集中)はモーションを一切動かさず、カメラの更新だけ行う */
             Scene *scene = m_loader->scene();
-            scene->updateCamera();
-            updateScene();
+            scene->update(Scene::kUpdateCamera);
         }
+        updateScene();
     }
 }
 
@@ -1531,8 +1522,6 @@ void SceneWidget::updateFPS()
 void SceneWidget::updateScene()
 {
     m_loader->updateMatrices(QSizeF(size()));
-    m_loader->scene()->updateModels();
-    m_loader->scene()->updateRenderEngines();
     if (m_enableUpdateGL)
         updateGL();
     emit cameraPerspectiveDidSet(m_loader->scene()->camera());
