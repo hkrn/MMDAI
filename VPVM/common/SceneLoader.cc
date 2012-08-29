@@ -738,7 +738,8 @@ void SceneLoader::loadProject(const QString &path)
         setLightColor(Color(color.x(), color.y(), color.z(), 1.0));
         setLightDirection(position);
         int progress = 0;
-        QList<IModel *> lostModels, assets;
+        QSet<IModel *> lostModels;
+        QList<IModel *> assets;
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         emit projectDidCount(modelUUIDs.size());
         const Array<IMotion *> &motions = m_project->motions();
@@ -810,19 +811,30 @@ void SceneLoader::loadProject(const QString &path)
                      modelUUIDString.c_str(),
                      name.c_str(),
                      qPrintable(filename));
-            lostModels.append(model);
+            lostModels.insert(model);
             emit projectDidProceed(++progress);
         }
         sceneObject->setAccelerationType(accelerationType);
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
+        Array<IMotion *> motionsToDelete;
+        motionsToDelete.copy(motions);
         for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = motions[i];
+            IMotion *motion = motionsToDelete[i];
             if (!motion->parentModel() && motion->countKeyframes(IKeyframe::kCamera) > 0) {
                 const QUuid uuid(m_project->motionUUID(motion).c_str());
                 deleteCameraMotion();
                 m_camera = motion;
                 m_project->camera()->setMotion(motion);
                 emit cameraMotionDidSet(motion, uuid);
+            }
+        }
+        /* 読み込みに失敗したモデルに従属するモーションを Project から削除する */
+        motionsToDelete.clear();
+        motionsToDelete.copy(m_project->motions());
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *motion = motionsToDelete[i];
+            if (lostModels.contains(motion->parentModel())) {
+                m_project->removeMotion(motion);
             }
         }
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
