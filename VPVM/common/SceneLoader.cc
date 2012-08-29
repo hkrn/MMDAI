@@ -307,26 +307,29 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
 IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
 {
     const CString d(dir.absolutePath());
-    const QFuture<IEffect *> &future = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, model, &d);
-    /* progress dialog */
-    /*
-     * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
-     * プロジェクトの新規作成毎またはデストラクタで解放するため、解放する必要はない(むしろ解放してはいけない)
-     */
-    IEffect *effect = future.result();
+    IEffect *effect = 0;
     int flags = 0;
+    if (isEffectEnabled()) {
+        const QFuture<IEffect *> &future = QtConcurrent::run(m_renderDelegate, &Delegate::createEffectAsync, model, &d);
+        /* progress dialog */
+        /*
+         * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
+         * プロジェクトの新規作成毎またはデストラクタで解放するため、解放する必要はない(むしろ解放してはいけない)
+         */
+        effect = future.result();
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    if (!effect) {
-        qWarning("Loaded effect pointer seems null");
-    }
-    else if (!effect->internalPointer()) {
-        CGcontext c = static_cast<CGcontext>(effect->internalContext());
-        qWarning("Loading an effect failed: %s", cgGetLastListing(c));
-    }
-    else {
-        flags = Scene::kEffectCapable;
-    }
+        if (!effect) {
+            qWarning("Loaded effect pointer seems null");
+        }
+        else if (!effect->internalPointer()) {
+            CGcontext c = static_cast<CGcontext>(effect->internalContext());
+            qWarning("Loading an effect failed: %s", cgGetLastListing(c));
+        }
+        else {
+            flags = Scene::kEffectCapable;
+        }
 #endif
+    }
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
@@ -1926,6 +1929,12 @@ bool SceneLoader::isVertexShaderSkinningType1Enabled() const
     return enabled;
 }
 
+bool SceneLoader::isEffectEnabled() const
+{
+    bool enabled = m_project ? m_project->globalSetting("effect.enabled") == "true" : false;
+    return enabled;
+}
+
 void SceneLoader::setVertexShaderSkinningType1Enable(bool value)
 {
     if (m_project && isVertexShaderSkinningType1Enabled() != value) {
@@ -1939,6 +1948,12 @@ void SceneLoader::setSoftwareSkinningEnable(bool value)
 {
     if (m_project && value)
         m_project->setAccelerationType(Scene::kSoftwareFallback);
+}
+
+void SceneLoader::setEffectEnable(bool value)
+{
+    if (m_project && isEffectEnabled() != value)
+        m_project->setGlobalSetting("effect.enabled", value ? "true" : "false");
 }
 
 void SceneLoader::setProjectDirtyFalse()

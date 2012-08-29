@@ -135,6 +135,7 @@ public:
     bool isOpenCLSkinningType1Enabled() const;
     bool isOpenCLSkinningType2Enabled() const;
     bool isVertexShaderSkinningType1Enabled() const;
+    bool isEffectEnabled() const;
 
     bool isProjectiveShadowEnabled(const vpvl2::IModel *model) const;
     void setProjectiveShadowEnable(const vpvl2::IModel *model, bool value);
@@ -220,6 +221,7 @@ public slots:
     void setOpenCLSkinningEnableType2(bool value);
     void setVertexShaderSkinningType1Enable(bool value);
     void setSoftwareSkinningEnable(bool value);
+    void setEffectEnable(bool value);
 
 signals:
     void projectDidInitialized();

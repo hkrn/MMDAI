@@ -238,20 +238,20 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
     else if (m_timelineTabWidget->rect().contains(m_timelineTabWidget->mapFromGlobal(pos))) {
         QMenu menu(this);
         menu.addAction(m_actionRegisterFrame);
-        menu.addAction(m_actionSelectAllFrames);
+        menu.addAction(m_actionSelectAllKeyframes);
         menu.addSeparator();
         menu.addAction(m_actionCut);
         menu.addAction(m_actionCopy);
         menu.addAction(m_actionPaste);
         menu.addAction(m_actionReversedPaste);
         menu.addSeparator();
-        menu.addAction(m_actionUndoFrame);
-        menu.addAction(m_actionRedoFrame);
+        menu.addAction(m_actionUndo);
+        menu.addAction(m_actionRedo);
         menu.addSeparator();
         menu.addAction(m_actionDeleteSelectedFrame);
         menu.addSeparator();
-        menu.addAction(m_actionSelectFrameDialog);
-        menu.addAction(m_actionFrameWeightDialog);
+        menu.addAction(m_actionSelectKeyframeDialog);
+        menu.addAction(m_actionKeyframeWeightDialog);
         menu.addAction(m_actionInterpolationDialog);
         menu.exec(pos);
     }
@@ -301,6 +301,8 @@ void MainWindow::newMotionFile()
 void MainWindow::newProjectFile()
 {
     if (maybeSaveProject()) {
+        SceneLoader *loader = m_sceneWidget->sceneLoader();
+        bool isEffectEnable = loader->isEffectEnabled();
         /*
          * カメラを含むモーションとモデルを全て削除してからプロジェクトを新規に作成する
          * SceneWidget#clear は内部的に削除と同時に新しい空のプロジェクトが作成される
@@ -311,6 +313,13 @@ void MainWindow::newProjectFile()
         m_morphMotionModel->removeMotion();
         m_sceneMotionModel->removeMotion();
         m_sceneWidget->clear();
+        /*
+         * 物理とグリッド表示のチェックをプロジェクト新規作成直後の状態に戻す
+         * エフェクトだけ例外で新規作成直前の状態に戻す
+         */
+        m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
+        m_actionShowGrid->setChecked(loader->isGridVisible());
+        loader->setEffectEnable(isEffectEnable);
         updateWindowTitle();
     }
 }
@@ -663,8 +672,8 @@ void MainWindow::buildUI()
     connect(m_actionPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteKeyframes()));
     m_actionReversedPaste = new QAction(this);
     connect(m_actionReversedPaste, SIGNAL(triggered()), m_timelineTabWidget, SLOT(pasteKeyframesWithReverse()));
-    m_actionUndoFrame = m_undo->createUndoAction(this);
-    m_actionRedoFrame = m_undo->createRedoAction(this);
+    m_actionUndo = m_undo->createUndoAction(this);
+    m_actionRedo = m_undo->createRedoAction(this);
     m_actionOpenUndoView = new QAction(this);
     connect(m_actionOpenUndoView, SIGNAL(triggered()), SLOT(openUndoView()));
     m_actionBoneXPosZero = new QAction(this);
@@ -747,18 +756,22 @@ void MainWindow::buildUI()
     m_actionResetModelPosition = new QAction(this);
     connect(m_actionResetModelPosition, SIGNAL(triggered()), m_sceneWidget, SLOT(resetModelPosition()));
 
-    m_actionSelectAllFrames = new QAction(this);
-    connect(m_actionSelectAllFrames, SIGNAL(triggered()), m_timelineTabWidget, SLOT(selectAllRegisteredKeyframes()));
-    m_actionSelectFrameDialog = new QAction(this);
-    connect(m_actionSelectFrameDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameSelectionDialog()));
-    m_actionFrameWeightDialog = new QAction(this);
-    connect(m_actionFrameWeightDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameWeightDialog()));
+    m_actionSelectAllKeyframes = new QAction(this);
+    connect(m_actionSelectAllKeyframes, SIGNAL(triggered()), m_timelineTabWidget, SLOT(selectAllRegisteredKeyframes()));
+    m_actionSelectKeyframeDialog = new QAction(this);
+    connect(m_actionSelectKeyframeDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameSelectionDialog()));
+    m_actionKeyframeWeightDialog = new QAction(this);
+    connect(m_actionKeyframeWeightDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openFrameWeightDialog()));
     m_actionInterpolationDialog = new QAction(this);
     connect(m_actionInterpolationDialog, SIGNAL(triggered()), m_timelineTabWidget, SLOT(openInterpolationDialogBySelectedIndices()));
     m_actionNextFrame = new QAction(this);
     connect(m_actionNextFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(nextFrame()));
     m_actionPreviousFrame = new QAction(this);
     connect(m_actionPreviousFrame, SIGNAL(triggered()), m_timelineTabWidget, SLOT(previousFrame()));
+
+    m_actionEnableEffect = new QAction(this);
+    m_actionEnableEffect->setCheckable(true);
+    m_actionEnableEffect->setChecked(false);
 
     m_actionViewLogMessage = new QAction(this);
     connect(m_actionViewLogMessage, SIGNAL(triggered()), m_loggerWidget, SLOT(show()));
@@ -863,8 +876,8 @@ void MainWindow::buildUI()
     m_menuFile->addAction(m_actionExit);
     m_menuBar->addMenu(m_menuFile);
     m_menuEdit = new QMenu(this);
-    m_menuEdit->addAction(m_actionUndoFrame);
-    m_menuEdit->addAction(m_actionRedoFrame);
+    m_menuEdit->addAction(m_actionUndo);
+    m_menuEdit->addAction(m_actionRedo);
     m_menuEdit->addSeparator();
     m_menuEdit->addAction(m_actionCut);
     m_menuEdit->addAction(m_actionCopy);
@@ -925,25 +938,28 @@ void MainWindow::buildUI()
     m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionDeleteSelectedModel);
     m_menuBar->addMenu(m_menuModel);
-    m_menuFrame = new QMenu(this);
-    m_menuFrame->addAction(m_actionRegisterFrame);
-    m_menuFrame->addAction(m_actionInsertEmptyFrame);
-    m_menuFrame->addAction(m_actionDeleteSelectedFrame);
-    m_menuFrame->addSeparator();
-    m_menuFrame->addAction(m_actionSelectAllFrames);
-    m_menuFrame->addAction(m_actionSelectFrameDialog);
-    m_menuFrame->addAction(m_actionFrameWeightDialog);
-    m_menuFrame->addAction(m_actionInterpolationDialog);
-    m_menuFrame->addSeparator();
-    m_menuFrame->addAction(m_actionNextFrame);
-    m_menuFrame->addAction(m_actionPreviousFrame);
-    m_menuFrame->addSeparator();
-    m_menuFrame->addAction(m_actionBoneXPosZero);
-    m_menuFrame->addAction(m_actionBoneYPosZero);
-    m_menuFrame->addAction(m_actionBoneZPosZero);
-    m_menuFrame->addAction(m_actionBoneResetAll);
-    m_menuFrame->addAction(m_actionBoneDialog);
-    m_menuBar->addMenu(m_menuFrame);
+    m_menuKeyframe = new QMenu(this);
+    m_menuKeyframe->addAction(m_actionRegisterFrame);
+    m_menuKeyframe->addAction(m_actionInsertEmptyFrame);
+    m_menuKeyframe->addAction(m_actionDeleteSelectedFrame);
+    m_menuKeyframe->addSeparator();
+    m_menuKeyframe->addAction(m_actionSelectAllKeyframes);
+    m_menuKeyframe->addAction(m_actionSelectKeyframeDialog);
+    m_menuKeyframe->addAction(m_actionKeyframeWeightDialog);
+    m_menuKeyframe->addAction(m_actionInterpolationDialog);
+    m_menuKeyframe->addSeparator();
+    m_menuKeyframe->addAction(m_actionNextFrame);
+    m_menuKeyframe->addAction(m_actionPreviousFrame);
+    m_menuKeyframe->addSeparator();
+    m_menuKeyframe->addAction(m_actionBoneXPosZero);
+    m_menuKeyframe->addAction(m_actionBoneYPosZero);
+    m_menuKeyframe->addAction(m_actionBoneZPosZero);
+    m_menuKeyframe->addAction(m_actionBoneResetAll);
+    m_menuKeyframe->addAction(m_actionBoneDialog);
+    m_menuBar->addMenu(m_menuKeyframe);
+    m_menuEffect = new QMenu(this);
+    m_menuEffect->addAction(m_actionEnableEffect);
+    m_menuBar->addMenu(m_menuEffect);
     m_menuView = new QMenu(this);
     m_menuView->addAction(m_actionViewLogMessage);
     m_menuView->addSeparator();
@@ -1041,9 +1057,9 @@ void MainWindow::bindActions()
     m_actionBoneResetAll->setShortcut(m_settings.value(kPrefix + "boneResetAll").toString());
     m_actionBoneDialog->setShortcut(m_settings.value(kPrefix + "boneDialog").toString());
     m_actionRegisterFrame->setShortcut(m_settings.value(kPrefix + "registerFrame", "Ctrl+E").toString());
-    m_actionSelectAllFrames->setShortcut(m_settings.value(kPrefix + "selectAllFrames", "Ctrl+A").toString());
-    m_actionSelectFrameDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog", "Ctrl+Alt+S").toString());
-    m_actionFrameWeightDialog->setShortcut(m_settings.value(kPrefix + "frameWeightDialog", "Ctrl+Alt+W").toString());
+    m_actionSelectAllKeyframes->setShortcut(m_settings.value(kPrefix + "selectAllFrames", "Ctrl+A").toString());
+    m_actionSelectKeyframeDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog", "Ctrl+Alt+S").toString());
+    m_actionKeyframeWeightDialog->setShortcut(m_settings.value(kPrefix + "frameWeightDialog", "Ctrl+Alt+W").toString());
     m_actionInterpolationDialog->setShortcut(m_settings.value(kPrefix + "interpolationDialog", "Ctrl+Alt+I").toString());
     m_actionInsertEmptyFrame->setShortcut(m_settings.value(kPrefix + "insertEmptyFrame", "Ctrl+I").toString());
     m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
@@ -1053,8 +1069,8 @@ void MainWindow::bindActions()
     m_actionCopy->setShortcut(m_settings.value(kPrefix + "copy", QKeySequence(QKeySequence::Copy).toString()).toString());
     m_actionPaste->setShortcut(m_settings.value(kPrefix + "paste", QKeySequence(QKeySequence::Paste).toString()).toString());
     m_actionReversedPaste->setShortcut(m_settings.value(kPrefix + "reversedPaste", "Alt+Ctrl+V").toString());
-    m_actionUndoFrame->setShortcut(m_settings.value(kPrefix + "undoFrame", QKeySequence(QKeySequence::Undo).toString()).toString());
-    m_actionRedoFrame->setShortcut(m_settings.value(kPrefix + "redoFrame", QKeySequence(QKeySequence::Redo).toString()).toString());
+    m_actionUndo->setShortcut(m_settings.value(kPrefix + "undoFrame", QKeySequence(QKeySequence::Undo).toString()).toString());
+    m_actionRedo->setShortcut(m_settings.value(kPrefix + "redoFrame", QKeySequence(QKeySequence::Redo).toString()).toString());
     m_actionOpenUndoView->setShortcut(m_settings.value(kPrefix + "undoView").toString());
     m_actionViewLogMessage->setShortcut(m_settings.value(kPrefix + "viewLogMessage").toString());
     m_actionEnableMoveGesture->setShortcut(m_settings.value(kPrefix + "enableMoveGesture").toString());
@@ -1072,6 +1088,7 @@ void MainWindow::bindActions()
     m_actionSetOpenCLSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
     m_actionSetOpenCLSkinningType2->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinningType2").toString());
     m_actionSetVertexShaderSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
+    m_actionEnableEffect->setShortcut(m_settings.value(kPrefix + "enableEffect").toString());
     QShortcut *cameraFront = new QShortcut(m_settings.value(kPrefix + "cameraFront", QKeySequence(Qt::Key_2)).toString(), this);
     connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveFront()));
     QShortcut *cameraBack = new QShortcut(m_settings.value(kPrefix + "cameraBack", QKeySequence(Qt::Key_8)).toString(), this);
@@ -1212,12 +1229,12 @@ void MainWindow::retranslate()
     m_actionBoneDialog->setStatusTip(tr("Open bone dialog to change position or rotation of the bone manually."));
     m_actionRegisterFrame->setText(tr("Register keyframe"));
     m_actionRegisterFrame->setStatusTip(tr("Register keyframes by selected indices from the timeline."));
-    m_actionSelectAllFrames->setText(tr("Select all keyframes"));
-    m_actionSelectAllFrames->setStatusTip(tr("Select all registered keyframes."));
-    m_actionSelectFrameDialog->setText(tr("Open keyframe range selection dialog"));
-    m_actionSelectFrameDialog->setStatusTip(tr("Open keyframe range selection dialog to select multiple frame indices."));
-    m_actionFrameWeightDialog->setText(tr("Open keyframe weight dialog"));
-    m_actionFrameWeightDialog->setStatusTip(tr("Open keyframe weight dialog to set weight to selected registered keyframes."));
+    m_actionSelectAllKeyframes->setText(tr("Select all keyframes"));
+    m_actionSelectAllKeyframes->setStatusTip(tr("Select all registered keyframes."));
+    m_actionSelectKeyframeDialog->setText(tr("Open keyframe range selection dialog"));
+    m_actionSelectKeyframeDialog->setStatusTip(tr("Open keyframe range selection dialog to select multiple frame indices."));
+    m_actionKeyframeWeightDialog->setText(tr("Open keyframe weight dialog"));
+    m_actionKeyframeWeightDialog->setStatusTip(tr("Open keyframe weight dialog to set weight to selected registered keyframes."));
     m_actionInterpolationDialog->setText(tr("Open interpolation dialog"));
     m_actionInterpolationDialog->setStatusTip(tr("Open interpolation dialog to configure interpolation parameter of keyframes."));
     m_actionInsertEmptyFrame->setText(tr("Insert empty keyframe"));
@@ -1280,12 +1297,15 @@ void MainWindow::retranslate()
     m_actionSetOpenCLSkinningType2->setStatusTip(tr("Enable OpenCL skinning with CPU. This is slower than OpenCL skinning with GPU but faster than software skinning and stable basically."));
     m_actionSetVertexShaderSkinningType1->setText(tr("Vertex shader skinning"));
     m_actionSetVertexShaderSkinningType1->setStatusTip(tr("Enable Vertex shader skinning. This is fast but maybe causes unstable."));
+    m_actionEnableEffect->setText(tr("Enable effect"));
+    m_actionEnableEffect->setStatusTip("Enable effect feature using NVIDIA CgFX (under development).");
     m_menuFile->setTitle(tr("&File"));
     m_menuEdit->setTitle(tr("&Edit"));
     m_menuProject->setTitle(tr("&Project"));
     m_menuScene->setTitle(tr("&Scene"));
     m_menuModel->setTitle(tr("&Model"));
-    m_menuFrame->setTitle(tr("&Keyframe"));
+    m_menuKeyframe->setTitle(tr("&Keyframe"));
+    m_menuEffect->setTitle(tr("Effect"));
     m_menuView->setTitle(tr("&View"));
     m_menuRetainAssets->setTitle(tr("Select asset"));
     m_menuRetainModels->setTitle(tr("Select model"));
@@ -1324,6 +1344,7 @@ void MainWindow::connectSceneLoader()
     connect(loader ,SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(vpvl2::IModel*,SceneLoader*)));
     connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_timelineTabWidget, SLOT(setLastSelectedModel(vpvl2::IModel*)));
     connect(loader, SIGNAL(assetDidSelect(vpvl2::IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl2::IModel*,SceneLoader*)));
+    connect(m_actionEnableEffect, SIGNAL(triggered(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionSetSoftwareSkinningFallback, SIGNAL(toggled(bool)), loader, SLOT(setSoftwareSkinningEnable(bool)));
     connect(m_actionSetOpenCLSkinningType1, SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType1(bool)));
