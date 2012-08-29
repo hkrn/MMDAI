@@ -157,6 +157,7 @@ linux-* {
                     $${BULET_PATH}/release/lib/libLinearMath.so.* \
                     $${VPVL_PATH}/release/lib/libvpvl.so.* \
                     $${VPVL2_PATH}/release/lib/libvpvl2.so.* \
+                    $${VPVL2_PATH}/release/lib/libvpvl2qtcommon.so.* \
                     $${ASSIMP_PATH}/release/lib/libassimp.so \
                     $${PORTAUDIO_PATH}/build/scons/posix/libportaudio.so.* \
                     $${LIBAV_PATH}/release_native/libavcodec.so.* \

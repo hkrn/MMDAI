@@ -329,20 +329,22 @@ my %env_backup = %ENV;
 $ENV{'PATH'} = '/usr/bin:/bin';
 $ENV{'PKG_CONFIG_PATH'} = '/usr/lib/pkgconfig';
 
-# checkout libjpeg
-unless (-d $LIBJPEG_DIRECTORY) {
-    system 'wget', $LIBJPEG_CHECKOUT_URI;
-    system 'tar', '-xvzf', 'jpegsrc.v8d.tar.gz';
-    system 'mv', 'jpeg-8d', $LIBJPEG_DIRECTORY;
+if ($opt_static) {
+    # checkout libjpeg
+    unless (-d $LIBJPEG_DIRECTORY) {
+        system 'wget', $LIBJPEG_CHECKOUT_URI;
+        system 'tar', '-xvzf', 'jpegsrc.v8d.tar.gz';
+        system 'mv', 'jpeg-8d', $LIBJPEG_DIRECTORY;
+    }
+    make_library($base_directory, $LIBJPEG_DIRECTORY, $CONFIGURE_LIBJPEG_ARGS, [ 'libjpeg.dylib', 'libjpeg.8.dylib' ]);
+    
+    # checkout libpng
+    system 'git', 'clone', $LIBPNG_CHECKOUT_URI, $LIBPNG_DIRECTORY unless -d $LIBPNG_DIRECTORY;
+    chdir $LIBPNG_DIRECTORY;
+    system 'git', 'checkout', $LIBPNG_TAG;
+    chdir $base_directory;
+    make_library($base_directory, $LIBPNG_DIRECTORY, $CONFIGURE_LIBPNG_ARGS, [ 'libpng.dylib', 'libpng15.15.dylib' ]);
 }
-make_library($base_directory, $LIBJPEG_DIRECTORY, $CONFIGURE_LIBJPEG_ARGS, [ 'libjpeg.dylib', 'libjpeg.8.dylib' ]);
-
-# checkout libpng
-system 'git', 'clone', $LIBPNG_CHECKOUT_URI, $LIBPNG_DIRECTORY unless -d $LIBPNG_DIRECTORY;
-chdir $LIBPNG_DIRECTORY;
-system 'git', 'checkout', $LIBPNG_TAG;
-chdir $base_directory;
-make_library($base_directory, $LIBPNG_DIRECTORY, $CONFIGURE_LIBPNG_ARGS, [ 'libpng.dylib', 'libpng15.15.dylib' ]);
 
 # checkout devil
 unless (-d $DEVIL_DIRECTORY) {
