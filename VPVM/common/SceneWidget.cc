@@ -432,8 +432,8 @@ void SceneWidget::insertMotionToAllModels()
 {
     /* モーションを追加したら即座に反映させるために updateMotion を呼んでおく */
     IMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                             tr("Open VMD (for model) file"),
-                                                             tr("Motion file (*.vmd *.mvd)"),
+                                                             tr("Load model motion from a VMD/MVD file"),
+                                                             tr("Model motion file (*.vmd *.mvd)"),
                                                              m_settings));
     IModel *selected = m_loader->selectedModel();
     if (motion && selected)
@@ -463,8 +463,8 @@ void SceneWidget::insertMotionToSelectedModel()
     IModel *model = m_loader->selectedModel();
     if (model) {
         IMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                                     tr("Open VMD (for model) file"),
-                                                                     tr("Motion file (*.vmd *.mvd)"),
+                                                                     tr("Load model motion from a VMD/MVD file"),
+                                                                     tr("Model motion file (*.vmd *.mvd)"),
                                                                      m_settings));
         if (motion)
             refreshMotions();
@@ -716,8 +716,8 @@ void SceneWidget::resetMotion()
 void SceneWidget::setCamera()
 {
     IMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
-                                               tr("Open VMD (for camera) file"),
-                                               tr("VMD file (*.vmd)"),
+                                               tr("Load camera motion from a VMD/MVD file"),
+                                               tr("Camera motion file (*.vmd *.mvd)"),
                                                m_settings));
     if (motion)
         refreshScene();
