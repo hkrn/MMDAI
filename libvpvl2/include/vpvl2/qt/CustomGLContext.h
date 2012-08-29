@@ -46,11 +46,12 @@ namespace qt
 
 class CustomGLContext : public QGLContext {
 public:
-    CustomGLContext(const QGLFormat& format, QPaintDevice* device);
-    CustomGLContext(const QGLFormat& format);
-
+    CustomGLContext(const QGLFormat &format) : QGLContext(format) {}
+    CustomGLContext(const QGLFormat &format, QPaintDevice *device) : QGLContext(format, device) {}
+#ifdef QT_MAC_USE_COCOA
 protected:
     void *chooseMacVisual(GDHandle handle);
+#endif
 };
 
 } /* namespace qt */

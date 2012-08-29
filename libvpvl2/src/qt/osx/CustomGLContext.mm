@@ -36,28 +36,15 @@
 
 #include "vpvl2/qt/CustomGLContext.h"
 
-#ifdef QT_MAC_USE_COCOA
 #include <Cocoa/Cocoa.h>
-#endif
 
 namespace vpvl2
 {
 namespace qt
 {
 
-CustomGLContext::CustomGLContext(const QGLFormat &format)
-    : QGLContext(format)
-{
-}
-
-CustomGLContext::CustomGLContext(const QGLFormat &format, QPaintDevice *device)
-    : QGLContext(format, device)
-{
-}
-
 void *CustomGLContext::chooseMacVisual(GDHandle handle)
 {
-#ifdef QT_MAC_USE_COCOA
     NSOpenGLPixelFormatAttribute attrs[] = {
         NSOpenGLPFAStencilSize, 8,
         NSOpenGLPFAAlphaSize, 8,
@@ -73,10 +60,8 @@ void *CustomGLContext::chooseMacVisual(GDHandle handle)
     };
     NSOpenGLPixelFormat *format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
     return format != nil ? format : QGLContext::chooseMacVisual(handle);
-#else
-    return QGLContext::chooseMacVisual(handle);
-#endif
 }
 
 } /* namespace qt */
 } /* namespace vpvl2 */
+
