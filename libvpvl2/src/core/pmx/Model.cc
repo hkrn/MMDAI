@@ -98,6 +98,7 @@ Model::Model(IEncoding *encoding)
       m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
       m_scaleFactor(1),
+      m_edgeWidth(0),
       m_visible(false),
       m_enableSkinning(true)
 {
@@ -666,7 +667,7 @@ Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
     Scalar length = 0;
     if (m_bones.count() > 1) {
         IBone *bone = m_bones.at(1);
-        length = (cameraPosition - bone->worldTransform().getOrigin()).length();
+        length = (cameraPosition - bone->worldTransform().getOrigin()).length() * m_edgeWidth;
     }
     return length / 1000.0;
 }

@@ -190,7 +190,7 @@ public:
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return kZeroV3; }
-    const Scalar &edgeWidth() const { static const float kOne = 1.0; return kOne; }
+    const Scalar &edgeWidth() const { return m_edgeWidth; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
     void setPosition(const Vector3 &value) { m_position = value; }
@@ -198,7 +198,7 @@ public:
     void setOpacity(const Scalar &value) { m_opacity = value; }
     void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
     void setEdgeColor(const Vector3 & /* value */) {}
-    void setEdgeWidth(const Scalar & /* value */) {}
+    void setEdgeWidth(const Scalar &value) { m_edgeWidth = value; }
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 
@@ -258,6 +258,7 @@ private:
     Quaternion m_rotation;
     Scalar m_opacity;
     Scalar m_scaleFactor;
+    Scalar m_edgeWidth;
     DataInfo m_info;
     bool m_visible;
     bool m_enableSkinning;
