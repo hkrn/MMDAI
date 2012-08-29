@@ -1298,7 +1298,7 @@ void MainWindow::retranslate()
     m_actionSetVertexShaderSkinningType1->setText(tr("Vertex shader skinning"));
     m_actionSetVertexShaderSkinningType1->setStatusTip(tr("Enable Vertex shader skinning. This is fast but maybe causes unstable."));
     m_actionEnableEffect->setText(tr("Enable effect"));
-    m_actionEnableEffect->setStatusTip("Enable effect feature using NVIDIA CgFX (under development).");
+    m_actionEnableEffect->setStatusTip(tr("Enable effect feature using NVIDIA CgFX (under development)."));
     m_menuFile->setTitle(tr("&File"));
     m_menuEdit->setTitle(tr("&Edit"));
     m_menuProject->setTitle(tr("&Project"));
