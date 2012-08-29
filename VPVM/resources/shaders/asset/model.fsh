@@ -1,7 +1,10 @@
 /* asset/model.fsh */
 #if __VERSION__ < 130
 #define in varying
+#define outPixelColor gl_FragColor
 #define texture(samp, uv) texture2D((samp), (uv))
+#else
+out vec4 outPixelColor;
 #endif
 uniform bool hasMainTexture;
 uniform bool hasSubTexture;
@@ -15,11 +18,11 @@ uniform vec3 lightDirection;
 uniform vec3 materialSpecular;
 uniform float materialShininess;
 uniform float opacity;
-out vec4 outColor;
-out vec4 outTexCoord;
-out vec4 outShadowCoord;
-out vec3 outEyeView;
-out vec3 outNormal;
+in vec4 outColor;
+in vec4 outTexCoord;
+in vec4 outShadowCoord;
+in vec3 outEyeView;
+in vec3 outNormal;
 const float kDepthThreshold = 0.00002;
 const float kOne = 1.0;
 const float kZero = 0.0;
@@ -60,6 +63,6 @@ void main() {
     float hdotn = max(dot(halfVector, outNormal), kZero);
     color.rgb += materialSpecular * pow(hdotn, max(materialShininess, kOne));
     color.a *= opacity;
-    gl_FragColor = color;
+    outPixelColor = color;
 }
 
