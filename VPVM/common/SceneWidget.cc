@@ -70,9 +70,9 @@ static void UIAlertMVDMotion(const IMotion *motion, SceneWidget *parent)
     /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
     if (motion->type() == IMotion::kMVD) {
         internal::warning(parent,
-                          parent->tr("The MVD file cannot save to the project currently"),
-                          parent->tr("The MVD file cannot save to the project. If you want to export the MVD file, "
-                                     "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
+                          QApplication::tr("The MVD file cannot save to the project currently"),
+                          QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
+                                           "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
     }
 }
 
