@@ -48,9 +48,9 @@ namespace vmd
 
 #pragma pack(push, 1)
 
-struct CameraKeyFrameChunk
+struct CameraKeyframeChunk
 {
-    int frameIndex;
+    int timeIndex;
     float distance;
     float position[3];
     float angle[3];
@@ -74,14 +74,14 @@ static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
 
 size_t CameraKeyframe::strideSize()
 {
-    return sizeof(CameraKeyFrameChunk);
+    return sizeof(CameraKeyframeChunk);
 }
 
 CameraKeyframe::CameraKeyframe()
     : BaseKeyframe(),
       m_ptr(0),
       m_distance(0.0f),
-      m_fovy(0.0f),
+      m_fov(0.0f),
       m_position(0.0f, 0.0f, 0.0f),
       m_angle(0.0f, 0.0f, 0.0f),
       m_noPerspective(false)
@@ -95,13 +95,13 @@ CameraKeyframe::CameraKeyframe()
 CameraKeyframe::~CameraKeyframe()
 {
     m_distance = 0.0f;
-    m_fovy = 0.0f;
+    m_fov = 0.0f;
     m_position.setZero();
     m_angle.setZero();
     m_noPerspective = false;
     delete m_ptr;
     m_ptr = 0;
-    for (int i = 0; i < kMax; i++) {
+    for (int i = 0; i < kMaxInterpolationType; i++) {
         delete[] m_interpolationTable[i];
         m_interpolationTable[i] = 0;
     }
@@ -113,13 +113,13 @@ CameraKeyframe::~CameraKeyframe()
 
 void CameraKeyframe::setDefaultInterpolationParameter()
 {
-    for (int i = 0; i < kMax; i++)
+    for (int i = 0; i < kMaxInterpolationType; i++)
         setInterpolationParameter(static_cast<InterpolationType>(i), kDefaultInterpolationParameterValue);
 }
 
 void CameraKeyframe::read(const uint8_t *data)
 {
-    CameraKeyFrameChunk chunk;
+    CameraKeyframeChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
 #ifdef VPVL2_BUILD_IOS
     float pos[3], angle[3];
@@ -130,8 +130,8 @@ void CameraKeyframe::read(const uint8_t *data)
     float *angle = chunk.angle;
 #endif
 
-    setFrameIndex(static_cast<float>(chunk.frameIndex));
-    setFovy(static_cast<float>(chunk.viewAngle));
+    setTimeIndex(static_cast<float>(chunk.timeIndex));
+    setFov(static_cast<float>(chunk.viewAngle));
     setPerspective(chunk.noPerspective == 0);
 #ifdef VPVL2_COORDINATE_OPENGL
     setDistance(-chunk.distance);
@@ -146,7 +146,7 @@ void CameraKeyframe::read(const uint8_t *data)
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
                         sizeof(chunk.interpolationTable));
     QuadWord v;
-    for (int i = 0; i < kMax; i++) {
+    for (int i = 0; i < kMaxInterpolationType; i++) {
         getValueFromTable(m_rawInterpolationTable, i, v);
         setInterpolationParameterInternal(static_cast<InterpolationType>(i), v);
     }
@@ -155,9 +155,9 @@ void CameraKeyframe::read(const uint8_t *data)
 
 void CameraKeyframe::write(uint8_t *data) const
 {
-    CameraKeyFrameChunk chunk;
-    chunk.frameIndex = static_cast<int>(m_frameIndex);
-    chunk.viewAngle = static_cast<int>(m_fovy);
+    CameraKeyframeChunk chunk;
+    chunk.timeIndex = static_cast<int>(m_timeIndex);
+    chunk.viewAngle = static_cast<int>(m_fov);
     chunk.noPerspective = m_noPerspective ? 1 : 0;
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
@@ -190,9 +190,9 @@ ICameraKeyframe *CameraKeyframe::clone() const
     internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->m_frameIndex = m_frameIndex;
+    frame->m_timeIndex = m_timeIndex;
     frame->m_distance = m_distance;
-    frame->m_fovy = m_fovy;
+    frame->m_fov = m_fov;
     frame->m_position = m_position;
     frame->m_angle = m_angle;
     frame->m_noPerspective = m_noPerspective;
@@ -218,13 +218,13 @@ void CameraKeyframe::setInterpolationParameter(InterpolationType type, const Qua
         // x2 => QuadWord#y():1
         // y1 => QuadWord#z():2
         // y2 => QuadWord#w():3
-        int index = i * kMax;
+        int index = i * kMaxInterpolationType;
         table[index + kX] = static_cast<int8_t>(m_parameter.x[i]);
         table[index + kY] = static_cast<int8_t>(m_parameter.y[i]);
         table[index + kZ] = static_cast<int8_t>(m_parameter.z[i]);
         table[index + kRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
         table[index + kDistance] = static_cast<int8_t>(m_parameter.distance[i]);
-        table[index + kFovy] = static_cast<int8_t>(m_parameter.fovy[i]);
+        table[index + kFov] = static_cast<int8_t>(m_parameter.fov[i]);
     }
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));
@@ -233,10 +233,10 @@ void CameraKeyframe::setInterpolationParameter(InterpolationType type, const Qua
 
 void CameraKeyframe::setInterpolationTable(const int8_t *table)
 {
-    for (int i = 0; i < kMax; i++)
+    for (int i = 0; i < kMaxInterpolationType; i++)
         m_linear[i] = ((table[4 * i] == table[4 * i + 2]) && (table[4 * i + 1] == table[4 * i + 3])) ? true : false;
     QuadWord v;
-    for (int i = 0; i < kMax; i++) {
+    for (int i = 0; i < kMaxInterpolationType; i++) {
         getValueFromTable(table, i, v);
         delete[] m_interpolationTable[i];
         if (m_linear[i]) {
@@ -244,11 +244,11 @@ void CameraKeyframe::setInterpolationTable(const int8_t *table)
             setInterpolationParameterInternal(static_cast<InterpolationType>(i), v);
             continue;
         }
-        m_interpolationTable[i] = new float[kTableSize + 1];
-        internal::buildInterpolationTable(v.x() / 127.0f, // x1
-                                          v.z() / 127.0f, // x2
-                                          v.y() / 127.0f, // y1
-                                          v.w() / 127.0f, // y2
+        m_interpolationTable[i] = new IKeyframe::SmoothPrecision[kTableSize + 1];
+        internal::buildInterpolationTable(v.x() / 127.0, // x1
+                                          v.z() / 127.0, // x2
+                                          v.y() / 127.0, // y1
+                                          v.w() / 127.0, // y2
                                           kTableSize,
                                           m_interpolationTable[i]);
     }
@@ -273,22 +273,22 @@ QuadWord &CameraKeyframe::getInterpolationParameterInternal(InterpolationType ty
         return const_cast<QuadWord &>(m_parameter.rotation);
     case kDistance:
         return const_cast<QuadWord &>(m_parameter.distance);
-    case kFovy:
-        return const_cast<QuadWord &>(m_parameter.fovy);
+    case kFov:
+        return const_cast<QuadWord &>(m_parameter.fov);
     default:
         static QuadWord q(0.0f, 0.0f, 0.0f, 0.0f);
         return q;
     }
 }
 
-void CameraKeyframe::setDistance(float value)
+void CameraKeyframe::setDistance(const Scalar &value)
 {
     m_distance = value;
 }
 
-void CameraKeyframe::setFovy(float value)
+void CameraKeyframe::setFov(const Scalar &value)
 {
-    m_fovy = value;
+    m_fov = value;
 }
 
 void CameraKeyframe::setPosition(const Vector3 &value)

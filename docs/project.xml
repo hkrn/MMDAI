@@ -9,7 +9,10 @@
  </vpvm:settings>
  <vpvm:physics dummy="dummy" enabled="true"/>
  <vpvm:models>
+  <!-- null model to test handling correctly -->
   <vpvm:model dummy="dummy" uuid="{00000000-0000-0000-0000-000000000000}" />
+  <!-- duplicated dummy model to test memory leak -->
+  <vpvm:model dummy="dummy" uuid="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}" />
   <vpvm:model dummy="dummy" uuid="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}">
    <vpvm:value dummy="dummy" name="name"><![CDATA[foo]]></vpvm:value>
    <vpvm:value dummy="dummy" name="uri"><![CDATA[model:/foo/bar/baz]]></vpvm:value>
@@ -24,7 +27,10 @@
   </vpvm:model>
  </vpvm:models>
  <vpvm:assets>
+  <!-- null asset to test handling correctly -->
   <vpvm:asset dummy="dummy" uuid="{00000000-0000-0000-0000-000000000000}" />
+  <!-- duplicated dummy asset to test memory leak -->
+  <vpvm:asset dummy="dummy" uuid="{EEBC6A85-F333-429A-ADF8-B6188908A517}" />
   <vpvm:asset dummy="dummy" uuid="{EEBC6A85-F333-429A-ADF8-B6188908A517}">
    <vpvm:value dummy="dummy" name="name"><![CDATA[foo]]></vpvm:value>
    <vpvm:value dummy="dummy" name="uri"><![CDATA[asset:/foo/bar/baz]]></vpvm:value>
@@ -35,7 +41,10 @@
   </vpvm:asset>
  </vpvm:assets>
  <vpvm:motions>
+  <!-- null motion to test handling correctly -->
   <vpvm:motion dummy="dummy" uuid="{00000000-0000-0000-0000-000000000000}" />
+  <!-- duplicated dummy motion to test memory leak -->
+  <vpvm:motion dummy="dummy" uuid="{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}" model="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}" /> <!-- duplicated motion -->
   <vpvm:motion dummy="dummy" uuid="{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}" model="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}">
    <vpvm:animation dummy="dummy" type="bone">
     <vpvm:keyframe dummy="dummy" name="bar" index="1" position="1,2,3" rotation="1,2,3,4" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>

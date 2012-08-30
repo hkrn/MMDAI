@@ -51,80 +51,82 @@ BT_DECLARE_HANDLE(btRigidBody)
 namespace
 {
 
+    static vpvl2::pmx::Bone kNullBone;
+
 #pragma pack(push, 1)
 
-struct RigidBodyUnit
-{
-    uint8_t collisionGroupID;
-    uint16_t collsionMask;
-    uint8_t shapeType;
-    float size[3];
-    float position[3];
-    float rotation[3];
-    float mass;
-    float linearDamping;
-    float angularDamping;
-    float restitution;
-    float friction;
-    uint8_t type;
-};
+    struct RigidBodyUnit
+    {
+        uint8_t collisionGroupID;
+        uint16_t collsionMask;
+        uint8_t shapeType;
+        float size[3];
+        float position[3];
+        float rotation[3];
+        float mass;
+        float linearDamping;
+        float angularDamping;
+        float restitution;
+        float friction;
+        uint8_t type;
+    };
 
 #pragma pack(pop)
 
 #ifndef VPVL2_NO_BULLET
-using namespace vpvl2;
-using namespace vpvl2::pmx;
+    using namespace vpvl2;
+    using namespace vpvl2::pmx;
 
-class AlignedMotionState : public btMotionState
-{
-public:
-    AlignedMotionState(const Transform &startTransform, const Transform &boneTransform, const Bone *bone)
-        : m_bone(bone),
-          m_boneTransform(boneTransform),
-          m_inversedBoneTransform(boneTransform.inverse()),
-          m_worldTransform(startTransform)
+    class AlignedMotionState : public btMotionState
     {
-    }
-    ~AlignedMotionState() {}
+    public:
+        AlignedMotionState(const Transform &startTransform, const Transform &boneTransform, const Bone *bone)
+            : m_bone(bone),
+              m_boneTransform(boneTransform),
+              m_inversedBoneTransform(boneTransform.inverse()),
+              m_worldTransform(startTransform)
+        {
+        }
+        ~AlignedMotionState() {}
 
-    void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans = m_worldTransform;
-    }
-    void setWorldTransform(const btTransform &worldTrans) {
-        m_worldTransform = worldTrans;
-        const Matrix3x3 &matrix = worldTrans.getBasis();
-        m_worldTransform.setOrigin(kZeroV3);
-        m_worldTransform = m_boneTransform * m_worldTransform;
-        m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
-        m_worldTransform.setBasis(matrix);
-    }
+        void getWorldTransform(btTransform &worldTrans) const {
+            worldTrans = m_worldTransform;
+        }
+        void setWorldTransform(const btTransform &worldTrans) {
+            m_worldTransform = worldTrans;
+            const Matrix3x3 &matrix = worldTrans.getBasis();
+            m_worldTransform.setOrigin(kZeroV3);
+            m_worldTransform = m_boneTransform * m_worldTransform;
+            m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
+            m_worldTransform.setBasis(matrix);
+        }
 
-private:
-    const Bone *m_bone;
-    const Transform m_boneTransform;
-    const Transform m_inversedBoneTransform;
-    Transform m_worldTransform;
-};
+    private:
+        const Bone *m_bone;
+        const Transform m_boneTransform;
+        const Transform m_inversedBoneTransform;
+        Transform m_worldTransform;
+    };
 
-class KinematicMotionState : public btMotionState
-{
-public:
-    KinematicMotionState(const Transform &boneTransform, const Bone *bone)
-        : m_bone(bone),
-          m_boneTransform(boneTransform)
+    class KinematicMotionState : public btMotionState
     {
-    }
-    ~KinematicMotionState() {}
+    public:
+        KinematicMotionState(const Transform &boneTransform, const Bone *bone)
+            : m_bone(bone),
+              m_boneTransform(boneTransform)
+        {
+        }
+        ~KinematicMotionState() {}
 
-    void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans = m_bone->localTransform() * m_boneTransform;
-    }
-    void setWorldTransform(const btTransform & /* worldTrans */) {}
+        void getWorldTransform(btTransform &worldTrans) const {
+            worldTrans = m_bone->localTransform() * m_boneTransform;
+        }
+        void setWorldTransform(const btTransform & /* worldTrans */) {}
 
-private:
-    const Bone *m_bone;
-    const Transform m_boneTransform;
-};
+    private:
+        const Bone *m_bone;
+        const Transform m_boneTransform;
+    };
 #endif /* VPVL2_NO_BULLET */
 
 }
@@ -244,6 +246,10 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
                 rigidBody->m_body = rigidBody->createRigidBody(shape);
             }
         }
+        else {
+            rigidBody->m_bone = &kNullBone;
+            rigidBody->m_body = rigidBody->createRigidBody(0);
+        }
         rigidBody->m_index = i;
     }
     return true;
@@ -259,7 +265,8 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
-    const RigidBodyUnit &unit = *reinterpret_cast<RigidBodyUnit *>(ptr);
+    RigidBodyUnit unit;
+    internal::getData(ptr, unit);
     m_collisionGroupID = unit.collisionGroupID;
     m_groupID = 0x0001 << m_collisionGroupID;
     m_collisionGroupMask = unit.collsionMask;
@@ -379,7 +386,7 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
     Scalar massValue = 0.0f;
     if (m_type != 0) {
         massValue = m_mass;
-        if (massValue != 0.0f)
+        if (shape && massValue != 0.0f)
             shape->calculateLocalInertia(massValue, localInertia);
     }
     const Transform &startTransform = createStartTransform(m_transform);

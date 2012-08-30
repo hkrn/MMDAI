@@ -53,7 +53,7 @@ class BoneAnimationKeyframePredication
 {
 public:
     bool operator()(const IBoneKeyframe *left, const IBoneKeyframe *right) const {
-        return left->frameIndex() < right->frameIndex();
+        return left->timeIndex() < right->timeIndex();
     }
 };
 
@@ -81,35 +81,37 @@ struct BoneAnimation::InternalBoneKeyFrameList {
     }
 };
 
-float BoneAnimation::weightValue(const BoneKeyframe *keyFrame, float w, int at)
+IKeyframe::SmoothPrecision BoneAnimation::weightValue(const BoneKeyframe *keyFrame,
+                                                      const IKeyframe::SmoothPrecision &w,
+                                                      int at)
 {
     const uint16_t index = static_cast<int16_t>(w * BoneKeyframe::kTableSize);
-    const float *v = keyFrame->interpolationTable()[at];
+    const IKeyframe::SmoothPrecision *v = keyFrame->interpolationTable()[at];
     return v[index] + (v[index + 1] - v[index]) * (w * BoneKeyframe::kTableSize - index);
 }
 
 void BoneAnimation::lerpVector3(const BoneKeyframe *keyFrame,
                                 const Vector3 &from,
                                 const Vector3 &to,
-                                float w,
+                                const IKeyframe::SmoothPrecision &w,
                                 int at,
-                                float &value)
+                                IKeyframe::SmoothPrecision &value)
 {
-    const float valueFrom = static_cast<const Scalar *>(from)[at];
-    const float valueTo = static_cast<const Scalar *>(to)[at];
+    const IKeyframe::SmoothPrecision &valueFrom = from[at];
+    const IKeyframe::SmoothPrecision &valueTo = to[at];
     if (keyFrame->linear()[at]) {
         value = internal::lerp(valueFrom, valueTo, w);
     }
     else {
-        const float w2 = weightValue(keyFrame, w, at);
+        const IKeyframe::SmoothPrecision &w2 = weightValue(keyFrame, w, at);
         value = internal::lerp(valueFrom, valueTo, w2);
     }
 }
 
 BoneAnimation::BoneAnimation(IEncoding *encoding)
     : BaseAnimation(),
-      m_encoding(encoding),
-      m_model(0),
+      m_encodingRef(encoding),
+      m_modelRef(0),
       m_enableNullFrame(false)
 {
 }
@@ -117,7 +119,7 @@ BoneAnimation::BoneAnimation(IEncoding *encoding)
 BoneAnimation::~BoneAnimation()
 {
     m_name2keyframes.releaseAll();
-    m_model = 0;
+    m_modelRef = 0;
 }
 
 void BoneAnimation::read(const uint8_t *data, int size)
@@ -125,16 +127,16 @@ void BoneAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        BoneKeyframe *frame = new BoneKeyframe(m_encoding);
+        BoneKeyframe *frame = new BoneKeyframe(m_encodingRef);
         m_keyframes.add(frame);
         frame->read(ptr);
         ptr += frame->estimateSize();
     }
 }
 
-void BoneAnimation::seek(float frameAt)
+void BoneAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 {
-    if (!m_model)
+    if (!m_modelRef)
         return;
     const int nnodes = m_name2keyframes.count();
     for (int i = 0; i < nnodes; i++) {
@@ -146,14 +148,14 @@ void BoneAnimation::seek(float frameAt)
         bone->setPosition(keyframes->position);
         bone->setRotation(keyframes->rotation);
     }
-    m_previousFrameIndex = m_currentFrameIndex;
-    m_currentFrameIndex = frameAt;
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = frameAt;
 }
 
 void BoneAnimation::setParentModel(IModel *model)
 {
     buildInternalKeyFrameList(model);
-    m_model = model;
+    m_modelRef = model;
 }
 
 BoneKeyframe *BoneAnimation::frameAt(int i) const
@@ -161,7 +163,7 @@ BoneKeyframe *BoneAnimation::frameAt(int i) const
     return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<BoneKeyframe *>(m_keyframes[i]) : 0;
 }
 
-BoneKeyframe *BoneAnimation::findKeyframe(int frameIndex, const IString *name) const
+BoneKeyframe *BoneAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
 {
     if (!name)
         return 0;
@@ -170,7 +172,7 @@ BoneKeyframe *BoneAnimation::findKeyframe(int frameIndex, const IString *name) c
     if (ptr) {
         const InternalBoneKeyFrameList *node = *ptr;
         const Array<BoneKeyframe *> &frames = node->keyframes;
-        int index = findKeyframeIndex(frameIndex, frames);
+        int index = findKeyframeIndex(timeIndex, frames);
         return index != -1 ? frames[index] : 0;
     }
     return 0;
@@ -211,21 +213,21 @@ void BoneAnimation::buildInternalKeyFrameList(IModel *model)
         InternalBoneKeyFrameList *node = *m_name2keyframes.value(i);
         Array<BoneKeyframe *> &frames = node->keyframes;
         frames.sort(BoneAnimationKeyframePredication());
-        btSetMax(m_maxFrameIndex, frames[frames.count() - 1]->frameIndex());
+        btSetMax(m_maxTimeIndex, frames[frames.count() - 1]->timeIndex());
     }
 }
 
-void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *keyFrames)
+void BoneAnimation::calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalBoneKeyFrameList *keyFrames)
 {
     Array<BoneKeyframe *> &keyframes = keyFrames->keyframes;
     const int nframes = keyframes.count();
     IBoneKeyframe *lastKeyFrame = keyframes[nframes - 1];
-    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    const IKeyframe::TimeIndex &currentFrame = btMin(frameAt, lastKeyFrame->timeIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0, lastIndex = keyFrames->lastIndex;
-    if (currentFrame >= keyframes[lastIndex]->frameIndex()) {
+    if (currentFrame >= keyframes[lastIndex]->timeIndex()) {
         for (int i = lastIndex; i < nframes; i++) {
-            if (currentFrame <= keyframes[i]->frameIndex()) {
+            if (currentFrame <= keyframes[i]->timeIndex()) {
                 k2 = i;
                 break;
             }
@@ -233,7 +235,7 @@ void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *key
     }
     else {
         for (int i = 0; i <= lastIndex && i < nframes; i++) {
-            if (currentFrame <= keyframes[i]->frameIndex()) {
+            if (currentFrame <= keyframes[i]->timeIndex()) {
                 k2 = i;
                 break;
             }
@@ -247,25 +249,25 @@ void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *key
 
     const BoneKeyframe *keyFrameFrom = keyframes.at(k1),
             *keyFrameTo = keyframes.at(k2);
-    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
+    const IKeyframe::TimeIndex &timeIndexFrom = keyFrameFrom->timeIndex(), timeIndexTo = keyFrameTo->timeIndex();
     BoneKeyframe *keyFrameForInterpolation = const_cast<BoneKeyframe *>(keyFrameTo);
     const Vector3 &positionFrom = keyFrameFrom->position();
     const Quaternion &rotationFrom = keyFrameFrom->rotation();
     const Vector3 &positionTo = keyFrameTo->position();
     const Quaternion &rotationTo = keyFrameTo->rotation();
 
-    if (frameIndexFrom != frameIndexTo) {
-        if (currentFrame <= frameIndexFrom) {
+    if (timeIndexFrom != timeIndexTo) {
+        if (currentFrame <= timeIndexFrom) {
             keyFrames->position = positionFrom;
             keyFrames->rotation = rotationFrom;
         }
-        else if (currentFrame >= frameIndexTo) {
+        else if (currentFrame >= timeIndexTo) {
             keyFrames->position = positionTo;
             keyFrames->rotation = rotationTo;
         }
         else {
-            const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
-            float x = 0, y = 0, z = 0;
+            const IKeyframe::SmoothPrecision &w = (currentFrame - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+            IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 1, y);
             lerpVector3(keyFrameForInterpolation, positionFrom, positionTo, w, 2, z);
@@ -274,7 +276,7 @@ void BoneAnimation::calculateFrames(float frameAt, InternalBoneKeyFrameList *key
                 keyFrames->rotation = rotationFrom.slerp(rotationTo, w);
             }
             else {
-                const float w2 = weightValue(keyFrameForInterpolation, w, 3);
+                const IKeyframe::SmoothPrecision &w2 = weightValue(keyFrameForInterpolation, w, 3);
                 keyFrames->rotation = rotationFrom.slerp(rotationTo, w2);
             }
         }

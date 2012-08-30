@@ -64,7 +64,8 @@ public:
         kElbow,
         kArm,
         kWrist,
-        kCenter
+        kCenter,
+        kMaxConstantType
     };
 
     virtual ~IEncoding() {}

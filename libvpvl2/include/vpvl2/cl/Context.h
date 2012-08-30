@@ -64,7 +64,7 @@ public:
     ~Context();
 
     bool isAvailable() const;
-    bool initializeContext();
+    bool initializeContext(cl_device_type hostDeviceType);
 
     IRenderDelegate *renderDelegate() const { return m_delegate; }
     cl_context computeContext() const { return m_context; }

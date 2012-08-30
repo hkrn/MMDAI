@@ -42,6 +42,7 @@
 namespace vpvl2
 {
 
+class IEffect;
 class IModel;
 class IString;
 
@@ -77,7 +78,8 @@ public:
         kMouseCursorPosition,
         kMouseLeftPressPosition,
         kMouseMiddlePressPosition,
-        kMouseRightPressPosition
+        kMouseRightPressPosition,
+        kMaxMousePositionType
     };
     enum MatrixTypeFlags {
         kWorldMatrix        = 0x001,
@@ -100,20 +102,23 @@ public:
     };
     struct Texture {
         Texture()
-            : width(0),
+            : async(true),
+              width(0),
               height(0),
               object(0)
         {
         }
         ~Texture() {
+            async = true;
             width = 0;
             height = 0;
             object = 0;
         }
 
+        bool async;
         int width;
         int height;
-        const void *object;
+        void *object;
     };
 
     virtual ~IRenderDelegate() {}
@@ -160,19 +165,17 @@ public:
      */
     virtual bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) = 0;
 
-    virtual void getToonColor(const IString *name, const IString *dir, Color &value, void *context) = 0;
-
+    /**
+     * 行列を取得します。
+     *
+     * flags 変数に呼び出し側が取得したい行列の形式をビットの組み合わせで渡します。
+     * 実装側は呼び出し側の要求に従って行列の結果を value に格納する必要があります。
+     *
+     * @param value
+     * @param mdoel
+     * @param flags
+     */
     virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
-
-    virtual void getViewport(Vector3 &value) const = 0;
-
-    virtual void getMousePosition(Vector4 &value, MousePositionType type) const = 0;
-
-    virtual void getTime(float &value, bool sync) const = 0;
-
-    virtual void getElapsed(float &value, bool sync) const = 0;
-
-    virtual IModel *findModel(const char *name) const = 0;
 
     /**
      * 指定されたフォーマットと可変引数を用いてロギングを行います。
@@ -186,6 +189,20 @@ public:
      * @param ap
      */
     virtual void log(void *context, LogLevel level, const char *format, va_list ap) = 0;
+
+    /**
+     * 指定された形式のエフェクトのソースを読み込みます。
+     *
+     * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
+     * model の type メソッドを用いて読み込むシェーダの切り替えを行います。
+     * 処理中は例外を投げないように処理を行う必要があります。
+     * このメソッドは Cg 専用でオフスクリーンに割り当てられたエフェクトの読み込みに利用します。
+     *
+     * @param type
+     * @param path
+     * @return IString
+     */
+    virtual IString *loadShaderSource(ShaderType type, const IString *path) = 0;
 
     /**
      * 指定された形式の (OpenGL の) シェーダのソースを読み込みます。
@@ -223,6 +240,108 @@ public:
      * @return IString
      */
     virtual IString *toUnicode(const uint8_t *str) const = 0;
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    /**
+     * トゥーン色を取得します。
+     *
+     * 実装側はトゥーン色の結果を value 変数に格納する必要があります。
+     * このメソッドは Cg 専用で、トゥーンテクスチャのみ uploadTexture に代わって呼び出します。
+     *
+     * @param name
+     * @param dir
+     * @param value
+     * @param context
+     */
+    virtual void getToonColor(const IString *name, const IString *dir, Color &value, void *context) = 0;
+
+    /**
+     * ビューポートの大きさを取得します。
+     *
+     * 実装側は value 変数に width を x に、height を y に設定して格納する必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @param value
+     */
+    virtual void getViewport(Vector3 &value) const = 0;
+
+    /**
+     * マウス座標を取得します。
+     *
+     * 実装側は type 変数に従ってマウス座標を x と y に、クリックされた時間を z に、
+     * クリックされたかの真偽値を w に格納する必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @param value
+     * @param type
+     */
+    virtual void getMousePosition(Vector4 &value, MousePositionType type) const = 0;
+
+    /**
+     * フレーム位置あるいは起動開始からの秒数を取得します。
+     *
+     * 実装側は sync が true ならフレーム位置を秒数単位に変換した値を、false なら
+     * 起動開始からの秒数を value 変数に格納する必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @param value
+     * @param sync
+     */
+    virtual void getTime(float &value, bool sync) const = 0;
+
+    /**
+     * 前回からの描画の秒数を取得します。
+     *
+     * 実装側は sync が true なら前回の描写の経過秒数を、false なら
+     * 起動開始からの秒数を value 変数に格納する必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @param value
+     * @param sync
+     */
+    virtual void getElapsed(float &value, bool sync) const = 0;
+
+    /**
+     * アニメーションテクスチャを更新します。
+     *
+     * 実装側は引数にしたがってアニメーションテクスチャを更新する必要があります。
+     * texture 変数に作成時のテクスチャの識別子が格納されているため、
+     * これを各 3D API のテクスチャのオブジェクトにキャストしてください。
+     * このメソッドは Cg 専用です。
+     *
+     * @param offset
+     * @param speed
+     * @param seek
+     * @param texture
+     * @param sync
+     */
+    virtual void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) = 0;
+
+    virtual IModel *findModel(const IString *name) const = 0;
+
+    virtual IModel *effectOwner(const IEffect *effect) const = 0;
+
+    virtual void setRenderColorTargets(const void *targets, const int ntargets) = 0;
+
+    virtual void bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
+
+    virtual void releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
+
+    virtual void bindRenderDepthStencilTarget(void *texture,
+                                              void *depth,
+                                              void *stencil,
+                                              size_t width,
+                                              size_t height,
+                                              bool enableAA) = 0;
+
+    virtual void releaseRenderDepthStencilTarget(void *texture,
+                                                 void *depth,
+                                                 void *stencil,
+                                                 size_t width,
+                                                 size_t height,
+                                                 bool enableAA) = 0;
+
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
 };
 
 } /* namespace vpvl2 */

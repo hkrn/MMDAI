@@ -152,9 +152,9 @@ public:
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const IString *userDataArea() const { return m_userDataArea; }
-    const IString *mainTexture() const { return m_mainTexture; }
-    const IString *sphereTexture() const { return m_sphereTexture; }
-    const IString *toonTexture() const { return m_toonTexture; }
+    const IString *mainTexture() const { return m_mainTextureRef; }
+    const IString *sphereTexture() const { return m_sphereTextureRef; }
+    const IString *toonTexture() const { return m_toonTextureRef; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
     const Color &ambient() const { return m_ambient.result; }
     const Color &diffuse() const { return m_diffuse.result; }
@@ -200,9 +200,9 @@ private:
     IString *m_name;
     IString *m_englishName;
     IString *m_userDataArea;
-    IString *m_mainTexture;
-    IString *m_sphereTexture;
-    IString *m_toonTexture;
+    IString *m_mainTextureRef;
+    IString *m_sphereTextureRef;
+    IString *m_toonTextureRef;
     SphereTextureRenderMode m_sphereTextureRenderMode;
     RGB3 m_ambient;
     RGBA3 m_diffuse;

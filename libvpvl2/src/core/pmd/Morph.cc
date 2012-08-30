@@ -43,9 +43,9 @@ namespace pmd
 {
 
 Morph::Morph(vpvl::Face *morph, IEncoding *encoding)
-    : m_encoding(encoding),
+    : m_encodingRef(encoding),
       m_name(0),
-      m_morph(morph),
+      m_morphRef(morph),
       m_category(kReserved),
       m_weight(0),
       m_index(-1)
@@ -57,7 +57,7 @@ Morph::~Morph()
 {
     delete m_name;
     m_name = 0;
-    m_morph = 0;
+    m_morphRef = 0;
     m_category = kReserved;
     m_weight = 0;
     m_index = -1;
@@ -65,7 +65,7 @@ Morph::~Morph()
 
 IMorph::Category Morph::category() const
 {
-    switch (m_morph->type()) {
+    switch (m_morphRef->type()) {
     case vpvl::Face::kEye:
         return kEye;
     case vpvl::Face::kEyeblow:
@@ -90,15 +90,15 @@ bool Morph::hasParent() const
     return false;
 }
 
-const Scalar &Morph::weight() const
+const IMorph::WeightPrecision &Morph::weight() const
 {
     return m_weight;
 }
 
-void Morph::setWeight(const Scalar &value)
+void Morph::setWeight(const WeightPrecision &value)
 {
     m_weight = value;
-    m_morph->setWeight(value);
+    m_morphRef->setWeight(value);
 }
 
 void Morph::setIndex(int value)

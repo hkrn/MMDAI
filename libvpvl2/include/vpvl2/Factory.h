@@ -39,6 +39,7 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IModel.h"
+#include "vpvl2/IMotion.h"
 
 namespace vpvl2
 {
@@ -59,6 +60,9 @@ class IMotion;
 class VPVL2_API Factory
 {
 public:
+    static IModel::Type findModelType(const uint8_t *data, size_t size);
+    static IMotion::Type findMotionType(const uint8_t *data, size_t size);
+
     Factory(IEncoding *encoding);
     ~Factory();
 
@@ -88,9 +92,11 @@ public:
     /**
      * 空の Motion インスタンスを返します。
      *
+     * @param type
+     * @param model
      * @return IMotion
      */
-    IMotion *createMotion() const;
+    IMotion *createMotion(vpvl2::IMotion::Type type, IModel *model) const;
 
     /**
      * オンメモリ上にあるデータとその長さを元に読み込み済みの Motion インスタンスを作成します。
@@ -112,30 +118,36 @@ public:
     /**
      * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return IBoneKeyframe
      */
-    IBoneKeyframe *createBoneKeyframe() const;
+    IBoneKeyframe *createBoneKeyframe(const IMotion *motion) const;
 
     /**
      * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return ICameraKeyframe
      */
-    ICameraKeyframe *createCameraKeyframe() const;
+    ICameraKeyframe *createCameraKeyframe(const IMotion *motion) const;
 
     /**
      * ILightKeyframe (照明のキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return ILightKeyframe
      */
-    ILightKeyframe *createLightKeyframe() const;
+    ILightKeyframe *createLightKeyframe(const IMotion *motion) const;
 
     /**
      * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します。
      *
+     * @param motion
      * @return IMorphKeyframe
      */
-    IMorphKeyframe *createMorphKeyframe() const;
+    IMorphKeyframe *createMorphKeyframe(const IMotion *motion) const;
+
+    IMotion *convertMotion(IMotion *source, IMotion::Type destType) const;
 
 private:
     struct PrivateContext;

@@ -52,7 +52,7 @@ class LightAnimationKeyFramePredication
 {
 public:
     bool operator()(const IKeyframe *left, const IKeyframe *right) const {
-        return left->frameIndex() < right->frameIndex();
+        return left->timeIndex() < right->timeIndex();
     }
 };
 
@@ -91,24 +91,24 @@ void LightAnimation::read(const uint8_t *data, int size)
     }
 }
 
-void LightAnimation::seek(float frameAt)
+void LightAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 {
     const int nframes = m_keyframes.count();
     LightKeyframe *lastKeyFrame = reinterpret_cast<LightKeyframe *>(m_keyframes[nframes - 1]);
-    float currentFrame = btMin(frameAt, lastKeyFrame->frameIndex());
+    const IKeyframe::TimeIndex &currentFrame = btMin(frameAt, lastKeyFrame->timeIndex());
     // Find the next frame index bigger than the frame index of last key frame
     int k1 = 0, k2 = 0;
-    if (currentFrame >= m_keyframes[m_lastIndex]->frameIndex()) {
-        for (int i = m_lastIndex; i < nframes; i++) {
-            if (currentFrame <= m_keyframes[i]->frameIndex()) {
+    if (currentFrame >= m_keyframes[m_lastTimeIndex]->timeIndex()) {
+        for (int i = m_lastTimeIndex; i < nframes; i++) {
+            if (currentFrame <= m_keyframes[i]->timeIndex()) {
                 k2 = i;
                 break;
             }
         }
     }
     else {
-        for (int i = 0; i <= m_lastIndex && i < nframes; i++) {
-            if (currentFrame <= m_keyframes[i]->frameIndex()) {
+        for (int i = 0; i <= m_lastTimeIndex && i < nframes; i++) {
+            if (currentFrame <= m_keyframes[i]->timeIndex()) {
                 k2 = i;
                 break;
             }
@@ -118,15 +118,15 @@ void LightAnimation::seek(float frameAt)
     if (k2 >= nframes)
         k2 = nframes - 1;
     k1 = k2 <= 1 ? 0 : k2 - 1;
-    m_lastIndex = k1;
+    m_lastTimeIndex = k1;
 
     const LightKeyframe *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
-    float frameIndexFrom = keyFrameFrom->frameIndex(), frameIndexTo = keyFrameTo->frameIndex();
+    const IKeyframe::TimeIndex &timeIndexFrom = keyFrameFrom->timeIndex(), timeIndexTo = keyFrameTo->timeIndex();
     const Vector3 &colorFrom = keyFrameFrom->color(), &directionFrom = keyFrameFrom->direction();
     const Vector3 &colorTo = keyFrameTo->color(), &directionTo = keyFrameTo->direction();
 
-    if (frameIndexFrom != frameIndexTo) {
-        const float w = (currentFrame - frameIndexFrom) / (frameIndexTo - frameIndexFrom);
+    if (timeIndexFrom != timeIndexTo) {
+        const IKeyframe::SmoothPrecision &w = (currentFrame - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
         m_color.setInterpolate3(colorFrom, colorTo, w);
         m_direction.setInterpolate3(directionFrom, directionTo, w);
     }
@@ -134,8 +134,8 @@ void LightAnimation::seek(float frameAt)
         m_color = colorFrom;
         m_direction = directionFrom;
     }
-    m_previousFrameIndex = m_currentFrameIndex;
-    m_currentFrameIndex = frameAt;
+    m_previousTimeIndex = m_currentTimeIndex;
+    m_currentTimeIndex = frameAt;
 }
 
 void LightAnimation::update()
@@ -143,16 +143,16 @@ void LightAnimation::update()
     int nkeyframes = m_keyframes.count();
     if (nkeyframes > 0) {
         m_keyframes.sort(LightAnimationKeyFramePredication());
-        m_maxFrameIndex = m_keyframes[m_keyframes.count() - 1]->frameIndex();
+        m_maxTimeIndex = m_keyframes[m_keyframes.count() - 1]->timeIndex();
     }
     else {
-        m_maxFrameIndex = 0;
+        m_maxTimeIndex = 0;
     }
 }
 
-LightKeyframe *LightAnimation::findKeyframe(int frameIndex) const
+LightKeyframe *LightAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex) const
 {
-    int index = findKeyframeIndex(frameIndex, m_keyframes);
+    int index = findKeyframeIndex(timeIndex, m_keyframes);
     return index != -1 ? reinterpret_cast<LightKeyframe *>(m_keyframes[index]) : 0;
 }
 

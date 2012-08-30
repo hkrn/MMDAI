@@ -62,15 +62,15 @@ public:
     Category category() const;
     Type type() const;
     bool hasParent() const;
-    const Scalar &weight() const;
-    void setWeight(const Scalar &value);
+    const WeightPrecision &weight() const;
+    void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     IString *m_name;
-    vpvl::Face *m_morph;
+    vpvl::Face *m_morphRef;
     Category m_category;
-    Scalar m_weight;
+    WeightPrecision m_weight;
     int m_index;
 };
 

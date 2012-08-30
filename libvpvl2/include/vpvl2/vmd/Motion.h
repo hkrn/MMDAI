@@ -112,35 +112,50 @@ public:
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void setParentModel(IModel *model);
-    void seek(float frameIndex);
-    void advance(float delta);
+    void seek(const IKeyframe::TimeIndex &timeIndex);
+    void seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene);
+    void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
+    void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene);
     void reload();
     void reset();
-    float maxFrameIndex() const;
-    bool isReachedTo(float frameIndex) const;
+    const IKeyframe::TimeIndex &maxTimeIndex() const;
+    bool isReachedTo(const IKeyframe::TimeIndex &atEnd) const;
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
-    IBoneKeyframe *findBoneKeyframe(int frameIndex, const IString *name) const;
+    void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                      const IKeyframe::LayerIndex &layerIndex,
+                      IKeyframe::Type type,
+                      Array<IKeyframe *> &keyframes);
+    IKeyframe::LayerIndex countLayers(const IString *name,
+                                      IKeyframe::Type type) const;
+    IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                    const IString *name,
+                                    const IKeyframe::LayerIndex &layerIndex) const;
     IBoneKeyframe *findBoneKeyframeAt(int index) const;
-    ICameraKeyframe *findCameraKeyframe(int frameIndex) const;
+    ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                        const IKeyframe::LayerIndex &layerIndex) const;
     ICameraKeyframe *findCameraKeyframeAt(int index) const;
-    ILightKeyframe *findLightKeyframe(int frameIndex) const;
+    ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                      const IKeyframe::LayerIndex &layerIndex) const;
     ILightKeyframe *findLightKeyframeAt(int index) const;
-    IMorphKeyframe *findMorphKeyframe(int frameIndex, const IString *name) const;
+    IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                      const IString *name,
+                                      const IKeyframe::LayerIndex &layerIndex) const;
     IMorphKeyframe *findMorphKeyframeAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
-    void deleteKeyframes(int frameIndex, IKeyframe::Type type);
+    void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
+    IMotion *clone() const;
 
     const IString *name() const {
         return m_name;
     }
     IModel *parentModel() const {
-        return m_model;
+        return m_modelRef;
     }
     Error error() const {
         return m_error;
@@ -175,6 +190,9 @@ public:
     bool isActive() const {
         return m_active;
     }
+    Type type() const {
+        return kVMD;
+    }
 
 private:
     void parseHeader(const DataInfo &info);
@@ -185,8 +203,9 @@ private:
     void parseSelfShadowFrames(const DataInfo &info);
     void release();
 
-    IModel *m_model;
-    IEncoding *m_encoding;
+    mutable IMotion *m_motionPtr;
+    IModel *m_modelRef;
+    IEncoding *m_encodingRef;
     IString *m_name;
     DataInfo m_result;
     BoneAnimation m_boneMotion;

@@ -37,7 +37,8 @@
 #ifndef VPVL2_CG2_PMXRENDERENGINE_H_
 #define VPVL2_CG2_PMXRENDERENGINE_H_
 
-#include "vpvl2/cg/EngineCommon.h"
+#include "vpvl2/IRenderEngine.h"
+#include "vpvl2/cg/EffectEngine.h"
 #include "vpvl2/pmx/Model.h"
 
 namespace vpvl2
@@ -82,6 +83,8 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
+    IEffect *effect(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
     //static bool isAcceleratorSupported();
     bool isAcceleratorAvailable() const;
@@ -90,11 +93,11 @@ public:
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
-    void renderModel(Effect::ScriptOrderType type);
-    static void handleError(CGcontext context, CGerror error, void *data);
+    bool releaseContext0(void *context);
+    void release();
 
     enum VertexBufferObjectType {
         kModelVertices,
@@ -113,14 +116,16 @@ private:
         Color toonTextureColor;
     };
 
-    const Scene *m_scene;
+    const Scene *m_sceneRef;
+    EffectEngine *m_currentRef;
     cl::PMXAccelerator *m_accelerator;
-    pmx::Model *m_model;
-    CGcontext m_context;
-    Effect m_effect;
+    pmx::Model *m_modelRef;
+    CGcontext m_contextRef;
     pmx::Model::SkinningMeshes m_mesh;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     MaterialContext *m_materialContexts;
+    Hash<btHashInt, EffectEngine *> m_effects;
+    Array<EffectEngine *> m_oseffects;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
 

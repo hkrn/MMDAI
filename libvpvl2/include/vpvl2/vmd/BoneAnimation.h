@@ -71,31 +71,31 @@ public:
     ~BoneAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(float frameAt);
+    void seek(const IKeyframe::TimeIndex &frameAt);
     void reset();
     void setParentModel(IModel *model);
     BoneKeyframe *frameAt(int i) const;
-    BoneKeyframe *findKeyframe(int frameIndex, const IString *name) const;
+    BoneKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
 
     bool isNullFrameEnabled() const { return m_enableNullFrame; }
     void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
-    static float weightValue(const BoneKeyframe *keyFrame,
-                             float w,
-                             int at);
+    static IKeyframe::SmoothPrecision weightValue(const BoneKeyframe *keyFrame,
+                                                  const IKeyframe::SmoothPrecision &w,
+                                                  int at);
     static void lerpVector3(const BoneKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
-                            float w,
+                            const IKeyframe::SmoothPrecision &w,
                             int at,
-                            float &value);
+                            IKeyframe::SmoothPrecision &value);
     void buildInternalKeyFrameList(IModel *model);
-    void calculateFrames(float frameAt, InternalBoneKeyFrameList *keyFrames);
+    void calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalBoneKeyFrameList *keyFrames);
 
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     Hash<HashString, InternalBoneKeyFrameList *> m_name2keyframes;
-    IModel *m_model;
+    IModel *m_modelRef;
     bool m_enableNullFrame;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneAnimation)

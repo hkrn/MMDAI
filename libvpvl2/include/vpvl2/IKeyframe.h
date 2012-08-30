@@ -51,11 +51,24 @@ class IString;
 class VPVL2_API IKeyframe
 {
 public:
+#ifdef VPVL2_ENABLE_GLES2
+    typedef float SmoothPrecision;
+    typedef float TimeIndex;
+#else
+    typedef double SmoothPrecision;
+    typedef double TimeIndex;
+#endif
+    typedef int LayerIndex;
     enum Type {
+        kAsset,
         kBone,
         kCamera,
+        kEffect,
         kLight,
-        kMorph
+        kModel,
+        kMorph,
+        kProject,
+        kMaxKeyframeType
     };
     virtual ~IKeyframe() {}
 
@@ -105,12 +118,20 @@ public:
     /**
      * キーフレームのフレーム番号を返します。
      *
-     * 返す値の型は float ですが、小数点はつきません。
+     * 返す値の型は double ですが、小数点はつきません。
      *
-     * @return float
-     * @sa setFrameIndex
+     * @return Index
+     * @sa setTimeIndex
      */
-    virtual float frameIndex() const = 0;
+    virtual const TimeIndex &timeIndex() const = 0;
+
+    /**
+     * キーフレームのレイヤー番号を返します。
+     *
+     * @return Layer
+     * @sa setLayerIndex
+     */
+    virtual const LayerIndex &layerIndex() const = 0;
 
     /**
      * キーフレームの動作対象となる名前を設定します。
@@ -126,10 +147,18 @@ public:
     /**
      * キーフレームのフレーム番号を設定します。
      *
-     * @param float
-     * @sa frameIndex
+     * @param Index
+     * @sa timeIndex
      */
-    virtual void setFrameIndex(float value) = 0;
+    virtual void setTimeIndex(const TimeIndex &value) = 0;
+
+    /**
+     * キーフレームのレイヤー番号を設定します。
+     *
+     * @param Layer
+     * @sa layerIndex
+     */
+    virtual void setLayerIndex(const LayerIndex &value) = 0;
 
     /**
      * キーフレームの型を返します。

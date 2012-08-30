@@ -64,15 +64,15 @@ public:
     size_t estimateSize() const;
     IMorphKeyframe *clone() const;
 
-    float weight() const {  return m_weight; }
+    const IMorph::WeightPrecision &weight() const {  return m_weight; }
     Type type() const { return IKeyframe::kMorph; }
 
     void setName(const IString *value);
-    void setWeight(float value);
+    void setWeight(const IMorph::WeightPrecision &value);
 
 private:
-    IEncoding *m_encoding;
-    float m_weight;
+    IEncoding *m_encodingRef;
+    IMorph::WeightPrecision m_weight;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)
 };

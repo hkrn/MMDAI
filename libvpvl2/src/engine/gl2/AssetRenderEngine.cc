@@ -232,9 +232,9 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate, const Scene *sce
       #else
     :
       #endif /* VPVL2_LINK_QT */
-      m_delegate(delegate),
-      m_scene(scene),
-      m_model(model),
+      m_delegateRef(delegate),
+      m_sceneRef(scene),
+      m_modelRef(model),
       m_context(0)
 {
     m_context = new PrivateContext();
@@ -245,48 +245,50 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate, const Scene *sce
 
 AssetRenderEngine::~AssetRenderEngine()
 {
-    const aiScene *scene = m_model->ptr()->getScene();
-    const unsigned int nmaterials = scene->mNumMaterials;
-    std::string texture, mainTexture, subTexture;
-    aiString texturePath;
-    for (unsigned int i = 0; i < nmaterials; i++) {
-        aiMaterial *material = scene->mMaterials[i];
-        aiReturn found = AI_SUCCESS;
-        GLuint textureID;
-        int textureIndex = 0;
-        while (found == AI_SUCCESS) {
-            found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-            if (found != AI_SUCCESS)
-                break;
-            texture = texturePath.data;
-            if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
-                if (sub != m_context->textures.end()) {
-                    textureID = sub->second;
-                    glDeleteTextures(1, &textureID);
-                    m_context->textures.erase(subTexture);
+    const aiScene *scene = m_modelRef->ptr()->getScene();
+    if (scene) {
+        const unsigned int nmaterials = scene->mNumMaterials;
+        std::string texture, mainTexture, subTexture;
+        aiString texturePath;
+        for (unsigned int i = 0; i < nmaterials; i++) {
+            aiMaterial *material = scene->mMaterials[i];
+            aiReturn found = AI_SUCCESS;
+            GLuint textureID;
+            int textureIndex = 0;
+            while (found == AI_SUCCESS) {
+                found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+                if (found != AI_SUCCESS)
+                    break;
+                texture = texturePath.data;
+                if (SplitTexturePath(texture, mainTexture, subTexture)) {
+                    PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
+                    if (sub != m_context->textures.end()) {
+                        textureID = sub->second;
+                        glDeleteTextures(1, &textureID);
+                        m_context->textures.erase(subTexture);
+                    }
                 }
+                PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
+                if (main != m_context->textures.end()) {
+                    textureID = main->second;
+                    glDeleteTextures(1, &textureID);
+                    m_context->textures.erase(mainTexture);
+                }
+                textureIndex++;
             }
-            PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
-            if (main != m_context->textures.end()) {
-                textureID = main->second;
-                glDeleteTextures(1, &textureID);
-                m_context->textures.erase(mainTexture);
-            }
-            textureIndex++;
         }
+        deleteRecurse(scene, scene->mRootNode);
     }
-    deleteRecurse(scene, scene->mRootNode);
     delete m_context;
     m_context = 0;
-    m_model = 0;
-    m_delegate = 0;
-    m_scene = 0;
+    m_modelRef = 0;
+    m_delegateRef = 0;
+    m_sceneRef = 0;
 }
 
 void AssetRenderEngine::renderModel()
 {
-    vpvl::Asset *asset = m_model->ptr();
+    vpvl::Asset *asset = m_modelRef->ptr();
     if (btFuzzyZero(asset->opacity()))
         return;
     const aiScene *a = asset->getScene();
@@ -309,7 +311,7 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    vpvl::Asset *asset = m_model->ptr();
+    vpvl::Asset *asset = m_modelRef->ptr();
     if (btFuzzyZero(asset->opacity()))
         return;
     const aiScene *a = asset->getScene();
@@ -318,7 +320,7 @@ void AssetRenderEngine::renderZPlot()
 
 IModel *AssetRenderEngine::model() const
 {
-    return m_model;
+    return m_modelRef;
 }
 
 bool AssetRenderEngine::upload(const IString *dir)
@@ -327,13 +329,13 @@ bool AssetRenderEngine::upload(const IString *dir)
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
-    vpvl::Asset *asset = m_model->ptr();
+    vpvl::Asset *asset = m_modelRef->ptr();
     const aiScene *scene = asset->getScene();
     const unsigned int nmaterials = scene->mNumMaterials;
     void *context = 0;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    m_delegate->allocateContext(m_model, context);
+    m_delegateRef->allocateContext(m_modelRef, context);
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
     texture.object = &textureID;
@@ -346,35 +348,50 @@ bool AssetRenderEngine::upload(const IString *dir)
             path = texturePath.data;
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_context->textures[mainTexture] == 0) {
-                    IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    if (m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                    IString *mainTexturePath = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                    ret = m_delegateRef->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context);
+                    delete mainTexturePath;
+                    if (ret) {
                         m_context->textures[mainTexture] = textureID = *static_cast<const GLuint *>(texture.object);
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                     }
-                    delete mainTexturePath;
+                    else {
+                        m_delegateRef->releaseContext(m_modelRef, context);
+                        return ret;
+                    }
                 }
                 if (m_context->textures[subTexture] == 0) {
-                    IString *subTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    if (m_delegate->uploadTexture(subTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                    IString *subTexturePath = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
+                    ret = m_delegateRef->uploadTexture(subTexturePath, dir, IRenderDelegate::kTexture2D, texture, context);
+                    delete subTexturePath;
+                    if (ret) {
                         m_context->textures[subTexture] = textureID = *static_cast<const GLuint *>(texture.object);
                         log0(context, IRenderDelegate::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
                     }
-                    delete subTexturePath;
+                    else {
+                        m_delegateRef->releaseContext(m_modelRef, context);
+                        return ret;
+                    }
                 }
             }
             else if (m_context->textures[mainTexture] == 0) {
-                IString *mainTexturePath = m_delegate->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                if (m_delegate->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                IString *mainTexturePath = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                ret = m_delegateRef->uploadTexture(mainTexturePath, dir, IRenderDelegate::kTexture2D, texture, context);
+                delete mainTexturePath;
+                if (ret) {
                     m_context->textures[mainTexture] = textureID = *static_cast<const GLuint *>(texture.object);
                     log0(context, IRenderDelegate::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                 }
-                delete mainTexturePath;
+                else {
+                    m_delegateRef->releaseContext(m_modelRef, context);
+                    return ret;
+                }
             }
             textureIndex++;
         }
     }
     ret = uploadRecurse(scene, scene->mRootNode, dir, context);
-    m_delegate->releaseContext(m_model, context);
+    m_delegateRef->releaseContext(m_modelRef, context);
     return ret;
 }
 
@@ -408,16 +425,26 @@ void AssetRenderEngine::performPostProcess()
     /* do nothing */
 }
 
+IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType /* type */) const
+{
+    return 0;
+}
+
+void AssetRenderEngine::setEffect(IEffect::ScriptOrderType /* type */, IEffect * /* effect */, const IString * /* dir */)
+{
+    /* do nothing */
+}
+
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context)
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
     AssetVertex assetVertex;
-    Program *assetProgram = m_context->assetPrograms[node] = new Program(m_delegate);
-    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram(m_delegate);
+    Program *assetProgram = m_context->assetPrograms[node] = new Program(m_delegateRef);
+    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram(m_delegateRef);
     IString *vertexShaderSource = 0, *fragmentShaderSource = 0;
-    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelVertexShader, m_model, dir, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_model, dir, context);
+    vertexShaderSource = m_delegateRef->loadShaderSource(IRenderDelegate::kModelVertexShader, m_modelRef, dir, context);
+    fragmentShaderSource = m_delegateRef->loadShaderSource(IRenderDelegate::kModelFragmentShader, m_modelRef, dir, context);
     assetProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     assetProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = assetProgram->linkProgram(context);
@@ -425,8 +452,8 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     delete fragmentShaderSource;
     if (!ret)
         return ret;
-    vertexShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_model, dir, context);
-    fragmentShaderSource = m_delegate->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_model, dir, context);
+    vertexShaderSource = m_delegateRef->loadShaderSource(IRenderDelegate::kZPlotVertexShader, m_modelRef, dir, context);
+    fragmentShaderSource = m_delegateRef->loadShaderSource(IRenderDelegate::kZPlotFragmentShader, m_modelRef, dir, context);
     zplotProgram->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     zplotProgram->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     ret = zplotProgram->linkProgram(context);
@@ -531,7 +558,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setSubTexture(0);
     }
     aiColor4D ambient, diffuse, specular;
-    const Vector3 &lc = m_scene->light()->color();
+    const Vector3 &lc = m_sceneRef->light()->color();
     Color la, mc, md, ms;
     aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient);
     aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse);
@@ -556,14 +583,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setMaterialShininess(15.0f);
     }
     float opacity;
-    vpvl::Asset *asset = m_model->ptr();
+    vpvl::Asset *asset = m_modelRef->ptr();
     if (aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS) {
         program->setOpacity(opacity * asset->opacity());
     }
     else {
         program->setOpacity(asset->opacity());
     }
-    void *texture = m_scene->light()->depthTexture();
+    void *texture = m_sceneRef->light()->depthTexture();
     if (texture && !btFuzzyZero(opacity - 0.98)) {
         GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
         program->setDepthTexture(textureID);
@@ -572,10 +599,12 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setDepthTexture(0);
     }
     int wireframe, twoside;
+#ifndef VPVL2_ENABLE_GLES2
     if (aiGetMaterialInteger(material, AI_MATKEY_ENABLE_WIREFRAME, &wireframe) == aiReturn_SUCCESS && wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
         m_context->cullFaceState = true;
@@ -597,26 +626,26 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     float matrix4x4[16];
     Program *program = m_context->assetPrograms[node];
     program->bind();
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kCameraMatrix);
     program->setViewProjectionMatrix(matrix4x4);
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
                           | IRenderDelegate::kLightMatrix);
     program->setLightViewProjectionMatrix(matrix4x4);
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kCameraMatrix);
     program->setModelMatrix(matrix4x4);
-    const Scene::ILight *light = m_scene->light();
+    const ILight *light = m_sceneRef->light();
     program->setLightColor(light->color());
     program->setLightDirection(light->direction());
-    program->setOpacity(m_model->opacity());
-    program->setCameraPosition(m_scene->camera()->position());
+    program->setOpacity(m_modelRef->opacity());
+    program->setCameraPosition(m_sceneRef->camera()->position());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = m_context->vbo[mesh];
@@ -644,7 +673,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     const unsigned int nmeshes = node->mNumMeshes;
     Program *program = m_context->assetPrograms[node];
     program->bind();
-    m_delegate->getMatrix(matrix4x4, m_model,
+    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
                           | IRenderDelegate::kViewMatrix
                           | IRenderDelegate::kProjectionMatrix
@@ -675,7 +704,7 @@ void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, con
 {
     va_list ap;
     va_start(ap, format);
-    m_delegate->log(context, level, format, ap);
+    m_delegateRef->log(context, level, format, ap);
     va_end(ap);
 }
 

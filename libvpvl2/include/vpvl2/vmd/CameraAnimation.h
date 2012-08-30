@@ -66,31 +66,31 @@ public:
     ~CameraAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(float frameAt);
+    void seek(const IKeyframe::TimeIndex &frameAt);
     void update();
-    CameraKeyframe *findKeyframe(int frameIndex) const;
+    CameraKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     CameraKeyframe *frameAt(int i) const;
 
     const Vector3 &position() const { return m_position; }
     const Vector3 &angle() const { return m_angle; }
-    float distance() const { return m_distance; }
-    float fovy() const { return m_fovy; }
+    const Scalar &distance() const { return m_distance; }
+    const Scalar &fovy() const { return m_fovy; }
 
 private:
-    static float weightValue(const CameraKeyframe *keyFrame,
-                             float w,
-                             int at);
+    static IKeyframe::SmoothPrecision weightValue(const CameraKeyframe *keyFrame,
+                                                  const IKeyframe::SmoothPrecision &w,
+                                                  int at);
     static void lerpVector3(const CameraKeyframe *keyFrame,
                             const Vector3 &from,
                             const Vector3 &to,
-                            float w,
+                            const IKeyframe::SmoothPrecision &w,
                             int at,
-                            float &value);
+                            IKeyframe::SmoothPrecision &value);
 
     Vector3 m_position;
     Vector3 m_angle;
-    float m_distance;
-    float m_fovy;
+    Scalar m_distance;
+    Scalar m_fovy;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraAnimation)
 };

@@ -60,13 +60,13 @@ public:
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_name; }
     bool isSpecial() const { return m_special; }
-    int count() const { return m_bones.count(); }
-    IBone *bone(int index) const { return m_bones.at(index); }
+    int count() const { return m_boneRefs.count(); }
+    IBone *bone(int index) const { return m_boneRefs.at(index); }
     IMorph *morph(int /* index */) const { return 0; }
 
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     IString *m_name;
-    Array<IBone *> m_bones;
+    Array<IBone *> m_boneRefs;
     bool m_special;
 };
 

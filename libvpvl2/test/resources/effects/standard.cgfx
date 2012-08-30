@@ -1,0 +1,19 @@
+float SAS : STANDARDSGLOBAL <
+    string ScriptClass = "object";
+	string ScriptOrder = "standard";
+	string Script = "Technique=Technique?test1:test2:test3";
+> = float(0.8);
+
+technique test1 {
+	// script should be ignored because ScriptClass is object
+	pass null < string Script = " Draw = Buffer; "; > {}
+}
+
+technique test2 {
+	pass null < string Script = " Draw = Geometry; "; > {}
+}
+
+technique test3 {
+	// generate "Draw=Geometry;" automatically
+	pass null {}
+}

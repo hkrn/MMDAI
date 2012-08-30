@@ -1,0 +1,22 @@
+float4x4 ValueTest <
+  bool BooleanTrueValue = true;
+  bool BooleanFalseValue = false;
+  int IntegerValue = 42;
+  float FloatValue = 42.0;
+  string StringValue = "This is string.";
+>;
+
+bool BooleanValue;
+float FloatValue;
+int IntegerValue;
+float2 Float2Value;
+float3 Float3Value;
+float4 Float4Value;
+float3x3 Float3x3Value;
+float3x4 Float3x4Value;
+float4x4 Float4x4Value;
+sampler SamplerValue;
+sampler2D Sampler2DValue;
+texture TextureValue;
+texture2D Texture2DValue;
+

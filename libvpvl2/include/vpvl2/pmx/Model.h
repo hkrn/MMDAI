@@ -144,7 +144,7 @@ public:
     size_t estimateSize() const;
 
     void resetVertices();
-    void performUpdate(const Vector3 &lightDirection);
+    void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection);
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
@@ -161,6 +161,7 @@ public:
 
     const void *vertexPtr() const;
     const void *indicesPtr() const;
+    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
 
     Type type() const { return kPMX; }
     const Array<Vertex *> &vertices() const { return m_vertices; }
@@ -189,7 +190,7 @@ public:
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return kZeroV3; }
-    const Scalar &edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
+    const Scalar &edgeWidth() const { return m_edgeWidth; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
     void setPosition(const Vector3 &value) { m_position = value; }
@@ -197,7 +198,7 @@ public:
     void setOpacity(const Scalar &value) { m_opacity = value; }
     void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
     void setEdgeColor(const Vector3 & /* value */) {}
-    void setEdgeWidth(const Scalar & /* value */) {}
+    void setEdgeWidth(const Scalar &value) { m_edgeWidth = value; }
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 
@@ -232,8 +233,8 @@ private:
     void parseRigidBodies(const DataInfo &info);
     void parseJoints(const DataInfo &info);
 
-    btDiscreteDynamicsWorld *m_world;
-    IEncoding *m_encoding;
+    btDiscreteDynamicsWorld *m_worldRef;
+    IEncoding *m_encodingRef;
     Array<Vertex *> m_vertices;
     Array<int> m_indices;
     Array<IString *> m_textures;
@@ -245,8 +246,8 @@ private:
     Array<Label *> m_labels;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
-    Hash<HashString, IBone *> m_name2bones;
-    Hash<HashString, IMorph *> m_name2morphs;
+    Hash<HashString, IBone *> m_name2boneRefs;
+    Hash<HashString, IMorph *> m_name2morphRefs;
     SkinnedVertex *m_skinnedVertices;
     int *m_skinnedIndices;
     IString *m_name;
@@ -257,6 +258,7 @@ private:
     Quaternion m_rotation;
     Scalar m_opacity;
     Scalar m_scaleFactor;
+    Scalar m_edgeWidth;
     DataInfo m_info;
     bool m_visible;
     bool m_enableSkinning;

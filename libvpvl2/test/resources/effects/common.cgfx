@@ -1,0 +1,15 @@
+float4 NullVertexShaderPass(float4 Pos : POSITION) : POSITION {
+    return Pos;
+}
+
+float4 NullFragmentShaderPass() : COLOR {
+    return float4(0);
+}
+
+technique NullTechnique {
+    pass NullPass {
+        VertexShader = compile glslf NullFragmentShaderPass();
+        PixelShader  = compile glslf NullFragmentShaderPass();
+    }
+}
+

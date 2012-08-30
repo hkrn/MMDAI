@@ -66,9 +66,9 @@ public:
     ~LightAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(float frameAt);
+    void seek(const IKeyframe::TimeIndex &frameAt);
     void update();
-    LightKeyframe *findKeyframe(int frameIndex) const;
+    LightKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     LightKeyframe *frameAt(int i) const;
 
     const Vector3 &color() const { return m_color; }

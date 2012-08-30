@@ -48,10 +48,10 @@ namespace vmd
 
 #pragma pack(push, 1)
 
-struct MorphKeyFrameChunk
+struct MorphKeyframeChunk
 {
     uint8_t name[MorphKeyframe::kNameSize];
-    int frameIndex;
+    int timeIndex;
     float weight;
 };
 
@@ -59,12 +59,12 @@ struct MorphKeyFrameChunk
 
 size_t MorphKeyframe::strideSize()
 {
-    return sizeof(MorphKeyFrameChunk);
+    return sizeof(MorphKeyframeChunk);
 }
 
 MorphKeyframe::MorphKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
-      m_encoding(encoding),
+      m_encodingRef(encoding),
       m_weight(0.0f)
 {
 }
@@ -75,10 +75,10 @@ MorphKeyframe::~MorphKeyframe()
 
 void MorphKeyframe::read(const uint8_t *data)
 {
-    MorphKeyFrameChunk chunk;
+    MorphKeyframeChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    internal::setStringDirect(m_encoding->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_name);
-    setFrameIndex(static_cast<float>(chunk.frameIndex));
+    internal::setStringDirect(m_encodingRef->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_namePtr);
+    setTimeIndex(static_cast<float>(chunk.timeIndex));
 #ifdef VPVL2_BUILD_IOS
     float weight;
     memcpy(&weight, &chunk.weight, sizeof(weight));
@@ -90,11 +90,11 @@ void MorphKeyframe::read(const uint8_t *data)
 
 void MorphKeyframe::write(uint8_t *data) const
 {
-    MorphKeyFrameChunk chunk;
-    uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
+    MorphKeyframeChunk chunk;
+    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
-    m_encoding->disposeByteArray(name);
-    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    m_encodingRef->disposeByteArray(name);
+    chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.weight = m_weight;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
@@ -106,19 +106,19 @@ size_t MorphKeyframe::estimateSize() const
 
 IMorphKeyframe *MorphKeyframe::clone() const
 {
-    MorphKeyframe *frame = new MorphKeyframe(m_encoding);
-    frame->setName(m_name);
-    frame->setFrameIndex(m_frameIndex);
+    MorphKeyframe *frame = new MorphKeyframe(m_encodingRef);
+    frame->setName(m_namePtr);
+    frame->setTimeIndex(m_timeIndex);
     frame->setWeight(m_weight);
     return frame;
 }
 
 void MorphKeyframe::setName(const IString *value)
 {
-    internal::setString(value, m_name);
+    internal::setString(value, m_namePtr);
 }
 
-void MorphKeyframe::setWeight(float value)
+void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 {
     m_weight = value;
 }

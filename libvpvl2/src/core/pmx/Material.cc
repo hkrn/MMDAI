@@ -67,9 +67,9 @@ Material::Material()
     : m_name(0),
       m_englishName(0),
       m_userDataArea(0),
-      m_mainTexture(0),
-      m_sphereTexture(0),
-      m_toonTexture(0),
+      m_mainTextureRef(0),
+      m_sphereTextureRef(0),
+      m_toonTextureRef(0),
       m_sphereTextureRenderMode(kNone),
       m_shininess(0, 1, 0),
       m_edgeSize(0, 1, 0),
@@ -91,9 +91,9 @@ Material::~Material()
     m_englishName = 0;
     delete m_userDataArea;
     m_userDataArea = 0;
-    m_mainTexture = 0;
-    m_sphereTexture = 0;
-    m_toonTexture = 0;
+    m_mainTextureRef = 0;
+    m_sphereTextureRef = 0;
+    m_toonTextureRef = 0;
     m_sphereTextureRenderMode = kNone;
     m_userDataArea = 0;
     m_shininess.setZero();
@@ -175,21 +175,21 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
             if (textureIndex >= ntextures)
                 return false;
             else
-                material->m_mainTexture = textures[textureIndex];
+                material->m_mainTextureRef = textures[textureIndex];
         }
         const int sphereTextureIndex = material->m_sphereTextureIndex;
         if (sphereTextureIndex >= 0) {
             if (sphereTextureIndex >= ntextures)
                 return false;
             else
-                material->m_sphereTexture = textures[sphereTextureIndex];
+                material->m_sphereTextureRef = textures[sphereTextureIndex];
         }
         const int toonTextureIndex = material->m_toonTextureIndex;
         if (!material->m_useSharedToonTexture && toonTextureIndex >= 0) {
             if (toonTextureIndex >= ntextures)
                 return false;
             else
-                material->m_toonTexture = textures[toonTextureIndex];
+                material->m_toonTextureRef = textures[toonTextureIndex];
         }
         material->m_index = i;
         actualIndices += material->indices();
@@ -206,7 +206,8 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    const MaterialUnit &unit = *reinterpret_cast<MaterialUnit *>(ptr);
+    MaterialUnit unit;
+    internal::getData(ptr, unit);
     m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2]);
     m_ambient.calculate();
     m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
@@ -360,17 +361,17 @@ void Material::setUserDataArea(const IString *value)
 
 void Material::setMainTexture(const IString *value)
 {
-    internal::setString(value, m_mainTexture);
+    internal::setString(value, m_mainTextureRef);
 }
 
 void Material::setSphereTexture(const IString *value)
 {
-    internal::setString(value, m_sphereTexture);
+    internal::setString(value, m_sphereTextureRef);
 }
 
 void Material::setToonTexture(const IString *value)
 {
-    internal::setString(value, m_toonTexture);
+    internal::setString(value, m_toonTextureRef);
 }
 
 void Material::setSphereTextureRenderMode(SphereTextureRenderMode value)

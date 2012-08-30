@@ -118,7 +118,7 @@ public:
     void setSdefR1(const Vector3 &value);
 
 private:
-    Bone *m_bones[4];
+    Bone *m_boneRefs[4];
     Vector4 m_originUVs[4];
     Vector4 m_morphUVs[5]; /* TexCoord + UVA1-4 */
     Vector3 m_origin;

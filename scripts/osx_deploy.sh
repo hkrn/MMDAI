@@ -18,6 +18,7 @@ package_zip_name="${app_name}-osx-intel.zip"
 rm -rf ${package_app_name} ${package_dmg_name} ${package_zip_name};
 make || exit;
 macdeployqt ${package_app_name};
+cp -r /Library/Frameworks/Cg.framework ${package_app_name}/Contents/Frameworks
 echo "deployed ${package_app_name}";
 cd ${package_app_name}/Contents/Frameworks || exit;
 rm -rf QtSql.framework;

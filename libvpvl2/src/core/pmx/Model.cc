@@ -86,8 +86,8 @@ struct Model::SkinnedVertex {
 };
 
 Model::Model(IEncoding *encoding)
-    : m_world(0),
-      m_encoding(encoding),
+    : m_worldRef(0),
+      m_encodingRef(encoding),
       m_skinnedVertices(0),
       m_skinnedIndices(0),
       m_name(0),
@@ -98,6 +98,7 @@ Model::Model(IEncoding *encoding)
       m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
       m_scaleFactor(1),
+      m_edgeWidth(0),
       m_visible(false),
       m_enableSkinning(true)
 {
@@ -280,7 +281,7 @@ void Model::resetVertices()
     }
 }
 
-void Model::performUpdate(const Vector3 &lightDirection)
+void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection)
 {
     // update local transform matrix
     const int nbones = m_bones.count();
@@ -300,7 +301,7 @@ void Model::performUpdate(const Vector3 &lightDirection)
         bone->performUpdateLocalTransform();
     }
     // physics simulation
-    if (m_world) {
+    if (m_worldRef) {
         const int nRigidBodies = m_rigidBodies.count();
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_rigidBodies[i];
@@ -318,6 +319,7 @@ void Model::performUpdate(const Vector3 &lightDirection)
         Bone *bone = m_APSOrderedBones[i];
         bone->performUpdateLocalTransform();
     }
+    const Scalar &esf = edgeScaleFactor(cameraPosition);
     // skinning
     if (m_enableSkinning) {
         const int nmaterials = m_materials.count();
@@ -334,7 +336,7 @@ void Model::performUpdate(const Vector3 &lightDirection)
                 const float edgeSize = vertex->edgeSize();
                 vertex->performSkinning(v.position, v.normal);
                 v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5);
-                v.edge = v.position + v.normal * edgeSize * materialEdgeSize * 0.03;
+                v.edge = v.position + v.normal * edgeSize * materialEdgeSize * esf;
                 v.uva1 = vertex->uv(1);
                 v.uva2 = vertex->uv(2);
                 v.uva3 = vertex->uv(3);
@@ -349,6 +351,8 @@ void Model::performUpdate(const Vector3 &lightDirection)
             Vertex *vertex = m_vertices[i];
             SkinnedVertex &v = m_skinnedVertices[i];
             v.position = vertex->origin() + vertex->delta();
+            v.normal[3] = vertex->edgeSize();
+            v.edge[3] = i;
         }
     }
 }
@@ -369,7 +373,7 @@ void Model::joinWorld(btDiscreteDynamicsWorld *world)
         Joint *joint = m_joints[i];
         world->addConstraint(joint->constraint());
     }
-    m_world = world;
+    m_worldRef = world;
 #endif /* VPVL2_NO_BULLET */
 }
 
@@ -389,19 +393,19 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *world)
         Joint *joint = m_joints[i];
         world->removeConstraint(joint->constraint());
     }
-    m_world = 0;
+    m_worldRef = 0;
 #endif /* VPVL2_NO_BULLET */
 }
 
 IBone *Model::findBone(const IString *value) const
 {
-    IBone **bone = const_cast<IBone **>(m_name2bones.find(value->toHashString()));
+    IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(value->toHashString()));
     return bone ? *bone : 0;
 }
 
 IMorph *Model::findMorph(const IString *value) const
 {
-    IMorph **morph = const_cast<IMorph **>(m_name2morphs.find(value->toHashString()));
+    IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(value->toHashString()));
     return morph ? *morph : 0;
 }
 
@@ -487,7 +491,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
     center.setZero();
     radius = 0;
-    IBone *bone = findBone(m_encoding->stringConstant(IEncoding::kCenter));
+    IBone *bone = findBone(m_encodingRef->stringConstant(IEncoding::kCenter));
     if (bone) {
         const Vector3 &centerPosition = bone->worldTransform().getOrigin();
         const int nvertices = m_vertices.count();
@@ -515,17 +519,18 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     /* header */
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    Header *header = reinterpret_cast<Header *>(ptr);
+    Header header;
+    internal::getData(ptr, header);
     info.basePtr = ptr;
 
     /* Check the signature and version is correct */
-    if (memcmp(header->signature, "PMX ", 4) != 0) {
+    if (memcmp(header.signature, "PMX ", 4) != 0) {
         m_info.error = kInvalidSignatureError;
         return false;
     }
 
     /* version */
-    if (header->version != 2.0) {
+    if (header.version != 2.0) {
         m_info.error = kInvalidVersionError;
         return false;
     }
@@ -637,7 +642,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.endPtr = ptr;
-    info.encoding = m_encoding;
+    info.encoding = m_encodingRef;
 
     return rest == 0;
 }
@@ -655,6 +660,16 @@ const void *Model::vertexPtr() const
 const void *Model::indicesPtr() const
 {
     return &m_skinnedIndices[0];
+}
+
+Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+{
+    Scalar length = 0;
+    if (m_bones.count() > 1) {
+        IBone *bone = m_bones.at(1);
+        length = (cameraPosition - bone->worldTransform().getOrigin()).length() * m_edgeWidth;
+    }
+    return length / 1000.0;
 }
 
 void Model::setName(const IString *value)
@@ -679,7 +694,7 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::release()
 {
-    leaveWorld(m_world);
+    leaveWorld(m_worldRef);
     internal::zerofill(&m_info, sizeof(m_info));
     m_vertices.releaseAll();
     m_textures.releaseAll();
@@ -711,9 +726,9 @@ void Model::parseNamesAndComments(const DataInfo &info)
 {
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), m_name);
-    internal::setStringDirect(m_encoding->toString(info.englishNamePtr, info.englishNameSize, info.codec), m_englishName);
-    internal::setStringDirect(m_encoding->toString(info.commentPtr, info.commentSize, info.codec), m_comment);
-    internal::setStringDirect(m_encoding->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), m_englishComment);
+    internal::setStringDirect(m_encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), m_englishName);
+    internal::setStringDirect(m_encodingRef->toString(info.commentPtr, info.commentSize, info.codec), m_comment);
+    internal::setStringDirect(m_encodingRef->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), m_englishComment);
 }
 
 void Model::parseVertices(const DataInfo &info)
@@ -764,7 +779,7 @@ void Model::parseTextures(const DataInfo &info)
     size_t nTextureSize, rest = SIZE_MAX;
     for(int i = 0; i < ntextures; i++) {
         internal::sizeText(ptr, rest, texturePtr, nTextureSize);
-        m_textures.add(m_encoding->toString(texturePtr, nTextureSize, info.codec));
+        m_textures.add(m_encodingRef->toString(texturePtr, nTextureSize, info.codec));
     }
 }
 
@@ -806,8 +821,8 @@ void Model::parseBones(const DataInfo &info)
         bone->read(ptr, info, size);
         bone->performTransform();
         bone->performUpdateLocalTransform();
-        m_name2bones.insert(bone->name()->toHashString(), bone);
-        m_name2bones.insert(bone->englishName()->toHashString(), bone);
+        m_name2boneRefs.insert(bone->name()->toHashString(), bone);
+        m_name2boneRefs.insert(bone->englishName()->toHashString(), bone);
         ptr += size;
     }
 }
@@ -821,8 +836,8 @@ void Model::parseMorphs(const DataInfo &info)
         Morph *morph = new Morph();
         m_morphs.add(morph);
         morph->read(ptr, info, size);
-        m_name2morphs.insert(morph->name()->toHashString(), morph);
-        m_name2morphs.insert(morph->englishName()->toHashString(), morph);
+        m_name2morphRefs.insert(morph->name()->toHashString(), morph);
+        m_name2morphRefs.insert(morph->englishName()->toHashString(), morph);
         ptr += size;
     }
 }

@@ -51,17 +51,16 @@ using namespace vpvl;
 static const char kProgramCompileFlags[] = "-cl-fast-relaxed-math -DMAC -DGUID_ARG";
 
 PMDAccelerator::PMDAccelerator(Context *context)
-    : m_context(context),
+    : m_contextRef(context),
       m_program(0),
       m_performSkinningKernel(0),
       m_verticesBuffer(0),
+      m_edgeOffsetBuffer(0),
       m_boneMatricesBuffer(0),
       m_boneWeightsBuffer(0),
       m_boneIndicesBuffer(0),
       m_localWGSizeForPerformSkinning(0),
-      m_boneWeights(0),
       m_boneTransform(0),
-      m_boneIndices(0),
       m_isBufferAllocated(false)
 {
 }
@@ -73,10 +72,11 @@ PMDAccelerator::~PMDAccelerator()
     clReleaseKernel(m_performSkinningKernel);
     m_performSkinningKernel = 0;
     delete[] m_boneTransform;
-    delete[] m_boneIndices;
-    delete[] m_boneWeights;
+    m_boneTransform = 0;
     clReleaseMemObject(m_verticesBuffer);
     m_verticesBuffer = 0;
+    clReleaseMemObject(m_edgeOffsetBuffer);
+    m_edgeOffsetBuffer = 0;
     clReleaseMemObject(m_boneMatricesBuffer);
     m_boneMatricesBuffer = 0;
     clReleaseMemObject(m_boneIndicesBuffer);
@@ -85,28 +85,29 @@ PMDAccelerator::~PMDAccelerator()
     m_boneWeightsBuffer = 0;
     m_localWGSizeForPerformSkinning = 0;
     m_isBufferAllocated = false;
+    m_contextRef = 0;
 }
 
 bool PMDAccelerator::isAvailable() const
 {
-    return m_context->isAvailable() && m_program;
+    return m_contextRef->isAvailable() && m_program;
 }
 
 bool PMDAccelerator::createKernelProgram()
 {
     cl_int err;
-    const IString *source = m_context->renderDelegate()->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
+    const IString *source = m_contextRef->renderDelegate()->loadKernelSource(IRenderDelegate::kModelSkinningKernel, 0);
     const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
     const size_t sourceSize = source->length();
     clReleaseProgram(m_program);
-    cl_context context = m_context->computeContext();
+    cl_context context = m_contextRef->computeContext();
     m_program = clCreateProgramWithSource(context, 1, &sourceText, &sourceSize, &err);
     delete source;
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed creating an OpenCL program: %d", err);
         return false;
     }
-    cl_device_id device = m_context->hostDevice();
+    cl_device_id device = m_contextRef->hostDevice();
     err = clBuildProgram(m_program, 1, &device, kProgramCompileFlags, 0, 0);
     if (err != CL_SUCCESS) {
         size_t buildLogSize;
@@ -130,7 +131,8 @@ bool PMDAccelerator::createKernelProgram()
 void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context)
 {
     cl_int err;
-    cl_context computeContext = m_context->computeContext();
+    cl_context computeContext = m_contextRef->computeContext();
+    clReleaseMemObject(m_verticesBuffer);
     m_verticesBuffer = clCreateFromGLBuffer(computeContext,
                                           CL_MEM_READ_WRITE,
                                           buffer,
@@ -142,33 +144,47 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
     const PMDModel *m = model->ptr();
     const int nBoneMatricesAllocs = m->bones().count() << 4;
     const int nBoneMatricesSize = nBoneMatricesAllocs * sizeof(float);
+    delete[] m_boneTransform;
     m_boneTransform = new float[nBoneMatricesAllocs];
     const VertexList &vertices = m->vertices();
     const int nvertices = vertices.count();
-    m_boneIndices = new int[nvertices * 2];
-    m_boneWeights = new float[nvertices];
+    Array<int> boneIndices;
+    Array<float> boneWeights, edgeOffset;
+    boneIndices.resize(nvertices * 2);
+    boneWeights.resize(nvertices);
+    edgeOffset.resize(nvertices);
     for (int i = 0; i < nvertices; i++) {
         const Vertex *vertex = vertices[i];
-        m_boneIndices[i * 2 + 0] = vertex->bone1();
-        m_boneIndices[i * 2 + 1] = vertex->bone2();
-        m_boneWeights[i] = vertex->weight();
+        boneIndices[i * 2 + 0] = vertex->bone1();
+        boneIndices[i * 2 + 1] = vertex->bone2();
+        boneWeights[i] = vertex->weight();
+        edgeOffset[i] = vertex->isEdgeEnabled() ? 1 : 0;
     }
+    clReleaseMemObject(m_boneMatricesBuffer);
     m_boneMatricesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_WRITE, nBoneMatricesSize, 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneMatricesBuffer %d", err);
         return;
     }
+    clReleaseMemObject(m_boneWeightsBuffer);
     m_boneWeightsBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneWeightsBuffer: %d", err);
         return;
     }
+    clReleaseMemObject(m_boneIndicesBuffer);
     m_boneIndicesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(int) * 2, 0, &err);
     if (err != CL_SUCCESS) {
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneIndicesBuffer: %d", err);
         return;
     }
-    cl_device_id device = m_context->hostDevice();
+    clReleaseMemObject(m_edgeOffsetBuffer);
+    m_edgeOffsetBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
+    if (err != CL_SUCCESS) {
+        log0(context, IRenderDelegate::kLogWarning, "Failed creating edgeOffsetBuffer: %d", err);
+        return;
+    }
+    cl_device_id device = m_contextRef->hostDevice();
     err = clGetKernelWorkGroupInfo(m_performSkinningKernel,
                                    device,
                                    CL_KERNEL_WORK_GROUP_SIZE,
@@ -179,13 +195,18 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
         log0(context, IRenderDelegate::kLogWarning, "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): %d", err);
         return;
     }
-    cl_command_queue queue = m_context->commandQueue();
-    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int) * 2, m_boneIndices, 0, 0, 0);
+    cl_command_queue queue = m_contextRef->commandQueue();
+    err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nvertices * sizeof(int) * 2, &boneIndices[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write BoneIndicesBuffer: %d", err);
         return;
     }
-    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nvertices * sizeof(float), m_boneWeights, 0, 0, 0);
+    err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nvertices * sizeof(float), &boneWeights[0], 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneWeightsBuffer: %d", err);
+        return;
+    }
+    err = clEnqueueWriteBuffer(queue, m_edgeOffsetBuffer, CL_TRUE, 0, nvertices * sizeof(float), &edgeOffset[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneWeightsBuffer: %d", err);
         return;
@@ -193,7 +214,7 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
     m_isBufferAllocated = true;
 }
 
-void PMDAccelerator::updateModel(pmd::Model *model)
+void PMDAccelerator::updateModel(pmd::Model *model, const Scene *scene)
 {
     if (!m_isBufferAllocated)
         return;
@@ -210,7 +231,7 @@ void PMDAccelerator::updateModel(pmd::Model *model)
     size_t nsize = (nbones * sizeof(float)) << 4;
     cl_int err;
     size_t local, global;
-    cl_command_queue queue = m_context->commandQueue();
+    cl_command_queue queue = m_contextRef->commandQueue();
     err = clEnqueueWriteBuffer(queue, m_boneMatricesBuffer, CL_TRUE, 0, nsize, m_boneTransform, 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write output matrices buffer: %d", err);
@@ -235,10 +256,23 @@ void PMDAccelerator::updateModel(pmd::Model *model)
         log0(0, IRenderDelegate::kLogWarning, "Failed setting 3rd argument of kernel (boneIndices): %d", err);
         return;
     }
+    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_edgeOffsetBuffer), &m_edgeOffsetBuffer);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (edgeOffset): %d", err);
+        return;
+    }
     const Vector3 &lightDirection = -m->lightPosition();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(lightDirection), &lightDirection);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (lightDirection): %d", argumentIndex, err);
+        return;
+    }
+    const ICamera *camera = scene->camera();
+    const Vector3 &cameraPosition = camera->position() + Vector3(0, 0, camera->distance());
+    const Scalar &edgeScaleFactor = model->edgeScaleFactor(cameraPosition) * model->edgeWidth();
+    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(edgeScaleFactor), &edgeScaleFactor);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (edgeScaleFactor): %d", argumentIndex, err);
         return;
     }
     const int nvertices = m->vertices().count();
@@ -297,7 +331,7 @@ void PMDAccelerator::log0(void *context, IRenderDelegate::LogLevel level, const 
 {
     va_list ap;
     va_start(ap, format);
-    m_context->renderDelegate()->log(context, level, format, ap);
+    m_contextRef->renderDelegate()->log(context, level, format, ap);
     va_end(ap);
 }
 

@@ -97,7 +97,7 @@ Vertex::Vertex()
     for (int i = 0; i < 4; i++) {
         m_originUVs[i].setZero();
         m_morphUVs[i].setZero();
-        m_bones[i] = 0;
+        m_boneRefs[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
     }
@@ -118,7 +118,7 @@ Vertex::~Vertex()
     for (int i = 0; i < 4; i++) {
         m_originUVs[i].setZero();
         m_morphUVs[i].setZero();
-        m_bones[i] = 0;
+        m_boneRefs[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
     }
@@ -180,10 +180,10 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 if (boneIndex >= nbones)
                     return false;
                 else
-                    vertex->m_bones[0] = bones[boneIndex];
+                    vertex->m_boneRefs[0] = bones[boneIndex];
             }
             else {
-                vertex->m_bones[0] = &kNullBone;
+                vertex->m_boneRefs[0] = &kNullBone;
             }
             break;
         }
@@ -196,10 +196,10 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     if (boneIndex >= nbones)
                         return false;
                     else
-                        vertex->m_bones[j] = bones[boneIndex];
+                        vertex->m_boneRefs[j] = bones[boneIndex];
                 }
                 else {
-                    vertex->m_bones[j] = &kNullBone;
+                    vertex->m_boneRefs[j] = &kNullBone;
                 }
             }
             break;
@@ -211,10 +211,10 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     if (boneIndex >= nbones)
                         return false;
                     else
-                        vertex->m_bones[j] = bones[boneIndex];
+                        vertex->m_boneRefs[j] = bones[boneIndex];
                 }
                 else {
-                    vertex->m_bones[j] = &kNullBone;
+                    vertex->m_boneRefs[j] = &kNullBone;
                 }
             }
             break;
@@ -229,14 +229,16 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
 void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    const VertexUnit &vertex = *reinterpret_cast<VertexUnit *>(ptr);
+    VertexUnit vertex;
+    internal::getData(ptr, vertex);
     internal::setPosition(vertex.position, m_origin);
     internal::setPosition(vertex.normal, m_normal);
     m_texcoord.setValue(vertex.texcoord[0], vertex.texcoord[1], 0);
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
+    AdditinalUVUnit uv;
     for (int i = 0; i < additionalUVSize; i++) {
-        const AdditinalUVUnit &uv = *reinterpret_cast<AdditinalUVUnit *>(ptr);
+        internal::getData(ptr, uv);
         m_originUVs[i].setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
         ptr += sizeof(uv);
     }
@@ -250,7 +252,8 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     case kBdef2: { /* BDEF2 */
         for (int i = 0; i < 2; i++)
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
-        const Bdef2Unit &unit = *reinterpret_cast<Bdef2Unit *>(ptr);
+        Bdef2Unit unit;
+        internal::getData(ptr, unit);
         m_weight[0] = btClamped(unit.weight, 0.0f, 1.0f);
         ptr += sizeof(unit);
         break;
@@ -258,7 +261,8 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     case kBdef4: { /* BDEF4 */
         for (int i = 0; i < 4; i++)
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
-        const Bdef4Unit &unit = *reinterpret_cast<Bdef4Unit *>(ptr);
+        Bdef4Unit unit;
+        internal::getData(ptr, unit);
         for (int i = 0; i < 4; i++)
             m_weight[i] = btClamped(unit.weight[i], 0.0f, 1.0f);
         ptr += sizeof(unit);
@@ -267,7 +271,8 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     case kSdef: { /* SDEF */
         for (int i = 0; i < 2; i++)
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
-        const SdefUnit &unit = *reinterpret_cast<SdefUnit *>(ptr);
+        SdefUnit unit;
+        internal::getData(ptr, unit);
         m_c.setValue(unit.c[0], unit.c[1], unit.c[2]);
         m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);
         m_r1.setValue(unit.r1[0], unit.r1[1], unit.r1[2]);
@@ -279,7 +284,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         assert(0);
         return;
     }
-    m_edgeSize = *reinterpret_cast<float *>(ptr);
+    internal::getData(ptr, m_edgeSize);
     ptr += sizeof(m_edgeSize);
     size = ptr - start;
 }
@@ -403,15 +408,15 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
     const Vector3 &vertexPosition = m_origin + m_morphDelta;
     switch (m_type) {
     case kBdef1: {
-        const Transform &transform = m_bones[0]->localTransform();
+        const Transform &transform = m_boneRefs[0]->localTransform();
         position = transform * vertexPosition;
         normal = transform.getBasis() * m_normal;
         break;
     }
     case kBdef2:
     case kSdef: {
-        const Transform &transformA = m_bones[0]->localTransform();
-        const Transform &transformB = m_bones[1]->localTransform();
+        const Transform &transformA = m_boneRefs[0]->localTransform();
+        const Transform &transformB = m_boneRefs[1]->localTransform();
         const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
         const Vector3 &v2 = transformB * vertexPosition;
@@ -422,10 +427,10 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
         break;
     }
     case kBdef4: {
-        const Transform &transformA = m_bones[0]->localTransform();
-        const Transform &transformB = m_bones[1]->localTransform();
-        const Transform &transformC = m_bones[2]->localTransform();
-        const Transform &transformD = m_bones[3]->localTransform();
+        const Transform &transformA = m_boneRefs[0]->localTransform();
+        const Transform &transformB = m_boneRefs[1]->localTransform();
+        const Transform &transformC = m_boneRefs[2]->localTransform();
+        const Transform &transformD = m_boneRefs[3]->localTransform();
         const Vector3 &v1 = transformA * vertexPosition;
         const Vector3 &n1 = transformA.getBasis() * m_normal;
         const Vector3 &v2 = transformB * vertexPosition;
@@ -455,7 +460,7 @@ float Vertex::weight(int index) const
 
 Bone *Vertex::bone(int index) const
 {
-    return index >= 0 && index < 4 ? m_bones[index] : 0;
+    return index >= 0 && index < 4 ? m_boneRefs[index] : 0;
 }
 
 void Vertex::setOrigin(const Vector3 &value)
@@ -498,7 +503,7 @@ void Vertex::setWeight(int index, float weight)
 void Vertex::setBone(int index, Bone *value)
 {
     if (index >= 0 && index < 4) {
-        m_bones[index] = value;
+        m_boneRefs[index] = value;
         m_boneIndices[index] = value->index();
     }
 }

@@ -78,7 +78,7 @@ public:
     void performInverseKinematics();
     void performUpdateLocalTransform();
     void resetIKLink();
-    const Vector3 &offset() const;
+    const Vector3 &offset() const { return m_offset; }
     const Transform &worldTransform() const { return m_worldTransform; }
     const Transform &localTransform() const { return m_localTransform; }
     void getLinkedBones(Array<IBone *> &value) const;
@@ -90,10 +90,10 @@ public:
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);
 
-    Bone *parentBone() const { return m_parentBone; }
-    Bone *targetBone() const { return m_targetBone; }
-    Bone *parentInherenceBone() const { return m_parentInherenceBone; }
-    Bone *destinationOriginBone() const { return m_destinationOriginBone; }
+    Bone *parentBone() const { return m_parentBoneRef; }
+    Bone *targetBone() const { return m_targetBoneRef; }
+    Bone *parentInherenceBone() const { return m_parentInherenceBoneRef; }
+    Bone *destinationOriginBone() const { return m_destinationOriginBoneRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const Quaternion &rotation() const { return m_rotation; }
@@ -149,18 +149,19 @@ public:
 
 private:
     Array<IKLink *> m_IKLinks;
-    Bone *m_parentBone;
-    Bone *m_targetBone;
-    Bone *m_parentInherenceBone;
-    Bone *m_destinationOriginBone;
+    Bone *m_parentBoneRef;
+    Bone *m_targetBoneRef;
+    Bone *m_parentInherenceBoneRef;
+    Bone *m_destinationOriginBoneRef;
     IString *m_name;
     IString *m_englishName;
     Quaternion m_rotation;
     Quaternion m_rotationInherence;
     Quaternion m_rotationMorph;
     Quaternion m_rotationIKLink;
-    Transform m_localTransform;
     Transform m_worldTransform;
+    Transform m_world2LocalTransform;
+    Transform m_localTransform;
     Vector3 m_origin;
     Vector3 m_offset;
     Vector3 m_position;

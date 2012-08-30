@@ -48,9 +48,9 @@ namespace vmd
 
 #pragma pack(push, 1)
 
-struct LightKeyFrameChunk
+struct LightKeyframeChunk
 {
-    int frameIndex;
+    int timeIndex;
     float color[3];
     float direction[3];
 };
@@ -59,7 +59,7 @@ struct LightKeyFrameChunk
 
 size_t LightKeyframe::strideSize()
 {
-    return sizeof(LightKeyFrameChunk);
+    return sizeof(LightKeyframeChunk);
 }
 
 LightKeyframe::LightKeyframe()
@@ -77,9 +77,9 @@ LightKeyframe::~LightKeyframe()
 
 void LightKeyframe::read(const uint8_t *data)
 {
-    LightKeyFrameChunk chunk;
+    LightKeyframeChunk chunk;
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    m_frameIndex = static_cast<float>(chunk.frameIndex);
+    m_timeIndex = static_cast<float>(chunk.timeIndex);
 #ifdef VPVL2_BUILD_IOS
     float color[3], direction[4];
     memcpy(color, &chunk.color, sizeof(color));
@@ -94,8 +94,8 @@ void LightKeyframe::read(const uint8_t *data)
 
 void LightKeyframe::write(uint8_t *data) const
 {
-    LightKeyFrameChunk chunk;
-    chunk.frameIndex = static_cast<int>(m_frameIndex);
+    LightKeyframeChunk chunk;
+    chunk.timeIndex = static_cast<int>(m_timeIndex);
     internal::getPositionRaw(m_color, chunk.color);
     internal::getPosition(m_direction, chunk.direction);
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
@@ -109,7 +109,7 @@ size_t LightKeyframe::estimateSize() const
 ILightKeyframe *LightKeyframe::clone() const
 {
     LightKeyframe *frame = new LightKeyframe();
-    frame->setFrameIndex(m_frameIndex);
+    frame->setTimeIndex(m_timeIndex);
     frame->setColor(m_color);
     frame->setDirection(m_direction);
     return frame;

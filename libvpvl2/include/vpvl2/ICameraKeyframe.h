@@ -56,7 +56,7 @@ public:
         QuadWord z;
         QuadWord rotation;
         QuadWord distance;
-        QuadWord fovy;
+        QuadWord fov;
     };
     enum InterpolationType
     {
@@ -65,8 +65,8 @@ public:
         kZ,
         kRotation,
         kDistance,
-        kFovy,
-        kMax
+        kFov,
+        kMaxInterpolationType
     };
     virtual ~ICameraKeyframe() {}
 
@@ -133,7 +133,7 @@ public:
      * @return float
      * @sa setDistance
      */
-    virtual float distance() const = 0;
+    virtual const Scalar &distance() const = 0;
 
     /**
      * カメラの視野角を返します。
@@ -141,7 +141,7 @@ public:
      * @return float
      * @sa setFovy
      */
-    virtual float fovy() const = 0;
+    virtual const Scalar &fov() const = 0;
 
     /**
      * カメラが透視であるかを返します。
@@ -173,7 +173,7 @@ public:
      * @param Vector3
      * @sa distance
      */
-    virtual void setDistance(float value) = 0;
+    virtual void setDistance(const Scalar &value) = 0;
 
     /**
      * カメラの視野角を設定します。
@@ -181,7 +181,7 @@ public:
      * @param Vector3
      * @sa fovy
      */
-    virtual void setFovy(float value) = 0;
+    virtual void setFov(const Scalar &value) = 0;
 
     /**
      * 透視にするかを設定します。

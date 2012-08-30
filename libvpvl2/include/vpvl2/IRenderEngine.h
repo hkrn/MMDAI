@@ -38,10 +38,12 @@
 #define VPVL2_IRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IEffect.h"
 
 namespace vpvl2
 {
 
+class IModel;
 class IString;
 
 class VPVL2_API IRenderEngine
@@ -61,6 +63,8 @@ public:
     virtual void preparePostProcess() = 0;
     virtual void performPreProcess() = 0;
     virtual void performPostProcess() = 0;
+    virtual IEffect *effect(IEffect::ScriptOrderType type) const = 0;
+    virtual void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir) = 0;
 };
 
 } /* namespace vpvl2 */

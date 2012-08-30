@@ -49,6 +49,7 @@
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/AssetRenderEngine.h"
+#include "vpvl2/cg/Effect.h"
 #include "vpvl2/cg/PMDRenderEngine.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
 #else
@@ -74,7 +75,7 @@ namespace
 
 using namespace vpvl2;
 
-class Light : public Scene::ILight {
+class Light : public ILight {
 public:
     Light() :
         m_motion(0),
@@ -135,7 +136,7 @@ private:
     bool m_hasFloatTexture;
     void *m_depthTexture;
 };
-class Camera : public Scene::ICamera {
+class Camera : public ICamera {
 public:
     Camera()
         : m_motion(0),
@@ -229,7 +230,7 @@ struct Scene::PrivateContext {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         effectContext = cgCreateContext();
         cgSetParameterSettingMode(effectContext, CG_DEFERRED_PARAMETER_SETTING);
-        cgGLSetDebugMode(CG_TRUE);
+        cgGLSetDebugMode(CG_FALSE);
         cgGLSetManageTextureParameters(effectContext, CG_TRUE);
         cgGLRegisterStates(effectContext);
 #endif
@@ -248,11 +249,46 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
+    void updateModels() {
+        const Vector3 &cameraPosition = camera.position() + Vector3(0, 0, camera.distance());
+        const Vector3 &lightDirection = light.direction();
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            IModel *model = models[i];
+            model->performUpdate(cameraPosition, lightDirection);
+        }
+    }
+    void updateRenderEngines() {
+        const int nengines = engines.count();
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
+            engine->update();
+        }
+    }
+    void updateCamera() {
+        camera.updateTransform();
+    }
+
+    bool isOpenCLAcceleration() const {
+        return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
+    }
+#ifdef VPVL2_ENABLE_OPENCL
+    cl_uint hostDeviceType() const {
+        switch (accelerationType) {
+        case kOpenCLAccelerationType1:
+            return CL_DEVICE_TYPE_ALL;
+        case kOpenCLAccelerationType2:
+            return CL_DEVICE_TYPE_CPU;
+        default:
+            return CL_DEVICE_TYPE_DEFAULT;
+        }
+    }
+#endif
     cl::Context *createComputeContext(IRenderDelegate *delegate) {
 #ifdef VPVL2_ENABLE_OPENCL
         if (!computeContext) {
             computeContext = new cl::Context(delegate);
-            computeContext->initializeContext();
+            computeContext->initializeContext(hostDeviceType());
         }
 #else
         (void) delegate;
@@ -262,7 +298,7 @@ struct Scene::PrivateContext {
     cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
         cl::PMDAccelerator *accelerator = 0;
 #ifdef VPVL2_ENABLE_OPENCL
-        if (accelerationType == kOpenCLAccelerationType1) {
+        if (isOpenCLAcceleration()) {
             accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
         }
@@ -274,7 +310,7 @@ struct Scene::PrivateContext {
     cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
         cl::PMXAccelerator *accelerator = 0;
 #ifdef VPVL2_ENABLE_OPENCL
-        if (accelerationType == kOpenCLAccelerationType1) {
+        if (isOpenCLAcceleration()) {
             accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
         }
@@ -283,11 +319,30 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
+    IEffect *compileEffect(IString *source) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        CGeffect effect = 0;
+        if (source) {
+            static const char *kCompilerArguments[] = {
+                "-DVPVM",
+                "-DVPVM_VERSION=" VPVL_VERSION_STRING,
+                0
+            };
+            effect = cgCreateEffect(effectContext, reinterpret_cast<const char *>(source->toByteArray()), kCompilerArguments);
+        }
+        delete source;
+        return new cg::Effect(effectContext, cgIsEffect(effect) ? effect : 0);
+#else
+        delete source;
+        return 0;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+    }
 
     cl::Context *computeContext;
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
-    Hash<HashPtr, IRenderEngine *> model2engine;
+    Hash<HashPtr, IRenderEngine *> model2engineRef;
+    Hash<HashPtr, IModel *> name2modelRef;
     Array<IModel *> models;
     Array<IMotion *> motions;
     Array<IRenderEngine *> engines;
@@ -297,12 +352,12 @@ struct Scene::PrivateContext {
     Scalar preferredFPS;
 };
 
-Scene::ICamera *Scene::createCamera()
+ICamera *Scene::createCamera()
 {
     return new Camera();
 }
 
-Scene::ILight *Scene::createLight()
+ILight *Scene::createLight()
 {
     return new Light();
 }
@@ -334,7 +389,7 @@ Scene::~Scene()
     m_context = 0;
 }
 
-IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model) const
+IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model, int flags) const
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
@@ -343,10 +398,11 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
 #ifdef VPVL2_LINK_ASSIMP
         asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        engine = new cg::AssetRenderEngine(delegate, this, m_context->effectContext, m);
-#else
-        engine = new gl2::AssetRenderEngine(delegate, this, m);
+        if (flags & kEffectCapable)
+            engine = new cg::AssetRenderEngine(delegate, this, m_context->effectContext, m);
+        else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+            engine = new gl2::AssetRenderEngine(delegate, this, m);
 #endif /* VPVL2_LINK_ASSIMP */
         break;
     }
@@ -354,20 +410,22 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
         cl::PMDAccelerator *accelerator = m_context->createPMDAccelerator(delegate);
         pmd::Model *m = static_cast<pmd::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
-#else
-        engine = new gl2::PMDRenderEngine(delegate, this, accelerator, m);
+        if (flags & kEffectCapable)
+            engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+        else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+            engine = new gl2::PMDRenderEngine(delegate, this, accelerator, m);
         break;
     }
     case IModel::kPMX: {
         cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate);
         pmx::Model *m = static_cast<pmx::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
-#else
-        engine = new gl2::PMXRenderEngine(delegate, this, accelerator, m);
+        if (flags & kEffectCapable)
+            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+        else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, m);
         break;
     }
     default:
@@ -393,7 +451,8 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
     }
     m_context->models.add(model);
     m_context->engines.add(engine);
-    m_context->model2engine.insert(HashPtr(model), engine);
+    m_context->model2engineRef.insert(model, engine);
+    m_context->name2modelRef.insert(model->name(), model);
 }
 
 void Scene::addMotion(IMotion *motion)
@@ -401,19 +460,39 @@ void Scene::addMotion(IMotion *motion)
     m_context->motions.add(motion);
 }
 
+IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
+{
+#ifdef VPVL2_OPENGL_RENDERER
+    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
+    return m_context->compileEffect(source);
+#else
+    return 0;
+#endif /* VPVL2_OPENGL_RENDERER */
+}
+
+IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate)
+{
+#ifdef VPVL2_OPENGL_RENDERER
+    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
+    return m_context->compileEffect(source);
+#else
+    return 0;
+#endif /* VPVL2_OPENGL_RENDERER */
+}
+
 void Scene::deleteModel(IModel *&model)
 {
     const HashPtr key(model);
-    IRenderEngine **enginePtr = const_cast<IRenderEngine **>(m_context->model2engine.find(key));
+    IRenderEngine **enginePtr = const_cast<IRenderEngine **>(m_context->model2engineRef.find(key));
     if (enginePtr) {
         IRenderEngine *engine = *enginePtr;
         m_context->models.remove(model);
         m_context->engines.remove(engine);
-        m_context->model2engine.remove(key);
+        m_context->model2engineRef.remove(key);
         delete engine;
-        delete model;
-        model = 0;
     }
+    delete model;
+    model = 0;
 }
 
 void Scene::removeMotion(IMotion *motion)
@@ -421,101 +500,74 @@ void Scene::removeMotion(IMotion *motion)
     m_context->motions.remove(motion);
 }
 
-void Scene::advance(float delta)
+void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
 {
-    const Array<IMotion *> &motions = m_context->motions;
-    const int nmotions = motions.count();
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
-        motion->advance(delta);
+    if (flags & kUpdateCamera) {
+        Camera &camera = m_context->camera;
+        IMotion *cameraMotion = camera.motion();
+        if (cameraMotion)
+            cameraMotion->advanceScene(delta, this);
     }
-    updateModels();
-    updateRenderEngines();
-    Camera &camera = m_context->camera;
-    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
-    if (cameraMotion) {
-        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->advance(delta);
-            camera.setPosition(animation->position());
-            camera.setAngle(animation->angle());
-            camera.setFov(animation->fovy());
-            camera.setDistance(animation->distance());
+    if (flags & kUpdateLight) {
+        Light &light = m_context->light;
+        IMotion *lightMotion = light.motion();
+        if (lightMotion)
+            lightMotion->advanceScene(delta, this);
+    }
+    if (flags & kUpdateModels) {
+        const Array<IMotion *> &motions = m_context->motions;
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *motion = motions[i];
+            motion->advance(delta);
         }
-    }
-    Light &light = m_context->light;
-    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(m_context->light.motion());
-    if (lightMotion) {
-        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->seek(delta);
-            light.setColor(animation->color());
-            light.setDirection(animation->direction());
-        }
-    }
-    updateCamera();
-}
-
-void Scene::seek(float frameIndex)
-{
-    const Array<IMotion *> &motions = m_context->motions;
-    const int nmotions = motions.count();
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
-        motion->seek(frameIndex);
-    }
-    updateModels();
-    updateRenderEngines();
-    Camera &camera = m_context->camera;
-    vmd::Motion *cameraMotion = static_cast<vmd::Motion *>(camera.motion());
-    if (cameraMotion) {
-        vmd::CameraAnimation *animation = cameraMotion->mutableCameraAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->seek(frameIndex);
-            camera.setPosition(animation->position());
-            camera.setAngle(animation->angle());
-            camera.setFov(animation->fovy());
-            camera.setDistance(animation->distance());
-        }
-    }
-    Light &light = m_context->light;
-    vmd::Motion *lightMotion = static_cast<vmd::Motion *>(camera.motion());
-    if (lightMotion) {
-        vmd::LightAnimation *animation = lightMotion->mutableLightAnimation();
-        if (animation->countKeyframes() > 0) {
-            animation->seek(frameIndex);
-            light.setColor(animation->color());
-            light.setDirection(animation->direction());
-        }
-    }
-    updateCamera();
-}
-
-void Scene::updateModels()
-{
-    const Vector3 &lightDirection = light()->direction();
-    const Array<IModel *> &models = m_context->models;
-    const int nmodels = models.count();
-    for (int i = 0; i < nmodels; i++) {
-        IModel *model = models[i];
-        model->performUpdate(lightDirection);
     }
 }
 
-void Scene::updateRenderEngines()
+void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
 {
-    const Array<IRenderEngine *> &renderEngines = m_context->engines;
-    const int nRenderEngines = renderEngines.count();
-    for (int i = 0; i < nRenderEngines; i++) {
-        IRenderEngine *engine = renderEngines[i];
-        engine->update();
+    if (flags & kUpdateCamera) {
+        Camera &camera = m_context->camera;
+        IMotion *cameraMotion = camera.motion();
+        if (cameraMotion)
+            cameraMotion->seekScene(timeIndex, this);
+    }
+    if (flags & kUpdateLight) {
+        Light &light = m_context->light;
+        IMotion *lightMotion = light.motion();
+        if (lightMotion)
+            lightMotion->seekScene(timeIndex, this);
+    }
+    if (flags & kUpdateModels) {
+        const Array<IMotion *> &motions = m_context->motions;
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *motion = motions[i];
+            motion->seek(timeIndex);
+        }
     }
 }
 
-void Scene::updateCamera()
+void Scene::updateModel(IModel *model) const
 {
-    Camera &camera = m_context->camera;
-    camera.updateTransform();
+    if (model) {
+        const ICamera *c = camera();
+        const Vector3 &cameraPosition = c->position() + Vector3(0, 0, c->distance());
+        model->performUpdate(cameraPosition, light()->direction());
+    }
+}
+
+void Scene::update(int flags)
+{
+    if (flags & kUpdateCamera) {
+        m_context->updateCamera();
+    }
+    if (flags & kUpdateModels) {
+        m_context->updateModels();
+    }
+    if (flags & kUpdateRenderEngines) {
+        m_context->updateRenderEngines();
+    }
 }
 
 void Scene::setPreferredFPS(const Scalar &value)
@@ -523,13 +575,13 @@ void Scene::setPreferredFPS(const Scalar &value)
     m_context->preferredFPS = value;
 }
 
-bool Scene::isReachedTo(float frameIndex) const
+bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
-        if (!motion->isReachedTo(frameIndex))
+        if (!motion->isReachedTo(timeIndex))
             return false;
     }
     return true;
@@ -539,10 +591,10 @@ float Scene::maxFrameIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
-    float maxFrameIndex = 0;
+    IKeyframe::TimeIndex maxFrameIndex = 0;
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
-        btSetMax(maxFrameIndex, motion->maxFrameIndex());
+        btSetMax(maxFrameIndex, motion->maxTimeIndex());
     }
     return maxFrameIndex;
 }
@@ -562,18 +614,24 @@ const Array<IRenderEngine *> &Scene::renderEngines() const
     return m_context->engines;
 }
 
-IRenderEngine *Scene::renderEngine(IModel *model) const
+IModel *Scene::findModel(const IString *name) const
 {
-    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engine.find(HashPtr(model)));
+    IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name));
+    return model ? *model : 0;
+}
+
+IRenderEngine *Scene::findRenderEngine(IModel *model) const
+{
+    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engineRef.find(model));
     return engine ? *engine : 0;
 }
 
-Scene::ILight *Scene::light() const
+ILight *Scene::light() const
 {
     return &m_context->light;
 }
 
-Scene::ICamera *Scene::camera() const
+ICamera *Scene::camera() const
 {
     return &m_context->camera;
 }

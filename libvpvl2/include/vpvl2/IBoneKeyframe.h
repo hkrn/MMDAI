@@ -62,7 +62,7 @@ public:
         kY,
         kZ,
         kRotation,
-        kMax
+        kMaxInterpolationType
     };
     virtual ~IBoneKeyframe() {}
 

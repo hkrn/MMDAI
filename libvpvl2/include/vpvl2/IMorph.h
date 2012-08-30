@@ -51,6 +51,11 @@ class IString;
 class VPVL2_API IMorph
 {
 public:
+#ifdef VPVL2_ENABLE_GLES2
+    typedef float WeightPrecision;
+#else
+    typedef double WeightPrecision;
+#endif
     enum Type {
         kUnknown = -1,
         kGroup,
@@ -61,14 +66,16 @@ public:
         kUVA2,
         kUVA3,
         kUVA4,
-        kMaterial
+        kMaterial,
+        kMaxMorphType
     };
     enum Category {
         kReserved,
         kEyeblow,
         kEye,
         kLip,
-        kOther
+        kOther,
+        kMaxCategoryType
     };
 
     virtual ~IMorph() {}
@@ -116,7 +123,7 @@ public:
      * @return float
      * @sa setWeight
      */
-    virtual const Scalar &weight() const = 0;
+    virtual const WeightPrecision &weight() const = 0;
 
     /**
      * 係数 value に基づいて変形を行います。
@@ -126,7 +133,7 @@ public:
      * @param float
      * @sa weight
      */
-    virtual void setWeight(const Scalar &value) = 0;
+    virtual void setWeight(const WeightPrecision &value) = 0;
 };
 
 }

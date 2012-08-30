@@ -80,7 +80,7 @@ public:
         kInvalidLabelsError,
         kInvalidRigidBodiesError,
         kInvalidJointsError,
-        kMaxErrors
+        kMaxErrorType
     };
     enum Object {
         kBone,
@@ -90,12 +90,15 @@ public:
         kMaterial,
         kMorph,
         kRigidBody,
-        kVertex
+        kVertex,
+        kMaxObjectType
     };
     enum Type {
+        kUnknown,
         kAsset,
         kPMD,
-        kPMX
+        kPMX,
+        kMaxModelType
     };
     virtual ~IModel() {}
 
@@ -197,7 +200,7 @@ public:
      *
      * @param Vector3
      */
-    virtual void performUpdate(const Vector3 &lightDirection) = 0;
+    virtual void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection) = 0;
 
     /**
      * モデルの物理演算を有効にします。

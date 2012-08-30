@@ -1,0 +1,68 @@
+// no asset
+bool     no_such_asset_bool      : CONTROLOBJECT < string name = "no_such_asset"; >;
+float    no_such_asset_float     : CONTROLOBJECT < string name = "no_such_asset"; >;
+float3   no_such_asset_float3    : CONTROLOBJECT < string name = "no_such_asset"; >;
+float4   no_such_asset_float4    : CONTROLOBJECT < string name = "no_such_asset"; >;
+float4x4 no_such_asset_float4x4  : CONTROLOBJECT < string name = "no_such_asset"; >;
+
+// asset
+bool     asset_bool      : CONTROLOBJECT < string name = "asset"; >;
+float    asset_float     : CONTROLOBJECT < string name = "asset"; >;
+float3   asset_float3    : CONTROLOBJECT < string name = "asset"; >;
+float4   asset_float4    : CONTROLOBJECT < string name = "asset"; >;
+float4x4 asset_float4x4  : CONTROLOBJECT < string name = "asset"; >;
+
+// no model
+bool     no_such_model_bool      : CONTROLOBJECT < string name = "no_such_model"; >;
+float    no_such_model_float     : CONTROLOBJECT < string name = "no_such_model"; >;
+float3   no_such_model_float3    : CONTROLOBJECT < string name = "no_such_model"; >;
+float4   no_such_model_float4    : CONTROLOBJECT < string name = "no_such_model"; >;
+float4x4 no_such_model_float4x4  : CONTROLOBJECT < string name = "no_such_model"; >;
+
+// model
+bool     model_bool      : CONTROLOBJECT < string name = "model"; >;
+float    model_float     : CONTROLOBJECT < string name = "model"; >;
+float3   model_float3    : CONTROLOBJECT < string name = "model"; >;
+float4   model_float4    : CONTROLOBJECT < string name = "model"; >;
+float4x4 model_float4x4  : CONTROLOBJECT < string name = "model"; >;
+
+// bone
+float3   bone_float3   : CONTROLOBJECT < string name = "model", item = "bone"; >;
+float4   bone_float4   : CONTROLOBJECT < string name = "model", item = "bone"; >;
+float4x4 bone_float4x4 : CONTROLOBJECT < string name = "model", item = "bone"; >;
+
+// no bone
+float3   no_such_bone_float3   : CONTROLOBJECT < string name = "model", item = "no_such_bone"; >;
+float4   no_such_bone_float4   : CONTROLOBJECT < string name = "model", item = "no_such_bone"; >;
+float4x4 no_such_bone_float4x4 : CONTROLOBJECT < string name = "model", item = "no_such_bone"; >;
+
+// morph
+float    morph_float    : CONTROLOBJECT < string name = "model", item = "morph"; >;
+
+// no morph
+float    no_such_morph_float    : CONTROLOBJECT < string name = "model", item = "no_such_morph"; >;
+
+// asset
+float  X_float    : CONTROLOBJECT < string name = "asset", item = "X"; >;
+float  Y_float    : CONTROLOBJECT < string name = "asset", item = "Y"; >;
+float  Z_float    : CONTROLOBJECT < string name = "asset", item = "Z"; >;
+float3 XYZ_float  : CONTROLOBJECT < string name = "asset", item = "XYZ"; >;
+float  Rx_float   : CONTROLOBJECT < string name = "asset", item = "Rx"; >;
+float  Ry_float   : CONTROLOBJECT < string name = "asset", item = "Ry"; >;
+float  Rz_float   : CONTROLOBJECT < string name = "asset", item = "Rz"; >;
+float3 Rxyz_float : CONTROLOBJECT < string name = "asset", item = "Rxyz"; >;
+float  Si_float   : CONTROLOBJECT < string name = "asset", item = "Si"; >;
+float  Tr_float   : CONTROLOBJECT < string name = "asset", item = "Tr"; >;
+
+// no asset
+float  no_such_X_float    : CONTROLOBJECT < string name = "no_such_asset", item = "X"; >;
+float  no_such_Y_float    : CONTROLOBJECT < string name = "no_such_asset", item = "Y"; >;
+float  no_such_Z_float    : CONTROLOBJECT < string name = "no_such_asset", item = "Z"; >;
+float3 no_such_XYZ_float  : CONTROLOBJECT < string name = "no_such_asset", item = "XYZ"; >;
+float  no_such_Rx_float   : CONTROLOBJECT < string name = "no_such_asset", item = "Rx"; >;
+float  no_such_Ry_float   : CONTROLOBJECT < string name = "no_such_asset", item = "Ry"; >;
+float  no_such_Rz_float   : CONTROLOBJECT < string name = "no_such_asset", item = "Rz"; >;
+float3 no_such_Rxyz_float : CONTROLOBJECT < string name = "no_such_asset", item = "Rxyz"; >;
+float  no_such_Si_float   : CONTROLOBJECT < string name = "no_such_asset", item = "Si"; >;
+float  no_such_Tr_float   : CONTROLOBJECT < string name = "no_such_asset", item = "Tr"; >;
+

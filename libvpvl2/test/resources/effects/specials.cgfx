@@ -1,0 +1,10 @@
+bool parthf = true;
+bool spadd = true;
+bool transp = true;
+bool use_texture = true;
+bool use_spheremap = true;
+bool use_toon = true;
+bool opadd = true;
+int VertexCount = 2;
+int SubsetCount = 3;
+

@@ -40,10 +40,11 @@
 #include "vpvl2/Common.h"
 #ifdef VPVL2_LINK_ASSIMP
 
-#include "vpvl2/cg/EngineCommon.h"
+#include "vpvl2/cg/EffectEngine.h"
 
 #include <assimp.h>
 #include <aiScene.h>
+#include <map>
 
 class btDynamicsWorld;
 class btIDebugDraw;
@@ -95,16 +96,15 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
+    IEffect *effect(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
-    void renderModel(Effect::ScriptOrderType type);
-    static void handleError(CGcontext context, CGerror error, void *data);
-
     typedef std::map<std::string, GLuint> Textures;
     struct AssetVertex {
         AssetVertex() {}
@@ -131,14 +131,18 @@ private:
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
 
-    const Scene *m_scene;
-    asset::Model *m_model;
-    CGcontext m_context;
-    Effect m_effect;
+    const Scene *m_sceneRef;
+    EffectEngine *m_currentRef;
+    asset::Model *m_modelRef;
+    CGcontext m_contextRef;
+    Hash<btHashInt, EffectEngine *> m_effects;
+    Array<EffectEngine *> m_oseffects;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, AssetVertices> m_vertices;
     std::map<const struct aiMesh *, AssetIndices> m_indices;
     std::map<const struct aiMesh *, AssetVBO> m_vbo;
+    int m_nvertices;
+    int m_nmeshes;
     bool m_cullFaceState;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)

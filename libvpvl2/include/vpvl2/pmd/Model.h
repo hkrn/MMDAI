@@ -70,7 +70,7 @@ public:
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void resetVertices();
-    void performUpdate(const Vector3 &lightDirection);
+    void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection);
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
@@ -81,6 +81,7 @@ public:
     void getLabels(Array<ILabel *> &value) const { value.copy(m_labels); }
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
+    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
     const Vector3 &position() const { return m_model.positionOffset(); }
     const Quaternion &rotation() const { return m_model.rotationOffset(); }
     const Scalar &opacity() const { return m_opacity; }
@@ -118,10 +119,11 @@ public:
     };
     void getSkinningMeshes(SkinningMeshes &meshes) const;
     void updateSkinningMeshes(SkinningMeshes &meshes) const;
+    void overrideEdgeVerticesOffset();
     void setSkinnningEnable(bool value);
 
 private:
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_englishName;
     IString *m_comment;
@@ -130,8 +132,8 @@ private:
     Array<IBone *> m_bones;
     Array<IMorph *> m_morphs;
     Array<ILabel *> m_labels;
-    Hash<HashString, IBone *> m_name2bones;
-    Hash<HashString, IMorph *> m_name2morphs;
+    Hash<HashString, IBone *> m_name2boneRefs;
+    Hash<HashString, IMorph *> m_name2morphRefs;
     Scalar m_opacity;
     Scalar m_scaleFactor;
     Vector3 m_edgeColor;

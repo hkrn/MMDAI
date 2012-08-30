@@ -7,8 +7,17 @@ libvpvl/libvpvl2/QMA のビルド方法
     - 5.10.1 以降
   - Subversion
   - git
+  - wget
+  - scons
+    - portaudio のビルドに必要
+  - yasm
+    - libav のビルドに必要
   - CMake
-    - 2.8 以降
+    - 2.8 以降。以下のライブラリのビルドに必要
+	  - bullet
+	  - assimp
+	  - libvpvl
+	  - libvpvl2
   - Qt
     - 4.8 以降
     - QtSDK 入れた方が楽

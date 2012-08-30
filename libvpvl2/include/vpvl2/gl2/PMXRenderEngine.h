@@ -76,6 +76,8 @@ class Model;
 namespace gl2
 {
 
+class BaseShaderProgram;
+
 class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
@@ -102,16 +104,26 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
+    IEffect *effect(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
-    const Scene *m_scene;
+    bool createProgram(BaseShaderProgram *program,
+                       const IString *dir,
+                       IRenderDelegate::ShaderType vertexShaderType,
+                       IRenderDelegate::ShaderType vertexSkinningShaderType,
+                       IRenderDelegate::ShaderType fragmentShaderType,
+                       void *context);
+    bool releaseContext0(void *context);
+
+    const Scene *m_sceneRef;
     cl::PMXAccelerator *m_accelerator;
-    pmx::Model *m_model;
+    pmx::Model *m_modelRef;
     PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)

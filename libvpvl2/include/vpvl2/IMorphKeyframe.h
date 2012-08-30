@@ -38,6 +38,7 @@
 #define VPVL2_IMORPHKEYFRAME_H_
 
 #include "vpvl2/IKeyframe.h"
+#include "vpvl2/IMorph.h"
 
 namespace vpvl2
 {
@@ -66,7 +67,7 @@ public:
      * @return float
      * @sa setWeight
      */
-    virtual float weight() const = 0;
+    virtual const IMorph::WeightPrecision &weight() const = 0;
 
     /**
      * 変形係数を設定します。
@@ -76,7 +77,7 @@ public:
      * @param float
      * @sa weight
      */
-    virtual void setWeight(float value) = 0;
+    virtual void setWeight(const IMorph::WeightPrecision &value) = 0;
 };
 
 }

@@ -37,13 +37,14 @@
 #ifndef VPVL2_PROJECT_H_
 #define VPVL2_PROJECT_H_
 
-#include <libxml/SAX2.h>
 #include <string>
 #include <vector>
 
 #include "vpvl2/Scene.h"
 
+/* declare libxml's handle ahead */
 typedef struct _xmlTextWriter* xmlTextWriterPtr;
+typedef struct _xmlBuffer* xmlBufferPtr;
 
 namespace vpvl2
 {
@@ -101,7 +102,7 @@ public:
     IMotion *motion(const UUID &uuid) const;
     bool containsModel(const IModel *model) const;
     bool containsMotion(const IMotion *motion) const;
-    bool isDirty() const { return m_dirty; }
+    bool isDirty() const;
     void setDirty(bool value);
 
     void addModel(IModel *model, IRenderEngine *engine, const UUID &uuid);
@@ -117,8 +118,6 @@ private:
     bool validate(bool result);
 
     PrivateContext *m_context;
-    xmlSAXHandler m_sax;
-    bool m_dirty;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Project)
 };

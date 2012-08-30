@@ -57,8 +57,9 @@ namespace vmd
 const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
 
 Motion::Motion(IModel *model, IEncoding *encoding)
-    : m_model(model),
-      m_encoding(encoding),
+    : m_motionPtr(0),
+      m_modelRef(model),
+      m_encodingRef(encoding),
       m_name(0),
       m_boneMotion(encoding),
       m_morphMotion(encoding),
@@ -172,9 +173,9 @@ bool Motion::load(const uint8_t *data, size_t size)
 void Motion::save(uint8_t *data) const
 {
     internal::writeBytes(kSignature, kSignatureSize, data);
-    uint8_t *name = m_encoding->toByteArray(m_name, IString::kShiftJIS);
+    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(data, name, kNameSize);
-    m_encoding->disposeByteArray(name);
+    m_encodingRef->disposeByteArray(name);
     data += kNameSize;
     int nBoneFrames = m_boneMotion.countKeyframes();
     internal::writeBytes(reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames), data);
@@ -230,7 +231,7 @@ void Motion::setParentModel(IModel *model)
 {
     m_boneMotion.setParentModel(model);
     m_morphMotion.setParentModel(model);
-    m_model = model;
+    m_modelRef = model;
     if (model) {
         const IString *name = model->name();
         if (name)
@@ -238,35 +239,71 @@ void Motion::setParentModel(IModel *model)
     }
 }
 
-void Motion::seek(float frameIndex)
+void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    m_boneMotion.seek(frameIndex);
-    m_morphMotion.seek(frameIndex);
-    m_active = maxFrameIndex() > frameIndex;
+    m_boneMotion.seek(timeIndex);
+    m_morphMotion.seek(timeIndex);
+    m_active = maxTimeIndex() > timeIndex;
 }
 
-void Motion::advance(float delta)
+void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
-    if (delta == 0.0f) {
-        m_boneMotion.advance(delta);
-        m_morphMotion.advance(delta);
+    if (m_cameraMotion.countKeyframes() > 0) {
+        m_cameraMotion.seek(timeIndex);
+        ICamera *camera = scene->camera();
+        camera->setPosition(m_cameraMotion.position());
+        camera->setAngle(m_cameraMotion.angle());
+        camera->setFov(m_cameraMotion.fovy());
+        camera->setDistance(m_cameraMotion.distance());
+    }
+    if (m_lightMotion.countKeyframes() > 0) {
+        m_lightMotion.seek(timeIndex);
+        ILight *light = scene->light();
+        light->setColor(m_lightMotion.color());
+        light->setDirection(m_lightMotion.direction());
+    }
+}
+
+void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
+{
+    if (deltaTimeIndex == 0) {
+        m_boneMotion.advance(deltaTimeIndex);
+        m_morphMotion.advance(deltaTimeIndex);
     }
     else if (m_active) {
         // The motion is active and continue to advance
-        m_boneMotion.advance(delta);
-        m_morphMotion.advance(delta);
-        if (m_boneMotion.currentIndex() >= m_boneMotion.maxIndex() &&
-                m_morphMotion.currentIndex() >= m_morphMotion.maxIndex()) {
+        m_boneMotion.advance(deltaTimeIndex);
+        m_morphMotion.advance(deltaTimeIndex);
+        if (m_boneMotion.currentTimeIndex() >= m_boneMotion.maxTimeIndex() &&
+                m_morphMotion.currentTimeIndex() >= m_morphMotion.maxTimeIndex()) {
             m_active = false;
         }
+    }
+}
+
+void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
+{
+    if (m_cameraMotion.countKeyframes() > 0) {
+        m_cameraMotion.advance(deltaTimeIndex);
+        ICamera *camera = scene->camera();
+        camera->setPosition(m_cameraMotion.position());
+        camera->setAngle(m_cameraMotion.angle());
+        camera->setFov(m_cameraMotion.fovy());
+        camera->setDistance(m_cameraMotion.distance());
+    }
+    if (m_lightMotion.countKeyframes() > 0) {
+        m_lightMotion.advance(deltaTimeIndex);
+        ILight *light = scene->light();
+        light->setColor(m_lightMotion.color());
+        light->setDirection(m_lightMotion.direction());
     }
 }
 
 void Motion::reload()
 {
     /* rebuild internal keyframe nodes */
-    m_boneMotion.setParentModel(m_model);
-    m_morphMotion.setParentModel(m_model);
+    m_boneMotion.setParentModel(m_modelRef);
+    m_morphMotion.setParentModel(m_modelRef);
     reset();
 }
 
@@ -279,15 +316,15 @@ void Motion::reset()
     m_active = true;
 }
 
-float Motion::maxFrameIndex() const
+const IKeyframe::TimeIndex &Motion::maxTimeIndex() const
 {
-    return btMax(btMax(btMax(m_boneMotion.maxIndex(), m_morphMotion.maxIndex()), m_cameraMotion.maxIndex()), m_lightMotion.maxIndex());
+    return btMax(btMax(btMax(m_boneMotion.maxTimeIndex(), m_morphMotion.maxTimeIndex()), m_cameraMotion.maxTimeIndex()), m_lightMotion.maxTimeIndex());
 }
 
-bool Motion::isReachedTo(float atEnd) const
+bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
     // force inactive motion is reached
-    return !m_active || (m_boneMotion.currentIndex() >= atEnd && m_morphMotion.currentIndex() >= atEnd);
+    return !m_active || (m_boneMotion.currentTimeIndex() >= atEnd && m_morphMotion.currentTimeIndex() >= atEnd);
 }
 
 bool Motion::isNullFrameEnabled() const
@@ -303,7 +340,7 @@ void Motion::setNullFrameEnable(bool value)
 
 void Motion::addKeyframe(IKeyframe *value)
 {
-    if (!value)
+    if (!value || value->layerIndex() != 0)
         return;
     switch (value->type()) {
     case IKeyframe::kBone:
@@ -325,11 +362,11 @@ void Motion::addKeyframe(IKeyframe *value)
 
 void Motion::replaceKeyframe(IKeyframe *value)
 {
-    if (!value)
+    if (!value || value->layerIndex() != 0)
         return;
     switch (value->type()) {
     case IKeyframe::kBone: {
-        IKeyframe *keyframeToDelete = m_boneMotion.findKeyframe(value->frameIndex(), value->name());
+        IKeyframe *keyframeToDelete = m_boneMotion.findKeyframe(value->timeIndex(), value->name());
         if (keyframeToDelete)
             m_boneMotion.deleteKeyframe(keyframeToDelete);
         m_boneMotion.addKeyframe(value);
@@ -337,7 +374,7 @@ void Motion::replaceKeyframe(IKeyframe *value)
         break;
     }
     case IKeyframe::kCamera: {
-        IKeyframe *keyframeToDelete = m_cameraMotion.findKeyframe(value->frameIndex());
+        IKeyframe *keyframeToDelete = m_cameraMotion.findKeyframe(value->timeIndex());
         if (keyframeToDelete)
             m_cameraMotion.deleteKeyframe(keyframeToDelete);
         m_cameraMotion.addKeyframe(value);
@@ -345,7 +382,7 @@ void Motion::replaceKeyframe(IKeyframe *value)
         break;
     }
     case IKeyframe::kLight: {
-        IKeyframe *keyframeToDelete = m_lightMotion.findKeyframe(value->frameIndex());
+        IKeyframe *keyframeToDelete = m_lightMotion.findKeyframe(value->timeIndex());
         if (keyframeToDelete)
             m_lightMotion.deleteKeyframe(keyframeToDelete);
         m_lightMotion.addKeyframe(value);
@@ -353,7 +390,7 @@ void Motion::replaceKeyframe(IKeyframe *value)
         break;
     }
     case IKeyframe::kMorph: {
-        IKeyframe *keyframeToDelete = m_morphMotion.findKeyframe(value->frameIndex(), value->name());
+        IKeyframe *keyframeToDelete = m_morphMotion.findKeyframe(value->timeIndex(), value->name());
         if (keyframeToDelete)
             m_morphMotion.deleteKeyframe(keyframeToDelete);
         m_morphMotion.addKeyframe(value);
@@ -381,9 +418,42 @@ int Motion::countKeyframes(IKeyframe::Type value) const
     }
 }
 
-IBoneKeyframe *Motion::findBoneKeyframe(int frameIndex, const IString *name) const
+void Motion::getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+                          const IKeyframe::LayerIndex &layerIndex,
+                          IKeyframe::Type type,
+                          Array<IKeyframe *> &keyframes)
 {
-    return m_boneMotion.findKeyframe(frameIndex, name);
+    if (layerIndex != -1 && layerIndex != 0)
+        return;
+    switch (type) {
+    case IKeyframe::kBone:
+        m_boneMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    case IKeyframe::kCamera:
+        m_cameraMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    case IKeyframe::kLight:
+        m_lightMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    case IKeyframe::kMorph:
+        m_morphMotion.getKeyframes(timeIndex, keyframes);
+        break;
+    default:
+        break;
+    }
+}
+
+IKeyframe::LayerIndex Motion::countLayers(const IString * /* name */,
+                                          IKeyframe::Type /* type */) const
+{
+    return 1;
+}
+
+IBoneKeyframe *Motion::findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                        const IString *name,
+                                        const IKeyframe::LayerIndex &layerIndex) const
+{
+    return layerIndex == 0 ? m_boneMotion.findKeyframe(timeIndex, name) : 0;
 }
 
 IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
@@ -391,9 +461,10 @@ IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
     return m_boneMotion.frameAt(index);
 }
 
-ICameraKeyframe *Motion::findCameraKeyframe(int frameIndex) const
+ICameraKeyframe *Motion::findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                            const IKeyframe::LayerIndex &layerIndex) const
 {
-    return m_cameraMotion.findKeyframe(frameIndex);
+    return layerIndex == 0 ? m_cameraMotion.findKeyframe(timeIndex) : 0;
 }
 
 ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
@@ -401,9 +472,10 @@ ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
     return m_cameraMotion.frameAt(index);
 }
 
-ILightKeyframe *Motion::findLightKeyframe(int frameIndex) const
+ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                          const IKeyframe::LayerIndex &layerIndex) const
 {
-    return m_lightMotion.findKeyframe(frameIndex);
+    return layerIndex == 0 ? m_lightMotion.findKeyframe(timeIndex) : 0;
 }
 
 ILightKeyframe *Motion::findLightKeyframeAt(int index) const
@@ -411,9 +483,11 @@ ILightKeyframe *Motion::findLightKeyframeAt(int index) const
     return m_lightMotion.frameAt(index);
 }
 
-IMorphKeyframe *Motion::findMorphKeyframe(int frameIndex, const IString *name) const
+IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                          const IString *name,
+                                          const IKeyframe::LayerIndex &layerIndex) const
 {
-    return m_morphMotion.findKeyframe(frameIndex, name);
+    return layerIndex == 0 ? m_morphMotion.findKeyframe(timeIndex, name) : 0;
 }
 
 IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
@@ -423,7 +497,8 @@ IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
 
 void Motion::deleteKeyframe(IKeyframe *&value)
 {
-    if (!value)
+    /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
+    if (!value || value->timeIndex() == 0)
         return;
     switch (value->type()) {
     case IKeyframe::kBone:
@@ -451,31 +526,11 @@ void Motion::deleteKeyframe(IKeyframe *&value)
     }
 }
 
-void Motion::deleteKeyframes(int frameIndex, IKeyframe::Type type)
-{
-    switch (type) {
-    case IKeyframe::kBone:
-        m_boneMotion.deleteKeyframes(frameIndex);
-        break;
-    case IKeyframe::kCamera:
-        m_cameraMotion.deleteKeyframes(frameIndex);
-        break;
-    case IKeyframe::kLight:
-        m_lightMotion.deleteKeyframes(frameIndex);
-        break;
-    case IKeyframe::kMorph:
-        m_morphMotion.deleteKeyframes(frameIndex);
-        break;
-    default:
-        break;
-    }
-}
-
 void Motion::update(IKeyframe::Type type)
 {
     switch (type) {
     case IKeyframe::kBone:
-        m_boneMotion.setParentModel(m_model);
+        m_boneMotion.setParentModel(m_modelRef);
         break;
     case IKeyframe::kCamera:
         m_cameraMotion.update();
@@ -484,28 +539,55 @@ void Motion::update(IKeyframe::Type type)
         m_lightMotion.update();
         break;
     case IKeyframe::kMorph:
-        m_morphMotion.setParentModel(m_model);
+        m_morphMotion.setParentModel(m_modelRef);
         break;
     default:
         break;
     }
 }
 
+IMotion *Motion::clone() const
+{
+    IMotion *dest = m_motionPtr = new Motion(m_modelRef, m_encodingRef);
+    const int nbkeyframes = m_boneMotion.countKeyframes();
+    for (int i = 0; i < nbkeyframes; i++) {
+        BoneKeyframe *keyframe = m_boneMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    const int nckeyframes = m_cameraMotion.countKeyframes();
+    for (int i = 0; i < nckeyframes; i++) {
+        CameraKeyframe *keyframe = m_cameraMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    const int nlkeyframes = m_lightMotion.countKeyframes();
+    for (int i = 0; i < nlkeyframes; i++) {
+        LightKeyframe *keyframe = m_lightMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    const int nmkeyframes = m_morphMotion.countKeyframes();
+    for (int i = 0; i < nmkeyframes; i++) {
+        MorphKeyframe *keyframe = m_morphMotion.frameAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    m_motionPtr = 0;
+    return dest;
+}
+
 void Motion::parseHeader(const DataInfo &info)
 {
-    m_name = m_encoding->toString(info.namePtr, IString::kShiftJIS, kNameSize);
+    m_name = m_encodingRef->toString(info.namePtr, IString::kShiftJIS, kNameSize);
 }
 
 void Motion::parseBoneFrames(const DataInfo &info)
 {
     m_boneMotion.read(info.boneKeyframePtr, info.boneKeyframeCount);
-    m_boneMotion.setParentModel(m_model);
+    m_boneMotion.setParentModel(m_modelRef);
 }
 
 void Motion::parseMorphFrames(const DataInfo &info)
 {
     m_morphMotion.read(info.morphKeyframePtr, info.morphKeyframeCount);
-    m_morphMotion.setParentModel(m_model);
+    m_morphMotion.setParentModel(m_modelRef);
 }
 
 void Motion::parseCameraFrames(const DataInfo &info)
@@ -526,6 +608,10 @@ void Motion::release()
 {
     delete m_name;
     m_name = 0;
+    delete m_motionPtr;
+    m_motionPtr = 0;
+    m_error = kNoError;
+    m_active = false;
 }
 
 }

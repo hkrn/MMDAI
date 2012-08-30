@@ -50,7 +50,7 @@
 #endif /* VPVL_LINK_QT */
 
 #if defined(VPVL2_ENABLE_GLES2)
-#include <GLES/gl2.h>
+#include <GLES2/gl2.h>
 #elif defined(VPVL2_BUILD_IOS)
 #include <OpenGLES/ES2/gl.h>
 #else
@@ -117,11 +117,13 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess();
+    IEffect *effect(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 protected:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
 
 private:
     bool uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context);
@@ -130,8 +132,8 @@ private:
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
 
-    const Scene *m_scene;
-    asset::Model *m_model;
+    const Scene *m_sceneRef;
+    asset::Model *m_modelRef;
     PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
