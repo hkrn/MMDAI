@@ -154,22 +154,14 @@ linux-* {
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
   libraries.path = /lib
-  libraries.files = $${BULET_PATH}/release/lib/libBulletCollision.so.* \
-                    $${BULET_PATH}/release/lib/libBulletDynamics.so.* \
-                    $${BULET_PATH}/release/lib/libBulletSoftBody.so.* \
-                    $${BULET_PATH}/release/lib/libLinearMath.so.* \
-                    $${VPVL_PATH}/release/lib/libvpvl.so.* \
-                    $${VPVL2_PATH}/release/lib/libvpvl2.so.* \
-                    $${VPVL2_PATH}/release/lib/libvpvl2qtcommon.so.* \
-                    $${ASSIMP_PATH}/release/lib/libassimp.so \
-                    $${PORTAUDIO_PATH}/build/scons/posix/libportaudio.so.* \
-                    $${LIBAV_PATH}/release_native/libavcodec.so.* \
-                    $${LIBAV_PATH}/release_native/libavformat.so.* \
-                    $${LIBAV_PATH}/release_native/libavutil.so.* \
-                    $${LIBAV_PATH}/release_native/libswscale.so.* \
-                    $${DEVIL_PATH}/release_native/libIL.so.* \
-                    $${DEVIL_PATH}/release_native/libILU.so.* \
-                    $${DEVIL_PATH}/release_native/libILUT.so.* \
+  libraries.files = $${PORTAUDIO_PATH}/build/scons/posix/libportaudio.so.* \
+                    $${LIBAV_PATH}/release_native/lib/libavcodec.so.* \
+                    $${LIBAV_PATH}/release_native/lib/libavformat.so.* \
+                    $${LIBAV_PATH}/release_native/lib/libavutil.so.* \
+                    $${LIBAV_PATH}/release_native/lib/libswscale.so.* \
+                    $${DEVIL_PATH}/release_native/lib/libIL.so.* \
+                    $${DEVIL_PATH}/release_native/lib/libILU.so.* \
+                    $${DEVIL_PATH}/release_native/lib/libILUT.so.* \
                     $$[QT_INSTALL_LIBS]/libQtCore.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtGui.so.4 \
                     $$[QT_INSTALL_LIBS]/libQtOpenGL.so.4
