@@ -309,7 +309,10 @@ public:
         Quaternion ix, iy, iz, ir, ifv, idt;
         for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
             const std::string &motionUUID = (*it).first;
-            const vmd::Motion *motion = reinterpret_cast<vmd::Motion *>((*it).second);
+            IMotion *motionPtr = (*it).second;
+            if (motionPtr->type() != IMotion::kVMD)
+                continue;
+            const vmd::Motion *motion = reinterpret_cast<vmd::Motion *>(motionPtr);
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("motion"), 0));
             const std::string &modelUUID = this->findModelUUID(motion->parentModel());
             if (modelUUID != Project::kNullUUID)
