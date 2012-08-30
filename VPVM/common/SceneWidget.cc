@@ -65,6 +65,16 @@
 using namespace vpvl2;
 using namespace internal;
 
+static void UIAlertMVDMotion(const IMotion *motion, SceneWidget *parent)
+{
+    /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
+    if (motion->type() == IMotion::kMVD) {
+        internal::warning(parent,
+                          parent->tr("The MVD file cannot save to the project currently"),
+                          parent->tr("The MVD file cannot save to the project. If you want to export the MVD file, "
+                                     "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
+    }
+}
 
 class SceneWidget::PlaneWorld {
 public:
@@ -436,8 +446,9 @@ void SceneWidget::insertMotionToAllModels()
                                                              tr("Model motion file (*.vmd *.mvd)"),
                                                              m_settings));
     IModel *selected = m_loader->selectedModel();
-    if (motion && selected)
+    if (motion && selected) {
         refreshMotions();
+    }
 }
 
 IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
@@ -447,6 +458,7 @@ IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
         QList<IModel *> models;
         motion = m_loader->loadModelMotion(path, models);
         if (motion) {
+            UIAlertMVDMotion(motion, this);
             seekMotion(0, false, true);
             emit fileDidLoad(path);
         }
@@ -466,8 +478,10 @@ void SceneWidget::insertMotionToSelectedModel()
                                                                      tr("Load model motion from a VMD/MVD file"),
                                                                      tr("Model motion file (*.vmd *.mvd)"),
                                                                      m_settings));
-        if (motion)
+        if (motion) {
+            UIAlertMVDMotion(motion, this);
             refreshMotions();
+        }
     }
     else {
         internal::warning(this, tr("The model is not selected."),
@@ -497,6 +511,7 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
                                                 "",
                                                 QMessageBox::Yes|QMessageBox::No);
                     if (ret == QMessageBox::Yes) {
+                        UIAlertMVDMotion(motion, this);
                         m_loader->setModelMotion(motion, model);
                     }
                     else {
@@ -680,7 +695,7 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
        渡された値が同じフレーム位置の場合は何もしない
        (シグナルスロット処理の関係でモーフスライダーが動かなくなってしまうため)
      */
-    if (!forceEvenSame && timeIndex == m_timeIndex)
+    if (!forceCameraUpdate && !forceEvenSame && timeIndex == m_timeIndex)
         return;
     /*
        advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある。
@@ -719,8 +734,10 @@ void SceneWidget::setCamera()
                                                tr("Load camera motion from a VMD/MVD file"),
                                                tr("Camera motion file (*.vmd *.mvd)"),
                                                m_settings));
-    if (motion)
+    if (motion) {
+        UIAlertMVDMotion(motion, this);
         refreshScene();
+    }
 }
 
 IMotion *SceneWidget::setCamera(const QString &path)
