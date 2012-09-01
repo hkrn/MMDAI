@@ -337,7 +337,7 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
       aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/osx vpvl2qtcommon_sources)
     endif()
     add_library(vpvl2qtcommon ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
-	if(APPLE)
+        if(APPLE)
       target_link_libraries(vpvl2qtcommon ${COCOA_LIBRARY})
     endif()
     target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
@@ -387,12 +387,6 @@ if(VPVL2_ENABLE_PROJECT)
   include_directories(${LIBXML2_INCLUDE_DIR})
 endif()
 
-# link against DevIL
-option(VPVL2_LINK_DEVIL "link against DevIL (default is OFF)" OFF)
-if(VPVL2_BUILD_QT_RENDERER AND VPVL2_LINK_DEVIL)
-  link_devil(vpvl2qtcommon)
-endif()
-
 # extra renderer program with SDL
 option(VPVL2_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL2_OPENGL_RENDERER required, default is OFF)" OFF)
 if(VPVL2_OPENGL_RENDERER AND VPVL2_BUILD_SDL)
@@ -403,9 +397,18 @@ if(VPVL2_OPENGL_RENDERER AND VPVL2_BUILD_SDL)
   endif()
   add_executable(vpvl2_sdl ${vpvl2_sdl_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
   target_link_libraries(vpvl2_sdl vpvl2 ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
-  include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})
+  include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../glm/)
   link_icu_or_iconv(vpvl2_sdl)
 endif()
+
+# link against DevIL
+option(VPVL2_LINK_DEVIL "link against DevIL (default is OFF)" OFF)
+if(VPVL2_BUILD_QT_RENDERER AND VPVL2_LINK_DEVIL)
+  link_devil(vpvl2qtcommon)
+elseif(VPVL2_BUILD_SDL)
+  link_devil(vpvl2_sdl)
+endif()
+
 
 option(VPVL2_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
 option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (default is OFF)" OFF)

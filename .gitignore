@@ -1,4 +1,5 @@
-alchemy
+*-debug
+*-release
 AppData
 assimp*
 bullet*
@@ -11,14 +12,15 @@ config.h
 debug*
 devil*
 *.dir
+glm*
 gmock-*
 gtest-*
 hts_engine_API-*
 install_manifest.txt
 ipch
-jpeg-*
 julius-*
 libav*
+libjpeg*
 libpng*
 Makefile*
 moc_*
@@ -26,6 +28,7 @@ nacl
 open_jtalk-*
 portaudio*
 release*
+SDLMain.*
 test-build-*
 UpgradeLog*.XML
 _UpgradeReport_Files
