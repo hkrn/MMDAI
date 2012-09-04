@@ -56,6 +56,7 @@
 
 /* SDL */
 #include <SDL.h>
+#include <SDL_image.h>
 #include <SDL_opengl.h>
 
 /* Bullet Physics */
@@ -89,22 +90,25 @@ BT_DECLARE_HANDLE(aiScene);
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-/* DevIL */
-#include <IL/il.h>
-#include <IL/ilu.h>
-#include <IL/ilut.h>
-
 namespace {
 
 using namespace vpvl2;
 
+const char *kDefaultEncoding = "utf8";
+
 class String : public IString {
 public:
     String(const UnicodeString &value)
-        : m_value(value)
+        : m_value(value),
+          m_bytes(0)
     {
+        size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
+        m_bytes = new char[length + 1];
+        value.extract(0, size, reinterpret_cast<char *>(m_bytes), kDefaultEncoding);
+        m_bytes[length] = 0;
     }
     ~String() {
+        delete m_bytes;
     }
 
     bool startsWith(const IString *value) const {
@@ -120,7 +124,7 @@ public:
         return new String(m_value);
     }
     const HashString toHashString() const {
-        return HashString(reinterpret_cast<const char *>(m_value.getTerminatedBuffer()));
+        return HashString(m_bytes);
     }
     bool equals(const IString *value) const {
         return m_value == static_cast<const String *>(value)->value();
@@ -129,14 +133,15 @@ public:
         return m_value;
     }
     const uint8_t *toByteArray() const {
-        return reinterpret_cast<const uint8_t *>(m_value.getTerminatedBuffer());
+        return reinterpret_cast<const uint8_t *>(m_bytes);
     }
     size_t length() const {
         return m_value.length();
     }
 
 private:
-    mutable UnicodeString m_value;
+    const UnicodeString m_value;
+    char *m_bytes;
 };
 
 class Encoding : public IEncoding {
@@ -194,7 +199,7 @@ public:
             s = new String(UnicodeString(str, size, "utf-8"));
             break;
         case IString::kUTF16:
-            s = new String(UnicodeString(str, size, "utf-16"));
+            s = new String(UnicodeString(str, size, "utf-16le"));
             break;
         default:
             break;
@@ -218,7 +223,7 @@ public:
                 codecTo = "utf-8";
                 break;
             case IString::kUTF16:
-                codecTo = "utf-16";
+                codecTo = "utf-16le";
                 break;
             default:
                 break;
@@ -226,8 +231,7 @@ public:
             size_t size = s->length(), newStringLength = src.extract(0, size, 0, codecTo);
             uint8_t *data = new uint8_t[newStringLength + 1];
             src.extract(0, size, reinterpret_cast<char *>(data), codecTo);
-            memcpy(data, s->toByteArray(), size);
-            data[size] = 0;
+            data[newStringLength] = 0;
             return data;
         }
         return 0;
@@ -237,99 +241,30 @@ public:
     }
 };
 
-typedef std::map<std::string, std::string> UIStringMap;
-struct UIContext
+static const std::string UIUnicodeStringToStdString(const UnicodeString &value)
 {
-    UIContext(Scene *scene, UIStringMap *config)
-        : sceneRef(scene),
-          configRef(config),
-          width(640),
-          height(480),
-          active(true)
-    {
-    }
-    const Scene *sceneRef;
-    const UIStringMap *configRef;
-    size_t width;
-    size_t height;
-    bool active;
-};
-
-static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
-{
-    const SDL_keysym &keysym = event.keysym;
-    switch (keysym.sym) {
-    case SDLK_ESCAPE:
-        context.active = false;
-        break;
-    default:
-        break;
-    }
+    size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
+    std::vector<char> bytes(length + 1);
+    value.extract(0, size, reinterpret_cast<char *>(&bytes[0]), kDefaultEncoding);
+    return std::string(bytes.begin(), bytes.end() - 1);
 }
 
-static void UIProceedEvents(UIContext &context)
+static int UIUnicodeStringToInt(const UnicodeString &value, int def = 0)
 {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-        case SDL_KEYDOWN:
-            UIHandleKeyEvent(event.key, context);
-            break;
-        case SDL_VIDEORESIZE:
-            context.width = event.resize.w;
-            context.height = event.resize.h;
-            break;
-        case SDL_QUIT:
-            context.active = false;
-            break;
-        default:
-            break;
-        }
-    }
+    int v = int(strtol(UIUnicodeStringToStdString(value).c_str(), 0, 10));
+    return v != 0 ? v : def;
 }
 
-static void UIDrawScreen(const UIContext &context)
+static int UIUnicodeStringToFloat(const UnicodeString &value, float def = 0.0)
 {
-    glViewport(0, 0, context.width, context.height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    const Array<IRenderEngine *> &engines = context.sceneRef->renderEngines();
-    const int nengines = engines.count();
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        engine->preparePostProcess();
-    }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        engine->performPreProcess();
-    }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        engine->renderModel();
-        engine->renderEdge();
-        engine->renderShadow();
-    }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        engine->performPostProcess();
-    }
-    SDL_GL_SwapBuffers();
+    float v = strtof(UIUnicodeStringToStdString(value).c_str(), 0);
+    return v != 0 ? v : def;
 }
 
-static std::string UITrimString(const std::string &value)
-{
-    const char delimiters[] = " \t\r\n";
-    std::string::size_type first = value.find_first_not_of(delimiters);
-    if (first == std::string::npos) {
-        return std::string();
-    }
-    std::string::size_type last = value.find_last_not_of(delimiters);
-    return value.substr(first, last - first + 1);
-}
-
-static bool UILoadFile(const std::string &path, std::string &bytes)
+static bool UILoadFile(const UnicodeString &path, std::string &bytes)
 {
     bytes.clear();
-    FILE *fp = ::fopen(path.c_str(), "rb");
+    FILE *fp = ::fopen(UIUnicodeStringToStdString(path).c_str(), "rb");
     bool ret = false;
     if (fp) {
         ::fseek(fp, 0, SEEK_END);
@@ -349,93 +284,81 @@ static const uint8_t *UICastData(const std::string &data)
     return reinterpret_cast<const uint8_t *>(data.c_str());
 }
 
+typedef std::map<UnicodeString, UnicodeString> UIStringMap;
+
 class Delegate : public IRenderDelegate {
 public:
+    struct TextureCache {
+        TextureCache() {}
+        TextureCache(int w, int h, GLuint i)
+            : width(w),
+              height(h),
+              id(i)
+        {
+        }
+        int width;
+        int height;
+        GLuint id;
+    };
+    typedef std::map<UnicodeString, TextureCache> TextureCacheMap;
+    struct PrivateContext {
+        TextureCacheMap textureCache;
+    };
+
     Delegate(Scene *sceneRef, UIStringMap *configRef)
         : m_sceneRef(sceneRef),
           m_configRef(configRef),
           m_lightWorldMatrix(1),
           m_lightViewMatrix(1),
-          m_lightProjectionMatrix(0),
-          m_cameraModelMatrix(1),
+          m_lightProjectionMatrix(1),
+          m_cameraWorldMatrix(1),
           m_cameraViewMatrix(1),
-          m_cameraProjectionMatrix(1)
+          m_cameraProjectionMatrix(1),
+          m_colorSwapSurface(0)
     {
+        m_colorSwapSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 0, 0, 32,
+                                                  0x000000ff,
+                                                  0x0000ff00,
+                                                  0x00ff0000,
+                                                  0xff000000);
     }
     ~Delegate()
     {
+        m_sceneRef = 0;
+        m_configRef = 0;
+        SDL_FreeSurface(m_colorSwapSurface);
     }
 
-    void allocateContext(const IModel * /* model */, void *& /* context */) {
+    void allocateContext(const IModel * /* model */, void *&context) {
+        PrivateContext *ctx = new PrivateContext();
+        context = ctx;
     }
-    void releaseContext(const IModel * /* model */, void *& /* context */) {
+    void releaseContext(const IModel * /* model */, void *&context) {
+        delete static_cast<PrivateContext *>(context);
+        context = 0;
     }
-    bool uploadTexture(const IString * /* name */, const IString * /* dir */, int /* flags */, Texture & /* texture */, void * /* context */) {
-#if 0
-        if (false) {
-            ILuint imageID;
-            ilGenImages(1, &imageID);
-            ilBindImage(imageID);
-            ILboolean loaded = IL_FALSE;
-            loaded = ilLoadL(ilTypeFromExt(("." + suffix).constData()), bytes.constData(), bytes.size());
-            if (loaded == IL_FALSE) {
-                ILenum error = ilGetError();
-                while (error != IL_NO_ERROR) {
-                    qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
-                    error = ilGetError();
-                }
-                ilDeleteImages(1, &imageID);
-                ok = false;
-                return true;
-            }
-            iluFlipImage();
-            GLuint textureID = ilutGLBindTexImage();
-            size_t width = ilGetInteger(IL_IMAGE_WIDTH);
-            size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
-            ilBindImage(0);
-            ilDeleteImages(1, &imageID);
+    bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
+        bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap, ok = false;
+        bool ret = false;
+        if (flags & IRenderDelegate::kTexture2D) {
+            const UnicodeString &path = createPath(dir, name);
+            std::cerr << "texture: " << UIUnicodeStringToStdString(path) << std::endl;
+            ret = uploadTextureInternal(path, texture, false, false, mipmap, ok, context);
         }
-        else {
-            ILuint imageID;
-            ilGenImages(1, &imageID);
-            ilBindImage(imageID);
-            ILboolean loaded = IL_FALSE;
-            if (!path.startsWith(":textures/")) {
-                loaded = ilLoadImage(path.toLocal8Bit().constData());
+        else if (flags & IRenderDelegate::kToonTexture) {
+            if (dir) {
+                const UnicodeString &path = createPath(dir, name);
+                std::cerr << "toon: " << UIUnicodeStringToStdString(path) << std::endl;
+                ret = uploadTextureInternal(path, texture, true, false, mipmap, ok, context);
             }
-            else {
-                QFile file(path);
-                file.open(QFile::ReadOnly);
-                const QByteArray &bytes = file.readAll();
-                loaded = ilLoadL(ilTypeFromExt(path.toLocal8Bit().constData()), bytes.constData(), bytes.size());
+            if (!ok) {
+                String s((*m_configRef)["dir.system.toon"]);
+                const UnicodeString &path = createPath(&s, name);
+                std::cerr << "system: " << UIUnicodeStringToStdString(path) << std::endl;
+                ret = uploadTextureInternal(path, texture, true, true, mipmap, ok, context);
             }
-            if (loaded == IL_FALSE) {
-                ILenum error = ilGetError();
-                while (error != IL_NO_ERROR) {
-                    qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
-                    error = ilGetError();
-                }
-                ilDeleteImages(1, &imageID);
-                ok = false;
-                return true;
-            }
-            iluFlipImage();
-            GLuint textureID = ilutGLBindTexImage();
-            size_t width = ilGetInteger(IL_IMAGE_WIDTH);
-            size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
-            ilBindImage(0);
-            ilDeleteImages(1, &imageID);
-            TextureCache cache(width, height, textureID);
-            m_texture2Paths.insert(textureID, path);
-            setTextureID(cache, isToon, texture);
-            addTextureCache(privateContext, path, cache);
-            qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
-                   textureID, width, height, qPrintable(path));
-            ok = textureID != 0;
-            return ok;
         }
-#endif
-        return false;
+        return ret;
     }
     void getMatrix(float value[], const IModel *model, int flags) const {
         glm::mat4x4 m(1);
@@ -462,7 +385,7 @@ public:
                 }
                 */
                 m *= shadowMatrix;
-                m *= m_cameraModelMatrix;
+                m *= m_cameraWorldMatrix;
                 m = glm::scale(m, glm::vec3(model->scaleFactor()));
             }
         }
@@ -484,7 +407,7 @@ public:
                     transform.getOpenGLMatrix(matrix);
                     m *= glm::make_mat4x4(matrix);
                 }
-                m *= m_cameraModelMatrix;
+                m *= m_cameraWorldMatrix;
                 m = glm::scale(m, glm::vec3(model->scaleFactor()));
             }
         }
@@ -566,12 +489,12 @@ public:
         default:
             break;
         }
-        const std::string &base = (*m_configRef)["dir.system.shaders"];
-        const std::string &path = base + "/" + file;
+        UnicodeString path = (*m_configRef)["dir.system.shaders"];
+        path.append("/");
+        path.append(UnicodeString::fromUTF8(file));
         std::string bytes;
         if (UILoadFile(path, bytes)) {
-            UnicodeString s(reinterpret_cast<const UChar *>(bytes.c_str()), bytes.length());
-            return new(std::nothrow) String(s);
+            return new(std::nothrow) String(UnicodeString::fromUTF8("#version 120\n" + bytes));
         }
         else {
             return 0;
@@ -580,8 +503,9 @@ public:
     IString *loadKernelSource(KernelType /* type */, void * /* context */) {
         return 0;
     }
-    IString *toUnicode(const uint8_t * /* str */) const {
-        return 0;
+    IString *toUnicode(const uint8_t *str) const {
+        const char *s = reinterpret_cast<const char *>(str);
+        return new(std::nothrow) String(UnicodeString(s, strlen(s), "shift_jis"));
     }
 
     IString *loadShaderSource(ShaderType /* type */, const IString * /* path */) {
@@ -616,16 +540,213 @@ public:
     void releaseRenderDepthStencilTarget(void * /* texture */, void * /* depth */, void * /* stencil */, size_t /* width */, size_t /* height */, bool /* enableAA */) {
     }
 
+    void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
+        m_cameraWorldMatrix = world;
+        m_cameraViewMatrix = view;
+        m_cameraProjectionMatrix = projection;
+    }
+
 private:
+    static const UnicodeString createPath(const IString *dir, const UnicodeString &name) {
+        const UnicodeString &d = static_cast<const String *>(dir)->value();
+        return d + "/" + name;
+    }
+    static const UnicodeString createPath(const IString *dir, const IString *name) {
+        const UnicodeString &d = static_cast<const String *>(dir)->value();
+        const UnicodeString &n = static_cast<const String *>(name)->value();
+        return d + "/" + n;
+    }
+    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, bool isToon,
+                               bool /* isSystem */, bool /* mipmap */, bool &ok, void *context) {
+        PrivateContext *privateContext = static_cast<PrivateContext *>(context);
+        /* テクスチャのキャッシュを検索する */
+        if (privateContext) {
+            TextureCacheMap &tc = privateContext->textureCache;
+            if (tc.find(path) != tc.end()) {
+                setTextureID(tc[path], isToon, texture);
+                ok = true;
+                return true;
+            }
+        }
+        std::string bytes;
+        if (!UILoadFile(path, bytes)) {
+            ok = false;
+            return true;
+        }
+        SDL_Surface *surface = 0;
+        SDL_RWops *source = SDL_RWFromConstMem(bytes.data(), bytes.length());
+        const UnicodeString &lowerPath = path.tempSubString().toLower();
+        if (lowerPath.endsWith(".sph") || lowerPath.endsWith(".spa")) {
+            char extension[] = "BMP";
+            surface = IMG_LoadTyped_RW(source, 0, extension);
+        }
+        else if (lowerPath.endsWith(".tga")) {
+            char extension[] = "TGA";
+            surface = IMG_LoadTyped_RW(source, 0, extension);
+        }
+        else if (lowerPath.endsWith(".png") && IMG_isPNG(source)) {
+            char extension[] = "PNG";
+            surface = IMG_LoadTyped_RW(source, 0, extension);
+        }
+        else if (lowerPath.endsWith(".bmp") && IMG_isBMP(source)) {
+            char extension[] = "BMP";
+            surface = IMG_LoadTyped_RW(source, 0, extension);
+        }
+        else if (lowerPath.endsWith(".jpg") && IMG_isJPG(source)) {
+            char extension[] = "JPG";
+            surface = IMG_LoadTyped_RW(source, 0, extension);
+        }
+        SDL_FreeRW(source);
+        if (!surface) {
+            ok = false;
+            return true;
+        }
+        surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
+        GLuint textureID = 0, internal = GL_RGBA8, format = GL_RGBA;
+        size_t width = surface->w, height = surface->h;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, GL_UNSIGNED_BYTE, surface->pixels);
+        SDL_FreeSurface(surface);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        TextureCache cache(width, height, textureID);
+        setTextureID(cache, isToon, texture);
+        addTextureCache(path, cache, privateContext);
+        ok = textureID != 0;
+        return ok;
+    }
+    void setTextureID(const TextureCache &cache, bool isToon, Texture &output) {
+        output.width = cache.width;
+        output.height = cache.height;
+        *const_cast<GLuint *>(static_cast<const GLuint *>(output.object)) = cache.id;
+        if (!isToon) {
+            GLuint textureID = *static_cast<const GLuint *>(output.object);
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+    }
+    void addTextureCache(const UnicodeString &path, const TextureCache &texture, PrivateContext *context) {
+        if (context)
+            context->textureCache.insert(std::make_pair(path, texture));
+    }
+
     Scene *m_sceneRef;
     UIStringMap *m_configRef;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;
     glm::mat4x4 m_lightProjectionMatrix;
-    glm::mat4x4 m_cameraModelMatrix;
+    glm::mat4x4 m_cameraWorldMatrix;
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
+    SDL_Surface *m_colorSwapSurface;
 };
+
+struct UIContext
+{
+    UIContext(Scene *scene, UIStringMap *config, Delegate *delegate)
+        : sceneRef(scene),
+          configRef(config),
+          delegateRef(delegate),
+          width(640),
+          height(480),
+          active(true)
+    {
+    }
+    const Scene *sceneRef;
+    const UIStringMap *configRef;
+    Delegate *delegateRef;
+    size_t width;
+    size_t height;
+    bool active;
+};
+
+static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
+{
+    const SDL_keysym &keysym = event.keysym;
+    const int degree = 15;
+    ICamera *camera = context.sceneRef->camera();
+    switch (keysym.sym) {
+    case SDLK_RIGHT:
+        camera->setAngle(camera->angle() + Vector3(0, degree, 0));
+        break;
+    case SDLK_LEFT:
+        camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
+        break;
+    case SDLK_UP:
+        camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
+        break;
+    case SDLK_DOWN:
+        camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
+        break;
+    case SDLK_ESCAPE:
+        context.active = false;
+        break;
+    default:
+        break;
+    }
+}
+
+static void UIUpdateCamera(UIContext &context)
+{
+    const ICamera *camera = context.sceneRef->camera();
+    Scalar matrix[16];
+    camera->modelViewTransform().getOpenGLMatrix(matrix);
+    const float &aspect = context.width / float(context.height);
+    const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
+            &projection = glm::perspective(camera->fov(), aspect, camera->znear(), camera->zfar());
+    context.delegateRef->setCameraMatrix(world, view, projection);
+}
+
+static void UIProceedEvents(UIContext &context)
+{
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_KEYDOWN:
+            UIHandleKeyEvent(event.key, context);
+            break;
+        case SDL_VIDEORESIZE:
+            context.width = event.resize.w;
+            context.height = event.resize.h;
+            break;
+        case SDL_QUIT:
+            context.active = false;
+            break;
+        default:
+            break;
+        }
+    }
+    UIUpdateCamera(context);
+}
+
+static void UIDrawScreen(const UIContext &context)
+{
+    glViewport(0, 0, context.width, context.height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    const Array<IRenderEngine *> &engines = context.sceneRef->renderEngines();
+    const int nengines = engines.count();
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->preparePostProcess();
+    }
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->performPreProcess();
+    }
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->renderModel();
+        engine->renderEdge();
+        engine->renderShadow();
+    }
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        engine->performPostProcess();
+    }
+    SDL_GL_SwapBuffers();
+}
 
 } /* namespace anonymous */
 
@@ -636,24 +757,50 @@ int main(int /* argc */, char ** /* argv[] */)
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
         return -1;
     }
+    atexit(IMG_Quit);
+    if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
+        std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
+        return -1;
+    }
+    SDL_WM_SetCaption("libvpvl2 with SDL", 0);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
         std::cerr << "SDL_GetVideoInfo() failed: " << SDL_GetError() << std::endl;
         return -1;
     }
-    size_t width = 640, height = 480, bpp = info->vfmt->BitsPerPixel;
+
+    std::ifstream stream("config.ini");
+    std::string line;
+    UIStringMap config;
+    UnicodeString k, v;
+    while (stream && std::getline(stream, line)) {
+        if (line.empty() || line.find_first_of("#;") != std::string::npos)
+            continue;
+        std::istringstream ss(line);
+        std::string key, value;
+        std::getline(ss, key, '=');
+        std::getline(ss, value);
+        k.setTo(UnicodeString::fromUTF8(key));
+        v.setTo(UnicodeString::fromUTF8(value));
+        config[k.trim()] = v.trim();
+    }
+
+    size_t width = UIUnicodeStringToInt("window.width", 640),
+            height = UIUnicodeStringToInt("window.height", 480),
+            bpp = info->vfmt->BitsPerPixel;
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_Surface *surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
+    SDL_Surface *surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL);
     if (!surface) {
         std::cerr << "SDL_SetVideoMode(width, height, bpp, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
         return -1;
     }
-    SDL_WM_SetCaption("libvpvl2 with SDL", 0);
     std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
     std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
     std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;
@@ -671,43 +818,35 @@ int main(int /* argc */, char ** /* argv[] */)
     std::cerr << "SDL_GL_STENCIL_SIZE:       " << value << std::endl;
     SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &value);
     std::cerr << "SDL_GL_DOUBLEBUFFER:       " << value << std::endl;
+    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &value);
+    std::cerr << "SDL_GL_MULTISAMPLEBUFFERS: " << value << std::endl;
+    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &value);
+    std::cerr << "SDL_GL_MULTISAMPLESAMPLES: " << value << std::endl;
     SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
     std::cerr << "SDL_GL_ACCELERATED_VISUAL: " << value << std::endl;
-
-    std::ifstream stream("config.ini");
-    std::string line;
-    UIStringMap config;
-    while (stream && std::getline(stream, line)) {
-        if (line.empty() || line.find_first_of("#;") != std::string::npos)
-            continue;
-        std::istringstream ss(line);
-        std::string key, value;
-        std::getline(ss, key, '=');
-        std::getline(ss, value);
-        config[UITrimString(key)] = UITrimString(value);
-    }
 
     Encoding encoding;
     Factory factory(&encoding);
     Scene scene;
     Delegate delegate(&scene, &config);
-    glClearColor(0, 0, 1, 0);
-    glClearDepth(0);
     bool ok = false;
-    const std::string &motionPath = config["dir.motion"] + "/" + config["file.motion"];
+    const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];
 
     std::string data;
-    int nmodels = int(strtol(config["models/size"].c_str(), 0, 10));
+    int nmodels = UIUnicodeStringToInt(config["models/size"]);
     for (int i = 0; i < nmodels; i++) {
         std::ostringstream stream;
         stream << "models/" << (i + 1);
-        const std::string &prefix = stream.str(), &modelPath = config[prefix + "/path"];
+        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
+                &modelPath = config[prefix + "/path"];
+        int indexOf = modelPath.lastIndexOf("/");
+        String dir(modelPath.tempSubString(0, indexOf));
         if (UILoadFile(modelPath, data)) {
             int flags = 0;
             IModel *model = factory.createModel(UICastData(data), data.size(), ok);
             IRenderEngine *engine = scene.createRenderEngine(&delegate, model, flags);
-            model->setEdgeWidth(strtof(config[prefix + "/edge.width"].c_str(), 0));
-            if (engine->upload(0)) {
+            model->setEdgeWidth(UIUnicodeStringToFloat(config[prefix + "/edge.width"]));
+            if (engine->upload(&dir)) {
                 scene.addModel(model, engine);
                 if (UILoadFile(motionPath, data)) {
                     IMotion *motion = factory.createMotion(UICastData(data), data.size(), model, ok);
@@ -716,23 +855,37 @@ int main(int /* argc */, char ** /* argv[] */)
             }
         }
     }
-    int nassets = int(strtol(config["assets/size"].c_str(), 0, 10));
+    int nassets = UIUnicodeStringToInt(config["assets/size"]);
     for (int i = 0; i < nassets; i++) {
         std::ostringstream stream;
         stream << "assets/" << (i + 1);
-        const std::string &prefix = stream.str(), &assetPath = config[prefix + "/path"];
+        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
+                &assetPath = config[prefix + "/path"];
         if (UILoadFile(assetPath, data)) {
+            int indexOf = assetPath.lastIndexOf("/");
+            String dir(assetPath.tempSubString(0, indexOf));
             IModel *asset = factory.createModel(UICastData(data), data.size(), ok);
-            IRenderEngine *engine = scene.createRenderEngine(0, asset, 0);
-            scene.addModel(asset, engine);
+            IRenderEngine *engine = scene.createRenderEngine(&delegate, asset, 0);
+            if (engine->upload(&dir)) {
+                scene.addModel(asset, engine);
+            }
         }
     }
 
-    UIContext context(&scene, &config);
+    glEnable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glCullFace(GL_BACK);
+    glClearColor(0, 0, 1, 0);
+
+    UIContext context(&scene, &config, &delegate);
     while (context.active) {
         UIProceedEvents(context);
         UIDrawScreen(context);
+        scene.update(Scene::kUpdateAll);
     }
+    SDL_FreeSurface(surface);
 
     return 0;
 }
