@@ -108,7 +108,7 @@ public:
         m_bytes[length] = 0;
     }
     ~String() {
-        delete m_bytes;
+        delete[] m_bytes;
     }
 
     bool startsWith(const IString *value) const {
@@ -247,6 +247,12 @@ static const std::string UIUnicodeStringToStdString(const UnicodeString &value)
     std::vector<char> bytes(length + 1);
     value.extract(0, size, reinterpret_cast<char *>(&bytes[0]), kDefaultEncoding);
     return std::string(bytes.begin(), bytes.end() - 1);
+}
+
+static bool UIUnicodeStringToBool(const UnicodeString &value)
+{
+    const std::string &v = UIUnicodeStringToStdString(value);
+    return v == "true" || v == "1" || v == "y" || v == "yes";
 }
 
 static int UIUnicodeStringToInt(const UnicodeString &value, int def = 0)
@@ -500,8 +506,25 @@ public:
             return 0;
         }
     }
-    IString *loadKernelSource(KernelType /* type */, void * /* context */) {
-        return 0;
+    IString *loadKernelSource(KernelType type, void * /* context */) {
+        std::string file;
+        switch (type) {
+        case kModelSkinningKernel:
+            file += "skinning.cl";
+            break;
+        default:
+            break;
+        }
+        UnicodeString path = (*m_configRef)["dir.system.kernels"];
+        path.append("/");
+        path.append(UnicodeString::fromUTF8(file));
+        std::string bytes;
+        if (UILoadFile(path, bytes)) {
+            return new(std::nothrow) String(UnicodeString::fromUTF8(bytes));
+        }
+        else {
+            return 0;
+        }
     }
     IString *toUnicode(const uint8_t *str) const {
         const char *s = reinterpret_cast<const char *>(str);
@@ -648,23 +671,56 @@ struct UIContext
     UIContext(Scene *scene, UIStringMap *config, Delegate *delegate)
         : sceneRef(scene),
           configRef(config),
+      #if SDL_MAJOR_VERSION == 2
+          windowRef(0),
+      #endif
           delegateRef(delegate),
           width(640),
           height(480),
+          restarted(SDL_GetTicks()),
+          current(restarted),
+          currentFPS(0),
           active(true)
     {
     }
+    void updateFPS() {
+        current = SDL_GetTicks();
+        if (current - restarted > 1000) {
+#if SDL_MAJOR_VERSION == 2
+            snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
+            SDL_SetWindowTitle(windowRef, title);
+#elif SDL_MAJOR_VERSION == 1
+            snprintf(title, sizeof(title), "libvpvl2 with SDL (FPS:%d)", currentFPS);
+            SDL_WM_SetCaption(title, 0);
+#endif
+            restarted = current;
+            currentFPS = 0;
+        }
+        currentFPS++;
+    }
+
     const Scene *sceneRef;
     const UIStringMap *configRef;
+#if SDL_MAJOR_VERSION == 2
+    SDL_Window *windowRef;
+#endif
     Delegate *delegateRef;
     size_t width;
     size_t height;
+    Uint32 restarted;
+    Uint32 current;
+    int currentFPS;
+    char title[32];
     bool active;
 };
 
 static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
 {
+#if SDL_MAJOR_VERSION == 2
+    const SDL_Keysym &keysym = event.keysym;
+#elif SDL_MAJOR_VERSION == 1
     const SDL_keysym &keysym = event.keysym;
+#endif
     const int degree = 15;
     ICamera *camera = context.sceneRef->camera();
     switch (keysym.sym) {
@@ -688,6 +744,24 @@ static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
     }
 }
 
+static void UIHandleMouseMotion(const SDL_MouseMotionEvent &event, UIContext &context)
+{
+    if (event.state == SDL_PRESSED) {
+        ICamera *camera = context.sceneRef->camera();
+        const Scalar &factor = 0.5;
+        camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
+    }
+}
+
+#if SDL_MAJOR_VERSION == 2
+static void UIHandleMouseWheel(const SDL_MouseWheelEvent &event, UIContext &context)
+{
+    ICamera *camera = context.sceneRef->camera();
+    const Scalar &factor = 1.0;
+    camera->setDistance(camera->distance() + event.y * factor);
+}
+#endif
+
 static void UIUpdateCamera(UIContext &context)
 {
     const ICamera *camera = context.sceneRef->camera();
@@ -697,28 +771,6 @@ static void UIUpdateCamera(UIContext &context)
     const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
             &projection = glm::perspective(camera->fov(), aspect, camera->znear(), camera->zfar());
     context.delegateRef->setCameraMatrix(world, view, projection);
-}
-
-static void UIProceedEvents(UIContext &context)
-{
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-        case SDL_KEYDOWN:
-            UIHandleKeyEvent(event.key, context);
-            break;
-        case SDL_VIDEORESIZE:
-            context.width = event.resize.w;
-            context.height = event.resize.h;
-            break;
-        case SDL_QUIT:
-            context.active = false;
-            break;
-        default:
-            break;
-        }
-    }
-    UIUpdateCamera(context);
 }
 
 static void UIDrawScreen(const UIContext &context)
@@ -745,7 +797,42 @@ static void UIDrawScreen(const UIContext &context)
         IRenderEngine *engine = engines[i];
         engine->performPostProcess();
     }
+#if SDL_MAJOR_VERSION == 2
+    SDL_GL_SwapWindow(context.windowRef);
+#elif SDL_MAJOR_VERSION == 1
     SDL_GL_SwapBuffers();
+#endif
+}
+
+static void UIProceedEvents(UIContext &context)
+{
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_MOUSEMOTION:
+            UIHandleMouseMotion(event.motion, context);
+            break;
+        case SDL_KEYDOWN:
+            UIHandleKeyEvent(event.key, context);
+            break;
+#if SDL_MAJOR_VERSION == 2
+        case SDL_MOUSEWHEEL:
+            UIHandleMouseWheel(event.wheel, context);
+            break;
+#elif SDL_MAJOR_VERSION == 1
+        case SDL_VIDEORESIZE:
+            context.width = event.resize.w;
+            context.height = event.resize.h;
+            break;
+#endif
+        case SDL_QUIT:
+            context.active = false;
+            break;
+        default:
+            break;
+        }
+    }
+    UIUpdateCamera(context);
 }
 
 } /* namespace anonymous */
@@ -762,12 +849,14 @@ int main(int /* argc */, char ** /* argv[] */)
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
         return -1;
     }
+#if SDL_MAJOR_VERSION == 1
     SDL_WM_SetCaption("libvpvl2 with SDL", 0);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
         std::cerr << "SDL_GetVideoInfo() failed: " << SDL_GetError() << std::endl;
         return -1;
     }
+#endif
 
     std::ifstream stream("config.ini");
     std::string line;
@@ -786,8 +875,7 @@ int main(int /* argc */, char ** /* argv[] */)
     }
 
     size_t width = UIUnicodeStringToInt("window.width", 640),
-            height = UIUnicodeStringToInt("window.height", 480),
-            bpp = info->vfmt->BitsPerPixel;
+            height = UIUnicodeStringToInt("window.height", 480);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 16);
@@ -796,11 +884,26 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_Surface *surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL);
+#if SDL_MAJOR_VERSION == 2
+    SDL_Window *window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                          width, height, SDL_WINDOW_OPENGL);
+    if (!window) {
+        std::cerr << "SDL_CreateWindow(title, x, y, width, height, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
+        return -1;
+    }
+    SDL_GLContext contextGL = SDL_GL_CreateContext(window);
+    if (!contextGL) {
+        std::cerr << "SDL_GL_CreateContext(window) failed: " << SDL_GetError() << std::endl;
+        return -1;
+    }
+    SDL_DisableScreenSaver();
+#elif SDL_MAJOR_VERSION == 1
+    SDL_Surface *surface = SDL_SetVideoMode(width, height, info->vfmt->BitsPerPixel, SDL_OPENGL);
     if (!surface) {
         std::cerr << "SDL_SetVideoMode(width, height, bpp, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
         return -1;
     }
+#endif
     std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
     std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
     std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;
@@ -831,6 +934,9 @@ int main(int /* argc */, char ** /* argv[] */)
     Delegate delegate(&scene, &config);
     bool ok = false;
     const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];
+    if (UIUnicodeStringToBool(config["enable.opencl"])) {
+        scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+    }
 
     std::string data;
     int nmodels = UIUnicodeStringToInt(config["models/size"]);
@@ -880,12 +986,22 @@ int main(int /* argc */, char ** /* argv[] */)
     glClearColor(0, 0, 1, 0);
 
     UIContext context(&scene, &config, &delegate);
+#if SDL_MAJOR_VERSION == 2
+    context.windowRef = window;
+#endif
     while (context.active) {
         UIProceedEvents(context);
         UIDrawScreen(context);
         scene.update(Scene::kUpdateAll);
+        context.updateFPS();
     }
+#if SDL_MAJOR_VERSION == 2
+    SDL_EnableScreenSaver();
+    SDL_GL_DeleteContext(contextGL);
+    SDL_DestroyWindow(window);
+#elif SDL_MAJOR_VERSION == 1
     SDL_FreeSurface(surface);
+#endif
 
     return 0;
 }
