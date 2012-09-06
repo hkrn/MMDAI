@@ -19,6 +19,7 @@ my $opt_num_cpu = 1;
 my $opt_help = 0;
 my $opt_man = 0;
 my $opt_march = 0;
+my $opt_no_bundle = 0;
 
 GetOptions(
     'opencl'     => \$opt_opencl,
@@ -26,6 +27,7 @@ GetOptions(
     'march'      => \$opt_march,
     'production' => \$opt_prod,
     'static'     => \$opt_static,
+    'nobundle'   => \$opt_no_bundle,
     'numcpu=i'   => \$opt_num_cpu,
     'help|?'     => \$opt_help,
     'man'        => \$opt_man,
@@ -308,6 +310,9 @@ chdir $base_directory;
 
 # checkout assimp source
 system 'svn', 'checkout', $ASSIMP_CHECKOUT_URI, $ASSIMP_DIRECTORY unless -d $ASSIMP_DIRECTORY;
+my $regex = $opt_static ? 's/ADD_LIBRARY\(\s*assimp\s+SHARED/ADD_LIBRARY(assimp STATIC/gxms'
+                        : 's/ADD_LIBRARY\(\s*assimp\s+STATIC/ADD_LIBRARY(assimp SHARED/gxms';
+system 'perl', '-pi', '-e', $regex, File::Spec->catfile($ASSIMP_DIRECTORY, 'code', 'CMakeLists.txt');
 build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 1;
 my $assimp_dir = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_DIRECTORY);
 my $assimp_lib_dir = File::Spec->catdir($assimp_dir, 'lib');
@@ -330,7 +335,7 @@ my %env_backup = %ENV;
 $ENV{'PATH'} = '/usr/bin:/bin';
 $ENV{'PKG_CONFIG_PATH'} = '/usr/lib/pkgconfig';
 
-if ($opt_static) {
+if ($opt_static && !$opt_no_bundle) {
     # checkout libjpeg
     unless (-d $LIBJPEG_DIRECTORY) {
         system 'wget', $LIBJPEG_CHECKOUT_URI;
@@ -455,6 +460,7 @@ build.pl - builds libvpvl/libvpvl2 and dependencies automatically
    -march           enable building multiple architectures
    -production      build as production
    -static          build as static library
+   -nobundle        doesn't bundle libraries (libjpeg and libpng)
    -numcpu=<core>   specify number of CPU cores
 
 =head1 DESCRIPTION
@@ -496,6 +502,10 @@ Builds libvpvl/libvpvl2 and dependencies as production (no debug symbols) instea
 =item B<-static>
 
 Builds libvpvl/libvpvl2 and dependencies as static library instead of dynamic shared library.
+
+=item B<-nobundle>
+
+Builds DevIL without building libjpeg and libpng (for Linux platform).
 
 =item B<-numcpu>
 

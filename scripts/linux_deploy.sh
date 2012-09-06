@@ -19,23 +19,20 @@ rm -rf ${app_name}.zip ${package_name}
 make
 make install
 strip ${app_name}
-cp ${INSTALL_ROOT}/lib/libassimp.so ${INSTALL_ROOT}/lib/libassimp.so.2
 mkdir ${package_name}
 rm -rf lib
 mkdir lib
-mv -f ../assimp/release/lib/libassimp.so ../assimp/release/lib/libassimp.so.2
-ldd ${app_name} | grep libassimp.so.2 | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../assimp/release/lib/% lib
-ldd ${app_name} | grep libvpvl2.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libvpvl2/release/lib/% lib
-ldd ${app_name} | grep libvpvl2qtcommon.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libvpvl2/release/lib/% lib
-ldd lib/libvpvl2.so.* | grep libvpvl.so | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
-ldd ${app_name} | grep libBullet | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../bullet/release/lib/% lib
-ldd ${app_name} | grep libLinearMath.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../bullet/release/lib/% lib
-ldd ${app_name} | grep libavcodec.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav/libav_release/lib/% lib
-ldd ${app_name} | grep libavformat.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav/libav_release/lib/% lib
-ldd ${app_name} | grep libavutil.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav/libav_release/lib/% lib
-ldd ${app_name} | grep libswscale.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav/libav_release/lib/% lib
-ldd ${app_name} | grep libportaudio.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../portaudio/build/scons/posix/% lib
+ldd ${app_name} | grep libavcodec.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
+ldd ${app_name} | grep libavformat.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
+ldd ${app_name} | grep libavutil.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
+ldd ${app_name} | grep libswscale.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
+ldd ${app_name} | grep libportaudio.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../portaudio-src/build/scons/posix/% lib
+ldd ${app_name} | grep libIL | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp ../devil-src/release_native/lib/% lib
+ldd ${app_name} | grep libILU | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % ../devil-src/release_native/lib/% lib
+ldd ${app_name} | grep libILUT | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % ../devil-src/release_native/lib/% lib
 ldd ${app_name} | grep libQt | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
+ldd ${app_name} | grep libCg | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
+ldd ${app_name} | grep libCgGL | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
 strip lib/*
 rm -rf plugins
 cp -r `qmake -query QT_INSTALL_PLUGINS` plugins

@@ -15,23 +15,6 @@ LIBPNG_PATH = ../libpng-src
 DEVIL_PATH = ../devil-src
 PORTAUDIO_PATH = ../portaudio-src
 
-# Required libraries
-LIBS += -lBulletCollision \
-        -lBulletDynamics \
-        -lBulletSoftBody \
-        -lLinearMath \
-        -lportaudio \
-        -lavcodec \
-        -lavformat \
-        -lavutil \
-        -lswscale \
-        -ljpeg \
-        -lpng \
-        -lIL \
-        -lILU \
-        -lILUT \
-        -lxml2
-
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
 exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L "$$(CMAKE_PREFIX_PATH)/lib"
@@ -72,7 +55,8 @@ CONFIG(debug, debug|release) {
                       -L$${DEVIL_PATH}/debug_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
                       $${VPVL2_PATH}/debug/include
-  LIBS             += -lassimp -lvpvl_debug -lvpvl2_debug -lvpvl2qtcommon_debug
+  # should not change link order because of static library link order
+  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug -lassimp
   INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
   macx {
     # libjpeg and libpng
@@ -83,7 +67,7 @@ CONFIG(debug, debug|release) {
   }
 }
 CONFIG(release, debug|release) {
-  unix:LIBS        += -L$${ASSIMP_PATH}/release/lib \
+  unix:LIBS        += -L$${ASSIMP_PATH}/release/code \
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib \
@@ -91,7 +75,8 @@ CONFIG(release, debug|release) {
                       -L$${DEVIL_PATH}/release_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
                       $${VPVL2_PATH}/release/include
-  LIBS             += -lassimp -lvpvl -lvpvl2 -lvpvl2qtcommon
+  # should not change link order because of static library link order
+  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl -lassimp
   INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
                       $${DEVIL_PATH}/release_native/include
   macx {
@@ -102,6 +87,24 @@ CONFIG(release, debug|release) {
                    $${LIBPNG_PATH}/release_native/include
   }
 }
+
+# Required libraries
+LIBS += -lBulletSoftBody \
+        -lBulletDynamics \
+        -lBulletCollision \
+        -lLinearMath \
+        -lportaudio \
+        -lavcodec \
+        -lavformat \
+        -lavutil \
+        -lswscale \
+        -ljpeg \
+        -lpng \
+        -lIL \
+        -lILU \
+        -lILUT \
+        -lxml2
+
 macx:LIBS += -framework OpenCL \
              -framework CoreServices \
              -framework Cg \

@@ -29,11 +29,11 @@ libvpvl/libvpvl2/QMA のビルド方法
 
 MacOSX 版のリリースビルドは以下を実行して作成しています。
 
-<pre>./MMDAI/scripts/build.pl -opencl -march -static -production</pre>
+<pre>./MMDAI/scripts/build.pl -opencl -cg -march -static -production</pre>
 
 Linux 版のリリースビルドは以下を実行して作成しています。
 
-<pre>./MMDAI/scripts/build.pl -production</pre>
+<pre>./MMDAI/scripts/build.pl -cg -production -static -nobundle</pre>
 
 デバッグ版は以下を実行して作成しています。
 
