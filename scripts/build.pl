@@ -33,26 +33,27 @@ GetOptions(
 pod2usage(1) if $opt_help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $opt_man;
 
+my $SOURCE_DIRECTORY_SUFFIX = '-src';
 my $MMDAI_CHECKOUT_URI = 'git://github.com/hkrn/MMDAI.git';
 my $MMDAI_DIRECTORY = 'MMDAI';
 my $VPVL_DIRECTORY = 'libvpvl';
 my $VPVL2_DIRECTORY = 'libvpvl2';
 my $BULLET_CHECKOUT_URI = 'http://bullet.googlecode.com/svn/tags/bullet-2.77';
-my $BULLET_DIRECTORY = 'bullet';
+my $BULLET_DIRECTORY = 'bullet' . $SOURCE_DIRECTORY_SUFFIX;
 my $ASSIMP_CHECKOUT_URI = 'https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0';
-my $ASSIMP_DIRECTORY = 'assimp';
+my $ASSIMP_DIRECTORY = 'assimp' . $SOURCE_DIRECTORY_SUFFIX;
 my $PORTAUDIO_CHECKOUT_URI = 'https://subversion.assembla.com/svn/portaudio/portaudio/trunk';
-my $PORTAUDIO_DIRECTORY = 'portaudio';
+my $PORTAUDIO_DIRECTORY = 'portaudio' . $SOURCE_DIRECTORY_SUFFIX;
 my $PORTAUDIO_REVISION = 1788;
 my $LIBJPEG_CHECKOUT_URI = 'http://www.ijg.org/files/jpegsrc.v8d.tar.gz';
-my $LIBJPEG_DIRECTORY = 'libjpeg';
+my $LIBJPEG_DIRECTORY = 'libjpeg' . $SOURCE_DIRECTORY_SUFFIX;
 my $LIBPNG_CHECKOUT_URI = 'git://libpng.git.sourceforge.net/gitroot/libpng/libpng';
-my $LIBPNG_DIRECTORY = 'libpng';
+my $LIBPNG_DIRECTORY = 'libpng' . $SOURCE_DIRECTORY_SUFFIX;
 my $LIBPNG_TAG = 'v1.5.12';
 my $DEVIL_CHECKOUT_URI = 'http://downloads.sourceforge.net/project/openil/DevIL/1.7.8/DevIL-1.7.8.tar.gz?r=&ts=&use_mirror=jaist';
-my $DEVIL_DIRECTORY = 'devil';
+my $DEVIL_DIRECTORY = 'devil' . $SOURCE_DIRECTORY_SUFFIX;
 my $LIBAV_CHECKOUT_URI = 'git://git.libav.org/libav.git';
-my $LIBAV_DIRECTORY = 'libav';
+my $LIBAV_DIRECTORY = 'libav' . $SOURCE_DIRECTORY_SUFFIX;
 my $LIBAV_TAG = 'v0.8.3';
 my $BUILD_TYPE = $opt_prod ? 'Release' : 'Debug';
 my $BUILD_DIRECTORY = lcfirst $BUILD_TYPE;
@@ -379,7 +380,8 @@ else {
     $ENV{'LDFLAGS64'} = $ldflags64;
 }
 chdir $base_directory;
-make_library($base_directory, $DEVIL_DIRECTORY, $CONFIGURE_DEVIL_ARGS,
+make_library($base_directory, $DEVIL_DIRECTORY,
+	$opt_prod ? $CONFIGURE_DEVIL_ARGS : [ @$CONFIGURE_DEVIL_ARGS, '--enable-debug' ],
     [ 'libIL.dylib', 'libIL.1.dylib', 'libILU.dylib', 'libILU.1.dylib', 'libILUT.dylib', 'libILUT.1.dylib' ]);
 %ENV = %env_backup;
 

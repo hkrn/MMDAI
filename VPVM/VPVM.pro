@@ -4,16 +4,16 @@ TEMPLATE = app
 DEFINES += IS_VPVM
 
 # libvpvl and base libraries (MMDAgent for win32)
-ASSIMP_PATH = ../assimp
-BULLET_PATH = ../bullet
+ASSIMP_PATH = ../assimp-src
+BULLET_PATH = ../bullet-src
 VPVL_PATH = ../libvpvl
 VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
-LIBAV_PATH = ../libav
-LIBJPEG_PATH = ../libjpeg
-LIBPNG_PATH = ../libpng
-DEVIL_PATH = ../devil
-PORTAUDIO_PATH = ../portaudio
+LIBAV_PATH = ../libav-src
+LIBJPEG_PATH = ../libjpeg-src
+LIBPNG_PATH = ../libpng-src
+DEVIL_PATH = ../devil-src
+PORTAUDIO_PATH = ../portaudio-src
 
 # Required libraries
 LIBS += -lBulletCollision \
