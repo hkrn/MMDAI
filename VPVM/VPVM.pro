@@ -23,15 +23,6 @@ exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L "$$(CMAKE_PREFIX_PATH)/lib"
 exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
-# PortAudio
-exists($${PORTAUDIO_PATH}/build/scons/posix):LIBS += -L$${PORTAUDIO_PATH}/build/scons/posix
-exists($${PORTAUDIO_PATH}/build/scons/darwin):LIBS += -L$${PORTAUDIO_PATH}/build/scons/darwin
-exists($${PORTAUDIO_PATH}/include):INCLUDEPATH += $${PORTAUDIO_PATH}/include
-
-# libxml2
-exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
-exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
-
 # VPVL and others configuration
 INCLUDEPATH +=  $${VPVL_PATH}/include \
                 $${VPVL2_PATH}/include \
@@ -51,19 +42,21 @@ CONFIG(debug, debug|release) {
                       -L$${BULLET_PATH}/debug/lib \
                       -L$${VPVL_PATH}/debug/lib \
                       -L$${VPVL2_PATH}/debug/lib \
+                      -L$${PORTAUDIO_PATH}/debug_native/lib \
                       -L$${LIBAV_PATH}/debug_native/lib \
                       -L$${DEVIL_PATH}/debug_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
-                      $${VPVL2_PATH}/debug/include
+                      $${VPVL2_PATH}/debug/include \
+                      $${PORTAUDIO_PATH}/debug_native/include
   # should not change link order because of static library link order
-  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug -lassimp
+  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
   INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
   macx {
     # libjpeg and libpng
     LIBS += -L$${LIBJPEG_PATH}/debug_native/lib \
             -L$${LIBPNG_PATH}/debug_native/lib
-    INCLUDEPATH += -I$${LIBJPEG_PATH}/release_native/include \
-                   -I$${LIBPNG_PATH}/release_native/include
+    INCLUDEPATH += $${LIBJPEG_PATH}/debig_native/include \
+                   $${LIBPNG_PATH}/debug_native/include
   }
 }
 CONFIG(release, debug|release) {
@@ -71,12 +64,14 @@ CONFIG(release, debug|release) {
                       -L$${BULLET_PATH}/release/lib \
                       -L$${VPVL_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib \
+                      -L$${PORTAUDIO_PATH}/release_native/lib \
                       -L$${LIBAV_PATH}/release_native/lib \
                       -L$${DEVIL_PATH}/release_native/lib
   unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
-                      $${VPVL2_PATH}/release/include
+                      $${VPVL2_PATH}/release/include \
+                      -L$${DEVIL_PATH}/release_native/lib
   # should not change link order because of static library link order
-  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl -lassimp
+  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
   INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
                       $${DEVIL_PATH}/release_native/include
   macx {
@@ -89,7 +84,8 @@ CONFIG(release, debug|release) {
 }
 
 # Required libraries
-LIBS += -lBulletSoftBody \
+LIBS += -lassimp \
+        -lBulletSoftBody \
         -lBulletDynamics \
         -lBulletCollision \
         -lLinearMath \
@@ -154,8 +150,7 @@ linux-* {
   QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${QMA_RPATH}\'
   QMAKE_RPATHDIR =
   libraries.path = /lib
-  libraries.files = $${PORTAUDIO_PATH}/build/scons/posix/libportaudio.so.* \
-                    $${LIBAV_PATH}/release_native/lib/libavcodec.so.* \
+  libraries.files = $${LIBAV_PATH}/release_native/lib/libavcodec.so.* \
                     $${LIBAV_PATH}/release_native/lib/libavformat.so.* \
                     $${LIBAV_PATH}/release_native/lib/libavutil.so.* \
                     $${LIBAV_PATH}/release_native/lib/libswscale.so.* \

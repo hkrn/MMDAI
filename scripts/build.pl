@@ -217,6 +217,7 @@ sub build_with_scons {
     }
     chdir $directory;
     system 'scons', @args;
+    system 'scons', 'install';
 }
 
 sub build_with_configure {
@@ -327,7 +328,10 @@ chdir $base_directory;
 
 # checkout portaudio
 system 'svn', 'checkout', '-r', $PORTAUDIO_REVISION, $PORTAUDIO_CHECKOUT_URI, $PORTAUDIO_DIRECTORY unless -d $PORTAUDIO_DIRECTORY;
-build_with_scons $PORTAUDIO_DIRECTORY, $SCONS_PORTAUDIO_ARGS;
+my $path_portaudio_native = File::Spec->catdir($base_directory, $PORTAUDIO_DIRECTORY, $BUILD_DIRECTORY . '_native');
+my $new_SCONS_PORTAUDIO_ARGS = [ @$SCONS_PORTAUDIO_ARGS, 'prefix="' . $path_portaudio_native . '"' ];
+make_path $path_portaudio_native unless -d $path_portaudio_native;
+build_with_scons $PORTAUDIO_DIRECTORY, $new_SCONS_PORTAUDIO_ARGS;
 chdir $base_directory;
 
 # save current environment variables
