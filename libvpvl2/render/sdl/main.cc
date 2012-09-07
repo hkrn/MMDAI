@@ -671,7 +671,7 @@ struct UIContext
     UIContext(Scene *scene, UIStringMap *config, Delegate *delegate)
         : sceneRef(scene),
           configRef(config),
-      #if SDL_MAJOR_VERSION == 2
+      #if SDL_VERSION_ATLEAST(2, 0, 0)
           windowRef(0),
       #endif
           delegateRef(delegate),
@@ -686,10 +686,10 @@ struct UIContext
     void updateFPS() {
         current = SDL_GetTicks();
         if (current - restarted > 1000) {
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
             snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
             SDL_SetWindowTitle(windowRef, title);
-#elif SDL_MAJOR_VERSION == 1
+#else
             snprintf(title, sizeof(title), "libvpvl2 with SDL (FPS:%d)", currentFPS);
             SDL_WM_SetCaption(title, 0);
 #endif
@@ -701,7 +701,7 @@ struct UIContext
 
     const Scene *sceneRef;
     const UIStringMap *configRef;
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *windowRef;
 #endif
     Delegate *delegateRef;
@@ -716,9 +716,9 @@ struct UIContext
 
 static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
 {
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
     const SDL_Keysym &keysym = event.keysym;
-#elif SDL_MAJOR_VERSION == 1
+#else
     const SDL_keysym &keysym = event.keysym;
 #endif
     const int degree = 15;
@@ -753,7 +753,7 @@ static void UIHandleMouseMotion(const SDL_MouseMotionEvent &event, UIContext &co
     }
 }
 
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
 static void UIHandleMouseWheel(const SDL_MouseWheelEvent &event, UIContext &context)
 {
     ICamera *camera = context.sceneRef->camera();
@@ -797,9 +797,9 @@ static void UIDrawScreen(const UIContext &context)
         IRenderEngine *engine = engines[i];
         engine->performPostProcess();
     }
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_GL_SwapWindow(context.windowRef);
-#elif SDL_MAJOR_VERSION == 1
+#else
     SDL_GL_SwapBuffers();
 #endif
 }
@@ -815,11 +815,11 @@ static void UIProceedEvents(UIContext &context)
         case SDL_KEYDOWN:
             UIHandleKeyEvent(event.key, context);
             break;
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
         case SDL_MOUSEWHEEL:
             UIHandleMouseWheel(event.wheel, context);
             break;
-#elif SDL_MAJOR_VERSION == 1
+#else
         case SDL_VIDEORESIZE:
             context.width = event.resize.w;
             context.height = event.resize.h;
@@ -849,7 +849,7 @@ int main(int /* argc */, char ** /* argv[] */)
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
         return -1;
     }
-#if SDL_MAJOR_VERSION == 1
+#if !SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_WM_SetCaption("libvpvl2 with SDL", 0);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
@@ -884,7 +884,7 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           width, height, SDL_WINDOW_OPENGL);
     if (!window) {
@@ -897,7 +897,7 @@ int main(int /* argc */, char ** /* argv[] */)
         return -1;
     }
     SDL_DisableScreenSaver();
-#elif SDL_MAJOR_VERSION == 1
+#else
     SDL_Surface *surface = SDL_SetVideoMode(width, height, info->vfmt->BitsPerPixel, SDL_OPENGL);
     if (!surface) {
         std::cerr << "SDL_SetVideoMode(width, height, bpp, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
@@ -986,7 +986,7 @@ int main(int /* argc */, char ** /* argv[] */)
     glClearColor(0, 0, 1, 0);
 
     UIContext context(&scene, &config, &delegate);
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
     context.windowRef = window;
 #endif
     while (context.active) {
@@ -995,11 +995,11 @@ int main(int /* argc */, char ** /* argv[] */)
         scene.update(Scene::kUpdateAll);
         context.updateFPS();
     }
-#if SDL_MAJOR_VERSION == 2
+#if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_EnableScreenSaver();
     SDL_GL_DeleteContext(contextGL);
     SDL_DestroyWindow(window);
-#elif SDL_MAJOR_VERSION == 1
+#else
     SDL_FreeSurface(surface);
 #endif
 
