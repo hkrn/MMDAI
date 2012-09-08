@@ -874,7 +874,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
     reset();
 }
 
-void BoneMotionModel::loadMotion(IMotion *motion, IModel *model)
+void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {

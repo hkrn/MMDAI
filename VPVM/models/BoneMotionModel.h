@@ -98,7 +98,7 @@ public slots:
     void removeModel();
     void removeMotion();
     void setPMDModel(vpvl2::IModel *model);
-    void loadMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
+    void loadMotion(vpvl2::IMotion *motion, const vpvl2::IModel *model);
     void rotateAngle(const vpvl2::Scalar &value, vpvl2::IBone *bone, int flags);
     void translateDelta(const vpvl2::Vector3 &delta, vpvl2::IBone *bone, int flags);
     void translateTo(const vpvl2::Vector3 &position, vpvl2::IBone *bone, int flags);

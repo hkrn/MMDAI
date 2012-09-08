@@ -80,7 +80,7 @@ public slots:
     void removeModel();
     void removeMotion();
     void setPMDModel(vpvl2::IModel *model);
-    void loadMotion(vpvl2::IMotion *motion, vpvl2::IModel *model);
+    void loadMotion(vpvl2::IMotion *motion, const vpvl2::IModel *model);
     void selectMorphs(const QList<vpvl2::IMorph *> &morphs);
     void saveTransform();
     void commitTransform();

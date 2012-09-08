@@ -520,7 +520,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
     reset();
 }
 
-void MorphMotionModel::loadMotion(IMotion *motion, IModel *model)
+void MorphMotionModel::loadMotion(IMotion *motion, const IModel *model)
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_model) {

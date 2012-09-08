@@ -107,7 +107,7 @@ public:
     const vpvl2::Scene *scene() const { return m_scene; }
 
 public slots:
-    virtual void loadMotion(vpvl2::IMotion *motion, vpvl2::IModel *model) = 0;
+    virtual void loadMotion(vpvl2::IMotion *motion, const vpvl2::IModel *model) = 0;
     virtual void setPMDModel(vpvl2::IModel *model) = 0;
     virtual void removeModel() = 0;
     void markAsNew(vpvl2::IModel *model);

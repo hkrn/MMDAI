@@ -178,7 +178,7 @@ void MotionBaseModel::setFrameIndexColumnMax(int newValue)
     setFrameIndexColumnMax0(newValue);
 }
 
-void MotionBaseModel::setFrameIndexColumnMax(vpvl2::IMotion *motion)
+void MotionBaseModel::setFrameIndexColumnMax(const vpvl2::IMotion *motion)
 {
     setFrameIndexColumnMax0(motion->maxTimeIndex());
 }

@@ -113,7 +113,7 @@ public:
     void fetchMore(const QModelIndex &parent);
     int frameIndexColumnMax() const;
     void setFrameIndexColumnMax(int newValue);
-    void setFrameIndexColumnMax(vpvl2::IMotion *motion);
+    void setFrameIndexColumnMax(const vpvl2::IMotion *motion);
     void updateFrameIndexColumnMax();
 
 public slots:
