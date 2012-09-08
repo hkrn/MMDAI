@@ -76,6 +76,26 @@ namespace vpvl2
 namespace qt
 {
 
+static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m) {
+    Transform transform;
+    transform.setOrigin(model->position());
+    transform.setRotation(model->rotation());
+    QMatrix4x4 worldMatrix;
+    Scalar matrix[16];
+    transform.getOpenGLMatrix(matrix);
+    for (int i = 0; i < 16; i++)
+        worldMatrix.data()[i] = matrix[i];
+    m *= worldMatrix;
+    const IBone *bone = model->parentBone();
+    if (bone) {
+        transform = bone->worldTransform();
+        transform.getOpenGLMatrix(matrix);
+        for (int i = 0; i < 16; i++)
+            worldMatrix.data()[i] = matrix[i];
+        m *= worldMatrix;
+    }
+}
+
 class Delegate::FrameBufferObject : protected QGLFunctions {
 public:
     FrameBufferObject(size_t width, size_t height, int samples, GLuint texture)
@@ -143,9 +163,12 @@ QImage Delegate::loadImageAsync(const QString &path)
     if (!image.isNull()) {
         return QGLWidget::convertToGLFormat(image.rgbSwapped());
     }
-    else {
+    else if (path.endsWith(".tga")) {
         ByteArrayPtr ptr;
         return QGLWidget::convertToGLFormat(loadTGA(path, ptr));
+    }
+    else {
+        return image; // returns null image
     }
 }
 
@@ -385,6 +408,7 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
                         shadowMatrix.data()[index] += dot;
                 }
             }
+            UIConcatModelTransformMatrix(model, m);
             m *= shadowMatrix;
             m *= m_cameraModelMatrix;
             m.scale(model->scaleFactor());
@@ -396,23 +420,7 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
         if (flags & IRenderDelegate::kViewMatrix)
             m *= m_cameraViewMatrix;
         if (flags & IRenderDelegate::kWorldMatrix) {
-            const IBone *bone = model->parentBone();
-            Transform transform;
-            transform.setOrigin(model->position());
-            transform.setRotation(model->rotation());
-            QMatrix4x4 worldMatrix;
-            Scalar matrix[16];
-            transform.getOpenGLMatrix(matrix);
-            for (int i = 0; i < 16; i++)
-                worldMatrix.data()[i] = matrix[i];
-            m *= worldMatrix;
-            if (bone) {
-                transform = bone->worldTransform();
-                transform.getOpenGLMatrix(matrix);
-                for (int i = 0; i < 16; i++)
-                    worldMatrix.data()[i] = matrix[i];
-                m *= worldMatrix;
-            }
+            UIConcatModelTransformMatrix(model, m);
             m *= m_cameraModelMatrix;
             m.scale(model->scaleFactor());
         }
