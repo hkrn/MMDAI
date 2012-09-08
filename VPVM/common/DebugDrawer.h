@@ -248,7 +248,9 @@ private:
         loader->getCameraMatrices(world, view, projection);
         if (model) {
             const Vector3 &position = model->position();
+            const Quaternion &rotation = model->rotation();
             world.translate(position.x(), position.y(), position.z());
+            world.rotate(QQuaternion(rotation.w(), rotation.x(), rotation.y(), rotation.z()));
         }
         m_program.bind();
         m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
