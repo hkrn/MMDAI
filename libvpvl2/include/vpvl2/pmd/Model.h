@@ -82,8 +82,8 @@ public:
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
-    const Vector3 &position() const { return m_model.positionOffset(); }
-    const Quaternion &rotation() const { return m_model.rotationOffset(); }
+    const Vector3 &position() const { return m_position; }
+    const Quaternion &rotation() const { return m_rotation; }
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return m_edgeColor; }
@@ -134,6 +134,8 @@ private:
     Array<ILabel *> m_labels;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
+    Vector3 m_position;
+    Quaternion m_rotation;
     Scalar m_opacity;
     Scalar m_scaleFactor;
     Vector3 m_edgeColor;

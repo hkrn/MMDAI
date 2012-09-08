@@ -52,6 +52,8 @@ Model::Model(IEncoding *encoding)
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
+      m_position(kZeroV3),
+      m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
       m_scaleFactor(1),
       m_edgeColor(kZeroV3),
@@ -75,6 +77,8 @@ Model::~Model()
     m_comment = 0;
     delete m_englishComment;
     m_englishComment = 0;
+    m_position.setZero();
+    m_rotation.setValue(0, 0, 0, 1);
     m_opacity = 0;
     m_scaleFactor = 0;
     m_edgeColor.setZero();
@@ -347,12 +351,12 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::setPosition(const Vector3 &value)
 {
-    m_model.setPositionOffset(value);
+    m_position = value;
 }
 
 void Model::setRotation(const Quaternion &value)
 {
-    m_model.setRotationOffset(value);
+    m_rotation = value;
 }
 
 void Model::setOpacity(const Scalar &value)
