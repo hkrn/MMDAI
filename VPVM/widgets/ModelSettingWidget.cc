@@ -165,6 +165,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_opacitySpinBox->setEnabled(true);
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
         m_shadowGroup->setEnabled(true);
+        m_noShadowCheckbox->setChecked(true);
         m_edgeColorDialog->setCurrentColor(c);
         if (loader) {
             m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
