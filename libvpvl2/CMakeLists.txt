@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(VPVL2_VERSION_MAJOR 0)
-set(VPVL2_VERSION_COMPAT 6)
+set(VPVL2_VERSION_COMPAT 7)
 set(VPVL2_VERSION_MINOR 0)
 
 # set library version
@@ -358,8 +358,8 @@ endif()
 # link against OpenGL
 if(VPVL2_OPENGL_RENDERER)
   if(VPVL2_PLATFORM_NACL)
-	find_library(OPENGL_gl_LIBRARY ppapi_gles2)
-	find_path(OPENGL_INCLUDE_DIR GLES2/gl2.h)
+    find_library(OPENGL_gl_LIBRARY ppapi_gles2)
+    find_path(OPENGL_INCLUDE_DIR GLES2/gl2.h)
   else()
     find_package(OpenGL REQUIRED)
   endif()
@@ -399,7 +399,7 @@ endif()
 option(VPVL2_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL2_OPENGL_RENDERER required, default is OFF)" OFF)
 if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_SDL OR VPVL2_BUILD_SDL2))
   if(VPVL2_BUILD_SDL2)
-	find_library(SDLIMAGE_LIBRARY SDL2_image REQUIRED)
+    find_library(SDLIMAGE_LIBRARY SDL2_image REQUIRED)
     find_program(SDL2_CONFIG_SCRIPT sdl2-config REQUIRED)
     exec_program(${SDL2_CONFIG_SCRIPT} ARGS --cflags OUTPUT_VARIABLE SDL2_CFLAGS)
     exec_program(${SDL2_CONFIG_SCRIPT} ARGS --static-libs OUTPUT_VARIABLE SDL_LIBRARY)
