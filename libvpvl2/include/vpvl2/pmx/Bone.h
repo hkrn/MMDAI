@@ -160,7 +160,6 @@ private:
     Quaternion m_rotationMorph;
     Quaternion m_rotationIKLink;
     Transform m_worldTransform;
-    Transform m_world2LocalTransform;
     Transform m_localTransform;
     Vector3 m_origin;
     Vector3 m_offset;

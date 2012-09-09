@@ -121,7 +121,6 @@ Bone::Bone()
       m_rotationMorph(Quaternion::getIdentity()),
       m_rotationIKLink(Quaternion::getIdentity()),
       m_worldTransform(Transform::getIdentity()),
-      m_world2LocalTransform(Transform::getIdentity()),
       m_localTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_offset(kZeroV3),
@@ -162,7 +161,6 @@ Bone::~Bone()
     m_position.setZero();
     m_positionMorph.setZero();
     m_worldTransform.setIdentity();
-    m_world2LocalTransform.setIdentity();
     m_localTransform.setIdentity();
     m_destinationOrigin.setZero();
     m_fixedAxis.setZero();
@@ -272,12 +270,9 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
             }
             else {
                 Bone *parent = bones[parentBoneID];
-                bone->m_offset = bone->m_origin - parent->m_origin;
+                bone->m_offset -= parent->m_origin;
                 bone->m_parentBoneRef = parent;
             }
-        }
-        else {
-            bone->m_offset = bone->m_origin;
         }
         const int destinationOriginBoneID = bone->m_destinationOriginBoneIndex;
         if (destinationOriginBoneID >= 0) {
@@ -339,8 +334,8 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
+    m_offset = m_origin;
     m_worldTransform.setOrigin(m_origin);
-    m_world2LocalTransform.setOrigin(-m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
     m_layerIndex = *reinterpret_cast<int *>(ptr);
@@ -720,7 +715,8 @@ void Bone::performInverseKinematics()
 
 void Bone::performUpdateLocalTransform()
 {
-    m_localTransform = m_worldTransform * m_world2LocalTransform;
+    const Transform localToOrigin(Matrix3x3::getIdentity(), -m_origin);
+    m_localTransform = m_worldTransform * localToOrigin;
 }
 
 void Bone::resetIKLink()
