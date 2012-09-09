@@ -65,6 +65,20 @@ class Bone;
 class VPVL2_API RigidBody
 {
 public:
+    enum ShapeType {
+        kUnknownShape = -1,
+        kSphereShape,
+        kBoxShape,
+        kCapsureShape,
+        kMaxShapeType
+    };
+    enum ObjectType {
+        kStaticObject,
+        kDynamicObject,
+        kAlignedObject,
+        kMaxObjectType
+    };
+
     RigidBody();
     ~RigidBody();
 
@@ -112,9 +126,9 @@ public:
     void setPosition(const Vector3 &value);
     void setRestitution(float value);
     void setRotation(const Vector3 &value);
-    void setShapeType(uint8_t value);
+    void setShapeType(ShapeType value);
     void setSize(const Vector3 &value);
-    void setType(uint8_t value);
+    void setType(ObjectType value);
     void setIndex(int value);
 
 private:
@@ -122,8 +136,8 @@ private:
     btCollisionShape *m_shape;
     btMotionState *m_motionState;
     btMotionState *m_kinematicMotionState;
-    Transform m_transform;
-    Transform m_invertedTransform;
+    Transform m_worldTransform;
+    Transform m_world2LocalTransform;
     Bone *m_bone;
     IString *m_name;
     IString *m_englishName;
@@ -140,8 +154,8 @@ private:
     uint16_t m_groupID;
     uint16_t m_collisionGroupMask;
     uint8_t m_collisionGroupID;
-    uint8_t m_shapeType;
-    uint8_t m_type;
+    ShapeType m_shapeType;
+    ObjectType m_type;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
 };

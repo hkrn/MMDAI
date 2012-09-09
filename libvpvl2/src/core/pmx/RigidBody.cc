@@ -77,13 +77,35 @@ namespace
     using namespace vpvl2;
     using namespace vpvl2::pmx;
 
+    class DefaultMotionState : public btMotionState
+    {
+    public:
+        DefaultMotionState(const Transform& startTrans, const Bone *bone)
+            : m_bone(bone),
+              m_worldTransform(startTrans)
+
+        {
+        }
+        ~DefaultMotionState() {}
+
+        void getWorldTransform(btTransform &worldTrans) const {
+            worldTrans = m_worldTransform;
+        }
+        void setWorldTransform(const btTransform &worldTrans) {
+            m_worldTransform = worldTrans;
+        }
+
+    private:
+        const Bone *m_bone;
+        Transform m_worldTransform;
+    };
+
     class AlignedMotionState : public btMotionState
     {
     public:
         AlignedMotionState(const Transform &startTransform, const Transform &boneTransform, const Bone *bone)
             : m_bone(bone),
               m_boneTransform(boneTransform),
-              m_inversedBoneTransform(boneTransform.inverse()),
               m_worldTransform(startTransform)
         {
         }
@@ -100,11 +122,13 @@ namespace
             m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
             m_worldTransform.setBasis(matrix);
         }
+        void setWorldTransformDirect(const Transform &value) {
+            m_worldTransform = value;
+        }
 
     private:
         const Bone *m_bone;
         const Transform m_boneTransform;
-        const Transform m_inversedBoneTransform;
         Transform m_worldTransform;
     };
 
@@ -141,8 +165,8 @@ RigidBody::RigidBody()
       m_shape(0),
       m_motionState(0),
       m_kinematicMotionState(0),
-      m_transform(Transform::getIdentity()),
-      m_invertedTransform(Transform::getIdentity()),
+      m_worldTransform(Transform::getIdentity()),
+      m_world2LocalTransform(Transform::getIdentity()),
       m_bone(0),
       m_name(0),
       m_englishName(0),
@@ -159,8 +183,8 @@ RigidBody::RigidBody()
       m_groupID(0),
       m_collisionGroupMask(0),
       m_collisionGroupID(0),
-      m_shapeType(0),
-      m_type(0)
+      m_shapeType(kUnknownShape),
+      m_type(kStaticObject)
 {
 }
 
@@ -180,8 +204,8 @@ RigidBody::~RigidBody()
     m_englishName = 0;
     m_bone = 0;
     m_boneIndex = 0;
-    m_transform.setIdentity();
-    m_invertedTransform.setIdentity();
+    m_worldTransform.setIdentity();
+    m_world2LocalTransform.setIdentity();
     m_size.setZero();
     m_position.setZero();
     m_rotation.setZero();
@@ -194,8 +218,8 @@ RigidBody::~RigidBody()
     m_groupID = 0;
     m_collisionGroupMask = 0;
     m_collisionGroupID = 0;
-    m_shapeType = 0;
-    m_type = 0;
+    m_shapeType = kUnknownShape;
+    m_type = kStaticObject;
 }
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -239,7 +263,7 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
             else {
                 btCollisionShape *shape = rigidBody->createShape();
                 Bone *bone = bones[boneIndex];
-                if (rigidBody->m_type != 0)
+                if (rigidBody->m_type != kStaticObject)
                     bone->setSimulated(true);
                 rigidBody->m_shape = shape;
                 rigidBody->m_bone = bone;
@@ -270,7 +294,7 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_collisionGroupID = unit.collisionGroupID;
     m_groupID = 0x0001 << m_collisionGroupID;
     m_collisionGroupMask = unit.collsionMask;
-    m_shapeType = unit.shapeType;
+    m_shapeType = static_cast<ShapeType>(unit.shapeType);
     internal::setPositionRaw(unit.size, m_size);
     internal::setPosition(unit.position, m_position);
     internal::setPositionRaw(unit.rotation, m_rotation);
@@ -279,7 +303,7 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_angularDamping = unit.angularDamping;
     m_restitution = unit.restitution;
     m_friction = unit.friction;
-    m_type = unit.type;
+    m_type = static_cast<ObjectType>(unit.type);
     ptr += sizeof(unit);
     size = ptr - start;
 }
@@ -318,17 +342,18 @@ size_t RigidBody::estimateSize(const Model::DataInfo &info) const
 void RigidBody::performTransformBone()
 {
 #ifndef VPVL2_NO_BULLET
-    if (m_type == 0 || !m_bone)
+    if (m_type == kStaticObject || !m_bone)
         return;
-    const Transform &transform = m_body->getCenterOfMassTransform() * m_invertedTransform;
-    m_bone->setLocalTransform(transform);
+    const Transform &worldTransform = m_body->getCenterOfMassTransform();
+    const Transform &localTransform = worldTransform * m_world2LocalTransform;
+    m_bone->setLocalTransform(localTransform);
 #endif /* VPVL2_NO_BULLET */
 }
 
 void RigidBody::setKinematic(bool value)
 {
 #ifndef VPVL2_NO_BULLET
-    if (m_type == 0)
+    if (m_type == kStaticObject)
         return;
     if (value) {
         m_body->setMotionState(m_kinematicMotionState);
@@ -337,7 +362,13 @@ void RigidBody::setKinematic(bool value)
     else {
         Transform transform;
         m_kinematicMotionState->getWorldTransform(transform);
-        m_motionState->setWorldTransform(transform);
+        if (m_type == kAlignedObject) {
+            AlignedMotionState *state = static_cast<AlignedMotionState *>(m_motionState);
+            state->setWorldTransformDirect(transform);
+        }
+        else {
+            m_motionState->setWorldTransform(transform);
+        }
         m_body->setMotionState(m_motionState);
         m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
     }
@@ -369,11 +400,11 @@ const Transform RigidBody::createStartTransform(Transform &base) const
 btCollisionShape *RigidBody::createShape() const
 {
     switch (m_shapeType) {
-    case 0:
+    case kSphereShape:
         return new btSphereShape(m_size.x());
-    case 1:
+    case kBoxShape:
         return new btBoxShape(m_size);
-    case 2:
+    case kCapsureShape:
         return new btCapsuleShape(m_size.x(), m_size.y());
     default:
         return 0;
@@ -384,25 +415,26 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
 {
     Vector3 localInertia = kZeroV3;
     Scalar massValue = 0.0f;
-    if (m_type != 0) {
+    if (m_type != kStaticObject) {
         massValue = m_mass;
         if (shape && massValue != 0.0f)
             shape->calculateLocalInertia(massValue, localInertia);
     }
-    const Transform &startTransform = createStartTransform(m_transform);
-    m_invertedTransform = m_transform.inverse();
+    const Transform &startTransform = createStartTransform(m_worldTransform);
+    m_world2LocalTransform = m_worldTransform.inverse();
     switch (m_type) {
-    case 0:
-        m_motionState = new KinematicMotionState(m_transform, m_bone);
+    default:
+    case kStaticObject:
+        m_motionState = new KinematicMotionState(m_worldTransform, m_bone);
         m_kinematicMotionState = 0;
         break;
-    case 1:
-        m_motionState = new btDefaultMotionState(startTransform);
-        m_kinematicMotionState = new KinematicMotionState(m_transform, m_bone);
+    case kDynamicObject:
+        m_motionState = new DefaultMotionState(startTransform, m_bone);
+        m_kinematicMotionState = new KinematicMotionState(m_worldTransform, m_bone);
         break;
-    default:
-        m_motionState = new AlignedMotionState(startTransform, m_transform, m_bone);
-        m_kinematicMotionState = new KinematicMotionState(m_transform, m_bone);
+    case kAlignedObject:
+        m_motionState = new AlignedMotionState(startTransform, m_worldTransform, m_bone);
+        m_kinematicMotionState = new KinematicMotionState(m_worldTransform, m_bone);
         break;
     }
     btRigidBody::btRigidBodyConstructionInfo info(massValue, m_motionState, shape, localInertia);
@@ -412,7 +444,7 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
     info.m_friction = m_friction;
     info.m_additionalDamping = true;
     btRigidBody *body = new btRigidBody(info);
-    if (m_type == 0)
+    if (m_type == kStaticObject)
         body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     body->setActivationState(DISABLE_DEACTIVATION);
     return body;
@@ -479,7 +511,7 @@ void RigidBody::setRotation(const Vector3 &value)
     m_rotation = value;
 }
 
-void RigidBody::setShapeType(uint8_t value)
+void RigidBody::setShapeType(ShapeType value)
 {
     m_shapeType = value;
 }
@@ -489,7 +521,7 @@ void RigidBody::setSize(const Vector3 &value)
     m_size = value;
 }
 
-void RigidBody::setType(uint8_t value)
+void RigidBody::setType(ObjectType value)
 {
     m_type = value;
 }
