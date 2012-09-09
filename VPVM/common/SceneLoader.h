@@ -233,7 +233,7 @@ signals:
     void modelDidAdd(vpvl2::IModel *model, const QUuid &uuid);
     void modelWillDelete(vpvl2::IModel *model, const QUuid &uuid);
     void modelDidMakePose(VPDFilePtr pose, vpvl2::IModel *model);
-    void motionDidAdd(vpvl2::IMotion *motion, vpvl2::IModel *model, const QUuid &uuid);
+    void motionDidAdd(vpvl2::IMotion *motion, const vpvl2::IModel *model, const QUuid &uuid);
     void motionWillDelete(vpvl2::IMotion *motion, const QUuid &uuid);
     void assetDidSelect(vpvl2::IModel *asset, SceneLoader *loader);
     void assetDidAdd(vpvl2::IModel *asset, const QUuid &uuid);
