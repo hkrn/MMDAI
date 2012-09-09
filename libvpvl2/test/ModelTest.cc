@@ -433,9 +433,9 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
     body.setPosition(Vector3(0.41, 0.42, 0.43));
     body.setRestitution(0.51);
     body.setRotation(Vector3(0.61, 0.62, 0.63));
-    body.setShapeType(4);
+    body.setShapeType(RigidBody::kCapsureShape);
     body.setSize(Vector3(0.71, 0.72, 0.73));
-    body.setType(5);
+    body.setType(RigidBody::kAlignedObject);
     size_t size = body.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     body.write(data.data(), info);
