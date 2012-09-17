@@ -6,6 +6,9 @@
 #else
 out vec4 outPixelColor;
 #endif
+#ifdef GL_ES
+precision lowp float;
+#endif
 uniform bool useToon;
 uniform bool useSoftShadow;
 uniform bool hasMainTexture;
