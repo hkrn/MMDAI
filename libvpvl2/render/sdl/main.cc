@@ -374,23 +374,21 @@ public:
             if (flags & IRenderDelegate::kViewMatrix)
                 m *= m_cameraViewMatrix;
             if (flags & IRenderDelegate::kWorldMatrix) {
-                glm::mat4x4 shadowMatrix(1);
-                /*
                 static const Vector3 plane(0.0f, 1.0f, 0.0f);
                 const ILight *light = m_sceneRef->light();
                 const Vector3 &direction = light->direction();
                 const Scalar dot = plane.dot(-direction);
+                float matrix[16];
                 for (int i = 0; i < 4; i++) {
                     int offset = i * 4;
                     for (int j = 0; j < 4; j++) {
                         int index = offset + j;
-                        shadowMatrix[index] = plane[i] * direction[j];
+                        matrix[index] = plane[i] * direction[j];
                         if (i == j)
-                            shadowMatrix[index] += dot;
+                            matrix[index] += dot;
                     }
                 }
-                */
-                m *= shadowMatrix;
+                m *= glm::make_mat4x4(matrix);
                 m *= m_cameraWorldMatrix;
                 m = glm::scale(m, glm::vec3(model->scaleFactor()));
             }
@@ -879,6 +877,7 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 16);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -915,6 +914,8 @@ int main(int /* argc */, char ** /* argv[] */)
     std::cerr << "SDL_GL_GREEN_SIZE:         " << value << std::endl;
     SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &value);
     std::cerr << "SDL_GL_BLUE_SIZE:          " << value << std::endl;
+    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &value);
+    std::cerr << "SDL_GL_ALPHA_SIZE:         " << value << std::endl;
     SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &value);
     std::cerr << "SDL_GL_DEPTH_SIZE:         " << value << std::endl;
     SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &value);
@@ -981,6 +982,7 @@ int main(int /* argc */, char ** /* argv[] */)
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glCullFace(GL_BACK);
     glClearColor(0, 0, 1, 0);
