@@ -440,8 +440,9 @@ class PMXRenderEngine::PrivateContext
         #endif
 {
 public:
-    PrivateContext()
-        : edgeProgram(0),
+    PrivateContext(const pmx::Model *model)
+        : modelRef(model),
+          edgeProgram(0),
           modelProgram(0),
           shadowProgram(0),
           zplotProgram(0),
@@ -449,6 +450,21 @@ public:
           cullFaceState(true),
           isVertexShaderSkinning(false)
     {
+        switch (modelRef->indexType()) {
+        case IModel::kIndex32:
+            indexType = GL_UNSIGNED_INT;
+            break;
+        case IModel::kIndex16:
+            indexType = GL_UNSIGNED_SHORT;
+            break;
+        case IModel::kIndex8:
+            indexType = GL_UNSIGNED_BYTE;
+            break;
+        case IModel::kMaxIndexType:
+        default:
+            indexType = GL_UNSIGNED_INT;
+            break;
+        }
 #ifdef VPVL2_LINK_QT
         initializeGLFunctions();
 #endif
@@ -467,9 +483,9 @@ public:
         isVertexShaderSkinning = false;
     }
 
-    void releaseMaterials(pmx::Model *model) {
+    void releaseMaterials() {
         if (materials) {
-            const Array<pmx::Material *> &modelMaterials = model->materials();
+            const Array<pmx::Material *> &modelMaterials = modelRef->materials();
             const int nmaterials = modelMaterials.count();
             for (int i = 0; i < nmaterials; i++) {
                 MaterialTextures &materialPrivate = materials[i];
@@ -482,12 +498,14 @@ public:
         }
     }
 
+    const pmx::Model *modelRef;
     EdgeProgram *edgeProgram;
     ModelProgram *modelProgram;
     ShadowProgram *shadowProgram;
     ExtendedZPlotProgram *zplotProgram;
     pmx::Model::SkinningMeshes mesh;
     GLuint vertexBufferObjects[kVertexBufferObjectMax];
+    GLenum indexType;
     MaterialTextures *materials;
     bool cullFaceState;
     bool isVertexShaderSkinning;
@@ -508,7 +526,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_modelRef(model),
       m_context(0)
 {
-    m_context = new PrivateContext();
+    m_context = new PrivateContext(model);
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif
@@ -517,7 +535,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
 PMXRenderEngine::~PMXRenderEngine()
 {
     if (m_context) {
-        m_context->releaseMaterials(m_modelRef);
+        m_context->releaseMaterials();
         delete m_context;
         m_context = 0;
     }
@@ -540,7 +558,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     bool ret = true;
     void *context = 0;
     if (!m_context)
-        m_context = new PrivateContext();
+        m_context = new PrivateContext(m_modelRef);
     m_delegateRef->allocateContext(m_modelRef, context);
     EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_delegateRef);
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegateRef);
@@ -776,7 +794,7 @@ void PMXRenderEngine::renderModel()
             m_context->cullFaceState = true;
         }
         const int nindices = material->indices();
-        glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+        glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * size;
     }
     modelProgram->unbind();

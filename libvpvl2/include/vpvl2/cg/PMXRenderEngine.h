@@ -126,6 +126,7 @@ private:
     MaterialContext *m_materialContexts;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
+    GLenum m_indexType;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
 

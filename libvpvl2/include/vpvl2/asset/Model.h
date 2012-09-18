@@ -68,7 +68,7 @@ public:
     const IString *comment() const { return m_name; }
     const IString *englishComment() const { return m_name; }
     bool isVisible() const { return !btFuzzyZero(opacity()); }
-    Error error() const { return kNoError; }
+    ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}
     size_t estimateSize() const { return 1; }
@@ -78,12 +78,13 @@ public:
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
     IBone *findBone(const IString * /* value */) const { return 0; }
     IMorph *findMorph(const IString * /* value */) const { return 0; }
-    int count(Object /* value */) const { return 0; }
+    int count(ObjectType /* value */) const { return 0; }
     void getBones(Array<IBone *> & /* value */) const {}
     void getMorphs(Array<IMorph *> & /* value */) const {}
     void getLabels(Array<ILabel *> & /* value */) const {}
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
+    IndexType indexType() const { return kIndex32; }
     const Vector3 &position() const { return m_asset.position(); }
     const Quaternion &rotation() const { return m_asset.rotation(); }
     const Scalar &opacity() const { return m_asset.opacity(); }

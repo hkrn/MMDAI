@@ -85,11 +85,126 @@ struct Model::SkinnedVertex {
     Vector4 uva4;
 };
 
+struct Model::IndexBuffer {
+    IndexBuffer(const Array<int> &indices, const int nvertices)
+        : type(kIndex32),
+          indices32Ptr(0)
+    {
+        const int nindices = indices.count();
+        if (nindices < 65536) {
+            type = kIndex16;
+            indices16Ptr = new uint16_t[nindices];
+        }
+        else if (nindices < 256) {
+            type = kIndex8;
+            indices8Ptr = new uint8_t[nindices];
+        }
+        else {
+            indices32Ptr = new int[nindices];
+        }
+        for (int i = 0; i < nindices; i++) {
+            int index = indices[i];
+            if (index >= 0 && index < nvertices) {
+                setIndexAt(i, index);
+            }
+            else {
+                setIndexAt(i, 0);
+            }
+        }
+#ifdef VPVL2_COORDINATE_OPENGL
+        for (int i = 0; i < nindices; i += 3) {
+            switch (type) {
+            case kIndex32:
+                btSwap(indices32Ptr[i], indices32Ptr[i + 1]);
+                break;
+            case kIndex16:
+                btSwap(indices16Ptr[i], indices16Ptr[i + 1]);
+                break;
+            case kIndex8:
+                btSwap(indices8Ptr[i], indices8Ptr[i + 1]);
+                break;
+            case kMaxIndexType:
+            default:
+                break;
+            }
+        }
+#endif
+    }
+    ~IndexBuffer() {
+        switch (type) {
+        case IModel::kIndex32:
+            delete[] indices32Ptr;
+            indices32Ptr = 0;
+            break;
+        case IModel::kIndex16:
+            delete[] indices16Ptr;
+            indices16Ptr = 0;
+            break;
+        case IModel::kIndex8:
+            delete[] indices8Ptr;
+            indices8Ptr = 0;
+            break;
+        case IModel::kMaxIndexType:
+        default:
+            break;
+        }
+    }
+
+    int indexAt(int index) const {
+        switch (type) {
+        case kIndex32:
+            return indices32Ptr[index];
+        case kIndex16:
+            return indices16Ptr[index];
+        case kIndex8:
+            return indices8Ptr[index];
+        case kMaxIndexType:
+        default:
+            return 0;
+        }
+    }
+    void setIndexAt(int i, int value) {
+        switch (type) {
+        case kIndex32:
+            indices32Ptr[i] = value;
+            break;
+        case kIndex16:
+            indices16Ptr[i] = uint16_t(value);
+            break;
+        case kIndex8:
+            indices8Ptr[i] = uint8_t(value);
+            break;
+        case kMaxIndexType:
+        default:
+            break;
+        }
+    }
+    void *toPtr() const {
+        switch (type) {
+        case kIndex32:
+            return indices32Ptr;
+        case kIndex16:
+            return indices16Ptr;
+        case kIndex8:
+            return indices8Ptr;
+        case kMaxIndexType:
+        default:
+            return 0;
+        }
+    }
+    IModel::IndexType type;
+    union {
+        int      *indices32Ptr;
+        uint16_t *indices16Ptr;
+        uint8_t  *indices8Ptr;
+    };
+};
+
 Model::Model(IEncoding *encoding)
     : m_worldRef(0),
       m_encodingRef(encoding),
       m_skinnedVertices(0),
-      m_skinnedIndices(0),
+      m_indexBuffer(0),
       m_name(0),
       m_englishName(0),
       m_comment(0),
@@ -409,7 +524,7 @@ IMorph *Model::findMorph(const IString *value) const
     return morph ? *morph : 0;
 }
 
-int Model::count(Object value) const
+int Model::count(ObjectType value) const
 {
     switch (value) {
     case kBone: {
@@ -508,6 +623,11 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
         center = (min + max) * 0.5;
         radius = (max - min).length() * 0.5;
     }
+}
+
+IModel::IndexType Model::indexType() const
+{
+    return m_indexBuffer ? m_indexBuffer->type : IModel::kIndex32;
 }
 
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
@@ -659,7 +779,7 @@ const void *Model::vertexPtr() const
 
 const void *Model::indicesPtr() const
 {
-    return &m_skinnedIndices[0];
+    return m_indexBuffer->toPtr();
 }
 
 Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
@@ -706,8 +826,6 @@ void Model::release()
     m_joints.releaseAll();
     delete[] m_skinnedVertices;
     m_skinnedVertices = 0;
-    delete[] m_skinnedIndices;
-    m_skinnedIndices = 0;
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -752,23 +870,19 @@ void Model::parseIndices(const DataInfo &info)
     const int nvertices = info.verticesCount;
     uint8_t *ptr = info.indicesPtr;
     size_t size = info.vertexIndexSize;
-    delete[] m_skinnedIndices;
-    m_skinnedIndices = new int[nindices];
     for(int i = 0; i < nindices; i++) {
         int index = internal::readUnsignedIndex(ptr, size);
         if (index >= 0 && index < nvertices) {
             m_indices.add(index);
-            m_skinnedIndices[i] = index;
+            //m_skinnedIndices[i] = index;
         }
         else {
             m_indices.add(0);
-            m_skinnedIndices[i] = 0;
+            //m_skinnedIndices[i] = 0;
         }
     }
-#ifdef VPVL2_COORDINATE_OPENGL
-    for (int i = 0; i < nindices; i += 3)
-        btSwap(m_skinnedIndices[i], m_skinnedIndices[i + 1]);
-#endif
+    delete m_indexBuffer;
+    m_indexBuffer = new IndexBuffer(m_indices, nvertices);
 }
 
 void Model::parseTextures(const DataInfo &info)
@@ -893,7 +1007,7 @@ void Model::getSkinningMesh(SkinningMeshes &meshes) const
         const int nindices = material->indices();
         int boneIndexInteral = 0;
         for (int j = 0; j < nindices; j++) {
-            int vertexIndex = m_skinnedIndices[offset + j];
+            int vertexIndex = m_indexBuffer->indexAt(offset + j);
             Vertex *vertex = m_vertices[vertexIndex];
             switch (vertex->type()) {
             case Vertex::kBdef1:

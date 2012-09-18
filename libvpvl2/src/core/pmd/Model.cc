@@ -240,7 +240,7 @@ IMorph *Model::findMorph(const IString *value) const
     return morph ? *morph : 0;
 }
 
-int Model::count(Object value) const
+int Model::count(ObjectType value) const
 {
     switch (value) {
     case kBone:

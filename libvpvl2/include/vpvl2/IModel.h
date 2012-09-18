@@ -59,7 +59,7 @@ public:
     /**
       * Type of parsing errors.
       */
-    enum Error
+    enum ErrorType
     {
         kNoError,
         kInvalidHeaderError,
@@ -82,7 +82,7 @@ public:
         kInvalidJointsError,
         kMaxErrorType
     };
-    enum Object {
+    enum ObjectType {
         kBone,
         kIK,
         kIndex,
@@ -100,6 +100,13 @@ public:
         kPMX,
         kMaxModelType
     };
+    enum IndexType {
+        kIndex8,
+        kIndex16,
+        kIndex32,
+        kMaxIndexType
+    };
+
     virtual ~IModel() {}
 
     /**
@@ -152,7 +159,7 @@ public:
      *
      * @return Error
      */
-    virtual Error error() const = 0;
+    virtual ErrorType error() const = 0;
 
     /**
      * オンメモリ上にある data とその長さ size に基づいてモデルを構築します。
@@ -246,7 +253,7 @@ public:
      */
     virtual IMorph *findMorph(const IString *value) const = 0;
 
-    virtual int count(Object value) const = 0;
+    virtual int count(ObjectType value) const = 0;
     virtual void getBones(Array<IBone *> &value) const = 0;
     virtual void getMorphs(Array<IMorph *> &value) const = 0;
     virtual void getLabels(Array<ILabel *> &value) const = 0;
@@ -276,6 +283,8 @@ public:
      * @sa getBoundingBox
      */
     virtual void getBoundingSphere(Vector3 &center, Scalar &radius) const = 0;
+
+    virtual IndexType indexType() const = 0;
 
     virtual const Vector3 &position() const = 0;
     virtual const Quaternion &rotation() const = 0;

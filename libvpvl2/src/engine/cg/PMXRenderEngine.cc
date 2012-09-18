@@ -69,9 +69,23 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_modelRef(model),
       m_contextRef(effectContext),
       m_materialContexts(0),
+      m_indexType(GL_UNSIGNED_INT),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
 {
+    switch (model->indexType()) {
+    case IModel::kIndex8:
+        m_indexType = GL_UNSIGNED_BYTE;
+        break;
+    case IModel::kIndex16:
+        m_indexType = GL_UNSIGNED_SHORT;
+        break;
+    case IModel::kIndex32:
+    case IModel::kMaxIndexType:
+    default:
+        break;
+    }
+
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif /* VPVL2_LINK_QT */
@@ -238,7 +252,7 @@ void PMXRenderEngine::renderModel()
         const int nindices = material->indices();
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
-        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glDisableClientState(GL_VERTEX_ARRAY);

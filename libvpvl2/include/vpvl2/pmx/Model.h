@@ -92,7 +92,7 @@ public:
     {
         IEncoding *encoding;
         IString::Codec codec;
-        Error error;
+        ErrorType error;
         uint8_t *basePtr;
         uint8_t *namePtr;
         size_t additionalUVSize;
@@ -149,12 +149,13 @@ public:
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
-    int count(Object value) const;
+    int count(ObjectType value) const;
     void getBones(Array<IBone *> &value) const;
     void getMorphs(Array<IMorph *> &value) const;
     void getLabels(Array<ILabel *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
+    IndexType indexType() const;
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
@@ -177,7 +178,7 @@ public:
     const IString *englishName() const { return m_englishName; }
     const IString *comment() const { return m_comment; }
     const IString *englishComment() const { return m_englishComment; }
-    Error error() const { return m_info.error; }
+    ErrorType error() const { return m_info.error; }
     bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
 
     void setName(const IString *value);
@@ -221,6 +222,8 @@ public:
     void setSkinningEnable(bool value);
 
 private:
+    struct IndexBuffer;
+
     void release();
     void parseNamesAndComments(const DataInfo &info);
     void parseVertices(const DataInfo &info);
@@ -249,7 +252,7 @@ private:
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     SkinnedVertex *m_skinnedVertices;
-    int *m_skinnedIndices;
+    IndexBuffer *m_indexBuffer;
     IString *m_name;
     IString *m_englishName;
     IString *m_comment;
