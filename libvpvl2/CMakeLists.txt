@@ -290,6 +290,7 @@ set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL
 
 # project include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # find libvpvl
 link_vpvl(vpvl2)
@@ -447,7 +448,6 @@ if(VPVL2_BUILD_QT_RENDERER AND VPVL2_LINK_DEVIL)
 endif()
 
 # generate configuration
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 if(NOT WIN32)
   set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc @ONLY)

@@ -148,20 +148,27 @@ endfunction()
 # end of imported
 
 option(BUILD_SHARED_LIBS "Build Shared Libraries (default is OFF)" OFF)
+option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
+option(VPVL_ENABLE_GLSL "Include OpenGL renderer class using GLSL shaders (default is ON)" ON)
+option(VPVL_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (default is OFF)" OFF)
+option(VPVL_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
+option(VPVL_COORDINATE_OPENGL "Use OpenGL coordinate system (default is ON)" ON)
+option(VPVL_NO_BULLET "Build libvpvl without BulletPhysics except LinearMath (default is OFF)" OFF)
+option(VPVL_LINK_ASSIMP "link against Open Asset Import Library (default is OFF)" OFF)
+option(VPVL_LINK_QT "Link against Qt 4.8 (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
+option(VPVL_LINK_QT_WITH_OPENCV "Build a renderer program with recording feature using OpenCV (default is OFF)" OFF)
+option(VPVL_BUILD_QT_RENDERER "Build a renderer program using Qt 4.8 (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
+option(VPVL_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
+option(VPVL_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
+option(VPVL_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
+
 if(BUILD_SHARED_LIBS)
   set(VPVL_LIB_TYPE SHARED)
 else()
   set(VPVL_LIB_TYPE STATIC)
 endif()
 
-option(VPVL_COORDINATE_OPENGL "Use OpenGL coordinate system (default is ON)" ON)
-option(VPVL_NO_BULLET "Build libvpvl without BulletPhysics except LinearMath (default is OFF)" OFF)
-
 # intercept to add source
-option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
-option(VPVL_ENABLE_GLSL "Include OpenGL renderer class using GLSL shaders (default is ON)" ON)
-option(VPVL_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (default is OFF)" OFF)
-option(VPVL_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
 if(VPVL_OPENGL_RENDERER)
   if(VPVL_ENABLE_GLSL)
     aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl_gl_sources)
@@ -179,23 +186,24 @@ if(VPVL_OPENGL_RENDERER)
   set(VPVL_COORDINATE_OPENGL ON BOOL)
 endif()
 
-option(VPVL_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
 if(VPVL_ENABLE_PROJECT)
   list(APPEND vpvl_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/project/Project.cc)
   list(APPEND vpvl_public_headers include/vpvl/Project.h)
 endif()
+
+set(vpvl_public_headers ${vpvl_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h)
 
 add_library(vpvl ${VPVL_LIB_TYPE} ${vpvl_sources} ${vpvl_public_headers} ${vpvl_internal_headers})
 set_target_properties(vpvl PROPERTIES VERSION ${VPVL_VERSION} SOVERSION ${VPVL_VERSION_COMPATIBLE})
 
 # project include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # find Bullet Physics
 link_bullet(vpvl)
 
 # find assimp library
-option(VPVL_LINK_ASSIMP "link against Open Asset Import Library (default is OFF)" OFF)
 if(VPVL_LINK_ASSIMP)
   link_assimp(vpvl)
 endif()
@@ -223,9 +231,6 @@ if(APPLE)
 endif()
 
 # link against Qt
-option(VPVL_LINK_QT "Link against Qt 4.8 (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
-option(VPVL_LINK_QT_WITH_OPENCV "Build a renderer program with recording feature using OpenCV (default is OFF)" OFF)
-option(VPVL_BUILD_QT_RENDERER "Build a renderer program using Qt 4.8 (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
 if(VPVL_OPENGL_RENDERER AND (VPVL_BUILD_QT_RENDERER OR VPVL_LINK_QT))
   find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
   include(${QT_USE_FILE})
@@ -273,7 +278,6 @@ if(VPVL_ENABLE_PROJECT)
 endif()
 
 # extra renderer program with SDL
-option(VPVL_BUILD_SDL "Build a renderer program using SDL to test rendering result (enabling VPVL_OPENGL_RENDERER required, default is OFF)" OFF)
 if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_SDL)
   find_package(SDL REQUIRED)
   find_package(SDL_image REQUIRED)
@@ -287,13 +291,9 @@ if(VPVL_OPENGL_RENDERER AND VPVL_BUILD_SDL)
   link_icu_or_iconv(vpvl_sdl)
 endif()
 
-option(VPVL_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
-
 # generate configuration
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h")
-set(vpvl_public_headers ${vpvl_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 if(NOT WIN32)
   set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
