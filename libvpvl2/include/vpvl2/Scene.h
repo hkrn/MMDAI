@@ -72,7 +72,8 @@ public:
         kUpdateCamera        = 0x4,
         kUpdateLight         = 0x8,
         kUpdateAll           = kUpdateModels | kUpdateRenderEngines | kUpdateCamera | kUpdateLight,
-        kMaxUpdateTypeFlags  = kUpdateAll + 1
+        kResetMotionState    = 0x10,
+        kMaxUpdateTypeFlags  = 0x20
     };
 
     static ICamera *createCamera();

@@ -70,6 +70,7 @@ public:
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void resetVertices();
+    void resetMotionState() {}
     void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection);
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);

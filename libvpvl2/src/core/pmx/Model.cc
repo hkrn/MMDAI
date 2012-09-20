@@ -396,6 +396,15 @@ void Model::resetVertices()
     }
 }
 
+void Model::resetMotionState()
+{
+    const int nRigidBodies = m_rigidBodies.count();
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = m_rigidBodies[i];
+        rigidBody->setKinematic(false);
+    }
+}
+
 void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection)
 {
     // update local transform matrix
@@ -480,7 +489,6 @@ void Model::joinWorld(btDiscreteDynamicsWorld *world)
     const int nRigidBodies = m_rigidBodies.count();
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->setKinematic(false);
         world->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->collisionGroupMask());
     }
     const int njoints = m_joints.count();
@@ -500,7 +508,6 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *world)
     const int nRigidBodies = m_rigidBodies.count();
     for (int i = nRigidBodies - 1; i >= 0; i--) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->setKinematic(true);
         world->removeCollisionObject(rigidBody->body());
     }
     const int njoints = m_joints.count();

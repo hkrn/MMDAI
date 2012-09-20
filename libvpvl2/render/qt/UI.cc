@@ -790,7 +790,7 @@ bool UI::loadScene()
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
     m_scene->seek(0, Scene::kUpdateAll);
-    m_scene->update(Scene::kUpdateAll);
+    m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     return true;
 }
 

@@ -202,6 +202,8 @@ public:
      */
     virtual void resetVertices() = 0;
 
+    virtual void resetMotionState() = 0;
+
     /**
      * モデルの変形を実行します。
      *

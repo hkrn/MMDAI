@@ -258,6 +258,13 @@ struct Scene::PrivateContext {
             model->performUpdate(cameraPosition, lightDirection);
         }
     }
+    void updateMotionState() {
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            IModel *model = models[i];
+            model->resetMotionState();
+        }
+    }
     void updateRenderEngines() {
         const int nengines = engines.count();
         for (int i = 0; i < nengines; i++) {
@@ -522,6 +529,9 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
             motion->advance(delta);
         }
     }
+    if (flags & kResetMotionState) {
+        m_context->updateMotionState();
+    }
 }
 
 void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
@@ -567,6 +577,9 @@ void Scene::update(int flags)
     }
     if (flags & kUpdateRenderEngines) {
         m_context->updateRenderEngines();
+    }
+    if (flags & kResetMotionState) {
+        m_context->updateMotionState();
     }
 }
 

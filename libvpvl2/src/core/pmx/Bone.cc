@@ -515,6 +515,16 @@ void Bone::mergeMorph(const Morph::Bone *morph, float weight)
     m_rotationMorph = Quaternion::getIdentity().slerp(morph->rotation, weight);
 }
 
+void Bone::getLocalTransform(Transform &output) const
+{
+    getLocalTransform(m_worldTransform, output);
+}
+
+void Bone::getLocalTransform(const Transform &worldTransform, Transform &output) const
+{
+    output = worldTransform * Transform(Matrix3x3::getIdentity(), -m_origin);
+}
+
 void Bone::performFullTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
@@ -715,8 +725,7 @@ void Bone::performInverseKinematics()
 
 void Bone::performUpdateLocalTransform()
 {
-    const Transform localToOrigin(Matrix3x3::getIdentity(), -m_origin);
-    m_localTransform = m_worldTransform * localToOrigin;
+    getLocalTransform(m_localTransform);
 }
 
 void Bone::resetIKLink()

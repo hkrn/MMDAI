@@ -92,7 +92,7 @@ public:
 
     void performTransformBone();
     void setKinematic(bool value);
-    const Transform createStartTransform(Transform &base) const;
+    const Transform createStartTransform() const;
     btCollisionShape *createShape() const;
     btRigidBody *createRigidBody(btCollisionShape *shape);
 
