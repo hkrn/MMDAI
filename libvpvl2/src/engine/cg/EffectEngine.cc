@@ -51,7 +51,7 @@
 #include <string>
 #include <sstream>
 
-#ifdef VPVL2_LINK_QT
+#if defined(VPVL2_LINK_QT)
 #include <QtOpenGL/QtOpenGL>
 #endif /* VPVL_LINK_QT */
 
@@ -1415,7 +1415,7 @@ void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IMode
     const ILight *light = scene->light();
     const Vector3 &lightColor = light->color();
     if (model->type() == IModel::kAsset) {
-        const Vector3 &ac = Vector3(0.7, 0.7, 0.7) - lightColor;
+        const Vector3 &ac = Vector3(0.7f, 0.7f, 0.7f) - lightColor;
         ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));
         diffuse.setLightColor(Color(1, 1, 1, 1));
         specular.setLightColor(lightColor);
@@ -1484,15 +1484,15 @@ bool EffectEngine::testTechnique(const CGtechnique technique,
         return false;
     int ok = 1;
     const CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
-    ok &= Util::isPassEquals(passAnnotation, pass);
+    ok &= Util::isPassEquals(passAnnotation, pass) ? 1 : 0;
     const CGannotation subsetAnnotation = cgGetNamedTechniqueAnnotation(technique, "Subset");
-    ok &= containsSubset(subsetAnnotation, offset, nmaterials);
+    ok &= containsSubset(subsetAnnotation, offset, nmaterials) ? 1 : 0;
     const CGannotation useTextureAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseTexture");
-    ok &= (!cgIsAnnotation(useTextureAnnotation) || Util::toBool(useTextureAnnotation) == hasTexture);
+    ok &= (!cgIsAnnotation(useTextureAnnotation) || Util::toBool(useTextureAnnotation) == hasTexture) ? 1 : 0;
     const CGannotation useSphereMapAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseSphereMap");
-    ok &= (!cgIsAnnotation(useSphereMapAnnotation) || Util::toBool(useSphereMapAnnotation) == hasSphereMap);
+    ok &= (!cgIsAnnotation(useSphereMapAnnotation) || Util::toBool(useSphereMapAnnotation) == hasSphereMap) ? 1 : 0;
     const CGannotation useToonAnnotation = cgGetNamedTechniqueAnnotation(technique, "UseToon");
-    ok &= (!cgIsAnnotation(useToonAnnotation) || Util::toBool(useToonAnnotation) == useToon);
+    ok &= (!cgIsAnnotation(useToonAnnotation) || Util::toBool(useToonAnnotation) == useToon) ? 1 : 0;
     return ok == 1;
 }
 
@@ -1617,7 +1617,7 @@ void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
             m_delegateRef->setRenderColorTargets(&m_renderColorTargets[0], nRenderColorTargets);
         m_delegateRef->releaseRenderColorTarget(&texture, width, height, index, kEnableRTAA);
         m_delegateRef->getViewport(viewport);
-        glViewport(0, 0, viewport.x(), viewport.y());
+        glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
     }
 }
 
@@ -1685,7 +1685,7 @@ void EffectEngine::executeScript(const Script *script,
                 }
                 break;
             case ScriptState::kLoopGetIndex:
-                cgGLSetParameter1f(state.parameter, currentIndex);
+                cgGLSetParameter1f(state.parameter, float(currentIndex));
                 break;
             case ScriptState::kRenderColorTarget0:
             case ScriptState::kRenderColorTarget1:

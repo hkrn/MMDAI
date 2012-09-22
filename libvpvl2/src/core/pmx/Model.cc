@@ -459,7 +459,7 @@ void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDir
                 const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
                 const float edgeSize = vertex->edgeSize();
                 vertex->performSkinning(v.position, v.normal);
-                v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5);
+                v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5f);
                 v.edge = v.position + v.normal * edgeSize * materialEdgeSize * esf;
                 v.uva1 = vertex->uv(1);
                 v.uva2 = vertex->uv(2);
@@ -476,7 +476,7 @@ void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDir
             SkinnedVertex &v = m_skinnedVertices[i];
             v.position = vertex->origin() + vertex->delta();
             v.normal[3] = vertex->edgeSize();
-            v.edge[3] = i;
+            v.edge[3] = Scalar(i);
         }
     }
 }
@@ -628,7 +628,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
         Vector3 min, max;
         getBoundingBox(min, max);
         center = (min + max) * 0.5;
-        radius = (max - min).length() * 0.5;
+        radius = (max - min).length() * 0.5f;
     }
 }
 
@@ -796,7 +796,7 @@ Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
         IBone *bone = m_bones.at(1);
         length = (cameraPosition - bone->worldTransform().getOrigin()).length() * m_edgeWidth;
     }
-    return length / 1000.0;
+    return length / 1000.0f;
 }
 
 void Model::setName(const IString *value)
@@ -925,7 +925,7 @@ void Model::parseMaterials(const DataInfo &info)
             Vertex *vertex = m_vertices[index];
             SkinnedVertex &v = m_skinnedVertices[index];
             v.normal[3] = vertex->edgeSize();
-            v.edge[3] = index;
+            v.edge[3] = Scalar(index);
         }
         offset += nindices;
     }
@@ -1031,7 +1031,7 @@ void Model::getSkinningMesh(SkinningMeshes &meshes) const
                 break;
             }
             SkinnedVertex &skinnedVertex = m_skinnedVertices[vertexIndex];
-            skinnedVertex.position.setW(vertex->type());
+            skinnedVertex.position.setW(Scalar(vertex->type()));
             for (int k = 0; k < 4; k++) {
                 Bone *bone = vertex->bone(k);
                 if (bone) {
@@ -1045,7 +1045,7 @@ void Model::getSkinningMesh(SkinningMeshes &meshes) const
                     else {
                         normalizedBoneIndex = *normalizedBoneIndexPtr;
                     }
-                    skinnedVertex.boneIndices[k] = normalizedBoneIndex;
+                    skinnedVertex.boneIndices[k] = Scalar(normalizedBoneIndex);
                     skinnedVertex.boneWeights[k] = vertex->weight(k);
                 }
                 else {

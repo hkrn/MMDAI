@@ -43,9 +43,11 @@
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
 
-#ifdef VPVL2_LINK_QT
+#if defined(VPVL2_LINK_QT)
 #include <QtOpenGL/QtOpenGL>
 #include <QtOpenGL/QGLFunctions>
+#elif defined(VPVL2_LINK_GLEW)
+#include <GL/glew.h>
 #endif /* VPVL_LINK_QT */
 
 #if defined(VPVL2_ENABLE_GLES2)

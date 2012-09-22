@@ -158,7 +158,7 @@ bool Model::load(const uint8_t *data, size_t size)
         size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
         for (int i = 0; i < nvertices; i++) {
             Vector3 *v = reinterpret_cast<Vector3 *>(ptr + i * stride);
-            v->setW(i);
+            v->setW(Scalar(i));
         }
         delete m_name;
         m_name = m_encodingRef->toString(m_model.name(), IString::kShiftJIS, vpvl::PMDModel::kNameSize);
@@ -303,7 +303,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
         Vector3 min, max;
         getBoundingBox(min, max);
         center = (min + max) * 0.5;
-        radius = (max - min).length() * 0.5;
+        radius = (max - min).length() * 0.5f;
     }
 }
 
@@ -314,7 +314,7 @@ Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
         IBone *bone = m_bones.at(1);
         length = (cameraPosition - bone->worldTransform().getOrigin()).length();
     }
-    return (length / 1000.0);
+    return (length / 1000.0f);
 }
 
 void Model::setName(const IString *value)
@@ -421,7 +421,7 @@ void Model::getSkinningMeshes(SkinningMeshes &meshes) const
                 normalizedBoneIndex2 = *normalizedBoneIndex2Ptr;
             }
             Vector3 *v = reinterpret_cast<Vector3 *>(ptr + vertexIndex * stride);
-            v->setValue(normalizedBoneIndex1, normalizedBoneIndex2, vertex->weight());
+            v->setValue(Scalar(normalizedBoneIndex1), Scalar(normalizedBoneIndex2), vertex->weight());
         }
         meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
         meshes.bones.push_back(boneIndices);
@@ -462,7 +462,7 @@ void Model::overrideEdgeVerticesOffset()
     size_t edgeOffset = m_model.strideOffset(vpvl::PMDModel::kEdgeVerticesStride);
     for (int i = 0; i < nvertices; i++) {
         const vpvl::Vertex *vertex = vertices[i];
-        const Scalar &w = vertex->isEdgeEnabled() ? 1.0 : 0.0;
+        const Scalar w(vertex->isEdgeEnabled() ? 1.0f : 0.0f);
         Vector3 &edge = *reinterpret_cast<Vector3 *>(verticesPtr + edgeOffset);
         edge.setValue(w, w, w);
         edgeOffset += stride;

@@ -39,11 +39,11 @@
 #include "vpvl2/vpvl2.h"
 
 #ifdef VPVL2_LINK_ASSIMP
+#include "EngineCommon.h"
 #include "vpvl2/gl2/AssetRenderEngine.h"
 
 #include "vpvl/Bone.h"
 #include "vpvl2/asset/Model.h"
-#include "EngineCommon.h"
 
 #include <map>
 
@@ -562,7 +562,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     Color la, mc, md, ms;
     aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient);
     aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse);
-    la.setValue(0.7 - lc.x(), 0.7 - lc.y(), 0.7 - lc.z(), 1.0);
+    la.setValue(0.7f - lc.x(), 0.7f - lc.y(), 0.7f - lc.z(), 1.0);
     mc.setValue(diffuse.r * la.x() + ambient.r, diffuse.g * la.y() + ambient.g, diffuse.b * la.z() + ambient.b, diffuse.a);
     md.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
     program->setMaterialColor(mc);
@@ -591,7 +591,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setOpacity(asset->opacity());
     }
     void *texture = m_sceneRef->light()->depthTexture();
-    if (texture && !btFuzzyZero(opacity - 0.98)) {
+    if (texture && !btFuzzyZero(opacity - 0.98f)) {
         GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
         program->setDepthTexture(textureID);
     }
@@ -684,7 +684,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
         bool succeeded = aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS;
-        if (succeeded && btFuzzyZero(opacity - 0.98))
+        if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         const AssetVBO &vbo = m_context->vbo[mesh];
         const AssetIndices &indices = m_context->indices[mesh];

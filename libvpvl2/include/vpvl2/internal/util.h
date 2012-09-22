@@ -57,16 +57,16 @@ namespace internal
 static const int kCurrentVersion = VPVL2_VERSION;
 static const char *const kCurrentVersionString = VPVL2_VERSION_STRING;
 
-static inline float spline1(const IKeyframe::SmoothPrecision &t,
-                            const IKeyframe::SmoothPrecision &p1,
-                            const IKeyframe::SmoothPrecision &p2)
+static inline IKeyframe::SmoothPrecision spline1(const IKeyframe::SmoothPrecision &t,
+                                                 const IKeyframe::SmoothPrecision &p1,
+                                                 const IKeyframe::SmoothPrecision &p2)
 {
     return ((1 + 3 * p1 - 3 * p2) * t * t * t + (3 * p2 - 6 * p1) * t * t + 3 * p1 * t);
 }
 
-static inline float spline2(const IKeyframe::SmoothPrecision &t,
-                            const IKeyframe::SmoothPrecision &p1,
-                            const IKeyframe::SmoothPrecision &p2)
+static inline IKeyframe::SmoothPrecision spline2(const IKeyframe::SmoothPrecision &t,
+                                                 const IKeyframe::SmoothPrecision &p1,
+                                                 const IKeyframe::SmoothPrecision &p2)
 {
     return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
 }
@@ -390,13 +390,13 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
     assert(table && size > 0);
     for (int i = 0; i < size; i++) {
         const IKeyframe::SmoothPrecision &in = IKeyframe::SmoothPrecision(i) / size;
-        float t = in;
+        IKeyframe::SmoothPrecision t = in;
         while (1) {
             const IKeyframe::SmoothPrecision &v = spline1(t, x1, x2) - in;
-            if (btFabs(v) < 0.0001f)
+            if (btFabs(btScalar(v)) < 0.0001f)
                 break;
             const IKeyframe::SmoothPrecision &tt = spline2(t, x1, x2);
-            if (btFuzzyZero(tt))
+            if (btFuzzyZero(btScalar(tt)))
                 break;
             t -= v / tt;
         }

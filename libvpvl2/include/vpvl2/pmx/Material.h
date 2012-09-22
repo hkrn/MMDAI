@@ -112,7 +112,7 @@ public:
         void calculateMulWeight(const Vector3 &value, const Scalar &weight) {
             static const Vector3 kOne3(1.0, 1.0, 1.0);
             const Vector3 &v = kOne3 - (kOne3 - value) * weight;
-            mul.setValue(v.x(), v.y(), v.z(), 1.0 - (1.0 - value.w()) * weight);
+            mul.setValue(v.x(), v.y(), v.z(), 1.0f - (1.0f - value.w()) * weight);
         }
         void calculateAddWeight(const Vector3 &value, const Scalar &weight) {
             const Vector3 &v = value * weight;

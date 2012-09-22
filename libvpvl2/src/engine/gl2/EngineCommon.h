@@ -39,8 +39,10 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderDelegate.h>
 
-#ifdef VPVL2_LINK_QT
+#if defined(VPVL2_LINK_QT)
 #include <QtOpenGL/QtOpenGL>
+#elif defined(WIN32)
+#include <windows.h>
 #endif /* VPVL_LINK_QT */
 
 #if defined(VPVL2_ENABLE_GLES2)
@@ -52,6 +54,8 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/CGLCurrent.h>
+#elif defined(VPVL2_LINK_GLEW)
+#include <GL/glew.h>
 #else
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -284,7 +288,7 @@ public:
         glUniform2fv(m_depthTextureSizeUniformLocation, 1, value);
     }
     void setSoftShadowEnable(bool value) {
-        glUniform1f(m_enableSoftShadowUniformLocation, value ? 1 : 0);
+        glUniform1f(m_enableSoftShadowUniformLocation, GLfloat(value ? 1 : 0));
     }
     void setOpacity(const Scalar &value) {
         glUniform1f(m_opacityUniformLocation, value);

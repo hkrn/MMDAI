@@ -298,9 +298,9 @@ void Material::mergeMorph(const Morph::Material *morph, float weight)
             m_ambient.calculateMulWeight(morph->ambient, weight);
             m_diffuse.calculateMulWeight(morph->diffuse, weight);
             m_specular.calculateMulWeight(morph->specular, weight);
-            m_shininess.setY(1.0 - (1.0 - morph->shininess) * weight);
+            m_shininess.setY(1.0f - (1.0f - morph->shininess) * weight);
             m_edgeColor.calculateMulWeight(morph->edgeColor, weight);
-            m_edgeSize.setY(1.0 - (1.0 - morph->edgeSize) * weight);
+            m_edgeSize.setY(1.0f - (1.0f - morph->edgeSize) * weight);
             m_mainTextureBlend.calculateMulWeight(morph->textureWeight, weight);
             m_sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, weight);
             m_toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, weight);

@@ -206,7 +206,7 @@ void PMDRenderEngine::renderModel()
     const Scalar &modelOpacity = m_modelRef->opacity();
     const ILight *light = m_sceneRef->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
-    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
+    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f),
             hasShadowMap = depthTexturePtr ? true : false;
     const int nmaterials = materials.count();
     size_t offset = 0;
@@ -377,7 +377,7 @@ void PMDRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         const int nindices = material->countIndices();
-        if (!btFuzzyZero(material->opacity() - 0.98)) {
+        if (!btFuzzyZero(material->opacity() - 0.98f)) {
             CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmaterials, false, false, true);
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, reinterpret_cast<const GLvoid *>(offset));
         }

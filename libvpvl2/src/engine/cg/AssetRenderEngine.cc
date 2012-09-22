@@ -397,7 +397,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
                     assetVertex.normal.setZero();
                 }
                 const aiVector3D &v = vertices[vertexIndex];
-                assetVertex.position.setValue(v.x, v.y, v.z, index);
+                assetVertex.position.setValue(v.x, v.y, v.z, Scalar(index));
                 assetVertices.push_back(assetVertex);
                 indices.push_back(index);
                 index++;
@@ -491,7 +491,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
         bool succeeded = aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS;
-        if (succeeded && btFuzzyZero(opacity - 0.98))
+        if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         const AssetVBO &vbo = m_vbo[mesh];
         const AssetIndices &indices = m_indices[mesh];

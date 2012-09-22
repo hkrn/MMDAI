@@ -261,10 +261,10 @@ static int UIUnicodeStringToInt(const UnicodeString &value, int def = 0)
     return v != 0 ? v : def;
 }
 
-static int UIUnicodeStringToFloat(const UnicodeString &value, float def = 0.0)
+static float UIUnicodeStringToFloat(const UnicodeString &value, float def = 0.0)
 {
-    float v = strtof(UIUnicodeStringToStdString(value).c_str(), 0);
-    return v != 0 ? v : def;
+    double v = strtod(UIUnicodeStringToStdString(value).c_str(), 0);
+    return v != 0.0 ? float(v) : def;
 }
 
 static bool UILoadFile(const UnicodeString &path, std::string &bytes)
@@ -685,10 +685,18 @@ struct UIContext
         current = SDL_GetTicks();
         if (current - restarted > 1000) {
 #if SDL_VERSION_ATLEAST(2, 0, 0)
+#ifdef _MSC_VER
+            _snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
+#else
             snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
+#endif
             SDL_SetWindowTitle(windowRef, title);
 #else
+#ifdef _MSC_VER
+            _snprintf(title, sizeof(title), "libvpvl2 with SDL (FPS:%d)", currentFPS);
+#else
             snprintf(title, sizeof(title), "libvpvl2 with SDL (FPS:%d)", currentFPS);
+#endif
             SDL_WM_SetCaption(title, 0);
 #endif
             restarted = current;
@@ -719,7 +727,7 @@ static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
 #else
     const SDL_keysym &keysym = event.keysym;
 #endif
-    const int degree = 15;
+    const Scalar degree(15.0);
     ICamera *camera = context.sceneRef->camera();
     switch (keysym.sym) {
     case SDLK_RIGHT:

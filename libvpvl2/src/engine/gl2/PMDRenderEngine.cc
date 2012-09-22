@@ -38,6 +38,7 @@
 
 #include "vpvl2/vpvl2.h"
 
+#include "EngineCommon.h"
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/pmd/Model.h"
@@ -45,8 +46,6 @@
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMDAccelerator.h"
 #endif
-
-#include "EngineCommon.h"
 
 namespace {
 
@@ -659,7 +658,7 @@ void PMDRenderEngine::renderModel()
     modelProgram->setDepthTextureSize(light->depthTextureSize());
     modelProgram->setCameraPosition(m_sceneRef->camera()->position());
     const Scalar &modelOpacity = m_modelRef->opacity();
-    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0);
+    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
     modelProgram->setOpacity(modelOpacity);
     const MaterialList &materials = model->materials();
     const PMDModelMaterialPrivate *materialPrivates = m_context->materials;
@@ -695,7 +694,7 @@ void PMDRenderEngine::renderModel()
             modelProgram->setIsSubAdditive(isSubSphereAdd);
             modelProgram->setSubTexture(materialPrivate.subTextureID);
         }
-        if (texture && !btFuzzyZero(materialOpacity - 0.98)) {
+        if (texture && !btFuzzyZero(materialOpacity - 0.98f)) {
             modelProgram->setDepthTexture(textureID);
         }
         else {
@@ -797,7 +796,7 @@ void PMDRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const vpvl::Material *material = materials[i];
         const int nindices = material->countIndices();
-        if (!btFuzzyZero(material->opacity() - 0.98)) {
+        if (!btFuzzyZero(material->opacity() - 0.98f)) {
             if (isVertexShaderSkinning) {
                 const pmd::Model::SkinningMeshes &mesh = m_context->mesh;
                 zplotProgram->setBoneIndicesAndWeights(reinterpret_cast<const GLvoid *>(boneOffset), boneStride);

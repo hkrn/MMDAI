@@ -13,6 +13,7 @@ config.h
 debug*
 devil-src
 *.dir
+glew-*
 glm-*
 gmock-*
 gtest-*
@@ -30,6 +31,8 @@ open_jtalk-*
 portaudio-src
 release*
 SDLMain.*
+SDL-*
+SDL_image-*
 test-build-*
 UpgradeLog*.XML
 _UpgradeReport_Files

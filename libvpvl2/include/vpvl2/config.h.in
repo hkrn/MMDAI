@@ -55,7 +55,7 @@
 /* Build libvpvl2 for iOS */
 #cmakedefine VPVL2_BUILD_IOS
 
-/* Link libvpvl2 against GLEW (no longer be used) */
+/* Link libvpvl2 against GLEW */
 #cmakedefine VPVL2_LINK_GLEW
 
 /* Build libvpvl2 with project file support */

@@ -135,6 +135,7 @@ void MorphKeyframe::setDefaultInterpolationParameter()
 void MorphKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
 {
     switch (type) {
+    case kWeight:
     default:
         m_interpolationWeight.build(value, interpolationTableSize());
         break;
@@ -144,6 +145,7 @@ void MorphKeyframe::setInterpolationParameter(InterpolationType type, const Quad
 void MorphKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
 {
     switch (type) {
+    case kWeight:
     default:
         value = m_interpolationWeight.parameter;
         break;

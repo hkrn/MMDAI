@@ -536,7 +536,7 @@ void Bone::performFullTransform()
             else
                 rotation *= parentBone->m_rotation * parentBone->m_rotationMorph;
         }
-        if (!btFuzzyZero(m_weight - 1.0))
+        if (!btFuzzyZero(m_weight - 1.0f))
             rotation = Quaternion::getIdentity().slerp(rotation, m_weight);
         if (parentBone && parentBone->hasInverseKinematics())
             rotation *= parentBone->m_rotationIKLink;
@@ -555,7 +555,7 @@ void Bone::performFullTransform()
             else
                 position += parentBone->m_position + parentBone->m_positionMorph;
         }
-        if (!btFuzzyZero(m_weight - 1.0))
+        if (!btFuzzyZero(m_weight - 1.0f))
             position *= m_weight;
         m_positionInherence = position;
     }

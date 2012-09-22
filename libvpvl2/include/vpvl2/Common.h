@@ -41,13 +41,16 @@
 
 #include "vpvl2/config.h"
 
-#if defined(WIN32) && !(defined(__MINGW__) || defined(__MINGW32__))
-typedef char int8_t;
-typedef unsigned char uint8_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef int int32_t;
-typedef unsigned int uint32_t;
+#if (defined(_MSC_VER) && _MSC_VER < 1600) && !(defined(__MINGW__) || defined(__MINGW32__))
+/* _MSC_VER < 1300 (= Visual Studio 6) doesn't support */
+typedef signed __int8 int8_t;
+typedef unsigned __int8 uint8_t;
+typedef __int16 int16_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
 #else
 #include <stdint.h>
   /* SIZE_MAX is C99 macro and use alternative (32bit) if not defined */

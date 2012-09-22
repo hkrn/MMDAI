@@ -146,10 +146,17 @@ bool PMXRenderEngine::upload(const IString *dir)
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             int index = material->toonTextureIndex();
+#ifdef _MSC_VER
+            if (index == 0)
+                _snprintf(buf, sizeof(buf), "toon%d.bmp", index);
+            else
+                _snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
+#else
             if (index == 0)
                 snprintf(buf, sizeof(buf), "toon%d.bmp", index);
             else
                 snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
+#endif
             IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
             m_delegateRef->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
             delete s;
@@ -201,7 +208,7 @@ void PMXRenderEngine::renderModel()
     const Scalar &modelOpacity = m_modelRef->opacity();
     const ILight *light = m_sceneRef->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
-    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0),
+    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f),
             hasShadowMap = depthTexturePtr ? true : false;
     const int nmaterials = materials.count();
     size_t offset = 0;

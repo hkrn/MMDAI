@@ -88,10 +88,10 @@ const QuadWord Motion::InterpolationTable::toQuadWord(const InterpolationPair &p
 
 void Motion::InterpolationTable::getInterpolationPair(InterpolationPair &pair) const
 {
-    pair.first.x = parameter.x();
-    pair.first.y = parameter.y();
-    pair.second.x = parameter.z();
-    pair.second.y = parameter.w();
+    pair.first.x = uint8_t(parameter.x());
+    pair.first.y = uint8_t(parameter.y());
+    pair.second.x = uint8_t(parameter.z());
+    pair.second.y = uint8_t(parameter.w());
 }
 
 void Motion::InterpolationTable::build(const QuadWord &value, int s)

@@ -153,7 +153,7 @@ void CameraAnimation::seek(const IKeyframe::TimeIndex &frameAt)
 
     const CameraKeyframe *keyFrameFrom = this->frameAt(k1), *keyFrameTo = this->frameAt(k2);
     CameraKeyframe *keyFrameForInterpolation = const_cast<CameraKeyframe *>(keyFrameTo);
-    float timeIndexFrom = keyFrameFrom->timeIndex(), timeIndexTo = keyFrameTo->timeIndex();
+	const IKeyframe::TimeIndex &timeIndexFrom = keyFrameFrom->timeIndex(), &timeIndexTo = keyFrameTo->timeIndex();
     float distanceFrom = keyFrameFrom->distance(), fovyFrom = keyFrameFrom->fov();
     Vector3 positionFrom = keyFrameFrom->position(), angleFrom = keyFrameFrom->angle();
     float distanceTo = keyFrameTo->distance(), fovyTo = keyFrameTo->fov();

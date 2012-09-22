@@ -44,7 +44,7 @@
 
 #include <string>
 
-#ifdef VPVL2_LINK_QT
+#if defined(VPVL2_LINK_QT)
 #include <QtOpenGL/QGLFunctions>
 #endif /* VPVL_LINK_QT */
 

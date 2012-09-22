@@ -145,7 +145,7 @@ public:
           m_angle(kZeroV3),
           m_fov(0),
           m_distance(0),
-          m_znear(0.1),
+          m_znear(0.1f),
           m_zfar(10000)
     {
         resetDefault();
@@ -600,7 +600,7 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
     return true;
 }
 
-float Scene::maxFrameIndex() const
+const IKeyframe::TimeIndex Scene::maxFrameIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
