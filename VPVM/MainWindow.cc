@@ -123,6 +123,13 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
 }
 
 struct MainWindow::WindowState {
+    WindowState()
+        : timeIndex(0),
+          preferredFPS(0),
+          isGridVisible(false),
+          isImage(false)
+    {
+    }
     QRect mainGeometry;
     QSize minSize;
     QSize maxSize;
@@ -131,6 +138,7 @@ struct MainWindow::WindowState {
     IKeyframe::TimeIndex timeIndex;
     Scalar preferredFPS;
     bool isGridVisible;
+    bool isImage;
 };
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -1540,6 +1548,7 @@ void MainWindow::invokeImageExporter()
     if (!filename.isEmpty()) {
         WindowState state;
         QSize videoSize(m_exportingVideoDialog->sceneWidth(), m_exportingVideoDialog->sceneHeight());
+        state.isImage = true;
         saveWindowStateAndResize(videoSize, state);
         m_sceneWidget->updateGL();
         const QImage &image = m_sceneWidget->grabFrameBuffer();
@@ -1700,9 +1709,12 @@ void MainWindow::saveWindowStateAndResize(const QSize &videoSize, WindowState &s
     adjustSize();
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     /* レンダリングモードを自動更新から手動更新に変更 */
-    m_sceneWidget->stop();
     m_sceneWidget->stopAutomaticRendering();
-    loader->startPhysicsSimulation();
+    /* 画像出力時は物理状態とモーションのリセットを行わない */
+    if (!state.isImage) {
+        m_sceneWidget->stop();
+        loader->startPhysicsSimulation();
+    }
     loader->setGridVisible(m_exportingVideoDialog->includesGrid());
     /* ハンドルと情報パネルを非表示にし、ウィンドウを指定されたサイズに変更する */
     m_sceneWidget->setHandlesVisible(false);
@@ -1732,9 +1744,12 @@ void MainWindow::restoreWindowState(const WindowState &state)
     m_sceneWidget->setInfoPanelVisible(true);
     m_sceneWidget->setBoneWireFramesVisible(true);
     m_sceneWidget->setPreferredFPS(state.preferredFPS);
+    /* 画像出力以外は物理状態の停止とモーションの位置再開を行う */
+    if (!state.isImage) {
+        loader->stopPhysicsSimulation();
+        m_sceneWidget->seekMotion(state.timeIndex, true, true);
+    }
     /* レンダリングを手動更新から自動更新に戻す */
-    loader->stopPhysicsSimulation();
-    m_sceneWidget->seekMotion(state.timeIndex, true, true);
     m_sceneWidget->startAutomaticRendering();
 }
 
