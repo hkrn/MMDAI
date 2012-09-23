@@ -1,5 +1,3 @@
-#include <vpvl2/IModel.h>
-
 namespace vpvl2 {
 
 class MockIModel : public IModel {
@@ -17,7 +15,7 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD0(isVisible,
       bool());
   MOCK_CONST_METHOD0(error,
-      Error());
+      ErrorType());
   MOCK_METHOD2(load,
       bool(const uint8_t *data, size_t size));
   MOCK_CONST_METHOD1(save,
@@ -25,6 +23,8 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD0(estimateSize,
       size_t());
   MOCK_METHOD0(resetVertices,
+      void());
+  MOCK_METHOD0(resetMotionState,
       void());
   MOCK_METHOD2(performUpdate,
       void(const Vector3 &cameraPosition, const Vector3 &lightDirection));
@@ -37,7 +37,7 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD1(findMorph,
       IMorph*(const IString *value));
   MOCK_CONST_METHOD1(count,
-      int(Object value));
+      int(ObjectType value));
   MOCK_CONST_METHOD1(getBones,
       void(Array<IBone *> &value));
   MOCK_CONST_METHOD1(getMorphs,
@@ -48,6 +48,8 @@ class MockIModel : public IModel {
       void(Vector3 &min, Vector3 &max));
   MOCK_CONST_METHOD2(getBoundingSphere,
       void(Vector3 &center, Scalar &radius));
+  MOCK_CONST_METHOD0(indexType,
+      IndexType());
   MOCK_CONST_METHOD0(position,
       const Vector3&());
   MOCK_CONST_METHOD0(rotation,
