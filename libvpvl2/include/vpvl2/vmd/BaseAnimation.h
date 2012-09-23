@@ -85,8 +85,7 @@ protected:
         while (min < max) {
             int mid = (min + max) / 2;
             const T *keyframe = keyframes[mid];
-            const IKeyframe::TimeIndex &timeIndex = int(keyframe->timeIndex());
-            if (timeIndex < key)
+            if (keyframe->timeIndex() < key)
                 min = mid + 1;
             else
                 max = mid;

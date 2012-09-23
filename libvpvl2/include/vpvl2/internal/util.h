@@ -75,7 +75,7 @@ static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &
                                               const IKeyframe::SmoothPrecision &y,
                                               const IKeyframe::SmoothPrecision &t)
 {
-    return x * (1.0 - t) + y * t;
+    return x * (1 - t) + y * t;
 }
 
 static inline void readBytes(size_t size, uint8_t *&ptr, size_t &rest)
@@ -412,11 +412,19 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
 static inline void zerofill(void *ptr, size_t size)
 {
     assert(ptr && size > 0);
-#if defined(WIN32) && !defined(__MINGW32__)
+#ifdef _MSC_VER
     SecureZeroMemory(ptr, size);
 #else
     memset(ptr, 0, size);
 #endif
+}
+
+static inline void snprintf(char *buf, size_t size, const char *format, ...)
+{
+    va_list ap;
+	va_start(ap, format);
+    vsnprintf(buf, size, format, ap);
+    va_end(ap);
 }
 
 }

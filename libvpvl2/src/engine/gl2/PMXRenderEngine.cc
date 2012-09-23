@@ -39,6 +39,7 @@
 #include "vpvl2/vpvl2.h"
 
 #include "EngineCommon.h"
+#include "vpvl2/internal/util.h" /* internal::snprintf */
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Model.h"
@@ -643,11 +644,7 @@ bool PMXRenderEngine::upload(const IString *dir)
         }
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
-#ifdef _MSC_VER
-            _snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
-#else
-            snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
-#endif
+            internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
             IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
             ret = m_delegateRef->uploadTexture(s, 0, IRenderDelegate::kToonTexture, texture, context);
             delete s;

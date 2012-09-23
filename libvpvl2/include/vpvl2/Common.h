@@ -41,25 +41,27 @@
 
 #include "vpvl2/config.h"
 
-#if (defined(_MSC_VER) && _MSC_VER < 1600) && !(defined(__MINGW__) || defined(__MINGW32__))
 /* _MSC_VER < 1300 (= Visual Studio 6) doesn't support */
-typedef signed __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
+#if (defined(_MSC_VER) && _MSC_VER < 1600)
+  #ifndef _MSC_STDINT_H_
+    typedef signed __int8 int8_t;
+    typedef unsigned __int8 uint8_t;
+    typedef signed __int16 int16_t;
+    typedef unsigned __int16 uint16_t;
+    typedef signed __int32 int32_t;
+    typedef unsigned __int32 uint32_t;
+    typedef signed __int64 int64_t;
+    typedef unsigned __int64 uint64_t;
+    #define _MSC_STDINT_H_
+  #endif /* _MSC_STDINT_H_ */
 #else
 #include <stdint.h>
   /* SIZE_MAX is C99 macro and use alternative (32bit) if not defined */
   #ifndef SIZE_MAX
     #define SIZE_MAX 4294967295U
   #endif
-#endif
+#endif /* (defined(_MSC_VER) && _MSC_VER < 1600) */
 
-#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>

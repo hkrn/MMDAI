@@ -158,7 +158,7 @@ void PMDAccelerator::uploadModel(pmd::Model *model, GLuint buffer, void *context
         boneIndices[i * 2 + 0] = vertex->bone1();
         boneIndices[i * 2 + 1] = vertex->bone2();
         boneWeights[i] = vertex->weight();
-        edgeOffset[i] = vertex->isEdgeEnabled() ? 1 : 0;
+        edgeOffset[i] = vertex->isEdgeEnabled() ? 1.0f : 0.0f;
     }
     clReleaseMemObject(m_boneMatricesBuffer);
     m_boneMatricesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_WRITE, nBoneMatricesSize, 0, &err);

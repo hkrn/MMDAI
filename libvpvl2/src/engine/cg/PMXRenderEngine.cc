@@ -37,6 +37,7 @@
 #include "vpvl2/cg/PMXRenderEngine.h"
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h" /* internal::snprintf */
 #include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Vertex.h"
@@ -146,17 +147,10 @@ bool PMXRenderEngine::upload(const IString *dir)
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             int index = material->toonTextureIndex();
-#ifdef _MSC_VER
             if (index == 0)
-                _snprintf(buf, sizeof(buf), "toon%d.bmp", index);
+                internal::snprintf(buf, sizeof(buf), "toon%d.bmp", index);
             else
-                _snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
-#else
-            if (index == 0)
-                snprintf(buf, sizeof(buf), "toon%d.bmp", index);
-            else
-                snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
-#endif
+                internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
             IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
             m_delegateRef->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
             delete s;

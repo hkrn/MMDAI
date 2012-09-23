@@ -44,9 +44,14 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #else
+#ifdef VPVL2_LINK_GLEW
+#include <GL/glew.h>
+#ifdef _MSC_VER
+#include <windows.h>
+#endif /* _MSC_VER */
+#endif /* VPVL2_LINK_GLEW */
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
-#include <GL/gl.h>
 #endif /* __APPLE__ */
 
 #include "vpvl2/IRenderDelegate.h"

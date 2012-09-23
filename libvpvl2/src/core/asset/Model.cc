@@ -85,7 +85,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
     Vector3 min, max;
     getBoundingBox(min, max);
     center = (min + max) * 0.5;
-    radius = (max - min).length() * 0.5;
+    radius = (max - min).length() * 0.5f;
 }
 
 void Model::setName(const IString *value)
