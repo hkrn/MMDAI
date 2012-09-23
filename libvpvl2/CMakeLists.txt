@@ -37,6 +37,8 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IString.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Scene.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/icu/String.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/icu/Encoding.h
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h

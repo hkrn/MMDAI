@@ -37,6 +37,7 @@
 /* libvpvl2 */
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderDelegate.h>
+#include <vpvl2/icu/Encoding.h>
 
 /* internal headers for debug */
 #include "vpvl2/pmx/Bone.h"
@@ -50,9 +51,6 @@
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/vmd/Motion.h"
-
-/* ICU */
-#include <unicode/unistr.h>
 
 /* SDL */
 #include <SDL.h>
@@ -93,184 +91,12 @@ BT_DECLARE_HANDLE(aiScene);
 namespace {
 
 using namespace vpvl2;
-
-const char *kDefaultEncoding = "utf8";
-
-class String : public IString {
-public:
-    String(const UnicodeString &value)
-        : m_value(value),
-          m_bytes(0)
-    {
-        size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-        m_bytes = new char[length + 1];
-        value.extract(0, size, reinterpret_cast<char *>(m_bytes), kDefaultEncoding);
-        m_bytes[length] = 0;
-    }
-    ~String() {
-        delete[] m_bytes;
-    }
-
-    bool startsWith(const IString *value) const {
-        return m_value.startsWith(static_cast<const String *>(value)->value());
-    }
-    bool contains(const IString *value) const {
-        return m_value.indexOf(static_cast<const String *>(value)->value()) != -1;
-    }
-    bool endsWith(const IString *value) const {
-        return m_value.endsWith(static_cast<const String *>(value)->value());
-    }
-    IString *clone() const {
-        return new String(m_value);
-    }
-    const HashString toHashString() const {
-        return HashString(m_bytes);
-    }
-    bool equals(const IString *value) const {
-        return m_value == static_cast<const String *>(value)->value();
-    }
-    const UnicodeString &value() const {
-        return m_value;
-    }
-    const uint8_t *toByteArray() const {
-        return reinterpret_cast<const uint8_t *>(m_bytes);
-    }
-    size_t length() const {
-        return m_value.length();
-    }
-
-private:
-    const UnicodeString m_value;
-    char *m_bytes;
-};
-
-class Encoding : public IEncoding {
-public:
-    Encoding()
-    {
-    }
-    ~Encoding() {
-    }
-
-    const IString *stringConstant(ConstantType value) const {
-        switch (value) {
-        case kLeft: {
-            static const String s("左");
-            return &s;
-        }
-        case kRight: {
-            static const String s("右");
-            return &s;
-        }
-        case kFinger: {
-            static const String s("指");
-            return &s;
-        }
-        case kElbow: {
-            static const String s("ひじ");
-            return &s;
-        }
-        case kArm: {
-            static const String s("腕");
-            return &s;
-        }
-        case kWrist: {
-            static const String s("手首");
-            return &s;
-        }
-        case kCenter: {
-            static const String s("センター");
-            return &s;
-        }
-        default: {
-            static const String s("");
-            return &s;
-        }
-        }
-    }
-    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
-        IString *s = 0;
-        const char *str = reinterpret_cast<const char *>(value);
-        switch (codec) {
-        case IString::kShiftJIS:
-            s = new String(UnicodeString(str, size, "shift_jis"));
-            break;
-        case IString::kUTF8:
-            s = new String(UnicodeString(str, size, "utf-8"));
-            break;
-        case IString::kUTF16:
-            s = new String(UnicodeString(str, size, "utf-16le"));
-            break;
-        default:
-            break;
-        }
-        return s;
-    }
-    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const {
-        size_t size = strlen(reinterpret_cast<const char *>(value));
-        return toString(value, btMin(maxlen, size), codec);
-    }
-    uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
-        if (value) {
-            const String *s = static_cast<const String *>(value);
-            const UnicodeString &src = s->value();
-            const char *codecTo = 0;
-            switch (codec) {
-            case IString::kShiftJIS:
-                codecTo = "shift_jis";
-                break;
-            case IString::kUTF8:
-                codecTo = "utf-8";
-                break;
-            case IString::kUTF16:
-                codecTo = "utf-16le";
-                break;
-            default:
-                break;
-            }
-            size_t size = s->length(), newStringLength = src.extract(0, size, 0, codecTo);
-            uint8_t *data = new uint8_t[newStringLength + 1];
-            src.extract(0, size, reinterpret_cast<char *>(data), codecTo);
-            data[newStringLength] = 0;
-            return data;
-        }
-        return 0;
-    }
-    void disposeByteArray(uint8_t *value) const {
-        delete[] value;
-    }
-};
-
-static const std::string UIUnicodeStringToStdString(const UnicodeString &value)
-{
-    size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-    std::vector<char> bytes(length + 1);
-    value.extract(0, size, reinterpret_cast<char *>(&bytes[0]), kDefaultEncoding);
-    return std::string(bytes.begin(), bytes.end() - 1);
-}
-
-static bool UIUnicodeStringToBool(const UnicodeString &value)
-{
-    const std::string &v = UIUnicodeStringToStdString(value);
-    return v == "true" || v == "1" || v == "y" || v == "yes";
-}
-
-static int UIUnicodeStringToInt(const UnicodeString &value, int def = 0)
-{
-    int v = int(strtol(UIUnicodeStringToStdString(value).c_str(), 0, 10));
-    return v != 0 ? v : def;
-}
-
-static float UIUnicodeStringToFloat(const UnicodeString &value, float def = 0.0)
-{
-    double v = strtod(UIUnicodeStringToStdString(value).c_str(), 0);
-    return v != 0.0 ? float(v) : def;
-}
+using namespace vpvl2::icu;
 
 static bool UILoadFile(const UnicodeString &path, std::string &bytes)
 {
     bytes.clear();
-    FILE *fp = ::fopen(UIUnicodeStringToStdString(path).c_str(), "rb");
+    FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
     bool ret = false;
     if (fp) {
         ::fseek(fp, 0, SEEK_END);
@@ -348,19 +174,19 @@ public:
         bool ret = false;
         if (flags & IRenderDelegate::kTexture2D) {
             const UnicodeString &path = createPath(dir, name);
-            std::cerr << "texture: " << UIUnicodeStringToStdString(path) << std::endl;
+            std::cerr << "texture: " << String::toStdString(path) << std::endl;
             ret = uploadTextureInternal(path, texture, false, false, mipmap, ok, context);
         }
         else if (flags & IRenderDelegate::kToonTexture) {
             if (dir) {
                 const UnicodeString &path = createPath(dir, name);
-                std::cerr << "toon: " << UIUnicodeStringToStdString(path) << std::endl;
+                std::cerr << "toon: " << String::toStdString(path) << std::endl;
                 ret = uploadTextureInternal(path, texture, true, false, mipmap, ok, context);
             }
             if (!ok) {
                 String s((*m_configRef)["dir.system.toon"]);
                 const UnicodeString &path = createPath(&s, name);
-                std::cerr << "system: " << UIUnicodeStringToStdString(path) << std::endl;
+                std::cerr << "system: " << String::toStdString(path) << std::endl;
                 ret = uploadTextureInternal(path, texture, true, true, mipmap, ok, context);
             }
         }
@@ -880,8 +706,8 @@ int main(int /* argc */, char ** /* argv[] */)
         config[k.trim()] = v.trim();
     }
 
-    size_t width = UIUnicodeStringToInt("window.width", 640),
-            height = UIUnicodeStringToInt("window.height", 480);
+    size_t width = vpvl2::icu::String::toInt("window.width", 640),
+            height = vpvl2::icu::String::toInt("window.height", 480);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 16);
@@ -943,12 +769,12 @@ int main(int /* argc */, char ** /* argv[] */)
     Delegate delegate(&scene, &config);
     bool ok = false;
     const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];
-    if (UIUnicodeStringToBool(config["enable.opencl"])) {
+    if (vpvl2::icu::String::toBoolean(config["enable.opencl"])) {
         scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
     }
 
     std::string data;
-    int nmodels = UIUnicodeStringToInt(config["models/size"]);
+    int nmodels = vpvl2::icu::String::toInt(config["models/size"]);
     for (int i = 0; i < nmodels; i++) {
         std::ostringstream stream;
         stream << "models/" << (i + 1);
@@ -960,7 +786,7 @@ int main(int /* argc */, char ** /* argv[] */)
             int flags = 0;
             IModel *model = factory.createModel(UICastData(data), data.size(), ok);
             IRenderEngine *engine = scene.createRenderEngine(&delegate, model, flags);
-            model->setEdgeWidth(UIUnicodeStringToFloat(config[prefix + "/edge.width"]));
+            model->setEdgeWidth(float(vpvl2::icu::String::toDouble(config[prefix + "/edge.width"])));
             if (engine->upload(&dir)) {
                 scene.addModel(model, engine);
                 if (UILoadFile(motionPath, data)) {
@@ -970,7 +796,7 @@ int main(int /* argc */, char ** /* argv[] */)
             }
         }
     }
-    int nassets = UIUnicodeStringToInt(config["assets/size"]);
+    int nassets = vpvl2::icu::String::toInt(config["assets/size"]);
     for (int i = 0; i < nassets; i++) {
         std::ostringstream stream;
         stream << "assets/" << (i + 1);
