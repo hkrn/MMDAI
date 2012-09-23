@@ -499,6 +499,21 @@ else()
   install(TARGETS vpvl2 DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
-      PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
+	  PATTERN "*.h"
+	  PATTERN ".svn" EXCLUDE
+	  PATTERN "config.h.in" EXCLUDE
+	  PATTERN "internal" EXCLUDE
+	  PATTERN "asset" EXCLUDE
+	  PATTERN "vmd" EXCLUDE
+	  PATTERN "mvd" EXCLUDE
+	  PATTERN "pmd" EXCLUDE
+	  PATTERN "pmx" EXCLUDE
+	  PATTERN "cg" EXCLUDE
+	  PATTERN "cl" EXCLUDE
+	  PATTERN "gl2" EXCLUDE
+	  PATTERN "qt" EXCLUDE)
+  if(VPVL2_LINK_QT)
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt" DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")
+  endif()
 endif()
 
