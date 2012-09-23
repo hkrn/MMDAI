@@ -427,31 +427,31 @@ void Bone::write(uint8_t *data, const Model::DataInfo &info) const
     internal::writeSignedIndex(m_parentBoneIndex, boneIndexSize, data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_layerIndex), sizeof(m_layerIndex), data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_flags), sizeof(m_flags), data);
-    if (m_flags & 0x0001) {
+    if (internal::hasFlagBits(m_flags, 0x0001)) {
         internal::writeSignedIndex(m_destinationOriginBoneIndex, boneIndexSize, data);
     }
     else {
         internal::getPosition(m_destinationOrigin, &bu.vector3[0]);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
     }
-    if (m_flags & 0x0100 || m_flags & 0x0200) {
+    if (hasRotationInherence() || hasPositionInherence()) {
         internal::writeSignedIndex(m_parentInherenceBoneIndex, boneIndexSize, data);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight), sizeof(m_weight), data);
     }
-    if (m_flags & 0x0400) {
+    if (hasFixedAxes()) {
         internal::getPosition(m_fixedAxis, &bu.vector3[0]);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
     }
-    if (m_flags & 0x0800) {
+    if (hasLocalAxes()) {
         internal::getPosition(m_axisX, &bu.vector3[0]);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
         internal::getPosition(m_axisZ, &bu.vector3[0]);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
     }
-    if (m_flags & 0x2000) {
+    if (isTransformedByExternalParent()) {
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_globalID), sizeof(m_globalID), data);
     }
-    if (m_flags & 0x0020) {
+    if (hasInverseKinematics()) {
         internal::writeSignedIndex(m_targetBoneIndex, boneIndexSize, data);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_nloop), sizeof(m_nloop), data);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_angleConstraint), sizeof(m_angleConstraint), data);
@@ -481,21 +481,21 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     size += boneIndexSize;
     size += sizeof(m_layerIndex);
     size += sizeof(m_flags);
-    size += (m_flags & 0x0001) ? boneIndexSize : sizeof(BoneUnit);
-    if (m_flags & 0x0100 || m_flags & 0x0200) {
+    size += (internal::hasFlagBits(m_flags, 0x0001)) ? boneIndexSize : sizeof(BoneUnit);
+    if (hasRotationInherence() || hasPositionInherence()) {
         size += boneIndexSize;
         size += sizeof(m_weight);
     }
-    if (m_flags & 0x0400) {
+    if (hasFixedAxes()) {
         size += sizeof(BoneUnit);
     }
-    if (m_flags & 0x0800) {
+    if (hasLocalAxes()) {
         size += sizeof(BoneUnit) * 2;
     }
-    if (m_flags & 0x2000) {
+    if (isTransformedByExternalParent()) {
         size += sizeof(m_globalID);
     }
-    if (m_flags & 0x0020) {
+    if (hasInverseKinematics()) {
         size += boneIndexSize;
         size += sizeof(IKUnit);
         int nlinks = m_IKLinks.count();
@@ -778,6 +778,60 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     else {
         value.setIdentity();
     }
+}
+
+bool Bone::isRotateable() const
+{
+    return internal::hasFlagBits(m_flags, 0x0002);
+}
+
+bool Bone::isMovable() const
+{
+    return internal::hasFlagBits(m_flags, 0x0004);
+}
+
+bool Bone::isVisible() const
+{
+    return internal::hasFlagBits(m_flags, 0x0008);
+}
+
+bool Bone::isInteractive() const
+{
+    return internal::hasFlagBits(m_flags, 0x0010);
+}
+
+bool Bone::hasInverseKinematics() const
+{
+    return internal::hasFlagBits(m_flags, 0x0020);
+}
+
+bool Bone::hasRotationInherence() const
+{
+    return internal::hasFlagBits(m_flags, 0x0100);
+}
+
+bool Bone::hasPositionInherence() const
+{
+    return internal::hasFlagBits(m_flags, 0x0200);
+}
+bool Bone::hasFixedAxes() const
+{
+    return internal::hasFlagBits(m_flags, 0x0400);
+}
+
+bool Bone::hasLocalAxes() const
+{
+    return internal::hasFlagBits(m_flags, 0x0800);
+}
+
+bool Bone::isTransformedAfterPhysicsSimulation() const
+{
+    return internal::hasFlagBits(m_flags, 0x1000);
+}
+
+bool Bone::isTransformedByExternalParent() const
+{
+    return internal::hasFlagBits(m_flags, 0x2000);
 }
 
 void Bone::setLocalTransform(const Transform &value)

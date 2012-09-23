@@ -344,6 +344,30 @@ void Material::resetMorph()
     m_toonTextureBlend.reset();
 }
 
+bool Material::isCullFaceDisabled() const
+{
+    return internal::hasFlagBits(m_flags, 0x01);
+}
+bool Material::hasShadow() const
+{
+    return internal::hasFlagBits(m_flags, 0x02);
+}
+
+bool Material::isShadowMapDrawn() const
+{
+    return internal::hasFlagBits(m_flags, 0x04);
+}
+
+bool Material::isSelfShadowDrawn() const
+{
+    return internal::hasFlagBits(m_flags, 0x08);
+}
+
+bool Material::isEdgeDrawn() const
+{
+    return internal::hasFlagBits(m_flags, 0x10);
+}
+
 void Material::setName(const IString *value)
 {
     internal::setString(value, m_name);

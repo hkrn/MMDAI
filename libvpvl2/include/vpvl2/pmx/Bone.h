@@ -111,17 +111,17 @@ public:
     int layerIndex() const { return m_layerIndex; }
     int externalIndex() const { return m_globalID; }
 
-    bool isRotateable() const { return m_flags & 0x0002; }
-    bool isMovable() const { return m_flags & 0x0004; }
-    bool isVisible() const { return m_flags & 0x0008; }
-    bool isInteractive() const { return m_flags & 0x0010; }
-    bool hasInverseKinematics() const { return m_flags & 0x0020; }
-    bool hasRotationInherence() const { return m_flags & 0x0100; }
-    bool hasPositionInherence() const { return m_flags & 0x0200; }
-    bool hasFixedAxes() const { return m_flags & 0x0400; }
-    bool hasLocalAxes() const { return m_flags & 0x0800; }
-    bool isTransformedAfterPhysicsSimulation() const { return m_flags & 0x1000; }
-    bool isTransformedByExternalParent() const { return m_flags & 0x2000; }
+    bool isRotateable() const;
+    bool isMovable() const;
+    bool isVisible() const;
+    bool isInteractive() const;
+    bool hasInverseKinematics() const;
+    bool hasRotationInherence() const;
+    bool hasPositionInherence() const;
+    bool hasFixedAxes() const;
+    bool hasLocalAxes() const;
+    bool isTransformedAfterPhysicsSimulation() const;
+    bool isTransformedByExternalParent() const;
 
     void setParentBone(Bone *value);
     void setParentInherenceBone(Bone *value, float weight);

@@ -370,6 +370,10 @@ static inline void toggleFlag(int value, bool enable, uint16_t &flags)
         flags &= ~value;
 }
 
+static inline bool hasFlagBits(int flags, int test) {
+    return (flags & test) == test;
+}
+
 template<typename T>
 static inline void getData(const uint8_t *ptr, T &output)
 {

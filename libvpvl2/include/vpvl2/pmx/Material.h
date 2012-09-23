@@ -171,11 +171,11 @@ public:
     int toonTextureIndex() const { return m_toonTextureIndex; }
     int indices() const { return m_indices; }
     bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
-    bool isCullFaceDisabled() const { return m_flags & 0x01; }
-    bool hasShadow() const { return m_flags & 0x02; }
-    bool isShadowMapDrawn() const { return m_flags & 0x04; }
-    bool isSelfShadowDrawn() const { return m_flags & 0x08; }
-    bool isEdgeDrawn() const { return m_flags & 0x10; }
+    bool isCullFaceDisabled() const;
+    bool hasShadow() const;
+    bool isShadowMapDrawn() const;
+    bool isSelfShadowDrawn() const;
+    bool isEdgeDrawn() const;
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
