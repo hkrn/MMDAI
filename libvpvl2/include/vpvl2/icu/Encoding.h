@@ -86,6 +86,7 @@ public:
             static const String s("センター");
             return &s;
         }
+        case kMaxConstantType:
         default: {
             static const String s("");
             return &s;
@@ -105,6 +106,7 @@ public:
         case IString::kUTF16:
             s = new String(UnicodeString(str, size, "utf-16le"));
             break;
+        case IString::kMaxCodecType:
         default:
             break;
         }
@@ -112,7 +114,7 @@ public:
     }
     IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const {
         size_t size = strlen(reinterpret_cast<const char *>(value));
-        return toString(value, btMin(maxlen, size), codec);
+        return toString(value, std::min(maxlen, size), codec);
     }
     uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
         if (value) {
@@ -129,6 +131,7 @@ public:
             case IString::kUTF16:
                 codecTo = "utf-16le";
                 break;
+            case IString::kMaxCodecType:
             default:
                 break;
             }
