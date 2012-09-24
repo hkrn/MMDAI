@@ -50,7 +50,7 @@ namespace vpvl2
 namespace icu
 {
 
-const char *kDefaultEncoding = "utf8";
+static const char *kDefaultEncoding = "utf8";
 
 class String : public IString {
 public:
