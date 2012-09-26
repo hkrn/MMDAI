@@ -29,6 +29,7 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILabel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILight.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILightKeyframe.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMaterial.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IModel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorph.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorphKeyframe.h
@@ -36,9 +37,10 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderDelegate.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IString.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IVertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Scene.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/icu/String.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/icu/Encoding.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/icu/Encoding.h
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
@@ -96,7 +98,7 @@ function(get_build_type var)
       set(${var} "${CMAKE_BUILD_TYPE_TOLOWER}-mingw" PARENT_SCOPE)
     else()
       set(${var} ${CMAKE_BUILD_TYPE_TOLOWER} PARENT_SCOPE)
-	endif()
+        endif()
   endif()
 endfunction()
 
@@ -146,7 +148,7 @@ function(link_bullet target)
       target_link_libraries(${target} ${BULLET_LINEARMATH_LIB})
     else()
       target_link_libraries(${target} ${BULLET_COLLISION_LIB} ${BULLET_DYNAMICS_LIB} ${BULLET_SOFTBODY_LIB} ${BULLET_LINEARMATH_LIB})
-	endif()
+        endif()
   endif()
 endfunction()
 
@@ -195,7 +197,7 @@ function(find_assimp target)
     if(BUILD_SHARED_LIBS OR MSVC)
       find_library(ASSIMP_LIBRARY assimp PATHS ${ASSIMP_LOCAL_LIBRARY_DIR} $ENV{ASSIMP_LIBRARY_DIR})
     endif()
-	link_assimp(${target})
+        link_assimp(${target})
   endif()
 endfunction()
 
@@ -507,19 +509,19 @@ else()
   install(TARGETS vpvl2 DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
-	  PATTERN "*.h"
-	  PATTERN ".svn" EXCLUDE
-	  PATTERN "config.h.in" EXCLUDE
-	  PATTERN "internal" EXCLUDE
-	  PATTERN "asset" EXCLUDE
-	  PATTERN "vmd" EXCLUDE
-	  PATTERN "mvd" EXCLUDE
-	  PATTERN "pmd" EXCLUDE
-	  PATTERN "pmx" EXCLUDE
-	  PATTERN "cg" EXCLUDE
-	  PATTERN "cl" EXCLUDE
-	  PATTERN "gl2" EXCLUDE
-	  PATTERN "qt" EXCLUDE)
+          PATTERN "*.h"
+          PATTERN ".svn" EXCLUDE
+          PATTERN "config.h.in" EXCLUDE
+          PATTERN "internal" EXCLUDE
+          PATTERN "asset" EXCLUDE
+          PATTERN "vmd" EXCLUDE
+          PATTERN "mvd" EXCLUDE
+          PATTERN "pmd" EXCLUDE
+          PATTERN "pmx" EXCLUDE
+          PATTERN "cg" EXCLUDE
+          PATTERN "cl" EXCLUDE
+          PATTERN "gl2" EXCLUDE
+          PATTERN "qt" EXCLUDE)
   if(VPVL2_LINK_QT)
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt" DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")
   endif()

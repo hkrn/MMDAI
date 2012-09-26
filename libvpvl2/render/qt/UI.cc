@@ -212,6 +212,8 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
     case pmx::Material::kSubTexture:
         debug << "         sphere                  = subtexture";
         break;
+    case pmx::Material::kMaxSphereTextureRenderModeType:
+        break;
     }
     debug << "\n";
     return debug.space();

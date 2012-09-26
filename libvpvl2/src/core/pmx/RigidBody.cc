@@ -51,8 +51,6 @@ BT_DECLARE_HANDLE(btRigidBody)
 namespace
 {
 
-    static vpvl2::pmx::Bone kNullBone;
-
 #pragma pack(push, 1)
 
     struct RigidBodyUnit
@@ -80,7 +78,7 @@ namespace
     class DefaultMotionState : public btMotionState
     {
     public:
-        DefaultMotionState(const Transform &startTransform, const Bone *bone)
+        DefaultMotionState(const Transform &startTransform, const IBone *bone)
             : m_bone(bone),
               m_startTransform(startTransform),
               m_worldTransform(startTransform)
@@ -99,7 +97,7 @@ namespace
         }
 
     protected:
-        const Bone *m_bone;
+        const IBone *m_bone;
         Transform m_startTransform;
         Transform m_worldTransform;
     };
@@ -107,7 +105,7 @@ namespace
     class AlignedMotionState : public DefaultMotionState
     {
     public:
-        AlignedMotionState(const Transform &startTransform, const Bone *bone)
+        AlignedMotionState(const Transform &startTransform, const IBone *bone)
             : DefaultMotionState(startTransform, bone)
         {
         }
@@ -129,7 +127,7 @@ namespace
     class KinematicMotionState : public DefaultMotionState
     {
     public:
-        KinematicMotionState(const Transform &startTransform, const Bone *bone)
+        KinematicMotionState(const Transform &startTransform, const IBone *bone)
             : DefaultMotionState(startTransform, bone)
         {
         }
@@ -445,7 +443,7 @@ void RigidBody::setEnglishName(const IString *value)
     internal::setString(value, m_englishName);
 }
 
-void RigidBody::setBone(Bone *value)
+void RigidBody::setBone(IBone *value)
 {
     m_bone = value;
     m_boneIndex = value ? value->index() : -1;

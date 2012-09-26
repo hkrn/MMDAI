@@ -456,7 +456,7 @@ void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDir
                 const int index = m_indices[j];
                 Vertex *vertex = m_vertices[index];
                 SkinnedVertex &v = m_skinnedVertices[index];
-                const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
+                const Vector3 &tex = vertex->textureCoord() + vertex->uv(0);
                 const float edgeSize = vertex->edgeSize();
                 vertex->performSkinning(v.position, v.normal);
                 v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5f);
@@ -1029,11 +1029,14 @@ void Model::getSkinningMesh(SkinningMeshes &meshes) const
             case Vertex::kSdef:
                 meshes.sdef.push_back(vertexIndex);
                 break;
+            case Vertex::kMaxType:
+            default:
+                break;
             }
             SkinnedVertex &skinnedVertex = m_skinnedVertices[vertexIndex];
             skinnedVertex.position.setW(Scalar(vertex->type()));
             for (int k = 0; k < 4; k++) {
-                Bone *bone = vertex->bone(k);
+                IBone *bone = vertex->bone(k);
                 if (bone) {
                     int boneIndex = bone->index();
                     int *normalizedBoneIndexPtr = set.find(boneIndex), normalizedBoneIndex = 0;

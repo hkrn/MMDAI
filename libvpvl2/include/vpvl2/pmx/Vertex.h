@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_VERTEX_H_
 #define VPVL2_PMX_VERTEX_H_
 
+#include "vpvl2/IVertex.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 
@@ -57,16 +58,9 @@ namespace pmx
  * Vertex class represents a morph of a Polygon Vertex Extended object.
  */
 
-class VPVL2_API Vertex
+class VPVL2_API Vertex : public IVertex
 {
 public:
-    enum Type {
-        kBdef1,
-        kBdef2,
-        kBdef4,
-        kSdef
-    };
-
     /**
      * Constructor
      */
@@ -95,30 +89,30 @@ public:
     const Vector3 &origin() const { return m_origin; }
     const Vector3 &delta() const { return m_morphDelta; }
     const Vector3 &normal() const { return m_normal; }
-    const Vector3 &texcoord() const { return m_texcoord; }
+    const Vector3 &textureCoord() const { return m_texcoord; }
     const Vector4 &uv(int index) const;
     Type type() const { return m_type; }
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
-    Bone *bone(int index) const;
+    IBone *bone(int index) const;
     const Vector3 &sdefC() const { return m_c; }
     const Vector3 &sdefR0() const { return m_r0; }
     const Vector3 &sdefR1() const { return m_r1; }
 
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
-    void setTexCoord(const Vector3 &value);
+    void setTextureCoord(const Vector3 &value);
     void setUV(int index, const Vector4 &value);
     void setType(Type value);
     void setEdgeSize(float value);
     void setWeight(int index, float weight);
-    void setBone(int index, Bone *value);
+    void setBone(int index, IBone *value);
     void setSdefC(const Vector3 &value);
     void setSdefR0(const Vector3 &value);
     void setSdefR1(const Vector3 &value);
 
 private:
-    Bone *m_boneRefs[4];
+    IBone *m_boneRefs[4];
     Vector4 m_originUVs[4];
     Vector4 m_morphUVs[5]; /* TexCoord + UVA1-4 */
     Vector3 m_origin;

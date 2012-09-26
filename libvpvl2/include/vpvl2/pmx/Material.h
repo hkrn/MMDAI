@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_MATERIAL_H_
 #define VPVL2_PMX_MATERIAL_H_
 
+#include "vpvl2/IMaterial.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 
@@ -54,15 +55,9 @@ namespace pmx
  * Material class represents a morph of a Polygon Material Extended object.
  */
 
-class VPVL2_API Material
+class VPVL2_API Material : public IMaterial
 {
 public:
-    enum SphereTextureRenderMode {
-        kNone,
-        kMultTexture,
-        kAddTexture,
-        kSubTexture
-    };
     struct RGB3 {
         Color result;
         Vector3 base;

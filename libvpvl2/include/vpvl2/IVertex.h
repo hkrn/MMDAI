@@ -34,72 +34,46 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_BONE_H_
-#define VPVL2_PMD_BONE_H_
+#ifndef VPVL2_IVERTEX_H_
+#define VPVL2_IVERTEX_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IBone.h"
-
-#include "vpvl/Bone.h"
-#include "vpvl/IK.h"
 
 namespace vpvl2
 {
+class IBone;
 
-class IEncoding;
-class IString;
-
-namespace pmd
-{
-
-class VPVL2_API Bone : public IBone
+class VPVL2_API IVertex
 {
 public:
-    Bone(vpvl::Bone *bone, IEncoding *encoding);
-    ~Bone();
+    enum Type {
+        kBdef1,
+        kBdef2,
+        kBdef4,
+        kSdef,
+        kMaxType
+    };
 
-    const IString *name() const;
-    int index() const;
-    IBone *parentBone() const { return m_parentBone; }
-    IBone *targetBone() const { return m_targetBoneRef; }
-    const Transform &worldTransform() const;
-    const Vector3 &origin() const;
-    const Vector3 destinationOrigin() const;
-    const Vector3 &position() const;
-    const Quaternion &rotation() const;
-    void getLinkedBones(Array<IBone *> &value) const;
-    void setPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
-    bool isMovable() const;
-    bool isRotateable() const;
-    bool isVisible() const;
-    bool isInteractive() const;
-    bool hasInverseKinematics() const;
-    bool hasFixedAxes() const;
-    bool hasLocalAxes() const;
-    const Vector3 &fixedAxis() const;
-    void getLocalAxes(Matrix3x3 &value) const;
+    virtual ~IVertex() {}
 
-    const Transform &localTransform() const { return m_boneRef->localTransform(); }
-    void getLocalTransform(Transform & /* world2LocalTransform */) const {}
-    void setLocalTransform(const Transform & /* value */) {}
-
-    void setParentBone(vpvl::Bone * value);
-    void setChildBone(vpvl::Bone *value);
-    void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
-
-private:
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    IBone *m_parentBone;
-    IBone *m_targetBoneRef;
-    IBone *m_childBone;
-    vpvl::Bone *m_boneRef;
-    Array<IBone *> m_IKLinks;
-    Vector3 m_fixedAxis;
+    virtual const Vector3 &origin() const = 0;
+    virtual const Vector3 &normal() const = 0;
+    virtual const Vector3 &textureCoord() const = 0;
+    virtual const Vector4 &uv(int index) const = 0;
+    virtual Type type() const = 0;
+    virtual float edgeSize() const = 0;
+    virtual float weight(int index) const = 0;
+    virtual IBone *bone(int index) const = 0;
+    virtual void setOrigin(const Vector3 &value) = 0;
+    virtual void setNormal(const Vector3 &value) = 0;
+    virtual void setTextureCoord(const Vector3 &value) = 0;
+    virtual void setUV(int index, const Vector4 &value) = 0;
+    virtual void setType(Type value) = 0;
+    virtual void setEdgeSize(float value) = 0;
+    virtual void setWeight(int index, float weight) = 0;
+    virtual void setBone(int index, IBone *value) = 0;
 };
 
-}
 }
 
 #endif

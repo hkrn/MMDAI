@@ -45,8 +45,6 @@ namespace
 
 using namespace vpvl2::pmx;
 
-static Bone kNullBone;
-
 #pragma pack(push, 1)
 
 struct VertexUnit {
@@ -445,6 +443,9 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
         normal   = n1 * w1s + n2 * w2s + n3 * w3s + n4 * w4s;
         break;
     }
+    case kMaxType:
+    default:
+        break;
     }
 }
 
@@ -458,7 +459,7 @@ float Vertex::weight(int index) const
     return index >= 0 && index < 4 ? m_weight[index] : 0.0f;
 }
 
-Bone *Vertex::bone(int index) const
+IBone *Vertex::bone(int index) const
 {
     return index >= 0 && index < 4 ? m_boneRefs[index] : 0;
 }
@@ -473,7 +474,7 @@ void Vertex::setNormal(const Vector3 &value)
     m_normal = value;
 }
 
-void Vertex::setTexCoord(const Vector3 &value)
+void Vertex::setTextureCoord(const Vector3 &value)
 {
     m_texcoord = value;
 }
@@ -500,7 +501,7 @@ void Vertex::setWeight(int index, float weight)
         m_weight[index] = weight;
 }
 
-void Vertex::setBone(int index, Bone *value)
+void Vertex::setBone(int index, IBone *value)
 {
     if (index >= 0 && index < 4) {
         m_boneRefs[index] = value;

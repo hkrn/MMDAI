@@ -34,72 +34,77 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_BONE_H_
-#define VPVL2_PMD_BONE_H_
+#ifndef VPVL2_IMATERIAL_H_
+#define VPVL2_IMATERIAL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IBone.h"
-
-#include "vpvl/Bone.h"
-#include "vpvl/IK.h"
 
 namespace vpvl2
 {
 
-class IEncoding;
 class IString;
 
-namespace pmd
-{
-
-class VPVL2_API Bone : public IBone
+class VPVL2_API IMaterial
 {
 public:
-    Bone(vpvl::Bone *bone, IEncoding *encoding);
-    ~Bone();
+    enum SphereTextureRenderMode {
+        kNone,
+        kMultTexture,
+        kAddTexture,
+        kSubTexture,
+        kMaxSphereTextureRenderModeType
+    };
 
-    const IString *name() const;
-    int index() const;
-    IBone *parentBone() const { return m_parentBone; }
-    IBone *targetBone() const { return m_targetBoneRef; }
-    const Transform &worldTransform() const;
-    const Vector3 &origin() const;
-    const Vector3 destinationOrigin() const;
-    const Vector3 &position() const;
-    const Quaternion &rotation() const;
-    void getLinkedBones(Array<IBone *> &value) const;
-    void setPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
-    bool isMovable() const;
-    bool isRotateable() const;
-    bool isVisible() const;
-    bool isInteractive() const;
-    bool hasInverseKinematics() const;
-    bool hasFixedAxes() const;
-    bool hasLocalAxes() const;
-    const Vector3 &fixedAxis() const;
-    void getLocalAxes(Matrix3x3 &value) const;
+    virtual ~IMaterial() {}
 
-    const Transform &localTransform() const { return m_boneRef->localTransform(); }
-    void getLocalTransform(Transform & /* world2LocalTransform */) const {}
-    void setLocalTransform(const Transform & /* value */) {}
+    virtual const IString *name() const = 0;
+    virtual const IString *englishName() const = 0;
+    virtual const IString *userDataArea() const = 0;
+    virtual const IString *mainTexture() const = 0;
+    virtual const IString *sphereTexture() const = 0;
+    virtual const IString *toonTexture() const = 0;
+    virtual SphereTextureRenderMode sphereTextureRenderMode() const = 0;
+    virtual const Color &ambient() const = 0;
+    virtual const Color &diffuse() const = 0;
+    virtual const Color &specular() const = 0;
+    virtual const Color &edgeColor() const = 0;
+    virtual const Color &mainTextureBlend() const = 0;
+    virtual const Color &sphereTextureBlend() const = 0;
+    virtual const Color &toonTextureBlend() const = 0;
+    virtual float shininess() const = 0;
+    virtual float edgeSize() const = 0;
+    virtual int index() const = 0;
+    virtual int textureIndex() const = 0;
+    virtual int sphereTextureIndex() const = 0;
+    virtual int toonTextureIndex() const = 0;
+    virtual int indices() const = 0;
+    virtual bool isSharedToonTextureUsed() const = 0;
+    virtual bool isCullFaceDisabled() const = 0;
+    virtual bool hasShadow() const = 0;
+    virtual bool isShadowMapDrawn() const = 0;
+    virtual bool isSelfShadowDrawn() const = 0;
+    virtual bool isEdgeDrawn() const = 0;
 
-    void setParentBone(vpvl::Bone * value);
-    void setChildBone(vpvl::Bone *value);
-    void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
-
-private:
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    IBone *m_parentBone;
-    IBone *m_targetBoneRef;
-    IBone *m_childBone;
-    vpvl::Bone *m_boneRef;
-    Array<IBone *> m_IKLinks;
-    Vector3 m_fixedAxis;
+    virtual void setName(const IString *value) = 0;
+    virtual void setEnglishName(const IString *value) = 0;
+    virtual void setUserDataArea(const IString *value) = 0;
+    virtual void setMainTexture(const IString *value) = 0;
+    virtual void setSphereTexture(const IString *value) = 0;
+    virtual void setToonTexture(const IString *value) = 0;
+    virtual void setSphereTextureRenderMode(SphereTextureRenderMode value) = 0;
+    virtual void setAmbient(const Color &value) = 0;
+    virtual void setDiffuse(const Color &value) = 0;
+    virtual void setSpecular(const Color &value) = 0;
+    virtual void setEdgeColor(const Color &value) = 0;
+    virtual void setShininess(float value) = 0;
+    virtual void setEdgeSize(float value) = 0;
+    virtual void setMainTextureIndex(int value) = 0;
+    virtual void setSphereTextureIndex(int value) = 0;
+    virtual void setToonTextureIndex(int value) = 0;
+    virtual void setIndices(int value) = 0;
+    virtual void setFlags(int value) = 0;
 };
 
-}
 }
 
 #endif

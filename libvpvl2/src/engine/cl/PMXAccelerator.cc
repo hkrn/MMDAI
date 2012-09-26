@@ -151,7 +151,7 @@ void PMXAccelerator::uploadModel(const pmx::Model *model, GLuint buffer, void *c
     for (int i = 0; i < nvertices; i++) {
         const pmx::Vertex *vertex = vertices[i];
         for (int j = 0; j < kMaxBonesPerVertex; j++) {
-            const pmx::Bone *bone = vertex->bone(j);
+            const IBone *bone = vertex->bone(j);
             boneIndices[i * kMaxBonesPerVertex + j] = bone ? bone->index() : -1;
             boneWeights[i * kMaxBonesPerVertex + j] = vertex->weight(j);
         }

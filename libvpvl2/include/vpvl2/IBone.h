@@ -100,6 +100,21 @@ public:
     virtual const Transform &worldTransform() const = 0;
 
     /**
+     * ボーンのローカル変換行列を返します。
+     *
+     * ボーンの位置を求めるにはこれが返す値の Transform::getOrigin によって求めることが出来ます。
+     * ボーンの初期位置を求めたい場合は origin を使用してください。
+     *
+     * @return Transform
+     * @sa origin
+     */
+    virtual const Transform &localTransform() const = 0;
+
+    virtual void getLocalTransform(Transform &world2LocalTransform) const = 0;
+
+    virtual void setLocalTransform(const Transform &value) = 0;
+
+    /**
      * ボーンの初期位置を返します。
      *
      * 返す値はボーン変形関係なく常に不変です。そのため、ボーン変形によって生じた値を
@@ -235,6 +250,36 @@ public:
      */
     virtual void getLocalAxes(Matrix3x3 &value) const = 0;
 };
+
+static class NullBone : public IBone {
+public:
+    NullBone() {}
+    ~NullBone() {}
+    const IString *name() const { return 0; }
+    int index() const { return -1; }
+    IBone *parentBone() const { return 0; }
+    IBone *targetBone() const { return 0; }
+    const Transform &worldTransform() const {  return Transform::getIdentity(); }
+    const Transform &localTransform() const {  return Transform::getIdentity(); }
+    void getLocalTransform(Transform & /* world2LocalTransform */) const {}
+    void setLocalTransform(const Transform & /* value */) {}
+    const Vector3 &origin() const { return kZeroV3; }
+    const Vector3 destinationOrigin() const { return kZeroV3; }
+    const Vector3 &position() const { return kZeroV3; }
+    const Quaternion &rotation() const { return Quaternion::getIdentity(); }
+    void getLinkedBones(Array<IBone *> & /* value */) const {}
+    void setPosition(const Vector3 & /* value */) {}
+    void setRotation(const Quaternion & /* value */) {}
+    bool isMovable() const { return false; }
+    bool isRotateable() const { return false; }
+    bool isVisible() const { return false; }
+    bool isInteractive() const { return false; }
+    bool hasInverseKinematics() const { return false; }
+    bool hasFixedAxes() const { return false; }
+    bool hasLocalAxes() const { return false; }
+    const Vector3 &fixedAxis() const { return kZeroV3; }
+    void getLocalAxes(Matrix3x3 & /* value */) const {}
+} kNullBone;
 
 }
 

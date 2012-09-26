@@ -97,7 +97,7 @@ public:
     btRigidBody *createRigidBody(btCollisionShape *shape);
 
     btRigidBody *body() const { return m_body; }
-    Bone *bone() const { return m_bone; }
+    IBone *bone() const { return m_bone; }
     int boneIndex() const { return m_boneIndex; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -116,7 +116,7 @@ public:
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
-    void setBone(Bone *value);
+    void setBone(IBone *value);
     void setAngularDamping(float value);
     void setCollisionGroupID(uint16_t value);
     void setCollisionMask(uint16_t value);
@@ -138,7 +138,7 @@ private:
     btMotionState *m_kinematicMotionState;
     Transform m_worldTransform;
     Transform m_world2LocalTransform;
-    Bone *m_bone;
+    IBone *m_bone;
     IString *m_name;
     IString *m_englishName;
     int m_boneIndex;
