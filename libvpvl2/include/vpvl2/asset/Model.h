@@ -44,8 +44,9 @@
 #include "vpvl2/IMorph.h"
 #include "vpvl2/IString.h"
 
-#include "vpvl/Asset.h"
 #ifdef VPVL2_LINK_ASSIMP
+#include <assimp.hpp>
+#include <aiPostProcess.h>
 #include <aiScene.h>
 #endif
 
@@ -86,35 +87,34 @@ public:
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     IndexType indexType() const { return kIndex32; }
-    const Vector3 &position() const { return m_asset.position(); }
-    const Quaternion &rotation() const { return m_asset.rotation(); }
-    const Scalar &opacity() const { return m_asset.opacity(); }
-    const Scalar &scaleFactor() const { return m_asset.scaleFactor(); }
+    const Vector3 &position() const { return m_position; }
+    const Quaternion &rotation() const { return m_rotation; }
+    const Scalar &opacity() const { return m_opacity; }
+    const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return kZeroV3; }
     const Scalar &edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
     IModel *parentModel() const { return m_parentModelRef; }
     IBone *parentBone() const { return m_parentBoneRef; }
     void setName(const IString *value);
-    void setEnglishName(const IString *value) { setName(value); }
+    void setEnglishName(const IString *value);
     void setComment(const IString *value);
-    void setEnglishComment(const IString *value) { setComment(value); }
-    void setPosition(const Vector3 &value) { m_asset.setPosition(value); }
-    void setRotation(const Quaternion &value) { m_asset.setRotation(value); }
-    void setOpacity(const Scalar &value) { m_asset.setOpacity(value); }
-    void setScaleFactor(const Scalar &value) { m_asset.setScaleFactor(value); }
+    void setEnglishComment(const IString *value);
+    void setPosition(const Vector3 &value);
+    void setRotation(const Quaternion &value);
+    void setOpacity(const Scalar &value);
+    void setScaleFactor(const Scalar &value);
     void setEdgeColor(const Vector3 & /* value */) {}
     void setEdgeWidth(const Scalar & /* value */) {}
-    void setParentModel(IModel *value) { m_parentModelRef = value; }
-    void setParentBone(IBone *value) { m_parentBoneRef = value; }
-
-    vpvl::Asset *ptr() { return &m_asset; }
+    void setParentModel(IModel *value);
+    void setParentBone(IBone *value);
 
 private:
 #ifdef VPVL2_LINK_ASSIMP
     void getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const;
+    Assimp::Importer m_importer;
+    const aiScene *m_scene;
 #endif
 
-    vpvl::Asset m_asset;
     IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_comment;
@@ -122,6 +122,10 @@ private:
     Array<IMorph *> m_morphs;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
+    Vector3 m_position;
+    Quaternion m_rotation;
+    Scalar m_opacity;
+    Scalar m_scaleFactor;
 };
 
 } /* namespace asset */

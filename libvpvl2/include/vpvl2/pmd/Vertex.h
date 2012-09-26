@@ -38,7 +38,7 @@
 #define VPVL2_PMD_MORPH_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IMorph.h"
+#include "vpvl2/IVertex.h"
 
 namespace vpvl2
 {
@@ -49,26 +49,35 @@ class IString;
 namespace pmd
 {
 
-class VPVL2_API Morph : public IMorph
+class VPVL2_API Vertex : public IVertex
 {
 public:
-    Morph(IEncoding *encodingRef);
-    ~Morph();
+    Vertex();
+    ~Vertex();
 
-    const IString *name() const { return m_name; }
-    int index() const { return m_index; }
-    Category category() const;
-    Type type() const;
-    bool hasParent() const;
-    const WeightPrecision &weight() const;
-    void setWeight(const WeightPrecision &value);
-    void setIndex(int value);
+    const Vector3 &origin() const { return m_origin; }
+    const Vector3 &normal() const { return m_normal; }
+    const Vector3 &textureCoord() const { return m_texcoord; }
+    const Vector4 &uv(int /* index */) const { return kZeroV4; }
+    Type type() const { return kBdef2; }
+    float edgeSize() const { return m_edgeSize; }
+    float weight(int /* index */) const { return m_weight; }
+    IBone *bone(int /* index */) const { return m_boneRef; }
+    void setOrigin(const Vector3 &value);
+    void setNormal(const Vector3 &value);
+    void setTextureCoord(const Vector3 &value);
+    void setUV(int index, const Vector4 &value);
+    void setType(Type value);
+    void setEdgeSize(float value);
+    void setWeight(int index, float weight);
+    void setBone(int index, IBone *value);
 
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    Category m_category;
-    WeightPrecision m_weight;
-    int m_index;
+    Vector3 m_origin;
+    Vector3 m_normal;
+    Vector3 m_texcoord;
+    float m_edgeSize;
+    float m_weight;
+    IBone *m_boneRef;
 };
 
 }

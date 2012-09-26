@@ -34,44 +34,71 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_MORPH_H_
-#define VPVL2_PMD_MORPH_H_
-
-#include "vpvl2/Common.h"
-#include "vpvl2/IMorph.h"
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/pmd/Vertex.h"
 
 namespace vpvl2
 {
-
-class IEncoding;
-class IString;
-
 namespace pmd
 {
 
-class VPVL2_API Morph : public IMorph
+Vertex::Vertex()
+    : m_origin(kZeroV3),
+      m_normal(kZeroV3),
+      m_texcoord(kZeroV3),
+      m_edgeSize(0),
+      m_weight(0),
+      m_boneRef(0)
 {
-public:
-    Morph(IEncoding *encodingRef);
-    ~Morph();
+}
 
-    const IString *name() const { return m_name; }
-    int index() const { return m_index; }
-    Category category() const;
-    Type type() const;
-    bool hasParent() const;
-    const WeightPrecision &weight() const;
-    void setWeight(const WeightPrecision &value);
-    void setIndex(int value);
+Vertex::~Vertex()
+{
+    m_origin.setZero();
+    m_normal.setZero();
+    m_texcoord.setZero();
+    m_edgeSize = 0;
+    m_weight = 0;
+    m_boneRef = 0;
+}
 
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    Category m_category;
-    WeightPrecision m_weight;
-    int m_index;
-};
+void Vertex::setOrigin(const Vector3 &value)
+{
+    m_origin = value;
+}
+
+void Vertex::setNormal(const Vector3 &value)
+{
+    m_normal = value;
+}
+
+void Vertex::setTextureCoord(const Vector3 &value)
+{
+    m_texcoord = value;
+}
+
+void Vertex::setUV(int /* index */, const Vector4 & /* value */)
+{
+}
+
+void Vertex::setType(Type /* value */)
+{
+}
+
+void Vertex::setEdgeSize(float value)
+{
+    m_edgeSize = value;
+}
+
+void Vertex::setWeight(int /* index */, float weight)
+{
+    m_weight = weight;
+}
+
+void Vertex::setBone(int /* index */, IBone *value)
+{
+    m_boneRef = value;
+}
 
 }
 }
-
-#endif

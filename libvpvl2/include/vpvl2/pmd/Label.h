@@ -40,8 +40,6 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/ILabel.h"
 
-#include "vpvl/Face.h"
-
 namespace vpvl2
 {
 

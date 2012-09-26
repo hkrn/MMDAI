@@ -42,16 +42,14 @@ namespace vpvl2
 namespace pmd
 {
 
-Bone::Bone(vpvl::Bone *bone, IEncoding *encoding)
-    : m_encodingRef(encoding),
+Bone::Bone(IEncoding *encodingRef)
+    : m_encodingRef(encodingRef),
       m_name(0),
       m_parentBone(0),
       m_targetBoneRef(0),
       m_childBone(0),
-      m_boneRef(bone),
       m_fixedAxis(kZeroV3)
 {
-    m_name = m_encodingRef->toString(m_boneRef->name(), IString::kShiftJIS, vpvl::Bone::kNameSize);
 }
 
 Bone::~Bone()
@@ -64,7 +62,6 @@ Bone::~Bone()
     m_childBone = 0;
     m_targetBoneRef = 0;
     m_encodingRef = 0;
-    m_boneRef = 0;
     m_fixedAxis.setZero();
 }
 
@@ -75,27 +72,27 @@ const IString *Bone::name() const
 
 int Bone::index() const
 {
-    return m_boneRef->id();
+    return -1;
 }
 
 const Transform &Bone::worldTransform() const
 {
-    return m_boneRef->localTransform();
+    return Transform::getIdentity();
 }
 
 const Vector3 &Bone::origin() const
 {
-    return m_boneRef->originPosition();
+    return kZeroV3;
 }
 
 const Vector3 Bone::destinationOrigin() const
 {
-    return m_boneRef->child()->localTransform().getOrigin();
+    return kZeroV3;
 }
 
 const Vector3 &Bone::position() const
 {
-    return m_boneRef->position();
+    return kZeroV3;
 }
 
 void Bone::getLinkedBones(Array<IBone *> &value) const
@@ -109,47 +106,45 @@ void Bone::getLinkedBones(Array<IBone *> &value) const
 
 const Quaternion &Bone::rotation() const
 {
-    return m_boneRef->rotation();
+    return Quaternion::getIdentity();
 }
 
-void Bone::setPosition(const Vector3 &value)
+void Bone::setPosition(const Vector3 & /* value */)
 {
-    m_boneRef->setPosition(value);
 }
 
-void Bone::setRotation(const Quaternion &value)
+void Bone::setRotation(const Quaternion & /* value */)
 {
-    m_boneRef->setRotation(value);
 }
 
 bool Bone::isMovable() const
 {
-    return m_boneRef->isMovable();
+    return false;
 }
 
 bool Bone::isRotateable() const
 {
-    return m_boneRef->isRotateable();
+    return false;
 }
 
 bool Bone::isVisible() const
 {
-    return m_boneRef->isVisible();
+    return false;
 }
 
 bool Bone::isInteractive() const
 {
-    return m_boneRef->isVisible();
+    return false;
 }
 
 bool Bone::hasInverseKinematics() const
 {
-    return m_targetBoneRef && m_IKLinks.count() > 0;
+    return false;
 }
 
 bool Bone::hasFixedAxes() const
 {
-    return m_boneRef->type() == vpvl::Bone::kTwist;
+    return false; // m_boneRef->type() == vpvl::Bone::kTwist;
 }
 
 bool Bone::hasLocalAxes() const
@@ -169,7 +164,7 @@ const Vector3 &Bone::fixedAxis() const
 void Bone::getLocalAxes(Matrix3x3 &value) const
 {
     if (hasLocalAxes()) {
-        const Vector3 &axisX = (m_childBone->origin() - m_boneRef->originPosition()).normalized();
+        const Vector3 &axisX = (m_childBone->origin() - origin()).normalized();
         Vector3 tmp1 = axisX;
         if (m_name->startsWith(m_encodingRef->stringConstant(IEncoding::kLeft)))
             tmp1.setY(-axisX.y());
@@ -185,42 +180,6 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     }
     else {
         value.setIdentity();
-    }
-}
-
-void Bone::setParentBone(vpvl::Bone *value)
-{
-    if (value)
-        m_parentBone = new Bone(const_cast<vpvl::Bone *>(value->parent()), m_encodingRef);
-}
-
-void Bone::setChildBone(vpvl::Bone *value)
-{
-    if (value) {
-        const vpvl::Bone *child = value->child();
-        m_childBone = new Bone(const_cast<vpvl::Bone *>(child), m_encodingRef);
-        if (hasFixedAxes())
-            m_fixedAxis = (child->originPosition() - m_boneRef->originPosition()).normalized();
-    }
-}
-
-void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
-{
-    vpvl::Bone *targetBone = ik->targetBone();
-    Bone **valuePtr = const_cast<Bone **>(b2b.find(targetBone));
-    if (valuePtr) {
-        Bone *value = *valuePtr;
-        m_targetBoneRef = value;
-    }
-    const vpvl::BoneList &bones = ik->linkedBones();
-    const int nbones = bones.count();
-    for (int i = 0; i < nbones; i++) {
-        vpvl::Bone *bone = bones[i];
-        valuePtr = const_cast<Bone **>(b2b.find(bone));
-        if (valuePtr) {
-            Bone *value = *valuePtr;
-            m_IKLinks.add(value);
-        }
     }
 }
 

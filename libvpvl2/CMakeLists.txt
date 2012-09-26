@@ -63,6 +63,12 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/NameListSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectSection.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/asset/Model.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Vertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Label.h
@@ -117,29 +123,6 @@ function(append_lib_linkage_suffix var)
   if(NOT BUILD_SHARED_LIBS)
     #set(${var} "${${var}}_static" PARENT_SCOPE)
   endif()
-endfunction()
-
-function(link_vpvl target)
-  if(BUILD_SHARED_LIBS OR MSVC)
-    target_link_libraries(${target} ${LIBVPVL_LIBRARY})
-  endif()
-endfunction()
-
-function(find_vpvl target)
-  get_build_type(LIBVPVL_BUILD_TYPE)
-  set(LIBVPVL_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../libvpvl")
-  set(LIBVPVL_LIBRARY_LOCAL_DIR "${LIBVPVL_LOCAL_DIR}/${LIBVPVL_BUILD_TYPE}/lib")
-  find_path(LIBVPVL_INCLUDE_DIRS vpvl/vpvl.h PATHS "${LIBVPVL_LOCAL_DIR}/include")
-  find_path(LIBVPVL_CONFIG_INCLUDE_DIRS vpvl/config.h PATHS "${LIBVPVL_LOCAL_DIR}/${LIBVPVL_BUILD_TYPE}/include")
-  include_directories(${LIBVPVL_INCLUDE_DIRS} ${LIBVPVL_CONFIG_INCLUDE_DIRS})
-  if(BUILD_SHARED_LIBS OR MSVC)
-    if(LIBVPVL_BUILD_TYPE STREQUAL "debug" AND NOT MSVC)
-      find_library(LIBVPVL_LIBRARY vpvl_debug PATHS ${LIBVPVL_LIBRARY_LOCAL_DIR})
-    else()
-      find_library(LIBVPVL_LIBRARY vpvl PATHS ${LIBVPVL_LIBRARY_LOCAL_DIR})
-    endif()
-  endif()
-  link_vpvl(${target})
 endfunction()
 
 function(link_bullet target)
@@ -343,13 +326,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # find libvpvl
-find_vpvl(vpvl2)
 list(APPEND vpvl2_public_headers
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/asset/Model.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
 )
 find_bullet(vpvl2)
 find_assimp(vpvl2)

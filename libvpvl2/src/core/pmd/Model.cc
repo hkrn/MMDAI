@@ -40,11 +40,24 @@
 #include "vpvl2/pmd/Label.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Morph.h"
+#include "vpvl2/pmd/Vertex.h"
 
 namespace vpvl2
 {
 namespace pmd
 {
+
+#pragma pack(push, 1)
+
+struct Header
+{
+    uint8_t signature[3];
+    float version;
+    uint8_t name[Model::kNameSize];
+    uint8_t comment[Model::kCommentSize];
+};
+
+#pragma pack(pop)
 
 Model::Model(IEncoding *encoding)
     : m_encodingRef(encoding),
@@ -86,105 +99,246 @@ Model::~Model()
     m_enableSkinning = false;
 }
 
+bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
+{
+    size_t rest = size;
+    // Header[3] + Version[4] + Name[20] + Comment[256]
+    if (!data || sizeof(Header) > rest) {
+        m_info.error = kInvalidHeaderError;
+        return false;
+    }
+
+    uint8_t *ptr = const_cast<uint8_t *>(data);
+    Header *header = reinterpret_cast<Header *>(ptr);
+    info.encoding = m_encodingRef;
+    info.basePtr = ptr;
+
+    // Check the signature and version is correct
+    if (memcmp(header->signature, "Pmd", 3) != 0) {
+        m_info.error = kInvalidSignatureError;
+        return false;
+    }
+    if (1.0f != header->version) {
+        m_info.error = kInvalidVersionError;
+        return false;
+    }
+
+    // Name and Comment (in Shift-JIS)
+    info.namePtr = header->name;
+    info.commentPtr = header->comment;
+    ptr += sizeof(Header);
+    rest -= sizeof(Header);
+
+    /*
+    size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
+            nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
+    // Vertices
+    if (!internal::size32(ptr, rest, nVertices)) {
+        m_info.error = kInvalidVerticesError;
+        return false;
+    }
+    info.verticesPtr = ptr;
+    if (!internal::validateSize(ptr, Vertex::stride(), nVertices, rest)) {
+        m_info.error = kInvalidVerticesError;
+        return false;
+    }
+    info.verticesCount = nVertices;
+
+    // Indices
+    if (!internal::size32(ptr, rest, nIndices)) {
+        m_info.error = kInvalidIndicesError;
+        return false;
+    }
+    info.indicesPtr = ptr;
+    if (!internal::validateSize(ptr, sizeof(uint16_t), nIndices, rest)) {
+        m_info.error = kInvalidIndicesError;
+        return false;
+    }
+    info.indicesCount = nIndices;
+
+    // Materials
+    if (!internal::size32(ptr, rest, nMaterials)) {
+        m_info.error = kInvalidMaterialsError;
+        return false;
+    }
+    info.materialsPtr = ptr;
+    if (!internal::validateSize(ptr, Material::stride(), nMaterials, rest)) {
+        m_info.error = kInvalidMaterialsError;
+        return false;
+    }
+    info.materialsCount = nMaterials;
+
+    // Bones
+    if (!internal::size16(ptr, rest, nBones)) {
+        m_info.error = kInvalidBonesError;
+        return false;
+    }
+    info.bonesPtr = ptr;
+    if (!internal::validateSize(ptr, Bone::stride(), nBones, rest)) {
+        m_info.error = kInvalidBonesError;
+        return false;
+    }
+    if (nBones == 0) {
+        m_info.error = kInvalidBonesError;
+        return false;
+    }
+    info.bonesCount = nBones;
+
+    // IKs
+    if (!internal::size16(ptr, rest, nIKs)) {
+        m_info.error = kInvalidBonesError;
+        return false;
+    }
+    info.IKBonesPtr = ptr;
+
+    bool ok = false;
+    size_t s = IK::totalSize(ptr, rest, nIKs, ok);
+    if (!ok || !internal::validateSize(ptr, s, 1, rest)) {
+        m_info.error = kInvalidBonesError;
+        return false;
+    }
+    info.IKBonesCount = nIKs;
+
+    // Faces
+    if (!internal::size16(ptr, rest, nFaces)) {
+        m_info.error = kInvalidMorphsError;
+        return false;
+    }
+    info.morphsPtr = ptr;
+
+    ok = false;
+    s = Face::totalSize(ptr, rest, nFaces, ok);
+    if (!ok || !internal::validateSize(ptr, s, 1, rest)) {
+        m_info.error = kInvalidMorphsError;
+        return false;
+    }
+    info.morphsCount = nFaces;
+
+    // Face display names
+    if (!internal::size8(ptr, rest, nFaceNames)) {
+        m_info.error = kInvalidLabelsError;
+        return false;
+    }
+    info.morphLabelsPtr = ptr;
+    if (!internal::validateSize(ptr, sizeof(uint16_t), nFaceNames, rest)) {
+        m_info.error = kInvalidLabelsError;
+        return false;
+    }
+    info.morphLabelsCount = nFaceNames;
+
+    // Bone frame names
+    if (!internal::size8(ptr, rest, nBoneFrames)) {
+        m_info.error = kInvalidLabelsError;
+        return false;
+    }
+    info.boneCategoryNamesPtr = ptr;
+    if (!internal::validateSize(ptr, kBoneCategoryNameSize, nBoneFrames, rest)) {
+        m_info.error = kInvalidLabelsError;
+        return false;
+    }
+    info.boneCategoryNamesCount = nBoneFrames;
+
+    // Bone display names
+    if (!internal::size32(ptr, rest, nBoneNames)) {
+        m_info.error = kInvalidLabelsError;
+        return false;
+    }
+    info.boneLabelsPtr = ptr;
+    if (!internal::validateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest)) {
+        m_info.error = kInvalidLabelsError;
+        return false;
+    }
+    info.boneLabelsCount = nBoneNames;
+
+    if (rest == 0)
+        return true;
+
+    // English names
+    size_t english;
+    internal::size8(ptr, rest, english);
+    if (english == 1) {
+        const size_t englishBoneNamesSize = Bone::kNameSize * nBones;
+        // In english names, the base face is not includes.
+        const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * Face::kNameSize : 0;
+        const size_t englishBoneCategoryNameSize = kBoneCategoryNameSize * nBoneFrames;
+        const size_t required = kNameSize + kCommentSize
+                + englishBoneNamesSize + englishFaceNamesSize + englishBoneCategoryNameSize;
+        if (required > rest) {
+            m_info.error = kInvalidEnglishNameSizeError;
+            return false;
+        }
+        info.englishNamePtr = ptr;
+        ptr += kNameSize;
+        info.englishCommentPtr = ptr;
+        ptr += kCommentSize;
+        info.englishBoneNamesPtr = ptr;
+        ptr += englishBoneNamesSize;
+        info.englishFaceNamesPtr = ptr;
+        ptr += englishFaceNamesSize;
+        info.englishBoneFramesPtr = ptr;
+        ptr += englishBoneCategoryNameSize;
+        rest -= required;
+    }
+
+    // Extra texture path (100 * 10)
+    size_t customTextureNameSize = (kCustomTextureMax - 1) * kCustomTextureNameMax;
+    if (customTextureNameSize > rest) {
+        m_info.error = kInvalidTextureSizeError;
+        return false;
+    }
+    info.toonTextureNamesPtr = ptr;
+    ptr += customTextureNameSize;
+    rest -= customTextureNameSize;
+
+    if (rest == 0)
+        return true;
+
+    // Rigid body
+    if (!internal::size32(ptr, rest, nRigidBodies)) {
+        m_info.error = kInvalidRigidBodiesError;
+        return false;
+    }
+    info.rigidBodiesPtr = ptr;
+    if (!internal::validateSize(ptr, RigidBody::stride(), nRigidBodies, rest)) {
+        m_info.error = kInvalidRigidBodiesError;
+        return false;
+    }
+    info.rigidBodiesCount = nRigidBodies;
+
+    // Constranint
+    if (!internal::size32(ptr, rest, nConstranits)) {
+        m_info.error = kInvalidJointsError;
+        return false;
+    }
+    info.constraintsPtr = ptr;
+    if (!internal::validateSize(ptr, Constraint::stride(), nConstranits, rest)) {
+        m_info.error = kInvalidJointsError;
+        return false;
+    }
+    info.constranitsCount = nConstranits;
+    */
+
+    return rest == 0;
+}
+
 bool Model::load(const uint8_t *data, size_t size)
 {
-    bool ret = m_model.load(data, size);
-    if (ret) {
-        /* convert bones (vpvl::Bone => vpvl2::IBone) */
-        const vpvl::BoneList &bones = m_model.bones();
-        const int nbones = bones.count();
-        Hash<HashPtr, Bone *> b2b;
-        for (int i = 0; i < nbones; i++) {
-            vpvl::Bone *b = bones[i];
-            Bone *bone = new Bone(b, m_encodingRef);
-            bone->setParentBone(b);
-            bone->setChildBone(b);
-            m_bones.add(bone);
-            m_name2boneRefs.insert(bone->name()->toHashString(), bone);
-            HashPtr key(b);
-            b2b.insert(key, bone);
-        }
-        /* set IK */
-        const vpvl::IKList &IKs = m_model.IKs();
-        const int nIKs = IKs.count();
-        for (int i = 0; i < nIKs; i++) {
-            vpvl::IK *ik = IKs[i];
-            Bone **valuePtr = const_cast<Bone **>(b2b.find(ik->destinationBone()));
-            if (valuePtr) {
-                Bone *value = *valuePtr;
-                value->setIK(ik, b2b);
-            }
-        }
-        /* build first bone label (this is special label) */
-        Array<IBone *> bones2, firstBone;
-        firstBone.add(m_bones[0]);
-        Label *label = new Label(reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encodingRef, true);
-        m_labels.add(label);
-        /* other bone labels */
-        const vpvl::Array<vpvl::BoneList *> &bonesForUI = m_model.bonesForUI();
-        const vpvl::Array<uint8_t *> &categories = m_model.boneCategoryNames();
-        const int ncategories = categories.count();
-        for (int i = 0; i < ncategories; i++) {
-            const vpvl::BoneList *bonesInCategory = bonesForUI[i];
-            const int nBonesInCategory = bonesInCategory->count();
-            const uint8_t *name = categories[i];
-            bones2.clear();
-            for (int j = 0; j < nBonesInCategory; j++) {
-                vpvl::Bone *bone = bonesInCategory->at(j);
-                Bone **valuePtr = const_cast<Bone **>(b2b.find(bone));
-                if (valuePtr) {
-                    Bone *value = *valuePtr;
-                    bones2.add(value);
-                }
-            }
-            label = new Label(name, bones2, m_encodingRef, false);
-            m_labels.add(label);
-        }
-        /* convert morphs (vpvl::Face => vpvl2::IMorph) */
-        const vpvl::FaceList &morphs = m_model.faces();
-        const int nmorphs = morphs.count();
-        for (int i = 0; i < nmorphs; i++) {
-            vpvl::Face *face = morphs[i];
-            if (face->type() != vpvl::Face::kBase) {
-                Morph *morph = new Morph(face, m_encodingRef);
-                morph->setIndex(i);
-                m_morphs.add(morph);
-                m_name2morphRefs.insert(morph->name()->toHashString(), morph);
-            }
-        }
-        /* set vertex ID to bone attribute */
-        const int nvertices = m_model.vertices().count();
-        uint8_t *ptr = static_cast<uint8_t *>(const_cast<void *>(m_model.boneAttributesPointer()));
-        size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
-        for (int i = 0; i < nvertices; i++) {
-            Vector3 *v = reinterpret_cast<Vector3 *>(ptr + i * stride);
-            v->setW(Scalar(i));
-        }
-        delete m_name;
-        m_name = m_encodingRef->toString(m_model.name(), IString::kShiftJIS, vpvl::PMDModel::kNameSize);
-        delete m_englishName;
-        m_englishName = m_encodingRef->toString(m_model.englishName(), IString::kShiftJIS, vpvl::PMDModel::kNameSize);
-        delete m_comment;
-        m_comment = m_encodingRef->toString(m_model.comment(), IString::kShiftJIS, vpvl::PMDModel::kCommentSize);
-        delete m_englishComment;
-        m_englishComment = m_encodingRef->toString(m_model.englishComment(), IString::kShiftJIS, vpvl::PMDModel::kCommentSize);
-        const vpvl::Color &edgeColor = m_model.edgeColor();
-        m_edgeColor.setValue(edgeColor.x(), edgeColor.y(), edgeColor.z());
-        m_edgeColor.setW(1);
-        m_edgeWidth = m_model.edgeOffset();
-        m_model.setVisible(true);
-    }
+    bool ret = false;
     return ret;
 }
 
 void Model::save(uint8_t *data) const
 {
-    m_model.save(data);
+}
+
+IModel::ErrorType Model::error() const
+{
+    return m_info.error;
 }
 
 size_t Model::estimateSize() const
 {
-    return m_model.estimateSize();
+    return 0;
 }
 
 void Model::resetVertices()
@@ -193,39 +347,14 @@ void Model::resetVertices()
 
 void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection)
 {
-    m_model.setLightPosition(-lightDirection);
-    m_model.updateImmediate();
-    if (m_enableSkinning) {
-        /* override edge process */
-        const size_t &stride = m_model.strideSize(vpvl::PMDModel::kEdgeVerticesStride);
-        const Scalar &edgeWidth = m_model.edgeOffset(), &esf = edgeScaleFactor(cameraPosition);
-        const vpvl::VertexList &vertices = m_model.vertices();
-        const int nvertices = vertices.count();
-        uint8_t *verticesPtr = const_cast<uint8_t *>(static_cast<const uint8_t *>(m_model.verticesPointer()));
-        size_t vertexOffset = m_model.strideOffset(vpvl::PMDModel::kVerticesStride),
-                normalOffset = m_model.strideOffset(vpvl::PMDModel::kNormalsStride),
-                edgeOffset = m_model.strideOffset(vpvl::PMDModel::kEdgeVerticesStride);
-        for (int i = 0; i < nvertices; i++) {
-            const vpvl::Vertex *vertex = vertices[i];
-            const Vector3 &position = *reinterpret_cast<const Vector3 *>(verticesPtr + vertexOffset);
-            const Vector3 &normal = *reinterpret_cast<const Vector3 *>(verticesPtr + normalOffset);
-            Vector3 &edge = *reinterpret_cast<Vector3 *>(verticesPtr + edgeOffset);
-            edge = vertex->isEdgeEnabled() ? (position + normal * edgeWidth * esf) : position;
-            vertexOffset += stride;
-            normalOffset += stride;
-            edgeOffset += stride;
-        }
-    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
 {
-    m_model.joinWorld(world);
 }
 
 void Model::leaveWorld(btDiscreteDynamicsWorld *world)
 {
-    m_model.leaveWorld(world);
 }
 
 IBone *Model::findBone(const IString *value) const
@@ -242,25 +371,33 @@ IMorph *Model::findMorph(const IString *value) const
 
 int Model::count(ObjectType value) const
 {
-    switch (value) {
-    case kBone:
-        return m_model.bones().count();
-    case kIK:
-        return m_model.IKs().count();
-    case kIndex:
-        return m_model.indices().count();
-    case kJoint:
-        return m_model.constraints().count();
-    case kMaterial:
-        return m_model.materials().count();
-    case kMorph:
-        return m_model.faces().count();
-    case kRigidBody:
-        return m_model.rigidBodies().count();
-    case kVertex:
-        return m_model.vertices().count();
-    default:
-        return 0;
+    return 0;
+}
+
+void Model::getBones(Array<IBone *> &value) const
+{
+    const int nbones = m_bones.count();
+    for (int i = 0; i < nbones; i++) {
+        IBone *bone = m_bones[i];
+        value.add(bone);
+    }
+}
+
+void Model::getLabels(Array<ILabel *> &value) const
+{
+    const int nlabels = m_labels.count();
+    for (int i = 0; i < nlabels; i++) {
+        ILabel *label = m_labels[i];
+        value.add(label);
+    }
+}
+
+void Model::getMorphs(Array<IMorph *> &value) const
+{
+    const int nmorphs = m_morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        IMorph *morph = m_morphs[i];
+        value.add(morph);
     }
 }
 
@@ -268,6 +405,7 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 {
     min.setZero();
     max.setZero();
+    /*
     const uint8_t *verticesPtr = static_cast<const uint8_t *>(m_model.verticesPointer());
     const size_t stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
     const int nvertices = m_model.vertices().count();
@@ -278,11 +416,13 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
         max.setMax(position);
         offset += stride;
     }
+    */
 }
 
 void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
     center.setZero();
+    /*
     radius = 0;
     IBone *bone = findBone(m_encodingRef->stringConstant(IEncoding::kCenter));
     if (bone) {
@@ -305,6 +445,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
         center = (min + max) * 0.5;
         radius = (max - min).length() * 0.5f;
     }
+    */
 }
 
 Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
@@ -320,33 +461,21 @@ Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 void Model::setName(const IString *value)
 {
     internal::setString(value, m_name);
-    uint8_t *bytes = m_encodingRef->toByteArray(value, IString::kShiftJIS);
-    m_model.setName(bytes);
-    m_encodingRef->disposeByteArray(bytes);
 }
 
 void Model::setEnglishName(const IString *value)
 {
     internal::setString(value, m_englishName);
-    uint8_t *bytes = m_encodingRef->toByteArray(value, IString::kShiftJIS);
-    m_model.setEnglishName(bytes);
-    m_encodingRef->disposeByteArray(bytes);
 }
 
 void Model::setComment(const IString *value)
 {
     internal::setString(value, m_comment);
-    uint8_t *bytes = m_encodingRef->toByteArray(value, IString::kShiftJIS);
-    m_model.setComment(bytes);
-    m_encodingRef->disposeByteArray(bytes);
 }
 
 void Model::setEnglishComment(const IString *value)
 {
     internal::setString(value, m_englishComment);
-    uint8_t *bytes = m_encodingRef->toByteArray(value, IString::kShiftJIS);
-    m_model.setEnglishComment(bytes);
-    m_encodingRef->disposeByteArray(bytes);
 }
 
 void Model::setPosition(const Vector3 &value)
@@ -371,18 +500,22 @@ void Model::setScaleFactor(const Scalar &value)
 
 void Model::setEdgeColor(const Vector3 &value)
 {
-    m_model.setEdgeColor(Color(value.x(), value.y(), value.z(), 1.0));
     m_edgeColor = value;
 }
 
 void Model::setEdgeWidth(const Scalar &value)
 {
-    m_model.setEdgeOffset(value);
     m_edgeWidth = value;
+}
+
+void Model::setVisible(bool value)
+{
+    m_visible = value;
 }
 
 void Model::getSkinningMeshes(SkinningMeshes &meshes) const
 {
+    /*
     const vpvl::MaterialList &materials = m_model.materials();
     const vpvl::VertexList &vertices = m_model.vertices();
     const vpvl::IndexList &vertexIndices = m_model.indices();
@@ -429,10 +562,12 @@ void Model::getSkinningMeshes(SkinningMeshes &meshes) const
         set.clear();
         offset += nindices;
     }
+    */
 }
 
 void Model::updateSkinningMeshes(SkinningMeshes &meshes) const
 {
+    /*
     const vpvl::BoneList &bones = m_model.bones();
     const int nbones = bones.count();
     MeshLocalTransforms &transforms = meshes.transforms;
@@ -451,28 +586,12 @@ void Model::updateSkinningMeshes(SkinningMeshes &meshes) const
             transform.getOpenGLMatrix(&matrices[j * 16]);
         }
     }
-}
-
-void Model::overrideEdgeVerticesOffset()
-{
-    const size_t &stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
-    const vpvl::VertexList &vertices = m_model.vertices();
-    const int nvertices = vertices.count();
-    uint8_t *verticesPtr = const_cast<uint8_t *>(static_cast<const uint8_t *>(m_model.verticesPointer()));
-    size_t edgeOffset = m_model.strideOffset(vpvl::PMDModel::kEdgeVerticesStride);
-    for (int i = 0; i < nvertices; i++) {
-        const vpvl::Vertex *vertex = vertices[i];
-        const Scalar w(vertex->isEdgeEnabled() ? 1.0f : 0.0f);
-        Vector3 &edge = *reinterpret_cast<Vector3 *>(verticesPtr + edgeOffset);
-        edge.setValue(w, w, w);
-        edgeOffset += stride;
-    }
+    */
 }
 
 void Model::setSkinnningEnable(bool value)
 {
     m_enableSkinning = value;
-    m_model.setSoftwareSkinningEnable(value);
 }
 
 }

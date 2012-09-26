@@ -40,9 +40,6 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IBone.h"
 
-#include "vpvl/Bone.h"
-#include "vpvl/IK.h"
-
 namespace vpvl2
 {
 
@@ -55,7 +52,7 @@ namespace pmd
 class VPVL2_API Bone : public IBone
 {
 public:
-    Bone(vpvl::Bone *bone, IEncoding *encoding);
+    Bone(IEncoding *encodingRef);
     ~Bone();
 
     const IString *name() const;
@@ -80,13 +77,9 @@ public:
     const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
 
-    const Transform &localTransform() const { return m_boneRef->localTransform(); }
+    const Transform &localTransform() const { return Transform::getIdentity(); }
     void getLocalTransform(Transform & /* world2LocalTransform */) const {}
     void setLocalTransform(const Transform & /* value */) {}
-
-    void setParentBone(vpvl::Bone * value);
-    void setChildBone(vpvl::Bone *value);
-    void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
 
 private:
     IEncoding *m_encodingRef;
@@ -94,7 +87,6 @@ private:
     IBone *m_parentBone;
     IBone *m_targetBoneRef;
     IBone *m_childBone;
-    vpvl::Bone *m_boneRef;
     Array<IBone *> m_IKLinks;
     Vector3 m_fixedAxis;
 };

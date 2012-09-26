@@ -36,9 +36,6 @@
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/internal/util.h"
-#ifdef VPVL2_LINK_ASSIMP
-#include "aiScene.h"
-#endif
 
 namespace vpvl2
 {
@@ -67,7 +64,13 @@ Model::~Model()
 
 bool Model::load(const uint8_t *data, size_t size)
 {
-    return m_asset.load(data, size);
+#ifdef VPVL2_LINK_ASSIMP
+    int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
+    m_scene = m_importer.ReadFileFromMemory(data, size, flags);
+    return m_scene != 0;
+#else
+    return false;
+#endif
 }
 
 void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
@@ -75,8 +78,7 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
     min.setZero();
     max.setZero();
 #ifdef VPVL2_LINK_ASSIMP
-    const aiScene *a = m_asset.getScene();
-    getBoundingBoxRecurse(a, a->mRootNode, min, max);
+    getBoundingBoxRecurse(m_scene, m_scene->mRootNode, min, max);
 #endif
 }
 
@@ -93,9 +95,48 @@ void Model::setName(const IString *value)
     internal::setString(value, m_name);
 }
 
+void Model::setEnglishName(const IString *value)
+{
+    setName(value);
+}
+
 void Model::setComment(const IString *value)
 {
     internal::setString(value, m_comment);
+}
+
+void Model::setEnglishComment(const IString *value)
+{
+    setComment(value);
+}
+
+void Model::setPosition(const Vector3 &value) {
+    m_position = value;
+}
+
+void Model::setRotation(const Quaternion &value)
+{
+    m_rotation = value;
+}
+
+void Model::setOpacity(const Scalar &value)
+{
+    m_opacity = value;
+}
+
+void Model::setScaleFactor(const Scalar &value)
+{
+    m_scaleFactor = value;
+}
+
+void Model::setParentModel(IModel *value)
+{
+    m_parentModelRef = value;
+}
+
+void Model::setParentBone(IBone *value)
+{
+    m_parentBoneRef = value;
 }
 
 #ifdef VPVL2_LINK_ASSIMP

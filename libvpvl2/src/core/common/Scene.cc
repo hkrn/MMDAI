@@ -56,7 +56,7 @@
 BT_DECLARE_HANDLE(CGcontext);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMDAccelerator.h"
 #include "vpvl2/cl/PMXAccelerator.h"
@@ -239,7 +239,7 @@ struct Scene::PrivateContext {
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
 #endif /* VPVL2_ENABLE_OPENCL */
@@ -279,7 +279,7 @@ struct Scene::PrivateContext {
     bool isOpenCLAcceleration() const {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
     cl_uint hostDeviceType() const {
         switch (accelerationType) {
         case kOpenCLAccelerationType1:
@@ -292,7 +292,7 @@ struct Scene::PrivateContext {
     }
 #endif
     cl::Context *createComputeContext(IRenderDelegate *delegate) {
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (!computeContext) {
             computeContext = new cl::Context(delegate);
             computeContext->initializeContext(hostDeviceType());
@@ -304,7 +304,7 @@ struct Scene::PrivateContext {
     }
     cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
         cl::PMDAccelerator *accelerator = 0;
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
             accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
@@ -316,7 +316,7 @@ struct Scene::PrivateContext {
     }
     cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
         cl::PMXAccelerator *accelerator = 0;
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
             accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
             accelerator->createKernelProgram();
@@ -371,7 +371,7 @@ ILight *Scene::createLight()
 
 bool Scene::isAcceleratorSupported()
 {
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
     return true;
 #else
     return false;
@@ -438,6 +438,10 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
     default:
         break;
     }
+#else
+    (void) delegate;
+    (void) model;
+    (void) flags;
 #endif /* VPVL2_OPENGL_RENDERER */
     return engine;
 }
@@ -473,6 +477,8 @@ IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
     return m_context->compileEffect(source);
 #else
+    (void) path;
+    (void) delegate;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }
@@ -483,6 +489,9 @@ IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDel
     IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
     return m_context->compileEffect(source);
 #else
+    (void) dir;
+    (void) model;
+    (void) delegate;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }
