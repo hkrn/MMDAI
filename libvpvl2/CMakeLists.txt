@@ -11,6 +11,7 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 # project configuration
 project(libvpvl2)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core vpvl2_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/base vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/common vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
@@ -44,6 +45,8 @@ set(vpvl2_public_headers
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/Joint.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/RigidBody.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/BaseSection.h
@@ -65,9 +68,12 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/asset/Model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Joint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Material.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
+	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/RigidBody.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Vertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h

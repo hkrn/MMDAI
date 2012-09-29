@@ -21,7 +21,7 @@ static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bo
 {
     vertex.setOrigin(Vector3(0.01, 0.02, 0.03));
     vertex.setNormal(Vector3(0.11, 0.12, 0.13));
-    vertex.setTexCoord(Vector3(0.21, 0.22, 0.0));
+    vertex.setTextureCoord(Vector3(0.21, 0.22, 0.0));
     vertex.setUV(0, Vector4(0.31, 0.32, 0.33, 0.34));
     vertex.setType(type);
     vertex.setEdgeSize(0.1);
@@ -39,7 +39,7 @@ static void CompareVertex(const Vertex &expected, const Vertex &vertex2, const A
 {
     ASSERT_TRUE(testVector(expected.origin(), vertex2.origin()));
     ASSERT_TRUE(testVector(expected.normal(), vertex2.normal()));
-    ASSERT_TRUE(testVector(expected.texcoord(), vertex2.texcoord()));
+    ASSERT_TRUE(testVector(expected.textureCoord(), vertex2.textureCoord()));
     ASSERT_TRUE(testVector(expected.uv(0), vertex2.uv(0)));
     ASSERT_TRUE(testVector(expected.uv(1), kZeroV4));
     ASSERT_EQ(expected.type(), vertex2.type());
@@ -80,7 +80,7 @@ TEST_P(FragmentTest, ReadWriteBone)
     Encoding encoding;
     Bone bone, bone2, parent;
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
@@ -152,7 +152,7 @@ TEST_P(FragmentTest, ReadWriteJoint)
     Joint joint, joint2;
     RigidBody body, body2;
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.rigidBodyIndexSize = indexSize;
@@ -198,7 +198,7 @@ TEST_P(FragmentTest, ReadWriteMaterial)
     Encoding encoding;
     Material material, material2;
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.textureIndexSize = indexSize;
@@ -246,7 +246,7 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
     Morph morph, morph2;
     QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.boneIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -293,7 +293,7 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
     Morph morph, morph2;
     QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.morphIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -336,7 +336,7 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
     Morph morph, morph2;
     QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.materialIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -416,7 +416,7 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
     RigidBody body, body2;
     Bone bone;
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
@@ -464,7 +464,7 @@ TEST_P(FragmentTest, ReadWriteVertexMorph)
     Morph morph, morph2;
     QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -599,7 +599,7 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     Morph morph, morph2;
     QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;

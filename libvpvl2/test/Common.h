@@ -7,13 +7,13 @@
 #include <tr1/tuple>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
-#include <vpvl2/qt/CString.h>
-#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/icu/String.h>
+#include <vpvl2/icu/Encoding.h>
 
 using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
-using namespace vpvl2::qt;
+using namespace vpvl2::icu;
 
 namespace vpvl2 {
 
@@ -126,6 +126,13 @@ static inline void AssertMatrix(const float *expected, const float *actual)
                                                 << i;
     }
 }
+
+struct ScopedPointerListDeleter {
+    template<typename T>
+    static inline void cleanup(QList<T *> *list) {
+        qDeleteAll(*list);
+    }
+};
 
 }
 

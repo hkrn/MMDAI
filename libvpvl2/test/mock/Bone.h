@@ -1,5 +1,3 @@
-#include <vpvl2/IBone.h>
-
 namespace vpvl2 {
 
 class MockIBone : public IBone {
@@ -14,6 +12,12 @@ class MockIBone : public IBone {
       IBone*());
   MOCK_CONST_METHOD0(worldTransform,
       const Transform&());
+  MOCK_CONST_METHOD0(localTransform,
+      const Transform&());
+  MOCK_CONST_METHOD1(getLocalTransform,
+      void(Transform &world2LocalTransform));
+  MOCK_METHOD1(setLocalTransform,
+      void(const Transform &value));
   MOCK_CONST_METHOD0(origin,
       const Vector3&());
   MOCK_CONST_METHOD0(destinationOrigin,

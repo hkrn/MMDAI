@@ -69,7 +69,7 @@ public:
         QFile file(effectPath);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
-            CString *source = new CString(bytes);
+            String *source = new String(UnicodeString::fromUTF8(bytes.constData()));
             EXPECT_CALL(delegate, getViewport(_)).Times(AnyNumber()).WillRepeatedly(Return());
             EXPECT_CALL(delegate, loadShaderSource(IRenderDelegate::kModelEffectTechniques, _))
                     .Times(1).WillRepeatedly(Return(source));
@@ -258,7 +258,7 @@ TEST_F(EffectTest, LoadControlObjectWithoutAsset)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
     EffectEngine engine(&scene, 0, ptr.data(), &delegate);
     EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(0);
     AssertParameterFloat(effectPtr, "no_such_asset_bool", 0);
     AssertParameterFloat(effectPtr, "no_such_asset_float", 0);
@@ -302,7 +302,7 @@ TEST_F(EffectTest, LoadControlObjectWithAsset)
     EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kAsset));
     EXPECT_CALL(delegate, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
     EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(&model);
     AssertParameterFloat(effectPtr, "asset_bool", 1);
     AssertParameterFloat(effectPtr, "asset_float", kScaleFactor);
@@ -331,7 +331,7 @@ TEST_F(EffectTest, LoadControlObjectWithoutModel)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
     EffectEngine engine(&scene, 0, ptr.data(), &delegate);
     EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("model"));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("model"));
     engine.controlObject.update(0);
     AssertParameterFloat(effectPtr, "no_such_model_bool", 0);
     AssertParameterFloat(effectPtr, "no_such_model_float", 0);
@@ -363,7 +363,7 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
     EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
     EXPECT_CALL(delegate, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
     EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(&model);
     AssertParameterFloat(effectPtr, "model_bool", 1);
     AssertParameterFloat(effectPtr, "model_float", kScaleFactor);

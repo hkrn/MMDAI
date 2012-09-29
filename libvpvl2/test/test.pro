@@ -9,8 +9,7 @@ QMAKE_CXXFLAGS = -W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings
 
 LIBS += -L../test/gtest-1.6.0/debug -lgtest -lgtest_main \
         -L../test/gmock-1.6.0/debug -lgmock -lgmock_main \
-        -L../debug/lib -lvpvl2_debug -lvpvl2qtcommon_debug \
-        -L../../libvpvl/debug/lib -lvpvl_debug \
+        -L../debug/lib -lvpvl2_debug -licuuc \
         -L../../bullet-src/debug/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 macx:LIBS += -framework Cg
 linux-*:LIBS += -lCg -lCgGL
@@ -42,7 +41,6 @@ HEADERS += mock/Bone.h \
     Common.h
 
 SOURCES += main.cc \
-    EffectTest.cc \
     InternalTest.cc \
     ModelTest.cc \
     VMDMotionTest.cc \
@@ -50,7 +48,8 @@ SOURCES += main.cc \
     ProjectTest.cc \
     StringTest.cc \
     EncodingTest.cc \
-    ArchiveTest.cc \
+#    ArchiveTest.cc \
+#    EffectTest.cc \
     FactoryTest.cc
 
 RESOURCES += \
