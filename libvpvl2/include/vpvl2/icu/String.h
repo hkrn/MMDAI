@@ -54,20 +54,20 @@ static const char *kDefaultEncoding = "utf8";
 
 class String : public IString {
 public:
-    static const std::string toStdString(const UnicodeString &value) {
+    static inline const std::string toStdString(const UnicodeString &value) {
         size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-        std::vector<char> bytes(length + 1);
-        value.extract(0, size, reinterpret_cast<char *>(&bytes[0]), kDefaultEncoding);
+        std::vector<uint8_t> bytes(length + 1);
+        value.extract(0, size, reinterpret_cast<char *>(bytes.data()), kDefaultEncoding);
         return std::string(bytes.begin(), bytes.end() - 1);
     }
-    static bool toBoolean(const UnicodeString &value) {
+    static inline bool toBoolean(const UnicodeString &value) {
         return value == "true" || value == "1" || value == "y" || value == "yes";
     }
-    static int toInt(const UnicodeString &value, int def = 0) {
+    static inline int toInt(const UnicodeString &value, int def = 0) {
         int v = int(strtol(toStdString(value).c_str(), 0, 10));
         return v != 0 ? v : def;
     }
-    static double toDouble(const UnicodeString &value, double def = 0.0) {
+    static inline double toDouble(const UnicodeString &value, double def = 0.0) {
         double v = strtod(toStdString(value).c_str(), 0);
         return v != 0.0 ? float(v) : def;
     }
@@ -77,7 +77,7 @@ public:
           m_bytes(0)
     {
         size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-        m_bytes = new char[length + 1];
+        m_bytes = new uint8_t[length + 1];
         value.extract(0, size, reinterpret_cast<char *>(m_bytes), kDefaultEncoding);
         m_bytes[length] = 0;
     }
@@ -94,11 +94,15 @@ public:
     bool endsWith(const IString *value) const {
         return m_value.endsWith(static_cast<const String *>(value)->value());
     }
+    void split(const IString */*separator*/, int /*maxTokens*/, Array<IString *> &tokens) const {
+        tokens.clear();
+        // FIXME: implement this
+    }
     IString *clone() const {
         return new String(m_value);
     }
     const HashString toHashString() const {
-        return HashString(m_bytes);
+        return HashString(reinterpret_cast<const char *>(m_bytes));
     }
     bool equals(const IString *value) const {
         return m_value == static_cast<const String *>(value)->value();
@@ -107,15 +111,28 @@ public:
         return m_value;
     }
     const uint8_t *toByteArray() const {
-        return reinterpret_cast<const uint8_t *>(m_bytes);
+        return m_bytes;
     }
-    size_t length() const {
+    size_t size() const {
         return m_value.length();
+    }
+    size_t length(Codec codec) const {
+        switch (codec) {
+        case kShiftJIS:
+            return m_value.extract(0, m_value.length(), 0, "shift_jis");
+        case kUTF8:
+            return m_value.extract(0, m_value.length(), 0, "shift_jis");
+        case kUTF16:
+            return m_value.extract(0, m_value.length(), 0, "shift_jis");
+        case kMaxCodecType:
+        default:
+            return 0;
+        }
     }
 
 private:
     const UnicodeString m_value;
-    char *m_bytes;
+    uint8_t *m_bytes;
 };
 
 } /* namespace icu */

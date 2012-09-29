@@ -333,17 +333,17 @@ static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
     }
 }
 
-static inline void writeString(const IString *string, uint8_t *&dst)
+static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
 {
-    size_t s = string ? string->length() : 0;
+    size_t s = string ? string->length(codec) : 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&s), sizeof(int), dst);
     if (s > 0)
         internal::writeBytes(string->toByteArray(), s, dst);
 }
 
-static inline size_t estimateSize(const IString *string)
+static inline size_t estimateSize(const IString *string, IString::Codec codec)
 {
-    return sizeof(int) + (string ? string->length() : 0);
+    return sizeof(int) + (string ? string->length(codec) : 0);
 }
 
 static inline void setString(const IString *newValue, IString *&value)
@@ -384,6 +384,12 @@ static inline void getData(const uint8_t *ptr, T &output)
 #endif
 }
 
+template<typename T>
+static inline bool checkBound(const T &value, const T &min, const T &max)
+{
+    return value >= min && value < max;
+}
+
 static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
                                            const IKeyframe::SmoothPrecision &x2,
                                            const IKeyframe::SmoothPrecision &y1,
@@ -422,7 +428,7 @@ static inline void zerofill(void *ptr, size_t size)
 static inline void snprintf(char *buf, size_t size, const char *format, ...)
 {
     va_list ap;
-	va_start(ap, format);
+    va_start(ap, format);
     vsnprintf(buf, size, format, ap);
     va_end(ap);
 }

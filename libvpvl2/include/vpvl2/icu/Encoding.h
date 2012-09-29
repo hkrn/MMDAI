@@ -59,36 +59,36 @@ public:
     const IString *stringConstant(ConstantType value) const {
         switch (value) {
         case kLeft: {
-            static const String s("左");
+            static const String s(UnicodeString::fromUTF8("左"));
             return &s;
         }
         case kRight: {
-            static const String s("右");
+            static const String s(UnicodeString::fromUTF8("右"));
             return &s;
         }
         case kFinger: {
-            static const String s("指");
+            static const String s(UnicodeString::fromUTF8("指"));
             return &s;
         }
         case kElbow: {
-            static const String s("ひじ");
+            static const String s(UnicodeString::fromUTF8("ひじ"));
             return &s;
         }
         case kArm: {
-            static const String s("腕");
+            static const String s(UnicodeString::fromUTF8("腕"));
             return &s;
         }
         case kWrist: {
-            static const String s("手首");
+            static const String s(UnicodeString::fromUTF8("手首"));
             return &s;
         }
         case kCenter: {
-            static const String s("センター");
+            static const String s(UnicodeString::fromUTF8("センター"));
             return &s;
         }
         case kMaxConstantType:
         default: {
-            static const String s("");
+            static const String s(UnicodeString::fromUTF8(""));
             return &s;
         }
         }
@@ -113,8 +113,13 @@ public:
         return s;
     }
     IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const {
-        size_t size = strlen(reinterpret_cast<const char *>(value));
-        return toString(value, std::min(maxlen, size), codec);
+        if (maxlen > 0 && value) {
+            size_t size = strlen(reinterpret_cast<const char *>(value));
+            return toString(value, std::min(maxlen, size), codec);
+        }
+        else {
+            return new(std::nothrow) String(UnicodeString::fromUTF8(""));
+        }
     }
     uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
         if (value) {
@@ -135,13 +140,17 @@ public:
             default:
                 break;
             }
-            size_t size = s->length(), newStringLength = src.extract(0, size, 0, codecTo);
+            size_t size = s->size(), newStringLength = src.extract(0, size, 0, codecTo);
             uint8_t *data = new uint8_t[newStringLength + 1];
             src.extract(0, size, reinterpret_cast<char *>(data), codecTo);
             data[newStringLength] = 0;
             return data;
         }
-        return 0;
+        else {
+            uint8_t *data = new uint8_t[1];
+            data[0] = 0;
+            return data;
+        }
     }
     void disposeByteArray(uint8_t *value) const {
         delete[] value;
