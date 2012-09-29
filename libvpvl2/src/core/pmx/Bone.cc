@@ -263,48 +263,48 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
-        const int parentBoneID = bone->m_parentBoneIndex;
-        if (parentBoneID >= 0) {
-            if (parentBoneID >= nbones) {
+        const int parentBoneIndex = bone->m_parentBoneIndex;
+        if (parentBoneIndex >= 0) {
+            if (parentBoneIndex >= nbones) {
                 return false;
             }
             else {
-                Bone *parent = bones[parentBoneID];
+                Bone *parent = bones[parentBoneIndex];
                 bone->m_offset -= parent->m_origin;
                 bone->m_parentBoneRef = parent;
             }
         }
-        const int destinationOriginBoneID = bone->m_destinationOriginBoneIndex;
-        if (destinationOriginBoneID >= 0) {
-            if (destinationOriginBoneID >= nbones)
+        const int destinationOriginBoneIndex = bone->m_destinationOriginBoneIndex;
+        if (destinationOriginBoneIndex >= 0) {
+            if (destinationOriginBoneIndex >= nbones)
                 return false;
             else
-                bone->m_destinationOriginBoneRef = bones[destinationOriginBoneID];
+                bone->m_destinationOriginBoneRef = bones[destinationOriginBoneIndex];
         }
-        const int targetBoneID = bone->m_targetBoneIndex;
-        if (targetBoneID >= 0) {
-            if (targetBoneID >= nbones)
+        const int targetBoneIndex = bone->m_targetBoneIndex;
+        if (targetBoneIndex >= 0) {
+            if (targetBoneIndex >= nbones)
                 return false;
             else
-                bone->m_targetBoneRef = bones[targetBoneID];
+                bone->m_targetBoneRef = bones[targetBoneIndex];
         }
-        const int parentBoneBiasID = bone->m_parentInherenceBoneIndex;
-        if (parentBoneBiasID >= 0) {
-            if (parentBoneBiasID >= nbones)
+        const int parentInherenceBoneIndex = bone->m_parentInherenceBoneIndex;
+        if (parentInherenceBoneIndex >= 0) {
+            if (parentInherenceBoneIndex >= nbones)
                 return false;
             else
-                bone->m_parentInherenceBoneRef = bones[parentBoneBiasID];
+                bone->m_parentInherenceBoneRef = bones[parentInherenceBoneIndex];
         }
         if (bone->hasInverseKinematics()) {
-            const int nIK = bone->m_IKLinks.count();
-            for (int j = 0; j < nIK; j++) {
+            const int nlinks = bone->m_IKLinks.count();
+            for (int j = 0; j < nlinks; j++) {
                 IKLink *ik = bone->m_IKLinks[j];
-                const int ikTargetBoneID = ik->boneID;
-                if (ikTargetBoneID >= 0) {
-                    if (ikTargetBoneID >= nbones)
+                const int ikTargetBoneIndex = ik->boneID;
+                if (ikTargetBoneIndex >= 0) {
+                    if (ikTargetBoneIndex >= nbones)
                         return false;
                     else
-                        ik->bone = bones[ikTargetBoneID];
+                        ik->bone = bones[ikTargetBoneIndex];
                 }
             }
         }
@@ -420,8 +420,8 @@ void Bone::write(uint8_t *data, const Model::DataInfo &info) const
 {
     size_t boneIndexSize = info.boneIndexSize;
     BoneUnit bu;
-    internal::writeString(m_name, data);
-    internal::writeString(m_englishName, data);
+    internal::writeString(m_name, info.codec, data);
+    internal::writeString(m_englishName, info.codec, data);
     internal::getPosition(m_origin, &bu.vector3[0]);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
     internal::writeSignedIndex(m_parentBoneIndex, boneIndexSize, data);
@@ -475,8 +475,8 @@ void Bone::write(uint8_t *data, const Model::DataInfo &info) const
 size_t Bone::estimateSize(const Model::DataInfo &info) const
 {
     size_t size = 0, boneIndexSize = info.boneIndexSize;
-    size += internal::estimateSize(m_name);
-    size += internal::estimateSize(m_englishName);
+    size += internal::estimateSize(m_name, info.codec);
+    size += internal::estimateSize(m_englishName, info.codec);
     size += sizeof(BoneUnit);
     size += boneIndexSize;
     size += sizeof(m_layerIndex);

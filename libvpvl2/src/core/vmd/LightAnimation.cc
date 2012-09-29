@@ -158,7 +158,7 @@ LightKeyframe *LightAnimation::findKeyframe(const IKeyframe::TimeIndex &timeInde
 
 LightKeyframe *LightAnimation::frameAt(int i) const
 {
-    return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<LightKeyframe *>(m_keyframes[i]) : 0;
+    return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<LightKeyframe *>(m_keyframes[i]) : 0;
 }
 
 }

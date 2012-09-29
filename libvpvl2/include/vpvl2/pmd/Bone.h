@@ -39,6 +39,7 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IBone.h"
+#include "vpvl2/pmd/Model.h"
 
 namespace vpvl2
 {
@@ -52,14 +53,34 @@ namespace pmd
 class VPVL2_API Bone : public IBone
 {
 public:
+    enum Type {
+        kRotate,
+        kRotateAndMove,
+        kIKDestination,
+        kUnknown,
+        kUnderIK,
+        kUnderRotate,
+        kIKTarget,
+        kInvisible,
+        kTwist,
+        kFollowRotate,
+        kMaxType
+    };
+
+    static const int kNameSize = 20;
+    static const int kCategoryNameSize = 50;
+
     Bone(IEncoding *encodingRef);
     ~Bone();
 
     const IString *name() const;
     int index() const;
-    IBone *parentBone() const { return m_parentBone; }
-    IBone *targetBone() const { return m_targetBoneRef; }
+    IBone *parentBone() const;
+    IBone *targetBone() const;
     const Transform &worldTransform() const;
+    const Transform &localTransform() const;
+    void getLocalTransform(Transform &world2LocalTransform) const;
+    void setLocalTransform(const Transform &value);
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
     const Vector3 &position() const;
@@ -77,18 +98,34 @@ public:
     const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
 
-    const Transform &localTransform() const { return Transform::getIdentity(); }
-    void getLocalTransform(Transform & /* world2LocalTransform */) const {}
-    void setLocalTransform(const Transform & /* value */) {}
+    static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool preparseIKJoints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadBones(const Array<Bone *> &bones);
+    static void readIKJoints(const uint8_t *data, const Array<Bone *> &bones, size_t &size);
+    void readBone(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    void setSimulated(bool value);
 
 private:
+    struct IKConstraint;
     IEncoding *m_encodingRef;
     IString *m_name;
-    IBone *m_parentBone;
+    IBone *m_parentBoneRef;
     IBone *m_targetBoneRef;
-    IBone *m_childBone;
-    Array<IBone *> m_IKLinks;
+    IBone *m_childBoneRef;
+    IKConstraint *m_constraint;
     Vector3 m_fixedAxis;
+    Vector3 m_origin;
+    Vector3 m_offset;
+    Vector3 m_position;
+    Quaternion m_rotation;
+    Transform m_worldTransform;
+    Transform m_localTransform;
+    Type m_type;
+    int m_index;
+    int m_parentBoneIndex;
+    int m_targetBoneIndex;
+    int m_childBoneIndex;
+    bool m_simulated;
 };
 
 }

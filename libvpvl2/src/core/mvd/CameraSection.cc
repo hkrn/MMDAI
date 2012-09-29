@@ -316,7 +316,7 @@ ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
 {
     if (m_contextPtr) {
         const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-        if (index >= 0 && index < keyframes->count()) {
+        if (internal::checkBound(index, 0, keyframes->count())) {
             ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes->at(index));
             return keyframe;
         }

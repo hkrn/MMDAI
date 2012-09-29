@@ -361,7 +361,7 @@ IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
 
 IBoneKeyframe *BoneSection::findKeyframeAt(int index) const
 {
-    if (index >= 0 && index < m_allKeyframeRefs.count()) {
+    if (internal::checkBound(index, 0, m_allKeyframeRefs.count())) {
         IBoneKeyframe *keyframe = reinterpret_cast<IBoneKeyframe *>(m_allKeyframeRefs[index]);
         return keyframe;
     }

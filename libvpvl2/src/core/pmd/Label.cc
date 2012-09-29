@@ -35,7 +35,23 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
+#include "vpvl2/pmd/Bone.h" /* for Boen::kCategoryNameSize */
 #include "vpvl2/pmd/Label.h"
+
+namespace
+{
+
+#pragma pack(push, 1)
+
+struct BoneLabel
+{
+    uint8_t categoryIndex;
+    uint16_t boneIndex;
+};
+
+#pragma pack(pop)
+}
 
 namespace vpvl2
 {
@@ -45,6 +61,7 @@ namespace pmd
 Label::Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)
     : m_encodingRef(encoding),
       m_name(0),
+      m_index(-1),
       m_special(special)
 {
     m_name = m_encodingRef->toString(name, IString::kShiftJIS, 50);
@@ -56,7 +73,84 @@ Label::~Label()
     delete m_name;
     m_name = 0;
     m_encodingRef = 0;
+    m_index = -1;
     m_special = false;
+}
+
+bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+{
+    size_t size;
+    if (!internal::size8(ptr, rest, size) || size * sizeof(uint16_t) > rest) {
+        return false;
+    }
+    info.morphLabelsCount = size;
+    info.morphLabelsPtr = ptr;
+    internal::readBytes(size * sizeof(uint16_t), ptr, rest);
+    if (!internal::size8(ptr, rest, size) || size * Bone::kCategoryNameSize > rest) {
+        return false;
+    }
+    info.boneCategoryNamesCount = size;
+    info.boneCategoryNamesPtr = ptr;
+    internal::readBytes(size * Bone::kCategoryNameSize, ptr, rest);
+    if (!internal::size32(ptr, rest, size) || size * sizeof(BoneLabel) > rest) {
+        return false;
+    }
+    info.boneLabelsCount = size;
+    info.boneCategoryNamesPtr = ptr;
+    internal::readBytes(size * sizeof(BoneLabel), ptr, rest);
+    return true;
+}
+
+bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones, const Array<Morph *> &morphs)
+{
+    const int nlabels = labels.count();
+    const int nbones = bones.count();
+    const int nmorphs = morphs.count();
+    (void) nbones;
+    (void) nmorphs;
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        // FIXME: implement this
+        /*
+        const Array<Pair *> &pairs = label->m_pairs;
+        const int npairs = pairs.count();
+        for (int j = 0; j < npairs; j++) {
+            Pair *pair = pairs[j];
+            switch (pair->type) {
+            case 0: {
+                const int boneIndex = pair->id;
+                if (boneIndex >= 0) {
+                    if (boneIndex >= nbones)
+                        return false;
+                    else
+                        pair->bone = bones[boneIndex];
+                }
+                break;
+            }
+            case 1: {
+                const int morphIndex = pair->id;
+                if (morphIndex >= 0) {
+                    if (morphIndex >= nmorphs)
+                        return false;
+                    else
+                        pair->morph = morphs[morphIndex];
+                }
+                break;
+            }
+            default:
+                assert(0);
+                return false;
+            }
+        }
+        */
+        label->m_index = i;
+    }
+    return true;
+}
+
+void Label::read(const uint8_t * /* data */, const Model::DataInfo &/*info*/, size_t &/*size*/)
+{
+    // FIXME: implement this
 }
 
 }

@@ -39,6 +39,7 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IMorph.h"
+#include "vpvl2/pmd/Model.h"
 
 namespace vpvl2
 {
@@ -49,9 +50,13 @@ class IString;
 namespace pmd
 {
 
+class Vertex;
+
 class VPVL2_API Morph : public IMorph
 {
 public:
+    static const int kNameSize = 20;
+
     Morph(IEncoding *encodingRef);
     ~Morph();
 
@@ -64,10 +69,15 @@ public:
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
+    void read(const uint8_t *data, const Array<Vertex *> &vertices, size_t &size);
+
     IEncoding *m_encodingRef;
     IString *m_name;
     Category m_category;
     WeightPrecision m_weight;
+    Array<Vertex *> m_vertexRefs;
     int m_index;
 };
 

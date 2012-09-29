@@ -37,15 +37,18 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 #include "vpvl2/pmd/Bone.h"
+#include "vpvl2/pmd/Joint.h"
 #include "vpvl2/pmd/Label.h"
+#include "vpvl2/pmd/Material.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Morph.h"
+#include "vpvl2/pmd/RigidBody.h"
 #include "vpvl2/pmd/Vertex.h"
 
-namespace vpvl2
+namespace
 {
-namespace pmd
-{
+
+using namespace vpvl2::pmd;
 
 #pragma pack(push, 1)
 
@@ -59,8 +62,15 @@ struct Header
 
 #pragma pack(pop)
 
-Model::Model(IEncoding *encoding)
-    : m_encodingRef(encoding),
+}
+
+namespace vpvl2
+{
+namespace pmd
+{
+
+Model::Model(IEncoding *encodingRef)
+    : m_encodingRef(encodingRef),
       m_name(0),
       m_englishName(0),
       m_comment(0),
@@ -78,256 +88,168 @@ Model::Model(IEncoding *encoding)
 
 Model::~Model()
 {
-    m_bones.releaseAll();
-    m_morphs.releaseAll();
-    m_labels.releaseAll();
-    m_encodingRef = 0;
-    delete m_name;
-    m_name = 0;
-    delete m_englishName;
-    m_englishName = 0;
-    delete m_comment;
-    m_comment = 0;
-    delete m_englishComment;
-    m_englishComment = 0;
-    m_position.setZero();
-    m_rotation.setValue(0, 0, 0, 1);
-    m_opacity = 0;
-    m_scaleFactor = 0;
-    m_edgeColor.setZero();
-    m_edgeWidth = 0;
-    m_enableSkinning = false;
+    release();
 }
 
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
-    // Header[3] + Version[4] + Name[20] + Comment[256]
-    if (!data || sizeof(Header) > rest) {
+    Header header;
+    if (!data || sizeof(header) > rest) {
         m_info.error = kInvalidHeaderError;
         return false;
     }
 
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    Header *header = reinterpret_cast<Header *>(ptr);
+    internal::getData(ptr, header);
     info.encoding = m_encodingRef;
     info.basePtr = ptr;
 
     // Check the signature and version is correct
-    if (memcmp(header->signature, "Pmd", 3) != 0) {
+    if (memcmp(header.signature, "Pmd", sizeof(header.signature)) != 0) {
         m_info.error = kInvalidSignatureError;
         return false;
     }
-    if (1.0f != header->version) {
+    if (header.version != 1.0) {
         m_info.error = kInvalidVersionError;
         return false;
     }
 
     // Name and Comment (in Shift-JIS)
-    info.namePtr = header->name;
-    info.commentPtr = header->comment;
-    ptr += sizeof(Header);
-    rest -= sizeof(Header);
+    info.namePtr = header.name;
+    info.commentPtr = header.comment;
+    internal::readBytes(sizeof(header), ptr, rest);
 
-    /*
-    size_t nVertices = 0, nIndices = 0, nMaterials = 0, nBones = 0, nIKs = 0, nFaces = 0,
-            nFaceNames = 0, nBoneFrames = 0, nBoneNames = 0, nRigidBodies = 0, nConstranits = 0;
-    // Vertices
-    if (!internal::size32(ptr, rest, nVertices)) {
-        m_info.error = kInvalidVerticesError;
+    // Vertex
+    if (!Vertex::preparse(ptr, rest, info)) {
+        info.error = kInvalidVerticesError;
         return false;
     }
-    info.verticesPtr = ptr;
-    if (!internal::validateSize(ptr, Vertex::stride(), nVertices, rest)) {
-        m_info.error = kInvalidVerticesError;
-        return false;
-    }
-    info.verticesCount = nVertices;
-
-    // Indices
-    if (!internal::size32(ptr, rest, nIndices)) {
+    // Index
+    size_t nindices, indexSize = sizeof(uint16_t);
+    if (!internal::size32(ptr, rest, nindices) || nindices * indexSize > rest) {
         m_info.error = kInvalidIndicesError;
         return false;
     }
     info.indicesPtr = ptr;
-    if (!internal::validateSize(ptr, sizeof(uint16_t), nIndices, rest)) {
-        m_info.error = kInvalidIndicesError;
+    info.indicesCount = nindices;
+    internal::readBytes(nindices * indexSize, ptr, rest);
+    // Material
+    if (!Material::preparse(ptr, rest, info)) {
+        info.error = kInvalidMaterialsError;
         return false;
     }
-    info.indicesCount = nIndices;
-
-    // Materials
-    if (!internal::size32(ptr, rest, nMaterials)) {
-        m_info.error = kInvalidMaterialsError;
+    // Bone
+    if (!Bone::preparseBones(ptr, rest, info)) {
+        info.error = kInvalidBonesError;
         return false;
     }
-    info.materialsPtr = ptr;
-    if (!internal::validateSize(ptr, Material::stride(), nMaterials, rest)) {
-        m_info.error = kInvalidMaterialsError;
+    // IK
+    if (!Bone::preparseIKJoints(ptr, rest, info)) {
+        info.error = kInvalidBonesError;
         return false;
     }
-    info.materialsCount = nMaterials;
-
-    // Bones
-    if (!internal::size16(ptr, rest, nBones)) {
-        m_info.error = kInvalidBonesError;
+    // Morph
+    if (!Morph::preparse(ptr, rest, info)) {
+        info.error = kInvalidMorphsError;
         return false;
     }
-    info.bonesPtr = ptr;
-    if (!internal::validateSize(ptr, Bone::stride(), nBones, rest)) {
-        m_info.error = kInvalidBonesError;
+    // Label
+    if (!Label::preparse(ptr, rest, info)) {
+        info.error = kInvalidLabelsError;
         return false;
     }
-    if (nBones == 0) {
-        m_info.error = kInvalidBonesError;
-        return false;
-    }
-    info.bonesCount = nBones;
-
-    // IKs
-    if (!internal::size16(ptr, rest, nIKs)) {
-        m_info.error = kInvalidBonesError;
-        return false;
-    }
-    info.IKBonesPtr = ptr;
-
-    bool ok = false;
-    size_t s = IK::totalSize(ptr, rest, nIKs, ok);
-    if (!ok || !internal::validateSize(ptr, s, 1, rest)) {
-        m_info.error = kInvalidBonesError;
-        return false;
-    }
-    info.IKBonesCount = nIKs;
-
-    // Faces
-    if (!internal::size16(ptr, rest, nFaces)) {
-        m_info.error = kInvalidMorphsError;
-        return false;
-    }
-    info.morphsPtr = ptr;
-
-    ok = false;
-    s = Face::totalSize(ptr, rest, nFaces, ok);
-    if (!ok || !internal::validateSize(ptr, s, 1, rest)) {
-        m_info.error = kInvalidMorphsError;
-        return false;
-    }
-    info.morphsCount = nFaces;
-
-    // Face display names
-    if (!internal::size8(ptr, rest, nFaceNames)) {
-        m_info.error = kInvalidLabelsError;
-        return false;
-    }
-    info.morphLabelsPtr = ptr;
-    if (!internal::validateSize(ptr, sizeof(uint16_t), nFaceNames, rest)) {
-        m_info.error = kInvalidLabelsError;
-        return false;
-    }
-    info.morphLabelsCount = nFaceNames;
-
-    // Bone frame names
-    if (!internal::size8(ptr, rest, nBoneFrames)) {
-        m_info.error = kInvalidLabelsError;
-        return false;
-    }
-    info.boneCategoryNamesPtr = ptr;
-    if (!internal::validateSize(ptr, kBoneCategoryNameSize, nBoneFrames, rest)) {
-        m_info.error = kInvalidLabelsError;
-        return false;
-    }
-    info.boneCategoryNamesCount = nBoneFrames;
-
-    // Bone display names
-    if (!internal::size32(ptr, rest, nBoneNames)) {
-        m_info.error = kInvalidLabelsError;
-        return false;
-    }
-    info.boneLabelsPtr = ptr;
-    if (!internal::validateSize(ptr, sizeof(uint16_t) + sizeof(uint8_t), nBoneNames, rest)) {
-        m_info.error = kInvalidLabelsError;
-        return false;
-    }
-    info.boneLabelsCount = nBoneNames;
-
     if (rest == 0)
         return true;
 
-    // English names
-    size_t english;
-    internal::size8(ptr, rest, english);
-    if (english == 1) {
-        const size_t englishBoneNamesSize = Bone::kNameSize * nBones;
-        // In english names, the base face is not includes.
-        const size_t englishFaceNamesSize = nFaces > 0 ? (nFaces - 1) * Face::kNameSize : 0;
-        const size_t englishBoneCategoryNameSize = kBoneCategoryNameSize * nBoneFrames;
-        const size_t required = kNameSize + kCommentSize
-                + englishBoneNamesSize + englishFaceNamesSize + englishBoneCategoryNameSize;
+    // English info
+    size_t hasEnglish;
+    if (!internal::size8(ptr, rest, hasEnglish)) {
+        info.error = kInvalidEnglishNameSizeError;
+        return false;
+    }
+    if (hasEnglish != 0) {
+        const size_t boneNameSize = Bone::kNameSize * info.bonesCount;
+        const size_t morphNameSize =  Morph::kNameSize * info.morphLabelsCount;
+        const size_t boneCategoryNameSize = Bone::kCategoryNameSize * info.boneCategoryNamesCount;
+        const size_t required = kNameSize + kCommentSize + boneNameSize + morphNameSize + boneCategoryNameSize;
         if (required > rest) {
             m_info.error = kInvalidEnglishNameSizeError;
             return false;
         }
         info.englishNamePtr = ptr;
-        ptr += kNameSize;
+        internal::readBytes(kNameSize, ptr, rest);
         info.englishCommentPtr = ptr;
-        ptr += kCommentSize;
+        internal::readBytes(kCommentSize, ptr, rest);
         info.englishBoneNamesPtr = ptr;
-        ptr += englishBoneNamesSize;
+        internal::readBytes(boneNameSize, ptr, rest);
         info.englishFaceNamesPtr = ptr;
-        ptr += englishFaceNamesSize;
+        internal::readBytes(morphNameSize, ptr, rest);
         info.englishBoneFramesPtr = ptr;
-        ptr += englishBoneCategoryNameSize;
-        rest -= required;
+        internal::readBytes(boneCategoryNameSize, ptr, rest);
     }
-
-    // Extra texture path (100 * 10)
-    size_t customTextureNameSize = (kCustomTextureMax - 1) * kCustomTextureNameMax;
-    if (customTextureNameSize > rest) {
+    // Custom toon textures
+    size_t customToonTextureNameSize = kMaxCustomToonTextures * kCustomToonTextureNameSize;
+    if (customToonTextureNameSize > rest) {
         m_info.error = kInvalidTextureSizeError;
         return false;
     }
-    info.toonTextureNamesPtr = ptr;
-    ptr += customTextureNameSize;
-    rest -= customTextureNameSize;
-
+    info.customToonTextureNamesPtr = ptr;
+    ptr += customToonTextureNameSize;
+    rest -= customToonTextureNameSize;
     if (rest == 0)
         return true;
 
-    // Rigid body
-    if (!internal::size32(ptr, rest, nRigidBodies)) {
-        m_info.error = kInvalidRigidBodiesError;
+    // RigidBody
+    if (!RigidBody::preparse(ptr, rest, info)) {
+        info.error = kInvalidRigidBodiesError;
         return false;
     }
-    info.rigidBodiesPtr = ptr;
-    if (!internal::validateSize(ptr, RigidBody::stride(), nRigidBodies, rest)) {
-        m_info.error = kInvalidRigidBodiesError;
+    // Joint
+    if (!Joint::preparse(ptr, rest, info)) {
+        info.error = kInvalidJointsError;
         return false;
     }
-    info.rigidBodiesCount = nRigidBodies;
-
-    // Constranint
-    if (!internal::size32(ptr, rest, nConstranits)) {
-        m_info.error = kInvalidJointsError;
-        return false;
-    }
-    info.constraintsPtr = ptr;
-    if (!internal::validateSize(ptr, Constraint::stride(), nConstranits, rest)) {
-        m_info.error = kInvalidJointsError;
-        return false;
-    }
-    info.constranitsCount = nConstranits;
-    */
 
     return rest == 0;
 }
 
 bool Model::load(const uint8_t *data, size_t size)
 {
-    bool ret = false;
-    return ret;
+    DataInfo info;
+    internal::zerofill(&info, sizeof(info));
+    if (preparse(data, size, info)) {
+        release();
+        parseNamesAndComments(info);
+        parseVertices(info);
+        parseIndices(info);
+        parseMaterials(info);
+        parseBones(info);
+        parseMorphs(info);
+        parseLabels(info);
+        parseCustomToonTextures(info);
+        parseRigidBodies(info);
+        parseJoints(info);
+        if (!Bone::loadBones(m_bones)
+                || !Material::loadMaterials(m_materials, m_customToonTextures, m_indices.count())
+                || !Vertex::loadVertices(m_vertices, m_bones)
+                || !Morph::loadMorphs(m_morphs, m_vertices)
+                || !Label::loadLabels(m_labels, m_bones, m_morphs)
+                || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
+                || !Joint::loadJoints(m_joints, m_rigidBodies)) {
+            m_info.error = info.error;
+            return false;
+        }
+        m_info = info;
+        return true;
+    }
+    else {
+        m_info.error = info.error;
+    }
+    return false;
 }
 
-void Model::save(uint8_t *data) const
+void Model::save(uint8_t * /* data */) const
 {
 }
 
@@ -345,15 +267,15 @@ void Model::resetVertices()
 {
 }
 
-void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection)
+void Model::performUpdate(const Vector3 &/*cameraPosition*/, const Vector3 &/*lightDirection*/)
 {
 }
 
-void Model::joinWorld(btDiscreteDynamicsWorld *world)
+void Model::joinWorld(btDiscreteDynamicsWorld * /* world */)
 {
 }
 
-void Model::leaveWorld(btDiscreteDynamicsWorld *world)
+void Model::leaveWorld(btDiscreteDynamicsWorld * /* world */)
 {
 }
 
@@ -371,6 +293,33 @@ IMorph *Model::findMorph(const IString *value) const
 
 int Model::count(ObjectType value) const
 {
+    switch (value) {
+    case kBone:
+        return m_bones.count();
+    case kIK: {
+        int nbones = 0, nIKJoints = 0;
+        for (int i = 0; i < nbones; i++) {
+            if (m_bones[i]->hasInverseKinematics())
+                nIKJoints++;
+        }
+        return nIKJoints;
+    }
+    case kIndex:
+        return m_indices.count();
+    case kJoint:
+        return m_joints.count();
+    case kMaterial:
+        return m_materials.count();
+    case kMorph:
+        return m_morphs.count();
+    case kRigidBody:
+        return m_rigidBodies.count();
+    case kVertex:
+        return m_vertices.count();
+    case kMaxObjectType:
+    default:
+        return 0;
+    }
     return 0;
 }
 
@@ -422,8 +371,8 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
     center.setZero();
-    /*
     radius = 0;
+    /*
     IBone *bone = findBone(m_encodingRef->stringConstant(IEncoding::kCenter));
     if (bone) {
         const Vector3 &centerPosition = bone->worldTransform().getOrigin();
@@ -513,7 +462,7 @@ void Model::setVisible(bool value)
     m_visible = value;
 }
 
-void Model::getSkinningMeshes(SkinningMeshes &meshes) const
+void Model::getSkinningMeshes(SkinningMeshes &/*meshes*/) const
 {
     /*
     const vpvl::MaterialList &materials = m_model.materials();
@@ -565,7 +514,7 @@ void Model::getSkinningMeshes(SkinningMeshes &meshes) const
     */
 }
 
-void Model::updateSkinningMeshes(SkinningMeshes &meshes) const
+void Model::updateSkinningMeshes(SkinningMeshes &/*meshes*/) const
 {
     /*
     const vpvl::BoneList &bones = m_model.bones();
@@ -592,6 +541,155 @@ void Model::updateSkinningMeshes(SkinningMeshes &meshes) const
 void Model::setSkinnningEnable(bool value)
 {
     m_enableSkinning = value;
+}
+
+void Model::release()
+{
+    m_vertices.releaseAll();
+    m_materials.releaseAll();
+    m_bones.releaseAll();
+    m_morphs.releaseAll();
+    m_labels.releaseAll();
+    m_rigidBodies.releaseAll();
+    m_joints.releaseAll();
+    m_customToonTextures.releaseAll();
+    delete m_name;
+    m_name = 0;
+    delete m_englishName;
+    m_englishName = 0;
+    delete m_comment;
+    m_comment = 0;
+    delete m_englishComment;
+    m_englishComment = 0;
+    m_position.setZero();
+    m_rotation.setValue(0, 0, 0, 1);
+    m_opacity = 0;
+    m_scaleFactor = 0;
+    m_edgeColor.setZero();
+    m_edgeWidth = 0;
+    m_enableSkinning = false;
+}
+
+void Model::parseNamesAndComments(const DataInfo &info)
+{
+    internal::setStringDirect(m_encodingRef->toString(info.namePtr, kNameSize, IString::kShiftJIS), m_name);
+    internal::setStringDirect(m_encodingRef->toString(info.englishNamePtr, kNameSize, IString::kShiftJIS), m_englishName);
+    internal::setStringDirect(m_encodingRef->toString(info.commentPtr, kCommentSize, IString::kShiftJIS), m_comment);
+    internal::setStringDirect(m_encodingRef->toString(info.englishCommentPtr, kCommentSize, IString::kShiftJIS), m_englishComment);
+}
+
+void Model::parseVertices(const DataInfo &info)
+{
+    const int nvertices = info.verticesCount;
+    uint8_t *ptr = info.verticesPtr;
+    size_t size;
+    for(int i = 0; i < nvertices; i++) {
+        Vertex *vertex = new Vertex();
+        m_vertices.add(vertex);
+        vertex->read(ptr, info, size);
+        ptr += size;
+    }
+}
+
+void Model::parseIndices(const DataInfo &info)
+{
+    const int nindices = info.indicesCount;
+    uint8_t *ptr = info.indicesPtr;
+    for(int i = 0; i < nindices; i++) {
+        uint16_t index = internal::readUnsignedIndex(ptr, 2);
+        m_indices.add(index);
+    }
+}
+
+void Model::parseMaterials(const DataInfo &info)
+{
+    const int nmaterials = info.materialsCount;
+    uint8_t *ptr = info.materialsPtr;
+    size_t size;
+    for(int i = 0; i < nmaterials; i++) {
+        Material *material = new Material(m_encodingRef);
+        m_materials.add(material);
+        material->read(ptr, info, size);
+        ptr += size;
+    }
+}
+
+void Model::parseBones(const DataInfo &info)
+{
+    const int nbones = info.bonesCount;
+    uint8_t *ptr = info.bonesPtr;
+    size_t size;
+    for(int i = 0; i < nbones; i++) {
+        Bone *bone = new Bone(m_encodingRef);
+        m_bones.add(bone);
+        bone->readBone(ptr, info, size);
+        ptr += size;
+    }
+}
+
+void Model::parseIKJoints(const DataInfo &info)
+{
+    const int njoints = info.IKJointsCount;
+    uint8_t *ptr = info.IKJointsPtr;
+    size_t size;
+    for(int i = 0; i < njoints; i++) {
+        Bone::readIKJoints(ptr, m_bones, size);
+        ptr += size;
+    }
+}
+
+void Model::parseMorphs(const DataInfo &info)
+{
+    const int nmorphs = info.morphsCount;
+    uint8_t *ptr = info.morphsPtr;
+    size_t size;
+    for(int i = 0; i < nmorphs; i++) {
+        Morph *morph = new Morph(m_encodingRef);
+        m_morphs.add(morph);
+        morph->read(ptr, m_vertices, size);
+        m_name2morphRefs.insert(morph->name()->toHashString(), morph);
+        ptr += size;
+    }
+}
+
+void Model::parseLabels(const DataInfo &info)
+{
+}
+
+void Model::parseCustomToonTextures(const DataInfo &info)
+{
+    uint8_t *ptr = info.customToonTextureNamesPtr;
+    for (int i = 0; i < kMaxCustomToonTextures; i++) {
+        IString *customToonTexture = m_encodingRef->toString(ptr, IString::kShiftJIS, kCustomToonTextureNameSize);
+        m_customToonTextures.add(customToonTexture);
+        ptr += kCustomToonTextureNameSize;
+    }
+}
+
+void Model::parseRigidBodies(const DataInfo &info)
+{
+    const int nRigidBodies = info.rigidBodiesCount;
+    uint8_t *ptr = info.rigidBodiesPtr;
+    size_t size;
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = new RigidBody(m_encodingRef);
+        m_rigidBodies.add(rigidBody);
+        rigidBody->read(ptr, info, size);
+        ptr += size;
+    }
+}
+
+void Model::parseJoints(const DataInfo &info)
+{
+    const int njoints = info.jointsCount;
+    uint8_t *ptr = info.jointsPtr;
+    size_t size;
+    for(int i = 0; i < njoints; i++) {
+        Joint *joint = new Joint(m_encodingRef);
+        m_joints.add(joint);
+        joint->read(ptr, info, size);
+        ptr += size;
+    }
 }
 
 }

@@ -108,8 +108,45 @@ public:
         kFloat3EffectParameter,
         kFloat4EffectParameter
     };
-    struct DataInfo
-    {
+    struct DataInfo {
+        DataInfo()
+            : encoding(0),
+              codec(IString::kUTF8),
+              basePtr(0),
+              namePtr(0),
+              nameSize(0),
+              name2Ptr(0),
+              name2Size(0),
+              reservedPtr(0),
+              reservedSize(0),
+              adjustAlignment(0),
+              sectionStartPtr(0),
+              nameListSectionPtr(0),
+              endPtr(0)
+        {
+        }
+        void copy(const DataInfo &other) {
+            encoding = other.encoding;
+            codec = other.codec;
+            namePtr = other.namePtr;
+            nameSize = other.nameSize;
+            name2Ptr = other.name2Ptr;
+            name2Size = other.name2Size;
+            reservedPtr = other.reservedPtr;
+            reservedSize = other.reservedSize;
+            adjustAlignment = other.adjustAlignment;
+            sectionStartPtr = other.sectionStartPtr;
+            nameListSectionPtr = other.nameListSectionPtr;
+            assetSectionPtrs.copy(other.assetSectionPtrs);
+            boneSectionPtrs.copy(other.boneSectionPtrs);
+            cameraSectionPtrs.copy(other.cameraSectionPtrs);
+            effectSectionPtrs.copy(other.effectSectionPtrs);
+            lightSectionPtrs.copy(other.lightSectionPtrs);
+            modelSectionPtrs.copy(other.modelSectionPtrs);
+            morphSectionPtrs.copy(other.morphSectionPtrs);
+            projectSectionPtrs.copy(other.projectSectionPtrs);
+            endPtr = other.endPtr;
+        }
         IEncoding *encoding;
         IString::Codec codec;
         uint8_t *basePtr;
@@ -207,7 +244,7 @@ public:
     const IString *name() const { return m_name; }
     IModel *parentModel() const { return m_modelRef; }
     Error error() const { return m_error; }
-    const DataInfo &result() const { return m_result; }
+    const DataInfo &result() const { return m_info; }
     NameListSection *nameListSection() const { return m_nameListSection; }
     bool isActive() const { return m_active; }
     Type type() const { return kMVD; }
@@ -239,7 +276,7 @@ private:
     IString *m_name;
     IString *m_name2;
     IString *m_reserved;
-    DataInfo m_result;
+    DataInfo m_info;
     Error m_error;
     bool m_active;
 

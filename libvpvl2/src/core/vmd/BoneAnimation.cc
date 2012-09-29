@@ -160,7 +160,7 @@ void BoneAnimation::setParentModel(IModel *model)
 
 BoneKeyframe *BoneAnimation::frameAt(int i) const
 {
-    return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<BoneKeyframe *>(m_keyframes[i]) : 0;
+    return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<BoneKeyframe *>(m_keyframes[i]) : 0;
 }
 
 BoneKeyframe *BoneAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const

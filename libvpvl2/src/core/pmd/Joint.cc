@@ -36,8 +36,8 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd/Morph.h"
-#include "vpvl2/pmd/Vertex.h"
+#include "vpvl2/pmd/Joint.h"
+#include "vpvl2/pmd/RigidBody.h"
 
 namespace
 {
@@ -46,15 +46,18 @@ using namespace vpvl2::pmd;
 
 #pragma pack(push, 1)
 
-struct VertexMorphUnit {
-    int vertexIndex;
+struct JointUnit {
+    uint8_t name[Joint::kNameSize];
+    int bodyIDA;
+    int bodyIDB;
     float position[3];
-};
-
-struct MorphUnit {
-    uint8_t name[Morph::kNameSize];
-    int nvertices;
-    uint8_t type;
+    float rotation[3];
+    float positionLowerLimit[3];
+    float positionUpperLimit[3];
+    float rotationLowerLimit[3];
+    float rotationUpperLimit[3];
+    float positionStiffness[3];
+    float rotationStiffness[3];
 };
 
 #pragma pack(pop)
@@ -66,107 +69,72 @@ namespace vpvl2
 namespace pmd
 {
 
-Morph::Morph(IEncoding *encodingRef)
-    : m_encodingRef(encodingRef),
-      m_name(0),
-      m_category(kReserved),
-      m_weight(0),
-      m_index(-1)
+Joint::Joint(IEncoding *encodingRef)
+    : common::Joint::Joint(),
+      m_encodingRef(encodingRef)
 {
 }
 
-Morph::~Morph()
+Joint::~Joint()
 {
-    delete m_name;
-    m_name = 0;
-    m_category = kReserved;
-    m_weight = 0;
-    m_index = -1;
+    m_encodingRef = 0;
 }
 
-bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     size_t size;
-    if (!internal::size16(ptr, rest, size)) {
+    if (!internal::size32(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
         return false;
     }
-    info.morphsCount = size;
-    info.morphsPtr = ptr;
-    MorphUnit unit;
-    VertexMorphUnit vunit;
-    size_t unitSize = 0;
-    for (size_t i = 0; i < size; i++) {
-        if (sizeof(unit) > rest) {
-            return false;
+    info.jointsCount = size;
+    info.jointsPtr = ptr;
+    internal::readBytes(size * sizeof(JointUnit), ptr, rest);
+    return true;
+}
+
+bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies)
+{
+    const int njoints = joints.count();
+    const int nRigidBodies = rigidBodies.count();
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = joints[i];
+        const int rigidBodyIndex1 = joint->m_rigidBodyIndex1;
+        if (rigidBodyIndex1 >= 0) {
+            if (rigidBodyIndex1 >= nRigidBodies)
+                return false;
+            else
+                joint->m_rigidBody1Ref = rigidBodies[rigidBodyIndex1];
         }
-        internal::getData(ptr, unit);
-        unitSize = sizeof(unit) + unit.nvertices * sizeof(vunit);
-        if (unitSize > rest) {
-            return false;
+        const int rigidBodyIndex2 = joint->m_rigidBodyIndex2;
+        if (rigidBodyIndex2 >= 0) {
+            if (rigidBodyIndex2 >= nRigidBodies)
+                return false;
+            else
+                joint->m_rigidBody2Ref = rigidBodies[rigidBodyIndex2];
         }
-        internal::readBytes(unitSize, ptr, rest);
+        if (joint->m_rigidBody1Ref && joint->m_rigidBody2Ref)
+            joint->m_constraint = joint->createConstraint();
+        joint->m_index = i;
     }
     return true;
 }
 
-bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices)
+void Joint::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
 {
-    const int nmorphs = morphs.count();
-    for (int i = 0; i < nmorphs; i++) {
-        // FIXME: implement this
-    }
-    return true;
-}
-
-void Morph::read(const uint8_t *data, const Array<Vertex *> &vertices, size_t &size)
-{
-    MorphUnit unit;
-    VertexMorphUnit vunit;
+    JointUnit unit;
     internal::getData(data, unit);
-    uint8_t *ptr = const_cast<uint8_t *>(data + sizeof(unit));
-    int nMorphVertices = unit.nvertices, nvertices = vertices.count();
-    for (int i = 0; i < nMorphVertices; i++) {
-        internal::getData(ptr, vunit);
-        int vertexIndex = vunit.vertexIndex;
-        if (internal::checkBound(vertexIndex, 0, nvertices)) {
-            Vertex *bone = vertices[vertexIndex];
-            m_vertexRefs.add(bone);
-        }
-        ptr += sizeof(vunit);
-    }
     m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
-    m_category = static_cast<Category>(unit.type);
-    size = ptr - data;
-}
-
-IMorph::Category Morph::category() const
-{
-    return m_category;
-}
-
-IMorph::Type Morph::type() const
-{
-    return kVertex;
-}
-
-bool Morph::hasParent() const
-{
-    return false;
-}
-
-const IMorph::WeightPrecision &Morph::weight() const
-{
-    return m_weight;
-}
-
-void Morph::setWeight(const WeightPrecision &value)
-{
-    m_weight = value;
-}
-
-void Morph::setIndex(int value)
-{
-    m_index = value;
+    m_rigidBodyIndex1 = unit.bodyIDA;
+    m_rigidBodyIndex2 = unit.bodyIDB;
+    internal::setPositionRaw(unit.position, m_position);
+    internal::setPositionRaw(unit.rotation, m_rotation);
+    internal::setPositionRaw(unit.positionLowerLimit, m_positionLowerLimit);
+    internal::setPositionRaw(unit.rotationLowerLimit, m_rotationLowerLimit);
+    internal::setPositionRaw(unit.positionUpperLimit, m_positionUpperLimit);
+    internal::setPositionRaw(unit.rotationUpperLimit, m_rotationUpperLimit);
+    internal::setPositionRaw(unit.positionStiffness, m_positionStiffness);
+    internal::setPositionRaw(unit.rotationStiffness, m_rotationStiffness);
+    size = sizeof(unit);
 }
 
 }

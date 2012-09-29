@@ -327,12 +327,13 @@ void Model::save(uint8_t * /* data */) const
 size_t Model::estimateSize() const
 {
     size_t size = 0;
+    IString::Codec codec = m_info.codec;
     size += sizeof(Header);
     size += sizeof(uint8_t) + 8;
-    size += internal::estimateSize(m_name);
-    size += internal::estimateSize(m_englishName);
-    size += internal::estimateSize(m_comment);
-    size += internal::estimateSize(m_englishComment);
+    size += internal::estimateSize(m_name, codec);
+    size += internal::estimateSize(m_englishName, codec);
+    size += internal::estimateSize(m_comment, codec);
+    size += internal::estimateSize(m_englishComment, codec);
     const int nvertices = m_vertices.count();
     size += sizeof(nvertices);
     for (int i = 0; i < nvertices; i++) {
@@ -346,7 +347,7 @@ size_t Model::estimateSize() const
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
         IString *texture = m_textures[i];
-        size += internal::estimateSize(texture);
+        size += internal::estimateSize(texture, codec);
     }
     const int nmaterials = m_materials.count();
     size += sizeof(nmaterials);
@@ -881,11 +882,9 @@ void Model::parseIndices(const DataInfo &info)
         int index = internal::readUnsignedIndex(ptr, size);
         if (index >= 0 && index < nvertices) {
             m_indices.add(index);
-            //m_skinnedIndices[i] = index;
         }
         else {
             m_indices.add(0);
-            //m_skinnedIndices[i] = 0;
         }
     }
     delete m_indexBuffer;

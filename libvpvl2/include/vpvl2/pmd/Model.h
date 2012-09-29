@@ -63,45 +63,47 @@ class VPVL2_API Model : public IModel
 {
 public:
     static const int kNameSize = 20;
-    static const int kCommentSize = 255;
+    static const int kCommentSize = 256;
+    static const int kCustomToonTextureNameSize = 100;
+    static const int kMaxCustomToonTextures = 10;
 
     struct DataInfo {
         IEncoding *encoding;
         ErrorType error;
-        const uint8_t *basePtr;
-        const uint8_t *namePtr;
-        const uint8_t *commentPtr;
-        const uint8_t *verticesPtr;
+        uint8_t *basePtr;
+        uint8_t *namePtr;
+        uint8_t *commentPtr;
+        uint8_t *verticesPtr;
         size_t verticesCount;
-        const uint8_t *indicesPtr;
+        uint8_t *indicesPtr;
         size_t indicesCount;
-        const uint8_t *materialsPtr;
+        uint8_t *materialsPtr;
         size_t materialsCount;
-        const uint8_t *bonesPtr;
+        uint8_t *bonesPtr;
         size_t bonesCount;
-        const uint8_t *IKBonesPtr;
-        size_t IKBonesCount;
-        const uint8_t *morphsPtr;
+        uint8_t *IKJointsPtr;
+        size_t IKJointsCount;
+        uint8_t *morphsPtr;
         size_t morphsCount;
-        const uint8_t *morphLabelsPtr;
+        uint8_t *morphLabelsPtr;
         size_t morphLabelsCount;
-        const uint8_t *boneCategoryNamesPtr;
+        uint8_t *boneCategoryNamesPtr;
         size_t boneCategoryNamesCount;
-        const uint8_t *boneLabelsPtr;
+        uint8_t *boneLabelsPtr;
         size_t boneLabelsCount;
-        const uint8_t *englishNamePtr;
-        const uint8_t *englishCommentPtr;
-        const uint8_t *englishBoneNamesPtr;
-        const uint8_t *englishFaceNamesPtr;
-        const uint8_t *englishBoneFramesPtr;
-        const uint8_t *toonTextureNamesPtr;
-        const uint8_t *rigidBodiesPtr;
+        uint8_t *englishNamePtr;
+        uint8_t *englishCommentPtr;
+        uint8_t *englishBoneNamesPtr;
+        uint8_t *englishFaceNamesPtr;
+        uint8_t *englishBoneFramesPtr;
+        uint8_t *customToonTextureNamesPtr;
+        uint8_t *rigidBodiesPtr;
         size_t rigidBodiesCount;
-        const uint8_t *jointsPtr;
+        uint8_t *jointsPtr;
         size_t jointsCount;
     };
 
-    Model(IEncoding *encoding);
+    Model(IEncoding *encodingRef);
     ~Model();
 
     Type type() const { return kPMD; }
@@ -170,6 +172,19 @@ public:
     void setSkinnningEnable(bool value);
 
 private:
+    void release();
+    void parseNamesAndComments(const DataInfo &info);
+    void parseVertices(const DataInfo &info);
+    void parseIndices(const DataInfo &info);
+    void parseMaterials(const DataInfo &info);
+    void parseBones(const DataInfo &info);
+    void parseIKJoints(const DataInfo &info);
+    void parseMorphs(const DataInfo &info);
+    void parseLabels(const DataInfo &info);
+    void parseCustomToonTextures(const DataInfo &info);
+    void parseRigidBodies(const DataInfo &info);
+    void parseJoints(const DataInfo &info);
+
     btDiscreteDynamicsWorld *m_worldRef;
     IEncoding *m_encodingRef;
     IString *m_name;
@@ -184,6 +199,7 @@ private:
     Array<Label *> m_labels;
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
+    Array<IString *> m_customToonTextures;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     DataInfo m_info;

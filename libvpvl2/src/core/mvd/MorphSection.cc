@@ -333,7 +333,7 @@ IMorphKeyframe *MorphSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex
 
 IMorphKeyframe *MorphSection::findKeyframeAt(int index) const
 {
-    if (index >= 0 && index < m_allKeyframeRefs.count()) {
+    if (internal::checkBound(index, 0, m_allKeyframeRefs.count())) {
         IMorphKeyframe *keyframe = reinterpret_cast<IMorphKeyframe *>(m_allKeyframeRefs[index]);
         return keyframe;
     }

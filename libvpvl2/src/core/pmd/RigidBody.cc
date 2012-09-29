@@ -37,7 +37,15 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 #include "vpvl2/pmd/Bone.h"
-#include "vpvl2/pmd/Vertex.h"
+#include "vpvl2/pmd/RigidBody.h"
+
+#ifndef VPVL2_NO_BULLET
+#include <btBulletDynamicsCommon.h>
+#else
+BT_DECLARE_HANDLE(btCollisionShape)
+BT_DECLARE_HANDLE(btMotionState)
+BT_DECLARE_HANDLE(btRigidBody)
+#endif
 
 namespace
 {
@@ -46,14 +54,21 @@ using namespace vpvl2::pmd;
 
 #pragma pack(push, 1)
 
-struct VertexUnit {
+struct RigidBodyUnit {
+    uint8_t name[RigidBody::kNameSize];
+    uint16_t boneID;
+    uint8_t collisionGroupID;
+    uint16_t collsionMask;
+    uint8_t shapeType;
+    float size[3];
     float position[3];
-    float normal[3];
-    float uv[2];
-    int16_t parentBoneID;
-    int16_t childBoneID;
-    uint8_t weight;
-    uint8_t edge;
+    float rotation[3];
+    float mass;
+    float linearDamping;
+    float angularDamping;
+    float restitution;
+    float friction;
+    uint8_t type;
 };
 
 #pragma pack(pop)
@@ -65,122 +80,83 @@ namespace vpvl2
 namespace pmd
 {
 
-const int Vertex::kMaxBones;
-
-Vertex::Vertex()
-    : m_origin(kZeroV3),
-      m_normal(kZeroV3),
-      m_texcoord(kZeroV3),
-      m_edgeSize(0),
-      m_weight(0)
+RigidBody::RigidBody(IEncoding *encodingRef)
+    : common::RigidBody::RigidBody(),
+      m_encodingRef(encodingRef)
 {
 }
 
-Vertex::~Vertex()
+RigidBody::~RigidBody()
 {
-    m_origin.setZero();
-    m_normal.setZero();
-    m_texcoord.setZero();
-    m_edgeSize = 0;
-    m_weight = 0;
+    m_encodingRef = 0;
 }
 
-bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     size_t size;
-    if (!internal::size32(ptr, rest, size) || size * sizeof(VertexUnit) > rest) {
+    if (!internal::size32(ptr, rest, size) || size * sizeof(RigidBodyUnit) > rest) {
         return false;
     }
-    info.verticesCount = size;
-    info.verticesPtr = ptr;
-    internal::readBytes(size * sizeof(VertexUnit), ptr, rest);
+    info.rigidBodiesCount = size;
+    info.rigidBodiesPtr = ptr;
+    internal::readBytes(size * sizeof(RigidBodyUnit), ptr, rest);
     return true;
 }
 
-bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones)
+bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones)
 {
-    const int nvertices = vertices.count();
+    const int nRigidBodies = rigidBodies.count();
     const int nbones = bones.count();
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = vertices[i];
-        for (int j = 0; j < kMaxBones; j++) {
-            int boneIndex = vertex->m_boneIndices[j];
-            if (boneIndex >= 0) {
-                if (boneIndex >= nbones)
-                    return false;
-                else
-                    vertex->m_boneRefs[j] = bones[boneIndex];
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = rigidBodies[i];
+        const int boneIndex = rigidBody->m_boneIndex;
+        if (boneIndex >= 0) {
+            if (boneIndex == 0xffff) {
+                rigidBody->m_boneRef = &kNullBone;
+                rigidBody->m_body = rigidBody->createRigidBody(0);
+            }
+            else if (boneIndex >= nbones) {
+                return false;
             }
             else {
-                vertex->m_boneRefs[j] = &kNullBone;
+                btCollisionShape *shape = rigidBody->createShape();
+                Bone *bone = bones[boneIndex];
+                if (rigidBody->m_type != kStaticObject)
+                    bone->setSimulated(true);
+                rigidBody->m_shape = shape;
+                rigidBody->m_boneRef = bone;
+                rigidBody->m_body = rigidBody->createRigidBody(shape);
             }
         }
+        else {
+            rigidBody->m_boneRef = &kNullBone;
+            rigidBody->m_body = rigidBody->createRigidBody(0);
+        }
+        rigidBody->m_index = i;
     }
     return true;
 }
 
-void Vertex::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+void RigidBody::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
 {
-    VertexUnit unit;
+    RigidBodyUnit unit;
     internal::getData(data, unit);
-    internal::setPosition(unit.position, m_origin);
-    internal::setPosition(unit.normal, m_normal);
-    m_texcoord.setValue(unit.uv[0], unit.uv[1], 0);
-    m_boneIndices[0] = unit.parentBoneID;
-    m_boneIndices[1] = unit.childBoneID;
-    m_weight = unit.weight;
-    m_edgeSize = unit.edge;
+    m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    m_boneIndex = unit.boneID;
+    m_collisionGroupID = unit.collisionGroupID;
+    m_collisionGroupMask = unit.collsionMask;
+    m_groupID = 0x0001 << unit.collsionMask;
+    m_shapeType = static_cast<ShapeType>(unit.shapeType);
+    internal::setPositionRaw(unit.size, m_size);
+    internal::setPosition(unit.position, m_position);
+    internal::setPositionRaw(unit.rotation, m_rotation);
+    m_mass = unit.mass;
+    m_linearDamping = unit.linearDamping;
+    m_angularDamping = unit.angularDamping;
+    m_restitution = unit.restitution;
+    m_friction = unit.friction;
+    m_type = static_cast<ObjectType>(unit.type);
     size = sizeof(unit);
-}
-
-float Vertex::weight(int index) const
-{
-    return index == 0 ? m_weight : 0;
-}
-
-IBone *Vertex::bone(int index) const
-{
-    return internal::checkBound(index, 0, kMaxBones) ? m_boneRefs[index] : 0;
-}
-
-void Vertex::setOrigin(const Vector3 &value)
-{
-    m_origin = value;
-}
-
-void Vertex::setNormal(const Vector3 &value)
-{
-    m_normal = value;
-}
-
-void Vertex::setTextureCoord(const Vector3 &value)
-{
-    m_texcoord = value;
-}
-
-void Vertex::setUV(int /* index */, const Vector4 & /* value */)
-{
-}
-
-void Vertex::setType(Type /* value */)
-{
-}
-
-void Vertex::setEdgeSize(float value)
-{
-    m_edgeSize = value;
-}
-
-void Vertex::setWeight(int index, float weight)
-{
-    if (index == 0)
-        m_weight = weight;
-}
-
-void Vertex::setBone(int index, IBone *value)
-{
-    if (internal::checkBound(index, 0, kMaxBones))
-        m_boneRefs[index] = value;
 }
 
 }

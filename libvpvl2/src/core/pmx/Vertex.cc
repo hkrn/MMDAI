@@ -54,7 +54,7 @@ struct VertexUnit {
 };
 
 struct AdditinalUVUnit {
-    float value[4];
+    float value[Vertex::kMaxBones];
 };
 
 struct Bdef2Unit {
@@ -62,7 +62,7 @@ struct Bdef2Unit {
 };
 
 struct Bdef4Unit {
-    float weight[4];
+    float weight[Vertex::kMaxBones];
 };
 
 struct SdefUnit {
@@ -81,6 +81,9 @@ namespace vpvl2
 namespace pmx
 {
 
+const int Vertex::kMaxBones;
+const int Vertex::kMaxMorphs;
+
 Vertex::Vertex()
     : m_origin(kZeroV3),
       m_morphDelta(kZeroV3),
@@ -92,14 +95,15 @@ Vertex::Vertex()
       m_type(kBdef1),
       m_edgeSize(0)
 {
-    for (int i = 0; i < 4; i++) {
-        m_originUVs[i].setZero();
-        m_morphUVs[i].setZero();
+    for (int i = 0; i < kMaxBones; i++) {
         m_boneRefs[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
     }
-    m_morphUVs[4].setZero();
+    for (int i = 0; i < kMaxMorphs; i++) {
+        m_originUVs[i].setZero();
+        m_morphUVs[i].setZero();
+    }
 }
 
 Vertex::~Vertex()
@@ -113,20 +117,24 @@ Vertex::~Vertex()
     m_r1.setZero();
     m_type = kBdef1;
     m_edgeSize = 0;
-    for (int i = 0; i < 4; i++) {
-        m_originUVs[i].setZero();
-        m_morphUVs[i].setZero();
+    for (int i = 0; i < kMaxBones; i++) {
         m_boneRefs[i] = 0;
         m_weight[i] = 0;
         m_boneIndices[i] = -1;
     }
-    m_morphUVs[4].setZero();
+    for (int i = 0; i < kMaxMorphs; i++) {
+        m_originUVs[i].setZero();
+        m_morphUVs[i].setZero();
+    }
 }
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     size_t size;
     if (!internal::size32(ptr, rest, size)) {
+        return false;
+    }
+    if (!internal::checkBound(info.additionalUVSize, size_t(0), size_t(kMaxMorphs))) {
         return false;
     }
     info.verticesPtr = ptr;
@@ -231,13 +239,15 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     internal::getData(ptr, vertex);
     internal::setPosition(vertex.position, m_origin);
     internal::setPosition(vertex.normal, m_normal);
-    m_texcoord.setValue(vertex.texcoord[0], vertex.texcoord[1], 0);
+    float u = vertex.texcoord[0], v = vertex.texcoord[1];
+    m_texcoord.setValue(u, v, 0);
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
     AdditinalUVUnit uv;
+    m_originUVs[0].setValue(u, v, 0, 0);
     for (int i = 0; i < additionalUVSize; i++) {
         internal::getData(ptr, uv);
-        m_originUVs[i].setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
+        m_originUVs[i + 1].setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
         ptr += sizeof(uv);
     }
     m_type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
@@ -298,7 +308,7 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
     int additionalUVSize = info.additionalUVSize;
     AdditinalUVUnit avu;
     for (int i = 0; i < additionalUVSize; i++) {
-        const Vector4 &uv = m_originUVs[i];
+        const Vector4 &uv = m_originUVs[i + 1];
         avu.value[0] = uv.x();
         avu.value[1] = uv.y();
         avu.value[2] = uv.z();
@@ -379,14 +389,14 @@ size_t Vertex::estimateSize(const Model::DataInfo &info) const
 void Vertex::reset()
 {
     m_morphDelta.setZero();
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < kMaxMorphs; i++)
         m_morphUVs[i].setZero();
 }
 
 void Vertex::mergeMorph(const Morph::UV *morph, float weight)
 {
     int offset = morph->offset;
-    if (offset >= 0 && offset <= 4) {
+    if (internal::checkBound(offset, 0, kMaxMorphs)) {
         const Vector4 &m = morph->position, &o = m_morphUVs[offset];
         Vector4 v(o.x() + m.x() * weight,
                   o.y() + m.y() * weight,
@@ -451,17 +461,17 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
 
 const Vector4 &Vertex::uv(int index) const
 {
-    return index >= 0 && index <= 4 ? m_morphUVs[index] : kZeroV4;
+    return internal::checkBound(index, 0, kMaxMorphs) ? m_morphUVs[index] : kZeroV4;
 }
 
 float Vertex::weight(int index) const
 {
-    return index >= 0 && index < 4 ? m_weight[index] : 0.0f;
+    return internal::checkBound(index, 0, kMaxBones) ? m_weight[index] : 0;
 }
 
 IBone *Vertex::bone(int index) const
 {
-    return index >= 0 && index < 4 ? m_boneRefs[index] : 0;
+    return internal::checkBound(index, 0, kMaxBones) ? m_boneRefs[index] : 0;
 }
 
 void Vertex::setOrigin(const Vector3 &value)
@@ -481,8 +491,8 @@ void Vertex::setTextureCoord(const Vector3 &value)
 
 void Vertex::setUV(int index, const Vector4 &value)
 {
-    if (index >= 0 && index < 4)
-        m_originUVs[index] = value;
+    if (internal::checkBound(index, 0, kMaxBones))
+        m_originUVs[index + 1] = value;
 }
 
 void Vertex::setType(Type value)
@@ -497,13 +507,13 @@ void Vertex::setEdgeSize(float value)
 
 void Vertex::setWeight(int index, float weight)
 {
-    if (index >= 0 && index < 4)
+    if (internal::checkBound(index, 0, kMaxBones))
         m_weight[index] = weight;
 }
 
 void Vertex::setBone(int index, IBone *value)
 {
-    if (index >= 0 && index < 4) {
+    if (internal::checkBound(index, 0, kMaxBones)) {
         m_boneRefs[index] = value;
         m_boneIndices[index] = value->index();
     }

@@ -34,11 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_MORPH_H_
-#define VPVL2_PMD_MORPH_H_
+#ifndef VPVL2_PMD_VERTEX_H_
+#define VPVL2_PMD_VERTEX_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IVertex.h"
+#include "vpvl2/pmd/Model.h"
 
 namespace vpvl2
 {
@@ -49,9 +50,13 @@ class IString;
 namespace pmd
 {
 
+class Bone;
+
 class VPVL2_API Vertex : public IVertex
 {
 public:
+    static const int kMaxBones = 2;
+
     Vertex();
     ~Vertex();
 
@@ -61,8 +66,8 @@ public:
     const Vector4 &uv(int /* index */) const { return kZeroV4; }
     Type type() const { return kBdef2; }
     float edgeSize() const { return m_edgeSize; }
-    float weight(int /* index */) const { return m_weight; }
-    IBone *bone(int /* index */) const { return m_boneRef; }
+    float weight(int index) const;
+    IBone *bone(int index) const;
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
     void setTextureCoord(const Vector3 &value);
@@ -72,12 +77,17 @@ public:
     void setWeight(int index, float weight);
     void setBone(int index, IBone *value);
 
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+
     Vector3 m_origin;
     Vector3 m_normal;
     Vector3 m_texcoord;
     float m_edgeSize;
     float m_weight;
-    IBone *m_boneRef;
+    IBone *m_boneRefs[kMaxBones];
+    int m_boneIndices[kMaxBones];
 };
 
 }

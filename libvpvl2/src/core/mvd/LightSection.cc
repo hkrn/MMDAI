@@ -163,7 +163,7 @@ ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex
 
 ILightKeyframe *LightSection::findKeyframeAt(int index) const
 {
-    if (index >= 0 && index < m_allKeyframes.count()) {
+    if (internal::checkBound(index, 0, m_allKeyframes.count())) {
         ILightKeyframe *keyframe = reinterpret_cast<ILightKeyframe *>(m_allKeyframes.at(index));
         return keyframe;
     }

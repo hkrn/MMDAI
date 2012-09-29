@@ -61,6 +61,9 @@ namespace pmx
 class VPVL2_API Vertex : public IVertex
 {
 public:
+    static const int kMaxBones = 4;
+    static const int kMaxMorphs = 5; /* TexCoord + UVA1-4 */
+
     /**
      * Constructor
      */
@@ -112,9 +115,9 @@ public:
     void setSdefR1(const Vector3 &value);
 
 private:
-    IBone *m_boneRefs[4];
-    Vector4 m_originUVs[4];
-    Vector4 m_morphUVs[5]; /* TexCoord + UVA1-4 */
+    IBone *m_boneRefs[kMaxBones];
+    Vector4 m_originUVs[kMaxMorphs];
+    Vector4 m_morphUVs[kMaxMorphs];
     Vector3 m_origin;
     Vector3 m_morphDelta;
     Vector3 m_normal;
@@ -124,8 +127,8 @@ private:
     Vector3 m_r1;
     Type m_type;
     float m_edgeSize;
-    float m_weight[4];
-    int m_boneIndices[4];
+    float m_weight[kMaxBones];
+    int m_boneIndices[kMaxBones];
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };

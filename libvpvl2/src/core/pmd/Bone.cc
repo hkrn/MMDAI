@@ -35,20 +35,71 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 #include "vpvl2/pmd/Bone.h"
+
+namespace
+{
+
+using namespace vpvl2::pmd;
+
+#pragma pack(push, 1)
+
+struct BoneUnit {
+    uint8_t name[Bone::kNameSize];
+    int16_t parentBoneID;
+    int16_t childBoneID;
+    uint8_t type;
+    int16_t targetBoneID;
+    float position[3];
+};
+
+struct IKUnit
+{
+    int16_t destinationBoneID;
+    int16_t targetBoneID;
+    uint8_t nlinks;
+    uint16_t niterations;
+    float angle;
+};
+
+#pragma pack(pop)
+
+}
 
 namespace vpvl2
 {
 namespace pmd
 {
 
+struct Bone::IKConstraint {
+    Array<Bone *> joints;
+    IBone *destination;
+    IBone *target;
+    int niterations;
+    float angle;
+};
+
 Bone::Bone(IEncoding *encodingRef)
     : m_encodingRef(encodingRef),
       m_name(0),
-      m_parentBone(0),
+      m_parentBoneRef(0),
       m_targetBoneRef(0),
-      m_childBone(0),
-      m_fixedAxis(kZeroV3)
+      m_childBoneRef(0),
+      m_constraint(0),
+      m_fixedAxis(kZeroV3),
+      m_origin(kZeroV3),
+      m_offset(kZeroV3),
+      m_position(kZeroV3),
+      m_rotation(Quaternion::getIdentity()),
+      m_worldTransform(Transform::getIdentity()),
+      m_localTransform(Transform::getIdentity()),
+      m_type(kUnknown),
+      m_index(-1),
+      m_parentBoneIndex(0),
+      m_targetBoneIndex(0),
+      m_childBoneIndex(0),
+      m_simulated(false)
 {
 }
 
@@ -56,13 +107,137 @@ Bone::~Bone()
 {
     delete m_name;
     m_name = 0;
-    delete m_parentBone;
-    m_parentBone = 0;
-    delete m_childBone;
-    m_childBone = 0;
-    m_targetBoneRef = 0;
+    delete m_constraint;
+    m_constraint = 0;
     m_encodingRef = 0;
+    m_parentBoneRef = 0;
+    m_childBoneRef = 0;
+    m_targetBoneRef = 0;
+    m_index = -1;
+    m_parentBoneIndex = 0;
+    m_childBoneIndex = 0;
+    m_targetBoneIndex = 0;
+    m_type = kUnknown;
     m_fixedAxis.setZero();
+    m_origin.setZero();
+    m_offset.setZero();
+    m_position.setZero();
+    m_worldTransform.setIdentity();
+    m_localTransform.setIdentity();
+    m_simulated = false;
+}
+
+bool Bone::preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+{
+    size_t size;
+    if (!internal::size16(ptr, rest, size) || size * sizeof(BoneUnit) > rest) {
+        return false;
+    }
+    info.bonesCount = size;
+    info.bonesPtr = ptr;
+    internal::readBytes(size * sizeof(BoneUnit), ptr, rest);
+    return true;
+}
+
+bool Bone::preparseIKJoints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+{
+    size_t size;
+    if (!internal::size16(ptr, rest, size)) {
+        return false;
+    }
+    info.IKJointsCount = size;
+    info.IKJointsPtr = ptr;
+    IKUnit unit;
+    size_t unitSize = 0;
+    for (size_t i = 0; i < size; i++) {
+        if (sizeof(unit) > rest) {
+            return false;
+        }
+        internal::getData(ptr, unit);
+        unitSize = sizeof(unit) + unit.nlinks * sizeof(uint16_t);
+        if (unitSize > rest) {
+            return false;
+        }
+        internal::readBytes(unitSize, ptr, rest);
+    }
+    return true;
+}
+
+bool Bone::loadBones(const Array<Bone *> &bones)
+{
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones[i];
+        const int parentBoneIndex = bone->m_parentBoneIndex;
+        if (parentBoneIndex >= 0) {
+            if (parentBoneIndex >= nbones) {
+                return false;
+            }
+            else {
+                Bone *parent = bones[parentBoneIndex];
+                bone->m_offset -= parent->m_origin;
+                bone->m_parentBoneRef = parent;
+            }
+        }
+        const int targetBoneIndex = bone->m_targetBoneIndex;
+        if (targetBoneIndex >= 0) {
+            if (targetBoneIndex >= nbones)
+                return false;
+            else
+                bone->m_targetBoneRef = bones[targetBoneIndex];
+        }
+        const int childBoneIndex = bone->m_childBoneIndex;
+        if (childBoneIndex >= 0) {
+            if (childBoneIndex >= nbones)
+                return false;
+            else
+                bone->m_childBoneRef = bones[childBoneIndex];
+        }
+    }
+    return true;
+}
+
+void Bone::readIKJoints(const uint8_t *data, const Array<Bone *> &bones, size_t &size)
+{
+    IKUnit unit;
+    internal::getData(data, unit);
+    int nlinks = unit.nlinks, nbones = bones.count();
+    int targetIndex = unit.targetBoneID;
+    int destIndex = unit.destinationBoneID;
+    if (internal::checkBound(targetIndex, 0, nbones) && internal::checkBound(destIndex, 0, nbones)) {
+        uint8_t *ptr = const_cast<uint8_t *>(data + sizeof(unit));
+        Array<Bone *> joints;
+        for (int i = 0; i < nlinks; i++) {
+            int boneIndex = internal::readUnsignedIndex(ptr, sizeof(uint16_t));
+            if (internal::checkBound(boneIndex, 0, nbones)) {
+                Bone *bone = bones[boneIndex];
+                joints.add(bone);
+            }
+            ptr += sizeof(uint16_t);
+        }
+        Bone *dest = bones[destIndex], *target = bones[targetIndex];
+        IKConstraint *constraint = dest->m_constraint = new IKConstraint();
+        constraint->joints.copy(joints);
+        constraint->destination = dest;
+        constraint->target = target;
+        constraint->niterations = unit.niterations;
+        constraint->angle = unit.angle;
+    }
+    size = sizeof(unit) + sizeof(uint16_t) * nlinks;
+}
+
+void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+{
+    BoneUnit unit;
+    internal::getData(data, unit);
+    m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    m_childBoneIndex = unit.childBoneID;
+    m_parentBoneIndex = unit.parentBoneID;
+    m_targetBoneIndex = unit.targetBoneID;
+    m_type = static_cast<Type>(unit.type);
+    internal::setPosition(unit.position, m_origin);
+    m_offset = m_origin;
+    size = sizeof(unit);
 }
 
 const IString *Bone::name() const
@@ -72,88 +247,118 @@ const IString *Bone::name() const
 
 int Bone::index() const
 {
-    return -1;
+    return m_index;
+}
+
+IBone *Bone::parentBone() const
+{
+    return m_parentBoneRef;
+}
+
+IBone *Bone::targetBone() const
+{
+    return m_targetBoneRef;
 }
 
 const Transform &Bone::worldTransform() const
 {
-    return Transform::getIdentity();
+    return m_worldTransform;
+}
+
+const Transform &Bone::localTransform() const
+{
+    return m_localTransform;
+}
+
+void Bone::getLocalTransform(Transform &world2LocalTransform) const
+{
+    world2LocalTransform = m_worldTransform * Transform(Matrix3x3::getIdentity(), m_origin).inverse();
+}
+
+void Bone::setLocalTransform(const Transform &value)
+{
+    m_localTransform = value;
 }
 
 const Vector3 &Bone::origin() const
 {
-    return kZeroV3;
+    return m_origin;
 }
 
 const Vector3 Bone::destinationOrigin() const
 {
-    return kZeroV3;
+    return m_parentBoneRef ? m_parentBoneRef->origin() : kZeroV3;
 }
 
 const Vector3 &Bone::position() const
 {
-    return kZeroV3;
-}
-
-void Bone::getLinkedBones(Array<IBone *> &value) const
-{
-    const int nlinks = m_IKLinks.count();
-    for (int i = 0; i < nlinks; i++) {
-        IBone *bone = m_IKLinks[i];
-        value.add(bone);
-    }
+    return m_position;
 }
 
 const Quaternion &Bone::rotation() const
 {
-    return Quaternion::getIdentity();
+    return m_rotation;
 }
 
-void Bone::setPosition(const Vector3 & /* value */)
+void Bone::getLinkedBones(Array<IBone *> &value) const
 {
+    if (m_constraint) {
+        const Array<Bone *> &bones = m_constraint->joints;
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            IBone *bone = bones[i];
+            value.add(bone);
+        }
+    }
 }
 
-void Bone::setRotation(const Quaternion & /* value */)
+void Bone::setPosition(const Vector3 &value)
 {
+    m_position = value;
+}
+
+void Bone::setRotation(const Quaternion &value)
+{
+    m_rotation = value;
 }
 
 bool Bone::isMovable() const
 {
-    return false;
+    return m_type == kRotateAndMove;
 }
 
 bool Bone::isRotateable() const
 {
-    return false;
+    return m_type == kRotate || m_type == kRotateAndMove;
 }
 
 bool Bone::isVisible() const
 {
-    return false;
+    return m_type != kInvisible;
 }
 
 bool Bone::isInteractive() const
 {
-    return false;
+    return isRotateable();
 }
 
 bool Bone::hasInverseKinematics() const
 {
-    return false;
+    return m_type == kIKDestination;
 }
 
 bool Bone::hasFixedAxes() const
 {
-    return false; // m_boneRef->type() == vpvl::Bone::kTwist;
+    return m_type == kTwist;
 }
 
 bool Bone::hasLocalAxes() const
 {
-    bool finger = m_name->contains(m_encodingRef->stringConstant(IEncoding::kFinger));
-    bool arm = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kArm));
-    bool elbow = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kElbow));
-    bool wrist = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kWrist));
-    return finger || arm || elbow || wrist;
+    bool hasFinger = m_name->contains(m_encodingRef->stringConstant(IEncoding::kFinger));
+    bool hasArm = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kArm));
+    bool hasElbow = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kElbow));
+    bool hasWrist = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kWrist));
+    return hasFinger || hasArm || hasElbow || hasWrist;
 }
 
 const Vector3 &Bone::fixedAxis() const
@@ -164,7 +369,7 @@ const Vector3 &Bone::fixedAxis() const
 void Bone::getLocalAxes(Matrix3x3 &value) const
 {
     if (hasLocalAxes()) {
-        const Vector3 &axisX = (m_childBone->origin() - origin()).normalized();
+        const Vector3 &axisX = (m_childBoneRef->origin() - origin()).normalized();
         Vector3 tmp1 = axisX;
         if (m_name->startsWith(m_encodingRef->stringConstant(IEncoding::kLeft)))
             tmp1.setY(-axisX.y());
@@ -181,6 +386,11 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     else {
         value.setIdentity();
     }
+}
+
+void Bone::setSimulated(bool value)
+{
+    m_simulated = value;
 }
 
 }

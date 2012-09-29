@@ -208,8 +208,8 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 
 void Label::write(uint8_t *data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_name, data);
-    internal::writeString(m_englishName, data);
+    internal::writeString(m_name, info.codec, data);
+    internal::writeString(m_englishName, info.codec, data);
     int npairs = m_pairs.count();
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_special), sizeof(uint8_t), data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&npairs), sizeof(npairs), data);
@@ -233,8 +233,8 @@ void Label::write(uint8_t *data, const Model::DataInfo &info) const
 size_t Label::estimateSize(const Model::DataInfo &info) const
 {
     size_t size = 0;
-    size += internal::estimateSize(m_name);
-    size += internal::estimateSize(m_englishName);
+    size += internal::estimateSize(m_name, info.codec);
+    size += internal::estimateSize(m_englishName, info.codec);
     int npairs = m_pairs.count();
     for (int i = 0; i < npairs; i++) {
         const Pair *pair = m_pairs[i];

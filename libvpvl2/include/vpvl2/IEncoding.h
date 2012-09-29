@@ -65,6 +65,9 @@ public:
         kArm,
         kWrist,
         kCenter,
+        kAsterisk,
+        kSPHExtension,
+        kSPAExtension,
         kMaxConstantType
     };
 
