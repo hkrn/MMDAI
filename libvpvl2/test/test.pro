@@ -9,7 +9,7 @@ QMAKE_CXXFLAGS = -W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings
 
 LIBS += -L../test/gtest-1.6.0/debug -lgtest -lgtest_main \
         -L../test/gmock-1.6.0/debug -lgmock -lgmock_main \
-        -L../debug/lib -lvpvl2_debug -licuuc \
+        -L../debug/lib -lvpvl2_debug -licuuc -licui18n \
         -L../../bullet-src/debug/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 macx:LIBS += -framework Cg
 linux-*:LIBS += -lCg -lCgGL

@@ -44,6 +44,7 @@
 
 /* ICU */
 #include <unicode/unistr.h>
+#include <unicode/regex.h>
 
 namespace vpvl2
 {
@@ -94,9 +95,24 @@ public:
     bool endsWith(const IString *value) const {
         return m_value.endsWith(static_cast<const String *>(value)->value());
     }
-    void split(const IString */*separator*/, int /*maxTokens*/, Array<IString *> &tokens) const {
+    void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const {
         tokens.clear();
-        // FIXME: implement this
+        if (maxTokens > 0) {
+            UErrorCode code = U_ZERO_ERROR;
+            const UnicodeString &pattern = static_cast<const String *>(separator)->value();
+            RegexMatcher matcher("\\Q" + pattern + "\\E", 0, code);
+            Array<UnicodeString> words;
+            words.resize(maxTokens);
+            tokens.reserve(maxTokens);
+            matcher.split(m_value, &words[0], maxTokens, code);
+            int nwords = words.count();
+            for (int i = 0; i < nwords; i++) {
+                tokens.add(new String(words[i]));
+            }
+        }
+        else if (maxTokens == 0) {
+            tokens.add(new String(m_value));
+        }
     }
     IString *clone() const {
         return new String(m_value);

@@ -84,3 +84,23 @@ TEST(String, Length)
     String c(str);
     ASSERT_EQ(sizeof(str) - 1, c.size());
 }
+
+TEST(String, Split)
+{
+    String s("This*Is*A*Test"), sep("*");
+    Array<IString *> tokens;
+    s.split(&sep, 0, tokens);
+    ASSERT_EQ(1, tokens.count());
+    ASSERT_STREQ(reinterpret_cast<const char *>(s.toByteArray()),
+                 reinterpret_cast<const char *>(tokens[0]->toByteArray()));
+    tokens.releaseAll();
+    s.split(&sep, 3, tokens);
+    ASSERT_EQ(3, tokens.count());
+    ASSERT_STREQ(reinterpret_cast<const char *>(String("This").toByteArray()),
+                 reinterpret_cast<const char *>(tokens[0]->toByteArray()));
+    ASSERT_STREQ(reinterpret_cast<const char *>(String("Is").toByteArray()),
+                 reinterpret_cast<const char *>(tokens[1]->toByteArray()));
+    ASSERT_STREQ(reinterpret_cast<const char *>(String("A*Test").toByteArray()),
+                 reinterpret_cast<const char *>(tokens[2]->toByteArray()));
+    tokens.releaseAll();
+}

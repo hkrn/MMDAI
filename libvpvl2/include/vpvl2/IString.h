@@ -87,7 +87,8 @@ public:
      *
      * maxTokens が 1 以上の場合は maxTokens 分まで分割し、それ以上の場合は例え separator があっても分割しません。
      * maxTokens が 0 の場合は中身の文字列をコピーして tokens に 1 つのみ含まれるようにします。
-     * maxTokens が -1 以下の場合は制限なく全て分割します。
+     * maxTokens が -1 以下の場合は制限なく全て分割しますが、実装依存であることに注意してください。
+     * (実際 vpvl2::icu::String#split で maxTokens を -1 にすると現状 tokens を空にするだけ)
      * tokens は使用者側が解放します。
      *
      * @param IString
