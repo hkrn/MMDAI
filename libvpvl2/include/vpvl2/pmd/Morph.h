@@ -71,7 +71,10 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
+
     void read(const uint8_t *data, const Array<Vertex *> &vertices, size_t &size);
+    size_t estimateSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
 
     IEncoding *m_encodingRef;
     IString *m_name;

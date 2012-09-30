@@ -65,6 +65,8 @@ public:
     static bool loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
 
 private:
     IEncoding *m_encodingRef;

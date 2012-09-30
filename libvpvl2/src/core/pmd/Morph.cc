@@ -129,14 +129,32 @@ void Morph::read(const uint8_t *data, const Array<Vertex *> &vertices, size_t &s
         internal::getData(ptr, vunit);
         int vertexIndex = vunit.vertexIndex;
         if (internal::checkBound(vertexIndex, 0, nvertices)) {
-            Vertex *bone = vertices[vertexIndex];
-            m_vertexRefs.add(bone);
+            Vertex *vertex = vertices[vertexIndex];
+            m_vertexRefs.add(vertex);
         }
         ptr += sizeof(vunit);
     }
     m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
     m_category = static_cast<Category>(unit.type);
     size = ptr - data;
+}
+
+size_t Morph::estimateSize(const Model::DataInfo & /* info */) const
+{
+    size_t size = 0;
+    size += sizeof(MorphUnit);
+    return size;
+}
+
+void Morph::write(uint8_t *data, const Model::DataInfo & /* info */) const
+{
+    MorphUnit unit;
+    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    internal::copyBytes(unit.name, name, sizeof(unit.name));
+    m_encodingRef->disposeByteArray(name);
+    unit.nvertices = m_vertexRefs.count();
+    unit.type = m_category;
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
 }
 
 IMorph::Category Morph::category() const

@@ -580,6 +580,24 @@ void Model::getBones(Array<IBone *> &value) const
     }
 }
 
+void Model::getLabels(Array<ILabel *> &value) const
+{
+    const int nlabels = m_labels.count();
+    for (int i = 0; i < nlabels; i++) {
+        ILabel *label = m_labels[i];
+        value.add(label);
+    }
+}
+
+void Model::getMaterials(Array<IMaterial *> &value) const
+{
+    const int nmaterials = m_materials.count();
+    for (int i = 0; i < nmaterials; i++) {
+        IMaterial *material = m_materials[i];
+        value.add(material);
+    }
+}
+
 void Model::getMorphs(Array<IMorph *> &value) const
 {
     const int nmorphs = m_morphs.count();
@@ -589,12 +607,12 @@ void Model::getMorphs(Array<IMorph *> &value) const
     }
 }
 
-void Model::getLabels(Array<ILabel *> &value) const
+void Model::getVertices(Array<IVertex *> &value) const
 {
-    const int nlabels = m_labels.count();
-    for (int i = 0; i < nlabels; i++) {
-        ILabel *label = m_labels[i];
-        value.add(label);
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        IVertex *vertex = m_vertices[i];
+        value.add(vertex);
     }
 }
 

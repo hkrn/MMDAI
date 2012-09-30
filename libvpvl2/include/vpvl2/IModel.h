@@ -46,8 +46,10 @@ namespace vpvl2
 
 class IBone;
 class ILabel;
+class IMaterial;
 class IMorph;
 class IString;
+class IVertex;
 
 /**
  * モデルをあらわすインターフェースです。
@@ -257,8 +259,10 @@ public:
 
     virtual int count(ObjectType value) const = 0;
     virtual void getBones(Array<IBone *> &value) const = 0;
-    virtual void getMorphs(Array<IMorph *> &value) const = 0;
     virtual void getLabels(Array<ILabel *> &value) const = 0;
+    virtual void getMaterials(Array<IMaterial *> &value) const = 0;
+    virtual void getMorphs(Array<IMorph *> &value) const = 0;
+    virtual void getVertices(Array<IVertex *> &value) const = 0;
 
     /**
      * モデルのバウンディングボックスの大きさを取得します。

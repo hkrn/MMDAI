@@ -125,8 +125,10 @@ public:
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
     void getBones(Array<IBone *> &value) const;
-    void getMorphs(Array<IMorph *> &value) const;
     void getLabels(Array<ILabel *> &value) const;
+    void getMaterials(Array<IMaterial *> &value) const;
+    void getMorphs(Array<IMorph *> &value) const;
+    void getVertices(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     IndexType indexType() const { return kIndex16; }
@@ -193,6 +195,7 @@ private:
     IString *m_englishComment;
     Array<Vertex *> m_vertices;
     Array<int> m_indices;
+    Array<uint16_t> m_indexBuffer;
     Array<Material *> m_materials;
     Array<Bone *> m_bones;
     Array<Morph *> m_morphs;

@@ -66,6 +66,8 @@ public:
     static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    size_t estimateSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
 
 private:
     IEncoding *m_encodingRef;

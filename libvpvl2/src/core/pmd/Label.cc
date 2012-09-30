@@ -153,5 +153,15 @@ void Label::read(const uint8_t * /* data */, const Model::DataInfo &/*info*/, si
     // FIXME: implement this
 }
 
+size_t Label::estimateSize(const Model::DataInfo & /* info */) const
+{
+    size_t size = 0;
+    return size;
+}
+
+void Label::write(uint8_t * /* data */, const Model::DataInfo & /* info */) const
+{
+}
+
 }
 }

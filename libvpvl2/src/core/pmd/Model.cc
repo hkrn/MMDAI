@@ -341,12 +341,30 @@ void Model::getLabels(Array<ILabel *> &value) const
     }
 }
 
+void Model::getMaterials(Array<IMaterial *> &value) const
+{
+    const int nmaterials = m_materials.count();
+    for (int i = 0; i < nmaterials; i++) {
+        IMaterial *material = m_materials[i];
+        value.add(material);
+    }
+}
+
 void Model::getMorphs(Array<IMorph *> &value) const
 {
     const int nmorphs = m_morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = m_morphs[i];
         value.add(morph);
+    }
+}
+
+void Model::getVertices(Array<IVertex *> &value) const
+{
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        IVertex *vertex = m_vertices[i];
+        value.add(vertex);
     }
 }
 
@@ -583,7 +601,7 @@ void Model::parseVertices(const DataInfo &info)
     const int nvertices = info.verticesCount;
     uint8_t *ptr = info.verticesPtr;
     size_t size;
-    for(int i = 0; i < nvertices; i++) {
+    for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = new Vertex();
         m_vertices.add(vertex);
         vertex->read(ptr, info, size);
@@ -595,10 +613,16 @@ void Model::parseIndices(const DataInfo &info)
 {
     const int nindices = info.indicesCount;
     uint8_t *ptr = info.indicesPtr;
-    for(int i = 0; i < nindices; i++) {
+    for (int i = 0; i < nindices; i++) {
         uint16_t index = internal::readUnsignedIndex(ptr, 2);
         m_indices.add(index);
+        m_indexBuffer.add(index);
     }
+#ifdef VPVL2_COORDINATE_OPENGL
+    for (int i = 0; i < nindices; i += 3) {
+        btSwap(m_indexBuffer[i], m_indexBuffer[i + 1]);
+    }
+#endif
 }
 
 void Model::parseMaterials(const DataInfo &info)
@@ -606,7 +630,7 @@ void Model::parseMaterials(const DataInfo &info)
     const int nmaterials = info.materialsCount;
     uint8_t *ptr = info.materialsPtr;
     size_t size;
-    for(int i = 0; i < nmaterials; i++) {
+    for (int i = 0; i < nmaterials; i++) {
         Material *material = new Material(m_encodingRef);
         m_materials.add(material);
         material->read(ptr, info, size);
@@ -619,7 +643,7 @@ void Model::parseBones(const DataInfo &info)
     const int nbones = info.bonesCount;
     uint8_t *ptr = info.bonesPtr;
     size_t size;
-    for(int i = 0; i < nbones; i++) {
+    for (int i = 0; i < nbones; i++) {
         Bone *bone = new Bone(m_encodingRef);
         m_bones.add(bone);
         bone->readBone(ptr, info, size);
@@ -632,7 +656,7 @@ void Model::parseIKJoints(const DataInfo &info)
     const int njoints = info.IKJointsCount;
     uint8_t *ptr = info.IKJointsPtr;
     size_t size;
-    for(int i = 0; i < njoints; i++) {
+    for (int i = 0; i < njoints; i++) {
         Bone::readIKJoints(ptr, m_bones, size);
         ptr += size;
     }
@@ -643,7 +667,7 @@ void Model::parseMorphs(const DataInfo &info)
     const int nmorphs = info.morphsCount;
     uint8_t *ptr = info.morphsPtr;
     size_t size;
-    for(int i = 0; i < nmorphs; i++) {
+    for (int i = 0; i < nmorphs; i++) {
         Morph *morph = new Morph(m_encodingRef);
         m_morphs.add(morph);
         morph->read(ptr, m_vertices, size);
@@ -684,7 +708,7 @@ void Model::parseJoints(const DataInfo &info)
     const int njoints = info.jointsCount;
     uint8_t *ptr = info.jointsPtr;
     size_t size;
-    for(int i = 0; i < njoints; i++) {
+    for (int i = 0; i < njoints; i++) {
         Joint *joint = new Joint(m_encodingRef);
         m_joints.add(joint);
         joint->read(ptr, info, size);

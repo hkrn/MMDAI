@@ -438,6 +438,9 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
     default:
         break;
     }
+#ifndef VPVL2_ENABLE_NVIDIA_CG
+    (void) flags;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
 #else
     (void) delegate;
     (void) model;

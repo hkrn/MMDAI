@@ -79,7 +79,11 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
+
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    size_t estimateSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void performSkinning(Vector3 &position, Vector3 &normal);
 
     Vector3 m_origin;
     Vector3 m_normal;

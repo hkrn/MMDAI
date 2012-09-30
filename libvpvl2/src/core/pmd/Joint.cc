@@ -137,5 +137,31 @@ void Joint::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t
     size = sizeof(unit);
 }
 
+size_t Joint::estimateSize(const Model::DataInfo & /* info */) const
+{
+    size_t size = 0;
+    size += sizeof(JointUnit);
+    return size;
+}
+
+void Joint::write(uint8_t *data, const Model::DataInfo & /* info */) const
+{
+    JointUnit unit;
+    unit.bodyIDA = m_rigidBodyIndex1;
+    unit.bodyIDB = m_rigidBodyIndex2;
+    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    internal::copyBytes(unit.name, name, sizeof(unit.name));
+    m_encodingRef->disposeByteArray(name);
+    internal::getPosition(m_position, unit.position);
+    internal::getPosition(m_rotation, unit.rotation);
+    internal::getPosition(m_positionLowerLimit, unit.positionLowerLimit);
+    internal::getPosition(m_rotationLowerLimit, unit.rotationLowerLimit);
+    internal::getPosition(m_positionUpperLimit, unit.positionUpperLimit);
+    internal::getPosition(m_rotationUpperLimit, unit.rotationUpperLimit);
+    internal::getPosition(m_positionStiffness, unit.positionStiffness);
+    internal::getPosition(m_rotationStiffness, unit.rotationStiffness);
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+}
+
 }
 }

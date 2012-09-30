@@ -159,5 +159,34 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo & /* info */, si
     size = sizeof(unit);
 }
 
+size_t RigidBody::estimateSize(const Model::DataInfo & /* info */) const
+{
+    size_t size = 0;
+    size += sizeof(RigidBodyUnit);
+    return size;
+}
+
+void RigidBody::write(uint8_t *data, const Model::DataInfo & /* info */) const
+{
+    RigidBodyUnit unit;
+    unit.angularDamping = m_angularDamping;
+    unit.boneID = m_boneIndex;
+    unit.collisionGroupID = m_collisionGroupID;
+    unit.collsionMask = m_collisionGroupMask;
+    unit.friction = m_friction;
+    unit.linearDamping = m_linearDamping;
+    unit.mass = m_mass;
+    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    internal::copyBytes(unit.name, name, sizeof(unit.name));
+    m_encodingRef->disposeByteArray(name);
+    internal::getPosition(m_position, unit.position);
+    unit.restitution = m_restitution;
+    internal::getPositionRaw(m_rotation, unit.rotation);
+    unit.shapeType = m_shapeType;
+    internal::getPositionRaw(m_size, unit.size);
+    unit.type = m_type;
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+}
+
 }
 }

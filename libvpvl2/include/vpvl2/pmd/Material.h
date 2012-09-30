@@ -106,8 +106,10 @@ public:
     static bool loadMaterials(const Array<Material *> &materials,
                               const Array<IString *> &textures,
                               int expectedIndices);
+
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data) const;
+    size_t estimateSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
 
 private:
     IEncoding *m_encodingRef;

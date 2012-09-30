@@ -182,8 +182,29 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
     size = sizeof(unit);
 }
 
-void Material::write(uint8_t * /* data */) const
+size_t Material::estimateSize(const Model::DataInfo & /* info */) const
 {
+    size_t size = 0;
+    size += sizeof(MaterialUnit);
+    return size;
+}
+
+void Material::write(uint8_t *data, const Model::DataInfo & /* info */) const
+{
+    MaterialUnit unit;
+    internal::getPositionRaw(m_ambient, unit.ambient);
+    internal::getPositionRaw(m_diffuse, unit.diffuse);
+    unit.edge = m_enableEdge ? 1 : 0;
+    unit.nindices = m_indices;
+    unit.opacity = m_diffuse.w();
+    unit.shininess = m_shininess;
+    internal::getPositionRaw(m_specular, unit.specular);
+    // TODO: texture*sphere
+    uint8_t *name = m_encodingRef->toByteArray(m_mainTexture, IString::kShiftJIS);
+    internal::copyBytes(unit.textureName, name, sizeof(unit.textureName));
+    m_encodingRef->disposeByteArray(name);
+    unit.toonTextureIndex = m_toonTextureIndex;
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
 }
 
 bool Material::isSharedToonTextureUsed() const

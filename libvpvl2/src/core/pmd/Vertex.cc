@@ -133,6 +133,40 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo & /* info */, size_
     size = sizeof(unit);
 }
 
+size_t Vertex::estimateSize(const Model::DataInfo & /* info */) const
+{
+    size_t size = 0;
+    size += sizeof(VertexUnit);
+    return size;
+}
+
+void Vertex::write(uint8_t *data, const Model::DataInfo & /* info */) const
+{
+    VertexUnit unit;
+    unit.childBoneID = m_boneIndices[1];
+    unit.edge = m_edgeSize;
+    internal::getPosition(m_normal, unit.normal);
+    unit.parentBoneID = m_boneIndices[0];
+    internal::getPosition(m_origin, unit.position);
+    unit.uv[0] = m_texcoord.x();
+    unit.uv[1] = m_texcoord.y();
+    unit.weight = m_weight;
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+}
+
+void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
+{
+    const Transform &transformA = m_boneRefs[0]->localTransform();
+    const Transform &transformB = m_boneRefs[1]->localTransform();
+    const Vector3 &vertexPosition = m_origin;
+    const Vector3 &v1 = transformA * vertexPosition;
+    const Vector3 &n1 = transformA.getBasis() * m_normal;
+    const Vector3 &v2 = transformB * vertexPosition;
+    const Vector3 &n2 = transformB.getBasis() * m_normal;
+    position.setInterpolate3(v2, v1, m_weight);
+    normal.setInterpolate3(n2, n1, m_weight);
+}
+
 float Vertex::weight(int index) const
 {
     return index == 0 ? m_weight : 0;

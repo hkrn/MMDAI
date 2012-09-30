@@ -102,7 +102,11 @@ public:
     static bool preparseIKJoints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);
     static void readIKJoints(const uint8_t *data, const Array<Bone *> &bones, size_t &size);
+
     void readBone(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    size_t estimateBonesSize(const Model::DataInfo &info) const;
+    size_t estimateIKJointsSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
     void setSimulated(bool value);
 
 private:

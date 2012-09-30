@@ -240,6 +240,35 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
     size = sizeof(unit);
 }
 
+size_t Bone::estimateBonesSize(const Model::DataInfo & /* info */) const
+{
+    size_t size = 0;
+    size += sizeof(BoneUnit);
+    return size;
+}
+
+size_t Bone::estimateIKJointsSize(const Model::DataInfo & /* info */) const
+{
+    size_t size = 0;
+    size += sizeof(IKUnit);
+    size += sizeof(uint16_t) * m_constraint->joints.count();
+    return size;
+}
+
+void Bone::write(uint8_t *data, const Model::DataInfo & /* info */) const
+{
+    BoneUnit unit;
+    unit.childBoneID = m_childBoneIndex;
+    unit.parentBoneID = m_parentBoneIndex;
+    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    internal::copyBytes(unit.name, name, sizeof(unit.name));
+    m_encodingRef->disposeByteArray(name);
+    internal::getPosition(m_origin, unit.position);
+    unit.targetBoneID = m_targetBoneIndex;
+    unit.type = m_type;
+    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+}
+
 const IString *Bone::name() const
 {
     return m_name;
