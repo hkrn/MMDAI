@@ -267,7 +267,7 @@ void Model::resetVertices()
 {
 }
 
-void Model::performUpdate(const Vector3 &/*cameraPosition*/, const Vector3 &/*lightDirection*/)
+void Model::performUpdate()
 {
 }
 
@@ -554,6 +554,24 @@ void Model::updateSkinningMeshes(SkinningMeshes &/*meshes*/) const
         }
     }
     */
+}
+
+void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const
+{
+    indexBuffer = 0;
+}
+
+void Model::getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
+                                   const IIndexBuffer */*indexBuffer*/) const
+{
+    dynamicBuffer = 0;
+}
+
+void Model::getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
+                                  IDynamicVertexBuffer */*dynamicBuffer*/,
+                                  const IIndexBuffer */*indexBuffer*/) const
+{
+    staticBuffer = 0;
 }
 
 void Model::setSkinnningEnable(bool value)

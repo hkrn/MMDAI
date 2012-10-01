@@ -68,14 +68,14 @@ public:
     const IString *englishName() const { return m_name; }
     const IString *comment() const { return m_name; }
     const IString *englishComment() const { return m_name; }
-    bool isVisible() const { return !btFuzzyZero(opacity()); }
+    bool isVisible() const { return m_visible && !btFuzzyZero(opacity()); }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}
     size_t estimateSize() const { return 1; }
     void resetVertices() {}
     void resetMotionState() {}
-    void performUpdate(const Vector3 & /* cameraPosition */, const Vector3 & /* lightDirection */) {}
+    void performUpdate() {}
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
     IBone *findBone(const IString * /* value */) const { return 0; }
@@ -88,7 +88,7 @@ public:
     void getVertices(Array<IVertex *> & /* value */) const {}
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    IndexType indexType() const { return kIndex32; }
+    float edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
     const Vector3 &position() const { return m_position; }
     const Quaternion &rotation() const { return m_rotation; }
     const Scalar &opacity() const { return m_opacity; }
@@ -109,6 +109,18 @@ public:
     void setEdgeWidth(const Scalar & /* value */) {}
     void setParentModel(IModel *value);
     void setParentBone(IBone *value);
+    void setVisible(bool value);
+
+    void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
+    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
+                                const IIndexBuffer */*indexBuffer*/) const { dynamicBuffer = 0; }
+    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
+                               IDynamicVertexBuffer */*dynamicBuffer*/,
+                               const IIndexBuffer */*indexBuffer*/) const { staticBuffer = 0; }
+
+#ifdef VPVL2_LINK_ASSIMP
+    const aiScene *aiScenePtr() const { return m_scene; }
+#endif
 
 private:
 #ifdef VPVL2_LINK_ASSIMP
@@ -128,6 +140,7 @@ private:
     Quaternion m_rotation;
     Scalar m_opacity;
     Scalar m_scaleFactor;
+    bool m_visible;
 };
 
 } /* namespace asset */

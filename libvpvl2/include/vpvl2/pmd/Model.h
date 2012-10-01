@@ -118,7 +118,7 @@ public:
     size_t estimateSize() const;
     void resetVertices();
     void resetMotionState() {}
-    void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection);
+    void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
@@ -131,7 +131,6 @@ public:
     void getVertices(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    IndexType indexType() const { return kIndex16; }
     Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
     const Vector3 &position() const { return m_position; }
     const Quaternion &rotation() const { return m_rotation; }
@@ -172,6 +171,13 @@ public:
     void getSkinningMeshes(SkinningMeshes &meshes) const;
     void updateSkinningMeshes(SkinningMeshes &meshes) const;
     void setSkinnningEnable(bool value);
+
+    void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
+    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
+                                const IIndexBuffer *indexBuffer) const;
+    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
+                               IDynamicVertexBuffer *dynamicBuffer,
+                               const IIndexBuffer *indexBuffer) const;
 
 private:
     void release();

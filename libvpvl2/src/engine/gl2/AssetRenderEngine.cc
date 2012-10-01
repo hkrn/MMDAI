@@ -42,7 +42,7 @@
 #include "EngineCommon.h"
 #include "vpvl2/gl2/AssetRenderEngine.h"
 
-#include "vpvl/Bone.h"
+#include "vpvl2/pmx/Bone.h"
 #include "vpvl2/asset/Model.h"
 
 #include <map>
@@ -171,9 +171,9 @@ private:
 struct AssetVertex
 {
     AssetVertex() {}
-    vpvl::Vector4 position;
-    vpvl::Vector3 normal;
-    vpvl::Vector3 texcoord;
+    vpvl2::Vector4 position;
+    vpvl2::Vector3 normal;
+    vpvl2::Vector3 texcoord;
 };
 struct AssetVBO
 {
@@ -245,39 +245,41 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate, const Scene *sce
 
 AssetRenderEngine::~AssetRenderEngine()
 {
-    const aiScene *scene = m_modelRef->ptr()->getScene();
-    if (scene) {
-        const unsigned int nmaterials = scene->mNumMaterials;
-        std::string texture, mainTexture, subTexture;
-        aiString texturePath;
-        for (unsigned int i = 0; i < nmaterials; i++) {
-            aiMaterial *material = scene->mMaterials[i];
-            aiReturn found = AI_SUCCESS;
-            GLuint textureID;
-            int textureIndex = 0;
-            while (found == AI_SUCCESS) {
-                found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                if (found != AI_SUCCESS)
-                    break;
-                texture = texturePath.data;
-                if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                    PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
-                    if (sub != m_context->textures.end()) {
-                        textureID = sub->second;
-                        glDeleteTextures(1, &textureID);
-                        m_context->textures.erase(subTexture);
+    if (m_modelRef) {
+        const aiScene *scene = m_modelRef->aiScenePtr();
+        if (scene) {
+            const unsigned int nmaterials = scene->mNumMaterials;
+            std::string texture, mainTexture, subTexture;
+            aiString texturePath;
+            for (unsigned int i = 0; i < nmaterials; i++) {
+                aiMaterial *material = scene->mMaterials[i];
+                aiReturn found = AI_SUCCESS;
+                GLuint textureID;
+                int textureIndex = 0;
+                while (found == AI_SUCCESS) {
+                    found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+                    if (found != AI_SUCCESS)
+                        break;
+                    texture = texturePath.data;
+                    if (SplitTexturePath(texture, mainTexture, subTexture)) {
+                        PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
+                        if (sub != m_context->textures.end()) {
+                            textureID = sub->second;
+                            glDeleteTextures(1, &textureID);
+                            m_context->textures.erase(subTexture);
+                        }
                     }
+                    PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
+                    if (main != m_context->textures.end()) {
+                        textureID = main->second;
+                        glDeleteTextures(1, &textureID);
+                        m_context->textures.erase(mainTexture);
+                    }
+                    textureIndex++;
                 }
-                PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
-                if (main != m_context->textures.end()) {
-                    textureID = main->second;
-                    glDeleteTextures(1, &textureID);
-                    m_context->textures.erase(mainTexture);
-                }
-                textureIndex++;
             }
+            deleteRecurse(scene, scene->mRootNode);
         }
-        deleteRecurse(scene, scene->mRootNode);
     }
     delete m_context;
     m_context = 0;
@@ -288,10 +290,9 @@ AssetRenderEngine::~AssetRenderEngine()
 
 void AssetRenderEngine::renderModel()
 {
-    vpvl::Asset *asset = m_modelRef->ptr();
-    if (btFuzzyZero(asset->opacity()))
+    if (!m_modelRef || btFuzzyZero(m_modelRef->opacity()))
         return;
-    const aiScene *a = asset->getScene();
+    const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode);
     if (!m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
@@ -311,10 +312,9 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    vpvl::Asset *asset = m_modelRef->ptr();
-    if (btFuzzyZero(asset->opacity()))
+    if (!m_modelRef || btFuzzyZero(m_modelRef->opacity()))
         return;
-    const aiScene *a = asset->getScene();
+    const aiScene *a = m_modelRef->aiScenePtr();
     renderZPlotRecurse(a, a->mRootNode);
 }
 
@@ -325,12 +325,13 @@ IModel *AssetRenderEngine::model() const
 
 bool AssetRenderEngine::upload(const IString *dir)
 {
+    if (!m_modelRef)
+        return false;
     bool ret = true;
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
-    vpvl::Asset *asset = m_modelRef->ptr();
-    const aiScene *scene = asset->getScene();
+    const aiScene *scene = m_modelRef->aiScenePtr();
     const unsigned int nmaterials = scene->mNumMaterials;
     void *context = 0;
     aiString texturePath;
@@ -583,12 +584,11 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setMaterialShininess(15.0f);
     }
     float opacity;
-    vpvl::Asset *asset = m_modelRef->ptr();
     if (aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS) {
-        program->setOpacity(opacity * asset->opacity());
+        program->setOpacity(opacity * m_modelRef->opacity());
     }
     else {
-        program->setOpacity(asset->opacity());
+        program->setOpacity(m_modelRef->opacity());
     }
     void *texture = m_sceneRef->light()->depthTexture();
     if (texture && !btFuzzyZero(opacity - 0.98f)) {
@@ -627,19 +627,19 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     Program *program = m_context->assetPrograms[node];
     program->bind();
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kCameraMatrix);
+                             IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kCameraMatrix);
     program->setViewProjectionMatrix(matrix4x4);
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kLightMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kLightMatrix);
     program->setLightViewProjectionMatrix(matrix4x4);
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kCameraMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kCameraMatrix);
     program->setModelMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     program->setLightColor(light->color());
@@ -674,10 +674,10 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     Program *program = m_context->assetPrograms[node];
     program->bind();
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kCameraMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kCameraMatrix);
     program->setModelViewProjectionMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {

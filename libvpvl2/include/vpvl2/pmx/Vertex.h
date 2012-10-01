@@ -87,7 +87,7 @@ public:
     void reset();
     void mergeMorph(const Morph::UV *morph, float weight);
     void mergeMorph(const Morph::Vertex *morph, float weight);
-    void performSkinning(Vector3 &position, Vector3 &normal);
+    void performSkinning(Vector3 &position, Vector3 &normal) const;
 
     const Vector3 &origin() const { return m_origin; }
     const Vector3 &delta() const { return m_morphDelta; }

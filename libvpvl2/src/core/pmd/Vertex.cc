@@ -154,7 +154,7 @@ void Vertex::write(uint8_t *data, const Model::DataInfo & /* info */) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
 }
 
-void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
+void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
 {
     const Transform &transformA = m_boneRefs[0]->localTransform();
     const Transform &transformB = m_boneRefs[1]->localTransform();

@@ -411,7 +411,7 @@ void Vertex::mergeMorph(const Morph::Vertex *morph, float weight)
     m_morphDelta += morph->position * weight;
 }
 
-void Vertex::performSkinning(Vector3 &position, Vector3 &normal)
+void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
 {
     const Vector3 &vertexPosition = m_origin + m_morphDelta;
     switch (m_type) {

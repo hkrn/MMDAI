@@ -47,7 +47,8 @@ Model::Model(IEncoding *encoding)
       m_name(0),
       m_comment(0),
       m_parentModelRef(0),
-      m_parentBoneRef(0)
+      m_parentBoneRef(0),
+      m_visible(false)
 {
 }
 
@@ -60,6 +61,7 @@ Model::~Model()
     m_parentBoneRef = 0;
     m_parentModelRef = 0;
     m_encodingRef = 0;
+    m_visible = false;
 }
 
 bool Model::load(const uint8_t *data, size_t size)
@@ -137,6 +139,11 @@ void Model::setParentModel(IModel *value)
 void Model::setParentBone(IBone *value)
 {
     m_parentBoneRef = value;
+}
+
+void Model::setVisible(bool value)
+{
+    m_visible = value;
 }
 
 #ifdef VPVL2_LINK_ASSIMP

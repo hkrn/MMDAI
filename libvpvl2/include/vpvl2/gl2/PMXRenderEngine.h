@@ -91,7 +91,7 @@ public:
     PMXRenderEngine(IRenderDelegate *delegate,
                     const Scene *scene,
                     cl::PMXAccelerator *accelerator,
-                    pmx::Model *model);
+                    vpvl2::IModel *model);
     virtual ~PMXRenderEngine();
 
     IModel *model() const;
@@ -125,7 +125,7 @@ private:
 
     const Scene *m_sceneRef;
     cl::PMXAccelerator *m_accelerator;
-    pmx::Model *m_modelRef;
+    IModel *m_modelRef;
     PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)

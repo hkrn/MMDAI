@@ -249,15 +249,6 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
-    void updateModels() {
-        const Vector3 &cameraPosition = camera.position() + Vector3(0, 0, camera.distance());
-        const Vector3 &lightDirection = light.direction();
-        const int nmodels = models.count();
-        for (int i = 0; i < nmodels; i++) {
-            IModel *model = models[i];
-            model->performUpdate(cameraPosition, lightDirection);
-        }
-    }
     void updateMotionState() {
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
@@ -421,7 +412,8 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
             engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::PMDRenderEngine(delegate, this, accelerator, m);
+            engine =  new gl2::PMXRenderEngine(delegate, this, 0, m);
+        //new gl2::PMDRenderEngine(delegate, this, accelerator, m);
         break;
     }
     case IModel::kPMX: {
@@ -451,18 +443,6 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
 
 void Scene::addModel(IModel *model, IRenderEngine *engine)
 {
-    const bool isSoftwareSkinning = accelerationType() == kSoftwareFallback;
-    switch (model->type()) {
-    case IModel::kPMD:
-        static_cast<pmd::Model *>(model)->setSkinnningEnable(isSoftwareSkinning);
-        break;
-    case IModel::kPMX:
-        static_cast<pmx::Model *>(model)->setSkinningEnable(isSoftwareSkinning);
-        break;
-    case IModel::kAsset:
-    default:
-        break;
-    }
     m_context->models.add(model);
     m_context->engines.add(engine);
     m_context->model2engineRef.insert(model, engine);
@@ -573,9 +553,11 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
 void Scene::updateModel(IModel *model) const
 {
     if (model) {
+        /*
         const ICamera *c = camera();
         const Vector3 &cameraPosition = c->position() + Vector3(0, 0, c->distance());
         model->performUpdate(cameraPosition, light()->direction());
+        */
     }
 }
 
@@ -583,9 +565,6 @@ void Scene::update(int flags)
 {
     if (flags & kUpdateCamera) {
         m_context->updateCamera();
-    }
-    if (flags & kUpdateModels) {
-        m_context->updateModels();
     }
     if (flags & kUpdateRenderEngines) {
         m_context->updateRenderEngines();

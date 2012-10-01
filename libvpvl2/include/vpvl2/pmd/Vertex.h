@@ -83,7 +83,7 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
-    void performSkinning(Vector3 &position, Vector3 &normal);
+    void performSkinning(Vector3 &position, Vector3 &normal) const;
 
     Vector3 m_origin;
     Vector3 m_normal;

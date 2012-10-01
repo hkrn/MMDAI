@@ -58,6 +58,48 @@ class IVertex;
 class VPVL2_API IModel
 {
 public:
+    struct IBuffer {
+        enum StrideType {
+            kVertexStride,
+            kNormalStride,
+            kTextureCoordStride,
+            kEdgeSizeStride,
+            kToonCoordStride,
+            kEdgeVertexStride,
+            kVertexIndexStride,
+            kBoneIndexStride,
+            kBoneWeightStride,
+            kUVA1Stride,
+            kUVA2Stride,
+            kUVA3Stride,
+            kUVA4Stride,
+            kIndexStride,
+            kMaxStrideType
+        };
+        virtual ~IBuffer() {}
+        virtual const void *bytes() const = 0;
+        virtual size_t size() const = 0;
+        virtual size_t strideOffset(StrideType type) const = 0;
+        virtual size_t strideSize() const = 0;
+    };
+    struct IDynamicVertexBuffer : IBuffer {
+        virtual void update(const Vector3 &cameraPosition, const Vector3 &lightDirection) = 0;
+    };
+    struct IStaticVertexBuffer : IBuffer {
+        virtual const float *matricesBytes(int materialIndex) const = 0;
+        virtual size_t matricesSize(int materialIndex) const = 0;
+    };
+    struct IIndexBuffer : IBuffer {
+        enum Type {
+            kIndex8,
+            kIndex16,
+            kIndex32,
+            kMaxIndexType
+        };
+        virtual int indexAt(int value) const = 0;
+        virtual Type type() const = 0;
+    };
+
     /**
       * Type of parsing errors.
       */
@@ -101,12 +143,6 @@ public:
         kPMD,
         kPMX,
         kMaxModelType
-    };
-    enum IndexType {
-        kIndex8,
-        kIndex16,
-        kIndex32,
-        kMaxIndexType
     };
 
     virtual ~IModel() {}
@@ -211,7 +247,7 @@ public:
      *
      * @param Vector3
      */
-    virtual void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection) = 0;
+    virtual void performUpdate() = 0;
 
     /**
      * モデルの物理演算を有効にします。
@@ -290,7 +326,7 @@ public:
      */
     virtual void getBoundingSphere(Vector3 &center, Scalar &radius) const = 0;
 
-    virtual IndexType indexType() const = 0;
+    virtual float edgeScaleFactor(const Vector3 &position) const = 0;
 
     virtual const Vector3 &position() const = 0;
     virtual const Quaternion &rotation() const = 0;
@@ -312,6 +348,14 @@ public:
     virtual void setEdgeWidth(const Scalar &value) = 0;
     virtual void setParentModel(IModel *value) = 0;
     virtual void setParentBone(IBone *value) = 0;
+    virtual void setVisible(bool value) = 0;
+
+    virtual void getIndexBuffer(IIndexBuffer *&indexBuffer) const = 0;
+    virtual void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
+                                        const IIndexBuffer *indexBuffer) const = 0;
+    virtual void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
+                                       IDynamicVertexBuffer *dynamicBuffer,
+                                       const IIndexBuffer *indexBuffer) const = 0;
 };
 
 } /* namespace vpvl2 */

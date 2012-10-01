@@ -56,12 +56,14 @@ public:
     bool startsWith(const IString *value) const;
     bool contains(const IString *value) const;
     bool endsWith(const IString *value) const;
+    void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const;
     IString *clone() const;
     const HashString toHashString() const;
     bool equals(const IString *value) const;
     const QString &value() const;
     const uint8_t *toByteArray() const;
-    size_t length() const;
+    size_t size() const;
+    size_t length(Codec codec) const;
 
 private:
     const QByteArray m_bytes;
