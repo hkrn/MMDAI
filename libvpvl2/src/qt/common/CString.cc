@@ -36,6 +36,9 @@
 
 #include "vpvl2/qt/CString.h"
 
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+
 namespace vpvl2
 {
 namespace qt
@@ -66,6 +69,36 @@ bool CString::endsWith(const IString *value) const
     return m_value.endsWith(static_cast<const CString *>(value)->m_value);
 }
 
+void CString::split(const IString *separator, int maxTokens, Array<IString *> &tokens) const
+{
+    const QString &sep = static_cast<const CString *>(separator)->value();
+    if (maxTokens > 1) {
+        const QStringList &words = m_value.split(sep);
+        int nwords = words.size();
+        int mwords = qMin(nwords, maxTokens - 1), i = 0;
+        for (i = 0; i < mwords; i++) {
+            const QString &word = words[i];
+            tokens.add(new CString(word));
+        }
+        if (nwords > maxTokens) {
+            QStringList concat;
+            for (int j = i; j < nwords; j++) {
+                concat.append(words[j]);
+            }
+            tokens.add(new CString(concat.join("")));
+        }
+    }
+    else if (maxTokens == 0) {
+        tokens.add(new CString(m_value));
+    }
+    else {
+        const QStringList &words = m_value.split(sep);
+        foreach (const QString &word, words) {
+            tokens.add(new CString(word));
+        }
+    }
+}
+
 IString *CString::clone() const
 {
     return new CString(m_value);
@@ -91,7 +124,12 @@ const uint8_t *CString::toByteArray() const
     return reinterpret_cast<const uint8_t *>(m_bytes.constData());
 }
 
-size_t CString::length() const
+size_t CString::size() const
+{
+    return m_value.length();
+}
+
+size_t CString::length(Codec /*codec*/) const
 {
     return m_bytes.length();
 }
