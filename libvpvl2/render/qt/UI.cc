@@ -869,9 +869,9 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
         m_delegate->parseOffscreenSemantic(effect, info.absoluteDir());
+#endif
         model = modelPtr.take();
         enginePtr.take();
-#endif
     }
     else {
         return 0;
