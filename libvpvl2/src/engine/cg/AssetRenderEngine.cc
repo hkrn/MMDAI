@@ -40,7 +40,6 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/asset/Model.h"
-#include "vpvl/Bone.h"
 
 namespace vpvl2
 {
@@ -99,7 +98,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
 
 AssetRenderEngine::~AssetRenderEngine()
 {
-    const aiScene *scene = m_modelRef->ptr()->getScene();
+    const aiScene *scene = m_modelRef->aiScenePtr();
     if (scene) {
         const unsigned int nmaterials = scene->mNumMaterials;
         std::string texture, mainTexture, subTexture;
@@ -153,8 +152,7 @@ IModel *AssetRenderEngine::model() const
 bool AssetRenderEngine::upload(const IString *dir)
 {
     bool ret = true;
-    vpvl::Asset *asset = m_modelRef->ptr();
-    const aiScene *scene = asset->getScene();
+    const aiScene *scene = m_modelRef->aiScenePtr();
     if (!scene)
         return false;
     const unsigned int nmaterials = scene->mNumMaterials;
@@ -218,8 +216,7 @@ void AssetRenderEngine::renderModel()
 {
     if (!m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
         return;
-    vpvl::Asset *asset = m_modelRef->ptr();
-    if (btFuzzyZero(asset->opacity()))
+    if (btFuzzyZero(m_modelRef->opacity()))
         return;
     const ILight *light = m_sceneRef->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
@@ -228,7 +225,7 @@ void AssetRenderEngine::renderModel()
         m_currentRef->depthTexture.setTexture(depthTexture);
     }
     m_currentRef->setModelMatrixParameters(m_modelRef);
-    const aiScene *a = asset->getScene();
+    const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
     if (!m_cullFaceState) {
         glEnable(GL_CULL_FACE);
@@ -250,11 +247,10 @@ void AssetRenderEngine::renderZPlot()
 {
     if (!m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
-    vpvl::Asset *asset = m_modelRef->ptr();
-    if (btFuzzyZero(asset->opacity()))
+    if (btFuzzyZero(m_modelRef->opacity()))
         return;
     m_currentRef->setModelMatrixParameters(m_modelRef);
-    const aiScene *a = asset->getScene();
+    const aiScene *a = m_modelRef->aiScenePtr();
     renderZPlotRecurse(a, a->mRootNode);
 }
 

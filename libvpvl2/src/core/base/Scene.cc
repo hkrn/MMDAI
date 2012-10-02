@@ -43,14 +43,12 @@
 #include "vpvl2/vmd/Motion.h"
 #ifdef VPVL2_OPENGL_RENDERER
 #include "vpvl2/gl2/AssetRenderEngine.h"
-#include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #endif
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/AssetRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
-#include "vpvl2/cg/PMDRenderEngine.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
 #else
 BT_DECLARE_HANDLE(CGcontext);
@@ -311,7 +309,7 @@ struct Scene::PrivateContext {
         if (source) {
             static const char *kCompilerArguments[] = {
                 "-DVPVM",
-                "-DVPVM_VERSION=" VPVL_VERSION_STRING,
+                "-DVPVL2_VERSION=" VPVL2_VERSION_STRING,
                 0
             };
             effect = cgCreateEffect(effectContext, reinterpret_cast<const char *>(source->toByteArray()), kCompilerArguments);
@@ -397,7 +395,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
         pmd::Model *m = static_cast<pmd::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
             engine =  new gl2::PMXRenderEngine(delegate, this, accelerator, m);

@@ -555,7 +555,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_context(0)
 {
     m_context = new PrivateContext(modelRef);
-    if (m_accelerator)
+    if (m_accelerator && m_accelerator->isAvailable())
         m_context->dynamicBuffer->setSkinningEnable(false);
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();

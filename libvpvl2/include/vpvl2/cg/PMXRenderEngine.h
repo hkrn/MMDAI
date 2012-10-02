@@ -49,9 +49,6 @@ class Scene;
 namespace cl {
 class PMXAccelerator;
 }
-namespace pmx {
-class Model;
-}
 
 namespace cg
 {
@@ -68,7 +65,7 @@ public:
                     const Scene *scene,
                     CGcontext effectContext,
                     cl::PMXAccelerator *accelerator,
-                    pmx::Model *model);
+                    IModel *modelRef);
     virtual ~PMXRenderEngine();
 
     IModel *model() const;
@@ -86,22 +83,18 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
-    //static bool isAcceleratorSupported();
     bool isAcceleratorAvailable() const;
     bool initializeAccelerator();
-
-protected:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
-
-    IRenderDelegate *m_delegateRef;
 
 private:
     bool releaseContext0(void *context);
     void release();
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
     enum VertexBufferObjectType {
-        kModelVertices,
-        kModelIndices,
+        kModelDynamicVertexBuffer,
+        kModelStaticVertexBuffer,
+        kModelIndexBuffer,
         kVertexBufferObjectMax
     };
     struct MaterialContext {
@@ -117,15 +110,19 @@ private:
     };
 
     const Scene *m_sceneRef;
+    IRenderDelegate *m_delegateRef;
+    CGcontext m_contextRef;
     EffectEngine *m_currentRef;
     cl::PMXAccelerator *m_accelerator;
-    pmx::Model *m_modelRef;
-    CGcontext m_contextRef;
-    pmx::Model::SkinningMeshes m_mesh;
+    IModel *m_modelRef;
+    IModel::IStaticVertexBuffer *m_staticBuffer;
+    IModel::IDynamicVertexBuffer *m_dynamicBuffer;
+    IModel::IIndexBuffer *m_indexBuffer;
     GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
     MaterialContext *m_materialContexts;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
+    Array<IMaterial *> m_materials;
     GLenum m_indexType;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
