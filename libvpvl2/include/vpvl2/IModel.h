@@ -85,6 +85,7 @@ public:
     };
     struct IDynamicVertexBuffer : IBuffer {
         virtual void update(const Vector3 &cameraPosition) = 0;
+        virtual void setSkinningEnable(bool value) = 0;
     };
     struct IStaticVertexBuffer : IBuffer {
     };

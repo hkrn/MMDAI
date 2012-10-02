@@ -282,10 +282,10 @@ struct Scene::PrivateContext {
         }
     }
 #endif
-    cl::Context *createComputeContext(IRenderDelegate *delegate) {
+    cl::Context *createComputeContext(IRenderDelegate *delegateRef) {
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (!computeContext) {
-            computeContext = new cl::Context(delegate);
+            computeContext = new cl::Context(delegateRef);
             computeContext->initializeContext(hostDeviceType());
         }
 #else
@@ -293,23 +293,11 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_OPENCL */
         return computeContext;
     }
-    cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
-        cl::PMDAccelerator *accelerator = 0;
-#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
-        if (isOpenCLAcceleration()) {
-            accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
-            accelerator->createKernelProgram();
-        }
-#else
-        (void) delegate;
-#endif /* VPVL2_ENABLE_OPENCL */
-        return accelerator;
-    }
-    cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
+    cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
-            accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
+            accelerator = new cl::PMXAccelerator(createComputeContext(delegate), modelRef);
             accelerator->createKernelProgram();
         }
 #else
@@ -405,19 +393,19 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
         break;
     }
     case IModel::kPMD: {
-        cl::PMDAccelerator *accelerator = m_context->createPMDAccelerator(delegate);
+        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
         pmd::Model *m = static_cast<pmd::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
             engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine =  new gl2::PMXRenderEngine(delegate, this, 0, m);
+            engine =  new gl2::PMXRenderEngine(delegate, this, accelerator, m);
         //new gl2::PMDRenderEngine(delegate, this, accelerator, m);
         break;
     }
     case IModel::kPMX: {
-        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate);
+        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
         pmx::Model *m = static_cast<pmx::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)

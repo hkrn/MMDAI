@@ -542,7 +542,7 @@ public:
 PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
                                  const Scene *scene,
                                  cl::PMXAccelerator *accelerator,
-                                 IModel *model)
+                                 IModel *modelRef)
 #ifdef VPVL2_LINK_QT
     : QGLFunctions(),
       #else
@@ -551,10 +551,12 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_delegateRef(delegate),
       m_sceneRef(scene),
       m_accelerator(accelerator),
-      m_modelRef(model),
+      m_modelRef(modelRef),
       m_context(0)
 {
-    m_context = new PrivateContext(model);
+    m_context = new PrivateContext(modelRef);
+    if (m_accelerator)
+        m_context->dynamicBuffer->setSkinningEnable(false);
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif
@@ -704,8 +706,10 @@ bool PMXRenderEngine::upload(const IString *dir)
         }
     }
 #ifdef VPVL2_ENABLE_OPENCL
-    if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->uploadModel(m_modelRef, m_context->vertexBufferObjects[kModelDynamicVertexBuffer], context);
+    if (m_accelerator && m_accelerator->isAvailable()) {
+        GLuint vbo = m_context->vertexBufferObjects[kModelDynamicVertexBuffer];
+        m_accelerator->upload(vbo, m_context->indexBuffer, context);
+    }
 #endif
     m_modelRef->performUpdate();
     m_modelRef->setVisible(true);
@@ -729,7 +733,7 @@ void PMXRenderEngine::update()
     //    m_modelRef->updateSkinningMesh(m_context->mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->updateModel(m_modelRef, m_sceneRef);
+        m_accelerator->update(m_context->dynamicBuffer, m_sceneRef);
 #endif
 }
 

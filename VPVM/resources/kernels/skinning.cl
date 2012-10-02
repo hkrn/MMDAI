@@ -69,7 +69,7 @@ void performSkinning2(const __global float16 *localMatrices,
                       const int strideSize,
                       const int offsetPosition,
                       const int offsetNormal,
-                      const int offsetTexCoord,
+                      const int offsetMorphDelta,
                       const int offsetEdgeVertex,
                       const int offsetEdgeSize,
                       __global float4 *vertices)
@@ -77,7 +77,7 @@ void performSkinning2(const __global float16 *localMatrices,
     int id = get_global_id(0);
     if (id < nvertices) {
         int strideOffset = strideSize * id;
-        float4 position4 = vertices[strideOffset + offsetPosition];
+        float4 position4 = vertices[strideOffset + offsetPosition] + vertices[strideOffset + offsetMorphDelta];
         float4 normal4 = vertices[strideOffset + offsetNormal];
         float vertexId = position4.w;
         float edgeSize = normal4.w * materialEdgeSize[id] * edgeScaleFactor;
@@ -103,7 +103,6 @@ void performSkinning2(const __global float16 *localMatrices,
             normal2 = weight.x * n1 + weight.y * n2 + weight.z * n3 + weight.w * n4;;
             vertices[strideOffset + offsetPosition] = position2;
             vertices[strideOffset + offsetNormal] = normal2;
-            vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
         }
         else if (boneIndex.y >= 0) { // bdef2 or sdef2
             float16 transform1 = localMatrices[boneIndex.x];
@@ -118,14 +117,12 @@ void performSkinning2(const __global float16 *localMatrices,
             normal2 = s * n2 + w * n1;
             vertices[strideOffset + offsetPosition] = position2;
             vertices[strideOffset + offsetNormal] = normal2;
-            vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
         } else { // bdef1
             float16 transform = localMatrices[boneIndex.x];
             position2 = matrixMultVector4(&transform, &position);
             normal2 = matrixMultVector3(&transform, &normal);
             vertices[strideOffset + offsetPosition] = position2;
             vertices[strideOffset + offsetNormal] = normal2;
-            vertices[strideOffset + offsetTexCoord].zw = (float2)(0.0, 0.5 + dot(lightDirection, normal2) * 0.5);
         }
         vertices[strideOffset + offsetPosition].w = vertexId;
         vertices[strideOffset + offsetEdgeVertex] = position2 + normal2 * edgeSize;

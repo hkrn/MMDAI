@@ -41,8 +41,8 @@ namespace vpvl2
 namespace cl
 {
 
-Context::Context(IRenderDelegate *delegate)
-    : m_delegate(delegate),
+Context::Context(IRenderDelegate *delegateRef)
+    : m_delegateRef(delegateRef),
       m_context(0),
       m_queue(0),
       m_device(0)
@@ -51,6 +51,7 @@ Context::Context(IRenderDelegate *delegate)
 
 Context::~Context()
 {
+    m_delegateRef = 0;
     clReleaseCommandQueue(m_queue);
     m_queue = 0;
     clReleaseContext(m_context);
@@ -145,7 +146,7 @@ bool Context::initializeContext(cl_device_type hostDeviceType)
 void Context::log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
     va_list ap;
     va_start(ap, format);
-    m_delegate->log(context, level, format, ap);
+    m_delegateRef->log(context, level, format, ap);
     va_end(ap);
 }
 

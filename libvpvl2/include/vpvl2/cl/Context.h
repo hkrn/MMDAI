@@ -65,13 +65,13 @@ namespace cl
 class Context
 {
 public:
-    Context(IRenderDelegate *delegate);
+    Context(IRenderDelegate *delegateRef);
     ~Context();
 
     bool isAvailable() const;
     bool initializeContext(cl_device_type hostDeviceType);
 
-    IRenderDelegate *renderDelegate() const { return m_delegate; }
+    IRenderDelegate *renderDelegate() const { return m_delegateRef; }
     cl_context computeContext() const { return m_context; }
     cl_command_queue commandQueue() const { return m_queue; }
     cl_device_id hostDevice() const { return m_device; }
@@ -79,7 +79,7 @@ public:
 private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
 
-    IRenderDelegate *m_delegate;
+    IRenderDelegate *m_delegateRef;
     cl_context m_context;
     cl_command_queue m_queue;
     cl_device_id m_device;

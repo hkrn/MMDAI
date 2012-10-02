@@ -144,11 +144,13 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
 struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     struct Buffer {
         Buffer() {}
-        Buffer(const IVertex *vertex) {
+        Buffer(const IVertex *vertex, int index) {
             position = vertex->origin();
             normal = vertex->normal();
+            normal[3] = vertex->edgeSize();
             delta = vertex->delta();
             edge.setZero();
+            edge[3] = Scalar(index);
             uva0 = vertex->uv(0);
             uva1 = vertex->uv(1);
             uva2 = vertex->uv(2);
@@ -168,14 +170,15 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
 
     DynamicVertexBuffer(const pmx::Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
-          indexBufferRef(indexBuffer)
+          indexBufferRef(indexBuffer),
+          enableSkinning(true)
     {
         model->getMaterials(materials);
         model->getVertices(vertices);
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
             IVertex *vertex = vertices[i];
-            buffer.add(Buffer(vertex));
+            buffer.add(Buffer(vertex, i));
         }
     }
 
@@ -224,45 +227,45 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     size_t strideSize() const {
         return sizeof(Buffer);
     }
-
     void update(const Vector3 &cameraPosition, void *address) {
-        const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
-        const int nmaterials = materials.count();
-        Buffer *bufferPtr = static_cast<Buffer *>(address);
-        int offset = 0;
-        for (int i = 0; i < nmaterials; i++) {
-            const IMaterial *material = materials[i];
-            const int nindices = material->indices(), offsetTo = offset + nindices;
-            const float materialEdgeSize = material->edgeSize();
-            for (int j = offset; j < offsetTo; j++) {
-                const int index = indexBufferRef->indexAt(j);
-                IVertex *vertex = vertices[index];
-                Buffer &v = bufferPtr[index];
-                const float edgeSize = vertex->edgeSize();
-                vertex->performSkinning(v.position, v.normal);
-                v.delta = vertex->delta();
-                v.edge = v.position + v.normal * edgeSize * materialEdgeSize * esf;
-                v.edge[3] = Scalar(i);
-                v.uva0 = vertex->uv(0);
-                v.uva1 = vertex->uv(1);
-                v.uva2 = vertex->uv(2);
-                v.uva3 = vertex->uv(3);
-                v.uva4 = vertex->uv(4);
+        if (enableSkinning) {
+            const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
+            const int nmaterials = materials.count();
+            Buffer *bufferPtr = static_cast<Buffer *>(address);
+            int offset = 0;
+            for (int i = 0; i < nmaterials; i++) {
+                const IMaterial *material = materials[i];
+                const int nindices = material->indices(), offsetTo = offset + nindices;
+                const float materialEdgeSize = material->edgeSize();
+                for (int j = offset; j < offsetTo; j++) {
+                    const int index = indexBufferRef->indexAt(j);
+                    IVertex *vertex = vertices[index];
+                    Buffer &v = bufferPtr[index];
+                    const float edgeSize = vertex->edgeSize();
+                    vertex->performSkinning(v.position, v.normal);
+                    v.delta = vertex->delta();
+                    v.edge = v.position + v.normal * edgeSize * materialEdgeSize * esf;
+                    v.edge[3] = Scalar(i);
+                    v.uva0 = vertex->uv(0);
+                    v.uva1 = vertex->uv(1);
+                    v.uva2 = vertex->uv(2);
+                    v.uva3 = vertex->uv(3);
+                    v.uva4 = vertex->uv(4);
+                }
+                offset += nindices;
             }
-            offset += nindices;
+        }
+        else {
+            const int nvertices = vertices.count();
+            for (int i = 0; i < nvertices; i++) {
+                IVertex *vertex = vertices[i];
+                Buffer &v = buffer[i];
+                v.delta = vertex->delta();
+            }
         }
     }
-    void updateNoSkinning() {
-        const int nvertices = vertices.count();
-        for (int i = 0; i < nvertices; i++) {
-            IVertex *vertex = vertices[i];
-            Buffer &v = buffer[i];
-            v.position = vertex->origin();
-            v.normal = vertex->normal();
-            v.delta = vertex->delta();
-            v.normal[3] = vertex->edgeSize();
-            v.edge[3] = Scalar(i);
-        }
+    void setSkinningEnable(bool value) {
+        enableSkinning = value;
     }
 
     const IModel *modelRef;
@@ -270,6 +273,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     Array<Buffer> buffer;
     Array<IMaterial *> materials;
     Array<IVertex *> vertices;
+    bool enableSkinning;
 };
 
 struct IndexBuffer : public IModel::IIndexBuffer {

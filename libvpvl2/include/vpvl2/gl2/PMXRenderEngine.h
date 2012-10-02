@@ -91,7 +91,7 @@ public:
     PMXRenderEngine(IRenderDelegate *delegate,
                     const Scene *scene,
                     cl::PMXAccelerator *accelerator,
-                    vpvl2::IModel *model);
+                    vpvl2::IModel *modelRef);
     virtual ~PMXRenderEngine();
 
     IModel *model() const;

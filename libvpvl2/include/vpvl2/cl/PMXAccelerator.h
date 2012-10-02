@@ -51,18 +51,22 @@ namespace cl
 class PMXAccelerator
 {
 public:
-    PMXAccelerator(Context *context);
+    PMXAccelerator(Context *contextRef, IModel *modelRef);
     ~PMXAccelerator();
 
     bool isAvailable() const;
     bool createKernelProgram();
-    void uploadModel(const pmx::Model *model, GLuint buffer, void *context);
-    void updateModel(const pmx::Model *model, const Scene *scene);
+    void upload(GLuint buffer, const IModel::IIndexBuffer *indexBuffer, void *context);
+    void update(const IModel::IDynamicVertexBuffer *dynamicBuffer, const Scene *scene);
 
 private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
 
     Context *m_contextRef;
+    IModel *m_modelRef;
+    Array<IBone *> m_bones;
+    Array<IMaterial *> m_materials;
+    Array<IVertex *> m_vertices;
     cl_program m_program;
     cl_kernel m_performSkinningKernel;
     cl_mem m_verticesBuffer;
