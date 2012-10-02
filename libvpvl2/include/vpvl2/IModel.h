@@ -84,7 +84,7 @@ public:
         virtual size_t strideSize() const = 0;
     };
     struct IDynamicVertexBuffer : IBuffer {
-        virtual void update(const Vector3 &cameraPosition) = 0;
+        virtual void update(const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) = 0;
         virtual void setSkinningEnable(bool value) = 0;
     };
     struct IStaticVertexBuffer : IBuffer {

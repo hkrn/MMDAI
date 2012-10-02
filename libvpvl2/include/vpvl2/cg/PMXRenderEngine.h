@@ -124,6 +124,8 @@ private:
     Array<EffectEngine *> m_oseffects;
     Array<IMaterial *> m_materials;
     GLenum m_indexType;
+    Vector3 m_aabbMin;
+    Vector3 m_aabbMax;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
 

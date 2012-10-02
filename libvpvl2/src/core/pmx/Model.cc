@@ -182,8 +182,8 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         }
     }
 
-    void update(const Vector3 &cameraPosition) {
-        update(cameraPosition, &buffer[0]);
+    void update(const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) {
+        update(cameraPosition, &buffer[0], aabbMin, aabbMax);
     }
     const void *bytes() const {
         return &buffer[0];
@@ -227,11 +227,12 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     size_t strideSize() const {
         return sizeof(Buffer);
     }
-    void update(const Vector3 &cameraPosition, void *address) {
+    void update(const Vector3 &cameraPosition, void *address, Vector3 &aabbMin, Vector3 &aabbMax) {
         if (enableSkinning) {
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
             const int nmaterials = materials.count();
             Buffer *bufferPtr = static_cast<Buffer *>(address);
+            Vector3 position, normal;
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
                 const IMaterial *material = materials[i];
@@ -242,15 +243,19 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                     IVertex *vertex = vertices[index];
                     Buffer &v = bufferPtr[index];
                     const float edgeSize = vertex->edgeSize();
-                    vertex->performSkinning(v.position, v.normal);
+                    vertex->performSkinning(position, normal);
+                    v.position = position;
+                    v.normal = normal;
                     v.delta = vertex->delta();
-                    v.edge = v.position + v.normal * edgeSize * materialEdgeSize * esf;
+                    v.edge = position + normal * edgeSize * materialEdgeSize * esf;
                     v.edge[3] = Scalar(i);
                     v.uva0 = vertex->uv(0);
                     v.uva1 = vertex->uv(1);
                     v.uva2 = vertex->uv(2);
                     v.uva3 = vertex->uv(3);
                     v.uva4 = vertex->uv(4);
+                    aabbMin.setMin(position);
+                    aabbMax.setMax(position);
                 }
                 offset += nindices;
             }
@@ -262,6 +267,8 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                 Buffer &v = buffer[i];
                 v.delta = vertex->delta();
             }
+            aabbMin.setZero();
+            aabbMax.setZero();
         }
     }
     void setSkinningEnable(bool value) {

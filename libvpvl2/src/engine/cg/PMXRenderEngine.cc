@@ -74,6 +74,8 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_indexBuffer(0),
       m_materialContexts(0),
       m_indexType(GL_UNSIGNED_INT),
+      m_aabbMin(kZeroV3),
+      m_aabbMax(kZeroV3),
       m_cullFaceState(true),
       m_isVertexShaderSkinning(false)
 {
@@ -194,14 +196,14 @@ void PMXRenderEngine::update()
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelDynamicVertexBuffer]);
     m_modelRef->performUpdate();
-    m_dynamicBuffer->update(m_sceneRef->camera()->position());
+    m_dynamicBuffer->update(m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
     glBufferSubData(GL_ARRAY_BUFFER, 0, m_dynamicBuffer->size(), m_dynamicBuffer->bytes());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     //if (m_isVertexShaderSkinning)
     //    m_modelRef->updateSkinningMesh(m_mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->update(m_dynamicBuffer, m_sceneRef);
+        m_accelerator->update(m_dynamicBuffer, m_sceneRef, m_aabbMin, m_aabbMax);
 #endif
     m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
     m_currentRef->updateSceneParameters();
@@ -502,6 +504,8 @@ void PMXRenderEngine::release()
 #endif
     m_effects.releaseAll();
     m_oseffects.releaseAll();
+    m_aabbMin.setZero();
+    m_aabbMax.setZero();
     m_currentRef = 0;
     m_delegateRef = 0;
     m_sceneRef = 0;

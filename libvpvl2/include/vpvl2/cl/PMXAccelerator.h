@@ -57,7 +57,10 @@ public:
     bool isAvailable() const;
     bool createKernelProgram();
     void upload(GLuint buffer, const IModel::IIndexBuffer *indexBuffer, void *context);
-    void update(const IModel::IDynamicVertexBuffer *dynamicBuffer, const Scene *scene);
+    void update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
+                const Scene *scene,
+                Vector3 &aabbMin,
+                Vector3 &aabbMax);
 
 private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);

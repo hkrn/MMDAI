@@ -234,7 +234,10 @@ void PMXAccelerator::upload(GLuint buffer, const IModel::IIndexBuffer *indexBuff
     m_isBufferAllocated = true;
 }
 
-void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer, const Scene *scene)
+void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
+                            const Scene *scene,
+                            Vector3 &aabbMin,
+                            Vector3 &aabbMax)
 {
     if (!m_isBufferAllocated)
         return;
@@ -347,6 +350,15 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer, c
     }
     clEnqueueReleaseGLObjects(queue, 1, &m_verticesBuffer, 0, 0, 0);
     clFinish(queue);
+    /* hack */
+    size_t offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
+    size_t size = dynamicBuffer->strideSize();
+    for (int i = 0; i < nvertices; i++) {
+        const uint8_t *ptr = static_cast<const uint8_t *>(dynamicBuffer->bytes()) + offset + size * i;
+        const Vector3 &v = *reinterpret_cast<const Vector3 *>(ptr);
+        aabbMin.setMin(v);
+        aabbMax.setMax(v);
+    }
 }
 
 void PMXAccelerator::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)

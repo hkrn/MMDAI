@@ -127,6 +127,8 @@ private:
     cl::PMXAccelerator *m_accelerator;
     IModel *m_modelRef;
     PrivateContext *m_context;
+    Vector3 m_aabbMin;
+    Vector3 m_aabbMax;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

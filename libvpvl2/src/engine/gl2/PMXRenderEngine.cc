@@ -552,7 +552,9 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_sceneRef(scene),
       m_accelerator(accelerator),
       m_modelRef(modelRef),
-      m_context(0)
+      m_context(0),
+      m_aabbMin(kZeroV3),
+      m_aabbMax(kZeroV3)
 {
     m_context = new PrivateContext(modelRef);
     if (m_accelerator && m_accelerator->isAvailable())
@@ -569,6 +571,8 @@ PMXRenderEngine::~PMXRenderEngine()
         delete m_context;
         m_context = 0;
     }
+    m_aabbMin.setZero();
+    m_aabbMax.setZero();
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
 #endif
@@ -726,14 +730,14 @@ void PMXRenderEngine::update()
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_modelRef->performUpdate();
-    dynamicBuffer->update(m_sceneRef->camera()->position());
+    dynamicBuffer->update(m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
     glBufferSubData(GL_ARRAY_BUFFER, 0, dynamicBuffer->size(), dynamicBuffer->bytes());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     //if (m_context->isVertexShaderSkinning)
     //    m_modelRef->updateSkinningMesh(m_context->mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->update(m_context->dynamicBuffer, m_sceneRef);
+        m_accelerator->update(m_context->dynamicBuffer, m_sceneRef, m_aabbMin, m_aabbMax);
 #endif
 }
 
