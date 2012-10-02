@@ -56,8 +56,9 @@ using namespace vpvl2::gl2;
 
 enum VertexBufferObjectType
 {
-    kModelVertices,
-    kModelIndices,
+    kModelDynamicVertexBuffer,
+    kModelStaticVertexBuffer,
+    kModelIndexBuffer,
     kVertexBufferObjectMax
 };
 
@@ -243,7 +244,8 @@ class ModelProgram : public ObjectProgram
 public:
     ModelProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_toonTexCoordAttributeLocation(0),
+          m_deltaAttributeLocation(0),
+          m_uva0AttributeLocation(0),
           m_uva1AttributeLocation(0),
           m_cameraPositionUniformLocation(0),
           m_materialColorUniformLocation(0),
@@ -266,7 +268,8 @@ public:
     {
     }
     ~ModelProgram() {
-        m_toonTexCoordAttributeLocation = 0;
+        m_deltaAttributeLocation = 0;
+        m_uva0AttributeLocation = 0;
         m_uva1AttributeLocation = 0;
         m_cameraPositionUniformLocation = 0;
         m_materialColorUniformLocation = 0;
@@ -291,8 +294,11 @@ public:
     void setCameraPosition(const Vector3 &value) {
         glUniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
-    void setToonTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_toonTexCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+    void setDelta(const GLvoid *ptr, GLsizei stride) {
+        glVertexAttribPointer(m_deltaAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+    }
+    void setUVA0(const GLvoid *ptr, GLsizei stride) {
+        glVertexAttribPointer(m_uva0AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setUVA1(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_uva1AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -379,7 +385,8 @@ public:
 protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
-        m_toonTexCoordAttributeLocation = glGetAttribLocation(m_program, "inToonCoord");
+        m_deltaAttributeLocation = glGetAttribLocation(m_program, "inDelta");
+        m_uva0AttributeLocation = glGetAttribLocation(m_program, "inUVA0");
         m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
         m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
@@ -399,14 +406,16 @@ protected:
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
-        enableAttribute(m_toonTexCoordAttributeLocation);
+        enableAttribute(m_deltaAttributeLocation);
+        enableAttribute(m_uva0AttributeLocation);
         enableAttribute(m_uva1AttributeLocation);
         enableAttribute(m_boneIndicesAttributeLocation);
         enableAttribute(m_boneWeightsAttributeLocation);
     }
 
 private:
-    GLuint m_toonTexCoordAttributeLocation;
+    GLuint m_deltaAttributeLocation;
+    GLuint m_uva0AttributeLocation;
     GLuint m_uva1AttributeLocation;
     GLuint m_cameraPositionUniformLocation;
     GLuint m_materialColorUniformLocation;
@@ -444,8 +453,9 @@ public:
     PrivateContext(const IModel *model)
         : modelRef(model),
           indexBuffer(0),
-          dynamicBuffer(0),
           staticBuffer(0),
+          dynamicBuffer(0),
+          matrixBuffer(0),
           edgeProgram(0),
           modelProgram(0),
           shadowProgram(0),
@@ -455,8 +465,9 @@ public:
           isVertexShaderSkinning(false)
     {
         model->getIndexBuffer(indexBuffer);
+        model->getStaticVertexBuffer(staticBuffer);
         model->getDynamicVertexBuffer(dynamicBuffer, indexBuffer);
-        model->getStaticVertexBuffer(staticBuffer, dynamicBuffer, indexBuffer);
+        model->getMatrixBuffer(matrixBuffer, dynamicBuffer, indexBuffer);
         switch (indexBuffer->type()) {
         case IModel::IIndexBuffer::kIndex32:
             indexType = GL_UNSIGNED_INT;
@@ -514,8 +525,9 @@ public:
 
     const IModel *modelRef;
     IModel::IIndexBuffer *indexBuffer;
-    IModel::IDynamicVertexBuffer *dynamicBuffer;
     IModel::IStaticVertexBuffer *staticBuffer;
+    IModel::IDynamicVertexBuffer *dynamicBuffer;
+    IModel::IMatrixBuffer *matrixBuffer;
     EdgeProgram *edgeProgram;
     ModelProgram *modelProgram;
     ShadowProgram *shadowProgram;
@@ -610,18 +622,24 @@ bool PMXRenderEngine::upload(const IString *dir)
         return releaseContext0(context);
     }
     glGenBuffers(kVertexBufferObjectMax, m_context->vertexBufferObjects);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_context->indexBuffer->size(),
                  m_context->indexBuffer->bytes(), GL_STATIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
          "Binding indices to the vertex buffer object (ID=%d)",
-         m_context->vertexBufferObjects[kModelIndices]);
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
+         m_context->vertexBufferObjects[kModelIndexBuffer]);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
     glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(),
                  m_context->dynamicBuffer->bytes(), GL_DYNAMIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
-         "Binding model vertices to the vertex buffer object (ID=%d)",
-         m_context->vertexBufferObjects[kModelVertices]);
+         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)",
+         m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
+    glBufferData(GL_ARRAY_BUFFER, m_context->staticBuffer->size(),
+                 m_context->staticBuffer->bytes(), GL_STATIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding model static vertex buffer to the vertex buffer object (ID=%d)",
+         m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
     //if (m_context->isVertexShaderSkinning)
     //    m_modelRef->getSkinningMesh(m_context->mesh);
     Array<IMaterial *> materials;
@@ -687,7 +705,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->uploadModel(m_modelRef, m_context->vertexBufferObjects[kModelVertices], context);
+        m_accelerator->uploadModel(m_modelRef, m_context->vertexBufferObjects[kModelDynamicVertexBuffer], context);
 #endif
     m_modelRef->performUpdate();
     m_modelRef->setVisible(true);
@@ -701,10 +719,10 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_modelRef->performUpdate();
-    dynamicBuffer->update(m_sceneRef->camera()->position(), m_sceneRef->light()->direction());
+    dynamicBuffer->update(m_sceneRef->camera()->position());
     glBufferSubData(GL_ARRAY_BUFFER, 0, dynamicBuffer->size(), dynamicBuffer->bytes());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     //if (m_context->isVertexShaderSkinning)
@@ -721,17 +739,22 @@ void PMXRenderEngine::renderModel()
         return;
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
+    IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
+    size_t offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
+    size_t size   = staticBuffer->strideSize();
+    modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    size_t offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
-    size_t size   = dynamicBuffer->strideSize();
+    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
+    size   = dynamicBuffer->strideSize();
     modelProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
     modelProgram->setNormal(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kTextureCoordStride);
-    modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kToonCoordStride);
-    modelProgram->setToonTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
+    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kMorphDeltaStride);
+    modelProgram->setDelta(reinterpret_cast<const GLvoid *>(offset), size);
+    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA0Stride);
+    modelProgram->setUVA0(reinterpret_cast<const GLvoid *>(offset), size);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA1Stride);
     modelProgram->setUVA1(reinterpret_cast<const GLvoid *>(offset), size);
     float matrix4x4[16];
@@ -764,7 +787,6 @@ void PMXRenderEngine::renderModel()
     const Scalar &opacity = m_modelRef->opacity();
     modelProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
-    IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     m_modelRef->getMaterials(materials);
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
@@ -776,7 +798,7 @@ void PMXRenderEngine::renderModel()
     const Vector3 &lc = light->color();
     Color diffuse, specular;
     offset = 0; size = m_context->indexBuffer->strideSize();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const MaterialTextures &materialPrivate = materialPrivates[i];
@@ -797,9 +819,10 @@ void PMXRenderEngine::renderModel()
         else
             modelProgram->setDepthTexture(0);
         if (isVertexShaderSkinning) {
+            IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
             modelProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
             modelProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
-            modelProgram->setBoneMatrices(staticBuffer->matricesBytes(i), staticBuffer->matricesSize(i));
+            modelProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
         }
         if ((!hasModelTransparent && m_context->cullFaceState) ||
                 (material->isCullFaceDisabled() && m_context->cullFaceState)) {
@@ -841,7 +864,7 @@ void PMXRenderEngine::renderShadow()
     IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     size_t offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
     size_t size = dynamicBuffer->strideSize();
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
@@ -852,15 +875,16 @@ void PMXRenderEngine::renderShadow()
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     offset = 0; size = m_context->indexBuffer->strideSize();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indices();
         if (material->hasShadow()) {
             if (isVertexShaderSkinning) {
+                IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
                 shadowProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
-                shadowProgram->setBoneMatrices(staticBuffer->matricesBytes(i), staticBuffer->matricesSize(i));
+                shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
         }
@@ -876,8 +900,8 @@ void PMXRenderEngine::renderEdge()
         return;
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
     float matrix4x4[16];
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                           IRenderDelegate::kWorldMatrix
@@ -921,7 +945,8 @@ void PMXRenderEngine::renderEdge()
         edgeProgram->setColor(material->edgeColor());
         if (material->isEdgeDrawn()) {
             if (isVertexShaderSkinning) {
-                edgeProgram->setBoneMatrices(staticBuffer->matricesBytes(i), staticBuffer->matricesSize(i));
+                IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+                edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
                 edgeProgram->setSize(material->edgeSize() * edgeScaleFactor);
             }
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
@@ -938,8 +963,8 @@ void PMXRenderEngine::renderZPlot()
         return;
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
     zplotProgram->bind();
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelVertices]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndices]);
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     size_t offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
@@ -966,9 +991,10 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indices();
         if (material->isShadowMapDrawn()) {
             if (isVertexShaderSkinning) {
+                IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
                 zplotProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
-                zplotProgram->setBoneMatrices(staticBuffer->matricesBytes(i), staticBuffer->matricesSize(i));
+                zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
         }

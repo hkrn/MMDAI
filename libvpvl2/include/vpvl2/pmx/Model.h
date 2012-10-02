@@ -201,11 +201,12 @@ public:
     void setParentBone(IBone * /* value */) {}
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
+    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
     void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
                                 const IIndexBuffer *indexBuffer) const;
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
-                               IDynamicVertexBuffer *dynamicBuffer,
-                               const IIndexBuffer *indexBuffer) const;
+    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
+                         IDynamicVertexBuffer *dynamicBuffer,
+                         const IIndexBuffer *indexBuffer) const;
 
 private:
     void release();

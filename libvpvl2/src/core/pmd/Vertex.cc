@@ -71,6 +71,7 @@ Vertex::Vertex()
     : m_origin(kZeroV3),
       m_normal(kZeroV3),
       m_texcoord(kZeroV3),
+      m_delta(kZeroV3),
       m_edgeSize(0),
       m_weight(0)
 {

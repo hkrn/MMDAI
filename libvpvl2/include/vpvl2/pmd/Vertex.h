@@ -64,6 +64,7 @@ public:
     const Vector3 &normal() const { return m_normal; }
     const Vector3 &textureCoord() const { return m_texcoord; }
     const Vector4 &uv(int /* index */) const { return kZeroV4; }
+    const Vector3 &delta() const { return m_delta; }
     Type type() const { return kBdef2; }
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
@@ -88,6 +89,7 @@ public:
     Vector3 m_origin;
     Vector3 m_normal;
     Vector3 m_texcoord;
+    Vector3 m_delta;
     float m_edgeSize;
     float m_weight;
     IBone *m_boneRefs[kMaxBones];

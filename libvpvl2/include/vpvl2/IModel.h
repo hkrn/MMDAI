@@ -63,12 +63,13 @@ public:
             kVertexStride,
             kNormalStride,
             kTextureCoordStride,
+            kMorphDeltaStride,
             kEdgeSizeStride,
-            kToonCoordStride,
             kEdgeVertexStride,
             kVertexIndexStride,
             kBoneIndexStride,
             kBoneWeightStride,
+            kUVA0Stride,
             kUVA1Stride,
             kUVA2Stride,
             kUVA3Stride,
@@ -83,11 +84,9 @@ public:
         virtual size_t strideSize() const = 0;
     };
     struct IDynamicVertexBuffer : IBuffer {
-        virtual void update(const Vector3 &cameraPosition, const Vector3 &lightDirection) = 0;
+        virtual void update(const Vector3 &cameraPosition) = 0;
     };
     struct IStaticVertexBuffer : IBuffer {
-        virtual const float *matricesBytes(int materialIndex) const = 0;
-        virtual size_t matricesSize(int materialIndex) const = 0;
     };
     struct IIndexBuffer : IBuffer {
         enum Type {
@@ -98,6 +97,11 @@ public:
         };
         virtual int indexAt(int value) const = 0;
         virtual Type type() const = 0;
+    };
+    struct IMatrixBuffer {
+        virtual void update() = 0;
+        virtual const float *bytes(int materialIndex) const = 0;
+        virtual size_t size(int materialIndex) const = 0;
     };
 
     /**
@@ -351,11 +355,12 @@ public:
     virtual void setVisible(bool value) = 0;
 
     virtual void getIndexBuffer(IIndexBuffer *&indexBuffer) const = 0;
+    virtual void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const = 0;
     virtual void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
                                         const IIndexBuffer *indexBuffer) const = 0;
-    virtual void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
-                                       IDynamicVertexBuffer *dynamicBuffer,
-                                       const IIndexBuffer *indexBuffer) const = 0;
+    virtual void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
+                                 IDynamicVertexBuffer *dynamicBuffer,
+                                 const IIndexBuffer *indexBuffer) const = 0;
 };
 
 } /* namespace vpvl2 */

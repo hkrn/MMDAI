@@ -558,20 +558,29 @@ void Model::updateSkinningMeshes(SkinningMeshes &/*meshes*/) const
 
 void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const
 {
+    delete indexBuffer;
     indexBuffer = 0;
+}
+
+void Model::getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const
+{
+    delete staticBuffer;
+    staticBuffer = 0;
 }
 
 void Model::getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
                                    const IIndexBuffer */*indexBuffer*/) const
 {
+    delete dynamicBuffer;
     dynamicBuffer = 0;
 }
 
-void Model::getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
-                                  IDynamicVertexBuffer */*dynamicBuffer*/,
-                                  const IIndexBuffer */*indexBuffer*/) const
+void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
+                            IDynamicVertexBuffer */*dynamicBuffer*/,
+                            const IIndexBuffer */*indexBuffer*/) const
 {
-    staticBuffer = 0;
+    delete matrixBuffer;
+    matrixBuffer = 0;
 }
 
 void Model::setSkinnningEnable(bool value)

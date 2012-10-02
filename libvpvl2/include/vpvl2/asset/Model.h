@@ -112,11 +112,12 @@ public:
     void setVisible(bool value);
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
+    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }
     void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
                                 const IIndexBuffer */*indexBuffer*/) const { dynamicBuffer = 0; }
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer,
-                               IDynamicVertexBuffer */*dynamicBuffer*/,
-                               const IIndexBuffer */*indexBuffer*/) const { staticBuffer = 0; }
+    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
+                         IDynamicVertexBuffer */*dynamicBuffer*/,
+                         const IIndexBuffer */*indexBuffer*/) const { matrixBuffer = 0; }
 
 #ifdef VPVL2_LINK_ASSIMP
     const aiScene *aiScenePtr() const { return m_scene; }

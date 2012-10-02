@@ -9,13 +9,15 @@ uniform mat4 lightViewProjectionMatrix;
 uniform mat3 normalMatrix;
 uniform vec4 materialColor;
 uniform vec3 cameraPosition;
+uniform vec3 lightDirection;
 uniform bool hasSphereTexture;
 uniform bool hasDepthTexture;
+in vec3 inDelta;
+in vec4 inUVA0;
 in vec4 inUVA1;
 in vec3 inPosition;
 in vec3 inNormal;
 in vec2 inTexCoord;
-in vec2 inToonCoord;
 out vec4 outColor;
 out vec4 outTexCoord;
 out vec4 outShadowCoord;
@@ -32,14 +34,18 @@ vec2 makeSphereMap(const vec3 normal) {
     return vec2(normal.x * kHalf + kHalf, normal.y * kHalf + kHalf);
 }
 
+vec2 calculateToon(const vec3 normal) {
+	return (vec3(1.0) + dot(lightDirection, -normal) * 0.5).xy;
+}
+
 void main() {
-    vec4 position = vec4(inPosition, kOne);
+    vec4 position = vec4(inPosition + inDelta, kOne);
     vec3 normal = normalMatrix * inNormal;
     outEyeView = cameraPosition - inPosition;
     outNormal = inNormal;
     outColor = max(min(materialColor, kOne4), kZero4);
-    outTexCoord.xy = inTexCoord;
-    outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : inToonCoord;
+    outTexCoord.xy = inTexCoord + inUVA0.xy;
+    outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : calculateToon(normal);
     outUVA1 = inUVA1;
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * position;
