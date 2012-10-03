@@ -71,7 +71,6 @@ void performSkinning2(const __global float16 *localMatrices,
                       const int offsetNormal,
                       const int offsetMorphDelta,
                       const int offsetEdgeVertex,
-                      const int offsetEdgeSize,
                       __global float4 *vertices)
 {
     int id = get_global_id(0);
