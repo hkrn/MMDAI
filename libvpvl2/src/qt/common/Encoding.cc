@@ -95,19 +95,24 @@ const IString *Encoding::stringConstant(ConstantType value) const
 IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec codec) const
 {
     IString *s = 0;
-    const char *str = reinterpret_cast<const char *>(value);
-    switch (codec) {
-    case IString::kShiftJIS:
-        s = new CString(m_sjis->toUnicode(str, size));
-        break;
-    case IString::kUTF8:
-        s = new CString(m_utf8->toUnicode(str, size));
-        break;
-    case IString::kUTF16:
-        s = new CString(m_utf16->toUnicode(str, size));
-        break;
-    default:
-        break;
+    if (value) {
+        const char *str = reinterpret_cast<const char *>(value);
+        switch (codec) {
+        case IString::kShiftJIS:
+            s = new CString(m_sjis->toUnicode(str, size));
+            break;
+        case IString::kUTF8:
+            s = new CString(m_utf8->toUnicode(str, size));
+            break;
+        case IString::kUTF16:
+            s = new CString(m_utf16->toUnicode(str, size));
+            break;
+        default:
+            break;
+        }
+    }
+    else {
+        s = new CString("");
     }
     return s;
 }
