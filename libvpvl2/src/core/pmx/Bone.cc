@@ -323,6 +323,18 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
     return true;
 }
 
+size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
+{
+    const int nbones = bones.count();
+    size_t size = 0;
+    size += sizeof(nbones);
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones[i];
+        size += bone->estimateSize(info);
+    }
+    return size;
+}
+
 void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;

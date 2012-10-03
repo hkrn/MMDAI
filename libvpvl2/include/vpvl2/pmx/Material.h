@@ -130,6 +130,7 @@ public:
     static bool loadMaterials(const Array<Material *> &materials,
                               const Array<IString *> &textures,
                               int expectedIndices);
+    static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

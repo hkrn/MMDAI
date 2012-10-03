@@ -70,6 +70,7 @@ public:
     static bool loadLabels(const Array<Label *> &labels,
                            const Array<Bone *> &bones,
                            const Array<Morph *> &morphs);
+    static size_t estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

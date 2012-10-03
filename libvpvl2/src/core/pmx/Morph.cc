@@ -231,6 +231,18 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
     return true;
 }
 
+size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
+{
+    const int nmorphs = morphs.count();
+    size_t size = 0;
+    size += sizeof(nmorphs);
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = morphs[i];
+        size += morph->estimateSize(info);
+    }
+    return size;
+}
+
 bool Morph::loadBones(const Array<pmx::Bone *> &bones, Morph *morph)
 {
     const int nMorphBones = morph->m_bones.count();

@@ -606,12 +606,7 @@ size_t Model::estimateSize() const
     size += internal::estimateSize(m_englishName, codec);
     size += internal::estimateSize(m_comment, codec);
     size += internal::estimateSize(m_englishComment, codec);
-    const int nvertices = m_vertices.count();
-    size += sizeof(nvertices);
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices[i];
-        size += vertex->estimateSize(m_info);
-    }
+    size += Vertex::estimateTotalSize(m_vertices, m_info);
     const int nindices = m_indices.count();
     size += sizeof(nindices);
     size += m_info.vertexIndexSize * nindices;
@@ -621,42 +616,12 @@ size_t Model::estimateSize() const
         IString *texture = m_textures[i];
         size += internal::estimateSize(texture, codec);
     }
-    const int nmaterials = m_materials.count();
-    size += sizeof(nmaterials);
-    for (int i = 0; i < nmaterials; i++) {
-        Material *material = m_materials[i];
-        size += material->estimateSize(m_info);
-    }
-    const int nbones = m_bones.count();
-    size += sizeof(nbones);
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
-        size += bone->estimateSize(m_info);
-    }
-    const int nmorphs = m_morphs.count();
-    size += sizeof(nmorphs);
-    for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = m_morphs[i];
-        size += morph->estimateSize(m_info);
-    }
-    const int nlabels = m_labels.count();
-    size += sizeof(nlabels);
-    for (int i = 0; i < nlabels; i++) {
-        Label *label = m_labels[i];
-        size += label->estimateSize(m_info);
-    }
-    const int nbodies = m_rigidBodies.count();
-    size += sizeof(nbodies);
-    for (int i = 0; i < nbodies; i++) {
-        RigidBody *body = m_rigidBodies[i];
-        size += body->estimateSize(m_info);
-    }
-    const int njoints = m_joints.count();
-    size += sizeof(njoints);
-    for (int i = 0; i < njoints; i++) {
-        Joint *joint = m_joints[i];
-        size += joint->estimateSize(m_info);
-    }
+    size += Material::estimateTotalSize(m_materials, m_info);
+    size += Bone::estimateTotalSize(m_bones, m_info);
+    size += Morph::estimateTotalSize(m_morphs, m_info);
+    size += Label::estimateTotalSize(m_labels, m_info);
+    size += RigidBody::estimateTotalSize(m_rigidBodies, m_info);
+    size += Joint::estimateTotalSize(m_joints, m_info);
     return size;
 }
 

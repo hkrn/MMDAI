@@ -197,6 +197,18 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
     return actualIndices == expectedIndices;
 }
 
+size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
+{
+    const int nmaterials = materials.count();
+    size_t size = 0;
+    size += sizeof(nmaterials);
+    for (int i = 0; i < nmaterials; i++) {
+        Material *material = materials[i];
+        size += material->estimateSize(info);
+    }
+    return size;
+}
+
 void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;

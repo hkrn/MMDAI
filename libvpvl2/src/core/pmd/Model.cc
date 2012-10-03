@@ -260,7 +260,9 @@ IModel::ErrorType Model::error() const
 
 size_t Model::estimateSize() const
 {
-    return 0;
+    size_t size = 0;
+    size += sizeof(Header);
+    return size;
 }
 
 void Model::resetVertices()

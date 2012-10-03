@@ -136,6 +136,7 @@ public:
                            const Array<pmx::Bone *> &bones,
                            const Array<pmx::Material *> &materials,
                            const Array<pmx::Vertex *> &vertices);
+    static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.

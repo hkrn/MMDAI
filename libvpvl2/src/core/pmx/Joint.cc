@@ -144,6 +144,18 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
     return true;
 }
 
+size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
+{
+    const int njoints = joints.count();
+    size_t size = 0;
+    size += sizeof(njoints);
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = joints[i];
+        size += joint->estimateSize(info);
+    }
+    return size;
+}
+
 void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;

@@ -73,6 +73,7 @@ public:
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices,
                              const Array<Bone *> &bones);
+    static size_t estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
