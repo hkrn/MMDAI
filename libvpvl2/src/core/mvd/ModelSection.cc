@@ -159,7 +159,7 @@ void ModelSection::setParentModel(IModel *model)
     if (m_contextPtr) {
         m_contextPtr->bones.clear();
         Array<IBone *> allBones, bonesOfIK;
-        model->getBones(allBones);
+        model->getBoneRefs(allBones);
         const int nbones = allBones.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = allBones[i];

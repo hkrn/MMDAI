@@ -63,9 +63,9 @@ PMXAccelerator::PMXAccelerator(Context *contextRef, IModel *modelRef)
       m_boneTransform(0),
       m_isBufferAllocated(false)
 {
-    modelRef->getBones(m_bones);
-    modelRef->getMaterials(m_materials);
-    modelRef->getVertices(m_vertices);
+    modelRef->getBoneRefs(m_bones);
+    modelRef->getMaterialRefs(m_materials);
+    modelRef->getVertexRefs(m_vertices);
 }
 
 PMXAccelerator::~PMXAccelerator()

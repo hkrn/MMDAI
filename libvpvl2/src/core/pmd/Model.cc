@@ -323,7 +323,7 @@ int Model::count(ObjectType value) const
     return 0;
 }
 
-void Model::getBones(Array<IBone *> &value) const
+void Model::getBoneRefs(Array<IBone *> &value) const
 {
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -332,7 +332,7 @@ void Model::getBones(Array<IBone *> &value) const
     }
 }
 
-void Model::getLabels(Array<ILabel *> &value) const
+void Model::getLabelRefs(Array<ILabel *> &value) const
 {
     const int nlabels = m_labels.count();
     for (int i = 0; i < nlabels; i++) {
@@ -341,7 +341,7 @@ void Model::getLabels(Array<ILabel *> &value) const
     }
 }
 
-void Model::getMaterials(Array<IMaterial *> &value) const
+void Model::getMaterialRefs(Array<IMaterial *> &value) const
 {
     const int nmaterials = m_materials.count();
     for (int i = 0; i < nmaterials; i++) {
@@ -350,7 +350,7 @@ void Model::getMaterials(Array<IMaterial *> &value) const
     }
 }
 
-void Model::getMorphs(Array<IMorph *> &value) const
+void Model::getMorphRefs(Array<IMorph *> &value) const
 {
     const int nmorphs = m_morphs.count();
     for (int i = 0; i < nmorphs; i++) {
@@ -359,7 +359,7 @@ void Model::getMorphs(Array<IMorph *> &value) const
     }
 }
 
-void Model::getVertices(Array<IVertex *> &value) const
+void Model::getVertexRefs(Array<IVertex *> &value) const
 {
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {

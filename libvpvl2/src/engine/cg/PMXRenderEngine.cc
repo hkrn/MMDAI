@@ -82,7 +82,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
     m_modelRef->getIndexBuffer(m_indexBuffer);
     m_modelRef->getStaticVertexBuffer(m_staticBuffer);
     m_modelRef->getDynamicVertexBuffer(m_dynamicBuffer, m_indexBuffer);
-    m_modelRef->getMaterials(m_materials);
+    m_modelRef->getMaterialRefs(m_materials);
     switch (m_indexBuffer->type()) {
     case IModel::IIndexBuffer::kIndex8:
         m_indexType = GL_UNSIGNED_BYTE;
@@ -138,7 +138,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     //if (m_isVertexShaderSkinning)
     //    m_modelRef->getSkinningMesh(m_mesh);
     Array<IMaterial *> materials;
-    m_modelRef->getMaterials(materials);
+    m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
@@ -483,7 +483,7 @@ void PMXRenderEngine::release()
     glDeleteBuffers(kVertexBufferObjectMax, m_vertexBufferObjects);
     if (m_materialContexts) {
         Array<IMaterial *> modelMaterials;
-        m_modelRef->getMaterials(modelMaterials);
+        m_modelRef->getMaterialRefs(modelMaterials);
         const int nmaterials = modelMaterials.count();
         for (int i = 0; i < nmaterials; i++) {
             MaterialContext &materialPrivate = m_materialContexts[i];

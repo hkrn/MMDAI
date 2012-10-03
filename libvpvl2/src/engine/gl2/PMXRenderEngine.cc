@@ -510,7 +510,7 @@ public:
     void releaseMaterials() {
         if (materials) {
             Array<IMaterial *> modelMaterials;
-            modelRef->getMaterials(modelMaterials);
+            modelRef->getMaterialRefs(modelMaterials);
             const int nmaterials = modelMaterials.count();
             for (int i = 0; i < nmaterials; i++) {
                 MaterialTextures &materialPrivate = materials[i];
@@ -649,7 +649,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     //if (m_context->isVertexShaderSkinning)
     //    m_modelRef->getSkinningMesh(m_context->mesh);
     Array<IMaterial *> materials;
-    m_modelRef->getMaterials(materials);
+    m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
     GLuint textureID = 0;
@@ -795,7 +795,7 @@ void PMXRenderEngine::renderModel()
     const Scalar &opacity = m_modelRef->opacity();
     modelProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
-    m_modelRef->getMaterials(materials);
+    m_modelRef->getMaterialRefs(materials);
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
     const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
@@ -876,7 +876,7 @@ void PMXRenderEngine::renderShadow()
     shadowProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
-    m_modelRef->getMaterials(materials);
+    m_modelRef->getMaterialRefs(materials);
     const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
             boneWeightOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride),
             boneStride = staticBuffer->strideSize();
@@ -919,7 +919,7 @@ void PMXRenderEngine::renderEdge()
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setOpacity(m_modelRef->opacity());
     Array<IMaterial *> materials;
-    m_modelRef->getMaterials(materials);
+    m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
@@ -987,7 +987,7 @@ void PMXRenderEngine::renderZPlot()
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
-    m_modelRef->getMaterials(materials);
+    m_modelRef->getMaterialRefs(materials);
     const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
             boneWeightOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride),
             boneStride = staticBuffer->strideSize();

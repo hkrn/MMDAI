@@ -124,11 +124,11 @@ public:
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
-    void getBones(Array<IBone *> &value) const;
-    void getLabels(Array<ILabel *> &value) const;
-    void getMaterials(Array<IMaterial *> &value) const;
-    void getMorphs(Array<IMorph *> &value) const;
-    void getVertices(Array<IVertex *> &value) const;
+    void getBoneRefs(Array<IBone *> &value) const;
+    void getLabelRefs(Array<ILabel *> &value) const;
+    void getMaterialRefs(Array<IMaterial *> &value) const;
+    void getMorphRefs(Array<IMorph *> &value) const;
+    void getVertexRefs(Array<IVertex *> &value) const;
     Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
     const Vector3 &position() const { return m_position; }
     const Quaternion &rotation() const { return m_rotation; }

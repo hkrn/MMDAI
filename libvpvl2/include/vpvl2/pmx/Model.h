@@ -146,11 +146,11 @@ public:
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
-    void getBones(Array<IBone *> &value) const;
-    void getLabels(Array<ILabel *> &value) const;
-    void getMaterials(Array<IMaterial *> &value) const;
-    void getMorphs(Array<IMorph *> &value) const;
-    void getVertices(Array<IVertex *> &value) const;
+    void getBoneRefs(Array<IBone *> &value) const;
+    void getLabelRefs(Array<ILabel *> &value) const;
+    void getMaterialRefs(Array<IMaterial *> &value) const;
+    void getMorphRefs(Array<IMorph *> &value) const;
+    void getVertexRefs(Array<IVertex *> &value) const;
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
