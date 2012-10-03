@@ -852,45 +852,6 @@ void Model::getVertices(Array<IVertex *> &value) const
     }
 }
 
-void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
-{
-    min.setZero();
-    max.setZero();
-    /*
-    const int nvertices = m_vertices.count();
-    for (int i = 0; i < nvertices; i++) {
-        const Vector3 &position = m_skinnedVertices[i].position;
-        min.setMin(position);
-        max.setMax(position);
-    }
-    */
-}
-
-void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
-{
-    center.setZero();
-    radius = 0;
-    /*
-    IBone *bone = findBone(m_encodingRef->stringConstant(IEncoding::kCenter));
-    if (bone) {
-        const Vector3 &centerPosition = bone->worldTransform().getOrigin();
-        const int nvertices = m_vertices.count();
-        for (int i = 0; i < nvertices; i++) {
-            const Vector3 &position = m_skinnedVertices[i].position;
-            btSetMax(radius, centerPosition.distance2(position));
-        }
-        center = centerPosition;
-        radius = btSqrt(radius);
-    }
-    else {
-        Vector3 min, max;
-        getBoundingBox(min, max);
-        center = (min + max) * 0.5;
-        radius = (max - min).length() * 0.5f;
-    }
-    */
-}
-
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;

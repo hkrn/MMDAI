@@ -304,35 +304,7 @@ public:
     virtual void getMaterials(Array<IMaterial *> &value) const = 0;
     virtual void getMorphs(Array<IMorph *> &value) const = 0;
     virtual void getVertices(Array<IVertex *> &value) const = 0;
-
-    /**
-     * モデルのバウンディングボックスの大きさを取得します。
-     *
-     * 返す値に position() の付加はないため、取得する側で補正する必要があります。
-     *
-     * @param Vector3
-     * @param Vector3
-     * @sa getBoundingSphere
-     */
-    virtual void getBoundingBox(Vector3 &min, Vector3 &max) const = 0;
-
-    /**
-     * モデルのバウンディングスフィアの大きさを取得します。
-     *
-     * type() が返す値が kPMD または kPMX の場合は「センター」ボーンを中心としたバウンディングスフィアの
-     * 大きさを算出します。kAsset かあるいは「センター」ボーンがない場合は getBoundingBox() を用いて
-     * バウンディングボックスが収まるバウンディングスフィアの大きさを算出します。
-     *
-     * 返す値に position() の付加はないため、取得する側で補正する必要があります。
-     *
-     * @param Vector3
-     * @param Scalar
-     * @sa getBoundingBox
-     */
-    virtual void getBoundingSphere(Vector3 &center, Scalar &radius) const = 0;
-
     virtual float edgeScaleFactor(const Vector3 &position) const = 0;
-
     virtual const Vector3 &position() const = 0;
     virtual const Quaternion &rotation() const = 0;
     virtual const Scalar &opacity() const = 0;

@@ -129,8 +129,6 @@ public:
     void getMaterials(Array<IMaterial *> &value) const;
     void getMorphs(Array<IMorph *> &value) const;
     void getVertices(Array<IVertex *> &value) const;
-    void getBoundingBox(Vector3 &min, Vector3 &max) const;
-    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
     const Vector3 &position() const { return m_position; }
     const Quaternion &rotation() const { return m_rotation; }

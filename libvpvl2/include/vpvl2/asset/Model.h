@@ -87,7 +87,6 @@ public:
     void getMorphs(Array<IMorph *> & /* value */) const {}
     void getVertices(Array<IVertex *> & /* value */) const {}
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
-    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     float edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
     const Vector3 &position() const { return m_position; }
     const Quaternion &rotation() const { return m_rotation; }
