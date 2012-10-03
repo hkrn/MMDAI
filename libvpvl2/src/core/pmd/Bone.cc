@@ -226,6 +226,18 @@ void Bone::readIKJoints(const uint8_t *data, const Array<Bone *> &bones, size_t 
     size = sizeof(unit) + sizeof(uint16_t) * nlinks;
 }
 
+size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
+{
+    const int nbones = bones.count();
+    size_t size = 0;
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones[i];
+        size += bone->estimateBoneSize(info);
+        size += bone->estimateIKJointsSize(info);
+    }
+    return size;
+}
+
 void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
 {
     BoneUnit unit;
@@ -240,7 +252,7 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
     size = sizeof(unit);
 }
 
-size_t Bone::estimateBonesSize(const Model::DataInfo & /* info */) const
+size_t Bone::estimateBoneSize(const Model::DataInfo & /* info */) const
 {
     size_t size = 0;
     size += sizeof(BoneUnit);
@@ -250,8 +262,10 @@ size_t Bone::estimateBonesSize(const Model::DataInfo & /* info */) const
 size_t Bone::estimateIKJointsSize(const Model::DataInfo & /* info */) const
 {
     size_t size = 0;
-    size += sizeof(IKUnit);
-    size += sizeof(uint16_t) * m_constraint->joints.count();
+    if (m_constraint) {
+        size += sizeof(IKUnit);
+        size += sizeof(uint16_t) * m_constraint->joints.count();
+    }
     return size;
 }
 

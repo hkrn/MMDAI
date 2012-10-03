@@ -137,6 +137,17 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
     return true;
 }
 
+size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
+{
+    const int nbodies = rigidBodies.count();
+    size_t size = 0;
+    for (int i = 0; i < nbodies; i++) {
+        RigidBody *rigidBody = rigidBodies[i];
+        size += rigidBody->estimateSize(info);
+    }
+    return size;
+}
+
 void RigidBody::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
 {
     RigidBodyUnit unit;

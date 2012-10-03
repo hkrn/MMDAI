@@ -135,6 +135,17 @@ bool Material::loadMaterials(const Array<Material *> &materials,
     return actualIndices == expectedIndices;
 }
 
+size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
+{
+    const int nmaterials = materials.count();
+    size_t size = 0;
+    for (int i = 0; i < nmaterials; i++) {
+        Material *material = materials[i];
+        size += material->estimateSize(info);
+    }
+    return size;
+}
+
 void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
 {
     MaterialUnit unit;
@@ -147,21 +158,24 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
         Array<IString *> tokens;
         texture->split(separator, 2, tokens);
         delete texture;
-        IString *main = tokens[0], *sub = tokens[1];
-        if (main->contains(sph)) {
-            m_sphereTexture = main;
+        IString *mainTexture = tokens[0];
+        if (mainTexture->contains(sph)) {
+            m_sphereTexture = mainTexture;
             m_sphereTextureRenderMode = kMultTexture;
         }
         else {
-            m_mainTexture = main;
+            m_mainTexture = mainTexture;
         }
-        if (sub->contains(sph)) {
-            m_sphereTexture = sub;
-            m_sphereTextureRenderMode = kMultTexture;
-        }
-        else if (sub->contains(spa)) {
-            m_sphereTexture = sub;
-            m_sphereTextureRenderMode = kAddTexture;
+        if (tokens.count() == 2) {
+            IString *subTexture = tokens[1];
+            if (subTexture->contains(sph)) {
+                m_sphereTexture = subTexture;
+                m_sphereTextureRenderMode = kMultTexture;
+            }
+            else if (subTexture->contains(spa)) {
+                m_sphereTexture = subTexture;
+                m_sphereTextureRenderMode = kAddTexture;
+            }
         }
     }
     else if (texture->contains(sph)) {

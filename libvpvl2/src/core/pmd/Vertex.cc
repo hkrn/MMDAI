@@ -120,6 +120,17 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
     return true;
 }
 
+size_t Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
+{
+    const int nvertices = vertices.count();
+    size_t size = 0;
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = vertices[i];
+        size += vertex->estimateSize(info);
+    }
+    return size;
+}
+
 void Vertex::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
 {
     VertexUnit unit;

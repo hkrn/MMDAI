@@ -154,22 +154,6 @@ public:
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
 
-    typedef btAlignedObjectArray<int> BoneIndices;
-    typedef btAlignedObjectArray<Vector4> VertexBoneIndicesAndWeights;
-    typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
-    typedef btAlignedObjectArray<VertexBoneIndicesAndWeights> MeshVertexBoneIndicesAndWeights;
-    typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
-    typedef Array<Scalar *> MeshMatrices;
-    struct SkinningMeshes {
-        MeshBoneIndices bones;
-        MeshLocalTransforms transforms;
-        MeshMatrices matrices;
-        ~SkinningMeshes() { matrices.releaseArrayAll(); }
-    };
-    void getSkinningMeshes(SkinningMeshes &meshes) const;
-    void updateSkinningMeshes(SkinningMeshes &meshes) const;
-    void setSkinnningEnable(bool value);
-
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
     void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
@@ -200,7 +184,6 @@ private:
     IString *m_englishComment;
     Array<Vertex *> m_vertices;
     Array<int> m_indices;
-    Array<uint16_t> m_indexBuffer;
     Array<Material *> m_materials;
     Array<Bone *> m_bones;
     Array<Morph *> m_morphs;
@@ -218,7 +201,6 @@ private:
     Vector3 m_edgeColor;
     Scalar m_edgeWidth;
     bool m_visible;
-    bool m_enableSkinning;
 };
 
 }

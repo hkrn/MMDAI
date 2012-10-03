@@ -71,6 +71,7 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
+    static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Array<Vertex *> &vertices, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;

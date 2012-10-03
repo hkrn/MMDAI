@@ -148,6 +148,17 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     return true;
 }
 
+size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
+{
+    const int nlabels = labels.count();
+    size_t size = 0;
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        size += label->estimateSize(info);
+    }
+    return size;
+}
+
 void Label::read(const uint8_t * /* data */, const Model::DataInfo &/*info*/, size_t &/*size*/)
 {
     // FIXME: implement this

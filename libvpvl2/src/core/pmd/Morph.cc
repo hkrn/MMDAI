@@ -118,6 +118,17 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
     return true;
 }
 
+size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
+{
+    const int nmorphs = morphs.count();
+    size_t size = 0;
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = morphs[i];
+        size += morph->estimateSize(info);
+    }
+    return size;
+}
+
 void Morph::read(const uint8_t *data, const Array<Vertex *> &vertices, size_t &size)
 {
     MorphUnit unit;

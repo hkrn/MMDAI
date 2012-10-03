@@ -63,6 +63,7 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies);
+    static size_t estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
