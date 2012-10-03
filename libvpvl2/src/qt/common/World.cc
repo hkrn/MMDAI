@@ -41,6 +41,9 @@ namespace vpvl2
 namespace qt
 {
 
+const Vector3 World::kAabbSize = Vector3(10000, 10000, 10000);
+const Vector3 World::kDefaultGravity = Vector3(0, -9.8f, 0);
+
 World::World()
     : m_dispatcher(0),
       m_broadphase(0),
@@ -52,7 +55,7 @@ World::World()
     m_broadphase = new btDbvtBroadphase();
     m_solver = new btSequentialImpulseConstraintSolver();
     m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
-    setGravity(Vector3(0.0f, -9.8f, 0.0f));
+    setGravity(kDefaultGravity);
     setPreferredFPS(Scene::defaultFPS());
 }
 
@@ -113,15 +116,10 @@ void World::removeRigidBody(btRigidBody *value)
     m_world->removeRigidBody(value);
 }
 
-void World::stepSimulationDefault(const Scalar &substep)
+void World::stepSimulation(const Scalar &delta)
 {
-    m_world->stepSimulation(1, substep, 1.0 / m_preferredFPS);
-}
-
-void World::stepSimulationDelta(const Scalar &delta)
-{
-    const Scalar &step = delta / m_preferredFPS;
-    m_world->stepSimulation(step, 1.0 / m_preferredFPS);
+    int substep = btMax(int(60 / m_preferredFPS), 1);
+    m_world->stepSimulation(delta, substep, 1.0 / m_preferredFPS);
 }
 
 } /* namespace qt */

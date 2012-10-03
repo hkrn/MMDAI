@@ -48,11 +48,12 @@ namespace vpvl2
 namespace qt
 {
 
-const static Vector3 kWorldAabbSize(10000, 10000, 10000);
-
 class World
 {
 public:
+    static const Vector3 kAabbSize;
+    static const Vector3 kDefaultGravity;
+
     World();
     ~World();
 
@@ -65,9 +66,7 @@ public:
     void removeModel(vpvl2::IModel *value);
     void addRigidBody(btRigidBody *value);
     void removeRigidBody(btRigidBody *value);
-
-    void stepSimulationDefault(const Scalar &substep = 1);
-    void stepSimulationDelta(const Scalar &delta);
+    void stepSimulation(const Scalar &delta);
 
 private:
     btDefaultCollisionConfiguration m_config;
