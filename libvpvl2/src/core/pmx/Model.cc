@@ -67,9 +67,9 @@ struct Header
 #pragma pack(pop)
 
 struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
-    struct Buffer {
-        Buffer() {}
-        Buffer(const IVertex *vertex) {
+    struct Unit {
+        Unit() {}
+        Unit(const IVertex *vertex) {
             IBone *bone1 = vertex->bone(0),
                     *bone2 = vertex->bone(1),
                     *bone3 = vertex->bone(2),
@@ -97,18 +97,18 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
             IVertex *vertex = vertices[i];
-            buffer.add(Buffer(vertex));
+            units.add(Unit(vertex));
         }
     }
 
     const void *bytes() const {
-        return &buffer[0];
+        return &units[0];
     }
     size_t size() const {
-        return strideSize() * buffer.count();
+        return strideSize() * units.count();
     }
     size_t strideOffset(StrideType type) const {
-        static const Buffer v;
+        static const Unit v;
         const uint8_t *base = reinterpret_cast<const uint8_t *>(&v.texcoord);
         switch (type) {
         case kBoneIndexStride:
@@ -134,17 +134,17 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         }
     }
     size_t strideSize() const {
-        return sizeof(Buffer);
+        return sizeof(Unit);
     }
 
     const IModel *modelRef;
-    Array<Buffer> buffer;
+    Array<Unit> units;
 };
 
 struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
-    struct Buffer {
-        Buffer() {}
-        Buffer(const IVertex *vertex, int index) {
+    struct Unit {
+        Unit() {}
+        Unit(const IVertex *vertex, int index) {
             position = vertex->origin();
             normal = vertex->normal();
             normal[3] = vertex->edgeSize();
@@ -168,7 +168,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         Vector4 uva4;
     };
 
-    DynamicVertexBuffer(const pmx::Model *model, const IModel::IIndexBuffer *indexBuffer)
+    DynamicVertexBuffer(const IModel *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
           enableSkinning(true)
@@ -178,21 +178,21 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
             IVertex *vertex = vertices[i];
-            buffer.add(Buffer(vertex, i));
+            units.add(Unit(vertex, i));
         }
     }
 
     void update(const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) {
-        update(cameraPosition, &buffer[0], aabbMin, aabbMax);
+        update(cameraPosition, &units[0], aabbMin, aabbMax);
     }
     const void *bytes() const {
-        return &buffer[0];
+        return &units[0];
     }
     size_t size() const {
-        return strideSize() * buffer.count();
+        return strideSize() * units.count();
     }
     size_t strideOffset(StrideType type) const {
-        static const Buffer v;
+        static const Unit v;
         const uint8_t *base = reinterpret_cast<const uint8_t *>(&v.position);
         switch (type) {
         case kVertexStride:
@@ -201,9 +201,11 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             return reinterpret_cast<const uint8_t *>(&v.normal) - base;
         case kMorphDeltaStride:
             return reinterpret_cast<const uint8_t *>(&v.delta) - base;
+        case kEdgeVertexStride:
+            return reinterpret_cast<const uint8_t *>(&v.edge) - base;
         case kEdgeSizeStride:
             return reinterpret_cast<const uint8_t *>(&v.normal[3]) - base;
-        case kEdgeVertexStride:
+        case kVertexIndexStride:
             return reinterpret_cast<const uint8_t *>(&v.edge[3]) - base;
         case kUVA0Stride:
             return reinterpret_cast<const uint8_t *>(&v.uva0) - base;
@@ -215,7 +217,6 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             return reinterpret_cast<const uint8_t *>(&v.uva3) - base;
         case kUVA4Stride:
             return reinterpret_cast<const uint8_t *>(&v.uva4) - base;
-        case kVertexIndexStride:
         case kBoneIndexStride:
         case kBoneWeightStride:
         case kTextureCoordStride:
@@ -225,13 +226,13 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         }
     }
     size_t strideSize() const {
-        return sizeof(Buffer);
+        return sizeof(Unit);
     }
     void update(const Vector3 &cameraPosition, void *address, Vector3 &aabbMin, Vector3 &aabbMax) {
         if (enableSkinning) {
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
             const int nmaterials = materials.count();
-            Buffer *bufferPtr = static_cast<Buffer *>(address);
+            Unit *bufferPtr = static_cast<Unit *>(address);
             Vector3 position, normal;
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
@@ -241,7 +242,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
                     IVertex *vertex = vertices[index];
-                    Buffer &v = bufferPtr[index];
+                    Unit &v = bufferPtr[index];
                     const float edgeSize = vertex->edgeSize();
                     vertex->performSkinning(position, normal);
                     v.position = position;
@@ -264,7 +265,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             const int nvertices = vertices.count();
             for (int i = 0; i < nvertices; i++) {
                 IVertex *vertex = vertices[i];
-                Buffer &v = buffer[i];
+                Unit &v = units[i];
                 v.delta = vertex->delta();
             }
             aabbMin.setZero();
@@ -277,7 +278,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
 
     const IModel *modelRef;
     const IModel::IIndexBuffer *indexBufferRef;
-    Array<Buffer> buffer;
+    Array<Unit> units;
     Array<IMaterial *> materials;
     Array<IVertex *> vertices;
     bool enableSkinning;
@@ -438,7 +439,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         ~SkinningMeshes() { matrices.releaseArrayAll(); }
     };
 
-    MatrixBuffer(const pmx::Model *model, const IndexBuffer *indexBuffer, DynamicVertexBuffer *dynamicBuffer)
+    MatrixBuffer(const IModel *model, const IndexBuffer *indexBuffer, DynamicVertexBuffer *dynamicBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
           dynamicBufferRef(dynamicBuffer)
@@ -468,8 +469,12 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
             }
         }
         const int nvertices = vertices.count();
-        for (int i = 0; i < nvertices; i++)
-            dynamicBufferRef->buffer[i].position = vertices[i]->origin(); // + m_vertices[i]->delta();
+        for (int i = 0; i < nvertices; i++) {
+            const IVertex *vertex = vertices[i];
+            DynamicVertexBuffer::Unit &buffer = dynamicBufferRef->units[i];
+            buffer.position = vertex->origin();
+            buffer.delta = vertex->delta();
+        }
     }
     const float *bytes(int materialIndex) const {
         int nmatrices = meshes.matrices.count();
@@ -482,7 +487,6 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
 
     void initialize() {
         const int nmaterials = materials.count();
-        btHashMap<btHashInt, int> set;
         BoneIndices boneIndices;
         meshes.transforms.resize(bones.count());
         int offset = 0;
@@ -509,12 +513,11 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
                 default:
                     break;
                 }
-                dynamicBufferRef->buffer[vertexIndex].position.setW(Scalar(vertex->type()));
+                dynamicBufferRef->units[vertexIndex].position.setW(Scalar(vertex->type()));
             }
             meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
             meshes.bones.push_back(boneIndices);
             boneIndices.clear();
-            set.clear();
             offset += nindices;
         }
     }

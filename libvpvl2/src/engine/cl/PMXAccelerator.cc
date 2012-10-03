@@ -46,8 +46,8 @@ namespace vpvl2
 namespace cl
 {
 
-static const int kMaxBonesPerVertex = 4;
 static const char kProgramCompileFlags[] = "-cl-fast-relaxed-math -DMAC -DGUID_ARG";
+static const int kMaxBonesPerVertex = 4;
 
 PMXAccelerator::PMXAccelerator(Context *contextRef, IModel *modelRef)
     : m_contextRef(contextRef),
@@ -156,8 +156,9 @@ void PMXAccelerator::upload(GLuint buffer, const IModel::IIndexBuffer *indexBuff
         const IVertex *vertex = m_vertices[i];
         for (int j = 0; j < kMaxBonesPerVertex; j++) {
             const IBone *bone = vertex->bone(j);
-            boneIndices[i * kMaxBonesPerVertex + j] = bone ? bone->index() : -1;
-            boneWeights[i * kMaxBonesPerVertex + j] = vertex->weight(j);
+            const int index = i * kMaxBonesPerVertex + j;
+            boneIndices[index] = bone ? bone->index() : -1;
+            boneWeights[index] = vertex->weight(j);
         }
     }
     const int nmaterials = m_materials.count();
@@ -326,12 +327,6 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
     }
     size_t offsetEdgeVertex = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeVertex), &offsetEdgeVertex);
-    if (err != CL_SUCCESS) {
-        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
-        return;
-    }
-    size_t offsetEdgeSize = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeSizeStride) >> 4;
-    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeSize), &offsetEdgeSize);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
         return;
