@@ -56,13 +56,11 @@ BT_DECLARE_HANDLE(CGcontext);
 
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
 #include "vpvl2/cl/Context.h"
-#include "vpvl2/cl/PMDAccelerator.h"
 #include "vpvl2/cl/PMXAccelerator.h"
 #else
 namespace vpvl2 {
 namespace cl {
 class Context;
-class PMDAccelerator;
 class PMXAccelerator;
 }
 }
@@ -390,27 +388,15 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
 #endif /* VPVL2_LINK_ASSIMP */
         break;
     }
-    case IModel::kPMD: {
-        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
-        pmd::Model *m = static_cast<pmd::Model *>(model);
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (flags & kEffectCapable)
-            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
-        else
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine =  new gl2::PMXRenderEngine(delegate, this, accelerator, m);
-        //new gl2::PMDRenderEngine(delegate, this, accelerator, m);
-        break;
-    }
+    case IModel::kPMD:
     case IModel::kPMX: {
         cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
-        pmx::Model *m = static_cast<pmx::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, model);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, m);
+            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, model);
         break;
     }
     default:
