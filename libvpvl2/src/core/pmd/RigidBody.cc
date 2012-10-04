@@ -80,6 +80,8 @@ namespace vpvl2
 namespace pmd
 {
 
+const int RigidBody::kNameSize;
+
 RigidBody::RigidBody(IEncoding *encodingRef)
     : common::RigidBody::RigidBody(),
       m_encodingRef(encodingRef)

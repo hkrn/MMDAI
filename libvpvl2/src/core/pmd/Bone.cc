@@ -80,6 +80,9 @@ struct Bone::IKConstraint {
     float angle;
 };
 
+const int Bone::kNameSize;
+const int Bone::kCategoryNameSize;
+
 Bone::Bone(IEncoding *encodingRef)
     : m_encodingRef(encodingRef),
       m_name(0),

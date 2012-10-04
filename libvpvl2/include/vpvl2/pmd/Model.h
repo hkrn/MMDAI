@@ -66,6 +66,7 @@ public:
     static const int kCommentSize = 256;
     static const int kCustomToonTextureNameSize = 100;
     static const int kMaxCustomToonTextures = 10;
+    static const uint8_t *const kFallbackToonTextureName;
 
     struct DataInfo {
         IEncoding *encoding;

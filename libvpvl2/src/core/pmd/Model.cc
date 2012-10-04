@@ -400,6 +400,12 @@ namespace vpvl2
 namespace pmd
 {
 
+const int Model::kNameSize;
+const int Model::kCommentSize;
+const int Model::kCustomToonTextureNameSize;
+const int Model::kMaxCustomToonTextures;
+const uint8_t *const Model::kFallbackToonTextureName = reinterpret_cast<const uint8_t *>("toon0.bmp");
+
 Model::Model(IEncoding *encodingRef)
     : m_encodingRef(encodingRef),
       m_name(0),
@@ -952,7 +958,11 @@ void Model::parseLabels(const DataInfo &info)
 
 void Model::parseCustomToonTextures(const DataInfo &info)
 {
+    static const uint8_t kFallbackToonTextureName[] = "toon0.bmp";
     uint8_t *ptr = info.customToonTextureNamesPtr;
+    m_customToonTextures.add(m_encodingRef->toString(kFallbackToonTextureName,
+                                                     sizeof(kFallbackToonTextureName),
+                                                     IString::kUTF8));
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         IString *customToonTexture = m_encodingRef->toString(ptr, IString::kShiftJIS, kCustomToonTextureNameSize);
         m_customToonTextures.add(customToonTexture);

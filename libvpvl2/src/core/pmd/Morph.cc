@@ -66,6 +66,8 @@ namespace vpvl2
 namespace pmd
 {
 
+const int Morph::kNameSize;
+
 Morph::Morph(IEncoding *encodingRef)
     : m_encodingRef(encodingRef),
       m_name(0),

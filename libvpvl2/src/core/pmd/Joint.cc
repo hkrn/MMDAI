@@ -69,6 +69,8 @@ namespace vpvl2
 namespace pmd
 {
 
+const int Joint::kNameSize;
+
 Joint::Joint(IEncoding *encodingRef)
     : common::Joint::Joint(),
       m_encodingRef(encodingRef)

@@ -66,6 +66,8 @@ namespace vpvl2
 namespace pmd
 {
 
+const int Material::kNameSize;
+
 Material::Material(IEncoding *encodingRef)
     : m_encodingRef(encodingRef),
       m_mainTexture(0),
@@ -124,10 +126,12 @@ bool Material::loadMaterials(const Array<Material *> &materials,
         Material *material = materials[i];
         const int toonTextureIndex = material->m_toonTextureIndex;
         if (toonTextureIndex >= 0) {
-            if (toonTextureIndex >= ntextures)
+            if (toonTextureIndex >= ntextures) {
                 return false;
-            else
+            }
+            else {
                 material->m_toonTextureRef = textures[toonTextureIndex];
+            }
         }
         material->m_index = i;
         actualIndices += material->indices();
