@@ -85,6 +85,18 @@ const IString *Encoding::stringConstant(ConstantType value) const
         static const CString s("センター");
         return &s;
     }
+    case kAsterisk: {
+        static const CString s("*");
+        return &s;
+    }
+    case kSPHExtension: {
+        static const CString s(".sph");
+        return &s;
+    }
+    case kSPAExtension: {
+        static const CString s(".spa");
+        return &s;
+    }
     default: {
         static const CString s("");
         return &s;
