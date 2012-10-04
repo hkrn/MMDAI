@@ -142,11 +142,13 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             delta = vertex->delta();
             edge.setZero();
             edge[3] = Scalar(index);
+            uva0.setValue(0, 0, 0, 1);
         }
         Vector3 position;
         Vector3 normal;
         Vector3 delta;
         Vector3 edge;
+        Vector4 uva0;
     };
 
     DynamicVertexBuffer(const IModel *model, const IModel::IIndexBuffer *indexBuffer)
@@ -189,6 +191,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         case kVertexIndexStride:
             return reinterpret_cast<const uint8_t *>(&v.edge[3]) - base;
         case kUVA0Stride:
+            return reinterpret_cast<const uint8_t *>(&v.uva0) - base;
         case kUVA1Stride:
         case kUVA2Stride:
         case kUVA3Stride:

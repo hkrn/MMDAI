@@ -123,20 +123,18 @@ bool PMXRenderEngine::upload(const IString *dir)
     log0(context, IRenderDelegate::kLogInfo,
          "Binding indices to the vertex buffer object (ID=%d)",
          m_vertexBufferObjects[kModelIndexBuffer]);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelDynamicVertexBuffer]);
+    GLuint dvbo = m_vertexBufferObjects[kModelDynamicVertexBuffer];
+    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
     glBufferData(GL_ARRAY_BUFFER, m_dynamicBuffer->size(),
                  m_dynamicBuffer->bytes(), GL_DYNAMIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
-         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)",
-         m_vertexBufferObjects[kModelDynamicVertexBuffer]);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelStaticVertexBuffer]);
+         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo);
+    GLuint svbo = m_vertexBufferObjects[kModelStaticVertexBuffer];
+    glBindBuffer(GL_ARRAY_BUFFER, svbo);
     glBufferData(GL_ARRAY_BUFFER, m_staticBuffer->size(),
                  m_staticBuffer->bytes(), GL_STATIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
-         "Binding model static vertex buffer to the vertex buffer object (ID=%d)",
-         m_vertexBufferObjects[kModelStaticVertexBuffer]);
-    //if (m_isVertexShaderSkinning)
-    //    m_modelRef->getSkinningMesh(m_mesh);
+         "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
@@ -199,8 +197,6 @@ void PMXRenderEngine::update()
     m_dynamicBuffer->update(m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
     glBufferSubData(GL_ARRAY_BUFFER, 0, m_dynamicBuffer->size(), m_dynamicBuffer->bytes());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //if (m_isVertexShaderSkinning)
-    //    m_modelRef->updateSkinningMesh(m_mesh);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_accelerator->update(m_dynamicBuffer, m_sceneRef, m_aabbMin, m_aabbMax);

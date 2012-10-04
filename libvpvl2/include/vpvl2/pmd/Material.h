@@ -65,16 +65,16 @@ public:
     const Color &ambient() const { return m_ambient; }
     const Color &diffuse() const { return m_diffuse; }
     const Color &specular() const { return m_specular; }
-    const Color &edgeColor() const { return kZeroC; }
-    const Color &mainTextureBlend() const { return kZeroC; }
-    const Color &sphereTextureBlend() const { return kZeroC; }
-    const Color &toonTextureBlend() const { return kZeroC; }
+    const Color &edgeColor() const { return kWhiteColor; }
+    const Color &mainTextureBlend() const { return kWhiteColor; }
+    const Color &sphereTextureBlend() const { return kWhiteColor; }
+    const Color &toonTextureBlend() const { return kWhiteColor; }
     float shininess() const { return m_shininess; }
-    float edgeSize() const { return 0; }
+    float edgeSize() const { return 1; }
     int index() const { return m_index; }
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
-    int toonTextureIndex() const { return -1; }
+    int toonTextureIndex() const { return m_toonTextureIndex; }
     int indices() const { return m_indices; }
     bool isSharedToonTextureUsed() const;
     bool isCullFaceDisabled() const;
@@ -113,6 +113,7 @@ public:
     void write(uint8_t *data, const Model::DataInfo &info) const;
 
 private:
+    static const Color kWhiteColor;
     IEncoding *m_encodingRef;
     const IString *m_mainTexture;
     const IString *m_sphereTexture;

@@ -67,6 +67,7 @@ namespace pmd
 {
 
 const int Material::kNameSize;
+const Color Material::kWhiteColor(1, 1, 1, 1);
 
 Material::Material(IEncoding *encodingRef)
     : m_encodingRef(encodingRef),
@@ -242,7 +243,7 @@ bool Material::hasShadow() const
 
 bool Material::isShadowMapDrawn() const
 {
-    return !btFuzzyZero(m_diffuse.w() - 0.98f);
+    return !btFuzzyZero(m_diffuse.x() - 0.98f);
 }
 
 bool Material::isSelfShadowDrawn() const

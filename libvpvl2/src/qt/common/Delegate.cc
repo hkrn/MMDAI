@@ -544,8 +544,6 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
         file += "asset/";
         break;
     case IModel::kPMD:
-        file += "pmd/";
-        break;
     case IModel::kPMX:
         file += "pmx/";
         break;
@@ -1208,7 +1206,7 @@ bool Delegate::uploadTextureInternal(const QString &path,
         return true; /* skip */
     }
     if (!info.exists()) {
-        qWarning("Cannot loading inexist \"%s\"", qPrintable(path));
+        qWarning("Cannot load inexist \"%s\"", qPrintable(path));
         ok = false;
         return true; /* skip */
     }
