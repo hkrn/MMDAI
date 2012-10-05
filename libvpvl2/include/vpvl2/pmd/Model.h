@@ -192,6 +192,7 @@ private:
     Array<RigidBody *> m_rigidBodies;
     Array<Joint *> m_joints;
     Array<IString *> m_customToonTextures;
+    Array<Bone *> m_sortedBones;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     DataInfo m_info;

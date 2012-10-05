@@ -83,10 +83,10 @@ public:
     void setLocalTransform(const Transform &value);
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
-    const Vector3 &position() const;
+    const Vector3 &localPosition() const;
     const Quaternion &rotation() const;
     void getLinkedBones(Array<IBone *> &value) const;
-    void setPosition(const Vector3 &value);
+    void setLocalPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
@@ -108,6 +108,9 @@ public:
     size_t estimateBoneSize(const Model::DataInfo &info) const;
     size_t estimateIKJointsSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
+    void performTransform();
+    void performInverseKinematics();
+    void performUpdateLocalTransform();
     void setSimulated(bool value);
 
 private:

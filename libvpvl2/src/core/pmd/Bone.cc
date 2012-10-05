@@ -286,6 +286,35 @@ void Bone::write(uint8_t *data, const Model::DataInfo & /* info */) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
 }
 
+void Bone::performTransform()
+{
+    if (m_type == kUnderRotate && m_targetBoneRef) {
+        const Quaternion &r = m_rotation * m_targetBoneRef->rotation();
+        m_worldTransform.setRotation(r);
+    }
+    else if (m_type == kFollowRotate && m_childBoneRef) {
+        const Scalar coef(m_targetBoneIndex * 0.01f);
+        const Quaternion &r = Quaternion::getIdentity().slerp(m_rotation, coef);
+        m_worldTransform.setRotation(r);
+    }
+    else {
+        m_worldTransform.setRotation(m_rotation);
+    }
+    m_worldTransform.setOrigin(m_offset + m_position);
+    if (m_parentBoneRef) {
+        m_worldTransform = m_parentBoneRef->worldTransform() * m_worldTransform;
+    }
+}
+
+void Bone::performInverseKinematics()
+{
+}
+
+void Bone::performUpdateLocalTransform()
+{
+    getLocalTransform(m_localTransform);
+}
+
 const IString *Bone::name() const
 {
     return m_name;
@@ -336,7 +365,7 @@ const Vector3 Bone::destinationOrigin() const
     return m_parentBoneRef ? m_parentBoneRef->origin() : kZeroV3;
 }
 
-const Vector3 &Bone::position() const
+const Vector3 &Bone::localPosition() const
 {
     return m_position;
 }
@@ -358,7 +387,7 @@ void Bone::getLinkedBones(Array<IBone *> &value) const
     }
 }
 
-void Bone::setPosition(const Vector3 &value)
+void Bone::setLocalPosition(const Vector3 &value)
 {
     m_position = value;
 }

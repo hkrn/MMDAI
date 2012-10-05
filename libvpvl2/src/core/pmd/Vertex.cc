@@ -71,7 +71,7 @@ Vertex::Vertex()
     : m_origin(kZeroV3),
       m_normal(kZeroV3),
       m_texcoord(kZeroV3),
-      m_delta(kZeroV3),
+      m_morphDelta(kZeroV3),
       m_edgeSize(0),
       m_weight(0)
 {
@@ -170,13 +170,23 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
 {
     const Transform &transformA = m_boneRefs[0]->localTransform();
     const Transform &transformB = m_boneRefs[1]->localTransform();
-    const Vector3 &vertexPosition = m_origin;
+    const Vector3 &vertexPosition = m_origin + m_morphDelta;
     const Vector3 &v1 = transformA * vertexPosition;
     const Vector3 &n1 = transformA.getBasis() * m_normal;
     const Vector3 &v2 = transformB * vertexPosition;
     const Vector3 &n2 = transformB.getBasis() * m_normal;
     position.setInterpolate3(v2, v1, m_weight);
     normal.setInterpolate3(n2, n1, m_weight);
+}
+
+void Vertex::reset()
+{
+    m_morphDelta.setZero();
+}
+
+void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight)
+{
+    m_morphDelta += value * weight;
 }
 
 float Vertex::weight(int index) const

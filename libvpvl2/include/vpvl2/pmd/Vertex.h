@@ -38,6 +38,7 @@
 #define VPVL2_PMD_VERTEX_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IMorph.h"
 #include "vpvl2/IVertex.h"
 #include "vpvl2/pmd/Model.h"
 
@@ -64,7 +65,7 @@ public:
     const Vector3 &normal() const { return m_normal; }
     const Vector3 &textureCoord() const { return m_texcoord; }
     const Vector4 &uv(int /* index */) const { return kZeroV4; }
-    const Vector3 &delta() const { return m_delta; }
+    const Vector3 &delta() const { return m_morphDelta; }
     Type type() const { return kBdef2; }
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
@@ -86,11 +87,13 @@ public:
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
     void performSkinning(Vector3 &position, Vector3 &normal) const;
+    void reset();
+    void mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight);
 
     Vector3 m_origin;
     Vector3 m_normal;
     Vector3 m_texcoord;
-    Vector3 m_delta;
+    Vector3 m_morphDelta;
     float m_edgeSize;
     float m_weight;
     IBone *m_boneRefs[kMaxBones];

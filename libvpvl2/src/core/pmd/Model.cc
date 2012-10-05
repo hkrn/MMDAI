@@ -128,6 +128,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         return sizeof(Unit);
     }
     const void *ident() const {
+        return &kIdent;
     }
 
     const IModel *modelRef;
@@ -408,6 +409,18 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
     SkinningMeshes meshes;
 };
 
+class BonePredication {
+public:
+    bool operator()(const IBone *left, const IBone *right) const {
+        const IBone *leftParentBone = left->parentBone();
+        const IBone *rightParentBone = right->parentBone();
+        if (leftParentBone && rightParentBone && leftParentBone == rightParentBone) {
+            return left->index() < right->index();
+        }
+        return !leftParentBone && rightParentBone;
+    }
+};
+
 }
 
 namespace vpvl2
@@ -629,10 +642,36 @@ size_t Model::estimateSize() const
 
 void Model::resetVertices()
 {
+    const int nvertices = m_vertices.count();
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = m_vertices[i];
+        vertex->reset();
+    }
 }
 
 void Model::performUpdate()
 {
+    const int nbones = m_sortedBones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_sortedBones[i];
+        bone->performTransform();
+    }
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_sortedBones[i];
+        bone->performInverseKinematics();
+    }
+    // physics simulation
+    if (m_worldRef) {
+        const int nRigidBodies = m_rigidBodies.count();
+        for (int i = 0; i < nRigidBodies; i++) {
+            RigidBody *rigidBody = m_rigidBodies[i];
+            rigidBody->performTransformBone();
+        }
+    }
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_sortedBones[i];
+        bone->performUpdateLocalTransform();
+    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
@@ -948,9 +987,11 @@ void Model::parseBones(const DataInfo &info)
     for (int i = 0; i < nbones; i++) {
         Bone *bone = new Bone(m_encodingRef);
         m_bones.add(bone);
+        m_sortedBones.add(bone);
         bone->readBone(ptr, info, size);
         ptr += size;
     }
+    m_sortedBones.sort(BonePredication());
 }
 
 void Model::parseIKJoints(const DataInfo &info)
@@ -972,7 +1013,7 @@ void Model::parseMorphs(const DataInfo &info)
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = new Morph(m_encodingRef);
         m_morphs.add(morph);
-        morph->read(ptr, m_vertices, size);
+        morph->read(ptr, size);
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
         ptr += size;
     }

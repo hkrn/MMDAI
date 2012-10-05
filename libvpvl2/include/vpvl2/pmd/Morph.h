@@ -73,7 +73,7 @@ public:
     static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
     static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
-    void read(const uint8_t *data, const Array<Vertex *> &vertices, size_t &size);
+    void read(const uint8_t *data, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
 
@@ -81,6 +81,7 @@ public:
     IString *m_name;
     Category m_category;
     WeightPrecision m_weight;
+    Array<Vector4> m_vertices;
     Array<Vertex *> m_vertexRefs;
     int m_index;
 };
