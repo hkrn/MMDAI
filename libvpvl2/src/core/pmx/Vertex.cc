@@ -405,7 +405,7 @@ void Vertex::reset()
         m_morphUVs[i].setZero();
 }
 
-void Vertex::mergeMorph(const Morph::UV *morph, float weight)
+void Vertex::mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &weight)
 {
     int offset = morph->offset;
     if (internal::checkBound(offset, 0, kMaxMorphs)) {
@@ -418,7 +418,7 @@ void Vertex::mergeMorph(const Morph::UV *morph, float weight)
     }
 }
 
-void Vertex::mergeMorph(const Morph::Vertex *morph, float weight)
+void Vertex::mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight)
 {
     m_morphDelta += morph->position * weight;
 }

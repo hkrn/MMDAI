@@ -142,7 +142,7 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
-    void mergeMorph(const Morph::Material *morph, float weight);
+    void mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight);
     void resetMorph();
 
     const IString *name() const { return m_name; }

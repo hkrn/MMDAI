@@ -521,10 +521,11 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Bone::mergeMorph(const Morph::Bone *morph, float weight)
+void Bone::mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight)
 {
-    m_positionMorph = morph->position * weight;
-    m_rotationMorph = Quaternion::getIdentity().slerp(morph->rotation, weight);
+    const Scalar w(weight);
+    m_positionMorph = morph->position * w;
+    m_rotationMorph = Quaternion::getIdentity().slerp(morph->rotation, w);
 }
 
 void Bone::getLocalTransform(Transform &output) const

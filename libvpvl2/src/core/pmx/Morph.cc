@@ -95,7 +95,7 @@ Morph::Morph()
     : m_name(0),
       m_englishName(0),
       m_weight(0),
-      m_category(kReserved),
+      m_category(kBase),
       m_type(kUnknown),
       m_index(-1),
       m_hasParent(false)
@@ -113,7 +113,7 @@ Morph::~Morph()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
-    m_category = kReserved;
+    m_category = kBase;
     m_type = kUnknown;
     m_index = -1;
     m_hasParent = false;

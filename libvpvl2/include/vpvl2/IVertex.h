@@ -57,6 +57,8 @@ public:
     virtual ~IVertex() {}
 
     virtual void performSkinning(Vector3 &position, Vector3 &normal) const = 0;
+    virtual void reset() = 0;
+
     virtual const Vector3 &origin() const = 0;
     virtual const Vector3 &normal() const = 0;
     virtual const Vector3 &textureCoord() const = 0;

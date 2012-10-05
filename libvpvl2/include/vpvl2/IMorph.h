@@ -70,7 +70,7 @@ public:
         kMaxMorphType
     };
     enum Category {
-        kReserved,
+        kBase,
         kEyeblow,
         kEye,
         kLip,

@@ -298,36 +298,37 @@ size_t Material::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Material::mergeMorph(const Morph::Material *morph, float weight)
+void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight)
 {
-    btClamp(weight, 0.0f, 1.0f);
-    if (btFuzzyZero(weight)) {
+    Scalar w(weight);
+    btClamp(w, 0.0f, 1.0f);
+    if (btFuzzyZero(w)) {
         resetMorph();
     }
     else {
         switch (morph->operation) {
         case 0: { // modulate
-            m_ambient.calculateMulWeight(morph->ambient, weight);
-            m_diffuse.calculateMulWeight(morph->diffuse, weight);
-            m_specular.calculateMulWeight(morph->specular, weight);
-            m_shininess.setY(1.0f - (1.0f - morph->shininess) * weight);
-            m_edgeColor.calculateMulWeight(morph->edgeColor, weight);
-            m_edgeSize.setY(1.0f - (1.0f - morph->edgeSize) * weight);
-            m_mainTextureBlend.calculateMulWeight(morph->textureWeight, weight);
-            m_sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, weight);
-            m_toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, weight);
+            m_ambient.calculateMulWeight(morph->ambient, w);
+            m_diffuse.calculateMulWeight(morph->diffuse, w);
+            m_specular.calculateMulWeight(morph->specular, w);
+            m_shininess.setY(1.0f - (1.0f - morph->shininess) * w);
+            m_edgeColor.calculateMulWeight(morph->edgeColor, w);
+            m_edgeSize.setY(1.0f - (1.0f - morph->edgeSize) * w);
+            m_mainTextureBlend.calculateMulWeight(morph->textureWeight, w);
+            m_sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, w);
+            m_toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, w);
             break;
         }
         case 1: { // add
-            m_ambient.calculateAddWeight(morph->ambient, weight);
-            m_diffuse.calculateAddWeight(morph->diffuse, weight);
-            m_specular.calculateAddWeight(morph->specular, weight);
-            m_shininess.setZ(morph->shininess * weight);
-            m_edgeColor.calculateAddWeight(morph->edgeColor, weight);
-            m_edgeSize.setZ(morph->edgeSize * weight);
-            m_mainTextureBlend.calculateAddWeight(morph->textureWeight, weight);
-            m_sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, weight);
-            m_toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, weight);
+            m_ambient.calculateAddWeight(morph->ambient, w);
+            m_diffuse.calculateAddWeight(morph->diffuse, w);
+            m_specular.calculateAddWeight(morph->specular, w);
+            m_shininess.setZ(morph->shininess * w);
+            m_edgeColor.calculateAddWeight(morph->edgeColor, w);
+            m_edgeSize.setZ(morph->edgeSize * w);
+            m_mainTextureBlend.calculateAddWeight(morph->textureWeight, w);
+            m_sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, w);
+            m_toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, w);
             break;
         }
         default:

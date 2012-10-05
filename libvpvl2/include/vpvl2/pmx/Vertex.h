@@ -86,8 +86,8 @@ public:
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
     void reset();
-    void mergeMorph(const Morph::UV *morph, float weight);
-    void mergeMorph(const Morph::Vertex *morph, float weight);
+    void mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &weight);
+    void mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight);
     void performSkinning(Vector3 &position, Vector3 &normal) const;
 
     const Vector3 &origin() const { return m_origin; }
