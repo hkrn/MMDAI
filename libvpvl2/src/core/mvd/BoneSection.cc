@@ -116,7 +116,7 @@ public:
                 position = positionFrom;
                 rotation = rotationFrom;
             }
-            boneRef->setPosition(position);
+            boneRef->setLocalPosition(position);
             boneRef->setRotation(rotation);
         }
     }

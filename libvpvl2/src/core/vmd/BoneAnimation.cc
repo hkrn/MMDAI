@@ -145,7 +145,7 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &frameAt)
             continue;
         calculateFrames(frameAt, keyframes);
         IBone *bone = keyframes->bone;
-        bone->setPosition(keyframes->position);
+        bone->setLocalPosition(keyframes->position);
         bone->setRotation(keyframes->rotation);
     }
     m_previousTimeIndex = m_currentTimeIndex;

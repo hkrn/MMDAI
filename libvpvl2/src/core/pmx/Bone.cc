@@ -755,7 +755,7 @@ void Bone::getLinkedBones(Array<IBone *> &value) const
     }
 }
 
-void Bone::setPosition(const Vector3 &value)
+void Bone::setLocalPosition(const Vector3 &value)
 {
     m_position = value;
 }

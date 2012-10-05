@@ -86,7 +86,7 @@ public:
     const Transform &localTransform() const { return m_localTransform; }
     void getLinkedBones(Array<IBone *> &value) const;
 
-    void setPosition(const Vector3 &value);
+    void setLocalPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
     const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
@@ -102,7 +102,7 @@ public:
     const Quaternion &rotation() const { return m_rotation; }
     const Vector3 &origin() const { return m_origin; }
     const Vector3 destinationOrigin() const;
-    const Vector3 &position() const { return m_position; }
+    const Vector3 &localPosition() const { return m_position; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
     const Vector3 &axisZ() const { return m_axisZ; }

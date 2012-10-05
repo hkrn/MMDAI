@@ -142,7 +142,7 @@ public:
      * @return Vector3
      * @sa setPosition
      */
-    virtual const Vector3 &position() const = 0;
+    virtual const Vector3 &localPosition() const = 0;
 
     /**
      * 現在のボーンの回転量を返します。
@@ -170,7 +170,7 @@ public:
      * @param Vector3
      * @sa position
      */
-    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setLocalPosition(const Vector3 &value) = 0;
 
     /**
      * ボーンの回転量を設定します。
@@ -265,10 +265,10 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     const Vector3 &origin() const { return kZeroV3; }
     const Vector3 destinationOrigin() const { return kZeroV3; }
-    const Vector3 &position() const { return kZeroV3; }
+    const Vector3 &localPosition() const { return kZeroV3; }
     const Quaternion &rotation() const { return Quaternion::getIdentity(); }
     void getLinkedBones(Array<IBone *> & /* value */) const {}
-    void setPosition(const Vector3 & /* value */) {}
+    void setLocalPosition(const Vector3 & /* value */) {}
     void setRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return false; }
     bool isRotateable() const { return false; }
