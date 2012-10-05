@@ -58,8 +58,6 @@ namespace pmx
 class VPVL2_API Label : public ILabel
 {
 public:
-    struct Pair;
-
     /**
      * Constructor
      */
@@ -98,6 +96,7 @@ public:
     void removeMorph(IMorph *value);
 
 private:
+    struct Pair;
     IString *m_name;
     IString *m_englishName;
     Array<Pair *> m_pairs;

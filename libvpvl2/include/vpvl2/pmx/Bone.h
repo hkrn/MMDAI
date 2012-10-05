@@ -93,10 +93,10 @@ public:
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);
 
-    Bone *parentBone() const { return m_parentBoneRef; }
-    Bone *targetBone() const { return m_targetBoneRef; }
-    Bone *parentInherenceBone() const { return m_parentInherenceBoneRef; }
-    Bone *destinationOriginBone() const { return m_destinationOriginBoneRef; }
+    IBone *parentBone() const { return m_parentBoneRef; }
+    IBone *targetBone() const { return m_targetBoneRef; }
+    IBone *parentInherenceBone() const { return m_parentInherenceBoneRef; }
+    IBone *destinationOriginBone() const { return m_destinationOriginBoneRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const Quaternion &rotation() const { return m_rotation; }
@@ -155,7 +155,7 @@ private:
     Bone *m_parentBoneRef;
     Bone *m_targetBoneRef;
     Bone *m_parentInherenceBoneRef;
-    Bone *m_destinationOriginBoneRef;
+    IBone *m_destinationOriginBoneRef;
     IString *m_name;
     IString *m_englishName;
     Quaternion m_rotation;
