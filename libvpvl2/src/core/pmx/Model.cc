@@ -88,6 +88,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         Vector4 boneIndices;
         Vector4 boneWeights;
     };
+    static const Unit kIdent;
 
     StaticVertexBuffer(const pmx::Model *model)
         : modelRef(model)
@@ -108,15 +109,14 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         return strideSize() * units.count();
     }
     size_t strideOffset(StrideType type) const {
-        static const Unit v;
-        const uint8_t *base = reinterpret_cast<const uint8_t *>(&v.texcoord);
+        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.texcoord);
         switch (type) {
         case kBoneIndexStride:
-            return reinterpret_cast<const uint8_t *>(&v.boneIndices) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.boneIndices) - base;
         case kBoneWeightStride:
-            return reinterpret_cast<const uint8_t *>(&v.boneWeights) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.boneWeights) - base;
         case kTextureCoordStride:
-            return reinterpret_cast<const uint8_t *>(&v.texcoord) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.texcoord) - base;
         case kVertexStride:
         case kNormalStride:
         case kMorphDeltaStride:
@@ -134,12 +134,16 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         }
     }
     size_t strideSize() const {
-        return sizeof(Unit);
+        return sizeof(kIdent);
+    }
+    const void *ident() const {
+        return &kIdent;
     }
 
     const IModel *modelRef;
     Array<Unit> units;
 };
+const StaticVertexBuffer::Unit StaticVertexBuffer::kIdent = StaticVertexBuffer::Unit();
 
 struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     struct Unit {
@@ -167,6 +171,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         Vector4 uva3;
         Vector4 uva4;
     };
+    static const Unit kIdent;
 
     DynamicVertexBuffer(const IModel *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
@@ -192,31 +197,30 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         return strideSize() * units.count();
     }
     size_t strideOffset(StrideType type) const {
-        static const Unit v;
-        const uint8_t *base = reinterpret_cast<const uint8_t *>(&v.position);
+        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.position);
         switch (type) {
         case kVertexStride:
-            return reinterpret_cast<const uint8_t *>(&v.position) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.position) - base;
         case kNormalStride:
-            return reinterpret_cast<const uint8_t *>(&v.normal) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.normal) - base;
         case kMorphDeltaStride:
-            return reinterpret_cast<const uint8_t *>(&v.delta) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.delta) - base;
         case kEdgeVertexStride:
-            return reinterpret_cast<const uint8_t *>(&v.edge) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
-            return reinterpret_cast<const uint8_t *>(&v.normal[3]) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.normal[3]) - base;
         case kVertexIndexStride:
-            return reinterpret_cast<const uint8_t *>(&v.edge[3]) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.edge[3]) - base;
         case kUVA0Stride:
-            return reinterpret_cast<const uint8_t *>(&v.uva0) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva0) - base;
         case kUVA1Stride:
-            return reinterpret_cast<const uint8_t *>(&v.uva1) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva1) - base;
         case kUVA2Stride:
-            return reinterpret_cast<const uint8_t *>(&v.uva2) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva2) - base;
         case kUVA3Stride:
-            return reinterpret_cast<const uint8_t *>(&v.uva3) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva3) - base;
         case kUVA4Stride:
-            return reinterpret_cast<const uint8_t *>(&v.uva4) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva4) - base;
         case kBoneIndexStride:
         case kBoneWeightStride:
         case kTextureCoordStride:
@@ -226,7 +230,10 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         }
     }
     size_t strideSize() const {
-        return sizeof(Unit);
+        return sizeof(kIdent);
+    }
+    const void *ident() const {
+        return &kIdent;
     }
     void update(const Vector3 &cameraPosition, void *address, Vector3 &aabbMin, Vector3 &aabbMax) {
         if (enableSkinning) {
@@ -283,8 +290,10 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     Array<IVertex *> vertices;
     bool enableSkinning;
 };
+const DynamicVertexBuffer::Unit DynamicVertexBuffer::kIdent = DynamicVertexBuffer::Unit();
 
 struct IndexBuffer : public IModel::IIndexBuffer {
+    static const int kIdent = 0;
     IndexBuffer(const Array<int> &indices, const int nvertices)
         : indexType(kIndex32),
           indices32Ptr(0),
@@ -380,6 +389,9 @@ struct IndexBuffer : public IModel::IIndexBuffer {
         default:
             return 0;
         }
+    }
+    const void *ident() const {
+        return &kIdent;
     }
     int indexAt(int index) const {
         switch (indexType) {
@@ -1169,7 +1181,12 @@ void Model::getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
                                    const IIndexBuffer *indexBuffer) const
 {
     delete dynamicBuffer;
-    dynamicBuffer = new DynamicVertexBuffer(this, indexBuffer);
+    if (indexBuffer && indexBuffer->ident() == &IndexBuffer::kIdent) {
+        dynamicBuffer = new DynamicVertexBuffer(this, indexBuffer);
+    }
+    else {
+        dynamicBuffer = 0;
+    }
 }
 
 void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
@@ -1177,9 +1194,15 @@ void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
                             const IIndexBuffer *indexBuffer) const
 {
     delete matrixBuffer;
-    matrixBuffer = new MatrixBuffer(this,
-                                    static_cast<const IndexBuffer *>(indexBuffer),
-                                    static_cast<DynamicVertexBuffer *>(dynamicBuffer));
+    if (indexBuffer && indexBuffer->ident() == &IndexBuffer::kIdent &&
+            dynamicBuffer && dynamicBuffer->ident() == &DynamicVertexBuffer::kIdent) {
+        matrixBuffer = new MatrixBuffer(this,
+                                        static_cast<const IndexBuffer *>(indexBuffer),
+                                        static_cast<DynamicVertexBuffer *>(dynamicBuffer));
+    }
+    else {
+        matrixBuffer = 0;
+    }
 }
 
 }
