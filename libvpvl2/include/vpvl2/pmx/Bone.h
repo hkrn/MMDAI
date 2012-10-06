@@ -78,13 +78,13 @@ public:
     void getLocalTransform(const Transform &worldTransform, Transform &output) const;
     void performFullTransform();
     void performTransform();
-    void performInverseKinematics();
+    void solveInverseKinematics();
     void performUpdateLocalTransform();
     void resetIKLink();
     const Vector3 &offset() const { return m_offset; }
     const Transform &worldTransform() const { return m_worldTransform; }
     const Transform &localTransform() const { return m_localTransform; }
-    void getLinkedBones(Array<IBone *> &value) const;
+    void getEffectorBones(Array<IBone *> &value) const;
 
     void setLocalPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
@@ -102,7 +102,7 @@ public:
     const Quaternion &rotation() const { return m_rotation; }
     const Vector3 &origin() const { return m_origin; }
     const Vector3 destinationOrigin() const;
-    const Vector3 &localPosition() const { return m_position; }
+    const Vector3 &localPosition() const { return m_localPosition; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
     const Vector3 &axisZ() const { return m_axisZ; }
@@ -166,9 +166,9 @@ private:
     Transform m_localTransform;
     Vector3 m_origin;
     Vector3 m_offset;
-    Vector3 m_position;
-    Vector3 m_positionInherence;
-    Vector3 m_positionMorph;
+    Vector3 m_localPosition;
+    Vector3 m_localPositionInherence;
+    Vector3 m_localPositionMorph;
     Vector3 m_destinationOrigin;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;

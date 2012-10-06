@@ -99,6 +99,7 @@ public:
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
     IBone *bone(int index) const;
+    int index() const { return m_index; }
     const Vector3 &sdefC() const { return m_c; }
     const Vector3 &sdefR0() const { return m_r0; }
     const Vector3 &sdefR1() const { return m_r1; }
@@ -130,6 +131,7 @@ private:
     float m_edgeSize;
     float m_weight[kMaxBones];
     int m_boneIndices[kMaxBones];
+    int m_index;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };
