@@ -45,7 +45,7 @@
 #include "vpvl2/IString.h"
 #include <string.h>
 
-#if defined(WIN32)
+#ifdef _MSC_VER
 #include <windows.h>
 #endif
 
@@ -412,7 +412,7 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
 static inline void zerofill(void *ptr, size_t size)
 {
     assert(ptr && size > 0);
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1700
     SecureZeroMemory(ptr, size);
 #else
     memset(ptr, 0, size);
