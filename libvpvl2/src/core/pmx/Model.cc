@@ -671,7 +671,7 @@ void Model::performUpdate()
     for (int i = 0; i < nBPSBones; i++) {
         Bone *bone = m_BPSOrderedBones[i];
         bone->performFullTransform();
-        bone->performInverseKinematics();
+        bone->solveInverseKinematics();
     }
     for (int i = 0; i < nBPSBones; i++) {
         Bone *bone = m_BPSOrderedBones[i];
@@ -690,7 +690,7 @@ void Model::performUpdate()
     for (int i = 0; i < nAPSBones; i++) {
         Bone *bone = m_APSOrderedBones[i];
         bone->performFullTransform();
-        bone->performInverseKinematics();
+        bone->solveInverseKinematics();
     }
     for (int i = 0; i < nAPSBones; i++) {
         Bone *bone = m_APSOrderedBones[i];

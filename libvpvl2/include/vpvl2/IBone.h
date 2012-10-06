@@ -162,7 +162,7 @@ public:
      * @param Array<IBone>
      * @sa hasInverseKinematics
      */
-    virtual void getLinkedBones(Array<IBone *> &value) const = 0;
+    virtual void getEffectorBones(Array<IBone *> &value) const = 0;
 
     /**
      * ボーンの移動量を設定します。
@@ -267,7 +267,7 @@ public:
     const Vector3 destinationOrigin() const { return kZeroV3; }
     const Vector3 &localPosition() const { return kZeroV3; }
     const Quaternion &rotation() const { return Quaternion::getIdentity(); }
-    void getLinkedBones(Array<IBone *> & /* value */) const {}
+    void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 & /* value */) {}
     void setRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return false; }

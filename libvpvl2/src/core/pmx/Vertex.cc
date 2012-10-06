@@ -93,7 +93,8 @@ Vertex::Vertex()
       m_r0(kZeroV3),
       m_r1(kZeroV3),
       m_type(kBdef1),
-      m_edgeSize(0)
+      m_edgeSize(0),
+      m_index(-1)
 {
     for (int i = 0; i < kMaxBones; i++) {
         m_boneRefs[i] = 0;
@@ -117,6 +118,7 @@ Vertex::~Vertex()
     m_r1.setZero();
     m_type = kBdef1;
     m_edgeSize = 0;
+    m_index = -1;
     for (int i = 0; i < kMaxBones; i++) {
         m_boneRefs[i] = 0;
         m_weight[i] = 0;
@@ -179,6 +181,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
     const int nbones = bones.count();
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
+        vertex->m_index = i;
         switch (vertex->m_type) {
         case kBdef1: {
             int boneIndex = vertex->m_boneIndices[0];

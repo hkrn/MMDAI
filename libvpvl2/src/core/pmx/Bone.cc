@@ -124,9 +124,9 @@ Bone::Bone()
       m_localTransform(Transform::getIdentity()),
       m_origin(kZeroV3),
       m_offset(kZeroV3),
-      m_position(kZeroV3),
-      m_positionInherence(kZeroV3),
-      m_positionMorph(kZeroV3),
+      m_localPosition(kZeroV3),
+      m_localPositionInherence(kZeroV3),
+      m_localPositionMorph(kZeroV3),
       m_destinationOrigin(kZeroV3),
       m_fixedAxis(kZeroV3),
       m_axisX(kZeroV3),
@@ -158,8 +158,8 @@ Bone::~Bone()
     m_parentInherenceBoneRef = 0;
     m_origin.setZero();
     m_offset.setZero();
-    m_position.setZero();
-    m_positionMorph.setZero();
+    m_localPosition.setZero();
+    m_localPositionMorph.setZero();
     m_worldTransform.setIdentity();
     m_localTransform.setIdentity();
     m_destinationOrigin.setZero();
@@ -524,7 +524,7 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
 void Bone::mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight)
 {
     const Scalar w(weight);
-    m_positionMorph = morph->position * w;
+    m_localPositionMorph = morph->position * w;
     m_rotationMorph = Quaternion::getIdentity().slerp(morph->rotation, w);
 }
 
@@ -564,15 +564,15 @@ void Bone::performFullTransform()
         Bone *parentBone = m_parentInherenceBoneRef;
         if (parentBone) {
             if (parentBone->hasPositionInherence())
-                position += parentBone->m_positionInherence;
+                position += parentBone->m_localPositionInherence;
             else
-                position += parentBone->localPosition() + parentBone->m_positionMorph;
+                position += parentBone->localPosition() + parentBone->m_localPositionMorph;
         }
         if (!btFuzzyZero(m_weight - 1.0f))
             position *= m_weight;
-        m_positionInherence = position;
+        m_localPositionInherence = position;
     }
-    position += m_position + m_positionMorph;
+    position += m_localPosition + m_localPositionMorph;
     m_worldTransform.setOrigin(m_offset + position);
     if (m_parentBoneRef) {
         m_worldTransform = m_parentBoneRef->worldTransform() * m_worldTransform;
@@ -584,7 +584,7 @@ void Bone::performFullTransform()
 void Bone::performTransform()
 {
     m_worldTransform.setRotation(m_rotation);
-    m_worldTransform.setOrigin(m_offset + m_position);
+    m_worldTransform.setOrigin(m_offset + m_localPosition);
     if (m_parentBoneRef) {
         m_worldTransform = m_parentBoneRef->worldTransform() * m_worldTransform;
     }
@@ -592,7 +592,7 @@ void Bone::performTransform()
     //qDebug("%s(transform): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
 }
 
-void Bone::performInverseKinematics()
+void Bone::solveInverseKinematics()
 {
     if (!hasInverseKinematics() || m_simulated)
         return;
@@ -746,7 +746,7 @@ void Bone::resetIKLink()
     m_rotationIKLink = Quaternion::getIdentity();
 }
 
-void Bone::getLinkedBones(Array<IBone *> &value) const
+void Bone::getEffectorBones(Array<IBone *> &value) const
 {
     const int nlinks = m_IKLinks.count();
     for (int i = 0; i < nlinks; i++) {
@@ -757,7 +757,7 @@ void Bone::getLinkedBones(Array<IBone *> &value) const
 
 void Bone::setLocalPosition(const Vector3 &value)
 {
-    m_position = value;
+    m_localPosition = value;
 }
 
 void Bone::setRotation(const Quaternion &value)
