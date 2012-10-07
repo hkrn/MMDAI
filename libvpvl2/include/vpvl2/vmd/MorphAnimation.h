@@ -65,8 +65,6 @@ class MorphKeyframe;
 class VPVL2_API MorphAnimation : public BaseAnimation
 {
 public:
-    typedef struct InternalMorphKeyFrameList InternalMorphKeyFrameList;
-
     MorphAnimation(IEncoding *encoding);
     ~MorphAnimation();
 
@@ -81,11 +79,12 @@ public:
     void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
-    void buildInternalNodes(IModel *model);
-    void calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalMorphKeyFrameList *keyFrames);
+    struct PrivateContext;
+    void createPrivateContexts(IModel *model);
+    void calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context);
 
     IEncoding *m_encodingRef;
-    Hash<HashString, InternalMorphKeyFrameList *> m_name2keyframes;
+    Hash<HashString, PrivateContext *> m_name2contexts;
     IModel *m_modelRef;
     bool m_enableNullFrame;
 

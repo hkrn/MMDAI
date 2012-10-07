@@ -106,11 +106,11 @@ size_t MorphKeyframe::estimateSize() const
 
 IMorphKeyframe *MorphKeyframe::clone() const
 {
-    MorphKeyframe *frame = new MorphKeyframe(m_encodingRef);
-    frame->setName(m_namePtr);
-    frame->setTimeIndex(m_timeIndex);
-    frame->setWeight(m_weight);
-    return frame;
+    MorphKeyframe *keyframe = new MorphKeyframe(m_encodingRef);
+    keyframe->setName(m_namePtr);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setWeight(m_weight);
+    return keyframe;
 }
 
 void MorphKeyframe::setName(const IString *value)

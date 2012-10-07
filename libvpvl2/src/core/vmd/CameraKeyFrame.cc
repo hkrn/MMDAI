@@ -186,20 +186,20 @@ size_t CameraKeyframe::estimateSize() const
 
 ICameraKeyframe *CameraKeyframe::clone() const
 {
-    CameraKeyframe *frame = m_ptr = new CameraKeyframe();
-    internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
+    CameraKeyframe *keyframe = m_ptr = new CameraKeyframe();
+    internal::copyBytes(reinterpret_cast<uint8_t *>(keyframe->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->m_timeIndex = m_timeIndex;
-    frame->m_distance = m_distance;
-    frame->m_fov = m_fov;
-    frame->m_position = m_position;
-    frame->m_angle = m_angle;
-    frame->m_noPerspective = m_noPerspective;
-    frame->m_parameter = m_parameter;
-    frame->setInterpolationTable(m_rawInterpolationTable);
+    keyframe->m_timeIndex = m_timeIndex;
+    keyframe->m_distance = m_distance;
+    keyframe->m_fov = m_fov;
+    keyframe->m_position = m_position;
+    keyframe->m_angle = m_angle;
+    keyframe->m_noPerspective = m_noPerspective;
+    keyframe->m_parameter = m_parameter;
+    keyframe->setInterpolationTable(m_rawInterpolationTable);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const

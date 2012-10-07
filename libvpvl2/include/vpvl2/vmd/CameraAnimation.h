@@ -66,7 +66,7 @@ public:
     ~CameraAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(const IKeyframe::TimeIndex &frameAt);
+    void seek(const IKeyframe::TimeIndex &timeIndexAt);
     void update();
     CameraKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     CameraKeyframe *frameAt(int i) const;
@@ -80,7 +80,7 @@ private:
     static IKeyframe::SmoothPrecision weightValue(const CameraKeyframe *keyFrame,
                                                   const IKeyframe::SmoothPrecision &w,
                                                   int at);
-    static void lerpVector3(const CameraKeyframe *keyFrame,
+    static void lerpVector3(const CameraKeyframe *keyframe,
                             const Vector3 &from,
                             const Vector3 &to,
                             const IKeyframe::SmoothPrecision &w,

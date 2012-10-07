@@ -65,8 +65,6 @@ class BoneKeyframe;
 class VPVL2_API BoneAnimation : public BaseAnimation
 {
 public:
-    struct InternalBoneKeyFrameList;
-
     BoneAnimation(IEncoding *encoding);
     ~BoneAnimation();
 
@@ -81,6 +79,7 @@ public:
     void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
+    struct PrivateContext;
     static IKeyframe::SmoothPrecision weightValue(const BoneKeyframe *keyFrame,
                                                   const IKeyframe::SmoothPrecision &w,
                                                   int at);
@@ -90,11 +89,11 @@ private:
                             const IKeyframe::SmoothPrecision &w,
                             int at,
                             IKeyframe::SmoothPrecision &value);
-    void buildInternalKeyFrameList(IModel *model);
-    void calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalBoneKeyFrameList *keyFrames);
+    void createPrivateContexts(IModel *model);
+    void calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context);
 
     IEncoding *m_encodingRef;
-    Hash<HashString, InternalBoneKeyFrameList *> m_name2keyframes;
+    Hash<HashString, PrivateContext *> m_name2contexts;
     IModel *m_modelRef;
     bool m_enableNullFrame;
 

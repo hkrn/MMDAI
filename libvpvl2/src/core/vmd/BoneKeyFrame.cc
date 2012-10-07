@@ -176,18 +176,18 @@ size_t BoneKeyframe::estimateSize() const
 
 IBoneKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_encodingRef);
-    frame->setName(m_namePtr);
-    internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
+    BoneKeyframe *keyframe = m_ptr = new BoneKeyframe(m_encodingRef);
+    keyframe->setName(m_namePtr);
+    internal::copyBytes(reinterpret_cast<uint8_t *>(keyframe->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->setTimeIndex(m_timeIndex);
-    frame->setPosition(m_position);
-    frame->setRotation(m_rotation);
-    frame->m_parameter = m_parameter;
-    frame->setInterpolationTable(m_rawInterpolationTable);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setPosition(m_position);
+    keyframe->setRotation(m_rotation);
+    keyframe->m_parameter = m_parameter;
+    keyframe->setInterpolationTable(m_rawInterpolationTable);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
