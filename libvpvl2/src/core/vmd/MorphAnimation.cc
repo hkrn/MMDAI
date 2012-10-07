@@ -97,14 +97,14 @@ void MorphAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        MorphKeyframe *frame = new MorphKeyframe(m_encodingRef);
-        m_keyframes.add(frame);
-        frame->read(ptr);
-        ptr += frame->estimateSize();
+        MorphKeyframe *keyframe = new MorphKeyframe(m_encodingRef);
+        m_keyframes.add(keyframe);
+        keyframe->read(ptr);
+        ptr += keyframe->estimateSize();
     }
 }
 
-void MorphAnimation::seek(const IKeyframe::TimeIndex &frameAt)
+void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
     if (!m_modelRef)
         return;
@@ -114,12 +114,12 @@ void MorphAnimation::seek(const IKeyframe::TimeIndex &frameAt)
         PrivateContext *context = *m_name2contexts.value(i);
         if (m_enableNullFrame && context->isNull())
             continue;
-        calculateFrames(frameAt, context);
+        calculateFrames(timeIndexAt, context);
         IMorph *morph = context->morph;
         morph->setWeight(context->weight);
     }
     m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = frameAt;
+    m_currentTimeIndex = timeIndexAt;
 }
 
 void MorphAnimation::setParentModel(IModel *model)
@@ -136,19 +136,19 @@ void MorphAnimation::createPrivateContexts(IModel *model)
     m_name2contexts.releaseAll();
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nkeyframes; i++) {
-        MorphKeyframe *frame = reinterpret_cast<MorphKeyframe *>(m_keyframes.at(i));
-        const IString *name = frame->name();
+        MorphKeyframe *keyframe = reinterpret_cast<MorphKeyframe *>(m_keyframes.at(i));
+        const IString *name = keyframe->name();
         const HashString &key = name->toHashString();
         PrivateContext **ptr = m_name2contexts[key], *context;
         if (ptr) {
             context = *ptr;
-            context->keyframes.add(frame);
+            context->keyframes.add(keyframe);
         }
         else {
             IMorph *morph = model->findMorph(name);
             if (morph) {
                 context = new PrivateContext();
-                context->keyframes.add(frame);
+                context->keyframes.add(keyframe);
                 context->morph = morph;
                 context->lastIndex = 0;
                 context->weight = 0.0f;
@@ -171,12 +171,12 @@ void MorphAnimation::reset()
     BaseAnimation::reset();
     const int ncontexts = m_name2contexts.count();
     for (int i = 0; i < ncontexts; i++) {
-        PrivateContext *node = *m_name2contexts.value(i);
-        node->lastIndex = 0;
+        PrivateContext *context = *m_name2contexts.value(i);
+        context->lastIndex = 0;
     }
 }
 
-MorphKeyframe *MorphAnimation::frameAt(int i) const
+MorphKeyframe *MorphAnimation::keyframeAt(int i) const
 {
     return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<MorphKeyframe *>(m_keyframes[i]) : 0;
 }
@@ -189,9 +189,9 @@ MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeInde
     PrivateContext *const *ptr = m_name2contexts.find(key);
     if (ptr) {
         const PrivateContext *context = *ptr;
-        const Array<MorphKeyframe *> &frames = context->keyframes;
-        int index = findKeyframeIndex(timeIndex, frames);
-        return index != -1 ? frames[index] : 0;
+        const Array<MorphKeyframe *> &keyframes = context->keyframes;
+        int index = findKeyframeIndex(timeIndex, keyframes);
+        return index != -1 ? keyframes[index] : 0;
     }
     return 0;
 }

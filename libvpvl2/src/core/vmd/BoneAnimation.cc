@@ -127,14 +127,14 @@ void BoneAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        BoneKeyframe *frame = new BoneKeyframe(m_encodingRef);
-        m_keyframes.add(frame);
-        frame->read(ptr);
-        ptr += frame->estimateSize();
+        BoneKeyframe *keyframe = new BoneKeyframe(m_encodingRef);
+        m_keyframes.add(keyframe);
+        keyframe->read(ptr);
+        ptr += keyframe->estimateSize();
     }
 }
 
-void BoneAnimation::seek(const IKeyframe::TimeIndex &frameAt)
+void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
     if (!m_modelRef)
         return;
@@ -143,13 +143,13 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &frameAt)
         PrivateContext *keyframes = *m_name2contexts.value(i);
         if (m_enableNullFrame && keyframes->isNull())
             continue;
-        calculateKeyframes(frameAt, keyframes);
+        calculateKeyframes(timeIndexAt, keyframes);
         IBone *bone = keyframes->bone;
         bone->setLocalPosition(keyframes->position);
         bone->setRotation(keyframes->rotation);
     }
     m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = frameAt;
+    m_currentTimeIndex = timeIndexAt;
 }
 
 void BoneAnimation::setParentModel(IModel *model)
@@ -158,7 +158,7 @@ void BoneAnimation::setParentModel(IModel *model)
     m_modelRef = model;
 }
 
-BoneKeyframe *BoneAnimation::frameAt(int i) const
+BoneKeyframe *BoneAnimation::keyframeAt(int i) const
 {
     return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<BoneKeyframe *>(m_keyframes[i]) : 0;
 }
@@ -211,9 +211,9 @@ void BoneAnimation::createPrivateContexts(IModel *model)
     const int ncontexts = m_name2contexts.count();
     for (int i = 0; i < ncontexts; i++) {
         PrivateContext *context = *m_name2contexts.value(i);
-        Array<BoneKeyframe *> &frames = context->keyframes;
-        frames.sort(BoneAnimationKeyframePredication());
-        btSetMax(m_maxTimeIndex, frames[frames.count() - 1]->timeIndex());
+        Array<BoneKeyframe *> &keyframes = context->keyframes;
+        keyframes.sort(BoneAnimationKeyframePredication());
+        btSetMax(m_maxTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
     }
 }
 

@@ -120,27 +120,17 @@ void CameraKeyframe::setDefaultInterpolationParameter()
 void CameraKeyframe::read(const uint8_t *data)
 {
     CameraKeyframeChunk chunk;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-#ifdef VPVL2_BUILD_IOS
-    float pos[3], angle[3];
-    memcpy(pos, &chunk.position, sizeof(pos));
-    memcpy(angle, &chunk.angle, sizeof(angle));
-#else
-    float *pos = chunk.position;
-    float *angle = chunk.angle;
-#endif
-
-    setTimeIndex(static_cast<float>(chunk.timeIndex));
-    setFov(static_cast<float>(chunk.viewAngle));
+    internal::getData(data, chunk);
+    setTimeIndex(static_cast<const TimeIndex>(chunk.timeIndex));
+    setFov(static_cast<const Scalar>(chunk.viewAngle));
     setPerspective(chunk.noPerspective == 0);
+    internal::setPosition(chunk.position, m_position);
 #ifdef VPVL2_COORDINATE_OPENGL
     setDistance(-chunk.distance);
-    setPosition(Vector3(pos[0], pos[1], -pos[2]));
-    setAngle(Vector3(-degree(angle[0]), -degree(angle[1]), degree(angle[2])));
+    setAngle(Vector3(-degree(chunk.angle[0]), -degree(chunk.angle[1]), degree(chunk.angle[2])));
 #else
     setDistance(chunk.distance);
-    setPosition(Vector3(pos[0], pos[1], pos[2]));
-    setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
+    setAngle(Vector3(degree(chunk.angle[0]), degree(chunk.angle[1]), degree(chunk.angle[2])));
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),

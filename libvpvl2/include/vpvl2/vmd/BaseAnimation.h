@@ -65,12 +65,12 @@ public:
     virtual ~BaseAnimation();
 
     virtual void read(const uint8_t *data, int size) = 0;
-    virtual void seek(const IKeyframe::TimeIndex &frameAt) = 0;
-    void advance(const IKeyframe::TimeIndex &deltaFrame);
-    void rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaFrame);
+    virtual void seek(const IKeyframe::TimeIndex &timeIndexAt) = 0;
+    void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
+    void rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaTimeIndex);
     void reset();
-    void addKeyframe(IKeyframe *frame);
-    void deleteKeyframe(IKeyframe *&frame);
+    void addKeyframe(IKeyframe *keyframe);
+    void deleteKeyframe(IKeyframe *&keyframe);
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes);
 
     int countKeyframes() const { return m_keyframes.count(); }

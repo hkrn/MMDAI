@@ -323,7 +323,7 @@ public:
             const vmd::BoneAnimation &ba = motion->boneAnimation();
             nframes = ba.countKeyframes();
             for (int j = 0; j < nframes; j++) {
-                const vmd::BoneKeyframe *frame = static_cast<vmd::BoneKeyframe *>(ba.frameAt(j));
+                const vmd::BoneKeyframe *frame = static_cast<vmd::BoneKeyframe *>(ba.keyframeAt(j));
                 const std::string &name = delegate->toStdFromString(frame->name());
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
@@ -360,7 +360,7 @@ public:
             const vmd::MorphAnimation &fa = motion->morphAnimation();
             nframes = fa.countKeyframes();
             for (int j = 0; j < nframes; j++) {
-                const vmd::MorphKeyframe *frame = static_cast<vmd::MorphKeyframe *>(fa.frameAt(j));
+                const vmd::MorphKeyframe *frame = static_cast<vmd::MorphKeyframe *>(fa.keyframeAt(j));
                 const std::string &name = delegate->toStdFromString(frame->name());
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));

@@ -78,18 +78,11 @@ LightKeyframe::~LightKeyframe()
 void LightKeyframe::read(const uint8_t *data)
 {
     LightKeyframeChunk chunk;
+    internal::getData(data, chunk);
     internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-    m_timeIndex = static_cast<float>(chunk.timeIndex);
-#ifdef VPVL2_BUILD_IOS
-    float color[3], direction[4];
-    memcpy(color, &chunk.color, sizeof(color));
-    memcpy(direction, &chunk.direction, sizeof(direction));
-#else
-    float *color = chunk.color;
-    float *direction = chunk.direction;
-#endif
-    internal::setPositionRaw(color, m_color);
-    internal::setPosition(direction, m_direction);
+    setTimeIndex(static_cast<const TimeIndex>(chunk.timeIndex));
+    internal::setPositionRaw(chunk.color, m_color);
+    internal::setPosition(chunk.direction, m_direction);
 }
 
 void LightKeyframe::write(uint8_t *data) const

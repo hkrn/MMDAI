@@ -76,16 +76,10 @@ MorphKeyframe::~MorphKeyframe()
 void MorphKeyframe::read(const uint8_t *data)
 {
     MorphKeyframeChunk chunk;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    internal::getData(data, chunk);
     internal::setStringDirect(m_encodingRef->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_namePtr);
-    setTimeIndex(static_cast<float>(chunk.timeIndex));
-#ifdef VPVL2_BUILD_IOS
-    float weight;
-    memcpy(&weight, &chunk.weight, sizeof(weight));
-    setWeight(weight);
-#else
+    setTimeIndex(static_cast<const TimeIndex>(chunk.timeIndex));
     setWeight(chunk.weight);
-#endif
 }
 
 void MorphKeyframe::write(uint8_t *data) const

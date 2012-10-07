@@ -77,24 +77,24 @@ static void TestBoneAnimation(const IMotion *motion)
     const String bar("bar"), baz("baz");
     QuadWord q;
     ASSERT_EQ(2, ba.countKeyframes());
-    ASSERT_EQ(IKeyframe::TimeIndex(1), ba.frameAt(0)->timeIndex());
-    ASSERT_TRUE(ba.frameAt(0)->name()->equals(&bar));
-    ASSERT_EQ(Vector3(1, 2, -3), ba.frameAt(0)->position());
-    ASSERT_EQ(Quaternion(-1, -2, 3, 4), ba.frameAt(0)->rotation());
+    ASSERT_EQ(IKeyframe::TimeIndex(1), ba.keyframeAt(0)->timeIndex());
+    ASSERT_TRUE(ba.keyframeAt(0)->name()->equals(&bar));
+    ASSERT_EQ(Vector3(1, 2, -3), ba.keyframeAt(0)->position());
+    ASSERT_EQ(Quaternion(-1, -2, 3, 4), ba.keyframeAt(0)->rotation());
     // ASSERT_TRUE(ba.frameAt(0)->isIKEnabled());
     for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
         int offset = i * 4;
-        ba.frameAt(0)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
+        ba.keyframeAt(0)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q);
     }
-    ASSERT_EQ(IKeyframe::TimeIndex(2), ba.frameAt(1)->timeIndex());
-    ASSERT_TRUE(ba.frameAt(1)->name()->equals(&baz));
-    ASSERT_EQ(Vector3(3, 1, -2), ba.frameAt(1)->position());
-    ASSERT_EQ(Quaternion(-4, -3, 2, 1), ba.frameAt(1)->rotation());
+    ASSERT_EQ(IKeyframe::TimeIndex(2), ba.keyframeAt(1)->timeIndex());
+    ASSERT_TRUE(ba.keyframeAt(1)->name()->equals(&baz));
+    ASSERT_EQ(Vector3(3, 1, -2), ba.keyframeAt(1)->position());
+    ASSERT_EQ(Quaternion(-4, -3, 2, 1), ba.keyframeAt(1)->rotation());
     // ASSERT_FALSE(ba.frameAt(1)->isIKEnabled());
     for (int i = IBoneKeyframe::kMaxInterpolationType - 1; i >= 0; i--) {
         int offset = (IBoneKeyframe::kMaxInterpolationType - 1 - i) * 4;
-        ba.frameAt(1)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
+        ba.keyframeAt(1)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q);
     }
 }
@@ -104,12 +104,12 @@ static void TestMorphAnimation(const IMotion *motion)
     const vmd::MorphAnimation &ma = static_cast<const vmd::Motion *>(motion)->morphAnimation();
     String bar("bar"), baz("baz");
     ASSERT_EQ(2, ma.countKeyframes());
-    ASSERT_EQ(IKeyframe::TimeIndex(1), ma.frameAt(0)->timeIndex());
-    ASSERT_TRUE(ma.frameAt(0)->name()->equals(&bar));
-    ASSERT_EQ(IMorph::WeightPrecision(0), ma.frameAt(0)->weight());
-    ASSERT_EQ(IKeyframe::TimeIndex(2), ma.frameAt(1)->timeIndex());
-    ASSERT_TRUE(ma.frameAt(1)->name()->equals(&baz));
-    ASSERT_EQ(IMorph::WeightPrecision(1), ma.frameAt(1)->weight());
+    ASSERT_EQ(IKeyframe::TimeIndex(1), ma.keyframeAt(0)->timeIndex());
+    ASSERT_TRUE(ma.keyframeAt(0)->name()->equals(&bar));
+    ASSERT_EQ(IMorph::WeightPrecision(0), ma.keyframeAt(0)->weight());
+    ASSERT_EQ(IKeyframe::TimeIndex(2), ma.keyframeAt(1)->timeIndex());
+    ASSERT_TRUE(ma.keyframeAt(1)->name()->equals(&baz));
+    ASSERT_EQ(IMorph::WeightPrecision(1), ma.keyframeAt(1)->weight());
 }
 
 static void TestCameraAnimation(const IMotion *motion)

@@ -82,10 +82,10 @@ void LightAnimation::read(const uint8_t *data, int size)
         uint8_t *ptr = const_cast<uint8_t *>(data);
         m_keyframes.reserve(size);
         for (int i = 0; i < size; i++) {
-            LightKeyframe *frame = new LightKeyframe();
-            m_keyframes.add(frame);
-            frame->read(ptr);
-            ptr += frame->estimateSize();
+            LightKeyframe *keyframe = new LightKeyframe();
+            m_keyframes.add(keyframe);
+            keyframe->read(ptr);
+            ptr += keyframe->estimateSize();
         }
         update();
     }
