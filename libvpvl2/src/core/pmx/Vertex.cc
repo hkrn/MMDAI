@@ -423,7 +423,8 @@ void Vertex::mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &w
 
 void Vertex::mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight)
 {
-    m_morphDelta += morph->position * weight;
+    const Scalar w(weight);
+    m_morphDelta += morph->position * w;
 }
 
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
