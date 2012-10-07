@@ -70,6 +70,7 @@ public:
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
     IBone *bone(int index) const;
+    int index() const { return m_index; }
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
     void setTextureCoord(const Vector3 &value);
@@ -98,6 +99,7 @@ public:
     float m_weight;
     IBone *m_boneRefs[kMaxBones];
     int m_boneIndices[kMaxBones];
+    int m_index;
 };
 
 }

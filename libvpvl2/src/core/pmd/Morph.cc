@@ -117,13 +117,13 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
     Morph *baseMorph = 0;
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
-        const Array<Vector4> &morphVertices = morph->m_vertices;
-        const int nMorphVertices = morphVertices.count();
         if (morph->category() == kBase) {
+            const Array<Vector4> &morphVertices = morph->m_vertices;
+            const int nMorphVertices = morphVertices.count();
             Array<Vertex *> &vertexRefs = morph->m_vertexRefs;
             for (int j = 0; j < nMorphVertices; j++) {
                 const Vector4 &morphVertex = morphVertices[j];
-                const int vertexId = int(morphVertex.w());
+                const int vertexId(morphVertex.w());
                 if (internal::checkBound(vertexId, 0, nvertices)) {
                     Vertex *vertex = vertices[vertexId];
                     vertex->setOrigin(morphVertex);
@@ -137,18 +137,19 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
     if (baseMorph) {
         for (int i = 0; i < nmorphs; i++) {
             Morph *morph = morphs[i];
-            Array<Vector4> &morphVertices = morph->m_vertices;
-            const Array<Vector4> &baseVertices = baseMorph->m_vertices;
-            const int nMorphVertices = morphVertices.count(), nBaseVertices = baseVertices.count();
+            morph->m_index = i;
             if (morph->category() != kBase) {
+                const Array<Vector4> &baseVertices = baseMorph->m_vertices;
+                Array<Vector4> &morphVertices = morph->m_vertices;
                 Array<Vertex *> &vertexRefs = morph->m_vertexRefs;
+                const int nMorphVertices = morphVertices.count(), nBaseVertices = baseVertices.count();
                 for (int j = 0; j < nMorphVertices; j++) {
                     Vector4 &morphVertex = morphVertices[j];
-                    int vertexId = int(morphVertex.w());
+                    int vertexId = morphVertex.w();
                     if (internal::checkBound(vertexId, 0, nBaseVertices)) {
-                        vertexId = int(baseVertices[vertexId].w());
-                        morphVertex.setW(vertexId);
-                        vertexRefs.add(vertices[vertexId]);
+                        int baseVertexId = baseVertices[vertexId].w();
+                        morphVertex.setW(baseVertexId);
+                        vertexRefs.add(vertices[baseVertexId]);
                     }
                 }
             }

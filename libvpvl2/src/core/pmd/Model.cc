@@ -212,10 +212,10 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         return sizeof(kIdent);
     }
     void update(const Vector3 &cameraPosition, void *address, Vector3 &aabbMin, Vector3 &aabbMax) {
+        Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
             const int nmaterials = materials.count();
-            Unit *bufferPtr = static_cast<Unit *>(address);
             Vector3 position, normal;
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
@@ -243,7 +243,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             const int nvertices = vertices.count();
             for (int i = 0; i < nvertices; i++) {
                 IVertex *vertex = vertices[i];
-                Unit &v = units[i];
+                Unit &v = bufferPtr[i];
                 v.delta = vertex->delta();
             }
             aabbMin.setZero();
@@ -411,13 +411,20 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
 
 class BonePredication {
 public:
-    bool operator()(const IBone *left, const IBone *right) const {
-        const IBone *leftParentBone = left->parentBone();
-        const IBone *rightParentBone = right->parentBone();
-        if (leftParentBone && rightParentBone && leftParentBone == rightParentBone) {
+    bool operator()(const pmd::Bone *left, const pmd::Bone *right) const {
+        const IBone *parentLeft = left->parentBone(), *parentRight = right->parentBone();
+        if (parentLeft && parentRight) {
+            return parentLeft->index() < parentRight->index();
+        }
+        else if (!parentLeft && parentRight) {
+            return true;
+        }
+        else if (parentLeft && !parentRight) {
+            return false;
+        }
+        else {
             return left->index() < right->index();
         }
-        return !leftParentBone && rightParentBone;
     }
 };
 
@@ -510,7 +517,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     // IK
-    if (!Bone::preparseIKJoints(ptr, rest, info)) {
+    if (!Bone::preparseIKConstraints(ptr, rest, info)) {
         info.error = kInvalidBonesError;
         return false;
     }
@@ -605,6 +612,7 @@ bool Model::load(const uint8_t *data, size_t size)
             m_info.error = info.error;
             return false;
         }
+        m_sortedBones.sort(BonePredication());
         m_info = info;
         return true;
     }
@@ -633,7 +641,11 @@ size_t Model::estimateSize() const
     size += Bone::estimateTotalSize(m_bones, m_info);
     size += Morph::estimateTotalSize(m_morphs, m_info);
     size += Label::estimateTotalSize(m_labels, m_info);
-    // TODO: estimate english name and comment
+    size += kNameSize;
+    size += kCommentSize;
+    size += Bone::kNameSize * m_info.bonesCount;
+    size += Morph::kNameSize * m_info.morphsCount;
+    size += Bone::kCategoryNameSize * m_info.boneCategoryNamesCount;
     size += kCustomToonTextureNameSize * kMaxCustomToonTextures;
     size += RigidBody::estimateTotalSize(m_rigidBodies, m_info);
     size += Joint::estimateTotalSize(m_joints, m_info);
@@ -658,7 +670,7 @@ void Model::performUpdate()
     }
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_sortedBones[i];
-        bone->performInverseKinematics();
+        bone->solveInverseKinematics();
     }
     // physics simulation
     if (m_worldRef) {
@@ -667,10 +679,6 @@ void Model::performUpdate()
             RigidBody *rigidBody = m_rigidBodies[i];
             rigidBody->performTransformBone();
         }
-    }
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_sortedBones[i];
-        bone->performUpdateLocalTransform();
     }
 }
 
@@ -989,18 +997,18 @@ void Model::parseBones(const DataInfo &info)
         m_bones.add(bone);
         m_sortedBones.add(bone);
         bone->readBone(ptr, info, size);
+        m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         ptr += size;
     }
-    m_sortedBones.sort(BonePredication());
 }
 
 void Model::parseIKJoints(const DataInfo &info)
 {
-    const int njoints = info.IKJointsCount;
-    uint8_t *ptr = info.IKJointsPtr;
+    const int njoints = info.IKConstraintsCount;
+    uint8_t *ptr = info.IKConstraintsPtr;
     size_t size;
     for (int i = 0; i < njoints; i++) {
-        Bone::readIKJoints(ptr, m_bones, size);
+        Bone::readIKConstraint(ptr, m_bones, size);
         ptr += size;
     }
 }

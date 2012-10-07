@@ -82,8 +82,8 @@ public:
         size_t materialsCount;
         uint8_t *bonesPtr;
         size_t bonesCount;
-        uint8_t *IKJointsPtr;
-        size_t IKJointsCount;
+        uint8_t *IKConstraintsPtr;
+        size_t IKConstraintsCount;
         uint8_t *morphsPtr;
         size_t morphsCount;
         uint8_t *morphLabelsPtr;

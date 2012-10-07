@@ -80,12 +80,13 @@ public:
     const Transform &worldTransform() const;
     const Transform &localTransform() const;
     void getLocalTransform(Transform &world2LocalTransform) const;
+    void getLocalTransform(const Transform &worldTransform, Transform &output) const;
     void setLocalTransform(const Transform &value);
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
     const Vector3 &localPosition() const;
     const Quaternion &rotation() const;
-    void getLinkedBones(Array<IBone *> &value) const;
+    void getEffectorBones(Array<IBone *> &value) const;
     void setLocalPosition(const Vector3 &value);
     void setRotation(const Quaternion &value);
     bool isMovable() const;
@@ -99,18 +100,17 @@ public:
     void getLocalAxes(Matrix3x3 &value) const;
 
     static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool preparseIKJoints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);
-    static void readIKJoints(const uint8_t *data, const Array<Bone *> &bones, size_t &size);
+    static void readIKConstraint(const uint8_t *data, const Array<Bone *> &bones, size_t &size);
     static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
 
     void readBone(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     size_t estimateBoneSize(const Model::DataInfo &info) const;
-    size_t estimateIKJointsSize(const Model::DataInfo &info) const;
+    size_t estimateIKConstraintsSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
     void performTransform();
-    void performInverseKinematics();
-    void performUpdateLocalTransform();
+    void solveInverseKinematics();
     void setSimulated(bool value);
 
 private:
@@ -124,7 +124,7 @@ private:
     Vector3 m_fixedAxis;
     Vector3 m_origin;
     Vector3 m_offset;
-    Vector3 m_position;
+    Vector3 m_localPosition;
     Quaternion m_rotation;
     Transform m_worldTransform;
     Transform m_localTransform;

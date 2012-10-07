@@ -50,8 +50,7 @@ struct VertexUnit {
     float position[3];
     float normal[3];
     float uv[2];
-    int16_t parentBoneID;
-    int16_t childBoneID;
+    int16_t bones[2];
     uint8_t weight;
     uint8_t edge;
 };
@@ -73,7 +72,8 @@ Vertex::Vertex()
       m_texcoord(kZeroV3),
       m_morphDelta(kZeroV3),
       m_edgeSize(0),
-      m_weight(0)
+      m_weight(0),
+      m_index(-1)
 {
 }
 
@@ -82,8 +82,10 @@ Vertex::~Vertex()
     m_origin.setZero();
     m_normal.setZero();
     m_texcoord.setZero();
+    m_morphDelta.setZero();
     m_edgeSize = 0;
     m_weight = 0;
+    m_index = -1;
 }
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -104,6 +106,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
     const int nbones = bones.count();
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
+        vertex->m_index = i;
         for (int j = 0; j < kMaxBones; j++) {
             int boneIndex = vertex->m_boneIndices[j];
             if (boneIndex >= 0) {
@@ -138,9 +141,9 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo & /* info */, size_
     internal::setPosition(unit.position, m_origin);
     internal::setPosition(unit.normal, m_normal);
     m_texcoord.setValue(unit.uv[0], unit.uv[1], 0);
-    m_boneIndices[0] = unit.parentBoneID;
-    m_boneIndices[1] = unit.childBoneID;
-    m_weight = unit.weight;
+    m_boneIndices[0] = unit.bones[0];
+    m_boneIndices[1] = unit.bones[1];
+    m_weight = unit.weight * 0.01;
     m_edgeSize = unit.edge;
     size = sizeof(unit);
 }
@@ -155,14 +158,14 @@ size_t Vertex::estimateSize(const Model::DataInfo & /* info */) const
 void Vertex::write(uint8_t *data, const Model::DataInfo & /* info */) const
 {
     VertexUnit unit;
-    unit.childBoneID = m_boneIndices[1];
+    unit.bones[0] = m_boneIndices[0];
+    unit.bones[1] = m_boneIndices[1];
     unit.edge = m_edgeSize;
     internal::getPosition(m_normal, unit.normal);
-    unit.parentBoneID = m_boneIndices[0];
     internal::getPosition(m_origin, unit.position);
     unit.uv[0] = m_texcoord.x();
     unit.uv[1] = m_texcoord.y();
-    unit.weight = m_weight;
+    unit.weight = m_weight * 100;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
 }
 
@@ -186,7 +189,8 @@ void Vertex::reset()
 
 void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight)
 {
-    m_morphDelta += value * weight;
+    const Scalar w(weight);
+    m_morphDelta += value * w;
 }
 
 float Vertex::weight(int index) const
