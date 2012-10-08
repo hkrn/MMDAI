@@ -244,7 +244,6 @@ class ModelProgram : public ObjectProgram
 public:
     ModelProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_deltaAttributeLocation(0),
           m_uva0AttributeLocation(0),
           m_uva1AttributeLocation(0),
           m_cameraPositionUniformLocation(0),
@@ -268,7 +267,6 @@ public:
     {
     }
     ~ModelProgram() {
-        m_deltaAttributeLocation = 0;
         m_uva0AttributeLocation = 0;
         m_uva1AttributeLocation = 0;
         m_cameraPositionUniformLocation = 0;
@@ -293,9 +291,6 @@ public:
 
     void setCameraPosition(const Vector3 &value) {
         glUniform3fv(m_cameraPositionUniformLocation, 1, value);
-    }
-    void setDelta(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_deltaAttributeLocation, 3, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setUVA0(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_uva0AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
@@ -385,7 +380,6 @@ public:
 protected:
     virtual void getLocations() {
         ObjectProgram::getLocations();
-        m_deltaAttributeLocation = glGetAttribLocation(m_program, "inDelta");
         m_uva0AttributeLocation = glGetAttribLocation(m_program, "inUVA0");
         m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
@@ -406,7 +400,6 @@ protected:
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
-        enableAttribute(m_deltaAttributeLocation);
         enableAttribute(m_uva0AttributeLocation);
         enableAttribute(m_uva1AttributeLocation);
         enableAttribute(m_boneIndicesAttributeLocation);
@@ -414,7 +407,6 @@ protected:
     }
 
 private:
-    GLuint m_deltaAttributeLocation;
     GLuint m_uva0AttributeLocation;
     GLuint m_uva1AttributeLocation;
     GLuint m_cameraPositionUniformLocation;
@@ -713,7 +705,6 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_accelerator->upload(vbo, m_context->indexBuffer, context);
     }
 #endif
-    m_modelRef->performUpdate();
     m_modelRef->setVisible(true);
     update();
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
@@ -755,8 +746,6 @@ void PMXRenderEngine::renderModel()
     modelProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
     modelProgram->setNormal(reinterpret_cast<const GLvoid *>(offset), size);
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kMorphDeltaStride);
-    modelProgram->setDelta(reinterpret_cast<const GLvoid *>(offset), size);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA0Stride);
     modelProgram->setUVA0(reinterpret_cast<const GLvoid *>(offset), size);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA1Stride);
@@ -838,7 +827,6 @@ void PMXRenderEngine::renderModel()
             cullFaceState = true;
         }
         const int nindices = material->indices();
-        if (i == 12)
         glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * size;
     }

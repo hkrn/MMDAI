@@ -12,7 +12,6 @@ uniform vec3 cameraPosition;
 uniform vec3 lightDirection;
 uniform bool hasSphereTexture;
 uniform bool hasDepthTexture;
-in vec3 inDelta;
 in vec4 inUVA0;
 in vec4 inUVA1;
 in vec3 inPosition;
@@ -39,7 +38,7 @@ vec2 calculateToon(const vec3 normal) {
 }
 
 void main() {
-    vec4 position = vec4(inPosition + inDelta, kOne);
+    vec4 position = vec4(inPosition, kOne);
     vec3 normal = normalMatrix * inNormal;
     outEyeView = cameraPosition - inPosition;
     outNormal = inNormal;
