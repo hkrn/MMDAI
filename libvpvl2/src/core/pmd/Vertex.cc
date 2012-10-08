@@ -190,7 +190,7 @@ void Vertex::reset()
 void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight)
 {
     const Scalar w(weight);
-    m_morphDelta = value * w;
+    m_morphDelta += value * w;
 }
 
 float Vertex::weight(int index) const

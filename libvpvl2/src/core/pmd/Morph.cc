@@ -123,7 +123,7 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
             Array<Vertex *> &vertexRefs = morph->m_vertexRefs;
             for (int j = 0; j < nMorphVertices; j++) {
                 const Vector4 &morphVertex = morphVertices[j];
-                const int vertexId(morphVertex.w());
+                int vertexId = morphVertex.w();
                 if (internal::checkBound(vertexId, 0, nvertices)) {
                     Vertex *vertex = vertices[vertexId];
                     vertex->setOrigin(morphVertex);
