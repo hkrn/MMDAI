@@ -321,9 +321,6 @@ public:
     }
     void setSphereTexture(GLuint value, pmx::Material::SphereTextureRenderMode mode) {
         if (value) {
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_sphereTextureUniformLocation, 1);
             switch (mode) {
             case pmx::Material::kNone:
             default:
@@ -333,19 +330,19 @@ public:
                 glUniform1i(m_isSubTextureUniformLocation, 0);
                 break;
             case pmx::Material::kMultTexture:
-                glUniform1i(m_hasSphereTextureUniformLocation, 1);
+                enableSphereTexture(value);
                 glUniform1i(m_isSPHTextureUniformLocation, 1);
                 glUniform1i(m_isSPATextureUniformLocation, 0);
                 glUniform1i(m_isSubTextureUniformLocation, 0);
                 break;
             case pmx::Material::kAddTexture:
-                glUniform1i(m_hasSphereTextureUniformLocation, 1);
+                enableSphereTexture(value);
                 glUniform1i(m_isSPHTextureUniformLocation, 0);
                 glUniform1i(m_isSPATextureUniformLocation, 1);
                 glUniform1i(m_isSubTextureUniformLocation, 0);
                 break;
             case pmx::Material::kSubTexture:
-                glUniform1i(m_hasSphereTextureUniformLocation, 1);
+                enableSphereTexture(value);
                 glUniform1i(m_isSPHTextureUniformLocation, 0);
                 glUniform1i(m_isSPATextureUniformLocation, 0);
                 glUniform1i(m_isSubTextureUniformLocation, 1);
@@ -407,6 +404,13 @@ protected:
     }
 
 private:
+    void enableSphereTexture(GLuint value) {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, value);
+        glUniform1i(m_sphereTextureUniformLocation, 1);
+        glUniform1i(m_hasSphereTextureUniformLocation, 1);
+    }
+
     GLuint m_uva0AttributeLocation;
     GLuint m_uva1AttributeLocation;
     GLuint m_cameraPositionUniformLocation;
