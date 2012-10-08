@@ -22,13 +22,13 @@ class MockIBone : public IBone {
       const Vector3&());
   MOCK_CONST_METHOD0(destinationOrigin,
       const Vector3());
-  MOCK_CONST_METHOD0(position,
+  MOCK_CONST_METHOD0(localPosition,
       const Vector3&());
   MOCK_CONST_METHOD0(rotation,
       const Quaternion&());
-  MOCK_CONST_METHOD1(getLinkedBones,
+  MOCK_CONST_METHOD1(getEffectorBones,
       void(Array<IBone *> &value));
-  MOCK_METHOD1(setPosition,
+  MOCK_METHOD1(setLocalPosition,
       void(const Vector3 &value));
   MOCK_METHOD1(setRotation,
       void(const Quaternion &value));

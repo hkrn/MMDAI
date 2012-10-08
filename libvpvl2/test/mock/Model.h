@@ -26,8 +26,8 @@ class MockIModel : public IModel {
       void());
   MOCK_METHOD0(resetMotionState,
       void());
-  MOCK_METHOD2(performUpdate,
-      void(const Vector3 &cameraPosition, const Vector3 &lightDirection));
+  MOCK_METHOD0(performUpdate,
+      void());
   MOCK_METHOD1(joinWorld,
       void(btDiscreteDynamicsWorld *world));
   MOCK_METHOD1(leaveWorld,
@@ -38,18 +38,18 @@ class MockIModel : public IModel {
       IMorph*(const IString *value));
   MOCK_CONST_METHOD1(count,
       int(ObjectType value));
-  MOCK_CONST_METHOD1(getBones,
+  MOCK_CONST_METHOD1(getBoneRefs,
       void(Array<IBone *> &value));
-  MOCK_CONST_METHOD1(getMorphs,
-      void(Array<IMorph *> &value));
-  MOCK_CONST_METHOD1(getLabels,
+  MOCK_CONST_METHOD1(getLabelRefs,
       void(Array<ILabel *> &value));
-  MOCK_CONST_METHOD2(getBoundingBox,
-      void(Vector3 &min, Vector3 &max));
-  MOCK_CONST_METHOD2(getBoundingSphere,
-      void(Vector3 &center, Scalar &radius));
-  MOCK_CONST_METHOD0(indexType,
-      IndexType());
+  MOCK_CONST_METHOD1(getMaterialRefs,
+      void(Array<IMaterial *> &value));
+  MOCK_CONST_METHOD1(getMorphRefs,
+      void(Array<IMorph *> &value));
+  MOCK_CONST_METHOD1(getVertexRefs,
+      void(Array<IVertex *> &value));
+  MOCK_CONST_METHOD1(edgeScaleFactor,
+      float(const Vector3 &position));
   MOCK_CONST_METHOD0(position,
       const Vector3&());
   MOCK_CONST_METHOD0(rotation,
@@ -90,6 +90,16 @@ class MockIModel : public IModel {
       void(IModel *value));
   MOCK_METHOD1(setParentBone,
       void(IBone *value));
+  MOCK_METHOD1(setVisible,
+      void(bool value));
+  MOCK_CONST_METHOD1(getIndexBuffer,
+      void(IIndexBuffer *&indexBuffer));
+  MOCK_CONST_METHOD1(getStaticVertexBuffer,
+      void(IStaticVertexBuffer *&staticBuffer));
+  MOCK_CONST_METHOD2(getDynamicVertexBuffer,
+      void(IDynamicVertexBuffer *&dynamicBuffer, const IIndexBuffer *indexBuffer));
+  MOCK_CONST_METHOD3(getMatrixBuffer,
+      void(IMatrixBuffer *&matrixBuffer, IDynamicVertexBuffer *dynamicBuffer, const IIndexBuffer *indexBuffer));
 };
 
 }  // namespace vpvl2
