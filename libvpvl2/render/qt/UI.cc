@@ -349,6 +349,31 @@ namespace render
 namespace qt
 {
 
+static QHash<IEncoding::ConstantType, CString *> UIBuildConstantsDictionary(QSettings *settings)
+{
+    QMap<QString, IEncoding::ConstantType> str2const;
+    str2const.insert("arm", IEncoding::kArm);
+    str2const.insert("asterisk", IEncoding::kAsterisk);
+    str2const.insert("center", IEncoding::kCenter);
+    str2const.insert("elbow", IEncoding::kElbow);
+    str2const.insert("finger", IEncoding::kFinger);
+    str2const.insert("left", IEncoding::kLeft);
+    str2const.insert("leftknee", IEncoding::kLeftKnee);
+    str2const.insert("right", IEncoding::kRight);
+    str2const.insert("rightknee", IEncoding::kRightKnee);
+    str2const.insert("spaextension", IEncoding::kSPAExtension);
+    str2const.insert("sphextension", IEncoding::kSPHExtension);
+    str2const.insert("wrist", IEncoding::kWrist);
+    QHash<IEncoding::ConstantType, CString *> dict;
+    QMapIterator<QString, IEncoding::ConstantType> it(str2const);
+    while (it.hasNext()) {
+        it.next();
+        const QVariant &value = settings->value("constants." + it.key());
+        dict.insert(it.value(), new CString(value.toString()));
+    }
+    return dict;
+}
+
 UI::UI()
     : QGLWidget(new CustomGLContext(QGLFormat(QGL::SampleBuffers)), 0),
       m_settings(0),
@@ -362,9 +387,6 @@ UI::UI()
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {
-    Encoding *encoding = new Encoding();
-    m_encoding = encoding;
-    m_factory = new Factory(encoding);
     m_world = new World();
     m_scene = new Scene();
     setMinimumSize(320, 240);
@@ -394,6 +416,8 @@ void UI::load(const QString &filename)
 {
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->setIniCodec("UTF-8");
+    m_encoding = new Encoding(UIBuildConstantsDictionary(m_settings));
+    m_factory = new Factory(m_encoding);
     QHash<QString, QString> settings;
     foreach (const QString &key, m_settings->allKeys()) {
         settings.insert(key, m_settings->value(key).toString());
@@ -485,12 +509,12 @@ void UI::initializeGL()
 
 void UI::timerEvent(QTimerEvent *)
 {
-    float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
-    float diff = elapsed - m_prevElapsed;
+    const Scalar &elapsed = m_timer.elapsed() / static_cast<Scalar>(60.0f);
+    Scalar delta(elapsed - m_prevElapsed);
     m_prevElapsed = elapsed;
-    if (diff < 0)
-        diff = elapsed;
-    m_scene->advance(diff, Scene::kUpdateAll);
+    if (delta < 0)
+        delta = elapsed;
+    m_scene->advance(delta, Scene::kUpdateAll);
     const Array<IMotion *> &motions = m_scene->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
@@ -500,7 +524,7 @@ void UI::timerEvent(QTimerEvent *)
             m_currentFrameIndex = 0;
         }
     }
-    m_world->stepSimulationDefault();
+    m_world->stepSimulation(delta);
     m_delegate->updateMatrices(size());
     m_scene->update(Scene::kUpdateAll);
     updateGL();
@@ -586,7 +610,7 @@ void UI::renderDepth()
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
             if (model->isVisible()) {
-                model->getBoundingSphere(center, radius);
+                // model->getBoundingSphere(center, radius);
                 radiusArray.add(radius);
                 centerArray.add(target);
                 target += center;

@@ -44,63 +44,27 @@ namespace vpvl2
 namespace qt
 {
 
-Encoding::Encoding()
-    : m_sjis(QTextCodec::codecForName("Shift-JIS")),
+Encoding::Encoding(const QHash<ConstantType, CString *> &dictionary)
+    : m_dictionary(dictionary),
+      m_sjis(QTextCodec::codecForName("Shift-JIS")),
       m_utf8(QTextCodec::codecForName("UTF-8")),
       m_utf16(QTextCodec::codecForName("UTF-16"))
 {
 }
 
-Encoding::~Encoding() {
+Encoding::~Encoding()
+{
+    qDeleteAll(m_dictionary);
 }
 
 const IString *Encoding::stringConstant(ConstantType value) const
 {
-    switch (value) {
-    case kLeft: {
-        static const CString s("左");
-        return &s;
+    if (m_dictionary.contains(value)) {
+        return m_dictionary[value];
     }
-    case kRight: {
-        static const CString s("右");
-        return &s;
-    }
-    case kFinger: {
-        static const CString s("指");
-        return &s;
-    }
-    case kElbow: {
-        static const CString s("ひじ");
-        return &s;
-    }
-    case kArm: {
-        static const CString s("腕");
-        return &s;
-    }
-    case kWrist: {
-        static const CString s("手首");
-        return &s;
-    }
-    case kCenter: {
-        static const CString s("センター");
-        return &s;
-    }
-    case kAsterisk: {
-        static const CString s("*");
-        return &s;
-    }
-    case kSPHExtension: {
-        static const CString s(".sph");
-        return &s;
-    }
-    case kSPAExtension: {
-        static const CString s(".spa");
-        return &s;
-    }
-    default: {
+    else {
         static const CString s("");
         return &s;
-    }
     }
 }
 

@@ -68,6 +68,8 @@ public:
         kAsterisk,
         kSPHExtension,
         kSPAExtension,
+        kRightKnee,
+        kLeftKnee,
         kMaxConstantType
     };
 

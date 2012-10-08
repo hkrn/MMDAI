@@ -40,6 +40,9 @@
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IString.h"
 
+#include <QHash>
+#include <QString>
+
 class QTextCodec;
 
 namespace vpvl2
@@ -47,10 +50,12 @@ namespace vpvl2
 namespace qt
 {
 
+class CString;
+
 class Encoding : public IEncoding
 {
 public:
-    Encoding();
+    Encoding(const QHash<ConstantType, CString *> &dictionary);
     ~Encoding();
 
     const IString *stringConstant(ConstantType value) const;
@@ -60,6 +65,7 @@ public:
     void disposeByteArray(uint8_t *value) const;
 
 private:
+    QHash<ConstantType, CString *> m_dictionary;
     QTextCodec *m_sjis;
     QTextCodec *m_utf8;
     QTextCodec *m_utf16;
