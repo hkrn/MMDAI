@@ -49,7 +49,9 @@ World::World()
       m_broadphase(0),
       m_solver(0),
       m_world(0),
-      m_preferredFPS(0)
+      m_preferredFPS(0),
+      m_maxSubSteps(0),
+      m_fixedTimeStep(0)
 {
     m_dispatcher = new btCollisionDispatcher(&m_config);
     m_broadphase = new btDbvtBroadphase();
@@ -94,6 +96,8 @@ void World::setRandSeed(unsigned long value)
 void World::setPreferredFPS(const Scalar &value)
 {
     m_preferredFPS = value;
+    m_maxSubSteps = btMax(int(60 / m_preferredFPS), 1);
+    m_fixedTimeStep = 1 / value;
 }
 
 void World::addModel(vpvl2::IModel *value)
@@ -118,8 +122,7 @@ void World::removeRigidBody(btRigidBody *value)
 
 void World::stepSimulation(const Scalar &delta)
 {
-    int substep = btMax(int(60 / m_preferredFPS), 1);
-    m_world->stepSimulation(delta, substep, 1.0 / m_preferredFPS);
+    m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
 }
 
 } /* namespace qt */

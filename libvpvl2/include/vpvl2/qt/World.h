@@ -75,6 +75,8 @@ private:
     btSequentialImpulseConstraintSolver *m_solver;
     btDiscreteDynamicsWorld *m_world;
     Scalar m_preferredFPS;
+    Scalar m_maxSubSteps;
+    Scalar m_fixedTimeStep;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(World)
 };
