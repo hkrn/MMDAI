@@ -170,7 +170,7 @@ private:
     void parseIndices(const DataInfo &info);
     void parseMaterials(const DataInfo &info);
     void parseBones(const DataInfo &info);
-    void parseIKJoints(const DataInfo &info);
+    void parseIKConstraints(const DataInfo &info);
     void parseMorphs(const DataInfo &info);
     void parseLabels(const DataInfo &info);
     void parseCustomToonTextures(const DataInfo &info);

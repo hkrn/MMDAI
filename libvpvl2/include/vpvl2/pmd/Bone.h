@@ -112,6 +112,7 @@ public:
     void performTransform();
     void solveInverseKinematics();
     void setSimulated(bool value);
+    bool isAxisXAligned();
 
 private:
     struct IKConstraint;

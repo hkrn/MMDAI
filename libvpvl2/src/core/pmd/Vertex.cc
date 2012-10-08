@@ -144,7 +144,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo & /* info */, size_
     m_boneIndices[0] = unit.bones[0];
     m_boneIndices[1] = unit.bones[1];
     m_weight = unit.weight * 0.01;
-    m_edgeSize = unit.edge;
+    m_edgeSize = unit.edge == 0 ? 1 : 0;
     size = sizeof(unit);
 }
 
@@ -160,7 +160,7 @@ void Vertex::write(uint8_t *data, const Model::DataInfo & /* info */) const
     VertexUnit unit;
     unit.bones[0] = m_boneIndices[0];
     unit.bones[1] = m_boneIndices[1];
-    unit.edge = m_edgeSize;
+    unit.edge = m_edgeSize > 0 ? 0 : 1;
     internal::getPosition(m_normal, unit.normal);
     internal::getPosition(m_origin, unit.position);
     unit.uv[0] = m_texcoord.x();
@@ -190,7 +190,7 @@ void Vertex::reset()
 void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight)
 {
     const Scalar w(weight);
-    m_morphDelta += value * w;
+    m_morphDelta = value * w;
 }
 
 float Vertex::weight(int index) const

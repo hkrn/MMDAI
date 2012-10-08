@@ -1,6 +1,8 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  hkrn                                    */
+/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
+/*                           Department of Computer Science          */
+/*                2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -65,6 +67,13 @@ struct IKUnit
 
 #pragma pack(pop)
 
+static const vpvl2::Vector3 kXAlignAxis(1.0f, 0.0f, 0.0f);
+const float kMinDistance    = 0.0001f;
+const float kMinAngle       = 0.00000001f;
+const float kMinAxis        = 0.0000001f;
+const float kMinRotationSum = 0.002f;
+const float kMinRotation    = 0.00001f;
+
 }
 
 namespace vpvl2
@@ -74,8 +83,7 @@ namespace pmd
 
 struct Bone::IKConstraint {
     Array<Bone *> effectors;
-    IBone *root;
-    IBone *target;
+    Bone *target;
     int niterations;
     float angle;
 };
@@ -217,15 +225,14 @@ void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &bones, siz
                 Bone *bone = bones[boneIndex];
                 effectors.add(bone);
             }
-            ptr += sizeof(uint16_t);
         }
         Bone *rootBone = bones[rootIndex], *targetBone = bones[targetIndex];
         IKConstraint *constraint = rootBone->m_constraint = new IKConstraint();
         constraint->effectors.copy(effectors);
-        constraint->root = rootBone;
         constraint->target = targetBone;
         constraint->niterations = unit.niterations;
         constraint->angle = unit.angle;
+        rootBone->m_targetBoneIndex = targetBone->index();
     }
     size = sizeof(unit) + sizeof(uint16_t) * nlinks;
 }
@@ -289,7 +296,6 @@ void Bone::write(uint8_t *data, const Model::DataInfo & /* info */) const
 
 void Bone::performTransform()
 {
-    m_worldTransform.setIdentity();
     if (m_type == kUnderRotate && m_targetBoneRef) {
         const Quaternion &rotation = m_rotation * m_targetBoneRef->rotation();
         m_worldTransform.setRotation(rotation);
@@ -311,6 +317,79 @@ void Bone::performTransform()
 
 void Bone::solveInverseKinematics()
 {
+    if (!m_constraint)
+        return;
+    const Array<Bone *> &effectors = m_constraint->effectors;
+    const int neffectors = effectors.count();
+    Bone *targetBoneRef = m_constraint->target;
+    const Quaternion originTargetRotation = targetBoneRef->rotation();
+    const Vector3 &destPosition = m_worldTransform.getOrigin();
+    const Scalar &angleLimit = m_constraint->angle;
+    Quaternion q;
+    Matrix3x3 matrix;
+    Vector3 localDestination, localTarget;
+    int niterations = m_constraint->niterations;
+    for (int i = 0; i < niterations; i++) {
+        for (int j = 0; j < neffectors; j++) {
+            Bone *effector = effectors[j];
+            const Vector3 &targetPosition = targetBoneRef->worldTransform().getOrigin();
+            const Transform &transform = effector->worldTransform().inverse();
+            localDestination = transform * destPosition;
+            localTarget = transform * targetPosition;
+            if (localDestination.distance2(localTarget) < kMinDistance) {
+                i = niterations;
+                break;
+            }
+            localDestination.safeNormalize();
+            localTarget.safeNormalize();
+            const Scalar &dot = localDestination.dot(localTarget);
+            if (dot > 1.0f)
+                continue;
+            Scalar angle = btAcos(dot);
+            if (btFabs(angle) < kMinAngle)
+                continue;
+            btClamp(angle, -angleLimit, angleLimit);
+            Vector3 axis = localTarget.cross(localDestination);
+            if (axis.length2() < kMinAxis && i > 0)
+                continue;
+            axis.normalize();
+            q.setRotation(axis, angle);
+            if (effector->isAxisXAligned()) {
+                if (i == 0) {
+                    q.setRotation(kXAlignAxis, btFabs(angle));
+                }
+                else {
+                    Scalar x, y, z, cx, cy, cz;
+                    matrix.setIdentity();
+                    matrix.setRotation(q);
+                    matrix.getEulerZYX(z, y, x);
+                    matrix.setRotation(effector->rotation());
+                    matrix.getEulerZYX(cz, cy, cx);
+                    if (x + cx > SIMD_PI)
+                        x = SIMD_PI - cx;
+                    if (kMinRotationSum > x + cx)
+                        x = kMinRotationSum - cx;
+                    btClamp(x, -angleLimit, angleLimit);
+                    if (btFabs(x) < kMinRotation)
+                        continue;
+                    q.setEulerZYX(0.0f, 0.0f, x);
+                }
+                const Quaternion &q2 = q * effector->rotation();
+                effector->setRotation(q2);
+            }
+            else {
+                const Quaternion &q2 = effector->rotation() * q;
+                effector->setRotation(q2);
+            }
+            for (int k = j; k >= 0; k--) {
+                Bone *bone = effectors[k];
+                bone->performTransform();
+            }
+            targetBoneRef->performTransform();
+        }
+    }
+    targetBoneRef->setRotation(originTargetRotation);
+    targetBoneRef->performTransform();
 }
 
 const IString *Bone::name() const
@@ -432,11 +511,14 @@ bool Bone::hasFixedAxes() const
 
 bool Bone::hasLocalAxes() const
 {
-    bool hasFinger = m_name->contains(m_encodingRef->stringConstant(IEncoding::kFinger));
-    bool hasArm = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kArm));
-    bool hasElbow = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kElbow));
-    bool hasWrist = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kWrist));
-    return hasFinger || hasArm || hasElbow || hasWrist;
+    if (m_encodingRef && m_name) {
+        bool hasFinger = m_name->contains(m_encodingRef->stringConstant(IEncoding::kFinger));
+        bool hasArm = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kArm));
+        bool hasElbow = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kElbow));
+        bool hasWrist = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kWrist));
+        return hasFinger || hasArm || hasElbow || hasWrist;
+    }
+    return false;
 }
 
 const Vector3 &Bone::fixedAxis() const
@@ -469,6 +551,16 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
 void Bone::setSimulated(bool value)
 {
     m_simulated = value;
+}
+
+bool Bone::isAxisXAligned()
+{
+    if (m_encodingRef && m_name) {
+        bool isRightKnee = m_name->equals(m_encodingRef->stringConstant(IEncoding::kRightKnee));
+        bool isLeftKnee = m_name->equals(m_encodingRef->stringConstant(IEncoding::kLeftKnee));
+        return isRightKnee || isLeftKnee;
+    }
+    return false;
 }
 
 }

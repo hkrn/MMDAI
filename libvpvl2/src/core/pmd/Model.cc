@@ -597,6 +597,7 @@ bool Model::load(const uint8_t *data, size_t size)
         parseIndices(info);
         parseMaterials(info);
         parseBones(info);
+        parseIKConstraints(info);
         parseMorphs(info);
         parseLabels(info);
         parseCustomToonTextures(info);
@@ -1002,7 +1003,7 @@ void Model::parseBones(const DataInfo &info)
     }
 }
 
-void Model::parseIKJoints(const DataInfo &info)
+void Model::parseIKConstraints(const DataInfo &info)
 {
     const int njoints = info.IKConstraintsCount;
     uint8_t *ptr = info.IKConstraintsPtr;
