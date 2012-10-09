@@ -570,7 +570,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
                 KeyFramePtr newKeyframe(m_factory->createBoneKeyframe(m_motion));
                 newKeyframe->setDefaultInterpolationParameter();
                 newKeyframe->setName(bone->name());
-                newKeyframe->setPosition(bone->position());
+                newKeyframe->setPosition(bone->localPosition());
                 newKeyframe->setRotation(bone->rotation());
                 boneKeyframes.append(KeyFramePair(frameIndex, newKeyframe));
             }
@@ -677,11 +677,11 @@ void BoneMotionModel::saveTransform()
         m_state.setModel(m_model);
         m_state.save();
         Array<IBone *> bones;
-        m_model->getBones(bones);
+        m_model->getBoneRefs(bones);
         int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
-            m_boneTransformStates.insert(bone, QPair<Vector3, Quaternion>(bone->position(), bone->rotation()));
+            m_boneTransformStates.insert(bone, QPair<Vector3, Quaternion>(bone->localPosition(), bone->rotation()));
         }
     }
 }
@@ -808,7 +808,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
             TreeItem *r = static_cast<TreeItem *>(ptr.data());
             Array<ILabel *> labels;
             Keys keys;
-            model->getLabels(labels);
+            model->getLabelRefs(labels);
             /* ボーンのカテゴリからルートの子供であるカテゴリアイテムを作成する */
             const int nlabels = labels.count();
             QScopedPointer<TreeItem> parent, child;
@@ -857,7 +857,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
         emit modelDidChange(model);
         /* ボーン選択(最初のボーンを選択状態にする) */
         Array<IBone *> bones;
-        model->getBones(bones);
+        model->getBoneRefs(bones);
         if (bones.count() > 0) {
             QList<IBone *> selectedBones;
             selectedBones.append(bones[0]);
@@ -1022,20 +1022,20 @@ void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
 void BoneMotionModel::resetBone(ResetType type)
 {
     foreach (IBone *selected, m_selectedBones) {
-        Vector3 pos = selected->position();
+        Vector3 pos = selected->localPosition();
         Quaternion rot = selected->rotation();
         switch (type) {
         case kX:
             pos.setX(0.0f);
-            selected->setPosition(pos);
+            selected->setLocalPosition(pos);
             break;
         case kY:
             pos.setY(0.0f);
-            selected->setPosition(pos);
+            selected->setLocalPosition(pos);
             break;
         case kZ:
             pos.setZ(0.0f);
-            selected->setPosition(pos);
+            selected->setLocalPosition(pos);
             break;
         case kRotation:
             rot.setValue(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1059,7 +1059,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
     if (!isBoneSelected())
         return;
     foreach (IBone *selected, m_selectedBones) {
-        const Vector3 &lastPosition = selected->position();
+        const Vector3 &lastPosition = selected->localPosition();
         Vector3 position = lastPosition;
         switch (coordinate) {
         case 'x':
@@ -1077,7 +1077,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
         default:
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
-        selected->setPosition(position);
+        selected->setLocalPosition(position);
         m_scene->updateModel(m_model);
         emit positionDidChange(selected, lastPosition);
     }
@@ -1121,7 +1121,7 @@ void BoneMotionModel::translateDelta(const Vector3 &delta, IBone *bone, int flag
             return;
     }
     /* 差分値による更新 */
-    translateInternal(bone->position(), delta, bone, flags);
+    translateInternal(bone->localPosition(), delta, bone, flags);
 }
 
 void BoneMotionModel::translateTo(const Vector3 &position, IBone *bone, int flags)
@@ -1189,13 +1189,13 @@ void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &
 {
     switch (flags & 0xff) {
     case 'V': /* ビュー変形 (カメラ視点) */
-        bone->setPosition(Transform(bone->rotation(), position) * UITranslateFromView(m_viewTransform, delta));
+        bone->setLocalPosition(Transform(bone->rotation(), position) * UITranslateFromView(m_viewTransform, delta));
         break;
     case 'L': /* ローカル変形 */
-        bone->setPosition(Transform(bone->rotation(), position) * delta);
+        bone->setLocalPosition(Transform(bone->rotation(), position) * delta);
         break;
     case 'G': /* グローバル変形 */
-        bone->setPosition(position + delta);
+        bone->setLocalPosition(position + delta);
         break;
     default:
         qFatal("Unexpected mode: %c", flags & 0xff);

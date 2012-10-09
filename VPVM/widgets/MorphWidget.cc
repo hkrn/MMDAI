@@ -145,7 +145,7 @@ void MorphWidget::setPMDModel(IModel *model)
     m_others->clear();
     if (model) {
         Array<IMorph *> morphs;
-        m_morphMotionModel->selectedModel()->getMorphs(morphs);
+        m_morphMotionModel->selectedModel()->getMorphRefs(morphs);
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];

@@ -59,7 +59,7 @@ void PMDMotionModel::State::restore() const
     foreach (const Bone &bone, m_bones) {
         IBone *b = bone.first;
         const Transform &tr = bone.second;
-        b->setPosition(tr.first);
+        b->setLocalPosition(tr.first);
         b->setRotation(tr.second);
     }
     foreach (const Morph &morph, m_morphs) {
@@ -72,16 +72,16 @@ void PMDMotionModel::State::restore() const
 void PMDMotionModel::State::save()
 {
     Array<IBone *> bones;
-    m_model->getBones(bones);
+    m_model->getBoneRefs(bones);
     m_bones.clear();
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        Transform tr(bone->position(), bone->rotation());
+        Transform tr(bone->localPosition(), bone->rotation());
         m_bones.append(Bone(bone, tr));
     }
     Array<IMorph *> morphs;
-    m_model->getMorphs(morphs);
+    m_model->getMorphRefs(morphs);
     m_morphs.clear();
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
@@ -100,7 +100,7 @@ bool PMDMotionModel::State::compact()
         const Bone &value = bones.value();
         const IBone *bone = value.first;
         const Transform &transform = value.second;
-        if (bone->position() == transform.first && bone->rotation() == transform.second)
+        if (bone->localPosition() == transform.first && bone->rotation() == transform.second)
             bones.remove();
     }
     QMutableListIterator<Morph> morphs(m_morphs);
@@ -131,11 +131,11 @@ void PMDMotionModel::State::copyFrom(const State &value)
 void PMDMotionModel::State::resetBones()
 {
     Array<IBone *> bones;
-    m_model->getBones(bones);
+    m_model->getBoneRefs(bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        bone->setPosition(kZeroV3);
+        bone->setLocalPosition(kZeroV3);
         bone->setRotation(Quaternion::getIdentity());
     }
     m_scene->updateModel(m_model);
@@ -145,7 +145,7 @@ void PMDMotionModel::State::resetMorphs()
 {
     Array<IMorph *> morphs;
     m_model->resetVertices();
-    m_model->getMorphs(morphs);
+    m_model->getMorphRefs(morphs);
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = morphs[i];

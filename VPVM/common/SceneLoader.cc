@@ -488,7 +488,7 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
         if (model->isVisible()) {
             Vector3 c;
             Scalar r;
-            model->getBoundingSphere(c, r);
+            // model->getBoundingSphere(c, r);
             radiusArray.add(r);
             centerArray.add(c);
             center += c;
@@ -902,7 +902,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
     if (model) {
         newModelMotion.reset(m_factory->createMotion(IMotion::kVMD, 0));
         Array<IBone *> bones;
-        model->getBones(bones);
+        model->getBoneRefs(bones);
         const int nbones = bones.count();
         QScopedPointer<IBoneKeyframe> boneKeyframe;
         for (int i = 0; i < nbones; i++) {
@@ -916,7 +916,7 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
         }
         newModelMotion->update(IKeyframe::kBone);
         Array<IMorph *> morphs;
-        model->getMorphs(morphs);
+        model->getMorphRefs(morphs);
         const int nmorphs = morphs.count();
         QScopedPointer<IMorphKeyframe> morphKeyframe;
         for (int i = 0; i < nmorphs; i++) {
@@ -1318,7 +1318,7 @@ void SceneLoader::startPhysicsSimulation()
             IModel *model = models[i];
             m_world->addModel(model);
         }
-        m_world->stepSimulationDefault(60.0);
+        m_world->stepSimulation(1);
     }
 }
 

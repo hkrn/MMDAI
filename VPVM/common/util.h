@@ -75,7 +75,7 @@ const static Vector3 kWorldAabbSize(10000, 10000, 10000);
 static inline void dumpBones(IModel *model)
 {
     Array<IBone *> bones;
-    model->getBones(bones);
+    model->getBoneRefs(bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];

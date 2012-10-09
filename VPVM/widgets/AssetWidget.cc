@@ -271,7 +271,7 @@ void AssetWidget::changeParentBone(int index)
 {
     if (index >= 0 && m_currentModel) {
         Array<IBone *> bones;
-        m_currentModel->getBones(bones);
+        m_currentModel->getBoneRefs(bones);
         IBone *bone = bones.at(index);
         m_currentAsset->setParentBone(bone);
     }
@@ -379,7 +379,7 @@ void AssetWidget::updateModelBoneComboBox(IModel *model)
     m_modelBonesComboBox->clear();
     if (model) {
         Array<IBone *> bones;
-        model->getBones(bones);
+        model->getBoneRefs(bones);
         const int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];

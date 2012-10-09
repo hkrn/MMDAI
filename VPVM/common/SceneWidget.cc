@@ -685,7 +685,7 @@ void SceneWidget::advanceMotion(const IKeyframe::TimeIndex &delta)
     scene->advance(delta, Scene::kUpdateAll);
     scene->update(Scene::kUpdateAll);
     if (m_loader->isPhysicsEnabled())
-        m_loader->world()->stepSimulationDelta(delta);
+        m_loader->world()->stepSimulation(delta);
     updateScene();
 }
 
@@ -1648,7 +1648,7 @@ IBone *SceneWidget::findNearestBone(const IModel *model,
 {
     static const Vector3 size(threshold, threshold, threshold);
     Array<IBone *> bones;
-    model->getBones(bones);
+    model->getBoneRefs(bones);
     const int nbones = bones.count();
     IBone *nearestBone = 0;
     Scalar hitLambda = 1.0f;

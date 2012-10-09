@@ -466,7 +466,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
             QScopedPointer<TreeItem> lip(new TreeItem(tr("Lip"), 0, false, true, rootItem));
             QScopedPointer<TreeItem> other(new TreeItem(tr("Other"), 0, false, true, rootItem));
             Array<IMorph *> morphs;
-            model->getMorphs(morphs);
+            model->getMorphRefs(morphs);
             const int nmorphs = morphs.count();
             Keys keys;
             for (int i = 0; i < nmorphs; i++) {
@@ -639,7 +639,7 @@ void MorphMotionModel::setWeight(const IMorph::WeightPrecision &value, IMorph *m
         /* 一度頂点がリセットされるので、頂点モーフのみ更新を行う */
         m_model->resetVertices();
         Array<IMorph *> morphs;
-        m_model->getMorphs(morphs);
+        m_model->getMorphRefs(morphs);
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *m = morphs[i];

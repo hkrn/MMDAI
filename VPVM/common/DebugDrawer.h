@@ -138,7 +138,7 @@ public:
         if (!model || !m_visible || !m_program.isLinked())
             return;
         Array<IBone *> bones;
-        model->getBones(bones);
+        model->getBoneRefs(bones);
         const int nbones = bones.count();
         glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
@@ -152,7 +152,7 @@ public:
                 linkedBones.clear();
                 bonesForIK.insert(bone);
                 bonesForIK.insert(bone->targetBone());
-                bone->getLinkedBones(linkedBones);
+                bone->getEffectorBones(linkedBones);
                 const int nlinks = linkedBones.count();
                 for (int j = 0; j < nlinks; j++) {
                     IBone *linkedBone = linkedBones[j];
@@ -309,7 +309,7 @@ private:
     }
     const IBone *findSpecialBone(const IModel *model) const {
         Array<ILabel *> labels;
-        model->getLabels(labels);
+        model->getLabelRefs(labels);
         const int nlabels = labels.count();
         for (int i = 0; i < nlabels; i++) {
             const ILabel *label = labels[i];
