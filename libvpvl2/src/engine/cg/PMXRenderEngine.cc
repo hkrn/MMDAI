@@ -194,7 +194,8 @@ void PMXRenderEngine::update()
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelDynamicVertexBuffer]);
     m_modelRef->performUpdate();
-    m_dynamicBuffer->update(m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
+    const ICamera *camera = m_sceneRef->camera();
+    m_dynamicBuffer->update(camera->position(), m_aabbMin, m_aabbMax);
     glBufferSubData(GL_ARRAY_BUFFER, 0, m_dynamicBuffer->size(), m_dynamicBuffer->bytes());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
@@ -305,7 +306,7 @@ void PMXRenderEngine::renderEdge()
         if (material->isEdgeDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("edge", i, nmaterials, false, false, true);
             m_currentRef->edgeColor.setGeometryColor(material->edgeColor());
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
         }
         offset += nindices * indexStride;
     }
@@ -335,7 +336,7 @@ void PMXRenderEngine::renderShadow()
         const IMaterial *material = m_materials[i];
         const int nindices = material->indices();
         CGtechnique technique = m_currentRef->findTechnique("shadow", i, nmaterials, false, false, true);
-        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
         offset += nindices * indexStride;
     }
     glCullFace(GL_BACK);
@@ -365,7 +366,7 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indices();
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmaterials, false, false, true);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(offset));
+            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
         }
         offset += nindices * indexStride;
     }

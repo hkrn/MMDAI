@@ -56,9 +56,9 @@ public:
 
     bool isAvailable() const;
     bool createKernelProgram();
-    void upload(GLuint buffer, const IModel::IIndexBuffer *indexBuffer, void *context);
-    void update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
-                const Scene *scene,
+    void upload(GLuint buffer, const IModel::IIndexBuffer *indexBufferRef, void *context);
+    void update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
+                const Scene *sceneRef,
                 Vector3 &aabbMin,
                 Vector3 &aabbMax);
 

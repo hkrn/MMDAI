@@ -97,7 +97,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         model->getVertexRefs(vertices);
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
-            IVertex *vertex = vertices[i];
+            const IVertex *vertex = vertices[i];
             units.add(Unit(vertex));
         }
     }
@@ -182,7 +182,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         model->getVertexRefs(vertices);
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
-            IVertex *vertex = vertices[i];
+            const IVertex *vertex = vertices[i];
             units.add(Unit(vertex, i));
         }
     }
@@ -249,12 +249,12 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
                     const IVertex *vertex = vertices[index];
-                    const float edgeSize = vertex->edgeSize();
-                    vertex->performSkinning(position, normal);
+                    const float edgeSize = vertex->edgeSize() * materialEdgeSize * esf;
                     Unit &v = bufferPtr[index];
+                    vertex->performSkinning(position, normal);
                     v.position = position;
                     v.normal = normal;
-                    v.edge = position + normal * edgeSize * materialEdgeSize * esf;
+                    v.edge = position + normal * edgeSize;
                     v.edge[3] = Scalar(i);
                     updateMorph(vertex, v);
                     aabbMin.setMin(position);

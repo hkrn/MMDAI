@@ -50,6 +50,7 @@ public:
     virtual ~ICamera() {}
 
     virtual const Transform &modelViewTransform() const = 0;
+    virtual const Vector3 &lookAt() const = 0;
     virtual const Vector3 &position() const = 0;
     virtual const Vector3 &angle() const = 0;
     virtual Scalar fov() const = 0;
@@ -57,7 +58,7 @@ public:
     virtual Scalar znear() const = 0;
     virtual Scalar zfar() const = 0;
     virtual IMotion *motion() const = 0;
-    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setLookAt(const Vector3 &value) = 0;
     virtual void setAngle(const Vector3 &value) = 0;
     virtual void setFov(Scalar value) = 0;
     virtual void setDistance(Scalar value) = 0;

@@ -132,15 +132,17 @@ private:
     bool m_hasFloatTexture;
     void *m_depthTexture;
 };
+
 class Camera : public ICamera {
 public:
     Camera()
         : m_motion(0),
           m_transform(Transform::getIdentity()),
+          m_lookAt(kZeroV3),
           m_position(kZeroV3),
           m_angle(kZeroV3),
+          m_distance(kZeroV3),
           m_fov(0),
-          m_distance(0),
           m_znear(0.1f),
           m_zfar(10000)
     {
@@ -151,31 +153,36 @@ public:
         delete m_motion;
         m_motion = 0;
         m_transform.setIdentity();
+        m_lookAt.setZero();
         m_position.setZero();
         m_angle.setZero();
+        m_distance.setZero();
         m_fov = 0;
-        m_distance = 0;
         m_znear = 0;
         m_zfar = 0;
     }
 
     const Transform &modelViewTransform() const { return m_transform; }
+    const Vector3 &lookAt() const { return m_lookAt; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &angle() const { return m_angle; }
     Scalar fov() const { return m_fov; }
-    Scalar distance() const { return m_distance; }
+    Scalar distance() const { return m_distance.z(); }
     Scalar znear() const { return m_znear; }
     Scalar zfar() const { return m_zfar; }
     IMotion *motion() const { return m_motion; }
-    void setPosition(const Vector3 &value) { m_position = value; }
+    void setLookAt(const Vector3 &value) { m_lookAt = value; }
     void setAngle(const Vector3 &value) { m_angle = value; }
     void setFov(Scalar value) { m_fov = value; }
-    void setDistance(Scalar value) { m_distance = value; }
     void setZNear(Scalar value) { m_znear = value; }
     void setZFar(Scalar value) { m_zfar = value; }
     void setMotion(IMotion *value) { m_motion = value; }
+    void setDistance(Scalar value) {
+        m_distance.setZ(value);
+        m_position = m_lookAt + m_distance;
+    }
     void copyFrom(ICamera *value) {
-        setPosition(value->position());
+        setLookAt(value->lookAt());
         setAngle(value->angle());
         setFov(value->fov());
         setDistance(value->distance());
@@ -183,7 +190,7 @@ public:
         setZFar(value->zfar());
     }
     void resetDefault() {
-        setPosition(Vector3(0, 10, 0));
+        setLookAt(Vector3(0, 10, 0));
         setFov(30);
         setDistance(50);
         updateTransform();
@@ -196,17 +203,18 @@ public:
                 rotationZ(kUnitZ, vpvl2::radian(m_angle.z()));
         m_transform.setIdentity();
         m_transform.setRotation(rotationZ * rotationX * rotationY);
-        m_transform.setOrigin(m_transform * -m_position - Vector3(0, 0, m_distance));
+        m_transform.setOrigin((m_transform * -m_lookAt) - m_distance);
     }
 
 private:
     IMotion *m_motion;
     Transform m_transform;
     Quaternion m_rotation;
+    Vector3 m_lookAt;
     Vector3 m_position;
     Vector3 m_angle;
+    Vector3 m_distance;
     Scalar m_fov;
-    Scalar m_distance;
     Scalar m_znear;
     Scalar m_zfar;
 };

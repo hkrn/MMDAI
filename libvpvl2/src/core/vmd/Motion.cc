@@ -251,7 +251,7 @@ void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
     if (m_cameraMotion.countKeyframes() > 0) {
         m_cameraMotion.seek(timeIndex);
         ICamera *camera = scene->camera();
-        camera->setPosition(m_cameraMotion.position());
+        camera->setLookAt(m_cameraMotion.position());
         camera->setAngle(m_cameraMotion.angle());
         camera->setFov(m_cameraMotion.fovy());
         camera->setDistance(m_cameraMotion.distance());
@@ -286,7 +286,7 @@ void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *sce
     if (m_cameraMotion.countKeyframes() > 0) {
         m_cameraMotion.advance(deltaTimeIndex);
         ICamera *camera = scene->camera();
-        camera->setPosition(m_cameraMotion.position());
+        camera->setLookAt(m_cameraMotion.position());
         camera->setAngle(m_cameraMotion.angle());
         camera->setFov(m_cameraMotion.fovy());
         camera->setDistance(m_cameraMotion.distance());

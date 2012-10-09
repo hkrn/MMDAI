@@ -847,7 +847,7 @@ void SceneWidget::rotateModel(IModel *model, const Quaternion &delta)
 void SceneWidget::translateScene(const Vector3 &delta)
 {
     ICamera *camera = m_loader->scene()->camera();
-    camera->setPosition(camera->position() + camera->modelViewTransform().getBasis().inverse() * delta);
+    camera->setLookAt(camera->lookAt() + camera->modelViewTransform().getBasis().inverse() * delta);
     emit cameraPerspectiveDidSet(camera);
 }
 

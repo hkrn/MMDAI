@@ -465,8 +465,8 @@ void UI::translate(float x, float y)
 {
     ICamera *camera = m_scene->camera();
     const Vector3 &diff = camera->modelViewTransform() * Vector3(x, y, 0);
-    Vector3 position = camera->position() + diff;
-    camera->setPosition(position + diff);
+    Vector3 position = camera->lookAt() + diff;
+    camera->setLookAt(position + diff);
 }
 
 void UI::closeEvent(QCloseEvent *event)

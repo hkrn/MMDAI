@@ -645,7 +645,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     program->setLightColor(light->color());
     program->setLightDirection(light->direction());
     program->setOpacity(m_modelRef->opacity());
-    program->setCameraPosition(m_sceneRef->camera()->position());
+    program->setCameraPosition(m_sceneRef->camera()->lookAt());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const AssetVBO &vbo = m_context->vbo[mesh];

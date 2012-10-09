@@ -1433,7 +1433,7 @@ void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IMode
     const ICamera *camera = scene->camera();
     const Vector3 &cameraPosition = camera->modelViewTransform().getOrigin();
     position.setCameraValue(cameraPosition);
-    direction.setCameraValue((cameraPosition - camera->position()).normalized());
+    direction.setCameraValue((cameraPosition - camera->lookAt()).normalized());
     controlObject.update(model);
 }
 

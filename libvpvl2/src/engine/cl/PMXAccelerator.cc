@@ -130,7 +130,7 @@ bool PMXAccelerator::createKernelProgram()
     return true;
 }
 
-void PMXAccelerator::upload(GLuint buffer, const IModel::IIndexBuffer *indexBuffer, void *context)
+void PMXAccelerator::upload(GLuint buffer, const IModel::IIndexBuffer *indexBufferRef, void *context)
 {
     cl_int err;
     cl_context computeContext = m_contextRef->computeContext();
@@ -168,7 +168,7 @@ void PMXAccelerator::upload(GLuint buffer, const IModel::IIndexBuffer *indexBuff
         const int nindices = material->indices(), offsetTo = offset + nindices;
         const float edgeSize = material->edgeSize();
         for (int j = offset; j < offsetTo; j++) {
-            const int index = indexBuffer->indexAt(j);
+            const int index = indexBufferRef->indexAt(j);
             materialEdgeSize[index] = edgeSize;
         }
         offset += nindices;
@@ -235,8 +235,8 @@ void PMXAccelerator::upload(GLuint buffer, const IModel::IIndexBuffer *indexBuff
     m_isBufferAllocated = true;
 }
 
-void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
-                            const Scene *scene,
+void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
+                            const Scene *sceneRef,
                             Vector3 &aabbMin,
                             Vector3 &aabbMax)
 {
@@ -282,15 +282,14 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (materialEdgeSize): %d", argumentIndex, err);
         return;
     }
-    const Vector3 &lightDirection = scene->light()->direction();
+    const Vector3 &lightDirection = sceneRef->light()->direction();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(lightDirection), &lightDirection);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (lightDirection): %d", argumentIndex, err);
         return;
     }
-    const ICamera *camera = scene->camera();
-    const Vector3 &cameraPosition = camera->position() + Vector3(0, 0, camera->distance());
-    const Scalar &edgeScaleFactor = m_modelRef->edgeScaleFactor(cameraPosition) * m_modelRef->edgeWidth();
+    const ICamera *camera = sceneRef->camera();
+    const Scalar &edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position()) * m_modelRef->edgeWidth();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(edgeScaleFactor), &edgeScaleFactor);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (edgeScaleFactor): %d", argumentIndex, err);
@@ -301,31 +300,31 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (nvertices): %d", argumentIndex, err);
         return;
     }
-    size_t strideSize = dynamicBuffer->strideSize() >> 4;
+    size_t strideSize = dynamicBufferRef->strideSize() >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(strideSize), &strideSize);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %th argument of kernel (strideSize): %d", argumentIndex, err);
         return;
     }
-    size_t offsetPosition = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride) >> 4;
+    size_t offsetPosition = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetPosition), &offsetPosition);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %th argument of kernel (offsetPosition): %d", argumentIndex, err);
         return;
     }
-    size_t offsetNormal = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride) >> 4;
+    size_t offsetNormal = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetNormal), &offsetNormal);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %th argument of kernel (offsetNormal): %d", argumentIndex, err);
         return;
     }
-    size_t offsetMorphDelta = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kMorphDeltaStride) >> 4;
+    size_t offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kMorphDeltaStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetMorphDelta), &offsetMorphDelta);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetMorphDelta): %d", argumentIndex, err);
         return;
     }
-    size_t offsetEdgeVertex = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride) >> 4;
+    size_t offsetEdgeVertex = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeVertex), &offsetEdgeVertex);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
@@ -346,10 +345,10 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBuffer,
     clEnqueueReleaseGLObjects(queue, 1, &m_verticesBuffer, 0, 0, 0);
     clFinish(queue);
     /* hack */
-    size_t offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
-    size_t size = dynamicBuffer->strideSize();
+    size_t offset = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
+    size_t size = dynamicBufferRef->strideSize();
     for (int i = 0; i < nvertices; i++) {
-        const uint8_t *ptr = static_cast<const uint8_t *>(dynamicBuffer->bytes()) + offset + size * i;
+        const uint8_t *ptr = static_cast<const uint8_t *>(dynamicBufferRef->bytes()) + offset + size * i;
         const Vector3 &v = *reinterpret_cast<const Vector3 *>(ptr);
         aabbMin.setMin(v);
         aabbMax.setMax(v);

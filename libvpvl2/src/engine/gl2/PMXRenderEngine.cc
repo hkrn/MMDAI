@@ -723,7 +723,7 @@ void PMXRenderEngine::update()
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_modelRef->performUpdate();
-    dynamicBuffer->update(m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
+    dynamicBuffer->update(m_sceneRef->camera()->lookAt(), m_aabbMin, m_aabbMax);
     glBufferSubData(GL_ARRAY_BUFFER, 0, dynamicBuffer->size(), dynamicBuffer->bytes());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
@@ -780,7 +780,7 @@ void PMXRenderEngine::renderModel()
     modelProgram->setToonEnable(light->isToonEnabled());
     modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
     modelProgram->setDepthTextureSize(light->depthTextureSize());
-    modelProgram->setCameraPosition(m_sceneRef->camera()->position());
+    modelProgram->setCameraPosition(m_sceneRef->camera()->lookAt());
     const Scalar &opacity = m_modelRef->opacity();
     modelProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
@@ -920,7 +920,7 @@ void PMXRenderEngine::renderEdge()
         const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
                 boneWeightOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride),
                 boneStride = staticBuffer->strideSize();
-        edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position() + Vector3(0, 0, camera->distance()));
+        edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position());
         offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeSizeStride);
         edgeProgram->setVertexEdgeSize(reinterpret_cast<const GLvoid *>(offset), size);
         offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);

@@ -74,10 +74,12 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         Unit(const IVertex *vertex) {
             IBone *bone1 = vertex->bone(0), *bone2 = vertex->bone(1);
             texcoord = vertex->textureCoord();
-            boneIndicesAndWeight.setValue(bone1->index(), bone2->index(), vertex->weight(0));
+            boneIndices.setValue(bone1->index(), bone2->index(), 0, 0);
+            boneWeights.setValue(vertex->weight(0), 0, 0, 0);
         }
         Vector3 texcoord;
-        Vector3 boneIndicesAndWeight;
+        Vector4 boneIndices;
+        Vector4 boneWeights;
     };
     static const Unit kIdent;
 
@@ -88,7 +90,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         model->getVertexRefs(vertices);
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
-            IVertex *vertex = vertices[i];
+            const IVertex *vertex = vertices[i];
             units.add(Unit(vertex));
         }
     }
@@ -103,9 +105,9 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.texcoord);
         switch (type) {
         case kBoneIndexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.boneIndicesAndWeight[0]) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.boneIndices) - base;
         case kBoneWeightStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.boneIndicesAndWeight[2]) - base;
+            return reinterpret_cast<const uint8_t *>(&kIdent.boneWeights) - base;
         case kTextureCoordStride:
             return reinterpret_cast<const uint8_t *>(&kIdent.texcoord) - base;
         case kVertexStride:
@@ -165,7 +167,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         model->getVertexRefs(vertices);
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
-            IVertex *vertex = vertices[i];
+            const IVertex *vertex = vertices[i];
             units.add(Unit(vertex, i));
         }
     }
@@ -221,17 +223,16 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             for (int i = 0; i < nmaterials; i++) {
                 const IMaterial *material = materials[i];
                 const int nindices = material->indices(), offsetTo = offset + nindices;
-                const float materialEdgeSize = material->edgeSize();
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
-                    IVertex *vertex = vertices[index];
+                    const IVertex *vertex = vertices[index];
+                    const float edgeSize = vertex->edgeSize() * esf;
                     Unit &v = bufferPtr[index];
-                    const float edgeSize = vertex->edgeSize();
                     vertex->performSkinning(position, normal);
                     v.position = position;
                     v.normal = normal;
                     v.delta = vertex->delta();
-                    v.edge = position + normal * edgeSize * materialEdgeSize * esf;
+                    v.edge = position + normal * edgeSize;
                     v.edge[3] = Scalar(i);
                     aabbMin.setMin(position);
                     aabbMax.setMax(position);
@@ -242,7 +243,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         else {
             const int nvertices = vertices.count();
             for (int i = 0; i < nvertices; i++) {
-                IVertex *vertex = vertices[i];
+                const IVertex *vertex = vertices[i];
                 Unit &v = bufferPtr[i];
                 v.delta = vertex->delta();
             }
