@@ -40,6 +40,9 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 PMDMotionModel::State::State(const Scene *scene, IModel *model)
@@ -320,3 +323,5 @@ void PMDMotionModel::removePMDMotion(IModel *model)
     if (stack)
         stack->clear();
 }
+
+} /* namespace vpvm */

@@ -34,18 +34,22 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef PLAYSETTINGDIALOG_H
-#define PLAYSETTINGDIALOG_H
+#ifndef VPVM_PLAYSETTINGDIALOG_H
+#define VPVM_PLAYSETTINGDIALOG_H
 
 #include <QtGui/QDialog>
 
-class MainWindow;
 class QCheckBox;
 class QComboBox;
 class QLabel;
 class QLineEdit;
 class QSettings;
 class QSpinBox;
+
+namespace vpvm
+{
+
+class MainWindow;
 class SceneLoader;
 class SceneWidget;
 
@@ -95,5 +99,7 @@ private:
 
     Q_DISABLE_COPY(PlaySettingDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // PLAYSETTINGDIALOG_H

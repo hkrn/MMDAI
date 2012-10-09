@@ -34,13 +34,16 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef LICENSEWIDGET_H
-#define LICENSEWIDGET_H
+#ifndef VPVM_LICENSEWIDGET_H
+#define VPVM_LICENSEWIDGET_H
 
 #include <QtGui/QAbstractItemView>
 #include <QtGui/QWidget>
 
 class QTextEdit;
+
+namespace vpvm
+{
 
 class LicenseWidget : public QWidget
 {
@@ -65,6 +68,8 @@ private:
 
     Q_DISABLE_COPY(LicenseWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // QMALICENSEWIDGET_H
 

@@ -34,19 +34,23 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELTABWIDGET_H
-#define MODELTABWIDGET_H
+#ifndef VPVM_MODELTABWIDGET_H
+#define VPVM_MODELTABWIDGET_H
 
 #include <QtGui/QWidget>
+
+class QCloseEvent;
+class QTabWidget;
+class QSettings;
+
+namespace vpvm
+{
 
 class BoneMotionModel;
 class MorphMotionModel;
 class MorphWidget;
 class ModelInfoWidget;
 class ModelSettingWidget;
-class QCloseEvent;
-class QTabWidget;
-class QSettings;
 class SceneMotionModel;
 
 class ModelTabWidget : public QWidget
@@ -78,5 +82,7 @@ private:
 
     Q_DISABLE_COPY(ModelTabWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // MODELWIDGET_H

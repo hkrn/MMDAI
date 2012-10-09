@@ -42,6 +42,9 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/Project.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
@@ -143,7 +146,7 @@ void RenderOrderDialog::buildOriginFromRenderOrder(const SceneLoader *loader)
     const QList<QUuid> &list = loader->renderOrderList();
     foreach (const QUuid &uuid, list) {
         if (IModel *model = loader->findModel(uuid))
-            m_origin.append(NameUUID(internal::toQStringFromModel(model), uuid));
+            m_origin.append(NameUUID(toQStringFromModel(model), uuid));
     }
 }
 
@@ -156,3 +159,5 @@ void RenderOrderDialog::setRenderOrder(const QList<NameUUID> &pairs)
         item->setData(QListWidgetItem::UserType, QVariant(pair.second));
     }
 }
+
+} /* namespace vpvm */

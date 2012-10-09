@@ -42,6 +42,11 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CString.h>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace vpvm
+{
+
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
@@ -52,54 +57,54 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
 {
     /* 目(左上) */
     QVBoxLayout *eyeVBoxLayout = new QVBoxLayout();
-    m_eyeRegistButton = new QPushButton();
+    m_eyeRegisterButton = new QPushButton();
     m_eyes = new QComboBox();
     m_eyeSlider = createSlider();
     connect(m_eyes, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_eyeRegistButton, SIGNAL(clicked()), SLOT(registerEye()));
+    connect(m_eyeRegisterButton, SIGNAL(clicked()), SLOT(registerEye()));
     connect(m_eyeSlider, SIGNAL(valueChanged(int)), SLOT(setEyeWeight(int)));
     eyeVBoxLayout->addWidget(m_eyes);
     eyeVBoxLayout->addWidget(m_eyeSlider);
-    eyeVBoxLayout->addWidget(m_eyeRegistButton);
+    eyeVBoxLayout->addWidget(m_eyeRegisterButton);
     m_eyeGroup = new QGroupBox();
     m_eyeGroup->setLayout(eyeVBoxLayout);
     /* 口唇(右上) */
     QVBoxLayout *lipVBoxLayout = new QVBoxLayout();
-    m_lipRegistButton = new QPushButton();
+    m_lipRegisterButton = new QPushButton();
     m_lips = new QComboBox();
     m_lipSlider = createSlider();
     connect(m_lips, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_lipRegistButton, SIGNAL(clicked()), SLOT(registerLip()));
+    connect(m_lipRegisterButton, SIGNAL(clicked()), SLOT(registerLip()));
     connect(m_lipSlider, SIGNAL(valueChanged(int)), SLOT(setLipWeight(int)));
     lipVBoxLayout->addWidget(m_lips);
     lipVBoxLayout->addWidget(m_lipSlider);
-    lipVBoxLayout->addWidget(m_lipRegistButton);
+    lipVBoxLayout->addWidget(m_lipRegisterButton);
     m_lipGroup = new QGroupBox();
     m_lipGroup->setLayout(lipVBoxLayout);
     /* まゆ(左下) */
     QVBoxLayout *eyeblowVBoxLayout = new QVBoxLayout();
-    m_eyeblowRegistButton = new QPushButton();
+    m_eyeblowRegisterButton = new QPushButton();
     m_eyeblows = new QComboBox();
     m_eyeblowSlider = createSlider();
     connect(m_eyeblows, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_eyeblowRegistButton, SIGNAL(clicked()), SLOT(registerEyeblow()));
+    connect(m_eyeblowRegisterButton, SIGNAL(clicked()), SLOT(registerEyeblow()));
     connect(m_eyeblowSlider, SIGNAL(valueChanged(int)), SLOT(setEyeblowWeight(int)));
     eyeblowVBoxLayout->addWidget(m_eyeblows);
     eyeblowVBoxLayout->addWidget(m_eyeblowSlider);
-    eyeblowVBoxLayout->addWidget(m_eyeblowRegistButton);
+    eyeblowVBoxLayout->addWidget(m_eyeblowRegisterButton);
     m_eyeblowGroup = new QGroupBox();
     m_eyeblowGroup->setLayout(eyeblowVBoxLayout);
     /* その他(右下) */
     QVBoxLayout *otherVBoxLayout = new QVBoxLayout();
-    m_otherRegistButton = new QPushButton();
+    m_otherRegisterButton = new QPushButton();
     m_others = new QComboBox();
     m_otherSlider = createSlider();
     connect(m_others, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_otherRegistButton, SIGNAL(clicked()), SLOT(registerOther()));
+    connect(m_otherRegisterButton, SIGNAL(clicked()), SLOT(registerOther()));
     connect(m_otherSlider, SIGNAL(valueChanged(int)), SLOT(setOtherWeight(int)));
     otherVBoxLayout->addWidget(m_others);
     otherVBoxLayout->addWidget(m_otherSlider);
-    otherVBoxLayout->addWidget(m_otherRegistButton);
+    otherVBoxLayout->addWidget(m_otherRegisterButton);
     m_otherGroup = new QGroupBox();
     m_otherGroup->setLayout(otherVBoxLayout);
     /* 「全てのモーフをリセット」ボタン */
@@ -120,21 +125,21 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     retranslate();
     setLayout(mainLayout);
     setEnabled(false);
-    connect(m_morphMotionModel, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(setPMDModel(vpvl2::IModel*)));
+    connect(m_morphMotionModel, SIGNAL(modelDidChange(IModel*)), SLOT(setPMDModel(IModel*)));
 }
 
 void MorphWidget::retranslate()
 {
-    const QString &buttonText = tr("Regist");
-    m_eyeRegistButton->setText(buttonText);
-    m_lipRegistButton->setText(buttonText);
-    m_eyeblowRegistButton->setText(buttonText);
-    m_otherRegistButton->setText(buttonText);
-    m_eyeGroup->setTitle(tr("Eye"));
-    m_lipGroup->setTitle(tr("Lip"));
-    m_eyeblowGroup->setTitle(tr("Eyeblow"));
-    m_otherGroup->setTitle(tr("Other"));
-    m_resetAllButton->setText(tr("Reset all morphs"));
+    const QString &buttonText = vpvm::MorphWidget::tr("Register");
+    m_eyeRegisterButton->setText(buttonText);
+    m_lipRegisterButton->setText(buttonText);
+    m_eyeblowRegisterButton->setText(buttonText);
+    m_otherRegisterButton->setText(buttonText);
+    m_eyeGroup->setTitle(vpvm::MorphWidget::tr("Eye"));
+    m_lipGroup->setTitle(vpvm::MorphWidget::tr("Lip"));
+    m_eyeblowGroup->setTitle(vpvm::MorphWidget::tr("Eyeblow"));
+    m_otherGroup->setTitle(vpvm::MorphWidget::tr("Other"));
+    m_resetAllButton->setText(vpvm::MorphWidget::tr("Reset all morphs"));
 }
 
 void MorphWidget::setPMDModel(IModel *model)
@@ -149,7 +154,7 @@ void MorphWidget::setPMDModel(IModel *model)
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
-            const QString &name = internal::toQStringFromMorph(morph);
+            const QString &name = toQStringFromMorph(morph);
             switch (morph->category()) {
             case IMorph::kEye:
                 m_eyes->addItem(name, name);
@@ -279,3 +284,5 @@ QSlider *MorphWidget::createSlider() const
     slider->setMaximum(kSliderMaximumValue);
     return slider;
 }
+
+} /* namespace vpvm */

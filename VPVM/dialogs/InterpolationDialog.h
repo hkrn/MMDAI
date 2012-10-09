@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef INTERPOLATIONDIALOG_H
-#define INTERPOLATIONDIALOG_H
+#ifndef VPVM_INTERPOLATIONDIALOG_H
+#define VPVM_INTERPOLATIONDIALOG_H
 
 #include <QtGui/QWidget>
 #include <QtGui/QAbstractItemView>
@@ -49,6 +49,10 @@ class QSpinBox;
 class QLabel;
 class QPushButton;
 class QDialogButtonBox;
+
+namespace vpvm
+{
+
 class BoneMotionModel;
 class InterpolationGraphWidget;
 class SceneMotionModel;
@@ -87,5 +91,7 @@ private:
 
     Q_DISABLE_COPY(InterpolationDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // INTERPOLATIONWIDGET_H

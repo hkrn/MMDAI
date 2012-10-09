@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELSETTINGWIDGET_H
-#define MODELSETTINGWIDGET_H
+#ifndef VPVM_MODELSETTINGWIDGET_H
+#define VPVM_MODELSETTINGWIDGET_H
 
 #include <QtGui/QWidget>
 #include <vpvl2/Common.h>
@@ -53,6 +53,11 @@ class QPushButton;
 class QRadioButton;
 class QSlider;
 class QSpinBox;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class ModelSettingWidget : public QWidget
@@ -66,17 +71,17 @@ public:
 signals:
     void edgeOffsetDidChange(double value);
     void edgeColorDidChange(const QColor &color);
-    void opacityDidChange(const vpvl2::Scalar &value);
-    void positionOffsetDidChange(const vpvl2::Vector3 &value);
-    void rotationOffsetDidChange(const vpvl2::Vector3 &value);
+    void opacityDidChange(const Scalar &value);
+    void positionOffsetDidChange(const Vector3 &value);
+    void rotationOffsetDidChange(const Vector3 &value);
     void projectiveShadowDidEnable(bool value);
     void selfShadowDidEnable(bool value);
 
 private slots:
     void retranslate();
     void openEdgeColorDialog();
-    void setModel(vpvl2::IModel *model, SceneLoader *loader);
-    void setPositionOffset(const vpvl2::Vector3 &position);
+    void setModel(IModel *model, SceneLoader *loader);
+    void setPositionOffset(const Vector3 &position);
     void updatePosition();
     void updateRotation();
     void emitOpacitySignal(int value);
@@ -108,5 +113,7 @@ private:
     QDoubleSpinBox *m_rz;
     QGroupBox *m_rotationGroup;
 };
+
+} /* namespace vpvm */
 
 #endif // MODELSETTINGWIDGET_H

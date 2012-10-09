@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPDFILE_H
-#define VPDFILE_H
+#ifndef VPVM_VPDFILE_H
+#define VPVM_VPDFILE_H
 
 #include <QtCore/QList>
 #include <QtCore/QSharedPointer>
@@ -49,14 +49,19 @@ class IEncoding;
 class IModel;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
+
 class VPDFile
 {
 public:
     struct Bone
     {
         QString name;
-        vpvl2::Vector3 position;
-        vpvl2::Vector4 rotation;
+        Vector3 position;
+        Vector4 rotation;
     };
     typedef QList<Bone *> BoneList;
 
@@ -80,7 +85,7 @@ public:
 
     bool load(QTextStream &stream);
     void save(QTextStream &stream);
-    void makePose(vpvl2::IModel *model);
+    void makePose(IModel *model);
     VPDFile *clone();
 
     const BoneList &bones() const { return m_bones; }
@@ -94,5 +99,7 @@ private:
 };
 
 typedef QSharedPointer<VPDFile> VPDFilePtr;
+
+} /* namespace vpvm */
 
 #endif // VPDFILE_H

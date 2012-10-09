@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SHADOWMAPSETTINGDIALOG_H
-#define SHADOWMAPSETTINGDIALOG_H
+#ifndef VPVM_SHADOWMAPSETTINGDIALOG_H
+#define VPVM_SHADOWMAPSETTINGDIALOG_H
 
 #include <QtGui/QDialog>
 #include <vpvl2/Common.h>
@@ -45,6 +45,10 @@ class QDoubleSpinBox;
 class QLabel;
 class QComboBox;
 
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class ShadowMapSettingDialog : public QDialog
@@ -57,7 +61,7 @@ public:
 signals:
     void sizeDidChange(const QSize &value);
     void softShadowDidEnable(bool value);
-    void boundingSphereDidChange(const vpvl2::Vector4 &value);
+    void boundingSphereDidChange(const Vector4 &value);
 
 private slots:
     void retranslate();
@@ -77,7 +81,9 @@ private:
     QDoubleSpinBox *m_z;
     QLabel *m_radiusLabel;
     QDoubleSpinBox *m_radius;
-    vpvl2::Vector4 m_boundingSphere;
+    Vector4 m_boundingSphere;
 };
+
+} /* namespace vpvm */
 
 #endif // SHADOWMAPSETTINGDIALOG_H

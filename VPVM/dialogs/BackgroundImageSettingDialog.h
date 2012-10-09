@@ -34,14 +34,18 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef BACKGROUNDIMAGESETTINGDIALOG_H
-#define BACKGROUNDIMAGESETTINGDIALOG_H
+#ifndef VPVM_BACKGROUNDIMAGESETTINGDIALOG_H
+#define VPVM_BACKGROUNDIMAGESETTINGDIALOG_H
 
 #include <QtCore/QPoint>
 #include <QtGui/QDialog>
 
 class QCheckBox;
 class QSpinBox;
+
+namespace vpvm
+{
+
 class SceneLoader;
 
 class BackgroundImageSettingDialog : public QDialog
@@ -68,5 +72,7 @@ private:
     QPoint m_position;
     bool m_scaled;
 };
+
+} /* namespace vpvm */
 
 #endif // BACKGROUNDIMAGESETTINGDIALOG_H

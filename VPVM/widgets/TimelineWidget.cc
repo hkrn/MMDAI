@@ -41,7 +41,11 @@
 
 #include <QtGui/QtGui>
 
+/* lupdate cannot parse tr() syntax correctly */
+
 namespace {
+
+using namespace vpvm;
 
 class TimelineItemDelegate : public QItemDelegate
 {
@@ -128,6 +132,9 @@ private:
 
 }
 
+namespace vpvm
+{
+
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
                                bool stretchLastSection,
                                QWidget *parent)
@@ -165,8 +172,8 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QItemSelectionModel *sm = m_treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentTimeIndex(QModelIndex)));
     /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
-    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_treeView, SLOT(restoreExpandState()));
-    connect(base, SIGNAL(motionDidUpdate(vpvl2::IModel*)), SLOT(setCurrentTimeIndexBySpinBox()));
+    connect(base, SIGNAL(motionDidUpdate(IModel*)), m_treeView, SLOT(restoreExpandState()));
+    connect(base, SIGNAL(motionDidUpdate(IModel*)), SLOT(setCurrentTimeIndexBySpinBox()));
     retranslate();
     setLayout(mainLayout);
 }
@@ -177,8 +184,8 @@ TimelineWidget::~TimelineWidget()
 
 void TimelineWidget::retranslate()
 {
-    m_label->setText(tr("Frame Index"));
-    m_button->setText(tr("Register"));
+    m_label->setText(vpvm::TimelineWidget::tr("Frame Index"));
+    m_button->setText(vpvm::TimelineWidget::tr("Register"));
 }
 
 int TimelineWidget::currentFrameIndex() const
@@ -205,7 +212,7 @@ void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
     m_button->setEnabled(value);
 }
 
-void TimelineWidget::setCurrentTimeIndex(const vpvl2::IKeyframe::TimeIndex &timeIndex)
+void TimelineWidget::setCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex)
 {
     setCurrentTimeIndex(int(timeIndex));
 }
@@ -292,3 +299,5 @@ void TimelineWidget::adjustFrameColumnSize(int value)
         break;
     }
 }
+
+} /* namespace vpvm */

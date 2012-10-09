@@ -41,6 +41,9 @@
 #include <QtOpenGL/QtOpenGL>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *parent)
@@ -162,3 +165,5 @@ QDoubleSpinBox *ShadowMapSettingDialog::createSpinBox(double min, double max)
     spinBox->setAlignment(Qt::AlignLeft);
     return spinBox;
 }
+
+} /* namespace vpvm */

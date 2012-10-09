@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MOTIONBASEMODEL_H
-#define MOTIONBASEMODEL_H
+#ifndef VPVM_MOTIONBASEMODEL_H
+#define VPVM_MOTIONBASEMODEL_H
 
 #include <QtCore/QString>
 #include <QtCore/QVariant>
@@ -47,6 +47,11 @@
 namespace vpvl2 {
 class IMotion;
 }
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 
 class MotionBaseModel : public QAbstractTableModel
 {
@@ -97,23 +102,23 @@ public:
 
     virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const = 0;
     virtual const QString nameFromModelIndex(const QModelIndex &index) const = 0;
-    virtual void saveMotion(vpvl2::IMotion *motion) = 0;
+    virtual void saveMotion(IMotion *motion) = 0;
     virtual void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex) = 0;
     virtual void pasteKeyframesByTimeIndex(int timeIndex) = 0;
     virtual int maxFrameIndex() const = 0;
     virtual bool forceCameraUpdate() const = 0;
 
-    vpvl2::IMotion *currentMotion() const { return m_motion; }
-    void setTimeIndex(const vpvl2::IKeyframe::TimeIndex &newIndex);
+    IMotion *currentMotion() const { return m_motion; }
+    void setTimeIndex(const IKeyframe::TimeIndex &newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }
     int maxFrameCount() const { return m_frameIndexColumnOffset; }
-    const vpvl2::IKeyframe::TimeIndex &timeIndex() const { return m_timeIndex; }
+    const IKeyframe::TimeIndex &timeIndex() const { return m_timeIndex; }
     bool canFetchMore(const QModelIndex & /* parent */) const;
     void fetchMore(const QModelIndex &parent);
     int frameIndexColumnMax() const;
     void setFrameIndexColumnMax(int newValue);
-    void setFrameIndexColumnMax(const vpvl2::IMotion *motion);
+    void setFrameIndexColumnMax(const IMotion *motion);
     void updateFrameIndexColumnMax();
 
 public slots:
@@ -123,16 +128,16 @@ public slots:
 
 signals:
     void motionDidModify(bool value);
-    void timeIndexDidChange(const vpvl2::IKeyframe::TimeIndex &newFrameIndex, const vpvl2::IKeyframe::TimeIndex &oldFrameIndex);
+    void timeIndexDidChange(const IKeyframe::TimeIndex &newFrameIndex, const IKeyframe::TimeIndex &oldFrameIndex);
     void frameIndexColumnMaxDidChange(int newValue, int oldValue);
 
 protected:
     virtual ITreeItem *root() const = 0;
     void addUndoCommand(QUndoCommand *command);
 
-    vpvl2::IMotion *m_motion;
+    IMotion *m_motion;
     QUndoGroup *m_undo;
-    vpvl2::IKeyframe::TimeIndex m_timeIndex;
+    IKeyframe::TimeIndex m_timeIndex;
     int m_frameIndexColumnMax;
     int m_frameIndexColumnOffset;
     bool m_modified;
@@ -142,5 +147,7 @@ private:
 
     Q_DISABLE_COPY(MotionBaseModel)
 };
+
+} /* namespace vpvl2 */
 
 #endif // MOTIONBASEMODEL_H

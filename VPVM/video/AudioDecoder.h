@@ -39,6 +39,9 @@
 
 #include <QtCore/QtCore>
 
+namespace vpvm
+{
+
 class AudioDecoder : public QThread
 {
     Q_OBJECT
@@ -66,5 +69,7 @@ private:
 
     Q_DISABLE_COPY(AudioDecoder)
 };
+
+}
 
 #endif // AUDIODECODER_H

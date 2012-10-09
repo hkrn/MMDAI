@@ -50,6 +50,11 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CString.h>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace vpvm
+{
+
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
@@ -102,25 +107,25 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settings,
             SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             SLOT(selectBonesByItemSelection(QItemSelection)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
-    connect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
-    connect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
-    connect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    connect(m_boneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_morphTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_sceneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     connect(m_boneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(m_sceneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
-    connect(bmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleBoneEnable(vpvl2::IModel*)));
-    connect(mmm, SIGNAL(modelDidChange(vpvl2::IModel*)), SLOT(toggleMorphEnable(vpvl2::IModel*)));
-    connect(bmm, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), SLOT(toggleBoneButtonsByBone(QList<vpvl2::IBone*>)));
+    connect(bmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleBoneEnable(IModel*)));
+    connect(mmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleMorphEnable(IModel*)));
+    connect(bmm, SIGNAL(bonesDidSelect(QList<IBone*>)), SLOT(toggleBoneButtonsByBone(QList<IBone*>)));
     /* モーションを読み込んだらフローズンビューを忘れずに更新しておく(フローズンビューが勢い良くスクロール出来てしまうことを防ぐ) */
-    connect(bmm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_boneTimeline->treeView(), SLOT(updateFrozenTreeView()));
-    connect(mmm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_morphTimeline->treeView(), SLOT(updateFrozenTreeView()));
-    connect(smm, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneTimeline->treeView(), SLOT(updateFrozenTreeView()));
+    connect(bmm, SIGNAL(motionDidUpdate(IModel*)), m_boneTimeline->treeView(), SLOT(updateFrozenTreeView()));
+    connect(mmm, SIGNAL(motionDidUpdate(IModel*)), m_morphTimeline->treeView(), SLOT(updateFrozenTreeView()));
+    connect(smm, SIGNAL(motionDidUpdate(IModel*)), m_sceneTimeline->treeView(), SLOT(updateFrozenTreeView()));
     /* フレームが切り替わったら現在のフレーム位置を設定し直す */
-    connect(bmm, SIGNAL(timeIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
-            m_boneTimeline, SLOT(setCurrentTimeIndex(vpvl2::IKeyframe::TimeIndex)));
-    connect(mmm, SIGNAL(timeIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
-            m_morphTimeline, SLOT(setCurrentTimeIndex(vpvl2::IKeyframe::TimeIndex)));
-    connect(smm, SIGNAL(timeIndexDidChange(vpvl2::IKeyframe::TimeIndex,vpvl2::IKeyframe::TimeIndex)),
-            m_sceneTimeline, SLOT(setCurrentTimeIndex(vpvl2::IKeyframe::TimeIndex)));
+    connect(bmm, SIGNAL(timeIndexDidChange(IKeyframe::TimeIndex,IKeyframe::TimeIndex)),
+            m_boneTimeline, SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
+    connect(mmm, SIGNAL(timeIndexDidChange(IKeyframe::TimeIndex,IKeyframe::TimeIndex)),
+            m_morphTimeline, SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
+    connect(smm, SIGNAL(timeIndexDidChange(IKeyframe::TimeIndex,IKeyframe::TimeIndex)),
+            m_sceneTimeline, SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(m_tabWidget);
     retranslate();
@@ -147,13 +152,13 @@ void TimelineTabWidget::loadPose(VPDFilePtr pose, IModel *model)
 
 void TimelineTabWidget::retranslate()
 {
-    m_boneSelectButton->setText(tr("Select"));
-    m_boneRotateButton->setText(tr("Rotate"));
-    m_boneMoveButton->setText(tr("Move"));
-    m_tabWidget->setTabText(kBoneTabIndex, tr("Bone"));
-    m_tabWidget->setTabText(kMorphTabIndex, tr("Morph"));
-    m_tabWidget->setTabText(kSceneTabIndex, tr("Scene"));
-    setWindowTitle(tr("Motion Timeline"));
+    m_boneSelectButton->setText(vpvm::TimelineTabWidget::tr("Select"));
+    m_boneRotateButton->setText(vpvm::TimelineTabWidget::tr("Rotate"));
+    m_boneMoveButton->setText(vpvm::TimelineTabWidget::tr("Move"));
+    m_tabWidget->setTabText(kBoneTabIndex, vpvm::TimelineTabWidget::tr("Bone"));
+    m_tabWidget->setTabText(kMorphTabIndex, vpvm::TimelineTabWidget::tr("Morph"));
+    m_tabWidget->setTabText(kSceneTabIndex, vpvm::TimelineTabWidget::tr("Scene"));
+    setWindowTitle(vpvm::TimelineTabWidget::tr("Motion Timeline"));
 }
 
 void TimelineTabWidget::savePose(VPDFile *pose, IModel *model)
@@ -184,15 +189,15 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
 void TimelineTabWidget::setCurrentFrameIndex(int value)
 {
     /* 二重呼出になってしまうため、一時的に motionDidSeek シグナルを止める */
-    disconnect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
-    disconnect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
-    disconnect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_boneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_morphTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_sceneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     m_boneTimeline->setCurrentTimeIndex(value);
     m_morphTimeline->setCurrentTimeIndex(value);
     m_sceneTimeline->setCurrentTimeIndex(value);
-    connect(m_boneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
-    connect(m_morphTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
-    connect(m_sceneTimeline, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    connect(m_boneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_morphTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_sceneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
 }
 
 void TimelineTabWidget::setCurrentFrameIndexZero()
@@ -310,7 +315,7 @@ void TimelineTabWidget::previousFrame()
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
     Type type;
-    vpvl2::IModel *lastSelectedModel = 0;
+    IModel *lastSelectedModel = 0;
     switch (index) {
     case kBoneTabIndex: {
         static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model())->setActiveUndoStack();
@@ -413,8 +418,8 @@ void TimelineTabWidget::openFrameWeightDialog()
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex: {
         FrameWeightDialog dialog(kBone);
-        connect(&dialog, SIGNAL(boneWeightDidSet(vpvl2::Vector3,vpvl2::Vector3)),
-                m_boneTimeline->treeView(), SLOT(setBoneKeyframesWeightBySelectedIndices(vpvl2::Vector3,vpvl2::Vector3)));
+        connect(&dialog, SIGNAL(boneWeightDidSet(Vector3,Vector3)),
+                m_boneTimeline->treeView(), SLOT(setBoneKeyframesWeightBySelectedIndices(Vector3,Vector3)));
         dialog.exec();
         break;
     }
@@ -426,8 +431,8 @@ void TimelineTabWidget::openFrameWeightDialog()
         break;
     }
     default:
-        internal::warning(this, tr("Not supported operation"),
-                          tr("The timeline is not supported adjusting keyframe weight."));
+        warning(this, vpvm::TimelineTabWidget::tr("Not supported operation"),
+                vpvm::TimelineTabWidget::tr("The timeline is not supported adjusting keyframe weight."));
         break;
     }
 }
@@ -441,9 +446,9 @@ void TimelineTabWidget::openInterpolationDialog(const QModelIndexList &indices)
         m_interpolationDialog->show();
     }
     else {
-        internal::warning(this,
-                          tr("No keyframes selected"),
-                          tr("Select bone or camera keyframe(s) to open interpolation dialog."));
+        warning(this,
+                vpvm::TimelineTabWidget::tr("No keyframes selected"),
+                vpvm::TimelineTabWidget::tr("Select bone or camera keyframe(s) to open interpolation dialog."));
     }
 }
 
@@ -465,9 +470,9 @@ void TimelineTabWidget::openInterpolationDialogBySelectedIndices()
         openInterpolationDialog(indices);
     }
     else {
-        internal::warning(this,
-                          tr("Interpolation is not supported"),
-                          tr("Configuration of morph interpolation is not supported (always linear)."));
+        warning(this,
+                vpvm::TimelineTabWidget::tr("Interpolation is not supported"),
+                vpvm::TimelineTabWidget::tr("Configuration of morph interpolation is not supported (always linear)."));
     }
 }
 
@@ -556,3 +561,5 @@ TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidget() const
         return 0;
     }
 }
+
+} /* namespace vpvm */

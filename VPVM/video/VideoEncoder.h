@@ -40,6 +40,9 @@
 #include <QtCore/QtCore>
 #include <QtGui/QImage>
 
+namespace vpvm
+{
+
 class VideoEncoder : public QThread
 {
     Q_OBJECT
@@ -88,5 +91,7 @@ private:
 
     Q_DISABLE_COPY(VideoEncoder)
 };
+
+} /* namespace vpvm */
 
 #endif // VIDEOENCODER_H

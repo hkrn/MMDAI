@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef VPVM_MAINWINDOW_H
+#define VPVM_MAINWINDOW_H
 
 #include <QtCore/QSettings>
 #include <QtCore/QUuid>
@@ -43,9 +43,12 @@
 #include <QtGui/QMainWindow>
 #include <vpvl2/Common.h>
 
-namespace internal {
-class Player;
-}
+class QCheckBox;
+class QDoubleSpinBox;
+class QPushButton;
+class QSpinBox;
+class QSplitter;
+class QUndoGroup;
 
 namespace vpvl2 {
 class Factory;
@@ -55,6 +58,10 @@ class IModel;
 class IMotion;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
 class AudioDecoder;
 class BoneMotionModel;
 class BoneUIDelegate;
@@ -63,6 +70,7 @@ class MorphMotionModel;
 class LicenseWidget;
 class LoggerWidget;
 class ModelTabWidget;
+class Player;
 class PlaySettingDialog;
 class SceneMotionModel;
 class SceneWidget;
@@ -70,12 +78,6 @@ class ScenePlayer;
 class TabWidget;
 class TimelineTabWidget;
 class VideoEncoder;
-class QCheckBox;
-class QDoubleSpinBox;
-class QPushButton;
-class QSpinBox;
-class QSplitter;
-class QUndoGroup;
 
 class MainWindow : public QMainWindow
 {
@@ -107,16 +109,16 @@ private slots:
     void saveProject();
     void saveProjectAs();
     void selectModel();
-    void setCurrentModel(vpvl2::IModel *model);
+    void setCurrentModel(IModel *model);
     void revertSelectedModel();
     void openRecentFile();
     void addRecentFile(const QString &filename);
     void updateRecentFiles();
     void clearRecentFiles();
-    void addModel(vpvl2::IModel *model, const QUuid &uuid);
-    void deleteModel(vpvl2::IModel *model, const QUuid &uuid);
-    void addAsset(vpvl2::IModel *asset, const QUuid &uuid);
-    void deleteAsset(vpvl2::IModel *asset, const QUuid &uuid);
+    void addModel(IModel *model, const QUuid &uuid);
+    void deleteModel(IModel *model, const QUuid &uuid);
+    void addAsset(IModel *asset, const QUuid &uuid);
+    void deleteAsset(IModel *asset, const QUuid &uuid);
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
@@ -146,7 +148,7 @@ private:
     struct WindowState;
     bool saveMotionAs(QString &filename);
     bool saveMotionFile(const QString &filename);
-    bool saveMotionFile(const QString &filename, vpvl2::IMotion *motion);
+    bool saveMotionFile(const QString &filename, IMotion *motion);
     bool saveProjectAs(QString &filename);
     bool saveProjectFile(const QString &filename);
     bool maybeSaveMotion();
@@ -161,8 +163,8 @@ private:
     void saveWindowStateAndResize(const QSize &videoSize, WindowState &state);
     void restoreWindowState(const WindowState &state);
 
-    vpvl2::IEncoding *m_encoding;
-    vpvl2::Factory *m_factory;
+    IEncoding *m_encoding;
+    Factory *m_factory;
     QSettings m_settings;
     QUndoGroup *m_undo;
     LicenseWidget *m_licenseWidget;
@@ -183,12 +185,12 @@ private:
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
 
-    vpvl2::IModel *m_model;
-    vpvl2::IBone *m_bone;
-    vpvl2::Vector3 m_position;
-    vpvl2::Vector3 m_angle;
-    vpvl2::Scalar m_fovy;
-    vpvl2::Scalar m_distance;
+    IModel *m_model;
+    IBone *m_bone;
+    Vector3 m_position;
+    Vector3 m_angle;
+    Scalar m_fovy;
+    Scalar m_distance;
     int m_currentFPS;
 
     QDockWidget *m_timelineDockWidget;
@@ -309,5 +311,7 @@ private:
 
     Q_DISABLE_COPY(MainWindow)
 };
+
+}
 
 #endif // MAINWINDOW_H

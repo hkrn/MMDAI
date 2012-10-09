@@ -34,12 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MORPHMOTIONMODEL_H
-#define MORPHMOTIONMODEL_H
+#ifndef VPVM_MORPHMOTIONMODEL_H
+#define VPVM_MORPHMOTIONMODEL_H
 
 #include "models/PMDMotionModel.h"
 
-#include <vpvl/BaseAnimation.h>
 #include <vpvl2/IMorph.h>
 
 namespace vpvl2 {
@@ -48,30 +47,35 @@ class IModel;
 class IMorphKeyframe;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
+
 class MorphMotionModel : public PMDMotionModel
 {
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl2::IMorphKeyframe> KeyFramePtr;
+    typedef QSharedPointer<IMorphKeyframe> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    explicit MorphMotionModel(vpvl2::Factory *factory, QUndoGroup *undo = 0, QObject *parent = 0);
+    explicit MorphMotionModel(Factory *factory, QUndoGroup *undo = 0, QObject *parent = 0);
     ~MorphMotionModel();
 
-    void saveMotion(vpvl2::IMotion *motion);
+    void saveMotion(IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
     void pasteKeyframesByTimeIndex(int timeIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     const QString nameFromModelIndex(const QModelIndex &index) const;
 
     void setKeyframes(const KeyFramePairList &keyframes);
-    void setWeight(vpvl2::IMorph::WeightPrecision &value);
-    void setWeight(const vpvl2::IMorph::WeightPrecision &value, vpvl2::IMorph *morph);
-    vpvl2::IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
+    void setWeight(IMorph::WeightPrecision &value);
+    void setWeight(const IMorph::WeightPrecision &value, IMorph *morph);
+    IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
     bool isMorphSelected() const { return m_model != 0 && selectedMorph() != 0; }
-    vpvl2::Factory *factory() const { return m_factory; }
+    Factory *factory() const { return m_factory; }
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
@@ -79,23 +83,25 @@ public slots:
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();
-    void setPMDModel(vpvl2::IModel *model);
-    void loadMotion(vpvl2::IMotion *motion, const vpvl2::IModel *model);
-    void selectMorphs(const QList<vpvl2::IMorph *> &morphs);
+    void setPMDModel(IModel *model);
+    void loadMotion(IMotion *motion, const IModel *model);
+    void selectMorphs(const QList<IMorph *> &morphs);
     void saveTransform();
     void commitTransform();
     void resetAllMorphs();
 
 signals:
-    void morphsDidSelect(const QList<vpvl2::IMorph *> &morphs);
+    void morphsDidSelect(const QList<IMorph *> &morphs);
 
 private:
-    vpvl2::Factory *m_factory;
-    QList<vpvl2::IMorph *> m_selectedMorphs;
+    Factory *m_factory;
+    QList<IMorph *> m_selectedMorphs;
     KeyFramePairList m_copiedKeyframes;
     PMDMotionModel::State m_state;
 
     Q_DISABLE_COPY(MorphMotionModel)
 };
+
+} /* namespace vpvl2 */
 
 #endif // MORPHMOTIONMODEL_H

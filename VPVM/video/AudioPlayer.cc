@@ -36,6 +36,9 @@
 
 #include "AudioPlayer.h"
 
+namespace vpvm
+{
+
 AudioPlayer::AudioPlayer()
     : AudioDecoder(),
       m_stream(0),
@@ -100,3 +103,6 @@ void AudioPlayer::decodeBuffer(const QByteArray &bytes, float position, int chan
     emit positionDidAdvance(position - m_position);
     m_position = position;
 }
+
+} /* namespace vpvm */
+

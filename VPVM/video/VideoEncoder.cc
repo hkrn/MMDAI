@@ -40,8 +40,6 @@
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 
-using namespace internal;
-
 namespace {
 
 static int UIAVCodecLockCallback(void ** /* mutex */, AVLockOp op)
@@ -65,6 +63,9 @@ static int UIAVCodecLockCallback(void ** /* mutex */, AVLockOp op)
 }
 
 }
+
+namespace vpvm
+{
 
 bool VideoEncoder::isSupported()
 {
@@ -294,3 +295,5 @@ void VideoEncoder::dequeueAudioBuffer(QByteArray &bytes, int size)
     bytes = m_audioBuffer.remove(0, size);
     m_audioBufferMutex.unlock();
 }
+
+} /* namespace vpvm */

@@ -43,6 +43,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CString.h>
 
+using namespace vpvm;
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
@@ -252,7 +253,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
-        setText(QApplication::tr("Register bone keyframes of %1").arg(internal::toQStringFromModel(m_model)));
+        setText(QApplication::tr("Register bone keyframes of %1").arg(toQStringFromModel(m_model)));
     }
     virtual ~SetKeyframesCommand() {
     }
@@ -300,10 +301,10 @@ public:
             IBoneKeyframe *boneKeyframe = data.data();
             /* キーフレームの対象ボーン名を取得する */
             if (boneKeyframe) {
-                key = internal::toQStringFromBoneKeyframe(boneKeyframe);
+                key = toQStringFromBoneKeyframe(boneKeyframe);
             }
             else if (m_bone) {
-                key = internal::toQStringFromBone(m_bone);
+                key = toQStringFromBone(m_bone);
             }
             else {
                 qWarning("No bone is selected or null");
@@ -366,7 +367,7 @@ public:
     {
         /* 全てのボーンの情報を保存しておく */
         m_state.save();
-        setText(QApplication::tr("Reset all bones of %1").arg(internal::toQStringFromModel(model)));
+        setText(QApplication::tr("Reset all bones of %1").arg(toQStringFromModel(model)));
     }
     virtual ~ResetAllCommand() {
     }
@@ -395,7 +396,7 @@ public:
         m_oldState.copyFrom(state);
         /* 前と後の全てのボーンの情報を保存しておく */
         m_newState.save();
-        setText(QApplication::tr("Set bones of %1").arg(internal::toQStringFromModel(model)));
+        setText(QApplication::tr("Set bones of %1").arg(toQStringFromModel(model)));
     }
 
     void undo() {
@@ -521,6 +522,9 @@ static const Quaternion UIRotateLocalAxisAngle(const IBone *bone, const Scalar &
 
 }
 
+namespace vpvm
+{
+
 BoneMotionModel::BoneMotionModel(Factory *factory,
                                  QUndoGroup *undo,
                                  QObject *parent) :
@@ -633,7 +637,7 @@ void BoneMotionModel::pasteReversedFrame(int frameIndex)
         /* 基本的な処理は pasteFrame と同等だが、「左」「右」の名前を持つボーンは特別扱い */
         foreach (const KeyFramePair &pair, m_copiedKeyframes) {
             keyframe.reset(pair.second->clone());
-            const QString &name = internal::toQStringFromBoneKeyframe(keyframe.data());
+            const QString &name = toQStringFromBoneKeyframe(keyframe.data());
             /* 二重登録防止のため、「左」「右」はどちらか出てきたら処理は一回のみ */
             if (!registered.contains(name)) {
                 bool isRight = name.startsWith(right);
@@ -753,10 +757,10 @@ void BoneMotionModel::loadPose(VPDFilePtr pose, IModel *model, int frameIndex)
 {
     if (model == m_model && m_motion) {
         addUndoCommand(new LoadPoseCommand(this, pose, frameIndex));
-        qDebug("Loaded a pose to the model: %s", qPrintable(internal::toQStringFromModel(model)));
+        qDebug("Loaded a pose to the model: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
-        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(internal::toQStringFromModel(model)));
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model)));
     }
 }
 
@@ -774,7 +778,7 @@ void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int frameIndex)
                 keyframe.reset(m_factory->createBoneKeyframe(m_motion));
                 keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
                 const Quaternion &q = keyframe->rotation();
-                bone->name = internal::toQStringFromBoneKeyframe(keyframe.data());
+                bone->name = toQStringFromBoneKeyframe(keyframe.data());
                 bone->position = keyframe->position();
                 bone->rotation = Vector4(q.x(), q.y(), q.z(), q.w());
                 bones.append(bone);
@@ -783,7 +787,7 @@ void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int frameIndex)
         pose->setBones(bones);
     }
     else {
-        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(internal::toQStringFromModel(model)));
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model)));
     }
 }
 
@@ -822,7 +826,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
                         const IBone *bone = label->bone(0);
                         if (bone) {
                             /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
-                            const QString &category = internal::toQStringFromBone(bone).trimmed();
+                            const QString &category = toQStringFromBone(bone).trimmed();
                             parent.reset(new TreeItem(category, 0, false, true, r));
                         }
                     }
@@ -831,14 +835,14 @@ void BoneMotionModel::setPMDModel(IModel *model)
                         continue;
                 }
                 else {
-                    const QString &category = internal::toQStringFromString(label->name()).trimmed();
+                    const QString &category = toQStringFromString(label->name()).trimmed();
                     parent.reset(new TreeItem(category, 0, false, true, r));
                 }
                 /* カテゴリに属するボーン名を求めてカテゴリアイテムに追加する。また、ボーン名をキー名として追加 */
                 for (int j = 0; j < nchildren; j++) {
                     IBone *bone = label->bone(j);
                     if (bone) {
-                        const QString &name = internal::toQStringFromBone(bone);
+                        const QString &name = toQStringFromBone(bone);
                         child.reset(new TreeItem(name, bone, false, false, parent.data()));
                         parent->addChild(child.data());
                         keys.insert(name, child.take());
@@ -863,7 +867,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
             selectedBones.append(bones[0]);
             selectBones(selectedBones);
         }
-        qDebug("Set a model in BoneMotionModel: %s", qPrintable(internal::toQStringFromModel(model)));
+        qDebug("Set a model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
         m_model = 0;
@@ -887,7 +891,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
-            const QString &key = internal::toQStringFromBoneKeyframe(keyframe);
+            const QString &key = toQStringFromBoneKeyframe(keyframe);
             if (keys.contains(key)) {
                 int frameIndex = static_cast<int>(keyframe->timeIndex());
                 QByteArray bytes(keyframe->estimateSize(), '0');
@@ -914,10 +918,10 @@ void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
         m_motion = motion;
         refreshModel(m_model);
         setModified(false);
-        qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(internal::toQStringFromModel(model)));
+        qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
-        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQStringFromModel(model)));
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(toQStringFromModel(model)));
     }
 }
 
@@ -1204,3 +1208,5 @@ void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &
     m_scene->updateModel(m_model);
     emit positionDidChange(bone, position);
 }
+
+} /* namespace vpvm */

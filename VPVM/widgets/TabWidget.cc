@@ -42,6 +42,11 @@
 
 #include <QtGui/QtGui>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 TabWidget::TabWidget(QSettings *settings, QWidget *parent) :
@@ -72,10 +77,10 @@ TabWidget::~TabWidget()
 
 void TabWidget::retranslate()
 {
-    m_tabWidget->setTabText(0, tr("Asset"));
-    m_tabWidget->setTabText(1, tr("Camera"));
-    m_tabWidget->setTabText(2, tr("Light"));
-    setWindowTitle(tr("Scene Tabs"));
+    m_tabWidget->setTabText(0, vpvm::TabWidget::tr("Asset"));
+    m_tabWidget->setTabText(1, vpvm::TabWidget::tr("Camera"));
+    m_tabWidget->setTabText(2, vpvm::TabWidget::tr("Light"));
+    setWindowTitle(vpvm::TabWidget::tr("Scene Tabs"));
 }
 
 void TabWidget::closeEvent(QCloseEvent *event)
@@ -83,3 +88,5 @@ void TabWidget::closeEvent(QCloseEvent *event)
     m_settings->setValue("tabWidget/geometry", saveGeometry());
     event->accept();
 }
+
+} /* namespace vpvm */

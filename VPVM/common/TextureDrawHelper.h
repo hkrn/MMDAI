@@ -34,13 +34,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TEXTUREDRAWHELPER_H
-#define TEXTUREDRAWHELPER_H
+#ifndef VPVM_TEXTUREDRAWHELPER_H
+#define VPVM_TEXTUREDRAWHELPER_H
 
 #include <QtOpenGL/QGLShaderProgram>
 #include <QtOpenGL/QGLWidget>
 
-namespace internal {
+namespace vpvm {
 
 class TextureDrawHelper
 {
@@ -111,6 +111,6 @@ private:
     QSize m_size;
 };
 
-}
+} /* namespace vpvm */
 
 #endif // TEXTUREDRAWHELPER_H

@@ -39,6 +39,11 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
@@ -192,22 +197,22 @@ void CameraPerspectiveWidget::setCameraPerspective(const ICamera *camera)
 
 void CameraPerspectiveWidget::retranslate()
 {
-    m_presetGroup->setTitle(tr("Preset"));
-    m_positionGroup->setTitle(tr("Position"));
-    m_rotationGroup->setTitle(tr("Rotation"));
-    m_frontButton->setText(tr("Front"));
-    m_backButton->setText(tr("Back"));
-    m_topButton->setText(tr("Top"));
-    m_leftButton->setText(tr("Left"));
-    m_rightButton->setText(tr("Right"));
-    m_cameraButton->setText(tr("Camera"));
-    m_fovyLabel->setText(tr("Fovy"));
-    m_distanceLabel->setText(tr("Distance"));
-    m_followGroup->setTitle(tr("Follow"));
-    m_followNone->setText(tr("None"));
-    m_followModel->setText(tr("Model"));
-    m_followBone->setText(tr("Bone"));
-    m_initializeButton->setText(tr("Initialize"));
+    m_presetGroup->setTitle(vpvm::CameraPerspectiveWidget::tr("Preset"));
+    m_positionGroup->setTitle(vpvm::CameraPerspectiveWidget::tr("Position"));
+    m_rotationGroup->setTitle(vpvm::CameraPerspectiveWidget::tr("Rotation"));
+    m_frontButton->setText(vpvm::CameraPerspectiveWidget::tr("Front"));
+    m_backButton->setText(vpvm::CameraPerspectiveWidget::tr("Back"));
+    m_topButton->setText(vpvm::CameraPerspectiveWidget::tr("Top"));
+    m_leftButton->setText(vpvm::CameraPerspectiveWidget::tr("Left"));
+    m_rightButton->setText(vpvm::CameraPerspectiveWidget::tr("Right"));
+    m_cameraButton->setText(vpvm::CameraPerspectiveWidget::tr("Camera"));
+    m_fovyLabel->setText(vpvm::CameraPerspectiveWidget::tr("Fovy"));
+    m_distanceLabel->setText(vpvm::CameraPerspectiveWidget::tr("Distance"));
+    m_followGroup->setTitle(vpvm::CameraPerspectiveWidget::tr("Follow"));
+    m_followNone->setText(vpvm::CameraPerspectiveWidget::tr("None"));
+    m_followModel->setText(vpvm::CameraPerspectiveWidget::tr("Model"));
+    m_followBone->setText(vpvm::CameraPerspectiveWidget::tr("Bone"));
+    m_initializeButton->setText(vpvm::CameraPerspectiveWidget::tr("Initialize"));
 }
 
 void CameraPerspectiveWidget::setCameraPerspectiveFront()
@@ -337,3 +342,5 @@ QSharedPointer<ICamera> CameraPerspectiveWidget::createCamera() const
     camera->setDistance(m_currentDistance);
     return camera;
 }
+
+} /* namespace vpvm */

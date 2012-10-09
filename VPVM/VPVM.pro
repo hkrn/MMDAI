@@ -3,10 +3,9 @@ TARGET = MMDAI2
 TEMPLATE = app
 DEFINES += IS_VPVM
 
-# libvpvl and base libraries (MMDAgent for win32)
+# libvpvl2 and base libraries (MMDAgent for win32)
 ASSIMP_PATH = ../assimp-src
 BULLET_PATH = ../bullet-src
-VPVL_PATH = ../libvpvl
 VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 LIBAV_PATH = ../libav-src
@@ -24,8 +23,7 @@ exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # VPVL and others configuration
-INCLUDEPATH +=  $${VPVL_PATH}/include \
-                $${VPVL2_PATH}/include \
+INCLUDEPATH +=  $${VPVL2_PATH}/include \
                 $${ASSIMP_PATH}/include \
                 $${BULLET_PATH}/src
 
@@ -40,16 +38,14 @@ win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
 CONFIG(debug, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
                       -L$${BULLET_PATH}/debug/lib \
-                      -L$${VPVL_PATH}/debug/lib \
                       -L$${VPVL2_PATH}/debug/lib \
                       -L$${PORTAUDIO_PATH}/debug_native/lib \
                       -L$${LIBAV_PATH}/debug_native/lib \
                       -L$${DEVIL_PATH}/debug_native/lib
-  unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
-                      $${VPVL2_PATH}/debug/include \
+  unix:INCLUDEPATH += $${VPVL2_PATH}/debug/include \
                       $${PORTAUDIO_PATH}/debug_native/include
   # should not change link order because of static library link order
-  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
+  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug
   INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
   macx {
     # libjpeg and libpng
@@ -62,16 +58,14 @@ CONFIG(debug, debug|release) {
 CONFIG(release, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/release/code \
                       -L$${BULLET_PATH}/release/lib \
-                      -L$${VPVL_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib \
                       -L$${PORTAUDIO_PATH}/release_native/lib \
                       -L$${LIBAV_PATH}/release_native/lib \
                       -L$${DEVIL_PATH}/release_native/lib
-  unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
-                      $${VPVL2_PATH}/release/include \
+  unix:INCLUDEPATH += $${VPVL2_PATH}/release/include \
                       -L$${DEVIL_PATH}/release_native/lib
   # should not change link order because of static library link order
-  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
+  LIBS             += -lvpvl2qtcommon -lvpvl2
   INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
                       $${DEVIL_PATH}/release_native/include
   macx {
@@ -137,7 +131,7 @@ macx {
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
-  # must add -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" to libvpvl and bullet
+  # must add -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" to libvpvl2 and bullet
   CONFIG(release, debug|release) {
     CONFIG += x86 x86_64
   }

@@ -38,7 +38,10 @@
 #include "common/SceneWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
+
+namespace vpvm
+{
 
 FrameWeightDialog::FrameWeightDialog(TimelineTabWidget::Type type, QWidget *parent) :
     QDialog(parent),
@@ -138,3 +141,5 @@ QDoubleSpinBox *FrameWeightDialog::createSpinBox(const char *slot)
     weightBox->setValue(1.0);
     return weightBox;
 }
+
+} /* namespace vpvm */

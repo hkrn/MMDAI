@@ -45,6 +45,9 @@
 
 #include <QtGui/QtGui>
 
+namespace vpvm
+{
+
 ModelTabWidget::ModelTabWidget(QSettings *settings,
                                MorphMotionModel *mmm,
                                QWidget *parent) :
@@ -87,3 +90,5 @@ void ModelTabWidget::closeEvent(QCloseEvent *event)
     m_settings->setValue("modelTabWidget/geometry", saveGeometry());
     event->accept();
 }
+
+} /* namespace vpvm */

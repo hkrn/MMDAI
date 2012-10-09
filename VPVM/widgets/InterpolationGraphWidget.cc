@@ -40,6 +40,9 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
@@ -344,3 +347,5 @@ void InterpolationGraphWidget::setDefault(QuadWord &q)
 {
     q.setValue(20, 20, 107, 107);
 }
+
+} /* namespace vpvm */

@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SCENEPLAYER_H
-#define SCENEPLAYER_H
+#ifndef VPVM_SCENEPLAYER_H
+#define VPVM_SCENEPLAYER_H
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>
@@ -47,6 +47,10 @@ namespace vpvl2 {
 class IModel;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
 class AudioPlayer;
 class SceneWidget;
 class PlaySettingDialog;
@@ -90,9 +94,9 @@ private:
     QString m_format;
     QByteArray m_buffer;
     AudioPlayer *m_player;
-    vpvl2::IModel *m_selected;
-    vpvl2::Scalar m_currentFPS;
-    vpvl2::Scalar m_prevSceneFPS;
+    IModel *m_selected;
+    Scalar m_currentFPS;
+    Scalar m_prevSceneFPS;
     float m_prevFrameIndex;
     float m_frameStep;
     float m_totalStep;
@@ -101,5 +105,7 @@ private:
     int m_countForFPS;
     bool m_restoreState;
 };
+
+} /* namespace vpvm */
 
 #endif // SCENEPLAYER_H

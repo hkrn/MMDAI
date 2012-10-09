@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef DEBUGDRAWER_H
-#define DEBUGDRAWER_H
+#ifndef VPVM_DEBUGDRAWER_H_
+#define VPVM_DEBUGDRAWER_H_
 
 #include "vpvl2/qt/CString.h"
 #include "SceneLoader.h"
@@ -46,7 +46,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <vpvl2/Common.h>
 
-namespace internal {
+namespace vpvm {
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
@@ -207,9 +207,9 @@ public:
             const Vector3 &origin = bone->worldTransform().getOrigin();
             QMatrix4x4 world, view, projection;
             loader->getCameraMatrices(world, view, projection);
-            drawLine(origin, transform * (internal::vec2vec(view.row(0)) * kLength), kRed);
-            drawLine(origin, transform * (internal::vec2vec(view.row(1)) * kLength), kGreen);
-            drawLine(origin, transform * (internal::vec2vec(view.row(2)) * kLength), kBlue);
+            drawLine(origin, transform * (vec2vec(view.row(0)) * kLength), kRed);
+            drawLine(origin, transform * (vec2vec(view.row(1)) * kLength), kGreen);
+            drawLine(origin, transform * (vec2vec(view.row(2)) * kLength), kBlue);
         }
         else if (mode == 'L') {
             if (bone->hasLocalAxes()) {
@@ -333,6 +333,6 @@ private:
     Q_DISABLE_COPY(DebugDrawer)
 };
 
-}
+} /* namespace vpvm */
 
 #endif // DEBUGDRAWER_H

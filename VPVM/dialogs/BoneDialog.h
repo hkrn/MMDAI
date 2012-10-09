@@ -34,15 +34,20 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef BONEDIALOG_H
-#define BONEDIALOG_H
+#ifndef VPVM_BONEDIALOG_H
+#define VPVM_BONEDIALOG_H
 
 #include <QtGui/QDialog>
 #include <vpvl2/Common.h>
 
-class BoneMotionModel;
 class QDoubleSpinBox;
 class QLabel;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
+class BoneMotionModel;
 
 class BoneDialog : public QDialog
 {
@@ -54,8 +59,8 @@ public:
 
 private slots:
     void retranslate();
-    void setPosition(const vpvl2::Vector3 &position);
-    void setRotation(const vpvl2::Quaternion &rotation);
+    void setPosition(const Vector3 &position);
+    void setRotation(const Quaternion &rotation);
     void setXPosition(double value);
     void setYPosition(double value);
     void setZPosition(double value);
@@ -82,5 +87,7 @@ private:
 
     Q_DISABLE_COPY(BoneDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // BONEDIALOG_H

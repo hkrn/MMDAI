@@ -39,6 +39,11 @@
 #include <QtGui/QtGui>
 #include <vpvl2/config.h>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace vpvm
+{
+
 LicenseWidget::LicenseWidget(QWidget *parent) :
     QWidget(parent),
     m_text(0)
@@ -53,18 +58,18 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
                                     "<p>%3</p><p>%4</p></div>")
                             .arg(qApp->applicationName())
                             .arg(qApp->applicationVersion())
-                            .arg(tr("MMDAI2 (will be VPVM) is an application to edit or create a motion compatible with MMD ("
+                            .arg(vpvm::LicenseWidget::tr("MMDAI2 (will be VPVM) is an application to edit or create a motion compatible with MMD ("
                                     "<a href='http://www.geocities.jp/higuchuu4/index.htm'>MikuMikuDance</a> "
                                     "created by Yuu Higuchi). This doesn't intend to be the successor of MMD."))
-                            .arg(tr("Below table is a list of libraries MMDAI2 uses. "
+                            .arg(vpvm::LicenseWidget::tr("Below table is a list of libraries MMDAI2 uses. "
                                     "Double click a row to show the license text or open the website")));
     copyrightLabel->setWordWrap(true);
     layout->addWidget(copyrightLabel);
     QTreeView *tree = new QTreeView();
     QAbstractItemModel *model = new QStandardItemModel(0, 3);
-    model->setHeaderData(0, Qt::Horizontal, tr("Name"));
-    model->setHeaderData(1, Qt::Horizontal, tr("License"));
-    model->setHeaderData(2, Qt::Horizontal, tr("Website"));
+    model->setHeaderData(0, Qt::Horizontal, vpvm::LicenseWidget::tr("Name"));
+    model->setHeaderData(1, Qt::Horizontal, vpvm::LicenseWidget::tr("License"));
+    model->setHeaderData(2, Qt::Horizontal, vpvm::LicenseWidget::tr("Website"));
     connect(tree, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(handleDoubleClick(QModelIndex)));
     tree->setRootIsDecorated(false);
     tree->setAlternatingRowColors(true);
@@ -74,13 +79,13 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
     QLabel *aboutIconLabel = new QLabel;
     aboutIconLabel->setText(
                 "<div style='font-size:10px'>" +
-                tr("MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
+                vpvm::LicenseWidget::tr("MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
                    "VOCALOID is the trademark of YAMAHA Corporation.") + "</div>");
     aboutIconLabel->setWordWrap(true);
     aboutIconLabel->setOpenExternalLinks(true);
     aboutIconLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
     layout->addWidget(aboutIconLabel);
-    setWindowTitle(QString(tr("About %1")).arg(qApp->applicationName()));
+    setWindowTitle(QString(vpvm::LicenseWidget::tr("About %1")).arg(qApp->applicationName()));
     resize(600, 450);
     setLayout(layout);
     m_model = model;
@@ -130,14 +135,13 @@ void LicenseWidget::handleDoubleClick(const QModelIndex &index)
     case 0: // name
     case 1: // license
     {
-        QString license = m_model->data(index).toString();
-        QString name = m_model->data(m_model->index(index.row(), 0)).toString();
+        const QString &name = m_model->data(m_model->index(index.row(), 0)).toString();
         QFile file(QString(":/licenses/%1").arg(m_path[name]));
         if (file.exists() && file.open(QFile::ReadOnly | QFile::Text)) {
             QTextStream stream(&file);
             if (!m_text)
                 m_text = new QTextEdit;
-            m_text->setWindowTitle(tr("%1's license").arg(name));
+            m_text->setWindowTitle(vpvm::LicenseWidget::tr("%1's license").arg(name));
             m_text->setReadOnly(true);
             m_text->setHtml(QString("<pre>%1</pre>").arg(stream.readAll()));
             m_text->resize(600, 500);
@@ -153,3 +157,4 @@ void LicenseWidget::handleDoubleClick(const QModelIndex &index)
     }
 }
 
+} /* namespace vpvm */

@@ -34,22 +34,26 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINEWIDGET_H
-#define TIMELINEWIDGET_H
+#ifndef VPVM_TIMELINEWIDGET_H
+#define VPVM_TIMELINEWIDGET_H
 
 #include <QtCore/QModelIndex>
 #include <QtGui/QWidget>
 #include "vpvl2/IKeyframe.h"
-
-class MotionBaseModel;
-class TimelineHeaderView;
-class TimelineTreeView;
 
 class QLabel;
 class QPushButton;
 class QSettings;
 class QSpinBox;
 class QTreeView;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
+class MotionBaseModel;
+class TimelineHeaderView;
+class TimelineTreeView;
 
 class TimelineWidget : public QWidget
 {
@@ -70,11 +74,11 @@ public:
     TimelineTreeView *treeView() const { return m_treeView; }
 
 public slots:
-    void setCurrentTimeIndex(const vpvl2::IKeyframe::TimeIndex &timeIndex);
+    void setCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex);
     void setCurrentTimeIndex(int timeIndex);
 
 signals:
-    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &column, bool forceCameraUpdate, bool forceEvenSame);
+    void motionDidSeek(const IKeyframe::TimeIndex &column, bool forceCameraUpdate, bool forceEvenSame);
 
 private slots:
     void retranslate();
@@ -95,5 +99,7 @@ private:
 
     Q_DISABLE_COPY(TimelineWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // TIMLINEWIDGET_H

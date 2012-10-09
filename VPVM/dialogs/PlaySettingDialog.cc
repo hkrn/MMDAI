@@ -40,8 +40,12 @@
 #include "dialogs/PlaySettingDialog.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl2/vpvl2.h>
+
+namespace vpvm
+{
+
+/* lupdate cannot parse tr() syntax correctly */
 
 PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, QWidget *parent)
     : QDialog(parent),
@@ -89,7 +93,7 @@ PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, Q
     subLayout->addWidget(m_boneWireFramesBox);
     mainLayout->addLayout(subLayout);
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    m_playButton = new QPushButton(tr("Play"));
+    m_playButton = new QPushButton(vpvm::PlaySettingDialog::tr("Play"));
     connect(m_playButton, SIGNAL(clicked()), SIGNAL(playingDidStart()));
     buttons->addButton(m_playButton, QDialogButtonBox::ActionRole);
     connect(this, SIGNAL(settingsDidSave()), this, SLOT(close()));
@@ -108,10 +112,10 @@ PlaySettingDialog::~PlaySettingDialog()
 
 void PlaySettingDialog::openFileDialog()
 {
-    const QString &filename = internal::openFileDialog("playSettingDialog/lastAudioDirectory",
-                                                       tr("Open audio file"),
-                                                       tr("WAV file (*.wav)"),
-                                                       m_settings);
+    const QString &filename = vpvm::openFileDialog("playSettingDialog/lastAudioDirectory",
+                                                   vpvm::PlaySettingDialog::tr("Open audio file"),
+                                                   vpvm::PlaySettingDialog::tr("WAV file (*.wav)"),
+                                                   m_settings);
     if (!filename.isEmpty())
         m_pathEdit->setText(filename);
 }
@@ -196,12 +200,14 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 
 void PlaySettingDialog::retranslate()
 {
-    m_openFileButton->setText(tr("Open"));
-    m_fromIndexLabel->setText(tr("Keyframe from: "));
-    m_toIndexLabel->setText(tr("Keyframe to: "));
-    m_sceneFPSLabel->setText(tr("Scene FPS: "));
-    m_loopBox->setText(tr("Loop"));
-    m_selectModelBox->setText(tr("Be model selected"));
-    m_boneWireFramesBox->setText(tr("Draw bone wireframes"));
-    setWindowTitle(tr("Playing scene setting"));
+    m_openFileButton->setText(vpvm::PlaySettingDialog::tr("Open"));
+    m_fromIndexLabel->setText(vpvm::PlaySettingDialog::tr("Keyframe from: "));
+    m_toIndexLabel->setText(vpvm::PlaySettingDialog::tr("Keyframe to: "));
+    m_sceneFPSLabel->setText(vpvm::PlaySettingDialog::tr("Scene FPS: "));
+    m_loopBox->setText(vpvm::PlaySettingDialog::tr("Loop"));
+    m_selectModelBox->setText(vpvm::PlaySettingDialog::tr("Be model selected"));
+    m_boneWireFramesBox->setText(vpvm::PlaySettingDialog::tr("Draw bone wireframes"));
+    setWindowTitle(vpvm::PlaySettingDialog::tr("Playing scene setting"));
 }
+
+} /* namespace vpvm */

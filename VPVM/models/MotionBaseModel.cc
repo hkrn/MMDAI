@@ -40,6 +40,9 @@
 
 #include "MotionBaseModel.h"
 
+namespace vpvm
+{
+
 int MotionBaseModel::toTimeIndex(const QModelIndex &index)
 {
     return toTimeIndex(index.column());
@@ -206,3 +209,5 @@ void MotionBaseModel::setFrameIndexColumnMax0(int newValue)
     reset();
     emit frameIndexColumnMaxDidChange(newValue, oldValue);
 }
+
+} /* namespace vpvm */

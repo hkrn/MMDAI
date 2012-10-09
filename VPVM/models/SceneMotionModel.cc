@@ -41,6 +41,7 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+using namespace vpvm;
 using namespace vpvl2;
 
 namespace {
@@ -328,6 +329,9 @@ private:
 };
 
 }
+
+namespace vpvm
+{
 
 SceneMotionModel::SceneMotionModel(Factory *factory,
                                    QUndoGroup *undo,
@@ -656,3 +660,5 @@ void SceneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &
 {
     /* 現在この処理はまだ何も無い */
 }
+
+} /* namespace vpvm */

@@ -41,6 +41,9 @@
 
 #include <portaudio.h>
 
+namespace vpvm
+{
+
 class AudioPlayer : public AudioDecoder
 {
     Q_OBJECT
@@ -65,5 +68,7 @@ private:
 
     Q_DISABLE_COPY(AudioPlayer)
 };
+
+} /* namespace vpvm */
 
 #endif // AUDIOPLAYER_H

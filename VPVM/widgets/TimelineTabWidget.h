@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINETABWIDGET_H
-#define TIMELINETABWIDGET_H
+#ifndef VPVM_TIMELINETABWIDGET_H
+#define VPVM_TIMELINETABWIDGET_H
 
 #include <QtGui/QWidget>
 #include <QtGui/QAbstractItemView>
@@ -54,6 +54,10 @@ class QButtonGroup;
 class QRadioButton;
 class QSettings;
 class QTabWidget;
+
+namespace vpvm
+{
+
 class FrameSelectionDialog;
 class FrameWeightDialog;
 class InterpolationDialog;
@@ -88,19 +92,19 @@ public:
 
 public slots:
     void addKeyframesFromSelectedIndices();
-    void loadPose(VPDFilePtr pose, vpvl2::IModel *model);
-    void savePose(VPDFile *pose, vpvl2::IModel *model);
+    void loadPose(VPDFilePtr pose, IModel *model);
+    void savePose(VPDFile *pose, IModel *model);
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
-    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate, bool forceEvenSame);
+    void motionDidSeek(const IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate, bool forceEvenSame);
     void currentTabDidChange(int type);
-    void currentModelDidChange(vpvl2::IModel *model);
+    void currentModelDidChange(IModel *model);
     void editModeDidSet(SceneWidget::EditMode mode);
 
 private slots:
     void retranslate();
-    void addMorphKeyframesAtCurrentFrameIndex(vpvl2::IMorph *morph);
+    void addMorphKeyframesAtCurrentFrameIndex(IMorph *morph);
     void setCurrentFrameIndex(int value);
     void setCurrentFrameIndexZero();
     void insertKeyframesBySelectedIndices();
@@ -113,18 +117,18 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
-    void toggleBoneEnable(vpvl2::IModel *model);
-    void toggleMorphEnable(vpvl2::IModel *model);
-    void toggleBoneButtonsByBone(const QList<vpvl2::IBone *> &bones);
+    void toggleBoneEnable(IModel *model);
+    void toggleMorphEnable(IModel *model);
+    void toggleBoneButtonsByBone(const QList<IBone *> &bones);
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();
     void openInterpolationDialog(const QModelIndexList &indices);
     void openInterpolationDialogBySelectedIndices();
-    void selectBones(const QList<vpvl2::IBone *> &bones);
+    void selectBones(const QList<IBone *> &bones);
     void selectBonesByItemSelection(const QItemSelection &selection);
     void selectButton(QAbstractButton *button);
-    void setLastSelectedModel(vpvl2::IModel *model);
+    void setLastSelectedModel(IModel *model);
     void clearLastSelectedModel();
 
 private:
@@ -143,9 +147,11 @@ private:
     FrameSelectionDialog *m_frameSelectionDialog;
     FrameWeightDialog *m_frameWeightDialog;
     InterpolationDialog *m_interpolationDialog;
-    vpvl2::IModel *m_lastSelectedModel;
+    IModel *m_lastSelectedModel;
 
     Q_DISABLE_COPY(TimelineTabWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // TIMELINETABWIDGET_H

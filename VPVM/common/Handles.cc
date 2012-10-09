@@ -47,13 +47,16 @@
 #include <aiPostProcess.h>
 #include <aiScene.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 class Handles::StaticWorld {
 public:
     StaticWorld()
         : m_dispatcher(&m_config),
-          m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
+          m_broadphase(-qt::World::kAabbSize, qt::World::kAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
     }
@@ -233,7 +236,7 @@ Handles::Handles(SceneLoader *loader, const QSize &size)
       m_visibilityFlags(kVisibleAll),
       m_visible(true)
 {
-    m_helper = new internal::TextureDrawHelper(size);
+    m_helper = new TextureDrawHelper(size);
     m_world = new Handles::StaticWorld();
 }
 
@@ -771,3 +774,5 @@ void Handles::loadModelHandles()
         UILoadStaticModel(meshes[4], m_translationHandle.axisZ);
     }
 }
+
+} /* namespace vpvm */

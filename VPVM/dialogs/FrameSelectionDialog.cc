@@ -38,7 +38,10 @@
 #include "common/SceneWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
+
+namespace vpvm
+{
 
 FrameSelectionDialog::FrameSelectionDialog(QWidget *parent) :
     QDialog(parent)
@@ -74,3 +77,5 @@ void FrameSelectionDialog::emitFrameIndices()
 {
     emit frameIndicesDidSelect(m_fromIndexBox->value(), m_toIndexBox->value());
 }
+
+} /* namespace vpvm */

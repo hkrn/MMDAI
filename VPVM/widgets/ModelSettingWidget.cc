@@ -40,6 +40,9 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
@@ -271,3 +274,5 @@ QDoubleSpinBox *ModelSettingWidget::createSpinBox(const char *slot, double min, 
     connect(spinBox, SIGNAL(valueChanged(double)), slot);
     return spinBox;
 }
+
+} /* namespace vpvm */

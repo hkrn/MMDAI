@@ -62,6 +62,9 @@
 #include <GL/glu.h>
 #endif /* Q_OS_DARWIN */
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 using namespace internal;
 
@@ -69,10 +72,10 @@ static void UIAlertMVDMotion(const IMotion *motion, SceneWidget *parent)
 {
     /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
     if (motion->type() == IMotion::kMVD) {
-        internal::warning(parent,
-                          QApplication::tr("The MVD file cannot save to the project currently"),
-                          QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
-                                           "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
+        warning(parent,
+                QApplication::tr("The MVD file cannot save to the project currently"),
+                QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
+                                 "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
     }
 }
 
@@ -80,14 +83,14 @@ class SceneWidget::PlaneWorld {
 public:
     PlaneWorld()
         : m_dispatcher(&m_config),
-          m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
+          m_broadphase(-kWorldAabbSize, kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
           m_state(0),
           m_shape(0),
           m_body(0)
     {
         m_state = new btDefaultMotionState();
-        m_shape = new btBoxShape(btVector3(internal::kWorldAabbSize.x(), internal::kWorldAabbSize.y(), 0.01));
+        m_shape = new btBoxShape(btVector3(kWorldAabbSize.x(), kWorldAabbSize.y(), 0.01));
         btRigidBody::btRigidBodyConstructionInfo info(0, m_state, m_shape);
         m_body = new btRigidBody(info);
         m_world.addRigidBody(m_body);
@@ -104,7 +107,7 @@ public:
         m_body->setWorldTransform(value);
         m_world.stepSimulation(1);
     }
-    void draw(const SceneLoader *loader, internal::DebugDrawer *drawer) {
+    void draw(const SceneLoader *loader, DebugDrawer *drawer) {
         const btTransform &worldTransform = m_body->getWorldTransform();
         m_world.setDebugDrawer(drawer);
         drawer->drawShape(&m_world, m_shape, loader, worldTransform, btVector3(1, 0, 0));
@@ -171,8 +174,8 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
     m_grid = new Grid();
     m_plane = new PlaneWorld();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
-    connect(this, SIGNAL(cameraPerspectiveDidSet(const vpvl2::ICamera*)),
-            this, SLOT(updatePlaneWorld(const vpvl2::ICamera*)));
+    connect(this, SIGNAL(cameraPerspectiveDidSet(const ICamera*)),
+            this, SLOT(updatePlaneWorld(const ICamera*)));
     setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
     setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
     setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
@@ -431,8 +434,8 @@ IModel *SceneWidget::addModel(const QString &path, bool skipDialog)
             }
         }
         else {
-            internal::warning(this, tr("Loading model error"),
-                              tr("%1 cannot be loaded").arg(fi.fileName()));
+            warning(this, tr("Loading model error"),
+                    tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
     return model;
@@ -463,8 +466,8 @@ IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
             emit fileDidLoad(path);
         }
         else {
-            internal::warning(this, tr("Loading model motion error"),
-                              tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            warning(this, tr("Loading model motion error"),
+                    tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
     return motion;
@@ -484,8 +487,8 @@ void SceneWidget::insertMotionToSelectedModel()
         }
     }
     else {
-        internal::warning(this, tr("The model is not selected."),
-                          tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+        warning(this, tr("The model is not selected."),
+                tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
     }
 }
 
@@ -503,13 +506,13 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
             if (motion) {
                 /* 違うモデルに適用しようとしているかどうかの確認 */
                 if (!model->name()->equals(motion->name())) {
-                    int ret = internal::warning(0,
-                                                tr("Applying this motion to the different model"),
-                                                tr("This motion is created for %1. Do you apply this motion to %2?")
-                                                .arg(internal::toQStringFromMotion(motion))
-                                                .arg(internal::toQStringFromModel(model)),
-                                                "",
-                                                QMessageBox::Yes|QMessageBox::No);
+                    int ret = warning(0,
+                                      tr("Applying this motion to the different model"),
+                                      tr("This motion is created for %1. Do you apply this motion to %2?")
+                                      .arg(toQStringFromMotion(motion))
+                                      .arg(toQStringFromModel(model)),
+                                      "",
+                                      QMessageBox::Yes|QMessageBox::No);
                     if (ret == QMessageBox::Yes) {
                         UIAlertMVDMotion(motion, this);
                         m_loader->setModelMotion(motion, model);
@@ -527,8 +530,8 @@ IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
                 emit fileDidLoad(path);
             }
             else {
-                internal::warning(this, tr("Loading model motion error"),
-                                  tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+                warning(this, tr("Loading model motion error"),
+                        tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
             }
         }
     }
@@ -547,9 +550,9 @@ void SceneWidget::setEmptyMotion(IModel *model)
         m_loader->setModelMotion(modelMotion, model);
     }
     else
-        internal::warning(this,
-                          tr("The model is not selected."),
-                          tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+        warning(this,
+                tr("The model is not selected."),
+                tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
 }
 
 void SceneWidget::addAsset()
@@ -570,8 +573,8 @@ IModel *SceneWidget::addAsset(const QString &path)
             emit fileDidLoad(path);
         }
         else {
-            internal::warning(this, tr("Loading asset error"),
-                              tr("%1 cannot be loaded").arg(fi.fileName()));
+            warning(this, tr("Loading asset error"),
+                    tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
     return asset;
@@ -596,8 +599,8 @@ IModel *SceneWidget::addAssetFromMetadata(const QString &path)
             setFocus();
         }
         else {
-            internal::warning(this, tr("Loading asset error"),
-                              tr("%1 cannot be loaded").arg(fi.fileName()));
+            warning(this, tr("Loading asset error"),
+                    tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
     return asset;
@@ -607,7 +610,7 @@ void SceneWidget::saveMetadataFromAsset(IModel *asset)
 {
     if (asset) {
         QString filename = QFileDialog::getSaveFileName(this, tr("Save %1 as VAC file")
-                                                        .arg(internal::toQStringFromModel(asset)), "",
+                                                        .arg(toQStringFromModel(asset)), "",
                                                         tr("MMD accessory metadata (*.vac)"));
         m_loader->saveMetadataFromAsset(filename, asset);
     }
@@ -665,15 +668,15 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
         if (QFile::exists(filename)) {
             ptr = m_loader->loadModelPose(filename, model);
             if (ptr.isNull()) {
-                internal::warning(this, tr("Loading model pose error"),
-                                  tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
+                warning(this, tr("Loading model pose error"),
+                        tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
             }
         }
     }
     else
-        internal::warning(this,
-                          tr("The model is not selected."),
-                          tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
+        warning(this,
+                tr("The model is not selected."),
+                tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
     return ptr;
 }
 
@@ -749,8 +752,8 @@ IMotion *SceneWidget::setCamera(const QString &path)
             emit fileDidLoad(path);
         }
         else {
-            internal::warning(this, tr("Loading camera motion error"),
-                              tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            warning(this, tr("Loading camera motion error"),
+                    tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
     return motion;
@@ -760,12 +763,12 @@ void SceneWidget::deleteSelectedModel()
 {
     IModel *selected = m_loader->selectedModel();
     if (selected) {
-        int ret = internal::warning(0,
-                                    tr("Confirm"),
-                                    tr("Do you want to delete the model \"%1\"? This cannot undo.")
-                                    .arg(internal::toQStringFromModel(selected)),
-                                    "",
-                                    QMessageBox::Yes | QMessageBox::No);
+        int ret = warning(0,
+                          tr("Confirm"),
+                          tr("Do you want to delete the model \"%1\"? This cannot undo.")
+                          .arg(toQStringFromModel(selected)),
+                          "",
+                          QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::Yes) {
             /* モデルを削除しても IBone への参照が残ってしまうので中身を空にする */
             clearSelectedBones();
@@ -1435,7 +1438,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
     /* 回転ジェスチャー */
     if (m_enableRotateGesture && flags & QPinchGesture::RotationAngleChanged) {
         qreal value = event->rotationAngle() - event->lastRotationAngle();
-        const Scalar &radian = vpvl2::radian(value);
+        const Scalar &radian = btRadians(value);
         /* ボーンが選択されている場合はボーンの回転 (現時点でY軸のみ) */
         if (!m_selectedBones.isEmpty()) {
             IBone *bone = m_selectedBones.last();
@@ -1496,9 +1499,9 @@ void SceneWidget::swipeTriggered(QSwipeGesture *event)
 void SceneWidget::openErrorDialogIfFailed(bool loadingProjectFailed)
 {
     if (!loadingProjectFailed) {
-        internal::warning(this,
-                          tr("Failed loading the project"),
-                          tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
+        warning(this,
+                tr("Failed loading the project"),
+                tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
     }
 }
 
@@ -1506,8 +1509,8 @@ bool SceneWidget::acceptAddingModel(IModel *model)
 {
     /* モデルを追加する前にモデルの名前とコメントを出すダイアログを表示 */
     QMessageBox mbox;
-    QString comment = internal::toQStringFromString(model->comment());
-    mbox.setText(tr("Model Information of \"%1\"").arg(internal::toQStringFromModel(model)));
+    QString comment = toQStringFromString(model->comment());
+    mbox.setText(tr("Model Information of \"%1\"").arg(toQStringFromModel(model)));
     mbox.setInformativeText(comment.replace("\n", "<br>"));
     mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     return mbox.exec() == QMessageBox::Ok;
@@ -1678,3 +1681,5 @@ bool SceneWidget::intersectsBone(const IBone *bone,
     Vector3 normal;
     return btRayAabb(znear, zfar, min, max, hitLambda, normal);
 }
+
+} /*  namespace vpvm */

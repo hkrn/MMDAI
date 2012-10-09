@@ -40,7 +40,7 @@
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 
-using namespace internal;
+using namespace vpvm;
 
 namespace {
 
@@ -65,6 +65,9 @@ void UICloseAudio(AVFormatContext *formatContext, AVCodecContext *audioContext)
 }
 
 }
+
+namespace vpvm
+{
 
 AudioDecoder::AudioDecoder()
     : m_running(true)
@@ -146,3 +149,6 @@ void AudioDecoder::decodeBuffer(const QByteArray &bytes, float /* position */, i
 {
     emit audioDidDecode(bytes);
 }
+
+} /* namespace vpvm */
+

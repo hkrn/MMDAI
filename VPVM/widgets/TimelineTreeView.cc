@@ -42,6 +42,9 @@
 
 #include <QtGui/QtGui>
 
+namespace vpvm
+{
+
 TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent)
     : QTreeView(parent),
       m_rubberBand(0)
@@ -369,3 +372,5 @@ void TimelineHeaderView::mousePressEvent(QMouseEvent *e)
     emit frameIndexDidSelect(MotionBaseModel::toTimeIndex(modelIndex));
     QHeaderView::mousePressEvent(e);
 }
+
+} /* namespace vpvm */

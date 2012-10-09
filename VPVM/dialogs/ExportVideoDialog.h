@@ -34,18 +34,22 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef EXPORTVIDEODIALOG_H
-#define EXPORTVIDEODIALOG_H
+#ifndef VPVM_EXPORTVIDEODIALOG_H
+#define VPVM_EXPORTVIDEODIALOG_H
 
 #include <QtGui/QDialog>
 
-class MainWindow;
 class QCheckBox;
 class QComboBox;
 class QLineEdit;
 class QPushButton;
 class QSettings;
 class QSpinBox;
+
+namespace vpvm
+{
+
+class MainWindow;
 class SceneLoader;
 class SceneWidget;
 
@@ -96,5 +100,7 @@ private:
 
     Q_DISABLE_COPY(ExportVideoDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // EXPORTVIDEODIALOG_H

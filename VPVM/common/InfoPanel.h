@@ -34,15 +34,15 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef INFOPANEL_H
-#define INFOPANEL_H
+#ifndef VPVM_INFOPANEL_H_
+#define VPVM_INFOPANEL_H_
 
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
 #include "TextureDrawHelper.h"
 #include "util.h"
 
-namespace internal {
+namespace vpvm {
 
 class InfoPanel
 {
@@ -107,7 +107,7 @@ public:
     }
 
     void setModel(IModel *model) {
-        m_model = internal::toQStringFromModel(model);
+        m_model = toQStringFromModel(model);
     }
     void setBones(const QList<IBone *> &bones, const QString &alterTextOnMultiple) {
         int nbones = bones.size();
@@ -115,10 +115,10 @@ public:
             m_bone = alterTextOnMultiple;
         }
         else if (nbones == 1) {
-            m_bone = internal::toQStringFromBone(bones.first());
+            m_bone = toQStringFromBone(bones.first());
         }
         else {
-            m_bone = internal::toQStringFromBone(static_cast<IBone *>(0));
+            m_bone = toQStringFromBone(static_cast<IBone *>(0));
         }
     }
     void setFPS(float value) {
@@ -151,6 +151,6 @@ private:
     Q_DISABLE_COPY(InfoPanel)
 };
 
-}
+} /* namespace vpvm */
 
 #endif // INFOPANEL_H

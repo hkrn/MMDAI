@@ -40,6 +40,9 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent) :
@@ -95,3 +98,5 @@ QDoubleSpinBox *GravitySettingDialog::createSpinBox(double value) const
     spinBox->setValue(value);
     return spinBox;
 }
+
+} /* namespace vpvm */

@@ -34,14 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "models/BoneMotionModel.h"
 #include "common/util.h"
 #include "dialogs/BoneDialog.h"
-#include "models/BoneMotionModel.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-
-using namespace vpvl2;
 
 namespace {
 
@@ -58,6 +56,11 @@ static void UISetAngleSpinBoxRange(QDoubleSpinBox *spinbox)
 }
 
 }
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 
 BoneDialog::BoneDialog(BoneMotionModel *bmm, QWidget *parent) :
     QDialog(parent),
@@ -122,13 +125,15 @@ BoneDialog::~BoneDialog()
 
 void BoneDialog::retranslate()
 {
-    m_xPositionLabel->setText(tr("X Position"));
-    m_yPositionLabel->setText(tr("Y Position"));
-    m_zPositionLabel->setText(tr("Z Position"));
-    m_xAngleLabel->setText(tr("X Axis"));
-    m_yAngleLabel->setText(tr("Y Axis"));
-    m_zAngleLabel->setText(tr("Z Axis"));
-    setWindowTitle(tr("Bone dialog of %1").arg(internal::toQStringFromBone(m_boneMotionModel->selectedBone())));
+    /* lupdate cannot parse tr() syntax correctly */
+    m_xPositionLabel->setText(vpvm::BoneDialog::tr("X Position"));
+    m_yPositionLabel->setText(vpvm::BoneDialog::tr("Y Position"));
+    m_zPositionLabel->setText(vpvm::BoneDialog::tr("Z Position"));
+    m_xAngleLabel->setText(vpvm::BoneDialog::tr("X Axis"));
+    m_yAngleLabel->setText(vpvm::BoneDialog::tr("Y Axis"));
+    m_zAngleLabel->setText(vpvm::BoneDialog::tr("Z Axis"));
+    setWindowTitle(vpvm::BoneDialog::tr("Bone dialog of %1")
+                   .arg(toQStringFromBone(m_boneMotionModel->selectedBone())));
 }
 
 void BoneDialog::setPosition(const Vector3 &position)
@@ -186,3 +191,5 @@ void BoneDialog::dialogRejected()
     m_boneMotionModel->mutableState()->restore();
     close();
 }
+
+} /* namespace vpvm */

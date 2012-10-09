@@ -41,6 +41,9 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
@@ -145,8 +148,8 @@ void ModelInfoWidget::retranslate()
 void ModelInfoWidget::setModel(IModel *model)
 {
     if (model) {
-        m_nameValueLabel->setText(internal::toQStringFromModel(model));
-        m_commentValueLabel->setText(internal::toQStringFromString(model->comment()));
+        m_nameValueLabel->setText(toQStringFromModel(model));
+        m_commentValueLabel->setText(toQStringFromString(model->comment()));
         m_verticesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kVertex)));
         m_indicesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kIndex)));
         m_materialsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMaterial)));
@@ -169,3 +172,5 @@ void ModelInfoWidget::setModel(IModel *model)
         m_constrantsCountValueLabel->setText("0");
     }
 }
+
+} /* namespace vpvm */

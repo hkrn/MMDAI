@@ -40,6 +40,9 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CString.h>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+using namespace vpvm;
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
@@ -140,7 +143,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
-        setText(QApplication::tr("Register morph keyframes of %1").arg(internal::toQStringFromModel(m_model)));
+        setText(QApplication::tr("Register morph keyframes of %1").arg(toQStringFromModel(m_model)));
     }
     ~SetKeyframesCommand() {
     }
@@ -188,10 +191,10 @@ public:
             IMorphKeyframe *morphKeyframe = ptr.data();
             /* キーフレームの対象頂点モーフ名を取得する */
             if (morphKeyframe) {
-                key = internal::toQStringFromMorphKeyframe(morphKeyframe);
+                key = toQStringFromMorphKeyframe(morphKeyframe);
             }
             else if (m_morph) {
-                key = internal::toQStringFromMorph(m_morph);
+                key = toQStringFromMorph(m_morph);
             }
             else {
                 qWarning("No bone is selected or null");
@@ -254,7 +257,7 @@ public:
     {
         /* 全ての頂点モーフの情報を保存しておく */
         m_state.save();
-        setText(QApplication::tr("Reset all morphs of %1").arg(internal::toQStringFromModel(model)));
+        setText(QApplication::tr("Reset all morphs of %1").arg(toQStringFromModel(model)));
     }
 
     void undo() {
@@ -281,7 +284,7 @@ public:
         m_oldState.copyFrom(oldState);
         /* 前と後の全ての頂点モーフの情報を保存しておく */
         m_newState.save();
-        setText(QApplication::tr("Set morphs of %1").arg(internal::toQStringFromModel(model)));
+        setText(QApplication::tr("Set morphs of %1").arg(toQStringFromModel(model)));
     }
     virtual ~SetMorphCommand() {
     }
@@ -310,6 +313,9 @@ static IMorph *UIMorphFromModelIndex(const QModelIndex &index, IModel *model)
 }
 
 }
+
+namespace vpvm
+{
 
 MorphMotionModel::MorphMotionModel(Factory *factory, QUndoGroup *undo, QObject *parent)
     : PMDMotionModel(undo, parent),
@@ -461,17 +467,17 @@ void MorphMotionModel::setPMDModel(IModel *model)
             RootPtr rootItemPtr(new TreeItem("", 0, true, false, 0));
             TreeItem *rootItem = static_cast<TreeItem *>(rootItemPtr.data());
             /* 予め決められたカテゴリのアイテムを作成する */
-            QScopedPointer<TreeItem> eyeblow(new TreeItem(tr("Eyeblow"), 0, false, true, rootItem));
-            QScopedPointer<TreeItem> eye(new TreeItem(tr("Eye"), 0, false, true, rootItem));
-            QScopedPointer<TreeItem> lip(new TreeItem(tr("Lip"), 0, false, true, rootItem));
-            QScopedPointer<TreeItem> other(new TreeItem(tr("Other"), 0, false, true, rootItem));
+            QScopedPointer<TreeItem> eyeblow(new TreeItem(vpvm::MorphMotionModel::tr("Eyeblow"), 0, false, true, rootItem));
+            QScopedPointer<TreeItem> eye(new TreeItem(vpvm::MorphMotionModel::tr("Eye"), 0, false, true, rootItem));
+            QScopedPointer<TreeItem> lip(new TreeItem(vpvm::MorphMotionModel::tr("Lip"), 0, false, true, rootItem));
+            QScopedPointer<TreeItem> other(new TreeItem(vpvm::MorphMotionModel::tr("Other"), 0, false, true, rootItem));
             Array<IMorph *> morphs;
             model->getMorphRefs(morphs);
             const int nmorphs = morphs.count();
             Keys keys;
             for (int i = 0; i < nmorphs; i++) {
                 IMorph *morph = morphs[i];
-                const QString &name = internal::toQStringFromMorph(morph);
+                const QString &name = toQStringFromMorph(morph);
                 TreeItem *child, *parent = 0;
                 /* カテゴリ毎に頂点モーフを追加して整理する */
                 switch (morph->category()) {
@@ -509,7 +515,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
         }
         m_model = model;
         emit modelDidChange(model);
-        qDebug("Set a model in MorphMotionModel: %s", qPrintable(internal::toQStringFromModel(model)));
+        qDebug("Set a model in MorphMotionModel: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
         m_model = 0;
@@ -531,7 +537,7 @@ void MorphMotionModel::loadMotion(IMotion *motion, const IModel *model)
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);
-            const QString &key = internal::toQStringFromMorphKeyframe(keyframe);
+            const QString &key = toQStringFromMorphKeyframe(keyframe);
             const Keys &keys = this->keys();
             if (keys.contains(key)) {
                 int frameIndex = static_cast<int>(keyframe->timeIndex());
@@ -551,10 +557,10 @@ void MorphMotionModel::loadMotion(IMotion *motion, const IModel *model)
         m_motion = motion;
         refreshModel(m_model);
         setModified(false);
-        qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(internal::toQStringFromModel(model)));
+        qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
-        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(internal::toQStringFromModel(model)));
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(toQStringFromModel(model)));
     }
 }
 
@@ -651,3 +657,5 @@ void MorphMotionModel::setWeight(const IMorph::WeightPrecision &value, IMorph *m
         m_scene->updateModel(m_model);
     }
 }
+
+} /* namespace vpvm */

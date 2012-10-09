@@ -34,16 +34,20 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TABWIDGET_H
-#define TABWIDGET_H
+#ifndef VPVM_TABWIDGET_H
+#define VPVM_TABWIDGET_H
 
 #include <QtGui/QTabWidget>
 #include <vpvl2/Scene.h>
 
+class QSettings;
+
+namespace vpvm
+{
+
 class AssetWidget;
 class CameraPerspectiveWidget;
 class SceneLightWidget;
-class QSettings;
 
 class TabWidget : public QWidget
 {
@@ -72,5 +76,7 @@ private:
 
     Q_DISABLE_COPY(TabWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // TABWIDGET_H

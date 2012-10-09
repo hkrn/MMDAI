@@ -36,7 +36,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include <vpvl/Project.h> /* for libxml2's functions and constants */
+#include <libxml/xmlwriter.h>
 #include <portaudio.h>
 #include "common/Application.h"
 #include "common/LoggerWidget.h"
@@ -120,9 +120,9 @@ int main(int argc, char *argv[])
     xmlInitGlobals();
     xmlInitParser();
     Pa_Initialize();
-    VideoEncoder::initialize();
+    vpvm::VideoEncoder::initialize();
 
-    Application a(argc, argv);
+    vpvm::Application a(argc, argv);
     QWidget fake;
     QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
@@ -135,24 +135,24 @@ int main(int argc, char *argv[])
 
     int result = -1;
     if (!vpvl2::isLibraryVersionCorrect(VPVL2_VERSION)) {
-        internal::warning(&fake,
-                          QApplication::tr("libvpvl2 version mismatch"),
-                          QApplication::tr("libvpvl2's version is incorrect (expected: %1 actual: %2).\n"
-                                           "Please replace libvpvl to correct version or reinstall MMDAI.")
-                          .arg(VPVL2_VERSION_STRING).arg(vpvl2::libraryVersionString()));
+        vpvm::warning(&fake,
+                      QApplication::tr("libvpvl2 version mismatch"),
+                      QApplication::tr("libvpvl2's version is incorrect (expected: %1 actual: %2).\n"
+                                       "Please replace libvpvl to correct version or reinstall MMDAI.")
+                      .arg(VPVL2_VERSION_STRING).arg(vpvl2::libraryVersionString()));
         return result;
     }
 
     try {
-        MainWindow w;
+        vpvm::MainWindow w;
         w.show();
         result = a.exec();
     } catch (std::exception &e) {
-        internal::warning(&fake,
-                          QApplication::tr("Exception caught"),
-                          QApplication::tr("Exception caught: %1").arg(e.what()));
+        vpvm::warning(&fake,
+                      QApplication::tr("Exception caught"),
+                      QApplication::tr("Exception caught: %1").arg(e.what()));
     }
-    LoggerWidget::destroyInstance();
+    vpvm::LoggerWidget::destroyInstance();
     Pa_Terminate();
     xmlCleanupParser();
     xmlMemoryDump();

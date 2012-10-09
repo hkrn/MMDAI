@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MORPHWIDGET_H
-#define MORPHWIDGET_H
+#ifndef VPVM_MORPHWIDGET_H
+#define VPVM_MORPHWIDGET_H
 
 #include <QtGui/QWidget>
 #include <vpvl2/Common.h>
@@ -45,11 +45,16 @@ class IModel;
 class IMorph;
 }
 
-class MorphMotionModel;
 class QComboBox;
 class QGroupBox;
 class QPushButton;
 class QSlider;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
+class MorphMotionModel;
 
 class MorphWidget : public QWidget
 {
@@ -63,11 +68,11 @@ public:
 signals:
     void morphWillChange();
     void morphDidChange();
-    void morphDidRegister(vpvl2::IMorph *morph);
+    void morphDidRegister(IMorph *morph);
 
 private slots:
     void retranslate();
-    void setPMDModel(vpvl2::IModel *model);
+    void setPMDModel(IModel *model);
     void setEyeWeight(int value);
     void setLipWeight(int value);
     void setEyeblowWeight(int value);
@@ -82,7 +87,7 @@ private:
     void setMorphWeight(const QComboBox *comboBox, int value);
     void registerBase(const QComboBox *comboBox);
     void updateMorphWeight(const QComboBox *comboBox, QSlider *slider);
-    vpvl2::IMorph *findMorph(const QString &name);
+    IMorph *findMorph(const QString &name);
     QSlider *createSlider() const;
 
     QGroupBox *m_eyeGroup;
@@ -97,15 +102,17 @@ private:
     QSlider *m_lipSlider;
     QSlider *m_eyeblowSlider;
     QSlider *m_otherSlider;
-    QPushButton *m_eyeRegistButton;
-    QPushButton *m_lipRegistButton;
-    QPushButton *m_eyeblowRegistButton;
-    QPushButton *m_otherRegistButton;
+    QPushButton *m_eyeRegisterButton;
+    QPushButton *m_lipRegisterButton;
+    QPushButton *m_eyeblowRegisterButton;
+    QPushButton *m_otherRegisterButton;
     QPushButton *m_resetAllButton;
     MorphMotionModel *m_morphMotionModel;
     bool m_seek;
 
     Q_DISABLE_COPY(MorphWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // MORPHWIDGET_H

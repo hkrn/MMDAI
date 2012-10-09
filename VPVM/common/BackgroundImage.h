@@ -34,14 +34,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef BACKGROUNDIMAGE_H
-#define BACKGROUNDIMAGE_H
+#ifndef VPVM_BACKGROUNDIMAGE_H_
+#define VPVM_BACKGROUNDIMAGE_H_
 
 #include <QtGui/QImage>
 #include <QtOpenGL/QtOpenGL>
 #include "TextureDrawHelper.h"
 
-namespace internal {
+namespace vpvm {
 
 class BackgroundImage {
 public:
@@ -141,6 +141,6 @@ private:
     bool m_uniformImage;
 };
 
-}
+} /* namespace vpvm */
 
 #endif // BACKGROUNDIMAGE_H

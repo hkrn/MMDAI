@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SCENELIGHTWIDGET_H
-#define SCENELIGHTWIDGET_H
+#ifndef VPVM_SCENELIGHTWIDGET_H
+#define VPVM_SCENELIGHTWIDGET_H
 
 #include <QtGui/QWidget>
 #include <vpvl2/Common.h>
@@ -44,6 +44,11 @@ class QDoubleSpinBox;
 class QGroupBox;
 class QPushButton;
 class QSpinBox;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 
 class SceneLightWidget : public QWidget
 {
@@ -54,12 +59,12 @@ public:
     ~SceneLightWidget();
 
 public slots:
-    void setColor(const vpvl2::Vector3 &value);
-    void setDirection(const vpvl2::Vector3 &value);
+    void setColor(const Vector3 &value);
+    void setDirection(const Vector3 &value);
 
 signals:
-    void lightColorDidSet(const vpvl2::Vector3 &value);
-    void lightDirectionDidSet(const vpvl2::Vector3 &value);
+    void lightColorDidSet(const Vector3 &value);
+    void lightDirectionDidSet(const Vector3 &value);
 
 private slots:
     void retranslate();
@@ -84,5 +89,7 @@ private:
     QDoubleSpinBox *m_z;
     QPushButton *m_openColorDialog;
 };
+
+} /* namespace vpvm */
 
 #endif // SCENELIGHTWIDGET_H

@@ -34,11 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELINFOWIDGET_H
-#define MODELINFOWIDGET_H
+#ifndef VPVM_MODELINFOWIDGET_H
+#define VPVM_MODELINFOWIDGET_H
 
 #include <QtGui/QWidget>
-#include <vpvl/Common.h>
 
 namespace vpvl2 {
 class IModel;
@@ -47,6 +46,11 @@ class IModel;
 class QLabel;
 class QLineEdit;
 class QTextEdit;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class ModelInfoWidget : public QWidget
@@ -59,7 +63,7 @@ public:
 
 private slots:
     void retranslate();
-    void setModel(vpvl2::IModel *model);
+    void setModel(IModel *model);
 
 private:
     QLabel *m_nameLabel;
@@ -83,5 +87,7 @@ private:
     QLabel *m_constrantsCountLabel;
     QLineEdit *m_constrantsCountValueLabel;
 };
+
+} /* namespace vpvm */
 
 #endif // MODELINFOWIDGET_H

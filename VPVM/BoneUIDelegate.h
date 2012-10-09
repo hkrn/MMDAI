@@ -34,10 +34,13 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef BONEUIDELEGATE_H
-#define BONEUIDELEGATE_H
+#ifndef VPVM_BONEUIDELEGATE_H
+#define VPVM_BONEUIDELEGATE_H
 
 #include <QtCore/QObject>
+
+namespace vpvm
+{
 
 class BoneMotionModel;
 class MainWindow;
@@ -64,5 +67,7 @@ private:
 
     Q_DISABLE_COPY(BoneUIDelegate)
 };
+
+} /* namespace vpvm */
 
 #endif // BONEUIDELEGATE_H

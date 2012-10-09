@@ -39,6 +39,9 @@
 #include "common/SceneLoader.h"
 #include "BackgroundImageSettingDialog.h"
 
+namespace vpvm
+{
+
 BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, QWidget *parent) :
     QDialog(parent),
     m_position(loader->backgroundImagePosition()),
@@ -95,3 +98,5 @@ void BackgroundImageSettingDialog::restoreAndClose()
     emit uniformDidEnable(m_scaled);
     close();
 }
+
+} /* namespace vpvm */

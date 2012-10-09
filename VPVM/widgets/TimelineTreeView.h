@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINETREEVIEW_H
-#define TIMELINETREEVIEW_H
+#ifndef VPVM_TIMELINETREEVIEW_H
+#define VPVM_TIMELINETREEVIEW_H
 
 #include <QtCore/QModelIndex>
 #include <QtGui/QHeaderView>
@@ -43,8 +43,12 @@
 
 #include <vpvl2/Common.h>
 
-class MotionBaseModel;
 class QItemDelegate;
+
+namespace vpvm
+{
+
+class MotionBaseModel;
 
 class TimelineTreeView : public QTreeView
 {
@@ -114,5 +118,7 @@ protected:
 private:
     Q_DISABLE_COPY(TimelineHeaderView)
 };
+
+} /* namespace vpvm */
 
 #endif // TIMELINETREEVIEW_H

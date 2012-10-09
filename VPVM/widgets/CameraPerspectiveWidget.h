@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef PERSPECTIONWIDGET_H
-#define PERSPECTIONWIDGET_H
+#ifndef VPVM_PERSPECTIONWIDGET_H
+#define VPVM_PERSPECTIONWIDGET_H
 
 #include <QtGui/QWidget>
 #include <vpvl2/Common.h>
@@ -51,6 +51,11 @@ class QLabel;
 class QPushButton;
 class QRadioButton;
 
+namespace vpvm
+{
+
+using namespace vpvl2;
+
 class CameraPerspectiveWidget : public QWidget
 {
     Q_OBJECT
@@ -59,10 +64,10 @@ public:
     explicit CameraPerspectiveWidget(QWidget *parent = 0);
 
 public slots:
-    void setCameraPerspective(const vpvl2::ICamera *camera);
+    void setCameraPerspective(const ICamera *camera);
 
 signals:
-    void cameraPerspectiveDidChange(const QSharedPointer<vpvl2::ICamera> &camera);
+    void cameraPerspectiveDidChange(const QSharedPointer<ICamera> &camera);
     void cameraPerspectiveDidReset();
 
 private slots:
@@ -82,15 +87,15 @@ private slots:
     void updateFovy(double value);
     void updateDistance(double value);
     void initializeCamera();
-    void setPositionFromModel(const vpvl2::Vector3 &value);
-    void setPositionFromBone(const vpvl2::Vector3 &value);
-    void setPositionFromBone(const QList<vpvl2::IBone *> &bones);
+    void setPositionFromModel(const Vector3 &value);
+    void setPositionFromBone(const Vector3 &value);
+    void setPositionFromBone(const QList<IBone *> &bones);
 
 private:
-    QSharedPointer<vpvl2::ICamera> createCamera() const;
+    QSharedPointer<ICamera> createCamera() const;
 
-    vpvl2::Vector3 m_currentPosition;
-    vpvl2::Vector3 m_currentAngle;
+    Vector3 m_currentPosition;
+    Vector3 m_currentAngle;
     QGroupBox *m_presetGroup;
     QGroupBox *m_positionGroup;
     QGroupBox *m_rotationGroup;
@@ -115,12 +120,14 @@ private:
     QDoubleSpinBox *m_fovy;
     QDoubleSpinBox *m_distance;
     QPushButton *m_initializeButton;
-    vpvl2::Scalar m_currentFovy;
-    vpvl2::Scalar m_currentDistance;
+    Scalar m_currentFovy;
+    Scalar m_currentDistance;
     bool m_enableFollowingModel;
     bool m_enableFollowingBone;
 
     Q_DISABLE_COPY(CameraPerspectiveWidget)
 };
+
+} /* namespace vpvl2 */
 
 #endif // PERSPECTIONWIDGET_H

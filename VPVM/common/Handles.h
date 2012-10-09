@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef HANDLES_H
-#define HANDLES_H
+#ifndef VPVM_HANDLES_H_
+#define VPVM_HANDLES_H_
 
 #include <QtOpenGL/QtOpenGL>
 #include <QtCore/QRectF>
@@ -43,10 +43,6 @@
 
 #include <vpvl2/Common.h>
 #include <assimp.hpp>
-
-namespace internal {
-class TextureDrawHelper;
-}
 
 namespace vpvl2 {
 class IBone;
@@ -56,7 +52,13 @@ class IModel;
 class btBvhTriangleMeshShape;
 class btRigidBody;
 class btTriangleMesh;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
+class TextureDrawHelper;
 
 class Handles : public QObject
 {
@@ -76,12 +78,12 @@ public:
         Texture disableRotate;
     };
     struct Vertex {
-        vpvl2::Vector3 position;
-        vpvl2::Vector3 normal;
+        Vector3 position;
+        Vector3 normal;
     };
     struct Model {
-        vpvl2::Array<Vertex> vertices;
-        vpvl2::Array<uint16_t> indices;
+        Array<Vertex> vertices;
+        Array<uint16_t> indices;
         btRigidBody *body;
     };
     struct RotationHandle {
@@ -124,37 +126,37 @@ public:
 
     void load();
     void resize(const QSize &size);
-    bool testHitModel(const vpvl2::Vector3 &rayFrom,
-                      const vpvl2::Vector3 &rayTo,
+    bool testHitModel(const Vector3 &rayFrom,
+                      const Vector3 &rayTo,
                       bool setTracked,
                       int &flags,
-                      vpvl2::Vector3 &pick);
+                      Vector3 &pick);
     bool testHitImage(const QPointF &p,
                       bool movable,
                       bool rotateable,
                       int &flags,
                       QRectF &rect);
-    void drawImageHandles(vpvl2::IBone *bone);
-    void drawRotationHandle(const vpvl2::IModel *model);
-    void drawMoveHandle(const vpvl2::IModel *model);
-    btScalar angle(const vpvl2::Vector3 &pos) const;
+    void drawImageHandles(IBone *bone);
+    void drawRotationHandle(const IModel *model);
+    void drawMoveHandle(const IModel *model);
+    btScalar angle(const Vector3 &pos) const;
 
-    void setPoint3D(const vpvl2::Vector3 &value);
+    void setPoint3D(const Vector3 &value);
     void setPoint2D(const QPointF &value);
     void setAngle(float value);
     void setRotateDirection(bool value);
-    const vpvl2::Vector3 diffPoint3D(const vpvl2::Vector3 &value) const;
+    const Vector3 diffPoint3D(const Vector3 &value) const;
     const QPointF diffPoint2D(const QPointF &value) const;
     float diffAngle(float value) const;
-    vpvl2::IBone *currentBone() const { return m_bone; }
+    IBone *currentBone() const { return m_bone; }
     bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
     bool isAngleZero() const { return m_prevAngle == 0.0f; }
     Flags constraint() const { return m_constraint; }
     int modeFromConstraint() const;
-    const vpvl2::Transform modelHandleTransform() const;
+    const Transform modelHandleTransform() const;
 
     void setState(Flags value);
-    void setBone(vpvl2::IBone *value);
+    void setBone(IBone *value);
     void setLocal(bool value);
     void setVisible(bool value);
     void setVisibilityFlags(int value);
@@ -169,8 +171,8 @@ private:
     void loadImageHandles();
     void loadModelHandles();
 
-    internal::TextureDrawHelper *m_helper;
-    vpvl2::IBone *m_bone;
+    TextureDrawHelper *m_helper;
+    IBone *m_bone;
     StaticWorld *m_world;
     SceneLoader *m_loader;
     QGLShaderProgram m_program;
@@ -184,7 +186,7 @@ private:
     Texture m_local;
     Texture m_view;
     Flags m_constraint;
-    vpvl2::Vector3 m_prevPos3D;
+    Vector3 m_prevPos3D;
     QPointF m_prevPos2D;
     float m_prevAngle;
     int m_visibilityFlags;
@@ -192,5 +194,7 @@ private:
 
     Q_DISABLE_COPY(Handles)
 };
+
+} /* namespace vpvm */
 
 #endif // HANDLES_H

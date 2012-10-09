@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef GRID_H
-#define GRID_H
+#ifndef VPVM_GRID_H_
+#define VPVM_GRID_H_
 
 #include <QtGlobal>
 #include <QtOpenGL/QGLFunctions>
@@ -45,7 +45,7 @@
 
 #include "SceneLoader.h"
 
-namespace internal {
+namespace vpvm {
 
 using namespace vpvl2;
 
@@ -165,6 +165,6 @@ private:
     Q_DISABLE_COPY(Grid)
 };
 
-}
+} /* namespace vpvm */
 
 #endif // GRID_H

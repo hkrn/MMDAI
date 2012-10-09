@@ -38,6 +38,9 @@
 
 #include <QtGui/QtGui>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 SceneLightWidget::SceneLightWidget(QWidget *parent) :
@@ -162,3 +165,5 @@ QDoubleSpinBox *SceneLightWidget::createDoubleSpinBox(const char *slot) const
     connect(spinBox, SIGNAL(valueChanged(double)), slot);
     return spinBox;
 }
+
+} /* namespace vpvm */

@@ -234,6 +234,9 @@ const QByteArray UILoadFile(const QString &filename,
 
 }
 
+namespace vpvm
+{
+
 SceneLoader::SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *context)
     : QObject(),
       m_depthBuffer(0),
@@ -280,7 +283,7 @@ SceneLoader::~SceneLoader()
 void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid)
 {
     /* モデル名が空っぽの場合はファイル名から補完しておく */
-    const QString &key = internal::toQStringFromModel(model).trimmed();
+    const QString &key = toQStringFromModel(model).trimmed();
     if (key.isEmpty()) {
         CString s(key);
         model->setName(&s);
@@ -1210,7 +1213,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModel *asset)
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
         const char lineSeparator[] = "\r\n";
-        stream << internal::toQStringFromModel(asset) << lineSeparator;
+        stream << toQStringFromModel(asset) << lineSeparator;
         stream << m_name2assets.key(asset) << lineSeparator;
         stream << asset->scaleFactor() << lineSeparator;
         const Vector3 &position = asset->position();
@@ -1220,7 +1223,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModel *asset)
         stream << QString("%1,%2,%3").arg(rotation.x(), 0, 'f', 1)
                   .arg(rotation.y(), 0, 'f', 1).arg(rotation.z(), 0, 'f', 1) << lineSeparator;
         const IBone *bone = asset->parentBone();
-        stream << (bone ? internal::toQStringFromBone(bone) : "地面") << lineSeparator;
+        stream << (bone ? toQStringFromBone(bone) : "地面") << lineSeparator;
         stream << 1 << lineSeparator;
     }
     else {
@@ -1763,7 +1766,7 @@ IBone *SceneLoader::assetParentBone(IModel *asset) const
 void SceneLoader::setAssetParentBone(const IModel *asset, IBone *bone)
 {
     if (m_project)
-        m_project->setModelSetting(asset, "parent.bone", internal::toQStringFromBone(bone).toStdString());
+        m_project->setModelSetting(asset, "parent.bone", toQStringFromBone(bone).toStdString());
 }
 
 IModel *SceneLoader::selectedAsset() const
@@ -2017,3 +2020,5 @@ qt::World *SceneLoader::world() const
 {
     return m_world;
 }
+
+} /*  namespace vpvm */

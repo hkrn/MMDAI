@@ -41,6 +41,11 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 AssetWidget::AssetWidget(QWidget *parent) :
@@ -144,21 +149,21 @@ AssetWidget::~AssetWidget()
 
 void AssetWidget::retranslate()
 {
-    m_assetGroup->setTitle(tr("Asset"));
-    m_assignGroup->setTitle(tr("Assign"));
-    m_positionGroup->setTitle(tr("Position"));
-    m_rotationGroup->setTitle(tr("Rotation"));
-    m_removeButton->setText(tr("Remove"));
-    m_scaleLabel->setText(tr("Scale"));
-    m_opacityLabel->setText(tr("Opacity"));
-    m_modelComboBox->setItemText(0, tr("Ground"));
+    m_assetGroup->setTitle(vpvm::AssetWidget::tr("Asset"));
+    m_assignGroup->setTitle(vpvm::AssetWidget::tr("Assign"));
+    m_positionGroup->setTitle(vpvm::AssetWidget::tr("Position"));
+    m_rotationGroup->setTitle(vpvm::AssetWidget::tr("Rotation"));
+    m_removeButton->setText(vpvm::AssetWidget::tr("Remove"));
+    m_scaleLabel->setText(vpvm::AssetWidget::tr("Scale"));
+    m_opacityLabel->setText(vpvm::AssetWidget::tr("Opacity"));
+    m_modelComboBox->setItemText(0, vpvm::AssetWidget::tr("Ground"));
 }
 
 void AssetWidget::addAsset(IModel *asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
     m_assets.append(asset);
-    m_assetComboBox->addItem(internal::toQStringFromModel(asset));
+    m_assetComboBox->addItem(toQStringFromModel(asset));
     m_assetComboBox->setCurrentIndex(m_assetComboBox->count() - 1);
     changeCurrentAsset(asset);
     setEnable(true);
@@ -185,7 +190,7 @@ void AssetWidget::addModel(IModel *model)
      * モデルは SceneLoader が管理するのでポインタのみ。解放してはいけない
      */
     m_models.append(model);
-    m_modelComboBox->addItem(internal::toQStringFromModel(model));
+    m_modelComboBox->addItem(toQStringFromModel(model));
 }
 
 void AssetWidget::removeModel(IModel *model)
@@ -241,7 +246,7 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
         m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
         IBone *bone = asset->parentBone();
         if (bone) {
-            const QString &name = internal::toQStringFromBone(bone);
+            const QString &name = toQStringFromBone(bone);
             index = m_modelBonesComboBox->findText(name);
             if (index >= 0)
                 m_modelBonesComboBox->setCurrentIndex(index);
@@ -383,7 +388,7 @@ void AssetWidget::updateModelBoneComboBox(IModel *model)
         const int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
-            m_modelBonesComboBox->addItem(internal::toQStringFromBone(bone), i);
+            m_modelBonesComboBox->addItem(toQStringFromBone(bone), i);
         }
     }
     connect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
@@ -397,3 +402,5 @@ int AssetWidget::modelIndexOf(IModel *model)
         index += 1;
     return index;
 }
+
+} /* namespace vpvm */

@@ -39,8 +39,11 @@
 #include <QtGui/QtGui>
 
 namespace {
-LoggerWidget *g_instance = 0;
+vpvm::LoggerWidget *g_instance = 0;
 }
+
+namespace vpvm
+{
 
 static void LoggerWidgetHandleMessage(QtMsgType /* type */, const char *message)
 {
@@ -123,3 +126,5 @@ void LoggerWidget::clear()
 {
     m_textEdit->clear();
 }
+
+} /* namespace vpvm */

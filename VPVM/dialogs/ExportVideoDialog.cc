@@ -41,8 +41,12 @@
 #include "MainWindow.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
-#include <vpvl/gl2/Renderer.h>
+#include <vpvl2/vpvl2.h>
+
+namespace vpvm
+{
+
+/* lupdate cannot parse tr() syntax correctly */
 
 ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
                                      const QSize &min,
@@ -55,7 +59,7 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QHBoxLayout *subLayout = new QHBoxLayout();
     m_pathEdit = new QLineEdit();
-    m_openFileButton = new QPushButton(tr("Open"));
+    m_openFileButton = new QPushButton(vpvm::ExportVideoDialog::tr("Open"));
     connect(m_openFileButton, SIGNAL(clicked()), SLOT(openFileDialog()));
     subLayout->addWidget(m_pathEdit);
     subLayout->addWidget(m_openFileButton);
@@ -78,19 +82,19 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
-    m_includeGridBox = new QCheckBox(tr("Include grid field"));
+    m_includeGridBox = new QCheckBox(vpvm::ExportVideoDialog::tr("Include grid field"));
     QGridLayout *gridLayout = new QGridLayout();
-    gridLayout->addWidget(new QLabel(tr("Width (px): ")), 0, 0);
+    gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Width (px): ")), 0, 0);
     gridLayout->addWidget(m_widthBox, 0, 1);
-    gridLayout->addWidget(new QLabel(tr("Height (px): ")), 0, 2);
+    gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Height (px): ")), 0, 2);
     gridLayout->addWidget(m_heightBox, 0, 3);
-    gridLayout->addWidget(new QLabel(tr("Keyframe from: ")), 1, 0);
+    gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Keyframe from: ")), 1, 0);
     gridLayout->addWidget(m_fromIndexBox, 1, 1);
-    gridLayout->addWidget(new QLabel(tr("Keyframe to: ")), 1, 2);
+    gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Keyframe to: ")), 1, 2);
     gridLayout->addWidget(m_toIndexBox, 1, 3);
-    gridLayout->addWidget(new QLabel(tr("Video Bitrate (kbps): ")), 2, 0);
+    gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Video Bitrate (kbps): ")), 2, 0);
     gridLayout->addWidget(m_videoBitrateBox, 2, 1);
-    gridLayout->addWidget(new QLabel(tr("Scene FPS: ")), 2, 2);
+    gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Scene FPS: ")), 2, 2);
     gridLayout->addWidget(m_sceneFPSBox, 2, 3);
     mainLayout->addLayout(gridLayout);
     mainLayout->addWidget(m_includeGridBox, 0, Qt::AlignCenter);
@@ -98,7 +102,7 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
     connect(buttons, SIGNAL(accepted()), this, SLOT(saveSettings()));
     connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
     mainLayout->addWidget(buttons);
-    setWindowTitle(tr("Exporting video setting"));
+    setWindowTitle(vpvm::ExportVideoDialog::tr("Exporting video setting"));
     setLayout(mainLayout);
 }
 
@@ -108,10 +112,10 @@ ExportVideoDialog::~ExportVideoDialog()
 
 void ExportVideoDialog::openFileDialog()
 {
-    const QString &filename = internal::openFileDialog("exportVideoDialog/lastAudioDirectory",
-                                                       tr("Open audio file"),
-                                                       tr("WAV file (*.wav)"),
-                                                       m_settings);
+    const QString &filename = vpvm::openFileDialog("exportVideoDialog/lastAudioDirectory",
+                                                   vpvm::ExportVideoDialog::tr("Open audio file"),
+                                                   vpvm::ExportVideoDialog::tr("WAV file (*.wav)"),
+                                                   m_settings);
     if (!filename.isEmpty())
         m_pathEdit->setText(filename);
 }
@@ -200,3 +204,5 @@ void ExportVideoDialog::showEvent(QShowEvent * /* event */)
     }
     m_includeGridBox->setChecked(m_loader->isGridIncluded());
 }
+
+} /* namespace vpvm */

@@ -43,6 +43,9 @@
 
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
@@ -232,3 +235,5 @@ void ScenePlayer::renderSceneFrame0(float step)
             emit motionDidSeek(value);
     }
 }
+
+} /* namespace vpvm */

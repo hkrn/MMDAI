@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef BONEMOTIONMODEL_H
-#define BONEMOTIONMODEL_H
+#ifndef VPVM_BONEMOTIONMODEL_H
+#define VPVM_BONEMOTIONMODEL_H
 
 #include "common/VPDFile.h"
 #include "models/PMDMotionModel.h"
@@ -50,6 +50,11 @@ class IModel;
 class IMotion;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
+
 class BoneMotionModel : public PMDMotionModel
 {
     Q_OBJECT
@@ -62,32 +67,32 @@ public:
         kRotation
     };
 
-    typedef QSharedPointer<vpvl2::IBoneKeyframe> KeyFramePtr;
+    typedef QSharedPointer<IBoneKeyframe> KeyFramePtr;
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    BoneMotionModel(vpvl2::Factory *factory, QUndoGroup *undo, QObject *parent = 0);
+    BoneMotionModel(Factory *factory, QUndoGroup *undo, QObject *parent = 0);
     ~BoneMotionModel();
 
-    void saveMotion(vpvl2::IMotion *motion);
+    void saveMotion(IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
     void pasteKeyframesByTimeIndex(int timeIndex);
     void pasteReversedFrame(int timeIndex);
-    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
+    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const Vector3 &position, const Vector3 &rotation);
     const QString nameFromModelIndex(const QModelIndex &index) const;
-    const QModelIndexList modelIndicesFromBones(const QList<vpvl2::IBone *> &bones, int timeIndex) const;
+    const QModelIndexList modelIndicesFromBones(const QList<IBone *> &bones, int timeIndex) const;
     KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
-    void loadPose(VPDFilePtr pose, vpvl2::IModel *model, int timeIndex);
-    void savePose(VPDFile *pose, vpvl2::IModel *model, int timeIndex);
+    void loadPose(VPDFilePtr pose, IModel *model, int timeIndex);
+    void savePose(VPDFile *pose, IModel *model, int timeIndex);
     void setKeyframes(const KeyFramePairList &keyframes);
     void resetBone(ResetType type);
     void resetAllBones();
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
 
-    vpvl2::IBone *selectedBone() const { return m_selectedBones.isEmpty() ? 0 : m_selectedBones.first(); }
-    vpvl2::Factory *factory() const { return m_factory; }
+    IBone *selectedBone() const { return m_selectedBones.isEmpty() ? 0 : m_selectedBones.first(); }
+    Factory *factory() const { return m_factory; }
     PMDMotionModel::State *mutableState() { return &m_state; }
     bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
 
@@ -97,36 +102,38 @@ public slots:
     void selectBonesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();
-    void setPMDModel(vpvl2::IModel *model);
-    void loadMotion(vpvl2::IMotion *motion, const vpvl2::IModel *model);
-    void rotateAngle(const vpvl2::Scalar &value, vpvl2::IBone *bone, int flags);
-    void translateDelta(const vpvl2::Vector3 &delta, vpvl2::IBone *bone, int flags);
-    void translateTo(const vpvl2::Vector3 &position, vpvl2::IBone *bone, int flags);
-    void selectBones(const QList<vpvl2::IBone *> &bones);
+    void setPMDModel(IModel *model);
+    void loadMotion(IMotion *motion, const IModel *model);
+    void rotateAngle(const Scalar &value, IBone *bone, int flags);
+    void translateDelta(const Vector3 &delta, IBone *bone, int flags);
+    void translateTo(const Vector3 &position, IBone *bone, int flags);
+    void selectBones(const QList<IBone *> &bones);
     void saveTransform();
     void commitTransform();
 
 signals:
-    void positionDidChange(vpvl2::IBone *bone, const vpvl2::Vector3 &lastPosition);
-    void rotationDidChange(vpvl2::IBone *bone, const vpvl2::Quaternion &lastRotation);
-    void bonesDidSelect(const QList<vpvl2::IBone *> &bones);
+    void positionDidChange(IBone *bone, const Vector3 &lastPosition);
+    void rotationDidChange(IBone *bone, const Quaternion &lastRotation);
+    void bonesDidSelect(const QList<IBone *> &bones);
 
 private slots:
-    void setCamera(const vpvl2::ICamera *camera);
+    void setCamera(const ICamera *camera);
 
 private:
-    void translateInternal(const vpvl2::Vector3 &position, const vpvl2::Vector3 &delta, vpvl2::IBone *bone, int flags);
+    void translateInternal(const Vector3 &position, const Vector3 &delta, IBone *bone, int flags);
 
     PMDMotionModel::State m_state;
     KeyFramePairList m_copiedKeyframes;
-    QList<vpvl2::IBone *> m_selectedBones;
-    vpvl2::Factory *m_factory;
-    vpvl2::IBoneKeyframe::InterpolationParameter m_interpolationParameter;
-    vpvl2::Transform m_viewTransform;
-    /* 操作時のボーンの位置と回転量を保存する。操作中は変化しない (vpvl2::IMorphKeyframe::State と重複するが...) */
-    QHash<vpvl2::IBone *, QPair<vpvl2::Vector3, vpvl2::Quaternion> > m_boneTransformStates;
+    QList<IBone *> m_selectedBones;
+    Factory *m_factory;
+    IBoneKeyframe::InterpolationParameter m_interpolationParameter;
+    Transform m_viewTransform;
+    /* 操作時のボーンの位置と回転量を保存する。操作中は変化しない (IMorphKeyframe::State と重複するが...) */
+    QHash<IBone *, QPair<Vector3, Quaternion> > m_boneTransformStates;
 
     Q_DISABLE_COPY(BoneMotionModel)
 };
+
+} /* namespace vpvl2 */
 
 #endif // BONEMOTIONMODEL_H

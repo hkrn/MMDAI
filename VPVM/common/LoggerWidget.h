@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 
-#ifndef LOGGERWIDGET_H_
-#define LOGGERWIDGET_H_
+#ifndef VPVM_LOGGERWIDGET_H_
+#define VPVM_LOGGERWIDGET_H_
 
 #include <QtCore/QStringList>
 #include <QtGui/QTextEdit>
@@ -44,6 +44,9 @@
 
 class QSettings;
 class QTextEdit;
+
+namespace vpvm
+{
 
 class LoggerWidget : public QWidget
 {
@@ -72,4 +75,6 @@ private:
     Q_DISABLE_COPY(LoggerWidget)
 };
 
-#endif // QMALOGVIEWWIDGET_H
+} /* namespace vpvm */
+
+#endif // VPVM_LOGGERWIDGET_H

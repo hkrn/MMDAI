@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef VPVM_UTIL_H
+#define VPVM_UTIL_H
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
@@ -65,7 +65,7 @@
 #define QMA_DEBUG
 #endif
 
-namespace internal
+namespace vpvm
 {
 
 using namespace vpvl2;
@@ -83,7 +83,7 @@ static inline void dumpBones(IModel *model)
         const Vector3 &p = transform.getOrigin();
         const Quaternion &q = transform.getRotation();
         qDebug().nospace() << "index=" << i
-                           << " name=" << internal::toQStringFromBone(bone)
+                           << " name=" << toQStringFromBone(bone)
                            << " position=" << QVector3D(p.x(), p.y(), p.z())
                            << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
     }
@@ -95,7 +95,7 @@ static inline void dumpBoneKeyFrame(const IBoneKeyframe *frame, int index = 0)
     const Quaternion &q = frame->rotation();
     qDebug().nospace() << "index=" << index
                        << " timeIndex=" << frame->timeIndex()
-                       << " name=" << internal::toQStringFromBoneKeyframe(frame)
+                       << " name=" << toQStringFromBoneKeyframe(frame)
                        << " position=" << QVector3D(p.x(), p.y(), p.z())
                        << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
 }
@@ -171,6 +171,6 @@ static const inline Vector3 vec2vec(const QVector4D &value) {
     return v;
 }
 
-}
+} /* namespace vpvm */
 
 #endif // UTIL_H

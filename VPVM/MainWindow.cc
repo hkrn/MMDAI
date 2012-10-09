@@ -74,6 +74,7 @@
 #include <vpvl2/qt/CString.h>
 #include <vpvl2/qt/Encoding.h>
 
+using namespace vpvm;
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
@@ -81,7 +82,7 @@ namespace {
 
 static int UIFindIndexOfActions(IModel *model, const QList<QAction *> &actions)
 {
-    const QString &name = internal::toQStringFromModel(model);
+    const QString &name = toQStringFromModel(model);
     int i = 0, found = -1;
     foreach (QAction *action, actions) {
         if (action->text() == name) {
@@ -142,6 +143,9 @@ struct MainWindow::WindowState {
     bool isImage;
 };
 
+namespace vpvm
+{
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_encoding(0),
@@ -186,7 +190,7 @@ MainWindow::MainWindow(QWidget *parent) :
     constants.insert(IEncoding::kSPHExtension, new CString(".sph"));
     constants.insert(IEncoding::kWrist, new CString("手首"));
     m_encoding = new Encoding(constants);
-    m_factory = new vpvl2::Factory(m_encoding);
+    m_factory = new Factory(m_encoding);
     m_undo = new QUndoGroup(this);
     m_sceneWidget = new SceneWidget(m_encoding, m_factory, &m_settings);
     /* SceneWidget で渡しているのは Scene が initializeGL で初期化されるという特性のため */
@@ -350,10 +354,10 @@ void MainWindow::newProjectFile()
 void MainWindow::loadProject()
 {
     if (maybeSaveProject()) {
-        const QString &filename = internal::openFileDialog("mainWindow/lastProjectDirectory",
-                                                           tr("Open VPVM file"),
-                                                           tr("VPVM file (*.xml)"),
-                                                           &m_settings);
+        const QString &filename = openFileDialog("mainWindow/lastProjectDirectory",
+                                                 tr("Open VPVM file"),
+                                                 tr("VPVM file (*.xml)"),
+                                                 &m_settings);
         if (!filename.isEmpty()) {
             m_boneMotionModel->removeMotion();
             m_morphMotionModel->removeMotion();
@@ -437,7 +441,7 @@ void MainWindow::clearRecentFiles()
 void MainWindow::addModel(IModel *model, const QUuid &uuid)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
-    QString name = internal::toQStringFromModel(model);
+    QString name = toQStringFromModel(model);
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select a model %1").arg(name));
@@ -467,7 +471,7 @@ void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
 void MainWindow::addAsset(IModel *asset, const QUuid &uuid)
 {
     /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
-    QString name = internal::toQStringFromModel(asset);
+    QString name = toQStringFromModel(asset);
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select an asset %1").arg(name));
@@ -498,21 +502,21 @@ void MainWindow::saveMotionAs()
 
 bool MainWindow::saveMotionAs(QString &filename)
 {
-    filename = internal::openSaveDialog("mainWindow/lastModelMotionDirectory",
-                                        tr("Save model motion as a VMD/MVD file"),
-                                        tr("Model motion file (*.vmd *.mvd)"),
-                                        tr("untitiled_model_motion.vmd"),
-                                        &m_settings);
+    filename = openSaveDialog("mainWindow/lastModelMotionDirectory",
+                              tr("Save model motion as a VMD/MVD file"),
+                              tr("Model motion file (*.vmd *.mvd)"),
+                              tr("untitiled_model_motion.vmd"),
+                              &m_settings);
     return !filename.isEmpty() ? saveMotionFile(filename) : false;
 }
 
 void MainWindow::saveCameraMotionAs()
 {
-    const QString &filename = internal::openSaveDialog("mainWindow/lastCameraMotionDirectory",
-                                                       tr("Save camera motion as a VMD/MVD file"),
-                                                       tr("Camera motion file (*.vmd *.mvd)"),
-                                                       tr("untitiled_camera_motion.vmd"),
-                                                       &m_settings);
+    const QString &filename = openSaveDialog("mainWindow/lastCameraMotionDirectory",
+                                             tr("Save camera motion as a VMD/MVD file"),
+                                             tr("Camera motion file (*.vmd *.mvd)"),
+                                             tr("untitiled_camera_motion.vmd"),
+                                             &m_settings);
     QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
     IMotion *motionPtr = motion.data();
     m_sceneMotionModel->saveMotion(motionPtr);
@@ -559,11 +563,11 @@ void MainWindow::saveProjectAs()
 
 bool MainWindow::saveProjectAs(QString &filename)
 {
-    filename = internal::openSaveDialog("mainWindow/lastProjectDirectory",
-                                        tr("Save projct as a VPVM project file"),
-                                        tr("VPVM project file (*.xml)"),
-                                        tr("untitled.xml"),
-                                        &m_settings);
+    filename = openSaveDialog("mainWindow/lastProjectDirectory",
+                              tr("Save projct as a VPVM project file"),
+                              tr("VPVM project file (*.xml)"),
+                              tr("untitled.xml"),
+                              &m_settings);
     return !filename.isEmpty() ? saveProjectFile(filename) : false;
 }
 
@@ -604,11 +608,11 @@ bool MainWindow::confirmSave(bool condition, bool &cancel)
 {
     cancel = false;
     if (condition) {
-        int ret = internal::warning(0,
-                                    tr("Confirm"),
-                                    tr("Do you want to save your changes?"),
-                                    "",
-                                    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        int ret = warning(0,
+                          tr("Confirm"),
+                          tr("Do you want to save your changes?"),
+                          "",
+                          QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         switch (ret) {
         case QMessageBox::Save:
             return true;
@@ -835,15 +839,16 @@ void MainWindow::buildUI()
     m_actionAboutQt->setMenuRole(QAction::AboutQtRole);
 
     QActionGroup *accelerationGroup = new QActionGroup(this);
+    bool hasAcceleration = Scene::isAcceleratorSupported();
     accelerationGroup->setExclusive(true);
     m_actionSetSoftwareSkinningFallback = new QAction(this);
     m_actionSetSoftwareSkinningFallback->setCheckable(true);
     accelerationGroup->addAction(m_actionSetSoftwareSkinningFallback);
     m_actionSetOpenCLSkinningType1 = new QAction(this);
-    m_actionSetOpenCLSkinningType1->setCheckable(Scene::isAcceleratorSupported());
+    m_actionSetOpenCLSkinningType1->setCheckable(hasAcceleration);
     accelerationGroup->addAction(m_actionSetOpenCLSkinningType1);
     m_actionSetOpenCLSkinningType2 = new QAction(this);
-    m_actionSetOpenCLSkinningType2->setCheckable(Scene::isAcceleratorSupported());
+    m_actionSetOpenCLSkinningType2->setCheckable(hasAcceleration);
     accelerationGroup->addAction(m_actionSetOpenCLSkinningType2);
     m_actionSetVertexShaderSkinningType1 = new QAction(this);
     m_actionSetVertexShaderSkinningType1->setCheckable(true);
@@ -1341,32 +1346,32 @@ void MainWindow::connectSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoader();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidget();
-    connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), SLOT(addModel(vpvl2::IModel*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), SLOT(deleteModel(vpvl2::IModel*,QUuid)));
-    connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), SLOT(deleteAsset(vpvl2::IModel*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
-    connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,const vpvl2::IModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(vpvl2::IMotion*,const vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,vpvl2::IModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFilePtr,vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
-    connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,const vpvl2::IModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(vpvl2::IMotion*,const vpvl2::IModel*)));
-    connect(loader, SIGNAL(assetDidAdd(vpvl2::IModel*,QUuid)), assetWidget, SLOT(addAsset(vpvl2::IModel*)));
-    connect(loader, SIGNAL(assetWillDelete(vpvl2::IModel*,QUuid)), assetWidget, SLOT(removeAsset(vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), assetWidget, SLOT(addModel(vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), assetWidget, SLOT(removeModel(vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelWillDelete(vpvl2::IModel*,QUuid)), m_timelineTabWidget, SLOT(clearLastSelectedModel()));
-    connect(loader, SIGNAL(modelDidAdd(vpvl2::IModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
-    connect(loader, SIGNAL(motionDidAdd(vpvl2::IMotion*,const vpvl2::IModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
-    connect(loader, SIGNAL(cameraMotionDidSet(vpvl2::IMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(vpvl2::IMotion*)));
+    connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), SLOT(addModel(IModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), SLOT(deleteModel(IModel*,QUuid)));
+    connect(loader, SIGNAL(assetWillDelete(IModel*,QUuid)), SLOT(deleteAsset(IModel*,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_boneMotionModel, SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_boneMotionModel,SLOT(loadMotion(IMotion*,const IModel*)));
+    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,IModel*)), m_timelineTabWidget, SLOT(loadPose(VPDFilePtr,IModel*)));
+    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_morphMotionModel, SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_morphMotionModel, SLOT(loadMotion(IMotion*,const IModel*)));
+    connect(loader, SIGNAL(assetDidAdd(IModel*,QUuid)), assetWidget, SLOT(addAsset(IModel*)));
+    connect(loader, SIGNAL(assetWillDelete(IModel*,QUuid)), assetWidget, SLOT(removeAsset(IModel*)));
+    connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), assetWidget, SLOT(addModel(IModel*)));
+    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), assetWidget, SLOT(removeModel(IModel*)));
+    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_timelineTabWidget, SLOT(clearLastSelectedModel()));
+    connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), m_timelineTabWidget, SLOT(notifyCurrentTabIndex()));
+    connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(IMotion*)));
+    connect(loader, SIGNAL(cameraMotionDidSet(IMotion*,QUuid)), m_sceneMotionModel, SLOT(loadMotion(IMotion*)));
     connect(loader, SIGNAL(projectDidInitialized()), this, SLOT(resetSceneToModels()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget, SLOT(refreshScene()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel, SLOT(markAsNew()));
-    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), SLOT(setCurrentModel(vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_morphMotionModel, SLOT(setPMDModel(vpvl2::IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(vpvl2::IModel*)));
-    connect(loader ,SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(vpvl2::IModel*,SceneLoader*)));
-    connect(loader, SIGNAL(modelDidSelect(vpvl2::IModel*,SceneLoader*)), m_timelineTabWidget, SLOT(setLastSelectedModel(vpvl2::IModel*)));
-    connect(loader, SIGNAL(assetDidSelect(vpvl2::IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(vpvl2::IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setCurrentModel(IModel*)));
+    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_boneMotionModel, SLOT(setPMDModel(IModel*)));
+    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_morphMotionModel, SLOT(setPMDModel(IModel*)));
+    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModel*)));
+    connect(loader ,SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_timelineTabWidget, SLOT(setLastSelectedModel(IModel*)));
+    connect(loader, SIGNAL(assetDidSelect(IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModel*,SceneLoader*)));
     connect(m_actionEnableEffect, SIGNAL(triggered(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnablePhysics, SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionSetSoftwareSkinningFallback, SIGNAL(toggled(bool)), loader, SLOT(setSoftwareSkinningEnable(bool)));
@@ -1374,27 +1379,27 @@ void MainWindow::connectSceneLoader()
     connect(m_actionSetOpenCLSkinningType2, SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType2(bool)));
     connect(m_actionSetVertexShaderSkinningType1, SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));
     connect(m_actionShowGrid, SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
-    connect(assetWidget, SIGNAL(assetDidRemove(vpvl2::IModel*)), loader, SLOT(deleteAsset(vpvl2::IModel*)));
-    connect(assetWidget, SIGNAL(assetDidSelect(vpvl2::IModel*)), loader, SLOT(setSelectedAsset(vpvl2::IModel*)));
+    connect(assetWidget, SIGNAL(assetDidRemove(IModel*)), loader, SLOT(deleteAsset(IModel*)));
+    connect(assetWidget, SIGNAL(assetDidSelect(IModel*)), loader, SLOT(setSelectedAsset(IModel*)));
     Handles *handles = m_sceneWidget->handles();
-    connect(m_boneMotionModel, SIGNAL(positionDidChange(vpvl2::IBone*,vpvl2::Vector3)), handles, SLOT(updateBone()));
-    connect(m_boneMotionModel, SIGNAL(rotationDidChange(vpvl2::IBone*,vpvl2::Quaternion)), handles, SLOT(updateBone()));
+    connect(m_boneMotionModel, SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateBone()));
+    connect(m_boneMotionModel, SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateBone()));
     connect(m_undo, SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget, SIGNAL(modelDidRotate(vpvl2::Quaternion)), handles, SLOT(updateBone()));
-    connect(m_timelineTabWidget, SIGNAL(currentModelDidChange(vpvl2::IModel*)), m_sceneWidget, SLOT(setSelectedModel(vpvl2::IModel*)));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(Vector3)), handles, SLOT(updateBone()));
+    connect(m_sceneWidget, SIGNAL(modelDidRotate(Quaternion)), handles, SLOT(updateBone()));
+    connect(m_timelineTabWidget, SIGNAL(currentModelDidChange(IModel*)), m_sceneWidget, SLOT(setSelectedModel(IModel*)));
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
     Scene *scene = m_sceneWidget->sceneLoader()->scene();
     ICamera *camera = scene->camera();
     cameraWidget->setCameraPerspective(camera);
-    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<vpvl2::ICamera>)),
-            m_sceneWidget, SLOT(setCameraPerspective(QSharedPointer<vpvl2::ICamera>)));
+    connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<ICamera>)),
+            m_sceneWidget, SLOT(setCameraPerspective(QSharedPointer<ICamera>)));
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidReset()), m_sceneWidget, SLOT(refreshScene()));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::ICamera*)),
-            cameraWidget, SLOT(setCameraPerspective(const vpvl2::ICamera*)));
-    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), cameraWidget, SLOT(setPositionFromModel(vpvl2::Vector3)));
-    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), cameraWidget, SLOT(setPositionFromBone(QList<vpvl2::IBone*>)));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const ICamera*)),
+            cameraWidget, SLOT(setCameraPerspective(const ICamera*)));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(Vector3)), cameraWidget, SLOT(setPositionFromModel(Vector3)));
+    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<IBone*>)), cameraWidget, SLOT(setPositionFromBone(QList<IBone*>)));
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
     ILight *light = scene->light();
@@ -1403,10 +1408,10 @@ void MainWindow::connectSceneLoader()
     lightWidget->setDirection(direction);
     m_boneMotionModel->setScenePtr(scene);
     m_morphMotionModel->setScenePtr(scene);
-    connect(loader, SIGNAL(lightColorDidSet(vpvl2::Vector3)), lightWidget, SLOT(setColor(vpvl2::Vector3)));
-    connect(loader, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), lightWidget, SLOT(setDirection(vpvl2::Vector3)));
-    connect(lightWidget, SIGNAL(lightColorDidSet(vpvl2::Vector3)), loader, SLOT(setLightColor(vpvl2::Vector3)));
-    connect(lightWidget, SIGNAL(lightDirectionDidSet(vpvl2::Vector3)), loader, SLOT(setLightDirection(vpvl2::Vector3)));
+    connect(loader, SIGNAL(lightColorDidSet(Vector3)), lightWidget, SLOT(setColor(Vector3)));
+    connect(loader, SIGNAL(lightDirectionDidSet(Vector3)), lightWidget, SLOT(setDirection(Vector3)));
+    connect(lightWidget, SIGNAL(lightColorDidSet(Vector3)), loader, SLOT(setLightColor(Vector3)));
+    connect(lightWidget, SIGNAL(lightDirectionDidSet(Vector3)), loader, SLOT(setLightDirection(Vector3)));
     connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), loader, SLOT(setProjectDirtyFalse()));
     connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneMotionModel, SIGNAL(cameraMotionDidLoad()), SLOT(disconnectInitialSlots()));
@@ -1429,37 +1434,37 @@ void MainWindow::connectWidgets()
 {
     connect(m_sceneWidget, SIGNAL(initailizeGLContextDidDone()), SLOT(connectSceneLoader()));
     connect(m_sceneWidget, SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
-    connect(m_sceneWidget, SIGNAL(handleDidMoveAbsolute(vpvl2::Vector3,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(translateTo(vpvl2::Vector3,vpvl2::IBone*,int)));
-    connect(m_sceneWidget, SIGNAL(handleDidMoveRelative(vpvl2::Vector3,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(translateDelta(vpvl2::Vector3,vpvl2::IBone*,int)));
-    connect(m_sceneWidget, SIGNAL(handleDidRotate(vpvl2::Scalar,vpvl2::IBone*,int)), m_boneMotionModel, SLOT(rotateAngle(vpvl2::Scalar,vpvl2::IBone*,int)));
-    connect(m_sceneWidget, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_timelineTabWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
-    connect(m_timelineTabWidget, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex,bool,bool)),  m_sceneWidget, SLOT(seekMotion(vpvl2::IKeyframe::TimeIndex,bool,bool)));
+    connect(m_sceneWidget, SIGNAL(handleDidMoveAbsolute(Vector3,IBone*,int)), m_boneMotionModel, SLOT(translateTo(Vector3,IBone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidMoveRelative(Vector3,IBone*,int)), m_boneMotionModel, SLOT(translateDelta(Vector3,IBone*,int)));
+    connect(m_sceneWidget, SIGNAL(handleDidRotate(Scalar,IBone*,int)), m_boneMotionModel, SLOT(rotateAngle(Scalar,IBone*,int)));
+    connect(m_sceneWidget, SIGNAL(bonesDidSelect(QList<IBone*>)), m_timelineTabWidget, SLOT(selectBones(QList<IBone*>)));
+    connect(m_timelineTabWidget, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),  m_sceneWidget, SLOT(seekMotion(IKeyframe::TimeIndex,bool,bool)));
     connect(m_boneMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel, SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_boneMotionModel, SLOT(markAsNew(vpvl2::IModel*)));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_morphMotionModel, SLOT(markAsNew(vpvl2::IModel*)));
-    connect(m_boneMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(refreshMotions()));
-    connect(m_morphMotionModel, SIGNAL(motionDidUpdate(vpvl2::IModel*)), m_sceneWidget, SLOT(refreshMotions()));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
-    connect(m_sceneWidget, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_boneMotionModel, SLOT(selectBones(QList<vpvl2::IBone*>)));
-    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(vpvl2::IMorph*)), m_timelineTabWidget, SLOT(addMorphKeyframesAtCurrentFrameIndex(vpvl2::IMorph*)));
-    connect(m_sceneWidget, SIGNAL(newMotionDidSet(vpvl2::IModel*)), m_sceneMotionModel, SLOT(markAsNew()));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(IModel*)), m_boneMotionModel, SLOT(markAsNew(IModel*)));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(IModel*)), m_morphMotionModel, SLOT(markAsNew(IModel*)));
+    connect(m_boneMotionModel, SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget, SLOT(refreshMotions()));
+    connect(m_morphMotionModel, SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget, SLOT(refreshMotions()));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(IModel*)), m_timelineTabWidget, SLOT(setCurrentFrameIndexZero()));
+    connect(m_sceneWidget, SIGNAL(bonesDidSelect(QList<IBone*>)), m_boneMotionModel, SLOT(selectBones(QList<IBone*>)));
+    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget, SLOT(addMorphKeyframesAtCurrentFrameIndex(IMorph*)));
+    connect(m_sceneWidget, SIGNAL(newMotionDidSet(IModel*)), m_sceneMotionModel, SLOT(markAsNew()));
     connect(m_sceneWidget, SIGNAL(handleDidGrab()), m_boneMotionModel, SLOT(saveTransform()));
     connect(m_sceneWidget, SIGNAL(handleDidRelease()), m_boneMotionModel, SLOT(commitTransform()));
-    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const vpvl2::ICamera*)), m_boneMotionModel, SLOT(setCamera(const vpvl2::ICamera*)));
-    connect(m_sceneWidget, SIGNAL(motionDidSeek(vpvl2::IKeyframe::TimeIndex)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
+    connect(m_sceneWidget, SIGNAL(cameraPerspectiveDidSet(const ICamera*)), m_boneMotionModel, SLOT(setCamera(const ICamera*)));
+    connect(m_sceneWidget, SIGNAL(motionDidSeek(IKeyframe::TimeIndex)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
     connect(m_sceneWidget, SIGNAL(undoDidRequest()), m_undo, SLOT(undo()));
     connect(m_sceneWidget, SIGNAL(redoDidRequest()), m_undo, SLOT(redo()));
     connect(m_timelineTabWidget, SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget, SLOT(setEditMode(SceneWidget::EditMode)));
     ModelSettingWidget *modelSettingWidget = m_modelTabWidget->modelSettingWidget();
     connect(modelSettingWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget, SLOT(setModelEdgeOffset(double)));
-    connect(modelSettingWidget, SIGNAL(opacityDidChange(vpvl2::Scalar)), m_sceneWidget, SLOT(setModelOpacity(vpvl2::Scalar)));
+    connect(modelSettingWidget, SIGNAL(opacityDidChange(Scalar)), m_sceneWidget, SLOT(setModelOpacity(Scalar)));
     connect(modelSettingWidget, SIGNAL(projectiveShadowDidEnable(bool)), m_sceneWidget, SLOT(setModelProjectiveShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(selfShadowDidEnable(bool)), m_sceneWidget, SLOT(setModelSelfShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget, SLOT(setModelEdgeColor(QColor)));
-    connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(vpvl2::Vector3)), m_sceneWidget, SLOT(setModelPositionOffset(vpvl2::Vector3)));
-    connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(vpvl2::Vector3)), m_sceneWidget, SLOT(setModelRotationOffset(vpvl2::Vector3)));
-    connect(m_sceneWidget, SIGNAL(modelDidMove(vpvl2::Vector3)), modelSettingWidget, SLOT(setPositionOffset(vpvl2::Vector3)));
+    connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(Vector3)), m_sceneWidget, SLOT(setModelPositionOffset(Vector3)));
+    connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(Vector3)), m_sceneWidget, SLOT(setModelRotationOffset(Vector3)));
+    connect(m_sceneWidget, SIGNAL(modelDidMove(Vector3)), modelSettingWidget, SLOT(setPositionOffset(Vector3)));
     MorphWidget *morphWidget = m_modelTabWidget->morphWidget();
     connect(morphWidget, SIGNAL(morphWillChange()), m_morphMotionModel, SLOT(saveTransform()));
     connect(morphWidget, SIGNAL(morphDidChange()), m_morphMotionModel, SLOT(commitTransform()));
@@ -1487,11 +1492,11 @@ void MainWindow::deleteSelectedModel()
 
 void MainWindow::saveModelPose()
 {
-    const QString &filename = internal::openSaveDialog("mainWindow/lastPoseFileDirectory",
-                                                       tr("Save model pose as a VPD file"),
-                                                       tr("VPD file (*.vpd)"),
-                                                       tr("untitled.vpd"),
-                                                       &m_settings);
+    const QString &filename = openSaveDialog("mainWindow/lastPoseFileDirectory",
+                                             tr("Save model pose as a VPD file"),
+                                             tr("VPD file (*.vpd)"),
+                                             tr("untitled.vpd"),
+                                             &m_settings);
     if (!filename.isEmpty()) {
         QFile file(filename);
         if (file.open(QFile::WriteOnly)) {
@@ -1541,13 +1546,13 @@ void MainWindow::exportVideo()
             m_exportingVideoDialog->open();
         }
         else {
-            internal::warning(this, tr("No motion to export."),
-                              tr("Create or load a motion."));
+            warning(this, tr("No motion to export."),
+                    tr("Create or load a motion."));
         }
     }
     else {
-        internal::warning(this, tr("Exporting video feature is not supported."),
-                          tr("Exporting video is disabled because OpenCV is not linked."));
+        warning(this, tr("Exporting video feature is not supported."),
+                tr("Exporting video is disabled because OpenCV is not linked."));
     }
 }
 
@@ -1555,11 +1560,11 @@ void MainWindow::invokeImageExporter()
 {
     disconnect(m_exportingVideoDialog, SIGNAL(settingsDidSave()), this, SLOT(invokeImageExporter()));
     m_exportingVideoDialog->close();
-    const QString &filename = internal::openSaveDialog("mainWindow/lastImageDirectory",
-                                                       tr("Export scene as an image"),
-                                                       tr("Image (*.bmp, *.jpg, *.png)"),
-                                                       tr("untitled.png"),
-                                                       &m_settings);
+    const QString &filename = openSaveDialog("mainWindow/lastImageDirectory",
+                                             tr("Export scene as an image"),
+                                             tr("Image (*.bmp, *.jpg, *.png)"),
+                                             tr("untitled.png"),
+                                             &m_settings);
     if (!filename.isEmpty()) {
         WindowState state;
         QSize videoSize(m_exportingVideoDialog->sceneWidth(), m_exportingVideoDialog->sceneHeight());
@@ -1583,20 +1588,20 @@ void MainWindow::invokeVideoEncoder()
     int fromIndex = m_exportingVideoDialog->fromIndex();
     int toIndex = m_exportingVideoDialog->toIndex();
     if (fromIndex == toIndex) {
-        internal::warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
-                          tr("Specify different value of \"Index from\" and \"Index to\"."));
+        warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
+                tr("Specify different value of \"Index from\" and \"Index to\"."));
         return;
     }
     else if (fromIndex > toIndex) {
-        internal::warning(this, tr("Value of \"Index from\" is bigger than \"Index to\"."),
-                          tr("\"Index from\" must be less than \"Index to\"."));
+        warning(this, tr("Value of \"Index from\" is bigger than \"Index to\"."),
+                tr("\"Index from\" must be less than \"Index to\"."));
         return;
     }
-    const QString &filename = internal::openSaveDialog("mainWindow/lastVideoDirectory",
-                                                       tr("Export scene as a video"),
-                                                       tr("Video (*.mov)"),
-                                                       tr("untitled.mov"),
-                                                       &m_settings);
+    const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
+                                             tr("Export scene as a video"),
+                                             tr("Video (*.mov)"),
+                                             tr("untitled.mov"),
+                                             &m_settings);
     if (!filename.isEmpty()) {
         QScopedPointer<QProgressDialog> progress(new QProgressDialog(this));
         progress->setCancelButtonText(tr("Cancel"));
@@ -1794,12 +1799,12 @@ void MainWindow::invokePlayer()
          * 再生中はボーンが全選択になるのでワイヤーフレーム表示のオプションの関係からシグナルを一時的に解除する。
          * 停止後に makeBonesSelectable 経由でシグナルを復活させる
          */
-        disconnect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
+        disconnect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<IBone*>)), m_sceneWidget, SLOT(selectBones(QList<IBone*>)));
         m_player->start();
     }
     else {
-        internal::warning(this, tr("No motion to export."),
-                          tr("Create or load a motion."));
+        warning(this, tr("No motion to export."),
+                tr("Create or load a motion."));
     }
 }
 
@@ -1811,8 +1816,8 @@ void MainWindow::openPlaySettingDialog()
         m_playSettingDialog->show();
     }
     else {
-        internal::warning(this, tr("No motion to export."),
-                          tr("Create or load a motion."));
+        warning(this, tr("No motion to export."),
+                tr("Create or load a motion."));
     }
 }
 
@@ -1919,7 +1924,7 @@ void MainWindow::updateWindowTitle()
 
 void MainWindow::makeBonesSelectable()
 {
-    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<vpvl2::IBone*>)), m_sceneWidget, SLOT(selectBones(QList<vpvl2::IBone*>)));
+    connect(m_boneMotionModel, SIGNAL(bonesDidSelect(QList<IBone*>)), m_sceneWidget, SLOT(selectBones(QList<IBone*>)));
 }
 
 void MainWindow::disconnectInitialSlots()
@@ -1935,3 +1940,5 @@ void MainWindow::resetSceneToModels()
     m_boneMotionModel->setScenePtr(scene);
     m_morphMotionModel->setScenePtr(scene);
 }
+
+} /* namespace vpvm */

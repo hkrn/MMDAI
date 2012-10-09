@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef INTERPOLATIONGRAPHWIDGET_H
-#define INTERPOLATIONGRAPHWIDGET_H
+#ifndef VPVM_INTERPOLATIONGRAPHWIDGET_H
+#define VPVM_INTERPOLATIONGRAPHWIDGET_H
 
 #include <QtGui/QAbstractItemView>
 #include <QtGui/QWidget>
@@ -45,10 +45,15 @@
 #include "models/BoneMotionModel.h"
 #include "models/SceneMotionModel.h"
 
-class BoneMotionModel;
-class SceneMotionModel;
 class QComboBox;
 class QHBoxLayout;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
+class BoneMotionModel;
+class SceneMotionModel;
 
 class InterpolationGraphWidget : public QWidget
 {
@@ -96,17 +101,17 @@ private slots:
 
 private:
     void updateValues(bool import);
-    void setValue(vpvl2::QuadWord &q, bool import);
-    void setDefault(vpvl2::QuadWord &q);
+    void setValue(QuadWord &q, bool import);
+    void setDefault(QuadWord &q);
 
     BoneMotionModel *m_boneMotionModel;
     SceneMotionModel *m_sceneMotionModel;
     BoneMotionModel::KeyFramePairList m_boneKeyframes;
     SceneMotionModel::CameraKeyframePairList m_cameraKeyframes;
-    vpvl2::IBoneKeyframe::InterpolationParameter m_boneIP;
-    vpvl2::IBoneKeyframe::InterpolationParameter m_preservedBoneIP;
-    vpvl2::ICameraKeyframe::InterpolationParameter m_cameraIP;
-    vpvl2::ICameraKeyframe::InterpolationParameter m_preservedCameraIP;
+    IBoneKeyframe::InterpolationParameter m_boneIP;
+    IBoneKeyframe::InterpolationParameter m_preservedBoneIP;
+    ICameraKeyframe::InterpolationParameter m_cameraIP;
+    ICameraKeyframe::InterpolationParameter m_preservedCameraIP;
     QPoint m_p1;
     QPoint m_p2;
     Type m_type;
@@ -116,5 +121,7 @@ private:
 
     Q_DISABLE_COPY(InterpolationGraphWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // INTERPOLATIONWIDGET_H

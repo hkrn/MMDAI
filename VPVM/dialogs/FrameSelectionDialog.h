@@ -34,13 +34,17 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef FRAMESELECTIONDIALOG_H
-#define FRAMESELECTIONDIALOG_H
+#ifndef VPVM_FRAMESELECTIONDIALOG_H
+#define VPVM_FRAMESELECTIONDIALOG_H
 
 #include <QtGui/QDialog>
 
 class QSettings;
 class QSpinBox;
+
+namespace vpvm
+{
+
 class SceneWidget;
 
 class FrameSelectionDialog : public QDialog
@@ -66,5 +70,7 @@ private:
 
     Q_DISABLE_COPY(FrameSelectionDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // FRAMESELECTIONDIALOG_H

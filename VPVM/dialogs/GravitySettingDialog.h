@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef GRAVITYSETTINGDIALOG_H
-#define GRAVITYSETTINGDIALOG_H
+#ifndef VPVM_GRAVITYSETTINGDIALOG_H
+#define VPVM_GRAVITYSETTINGDIALOG_H
 
 #include <QtGui/QDialog>
 #include <vpvl2/Common.h>
@@ -43,6 +43,10 @@
 class QDoubleSpinBox;
 class QLabel;
 class QSpinBox;
+
+namespace vpvm
+{
+
 class SceneLoader;
 
 class GravitySettingDialog : public QDialog
@@ -68,5 +72,7 @@ private:
     QDoubleSpinBox *m_axisZ;
     QSpinBox *m_randSeed;
 };
+
+} /* namespace vpvm */
 
 #endif // GRAVITYSETTINGDIALOG_H

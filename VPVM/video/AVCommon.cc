@@ -36,7 +36,8 @@
 
 #include "AVCommon.h"
 
-namespace internal {
+namespace vpvm
+{
 
 double ComputePresentTimeStamp(AVStream *stream)
 {
@@ -208,4 +209,4 @@ AVFormatContext *OpenInputFormat(const QString &filename, const char *shortname)
     return formatContext;
 }
 
-}
+} /* namespace vpvm */
