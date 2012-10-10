@@ -60,7 +60,7 @@ class ModelTabWidget : public QWidget
 public:
     explicit ModelTabWidget(QSettings *settings,
                             MorphMotionModel *mmm,
-                            QWidget *parent);
+                            QWidget *parent = 0);
     ~ModelTabWidget();
 
     MorphWidget *morphWidget() const { return m_morphWidget; }

@@ -36,6 +36,8 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Encoding.h>
 #include <libxml/xmlwriter.h>
 #include <portaudio.h>
 #include "common/Application.h"
@@ -43,6 +45,9 @@
 #include "common/util.h"
 #include "video/VideoEncoder.h"
 #include "MainWindow.h"
+
+using namespace vpvl2;
+using namespace vpvl2::qt;
 
 static void SetSearchPaths(const QCoreApplication &app)
 {
@@ -144,7 +149,21 @@ int main(int argc, char *argv[])
     }
 
     try {
-        vpvm::MainWindow w;
+        // TODO: make external
+        QHash<IEncoding::ConstantType, CString *> constants;
+        constants.insert(IEncoding::kArm, new CString("腕"));
+        constants.insert(IEncoding::kAsterisk, new CString("*"));
+        constants.insert(IEncoding::kCenter, new CString("センター"));
+        constants.insert(IEncoding::kElbow, new CString("ひじ"));
+        constants.insert(IEncoding::kFinger, new CString("指"));
+        constants.insert(IEncoding::kLeft, new CString("左"));
+        constants.insert(IEncoding::kLeftKnee, new CString("左ひざ"));
+        constants.insert(IEncoding::kRight, new CString("右"));
+        constants.insert(IEncoding::kRightKnee, new CString("右ひざ"));
+        constants.insert(IEncoding::kSPAExtension, new CString(".spa"));
+        constants.insert(IEncoding::kSPHExtension, new CString(".sph"));
+        constants.insert(IEncoding::kWrist, new CString("手首"));
+        vpvm::MainWindow w(constants);
         w.show();
         result = a.exec();
     } catch (std::exception &e) {

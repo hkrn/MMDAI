@@ -50,7 +50,7 @@ class BoneUIDelegate : public QObject
     Q_OBJECT
 
 public:
-    BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent);
+    BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent = 0);
     ~BoneUIDelegate();
 
 private slots:
