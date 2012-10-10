@@ -59,7 +59,13 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QVBoxLayout *eyeVBoxLayout = new QVBoxLayout();
     m_eyeRegisterButton = new QPushButton();
     m_eyes = new QComboBox();
+    m_eyesEdit = new QLineEdit();
+    m_eyesCompleter = new QCompleter();
+    m_eyesCompleterModel = new QStringListModel();
     m_eyeSlider = createSlider();
+    m_eyesCompleter->setModel(m_eyesCompleterModel);
+    m_eyesEdit->setCompleter(m_eyesCompleter);
+    m_eyes->setLineEdit(m_eyesEdit);
     connect(m_eyes, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
     connect(m_eyeRegisterButton, SIGNAL(clicked()), SLOT(registerEye()));
     connect(m_eyeSlider, SIGNAL(valueChanged(int)), SLOT(setEyeWeight(int)));
@@ -72,7 +78,13 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QVBoxLayout *lipVBoxLayout = new QVBoxLayout();
     m_lipRegisterButton = new QPushButton();
     m_lips = new QComboBox();
+    m_lipsEdit = new QLineEdit();
+    m_lipsCompleter = new QCompleter();
+    m_lipsCompleterModel = new QStringListModel();
     m_lipSlider = createSlider();
+    m_lipsCompleter->setModel(m_lipsCompleterModel);
+    m_lipsEdit->setCompleter(m_lipsCompleter);
+    m_lips->setLineEdit(m_lipsEdit);
     connect(m_lips, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
     connect(m_lipRegisterButton, SIGNAL(clicked()), SLOT(registerLip()));
     connect(m_lipSlider, SIGNAL(valueChanged(int)), SLOT(setLipWeight(int)));
@@ -85,7 +97,13 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QVBoxLayout *eyeblowVBoxLayout = new QVBoxLayout();
     m_eyeblowRegisterButton = new QPushButton();
     m_eyeblows = new QComboBox();
+    m_eyeblowsEdit = new QLineEdit();
+    m_eyeblowsCompleter = new QCompleter();
+    m_eyeblowsCompleterModel = new QStringListModel();
     m_eyeblowSlider = createSlider();
+    m_eyeblowsCompleter->setModel(m_eyeblowsCompleterModel);
+    m_eyeblowsEdit->setCompleter(m_eyeblowsCompleter);
+    m_eyeblows->setLineEdit(m_eyeblowsEdit);
     connect(m_eyeblows, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
     connect(m_eyeblowRegisterButton, SIGNAL(clicked()), SLOT(registerEyeblow()));
     connect(m_eyeblowSlider, SIGNAL(valueChanged(int)), SLOT(setEyeblowWeight(int)));
@@ -98,7 +116,13 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QVBoxLayout *otherVBoxLayout = new QVBoxLayout();
     m_otherRegisterButton = new QPushButton();
     m_others = new QComboBox();
+    m_othersEdit = new QLineEdit();
+    m_othersCompleter = new QCompleter();
+    m_othersCompleterModel = new QStringListModel();
     m_otherSlider = createSlider();
+    m_othersCompleter->setModel(m_othersCompleterModel);
+    m_othersEdit->setCompleter(m_othersCompleter);
+    m_others->setLineEdit(m_othersEdit);
     connect(m_others, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
     connect(m_otherRegisterButton, SIGNAL(clicked()), SLOT(registerOther()));
     connect(m_otherSlider, SIGNAL(valueChanged(int)), SLOT(setOtherWeight(int)));
@@ -144,6 +168,7 @@ void MorphWidget::retranslate()
 
 void MorphWidget::setPMDModel(IModel *model)
 {
+    QStringList eyes, lips, eyeblows, others;
     m_eyes->clear();
     m_lips->clear();
     m_eyeblows->clear();
@@ -158,15 +183,19 @@ void MorphWidget::setPMDModel(IModel *model)
             switch (morph->category()) {
             case IMorph::kEye:
                 m_eyes->addItem(name, name);
+                eyes.append(name);
                 break;
             case IMorph::kLip:
                 m_lips->addItem(name, name);
+                lips.append(name);
                 break;
             case IMorph::kEyeblow:
                 m_eyeblows->addItem(name, name);
+                eyeblows.append(name);
                 break;
             case IMorph::kOther:
                 m_others->addItem(name, name);
+                others.append(name);
                 break;
             default:
                 break;
@@ -177,6 +206,10 @@ void MorphWidget::setPMDModel(IModel *model)
     else {
         setEnabled(false);
     }
+    m_eyesCompleterModel->setStringList(eyes);
+    m_lipsCompleterModel->setStringList(lips);
+    m_eyeblowsCompleterModel->setStringList(eyeblows);
+    m_othersCompleterModel->setStringList(others);
 }
 
 void MorphWidget::setEyeWeight(int value)

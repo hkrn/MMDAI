@@ -46,9 +46,12 @@ class IMorph;
 }
 
 class QComboBox;
+class QCompleter;
 class QGroupBox;
+class QLineEdit;
 class QPushButton;
 class QSlider;
+class QStringListModel;
 
 namespace vpvm
 {
@@ -95,9 +98,21 @@ private:
     QGroupBox *m_eyeblowGroup;
     QGroupBox *m_otherGroup;
     QComboBox *m_eyes;
+    QLineEdit *m_eyesEdit;
+    QCompleter *m_eyesCompleter;
+    QStringListModel *m_eyesCompleterModel;
     QComboBox *m_lips;
+    QLineEdit *m_lipsEdit;
+    QCompleter *m_lipsCompleter;
+    QStringListModel *m_lipsCompleterModel;
     QComboBox *m_eyeblows;
+    QLineEdit *m_eyeblowsEdit;
+    QCompleter *m_eyeblowsCompleter;
+    QStringListModel *m_eyeblowsCompleterModel;
     QComboBox *m_others;
+    QLineEdit *m_othersEdit;
+    QCompleter *m_othersCompleter;
+    QStringListModel *m_othersCompleterModel;
     QSlider *m_eyeSlider;
     QSlider *m_lipSlider;
     QSlider *m_eyeblowSlider;
