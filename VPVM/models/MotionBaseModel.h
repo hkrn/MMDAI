@@ -108,7 +108,7 @@ public:
     virtual int maxFrameIndex() const = 0;
     virtual bool forceCameraUpdate() const = 0;
 
-    IMotion *currentMotion() const { return m_motion; }
+    IMotion *currentMotionRef() const { return m_motionRef; }
     void setTimeIndex(const IKeyframe::TimeIndex &newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }
@@ -132,11 +132,11 @@ signals:
     void frameIndexColumnMaxDidChange(int newValue, int oldValue);
 
 protected:
-    virtual ITreeItem *root() const = 0;
+    virtual ITreeItem *rootRef() const = 0;
     void addUndoCommand(QUndoCommand *command);
 
-    IMotion *m_motion;
-    QUndoGroup *m_undo;
+    IMotion *m_motionRef;
+    QUndoGroup *m_undoRef;
     IKeyframe::TimeIndex m_timeIndex;
     int m_frameIndexColumnMax;
     int m_frameIndexColumnOffset;

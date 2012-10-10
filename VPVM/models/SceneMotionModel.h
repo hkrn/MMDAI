@@ -67,9 +67,9 @@ public:
     typedef QPair<int, LightKeyframePtr> LightKeyframePair;
     typedef QList<LightKeyframePair> LightKeyframePairList;
 
-    explicit SceneMotionModel(Factory *factory,
-                              QUndoGroup *undo,
-                              const SceneWidget *sceneWidget,
+    explicit SceneMotionModel(Factory *factoryRef,
+                              QUndoGroup *undoRef,
+                              const SceneWidget *sceneWidgetRef,
                               QObject *parent = 0);
     ~SceneMotionModel();
 
@@ -104,20 +104,20 @@ signals:
     void motionDidUpdate(IModel *model);
 
 protected:
-    ITreeItem *root() const { return m_rootTreeItem; }
+    ITreeItem *rootRef() const { return m_rootTreeItem.data(); }
 
 private:
-    const SceneWidget *m_sceneWidget;
+    const SceneWidget *m_sceneWidgetRef;
+    QScopedPointer<ITreeItem> m_rootTreeItem;
+    QScopedPointer<ITreeItem> m_cameraTreeItem;
+    QScopedPointer<ITreeItem> m_lightTreeItem;
+    QScopedPointer<QUndoStack> m_stack;
     QModelIndex m_cameraIndex;
     QModelIndex m_lightIndex;
-    QUndoStack *m_stack;
     Values m_cameraData;
     Values m_lightData;
     Factory *m_factory;
     ICameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
-    ITreeItem *m_rootTreeItem;
-    ITreeItem *m_cameraTreeItem;
-    ITreeItem *m_lightTreeItem;
 
     Q_DISABLE_COPY(SceneMotionModel)
 };

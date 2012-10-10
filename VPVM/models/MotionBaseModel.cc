@@ -60,10 +60,10 @@ int MotionBaseModel::toModelIndex(int frameIndex)
     return qMax(frameIndex + 1, 0);
 }
 
-MotionBaseModel::MotionBaseModel(QUndoGroup *undo, QObject *parent)
+MotionBaseModel::MotionBaseModel(QUndoGroup *undoRef, QObject *parent)
     : QAbstractTableModel(parent),
-      m_motion(0),
-      m_undo(undo),
+      m_motionRef(0),
+      m_undoRef(undoRef),
       m_timeIndex(0),
       m_frameIndexColumnMax(kFrameIndexColumnMinimum),
       m_frameIndexColumnOffset(kFrameIndexColumnMinimum),
@@ -86,7 +86,7 @@ QModelIndex MotionBaseModel::index(int row, int column, const QModelIndex &paren
         return QModelIndex();
     ITreeItem *parentItem = 0;
     if (!parent.isValid())
-        parentItem = root();
+        parentItem = rootRef();
     else
         parentItem = static_cast<ITreeItem *>(parent.internalPointer());
     ITreeItem *childItem = parentItem->child(row);
@@ -99,7 +99,7 @@ QModelIndex MotionBaseModel::parent(const QModelIndex &child) const
         return QModelIndex();
     ITreeItem *childItem = static_cast<ITreeItem *>(child.internalPointer());
     ITreeItem *parentItem = childItem->parent();
-    return parentItem == root() ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
+    return parentItem == rootRef() ? QModelIndex() : createIndex(parentItem->rowIndex(), 0, parentItem);
 }
 
 int MotionBaseModel::rowCount(const QModelIndex &parent) const
@@ -108,7 +108,7 @@ int MotionBaseModel::rowCount(const QModelIndex &parent) const
     if (parent.column() > 0)
         return 0;
     if (!parent.isValid()) {
-        parentItem = root();
+        parentItem = rootRef();
         if (!parentItem)
             return 0;
     }
@@ -188,7 +188,7 @@ void MotionBaseModel::setFrameIndexColumnMax(const vpvl2::IMotion *motion)
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)
 {
-    QUndoStack *activeStack = m_undo->activeStack();
+    QUndoStack *activeStack = m_undoRef->activeStack();
     if (activeStack)
         activeStack->push(command);
 }

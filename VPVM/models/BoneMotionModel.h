@@ -71,7 +71,7 @@ public:
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    BoneMotionModel(Factory *factory, QUndoGroup *undo, QObject *parent = 0);
+    BoneMotionModel(Factory *factoryRef, QUndoGroup *undoRef, QObject *parent = 0);
     ~BoneMotionModel();
 
     void saveMotion(IMotion *motion);
@@ -92,9 +92,9 @@ public:
     void setRotation(int coordinate, float value);
 
     IBone *selectedBone() const { return m_selectedBones.isEmpty() ? 0 : m_selectedBones.first(); }
-    Factory *factory() const { return m_factory; }
+    Factory *factoryRef() const { return m_factoryRef; }
     PMDMotionModel::State *mutableState() { return &m_state; }
-    bool isBoneSelected() const { return m_model != 0 && selectedBone() != 0; }
+    bool isBoneSelected() const { return m_modelRef != 0 && selectedBone() != 0; }
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
@@ -125,10 +125,10 @@ private:
     PMDMotionModel::State m_state;
     KeyFramePairList m_copiedKeyframes;
     QList<IBone *> m_selectedBones;
-    Factory *m_factory;
+    Factory *m_factoryRef;
     IBoneKeyframe::InterpolationParameter m_interpolationParameter;
     Transform m_viewTransform;
-    /* 操作時のボーンの位置と回転量を保存する。操作中は変化しない (IMorphKeyframe::State と重複するが...) */
+    /* 操作時のボーンの位置と回転量を保存する。操作中は変化しない */
     QHash<IBone *, QPair<Vector3, Quaternion> > m_boneTransformStates;
 
     Q_DISABLE_COPY(BoneMotionModel)

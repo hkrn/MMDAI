@@ -45,20 +45,21 @@ namespace vpvm
 
 using namespace vpvl2;
 
-PMDMotionModel::State::State(const Scene *scene, IModel *model)
-    : m_scene(scene),
-      m_model(model)
+PMDMotionModel::State::State(const Scene *sceneRef, IModel *modelRef)
+    : m_sceneRef(sceneRef),
+      m_modelRef(modelRef)
 {
 }
 
 PMDMotionModel::State::~State()
 {
-    m_model = 0;
+    m_sceneRef = 0;
+    m_modelRef = 0;
 }
 
 void PMDMotionModel::State::restore() const
 {
-    m_model->resetVertices();
+    m_modelRef->resetVertices();
     foreach (const Bone &bone, m_bones) {
         IBone *b = bone.first;
         const Transform &tr = bone.second;
@@ -69,13 +70,13 @@ void PMDMotionModel::State::restore() const
         IMorph *m = morph.first;
         m->setWeight(morph.second);
     }
-    m_scene->updateModel(m_model);
+    m_sceneRef->updateModel(m_modelRef);
 }
 
 void PMDMotionModel::State::save()
 {
     Array<IBone *> bones;
-    m_model->getBoneRefs(bones);
+    m_modelRef->getBoneRefs(bones);
     m_bones.clear();
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -84,7 +85,7 @@ void PMDMotionModel::State::save()
         m_bones.append(Bone(bone, tr));
     }
     Array<IMorph *> morphs;
-    m_model->getMorphRefs(morphs);
+    m_modelRef->getMorphRefs(morphs);
     m_morphs.clear();
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
@@ -128,39 +129,39 @@ void PMDMotionModel::State::copyFrom(const State &value)
 {
     m_bones = value.m_bones;
     m_morphs = value.m_morphs;
-    m_model = value.m_model;
+    m_modelRef = value.m_modelRef;
 }
 
 void PMDMotionModel::State::resetBones()
 {
     Array<IBone *> bones;
-    m_model->getBoneRefs(bones);
+    m_modelRef->getBoneRefs(bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
         bone->setLocalPosition(kZeroV3);
         bone->setRotation(Quaternion::getIdentity());
     }
-    m_scene->updateModel(m_model);
+    m_sceneRef->updateModel(m_modelRef);
 }
 
 void PMDMotionModel::State::resetMorphs()
 {
     Array<IMorph *> morphs;
-    m_model->resetVertices();
-    m_model->getMorphRefs(morphs);
+    m_modelRef->resetVertices();
+    m_modelRef->getMorphRefs(morphs);
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = morphs[i];
         morph->setWeight(0);
     }
-    m_scene->updateModel(m_model);
+    m_sceneRef->updateModel(m_modelRef);
 }
 
-PMDMotionModel::PMDMotionModel(QUndoGroup *undo, QObject *parent) :
-    MotionBaseModel(undo, parent),
-    m_scene(0),
-    m_model(0),
+PMDMotionModel::PMDMotionModel(QUndoGroup *undoRef, QObject *parent) :
+    MotionBaseModel(undoRef, parent),
+    m_sceneRef(0),
+    m_modelRef(0),
     m_lightDirection(kZeroV3)
 {
     /* 空のモデルのデータを予め入れておく */
@@ -183,9 +184,9 @@ QVariant PMDMotionModel::data(const QModelIndex &index, int role) const
         ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
         return item->name();
     }
-    else if (role == kBinaryDataRole && m_model) {
+    else if (role == kBinaryDataRole && m_modelRef) {
         /* BaseKeyFrame#write によって書き出されたキーフレームのバイナリのデータを返す */
-        QVariant value = m_values[m_model].value(index);
+        QVariant value = m_values[m_modelRef].value(index);
         return value;
     }
     else {
@@ -195,8 +196,8 @@ QVariant PMDMotionModel::data(const QModelIndex &index, int role) const
 
 bool PMDMotionModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (m_model && index.isValid() && role == Qt::EditRole) {
-        m_values[m_model].insert(index, value);
+    if (m_modelRef && index.isValid() && role == Qt::EditRole) {
+        m_values[m_modelRef].insert(index, value);
         setModified(true);
         emit dataChanged(index, index);
         return true;
@@ -224,19 +225,19 @@ const QModelIndex PMDMotionModel::frameIndexToModelIndex(ITreeItem *item, int fr
 int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
 {
     /* カラムは常に1つ以上存在するようにしないと assertion error が発生する */
-    return m_model ? maxFrameCount() + 1 : 1;
+    return m_modelRef ? maxFrameCount() + 1 : 1;
 }
 
 void PMDMotionModel::markAsNew(IModel *model)
 {
-    if (model == m_model)
+    if (model == m_modelRef)
         setModified(false);
 }
 
 void PMDMotionModel::updateModel(IModel *model, bool seek)
 {
     if (model) {
-        m_scene->updateModel(model);
+        m_sceneRef->updateModel(model);
         if (seek)
             emit timeIndexDidChange(m_timeIndex, m_timeIndex);
     }
@@ -255,15 +256,15 @@ void PMDMotionModel::refreshModel(IModel *model)
 
 void PMDMotionModel::setActiveUndoStack()
 {
-    if (m_stacks.contains(m_model))
-        m_undo->setActiveStack(m_stacks[m_model].data());
+    if (m_stacks.contains(m_modelRef))
+        m_undoRef->setActiveStack(m_stacks[m_modelRef].data());
     else
-        m_undo->setActiveStack(0);
+        m_undoRef->setActiveStack(0);
 }
 
 int PMDMotionModel::maxFrameIndex() const
 {
-    return m_motion ? m_motion->maxTimeIndex() : 0;
+    return m_motionRef ? m_motionRef->maxTimeIndex() : 0;
 }
 
 bool PMDMotionModel::forceCameraUpdate() const
@@ -271,9 +272,9 @@ bool PMDMotionModel::forceCameraUpdate() const
     return false;
 }
 
-void PMDMotionModel::setScenePtr(const Scene *value)
+void PMDMotionModel::setSceneRef(const Scene *value)
 {
-    m_scene = value;
+    m_sceneRef = value;
 }
 
 void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys &keys)
@@ -283,11 +284,11 @@ void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys 
         UndoStackPtr stackPtr(new QUndoStack());
         QUndoStack *stack = stackPtr.data();
         m_stacks.insert(model, stackPtr);
-        m_undo->addStack(stack);
-        m_undo->setActiveStack(stack);
+        m_undoRef->addStack(stack);
+        m_undoRef->setActiveStack(stack);
     }
     else {
-        m_undo->setActiveStack(m_stacks[model].data());
+        m_undoRef->setActiveStack(m_stacks[model].data());
     }
     /* 各モデル毎のルートアイテム、ボーンまたは頂点モーフのキー名、テーブルのデータを作成する。作成済みの場合は何も処理しない */
     if (!m_roots.contains(model))
@@ -303,10 +304,10 @@ void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys 
 void PMDMotionModel::removePMDModel(IModel *model)
 {
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
-    m_model = 0;
+    m_modelRef = 0;
     /* モーションのポインタを残すとダングリングポインタと化してクラッシュするので、ゼロクリアする */
-    m_motion = 0;
-    m_undo->setActiveStack(0);
+    m_motionRef = 0;
+    m_undoRef->setActiveStack(0);
     m_values.remove(model);
     m_keys.remove(model);
     m_stacks.remove(model);
@@ -319,7 +320,7 @@ void PMDMotionModel::removePMDMotion(IModel *model)
     /* テーブルのモデルのデータの破棄と巻き戻しスタックの破棄を行う。モーションは削除されない */
     if (m_values.contains(model))
         m_values[model].clear();
-    QUndoStack *stack = m_undo->activeStack();
+    QUndoStack *stack = m_undoRef->activeStack();
     if (stack)
         stack->clear();
 }

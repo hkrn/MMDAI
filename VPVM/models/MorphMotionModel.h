@@ -61,7 +61,7 @@ public:
     typedef QPair<int, KeyFramePtr> KeyFramePair;
     typedef QList<KeyFramePair> KeyFramePairList;
 
-    explicit MorphMotionModel(Factory *factory, QUndoGroup *undo = 0, QObject *parent = 0);
+    explicit MorphMotionModel(Factory *factoryRef, QUndoGroup *undoRef = 0, QObject *parent = 0);
     ~MorphMotionModel();
 
     void saveMotion(IMotion *motion);
@@ -74,8 +74,8 @@ public:
     void setWeight(IMorph::WeightPrecision &value);
     void setWeight(const IMorph::WeightPrecision &value, IMorph *morph);
     IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
-    bool isMorphSelected() const { return m_model != 0 && selectedMorph() != 0; }
-    Factory *factory() const { return m_factory; }
+    bool isMorphSelected() const { return m_modelRef != 0 && selectedMorph() != 0; }
+    Factory *factoryRef() const { return m_factoryRef; }
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
@@ -94,7 +94,7 @@ signals:
     void morphsDidSelect(const QList<IMorph *> &morphs);
 
 private:
-    Factory *m_factory;
+    Factory *m_factoryRef;
     QList<IMorph *> m_selectedMorphs;
     KeyFramePairList m_copiedKeyframes;
     PMDMotionModel::State m_state;

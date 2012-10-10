@@ -178,7 +178,7 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
         MorphMotionModel::KeyFramePairList keyframes;
         QScopedPointer<IMorphKeyframe> keyframe;
         int frameIndex = m_morphTimeline->selectedFrameIndex();
-        keyframe.reset(model->factory()->createMorphKeyframe(model->currentMotion()));
+        keyframe.reset(model->factoryRef()->createMorphKeyframe(model->currentMotionRef()));
         keyframe->setName(morph->name());
         keyframe->setWeight(morph->weight());
         keyframes.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
@@ -214,14 +214,14 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         TimelineTreeView *view = m_boneTimeline->treeView();
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         BoneMotionModel *model = static_cast<BoneMotionModel *>(view->model());
-        Factory *factory = model->factory();
+        Factory *factory = model->factoryRef();
         BoneMotionModel::KeyFramePairList boneFrames;
         QScopedPointer<IBoneKeyframe> frame;
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
-            frame.reset(factory->createBoneKeyframe(model->currentMotion()));
+            frame.reset(factory->createBoneKeyframe(model->currentMotionRef()));
             frame->setName(&s);
             frame->setDefaultInterpolationParameter();
             boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame.take())));
@@ -235,14 +235,14 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         TimelineTreeView *view = m_morphTimeline->treeView();
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         MorphMotionModel *model = static_cast<MorphMotionModel *>(view->model());
-        Factory *factory = model->factory();
+        Factory *factory = model->factoryRef();
         MorphMotionModel::KeyFramePairList faceFrames;
         QScopedPointer<IMorphKeyframe> frame;
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
             int frameIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
-            frame.reset(factory->createMorphKeyframe(model->currentMotion()));
+            frame.reset(factory->createMorphKeyframe(model->currentMotionRef()));
             frame->setName(&s);
             frame->setWeight(0);
             faceFrames.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(frame.take())));

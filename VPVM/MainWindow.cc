@@ -1387,8 +1387,8 @@ void MainWindow::connectSceneLoader()
     const ILight *light = scene->light();
     lightWidget->setColor(light->color());
     lightWidget->setDirection(light->direction());
-    m_boneMotionModel->setScenePtr(scene);
-    m_morphMotionModel->setScenePtr(scene);
+    m_boneMotionModel->setSceneRef(scene);
+    m_morphMotionModel->setSceneRef(scene);
     connect(loader, SIGNAL(lightColorDidSet(Vector3)), lightWidget, SLOT(setColor(Vector3)));
     connect(loader, SIGNAL(lightDirectionDidSet(Vector3)), lightWidget, SLOT(setDirection(Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(Vector3)), loader, SLOT(setLightColor(Vector3)));
@@ -1769,7 +1769,7 @@ void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
         IModel *model = m_sceneWidget->sceneLoaderRef()->selectedModel();
-        IMotion *motion = m_boneMotionModel->currentMotion();
+        IMotion *motion = m_boneMotionModel->currentMotionRef();
         if (model && motion) {
             m_boneMotionModel->removeMotion();
             m_morphMotionModel->removeMotion();
@@ -1930,8 +1930,8 @@ void MainWindow::disconnectInitialSlots()
 void MainWindow::resetSceneToModels()
 {
     const Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
-    m_boneMotionModel->setScenePtr(scene);
-    m_morphMotionModel->setScenePtr(scene);
+    m_boneMotionModel->setSceneRef(scene);
+    m_morphMotionModel->setSceneRef(scene);
 }
 
 } /* namespace vpvm */

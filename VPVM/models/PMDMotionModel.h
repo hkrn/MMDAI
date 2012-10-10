@@ -67,7 +67,7 @@ class PMDMotionModel : public MotionBaseModel
 public:
     class State {
     public:
-        State(const Scene *scene, IModel *model);
+        State(const Scene *sceneRef, IModel *modelRef);
         ~State();
         void restore() const;
         void save();
@@ -76,20 +76,20 @@ public:
         void copyFrom(const State &value);
         void resetBones();
         void resetMorphs();
-        IModel *model() const { return m_model; }
-        void setModel(IModel *value) { m_model = value; }
+        IModel *model() const { return m_modelRef; }
+        void setModel(IModel *value) { m_modelRef = value; }
     private:
         typedef QPair<Vector3, Quaternion> Transform;
         typedef QPair<IBone *, Transform> Bone;
         typedef QPair<IMorph *, Scalar> Morph;
-        const Scene *m_scene;
-        IModel *m_model;
+        const Scene *m_sceneRef;
+        IModel *m_modelRef;
         QList<Bone> m_bones;
         QList<Morph> m_morphs;
         Q_DISABLE_COPY(State)
     };
 
-    explicit PMDMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    explicit PMDMotionModel(QUndoGroup *undoRef, QObject *parent = 0);
     ~PMDMotionModel();
 
     QVariant data(const QModelIndex &index, int role) const;
@@ -105,11 +105,11 @@ public:
     void setActiveUndoStack();
     int maxFrameIndex() const;
     bool forceCameraUpdate() const;
-    void setScenePtr(const Scene *value);
+    void setSceneRef(const Scene *value);
 
-    IModel *selectedModel() const { return m_model; }
-    const Keys keys() const { return m_keys[m_model]; }
-    const Scene *scene() const { return m_scene; }
+    IModel *selectedModel() const { return m_modelRef; }
+    const Keys keys() const { return m_keys[m_modelRef]; }
+    const Scene *scene() const { return m_sceneRef; }
 
 public slots:
     virtual void loadMotion(IMotion *motion, const IModel *model) = 0;
@@ -124,15 +124,15 @@ signals:
 protected:
     void removePMDModel(IModel *model);
     void removePMDMotion(IModel *model);
-    void addPMDModel(IModel *model, const RootPtr &root, const Keys &keys);
+    void addPMDModel(IModel *model, const RootPtr &rootRef, const Keys &keys);
     bool hasPMDModel(IModel *model) const { return m_roots.contains(model); }
-    const Values values() const { return m_values[m_model]; }
-    RootPtr rootPtr() const { return rootPtr(m_model); }
+    const Values values() const { return m_values[m_modelRef]; }
+    RootPtr rootPtr() const { return rootPtr(m_modelRef); }
     RootPtr rootPtr(IModel *model) const { return m_roots[model]; }
-    ITreeItem *root() const { return rootPtr().data(); }
+    ITreeItem *rootRef() const { return rootPtr().data(); }
 
-    const Scene *m_scene;
-    IModel *m_model;
+    const Scene *m_sceneRef;
+    IModel *m_modelRef;
     Vector3 m_lightDirection;
 
 private:
