@@ -49,7 +49,7 @@ World::World()
       m_broadphase(0),
       m_solver(0),
       m_world(0),
-      m_preferredFPS(0),
+      m_motionFPS(0),
       m_maxSubSteps(0),
       m_fixedTimeStep(0)
 {
@@ -58,7 +58,7 @@ World::World()
     m_solver = new btSequentialImpulseConstraintSolver();
     m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
     setGravity(kDefaultGravity);
-    setPreferredFPS(Scene::defaultFPS());
+    setMotionFPS(Scene::defaultFPS());
 }
 
 World::~World()
@@ -93,10 +93,10 @@ void World::setRandSeed(unsigned long value)
     m_solver->setRandSeed(value);
 }
 
-void World::setPreferredFPS(const Scalar &value)
+void World::setMotionFPS(const Scalar &value)
 {
-    m_preferredFPS = value;
-    m_maxSubSteps = btMax(int(60 / m_preferredFPS), 1);
+    m_motionFPS = value;
+    m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
     m_fixedTimeStep = 1 / value;
 }
 

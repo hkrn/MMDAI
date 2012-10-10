@@ -61,7 +61,7 @@ public:
     void setGravity(const Vector3 &value);
     unsigned long randSeed() const;
     void setRandSeed(unsigned long value);
-    void setPreferredFPS(const Scalar &value);
+    void setMotionFPS(const Scalar &value);
     void addModel(vpvl2::IModel *value);
     void removeModel(vpvl2::IModel *value);
     void addRigidBody(btRigidBody *value);
@@ -74,7 +74,7 @@ private:
     btDbvtBroadphase *m_broadphase;
     btSequentialImpulseConstraintSolver *m_solver;
     btDiscreteDynamicsWorld *m_world;
-    Scalar m_preferredFPS;
+    Scalar m_motionFPS;
     Scalar m_maxSubSteps;
     Scalar m_fixedTimeStep;
 
