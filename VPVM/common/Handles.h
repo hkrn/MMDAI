@@ -121,7 +121,7 @@ public:
 
     static bool isToggleButton(int value);
 
-    Handles(SceneLoader *loader, const QSize &size);
+    Handles(SceneLoader *loaderRef, const QSize &size);
     ~Handles();
 
     void load();
@@ -148,7 +148,7 @@ public:
     const Vector3 diffPoint3D(const Vector3 &value) const;
     const QPointF diffPoint2D(const QPointF &value) const;
     float diffAngle(float value) const;
-    IBone *currentBone() const { return m_bone; }
+    IBone *currentBone() const { return m_boneRef; }
     bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
     bool isAngleZero() const { return m_prevAngle == 0.0f; }
     Flags constraint() const { return m_constraint; }
@@ -171,10 +171,10 @@ private:
     void loadImageHandles();
     void loadModelHandles();
 
-    TextureDrawHelper *m_helper;
-    IBone *m_bone;
-    StaticWorld *m_world;
-    SceneLoader *m_loader;
+    QScopedPointer<TextureDrawHelper> m_helper;
+    QScopedPointer<StaticWorld> m_world;
+    IBone *m_boneRef;
+    SceneLoader *m_loaderRef;
     QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;
     TranslationHandle m_translationHandle;

@@ -70,8 +70,6 @@ namespace vpvm
 
 using namespace vpvl2;
 
-const static Vector3 kWorldAabbSize(10000, 10000, 10000);
-
 static inline void dumpBones(IModel *model)
 {
     Array<IBone *> bones;
@@ -166,7 +164,8 @@ static const inline QString openSaveDialog(const QString &name,
     return fileName;
 }
 
-static const inline Vector3 vec2vec(const QVector4D &value) {
+static const inline Vector3 vec2vec(const QVector4D &value)
+{
     Vector3 v(value.x(), value.y(), value.z());
     return v;
 }

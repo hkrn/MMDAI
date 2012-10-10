@@ -46,18 +46,15 @@ namespace vpvm {
 class BackgroundImage {
 public:
     BackgroundImage(const QSize &size)
-        : m_backgroundDrawer(0),
+        : m_backgroundDrawer(new TextureDrawHelper(size)),
           m_backgroundTexture(0),
           m_uniformImage(false)
     {
-        m_backgroundDrawer = new TextureDrawHelper(size);
         m_backgroundDrawer->load();
     }
     ~BackgroundImage() {
         glDeleteTextures(1, &m_backgroundTexture);
         m_backgroundTexture = 0;
-        delete m_backgroundDrawer;
-        m_backgroundDrawer = 0;
     }
 
     void resize(const QSize &size) {
@@ -132,7 +129,7 @@ private:
         m_backgroundImageSize = image.size();
     }
 
-    TextureDrawHelper *m_backgroundDrawer;
+    QScopedPointer<TextureDrawHelper> m_backgroundDrawer;
     QMovie m_movie;
     QSize m_backgroundImageSize;
     QPoint m_backgroundImagePosition;

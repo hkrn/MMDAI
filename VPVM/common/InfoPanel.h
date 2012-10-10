@@ -48,7 +48,7 @@ class InfoPanel
 {
 public:
     InfoPanel(const QSize &size)
-        : m_helper(0),
+        : m_helper(new TextureDrawHelper(size)),
           m_rect(0, 0, 256, 256),
           m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),
@@ -57,11 +57,8 @@ public:
           m_fps(0.0f),
           m_visible(true)
     {
-        m_helper = new TextureDrawHelper(size);
     }
     ~InfoPanel() {
-        delete m_helper;
-        m_helper = 0;
         deleteTexture();
     }
 
@@ -137,7 +134,7 @@ private:
         }
     }
 
-    TextureDrawHelper *m_helper;
+    QScopedPointer<TextureDrawHelper> m_helper;
     QRect m_rect;
     QImage m_texture;
     QFont m_font;

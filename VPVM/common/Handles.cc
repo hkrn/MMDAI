@@ -223,12 +223,12 @@ static void UIInitializeRenderingModel(const SceneLoader *loader,
 
 }
 
-Handles::Handles(SceneLoader *loader, const QSize &size)
+Handles::Handles(SceneLoader *loaderRef, const QSize &size)
     : QObject(),
-      m_helper(0),
-      m_bone(0),
-      m_world(0),
-      m_loader(loader),
+      m_helper(new TextureDrawHelper(size)),
+      m_world(new Handles::StaticWorld()),
+      m_boneRef(0),
+      m_loaderRef(loaderRef),
       m_trackedHandle(0),
       m_constraint(kLocal),
       m_prevPos3D(0.0f, 0.0f, 0.0f),
@@ -236,8 +236,6 @@ Handles::Handles(SceneLoader *loader, const QSize &size)
       m_visibilityFlags(kVisibleAll),
       m_visible(true)
 {
-    m_helper = new TextureDrawHelper(size);
-    m_world = new Handles::StaticWorld();
 }
 
 bool Handles::isToggleButton(int value)
@@ -263,8 +261,6 @@ Handles::~Handles()
     context->deleteTexture(m_global.textureID);
     context->deleteTexture(m_local.textureID);
     context->deleteTexture(m_view.textureID);
-    delete m_helper;
-    delete m_world;
 }
 
 void Handles::load()
@@ -324,14 +320,14 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
                            Vector3 &pick)
 {
     flags = kNone;
-    if (m_bone) {
+    if (m_boneRef) {
         btCollisionWorld::ClosestRayResultCallback callback(rayFrom,rayTo);
         m_world->world()->rayTest(rayFrom, rayTo, callback);
         m_trackedHandle = 0;
         if (callback.hasHit()) {
             btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
             Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
-            if (m_bone->isMovable() && m_visibilityFlags & kMove) {
+            if (m_boneRef->isMovable() && m_visibilityFlags & kMove) {
                 if (model == &m_translationHandle.x && (m_visibilityFlags & kX))
                     flags = kModel | kMove | kX;
                 else if (model == &m_translationHandle.y && (m_visibilityFlags & kY))
@@ -339,7 +335,7 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
                 else if (model == &m_translationHandle.z && (m_visibilityFlags & kZ))
                     flags = kModel | kMove | kZ;
             }
-            if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
+            if (m_boneRef->isRotateable() && m_visibilityFlags & kRotate) {
                 if (model == &m_rotationHandle.x && (m_visibilityFlags & kX))
                     flags = kModel | kRotate | kX;
                 else if (model == &m_rotationHandle.y && (m_visibilityFlags & kY))
@@ -459,7 +455,7 @@ bool Handles::testHitImage(const QPointF &p,
 
 btScalar Handles::angle(const Vector3 &pos) const
 {
-    return pos.angle(m_bone->worldTransform().getOrigin());
+    return pos.angle(m_boneRef->worldTransform().getOrigin());
 }
 
 int Handles::modeFromConstraint() const
@@ -491,21 +487,21 @@ int Handles::modeFromConstraint() const
 const Transform Handles::modelHandleTransform() const
 {
     Transform transform = Transform::getIdentity();
-    if (m_bone) {
+    if (m_boneRef) {
         int mode = modeFromConstraint();
         if (mode == 'G') {
-            transform.setOrigin(m_bone->worldTransform().getOrigin());
+            transform.setOrigin(m_boneRef->worldTransform().getOrigin());
         }
         else if (mode == 'L') {
-            transform = m_bone->worldTransform();
+            transform = m_boneRef->worldTransform();
         }
         else if (mode == 'V') {
-            const Matrix3x3 &basis = m_loader->sceneRef()->camera()->modelViewTransform().getBasis();
+            const Matrix3x3 &basis = m_loaderRef->sceneRef()->camera()->modelViewTransform().getBasis();
             btMatrix3x3 newBasis;
             newBasis[0] = basis * Vector3(1, 0, 0);
             newBasis[1] = basis * Vector3(0, 1, 0);
             newBasis[2] = basis * Vector3(0, 0, 1);
-            transform.setOrigin(m_bone->worldTransform().getOrigin());
+            transform.setOrigin(m_boneRef->worldTransform().getOrigin());
             transform.setBasis(newBasis);
         }
     }
@@ -544,7 +540,7 @@ float Handles::diffAngle(float value) const
 
 void Handles::setBone(IBone *value)
 {
-    m_bone = value;
+    m_boneRef = value;
     updateBone();
 }
 
@@ -644,12 +640,12 @@ void Handles::drawImageHandles(IBone *bone)
 
 void Handles::drawRotationHandle(const IModel *model)
 {
-    if (!m_visible || !m_program.isLinked() || !m_bone)
+    if (!m_visible || !m_program.isLinked() || !m_boneRef)
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader, model, modelHandleTransform(), &m_program);
-    if (m_bone->isRotateable() && m_visibilityFlags & kRotate) {
+    UIInitializeRenderingModel(m_loaderRef, model, modelHandleTransform(), &m_program);
+    if (m_boneRef->isRotateable() && m_visibilityFlags & kRotate) {
         drawModel(m_rotationHandle.x, kRed, kX);
         drawModel(m_rotationHandle.y, kGreen, kY);
         drawModel(m_rotationHandle.z, kBlue, kZ);
@@ -660,12 +656,12 @@ void Handles::drawRotationHandle(const IModel *model)
 
 void Handles::drawMoveHandle(const IModel *model)
 {
-    if (!m_visible || !m_program.isLinked() || !m_bone)
+    if (!m_visible || !m_program.isLinked() || !m_boneRef)
         return;
     glDisable(GL_DEPTH_TEST);
     m_program.bind();
-    UIInitializeRenderingModel(m_loader, model, modelHandleTransform(), &m_program);
-    if (m_bone->isMovable() && m_visibilityFlags & kMove) {
+    UIInitializeRenderingModel(m_loaderRef, model, modelHandleTransform(), &m_program);
+    if (m_boneRef->isMovable() && m_visibilityFlags & kMove) {
         drawModel(m_translationHandle.x, kRed, kX);
         drawModel(m_translationHandle.y, kGreen, kY);
         drawModel(m_translationHandle.z, kBlue, kZ);
@@ -754,9 +750,9 @@ void Handles::loadModelHandles()
         size_t size =  rotationHandleBytes.size();
         const aiScene *scene = m_rotationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_Fast);
         aiMesh **meshes = scene->mMeshes;
-        UILoadTrackableModel(meshes[1], m_world, new BoneHandleMotionState(this), m_rotationHandle.x);
-        UILoadTrackableModel(meshes[0], m_world, new BoneHandleMotionState(this), m_rotationHandle.y);
-        UILoadTrackableModel(meshes[2], m_world, new BoneHandleMotionState(this), m_rotationHandle.z);
+        UILoadTrackableModel(meshes[1], m_world.data(), new BoneHandleMotionState(this), m_rotationHandle.x);
+        UILoadTrackableModel(meshes[0], m_world.data(), new BoneHandleMotionState(this), m_rotationHandle.y);
+        UILoadTrackableModel(meshes[2], m_world.data(), new BoneHandleMotionState(this), m_rotationHandle.z);
     }
     /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
     QFile translationHandleFile(":models/translation.3ds");
@@ -766,9 +762,9 @@ void Handles::loadModelHandles()
         size_t size =  translationHandleBytes.size();
         const aiScene *scene = m_translationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_Fast);
         aiMesh **meshes = scene->mMeshes;
-        UILoadTrackableModel(meshes[0], m_world, new BoneHandleMotionState(this), m_translationHandle.x);
-        UILoadTrackableModel(meshes[2], m_world, new BoneHandleMotionState(this), m_translationHandle.y);
-        UILoadTrackableModel(meshes[1], m_world, new BoneHandleMotionState(this), m_translationHandle.z);
+        UILoadTrackableModel(meshes[0], m_world.data(), new BoneHandleMotionState(this), m_translationHandle.x);
+        UILoadTrackableModel(meshes[2], m_world.data(), new BoneHandleMotionState(this), m_translationHandle.y);
+        UILoadTrackableModel(meshes[1], m_world.data(), new BoneHandleMotionState(this), m_translationHandle.z);
         UILoadStaticModel(meshes[3], m_translationHandle.axisX);
         UILoadStaticModel(meshes[5], m_translationHandle.axisY);
         UILoadStaticModel(meshes[4], m_translationHandle.axisZ);

@@ -83,24 +83,17 @@ class SceneWidget::PlaneWorld {
 public:
     PlaneWorld()
         : m_dispatcher(&m_config),
-          m_broadphase(-kWorldAabbSize, kWorldAabbSize),
+          m_broadphase(-qt::World::kAabbSize, qt::World::kAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
-          m_state(0),
-          m_shape(0),
-          m_body(0)
+          m_state(new btDefaultMotionState()),
+          m_shape(new btBoxShape(btVector3(qt::World::kAabbSize.x(), qt::World::kAabbSize.y(), 0.01))),
+          m_body(new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0, m_state.data(), m_shape.data())))
     {
-        m_state = new btDefaultMotionState();
-        m_shape = new btBoxShape(btVector3(kWorldAabbSize.x(), kWorldAabbSize.y(), 0.01));
-        btRigidBody::btRigidBodyConstructionInfo info(0, m_state, m_shape);
-        m_body = new btRigidBody(info);
-        m_world.addRigidBody(m_body);
+        m_world.addRigidBody(m_body.data());
     }
     ~PlaneWorld()
     {
-        m_world.removeRigidBody(m_body);
-        delete m_body;
-        delete m_shape;
-        delete m_state;
+        m_world.removeRigidBody(m_body.data());
     }
 
     void updateTransform(const Transform &value) {
@@ -110,7 +103,7 @@ public:
     void draw(const SceneLoader *loader, DebugDrawer *drawer) {
         const btTransform &worldTransform = m_body->getWorldTransform();
         m_world.setDebugDrawer(drawer);
-        drawer->drawShape(&m_world, m_shape, loader, worldTransform, btVector3(1, 0, 0));
+        drawer->drawShape(&m_world, m_shape.data(), loader, worldTransform, btVector3(1, 0, 0));
         m_world.setDebugDrawer(0);
     }
     bool test(const Vector3 &from, const Vector3 &to, Vector3 &hit) {
@@ -130,9 +123,9 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
-    btDefaultMotionState *m_state;
-    btBoxShape *m_shape;
-    btRigidBody *m_body;
+    QScopedPointer<btDefaultMotionState> m_state;
+    QScopedPointer<btBoxShape> m_shape;
+    QScopedPointer<btRigidBody> m_body;
 };
 
 SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent)
