@@ -479,7 +479,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
         int frameIndex = toTimeIndex(index);
         if (frameIndex >= 0 && item->isCategory()) {
             if (index.row() == m_cameraTreeItem->rowIndex()) {
-                const ICamera *camera = m_sceneWidget->sceneLoader()->scene()->camera();
+                const ICamera *camera = m_sceneWidget->sceneLoaderRef()->sceneRef()->camera();
                 cameraKeyframe.reset(m_factory->createCameraKeyframe(m_motion));
                 cameraKeyframe->setDefaultInterpolationParameter();
                 cameraKeyframe->setPosition(camera->lookAt());
@@ -489,7 +489,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
                 cameraKeyframes.append(CameraKeyframePair(frameIndex, CameraKeyframePtr(cameraKeyframe.take())));
             }
             else if (index.row() == m_lightTreeItem->rowIndex()) {
-                const ILight *light = m_sceneWidget->sceneLoader()->scene()->light();
+                const ILight *light = m_sceneWidget->sceneLoaderRef()->sceneRef()->light();
                 lightKeyframe.reset(m_factory->createLightKeyframe(m_motion));
                 lightKeyframe->setColor(light->color());
                 lightKeyframe->setDirection(light->direction());

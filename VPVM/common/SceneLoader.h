@@ -80,7 +80,7 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
-    explicit SceneLoader(IEncoding *encoding, Factory *factory, QGLWidget *context);
+    explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, QGLWidget *contextRef);
     ~SceneLoader();
 
     QList<IModel *> allModels() const;
@@ -90,7 +90,7 @@ public:
     IMotion *findMotion(const QUuid &uuid) const;
     const QUuid findUUID(IModel *model) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection) const;
+    void getCameraMatrices(QMatrix4x4 &worldRef, QMatrix4x4 &view, QMatrix4x4 &projection) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, IModel *&asset);
     IModel *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
@@ -174,8 +174,8 @@ public:
     IBone *assetParentBone(IModel *asset) const;
     void setAssetParentBone(const IModel *asset, IBone *bone);
 
-    Scene *scene() const;
-    qt::World *world() const;
+    Scene *sceneRef() const;
+    qt::World *worldRef() const;
     int maxFrameIndex() const;
 
 public slots:
@@ -261,18 +261,18 @@ private:
     Scene::AccelerationType globalAccelerationType() const;
     Scene::AccelerationType modelAccelerationType(const IModel *model) const;
 
-    QGLFramebufferObject *m_depthBuffer;
+    QScopedPointer<QGLFramebufferObject> m_depthBuffer;
+    QScopedPointer<qt::World> m_world;
+    QScopedPointer<qt::Delegate> m_renderDelegate;
+    QScopedPointer<Project::IDelegate> m_projectDelegate;
+    QScopedPointer<Project> m_project;
+    QScopedPointer<IMotion> m_camera;
+    IEncoding *m_encodingRef;
+    Factory *m_factoryRef;
     QMap<QString, IModel*> m_name2assets;
     QMatrix4x4 m_projection;
-    qt::World *m_world;
-    IEncoding *m_encoding;
-    qt::Delegate *m_renderDelegate;
-    Factory *m_factory;
-    Project *m_project;
-    Project::IDelegate *m_projectDelegate;
-    IModel *m_model;
-    IModel *m_asset;
-    IMotion *m_camera;
+    IModel *m_selectedModelRef;
+    IModel *m_selectedAssetRef;
     Array<QUuid> m_renderOrderList;
     GLuint m_depthBufferID;
 

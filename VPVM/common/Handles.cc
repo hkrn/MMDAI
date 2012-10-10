@@ -500,7 +500,7 @@ const Transform Handles::modelHandleTransform() const
             transform = m_bone->worldTransform();
         }
         else if (mode == 'V') {
-            const Matrix3x3 &basis = m_loader->scene()->camera()->modelViewTransform().getBasis();
+            const Matrix3x3 &basis = m_loader->sceneRef()->camera()->modelViewTransform().getBasis();
             btMatrix3x3 newBasis;
             newBasis[0] = basis * Vector3(1, 0, 0);
             newBasis[1] = basis * Vector3(0, 1, 0);

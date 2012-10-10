@@ -64,7 +64,7 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
     subLayout->addWidget(m_pathEdit);
     subLayout->addWidget(m_openFileButton);
     mainLayout->addLayout(subLayout);
-    int maxFrameIndex = loader->scene()->maxFrameIndex();
+    int maxFrameIndex = loader->sceneRef()->maxFrameIndex();
     m_widthBox = new QSpinBox();
     m_widthBox->setRange(min.width(), max.width());
     m_heightBox = new QSpinBox();
@@ -182,7 +182,7 @@ bool ExportVideoDialog::includesGrid() const
 
 void ExportVideoDialog::showEvent(QShowEvent * /* event */)
 {
-    int maxFrameIndex = m_loader->scene()->maxFrameIndex();
+    int maxFrameIndex = m_loader->sceneRef()->maxFrameIndex();
     m_pathEdit->setText(m_loader->backgroundAudio());
     m_widthBox->setValue(m_loader->sceneWidth());
     m_heightBox->setValue(m_loader->sceneHeight());

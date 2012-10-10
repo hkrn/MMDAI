@@ -101,7 +101,7 @@ static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
                                              QScopedPointer<PlaySettingDialog> &dialog)
 {
     if (!dialog) {
-        dialog.reset(new PlaySettingDialog(sceneWidget->sceneLoader(), settings, mainWindow));
+        dialog.reset(new PlaySettingDialog(sceneWidget->sceneLoaderRef(), settings, mainWindow));
         QObject::connect(dialog.data(), SIGNAL(playingDidStart()), mainWindow, SLOT(invokePlayer()));
     }
 }
@@ -294,6 +294,10 @@ MainWindow::MainWindow(const QHash<IEncoding::ConstantType, CString *> &constant
 
 MainWindow::~MainWindow()
 {
+    /* null アクセスが発生してしまうため、先に以下のシグナルを解除しておく */
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
+    disconnect(loader, SIGNAL(assetWillDelete(IModel*,QUuid)), this, SLOT(deleteAsset(IModel*,QUuid)));
+    disconnect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), this, SLOT(deleteModel(IModel*,QUuid)));
     /* 所有権が移動しているため、事前に take で所有権を放棄してメモリ解放しないようにする */
     m_modelTabWidget.take();
     m_sceneTabWidget.take();
@@ -373,7 +377,7 @@ void MainWindow::selectModel()
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
         const QUuid uuid(action->data().toString());
-        m_sceneWidget->setSelectedModel(m_sceneWidget->sceneLoader()->findModel(uuid));
+        m_sceneWidget->setSelectedModel(m_sceneWidget->sceneLoaderRef()->findModel(uuid));
     }
 }
 
@@ -400,7 +404,7 @@ void MainWindow::newMotionFile()
 void MainWindow::newProjectFile()
 {
     if (maybeSaveProject()) {
-        SceneLoader *loader = m_sceneWidget->sceneLoader();
+        SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
         bool isEffectEnable = loader->isEffectEnabled();
         /*
          * カメラを含むモーションとモデルを全て削除してからプロジェクトを新規に作成する
@@ -435,7 +439,7 @@ void MainWindow::loadProject()
             m_morphMotionModel->removeMotion();
             m_sceneMotionModel->removeMotion();
             m_sceneWidget->loadProject(filename);
-            SceneLoader *loader = m_sceneWidget->sceneLoader();
+            SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
             m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
             m_actionShowGrid->setChecked(loader->isGridVisible());
             m_actionSetOpenCLSkinningType1->setChecked(loader->isOpenCLSkinningType1Enabled());
@@ -525,7 +529,7 @@ void MainWindow::addModel(IModel *model, const QUuid &uuid)
 void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
 {
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
-    if (model == m_sceneWidget->sceneLoader()->selectedModel())
+    if (model == m_sceneWidget->sceneLoaderRef()->selectedModel())
         m_sceneWidget->setSelectedModel(0);
     /* 削除されるモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
@@ -600,7 +604,7 @@ bool MainWindow::saveMotionFile(const QString &filename)
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
     QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
     IMotion *motionPtr = motion.data();
-    motionPtr->setParentModel(m_sceneWidget->sceneLoader()->selectedModel());
+    motionPtr->setParentModel(m_sceneWidget->sceneLoaderRef()->selectedModel());
     m_boneMotionModel->saveMotion(motionPtr);
     m_morphMotionModel->saveMotion(motionPtr);
     return saveMotionFile(filename, motionPtr);
@@ -645,7 +649,7 @@ bool MainWindow::saveProjectAs(QString &filename)
 
 bool MainWindow::saveProjectFile(const QString &filename)
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     loader->setOpenCLSkinningEnableType1(m_actionSetOpenCLSkinningType1->isChecked());
     loader->setOpenCLSkinningEnableType2(m_actionSetOpenCLSkinningType2->isChecked());
     loader->setVertexShaderSkinningType1Enable(m_actionSetVertexShaderSkinningType1->isChecked());
@@ -670,7 +674,7 @@ bool MainWindow::maybeSaveProject()
     bool cancel, cond = m_boneMotionModel->isModified()
             || m_morphMotionModel->isModified()
             || m_sceneMotionModel->isModified()
-            || m_sceneWidget->sceneLoader()->isProjectModified();
+            || m_sceneWidget->sceneLoaderRef()->isProjectModified();
     if (confirmSave(cond, cancel))
         saveProject();
     return !cancel;
@@ -1322,7 +1326,7 @@ void MainWindow::retranslate()
 
 void MainWindow::connectSceneLoader()
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidget();
     connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), SLOT(addModel(IModel*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), SLOT(deleteModel(IModel*,QUuid)));
@@ -1359,7 +1363,7 @@ void MainWindow::connectSceneLoader()
     connect(m_actionShowGrid.data(), SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
     connect(assetWidget, SIGNAL(assetDidRemove(IModel*)), loader, SLOT(deleteAsset(IModel*)));
     connect(assetWidget, SIGNAL(assetDidSelect(IModel*)), loader, SLOT(setSelectedAsset(IModel*)));
-    Handles *handles = m_sceneWidget->handles();
+    Handles *handles = m_sceneWidget->handlesRef();
     connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateBone()));
     connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateBone()));
     connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
@@ -1368,7 +1372,7 @@ void MainWindow::connectSceneLoader()
     connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModel*)), m_sceneWidget.data(), SLOT(setSelectedModel(IModel*)));
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
-    Scene *scene = m_sceneWidget->sceneLoader()->scene();
+    Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
     const ICamera *camera = scene->camera();
     cameraWidget->setCameraPerspective(camera);
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<ICamera>)),
@@ -1490,7 +1494,7 @@ void MainWindow::saveModelPose()
         if (file.open(QFile::WriteOnly)) {
             VPDFile pose;
             QTextStream stream(&file);
-            m_timelineTabWidget->savePose(&pose, m_sceneWidget->sceneLoader()->selectedModel());
+            m_timelineTabWidget->savePose(&pose, m_sceneWidget->sceneLoaderRef()->selectedModel());
             pose.save(stream);
             file.close();
             qDebug("Saved a pose: %s", qPrintable(filename));
@@ -1509,7 +1513,7 @@ void MainWindow::saveAssetMetadata()
 void MainWindow::exportImage()
 {
     if (!m_exportingVideoDialog) {
-        SceneLoader *loader = m_sceneWidget->sceneLoader();
+        SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
         const QSize min(160, 160);
         const QSize &max = m_sceneWidget->maximumSize();
         m_exportingVideoDialog.reset(new ExportVideoDialog(loader, min, max, &m_settings));
@@ -1523,8 +1527,8 @@ void MainWindow::exportImage()
 void MainWindow::exportVideo()
 {
     if (VideoEncoder::isSupported()) {
-        SceneLoader *loader = m_sceneWidget->sceneLoader();
-        if (loader->scene()->maxFrameIndex() > 0) {
+        SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
+        if (loader->sceneRef()->maxFrameIndex() > 0) {
             if (!m_exportingVideoDialog) {
                 const QSize min(160, 160);
                 const QSize &max = m_sceneWidget->maximumSize();
@@ -1607,7 +1611,7 @@ void MainWindow::invokeVideoEncoder()
         }
         int sceneFPS = m_exportingVideoDialog->sceneFPS();
         m_audioDecoder.reset(new AudioDecoder());
-        m_audioDecoder->setFilename(m_sceneWidget->sceneLoader()->backgroundAudio());
+        m_audioDecoder->setFilename(m_sceneWidget->sceneLoaderRef()->backgroundAudio());
         bool canOpenAudio = m_audioDecoder->canOpen();
         int sampleRate = 0, bitRate = 0;
         if (canOpenAudio) {
@@ -1642,7 +1646,7 @@ void MainWindow::invokeVideoEncoder()
         const IKeyframe::TimeIndex &advanceSecond = 1.0f / (sceneFPS / Scene::defaultFPS());
         IKeyframe::TimeIndex totalAdvanced = 0.0f;
         /* 全てのモーションが終了するまでエンコード処理 */
-        const Scene *scene = m_sceneWidget->sceneLoader()->scene();
+        const Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
         Q_UNUSED(scene)
         while (!scene->isReachedTo(toIndex)) {
             if (progress->wasCanceled())
@@ -1695,7 +1699,7 @@ void MainWindow::invokeVideoEncoder()
 
 void MainWindow::saveWindowStateAndResize(const QSize &videoSize, WindowState &state)
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     /* 画面を復元するために一時的に情報を保持。mainGeometry はコピーを持たないといけないので参照であってはならない */
     state.mainGeometry = geometry();
     state.minSize = minimumSize();
@@ -1703,7 +1707,7 @@ void MainWindow::saveWindowStateAndResize(const QSize &videoSize, WindowState &s
     state.scenesize = m_sceneWidget->size();
     state.policy = sizePolicy();
     state.timeIndex = m_sceneWidget->currentTimeIndex();
-    state.preferredFPS = loader->scene()->preferredFPS();
+    state.preferredFPS = loader->sceneRef()->preferredFPS();
     state.isGridVisible = loader->isGridVisible();
     m_mainToolBar->hide();
     m_timelineDockWidget->hide();
@@ -1733,7 +1737,7 @@ void MainWindow::saveWindowStateAndResize(const QSize &videoSize, WindowState &s
 
 void MainWindow::restoreWindowState(const WindowState &state)
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     /* 画面情報を復元 */
     loader->setGridVisible(state.isGridVisible);
     setSizePolicy(state.policy);
@@ -1764,7 +1768,7 @@ void MainWindow::restoreWindowState(const WindowState &state)
 void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
-        IModel *model = m_sceneWidget->sceneLoader()->selectedModel();
+        IModel *model = m_sceneWidget->sceneLoaderRef()->selectedModel();
         IMotion *motion = m_boneMotionModel->currentMotion();
         if (model && motion) {
             m_boneMotionModel->removeMotion();
@@ -1780,7 +1784,7 @@ void MainWindow::addNewMotion()
 
 void MainWindow::invokePlayer()
 {
-    if (m_sceneWidget->sceneLoader()->scene()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         /*
@@ -1798,7 +1802,7 @@ void MainWindow::invokePlayer()
 
 void MainWindow::openPlaySettingDialog()
 {
-    if (m_sceneWidget->sceneLoader()->scene()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxFrameIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         m_playSettingDialog->show();
@@ -1813,8 +1817,8 @@ void MainWindow::selectNextModel()
 {
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
-        const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
+        const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
+        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModel(), actions);
         if (index == -1 || index == actions.length() - 1)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
         else
@@ -1826,8 +1830,8 @@ void MainWindow::selectPreviousModel()
 {
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
-        const SceneLoader *loader = m_sceneWidget->sceneLoader();
-        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoader()->selectedModel(), actions);
+        const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
+        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModel(), actions);
         if (index == -1 || index == 0)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
         else
@@ -1845,19 +1849,19 @@ void MainWindow::showLicenseWidget()
 
 void MainWindow::openGravitySettingDialog()
 {
-    QScopedPointer<GravitySettingDialog> dialog(new GravitySettingDialog(m_sceneWidget->sceneLoader()));
+    QScopedPointer<GravitySettingDialog> dialog(new GravitySettingDialog(m_sceneWidget->sceneLoaderRef()));
     dialog->exec();
 }
 
 void MainWindow::openRenderOrderDialog()
 {
-    QScopedPointer<RenderOrderDialog> dialog(new RenderOrderDialog(m_sceneWidget->sceneLoader()));
+    QScopedPointer<RenderOrderDialog> dialog(new RenderOrderDialog(m_sceneWidget->sceneLoaderRef()));
     dialog->exec();
 }
 
 void MainWindow::openScreenColorDialog()
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoader();
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     const QColor &before = loader->screenColor();
     QScopedPointer<QColorDialog> dialog(new QColorDialog(before));
     connect(dialog.data(), SIGNAL(currentColorChanged(QColor)), loader, SLOT(setScreenColor(QColor)));
@@ -1867,13 +1871,13 @@ void MainWindow::openScreenColorDialog()
 
 void MainWindow::openShadowMapDialog()
 {
-    QScopedPointer<ShadowMapSettingDialog> dialog(new ShadowMapSettingDialog(m_sceneWidget->sceneLoader()));
+    QScopedPointer<ShadowMapSettingDialog> dialog(new ShadowMapSettingDialog(m_sceneWidget->sceneLoaderRef()));
     dialog->exec();
 }
 
 void MainWindow::openBackgroundImageDialog()
 {
-    QScopedPointer<BackgroundImageSettingDialog> dialog(new BackgroundImageSettingDialog(m_sceneWidget->sceneLoader()));
+    QScopedPointer<BackgroundImageSettingDialog> dialog(new BackgroundImageSettingDialog(m_sceneWidget->sceneLoaderRef()));
     connect(dialog.data(), SIGNAL(positionDidChange(QPoint)), m_sceneWidget.data(), SLOT(setBackgroundPosition(QPoint)));
     connect(dialog.data(), SIGNAL(uniformDidEnable(bool)), m_sceneWidget.data(), SLOT(setBackgroundImageUniformEnable(bool)));
     dialog->exec();
@@ -1918,14 +1922,14 @@ void MainWindow::makeBonesSelectable()
 
 void MainWindow::disconnectInitialSlots()
 {
-    disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoader(), SLOT(setProjectDirtyFalse()));
+    disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoaderRef(), SLOT(setProjectDirtyFalse()));
     disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel.data(), SLOT(markAsNew()));
     disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSlots()));
 }
 
 void MainWindow::resetSceneToModels()
 {
-    const Scene *scene = m_sceneWidget->sceneLoader()->scene();
+    const Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
     m_boneMotionModel->setScenePtr(scene);
     m_morphMotionModel->setScenePtr(scene);
 }

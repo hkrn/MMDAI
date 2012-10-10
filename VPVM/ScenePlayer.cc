@@ -83,8 +83,8 @@ void ScenePlayer::start()
     if (isActive())
         return;
     int sceneFPS = m_dialog->sceneFPS();
-    m_selected = m_sceneWidget->sceneLoader()->selectedModel();
-    m_prevSceneFPS = m_sceneWidget->sceneLoader()->scene()->preferredFPS();
+    m_selected = m_sceneWidget->sceneLoaderRef()->selectedModel();
+    m_prevSceneFPS = m_sceneWidget->sceneLoaderRef()->sceneRef()->preferredFPS();
     m_prevFrameIndex = m_sceneWidget->currentTimeIndex();
     m_frameStep = 1.0 / (sceneFPS / Scene::defaultFPS());
     m_totalStep = 0;
@@ -95,7 +95,7 @@ void ScenePlayer::start()
     m_sceneWidget->stopAutomaticRendering();
     /* FPS を設定してから物理エンジンを有効にする(FPS設定を反映させるため) */
     m_sceneWidget->setPreferredFPS(sceneFPS);
-    m_sceneWidget->sceneLoader()->startPhysicsSimulation();
+    m_sceneWidget->sceneLoaderRef()->startPhysicsSimulation();
     /* 場面を開始位置にシーク */
     m_sceneWidget->seekMotion(m_dialog->fromIndex(), true, true);
     /* ハンドルも情報パネルも消す */
@@ -112,7 +112,7 @@ void ScenePlayer::start()
     m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
     float renderTimerInterval = 1000.0 / sceneFPS;
     /* 音声出力準備 */
-    m_player->setFilename(m_sceneWidget->sceneLoader()->backgroundAudio());
+    m_player->setFilename(m_sceneWidget->sceneLoaderRef()->backgroundAudio());
     if (m_player->initalize()) {
         connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameVariant()));
         connect(m_player, SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
@@ -147,7 +147,7 @@ void ScenePlayer::stop()
     m_sceneWidget->setBoneWireFramesVisible(true);
     m_sceneWidget->setSelectedModel(m_selected);
     /* 再生が終わったら物理を無効にする */
-    m_sceneWidget->sceneLoader()->stopPhysicsSimulation();
+    m_sceneWidget->sceneLoaderRef()->stopPhysicsSimulation();
     m_sceneWidget->resetMotion();
     m_sceneWidget->setPreferredFPS(m_prevSceneFPS);
     /* フレーム位置を再生前に戻す */
@@ -201,7 +201,7 @@ void ScenePlayer::renderSceneFrame0(float step)
         m_elapsed.restart();
     }
     m_countForFPS++;
-    Scene *scene = m_sceneWidget->sceneLoader()->scene();
+    Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
     bool isReached = scene->isReachedTo(m_dialog->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
     if ((!m_dialog->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
@@ -211,7 +211,7 @@ void ScenePlayer::renderSceneFrame0(float step)
         int value;
         if (isReached) {
             /* ループする場合はモーションと物理演算をリセットしてから開始位置に移動する */
-            SceneLoader *loader = m_sceneWidget->sceneLoader();
+            SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
             value = m_dialog->fromIndex();
             loader->stopPhysicsSimulation();
             m_sceneWidget->resetMotion();

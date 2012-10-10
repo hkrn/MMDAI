@@ -90,7 +90,7 @@ public:
     explicit SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent = 0);
     ~SceneWidget();
 
-    SceneLoader *sceneLoader() const;
+    SceneLoader *sceneLoaderRef() const;
     void setWorldGravity(const Vector3 &value);
     void setPreferredFPS(int value);
     void setHandlesVisible(bool value);
@@ -110,9 +110,9 @@ public:
     VPDFilePtr insertPoseToSelectedModel(const QString &filename, IModel *model);
     IMotion *setCamera(const QString &path);
     void makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo) const;
-    Handles *handles() const { return m_handles; }
+    Handles *handlesRef() const { return m_handles.data(); }
     EditMode editMode() const { return m_editMode; }
-    const QList<IBone *> &selectedBones() const { return m_selectedBones; }
+    const QList<IBone *> &selectedBones() const { return m_selectedBoneRefs; }
     const IKeyframe::TimeIndex &currentTimeIndex() const { return m_timeIndex; }
     bool isPlaying() const { return m_playing; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
@@ -201,9 +201,9 @@ protected:
     void pinchTriggered(QPinchGesture *event);
     void swipeTriggered(QSwipeGesture *event);
 
-    SceneLoader *m_loader;
-    QSettings *m_settings;
-    BackgroundImage *m_background;
+    QScopedPointer<SceneLoader> m_loader;
+    QScopedPointer<BackgroundImage> m_background;
+    QSettings *m_settingsRef;
 
 private slots:
     void addModel();
@@ -263,24 +263,24 @@ private:
                         const Vector3 &zfar,
                         const Scalar &threshold) const;
 
-    IEncoding *m_encoding;
-    Factory *m_factory;
-    IBone *m_currentSelectedBone;
-    Vector3 m_lastBonePosition;
-    Scalar m_totalDelta;
-    DebugDrawer *m_debugDrawer;
-    Grid *m_grid;
-    InfoPanel *m_info;
-    PlaneWorld *m_plane;
-    Handles *m_handles;
-    QList<IBone *> m_selectedBones;
+    QScopedPointer<DebugDrawer> m_debugDrawer;
+    QScopedPointer<Grid> m_grid;
+    QScopedPointer<InfoPanel> m_info;
+    QScopedPointer<PlaneWorld> m_plane;
+    QScopedPointer<Handles> m_handles;
+    IEncoding *m_encodingRef;
+    Factory *m_factoryRef;
+    IBone *m_currentSelectedBoneRef;
+    QList<IBone *> m_selectedBoneRefs;
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
     QPointF m_delta;
     EditMode m_editMode;
+    Vector3 m_lastBonePosition;
+    Scalar m_totalDelta;
+    IKeyframe::TimeIndex m_timeIndex;
     float m_lastDistance;
     float m_prevElapsed;
-    IKeyframe::TimeIndex m_timeIndex;
     int m_frameCount;
     int m_currentFPS;
     int m_interval;
