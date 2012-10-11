@@ -325,7 +325,7 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
         m_world->world()->rayTest(rayFrom, rayTo, callback);
         m_trackedHandle = 0;
         if (callback.hasHit()) {
-            btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
+            const btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
             Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
             if (m_boneRef->isMovable() && m_visibilityFlags & kMove) {
                 if (model == &m_translationHandle.x && (m_visibilityFlags & kX))

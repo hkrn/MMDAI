@@ -54,12 +54,12 @@ class TabWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit TabWidget(QSettings *settings, QWidget *parent = 0);
+    explicit TabWidget(QSettings *settingsRef, QWidget *parent = 0);
     ~TabWidget();
 
-    AssetWidget *assetWidget() const { return m_asset; }
-    CameraPerspectiveWidget *cameraPerspectiveWidget() const { return m_camera; }
-    SceneLightWidget *sceneLightWidget() const { return m_light; }
+    AssetWidget *assetWidgetRef() const { return m_asset.data(); }
+    CameraPerspectiveWidget *cameraPerspectiveWidgetRef() const { return m_camera.data(); }
+    SceneLightWidget *sceneLightWidgetRef() const { return m_light.data(); }
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -68,11 +68,11 @@ private slots:
     void retranslate();
 
 private:
-    QTabWidget *m_tabWidget;
-    QSettings *m_settings;
-    AssetWidget *m_asset;
-    CameraPerspectiveWidget *m_camera;
-    SceneLightWidget *m_light;
+    QScopedPointer<QTabWidget> m_tabWidget;
+    QScopedPointer<AssetWidget> m_asset;
+    QScopedPointer<CameraPerspectiveWidget> m_camera;
+    QScopedPointer<SceneLightWidget> m_light;
+    QSettings *m_settingsRef;
 
     Q_DISABLE_COPY(TabWidget)
 };

@@ -50,7 +50,7 @@ class BoneUIDelegate : public QObject
     Q_OBJECT
 
 public:
-    BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent = 0);
+    BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent);
     ~BoneUIDelegate();
 
 private slots:
@@ -62,8 +62,8 @@ private slots:
     void openBoneDialog();
 
 private:
-    MainWindow *m_parent;
-    BoneMotionModel *m_boneMotionModel;
+    MainWindow *m_parentRef;
+    BoneMotionModel *m_boneMotionModelRef;
 
     Q_DISABLE_COPY(BoneUIDelegate)
 };

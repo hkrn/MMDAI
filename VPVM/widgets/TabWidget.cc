@@ -49,26 +49,23 @@ namespace vpvm
 
 using namespace vpvl2;
 
-TabWidget::TabWidget(QSettings *settings, QWidget *parent) :
-    QWidget(parent),
-    m_settings(settings),
-    m_asset(0),
-    m_camera(0),
-    m_light(0)
+TabWidget::TabWidget(QSettings *settingsRef, QWidget *parent)
+    : QWidget(parent),
+      m_tabWidget(new QTabWidget()),
+      m_asset(new AssetWidget()),
+      m_camera(new CameraPerspectiveWidget()),
+      m_light(new SceneLightWidget()),
+      m_settingsRef(settingsRef)
 {
-    m_asset = new AssetWidget();
-    m_camera = new CameraPerspectiveWidget();
-    m_light = new SceneLightWidget();
-    m_tabWidget = new QTabWidget();
-    m_tabWidget->addTab(m_asset, "");
-    m_tabWidget->addTab(m_camera, "");
-    m_tabWidget->addTab(m_light, "");
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(m_tabWidget);
+    m_tabWidget->addTab(m_asset.data(), "");
+    m_tabWidget->addTab(m_camera.data(), "");
+    m_tabWidget->addTab(m_light.data(), "");
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addWidget(m_tabWidget.data());
     retranslate();
     setMinimumWidth(350);
-    setLayout(layout);
-    restoreGeometry(m_settings->value("tabWidget/geometry").toByteArray());
+    setLayout(mainLayout.take());
+    restoreGeometry(m_settingsRef->value("tabWidget/geometry").toByteArray());
 }
 
 TabWidget::~TabWidget()
@@ -85,7 +82,7 @@ void TabWidget::retranslate()
 
 void TabWidget::closeEvent(QCloseEvent *event)
 {
-    m_settings->setValue("tabWidget/geometry", saveGeometry());
+    m_settingsRef->setValue("tabWidget/geometry", saveGeometry());
     event->accept();
 }
 

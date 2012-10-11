@@ -46,83 +46,83 @@ namespace vpvm
 
 using namespace vpvl2;
 
-ModelInfoWidget::ModelInfoWidget(QWidget *parent) :
-    QWidget(parent)
+ModelInfoWidget::ModelInfoWidget(QWidget *parent)
+    : QWidget(parent),
+      m_nameLabel(new QLabel()),
+      m_nameValueLabel(new QLineEdit()),
+      m_commentLabel(new QLabel()),
+      m_commentValueLabel(new QTextEdit()),
+      m_verticesCountLabel(new QLabel()),
+      m_verticesCountValueLabel(new QLineEdit()),
+      m_indicesCountLabel(new QLabel()),
+      m_indicesCountValueLabel(new QLineEdit()),
+      m_materialsCountLabel(new QLabel()),
+      m_materialsCountValueLabel(new QLineEdit()),
+      m_bonesCountLabel(new QLabel()),
+      m_bonesCountValueLabel(new QLineEdit()),
+      m_IKsCountLabel(new QLabel()),
+      m_IKsCountValueLabel(new QLineEdit()),
+      m_morphsCountLabel(new QLabel()),
+      m_morphsCountValueLabel(new QLineEdit()),
+      m_rigidBodiesCountLabel(new QLabel()),
+      m_rigidBodiesCountValueLabel(new QLineEdit()),
+      m_constrantsCountLabel(new QLabel()),
+      m_constrantsCountValueLabel(new QLineEdit())
 {
     /* モデル名 */
-    m_nameLabel = new QLabel();
-    m_nameValueLabel = new QLineEdit();
     m_nameValueLabel->setReadOnly(true);
     /* モデルのコメント */
-    m_commentLabel = new QLabel();
-    m_commentValueLabel = new QTextEdit();
     m_commentValueLabel->setReadOnly(true);
     /* 頂点数 */
-    m_verticesCountLabel = new QLabel();
-    m_verticesCountValueLabel = new QLineEdit();
     m_verticesCountValueLabel->setReadOnly(true);
     m_verticesCountValueLabel->setAlignment(Qt::AlignRight);
     /* インデックス数 */
-    m_indicesCountLabel = new QLabel();
-    m_indicesCountValueLabel = new QLineEdit();
     m_indicesCountValueLabel->setReadOnly(true);
     m_indicesCountValueLabel->setAlignment(Qt::AlignRight);
     /* 材質数 */
-    m_materialsCountLabel = new QLabel();
-    m_materialsCountValueLabel = new QLineEdit();
     m_materialsCountValueLabel->setReadOnly(true);
     m_materialsCountValueLabel->setAlignment(Qt::AlignRight);
     /* ボーン数 */
-    m_bonesCountLabel = new QLabel();
-    m_bonesCountValueLabel = new QLineEdit();
     m_bonesCountValueLabel->setReadOnly(true);
     m_bonesCountValueLabel->setAlignment(Qt::AlignRight);
     /* IK 数 */
-    m_IKsCountLabel = new QLabel();
-    m_IKsCountValueLabel = new QLineEdit();
     m_IKsCountValueLabel->setReadOnly(true);
     m_IKsCountValueLabel->setAlignment(Qt::AlignRight);
     /* モーフ数 */
-    m_morphsCountLabel = new QLabel();
-    m_morphsCountValueLabel = new QLineEdit();
     m_morphsCountValueLabel->setReadOnly(true);
     m_morphsCountValueLabel->setAlignment(Qt::AlignRight);
     /* 剛体数 */
-    m_rigidBodiesCountLabel = new QLabel();
-    m_rigidBodiesCountValueLabel = new QLineEdit();
     m_rigidBodiesCountValueLabel->setReadOnly(true);
     m_rigidBodiesCountValueLabel->setAlignment(Qt::AlignRight);
     /* コンストレイント(拘束条件)数 */
-    m_constrantsCountLabel = new QLabel();
-    m_constrantsCountValueLabel = new QLineEdit();
     m_constrantsCountValueLabel->setReadOnly(true);
     m_constrantsCountValueLabel->setAlignment(Qt::AlignRight);
     /* 構築 */
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(m_nameLabel);
-    mainLayout->addWidget(m_nameValueLabel);
-    mainLayout->addWidget(m_commentLabel);
-    mainLayout->addWidget(m_commentValueLabel);
-    QGridLayout *gridLayout = new QGridLayout();
-    gridLayout->addWidget(m_verticesCountLabel, 0, 0);
-    gridLayout->addWidget(m_verticesCountValueLabel, 1, 0);
-    gridLayout->addWidget(m_indicesCountLabel, 0, 1);
-    gridLayout->addWidget(m_indicesCountValueLabel, 1, 1);
-    gridLayout->addWidget(m_materialsCountLabel, 2, 0);
-    gridLayout->addWidget(m_materialsCountValueLabel, 3, 0);
-    gridLayout->addWidget(m_bonesCountLabel, 2, 1);
-    gridLayout->addWidget(m_bonesCountValueLabel, 3, 1);
-    gridLayout->addWidget(m_IKsCountLabel, 4, 0);
-    gridLayout->addWidget(m_IKsCountValueLabel, 5, 0);
-    gridLayout->addWidget(m_morphsCountLabel, 4, 1);
-    gridLayout->addWidget(m_morphsCountValueLabel, 5, 1);
-    gridLayout->addWidget(m_rigidBodiesCountLabel, 6, 0);
-    gridLayout->addWidget(m_rigidBodiesCountValueLabel, 7, 0);
-    gridLayout->addWidget(m_constrantsCountLabel, 6, 1);
-    gridLayout->addWidget(m_constrantsCountValueLabel, 7, 1);
-    mainLayout->addLayout(gridLayout);
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addWidget(m_nameLabel.data());
+    mainLayout->addWidget(m_nameValueLabel.data());
+    mainLayout->addWidget(m_commentLabel.data());
+    mainLayout->addWidget(m_commentValueLabel.data());
+    QScopedPointer<QGridLayout> gridLayout(new QGridLayout());
+    gridLayout->addWidget(m_verticesCountLabel.data(), 0, 0);
+    gridLayout->addWidget(m_verticesCountValueLabel.data(), 1, 0);
+    gridLayout->addWidget(m_indicesCountLabel.data(), 0, 1);
+    gridLayout->addWidget(m_indicesCountValueLabel.data(), 1, 1);
+    gridLayout->addWidget(m_materialsCountLabel.data(), 2, 0);
+    gridLayout->addWidget(m_materialsCountValueLabel.data(), 3, 0);
+    gridLayout->addWidget(m_bonesCountLabel.data(), 2, 1);
+    gridLayout->addWidget(m_bonesCountValueLabel.data(), 3, 1);
+    gridLayout->addWidget(m_IKsCountLabel.data(), 4, 0);
+    gridLayout->addWidget(m_IKsCountValueLabel.data(), 5, 0);
+    gridLayout->addWidget(m_morphsCountLabel.data(), 4, 1);
+    gridLayout->addWidget(m_morphsCountValueLabel.data(), 5, 1);
+    gridLayout->addWidget(m_rigidBodiesCountLabel.data(), 6, 0);
+    gridLayout->addWidget(m_rigidBodiesCountValueLabel.data(), 7, 0);
+    gridLayout->addWidget(m_constrantsCountLabel.data(), 6, 1);
+    gridLayout->addWidget(m_constrantsCountValueLabel.data(), 7, 1);
+    mainLayout->addLayout(gridLayout.take());
     mainLayout->addStretch();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
     retranslate();
     setModel(0);
 }

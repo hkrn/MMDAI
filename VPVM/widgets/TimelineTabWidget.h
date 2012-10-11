@@ -83,7 +83,7 @@ public:
     static const int kMorphTabIndex = 2;
     static const int kInterpolationTabIndex = 3;
 
-    explicit TimelineTabWidget(QSettings *settings,
+    explicit TimelineTabWidget(QSettings *settingsRef,
                                BoneMotionModel *bmm,
                                MorphMotionModel *mmm,
                                SceneMotionModel *smm,
@@ -133,21 +133,21 @@ private slots:
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
-    TimelineWidget *currentSelectedTimelineWidget() const;
+    TimelineWidget *currentSelectedTimelineWidgetRef() const;
 
-    QSettings *m_settings;
-    QTabWidget *m_tabWidget;
-    TimelineWidget *m_boneTimeline;
-    TimelineWidget *m_morphTimeline;
-    TimelineWidget *m_sceneTimeline;
-    QButtonGroup *m_boneButtonGroup;
-    QRadioButton *m_boneSelectButton;
-    QRadioButton *m_boneRotateButton;
-    QRadioButton *m_boneMoveButton;
-    FrameSelectionDialog *m_frameSelectionDialog;
-    FrameWeightDialog *m_frameWeightDialog;
-    InterpolationDialog *m_interpolationDialog;
-    IModel *m_lastSelectedModel;
+    QScopedPointer<QTabWidget> m_tabWidget;
+    QScopedPointer<TimelineWidget> m_boneTimeline;
+    QScopedPointer<TimelineWidget> m_morphTimeline;
+    QScopedPointer<TimelineWidget> m_sceneTimeline;
+    QScopedPointer<QButtonGroup> m_boneButtonGroup;
+    QScopedPointer<QRadioButton> m_boneSelectButton;
+    QScopedPointer<QRadioButton> m_boneRotateButton;
+    QScopedPointer<QRadioButton> m_boneMoveButton;
+    QScopedPointer<FrameSelectionDialog> m_frameSelectionDialog;
+    QScopedPointer<FrameWeightDialog> m_frameWeightDialog;
+    QScopedPointer<InterpolationDialog> m_interpolationDialog;
+    QSettings *m_settingsRef;
+    IModel *m_lastSelectedModelRef;
 
     Q_DISABLE_COPY(TimelineTabWidget)
 };

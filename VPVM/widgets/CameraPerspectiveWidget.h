@@ -37,6 +37,11 @@
 #ifndef VPVM_PERSPECTIONWIDGET_H
 #define VPVM_PERSPECTIONWIDGET_H
 
+#include <QtGui/QDoubleSpinBox>
+#include <QtGui/QGroupBox>
+#include <QtGui/QLabel>
+#include <QtGui/QPushButton>
+#include <QtGui/QRadioButton>
 #include <QtGui/QWidget>
 #include <vpvl2/Common.h>
 #include <vpvl2/Scene.h>
@@ -44,12 +49,6 @@
 namespace vpvl2 {
 class IBone;
 }
-
-class QDoubleSpinBox;
-class QGroupBox;
-class QLabel;
-class QPushButton;
-class QRadioButton;
 
 namespace vpvm
 {
@@ -96,30 +95,30 @@ private:
 
     Vector3 m_currentPosition;
     Vector3 m_currentAngle;
-    QGroupBox *m_presetGroup;
-    QGroupBox *m_positionGroup;
-    QGroupBox *m_rotationGroup;
-    QPushButton *m_frontButton;
-    QPushButton *m_backButton;
-    QPushButton *m_topButton;
-    QPushButton *m_leftButton;
-    QPushButton *m_rightButton;
-    QPushButton *m_cameraButton;
-    QLabel *m_fovyLabel;
-    QLabel *m_distanceLabel;
-    QDoubleSpinBox *m_px;
-    QDoubleSpinBox *m_py;
-    QDoubleSpinBox *m_pz;
-    QDoubleSpinBox *m_rx;
-    QDoubleSpinBox *m_ry;
-    QDoubleSpinBox *m_rz;
-    QGroupBox *m_followGroup;
-    QRadioButton *m_followNone;
-    QRadioButton *m_followModel;
-    QRadioButton *m_followBone;
-    QDoubleSpinBox *m_fovy;
-    QDoubleSpinBox *m_distance;
-    QPushButton *m_initializeButton;
+    QScopedPointer<QGroupBox> m_presetGroup;
+    QScopedPointer<QGroupBox> m_positionGroup;
+    QScopedPointer<QGroupBox> m_rotationGroup;
+    QScopedPointer<QPushButton> m_frontButton;
+    QScopedPointer<QPushButton> m_backButton;
+    QScopedPointer<QPushButton> m_topButton;
+    QScopedPointer<QPushButton> m_leftButton;
+    QScopedPointer<QPushButton> m_rightButton;
+    QScopedPointer<QPushButton> m_cameraButton;
+    QScopedPointer<QLabel> m_fovyLabel;
+    QScopedPointer<QLabel> m_distanceLabel;
+    QScopedPointer<QDoubleSpinBox> m_px;
+    QScopedPointer<QDoubleSpinBox> m_py;
+    QScopedPointer<QDoubleSpinBox> m_pz;
+    QScopedPointer<QDoubleSpinBox> m_rx;
+    QScopedPointer<QDoubleSpinBox> m_ry;
+    QScopedPointer<QDoubleSpinBox> m_rz;
+    QScopedPointer<QGroupBox> m_followGroup;
+    QScopedPointer<QRadioButton> m_followNone;
+    QScopedPointer<QRadioButton> m_followModel;
+    QScopedPointer<QRadioButton> m_followBone;
+    QScopedPointer<QDoubleSpinBox> m_fovy;
+    QScopedPointer<QDoubleSpinBox> m_distance;
+    QScopedPointer<QPushButton> m_initializeButton;
     Scalar m_currentFovy;
     Scalar m_currentDistance;
     bool m_enableFollowingModel;

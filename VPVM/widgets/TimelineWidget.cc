@@ -138,44 +138,43 @@ namespace vpvm
 TimelineWidget::TimelineWidget(MotionBaseModel *base,
                                bool stretchLastSection,
                                QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent),
+      m_treeView(new TimelineTreeView(base, new TimelineItemDelegate(this))),
+      m_headerView(new TimelineHeaderView(Qt::Horizontal, stretchLastSection)),
+      m_label(new QLabel()),
+      m_button(new QPushButton()),
+      m_spinBox(new QSpinBox())
 {
-    TimelineItemDelegate *delegate = new TimelineItemDelegate(this);
-    m_treeView = new TimelineTreeView(base, delegate);
     /* 専用の選択処理を行うようにスロットを追加する */
     connect(m_treeView->horizontalScrollBar(), SIGNAL(actionTriggered(int)), SLOT(adjustFrameColumnSize(int)));
-    m_headerView = new TimelineHeaderView(Qt::Horizontal, stretchLastSection);
-    connect(m_headerView, SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentTimeIndexAndSelect(int)));
-    m_treeView->setHeader(m_headerView);
+    connect(m_headerView.data(), SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentTimeIndexAndSelect(int)));
+    m_treeView->setHeader(m_headerView.data());
     m_headerView->setResizeMode(0, QHeaderView::ResizeToContents);
     m_treeView->initializeFrozenView();
-    m_spinBox = new QSpinBox();
     m_spinBox->setAlignment(Qt::AlignRight);
-    connect(m_spinBox, SIGNAL(valueChanged(int)), SLOT(setCurrentTimeIndex(int)));
-    connect(m_spinBox, SIGNAL(editingFinished()), SLOT(setCurrentTimeIndexAndExpandBySpinBox()));
+    connect(m_spinBox.data(), SIGNAL(valueChanged(int)), SLOT(setCurrentTimeIndex(int)));
+    connect(m_spinBox.data(), SIGNAL(editingFinished()), SLOT(setCurrentTimeIndexAndExpandBySpinBox()));
     m_spinBox->setRange(0, kFrameIndexColumnMax);
     m_spinBox->setWrapping(false);
     /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
-    m_label = new QLabel();
-    m_button = new QPushButton();
     /* キーフレームの登録処理 */
-    connect(m_button, SIGNAL(clicked()), m_treeView, SLOT(addKeyframesBySelectedIndices()));
+    connect(m_button.data(), SIGNAL(clicked()), m_treeView.data(), SLOT(addKeyframesBySelectedIndices()));
     QHBoxLayout *spinboxLayout = new QHBoxLayout();
-    spinboxLayout->addWidget(m_label);
-    spinboxLayout->addWidget(m_spinBox);
-    spinboxLayout->addWidget(m_button);
+    spinboxLayout->addWidget(m_label.data());
+    spinboxLayout->addWidget(m_spinBox.data());
+    spinboxLayout->addWidget(m_button.data());
     spinboxLayout->setAlignment(Qt::AlignCenter);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     mainLayout->addLayout(spinboxLayout);
-    mainLayout->addWidget(m_treeView);
+    mainLayout->addWidget(m_treeView.data());
     mainLayout->setContentsMargins(QMargins());
     QItemSelectionModel *sm = m_treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentTimeIndex(QModelIndex)));
     /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
-    connect(base, SIGNAL(motionDidUpdate(IModel*)), m_treeView, SLOT(restoreExpandState()));
+    connect(base, SIGNAL(motionDidUpdate(IModel*)), m_treeView.data(), SLOT(restoreExpandState()));
     connect(base, SIGNAL(motionDidUpdate(IModel*)), SLOT(setCurrentTimeIndexBySpinBox()));
     retranslate();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
 }
 
 TimelineWidget::~TimelineWidget()

@@ -86,15 +86,15 @@ private slots:
 private:
     void renderSceneFrame0(float step);
 
+    QScopedPointer<AudioPlayer> m_player;
+    QScopedPointer<QProgressDialog> m_progress;
+    SceneWidget *m_sceneWidgetRef;
+    PlaySettingDialog *m_dialogRef;
+    IModel *m_selectedModelRef;
     QElapsedTimer m_elapsed;
     QTimer m_renderTimer;
-    SceneWidget *m_sceneWidget;
-    PlaySettingDialog *m_dialog;
-    QProgressDialog *m_progress;
     QString m_format;
     QByteArray m_buffer;
-    AudioPlayer *m_player;
-    IModel *m_selected;
     Scalar m_currentFPS;
     Scalar m_prevSceneFPS;
     float m_prevFrameIndex;

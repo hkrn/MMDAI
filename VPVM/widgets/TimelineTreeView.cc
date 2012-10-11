@@ -47,7 +47,8 @@ namespace vpvm
 
 TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent)
     : QTreeView(parent),
-      m_rubberBand(0)
+      m_frozenTreeView(new QTreeView(this)),
+      m_rubberBand(new QRubberBand(QRubberBand::Rectangle))
 {
     setModel(mbm);
     setSelectionBehavior(QAbstractItemView::SelectItems);
@@ -57,11 +58,9 @@ TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate
     setUniformRowHeights(true);
     setSortingEnabled(false);
     setItemsExpandable(false);
-    m_frozenTreeView = new QTreeView(this);
-    QItemDelegate *itemDelegate = new QItemDelegate();
-    m_frozenTreeView->setItemDelegate(itemDelegate);
-    connect(m_frozenTreeView, SIGNAL(collapsed(QModelIndex)), SLOT(addCollapsed(QModelIndex)));
-    connect(m_frozenTreeView, SIGNAL(expanded(QModelIndex)), SLOT(addExpanded(QModelIndex)));
+    m_frozenTreeView->setItemDelegate(new QItemDelegate());
+    connect(m_frozenTreeView.data(), SIGNAL(collapsed(QModelIndex)), SLOT(addCollapsed(QModelIndex)));
+    connect(m_frozenTreeView.data(), SIGNAL(expanded(QModelIndex)), SLOT(addExpanded(QModelIndex)));
     connect(m_frozenTreeView->verticalScrollBar(), SIGNAL(valueChanged(int)),
             verticalScrollBar(), SLOT(setValue(int)));
     connect(verticalScrollBar(), SIGNAL(valueChanged(int)),
@@ -73,7 +72,6 @@ TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate
 
 TimelineTreeView::~TimelineTreeView()
 {
-    delete m_rubberBand;
 }
 
 void TimelineTreeView::initializeFrozenView()
@@ -81,7 +79,7 @@ void TimelineTreeView::initializeFrozenView()
     QAbstractItemModel *m = model();
     m_frozenTreeView->setModel(m);
     m_frozenTreeView->header()->setResizeMode(QHeaderView::Fixed);
-    viewport()->stackUnder(m_frozenTreeView);
+    viewport()->stackUnder(m_frozenTreeView.data());
     updateFrozenTreeView();
     m_frozenTreeView->setColumnWidth(0, columnWidth(0));
     m_frozenTreeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -231,8 +229,6 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
     if (v->rect().contains(v->mapFromGlobal(pos))) {
         m_rubberBandRect.setTopLeft(pos);
         m_rubberBandRect.setBottomRight(pos);
-        if (!m_rubberBand)
-            m_rubberBand = new QRubberBand(QRubberBand::Rectangle);
         m_rubberBand->setGeometry(m_rubberBandRect);
         m_rubberBand->show();
     }

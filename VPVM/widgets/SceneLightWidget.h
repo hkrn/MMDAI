@@ -79,15 +79,15 @@ private:
     QSpinBox *createSpinBox(const char *slot) const;
     QDoubleSpinBox *createDoubleSpinBox(const char *slot) const;
 
-    QGroupBox *m_colorGroup;
-    QGroupBox *m_directionGroup;
-    QSpinBox *m_r;
-    QSpinBox *m_g;
-    QSpinBox *m_b;
-    QDoubleSpinBox *m_x;
-    QDoubleSpinBox *m_y;
-    QDoubleSpinBox *m_z;
-    QPushButton *m_openColorDialog;
+    QScopedPointer<QGroupBox> m_colorGroup;
+    QScopedPointer<QGroupBox> m_directionGroup;
+    QScopedPointer<QSpinBox> m_r;
+    QScopedPointer<QSpinBox> m_g;
+    QScopedPointer<QSpinBox> m_b;
+    QScopedPointer<QDoubleSpinBox> m_x;
+    QScopedPointer<QDoubleSpinBox> m_y;
+    QScopedPointer<QDoubleSpinBox> m_z;
+    QScopedPointer<QPushButton> m_openColorDialog;
 };
 
 } /* namespace vpvm */

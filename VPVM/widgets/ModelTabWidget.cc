@@ -48,29 +48,25 @@
 namespace vpvm
 {
 
-ModelTabWidget::ModelTabWidget(QSettings *settings,
+ModelTabWidget::ModelTabWidget(QSettings *settingsRef,
                                MorphMotionModel *mmm,
-                               QWidget *parent) :
-    QWidget(parent),
-    m_tabWidget(0),
-    m_settings(settings),
-    m_morphWidget(0),
-    m_modelInfoWidget(0),
-    m_modelSettingWidget(0)
+                               QWidget *parent)
+    : QWidget(parent),
+      m_tabWidget(new QTabWidget()),
+      m_morphWidget(new MorphWidget(mmm)),
+      m_modelInfoWidget(new ModelInfoWidget()),
+      m_modelSettingWidget(new ModelSettingWidget()),
+      m_settingsRef(settingsRef)
 {
-    m_morphWidget = new MorphWidget(mmm);
-    m_modelInfoWidget = new ModelInfoWidget();
-    m_modelSettingWidget = new ModelSettingWidget();
-    m_tabWidget = new QTabWidget();
-    m_tabWidget->addTab(m_modelInfoWidget, "");
-    m_tabWidget->addTab(m_modelSettingWidget, "");
-    m_tabWidget->addTab(m_morphWidget, "");
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(m_tabWidget);
+    m_tabWidget->addTab(m_modelInfoWidget.data(), "");
+    m_tabWidget->addTab(m_modelSettingWidget.data(), "");
+    m_tabWidget->addTab(m_morphWidget.data(), "");
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addWidget(m_tabWidget.data());
     retranslate();
     setMinimumWidth(350);
-    setLayout(layout);
-    restoreGeometry(m_settings->value("modelTabWidget/geometry").toByteArray());
+    setLayout(mainLayout.take());
+    restoreGeometry(m_settingsRef->value("modelTabWidget/geometry").toByteArray());
 }
 
 ModelTabWidget::~ModelTabWidget()
@@ -87,7 +83,7 @@ void ModelTabWidget::retranslate()
 
 void ModelTabWidget::closeEvent(QCloseEvent *event)
 {
-    m_settings->setValue("modelTabWidget/geometry", saveGeometry());
+    m_settingsRef->setValue("modelTabWidget/geometry", saveGeometry());
     event->accept();
 }
 

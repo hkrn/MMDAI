@@ -62,8 +62,8 @@ private:
                     const QString &href,
                     const QString &path);
 
-    QAbstractItemModel *m_model;
-    QTextEdit *m_text;
+    QScopedPointer<QAbstractItemModel> m_model;
+    QScopedPointer<QTextEdit> m_text;
     QHash<QString, QString> m_path;
 
     Q_DISABLE_COPY(LicenseWidget)

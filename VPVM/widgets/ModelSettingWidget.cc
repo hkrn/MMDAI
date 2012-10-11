@@ -43,91 +43,91 @@
 namespace vpvm
 {
 
+static const Scalar kZfar = 10000;
+
 using namespace vpvl2;
 
-ModelSettingWidget::ModelSettingWidget(QWidget *parent) :
-    QWidget(parent),
-    m_edgeColorDialog(0)
+ModelSettingWidget::ModelSettingWidget(QWidget *parent)
+    : QWidget(parent),
+      m_edgeOffsetLabel(new QLabel()),
+      m_edgeOffsetSpinBox(new QDoubleSpinBox()),
+      m_edgeColorDialogOpenButton(new QPushButton()),
+      m_opacityLabel(new QLabel()),
+      m_opacitySlider(new QSlider(Qt::Horizontal)),
+      m_opacitySpinBox(new QSpinBox()),
+      m_shadowGroup(new QGroupBox()),
+      m_shadowButtonsGroup(new QButtonGroup()),
+      m_noShadowCheckbox(new QRadioButton()),
+      m_projectiveShadowCheckbox(new QRadioButton()),
+      m_selfShadowCheckbox(new QRadioButton()),
+      m_px(createSpinBox(SLOT(updatePosition()), -kZfar, kZfar)),
+      m_py(createSpinBox(SLOT(updatePosition()), -kZfar, kZfar)),
+      m_pz(createSpinBox(SLOT(updatePosition()), -kZfar, kZfar)),
+      m_positionGroup(new QGroupBox()),
+      m_rx(createSpinBox(SLOT(updateRotation()), -180.0, 180.0)),
+      m_ry(createSpinBox(SLOT(updateRotation()), -180.0, 180.0)),
+      m_rz(createSpinBox(SLOT(updateRotation()), -180.0, 180.0)),
+      m_rotationGroup(new QGroupBox())
 {
     /* エッジ幅 */
-    m_edgeOffsetLabel = new QLabel();
-    m_edgeOffsetSpinBox = new QDoubleSpinBox();
-    connect(m_edgeOffsetSpinBox, SIGNAL(valueChanged(double)), SIGNAL(edgeOffsetDidChange(double)));
+    connect(m_edgeOffsetSpinBox.data(), SIGNAL(valueChanged(double)), SIGNAL(edgeOffsetDidChange(double)));
     m_edgeOffsetSpinBox->setEnabled(false);
     m_edgeOffsetSpinBox->setSingleStep(0.1);
     m_edgeOffsetSpinBox->setRange(0.0, 2.0);
     /* エッジ色 */
-    m_edgeColorDialogOpenButton = new QPushButton();
-    connect(m_edgeColorDialogOpenButton, SIGNAL(clicked()), SLOT(openEdgeColorDialog()));
+    connect(m_edgeColorDialogOpenButton.data(), SIGNAL(clicked()), SLOT(openEdgeColorDialog()));
     /* 不透明度 */
-    m_opacityLabel = new QLabel();
-    m_opacitySlider = new QSlider(Qt::Horizontal);
     m_opacitySlider->setRange(0, 100);
-    m_opacitySpinBox = new QSpinBox();
     m_opacitySpinBox->setRange(0, 100);
-    connect(m_opacitySlider, SIGNAL(valueChanged(int)), m_opacitySpinBox, SLOT(setValue(int)));
-    connect(m_opacitySpinBox, SIGNAL(valueChanged(int)), m_opacitySlider, SLOT(setValue(int)));
-    connect(m_opacitySpinBox, SIGNAL(valueChanged(int)), SLOT(emitOpacitySignal(int)));
+    connect(m_opacitySlider.data(), SIGNAL(valueChanged(int)), m_opacitySpinBox.data(), SLOT(setValue(int)));
+    connect(m_opacitySpinBox.data(), SIGNAL(valueChanged(int)), m_opacitySlider.data(), SLOT(setValue(int)));
+    connect(m_opacitySpinBox.data(), SIGNAL(valueChanged(int)), SLOT(emitOpacitySignal(int)));
     /* 影の種類の選択 */
-    m_shadowGroup = new QGroupBox();
     m_shadowGroup->setEnabled(false);
-    m_noShadowCheckbox = new QRadioButton();
     m_noShadowCheckbox->setChecked(true);
-    m_projectiveShadowCheckbox = new QRadioButton();
-    connect(m_projectiveShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidEnable(bool)));
-    m_selfShadowCheckbox = new QRadioButton();
-    connect(m_selfShadowCheckbox, SIGNAL(toggled(bool)), SIGNAL(selfShadowDidEnable(bool)));
-    m_shadowButtonsGroup = new QButtonGroup();
-    m_shadowButtonsGroup->addButton(m_noShadowCheckbox);
-    m_shadowButtonsGroup->addButton(m_projectiveShadowCheckbox);
-    m_shadowButtonsGroup->addButton(m_selfShadowCheckbox);
+    connect(m_projectiveShadowCheckbox.data(), SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidEnable(bool)));
+    connect(m_selfShadowCheckbox.data(), SIGNAL(toggled(bool)), SIGNAL(selfShadowDidEnable(bool)));
+    m_shadowButtonsGroup->addButton(m_noShadowCheckbox.data());
+    m_shadowButtonsGroup->addButton(m_projectiveShadowCheckbox.data());
+    m_shadowButtonsGroup->addButton(m_selfShadowCheckbox.data());
     /* モデルの位置(X,Y,Z) */
-    const Scalar &zfar = 10000;
-    QFormLayout *formLayout = new QFormLayout();
-    m_px = createSpinBox(SLOT(updatePosition()), -zfar, zfar);
-    formLayout->addRow("X", m_px);
-    m_py = createSpinBox(SLOT(updatePosition()), -zfar, zfar);
-    formLayout->addRow("Y", m_py);
-    m_pz = createSpinBox(SLOT(updatePosition()), -zfar, zfar);
-    formLayout->addRow("Z", m_pz);
-    m_positionGroup = new QGroupBox();
-    m_positionGroup->setLayout(formLayout);
+    QScopedPointer<QFormLayout> formLayout(new QFormLayout());
+    formLayout->addRow("X", m_px.data());
+    formLayout->addRow("Y", m_py.data());
+    formLayout->addRow("Z", m_pz.data());
+    m_positionGroup->setLayout(formLayout.take());
     /* モデルの回転(X,Y,Z) */
-    formLayout = new QFormLayout();
-    m_rx = createSpinBox(SLOT(updateRotation()), -180.0, 180.0);
-    formLayout->addRow("X", m_rx);
-    m_ry = createSpinBox(SLOT(updateRotation()), -180.0, 180.0);
-    formLayout->addRow("Y", m_ry);
-    m_rz = createSpinBox(SLOT(updateRotation()), -180.0, 180.0);
-    formLayout->addRow("Z", m_rz);
-    m_rotationGroup = new QGroupBox();
-    m_rotationGroup->setLayout(formLayout);
+    formLayout.reset(new QFormLayout());
+    formLayout->addRow("X", m_rx.data());
+    formLayout->addRow("Y", m_ry.data());
+    formLayout->addRow("Z", m_rz.data());
+    m_rotationGroup->setLayout(formLayout.take());
     /* 構築 */
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QLayout *subLayout = new QHBoxLayout();
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QLayout> subLayout(new QHBoxLayout());
     subLayout->setAlignment(Qt::AlignCenter);
-    subLayout->addWidget(m_opacityLabel);
-    subLayout->addWidget(m_opacitySlider);
-    subLayout->addWidget(m_opacitySpinBox);
-    mainLayout->addLayout(subLayout);
-    subLayout = new QHBoxLayout();
+    subLayout->addWidget(m_opacityLabel.data());
+    subLayout->addWidget(m_opacitySlider.data());
+    subLayout->addWidget(m_opacitySpinBox.data());
+    mainLayout->addLayout(subLayout.take());
+    subLayout.reset(new QHBoxLayout());
     subLayout->setAlignment(Qt::AlignCenter);
-    subLayout->addWidget(m_edgeOffsetLabel);
-    subLayout->addWidget(m_edgeOffsetSpinBox);
-    subLayout->addWidget(m_edgeColorDialogOpenButton);
-    mainLayout->addLayout(subLayout);
-    subLayout = new QVBoxLayout();
-    subLayout->addWidget(m_noShadowCheckbox);
-    subLayout->addWidget(m_projectiveShadowCheckbox);
-    subLayout->addWidget(m_selfShadowCheckbox);
-    m_shadowGroup->setLayout(subLayout);
-    mainLayout->addWidget(m_shadowGroup);
-    subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_positionGroup);
-    subLayout->addWidget(m_rotationGroup);
-    mainLayout->addLayout(subLayout);
+    subLayout->addWidget(m_edgeOffsetLabel.data());
+    subLayout->addWidget(m_edgeOffsetSpinBox.data());
+    subLayout->addWidget(m_edgeColorDialogOpenButton.data());
+    mainLayout->addLayout(subLayout.take());
+    subLayout.reset(new QVBoxLayout());
+    subLayout->addWidget(m_noShadowCheckbox.data());
+    subLayout->addWidget(m_projectiveShadowCheckbox.data());
+    subLayout->addWidget(m_selfShadowCheckbox.data());
+    m_shadowGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_shadowGroup.data());
+    subLayout.reset(new QHBoxLayout());
+    subLayout->addWidget(m_positionGroup.data());
+    subLayout->addWidget(m_rotationGroup.data());
+    mainLayout->addLayout(subLayout.take());
     mainLayout->addStretch();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
     retranslate();
 }
 
@@ -223,8 +223,8 @@ void ModelSettingWidget::setPositionOffset(const Vector3 &position)
 void ModelSettingWidget::createEdgeColorDialog(const QColor &color)
 {
     if (!m_edgeColorDialog) {
-        m_edgeColorDialog = new QColorDialog(color, this);
-        connect(m_edgeColorDialog, SIGNAL(currentColorChanged(QColor)), SIGNAL(edgeColorDidChange(QColor)));
+        m_edgeColorDialog.reset(new QColorDialog(color, this));
+        connect(m_edgeColorDialog.data(), SIGNAL(currentColorChanged(QColor)), SIGNAL(edgeColorDidChange(QColor)));
         m_edgeColorDialog->setOption(QColorDialog::NoButtons);
     }
 }
@@ -248,31 +248,31 @@ void ModelSettingWidget::emitOpacitySignal(int value)
 
 void ModelSettingWidget::disableSignals()
 {
-    disconnect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    disconnect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    disconnect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    disconnect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    disconnect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    disconnect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
 }
 
 void ModelSettingWidget::enableSignals()
 {
-    connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    connect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
-    connect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    connect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
 }
 
 QDoubleSpinBox *ModelSettingWidget::createSpinBox(const char *slot, double min, double max, double step) const
 {
-    QDoubleSpinBox *spinBox = new QDoubleSpinBox();
+    QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
     spinBox->setRange(min, max);
     spinBox->setSingleStep(step);
-    connect(spinBox, SIGNAL(valueChanged(double)), slot);
-    return spinBox;
+    connect(spinBox.data(), SIGNAL(valueChanged(double)), slot);
+    return spinBox.take();
 }
 
 } /* namespace vpvm */

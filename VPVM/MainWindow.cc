@@ -159,7 +159,7 @@ MainWindow::MainWindow(const QHash<IEncoding::ConstantType, CString *> &constant
       m_sceneMotionModel(new SceneMotionModel(m_factory.data(), m_undo.data(), m_sceneWidget.data())),
       m_modelTabWidget(new ModelTabWidget(&m_settings, m_morphMotionModel.data())),
       m_timelineTabWidget(new TimelineTabWidget(&m_settings, m_boneMotionModel.data(), m_morphMotionModel.data(), m_sceneMotionModel.data())),
-      m_boneUIDelegate(new BoneUIDelegate(m_boneMotionModel.data())),
+      m_boneUIDelegate(new BoneUIDelegate(m_boneMotionModel.data(), this)),
       m_timelineDockWidget(new QDockWidget()),
       m_sceneDockWidget(new QDockWidget()),
       m_modelDockWidget(new QDockWidget()),
@@ -1100,17 +1100,17 @@ void MainWindow::bindActions()
     m_actionSetVertexShaderSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
     m_actionEnableEffect->setShortcut(m_settings.value(kPrefix + "enableEffect").toString());
     QShortcut *cameraFront = new QShortcut(m_settings.value(kPrefix + "cameraFront", QKeySequence(Qt::Key_2)).toString(), this);
-    connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveFront()));
+    connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveFront()));
     QShortcut *cameraBack = new QShortcut(m_settings.value(kPrefix + "cameraBack", QKeySequence(Qt::Key_8)).toString(), this);
-    connect(cameraBack, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveBack()));
+    connect(cameraBack, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveBack()));
     QShortcut *cameraLeft = new QShortcut(m_settings.value(kPrefix + "cameraLeft", QKeySequence(Qt::Key_4)).toString(), this);
-    connect(cameraLeft, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveLeft()));
+    connect(cameraLeft, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveLeft()));
     QShortcut *cameraRight = new QShortcut(m_settings.value(kPrefix + "cameraRight", QKeySequence(Qt::Key_6)).toString(), this);
-    connect(cameraRight, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveRight()));
+    connect(cameraRight, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveRight()));
     QShortcut *cameraTop = new QShortcut(m_settings.value(kPrefix + "cameraTop", QKeySequence(Qt::Key_5)).toString(), this);
-    connect(cameraTop, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveTop()));
+    connect(cameraTop, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveTop()));
     QShortcut *cameraBottom = new QShortcut(m_settings.value(kPrefix + "cameraBottom", QKeySequence(Qt::Key_0)).toString(), this);
-    connect(cameraBottom, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidget(), SLOT(setCameraPerspectiveBottom()));
+    connect(cameraBottom, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveBottom()));
 }
 
 void MainWindow::retranslate()
@@ -1327,7 +1327,7 @@ void MainWindow::retranslate()
 void MainWindow::connectSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-    AssetWidget *assetWidget = m_sceneTabWidget->assetWidget();
+    AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
     connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), SLOT(addModel(IModel*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), SLOT(deleteModel(IModel*,QUuid)));
     connect(loader, SIGNAL(assetWillDelete(IModel*,QUuid)), SLOT(deleteAsset(IModel*,QUuid)));
@@ -1371,7 +1371,7 @@ void MainWindow::connectSceneLoader()
     connect(m_sceneWidget.data(), SIGNAL(modelDidRotate(Quaternion)), handles, SLOT(updateBone()));
     connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModel*)), m_sceneWidget.data(), SLOT(setSelectedModel(IModel*)));
     /* カメラの初期値を設定。シグナル発行前に行う */
-    CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidget();
+    CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidgetRef();
     Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
     const ICamera *camera = scene->camera();
     cameraWidget->setCameraPerspective(camera);
@@ -1383,7 +1383,7 @@ void MainWindow::connectSceneLoader()
     connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), cameraWidget, SLOT(setPositionFromModel(Vector3)));
     connect(m_boneMotionModel.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), cameraWidget, SLOT(setPositionFromBone(QList<IBone*>)));
     /* 光源の初期値を設定。シグナル発行前に行う */
-    SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidget();
+    SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidgetRef();
     const ILight *light = scene->light();
     lightWidget->setColor(light->color());
     lightWidget->setDirection(light->direction());
@@ -1507,7 +1507,7 @@ void MainWindow::saveModelPose()
 
 void MainWindow::saveAssetMetadata()
 {
-    m_sceneWidget->saveMetadataFromAsset(m_sceneTabWidget->assetWidget()->currentAsset());
+    m_sceneWidget->saveMetadataFromAsset(m_sceneTabWidget->assetWidgetRef()->currentAsset());
 }
 
 void MainWindow::exportImage()

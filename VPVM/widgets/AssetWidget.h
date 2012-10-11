@@ -66,8 +66,8 @@ public:
     explicit AssetWidget(QWidget *parent = 0);
     ~AssetWidget();
 
-    IModel *currentAsset() const { return m_currentAsset; }
-    IModel *currentModel() const { return m_currentModel; }
+    IModel *currentAsset() const { return m_currentAssetRef; }
+    IModel *currentModel() const { return m_currentModelRef; }
 
 public slots:
     void addAsset(IModel *asset);
@@ -101,28 +101,28 @@ private:
     void updateModelBoneComboBox(IModel *model);
     int modelIndexOf(IModel *model);
 
-    QGroupBox *m_assetGroup;
-    QGroupBox *m_assignGroup;
-    QGroupBox *m_positionGroup;
-    QGroupBox *m_rotationGroup;
-    QComboBox *m_assetComboBox;
-    QComboBox *m_modelComboBox;
-    QComboBox *m_modelBonesComboBox;
-    QPushButton *m_removeButton;
-    QDoubleSpinBox *m_px;
-    QDoubleSpinBox *m_py;
-    QDoubleSpinBox *m_pz;
-    QDoubleSpinBox *m_rx;
-    QDoubleSpinBox *m_ry;
-    QDoubleSpinBox *m_rz;
-    QDoubleSpinBox *m_scale;
-    QDoubleSpinBox *m_opacity;
-    QLabel *m_scaleLabel;
-    QLabel *m_opacityLabel;
+    QScopedPointer<QGroupBox> m_assetGroup;
+    QScopedPointer<QGroupBox> m_assignGroup;
+    QScopedPointer<QGroupBox> m_positionGroup;
+    QScopedPointer<QGroupBox> m_rotationGroup;
+    QScopedPointer<QComboBox> m_assetComboBox;
+    QScopedPointer<QComboBox> m_modelComboBox;
+    QScopedPointer<QComboBox> m_modelBonesComboBox;
+    QScopedPointer<QPushButton> m_removeButton;
+    QScopedPointer<QDoubleSpinBox> m_px;
+    QScopedPointer<QDoubleSpinBox> m_py;
+    QScopedPointer<QDoubleSpinBox> m_pz;
+    QScopedPointer<QDoubleSpinBox> m_rx;
+    QScopedPointer<QDoubleSpinBox> m_ry;
+    QScopedPointer<QDoubleSpinBox> m_rz;
+    QScopedPointer<QDoubleSpinBox> m_scale;
+    QScopedPointer<QDoubleSpinBox> m_opacity;
+    QScopedPointer<QLabel> m_scaleLabel;
+    QScopedPointer<QLabel> m_opacityLabel;
     QList<IModel *> m_assets;
     QList<IModel *> m_models;
-    IModel *m_currentAsset;
-    IModel *m_currentModel;
+    IModel *m_currentAssetRef;
+    IModel *m_currentModelRef;
 
     Q_DISABLE_COPY(AssetWidget)
 };

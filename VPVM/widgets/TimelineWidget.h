@@ -71,7 +71,7 @@ public:
     int selectedFrameIndex() const;
     void setFrameIndexSpinBoxEnable(bool value);
 
-    TimelineTreeView *treeView() const { return m_treeView; }
+    TimelineTreeView *treeViewRef() const { return m_treeView.data(); }
 
 public slots:
     void setCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex);
@@ -89,12 +89,12 @@ private slots:
     void adjustFrameColumnSize(int value);
 
 private:
-    TimelineTreeView *m_treeView;
-    TimelineHeaderView *m_headerView;
-    QLabel *m_label;
-    QPushButton *m_button;
-    QSettings *m_settings;
-    QSpinBox *m_spinBox;
+    QScopedPointer<TimelineTreeView> m_treeView;
+    QScopedPointer<TimelineHeaderView> m_headerView;
+    QScopedPointer<QLabel> m_label;
+    QScopedPointer<QPushButton> m_button;
+    QScopedPointer<QSpinBox> m_spinBox;
+    QSettings *m_settingsRef;
     QModelIndex m_index;
 
     Q_DISABLE_COPY(TimelineWidget)

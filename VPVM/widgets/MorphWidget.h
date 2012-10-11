@@ -37,6 +37,14 @@
 #ifndef VPVM_MORPHWIDGET_H
 #define VPVM_MORPHWIDGET_H
 
+#include <QtCore/QPointer>
+#include <QtGui/QComboBox>
+#include <QtGui/QCompleter>
+#include <QtGui/QGroupBox>
+#include <QtGui/QLineEdit>
+#include <QtGui/QPushButton>
+#include <QtGui/QSlider>
+#include <QtGui/QStringListModel>
 #include <QtGui/QWidget>
 #include <vpvl2/Common.h>
 
@@ -44,14 +52,6 @@ namespace vpvl2 {
 class IModel;
 class IMorph;
 }
-
-class QComboBox;
-class QCompleter;
-class QGroupBox;
-class QLineEdit;
-class QPushButton;
-class QSlider;
-class QStringListModel;
 
 namespace vpvm
 {
@@ -67,6 +67,7 @@ public:
     static const int kSliderMaximumValue = 100;
 
     explicit MorphWidget(MorphMotionModel *fmm, QWidget *parent = 0);
+    ~MorphWidget();
 
 signals:
     void morphWillChange();
@@ -93,36 +94,28 @@ private:
     IMorph *findMorph(const QString &name);
     QSlider *createSlider() const;
 
-    QGroupBox *m_eyeGroup;
-    QGroupBox *m_lipGroup;
-    QGroupBox *m_eyeblowGroup;
-    QGroupBox *m_otherGroup;
-    QComboBox *m_eyes;
-    QLineEdit *m_eyesEdit;
-    QCompleter *m_eyesCompleter;
-    QStringListModel *m_eyesCompleterModel;
-    QComboBox *m_lips;
-    QLineEdit *m_lipsEdit;
-    QCompleter *m_lipsCompleter;
-    QStringListModel *m_lipsCompleterModel;
-    QComboBox *m_eyeblows;
-    QLineEdit *m_eyeblowsEdit;
-    QCompleter *m_eyeblowsCompleter;
-    QStringListModel *m_eyeblowsCompleterModel;
-    QComboBox *m_others;
-    QLineEdit *m_othersEdit;
-    QCompleter *m_othersCompleter;
-    QStringListModel *m_othersCompleterModel;
-    QSlider *m_eyeSlider;
-    QSlider *m_lipSlider;
-    QSlider *m_eyeblowSlider;
-    QSlider *m_otherSlider;
-    QPushButton *m_eyeRegisterButton;
-    QPushButton *m_lipRegisterButton;
-    QPushButton *m_eyeblowRegisterButton;
-    QPushButton *m_otherRegisterButton;
-    QPushButton *m_resetAllButton;
-    MorphMotionModel *m_morphMotionModel;
+    QPointer<QComboBox> m_eyes;
+    QPointer<QSlider> m_eyeSlider;
+    QPointer<QStringListModel> m_eyesCompleterModel;
+    QPointer<QGroupBox> m_eyeGroup;
+    QPointer<QComboBox> m_lips;
+    QPointer<QSlider> m_lipSlider;
+    QPointer<QStringListModel> m_lipsCompleterModel;
+    QPointer<QGroupBox> m_lipGroup;
+    QPointer<QComboBox> m_eyeblows;
+    QPointer<QSlider> m_eyeblowSlider;
+    QPointer<QStringListModel> m_eyeblowsCompleterModel;
+    QPointer<QGroupBox> m_eyeblowGroup;
+    QPointer<QComboBox> m_others;
+    QPointer<QSlider> m_otherSlider;
+    QPointer<QStringListModel> m_othersCompleterModel;
+    QPointer<QGroupBox> m_otherGroup;
+    QPointer<QPushButton> m_eyeRegisterButton;
+    QPointer<QPushButton> m_lipRegisterButton;
+    QPointer<QPushButton> m_eyeblowRegisterButton;
+    QPointer<QPushButton> m_otherRegisterButton;
+    QPointer<QPushButton> m_resetAllButton;
+    MorphMotionModel *m_morphMotionModelRef;
     bool m_seek;
 
     Q_DISABLE_COPY(MorphWidget)

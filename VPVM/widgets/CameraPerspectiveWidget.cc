@@ -46,133 +46,133 @@ namespace vpvm
 
 using namespace vpvl2;
 
-CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent) :
-    QWidget(parent),
-    m_currentPosition(0.0f, 0.0f, 0.0f),
-    m_currentAngle(0.0f, 0.0f, 0.0f),
-    m_currentFovy(0.0f),
-    m_currentDistance(0.0f),
-    m_enableFollowingModel(false),
-    m_enableFollowingBone(false)
+CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent)
+    : QWidget(parent),
+      m_currentPosition(0.0f, 0.0f, 0.0f),
+      m_currentAngle(0.0f, 0.0f, 0.0f),
+      m_presetGroup(new QGroupBox()),
+      m_positionGroup(new QGroupBox()),
+      m_rotationGroup(new QGroupBox()),
+      m_frontButton(new QPushButton()),
+      m_backButton(new QPushButton()),
+      m_topButton(new QPushButton()),
+      m_leftButton(new QPushButton()),
+      m_rightButton(new QPushButton()),
+      m_cameraButton(new QPushButton()),
+      m_fovyLabel(new QLabel()),
+      m_distanceLabel(new QLabel()),
+      m_px(new QDoubleSpinBox()),
+      m_py(new QDoubleSpinBox()),
+      m_pz(new QDoubleSpinBox()),
+      m_rx(new QDoubleSpinBox()),
+      m_ry(new QDoubleSpinBox()),
+      m_rz(new QDoubleSpinBox()),
+      m_followGroup(new QGroupBox()),
+      m_followNone(new QRadioButton()),
+      m_followModel(new QRadioButton()),
+      m_followBone(new QRadioButton()),
+      m_fovy(new QDoubleSpinBox()),
+      m_distance(new QDoubleSpinBox()),
+      m_initializeButton(new QPushButton()),
+      m_currentFovy(0.0f),
+      m_currentDistance(0.0f),
+      m_enableFollowingModel(false),
+      m_enableFollowingBone(false)
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QGridLayout *gridLayout = new QGridLayout();
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QGridLayout> gridLayout(new QGridLayout());
     /* 前 */
-    m_frontButton = new QPushButton();
-    connect(m_frontButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveFront()));
-    gridLayout->addWidget(m_frontButton, 0, 0);
+    connect(m_frontButton.data(), SIGNAL(clicked()), this, SLOT(setCameraPerspectiveFront()));
+    gridLayout->addWidget(m_frontButton.data(), 0, 0);
     /* 後ろ */
-    m_backButton = new QPushButton();
-    connect(m_backButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveBack()));
-    gridLayout->addWidget(m_backButton, 0, 1);
+    connect(m_backButton.data(), SIGNAL(clicked()), this, SLOT(setCameraPerspectiveBack()));
+    gridLayout->addWidget(m_backButton.data(), 0, 1);
     /* トップ */
-    m_topButton = new QPushButton();
-    connect(m_topButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveTop()));
-    gridLayout->addWidget(m_topButton, 0, 2);
+    connect(m_topButton.data(), SIGNAL(clicked()), this, SLOT(setCameraPerspectiveTop()));
+    gridLayout->addWidget(m_topButton.data(), 0, 2);
     /* 左 */
-    m_leftButton = new QPushButton();
-    connect(m_leftButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveLeft()));
-    gridLayout->addWidget(m_leftButton, 1, 0);
+    connect(m_leftButton.data(), SIGNAL(clicked()), this, SLOT(setCameraPerspectiveLeft()));
+    gridLayout->addWidget(m_leftButton.data(), 1, 0);
     /* 右 */
-    m_rightButton = new QPushButton();
-    connect(m_rightButton, SIGNAL(clicked()), this, SLOT(setCameraPerspectiveRight()));
-    gridLayout->addWidget(m_rightButton, 1, 1);
+    connect(m_rightButton.data(), SIGNAL(clicked()), this, SLOT(setCameraPerspectiveRight()));
+    gridLayout->addWidget(m_rightButton.data(), 1, 1);
     /* カメラ視点 */
-    m_cameraButton = new QPushButton();
-    connect(m_cameraButton, SIGNAL(clicked()), this, SIGNAL(cameraPerspectiveDidReset()));
-    gridLayout->addWidget(m_cameraButton, 1, 2);
-    m_presetGroup = new QGroupBox();
-    m_presetGroup->setLayout(gridLayout);
-    mainLayout->addWidget(m_presetGroup);
+    connect(m_cameraButton.data(), SIGNAL(clicked()), this, SIGNAL(cameraPerspectiveDidReset()));
+    gridLayout->addWidget(m_cameraButton.data(), 1, 2);
+    m_presetGroup->setLayout(gridLayout.take());
+    mainLayout->addWidget(m_presetGroup.data());
     /* 位置(X,Y,Z) */
-    QFormLayout *formLayout = new QFormLayout();
+    QScopedPointer<QFormLayout> formLayout(new QFormLayout());
     const Scalar &zfar = 10000;
-    m_px = new QDoubleSpinBox();
     m_px->setRange(-zfar, zfar);
-    connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
-    formLayout->addRow("X", m_px);
-    m_py = new QDoubleSpinBox();
+    connect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
+    formLayout->addRow("X", m_px.data());
     m_py->setRange(-zfar, zfar);
-    connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
-    formLayout->addRow("Y", m_py);
-    m_pz = new QDoubleSpinBox();
+    connect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
+    formLayout->addRow("Y", m_py.data());
     m_pz->setRange(-zfar, zfar);
-    connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
-    formLayout->addRow("Z", m_pz);
-    m_positionGroup = new QGroupBox();
-    m_positionGroup->setLayout(formLayout);
+    connect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
+    formLayout->addRow("Z", m_pz.data());
+    m_positionGroup->setLayout(formLayout.take());
     /* 回転(X,Y,Z) */
-    formLayout = new QFormLayout();
-    m_rx = new QDoubleSpinBox();
+    formLayout.reset(new QFormLayout());
     m_rx->setRange(-180.0, 180.0);
     m_rx->setSingleStep(0.1);
-    connect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
-    formLayout->addRow("X", m_rx);
-    m_ry = new QDoubleSpinBox();
+    connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
+    formLayout->addRow("X", m_rx.data());
     m_ry->setSingleStep(0.1);
     m_ry->setRange(-180.0, 180.0);
-    connect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
-    formLayout->addRow("Y", m_ry);
-    m_rz = new QDoubleSpinBox();
+    connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
+    formLayout->addRow("Y", m_ry.data());
     m_rz->setSingleStep(0.1);
     m_rz->setRange(-180.0, 180.0);
-    connect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
-    formLayout->addRow("Z", m_rz);
-    m_rotationGroup = new QGroupBox();
-    m_rotationGroup->setLayout(formLayout);
-    QLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_positionGroup);
-    subLayout->addWidget(m_rotationGroup);
-    mainLayout->addLayout(subLayout);
+    connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
+    formLayout->addRow("Z", m_rz.data());
+    m_rotationGroup->setLayout(formLayout.take());
+    QScopedPointer<QLayout> subLayout(new QHBoxLayout());
+    subLayout->addWidget(m_positionGroup.data());
+    subLayout->addWidget(m_rotationGroup.data());
+    mainLayout->addLayout(subLayout.take());
     /* 追従 */
-    m_followGroup = new QGroupBox();
-    m_followNone = new QRadioButton();
-    m_followModel = new QRadioButton();
-    m_followBone = new QRadioButton();
     m_followNone->setChecked(true);
-    subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_followNone);
-    subLayout->addWidget(m_followModel);
-    subLayout->addWidget(m_followBone);
-    m_followGroup->setLayout(subLayout);
-    mainLayout->addWidget(m_followGroup);
-    subLayout = new QHBoxLayout();
+    subLayout.reset(new QHBoxLayout());
+    subLayout->addWidget(m_followNone.data());
+    subLayout->addWidget(m_followModel.data());
+    subLayout->addWidget(m_followBone.data());
+    m_followGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_followGroup.data());
+    subLayout.reset(new QHBoxLayout());
     /* 視野角 */
-    m_fovyLabel = new QLabel();
-    subLayout->addWidget(m_fovyLabel);
-    m_fovy = new QDoubleSpinBox();
+    subLayout->addWidget(m_fovyLabel.data());
     m_fovy->setSingleStep(0.1);
     m_fovy->setRange(0.1, 125.0);
-    connect(m_fovy, SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
-    subLayout->addWidget(m_fovy);
+    connect(m_fovy.data(), SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
+    subLayout->addWidget(m_fovy.data());
     /* 距離 */
-    m_distanceLabel = new QLabel();
-    subLayout->addWidget(m_distanceLabel);
-    m_distance = new QDoubleSpinBox();
+    subLayout->addWidget(m_distanceLabel.data());
     m_distance->setSingleStep(1.0);
     m_distance->setRange(-zfar, zfar);
-    connect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
-    subLayout->addWidget(m_distance);
-    mainLayout->addLayout(subLayout);
+    connect(m_distance.data(), SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
+    subLayout->addWidget(m_distance.data());
+    mainLayout->addLayout(subLayout.take());
     /* 初期化 */
-    m_initializeButton = new QPushButton();
-    connect(m_initializeButton, SIGNAL(clicked()), this, SLOT(initializeCamera()));
-    mainLayout->addWidget(m_initializeButton, 0, Qt::AlignCenter);
+    connect(m_initializeButton.data(), SIGNAL(clicked()), this, SLOT(initializeCamera()));
+    mainLayout->addWidget(m_initializeButton.data(), 0, Qt::AlignCenter);
     mainLayout->addStretch();
     retranslate();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
 }
 
 void CameraPerspectiveWidget::setCameraPerspective(const ICamera *camera)
 {
-    disconnect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
-    disconnect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
-    disconnect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
-    disconnect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
-    disconnect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
-    disconnect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
-    disconnect(m_fovy, SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
-    disconnect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
+    disconnect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
+    disconnect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
+    disconnect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
+    disconnect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
+    disconnect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
+    disconnect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
+    disconnect(m_fovy.data(), SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
+    disconnect(m_distance.data(), SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
     m_currentPosition = camera->lookAt();
     m_currentAngle = camera->angle();
     m_currentFovy = camera->fov();
@@ -185,14 +185,14 @@ void CameraPerspectiveWidget::setCameraPerspective(const ICamera *camera)
     m_rz->setValue(m_currentAngle.z());
     m_fovy->setValue(m_currentFovy);
     m_distance->setValue(m_currentDistance);
-    connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
-    connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
-    connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
-    connect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
-    connect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
-    connect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
-    connect(m_fovy, SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
-    connect(m_distance, SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
+    connect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
+    connect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
+    connect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
+    connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
+    connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
+    connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
+    connect(m_fovy.data(), SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
+    connect(m_distance.data(), SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
 }
 
 void CameraPerspectiveWidget::retranslate()

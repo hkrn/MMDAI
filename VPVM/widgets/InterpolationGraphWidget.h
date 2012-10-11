@@ -104,8 +104,8 @@ private:
     void setValue(QuadWord &q, bool import);
     void setDefault(QuadWord &q);
 
-    BoneMotionModel *m_boneMotionModel;
-    SceneMotionModel *m_sceneMotionModel;
+    BoneMotionModel *m_boneMotionModelRef;
+    SceneMotionModel *m_sceneMotionModelRef;
     BoneMotionModel::KeyFramePairList m_boneKeyframes;
     SceneMotionModel::CameraKeyframePairList m_cameraKeyframes;
     IBoneKeyframe::InterpolationParameter m_boneIP;

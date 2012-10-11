@@ -52,104 +52,108 @@ using namespace vpvl2::qt;
 
 MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     QWidget(parent),
-    m_morphMotionModel(mmm),
+    m_eyes(new QComboBox()),
+    m_eyeSlider(createSlider()),
+    m_eyesCompleterModel(new QStringListModel()),
+    m_eyeGroup(new QGroupBox()),
+    m_lips(new QComboBox()),
+    m_lipSlider(createSlider()),
+    m_lipsCompleterModel(new QStringListModel()),
+    m_lipGroup(new QGroupBox()),
+    m_eyeblows(new QComboBox()),
+    m_eyeblowSlider(createSlider()),
+    m_eyeblowsCompleterModel(new QStringListModel()),
+    m_eyeblowGroup(new QGroupBox()),
+    m_others(new QComboBox()),
+    m_otherSlider(createSlider()),
+    m_othersCompleterModel(new QStringListModel()),
+    m_otherGroup(new QGroupBox()),
+    m_eyeRegisterButton(new QPushButton()),
+    m_lipRegisterButton(new QPushButton()),
+    m_eyeblowRegisterButton(new QPushButton()),
+    m_otherRegisterButton(new QPushButton()),
+    m_resetAllButton(new QPushButton()),
+    m_morphMotionModelRef(mmm),
     m_seek(true)
 {
     /* 目(左上) */
-    QVBoxLayout *eyeVBoxLayout = new QVBoxLayout();
-    m_eyeRegisterButton = new QPushButton();
-    m_eyes = new QComboBox();
-    m_eyesEdit = new QLineEdit();
-    m_eyesCompleter = new QCompleter();
-    m_eyesCompleterModel = new QStringListModel();
-    m_eyeSlider = createSlider();
-    m_eyesCompleter->setModel(m_eyesCompleterModel);
-    m_eyesEdit->setCompleter(m_eyesCompleter);
-    m_eyes->setLineEdit(m_eyesEdit);
-    connect(m_eyes, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_eyeRegisterButton, SIGNAL(clicked()), SLOT(registerEye()));
-    connect(m_eyeSlider, SIGNAL(valueChanged(int)), SLOT(setEyeWeight(int)));
-    eyeVBoxLayout->addWidget(m_eyes);
-    eyeVBoxLayout->addWidget(m_eyeSlider);
-    eyeVBoxLayout->addWidget(m_eyeRegisterButton);
-    m_eyeGroup = new QGroupBox();
-    m_eyeGroup->setLayout(eyeVBoxLayout);
+    QScopedPointer<QVBoxLayout> eyeVBoxLayout(new QVBoxLayout());
+    QScopedPointer<QCompleter> completer(new QCompleter());
+    QScopedPointer<QLineEdit> lineEdit(new QLineEdit());
+    completer->setModel(m_eyesCompleterModel.data());
+    lineEdit->setCompleter(completer.take());
+    m_eyes->setLineEdit(lineEdit.take());
+    connect(m_eyes.data(), SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_eyeRegisterButton.data(), SIGNAL(clicked()), SLOT(registerEye()));
+    connect(m_eyeSlider.data(), SIGNAL(valueChanged(int)), SLOT(setEyeWeight(int)));
+    eyeVBoxLayout->addWidget(m_eyes.data());
+    eyeVBoxLayout->addWidget(m_eyeSlider.data());
+    eyeVBoxLayout->addWidget(m_eyeRegisterButton.data());
+    m_eyeGroup->setLayout(eyeVBoxLayout.take());
     /* 口唇(右上) */
-    QVBoxLayout *lipVBoxLayout = new QVBoxLayout();
-    m_lipRegisterButton = new QPushButton();
-    m_lips = new QComboBox();
-    m_lipsEdit = new QLineEdit();
-    m_lipsCompleter = new QCompleter();
-    m_lipsCompleterModel = new QStringListModel();
-    m_lipSlider = createSlider();
-    m_lipsCompleter->setModel(m_lipsCompleterModel);
-    m_lipsEdit->setCompleter(m_lipsCompleter);
-    m_lips->setLineEdit(m_lipsEdit);
-    connect(m_lips, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_lipRegisterButton, SIGNAL(clicked()), SLOT(registerLip()));
-    connect(m_lipSlider, SIGNAL(valueChanged(int)), SLOT(setLipWeight(int)));
-    lipVBoxLayout->addWidget(m_lips);
-    lipVBoxLayout->addWidget(m_lipSlider);
-    lipVBoxLayout->addWidget(m_lipRegisterButton);
-    m_lipGroup = new QGroupBox();
-    m_lipGroup->setLayout(lipVBoxLayout);
+    QScopedPointer<QVBoxLayout> lipVBoxLayout(new QVBoxLayout());
+    completer.reset(new QCompleter());
+    lineEdit.reset(new QLineEdit());
+    completer->setModel(m_lipsCompleterModel.data());
+    lineEdit->setCompleter(completer.take());
+    m_lips->setLineEdit(lineEdit.take());
+    connect(m_lips.data(), SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_lipRegisterButton.data(), SIGNAL(clicked()), SLOT(registerLip()));
+    connect(m_lipSlider.data(), SIGNAL(valueChanged(int)), SLOT(setLipWeight(int)));
+    lipVBoxLayout->addWidget(m_lips.data());
+    lipVBoxLayout->addWidget(m_lipSlider.data());
+    lipVBoxLayout->addWidget(m_lipRegisterButton.data());
+    m_lipGroup->setLayout(lipVBoxLayout.take());
     /* まゆ(左下) */
-    QVBoxLayout *eyeblowVBoxLayout = new QVBoxLayout();
-    m_eyeblowRegisterButton = new QPushButton();
-    m_eyeblows = new QComboBox();
-    m_eyeblowsEdit = new QLineEdit();
-    m_eyeblowsCompleter = new QCompleter();
-    m_eyeblowsCompleterModel = new QStringListModel();
-    m_eyeblowSlider = createSlider();
-    m_eyeblowsCompleter->setModel(m_eyeblowsCompleterModel);
-    m_eyeblowsEdit->setCompleter(m_eyeblowsCompleter);
-    m_eyeblows->setLineEdit(m_eyeblowsEdit);
-    connect(m_eyeblows, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_eyeblowRegisterButton, SIGNAL(clicked()), SLOT(registerEyeblow()));
-    connect(m_eyeblowSlider, SIGNAL(valueChanged(int)), SLOT(setEyeblowWeight(int)));
-    eyeblowVBoxLayout->addWidget(m_eyeblows);
-    eyeblowVBoxLayout->addWidget(m_eyeblowSlider);
-    eyeblowVBoxLayout->addWidget(m_eyeblowRegisterButton);
-    m_eyeblowGroup = new QGroupBox();
-    m_eyeblowGroup->setLayout(eyeblowVBoxLayout);
+    QScopedPointer<QVBoxLayout> eyeblowVBoxLayout(new QVBoxLayout());
+    completer.reset(new QCompleter());
+    lineEdit.reset(new QLineEdit());
+    completer->setModel(m_eyeblowsCompleterModel.data());
+    lineEdit->setCompleter(completer.take());
+    m_eyeblows->setLineEdit(lineEdit.take());
+    connect(m_eyeblows.data(), SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_eyeblowRegisterButton.data(), SIGNAL(clicked()), SLOT(registerEyeblow()));
+    connect(m_eyeblowSlider.data(), SIGNAL(valueChanged(int)), SLOT(setEyeblowWeight(int)));
+    eyeblowVBoxLayout->addWidget(m_eyeblows.data());
+    eyeblowVBoxLayout->addWidget(m_eyeblowSlider.data());
+    eyeblowVBoxLayout->addWidget(m_eyeblowRegisterButton.data());
+    m_eyeblowGroup->setLayout(eyeblowVBoxLayout.take());
     /* その他(右下) */
-    QVBoxLayout *otherVBoxLayout = new QVBoxLayout();
-    m_otherRegisterButton = new QPushButton();
-    m_others = new QComboBox();
-    m_othersEdit = new QLineEdit();
-    m_othersCompleter = new QCompleter();
-    m_othersCompleterModel = new QStringListModel();
-    m_otherSlider = createSlider();
-    m_othersCompleter->setModel(m_othersCompleterModel);
-    m_othersEdit->setCompleter(m_othersCompleter);
-    m_others->setLineEdit(m_othersEdit);
-    connect(m_others, SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
-    connect(m_otherRegisterButton, SIGNAL(clicked()), SLOT(registerOther()));
-    connect(m_otherSlider, SIGNAL(valueChanged(int)), SLOT(setOtherWeight(int)));
-    otherVBoxLayout->addWidget(m_others);
-    otherVBoxLayout->addWidget(m_otherSlider);
-    otherVBoxLayout->addWidget(m_otherRegisterButton);
-    m_otherGroup = new QGroupBox();
-    m_otherGroup->setLayout(otherVBoxLayout);
+    QScopedPointer<QVBoxLayout> otherVBoxLayout(new QVBoxLayout());
+    completer.reset(new QCompleter());
+    lineEdit.reset(new QLineEdit());
+    completer->setModel(m_othersCompleterModel.data());
+    lineEdit->setCompleter(completer.take());
+    m_others->setLineEdit(lineEdit.take());
+    connect(m_others.data(), SIGNAL(currentIndexChanged(int)), SLOT(updateMorphWeightValues()));
+    connect(m_otherRegisterButton.data(), SIGNAL(clicked()), SLOT(registerOther()));
+    connect(m_otherSlider.data(), SIGNAL(valueChanged(int)), SLOT(setOtherWeight(int)));
+    otherVBoxLayout->addWidget(m_others.data());
+    otherVBoxLayout->addWidget(m_otherSlider.data());
+    otherVBoxLayout->addWidget(m_otherRegisterButton.data());
+    m_otherGroup->setLayout(otherVBoxLayout.take());
     /* 「全てのモーフをリセット」ボタン */
-    m_resetAllButton = new QPushButton();
-    connect(m_resetAllButton, SIGNAL(clicked()), m_morphMotionModel, SLOT(resetAllMorphs()));
+    connect(m_resetAllButton.data(), SIGNAL(clicked()), m_morphMotionModelRef, SLOT(resetAllMorphs()));
     /* レイアウト結合 */
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_eyeGroup);
-    subLayout->addWidget(m_lipGroup);
-    mainLayout->addLayout(subLayout);
-    subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_eyeblowGroup);
-    subLayout->addWidget(m_otherGroup);
-    mainLayout->addLayout(subLayout);
-    mainLayout->addWidget(m_resetAllButton);
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QLayout> subLayout(new QHBoxLayout());
+    subLayout->addWidget(m_eyeGroup.data());
+    subLayout->addWidget(m_lipGroup.data());
+    mainLayout->addLayout(subLayout.take());
+    subLayout.reset(new QHBoxLayout());
+    subLayout->addWidget(m_eyeblowGroup.data());
+    subLayout->addWidget(m_otherGroup.data());
+    mainLayout->addLayout(subLayout.take());
+    mainLayout->addWidget(m_resetAllButton.data());
     mainLayout->addStretch();
     retranslate();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
     setEnabled(false);
-    connect(m_morphMotionModel, SIGNAL(modelDidChange(IModel*)), SLOT(setPMDModel(IModel*)));
+    connect(m_morphMotionModelRef, SIGNAL(modelDidChange(IModel*)), SLOT(setPMDModel(IModel*)));
+}
+
+MorphWidget::~MorphWidget()
+{
 }
 
 void MorphWidget::retranslate()
@@ -175,7 +179,7 @@ void MorphWidget::setPMDModel(IModel *model)
     m_others->clear();
     if (model) {
         Array<IMorph *> morphs;
-        m_morphMotionModel->selectedModel()->getMorphRefs(morphs);
+        m_morphMotionModelRef->selectedModel()->getMorphRefs(morphs);
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
@@ -214,47 +218,47 @@ void MorphWidget::setPMDModel(IModel *model)
 
 void MorphWidget::setEyeWeight(int value)
 {
-    setMorphWeight(m_eyes, value);
+    setMorphWeight(m_eyes.data(), value);
 }
 
 void MorphWidget::setLipWeight(int value)
 {
-    setMorphWeight(m_lips, value);
+    setMorphWeight(m_lips.data(), value);
 }
 
 void MorphWidget::setEyeblowWeight(int value)
 {
-    setMorphWeight(m_eyeblows, value);
+    setMorphWeight(m_eyeblows.data(), value);
 }
 
 void MorphWidget::setOtherWeight(int value)
 {
-    setMorphWeight(m_others, value);
+    setMorphWeight(m_others.data(), value);
 }
 
 void MorphWidget::registerEye()
 {
-    registerBase(m_eyes);
+    registerBase(m_eyes.data());
 }
 
 void MorphWidget::registerLip()
 {
-    registerBase(m_lips);
+    registerBase(m_lips.data());
 }
 
 void MorphWidget::registerEyeblow()
 {
-    registerBase(m_eyeblows);
+    registerBase(m_eyeblows.data());
 }
 
 void MorphWidget::registerOther()
 {
-    registerBase(m_others);
+    registerBase(m_others.data());
 }
 
 void MorphWidget::registerBase(const QComboBox *comboBox)
 {
-    IModel *model = m_morphMotionModel->selectedModel();
+    IModel *model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const CString s(comboBox->itemText(index));
@@ -272,16 +276,16 @@ void MorphWidget::updateMorphWeightValues()
      * (ボーンタイムラインでシークする時の MorphMotionModel::m_frameIndex が 0 であるため)
      */
     m_seek = false;
-    updateMorphWeight(m_eyes, m_eyeSlider);
-    updateMorphWeight(m_lips, m_lipSlider);
-    updateMorphWeight(m_eyeblows, m_eyeblowSlider);
-    updateMorphWeight(m_others, m_otherSlider);
+    updateMorphWeight(m_eyes.data(), m_eyeSlider.data());
+    updateMorphWeight(m_lips.data(), m_lipSlider.data());
+    updateMorphWeight(m_eyeblows.data(), m_eyeblowSlider.data());
+    updateMorphWeight(m_others.data(), m_otherSlider.data());
     m_seek = true;
 }
 
 void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 {
-    IModel *model = m_morphMotionModel->selectedModel();
+    IModel *model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const CString s(comboBox->itemText(index));
@@ -293,7 +297,7 @@ void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 
 void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
 {
-    IModel *model = m_morphMotionModel->selectedModel();
+    IModel *model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const CString s(comboBox->itemText(index));
@@ -301,21 +305,21 @@ void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
         if (morph) {
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
             const Scalar &newWeight = value / static_cast<Scalar>(kSliderMaximumValue);
-            m_morphMotionModel->setWeight(newWeight, morph);
-            m_morphMotionModel->updateModel(m_morphMotionModel->selectedModel(), m_seek);
+            m_morphMotionModelRef->setWeight(newWeight, morph);
+            m_morphMotionModelRef->updateModel(m_morphMotionModelRef->selectedModel(), m_seek);
         }
     }
 }
 
 QSlider *MorphWidget::createSlider() const
 {
-    QSlider *slider = new QSlider(Qt::Horizontal);
-    connect(slider, SIGNAL(sliderPressed()), SIGNAL(morphWillChange()));
-    connect(slider, SIGNAL(sliderReleased()), SIGNAL(morphDidChange()));
+    QScopedPointer<QSlider> slider(new QSlider(Qt::Horizontal));
+    connect(slider.data(), SIGNAL(sliderPressed()), SIGNAL(morphWillChange()));
+    connect(slider.data(), SIGNAL(sliderReleased()), SIGNAL(morphDidChange()));
     slider->setTickInterval(20);
     slider->setMinimum(0);
     slider->setMaximum(kSliderMaximumValue);
-    return slider;
+    return slider.take();
 }
 
 } /* namespace vpvm */

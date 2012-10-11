@@ -91,8 +91,8 @@ private slots:
 private:
     void updateFrozenTreeViewGeometry();
 
-    QRubberBand *m_rubberBand;
-    QTreeView *m_frozenTreeView;
+    QScopedPointer<QRubberBand> m_rubberBand;
+    QScopedPointer<QTreeView> m_frozenTreeView;
     QRect m_rubberBandRect;
     QModelIndexList m_expanded;
 

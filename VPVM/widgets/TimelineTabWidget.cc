@@ -58,95 +58,88 @@ namespace vpvm
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
-TimelineTabWidget::TimelineTabWidget(QSettings *settings,
+TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
                                      BoneMotionModel *bmm,
                                      MorphMotionModel *mmm,
                                      SceneMotionModel *smm,
-                                     QWidget *parent) :
-    QWidget(parent),
-    m_settings(settings),
-    m_boneTimeline(0),
-    m_morphTimeline(0),
-    m_sceneTimeline(0),
-    m_frameSelectionDialog(0),
-    m_frameWeightDialog(0),
-    m_interpolationDialog(0),
-    m_lastSelectedModel(0)
+                                     QWidget *parent)
+    : QWidget(parent),
+      m_tabWidget(new QTabWidget()),
+      m_boneTimeline(new TimelineWidget(bmm, true, this)),
+      m_morphTimeline(new TimelineWidget(mmm, true, this)),
+      m_sceneTimeline(new TimelineWidget(smm, false, this)),
+      m_boneButtonGroup(new QButtonGroup()),
+      m_boneSelectButton(new QRadioButton()),
+      m_boneRotateButton(new QRadioButton()),
+      m_boneMoveButton(new QRadioButton()),
+      m_interpolationDialog(new InterpolationDialog(bmm, smm)),
+      m_settingsRef(settingsRef),
+      m_lastSelectedModelRef(0)
 {
-    m_tabWidget = new QTabWidget();
-    m_boneTimeline = new TimelineWidget(bmm, true, this);
     m_boneTimeline->setFrameIndexSpinBoxEnable(false);
-    m_interpolationDialog = new InterpolationDialog(bmm, smm);
-    m_boneSelectButton = new QRadioButton();
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(false);
-    m_boneRotateButton = new QRadioButton();
     m_boneRotateButton->setEnabled(false);
-    m_boneMoveButton = new QRadioButton();
     m_boneMoveButton->setEnabled(false);
-    m_boneButtonGroup = new QButtonGroup();
-    connect(m_boneButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(selectButton(QAbstractButton*)));
-    m_boneButtonGroup->addButton(m_boneSelectButton);
-    m_boneButtonGroup->addButton(m_boneRotateButton);
-    m_boneButtonGroup->addButton(m_boneMoveButton);
-    QHBoxLayout *mainLayout = new QHBoxLayout();
-    mainLayout->addWidget(m_boneSelectButton);
-    mainLayout->addWidget(m_boneRotateButton);
-    mainLayout->addWidget(m_boneMoveButton);
-    mainLayout->setAlignment(Qt::AlignCenter);
+    connect(m_boneButtonGroup.data(), SIGNAL(buttonClicked(QAbstractButton*)), SLOT(selectButton(QAbstractButton*)));
+    m_boneButtonGroup->addButton(m_boneSelectButton.data());
+    m_boneButtonGroup->addButton(m_boneRotateButton.data());
+    m_boneButtonGroup->addButton(m_boneMoveButton.data());
+    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
+    subLayout->addWidget(m_boneSelectButton.data());
+    subLayout->addWidget(m_boneRotateButton.data());
+    subLayout->addWidget(m_boneMoveButton.data());
+    subLayout->setAlignment(Qt::AlignCenter);
     /* hack bone timeline layout */
-    reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(mainLayout);
-    m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline, "");
-    m_morphTimeline = new TimelineWidget(mmm, true, this);
+    reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(subLayout.take());
+    m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline.data(), "");
     m_morphTimeline->setFrameIndexSpinBoxEnable(false);
-    m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline, "");
-    m_sceneTimeline = new TimelineWidget(smm, false, this);
-    m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline, "");
-    connect(m_tabWidget, SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
-    connect(m_boneTimeline->treeView()->frozenViewSelectionModel(),
+    m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline.data(), "");
+    m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline.data(), "");
+    connect(m_tabWidget.data(), SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
+    connect(m_boneTimeline->treeViewRef()->frozenViewSelectionModel(),
             SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             SLOT(selectBonesByItemSelection(QItemSelection)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
-    connect(m_boneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
-    connect(m_morphTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
-    connect(m_sceneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
-    connect(m_boneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
-    connect(m_sceneTimeline->treeView(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
+    connect(m_boneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_morphTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_sceneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_boneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
+    connect(m_sceneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(bmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleBoneEnable(IModel*)));
     connect(mmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleMorphEnable(IModel*)));
     connect(bmm, SIGNAL(bonesDidSelect(QList<IBone*>)), SLOT(toggleBoneButtonsByBone(QList<IBone*>)));
     /* モーションを読み込んだらフローズンビューを忘れずに更新しておく(フローズンビューが勢い良くスクロール出来てしまうことを防ぐ) */
-    connect(bmm, SIGNAL(motionDidUpdate(IModel*)), m_boneTimeline->treeView(), SLOT(updateFrozenTreeView()));
-    connect(mmm, SIGNAL(motionDidUpdate(IModel*)), m_morphTimeline->treeView(), SLOT(updateFrozenTreeView()));
-    connect(smm, SIGNAL(motionDidUpdate(IModel*)), m_sceneTimeline->treeView(), SLOT(updateFrozenTreeView()));
+    connect(bmm, SIGNAL(motionDidUpdate(IModel*)), m_boneTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
+    connect(mmm, SIGNAL(motionDidUpdate(IModel*)), m_morphTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
+    connect(smm, SIGNAL(motionDidUpdate(IModel*)), m_sceneTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
     /* フレームが切り替わったら現在のフレーム位置を設定し直す */
     connect(bmm, SIGNAL(timeIndexDidChange(IKeyframe::TimeIndex,IKeyframe::TimeIndex)),
-            m_boneTimeline, SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
+            m_boneTimeline.data(), SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
     connect(mmm, SIGNAL(timeIndexDidChange(IKeyframe::TimeIndex,IKeyframe::TimeIndex)),
-            m_morphTimeline, SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
+            m_morphTimeline.data(), SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
     connect(smm, SIGNAL(timeIndexDidChange(IKeyframe::TimeIndex,IKeyframe::TimeIndex)),
-            m_sceneTimeline, SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(m_tabWidget);
+            m_sceneTimeline.data(), SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
+    QScopedPointer<QVBoxLayout> layout(new QVBoxLayout());
+    layout->addWidget(m_tabWidget.data());
     retranslate();
-    setLayout(layout);
-    restoreGeometry(m_settings->value("timelineTabWidget/geometry").toByteArray());
+    setLayout(layout.take());
+    restoreGeometry(m_settingsRef->value("timelineTabWidget/geometry").toByteArray());
 }
 
 TimelineTabWidget::~TimelineTabWidget()
 {
-    delete m_interpolationDialog;
-    m_interpolationDialog = 0;
+    disconnect(m_tabWidget.data(), SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
 }
 
 void TimelineTabWidget::addKeyframesFromSelectedIndices()
 {
-    currentSelectedTimelineWidget()->treeView()->addKeyframesBySelectedIndices();
+    currentSelectedTimelineWidgetRef()->treeViewRef()->addKeyframesBySelectedIndices();
 }
 
 void TimelineTabWidget::loadPose(VPDFilePtr pose, IModel *model)
 {
-    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
     m->loadPose(pose, model, m_boneTimeline->selectedFrameIndex());
 }
 
@@ -163,7 +156,7 @@ void TimelineTabWidget::retranslate()
 
 void TimelineTabWidget::savePose(VPDFile *pose, IModel *model)
 {
-    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
     m->savePose(pose, model, m_boneTimeline->selectedFrameIndex());
 }
 
@@ -174,7 +167,7 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
      * (FaceKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
     if (morph) {
-        MorphMotionModel *model = static_cast<MorphMotionModel *>(m_morphTimeline->treeView()->model());
+        MorphMotionModel *model = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
         MorphMotionModel::KeyFramePairList keyframes;
         QScopedPointer<IMorphKeyframe> keyframe;
         int frameIndex = m_morphTimeline->selectedFrameIndex();
@@ -189,15 +182,21 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
 void TimelineTabWidget::setCurrentFrameIndex(int value)
 {
     /* 二重呼出になってしまうため、一時的に motionDidSeek シグナルを止める */
-    disconnect(m_boneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
-    disconnect(m_morphTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
-    disconnect(m_sceneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_boneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),
+               this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_morphTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),
+               this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    disconnect(m_sceneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),
+               this, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     m_boneTimeline->setCurrentTimeIndex(value);
     m_morphTimeline->setCurrentTimeIndex(value);
     m_sceneTimeline->setCurrentTimeIndex(value);
-    connect(m_boneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
-    connect(m_morphTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
-    connect(m_sceneTimeline, SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_boneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),
+            SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_morphTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),
+            SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_sceneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),
+            SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
 }
 
 void TimelineTabWidget::setCurrentFrameIndexZero()
@@ -211,7 +210,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
     case kBoneTabIndex:
     {
         /* 選択されたボーンをキーフレームとして登録する */
-        TimelineTreeView *view = m_boneTimeline->treeView();
+        TimelineTreeView *view = m_boneTimeline->treeViewRef();
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         BoneMotionModel *model = static_cast<BoneMotionModel *>(view->model());
         Factory *factory = model->factoryRef();
@@ -232,7 +231,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
     case kMorphTabIndex:
     {
         /* 選択されたモーフをキーフレームとして登録する */
-        TimelineTreeView *view = m_morphTimeline->treeView();
+        TimelineTreeView *view = m_morphTimeline->treeViewRef();
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         MorphMotionModel *model = static_cast<MorphMotionModel *>(view->model());
         Factory *factory = model->factoryRef();
@@ -256,14 +255,14 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
 void TimelineTabWidget::deleteKeyframesBySelectedIndices()
 {
     /* 選択されたボーンまたはモーフに登録されているキーフレームを削除する */
-    currentSelectedTimelineWidget()->treeView()->deleteKeyframesBySelectedIndices();
+    currentSelectedTimelineWidgetRef()->treeViewRef()->deleteKeyframesBySelectedIndices();
 }
 
 void TimelineTabWidget::copyKeyframes()
 {
     /* 選択されたボーンまたはモーフに登録されているキーフレームを対象のフレームの位置にコピーする */
-    TimelineWidget *widget = currentSelectedTimelineWidget();
-    TimelineTreeView *treeView = widget->treeView();
+    TimelineWidget *widget = currentSelectedTimelineWidgetRef();
+    TimelineTreeView *treeView = widget->treeViewRef();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
     model->copyKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->selectedFrameIndex());
 }
@@ -271,8 +270,8 @@ void TimelineTabWidget::copyKeyframes()
 void TimelineTabWidget::cutKeyframes()
 {
     /* 選択されたボーンまたはモーフに登録されているキーフレームをカット（対象のフレームの位置をコピーして削除） */
-    TimelineWidget *widget = currentSelectedTimelineWidget();
-    TimelineTreeView *treeView = widget->treeView();
+    TimelineWidget *widget = currentSelectedTimelineWidgetRef();
+    TimelineTreeView *treeView = widget->treeViewRef();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
     model->cutKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->selectedFrameIndex());
 }
@@ -280,8 +279,8 @@ void TimelineTabWidget::cutKeyframes()
 void TimelineTabWidget::pasteKeyframes()
 {
     /* 選択されたボーンまたはモーフに登録されているキーフレームを対象のフレームの位置にペーストする */
-    TimelineWidget *widget = currentSelectedTimelineWidget();
-    TimelineTreeView *treeView = widget->treeView();
+    TimelineWidget *widget = currentSelectedTimelineWidgetRef();
+    TimelineTreeView *treeView = widget->treeViewRef();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
     model->pasteKeyframesByTimeIndex(widget->selectedFrameIndex());
 }
@@ -293,7 +292,7 @@ void TimelineTabWidget::pasteKeyframesWithReverse()
     BoneMotionModel *model;
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        treeView = m_boneTimeline->treeView();
+        treeView = m_boneTimeline->treeViewRef();
         model = static_cast<BoneMotionModel *>(treeView->model());
         model->pasteReversedFrame(m_boneTimeline->selectedFrameIndex());
         break;
@@ -318,19 +317,19 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
     IModel *lastSelectedModel = 0;
     switch (index) {
     case kBoneTabIndex: {
-        static_cast<PMDMotionModel *>(m_boneTimeline->treeView()->model())->setActiveUndoStack();
+        static_cast<PMDMotionModel *>(m_boneTimeline->treeViewRef()->model())->setActiveUndoStack();
         type = kBone;
-        lastSelectedModel = m_lastSelectedModel;
+        lastSelectedModel = m_lastSelectedModelRef;
         break;
     }
     case kMorphTabIndex: {
-        static_cast<PMDMotionModel *>(m_morphTimeline->treeView()->model())->setActiveUndoStack();
+        static_cast<PMDMotionModel *>(m_morphTimeline->treeViewRef()->model())->setActiveUndoStack();
         type = kMorph;
-        lastSelectedModel = m_lastSelectedModel;
+        lastSelectedModel = m_lastSelectedModelRef;
         break;
     }
     case kSceneTabIndex: {
-        SceneMotionModel *model = static_cast<SceneMotionModel *>(m_sceneTimeline->treeView()->model());
+        SceneMotionModel *model = static_cast<SceneMotionModel *>(m_sceneTimeline->treeViewRef()->model());
         model->setActiveUndoStack();
         type = kScene;
         break;
@@ -360,7 +359,7 @@ void TimelineTabWidget::notifyCurrentTabIndex()
 void TimelineTabWidget::toggleBoneEnable(IModel *model)
 {
     bool value = model ? true : false;
-    m_boneTimeline->treeView()->updateFrozenTreeView();
+    m_boneTimeline->treeViewRef()->updateFrozenTreeView();
     m_boneTimeline->setFrameIndexSpinBoxEnable(value);
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(value);
@@ -370,7 +369,7 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
 
 void TimelineTabWidget::toggleMorphEnable(IModel *model)
 {
-    m_morphTimeline->treeView()->updateFrozenTreeView();
+    m_morphTimeline->treeViewRef()->updateFrozenTreeView();
     m_morphTimeline->setFrameIndexSpinBoxEnable(model ? true : false);
 }
 
@@ -395,7 +394,7 @@ void TimelineTabWidget::toggleBoneButtonsByBone(const QList<IBone *> &bones)
 void TimelineTabWidget::selectAllRegisteredKeyframes()
 {
     /* 登録済みのすべてのキーフレームを選択状態にする */
-    MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidget()->treeView()->model());
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidgetRef()->treeViewRef()->model());
     selectFrameIndices(0, model->maxFrameIndex());
 }
 
@@ -403,11 +402,11 @@ void TimelineTabWidget::openFrameSelectionDialog()
 {
     /* キーフレーム選択ダイアログを表示する */
     if (!m_frameSelectionDialog) {
-        m_frameSelectionDialog = new FrameSelectionDialog(this);
-        connect(m_frameSelectionDialog, SIGNAL(frameIndicesDidSelect(int,int)),
+        m_frameSelectionDialog.reset(new FrameSelectionDialog(this));
+        connect(m_frameSelectionDialog.data(), SIGNAL(frameIndicesDidSelect(int,int)),
                 this, SLOT(selectFrameIndices(int,int)));
     }
-    MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidget()->treeView()->model());
+    MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidgetRef()->treeViewRef()->model());
     m_frameSelectionDialog->setMaxFrameIndex(model->maxFrameIndex());
     m_frameSelectionDialog->show();
 }
@@ -419,14 +418,14 @@ void TimelineTabWidget::openFrameWeightDialog()
     case kBoneTabIndex: {
         FrameWeightDialog dialog(kBone);
         connect(&dialog, SIGNAL(boneWeightDidSet(Vector3,Vector3)),
-                m_boneTimeline->treeView(), SLOT(setBoneKeyframesWeightBySelectedIndices(Vector3,Vector3)));
+                m_boneTimeline->treeViewRef(), SLOT(setBoneKeyframesWeightBySelectedIndices(Vector3,Vector3)));
         dialog.exec();
         break;
     }
     case kMorphTabIndex: {
         FrameWeightDialog dialog(kMorph);
         connect(&dialog, SIGNAL(morphKeyframeWeightDidSet(float)),
-                m_morphTimeline->treeView(), SLOT(setMorphKeyframesWeightBySelectedIndices(float)));
+                m_morphTimeline->treeViewRef(), SLOT(setMorphKeyframesWeightBySelectedIndices(float)));
         dialog.exec();
         break;
     }
@@ -457,10 +456,10 @@ void TimelineTabWidget::openInterpolationDialogBySelectedIndices()
     TimelineTreeView *view = 0;
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        view = m_boneTimeline->treeView();
+        view = m_boneTimeline->treeViewRef();
         break;
     case kSceneTabIndex:
-        view = m_sceneTimeline->treeView();
+        view = m_sceneTimeline->treeViewRef();
         break;
     default:
         break;
@@ -479,7 +478,7 @@ void TimelineTabWidget::openInterpolationDialogBySelectedIndices()
 void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
 {
     /* 前回の選択状態をリセットして引数に渡された対象のボーンを選択状態にする */
-    TimelineTreeView *boneTreeView = m_boneTimeline->treeView();
+    TimelineTreeView *boneTreeView = m_boneTimeline->treeViewRef();
     BoneMotionModel *bmm = static_cast<BoneMotionModel *>(boneTreeView->model());
     QItemSelectionModel *selectionModel = boneTreeView->selectionModel();
     int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
@@ -491,7 +490,7 @@ void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
 
 void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selection)
 {
-    BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeView()->model());
+    BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
     const QModelIndexList &indices = selection.indexes();
     if (!indices.empty()) {
         QModelIndexList bone;
@@ -502,11 +501,11 @@ void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selecti
 
 void TimelineTabWidget::selectButton(QAbstractButton *button)
 {
-    if (button == m_boneSelectButton)
+    if (button == m_boneSelectButton.data())
         emit editModeDidSet(SceneWidget::kSelect);
-    else if (button == m_boneRotateButton)
+    else if (button == m_boneRotateButton.data())
         emit editModeDidSet(SceneWidget::kRotate);
-    else if (button == m_boneMoveButton)
+    else if (button == m_boneMoveButton.data())
         emit editModeDidSet(SceneWidget::kMove);
 }
 
@@ -514,19 +513,19 @@ void TimelineTabWidget::setLastSelectedModel(IModel *model)
 {
     /* タブ移動時でモデル選択を切り替えるため最後に選択したモデルのポインタを保存する処理。NULL はスキップする */
     if (model)
-        m_lastSelectedModel = model;
+        m_lastSelectedModelRef = model;
     /*
      * 最初の列以外を隠す。モデルを選択した後でないと BoneMotionModel と MorphMotionModel の
      * columnCount が 1 を返してしまうため、ここで処理する
      */
-    m_boneTimeline->treeView()->updateFrozenTreeView();
-    m_morphTimeline->treeView()->updateFrozenTreeView();
-    m_sceneTimeline->treeView()->updateFrozenTreeView();
+    m_boneTimeline->treeViewRef()->updateFrozenTreeView();
+    m_morphTimeline->treeViewRef()->updateFrozenTreeView();
+    m_sceneTimeline->treeViewRef()->updateFrozenTreeView();
 }
 
 void TimelineTabWidget::clearLastSelectedModel()
 {
-    m_lastSelectedModel = 0;
+    m_lastSelectedModelRef = 0;
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
@@ -537,25 +536,25 @@ void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
     QList<int> frameIndices;
     for (int i = fromIndex; i <= toIndex; i++)
         frameIndices.append(i);
-    currentSelectedTimelineWidget()->treeView()->selectFrameIndices(frameIndices, true);
+    currentSelectedTimelineWidgetRef()->treeViewRef()->selectFrameIndices(frameIndices, true);
 }
 
 void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)
 {
     /* 指定されたフレームの位置にシークする */
-    TimelineWidget *timeline = currentSelectedTimelineWidget();
-    currentSelectedTimelineWidget()->setCurrentTimeIndex(timeline->selectedFrameIndex() + frameIndex);
+    TimelineWidget *timeline = currentSelectedTimelineWidgetRef();
+    currentSelectedTimelineWidgetRef()->setCurrentTimeIndex(timeline->selectedFrameIndex() + frameIndex);
 }
 
-TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidget() const
+TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidgetRef() const
 {
     switch (m_tabWidget->currentIndex()) {
     case kBoneTabIndex:
-        return m_boneTimeline;
+        return m_boneTimeline.data();
     case kMorphTabIndex:
-        return m_morphTimeline;
+        return m_morphTimeline.data();
     case kSceneTabIndex:
-        return m_sceneTimeline;
+        return m_sceneTimeline.data();
     default:
         qFatal("Unexpected tab index value: %d", m_tabWidget->currentIndex());
         return 0;
