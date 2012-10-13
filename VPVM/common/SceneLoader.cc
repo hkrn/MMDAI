@@ -271,11 +271,11 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
     }
     const QString &path = dir.absoluteFilePath(baseName);
     m_renderDelegate->addModelPath(model, path);
-    IRenderEngine *engine = createModelEngine(model, dir);
-    if (engine) {
+    IRenderEnginePtr enginePtr;
+    if (createModelEngine(model, dir, enginePtr)) {
         /* モデルを SceneLoader にヒモ付けする */
         uuid = QUuid::createUuid();
-        m_project->addModel(model, engine, uuid.toString().toStdString());
+        m_project->addModel(model, enginePtr.take(), uuid.toString().toStdString());
         m_project->setModelSetting(model, Project::kSettingNameKey, key.toStdString());
         m_project->setModelSetting(model, Project::kSettingURIKey, path.toStdString());
         m_project->setModelSetting(model, "selected", "false");
@@ -288,7 +288,7 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
     }
 }
 
-IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
+bool SceneLoader::createModelEngine(IModel *model, const QDir &dir, IRenderEnginePtr &enginePtr)
 {
     const CString d(dir.absolutePath());
     IEffect *effect = 0;
@@ -318,15 +318,15 @@ IRenderEngine *SceneLoader::createModelEngine(IModel *model, const QDir &dir)
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
-    QScopedPointer<IRenderEngine> enginePtr(m_project->createRenderEngine(m_renderDelegate.data(), model, flags));
+    enginePtr.reset(m_project->createRenderEngine(m_renderDelegate.data(), model, flags));
     if (enginePtr->upload(&d)) {
         /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &d);
         m_renderDelegate->parseOffscreenSemantic(effect, dir);
         m_renderDelegate->setArchive(0);
-        return enginePtr.take();
+        return true;
     }
-    return 0;
+    return false;
 }
 
 QList<IModel *> SceneLoader::allModels() const
@@ -453,7 +453,7 @@ IMotion *SceneLoader::findMotion(const QUuid &uuid) const
     return m_project->motion(uuid.toString().toStdString());
 }
 
-const QUuid SceneLoader::findUUID(IModel *model) const
+const QUuid SceneLoader::findUUID(const IModel *model) const
 {
     return QUuid(m_project->modelUUID(model).c_str());
 }
@@ -500,7 +500,7 @@ bool SceneLoader::isProjectModified() const
     return m_project->isDirty();
 }
 
-bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset)
+bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr)
 {
     IModel::Type type; /* unused */
     const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, type, m_renderDelegate.data());
@@ -509,41 +509,33 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModel *&asset
      */
     bool isNullData = bytes.isNull();
     if (!isNullData) {
-        bool allocated = false;
-        if (!asset) {
-            asset = m_factoryRef->createModel(IModel::kAsset);
-            allocated = true;
-        }
-        if (asset->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
+        assetPtr.reset(m_factoryRef->createModel(IModel::kAsset));
+        if (assetPtr->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
             /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
             QFileInfo fileInfo(filename);
             CString name(fileInfo.completeBaseName());
-            asset->setName(&name);
-            m_renderDelegate->addModelPath(asset, filename);
-            IRenderEngine *engine = createModelEngine(asset, fileInfo.dir());
-            if (engine) {
+            assetPtr->setName(&name);
+            m_renderDelegate->addModelPath(assetPtr.data(), filename);
+            IRenderEnginePtr enginePtr;
+            if (createModelEngine(assetPtr.data(), fileInfo.dir(), enginePtr)) {
                 uuid = QUuid::createUuid();
-                m_project->addModel(asset, engine, uuid.toString().toStdString());
-                m_project->setModelSetting(asset, Project::kSettingNameKey, fileInfo.completeBaseName().toStdString());
-                m_project->setModelSetting(asset, Project::kSettingURIKey, filename.toStdString());
-                m_project->setModelSetting(asset, "selected", "false");
+                m_project->addModel(assetPtr.data(), enginePtr.take(), uuid.toString().toStdString());
+                m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, fileInfo.completeBaseName().toStdString());
+                m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, filename.toStdString());
+                m_project->setModelSetting(assetPtr.data(), "selected", "false");
                 m_renderOrderList.add(uuid);
-                setAssetPosition(asset, asset->position());
-                setAssetRotation(asset, asset->rotation());
-                setAssetOpacity(asset, asset->opacity());
-                setAssetScaleFactor(asset, asset->scaleFactor());
-                emit assetDidAdd(asset, uuid);
+                setAssetPosition(assetPtr.data(), assetPtr->position());
+                setAssetRotation(assetPtr.data(), assetPtr->rotation());
+                setAssetOpacity(assetPtr.data(), assetPtr->opacity());
+                setAssetScaleFactor(assetPtr.data(), assetPtr->scaleFactor());
+                emit assetDidAdd(assetPtr.data(), uuid);
             }
         }
-        else if (allocated) {
-            delete asset;
-            asset = 0;
-        }
     }
-    return !isNullData && asset != 0;
+    return !isNullData && assetPtr;
 }
 
-IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid)
+bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelPtr &modelPtr)
 {
     QFile file(dir.absoluteFilePath(baseName));
     /* VAC 形式からアクセサリを読み込む。VAC は Shift_JIS で読み込む必要がある */
@@ -564,67 +556,66 @@ IModel *SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &
         const QString &bone = stream.readLine();
         /* 7行目: 影をつけるかどうか(未実装) */
         bool enableShadow = stream.readLine().toInt() == 1;
-        QScopedPointer<IModel> asset(m_factoryRef->createModel(IModel::kAsset));
-        IModel *assetPtr = asset.data();
-        if (loadAsset(dir.absoluteFilePath(filename), uuid, assetPtr)) {
+        modelPtr.reset(m_factoryRef->createModel(IModel::kAsset));
+        if (loadAsset(dir.absoluteFilePath(filename), uuid, modelPtr)) {
             if (!name.isEmpty()) {
                 CString s(name);
-                asset->setName(&s);
+                modelPtr->setName(&s);
             }
             if (!filename.isEmpty()) {
-                m_name2assets.insert(filename, assetPtr);
+                m_name2assets.insert(filename, modelPtr.data());
             }
             if (scaleFactor > 0)
-                asset->setScaleFactor(scaleFactor);
+                modelPtr->setScaleFactor(scaleFactor);
             if (position.count() == 3) {
                 float x = position.at(0).toFloat();
                 float y = position.at(1).toFloat();
                 float z = position.at(2).toFloat();
-                asset->setPosition(Vector3(x, y, z));
+                modelPtr->setPosition(Vector3(x, y, z));
             }
             if (rotation.count() == 3) {
                 float x = rotation.at(0).toFloat();
                 float y = rotation.at(1).toFloat();
                 float z = rotation.at(2).toFloat();
-                asset->setRotation(Quaternion(x, y, z));
+                modelPtr->setRotation(Quaternion(x, y, z));
             }
             if (!bone.isEmpty() && m_selectedModelRef) {
                 CString s(name);
                 IBone *bone = m_selectedModelRef->findBone(&s);
-                asset->setParentBone(bone);
+                modelPtr->setParentBone(bone);
             }
             Q_UNUSED(enableShadow);
         }
-        return asset.take();
+        return true;
     }
     else {
         qWarning("Cannot load %s: %s", qPrintable(baseName), qPrintable(file.errorString()));
-        return 0;
+        return false;
     }
 }
 
-IMotion *SceneLoader::loadCameraMotion(const QString &path)
+bool SceneLoader::loadCameraMotion(const QString &path, IMotionPtr &motionPtr)
 {
     /* カメラモーションをファイルから読み込み、場面オブジェクトに設定する */
     QFile file(path);
-    QScopedPointer<IMotion> motion;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
-        motion.reset(m_factoryRef->createMotion(Factory::findMotionType(ptr, data.size()), 0));
-        if (motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
-                && motion->countKeyframes(IKeyframe::kCamera) > 0) {
-            setCameraMotion(motion.data());
-            m_project->addMotion(motion.data(), QUuid::createUuid().toString().toStdString());
+        motionPtr.reset(m_factoryRef->createMotion(Factory::findMotionType(ptr, data.size()), 0));
+        if (motionPtr->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
+                && motionPtr->countKeyframes(IKeyframe::kCamera) > 0) {
+            setCameraMotion(motionPtr.data());
+            m_project->addMotion(motionPtr.data(), QUuid::createUuid().toString().toStdString());
         }
         else {
-            motion.reset(0);
+            motionPtr.reset(0);
         }
+        return true;
     }
-    return motion.take();
+    return false;
 }
 
-bool SceneLoader::loadModel(const QString &filename, IModel *&model)
+bool SceneLoader::loadModel(const QString &filename, IModelPtr &modelPtr)
 {
     /*
      * モデルをファイルから読み込む。レンダリングエンジンに送るには addModel を呼び出す必要がある
@@ -634,62 +625,57 @@ bool SceneLoader::loadModel(const QString &filename, IModel *&model)
     const QByteArray &bytes = UILoadFile(filename, kModelLoadable, kModelExtensions, type, m_renderDelegate.data());
     bool isNullData = bytes.isNull();
     if (!isNullData) {
-        bool allocated = false;
-        if (!model) {
-            model = m_factoryRef->createModel(type);
-            allocated = true;
-        }
+        if (modelPtr.isNull())
+            modelPtr.reset(m_factoryRef->createModel(type));
         const uint8_t *dataPtr = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        if (!model->load(dataPtr, size)) {
-            if (allocated) {
-                delete model;
-                model = 0;
-            }
+        if (!modelPtr->load(dataPtr, size)) {
             m_renderDelegate->setArchive(0);
         }
     }
-    return !isNullData && model != 0;
+    return !isNullData && modelPtr;
 }
 
-IMotion *SceneLoader::loadModelMotion(const QString &path)
+bool SceneLoader::loadModelMotion(const QString &path, IMotionPtr &motionPtr)
 {
     /* モーションをファイルから読み込む。モデルへの追加は setModelMotion を使う必要がある */
     QFile file(path);
-    QScopedPointer<IMotion> motion;
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
-        motion.reset(m_factoryRef->createMotion(Factory::findMotionType(ptr, data.size()), 0));
-        if (!motion->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size()))
-            motion.reset(0);
+        motionPtr.reset(m_factoryRef->createMotion(Factory::findMotionType(ptr, data.size()), 0));
+        if (!motionPtr->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
+            motionPtr.reset(0);
+            return false;
+        }
+        return true;
     }
-    return motion.take();
+    return false;
 }
 
-IMotion *SceneLoader::loadModelMotion(const QString &path, QList<IModel *> &models)
+bool SceneLoader::loadModelMotion(const QString &path, QList<IModel *> &models, IMotionPtr &motionPtr)
 {
     /* モーションをファイルから読み込み、対象の全てのモデルに対してモーションを適用する */
-    IMotion *motion = loadModelMotion(path);
-    if (motion) {
+    if (loadModelMotion(path, 0, motionPtr)) {
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         int nmodels = modelUUIDs.size();
         for (int i = 0; i < nmodels; i++) {
             IModel *model = m_project->model(modelUUIDs[i]);
-            setModelMotion(motion, model);
+            setModelMotion(motionPtr.data(), model);
             models.append(model);
         }
     }
-    return motion;
+    return motionPtr;
 }
 
-IMotion *SceneLoader::loadModelMotion(const QString &path, IModel *model)
+bool SceneLoader::loadModelMotion(const QString &path, IModel *model, IMotionPtr &motionPtr)
 {
     /* loadModelMotion に setModelMotion の追加が入ったショートカット的なメソッド */
-    IMotion *motion = loadModelMotion(path);
-    if (motion)
-        setModelMotion(motion, model);
-    return motion;
+    if (loadModelMotion(path, model, motionPtr)) {
+        setModelMotion(motionPtr.data(), model);
+        return true;
+    }
+    return false;
 }
 
 VPDFilePtr SceneLoader::loadModelPose(const QString &path, IModel *model)
@@ -735,16 +721,17 @@ void SceneLoader::loadProject(const QString &path)
         sceneObject->setAccelerationType(accelerationType);
         for (int i = 0; i < nmodels; i++) {
             const Project::UUID &modelUUIDString = modelUUIDs[i];
-            IModel *model = m_project->model(modelUUIDString);
-            const std::string &name = m_project->modelSetting(model, Project::kSettingNameKey);
-            const std::string &uri = m_project->modelSetting(model, Project::kSettingURIKey);
+            IModelPtr modelPtr(m_project->model(modelUUIDString));
+            const std::string &name = m_project->modelSetting(modelPtr.data(), Project::kSettingNameKey);
+            const std::string &uri = m_project->modelSetting(modelPtr.data(), Project::kSettingURIKey);
             const QString &filename = QString::fromStdString(uri);
-            if (loadModel(filename, model)) {
+            if (loadModel(filename, modelPtr)) {
                 const QFileInfo fileInfo(filename);
+                IModel *model = modelPtr.take();
                 m_renderDelegate->addModelPath(model, filename);
-                IRenderEngine *engine = createModelEngine(model, fileInfo.absoluteDir());
-                if (engine) {
-                    sceneObject->addModel(model, engine);
+                IRenderEnginePtr enginePtr;
+                if (createModelEngine(model, fileInfo.absoluteDir(), enginePtr)) {
+                    sceneObject->addModel(model, enginePtr.take());
                     sceneObject->setAccelerationType(modelAccelerationType(model));
                     IModel::Type type = model->type();
                     if (type == IModel::kPMD || type == IModel::kPMX) {
@@ -794,7 +781,7 @@ void SceneLoader::loadProject(const QString &path)
                      modelUUIDString.c_str(),
                      name.c_str(),
                      qPrintable(filename));
-            lostModels.insert(model);
+            lostModels.insert(modelPtr.take());
             emit projectDidProceed(++progress);
         }
         sceneObject->setAccelerationType(accelerationType);
@@ -854,12 +841,12 @@ void SceneLoader::loadProject(const QString &path)
     }
 }
 
-IMotion *SceneLoader::newCameraMotion() const
+void SceneLoader::newCameraMotion(IMotionPtr &motionPtr) const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
-    QScopedPointer<IMotion> newCameraMotion(m_factoryRef->createMotion(IMotion::kVMD, 0));
-    QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factoryRef->createCameraKeyframe(newCameraMotion.data()));
-    QScopedPointer<ILightKeyframe> lightKeyframe(m_factoryRef->createLightKeyframe(newCameraMotion.data()));
+    motionPtr.reset(m_factoryRef->createMotion(IMotion::kVMD, 0));
+    QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factoryRef->createCameraKeyframe(motionPtr.data()));
+    QScopedPointer<ILightKeyframe> lightKeyframe(m_factoryRef->createLightKeyframe(motionPtr.data()));
     ICamera *camera = m_project->camera();
     ILight *light = m_project->light();
     cameraKeyframe->setDefaultInterpolationParameter();
@@ -869,19 +856,17 @@ IMotion *SceneLoader::newCameraMotion() const
     cameraKeyframe->setDistance(camera->distance());
     lightKeyframe->setColor(light->color());
     lightKeyframe->setDirection(light->direction());
-    newCameraMotion->addKeyframe(cameraKeyframe.take());
-    newCameraMotion->addKeyframe(lightKeyframe.take());
-    newCameraMotion->update(IKeyframe::kCamera);
-    newCameraMotion->update(IKeyframe::kLight);
-    return newCameraMotion.take();
+    motionPtr->addKeyframe(cameraKeyframe.take());
+    motionPtr->addKeyframe(lightKeyframe.take());
+    motionPtr->update(IKeyframe::kCamera);
+    motionPtr->update(IKeyframe::kLight);
 }
 
-IMotion *SceneLoader::newModelMotion(IModel *model) const
+void SceneLoader::newModelMotion(const IModel *model, IMotionPtr &motionPtr) const
 {
     /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
-    QScopedPointer<IMotion> newModelMotion;
     if (model) {
-        newModelMotion.reset(m_factoryRef->createMotion(IMotion::kVMD, 0));
+        motionPtr.reset(m_factoryRef->createMotion(IMotion::kVMD, 0));
         Array<IBone *> bones;
         model->getBoneRefs(bones);
         const int nbones = bones.count();
@@ -889,26 +874,25 @@ IMotion *SceneLoader::newModelMotion(IModel *model) const
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
             if (bone->isMovable() || bone->isRotateable()) {
-                boneKeyframe.reset(m_factoryRef->createBoneKeyframe(newModelMotion.data()));
+                boneKeyframe.reset(m_factoryRef->createBoneKeyframe(motionPtr.data()));
                 boneKeyframe->setDefaultInterpolationParameter();
                 boneKeyframe->setName(bone->name());
-                newModelMotion->addKeyframe(boneKeyframe.take());
+                motionPtr->addKeyframe(boneKeyframe.take());
             }
         }
-        newModelMotion->update(IKeyframe::kBone);
+        motionPtr->update(IKeyframe::kBone);
         Array<IMorph *> morphs;
         model->getMorphRefs(morphs);
         const int nmorphs = morphs.count();
         QScopedPointer<IMorphKeyframe> morphKeyframe;
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
-            morphKeyframe.reset(m_factoryRef->createMorphKeyframe(newModelMotion.data()));
+            morphKeyframe.reset(m_factoryRef->createMorphKeyframe(motionPtr.data()));
             morphKeyframe->setName(morph->name());
-            newModelMotion->addKeyframe(morphKeyframe.take());
+            motionPtr->addKeyframe(morphKeyframe.take());
         }
-        newModelMotion->update(IKeyframe::kMorph);
+        motionPtr->update(IKeyframe::kMorph);
     }
-    return newModelMotion.take();
 }
 
 void SceneLoader::releaseProject()
@@ -1403,7 +1387,7 @@ void SceneLoader::setVertexShaderSkinningType1Enable(const IModel *model, bool v
         m_project->setModelSetting(model, "skinning.vs.type1", value ? "true" : "false");
 }
 
-IModel *SceneLoader::selectedModel() const
+IModel *SceneLoader::selectedModelRef() const
 {
     return m_selectedModelRef;
 }
@@ -1716,7 +1700,7 @@ void SceneLoader::setAssetScaleFactor(const IModel *asset, float value)
     }
 }
 
-IModel *SceneLoader::assetParentModel(IModel *asset) const
+IModel *SceneLoader::assetParentModel(const IModel *asset) const
 {
     IModel *parentModel = m_project ? m_project->model(m_project->modelSetting(asset, "parent.model")) : 0;
     return parentModel;
@@ -1728,7 +1712,7 @@ void SceneLoader::setAssetParentModel(const IModel *asset, IModel *model)
         m_project->setModelSetting(asset, "parent.model", m_project->modelUUID(model));
 }
 
-IBone *SceneLoader::assetParentBone(IModel *asset) const
+IBone *SceneLoader::assetParentBone(const IModel *asset) const
 {
     IModel *model = 0;
     if (m_project && (model = assetParentModel(asset))) {

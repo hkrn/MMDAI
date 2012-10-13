@@ -74,6 +74,9 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+typedef QScopedPointer<IModel> IModelPtr;
+typedef QScopedPointer<IMotion> IMotionPtr;
+typedef QScopedPointer<IRenderEngine> IRenderEnginePtr;
 
 class SceneLoader : public QObject
 {
@@ -88,20 +91,20 @@ public:
     IModel *findAsset(const QUuid &uuid) const;
     IModel *findModel(const QUuid &uuid) const;
     IMotion *findMotion(const QUuid &uuid) const;
-    const QUuid findUUID(IModel *model) const;
+    const QUuid findUUID(const IModel *model) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     void getCameraMatrices(QMatrix4x4 &worldRef, QMatrix4x4 &view, QMatrix4x4 &projection) const;
     bool isProjectModified() const;
-    bool loadAsset(const QString &filename, QUuid &uuid, IModel *&asset);
-    IModel *loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid);
-    IMotion *loadCameraMotion(const QString &path);
-    bool loadModel(const QString &filename, IModel *&model);
-    IMotion *loadModelMotion(const QString &path);
-    IMotion *loadModelMotion(const QString &path, QList<IModel *> &models);
-    IMotion *loadModelMotion(const QString &path, IModel *model);
+    bool loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr);
+    bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelPtr &modelPtr);
+    bool loadCameraMotion(const QString &path, IMotionPtr &motionPtr);
+    bool loadModel(const QString &filename, IModelPtr &modelPtr);
+    bool loadModelMotion(const QString &path, IMotionPtr &motionPtr);
+    bool loadModelMotion(const QString &path, QList<IModel *> &models, IMotionPtr &motionPtr);
+    bool loadModelMotion(const QString &path, IModel *model, IMotionPtr &motionPtr);
     VPDFilePtr loadModelPose(const QString &path, IModel *model);
-    IMotion *newCameraMotion() const;
-    IMotion *newModelMotion(IModel *model) const;
+    void newCameraMotion(IMotionPtr &motionPtr) const;
+    void newModelMotion(const IModel *model, IMotionPtr &motionPtr) const;
     void releaseProject();
     void releaseDepthTexture();
     void renderWindow();
@@ -150,7 +153,7 @@ public:
     void setOpenCLSkinningEnableType1(const IModel *model, bool value);
     bool isVertexShaderSkinningType1Enabled(const IModel *model) const;
     void setVertexShaderSkinningType1Enable(const IModel *model, bool value);
-    IModel *selectedModel() const;
+    IModel *selectedModelRef() const;
     bool isModelSelected(const IModel *value) const;
     void setModelEdgeColor(IModel *model, const QColor &value);
     void setModelEdgeOffset(IModel *model, float value);
@@ -169,9 +172,9 @@ public:
     void setAssetScaleFactor(const IModel *asset, float value);
     IModel *selectedAsset() const;
     bool isAssetSelected(const IModel *value) const;
-    IModel *assetParentModel(IModel *asset) const;
+    IModel *assetParentModel(const IModel *asset) const;
     void setAssetParentModel(const IModel *asset, IModel *model);
-    IBone *assetParentBone(IModel *asset) const;
+    IBone *assetParentBone(const IModel *asset) const;
     void setAssetParentBone(const IModel *asset, IBone *bone);
 
     Scene *sceneRef() const;
@@ -252,7 +255,7 @@ private slots:
     void setProjectDirtyFalse();
 
 private:
-    IRenderEngine *createModelEngine(IModel *model, const QDir &dir);
+    bool createModelEngine(IModel *model, const QDir &dir, IRenderEnginePtr &enginePtr);
     void insertModel(IModel *model, const QString &name);
     void insertMotion(IMotion *motion, IModel *model);
     void commitAssetProperties();

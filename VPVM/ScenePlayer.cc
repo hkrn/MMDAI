@@ -79,7 +79,7 @@ void ScenePlayer::start()
     if (isActive())
         return;
     int sceneFPS = m_dialogRef->sceneFPS();
-    m_selectedModelRef = m_sceneWidgetRef->sceneLoaderRef()->selectedModel();
+    m_selectedModelRef = m_sceneWidgetRef->sceneLoaderRef()->selectedModelRef();
     m_prevSceneFPS = m_sceneWidgetRef->sceneLoaderRef()->sceneRef()->preferredFPS();
     m_prevFrameIndex = m_sceneWidgetRef->currentTimeIndex();
     m_frameStep = 1.0 / (sceneFPS / Scene::defaultFPS());

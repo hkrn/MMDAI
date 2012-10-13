@@ -532,7 +532,7 @@ void MainWindow::addModel(IModel *model, const QUuid &uuid)
 void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
 {
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
-    if (model == m_sceneWidget->sceneLoaderRef()->selectedModel())
+    if (model == m_sceneWidget->sceneLoaderRef()->selectedModelRef())
         m_sceneWidget->setSelectedModel(0);
     /* 削除されるモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
@@ -607,7 +607,7 @@ bool MainWindow::saveMotionFile(const QString &filename)
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
     QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
     IMotion *motionPtr = motion.data();
-    motionPtr->setParentModel(m_sceneWidget->sceneLoaderRef()->selectedModel());
+    motionPtr->setParentModel(m_sceneWidget->sceneLoaderRef()->selectedModelRef());
     m_boneMotionModel->saveMotion(motionPtr);
     m_morphMotionModel->saveMotion(motionPtr);
     return saveMotionFile(filename, motionPtr);
@@ -1421,8 +1421,9 @@ void MainWindow::connectSceneLoader()
      * アクセラレーションの設定の後にやるのは setDirtyFalse の後に アクセラレーションの設定変更によって
      * プロジェクト更新がかかり、何もしていないのに終了時に確認ダイアログが出てしまうことを防ぐため
      */
-    IMotion *cameraMotion = loader->newCameraMotion();
-    loader->setCameraMotion(cameraMotion);
+    IMotionPtr cameraMotionPtr;
+    loader->newCameraMotion(cameraMotionPtr);
+    loader->setCameraMotion(cameraMotionPtr.take());
 }
 
 void MainWindow::connectWidgets()
@@ -1497,7 +1498,7 @@ void MainWindow::saveModelPose()
         if (file.open(QFile::WriteOnly)) {
             VPDFile pose;
             QTextStream stream(&file);
-            m_timelineTabWidget->savePose(&pose, m_sceneWidget->sceneLoaderRef()->selectedModel());
+            m_timelineTabWidget->savePose(&pose, m_sceneWidget->sceneLoaderRef()->selectedModelRef());
             pose.save(stream);
             file.close();
             qDebug("Saved a pose: %s", qPrintable(filename));
@@ -1769,7 +1770,7 @@ void MainWindow::restoreWindowState(const WindowState &state)
 void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
-        IModel *model = m_sceneWidget->sceneLoaderRef()->selectedModel();
+        IModel *model = m_sceneWidget->sceneLoaderRef()->selectedModelRef();
         IMotion *motion = m_boneMotionModel->currentMotionRef();
         if (model && motion) {
             m_boneMotionModel->removeMotion();
@@ -1819,7 +1820,7 @@ void MainWindow::selectNextModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModel(), actions);
+        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModelRef(), actions);
         if (index == -1 || index == actions.length() - 1)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
         else
@@ -1832,7 +1833,7 @@ void MainWindow::selectPreviousModel()
     const QList<QAction *> &actions = m_menuRetainModels->actions();
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModel(), actions);
+        int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModelRef(), actions);
         if (index == -1 || index == 0)
             m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
         else

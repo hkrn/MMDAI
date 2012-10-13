@@ -41,6 +41,8 @@
 #include <QtCore/QUuid>
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLWidget>
+
+#include "SceneLoader.h"
 #include "VPDFile.h"
 
 #include <vpvl2/Common.h>
@@ -72,7 +74,6 @@ class DebugDrawer;
 class Grid;
 class InfoPanel;
 class Handles;
-class SceneLoader;
 class VPDFile;
 
 class SceneWidget : public QGLWidget, protected QGLFunctions
@@ -101,12 +102,12 @@ public:
     void loadProject(const QString &filename);
     void saveProject(const QString &filename);
 
-    IModel *addModel(const QString &path, bool skipDialog = false);
-    IMotion *insertMotionToAllModels(const QString &path);
-    IMotion *insertMotionToSelectedModel(const QString &path);
-    IMotion *insertMotionToModel(const QString &path, IModel *model);
-    IModel *addAsset(const QString &path);
-    IModel *addAssetFromMetadata(const QString &path);
+    void loadModel(const QString &path, IModelPtr &model, bool skipDialog = false);
+    void loadMotionToAllModels(const QString &path, IMotionPtr &motionPtr);
+    void loadMotionToSelectedModel(const QString &path, IMotionPtr &motionPtr);
+    void loadMotionToModel(const QString &path, IModel *model, IMotionPtr &motionPtr);
+    void loadAsset(const QString &path, QScopedPointer<IModel> &modelPtr);
+    void loadAssetFromMetadata(const QString &path);
     VPDFilePtr insertPoseToSelectedModel(const QString &filename, IModel *model);
     IMotion *setCamera(const QString &path);
     void makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo) const;
