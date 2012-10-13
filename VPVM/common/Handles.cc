@@ -229,7 +229,7 @@ Handles::Handles(SceneLoader *loaderRef, const QSize &size)
       m_world(new Handles::StaticWorld()),
       m_boneRef(0),
       m_loaderRef(loaderRef),
-      m_trackedHandle(0),
+      m_trackedHandleRef(0),
       m_constraint(kLocal),
       m_prevPos3D(0.0f, 0.0f, 0.0f),
       m_prevAngle(0.0f),
@@ -323,7 +323,7 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
     if (m_boneRef) {
         btCollisionWorld::ClosestRayResultCallback callback(rayFrom,rayTo);
         m_world->world()->rayTest(rayFrom, rayTo, callback);
-        m_trackedHandle = 0;
+        m_trackedHandleRef = 0;
         if (callback.hasHit()) {
             const btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
             Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
@@ -344,7 +344,7 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
                     flags = kModel | kRotate | kZ;
             }
             if (setTracked)
-                m_trackedHandle = model;
+                m_trackedHandleRef = model;
             pick = callback.m_hitPointWorld;
             return flags != kNone;
         }
@@ -681,7 +681,7 @@ void Handles::drawModel(const Handles::Model &model,
         const Handles::Vertex &ptr = model.vertices.at(0);
         const GLfloat *vertexPtr = reinterpret_cast<const GLfloat *>(&ptr.position.x());
         int inPosition = m_program.attributeLocation("inPosition");
-        m_program.setUniformValue("color", &model == m_trackedHandle ? kYellow : color);
+        m_program.setUniformValue("color", &model == m_trackedHandleRef ? kYellow : color);
         m_program.enableAttributeArray(inPosition);
         m_program.setAttributeArray(inPosition, vertexPtr, 4, sizeof(Handles::Vertex));
         glDrawElements(GL_TRIANGLES, model.indices.count(), GL_UNSIGNED_SHORT, &model.indices[0]);

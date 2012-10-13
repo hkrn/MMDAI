@@ -178,7 +178,7 @@ private:
     QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;
     TranslationHandle m_translationHandle;
-    Model *m_trackedHandle;
+    Model *m_trackedHandleRef;
     ImageHandle m_x;
     ImageHandle m_y;
     ImageHandle m_z;
