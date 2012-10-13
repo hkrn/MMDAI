@@ -105,6 +105,8 @@ struct SWScaleContextCleaner
     }
 };
 
+static bool g_initialized = false;
+
 }
 
 namespace vpvm
@@ -115,11 +117,14 @@ bool VideoEncoder::isSupported()
     return true;
 }
 
-void VideoEncoder::initialize()
+void VideoEncoder::initializeEncoder()
 {
-    avcodec_register_all();
-    av_register_all();
-    av_lockmgr_register(UIAVCodecLockCallback);
+    if (!g_initialized) {
+        avcodec_register_all();
+        av_register_all();
+        av_lockmgr_register(UIAVCodecLockCallback);
+        g_initialized = true;
+    }
 }
 
 VideoEncoder::VideoEncoder(QObject *parent)
@@ -130,6 +135,7 @@ VideoEncoder::VideoEncoder(QObject *parent)
       m_audioSampleRate(0),
       m_running(false)
 {
+    initializeEncoder();
 }
 
 VideoEncoder::~VideoEncoder()

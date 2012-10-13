@@ -50,7 +50,7 @@ class VideoEncoder : public QThread, public IVideoEncoder
 
 public:
     static bool isSupported();
-    static void initialize();
+    static void initializeEncoder();
 
     explicit VideoEncoder(QObject *parent);
     ~VideoEncoder();

@@ -41,7 +41,7 @@ namespace vpvm
 
 double ComputePresentTimeStamp(const AVStream *stream)
 {
-    return stream ? static_cast<double>(stream->pts.val) * stream->time_base.num / stream->time_base.den : 0.0;
+    return stream ? double(stream->pts.val) * stream->time_base.num / stream->time_base.den : 0;
 }
 
 void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, AVPacket &packet)

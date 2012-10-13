@@ -60,7 +60,7 @@ class ScenePlayer : public QObject
     Q_OBJECT
 
 public:
-    ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog);
+    ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dialog, QObject *parent = 0);
     ~ScenePlayer();
 
     void start();
@@ -81,15 +81,16 @@ signals:
 private slots:
     void renderSceneFrameFixed();
     void renderSceneFrameVariant();
-    void advanceAudioFrame(float step);
+    void advanceAudioFrame(qreal step);
 
 private:
-    void renderSceneFrame0(float step);
+    void renderSceneFrame0(qreal step);
+    void updateCurrentFPS();
 
+    const PlaySettingDialog *m_dialogRef;
     QScopedPointer<AudioPlayer> m_player;
     QScopedPointer<QProgressDialog> m_progress;
     SceneWidget *m_sceneWidgetRef;
-    PlaySettingDialog *m_dialogRef;
     IModel *m_selectedModelRef;
     QElapsedTimer m_elapsed;
     QTimer m_renderTimer;
@@ -97,11 +98,11 @@ private:
     QByteArray m_buffer;
     Scalar m_currentFPS;
     Scalar m_prevSceneFPS;
-    float m_prevFrameIndex;
-    float m_frameStep;
-    float m_totalStep;
-    float m_audioFrameIndex;
-    float m_prevAudioFrameIndex;
+    qreal m_prevFrameIndex;
+    qreal m_frameStep;
+    qreal m_totalStep;
+    qreal m_audioFrameIndex;
+    qreal m_prevAudioFrameIndex;
     int m_countForFPS;
     bool m_restoreState;
 };

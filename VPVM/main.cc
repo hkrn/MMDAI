@@ -124,8 +124,6 @@ int main(int argc, char *argv[])
     xmlInitCharEncodingHandlers();
     xmlInitGlobals();
     xmlInitParser();
-    Pa_Initialize();
-    vpvm::VideoEncoder::initialize();
 
     vpvm::Application a(argc, argv);
     QWidget fake;
