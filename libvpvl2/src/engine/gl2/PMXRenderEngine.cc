@@ -654,7 +654,8 @@ bool PMXRenderEngine::upload(const IString *dir)
         if (path) {
             if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
                 materialPrivate.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
-                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
+                if (textureID > 0)
+                    log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
             else {
                 return releaseContext0(context);
@@ -664,7 +665,8 @@ bool PMXRenderEngine::upload(const IString *dir)
         if (path) {
             if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
                 materialPrivate.sphereTextureID = textureID = *static_cast<GLuint *>(texture.object);
-                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
+                if (textureID > 0)
+                    log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
             else {
                 return releaseContext0(context);
@@ -678,7 +680,8 @@ bool PMXRenderEngine::upload(const IString *dir)
             delete s;
             if (ret) {
                 materialPrivate.toonTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+                if (textureID > 0)
+                    log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
             }
             else {
                 return releaseContext0(context);

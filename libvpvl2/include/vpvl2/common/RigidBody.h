@@ -76,9 +76,11 @@ public:
 
     void performTransformBone();
     void setKinematic(bool value);
-    const Transform createStartTransform() const;
-    btCollisionShape *createShape() const;
-    btRigidBody *createRigidBody(btCollisionShape *shape);
+
+    virtual const Transform createTransform() const;
+    virtual const Transform createStartTransform(const Transform &transform) const;
+    virtual btCollisionShape *createShape() const;
+    virtual btRigidBody *createRigidBody(btCollisionShape *shape);
 
     btRigidBody *body() const { return m_body; }
     IBone *bone() const { return m_boneRef; }
@@ -116,7 +118,7 @@ public:
     void setIndex(int value);
 
 protected:
-    void build(IBone *bone, btCollisionShape *shape, int index);
+    void build(IBone *bone, int index);
 
     btRigidBody *m_body;
     btRigidBody *m_ptr;

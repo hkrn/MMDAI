@@ -192,7 +192,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     vertex->m_boneRefs[0] = bones[boneIndex];
             }
             else {
-                vertex->m_boneRefs[0] = &kNullBone;
+                vertex->m_boneRefs[0] = NullBone::sharedReference();
             }
             break;
         }
@@ -208,7 +208,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                         vertex->m_boneRefs[j] = bones[boneIndex];
                 }
                 else {
-                    vertex->m_boneRefs[j] = &kNullBone;
+                    vertex->m_boneRefs[j] = NullBone::sharedReference();
                 }
             }
             break;
@@ -223,7 +223,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                         vertex->m_boneRefs[j] = bones[boneIndex];
                 }
                 else {
-                    vertex->m_boneRefs[j] = &kNullBone;
+                    vertex->m_boneRefs[j] = NullBone::sharedReference();
                 }
             }
             break;

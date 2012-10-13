@@ -39,14 +39,6 @@
 #include "vpvl2/pmd/Bone.h"
 #include "vpvl2/pmd/RigidBody.h"
 
-#ifndef VPVL2_NO_BULLET
-#include <btBulletDynamicsCommon.h>
-#else
-BT_DECLARE_HANDLE(btCollisionShape)
-BT_DECLARE_HANDLE(btMotionState)
-BT_DECLARE_HANDLE(btRigidBody)
-#endif
-
 namespace
 {
 
@@ -83,7 +75,7 @@ namespace pmd
 const int RigidBody::kNameSize;
 
 RigidBody::RigidBody(IEncoding *encodingRef)
-    : common::RigidBody::RigidBody(),
+    : common::RigidBody(),
       m_encodingRef(encodingRef)
 {
 }
@@ -114,21 +106,17 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
         const int boneIndex = rigidBody->m_boneIndex;
         if (boneIndex >= 0) {
             if (boneIndex == 0xffff) {
-                rigidBody->build(&kNullBone, 0, i);
+                rigidBody->build(NullBone::sharedReference(), i);
             }
             else if (boneIndex >= nbones) {
                 return false;
             }
             else {
-                btCollisionShape *shape = rigidBody->createShape();
-                Bone *bone = bones[boneIndex];
-                if (rigidBody->m_type != kStaticObject)
-                    bone->setSimulated(true);
-                rigidBody->build(bone, shape, i);
+                rigidBody->build(bones[boneIndex], i);
             }
         }
         else {
-            rigidBody->build(&kNullBone, 0, i);
+            rigidBody->build(NullBone::sharedReference(), i);
         }
     }
     return true;
@@ -194,6 +182,12 @@ void RigidBody::write(uint8_t *data, const Model::DataInfo & /* info */) const
     internal::getPositionRaw(m_size, unit.size);
     unit.type = m_type;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+}
+
+const Transform RigidBody::createStartTransform(const Transform &transform) const
+{
+    const Vector3 &origin = m_boneRef->worldTransform().getOrigin();
+    return Transform(Matrix3x3::getIdentity(), origin) * transform;
 }
 
 }

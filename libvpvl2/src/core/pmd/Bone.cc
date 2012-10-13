@@ -110,7 +110,7 @@ Bone::Bone(IEncoding *encodingRef)
       m_parentBoneIndex(0),
       m_targetBoneIndex(0),
       m_childBoneIndex(0),
-      m_simulated(false)
+      m_enableInverseKinematics(false)
 {
 }
 
@@ -135,7 +135,7 @@ Bone::~Bone()
     m_localPosition.setZero();
     m_worldTransform.setIdentity();
     m_localTransform.setIdentity();
-    m_simulated = false;
+    m_enableInverseKinematics = false;
 }
 
 bool Bone::preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -548,11 +548,6 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     }
 }
 
-void Bone::setSimulated(bool value)
-{
-    m_simulated = value;
-}
-
 bool Bone::isAxisXAligned()
 {
     if (m_encodingRef && m_name) {
@@ -561,6 +556,11 @@ bool Bone::isAxisXAligned()
         return isRightKnee || isLeftKnee;
     }
     return false;
+}
+
+void Bone::setInverseKinematicsEnable(bool value)
+{
+    m_enableInverseKinematics = value;
 }
 
 }

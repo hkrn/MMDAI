@@ -69,6 +69,7 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
+    const Transform createStartTransform(const Transform &transform) const;
 
 private:
     IEncoding *m_encodingRef;

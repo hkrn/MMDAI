@@ -98,6 +98,7 @@ public:
     bool hasLocalAxes() const;
     const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
+    void setInverseKinematicsEnable(bool value);
 
     static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
@@ -134,7 +135,7 @@ private:
     int m_parentBoneIndex;
     int m_targetBoneIndex;
     int m_childBoneIndex;
-    bool m_simulated;
+    bool m_enableInverseKinematics;
 };
 
 }

@@ -116,7 +116,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     vertex->m_boneRefs[j] = bones[boneIndex];
             }
             else {
-                vertex->m_boneRefs[j] = &kNullBone;
+                vertex->m_boneRefs[j] = NullBone::sharedReference();
             }
         }
     }

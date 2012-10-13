@@ -42,8 +42,8 @@
 #ifndef VPVL2_NO_BULLET
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
 #else
-BT_DECLARE_HANDLE(btGeneric6DofConstraint)
-BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint)
+BT_DECLARE_HANDLE(btGeneric6DofConstraint);
+BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint);
 #endif
 
 namespace vpvl2
@@ -66,8 +66,8 @@ Joint::Joint()
       m_rotationUpperLimit(kZeroV3),
       m_positionStiffness(kZeroV3),
       m_rotationStiffness(kZeroV3),
-      m_rigidBodyIndex1(0),
-      m_rigidBodyIndex2(0),
+      m_rigidBodyIndex1(-1),
+      m_rigidBodyIndex2(-1),
       m_index(-1)
 {
 }
@@ -184,8 +184,8 @@ btGeneric6DofSpringConstraint *Joint::createConstraint()
 #endif /* VPVL2_COORDINATE_OPENGL */
     transform.setBasis(basis);
     btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
-    Transform transformA = bodyA->getWorldTransform().inverse() * transform,
-            transformB = bodyB->getWorldTransform().inverse() * transform;
+    const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
+            &transformB = bodyB->getWorldTransform().inverse() * transform;
     btGeneric6DofSpringConstraint *constraint = m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
     const Vector3 &positionLowerLimit = m_positionLowerLimit;
     const Vector3 &positionUpperLimit = m_positionUpperLimit;
@@ -210,6 +210,7 @@ btGeneric6DofSpringConstraint *Joint::createConstraint()
             constraint->setStiffness(index, value);
         }
     }
+    constraint->setUserConstraintPtr(this);
     return constraint;
 #else /* VPVL2_NO_BULLET */
     return 0;

@@ -142,7 +142,7 @@ Bone::Bone()
       m_parentInherenceBoneIndex(-1),
       m_globalID(0),
       m_flags(0),
-      m_simulated(false)
+      m_enableInverseKinematics(true)
 {
 }
 
@@ -174,7 +174,7 @@ Bone::~Bone()
     m_parentInherenceBoneIndex = -1;
     m_globalID = 0;
     m_flags = 0;
-    m_simulated = false;
+    m_enableInverseKinematics = false;
 }
 
 bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -594,7 +594,7 @@ void Bone::performTransform()
 
 void Bone::solveInverseKinematics()
 {
-    if (!hasInverseKinematics() || m_simulated)
+    if (!hasInverseKinematics() || !m_enableInverseKinematics)
         return;
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
@@ -852,11 +852,6 @@ void Bone::setLocalTransform(const Transform &value)
     m_localTransform = value;
 }
 
-void Bone::setSimulated(bool value)
-{
-    m_simulated = value;
-}
-
 void Bone::setParentBone(Bone *value)
 {
     m_parentBoneRef = value;
@@ -981,7 +976,7 @@ void Bone::setLocalAxisEnable(bool value)
     internal::toggleFlag(0x0800, value, m_flags);
 }
 
-void Bone::setTransformedAfterPhysicsSimulationEnable(bool value)
+void Bone::setTransformAfterPhysicsEnable(bool value)
 {
     internal::toggleFlag(0x1000, value, m_flags);
 }
@@ -989,6 +984,11 @@ void Bone::setTransformedAfterPhysicsSimulationEnable(bool value)
 void Bone::setTransformedByExternalParentEnable(bool value)
 {
     internal::toggleFlag(0x2000, value, m_flags);
+}
+
+void Bone::setInverseKinematicsEnable(bool value)
+{
+    m_enableInverseKinematics = value;
 }
 
 } /* namespace pmx */

@@ -40,110 +40,28 @@
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/RigidBody.h"
 
-#ifndef VPVL2_NO_BULLET
-#include <btBulletDynamicsCommon.h>
-#else
-BT_DECLARE_HANDLE(btCollisionShape)
-BT_DECLARE_HANDLE(btMotionState)
-BT_DECLARE_HANDLE(btRigidBody)
-#endif
-
 namespace
 {
 
 #pragma pack(push, 1)
 
-    struct RigidBodyUnit
-    {
-        uint8_t collisionGroupID;
-        uint16_t collsionMask;
-        uint8_t shapeType;
-        float size[3];
-        float position[3];
-        float rotation[3];
-        float mass;
-        float linearDamping;
-        float angularDamping;
-        float restitution;
-        float friction;
-        uint8_t type;
-    };
+struct RigidBodyUnit
+{
+    uint8_t collisionGroupID;
+    uint16_t collsionMask;
+    uint8_t shapeType;
+    float size[3];
+    float position[3];
+    float rotation[3];
+    float mass;
+    float linearDamping;
+    float angularDamping;
+    float restitution;
+    float friction;
+    uint8_t type;
+};
 
 #pragma pack(pop)
-
-#ifndef VPVL2_NO_BULLET
-    using namespace vpvl2;
-    using namespace vpvl2::pmx;
-
-    class DefaultMotionState : public btMotionState
-    {
-    public:
-        DefaultMotionState(const Transform &startTransform, const IBone *bone)
-            : m_boneRef(bone),
-              m_startTransform(startTransform),
-              m_worldTransform(startTransform)
-        {
-        }
-        ~DefaultMotionState() {}
-
-        void getWorldTransform(btTransform &worldTrans) const {
-            worldTrans = m_worldTransform;
-        }
-        void setWorldTransform(const btTransform &worldTrans) {
-            m_worldTransform = worldTrans * m_boneRef->localTransform();
-        }
-        void resetWorldTransform(const Transform &value) {
-            m_startTransform = m_worldTransform = value;
-        }
-
-    protected:
-        const IBone *m_boneRef;
-        Transform m_startTransform;
-        Transform m_worldTransform;
-    };
-
-    class AlignedMotionState : public DefaultMotionState
-    {
-    public:
-        AlignedMotionState(const Transform &startTransform, const IBone *bone)
-            : DefaultMotionState(startTransform, bone)
-        {
-        }
-        ~AlignedMotionState() {}
-
-        void getWorldTransform(btTransform &worldTrans) const {
-            worldTrans = m_worldTransform;
-        }
-        void setWorldTransform(const btTransform &worldTrans) {
-            m_worldTransform = worldTrans;
-            const Matrix3x3 &rotation = worldTrans.getBasis();
-            m_worldTransform.setOrigin(kZeroV3);
-            m_worldTransform = m_startTransform * m_worldTransform;
-            m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_boneRef->localTransform().getOrigin());
-            m_worldTransform.setBasis(rotation);
-        }
-    };
-
-    class KinematicMotionState : public DefaultMotionState
-    {
-    public:
-        KinematicMotionState(const Transform &startTransform, const IBone *bone)
-            : DefaultMotionState(startTransform, bone)
-        {
-        }
-        ~KinematicMotionState() {}
-
-        void getWorldTransform(btTransform &worldTrans) const {
-            // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
-            // (Bone#localTransform will be identity)
-            Transform output;
-            m_boneRef->getLocalTransform(output);
-            worldTrans = output * m_startTransform;
-        }
-        void setWorldTransform(const btTransform & /* worldTrans */) {
-        }
-    };
-#endif /* VPVL2_NO_BULLET */
 
 }
 
@@ -153,7 +71,7 @@ namespace pmx
 {
 
 RigidBody::RigidBody()
-    : common::RigidBody::RigidBody()
+    : common::RigidBody()
 {
 }
 
@@ -199,15 +117,11 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
                 return false;
             }
             else {
-                btCollisionShape *shape = rigidBody->createShape();
-                Bone *bone = bones[boneIndex];
-                if (rigidBody->m_type != kStaticObject)
-                    bone->setSimulated(true);
-                rigidBody->build(bone, shape, i);
+                rigidBody->build(bones[boneIndex], i);
             }
         }
         else {
-            rigidBody->build(&kNullBone, 0, i);
+            rigidBody->build(NullBone::sharedReference(), i);
         }
     }
     return true;

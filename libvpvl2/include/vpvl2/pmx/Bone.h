@@ -147,8 +147,9 @@ public:
     void setRotationInherenceEnable(bool value);
     void setAxisFixedEnable(bool value);
     void setLocalAxisEnable(bool value);
-    void setTransformedAfterPhysicsSimulationEnable(bool value);
+    void setTransformAfterPhysicsEnable(bool value);
     void setTransformedByExternalParentEnable(bool value);
+    void setInverseKinematicsEnable(bool value);
 
 private:
     Array<IKLink *> m_IKLinks;
@@ -184,7 +185,7 @@ private:
     int m_parentInherenceBoneIndex;
     int m_globalID;
     uint16_t m_flags;
-    bool m_simulated;
+    bool m_enableInverseKinematics;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Bone)
 };

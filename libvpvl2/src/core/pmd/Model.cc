@@ -604,8 +604,7 @@ bool Model::load(const uint8_t *data, size_t size)
         parseCustomToonTextures(info);
         parseRigidBodies(info);
         parseJoints(info);
-        if (!Bone::loadBones(m_bones)
-                || !Material::loadMaterials(m_materials, m_customToonTextures, m_indices.count())
+        if (!Material::loadMaterials(m_materials, m_customToonTextures, m_indices.count())
                 || !Vertex::loadVertices(m_vertices, m_bones)
                 || !Morph::loadMorphs(m_morphs, m_vertices)
                 || !Label::loadLabels(m_labels, m_bones, m_morphs)
@@ -614,7 +613,6 @@ bool Model::load(const uint8_t *data, size_t size)
             m_info.error = info.error;
             return false;
         }
-        m_sortedBones.sort(BonePredication());
         m_info = info;
         return true;
     }
@@ -1011,6 +1009,9 @@ void Model::parseBones(const DataInfo &info)
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         ptr += size;
     }
+    m_sortedBones.sort(BonePredication());
+    Bone::loadBones(m_bones);
+    performUpdate();
 }
 
 void Model::parseIKConstraints(const DataInfo &info)

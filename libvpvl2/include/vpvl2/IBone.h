@@ -249,19 +249,25 @@ public:
      * @sa getFixedAxes
      */
     virtual void getLocalAxes(Matrix3x3 &value) const = 0;
+
+    virtual void setInverseKinematicsEnable(bool value) = 0;
 };
 
-static class NullBone : public IBone {
+class NullBone : public IBone {
 public:
-    NullBone() {}
-    ~NullBone() {}
+    static IBone *sharedReference() {
+        static NullBone bone;
+        return &bone;
+    }
     const IString *name() const { return 0; }
     int index() const { return -1; }
     IBone *parentBone() const { return 0; }
     IBone *targetBone() const { return 0; }
     const Transform &worldTransform() const {  return Transform::getIdentity(); }
     const Transform &localTransform() const {  return Transform::getIdentity(); }
-    void getLocalTransform(Transform & /* world2LocalTransform */) const {}
+    void getLocalTransform(Transform &world2LocalTransform) const {
+        world2LocalTransform = Transform::getIdentity();
+    }
     void setLocalTransform(const Transform & /* value */) {}
     const Vector3 &origin() const { return kZeroV3; }
     const Vector3 destinationOrigin() const { return kZeroV3; }
@@ -279,7 +285,11 @@ public:
     bool hasLocalAxes() const { return false; }
     const Vector3 &fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
-} kNullBone;
+    void setInverseKinematicsEnable(bool /* value */) {}
+private:
+    NullBone() {}
+    ~NullBone() {}
+};
 
 }
 

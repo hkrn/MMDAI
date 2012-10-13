@@ -73,7 +73,7 @@ namespace pmx
 {
 
 Joint::Joint()
-    : common::Joint::Joint()
+    : common::Joint()
 {
 }
 

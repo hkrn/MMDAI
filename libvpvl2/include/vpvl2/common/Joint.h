@@ -41,8 +41,13 @@
 
 #include "vpvl2/common/RigidBody.h"
 
+#ifndef VPVL2_NO_BULLET
 class btGeneric6DofConstraint;
 class btGeneric6DofSpringConstraint;
+#else
+BT_DECLARE_HANDLE(btGeneric6DofConstraint);
+BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint);
+#endif
 
 namespace vpvl2
 {
@@ -85,7 +90,8 @@ public:
     void setPositionStiffness(const Vector3 &value);
     void setRotationStiffness(const Vector3 &value);
     void setIndex(int value);
-    btGeneric6DofSpringConstraint *createConstraint();
+
+    virtual btGeneric6DofSpringConstraint *createConstraint();
 
 protected:
     void build(int index);

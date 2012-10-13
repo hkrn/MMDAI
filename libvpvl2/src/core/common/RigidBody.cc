@@ -39,88 +39,111 @@
 
 #include "vpvl2/common/RigidBody.h"
 
+#define QT_NO_DEBUG_STREAM
+#include <QtDebug>
+
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
 #else
-BT_DECLARE_HANDLE(btCollisionShape)
-BT_DECLARE_HANDLE(btMotionState)
-BT_DECLARE_HANDLE(btRigidBody)
+BT_DECLARE_HANDLE(btCollisionShape);
+BT_DECLARE_HANDLE(btMotionState);
+BT_DECLARE_HANDLE(btRigidBody);
 #endif
 
 namespace
 {
 
 #ifndef VPVL2_NO_BULLET
-    using namespace vpvl2;
+using namespace vpvl2;
 
-    class DefaultMotionState : public btMotionState
+class DefaultMotionState : public btMotionState
+{
+public:
+    DefaultMotionState(const Transform &startTransform, const IBone *bone)
+        : m_boneRef(bone),
+          m_startTransform(startTransform),
+          m_worldTransform(startTransform)
     {
-    public:
-        DefaultMotionState(const Transform &startTransform, const IBone *bone)
-            : m_boneRef(bone),
-              m_startTransform(startTransform),
-              m_worldTransform(startTransform)
-        {
-        }
-        ~DefaultMotionState() {}
+    }
+    ~DefaultMotionState() {}
 
-        void getWorldTransform(btTransform &worldTrans) const {
-            worldTrans = m_worldTransform;
-        }
-        void setWorldTransform(const btTransform &worldTrans) {
-            m_worldTransform = worldTrans * m_boneRef->localTransform();
-        }
-        void resetWorldTransform(const Transform &value) {
-            m_startTransform = m_worldTransform = value;
-        }
+    void getWorldTransform(btTransform &worldTransform) const {
+        qDebug("DefaultMotionState#getWorldTransform: %s", m_boneRef->name() ? m_boneRef->name()->toByteArray() : 0);
+        qDebug() << m_worldTransform.getOrigin().x()
+                 << m_worldTransform.getOrigin().y()
+                 << m_worldTransform.getOrigin().z();
+        worldTransform = m_worldTransform;
+    }
+    void setWorldTransform(const btTransform &worldTransform) {
+        qDebug("DefaultMotionState#setWorldTransform: %s", m_boneRef->name() ? m_boneRef->name()->toByteArray() : 0);
+        qDebug() << worldTransform.getOrigin().x()
+                 << worldTransform.getOrigin().y()
+                 << worldTransform.getOrigin().z();
+        const Vector3 &v = m_boneRef->worldTransform().getOrigin();
+        qDebug() << v.x()
+                 << v.y()
+                 << v.z();
+        m_worldTransform = worldTransform;
+    }
+    void resetWorldTransform(const Transform &value) {
+        qDebug("resetWorldTransform: %s", m_boneRef->name() ? m_boneRef->name()->toByteArray() : 0);
+        qDebug() << value.getOrigin().x()
+                 << value.getOrigin().y()
+                 << value.getOrigin().z();
+        m_startTransform = m_worldTransform = value;
+    }
 
-    protected:
-        const IBone *m_boneRef;
-        Transform m_startTransform;
-        Transform m_worldTransform;
-    };
+protected:
+    const IBone *m_boneRef;
+    Transform m_startTransform;
+    Transform m_worldTransform;
+};
 
-    class AlignedMotionState : public DefaultMotionState
+class AlignedMotionState : public DefaultMotionState
+{
+public:
+    AlignedMotionState(const Transform &startTransform, const IBone *bone)
+        : DefaultMotionState(startTransform, bone)
     {
-    public:
-        AlignedMotionState(const Transform &startTransform, const IBone *bone)
-            : DefaultMotionState(startTransform, bone)
-        {
-        }
-        ~AlignedMotionState() {}
+    }
+    ~AlignedMotionState() {}
 
-        void getWorldTransform(btTransform &worldTrans) const {
-            worldTrans = m_worldTransform;
-        }
-        void setWorldTransform(const btTransform &worldTrans) {
-            m_worldTransform = worldTrans;
-            const Matrix3x3 &rotation = worldTrans.getBasis();
-            m_worldTransform.setOrigin(kZeroV3);
-            m_worldTransform = m_startTransform * m_worldTransform;
-            m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_boneRef->localTransform().getOrigin());
-            m_worldTransform.setBasis(rotation);
-        }
-    };
+    void getWorldTransform(btTransform &worldTransform) const {
+        qDebug("AlignedMotionState#getWorldTransform: %s", m_boneRef->name() ? m_boneRef->name()->toByteArray() : 0);
+        qDebug() << m_worldTransform.getOrigin().x()
+                 << m_worldTransform.getOrigin().y()
+                 << m_worldTransform.getOrigin().z();
+        worldTransform = m_worldTransform;
+    }
+    void setWorldTransform(const btTransform &worldTransform) {
+        qDebug("AlignedMotionState#setWorldTransform: %s", m_boneRef->name() ? m_boneRef->name()->toByteArray() : 0);
+        qDebug() << worldTransform.getOrigin().x()
+                 << worldTransform.getOrigin().y()
+                 << worldTransform.getOrigin().z();
+        m_worldTransform = worldTransform;
+        m_worldTransform.setOrigin(m_boneRef->worldTransform().getOrigin());
+    }
+};
 
-    class KinematicMotionState : public DefaultMotionState
+class KinematicMotionState : public DefaultMotionState
+{
+public:
+    KinematicMotionState(const Transform &startTransform, const IBone *bone)
+        : DefaultMotionState(startTransform, bone)
     {
-    public:
-        KinematicMotionState(const Transform &startTransform, const IBone *bone)
-            : DefaultMotionState(startTransform, bone)
-        {
-        }
-        ~KinematicMotionState() {}
+    }
+    ~KinematicMotionState() {}
 
-        void getWorldTransform(btTransform &worldTrans) const {
-            // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
-            // (Bone#localTransform will be identity)
-            Transform output;
-            m_boneRef->getLocalTransform(output);
-            worldTrans = output * m_startTransform;
-        }
-        void setWorldTransform(const btTransform & /* worldTrans */) {
-        }
-    };
+    void getWorldTransform(btTransform &worldTransform) const {
+        // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
+        // (Bone#localTransform will be identity)
+        Transform output;
+        m_boneRef->getLocalTransform(output);
+        worldTransform = output * m_startTransform;
+    }
+    void setWorldTransform(const btTransform & /* worldTransform */) {
+    }
+};
 #endif /* VPVL2_NO_BULLET */
 
 }
@@ -141,7 +164,7 @@ RigidBody::RigidBody()
       m_boneRef(0),
       m_name(0),
       m_englishName(0),
-      m_boneIndex(0),
+      m_boneIndex(-1),
       m_size(kZeroV3),
       m_position(kZeroV3),
       m_rotation(kZeroV3),
@@ -176,7 +199,7 @@ RigidBody::~RigidBody()
     delete m_englishName;
     m_englishName = 0;
     m_boneRef = 0;
-    m_boneIndex = 0;
+    m_boneIndex = -1;
     m_worldTransform.setIdentity();
     m_world2LocalTransform.setIdentity();
     m_size.setZero();
@@ -198,10 +221,20 @@ RigidBody::~RigidBody()
 void RigidBody::performTransformBone()
 {
 #ifndef VPVL2_NO_BULLET
-    if (m_type == kStaticObject || !m_boneRef)
+    if (m_type == kStaticObject || !m_boneRef || m_boneRef == NullBone::sharedReference())
         return;
     const Transform &worldTransform = m_body->getCenterOfMassTransform();
     const Transform &localTransform = worldTransform * m_world2LocalTransform;
+    qDebug("%s", m_name->toByteArray());
+    qDebug() << localTransform.getOrigin().x()
+             << localTransform.getOrigin().y()
+             << localTransform.getOrigin().z();
+    qDebug() << m_world2LocalTransform.getOrigin().x()
+             << m_world2LocalTransform.getOrigin().y()
+             << m_world2LocalTransform.getOrigin().z();
+    qDebug() << worldTransform.getOrigin().x()
+             << worldTransform.getOrigin().y()
+             << worldTransform.getOrigin().z();
     m_boneRef->setLocalTransform(localTransform);
 #endif /* VPVL2_NO_BULLET */
 }
@@ -216,11 +249,11 @@ void RigidBody::setKinematic(bool value)
         m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     }
     else {
-        Transform worldTransform;
-        m_kinematicMotionState->getWorldTransform(worldTransform);
+        Transform transform;
+        m_kinematicMotionState->getWorldTransform(transform);
         DefaultMotionState *motionState = static_cast<DefaultMotionState *>(m_motionState);
-        motionState->resetWorldTransform(worldTransform);
-        m_body->setMotionState(m_motionState);
+        motionState->resetWorldTransform(transform);
+        m_body->setMotionState(motionState);
         m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
     }
 #else  /* VPVL2_NO_BULLET */
@@ -228,7 +261,7 @@ void RigidBody::setKinematic(bool value)
 #endif /* VPVL2_NO_BULLET */
 }
 
-const Transform RigidBody::createStartTransform() const
+const Transform RigidBody::createTransform() const
 {
     Matrix3x3 basis;
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -236,11 +269,16 @@ const Transform RigidBody::createStartTransform() const
     mx.setEulerZYX(-m_rotation[0], 0.0f, 0.0f);
     my.setEulerZYX(0.0f, -m_rotation[1], 0.0f);
     mz.setEulerZYX(0.0f, 0.0f, m_rotation[2]);
-    basis = mz * my * mx;// my * mz * mx;
+    basis = my * mz * mx;
 #else  /* VPVL2_COORDINATE_OPENGL */
     basis.setEulerZYX(m_rotation[0], m_rotation[1], m_rotation[2]);
 #endif /* VPVL2_COORDINATE_OPENGL */
     return Transform(basis, m_position);
+}
+
+const Transform RigidBody::createStartTransform(const Transform &transform) const
+{
+    return transform;
 }
 
 btCollisionShape *RigidBody::createShape() const
@@ -252,23 +290,24 @@ btCollisionShape *RigidBody::createShape() const
         return new btBoxShape(m_size);
     case kCapsureShape:
         return new btCapsuleShape(m_size.x(), m_size.y());
+    case kUnknownShape:
     default:
         return 0;
     }
-    return 0;
 }
 
 btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
 {
-    Vector3 localInertia = kZeroV3;
-    Scalar massValue = 0.0f;
+    Vector3 localInertia(kZeroV3);
+    Scalar massValue(0);
     if (m_type != kStaticObject) {
         massValue = m_mass;
-        if (shape && massValue != 0.0f)
+        if (shape && !btFuzzyZero(massValue))
             shape->calculateLocalInertia(massValue, localInertia);
     }
-    m_worldTransform = createStartTransform();
+    m_worldTransform = createTransform();
     m_world2LocalTransform = m_worldTransform.inverse();
+    Transform startTransform(createStartTransform(m_worldTransform));
     switch (m_type) {
     default:
     case kStaticObject:
@@ -276,11 +315,11 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
         m_kinematicMotionState = 0;
         break;
     case kDynamicObject:
-        m_motionState = new DefaultMotionState(m_worldTransform, m_boneRef);
+        m_motionState = new DefaultMotionState(startTransform, m_boneRef);
         m_kinematicMotionState = new KinematicMotionState(m_worldTransform, m_boneRef);
         break;
     case kAlignedObject:
-        m_motionState = new AlignedMotionState(m_worldTransform, m_boneRef);
+        m_motionState = new AlignedMotionState(startTransform, m_boneRef);
         m_kinematicMotionState = new KinematicMotionState(m_worldTransform, m_boneRef);
         break;
     }
@@ -290,11 +329,16 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
     info.m_restitution = m_restitution;
     info.m_friction = m_friction;
     info.m_additionalDamping = true;
+    /*
+    if (m_type == kDynamicObject) {
+        qWarning("%s", m_name->toByteArray());
+    }
+    */
     btRigidBody *body = m_ptr = new btRigidBody(info);
-    if (m_type == kStaticObject)
-        body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     body->setActivationState(DISABLE_DEACTIVATION);
     body->setUserPointer(this);
+    if (m_type == kStaticObject)
+        body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     return body;
 }
 
@@ -379,15 +423,16 @@ void RigidBody::setIndex(int value)
     m_index = value;
 }
 
-void RigidBody::build(IBone *bone, btCollisionShape *shape, int index)
+void RigidBody::build(IBone *bone, int index)
 {
-    m_shape = shape;
     m_boneRef = bone;
-    m_body = createRigidBody(shape);
+    m_shape = createShape();
+    m_body = createRigidBody(m_shape);
     m_ptr = 0;
     m_index = index;
+    if (m_type != kStaticObject)
+        bone->setInverseKinematicsEnable(false);
 }
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
-
