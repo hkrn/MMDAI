@@ -69,6 +69,9 @@
 #include "widgets/TabWidget.h"
 #include "widgets/TimelineTabWidget.h"
 
+#include "video/IAudioDecoder.h"
+#include "video/IVideoEncoder.h"
+
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CString.h>
@@ -1602,16 +1605,16 @@ void MainWindow::invokeVideoEncoder()
         int height = m_exportingVideoDialog->sceneHeight();
         /* 終了するまで待つ */
         if (m_audioDecoder && !m_audioDecoder->isFinished()) {
-            m_audioDecoder->stop();
-            m_audioDecoder->wait();
+            m_audioDecoder->stopSession();
+            m_audioDecoder->waitUntilComplete();
         }
         if (m_videoEncoder && !m_videoEncoder->isFinished()) {
-            m_videoEncoder->stop();
-            m_videoEncoder->wait();
+            m_videoEncoder->stopSession();
+            m_videoEncoder->waitUntilComplete();
         }
         int sceneFPS = m_exportingVideoDialog->sceneFPS();
         m_audioDecoder.reset(new AudioDecoder());
-        m_audioDecoder->setFilename(m_sceneWidget->sceneLoaderRef()->backgroundAudio());
+        m_audioDecoder->setFileName(m_sceneWidget->sceneLoaderRef()->backgroundAudio());
         bool canOpenAudio = m_audioDecoder->canOpen();
         int sampleRate = 0, bitRate = 0;
         if (canOpenAudio) {
@@ -1619,16 +1622,14 @@ void MainWindow::invokeVideoEncoder()
             bitRate = 64000;
         }
         const QSize videoSize(width, height);
-        m_videoEncoder.reset(
-                    new VideoEncoder(filename,
-                                     videoSize,
-                                     sceneFPS,
-                                     m_exportingVideoDialog->videoBitrate(),
-                                     bitRate,
-                                     sampleRate)
-                    );
-        connect(m_audioDecoder.data(), SIGNAL(audioDidDecode(QByteArray)), m_videoEncoder.data(), SLOT(enqueueAudioBuffer(QByteArray)));
-        connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder.data(), SLOT(enqueueImage(QImage)));
+        m_videoEncoder.reset(new VideoEncoder(this));
+        m_videoEncoder->setFileName(filename);
+        m_videoEncoder->setSceneFPS(sceneFPS);
+        m_videoEncoder->setSceneSize(videoSize);
+        connect(static_cast<AudioDecoder *>(m_audioDecoder.data()), SIGNAL(audioDidDecode(QByteArray)),
+                static_cast<VideoEncoder *>(m_videoEncoder.data()), SLOT(audioSamplesDidQueue(QByteArray)));
+        connect(this, SIGNAL(sceneDidRendered(QImage)),
+                static_cast<VideoEncoder *>(m_videoEncoder.data()), SLOT(videoFrameDidQueue(QImage)));
         m_sceneWidget->setPreferredFPS(sceneFPS);
         const QString &exportingFormat = tr("Exporting frame %1 of %2...");
         int maxRangeIndex = toIndex - fromIndex;
@@ -1640,9 +1641,9 @@ void MainWindow::invokeVideoEncoder()
         m_sceneWidget->advanceMotion(fromIndex);
         progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
         /* 指定のキーフレームまで動画にフレームの書き出しを行う */
-        m_videoEncoder->start();
+        m_videoEncoder->startSession();
         if (canOpenAudio)
-            m_audioDecoder->start();
+            m_audioDecoder->startSession();
         const IKeyframe::TimeIndex &advanceSecond = 1.0f / (sceneFPS / Scene::defaultFPS());
         IKeyframe::TimeIndex totalAdvanced = 0.0f;
         /* 全てのモーションが終了するまでエンコード処理 */
@@ -1677,7 +1678,7 @@ void MainWindow::invokeVideoEncoder()
         emit sceneDidRendered(QImage());
         /* エンコードが完了するまで待機 */
         const QString &encodingFormat = tr("Encoding remain frame %1 of %2...");
-        int remain = m_videoEncoder->sizeOfVideoQueue();
+        int remain = m_videoEncoder->sizeofVideoFrameQueue();
         progress->setValue(0);
         progress->setMaximum(remain);
         progress->setLabelText(encodingFormat.arg(0).arg(remain));
@@ -1686,13 +1687,13 @@ void MainWindow::invokeVideoEncoder()
         while (remain > size) {
             if (progress->wasCanceled())
                 break;
-            size = remain - m_videoEncoder->sizeOfVideoQueue();
+            size = remain - m_videoEncoder->sizeofVideoFrameQueue();
             progress->setValue(size);
             progress->setLabelText(encodingFormat.arg(size).arg(remain));
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
-        m_audioDecoder->stop();
-        m_videoEncoder->stop();
+        m_audioDecoder->stopSession();
+        m_videoEncoder->stopSession();
         restoreWindowState(state);
     }
 }

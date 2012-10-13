@@ -39,21 +39,22 @@
 namespace vpvm
 {
 
-double ComputePresentTimeStamp(AVStream *stream)
+double ComputePresentTimeStamp(const AVStream *stream)
 {
     return stream ? static_cast<double>(stream->pts.val) * stream->time_base.num / stream->time_base.den : 0.0;
 }
 
 void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, AVPacket &packet)
 {
-    if (codedFrame && codedFrame->pts != AV_NOPTS_VALUE)
+    if (codedFrame && codedFrame->pts != int64_t(AV_NOPTS_VALUE))
         packet.pts = av_rescale_q(codedFrame->pts, stream->codec->time_base, stream->time_base);
 }
 
 void OpenAVCodec(AVCodecContext *context, AVCodec *codec)
 {
-    if (!context || !codec || avcodec_open2(context, codec, 0) < 0)
-        throw std::bad_exception();
+    if (context && codec) {
+        avcodec_open2(context, codec, 0);
+    }
 }
 
 void OpenEncodingCodec(AVCodecContext *codecContext)
@@ -73,16 +74,18 @@ AVStream *OpenAudioStream(AVFormatContext *formatContext,
                           int sampleRate)
 {
     AVStream *stream = avformat_new_stream(formatContext, 0);
-    AVCodecContext *codec = stream->codec;
-    codec->codec_id = codecID;
-    codec->codec_type = AVMEDIA_TYPE_AUDIO;
-    codec->sample_fmt = AV_SAMPLE_FMT_S16;
-    codec->bit_rate = bitrate;
-    codec->sample_rate = sampleRate;
-    codec->channels = 2;
-    if (outputFormat->flags & AVFMT_GLOBALHEADER)
-        codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
-    OpenEncodingCodec(codec);
+    if (stream) {
+        AVCodecContext *codec = stream->codec;
+        codec->codec_id = codecID;
+        codec->codec_type = AVMEDIA_TYPE_AUDIO;
+        codec->sample_fmt = AV_SAMPLE_FMT_S16;
+        codec->bit_rate = bitrate;
+        codec->sample_rate = sampleRate;
+        codec->channels = 2;
+        if (outputFormat->flags & AVFMT_GLOBALHEADER)
+            codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
+        OpenEncodingCodec(codec);
+    }
     return stream;
 }
 
@@ -92,16 +95,16 @@ void WriteAudioFrame(AVFormatContext *formatContext,
                      uint8_t *encodedFrameBuffer,
                      size_t encodedFrameBufferSize)
 {
-    if (!samples)
-        return;
-    AVPacket packet;
-    av_init_packet(&packet);
-    packet.size = avcodec_encode_audio(stream->codec, encodedFrameBuffer, encodedFrameBufferSize, samples);
-    RescalePresentTimeStamp(stream->codec->coded_frame, stream, packet);
-    packet.flags |= AV_PKT_FLAG_KEY;
-    packet.stream_index = stream->index;
-    packet.data = encodedFrameBuffer;
-    av_interleaved_write_frame(formatContext, &packet);
+    if (formatContext && stream && samples && encodedFrameBuffer) {
+        AVPacket packet;
+        av_init_packet(&packet);
+        packet.size = avcodec_encode_audio(stream->codec, encodedFrameBuffer, encodedFrameBufferSize, samples);
+        RescalePresentTimeStamp(stream->codec->coded_frame, stream, packet);
+        packet.flags |= AV_PKT_FLAG_KEY;
+        packet.stream_index = stream->index;
+        packet.data = encodedFrameBuffer;
+        av_interleaved_write_frame(formatContext, &packet);
+    }
 }
 
 AVStream *OpenVideoStream(AVFormatContext *formatContext,
@@ -112,22 +115,23 @@ AVStream *OpenVideoStream(AVFormatContext *formatContext,
                           int bitrate,
                           int fps)
 {
-    //AVStream *stream = av_new_stream(formatContext, 0);
     AVStream *stream = avformat_new_stream(formatContext, 0);
-    AVCodecContext *codec = stream->codec;
-    codec->codec_id = codecID;
-    codec->me_method = 1;
-    codec->codec_type = AVMEDIA_TYPE_VIDEO;
-    codec->bit_rate = bitrate;
-    codec->width = size.width();
-    codec->height = size.height();
-    codec->time_base.den = fps;
-    codec->time_base.num = 1;
-    codec->gop_size = 12;
-    codec->pix_fmt = pixelFormat;
-    if (outputFormat->flags & AVFMT_GLOBALHEADER)
-        codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
-    OpenEncodingCodec(codec);
+    if (stream) {
+        AVCodecContext *codec = stream->codec;
+        codec->codec_id = codecID;
+        codec->me_method = 1;
+        codec->codec_type = AVMEDIA_TYPE_VIDEO;
+        codec->bit_rate = bitrate;
+        codec->width = size.width();
+        codec->height = size.height();
+        codec->time_base.den = fps;
+        codec->time_base.num = 1;
+        codec->gop_size = 12;
+        codec->pix_fmt = pixelFormat;
+        if (outputFormat->flags & AVFMT_GLOBALHEADER)
+            codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
+        OpenEncodingCodec(codec);
+    }
     return stream;
 }
 
@@ -137,26 +141,28 @@ void WriteVideoFrame(AVFormatContext *formatContext,
                      uint8_t *encodedFrameBuffer,
                      size_t encodedFrameBufferSize)
 {
-    AVPacket packet;
-    av_init_packet(&packet);
-    if (formatContext->oformat->flags & AVFMT_RAWPICTURE) {
-        packet.flags |= AV_PKT_FLAG_KEY;
-        packet.stream_index = stream->index;
-        packet.data = reinterpret_cast<uint8_t *>(frame);
-        packet.size = sizeof(AVPicture);
-        av_interleaved_write_frame(formatContext, &packet);
-    }
-    else {
-        int outputSize = avcodec_encode_video(stream->codec, encodedFrameBuffer, encodedFrameBufferSize, frame);
-        if (outputSize > 0) {
-            AVFrame *codedFrame = stream->codec->coded_frame;
-            RescalePresentTimeStamp(codedFrame, stream, packet);
-            if (codedFrame->key_frame)
-                packet.flags |= AV_PKT_FLAG_KEY;
+    if (formatContext && stream && frame && encodedFrameBuffer) {
+        AVPacket packet;
+        av_init_packet(&packet);
+        if (formatContext->oformat->flags & AVFMT_RAWPICTURE) {
+            packet.flags |= AV_PKT_FLAG_KEY;
             packet.stream_index = stream->index;
-            packet.data = encodedFrameBuffer;
-            packet.size = outputSize;
+            packet.data = reinterpret_cast<uint8_t *>(frame);
+            packet.size = sizeof(AVPicture);
             av_interleaved_write_frame(formatContext, &packet);
+        }
+        else {
+            int outputSize = avcodec_encode_video(stream->codec, encodedFrameBuffer, encodedFrameBufferSize, frame);
+            if (outputSize > 0) {
+                AVFrame *codedFrame = stream->codec->coded_frame;
+                RescalePresentTimeStamp(codedFrame, stream, packet);
+                if (codedFrame->key_frame)
+                    packet.flags |= AV_PKT_FLAG_KEY;
+                packet.stream_index = stream->index;
+                packet.data = encodedFrameBuffer;
+                packet.size = outputSize;
+                av_interleaved_write_frame(formatContext, &packet);
+            }
         }
     }
 }
@@ -164,37 +170,38 @@ void WriteVideoFrame(AVFormatContext *formatContext,
 AVOutputFormat *CreateVideoFormat(const QString &filename)
 {
     AVOutputFormat *videoFormat = av_guess_format(0, filename.toLocal8Bit().constData(), 0);
-    if (!videoFormat)
+    if (!videoFormat) {
         videoFormat = av_guess_format("mpeg", 0, 0);
+    }
     return videoFormat;
 }
 
 AVFormatContext *CreateVideoFormatContext(AVOutputFormat *videoFormat, const QString &filename)
 {
     AVFormatContext *videoFormatContext = avformat_alloc_context();
-    if (!videoFormatContext)
-        throw std::bad_alloc();
-    videoFormatContext->oformat = videoFormat;
-    snprintf(videoFormatContext->filename,
-             sizeof(videoFormatContext->filename),
-             "%s",
-             filename.toLocal8Bit().constData());
+    if (videoFormatContext) {
+        videoFormatContext->oformat = videoFormat;
+        qsnprintf(videoFormatContext->filename,
+                  sizeof(videoFormatContext->filename),
+                  "%s",
+                  filename.toLocal8Bit().constData());
+    }
     return videoFormatContext;
 }
 
 AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format)
 {
     AVFrame *frame = avcodec_alloc_frame();
-    int width = size.width(), height = size.height();
-    if (!frame)
-        throw std::bad_alloc();
-    int willAllocate = avpicture_get_size(format, width, height);
-    uint8_t *buffer = static_cast<uint8_t *>(av_malloc(willAllocate));
-    if (!buffer) {
-        av_free(frame);
-        throw std::bad_alloc();
+    if (frame) {
+        int width = size.width(), height = size.height();
+        int willAllocate = avpicture_get_size(format, width, height);
+        uint8_t *buffer = static_cast<uint8_t *>(av_malloc(willAllocate));
+        if (!buffer) {
+            av_free(frame);
+            return 0;
+        }
+        avpicture_fill(reinterpret_cast<AVPicture *>(frame), buffer, format, width, height);
     }
-    avpicture_fill(reinterpret_cast<AVPicture *>(frame), buffer, format, width, height);
     return frame;
 }
 
@@ -202,11 +209,11 @@ AVFormatContext *OpenInputFormat(const QString &filename, const char *shortname)
 {
     AVFormatContext *formatContext = 0;
     AVInputFormat *inputFormat = av_find_input_format(shortname);
-    if (!inputFormat)
-        throw std::bad_exception();
-    if (avformat_open_input(&formatContext, filename.toLocal8Bit().constData(), inputFormat, 0) < 0)
-        throw std::bad_exception();
-    return formatContext;
+    const char *fn = filename.toLocal8Bit().constData();
+    if (inputFormat && avformat_open_input(&formatContext, fn, inputFormat, 0) == 0) {
+        return formatContext;
+    }
+    return 0;
 }
 
 } /* namespace vpvm */

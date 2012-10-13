@@ -55,7 +55,7 @@ extern "C" {
 namespace vpvm
 {
 
-double ComputePresentTimeStamp(AVStream *stream);
+double ComputePresentTimeStamp(const AVStream *stream);
 
 void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, AVPacket &packet);
 

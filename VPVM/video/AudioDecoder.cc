@@ -101,14 +101,25 @@ bool AudioDecoder::canOpen() const
     return ret;
 }
 
-void AudioDecoder::setFilename(const QString &filename)
+void AudioDecoder::setFileName(const QString &filename)
 {
     m_filename = filename;
 }
 
-void AudioDecoder::stop()
+void AudioDecoder::startSession()
+{
+    start();
+}
+
+void AudioDecoder::stopSession()
 {
     m_running = false;
+}
+
+void AudioDecoder::waitUntilComplete()
+{
+    stopSession();
+    wait();
 }
 
 void AudioDecoder::run()

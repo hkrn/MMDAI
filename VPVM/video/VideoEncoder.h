@@ -39,11 +39,12 @@
 
 #include <QtCore/QtCore>
 #include <QtGui/QImage>
+#include "IVideoEncoder.h"
 
 namespace vpvm
 {
 
-class VideoEncoder : public QThread
+class VideoEncoder : public QThread, public IVideoEncoder
 {
     Q_OBJECT
 
@@ -51,31 +52,30 @@ public:
     static bool isSupported();
     static void initialize();
 
-    explicit VideoEncoder(const QString &filename,
-                          const QSize &size,
-                          int fps,
-                          int videoBitrate,
-                          int audioBitrate,
-                          int audioSampleRate,
-                          QObject *parent = 0);
+    explicit VideoEncoder(QObject *parent);
     ~VideoEncoder();
 
-    int sizeOfVideoQueue() const;
-    int sizeOfAudioBuffer() const;
-
-public slots:
-    void stop();
+    void startSession();
+    void stopSession();
+    void waitUntilComplete();
+    void setFileName(const QString &value);
+    void setSceneSize(const QSize &value);
+    void setSceneFPS(int value);
+    bool isRunning() const { return m_running; }
+    bool isFinished() const { return !m_running; }
+    int sizeofVideoFrameQueue() const;
+    int sizeOfAudioSampleQueue() const;
 
 protected:
     virtual void run();
 
 private slots:
-    void enqueueImage(const QImage &image);
-    void enqueueAudioBuffer(const QByteArray &bytes);
+    void videoFrameDidQueue(const QImage &image);
+    void audioSamplesDidQueue(const QByteArray &bytes);
 
 private:
-    void dequeueImage(QImage &image);
-    void dequeueAudioBuffer(QByteArray &bytes, int size);
+    void dequeueVideoFrame(QImage &image);
+    void dequeueAudioSamples(QByteArray &bytes, int size);
 
     mutable QMutex m_videoQueueMutex;
     mutable QMutex m_audioBufferMutex;

@@ -108,12 +108,12 @@ void ScenePlayer::start()
     m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
     float renderTimerInterval = 1000.0 / sceneFPS;
     /* 音声出力準備 */
-    m_player->setFilename(m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio());
+    m_player->setFileName(m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio());
     if (m_player->initalize()) {
         connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameVariant()));
         connect(m_player.data(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
         connect(m_player.data(), SIGNAL(positionDidAdvance(float)), SLOT(advanceAudioFrame(float)));
-        m_player->start();
+        m_player->startSession();
     }
     else {
         connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameFixed()));
@@ -134,7 +134,7 @@ void ScenePlayer::stop()
     disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameFixed()));
     disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameVariant()));
     /* タイマーと音声出力オブジェクトの停止 */
-    m_player->stop();
+    m_player->stopSession();
     m_renderTimer.stop();
     m_progress->reset();
     /* ハンドルと情報パネルを復帰させる */

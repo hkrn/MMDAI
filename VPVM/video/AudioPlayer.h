@@ -53,7 +53,7 @@ public:
     ~AudioPlayer();
 
     bool initalize();
-    void stop();
+    void stopSession();
 
 protected:
     void run();

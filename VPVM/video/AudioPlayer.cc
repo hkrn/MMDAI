@@ -48,7 +48,7 @@ AudioPlayer::AudioPlayer()
 
 AudioPlayer::~AudioPlayer()
 {
-    AudioDecoder::stop();
+    AudioDecoder::stopSession();
     if (m_stream) {
         Pa_CloseStream(m_stream);
         m_stream = 0;
@@ -83,9 +83,9 @@ bool AudioPlayer::initalize()
     return false;
 }
 
-void AudioPlayer::stop()
+void AudioPlayer::stopSession()
 {
-    AudioDecoder::stop();
+    AudioDecoder::stopSession();
     if (m_stream)
         Pa_StopStream(m_stream);
 }

@@ -82,7 +82,9 @@ class SceneWidget;
 class ScenePlayer;
 class TabWidget;
 class TimelineTabWidget;
-class VideoEncoder;
+
+class IAudioDecoder;
+class IVideoEncoder;
 
 class MainWindow : public QMainWindow
 {
@@ -184,8 +186,8 @@ private:
     QScopedPointer<ExportVideoDialog> m_exportingVideoDialog;
     QScopedPointer<PlaySettingDialog> m_playSettingDialog;
     QScopedPointer<BoneUIDelegate> m_boneUIDelegate;
-    QScopedPointer<AudioDecoder> m_audioDecoder;
-    QScopedPointer<VideoEncoder> m_videoEncoder;
+    QScopedPointer<IAudioDecoder> m_audioDecoder;
+    QScopedPointer<IVideoEncoder> m_videoEncoder;
     QScopedPointer<ScenePlayer> m_player;
     QScopedPointer<QDockWidget> m_timelineDockWidget;
     QScopedPointer<QDockWidget> m_sceneDockWidget;

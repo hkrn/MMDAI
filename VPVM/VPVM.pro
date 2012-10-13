@@ -249,6 +249,8 @@ HEADERS  += \
     video/AudioDecoder.h \
     video/AVCommon.h \
     video/AudioPlayer.h \
+    video/IAudioDecoder.h \
+    video/IVideoEncoder.h \
     dialogs/RenderOrderDialog.h \
     widgets/SceneLightWidget.h \
     widgets/ModelSettingWidget.h \
