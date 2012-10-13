@@ -164,7 +164,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
         texture->split(separator, 2, tokens);
         delete texture;
         IString *mainTexture = tokens[0];
-        if (mainTexture->contains(sph)) {
+        if (mainTexture->endsWith(sph)) {
             m_sphereTexture = mainTexture;
             m_sphereTextureRenderMode = kMultTexture;
         }
@@ -173,17 +173,17 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
         }
         if (tokens.count() == 2) {
             IString *subTexture = tokens[1];
-            if (subTexture->contains(sph)) {
+            if (subTexture->endsWith(sph)) {
                 m_sphereTexture = subTexture;
                 m_sphereTextureRenderMode = kMultTexture;
             }
-            else if (subTexture->contains(spa)) {
+            else if (subTexture->endsWith(spa)) {
                 m_sphereTexture = subTexture;
                 m_sphereTextureRenderMode = kAddTexture;
             }
         }
     }
-    else if (texture->contains(sph)) {
+    else if (texture->endsWith(sph)) {
         m_sphereTexture = texture;
         m_sphereTextureRenderMode = kMultTexture;
     }

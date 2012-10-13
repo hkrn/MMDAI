@@ -75,7 +75,7 @@ void CString::split(const IString *separator, int maxTokens, Array<IString *> &t
     if (maxTokens > 1) {
         const QStringList &words = m_value.split(sep);
         int nwords = words.size();
-        int mwords = qMin(nwords, maxTokens - 1), i = 0;
+        int mwords = qMin(nwords, maxTokens), i = 0;
         for (i = 0; i < mwords; i++) {
             const QString &word = words[i];
             tokens.add(new CString(word));
