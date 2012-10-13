@@ -39,6 +39,7 @@
 
 #include <QtCore/QTextStream>
 #include <QtCore/QUuid>
+#include <QtGui/QStringListModel>
 #include <QtGui/QWidget>
 
 namespace vpvl2 {
@@ -117,6 +118,7 @@ private:
     QScopedPointer<QDoubleSpinBox> m_rz;
     QScopedPointer<QDoubleSpinBox> m_scale;
     QScopedPointer<QDoubleSpinBox> m_opacity;
+    QScopedPointer<QStringListModel> m_assetCompleterModel;
     QScopedPointer<QLabel> m_scaleLabel;
     QScopedPointer<QLabel> m_opacityLabel;
     QList<IModel *> m_assets;

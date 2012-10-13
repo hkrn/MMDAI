@@ -66,6 +66,7 @@ AssetWidget::AssetWidget(QWidget *parent)
       m_rz(new QDoubleSpinBox()),
       m_scale(new QDoubleSpinBox()),
       m_opacity(new QDoubleSpinBox()),
+      m_assetCompleterModel(new QStringListModel()),
       m_scaleLabel(new QLabel()),
       m_opacityLabel(new QLabel()),
       m_currentAssetRef(0),
@@ -74,6 +75,11 @@ AssetWidget::AssetWidget(QWidget *parent)
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
     /* アクセサリ選択 */
+    QScopedPointer<QCompleter> completer(new QCompleter());
+    QScopedPointer<QLineEdit> lineEdit(new QLineEdit());
+    completer->setModel(m_assetCompleterModel.data());
+    lineEdit->setCompleter(completer.take());
+    m_assetComboBox->setLineEdit(lineEdit.take());
     connect(m_assetComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentAsset(int)));
     subLayout->addWidget(m_assetComboBox.data(), 1);
     /* アクセサリ削除 */
@@ -162,9 +168,11 @@ void AssetWidget::retranslate()
 void AssetWidget::addAsset(IModel *asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
+    const QString &name = toQStringFromModel(asset);
     m_assets.append(asset);
-    m_assetComboBox->addItem(toQStringFromModel(asset));
+    m_assetComboBox->addItem(name);
     m_assetComboBox->setCurrentIndex(m_assetComboBox->count() - 1);
+    m_assetCompleterModel->setStringList(m_assetCompleterModel->stringList() << name);
     changeCurrentAsset(asset);
     setEnable(true);
 }
@@ -177,6 +185,9 @@ void AssetWidget::removeAsset(IModel *asset)
         IModel *asset = m_assets[index];
         m_assets.removeAt(index);
         m_assetComboBox->removeItem(index);
+        QStringList assetNames = m_assetCompleterModel->stringList();
+        assetNames.removeAt(index);
+        m_assetCompleterModel->setStringList(assetNames);
         if (m_assets.count() == 0)
             setEnable(false);
         emit assetDidRemove(asset);
