@@ -1113,7 +1113,7 @@ void Delegate::setTextureID(const TextureCache &cache, bool isToon, Texture &out
 {
     output.width = cache.width;
     output.height = cache.height;
-    *const_cast<GLuint *>(static_cast<const GLuint *>(output.object)) = cache.id;
+    *static_cast<GLuint *>(output.object) = cache.id;
     if (!isToon) {
         GLuint textureID = *static_cast<const GLuint *>(output.object);
         glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

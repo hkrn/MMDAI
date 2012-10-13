@@ -139,13 +139,13 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     IRenderDelegate::Texture texture;
-    GLuint textureID = 0;
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
-    texture.object = &textureID;
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
+        GLuint textureID = 0;
+        texture.object = &textureID;
         path = material->mainTexture();
         if (path && m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
             materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
