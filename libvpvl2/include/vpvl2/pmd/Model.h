@@ -118,7 +118,7 @@ public:
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void resetVertices();
-    void resetMotionState() {}
+    void resetMotionState();
     void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);

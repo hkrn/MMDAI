@@ -53,6 +53,7 @@ namespace common
 
 Joint::Joint()
     : m_constraint(0),
+      m_ptr(0),
       m_rigidBody1Ref(0),
       m_rigidBody2Ref(0),
       m_name(0),
@@ -75,6 +76,8 @@ Joint::~Joint()
 {
     delete m_constraint;
     m_constraint = 0;
+    delete m_ptr;
+    m_ptr = 0;
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -161,7 +164,7 @@ void Joint::setIndex(int value)
     m_index = value;
 }
 
-btGeneric6DofSpringConstraint *Joint::createConstraint() const
+btGeneric6DofSpringConstraint *Joint::createConstraint()
 {
 #ifndef VPVL2_NO_BULLET
     Transform transform = Transform::getIdentity();
@@ -183,7 +186,7 @@ btGeneric6DofSpringConstraint *Joint::createConstraint() const
     btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
     Transform transformA = bodyA->getWorldTransform().inverse() * transform,
             transformB = bodyB->getWorldTransform().inverse() * transform;
-    btGeneric6DofSpringConstraint *constraint = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
+    btGeneric6DofSpringConstraint *constraint = m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
     const Vector3 &positionLowerLimit = m_positionLowerLimit;
     const Vector3 &positionUpperLimit = m_positionUpperLimit;
     const Vector3 &rotationLowerLimit = m_positionLowerLimit;
@@ -211,6 +214,15 @@ btGeneric6DofSpringConstraint *Joint::createConstraint() const
 #else /* VPVL2_NO_BULLET */
     return 0;
 #endif
+}
+
+void Joint::build(int index)
+{
+    if (m_rigidBody1Ref && m_rigidBody2Ref) {
+        m_constraint = createConstraint();
+        m_ptr = 0;
+    }
+    m_index = index;
 }
 
 } /* namespace pmx */

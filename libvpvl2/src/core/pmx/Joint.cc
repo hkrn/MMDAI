@@ -137,9 +137,7 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
             else
                 joint->m_rigidBody2Ref = rigidBodies[rigidBodyIndex2];
         }
-        if (joint->m_rigidBody1Ref && joint->m_rigidBody2Ref)
-            joint->m_constraint = joint->createConstraint();
-        joint->m_index = i;
+        joint->build(i);
     }
     return true;
 }

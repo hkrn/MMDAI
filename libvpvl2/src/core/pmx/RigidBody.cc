@@ -203,16 +203,12 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
                 Bone *bone = bones[boneIndex];
                 if (rigidBody->m_type != kStaticObject)
                     bone->setSimulated(true);
-                rigidBody->m_shape = shape;
-                rigidBody->m_boneRef = bone;
-                rigidBody->m_body = rigidBody->createRigidBody(shape);
+                rigidBody->build(bone, shape, i);
             }
         }
         else {
-            rigidBody->m_boneRef = &kNullBone;
-            rigidBody->m_body = rigidBody->createRigidBody(0);
+            rigidBody->build(&kNullBone, 0, i);
         }
-        rigidBody->m_index = i;
     }
     return true;
 }

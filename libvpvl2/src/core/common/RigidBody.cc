@@ -132,6 +132,7 @@ namespace common
 
 RigidBody::RigidBody()
     : m_body(0),
+      m_ptr(0),
       m_shape(0),
       m_motionState(0),
       m_kinematicMotionState(0),
@@ -162,6 +163,8 @@ RigidBody::~RigidBody()
 {
     delete m_body;
     m_body = 0;
+    delete m_ptr;
+    m_ptr = 0;
     delete m_shape;
     m_shape = 0;
     delete m_motionState;
@@ -287,10 +290,11 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
     info.m_restitution = m_restitution;
     info.m_friction = m_friction;
     info.m_additionalDamping = true;
-    btRigidBody *body = new btRigidBody(info);
+    btRigidBody *body = m_ptr = new btRigidBody(info);
     if (m_type == kStaticObject)
         body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     body->setActivationState(DISABLE_DEACTIVATION);
+    body->setUserPointer(this);
     return body;
 }
 
@@ -373,6 +377,15 @@ void RigidBody::setType(ObjectType value)
 void RigidBody::setIndex(int value)
 {
     m_index = value;
+}
+
+void RigidBody::build(IBone *bone, btCollisionShape *shape, int index)
+{
+    m_shape = shape;
+    m_boneRef = bone;
+    m_body = createRigidBody(shape);
+    m_ptr = 0;
+    m_index = index;
 }
 
 } /* namespace pmx */

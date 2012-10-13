@@ -85,10 +85,13 @@ public:
     void setPositionStiffness(const Vector3 &value);
     void setRotationStiffness(const Vector3 &value);
     void setIndex(int value);
-    btGeneric6DofSpringConstraint *createConstraint() const;
+    btGeneric6DofSpringConstraint *createConstraint();
 
 protected:
+    void build(int index);
+
     btGeneric6DofSpringConstraint *m_constraint;
+    btGeneric6DofSpringConstraint *m_ptr;
     RigidBody *m_rigidBody1Ref;
     RigidBody *m_rigidBody2Ref;
     IString *m_name;

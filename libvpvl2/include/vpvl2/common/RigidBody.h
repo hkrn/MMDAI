@@ -116,7 +116,10 @@ public:
     void setIndex(int value);
 
 protected:
+    void build(IBone *bone, btCollisionShape *shape, int index);
+
     btRigidBody *m_body;
+    btRigidBody *m_ptr;
     btCollisionShape *m_shape;
     btMotionState *m_motionState;
     btMotionState *m_kinematicMotionState;

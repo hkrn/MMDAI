@@ -663,6 +663,15 @@ void Model::resetVertices()
     }
 }
 
+void Model::resetMotionState()
+{
+    const int nRigidBodies = m_rigidBodies.count();
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = m_rigidBodies[i];
+        rigidBody->setKinematic(false);
+    }
+}
+
 void Model::performUpdate()
 {
     const int nbones = m_sortedBones.count();
