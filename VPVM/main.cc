@@ -126,7 +126,6 @@ int main(int argc, char *argv[])
     xmlInitParser();
 
     vpvm::Application a(argc, argv);
-    QWidget fake;
     QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
     a.setApplicationVersion("0.25.1");
@@ -138,6 +137,7 @@ int main(int argc, char *argv[])
 
     int result = -1;
     if (!vpvl2::isLibraryVersionCorrect(VPVL2_VERSION)) {
+        QWidget fake;
         vpvm::warning(&fake,
                       QApplication::tr("libvpvl2 version mismatch"),
                       QApplication::tr("libvpvl2's version is incorrect (expected: %1 actual: %2).\n"
@@ -165,12 +165,12 @@ int main(int argc, char *argv[])
         w.show();
         result = a.exec();
     } catch (std::exception &e) {
+        QWidget fake;
         vpvm::warning(&fake,
                       QApplication::tr("Exception caught"),
                       QApplication::tr("Exception caught: %1").arg(e.what()));
     }
     vpvm::LoggerWidget::destroyInstance();
-    Pa_Terminate();
     xmlCleanupParser();
     xmlMemoryDump();
 
