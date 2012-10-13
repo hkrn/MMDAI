@@ -484,6 +484,19 @@ public:
 #endif
     }
     virtual ~PrivateContext() {
+        if (materials) {
+            Array<IMaterial *> modelMaterials;
+            modelRef->getMaterialRefs(modelMaterials);
+            const int nmaterials = modelMaterials.count();
+            for (int i = 0; i < nmaterials; i++) {
+                MaterialTextures &materialPrivate = materials[i];
+                glDeleteTextures(1, &materialPrivate.mainTextureID);
+                glDeleteTextures(1, &materialPrivate.sphereTextureID);
+                glDeleteTextures(1, &materialPrivate.toonTextureID);
+            }
+            delete[] materials;
+            materials = 0;
+        }
         glDeleteBuffers(kVertexBufferObjectMax, vertexBufferObjects);
         delete indexBuffer;
         indexBuffer = 0;
@@ -501,22 +514,6 @@ public:
         zplotProgram = 0;
         cullFaceState = false;
         isVertexShaderSkinning = false;
-    }
-
-    void releaseMaterials() {
-        if (materials) {
-            Array<IMaterial *> modelMaterials;
-            modelRef->getMaterialRefs(modelMaterials);
-            const int nmaterials = modelMaterials.count();
-            for (int i = 0; i < nmaterials; i++) {
-                MaterialTextures &materialPrivate = materials[i];
-                glDeleteTextures(1, &materialPrivate.mainTextureID);
-                glDeleteTextures(1, &materialPrivate.sphereTextureID);
-                glDeleteTextures(1, &materialPrivate.toonTextureID);
-            }
-            delete[] materials;
-            materials = 0;
-        }
     }
 
     const IModel *modelRef;
@@ -562,13 +559,8 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
 
 PMXRenderEngine::~PMXRenderEngine()
 {
-    if (m_context) {
-        m_context->releaseMaterials();
-        delete m_context;
-        m_context = 0;
-    }
-    m_aabbMin.setZero();
-    m_aabbMax.setZero();
+    delete m_context;
+    m_context = 0;
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
 #endif
@@ -576,6 +568,8 @@ PMXRenderEngine::~PMXRenderEngine()
     m_sceneRef = 0;
     m_modelRef = 0;
     m_accelerator = 0;
+    m_aabbMin.setZero();
+    m_aabbMax.setZero();
 }
 
 IModel *PMXRenderEngine::model() const
@@ -756,21 +750,21 @@ void PMXRenderEngine::renderModel()
     modelProgram->setUVA1(reinterpret_cast<const GLvoid *>(offset), size);
     float matrix4x4[16];
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kCameraMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kCameraMatrix);
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kCameraMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kLightMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     void *texture = light->depthTexture();
@@ -849,10 +843,10 @@ void PMXRenderEngine::renderShadow()
     shadowProgram->bind();
     float matrix4x4[16];
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kShadowMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     shadowProgram->setLightColor(light->color());
@@ -901,10 +895,10 @@ void PMXRenderEngine::renderEdge()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
     float matrix4x4[16];
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kCameraMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kCameraMatrix);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setOpacity(m_modelRef->opacity());
     Array<IMaterial *> materials;
@@ -969,10 +963,10 @@ void PMXRenderEngine::renderZPlot()
     zplotProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
     float matrix4x4[16];
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                          IRenderDelegate::kWorldMatrix
-                          | IRenderDelegate::kViewMatrix
-                          | IRenderDelegate::kProjectionMatrix
-                          | IRenderDelegate::kLightMatrix);
+                             IRenderDelegate::kWorldMatrix
+                             | IRenderDelegate::kViewMatrix
+                             | IRenderDelegate::kProjectionMatrix
+                             | IRenderDelegate::kLightMatrix);
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
