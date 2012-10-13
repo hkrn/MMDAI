@@ -113,7 +113,7 @@ void ScenePlayer::start()
         m_player->setFileName(backgroundAudio);
         connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameVariant()));
         connect(m_player.data(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
-        connect(m_player.data(), SIGNAL(positionDidAdvance(float)), SLOT(advanceAudioFrame(qreal)));
+        connect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), SLOT(advanceAudioFrame(qreal)));
         m_player->startSession();
     }
     else {
@@ -131,7 +131,7 @@ void ScenePlayer::stop()
 {
     /* 多重登録を防ぐためタイマーと音声出力オブジェクトのシグナルを解除しておく */
     disconnect(m_player.data(), SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
-    disconnect(m_player.data(), SIGNAL(positionDidAdvance(float)), this, SLOT(advanceAudioFrame(qreal)));
+    disconnect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), this, SLOT(advanceAudioFrame(qreal)));
     disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameFixed()));
     disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameVariant()));
     /* タイマーと音声出力オブジェクトの停止 */
