@@ -1,5 +1,12 @@
 #include "Common.h"
+#include "vpvl2/icu/String.h"
+#include "vpvl2/internal/util.h"
 #include <limits>
+
+using namespace ::testing;
+using namespace vpvl2;
+using namespace vpvl2::icu;
+using namespace vpvl2::internal;
 
 TEST(InternalTest, Lerp)
 {

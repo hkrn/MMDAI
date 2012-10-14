@@ -1,11 +1,17 @@
 #include "Common.h"
 #include <vpvl2/cg/EffectEngine.h>
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/icu/Encoding.h"
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
 #include "mock/RenderDelegate.h"
 
+using namespace ::testing;
+using namespace std::tr1;
+using namespace vpvl2;
 using namespace vpvl2::cg;
+using namespace vpvl2::icu;
 
 namespace {
 
@@ -26,7 +32,7 @@ static void AssertParameterVector3(const CGeffect effectPtr, const char *name, c
     const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
     ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
     cgGLGetParameter3f(parameter, v);
-    ASSERT_TRUE(testVector(expected, v));
+    ASSERT_TRUE(CompareVector(expected, v));
 }
 
 static void AssertParameterVector4(const CGeffect effectPtr, const char *name, const Vector4 &expected)
@@ -36,7 +42,7 @@ static void AssertParameterVector4(const CGeffect effectPtr, const char *name, c
     const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
     ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
     cgGLGetParameter4f(parameter, v);
-    ASSERT_TRUE(testVector(expected, v));
+    ASSERT_TRUE(CompareVector(expected, v));
 }
 
 static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, const float *expected)

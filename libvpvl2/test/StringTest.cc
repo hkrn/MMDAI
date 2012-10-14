@@ -1,4 +1,9 @@
 #include "Common.h"
+#include "vpvl2/icu/String.h"
+
+using namespace ::testing;
+using namespace vpvl2;
+using namespace vpvl2::icu;
 
 TEST(String, StartsWith)
 {

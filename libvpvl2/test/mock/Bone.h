@@ -50,6 +50,16 @@ class MockIBone : public IBone {
       const Vector3&());
   MOCK_CONST_METHOD1(getLocalAxes,
       void(Matrix3x3 &value));
+  MOCK_METHOD1(setInverseKinematicsEnable,
+      void(bool value));
+};
+
+}  // namespace vpvl2
+
+namespace vpvl2 {
+
+class MockNullBone : public NullBone {
+ public:
 };
 
 }  // namespace vpvl2

@@ -1,5 +1,7 @@
 #include "Common.h"
 
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/icu/Encoding.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
@@ -15,6 +17,9 @@
 #include "mock/Model.h"
 #include "mock/Morph.h"
 
+using namespace ::testing;
+using namespace vpvl2;
+using namespace vpvl2::icu;
 using namespace vpvl2::pmx;
 
 namespace
@@ -26,38 +31,38 @@ static void CompareBoneInterpolationMatrix(const QuadWord p[], const vmd::BoneKe
 {
     QuadWord actual, expected = p[0];
     frame.getInterpolationParameter(vmd::BoneKeyframe::kX, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[1];
     frame.getInterpolationParameter(vmd::BoneKeyframe::kY, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[2];
     frame.getInterpolationParameter(vmd::BoneKeyframe::kZ, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[3];
     frame.getInterpolationParameter(vmd::BoneKeyframe::kRotation, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
 }
 
 static void CompareCameraInterpolationMatrix(const QuadWord p[], const vmd::CameraKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
     frame.getInterpolationParameter(vmd::CameraKeyframe::kX, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[1];
     frame.getInterpolationParameter(vmd::CameraKeyframe::kY, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[2];
     frame.getInterpolationParameter(vmd::CameraKeyframe::kZ, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[3];
     frame.getInterpolationParameter(vmd::CameraKeyframe::kRotation, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[4];
     frame.getInterpolationParameter(vmd::CameraKeyframe::kDistance, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[5];
     frame.getInterpolationParameter(vmd::CameraKeyframe::kFov, actual);
-    ASSERT_TRUE(testVector(expected, actual));
+    ASSERT_TRUE(CompareVector(expected, actual));
 }
 
 }
@@ -406,7 +411,7 @@ TEST(VMDMotionTest, BoneInterpolation)
     vmd::BoneKeyframe frame(&encoding);
     QuadWord n;
     frame.getInterpolationParameter(vmd::BoneKeyframe::kX, n);
-    ASSERT_TRUE(testVector(QuadWord(0.0f, 0.0f, 0.0f, 0.0f), n));
+    ASSERT_TRUE(CompareVector(QuadWord(0.0f, 0.0f, 0.0f, 0.0f), n));
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -424,7 +429,7 @@ TEST(VMDMotionTest, CameraInterpolation)
     vmd::CameraKeyframe frame;
     QuadWord n;
     frame.getInterpolationParameter(vmd::CameraKeyframe::kX, n);
-    ASSERT_TRUE(testVector(QuadWord(0.0f, 0.0f, 0.0f, 0.0f), n));
+    ASSERT_TRUE(CompareVector(QuadWord(0.0f, 0.0f, 0.0f, 0.0f), n));
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
             pz(17, 18, 19, 20),

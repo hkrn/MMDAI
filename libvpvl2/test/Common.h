@@ -5,56 +5,29 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <tr1/tuple>
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/internal/util.h>
-#include <vpvl2/icu/String.h>
-#include <vpvl2/icu/Encoding.h>
+#include <vpvl2/Common.h>
 
-using namespace ::testing;
-using namespace std::tr1;
-using namespace vpvl2;
-using namespace vpvl2::icu;
+#define ASSERT_OR_RETURN(expr) do { AssertionResult r = (expr); if (!r) { return r; } } while (0)
 
 namespace vpvl2 {
 
-inline std::ostream& operator <<(std::ostream &os, const Vector3 &value)
-{
-    return os << "Vector3(x=" << value.x()
-              << ", y=" << value.y()
-              << ", z=" << value.z()
-              << ")";
-}
+class IBone;
+class IMaterial;
+class IVertex;
 
-inline std::ostream& operator <<(std::ostream &os, const Vector4 &value)
-{
-    return os << "Vector4(x=" << value.x()
-              << ", y=" << value.y()
-              << ", z=" << value.z()
-              << ", w=" << value.w()
-              << ")";
-}
+std::ostream& operator <<(std::ostream &os, const Vector3 &value);
+std::ostream& operator <<(std::ostream &os, const Vector4 &value);
+std::ostream& operator <<(std::ostream &os, const Quaternion &value);
+std::ostream& operator <<(std::ostream &os, const QuadWord &value);
 
-inline std::ostream& operator <<(std::ostream &os, const Quaternion &value)
-{
-    return os << "Quaternion(x=" << value.x()
-              << ", y=" << value.y()
-              << ", z=" << value.z()
-              << ", w=" << value.w()
-              << ")";
-}
-
-inline std::ostream& operator <<(std::ostream &os, const QuadWord &value)
-{
-    return os << "QuadWord(x=" << value.x()
-              << ", y=" << value.y()
-              << ", z=" << value.z()
-              << ", w=" << value.w()
-              << ")";
+namespace pmx {
+class Bone;
+class Joint;
+class RigidBody;
+class Vertex;
 }
 
 }
-
-namespace {
 
 static const float kIdentity4x4[] = {
     1, 0, 0, 0,
@@ -62,70 +35,29 @@ static const float kIdentity4x4[] = {
     0, 0, 1, 0,
     0, 0, 0, 1
 };
-
 static const float kEpsilon = 0.000001;
 
-static inline AssertionResult testVector(const Vector3 &expected, const Vector3 &actual)
-{
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
-    return AssertionSuccess();
-}
+::testing::AssertionResult CompareVector(const vpvl2::Vector3 &expected, const vpvl2::Vector3 &actual);
+::testing::AssertionResult CompareVector(const vpvl2::Vector4 &expected, const vpvl2::Vector4 &actual);
+::testing::AssertionResult CompareVector(const vpvl2::Quaternion &expected, const vpvl2::Quaternion &actual);
+::testing::AssertionResult CompareVector(const vpvl2::QuadWord &actual, const vpvl2::QuadWord &expected);
+::testing::AssertionResult CompareBoneInterface(const vpvl2::IBone &expected, const vpvl2::IBone &actual);
+::testing::AssertionResult CompareBone(const vpvl2::pmx::Bone &expected, const vpvl2::pmx::Bone &actual);
+::testing::AssertionResult CompareJoint(const vpvl2::pmx::Joint &expected,
+                                        const vpvl2::pmx::Joint &actual,
+                                        const vpvl2::pmx::RigidBody &body,
+                                        const vpvl2::pmx::RigidBody &body2);
+::testing::AssertionResult CompareMaterialInterface(const vpvl2::IMaterial &expected,
+                                                    const vpvl2::IMaterial &actual);
+::testing::AssertionResult CompareRigidBody(const vpvl2::pmx::RigidBody &expected,
+                                            const vpvl2::pmx::RigidBody &actual,
+                                            const vpvl2::IBone &bone);
+::testing::AssertionResult CompareVertexInterface(const vpvl2::IVertex &expected, const vpvl2::IVertex &actual);
+::testing::AssertionResult CompareVertex(const vpvl2::pmx::Vertex &expected,
+                                         const vpvl2::pmx::Vertex &actual,
+                                         const vpvl2::Array<vpvl2::pmx::Bone *> &bones);
 
-static inline AssertionResult testVector(const Vector4 &expected, const Vector4 &actual)
-{
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.w() - actual.w(), kEpsilon))
-        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
-    return AssertionSuccess();
-}
-
-static inline AssertionResult testVector(const Quaternion &expected, const Quaternion &actual)
-{
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.w() - actual.w(), kEpsilon))
-        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
-    return AssertionSuccess();
-}
-
-static inline AssertionResult testVector(const QuadWord &actual, const QuadWord &expected)
-{
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.w() - actual.w(), kEpsilon))
-        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
-    return AssertionSuccess();
-}
-
-static inline void AssertMatrix(const float *expected, const float *actual)
-{
-    for (int i = 0; i < 16; i++) {
-        ASSERT_FLOAT_EQ(expected[i], actual[i]) << "matrix value differs "
-                                                << expected[i]
-                                                << " but "
-                                                << actual[i]
-                                                << " at index "
-                                                << i;
-    }
-}
+void AssertMatrix(const float *expected, const float *actual);
 
 struct ScopedPointerListDeleter {
     template<typename T>
@@ -133,7 +65,5 @@ struct ScopedPointerListDeleter {
         qDeleteAll(*list);
     }
 };
-
-}
 
 #endif // COMMON_H

@@ -1,6 +1,9 @@
 #include "Common.h"
 #include "vpvl2/qt/Archive.h"
 
+using namespace vpvl2;
+using namespace vpvl2::qt;
+
 namespace {
 
 static void UncompressArchive(Archive &archive, QStringList &entries)

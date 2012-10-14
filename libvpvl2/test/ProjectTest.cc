@@ -1,6 +1,8 @@
 #include "Common.h"
 
-#include <vpvl2/Project.h>
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/Project.h"
+#include "vpvl2/icu/Encoding.h"
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
 #include "vpvl2/vmd/CameraAnimation.h"
@@ -10,6 +12,10 @@
 #include "vpvl2/vmd/MorphAnimation.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
+
+using namespace ::testing;
+using namespace vpvl2;
+using namespace vpvl2::icu;
 
 namespace
 {

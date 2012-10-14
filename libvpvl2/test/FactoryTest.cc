@@ -1,6 +1,7 @@
 #include "Common.h"
-#include "vpvl2/Factory.h"
 
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/icu/Encoding.h"
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
@@ -17,6 +18,11 @@
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
+
+using namespace ::testing;
+using namespace std::tr1;
+using namespace vpvl2;
+using namespace vpvl2::icu;
 
 TEST(FactoryTest, CreateEmptyModels)
 {
