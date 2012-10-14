@@ -141,7 +141,7 @@ public:
 
     bool operator()(const QUuid &left, const QUuid &right) const {
         const Project::UUID &luuid = left.toString().toStdString(), &ruuid = right.toString().toStdString();
-        IModel *lmodel = m_project->model(luuid), *rmodel = m_project->model(ruuid);
+        IModel *lmodel = m_project->findModel(luuid), *rmodel = m_project->findModel(ruuid);
         bool lok, rok;
         if (lmodel && rmodel) {
             int lorder = QString::fromStdString(m_project->modelSetting(lmodel, "order")).toInt(&lok);
@@ -335,7 +335,7 @@ QList<IModel *> SceneLoader::allModels() const
     QList<IModel *> models;
     Project::UUIDList::const_iterator it = uuids.begin(), end = uuids.end();
     while (it != end) {
-        models.append(m_project->model(*it));
+        models.append(m_project->findModel(*it));
         it++;
     }
     return models;
@@ -440,17 +440,17 @@ void SceneLoader::deleteMotion(IMotion *&motion)
 
 IModel *SceneLoader::findAsset(const QUuid &uuid) const
 {
-    return m_project->model(uuid.toString().toStdString());
+    return m_project->findModel(uuid.toString().toStdString());
 }
 
 IModel *SceneLoader::findModel(const QUuid &uuid) const
 {
-    return m_project->model(uuid.toString().toStdString());
+    return m_project->findModel(uuid.toString().toStdString());
 }
 
 IMotion *SceneLoader::findMotion(const QUuid &uuid) const
 {
-    return m_project->motion(uuid.toString().toStdString());
+    return m_project->findMotion(uuid.toString().toStdString());
 }
 
 const QUuid SceneLoader::findUUID(const IModel *model) const
@@ -660,7 +660,7 @@ bool SceneLoader::loadModelMotion(const QString &path, QList<IModel *> &models, 
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         int nmodels = modelUUIDs.size();
         for (int i = 0; i < nmodels; i++) {
-            IModel *model = m_project->model(modelUUIDs[i]);
+            IModel *model = m_project->findModel(modelUUIDs[i]);
             setModelMotion(motionPtr.data(), model);
             models.append(model);
         }
@@ -721,7 +721,7 @@ void SceneLoader::loadProject(const QString &path)
         sceneObject->setAccelerationType(accelerationType);
         for (int i = 0; i < nmodels; i++) {
             const Project::UUID &modelUUIDString = modelUUIDs[i];
-            IModelPtr modelPtr(m_project->model(modelUUIDString));
+            IModelPtr modelPtr(m_project->findModel(modelUUIDString));
             const std::string &name = m_project->modelSetting(modelPtr.data(), Project::kSettingNameKey);
             const std::string &uri = m_project->modelSetting(modelPtr.data(), Project::kSettingURIKey);
             const QString &filename = QString::fromStdString(uri);
@@ -900,14 +900,14 @@ void SceneLoader::releaseProject()
     const Project::UUIDList &motionUUIDs = m_project->motionUUIDs();
     for (Project::UUIDList::const_iterator it = motionUUIDs.begin(); it != motionUUIDs.end(); it++) {
         const Project::UUID &motionUUID = *it;
-        IMotion *motion = m_project->motion(motionUUID);
+        IMotion *motion = m_project->findMotion(motionUUID);
         if (motion)
             emit motionWillDelete(motion, QUuid(motionUUID.c_str()));
     }
     const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
     for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         const Project::UUID &modelUUID = *it;
-        IModel *model = m_project->model(modelUUID);
+        IModel *model = m_project->findModel(modelUUID);
         IModel::Type type = model->type();
         if (type == IModel::kPMD || type == IModel::kPMX)
             emit modelWillDelete(model, QUuid(modelUUID.c_str()));
@@ -929,7 +929,7 @@ void SceneLoader::renderWindow()
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->model(uuidString)) {
+        if (IModel *model = m_project->findModel(uuidString)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
             IEffect *effect = engine->effect(IEffect::kPostProcess);
             engine->setEffect(IEffect::kPostProcess, effect, 0);
@@ -940,7 +940,7 @@ void SceneLoader::renderWindow()
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->model(uuidString)) {
+        if (IModel *model = m_project->findModel(uuidString)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
             IEffect *effect = engine->effect(IEffect::kPreProcess);
             engine->setEffect(IEffect::kPreProcess, effect, 0);
@@ -952,7 +952,7 @@ void SceneLoader::renderWindow()
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->model(uuidString)) {
+        if (IModel *model = m_project->findModel(uuidString)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
             IEffect *effect = engine->effect(IEffect::kStandard);
             engine->setEffect(IEffect::kStandard, effect, 0);
@@ -967,7 +967,7 @@ void SceneLoader::renderWindow()
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->model(uuidString)) {
+        if (IModel *model = m_project->findModel(uuidString)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
             IEffect *effect = engine->effect(IEffect::kPostProcess);
             engine->setEffect(IEffect::kPostProcess, effect, 0);
@@ -1031,7 +1031,7 @@ void SceneLoader::renderOffscreen(const QSize &size)
         for (int i = 0; i < nobjects; i++) {
             const QUuid &uuid = m_renderOrderList[i];
             const Project::UUID &uuidString = uuid.toString().toStdString();
-            if (IModel *model = m_project->model(uuidString)) {
+            if (IModel *model = m_project->findModel(uuidString)) {
                 IRenderEngine *engine = m_project->findRenderEngine(model);
                 if (engine->hasPreProcess() || engine->hasPostProcess())
                     continue;
@@ -1111,7 +1111,7 @@ void SceneLoader::renderZPlot()
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
-        IModel *model = m_project->model(uuidString);
+        IModel *model = m_project->findModel(uuidString);
         if (model && isSelfShadowEnabled(model)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
             engine->renderZPlot();
@@ -1257,7 +1257,7 @@ void SceneLoader::setRenderOrderList(const QList<QUuid> &value)
     foreach (const QUuid &uuid, value) {
         const Project::UUID &u = uuid.toString().toStdString();
         const std::string &n = QVariant(i).toString().toStdString();
-        if (IModel *model = m_project->model(u)) {
+        if (IModel *model = m_project->findModel(u)) {
             m_project->setModelSetting(model, "order", n);
         }
         i++;
@@ -1404,7 +1404,7 @@ void SceneLoader::setSelectedModel(IModel *value)
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         Project::UUIDList::const_iterator it = modelUUIDs.begin(), end = modelUUIDs.end();
         while (it != end) {
-            IModel *model = m_project->model(*it);
+            IModel *model = m_project->findModel(*it);
             IModel::Type type = model->type();
             if (type == IModel::kPMD || type == IModel::kPMX)
                 m_project->setModelSetting(model, "selected", "false");
@@ -1702,7 +1702,7 @@ void SceneLoader::setAssetScaleFactor(const IModel *asset, float value)
 
 IModel *SceneLoader::assetParentModel(const IModel *asset) const
 {
-    IModel *parentModel = m_project ? m_project->model(m_project->modelSetting(asset, "parent.model")) : 0;
+    IModel *parentModel = m_project ? m_project->findModel(m_project->modelSetting(asset, "parent.model")) : 0;
     return parentModel;
 }
 
@@ -1747,7 +1747,7 @@ void SceneLoader::setSelectedAsset(IModel *value)
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         Project::UUIDList::const_iterator it = modelUUIDs.begin(), end = modelUUIDs.end();
         while (it != end) {
-            IModel *model = m_project->model(*it);
+            IModel *model = m_project->findModel(*it);
             if (model->type() == IModel::kAsset)
                 m_project->setModelSetting(model, "selected", "false");
             ++it;

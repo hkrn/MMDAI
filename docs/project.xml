@@ -63,6 +63,24 @@
     <vpvm:keyframe dummy="dummy" index="2" color="3,1,2" direction="3,1,2"/>
    </vpvm:animation>
   </vpvm:motion>
+  <vpvm:motion dummy="dummy" uuid="{481E1B4E-FC24-4D61-841D-C8AB7CF1096D}" model="{B18ACADC-89FD-4945-9192-8E8FBC849E52}" type="mvd">
+   <vpvm:animation dummy="dummy" type="bone">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" layer="0" position="1,2,3" rotation="1,2,3,4" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" layer="1" position="3,1,2" rotation="4,3,2,1" ik="false" interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="morph">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" weight="0.00"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" weight="1.00"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="camera">
+    <vpvm:keyframe dummy="dummy" index="1" layer="0" position="1,2,3" angle="1,2,3" fovy="15" distance="150" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+    <vpvm:keyframe dummy="dummy" index="2" layer="1" position="3,1,2" angle="3,1,2" fovy="30" distance="300" interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="light">
+    <vpvm:keyframe dummy="dummy" index="1" color="1,2,3" direction="1,2,3"/>
+    <vpvm:keyframe dummy="dummy" index="2" color="3,1,2" direction="3,1,2"/>
+   </vpvm:animation>
+  </vpvm:motion>
  </vpvm:motions>
 </vpvm:project>
 

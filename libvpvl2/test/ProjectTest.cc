@@ -3,6 +3,23 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/Project.h"
 #include "vpvl2/icu/Encoding.h"
+#include "vpvl2/mvd/AssetKeyframe.h"
+#include "vpvl2/mvd/AssetSection.h"
+#include "vpvl2/mvd/BoneKeyframe.h"
+#include "vpvl2/mvd/BoneSection.h"
+#include "vpvl2/mvd/CameraKeyframe.h"
+#include "vpvl2/mvd/CameraSection.h"
+#include "vpvl2/mvd/EffectKeyframe.h"
+#include "vpvl2/mvd/EffectSection.h"
+#include "vpvl2/mvd/LightKeyframe.h"
+#include "vpvl2/mvd/LightSection.h"
+#include "vpvl2/mvd/ModelKeyframe.h"
+#include "vpvl2/mvd/ModelSection.h"
+#include "vpvl2/mvd/MorphKeyframe.h"
+#include "vpvl2/mvd/MorphSection.h"
+#include "vpvl2/mvd/Motion.h"
+#include "vpvl2/mvd/ProjectKeyframe.h"
+#include "vpvl2/mvd/ProjectSection.h"
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
 #include "vpvl2/vmd/CameraAnimation.h"
@@ -24,7 +41,8 @@ const Project::UUID kAsset1UUID = "{EEBC6A85-F333-429A-ADF8-B6188908A517}";
 const Project::UUID kAsset2UUID = "{D4403C60-3D6C-4051-9B28-51DEFE021F59}";
 const Project::UUID kModel1UUID = "{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}";
 const Project::UUID kModel2UUID = "{B18ACADC-89FD-4945-9192-8E8FBC849E52}";
-const Project::UUID kMotionUUID = "{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}";
+const Project::UUID kMotion1UUID = "{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}";
+const Project::UUID kMotion2UUID = "{481E1B4E-FC24-4D61-841D-C8AB7CF1096D}";
 
 class Delegate : public Project::IDelegate
 {
@@ -67,8 +85,8 @@ static void TestGlobalSettings(const Project &project)
 
 static void TestLocalSettings(const Project &project)
 {
-    IModel *asset1 = project.model(kAsset1UUID), *asset2 = project.model(kAsset2UUID);
-    IModel *model1 = project.model(kModel1UUID), *model2 = project.model(kModel2UUID);
+    IModel *asset1 = project.findModel(kAsset1UUID), *asset2 = project.findModel(kAsset2UUID);
+    IModel *model1 = project.findModel(kModel1UUID), *model2 = project.findModel(kModel2UUID);
     ASSERT_STREQ("asset:/foo/bar/baz", project.modelSetting(asset1, Project::kSettingURIKey).c_str());
     ASSERT_STREQ("model:/foo/bar/baz", project.modelSetting(model1, Project::kSettingURIKey).c_str());
     ASSERT_STREQ("1.0", project.modelSetting(model1, "edge").c_str());
@@ -77,92 +95,115 @@ static void TestLocalSettings(const Project &project)
     ASSERT_STREQ("0.5", project.modelSetting(model2, "edge").c_str());
 }
 
-static void TestBoneAnimation(const IMotion *motion)
+static void TestBoneMotion(const IMotion *motion, bool hasLayer)
 {
-    const vmd::BoneAnimation &ba = static_cast<const vmd::Motion *>(motion)->boneAnimation();
+    const IBoneKeyframe *keyframe1 = motion->findBoneKeyframeAt(0);
     const String bar("bar"), baz("baz");
     QuadWord q;
-    ASSERT_EQ(2, ba.countKeyframes());
-    ASSERT_EQ(IKeyframe::TimeIndex(1), ba.keyframeAt(0)->timeIndex());
-    ASSERT_TRUE(ba.keyframeAt(0)->name()->equals(&bar));
-    ASSERT_EQ(Vector3(1, 2, -3), ba.keyframeAt(0)->position());
-    ASSERT_EQ(Quaternion(-1, -2, 3, 4), ba.keyframeAt(0)->rotation());
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kBone));
+    ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe1->timeIndex());
+    ASSERT_TRUE(keyframe1->name()->equals(&bar));
+    ASSERT_EQ(Vector3(1, 2, -3), keyframe1->position());
+    ASSERT_EQ(Quaternion(-1, -2, 3, 4), keyframe1->rotation());
     // ASSERT_TRUE(ba.frameAt(0)->isIKEnabled());
     for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
         int offset = i * 4;
-        ba.keyframeAt(0)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
+        keyframe1->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q);
     }
-    ASSERT_EQ(IKeyframe::TimeIndex(2), ba.keyframeAt(1)->timeIndex());
-    ASSERT_TRUE(ba.keyframeAt(1)->name()->equals(&baz));
-    ASSERT_EQ(Vector3(3, 1, -2), ba.keyframeAt(1)->position());
-    ASSERT_EQ(Quaternion(-4, -3, 2, 1), ba.keyframeAt(1)->rotation());
+    const IBoneKeyframe *keyframe2 = motion->findBoneKeyframeAt(1);
+    ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe2->timeIndex());
+    ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe2->layerIndex());
+    ASSERT_TRUE(keyframe2->name()->equals(&baz));
+    ASSERT_EQ(Vector3(3, 1, -2), keyframe2->position());
+    ASSERT_EQ(Quaternion(-4, -3, 2, 1), keyframe2->rotation());
     // ASSERT_FALSE(ba.frameAt(1)->isIKEnabled());
     for (int i = IBoneKeyframe::kMaxInterpolationType - 1; i >= 0; i--) {
         int offset = (IBoneKeyframe::kMaxInterpolationType - 1 - i) * 4;
-        ba.keyframeAt(1)->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
+        keyframe2->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
         ASSERT_EQ(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q);
     }
 }
 
-static void TestMorphAnimation(const IMotion *motion)
+static void TestMorphMotion(const IMotion *motion)
 {
-    const vmd::MorphAnimation &ma = static_cast<const vmd::Motion *>(motion)->morphAnimation();
     String bar("bar"), baz("baz");
-    ASSERT_EQ(2, ma.countKeyframes());
-    ASSERT_EQ(IKeyframe::TimeIndex(1), ma.keyframeAt(0)->timeIndex());
-    ASSERT_TRUE(ma.keyframeAt(0)->name()->equals(&bar));
-    ASSERT_EQ(IMorph::WeightPrecision(0), ma.keyframeAt(0)->weight());
-    ASSERT_EQ(IKeyframe::TimeIndex(2), ma.keyframeAt(1)->timeIndex());
-    ASSERT_TRUE(ma.keyframeAt(1)->name()->equals(&baz));
-    ASSERT_EQ(IMorph::WeightPrecision(1), ma.keyframeAt(1)->weight());
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kMorph));
+    const IMorphKeyframe *keyframe1 = motion->findMorphKeyframeAt(0);
+    ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe1->timeIndex());
+    ASSERT_TRUE(keyframe1->name()->equals(&bar));
+    ASSERT_EQ(IMorph::WeightPrecision(0), keyframe1->weight());
+    const IMorphKeyframe *keyframe2 = motion->findMorphKeyframeAt(1);
+    ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe2->timeIndex());
+    ASSERT_TRUE(keyframe2->name()->equals(&baz));
+    ASSERT_EQ(IMorph::WeightPrecision(1), keyframe2->weight());
 }
 
-static void TestCameraAnimation(const IMotion *motion)
+static void TestCameraMotion(const IMotion *motion, bool hasLayer, bool skipYZ)
 {
-    const vmd::CameraAnimation &ca = static_cast<const vmd::Motion *>(motion)->cameraAnimation();
     QuadWord q;
-    ASSERT_EQ(2, ca.countKeyframes());
-    ASSERT_EQ(IKeyframe::TimeIndex(1), ca.frameAt(0)->timeIndex());
-    ASSERT_EQ(Vector3(1, 2, -3), ca.frameAt(0)->position());
-    const Vector3 &angle1 = ca.frameAt(0)->angle();
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kCamera));
+    const ICameraKeyframe *keyframe1 = motion->findCameraKeyframeAt(0);
+    ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe1->timeIndex());
+    ASSERT_EQ(Vector3(1, 2, -3), keyframe1->position());
+    const Vector3 &angle1 = keyframe1->angle();
     ASSERT_TRUE(qFuzzyCompare(angle1.x(), -degree(1)));
     ASSERT_TRUE(qFuzzyCompare(angle1.y(), -degree(2)));
     ASSERT_TRUE(qFuzzyCompare(angle1.z(), -degree(3)));
-    ASSERT_EQ(15.0f, ca.frameAt(0)->fov());
-    ASSERT_EQ(150.0f, ca.frameAt(0)->distance());
-    for (int i = 0; i < ICameraKeyframe::kMaxInterpolationType; i++) {
-        int offset = i * 4;
-        ca.frameAt(0)->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
-        ASSERT_EQ(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q);
+    ASSERT_EQ(15.0f, keyframe1->fov());
+    ASSERT_EQ(150.0f, keyframe1->distance());
+    if (skipYZ) {
+        for (int i = 0; i < ICameraKeyframe::kMaxInterpolationType; i++) {
+            int offset = (i < 3 ? 0 : i - 2) * 4;
+            keyframe1->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
+            ASSERT_EQ(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q);
+        }
     }
-    ASSERT_EQ(IKeyframe::TimeIndex(2), ca.frameAt(1)->timeIndex());
-    ASSERT_EQ(Vector3(3, 1, -2), ca.frameAt(1)->position());
-    const Vector3 &angle2 = ca.frameAt(1)->angle();
+    else {
+        for (int i = 0; i < ICameraKeyframe::kMaxInterpolationType; i++) {
+            int offset = i * 4;
+            keyframe1->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
+            ASSERT_EQ(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q);
+        }
+    }
+    const ICameraKeyframe *keyframe2 = motion->findCameraKeyframeAt(1);
+    ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe2->timeIndex());
+    ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe2->layerIndex());
+    ASSERT_EQ(Vector3(3, 1, -2), keyframe2->position());
+    const Vector3 &angle2 = keyframe2->angle();
     ASSERT_TRUE(qFuzzyCompare(angle2.x(), -degree(3)));
     ASSERT_TRUE(qFuzzyCompare(angle2.y(), -degree(1)));
     ASSERT_TRUE(qFuzzyCompare(angle2.z(), -degree(2)));
-    ASSERT_EQ(30.0f, ca.frameAt(1)->fov());
-    ASSERT_EQ(300.0f, ca.frameAt(1)->distance());
-    for (int i = ICameraKeyframe::kMaxInterpolationType - 1; i >= 0; i--) {
-        int offset = (ICameraKeyframe::kMaxInterpolationType - 1 - i) * 4;
-        ca.frameAt(1)->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
-        ASSERT_EQ(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q);
+    ASSERT_EQ(30.0f, keyframe2->fov());
+    ASSERT_EQ(300.0f, keyframe2->distance());
+    if (skipYZ) {
+        for (int max = ICameraKeyframe::kMaxInterpolationType - 1, i = max; i >= 0; i--) {
+            int offset = qMin((max - i) * 4, 12);
+            keyframe2->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
+            ASSERT_EQ(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q);
+        }
+    }
+    else {
+        for (int max = ICameraKeyframe::kMaxInterpolationType - 1, i = max; i >= 0; i--) {
+            int offset = (max - i) * 4;
+            keyframe2->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
+            ASSERT_EQ(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q);
+        }
     }
 }
 
-static void TestLightAnimation(const IMotion *motion)
+static void TestLightMotion(const IMotion *motion)
 {
-    const vmd::LightAnimation &la = static_cast<const vmd::Motion *>(motion)->lightAnimation();
-    ASSERT_EQ(2, la.countKeyframes());
-    ASSERT_EQ(IKeyframe::TimeIndex(1), la.frameAt(0)->timeIndex());
-    ASSERT_EQ(Vector3(1, 2, 3), la.frameAt(0)->color());
-    ASSERT_EQ(Vector3(1, 2, 3), la.frameAt(0)->direction());
-    ASSERT_EQ(IKeyframe::TimeIndex(2), la.frameAt(1)->timeIndex());
-    ASSERT_EQ(Vector3(3, 1, 2), la.frameAt(1)->color());
-    ASSERT_EQ(Vector3(3, 1, 2), la.frameAt(1)->direction());
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kLight));
+    const ILightKeyframe *keyframe1 = motion->findLightKeyframeAt(0);
+    ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe1->timeIndex());
+    ASSERT_EQ(Vector3(1, 2, 3), keyframe1->color());
+    ASSERT_EQ(Vector3(1, 2, 3), keyframe1->direction());
+    const ILightKeyframe *keyframe2 = motion->findLightKeyframeAt(1);
+    ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe2->timeIndex());
+    ASSERT_EQ(Vector3(3, 1, 2), keyframe2->color());
+    ASSERT_EQ(Vector3(3, 1, 2), keyframe2->direction());
 }
-
 
 }
 
@@ -177,15 +218,23 @@ TEST(ProjectTest, Load)
     ASSERT_FALSE(project.isDirty());
     ASSERT_STREQ("0.1", project.version().c_str());
     ASSERT_EQ(size_t(4), project.modelUUIDs().size());
-    ASSERT_EQ(size_t(1), project.motionUUIDs().size());
+    ASSERT_EQ(size_t(2), project.motionUUIDs().size());
     TestGlobalSettings(project);
     TestLocalSettings(project);
-    IMotion *motion = project.motion(kMotionUUID);
-    ASSERT_EQ(project.model(kModel1UUID), motion->parentModel());
-    TestBoneAnimation(motion);
-    TestMorphAnimation(motion);
-    TestCameraAnimation(motion);
-    TestLightAnimation(motion);
+    IMotion *motion = project.findMotion(kMotion1UUID);
+    ASSERT_EQ(IMotion::kVMD, motion->type());
+    ASSERT_EQ(project.findModel(kModel1UUID), motion->parentModel());
+    TestBoneMotion(motion, false);
+    TestMorphMotion(motion);
+    TestCameraMotion(motion, false, false);
+    TestLightMotion(motion);
+    IMotion *motion2 = project.findMotion(kMotion2UUID);
+    ASSERT_EQ(IMotion::kMVD, motion2->type());
+    ASSERT_EQ(project.findModel(kModel2UUID), motion2->parentModel());
+    TestBoneMotion(motion2, true);
+    TestMorphMotion(motion2);
+    TestCameraMotion(motion2, true, true);
+    TestLightMotion(motion2);
 }
 
 TEST(ProjectTest, Save)
@@ -203,17 +252,27 @@ TEST(ProjectTest, Save)
     ASSERT_FALSE(project.isDirty());
     Project project2(&delegate, &factory);
     ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
-    ASSERT_STREQ(libraryVersionString(), project2.version().c_str());
+    QString s;
+    s.sprintf("%.1f", Project::formatVersion());
+    ASSERT_STREQ(qPrintable(s), project2.version().c_str());
     ASSERT_EQ(size_t(4), project2.modelUUIDs().size());
-    ASSERT_EQ(size_t(1), project2.motionUUIDs().size());
+    ASSERT_EQ(size_t(2), project2.motionUUIDs().size());
     TestGlobalSettings(project2);
     TestLocalSettings(project2);
-    IMotion *motion = project2.motion(kMotionUUID);
-    ASSERT_EQ(project2.model(kModel1UUID), motion->parentModel());
-    TestBoneAnimation(motion);
-    TestMorphAnimation(motion);
-    TestCameraAnimation(motion);
-    TestLightAnimation(motion);
+    IMotion *motion = project2.findMotion(kMotion1UUID);
+    ASSERT_EQ(project2.findModel(kModel1UUID), motion->parentModel());
+    ASSERT_EQ(IMotion::kVMD, motion->type());
+    TestBoneMotion(motion, false);
+    TestMorphMotion(motion);
+    TestCameraMotion(motion, false, false);
+    TestLightMotion(motion);
+    IMotion *motion2 = project2.findMotion(kMotion2UUID);
+    ASSERT_EQ(IMotion::kMVD, motion2->type());
+    ASSERT_EQ(project2.findModel(kModel2UUID), motion2->parentModel());
+    TestBoneMotion(motion2, true);
+    TestMorphMotion(motion2);
+    TestCameraMotion(motion2, true, true);
+    TestLightMotion(motion2);
 }
 
 TEST(ProjectTest, HandleAssets)
@@ -232,8 +291,8 @@ TEST(ProjectTest, HandleAssets)
     ASSERT_TRUE(project.containsModel(ptr));
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(ptr));
-    ASSERT_EQ(ptr, project.model(uuid.toStdString()));
-    ASSERT_EQ(static_cast<IModel*>(0), project.model(Project::kNullUUID));
+    ASSERT_EQ(ptr, project.findModel(uuid.toStdString()));
+    ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
     project.removeModel(ptr);
     ASSERT_FALSE(project.containsModel(ptr));
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
@@ -262,8 +321,8 @@ TEST(ProjectTest, HandleModels)
     ASSERT_TRUE(project.containsModel(ptr));
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(ptr));
-    ASSERT_EQ(ptr, project.model(uuid.toStdString()));
-    ASSERT_EQ(static_cast<IModel*>(0), project.model(Project::kNullUUID));
+    ASSERT_EQ(ptr, project.findModel(uuid.toStdString()));
+    ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
     project.removeModel(ptr);
     ASSERT_FALSE(project.containsModel(ptr));
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
@@ -290,8 +349,8 @@ TEST(ProjectTest, HandleMotions)
     project.addMotion(ptr, uuid.toStdString());
     ASSERT_TRUE(project.isDirty());
     ASSERT_TRUE(project.containsMotion(ptr));
-    ASSERT_EQ(ptr, project.motion(uuid.toStdString()));
-    ASSERT_EQ(static_cast<IMotion*>(0), project.motion(Project::kNullUUID));
+    ASSERT_EQ(ptr, project.findMotion(uuid.toStdString()));
+    ASSERT_EQ(static_cast<IMotion*>(0), project.findMotion(Project::kNullUUID));
     project.setDirty(false);
     project.removeMotion(ptr);
     ASSERT_FALSE(project.containsMotion(ptr));

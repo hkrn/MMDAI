@@ -81,6 +81,7 @@ public:
     static const std::string kSettingNameKey;
     static const std::string kSettingURIKey;
 
+    static float formatVersion();
     static bool isReservedSettingKey(const std::string &key);
 
     Project(IDelegate *delegate, Factory *factory);
@@ -98,8 +99,8 @@ public:
     const UUIDList motionUUIDs() const;
     const UUID &modelUUID(const IModel *model) const;
     const UUID &motionUUID(const IMotion *motion) const;
-    IModel *model(const UUID &uuid) const;
-    IMotion *motion(const UUID &uuid) const;
+    IModel *findModel(const UUID &uuid) const;
+    IMotion *findMotion(const UUID &uuid) const;
     bool containsModel(const IModel *model) const;
     bool containsMotion(const IMotion *motion) const;
     bool isDirty() const;
