@@ -716,8 +716,9 @@ int main(int /* argc */, char ** /* argv[] */)
         config[k.trim()] = v.trim();
     }
 
-    size_t width = vpvl2::icu::String::toInt("window.width", 640),
-            height = vpvl2::icu::String::toInt("window.height", 480);
+    size_t width = vpvl2::icu::String::toInt(config["window.width"], 640),
+            height = vpvl2::icu::String::toInt(config["window.height"], 480);
+    bool enableSW = vpvl2::icu::String::toBoolean(config["enable.opengl.software"]);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 16);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 16);
@@ -727,6 +728,7 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, enableSW ? 0 : 1);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           width, height, SDL_WINDOW_OPENGL);
