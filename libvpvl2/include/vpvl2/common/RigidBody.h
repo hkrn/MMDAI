@@ -40,10 +40,10 @@
 #define VPVL2_COMMON_RIGIDBODY_H_
 
 #include "vpvl2/Common.h"
+#include "LinearMath/btMotionState.h"
 
 class btCollisionShape;
 class btRigidBody;
-class btMotionState;
 
 namespace vpvl2
 {
@@ -71,6 +71,65 @@ public:
         kMaxObjectType
     };
 
+    class DefaultMotionState : public btMotionState {
+    public:
+        DefaultMotionState(const Transform &startTransform, const IBone *bone)
+            : m_boneRef(bone),
+              m_startTransform(startTransform),
+              m_worldTransform(startTransform)
+        {
+        }
+        ~DefaultMotionState() {}
+
+        void getWorldTransform(btTransform &worldTransform) const {
+            worldTransform = m_worldTransform;
+        }
+        void setWorldTransform(const btTransform &worldTransform) {
+            m_worldTransform = worldTransform;
+        }
+        void resetWorldTransform(const Transform &value) {
+            m_startTransform = m_worldTransform = value;
+        }
+
+    protected:
+        const IBone *m_boneRef;
+        Transform m_startTransform;
+        Transform m_worldTransform;
+    };
+
+    class AlignedMotionState : public DefaultMotionState {
+    public:
+        AlignedMotionState(const Transform &startTransform, const IBone *bone)
+            : DefaultMotionState(startTransform, bone)
+        {
+        }
+        ~AlignedMotionState() {}
+
+        void setWorldTransform(const btTransform &worldTransform) {
+            m_worldTransform = worldTransform;
+            m_worldTransform.setOrigin(m_boneRef->worldTransform().getOrigin());
+        }
+    };
+
+    class KinematicMotionState : public DefaultMotionState {
+    public:
+        KinematicMotionState(const Transform &startTransform, const IBone *bone)
+            : DefaultMotionState(startTransform, bone)
+        {
+        }
+        ~KinematicMotionState() {}
+
+        void getWorldTransform(btTransform &worldTransform) const {
+            // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
+            // (Bone#localTransform will be identity)
+            Transform localTransform;
+            m_boneRef->getLocalTransform(localTransform);
+            worldTransform = localTransform * m_startTransform;
+        }
+        void setWorldTransform(const btTransform & /* worldTransform */) {
+        }
+    };
+
     RigidBody();
     virtual ~RigidBody();
 
@@ -78,7 +137,6 @@ public:
     void setKinematic(bool value);
 
     virtual const Transform createTransform() const;
-    virtual const Transform createStartTransform(const Transform &transform) const;
     virtual btCollisionShape *createShape() const;
     virtual btRigidBody *createRigidBody(btCollisionShape *shape);
 
@@ -119,6 +177,9 @@ public:
 
 protected:
     void build(IBone *bone, int index);
+    virtual btMotionState *createKinematicMotionState() const;
+    virtual btMotionState *createDefaultMotionState() const;
+    virtual btMotionState *createAlignedMotionState() const;
 
     btRigidBody *m_body;
     btRigidBody *m_ptr;

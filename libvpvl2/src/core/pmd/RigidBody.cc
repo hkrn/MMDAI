@@ -42,6 +42,7 @@
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmd;
 
 #pragma pack(push, 1)
@@ -184,10 +185,10 @@ void RigidBody::write(uint8_t *data, const Model::DataInfo & /* info */) const
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
 }
 
-const Transform RigidBody::createStartTransform(const Transform &transform) const
+const Transform RigidBody::createTransform() const
 {
-    const Vector3 &origin = m_boneRef->worldTransform().getOrigin();
-    return Transform(Matrix3x3::getIdentity(), origin) * transform;
+    const Transform &localTransform = common::RigidBody::createTransform();
+    return Transform(Matrix3x3::getIdentity(), m_boneRef->worldTransform().getOrigin()) * localTransform;
 }
 
 }

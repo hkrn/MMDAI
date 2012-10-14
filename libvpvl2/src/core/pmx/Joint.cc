@@ -39,29 +39,22 @@
 
 #include "vpvl2/pmx/Joint.h"
 
-#ifndef VPVL2_NO_BULLET
-#include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
-#else
-BT_DECLARE_HANDLE(btGeneric6DofConstraint)
-BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint)
-#endif
-
 namespace
 {
 
 #pragma pack(push, 1)
 
-    struct JointUnit
-    {
-        float position[3];
-        float rotation[3];
-        float positionLowerLimit[3];
-        float positionUpperLimit[3];
-        float rotationLowerLimit[3];
-        float rotationUpperLimit[3];
-        float positionStiffness[3];
-        float rotationStiffness[3];
-    };
+struct JointUnit
+{
+    float position[3];
+    float rotation[3];
+    float positionLowerLimit[3];
+    float positionUpperLimit[3];
+    float rotationLowerLimit[3];
+    float rotationUpperLimit[3];
+    float positionStiffness[3];
+    float rotationStiffness[3];
+};
 
 #pragma pack(pop)
 
