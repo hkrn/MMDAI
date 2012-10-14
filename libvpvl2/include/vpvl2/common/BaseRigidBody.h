@@ -36,8 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_COMMON_RIGIDBODY_H_
-#define VPVL2_COMMON_RIGIDBODY_H_
+#ifndef VPVL2_COMMON_BASERIGIDBODY_H_
+#define VPVL2_COMMON_BASERIGIDBODY_H_
 
 #include "vpvl2/Common.h"
 #include "LinearMath/btMotionState.h"
@@ -54,7 +54,7 @@ class IString;
 namespace common
 {
 
-class VPVL2_API RigidBody
+class VPVL2_API BaseRigidBody
 {
 public:
     enum ShapeType {
@@ -130,8 +130,8 @@ public:
         }
     };
 
-    RigidBody();
-    virtual ~RigidBody();
+    BaseRigidBody();
+    virtual ~BaseRigidBody();
 
     void performTransformBone();
     void setKinematic(bool value);
@@ -207,7 +207,7 @@ protected:
     ShapeType m_shapeType;
     ObjectType m_type;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRigidBody)
 };
 
 } /* namespace pmx */

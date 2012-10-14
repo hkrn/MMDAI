@@ -76,7 +76,7 @@ namespace pmd
 const int RigidBody::kNameSize;
 
 RigidBody::RigidBody(IEncoding *encodingRef)
-    : common::RigidBody(),
+    : common::BaseRigidBody(),
       m_encodingRef(encodingRef)
 {
 }
@@ -187,7 +187,7 @@ void RigidBody::write(uint8_t *data, const Model::DataInfo & /* info */) const
 
 const Transform RigidBody::createTransform() const
 {
-    const Transform &localTransform = common::RigidBody::createTransform();
+    const Transform &localTransform = BaseRigidBody::createTransform();
     return Transform(Matrix3x3::getIdentity(), m_boneRef->worldTransform().getOrigin()) * localTransform;
 }
 

@@ -36,10 +36,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_COMMON_JOINT_H_
-#define VPVL2_COMMON_JOINT_H_
+#ifndef VPVL2_COMMON_BASEJOINT_H_
+#define VPVL2_COMMON_BASEJOINT_H_
 
-#include "vpvl2/common/RigidBody.h"
+#include "vpvl2/common/BaseRigidBody.h"
 
 #ifndef VPVL2_NO_BULLET
 class btGeneric6DofConstraint;
@@ -54,15 +54,15 @@ namespace vpvl2
 namespace common
 {
 
-class VPVL2_API Joint
+class VPVL2_API BaseJoint
 {
 public:
-    Joint();
-    virtual ~Joint();
+    BaseJoint();
+    virtual ~BaseJoint();
 
     btGeneric6DofSpringConstraint *constraint() const { return m_constraint; }
-    RigidBody *rigidBody1() const { return m_rigidBody1Ref; }
-    RigidBody *rigidBody2() const { return m_rigidBody2Ref; }
+    BaseRigidBody *rigidBody1() const { return m_rigidBody1Ref; }
+    BaseRigidBody *rigidBody2() const { return m_rigidBody2Ref; }
     int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
     int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
     const IString *name() const { return m_name; }
@@ -77,8 +77,8 @@ public:
     const Vector3 &rotationStiffness() const { return m_rotationStiffness; }
     int index() const { return m_index; }
 
-    void setRigidBody1(RigidBody *value);
-    void setRigidBody2(RigidBody *value);
+    void setRigidBody1(BaseRigidBody *value);
+    void setRigidBody2(BaseRigidBody *value);
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setPosition(const Vector3 &value);
@@ -98,8 +98,8 @@ protected:
 
     btGeneric6DofSpringConstraint *m_constraint;
     btGeneric6DofSpringConstraint *m_ptr;
-    RigidBody *m_rigidBody1Ref;
-    RigidBody *m_rigidBody2Ref;
+    BaseRigidBody *m_rigidBody1Ref;
+    BaseRigidBody *m_rigidBody2Ref;
     IString *m_name;
     IString *m_englishName;
     Vector3 m_position;
@@ -114,7 +114,7 @@ protected:
     int m_rigidBodyIndex2;
     int m_index;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Joint)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseJoint)
 };
 
 } /* namespace pmx */

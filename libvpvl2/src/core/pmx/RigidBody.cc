@@ -71,7 +71,7 @@ namespace pmx
 {
 
 RigidBody::RigidBody()
-    : common::RigidBody()
+    : common::BaseRigidBody()
 {
 }
 

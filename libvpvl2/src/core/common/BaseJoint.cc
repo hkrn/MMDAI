@@ -37,7 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/common/Joint.h"
+#include "vpvl2/common/BaseJoint.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
@@ -51,7 +51,7 @@ namespace vpvl2
 namespace common
 {
 
-Joint::Joint()
+BaseJoint::BaseJoint()
     : m_constraint(0),
       m_ptr(0),
       m_rigidBody1Ref(0),
@@ -72,7 +72,7 @@ Joint::Joint()
 {
 }
 
-Joint::~Joint()
+BaseJoint::~BaseJoint()
 {
     delete m_constraint;
     m_constraint = 0;
@@ -97,74 +97,74 @@ Joint::~Joint()
     m_index = -1;
 }
 
-void Joint::setRigidBody1(RigidBody *value)
+void BaseJoint::setRigidBody1(BaseRigidBody *value)
 {
     m_rigidBody1Ref = value;
     m_rigidBodyIndex1 = value ? value->index() : -1;
 }
 
-void Joint::setRigidBody2(RigidBody *value)
+void BaseJoint::setRigidBody2(BaseRigidBody *value)
 {
     m_rigidBody2Ref = value;
     m_rigidBodyIndex2 = value ? value->index() : -1;
 }
 
-void Joint::setName(const IString *value)
+void BaseJoint::setName(const IString *value)
 {
     internal::setString(value, m_name);
 }
 
-void Joint::setEnglishName(const IString *value)
+void BaseJoint::setEnglishName(const IString *value)
 {
     internal::setString(value, m_englishName);
 }
 
-void Joint::setPosition(const Vector3 &value)
+void BaseJoint::setPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void Joint::setRotation(const Vector3 &value)
+void BaseJoint::setRotation(const Vector3 &value)
 {
     m_rotation = value;
 }
 
-void Joint::setPositionLowerLimit(const Vector3 &value)
+void BaseJoint::setPositionLowerLimit(const Vector3 &value)
 {
     m_positionLowerLimit = value;
 }
 
-void Joint::setPositionUpperLimit(const Vector3 &value)
+void BaseJoint::setPositionUpperLimit(const Vector3 &value)
 {
     m_positionUpperLimit = value;
 }
 
-void Joint::setRotationLowerLimit(const Vector3 &value)
+void BaseJoint::setRotationLowerLimit(const Vector3 &value)
 {
     m_rotationLowerLimit = value;
 }
 
-void Joint::setRotationUpperLimit(const Vector3 &value)
+void BaseJoint::setRotationUpperLimit(const Vector3 &value)
 {
     m_rotationUpperLimit = value;
 }
 
-void Joint::setPositionStiffness(const Vector3 &value)
+void BaseJoint::setPositionStiffness(const Vector3 &value)
 {
     m_positionStiffness = value;
 }
 
-void Joint::setRotationStiffness(const Vector3 &value)
+void BaseJoint::setRotationStiffness(const Vector3 &value)
 {
     m_rotationStiffness = value;
 }
 
-void Joint::setIndex(int value)
+void BaseJoint::setIndex(int value)
 {
     m_index = value;
 }
 
-btGeneric6DofSpringConstraint *Joint::createConstraint()
+btGeneric6DofSpringConstraint *BaseJoint::createConstraint()
 {
 #ifndef VPVL2_NO_BULLET
     Transform transform = Transform::getIdentity();
@@ -223,7 +223,7 @@ btGeneric6DofSpringConstraint *Joint::createConstraint()
 #endif
 }
 
-void Joint::build(int index)
+void BaseJoint::build(int index)
 {
     if (m_rigidBody1Ref && m_rigidBody2Ref) {
         m_constraint = createConstraint();

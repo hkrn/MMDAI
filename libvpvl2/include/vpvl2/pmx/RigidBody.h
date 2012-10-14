@@ -40,7 +40,7 @@
 #define VPVL2_PMX_RIGIDBODY_H_
 
 #include "vpvl2/pmx/Model.h"
-#include "vpvl2/common/RigidBody.h"
+#include "vpvl2/common/BaseRigidBody.h"
 
 class btCollisionShape;
 class btRigidBody;
@@ -61,7 +61,7 @@ namespace pmx
  * RigidBody class represents a rigid body of a Polygon Model Data object.
  */
 
-class VPVL2_API RigidBody : public common::RigidBody
+class VPVL2_API RigidBody : public common::BaseRigidBody
 {
 public:
     RigidBody();

@@ -37,7 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/common/RigidBody.h"
+#include "vpvl2/common/BaseRigidBody.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
@@ -52,7 +52,7 @@ namespace vpvl2
 namespace common
 {
 
-RigidBody::RigidBody()
+BaseRigidBody::BaseRigidBody()
     : m_body(0),
       m_ptr(0),
       m_shape(0),
@@ -81,7 +81,7 @@ RigidBody::RigidBody()
 {
 }
 
-RigidBody::~RigidBody()
+BaseRigidBody::~BaseRigidBody()
 {
     delete m_body;
     m_body = 0;
@@ -117,7 +117,7 @@ RigidBody::~RigidBody()
     m_type = kStaticObject;
 }
 
-void RigidBody::performTransformBone()
+void BaseRigidBody::performTransformBone()
 {
 #ifndef VPVL2_NO_BULLET
     if (m_type == kStaticObject || !m_boneRef || m_boneRef == NullBone::sharedReference())
@@ -128,7 +128,7 @@ void RigidBody::performTransformBone()
 #endif /* VPVL2_NO_BULLET */
 }
 
-void RigidBody::setKinematic(bool value)
+void BaseRigidBody::setKinematic(bool value)
 {
 #ifndef VPVL2_NO_BULLET
     if (m_type == kStaticObject)
@@ -150,7 +150,7 @@ void RigidBody::setKinematic(bool value)
 #endif /* VPVL2_NO_BULLET */
 }
 
-const Transform RigidBody::createTransform() const
+const Transform BaseRigidBody::createTransform() const
 {
     Matrix3x3 basis;
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -165,7 +165,7 @@ const Transform RigidBody::createTransform() const
     return Transform(basis, m_position);
 }
 
-btCollisionShape *RigidBody::createShape() const
+btCollisionShape *BaseRigidBody::createShape() const
 {
     switch (m_shapeType) {
     case kSphereShape:
@@ -180,7 +180,7 @@ btCollisionShape *RigidBody::createShape() const
     }
 }
 
-btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
+btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
 {
     Vector3 localInertia(kZeroV3);
     Scalar massValue(0);
@@ -220,88 +220,88 @@ btRigidBody *RigidBody::createRigidBody(btCollisionShape *shape)
     return body;
 }
 
-void RigidBody::setName(const IString *value)
+void BaseRigidBody::setName(const IString *value)
 {
     internal::setString(value, m_name);
 }
 
-void RigidBody::setEnglishName(const IString *value)
+void BaseRigidBody::setEnglishName(const IString *value)
 {
     internal::setString(value, m_englishName);
 }
 
-void RigidBody::setBone(IBone *value)
+void BaseRigidBody::setBone(IBone *value)
 {
     m_boneRef = value;
     m_boneIndex = value ? value->index() : -1;
 }
 
-void RigidBody::setAngularDamping(float value)
+void BaseRigidBody::setAngularDamping(float value)
 {
     m_angularDamping = value;
 }
 
-void RigidBody::setCollisionGroupID(uint16_t value)
+void BaseRigidBody::setCollisionGroupID(uint16_t value)
 {
     m_collisionGroupID = value;
 }
 
-void RigidBody::setCollisionMask(uint16_t value)
+void BaseRigidBody::setCollisionMask(uint16_t value)
 {
     m_collisionGroupID = value;
 }
 
-void RigidBody::setFriction(float value)
+void BaseRigidBody::setFriction(float value)
 {
     m_friction = value;
 }
 
-void RigidBody::setLinearDamping(float value)
+void BaseRigidBody::setLinearDamping(float value)
 {
     m_linearDamping = value;
 }
 
-void RigidBody::setMass(float value)
+void BaseRigidBody::setMass(float value)
 {
     m_mass = value;
 }
 
-void RigidBody::setPosition(const Vector3 &value)
+void BaseRigidBody::setPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void RigidBody::setRestitution(float value)
+void BaseRigidBody::setRestitution(float value)
 {
     m_restitution = value;
 }
 
-void RigidBody::setRotation(const Vector3 &value)
+void BaseRigidBody::setRotation(const Vector3 &value)
 {
     m_rotation = value;
 }
 
-void RigidBody::setShapeType(ShapeType value)
+void BaseRigidBody::setShapeType(ShapeType value)
 {
     m_shapeType = value;
 }
 
-void RigidBody::setSize(const Vector3 &value)
+void BaseRigidBody::setSize(const Vector3 &value)
 {
     m_size = value;
 }
 
-void RigidBody::setType(ObjectType value)
+void BaseRigidBody::setType(ObjectType value)
 {
     m_type = value;
 }
 
-void RigidBody::setIndex(int value)
+void BaseRigidBody::setIndex(int value)
 {
     m_index = value;
 }
 
-void RigidBody::build(IBone *bone, int index)
+void BaseRigidBody::build(IBone *bone, int index)
 {
     m_boneRef = bone;
     m_shape = createShape();
@@ -312,19 +312,19 @@ void RigidBody::build(IBone *bone, int index)
         bone->setInverseKinematicsEnable(false);
 }
 
-btMotionState *RigidBody::createKinematicMotionState() const
+btMotionState *BaseRigidBody::createKinematicMotionState() const
 {
-    return new RigidBody::KinematicMotionState(m_worldTransform, m_boneRef);
+    return new BaseRigidBody::KinematicMotionState(m_worldTransform, m_boneRef);
 }
 
-btMotionState *RigidBody::createDefaultMotionState() const
+btMotionState *BaseRigidBody::createDefaultMotionState() const
 {
-    return new RigidBody::DefaultMotionState(m_worldTransform, m_boneRef);
+    return new BaseRigidBody::DefaultMotionState(m_worldTransform, m_boneRef);
 }
 
-btMotionState *RigidBody::createAlignedMotionState() const
+btMotionState *BaseRigidBody::createAlignedMotionState() const
 {
-    return new RigidBody::AlignedMotionState(m_worldTransform, m_boneRef);
+    return new BaseRigidBody::AlignedMotionState(m_worldTransform, m_boneRef);
 }
 
 } /* namespace pmx */

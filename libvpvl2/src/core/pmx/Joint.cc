@@ -66,7 +66,7 @@ namespace pmx
 {
 
 Joint::Joint()
-    : common::Joint()
+    : common::BaseJoint()
 {
 }
 
