@@ -86,6 +86,26 @@ public:
             static const String s(UnicodeString::fromUTF8("センター"));
             return &s;
         }
+        case kAsterisk: {
+            static const String s(UnicodeString::fromUTF8("*"));
+            return &s;
+        }
+        case kSPHExtension: {
+            static const String s(UnicodeString::fromUTF8(".sph"));
+            return &s;
+        }
+        case kSPAExtension: {
+            static const String s(UnicodeString::fromUTF8(".spa"));
+            return &s;
+        }
+        case kRightKnee: {
+            static const String s(UnicodeString::fromUTF8("右ひざ"));
+            return &s;
+        }
+        case kLeftKnee: {
+            static const String s(UnicodeString::fromUTF8("左ひざ"));
+            return &s;
+        }
         case kMaxConstantType:
         default: {
             static const String s(UnicodeString::fromUTF8(""));
