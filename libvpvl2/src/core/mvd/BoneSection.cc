@@ -306,7 +306,7 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
         PrivateContext *contextPtr = *context;
         addKeyframe0(keyframe, contextPtr->keyframes);
     }
-    else {
+    else if (m_modelRef) {
         PrivateContext *contextPtr = m_contextPtr = new PrivateContext();
         contextPtr->boneRef = m_modelRef->findBone(keyframe->name());
         BaseSectionContext::KeyframeCollection *kc = contextPtr->keyframes = new BaseSectionContext::KeyframeCollection();
