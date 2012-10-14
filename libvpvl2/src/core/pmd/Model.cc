@@ -1009,8 +1009,8 @@ void Model::parseBones(const DataInfo &info)
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         ptr += size;
     }
-    m_sortedBones.sort(BonePredication());
     Bone::loadBones(m_bones);
+    m_sortedBones.sort(BonePredication());
     performUpdate();
 }
 
