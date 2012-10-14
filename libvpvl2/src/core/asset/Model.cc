@@ -48,6 +48,10 @@ Model::Model(IEncoding *encoding)
       m_comment(0),
       m_parentModelRef(0),
       m_parentBoneRef(0),
+      m_position(kZeroV3),
+      m_rotation(Quaternion::getIdentity()),
+      m_opacity(1),
+      m_scaleFactor(10),
       m_visible(false)
 {
 }
@@ -61,6 +65,10 @@ Model::~Model()
     m_parentBoneRef = 0;
     m_parentModelRef = 0;
     m_encodingRef = 0;
+    m_position.setZero();
+    m_rotation.setValue(0, 0, 0, 1);
+    m_opacity = 0;
+    m_scaleFactor = 0;
     m_visible = false;
 }
 
