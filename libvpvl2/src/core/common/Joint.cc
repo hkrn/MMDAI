@@ -187,11 +187,11 @@ btGeneric6DofSpringConstraint *Joint::createConstraint()
     const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
             &transformB = bodyB->getWorldTransform().inverse() * transform;
     btGeneric6DofSpringConstraint *constraint = m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
+#ifdef VPVL2_COORDINATE_OPENGL
     const Vector3 &positionLowerLimit = m_positionLowerLimit;
     const Vector3 &positionUpperLimit = m_positionUpperLimit;
     const Vector3 &rotationLowerLimit = m_positionLowerLimit;
     const Vector3 &rotationUpperLimit = m_positionUpperLimit;
-#ifdef VPVL2_COORDINATE_OPENGL
     constraint->setLinearUpperLimit(Vector3(positionUpperLimit[0], positionUpperLimit[1], -positionLowerLimit[2]));
     constraint->setLinearLowerLimit(Vector3(positionLowerLimit[0], positionLowerLimit[1], -positionUpperLimit[2]));
     constraint->setAngularUpperLimit(Vector3(-rotationLowerLimit[0], -rotationLowerLimit[1], rotationUpperLimit[2]));
@@ -203,13 +203,19 @@ btGeneric6DofSpringConstraint *Joint::createConstraint()
     constraint->setAngularLowerLimit(m_rotationUpperLimit);
 #endif /* VPVL2_COORDINATE_OPENGL */
     for (int i = 0; i < 3; i++) {
-        const Scalar &value = m_rotationStiffness[i];
+        const Scalar &value = m_positionStiffness[i];
         if (!btFuzzyZero(value)) {
-            int index = i + 3;
-            constraint->enableSpring(index, true);
-            constraint->setStiffness(index, value);
+            constraint->enableSpring(i, true);
+            constraint->setStiffness(i, value);
         }
     }
+    for (int i = 0; i < 3; i++) {
+        const Scalar &value = m_rotationStiffness[i];
+        int index = i + 3;
+        constraint->enableSpring(index, true);
+        constraint->setStiffness(index, value);
+    }
+    constraint->setEquilibriumPoint();
     constraint->setUserConstraintPtr(this);
     return constraint;
 #else /* VPVL2_NO_BULLET */
