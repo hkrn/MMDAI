@@ -611,6 +611,11 @@ IString *Delegate::toUnicode(const uint8_t *value) const
     return new(std::nothrow) CString(s);
 }
 
+bool Delegate::hasExtension(const char *name) const
+{
+    return m_extensions.contains(name);
+}
+
 void Delegate::setArchive(Archive *value)
 {
     delete m_archive;
@@ -784,6 +789,10 @@ void Delegate::initialize(bool enableMSAA)
     initializeGLFunctions(context);
     if (enableMSAA)
         glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+    const QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    foreach (const QString &extension, extensions.split(' ', QString::SkipEmptyParts)) {
+        m_extensions.insert(extension.trimmed());
+    }
 #ifndef __APPLE__
     glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(context->getProcAddress("glBlitFramebuffer"));
     glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));

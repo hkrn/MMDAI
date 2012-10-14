@@ -241,6 +241,8 @@ public:
      */
     virtual IString *toUnicode(const uint8_t *str) const = 0;
 
+    virtual bool hasExtension(const char *name) const = 0;
+
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     /**
      * トゥーン色を取得します。

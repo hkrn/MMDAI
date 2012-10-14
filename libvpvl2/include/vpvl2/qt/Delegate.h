@@ -97,6 +97,8 @@ public:
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
+    bool hasExtension(const char *name) const;
+
     IModel *effectOwner(const IEffect *effect) const;
     IModel *findModel(const IString *name) const;
     void setRenderColorTargets(const void *targets, const int ntargets);
@@ -177,6 +179,7 @@ private:
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;
+    QSet<QString> m_extensions;
     Vector4 m_mouseCursorPosition;
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
