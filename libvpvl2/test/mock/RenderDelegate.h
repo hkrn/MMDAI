@@ -1,5 +1,3 @@
-#include <vpvl2/IRenderDelegate.h>
-
 namespace vpvl2 {
 
 class MockIRenderDelegate : public IRenderDelegate {
@@ -22,6 +20,8 @@ class MockIRenderDelegate : public IRenderDelegate {
       IString*(KernelType type, void *context));
   MOCK_CONST_METHOD1(toUnicode,
       IString*(const uint8_t *str));
+  MOCK_CONST_METHOD1(hasExtension,
+      bool(const char *name));
   MOCK_METHOD4(getToonColor,
       void(const IString *name, const IString *dir, Color &value, void *context));
   MOCK_CONST_METHOD1(getViewport,
@@ -34,10 +34,10 @@ class MockIRenderDelegate : public IRenderDelegate {
       void(float &value, bool sync));
   MOCK_METHOD4(uploadAnimatedTexture,
       void(float offset, float speed, float seek, void *texture));
-  MOCK_CONST_METHOD1(effectOwner,
-      IModel*(const IEffect *effect));
   MOCK_CONST_METHOD1(findModel,
       IModel*(const IString *name));
+  MOCK_CONST_METHOD1(effectOwner,
+      IModel*(const IEffect *effect));
   MOCK_METHOD2(setRenderColorTargets,
       void(const void *targets, const int ntargets));
   MOCK_METHOD5(bindRenderColorTarget,
