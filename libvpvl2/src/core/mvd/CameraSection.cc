@@ -304,7 +304,7 @@ ICameraKeyframe *CameraSection::findKeyframe(const IKeyframe::TimeIndex &timeInd
     const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
     const int nkeyframes = keyframes->count();
     for (int i = 0; i < nkeyframes; i++) {
-        ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes->at(i));
+        mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(i));
         if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
             return keyframe;
         }
@@ -317,7 +317,7 @@ ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
     if (m_contextPtr) {
         const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
         if (internal::checkBound(index, 0, keyframes->count())) {
-            ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes->at(index));
+            mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(index));
             return keyframe;
         }
     }

@@ -322,7 +322,7 @@ IMorphKeyframe *MorphSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex
         const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
         const int nkeyframes = keyframes->count();
         for (int i = 0; i < nkeyframes; i++) {
-            IMorphKeyframe *keyframe = reinterpret_cast<IMorphKeyframe *>(keyframes->at(i));
+            mvd::MorphKeyframe *keyframe = reinterpret_cast<mvd::MorphKeyframe *>(keyframes->at(i));
             if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
                 return keyframe;
             }
@@ -334,7 +334,7 @@ IMorphKeyframe *MorphSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex
 IMorphKeyframe *MorphSection::findKeyframeAt(int index) const
 {
     if (internal::checkBound(index, 0, m_allKeyframeRefs.count())) {
-        IMorphKeyframe *keyframe = reinterpret_cast<IMorphKeyframe *>(m_allKeyframeRefs[index]);
+        mvd::MorphKeyframe *keyframe = reinterpret_cast<mvd::MorphKeyframe *>(m_allKeyframeRefs[index]);
         return keyframe;
     }
     return 0;

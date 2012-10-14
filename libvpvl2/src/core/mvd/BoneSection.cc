@@ -350,7 +350,7 @@ IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
         const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
         const int nkeyframes = keyframes->count();
         for (int i = 0; i < nkeyframes; i++) {
-            IBoneKeyframe *keyframe = reinterpret_cast<IBoneKeyframe *>(keyframes->at(i));
+            mvd::BoneKeyframe *keyframe = reinterpret_cast<mvd::BoneKeyframe *>(keyframes->at(i));
             if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
                 return keyframe;
             }
@@ -362,7 +362,7 @@ IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
 IBoneKeyframe *BoneSection::findKeyframeAt(int index) const
 {
     if (internal::checkBound(index, 0, m_allKeyframeRefs.count())) {
-        IBoneKeyframe *keyframe = reinterpret_cast<IBoneKeyframe *>(m_allKeyframeRefs[index]);
+        mvd::BoneKeyframe *keyframe = reinterpret_cast<mvd::BoneKeyframe *>(m_allKeyframeRefs[index]);
         return keyframe;
     }
     return 0;
