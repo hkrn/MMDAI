@@ -71,6 +71,7 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <set>
 
 /* Open Asset Import Library */
 #ifdef VPVL2_LINK_ASSIMP
@@ -153,6 +154,11 @@ public:
                                                   0x0000ff00,
                                                   0x00ff0000,
                                                   0xff000000);
+        std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+        std::string extension;
+        while (std::getline(in, extension, ' ')) {
+            m_extensions.insert(extension);
+        }
     }
     ~Delegate()
     {
@@ -354,6 +360,9 @@ public:
         const char *s = reinterpret_cast<const char *>(str);
         return new(std::nothrow) String(UnicodeString(s, strlen(s), "shift_jis"));
     }
+    bool hasExtension(const char *name) const {
+        return m_extensions.find(name) != m_extensions.end();
+    }
 
     IString *loadShaderSource(ShaderType /* type */, const IString * /* path */) {
         return 0;
@@ -488,6 +497,7 @@ private:
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
     SDL_Surface *m_colorSwapSurface;
+    std::set<std::string> m_extensions;
 };
 
 struct UIContext

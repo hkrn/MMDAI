@@ -45,8 +45,8 @@ set(vpvl2_public_headers
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/Joint.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/RigidBody.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/Joint.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/RigidBody.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/BaseSection.h
@@ -70,10 +70,10 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Joint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Material.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Material.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
-	${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/RigidBody.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/RigidBody.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Vertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h
@@ -239,11 +239,12 @@ function(link_devil target)
 endfunction()
 
 function(link_icu_or_iconv target)
+  find_library(ICU_LIBRARY_I18N icui18n)
   find_library(ICU_LIBRARY_UC icuuc)
   find_path(ICU_INCLUDE_DIRS unicode/unistr.h)
-  if(ICU_LIBRARY_UC AND ICU_INCLUDE_DIRS)
+  if(ICU_LIBRARY_I18N AND ICU_LIBRARY_UC AND ICU_INCLUDE_DIRS)
     add_definitions(-DVPVL2_HAS_ICU)
-    target_link_libraries(${target} ${ICU_LIBRARY_IO} ${ICU_LIBRARY_UC})
+    target_link_libraries(${target} ${ICU_LIBRARY_I18N} ${ICU_LIBRARY_IO} ${ICU_LIBRARY_UC})
     include_directories(${ICU_INCLUDE_DIRS})
   else()
     find_library(ICONV_LIBRARY iconv)
@@ -473,7 +474,6 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2))
   link_bullet(vpvl2_sdl)
   link_glew(vpvl2_sdl)
   link_icu_or_iconv(vpvl2_sdl)
-  link_vpvl(vpvl2_sdl)
 endif()
 
 # generate configuration
