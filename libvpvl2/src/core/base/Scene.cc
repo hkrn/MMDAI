@@ -332,7 +332,7 @@ struct Scene::PrivateContext {
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
     Hash<HashPtr, IRenderEngine *> model2engineRef;
-    Hash<HashPtr, IModel *> name2modelRef;
+    Hash<HashString, IModel *> name2modelRef;
     Array<IModel *> models;
     Array<IMotion *> motions;
     Array<IRenderEngine *> engines;
@@ -423,15 +423,18 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
 
 void Scene::addModel(IModel *model, IRenderEngine *engine)
 {
-    m_context->models.add(model);
-    m_context->engines.add(engine);
-    m_context->model2engineRef.insert(model, engine);
-    m_context->name2modelRef.insert(model->name(), model);
+    if (model && engine) {
+        m_context->models.add(model);
+        m_context->engines.add(engine);
+        m_context->model2engineRef.insert(model, engine);
+        m_context->name2modelRef.insert(model->name()->toHashString(), model);
+    }
 }
 
 void Scene::addMotion(IMotion *motion)
 {
-    m_context->motions.add(motion);
+    if (motion)
+        m_context->motions.add(motion);
 }
 
 IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
@@ -476,7 +479,8 @@ void Scene::deleteModel(IModel *&model)
 
 void Scene::removeMotion(IMotion *motion)
 {
-    m_context->motions.remove(motion);
+    if (motion)
+        m_context->motions.remove(motion);
 }
 
 void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
@@ -600,7 +604,7 @@ const Array<IRenderEngine *> &Scene::renderEngines() const
 
 IModel *Scene::findModel(const IString *name) const
 {
-    IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name));
+    IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name->toHashString()));
     return model ? *model : 0;
 }
 

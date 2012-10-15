@@ -51,6 +51,7 @@ SOURCES += main.cc \
     ArchiveTest.cc \
     EffectTest.cc \
     FactoryTest.cc \
+    SceneTest.cc \
     Common.cc
 
 RESOURCES += \
