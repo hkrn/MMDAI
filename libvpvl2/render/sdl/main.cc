@@ -94,6 +94,82 @@ namespace {
 using namespace vpvl2;
 using namespace vpvl2::icu;
 
+class World {
+public:
+    World()
+        : m_dispatcher(0),
+          m_broadphase(0),
+          m_solver(0),
+          m_world(0),
+          m_motionFPS(0),
+          m_fixedTimeStep(0),
+          m_maxSubSteps(0)
+    {
+        m_dispatcher = new btCollisionDispatcher(&m_config);
+        m_broadphase = new btDbvtBroadphase();
+        m_solver = new btSequentialImpulseConstraintSolver();
+        m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
+        setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
+        setPreferredFPS(vpvl2::Scene::defaultFPS());
+    }
+    ~World() {
+        const int nmodels = m_modelRefs.count();
+        for (int i = 0; i < nmodels; i++) {
+            removeModel(m_modelRefs[i]);
+        }
+        delete m_dispatcher;
+        m_dispatcher = 0;
+        delete m_broadphase;
+        m_broadphase = 0;
+        delete m_solver;
+        m_solver = 0;
+        delete m_world;
+        m_world = 0;
+        m_motionFPS = 0;
+        m_maxSubSteps = 0;
+        m_fixedTimeStep = 0;
+    }
+    const vpvl2::Vector3 gravity() const { return m_world->getGravity(); }
+    void setGravity(const vpvl2::Vector3 &value) { m_world->setGravity(value); }
+    unsigned long randSeed() const { return m_solver->getRandSeed(); }
+    void setRandSeed(unsigned long value) { m_solver->setRandSeed(value); }
+    void setPreferredFPS(const vpvl2::Scalar &value) {
+        m_motionFPS = value;
+        m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
+        m_fixedTimeStep = 1.0 / value;
+    }
+    void addModel(vpvl2::IModel *value) {
+        value->joinWorld(m_world);
+        m_modelRefs.add(value);
+    }
+    void removeModel(vpvl2::IModel *value) {
+        value->leaveWorld(m_world);
+        m_modelRefs.remove(value);
+    }
+    void addRigidBody(btRigidBody *value) {
+        m_world->addRigidBody(value);
+    }
+    void removeRigidBody(btRigidBody *value) {
+        m_world->removeRigidBody(value);
+    }
+    void stepSimulation(const vpvl2::Scalar &delta) {
+        m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
+    }
+
+private:
+    btDefaultCollisionConfiguration m_config;
+    btCollisionDispatcher *m_dispatcher;
+    btDbvtBroadphase *m_broadphase;
+    btSequentialImpulseConstraintSolver *m_solver;
+    btDiscreteDynamicsWorld *m_world;
+    vpvl2::Scalar m_motionFPS;
+    Array<IModel *> m_modelRefs;
+    Scalar m_fixedTimeStep;
+    int m_maxSubSteps;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(World)
+};
+
 static bool UILoadFile(const UnicodeString &path, std::string &bytes)
 {
     bytes.clear();
@@ -779,6 +855,7 @@ int main(int /* argc */, char ** /* argv[] */)
     Factory factory(&encoding);
     Scene scene;
     Delegate delegate(&scene, &config);
+    World world;
     bool ok = false;
     const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];
     if (vpvl2::icu::String::toBoolean(config["enable.opencl"])) {
@@ -800,6 +877,8 @@ int main(int /* argc */, char ** /* argv[] */)
             IRenderEngine *engine = scene.createRenderEngine(&delegate, model, flags);
             model->setEdgeWidth(float(vpvl2::icu::String::toDouble(config[prefix + "/edge.width"])));
             if (engine->upload(&dir)) {
+                if (String::toBoolean(config[prefix + "/enable.physics"]))
+                    world.addModel(model);
                 scene.addModel(model, engine);
                 if (UILoadFile(motionPath, data)) {
                     IMotion *motion = factory.createMotion(UICastData(data), data.size(), model, ok);
@@ -837,9 +916,17 @@ int main(int /* argc */, char ** /* argv[] */)
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     context.windowRef = window;
 #endif
+    Uint32 prev = SDL_GetTicks();
+    scene.seek(0, Scene::kUpdateAll);
+    scene.update(Scene::kUpdateAll | Scene::kResetMotionState);
     while (context.active) {
         UIProceedEvents(context);
         UIDrawScreen(context);
+        Uint32 current = SDL_GetTicks();
+        Scalar delta = (current - prev) / 60.0;
+        prev = current;
+        scene.advance(delta, Scene::kUpdateAll);
+        world.stepSimulation(delta);
         scene.update(Scene::kUpdateAll);
         context.updateFPS();
     }
