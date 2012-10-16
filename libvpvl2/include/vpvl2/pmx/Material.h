@@ -172,6 +172,9 @@ public:
     bool isShadowMapDrawn() const;
     bool isSelfShadowDrawn() const;
     bool isEdgeDrawn() const;
+    bool hasVertexColor() const;
+    bool isPointDraw() const;
+    bool isLineDraw() const;
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);

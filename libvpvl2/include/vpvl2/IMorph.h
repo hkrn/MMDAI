@@ -67,6 +67,8 @@ public:
         kUVA3,
         kUVA4,
         kMaterial,
+        kFlip,
+        kImpulse,
         kMaxMorphType
     };
     enum Category {

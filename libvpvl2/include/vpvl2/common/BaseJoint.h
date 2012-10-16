@@ -42,10 +42,10 @@
 #include "vpvl2/common/BaseRigidBody.h"
 
 #ifndef VPVL2_NO_BULLET
-class btGeneric6DofConstraint;
+class btTypedConstraint;
 class btGeneric6DofSpringConstraint;
 #else
-BT_DECLARE_HANDLE(btGeneric6DofConstraint);
+BT_DECLARE_HANDLE(btTypedConstraint);
 BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint);
 #endif
 
@@ -57,10 +57,20 @@ namespace common
 class VPVL2_API BaseJoint
 {
 public:
+    enum Type {
+        kGeneric6DofSpringConstraint,
+        kGeneric6DofConstraint,
+        kPoint2PointConstraint,
+        kConeTwistConstraint,
+        kSliderConstraint,
+        kHingeConstraint,
+        kMaxType
+    };
+
     BaseJoint();
     virtual ~BaseJoint();
 
-    btGeneric6DofSpringConstraint *constraint() const { return m_constraint; }
+    btTypedConstraint *constraint() const { return m_constraint; }
     BaseRigidBody *rigidBody1() const { return m_rigidBody1Ref; }
     BaseRigidBody *rigidBody2() const { return m_rigidBody2Ref; }
     int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
@@ -91,13 +101,15 @@ public:
     void setRotationStiffness(const Vector3 &value);
     void setIndex(int value);
 
-    virtual btGeneric6DofSpringConstraint *createConstraint();
+    virtual btTypedConstraint *createConstraint();
 
 protected:
+    btGeneric6DofSpringConstraint *createGeneric6DofSpringConstraint();
+    void setJointTransform(Transform &transform) const;
     void build(int index);
 
-    btGeneric6DofSpringConstraint *m_constraint;
-    btGeneric6DofSpringConstraint *m_ptr;
+    btTypedConstraint *m_constraint;
+    btTypedConstraint *m_ptr;
     BaseRigidBody *m_rigidBody1Ref;
     BaseRigidBody *m_rigidBody2Ref;
     IString *m_name;
@@ -110,6 +122,7 @@ protected:
     Vector3 m_rotationUpperLimit;
     Vector3 m_positionStiffness;
     Vector3 m_rotationStiffness;
+    Type m_type;
     int m_rigidBodyIndex1;
     int m_rigidBodyIndex2;
     int m_index;

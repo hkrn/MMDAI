@@ -158,6 +158,7 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             boneSize = info.boneIndexSize * 2 + sizeof(Bdef2Unit);
             break;
         case 2: /* BDEF4 */
+        case 4: /* QDEF */
             boneSize = info.boneIndexSize * 4 + sizeof(Bdef4Unit);
             break;
         case 3: /* SDEF */
@@ -213,7 +214,9 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
             }
             break;
         }
-        case kBdef4: {
+        case kBdef4:
+        case kQdef:
+        {
             for (int j = 0; j < 4; j++) {
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
@@ -268,11 +271,11 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     m_type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
     ptr += sizeof(uint8_t);
     switch (m_type) {
-    case kBdef1: { /* BDEF1 */
+    case kBdef1: {
         m_boneIndices[0] = internal::readSignedIndex(ptr, info.boneIndexSize);
         break;
     }
-    case kBdef2: { /* BDEF2 */
+    case kBdef2: {
         for (int i = 0; i < 2; i++)
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         Bdef2Unit unit;
@@ -281,7 +284,9 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         ptr += sizeof(unit);
         break;
     }
-    case kBdef4: { /* BDEF4 */
+    case kBdef4:
+    case kQdef:
+    {
         for (int i = 0; i < 4; i++)
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         Bdef4Unit unit;
@@ -291,7 +296,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         ptr += sizeof(unit);
         break;
     }
-    case kSdef: { /* SDEF */
+    case kSdef: {
         for (int i = 0; i < 2; i++)
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         SdefUnit unit;
@@ -333,24 +338,26 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_type), sizeof(uint8_t), data);
     int boneIndexSize = info.boneIndexSize;
     switch (m_type) {
-    case kBdef1: { /* BDEF1 */
+    case kBdef1: {
         internal::writeSignedIndex(m_boneIndices[0], boneIndexSize, data);
         break;
     }
-    case kBdef2: { /* BDEF2 */
+    case kBdef2: {
         for (int i = 0; i < 2; i++)
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[0]), sizeof(m_weight[0]), data);
         break;
     }
-    case kBdef4: { /* BDEF4 */
+    case kBdef4:
+    case kQdef:
+    {
         for (int i = 0; i < 4; i++)
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
         for (int i = 0; i < 4; i++)
             internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[i]), sizeof(m_weight[i]), data);
         break;
     }
-    case kSdef: { /* SDEF */
+    case kSdef: {
         for (int i = 0; i < 2; i++)
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
         SdefUnit unit;
@@ -382,16 +389,17 @@ size_t Vertex::estimateSize(const Model::DataInfo &info) const
     size += sizeof(uint8_t);
     size += sizeof(m_edgeSize);
     switch (m_type) {
-    case kBdef1: /* BDEF1 */
+    case kBdef1:
         size += info.boneIndexSize;
         break;
-    case kBdef2: /* BDEF2 */
+    case kBdef2:
         size += info.boneIndexSize * 2 + sizeof(m_weight[0]);
         break;
-    case kBdef4: /* BDEF4 */
+    case kBdef4:
+    case kQdef:
         size += info.boneIndexSize * 4 + sizeof(m_weight);
         break;
-    case kSdef: /* SDEF */
+    case kSdef:
         size += info.boneIndexSize * 2 + sizeof(SdefUnit);
         break;
     default: /* unexpected value */

@@ -157,27 +157,20 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     internal::size8(ptr, rest, nNameSize);
-    switch (nNameSize) {
-    case 0: {
-        m_rigidBodyIndex1 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
-        m_rigidBodyIndex2 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
-        JointUnit unit;
-        internal::getData(ptr, unit);
-        internal::setPositionRaw(unit.position, m_position);
-        internal::setPositionRaw(unit.rotation, m_rotation);
-        internal::setPositionRaw(unit.positionLowerLimit, m_positionLowerLimit);
-        internal::setPositionRaw(unit.rotationLowerLimit, m_rotationLowerLimit);
-        internal::setPositionRaw(unit.positionUpperLimit, m_positionUpperLimit);
-        internal::setPositionRaw(unit.rotationUpperLimit, m_rotationUpperLimit);
-        internal::setPositionRaw(unit.positionStiffness, m_positionStiffness);
-        internal::setPositionRaw(unit.rotationStiffness, m_rotationStiffness);
-        ptr += sizeof(unit);
-        break;
-    }
-    default:
-        assert(0);
-        return;
-    }
+    m_type = static_cast<Type>(nNameSize);
+    m_rigidBodyIndex1 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
+    m_rigidBodyIndex2 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
+    JointUnit unit;
+    internal::getData(ptr, unit);
+    internal::setPositionRaw(unit.position, m_position);
+    internal::setPositionRaw(unit.rotation, m_rotation);
+    internal::setPositionRaw(unit.positionLowerLimit, m_positionLowerLimit);
+    internal::setPositionRaw(unit.rotationLowerLimit, m_rotationLowerLimit);
+    internal::setPositionRaw(unit.positionUpperLimit, m_positionUpperLimit);
+    internal::setPositionRaw(unit.rotationUpperLimit, m_rotationUpperLimit);
+    internal::setPositionRaw(unit.positionStiffness, m_positionStiffness);
+    internal::setPositionRaw(unit.rotationStiffness, m_rotationStiffness);
+    ptr += sizeof(unit);
     size = ptr - start;
 }
 
@@ -185,7 +178,7 @@ void Joint::write(uint8_t *data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
-    uint8_t type = 0;
+    uint8_t type = m_type;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&type), sizeof(type), data);
     size_t rigidBodyIndexSize = info.rigidBodyIndexSize;
     internal::writeSignedIndex(m_rigidBodyIndex1, rigidBodyIndexSize, data);

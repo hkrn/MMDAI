@@ -40,10 +40,7 @@
 #include "vpvl2/common/BaseJoint.h"
 
 #ifndef VPVL2_NO_BULLET
-#include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
-#else
-BT_DECLARE_HANDLE(btGeneric6DofConstraint);
-BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint);
+#include <btBulletDynamicsCommon.h>
 #endif
 
 namespace vpvl2
@@ -66,6 +63,7 @@ BaseJoint::BaseJoint()
       m_rotationUpperLimit(kZeroV3),
       m_positionStiffness(kZeroV3),
       m_rotationStiffness(kZeroV3),
+      m_type(kGeneric6DofSpringConstraint),
       m_rigidBodyIndex1(-1),
       m_rigidBodyIndex2(-1),
       m_index(-1)
@@ -164,29 +162,132 @@ void BaseJoint::setIndex(int value)
     m_index = value;
 }
 
-btGeneric6DofSpringConstraint *BaseJoint::createConstraint()
+btTypedConstraint *BaseJoint::createConstraint()
 {
 #ifndef VPVL2_NO_BULLET
-    Transform transform = Transform::getIdentity();
-    Matrix3x3 basis;
-    const Vector3 &position = m_position;
-    const Vector3 &rotation = m_rotation;
+    btTypedConstraint *ptr = 0;
+    switch (m_type) {
+    case kGeneric6DofSpringConstraint: {
+        btGeneric6DofSpringConstraint *constraint = createGeneric6DofSpringConstraint();
+        for (int i = 0; i < 3; i++) {
+            const Scalar &value = m_positionStiffness[i];
+            if (!btFuzzyZero(value)) {
+                constraint->enableSpring(i, true);
+                constraint->setStiffness(i, value);
+            }
+        }
+        for (int i = 0; i < 3; i++) {
+            const Scalar &value = m_rotationStiffness[i];
+            int index = i + 3;
+            constraint->enableSpring(index, true);
+            constraint->setStiffness(index, value);
+        }
+        constraint->setEquilibriumPoint();
+        ptr = constraint;
+    }
+    case kGeneric6DofConstraint: {
+        ptr = createGeneric6DofSpringConstraint();
+        break;
+    }
+    case kPoint2PointConstraint: {
+        // FIXME: correct construction parameter
+        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        m_ptr = new btPoint2PointConstraint(*bodyA, *bodyB, kZeroV3, kZeroV3);
+        btPoint2PointConstraint *constraint = static_cast<btPoint2PointConstraint *>(m_ptr);
+        ptr = constraint;
+        break;
+    }
+    case kConeTwistConstraint: {
+        Transform transform;
+        setJointTransform(transform);
+        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
+                &transformB = bodyB->getWorldTransform().inverse() * transform;
+        m_ptr = new btConeTwistConstraint(*bodyA, *bodyB, transformA, transformB);
+        btConeTwistConstraint *constraint = static_cast<btConeTwistConstraint *>(m_ptr);
+        constraint->setLimit(m_rotationLowerLimit.x(), m_rotationLowerLimit.y(), m_rotationLowerLimit.z(),
+                             m_positionStiffness.x(), m_positionStiffness.y(), m_positionStiffness.z());
+        constraint->setDamping(m_positionLowerLimit.x());
+        constraint->setFixThresh(m_positionUpperLimit.x());
+        bool enableMotor = btFuzzyZero(m_positionLowerLimit.z());
+        constraint->enableMotor(enableMotor);
+        if (enableMotor) {
+            constraint->setMaxMotorImpulse(m_positionUpperLimit.z());
+            Quaternion rotation;
 #ifdef VPVL2_COORDINATE_OPENGL
-    Matrix3x3 mx, my, mz;
-    mx.setEulerZYX(-rotation[0], 0.0f, 0.0f);
-    my.setEulerZYX(0.0f, -rotation[1], 0.0f);
-    mz.setEulerZYX(0.0f, 0.0f, rotation[2]);
-    basis = my * mz * mx;
-    transform.setOrigin(Vector3(position[0], position[1], -position[2]));
-#else  /* VPVL2_COORDINATE_OPENGL */
-    basis.setEulerZYX(rotation[0], rotation[1], rotation[2]);
-    transform.setOrigin(m_position);
-#endif /* VPVL2_COORDINATE_OPENGL */
-    transform.setBasis(basis);
+            rotation.setEulerZYX(-m_rotationStiffness.x(), -m_rotationStiffness.y(), m_rotationStiffness.z());
+#else
+            rotation.setEuler(m_rotationStiffness.x(), m_rotationStiffness.y(), m_rotationStiffness.z());
+#endif
+            constraint->setMotorTargetInConstraintSpace(rotation);
+        }
+        ptr = constraint;
+        break;
+    }
+    case kSliderConstraint: {
+        Transform transform;
+        setJointTransform(transform);
+        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
+                &transformB = bodyB->getWorldTransform().inverse() * transform;
+        m_ptr = new btSliderConstraint(*bodyA, *bodyB, transformA, transformB, true);
+        btSliderConstraint *constraint = static_cast<btSliderConstraint *>(m_ptr);
+        constraint->setLowerLinLimit(m_positionLowerLimit.x());
+        constraint->setUpperLinLimit(m_positionUpperLimit.x());
+        constraint->setLowerAngLimit(m_rotationLowerLimit.x());
+        constraint->setUpperAngLimit(m_rotationUpperLimit.x());
+        bool enablePoweredLinMotor = btFuzzyZero(m_positionStiffness.x());
+        constraint->setPoweredLinMotor(enablePoweredLinMotor);
+        if (enablePoweredLinMotor) {
+            constraint->setTargetLinMotorVelocity(m_positionStiffness.y());
+            constraint->setMaxLinMotorForce(m_positionStiffness.z());
+        }
+        bool enablePoweredAngMotor = btFuzzyZero(m_rotationStiffness.x());
+        constraint->setPoweredAngMotor(enablePoweredAngMotor);
+        if (enablePoweredAngMotor) {
+            constraint->setTargetAngMotorVelocity(m_rotationStiffness.y());
+            constraint->setMaxAngMotorForce(m_rotationStiffness.z());
+        }
+        break;
+    }
+    case kHingeConstraint: {
+        Transform transform;
+        setJointTransform(transform);
+        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
+                &transformB = bodyB->getWorldTransform().inverse() * transform;
+        m_ptr = new btHingeConstraint(*bodyA, *bodyB, transformA, transformB);
+        btHingeConstraint *constraint = static_cast<btHingeConstraint *>(m_ptr);
+        constraint->setLimit(m_rotationLowerLimit.x(), m_rotationUpperLimit.y(), m_positionStiffness.x(),
+                             m_positionStiffness.y(), m_positionStiffness.z());
+        bool enableMotor = btFuzzyZero(m_rotationStiffness.z());
+        constraint->enableMotor(enableMotor);
+        if (enableMotor) {
+            constraint->enableAngularMotor(enableMotor, m_rotationStiffness.y(), m_rotationStiffness.z());
+        }
+        ptr = constraint;
+        break;
+    }
+    case kMaxType:
+    default:
+        break;
+    }
+    ptr->setUserConstraintPtr(this);
+    return ptr;
+#else /* VPVL2_NO_BULLET */
+    return 0;
+#endif
+}
+
+btGeneric6DofSpringConstraint *BaseJoint::createGeneric6DofSpringConstraint()
+{
+    Transform transform;
     btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+    setJointTransform(transform);
     const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
             &transformB = bodyB->getWorldTransform().inverse() * transform;
-    btGeneric6DofSpringConstraint *constraint = m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
+    m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
+    btGeneric6DofSpringConstraint *constraint = static_cast<btGeneric6DofSpringConstraint *>(m_ptr);
 #ifdef VPVL2_COORDINATE_OPENGL
     const Vector3 &positionLowerLimit = m_positionLowerLimit;
     const Vector3 &positionUpperLimit = m_positionUpperLimit;
@@ -202,25 +303,24 @@ btGeneric6DofSpringConstraint *BaseJoint::createConstraint()
     constraint->setAngularUpperLimit(m_rotationLowerLimit);
     constraint->setAngularLowerLimit(m_rotationUpperLimit);
 #endif /* VPVL2_COORDINATE_OPENGL */
-    for (int i = 0; i < 3; i++) {
-        const Scalar &value = m_positionStiffness[i];
-        if (!btFuzzyZero(value)) {
-            constraint->enableSpring(i, true);
-            constraint->setStiffness(i, value);
-        }
-    }
-    for (int i = 0; i < 3; i++) {
-        const Scalar &value = m_rotationStiffness[i];
-        int index = i + 3;
-        constraint->enableSpring(index, true);
-        constraint->setStiffness(index, value);
-    }
-    constraint->setEquilibriumPoint();
-    constraint->setUserConstraintPtr(this);
     return constraint;
-#else /* VPVL2_NO_BULLET */
-    return 0;
-#endif
+}
+
+void BaseJoint::setJointTransform(Transform &transform) const
+{
+    Matrix3x3 basis;
+#ifdef VPVL2_COORDINATE_OPENGL
+    Matrix3x3 mx, my, mz;
+    mx.setEulerZYX(-m_rotation[0], 0.0f, 0.0f);
+    my.setEulerZYX(0.0f, -m_rotation[1], 0.0f);
+    mz.setEulerZYX(0.0f, 0.0f, m_rotation[2]);
+    basis = my * mz * mx;
+    transform.setOrigin(Vector3(m_position[0], m_position[1], -m_position[2]));
+#else  /* VPVL2_COORDINATE_OPENGL */
+    basis.setEulerZYX(m_rotation[0], m_rotation[1], m_rotation[2]);
+    transform.setOrigin(m_position);
+#endif /* VPVL2_COORDINATE_OPENGL */
+    transform.setBasis(basis);
 }
 
 void BaseJoint::build(int index)

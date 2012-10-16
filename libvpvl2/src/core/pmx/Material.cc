@@ -363,22 +363,37 @@ bool Material::isCullFaceDisabled() const
 }
 bool Material::hasShadow() const
 {
-    return internal::hasFlagBits(m_flags, 0x02);
+    return internal::hasFlagBits(m_flags, 0x02) && !isPointDraw();
 }
 
 bool Material::isShadowMapDrawn() const
 {
-    return internal::hasFlagBits(m_flags, 0x04);
+    return internal::hasFlagBits(m_flags, 0x04 && !isPointDraw());
 }
 
 bool Material::isSelfShadowDrawn() const
 {
-    return internal::hasFlagBits(m_flags, 0x08);
+    return internal::hasFlagBits(m_flags, 0x08) && !isPointDraw();
 }
 
 bool Material::isEdgeDrawn() const
 {
-    return internal::hasFlagBits(m_flags, 0x10);
+    return internal::hasFlagBits(m_flags, 0x10) && !isPointDraw() && !isLineDraw();
+}
+
+bool Material::hasVertexColor() const
+{
+    return internal::hasFlagBits(m_flags, 0x20);
+}
+
+bool Material::isPointDraw() const
+{
+    return internal::hasFlagBits(m_flags, 0x40);
+}
+
+bool Material::isLineDraw() const
+{
+    return internal::hasFlagBits(m_flags, 0x80);
 }
 
 void Material::setName(const IString *value)

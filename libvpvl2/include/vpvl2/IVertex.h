@@ -51,6 +51,7 @@ public:
         kBdef2,
         kBdef4,
         kSdef,
+        kQdef,
         kMaxType
     };
 

@@ -40,6 +40,7 @@
 #define VPVL2_PMX_RIGIDBODY_H_
 
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/pmx/Morph.h"
 #include "vpvl2/common/BaseRigidBody.h"
 
 class btCollisionShape;
@@ -74,6 +75,7 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
+    void mergeMorph(const Morph::Impulse *morph, const IMorph::WeightPrecision &weight);
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
