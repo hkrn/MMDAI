@@ -62,7 +62,7 @@ enum VertexBufferObjectType
     kMaxVertexBufferObjectType
 };
 
-enum VertexArrayObjectTyep
+enum VertexArrayObjectType
 {
     kEvenVertexArrayObject,
     kMaxVertexArrayObjectType
@@ -632,7 +632,9 @@ bool PMXRenderEngine::upload(const IString *dir)
     }
     if (glGenVertexArraysPtr && glBindVertexArrayPtr) {
         glGenVertexArraysPtr(kMaxVertexArrayObjectType, m_context->vertexArrayObjects);
-        glBindVertexArrayPtr(m_context->vertexArrayObjects[kEvenVertexArrayObject]);
+        GLuint vao = m_context->vertexArrayObjects[kEvenVertexArrayObject];
+        glBindVertexArrayPtr(vao);
+        log0(context, IRenderDelegate::kLogInfo, "Created an vertex array object (ID=%d)", vao);
     }
     glGenBuffers(kMaxVertexBufferObjectType, m_context->vertexBufferObjects);
     const IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;

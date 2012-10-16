@@ -89,13 +89,19 @@ public:
 private:
     bool releaseContext0(void *context);
     void release();
+    void bindVertexBuffers();
+    void unbindVertexBuffers();
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
     enum VertexBufferObjectType {
         kModelDynamicVertexBuffer,
         kModelStaticVertexBuffer,
         kModelIndexBuffer,
-        kVertexBufferObjectMax
+        kMaxVertexBufferObjectType
+    };
+    enum VertexArrayObjectType {
+        kEvenVertexArrayObject,
+        kMaxVertexArrayObjectType
     };
     struct MaterialContext {
         MaterialContext()
@@ -108,6 +114,9 @@ private:
         GLuint sphereTextureID;
         Color toonTextureColor;
     };
+    typedef void (*PFNGLBINDVERTEXARRAY)(GLuint id);
+    typedef void (*PFNGLDELETEVERTEXARRAYS)(GLsizei n, const GLuint *ids);
+    typedef void (*PFNGLGENVERTEXARRAYS)(GLsizei n, GLuint *ids);
 
     const Scene *m_sceneRef;
     IRenderDelegate *m_delegateRef;
@@ -118,7 +127,8 @@ private:
     IModel::IStaticVertexBuffer *m_staticBuffer;
     IModel::IDynamicVertexBuffer *m_dynamicBuffer;
     IModel::IIndexBuffer *m_indexBuffer;
-    GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
+    GLuint m_vertexBufferObjects[kMaxVertexBufferObjectType];
+    GLuint m_vertexArrayObjects[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
@@ -128,6 +138,9 @@ private:
     Vector3 m_aabbMax;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
+    PFNGLBINDVERTEXARRAY glBindVertexArrayPtr;
+    PFNGLDELETEVERTEXARRAYS glDeleteVertexArraysPtr;
+    PFNGLGENVERTEXARRAYS glGenVertexArraysPtr;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };
