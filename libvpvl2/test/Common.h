@@ -12,7 +12,10 @@
 namespace vpvl2 {
 
 class IBone;
+class IBoneKeyframe;
+class ICameraKeyframe;
 class IMaterial;
+class IMorphKeyframe;
 class IVertex;
 
 std::ostream& operator <<(std::ostream &os, const Vector3 &value);
@@ -41,6 +44,7 @@ static const float kEpsilon = 0.000001;
 ::testing::AssertionResult CompareVector(const vpvl2::Vector4 &expected, const vpvl2::Vector4 &actual);
 ::testing::AssertionResult CompareVector(const vpvl2::Quaternion &expected, const vpvl2::Quaternion &actual);
 ::testing::AssertionResult CompareVector(const vpvl2::QuadWord &actual, const vpvl2::QuadWord &expected);
+
 ::testing::AssertionResult CompareBoneInterface(const vpvl2::IBone &expected, const vpvl2::IBone &actual);
 ::testing::AssertionResult CompareBone(const vpvl2::pmx::Bone &expected, const vpvl2::pmx::Bone &actual);
 ::testing::AssertionResult CompareJoint(const vpvl2::pmx::Joint &expected,
@@ -56,6 +60,13 @@ static const float kEpsilon = 0.000001;
 ::testing::AssertionResult CompareVertex(const vpvl2::pmx::Vertex &expected,
                                          const vpvl2::pmx::Vertex &actual,
                                          const vpvl2::Array<vpvl2::pmx::Bone *> &bones);
+
+::testing::AssertionResult CompareBoneKeyframe(const vpvl2::IBoneKeyframe &expected,
+                                               const vpvl2::IBoneKeyframe &actual);
+::testing::AssertionResult CompareCameraKeyframe(const vpvl2::ICameraKeyframe &expected,
+                                                 const vpvl2::ICameraKeyframe &actual);
+::testing::AssertionResult CompareMorphKeyframe(const vpvl2::IMorphKeyframe &expected,
+                                                const vpvl2::IMorphKeyframe &actual);
 
 void AssertMatrix(const float *expected, const float *actual);
 

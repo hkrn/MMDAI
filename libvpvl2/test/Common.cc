@@ -465,6 +465,101 @@ AssertionResult CompareVertex(const Vertex &expected, const Vertex &actual, cons
     return AssertionSuccess();
 }
 
+AssertionResult CompareBoneKeyframe(const IBoneKeyframe &expected, const IBoneKeyframe &actual)
+{
+    if (expected.timeIndex() != actual.timeIndex()) {
+        return AssertionFailure() << "IBoneKeyframe#timeIndex is not same: expected="
+                                  << expected.timeIndex() << " actual=" << actual.timeIndex();
+    }
+    if (expected.layerIndex() != actual.layerIndex()) {
+        return AssertionFailure() << "IBoneKeyframe#layerIndex is not same: expected="
+                                  << expected.layerIndex() << " actual=" << actual.layerIndex();
+    }
+    if (expected.name() && !expected.name()->equals(actual.name())) {
+        return AssertionFailure() << "IBoneKeyframe#name is not same: expected="
+                                  << expected.name() << " actual=" << actual.name();
+    }
+    if (expected.position() != actual.position()) {
+        return AssertionFailure() << "IBoneKeyframe#position is not same: expected="
+                                  << expected.position() << " actual=" << actual.position();
+    }
+    if (expected.rotation() != actual.rotation()) {
+        return AssertionFailure() << "IBoneKeyframe#rotation is not same: expected="
+                                  << expected.rotation() << " actual=" << actual.rotation();
+    }
+    Quaternion eq, aq;
+    for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
+        IBoneKeyframe::InterpolationType index = static_cast<IBoneKeyframe::InterpolationType>(i);
+        expected.getInterpolationParameter(index, eq);
+        actual.getInterpolationParameter(index, aq);
+        if (eq != aq) {
+            return AssertionFailure() << "IBoneKeyframe#getInterpolation(i, q) is not same: expected="
+                                      << eq << " actual=" << aq << " index=" << index;
+        }
+    }
+    return AssertionSuccess();
+}
+
+AssertionResult CompareCameraKeyframe(const ICameraKeyframe &expected, const ICameraKeyframe &actual)
+{
+    if (expected.timeIndex() != actual.timeIndex()) {
+        return AssertionFailure() << "ICameraKeyframe#timeIndex is not same: expected="
+                                  << expected.timeIndex() << " actual=" << actual.timeIndex();
+    }
+    if (expected.layerIndex() != actual.layerIndex()) {
+        return AssertionFailure() << "ICameraKeyframe#layerIndex is not same: expected="
+                                  << expected.layerIndex() << " actual=" << actual.layerIndex();
+    }
+    if (expected.position() != actual.position()) {
+        return AssertionFailure() << "ICameraKeyframe#position is not same: expected="
+                                  << expected.position() << " actual=" << actual.position();
+    }
+    if (expected.distance() != actual.distance()) {
+        return AssertionFailure() << "ICameraKeyframe#distance is not same: expected="
+                                  << expected.distance() << " actual=" << actual.distance();
+    }
+    if (expected.fov() != actual.fov()) {
+        return AssertionFailure() << "ICameraKeyframe#fov is not same: expected="
+                                  << expected.fov() << " actual=" << actual.fov();
+    }
+    if (expected.isPerspective() != actual.isPerspective()) {
+        return AssertionFailure() << "ICameraKeyframe#isPerspective is not same: expected="
+                                  << expected.isPerspective() << " actual=" << actual.isPerspective();
+    }
+    Quaternion eq, aq;
+    for (int i = 2; i < ICameraKeyframe::kMaxInterpolationType; i++) { /* skip kX and kY because of MVD spec */
+        ICameraKeyframe::InterpolationType index = static_cast<ICameraKeyframe::InterpolationType>(i);
+        expected.getInterpolationParameter(index, eq);
+        actual.getInterpolationParameter(index, aq);
+        if (eq != aq) {
+            return AssertionFailure() << "ICameraKeyframe#getInterpolation(i, q) is not same: expected="
+                                      << eq << " actual=" << aq << " index=" << index;
+        }
+    }
+    return AssertionSuccess();
+}
+
+AssertionResult CompareMorphKeyframe(const IMorphKeyframe &expected, const IMorphKeyframe &actual)
+{
+    if (expected.timeIndex() != actual.timeIndex()) {
+        return AssertionFailure() << "IMorphKeyframe#timeIndex is not same: expected="
+                                  << expected.timeIndex() << " actual=" << actual.timeIndex();
+    }
+    if (expected.layerIndex() != actual.layerIndex()) {
+        return AssertionFailure() << "IMorphKeyframe#layerIndex is not same: expected="
+                                  << expected.layerIndex() << " actual=" << actual.layerIndex();
+    }
+    if (expected.name() && !expected.name()->equals(actual.name())) {
+        return AssertionFailure() << "IMorphKeyframe#name is not same: expected="
+                                  << expected.name() << " actual=" << actual.name();
+    }
+    if (expected.weight() != actual.weight()) {
+        return AssertionFailure() << "IMorphKeyframe#weight is not same: expected="
+                                  << expected.weight() << " actual=" << actual.weight();
+    }
+    return AssertionSuccess();
+}
+
 void AssertMatrix(const float *expected, const float *actual)
 {
     for (int i = 0; i < 16; i++) {
