@@ -241,7 +241,25 @@ public:
      */
     virtual IString *toUnicode(const uint8_t *str) const = 0;
 
+#ifdef VPVL2_COORDINATE_OPENGL
+    /**
+     * 指定された OpenGL の拡張が存在するかを返します
+     *
+     * @brief hasExtension
+     * @param name
+     * @return
+     */
     virtual bool hasExtension(const char *name) const = 0;
+
+    /**
+     * OpenGL の拡張の関数ポインタを返します
+     *
+     * @brief extensionProcAddress
+     * @param name
+     * @return
+     */
+    virtual void *extensionProcAddress(const char *name) const = 0;
+#endif
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     /**

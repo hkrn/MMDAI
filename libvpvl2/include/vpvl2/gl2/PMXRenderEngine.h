@@ -109,12 +109,12 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
-protected:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
-
-    IRenderDelegate *m_delegateRef;
-
 private:
+    typedef void (*PFNGLBINDVERTEXARRAY)(GLuint id);
+    typedef void (*PFNGLDELETEVERTEXARRAYS)(GLsizei n, const GLuint *ids);
+    typedef void (*PFNGLGENVERTEXARRAYS)(GLsizei n, GLuint *ids);
+
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
                        IRenderDelegate::ShaderType vertexShaderType,
@@ -122,13 +122,19 @@ private:
                        IRenderDelegate::ShaderType fragmentShaderType,
                        void *context);
     bool releaseContext0(void *context);
+    void bindVertexBuffers();
+    void unbindVertexBuffers();
 
     const Scene *m_sceneRef;
+    IRenderDelegate *m_delegateRef;
     cl::PMXAccelerator *m_accelerator;
     IModel *m_modelRef;
     PrivateContext *m_context;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
+    PFNGLBINDVERTEXARRAY glBindVertexArrayPtr;
+    PFNGLDELETEVERTEXARRAYS glDeleteVertexArraysPtr;
+    PFNGLGENVERTEXARRAYS glGenVertexArraysPtr;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

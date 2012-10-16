@@ -167,8 +167,6 @@ public:
     }
     virtual void unbind() {
         glUseProgram(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     void setModelViewProjectionMatrix(const float value[16]) {
         glUniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
