@@ -78,6 +78,7 @@ Material::Material(IEncoding *encodingRef)
       m_ambient(kZeroC),
       m_diffuse(kZeroC),
       m_specular(kZeroC),
+      m_edgeColor(kZeroC),
       m_shininess(0),
       m_index(-1),
       m_indices(0),
@@ -289,6 +290,11 @@ void Material::setDiffuse(const Color &value)
 void Material::setSpecular(const Color &value)
 {
     m_specular = value;
+}
+
+void Material::setEdgeColor(const Color &value)
+{
+    m_edgeColor = value;
 }
 
 void Material::setShininess(float value)

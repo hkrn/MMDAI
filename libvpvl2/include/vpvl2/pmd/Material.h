@@ -65,7 +65,7 @@ public:
     const Color &ambient() const { return m_ambient; }
     const Color &diffuse() const { return m_diffuse; }
     const Color &specular() const { return m_specular; }
-    const Color &edgeColor() const { return kWhiteColor; }
+    const Color &edgeColor() const { return m_edgeColor; }
     const Color &mainTextureBlend() const { return kWhiteColor; }
     const Color &sphereTextureBlend() const { return kWhiteColor; }
     const Color &toonTextureBlend() const { return kWhiteColor; }
@@ -93,7 +93,7 @@ public:
     void setAmbient(const Color &value);
     void setDiffuse(const Color &value);
     void setSpecular(const Color &value);
-    void setEdgeColor(const Color & /* value */) {}
+    void setEdgeColor(const Color &value);
     void setShininess(float value);
     void setEdgeSize(float /* value */) {}
     void setMainTextureIndex(int /* value */) {}
@@ -122,6 +122,7 @@ private:
     Color m_ambient;
     Color m_diffuse;
     Color m_specular;
+    Color m_edgeColor;
     float m_shininess;
     int m_index;
     int m_indices;
