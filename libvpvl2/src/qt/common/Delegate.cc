@@ -611,22 +611,23 @@ IString *Delegate::toUnicode(const uint8_t *value) const
     return new(std::nothrow) CString(s);
 }
 
-bool Delegate::hasExtension(const char *name) const
+bool Delegate::hasExtension(const void *namePtr) const
 {
-    return m_extensions.contains(name);
+    return m_extensions.contains(static_cast<const char *>(namePtr));
 }
 
-void *Delegate::findExtensionProcAddress(const char *extensions[]) const
+void *Delegate::findProcedureAddress(const void **candidatesPtr) const
 {
     const QGLContext *context = QGLContext::currentContext();
-    const char *extension = extensions[0];
+    const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
+    const char *candidate = candidates[0];
     int i = 0;
-    while (extension) {
-        void *address = context->getProcAddress(extension);
+    while (candidate) {
+        void *address = context->getProcAddress(candidate);
         if (address) {
             return address;
         }
-        extension = extensions[++i];
+        candidate = candidates[++i];
     }
     return 0;
 }

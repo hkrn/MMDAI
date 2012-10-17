@@ -436,18 +436,19 @@ public:
         const char *s = reinterpret_cast<const char *>(str);
         return new(std::nothrow) String(UnicodeString(s, strlen(s), "shift_jis"));
     }
-    bool hasExtension(const char *name) const {
-        return m_extensions.find(name) != m_extensions.end();
+    bool hasExtension(const void *namePtr) const {
+        return m_extensions.find(static_cast<const char *>(namePtr)) != m_extensions.end();
     }
-    void *findExtensionProcAddress(const char *extensions[]) const {
-        const char *extension = extensions[0];
+    void *findProcedureAddress(const void **candidatesPtr) const {
+        const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
+        const char *candidate = candidates[0];
         int i = 0;
-        while (extension) {
-            void *address = SDL_GL_GetProcAddress(extension);
+        while (candidate) {
+            void *address = SDL_GL_GetProcAddress(candidate);
             if (address) {
                 return address;
             }
-            extension = extensions[++i];
+            candidate = candidates[++i];
         }
         return 0;
     }

@@ -97,8 +97,8 @@ public:
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
-    bool hasExtension(const char *name) const;
-    void *findExtensionProcAddress(const char *extensions[]) const;
+    bool hasExtension(const void *namePtr) const;
+    void *findProcedureAddress(const void **candidatesPtr) const;
 
     IModel *effectOwner(const IEffect *effect) const;
     IModel *findModel(const IString *name) const;

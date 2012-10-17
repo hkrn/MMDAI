@@ -21,9 +21,9 @@ class MockIRenderDelegate : public IRenderDelegate {
   MOCK_CONST_METHOD1(toUnicode,
       IString*(const uint8_t *str));
   MOCK_CONST_METHOD1(hasExtension,
-      bool(const char *name));
-  MOCK_CONST_METHOD1(findExtensionProcAddress,
-      void*(const char **extensions));
+      bool(const void *namePtr));
+  MOCK_CONST_METHOD1(findProcedureAddress,
+      void*(const void **candidatesPtr));
   MOCK_METHOD4(getToonColor,
       void(const IString *name, const IString *dir, Color &value, void *context));
   MOCK_CONST_METHOD1(getViewport,

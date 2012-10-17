@@ -241,7 +241,6 @@ public:
      */
     virtual IString *toUnicode(const uint8_t *str) const = 0;
 
-#ifdef VPVL2_COORDINATE_OPENGL
     /**
      * 指定された OpenGL の拡張が存在するかを返します
      *
@@ -249,19 +248,19 @@ public:
      * @param name
      * @return
      */
-    virtual bool hasExtension(const char *name) const = 0;
+    virtual bool hasExtension(const void *namePtr) const = 0;
 
     /**
      * OpenGL の拡張の関数ポインタを返します
      *
-     * 複数指定されますが、引数の終端に必ず 0 が入ります
+     * 複数指定された文字列の引数のうち最初に見つかった関数ポインタを返すように実装する必要があります。
+     * 引数の終端に必ず 0 が入ります。
      *
-     * @brief findExtensionProcAddress
-     * @param name
+     * @brief findProcedureAddress
+     * @param candidatesPtr
      * @return
      */
-    virtual void *findExtensionProcAddress(const char **extensions) const = 0;
-#endif
+    virtual void *findProcedureAddress(const void **candidatesPtr) const = 0;
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     /**

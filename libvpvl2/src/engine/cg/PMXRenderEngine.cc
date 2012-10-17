@@ -115,9 +115,12 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
         "glGenVertexArrays",
         0
     };
-    glBindVertexArrayPtr = reinterpret_cast<PFNGLBINDVERTEXARRAY>(m_delegateRef->findExtensionProcAddress(bindVertexArray));
-    glDeleteVertexArraysPtr = reinterpret_cast<PFNGLDELETEVERTEXARRAYS>(m_delegateRef->findExtensionProcAddress(deleteVertexArrays));
-    glGenVertexArraysPtr = reinterpret_cast<PFNGLGENVERTEXARRAYS>(m_delegateRef->findExtensionProcAddress(genVertexArrays));
+    glBindVertexArrayPtr = reinterpret_cast<PFNGLBINDVERTEXARRAY>(
+                m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(bindVertexArray)));
+    glDeleteVertexArraysPtr = reinterpret_cast<PFNGLDELETEVERTEXARRAYS>(
+                m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(deleteVertexArrays)));
+    glGenVertexArraysPtr = reinterpret_cast<PFNGLGENVERTEXARRAYS>(
+                m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(genVertexArrays)));
 }
 
 PMXRenderEngine::~PMXRenderEngine()
