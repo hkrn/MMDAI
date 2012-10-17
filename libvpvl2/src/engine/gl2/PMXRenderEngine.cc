@@ -563,18 +563,18 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
     initializeGLFunctions();
 #endif
     static const char *bindVertexArray[] = {
-        "glBindVertexArrayAPPLE",
         "glBindVertexArray",
+        "glBindVertexArrayAPPLE",
         0
     };
     static const char *deleteVertexArrays[] = {
-        "glDeleteVertexArraysAPPLE",
         "glDeleteVertexArrays",
+        "glDeleteVertexArraysAPPLE",
         0
     };
     static const char *genVertexArrays[] = {
-        "glGenVertexArraysAPPLE",
         "glGenVertexArrays",
+        "glGenVertexArraysAPPLE",
         0
     };
     glBindVertexArrayPtr = reinterpret_cast<PFNGLBINDVERTEXARRAY>(

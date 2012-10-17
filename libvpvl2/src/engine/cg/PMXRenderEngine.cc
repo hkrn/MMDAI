@@ -100,19 +100,20 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif /* VPVL2_LINK_QT */
+    /* currently NVIDIA Cg doesn't support OpenGL core profile mode */
     static const char *bindVertexArray[] = {
+        // "glBindVertexArray",
         "glBindVertexArrayAPPLE",
-        "glBindVertexArray",
         0
     };
     static const char *deleteVertexArrays[] = {
+        // "glDeleteVertexArrays",
         "glDeleteVertexArraysAPPLE",
-        "glDeleteVertexArrays",
         0
     };
     static const char *genVertexArrays[] = {
+        // "glGenVertexArrays",
         "glGenVertexArraysAPPLE",
-        "glGenVertexArrays",
         0
     };
     glBindVertexArrayPtr = reinterpret_cast<PFNGLBINDVERTEXARRAY>(
