@@ -36,7 +36,10 @@
 
 #include "vpvl2/qt/CustomGLContext.h"
 
-#include <Cocoa/Cocoa.h>
+#include <QtCore/QtCore>
+
+#import <Cocoa/Cocoa.h>
+#import <OpenGL/CGLRenderers.h>
 
 namespace vpvl2
 {
@@ -45,21 +48,42 @@ namespace qt
 
 void *CustomGLContext::chooseMacVisual(GDHandle handle)
 {
-    NSOpenGLPixelFormatAttribute attrs[] = {
-        NSOpenGLPFAStencilSize, 8,
-        NSOpenGLPFAAlphaSize, 8,
-        NSOpenGLPFAColorSize, 32,
-        NSOpenGLPFADepthSize, 32,
-        NSOpenGLPFASampleBuffers, 1,
-        NSOpenGLPFASamples, 4,
-        NSOpenGLPFADoubleBuffer, 1,
-        NSOpenGLPFAAccelerated, 0,
-        NSOpenGLPFAClosestPolicy, 1,
-        NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersionLegacy,
-        0
-    };
-    NSOpenGLPixelFormat *format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
-    return format != nil ? format : QGLContext::chooseMacVisual(handle);
+    QVarLengthArray<NSOpenGLPixelFormatAttribute> attrs;
+    attrs.append(NSOpenGLPFAStencilSize);
+    attrs.append(8);
+    attrs.append(NSOpenGLPFAAlphaSize);
+    attrs.append(8);
+    attrs.append(NSOpenGLPFAColorSize);
+    attrs.append(32);
+    attrs.append(NSOpenGLPFADepthSize);
+    attrs.append(32);
+    if (format().sampleBuffers()) {
+        attrs.append(NSOpenGLPFAMultisample);
+        attrs.append(NSOpenGLPFASampleBuffers);
+        attrs.append(1);
+        attrs.append(NSOpenGLPFASamples);
+        attrs.append(4);
+    }
+    if (format().doubleBuffer()) {
+        attrs.append(NSOpenGLPFADoubleBuffer);
+    }
+    if (format().directRendering()) {
+        attrs.append(NSOpenGLPFAAccelerated);
+    }
+    else {
+        attrs.append(NSOpenGLPFARendererID);
+        attrs.append(kCGLRendererGenericFloatID);
+    }
+    attrs.append(NSOpenGLPFAOpenGLProfile);
+    if (format().profile() == QGLFormat::CoreProfile) {
+        attrs.append(NSOpenGLProfileVersion3_2Core);
+    }
+    else {
+        attrs.append(NSOpenGLProfileVersionLegacy);
+    }
+    attrs.append(0);
+    NSOpenGLPixelFormat *fmt = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs.constData()];
+    return fmt != nil ? fmt : QGLContext::chooseMacVisual(handle);
 }
 
 } /* namespace qt */
