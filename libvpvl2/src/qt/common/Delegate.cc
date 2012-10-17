@@ -161,11 +161,11 @@ QImage Delegate::loadImageAsync(const QString &path)
 {
     QImage image(path);
     if (!image.isNull()) {
-        return QGLWidget::convertToGLFormat(image.rgbSwapped());
+        return image.rgbSwapped();
     }
     else if (path.endsWith(".tga")) {
         ByteArrayPtr ptr;
-        return QGLWidget::convertToGLFormat(loadTGA(path, ptr));
+        return loadTGA(path, ptr);
     }
     else {
         return image; // returns null image
@@ -597,7 +597,7 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
         qDebug("Loaded a shader: %s", qPrintable(path));
-        return new(std::nothrow) CString("#version 120\n" + source);
+        return new(std::nothrow) CString(m_shaderSourcePrefix + source);
     }
     else {
         return 0;
@@ -795,6 +795,9 @@ void Delegate::initialize(bool enableMSAA)
     if (enableMSAA)
         glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
     const QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    int shaderVersion = qMax(QString(reinterpret_cast<const char *>(shaderVersionString)).toFloat(), 1.2f) * 100;
+    m_shaderSourcePrefix.sprintf("#version %d", shaderVersion);
     foreach (const QString &extension, extensions.split(' ', QString::SkipEmptyParts)) {
         m_extensions.insert(extension.trimmed());
     }
@@ -1203,8 +1206,8 @@ bool Delegate::uploadTextureInternal(const QString &path,
             ok = false;
             return true;
         }
-        GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
         size_t width = image.width(), height = image.height();
+        GLuint textureID = generateTextureFromImage(image, mipmap);
 #endif
         TextureCache cache(width, height, textureID);
         m_texture2Paths.insert(textureID, path);
@@ -1291,7 +1294,7 @@ bool Delegate::uploadTextureInternal(const QString &path,
     else {
         const QFuture<QImage> &future = QtConcurrent::run(&Delegate::loadImageAsync, path);
         const QImage &image = future.result();
-        GLuint textureID = m_context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
+        GLuint textureID = generateTextureFromImage(image, mipmap);
         TextureCache cache(image.width(), image.height(), textureID);
         m_texture2Paths.insert(textureID, path);
         setTextureID(cache, isToon, texture);
@@ -1302,6 +1305,14 @@ bool Delegate::uploadTextureInternal(const QString &path,
         return ok;
     }
 #endif
+}
+
+GLuint Delegate::generateTextureFromImage(const QImage &image, bool mipmap)
+{
+    return m_context->bindTexture(QGLWidget::convertToGLFormat(image),
+                                  GL_TEXTURE_2D,
+                                  GL_RGBA,
+                                  textureBindOptions(mipmap));
 }
 
 void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)

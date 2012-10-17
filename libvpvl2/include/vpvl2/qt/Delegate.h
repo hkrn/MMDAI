@@ -150,6 +150,7 @@ private:
                                bool mipmap,
                                bool &ok,
                                void *context);
+    GLuint generateTextureFromImage(const QImage &image, bool mipmap);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
@@ -181,6 +182,7 @@ private:
     QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;
     QSet<QString> m_extensions;
+    QString m_shaderSourcePrefix;
     Vector4 m_mouseCursorPosition;
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;

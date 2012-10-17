@@ -173,6 +173,7 @@ public:
     }
     void setPosition(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_positionAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_positionAttributeLocation);
     }
     void enableAttribute(GLuint value) {
         if (value != kAddressNotFound)
@@ -183,7 +184,6 @@ protected:
     virtual void getLocations() {
         m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
         m_positionAttributeLocation = glGetAttribLocation(m_program, "inPosition");
-        enableAttribute(m_positionAttributeLocation);
     }
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
         va_list ap;
@@ -248,6 +248,7 @@ public:
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_normalAttributeLocation);
     }
     void setNormalMatrix(const float value[16]) {
         float m[] = {
@@ -259,6 +260,7 @@ public:
     }
     void setTexCoord(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_texCoordAttributeLocation);
     }
     void setMainTexture(GLuint value) {
         if (value) {
@@ -308,8 +310,6 @@ protected:
         m_depthTextureSizeUniformLocation = glGetUniformLocation(m_program, "depthTextureSize");
         m_enableSoftShadowUniformLocation = glGetUniformLocation(m_program, "useSoftShadow");
         m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
-        enableAttribute(m_normalAttributeLocation);
-        enableAttribute(m_texCoordAttributeLocation);
     }
 
 private:

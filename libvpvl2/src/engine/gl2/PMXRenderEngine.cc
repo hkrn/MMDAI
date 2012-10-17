@@ -154,18 +154,22 @@ public:
     }
     void setNormal(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_normalAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_normalAttributeLocation);
     }
     void setVertexEdgeSize(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_edgeAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_edgeAttributeLocation);
     }
     void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_boneIndicesAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
     }
     void setBoneWeights(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_boneWeightsAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_boneIndicesAttributeLocation);
     }
     void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        enableAttribute(m_boneWeightsAttributeLocation);
     }
 
 protected:
@@ -179,10 +183,6 @@ protected:
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
-        enableAttribute(m_normalAttributeLocation);
-        enableAttribute(m_edgeAttributeLocation);
-        enableAttribute(m_boneIndicesAttributeLocation);
-        enableAttribute(m_boneWeightsAttributeLocation);
     }
 
 private:
@@ -219,9 +219,11 @@ public:
     }
     void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_boneIndicesAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_boneIndicesAttributeLocation);
     }
     void setBoneWeights(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_boneWeightsAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_boneWeightsAttributeLocation);
     }
     void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
@@ -234,8 +236,6 @@ protected:
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
-        enableAttribute(m_boneIndicesAttributeLocation);
-        enableAttribute(m_boneWeightsAttributeLocation);
     }
 
 private:
@@ -300,9 +300,11 @@ public:
     }
     void setUVA0(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_uva0AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_uva0AttributeLocation);
     }
     void setUVA1(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_uva1AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_uva1AttributeLocation);
     }
     void setMaterialColor(const Color &value) {
         glUniform4fv(m_materialColorUniformLocation, 1, value);
@@ -372,9 +374,11 @@ public:
     }
     void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_boneIndicesAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_boneIndicesAttributeLocation);
     }
     void setBoneWeights(const GLvoid *ptr, GLsizei stride) {
         glVertexAttribPointer(m_boneWeightsAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
+        enableAttribute(m_boneWeightsAttributeLocation);
     }
     void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
@@ -403,10 +407,6 @@ protected:
         m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
         m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
-        enableAttribute(m_uva0AttributeLocation);
-        enableAttribute(m_uva1AttributeLocation);
-        enableAttribute(m_boneIndicesAttributeLocation);
-        enableAttribute(m_boneWeightsAttributeLocation);
     }
 
 private:
@@ -532,7 +532,7 @@ public:
     ShadowProgram *shadowProgram;
     ExtendedZPlotProgram *zplotProgram;
     GLuint vertexBufferObjects[kMaxVertexBufferObjectType];
-    GLuint vertexArrayObjects[];
+    GLuint vertexArrayObjects[kMaxVertexArrayObjectType];
     GLenum indexType;
     MaterialTextures *materials;
     bool cullFaceState;
