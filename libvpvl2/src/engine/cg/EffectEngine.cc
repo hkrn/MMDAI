@@ -1133,9 +1133,6 @@ EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effec
       animatedTexture(delegate),
       offscreenRenderTarget(effect, delegate),
       index(0),
-      #ifndef __APPLE__
-      glDrawBuffers(0),
-      #endif /* __APPLE__ */
       m_effectRef(0),
       m_delegateRef(delegate),
       m_scriptOutput(kColor),
@@ -1143,12 +1140,8 @@ EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effec
       m_scriptOrder(IEffect::kStandard)
 {
 #ifdef VPVL2_LINK_QT
-    const QGLContext *context = QGLContext::currentContext();
-    initializeGLFunctions(context);
-#ifndef __APPLE__
-    glDrawBuffers = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
-#endif /* __APPLE__ */
-#endif /* VPVL2_LINK_QT */
+    initializeGLFunctions();
+#endif
     attachEffect(effect, dir);
 }
 

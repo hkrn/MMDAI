@@ -100,15 +100,24 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif /* VPVL2_LINK_QT */
-#if GL_APPLE_vertex_array_object
-    glBindVertexArrayPtr = glBindVertexArrayAPPLE;
-    glDeleteVertexArraysPtr = glDeleteVertexArraysAPPLE;
-    glGenVertexArraysPtr = glGenVertexArraysAPPLE;
-#else
-    glBindVertexArrayPtr = reinterpret_cast<PFNGLBINDVERTEXARRAY>(m_delegateRef->extensionProcAddress("glBindVertexArray"));
-    glDeleteVertexArraysPtr = reinterpret_cast<PFNGLDELETEVERTEXARRAYS>(m_delegateRef->extensionProcAddress("glDeleteVertexArrays"));
-    glGenVertexArraysPtr = reinterpret_cast<PFNGLGENVERTEXARRAYS>(m_delegateRef->extensionProcAddress("glGenVertexArrays"));
-#endif /* GL_APPLE_vertex_array_object */
+    static const char *bindVertexArray[] = {
+        "glBindVertexArrayAPPLE",
+        "glBindVertexArray",
+        0
+    };
+    static const char *deleteVertexArrays[] = {
+        "glDeleteVertexArraysAPPLE",
+        "glDeleteVertexArrays",
+        0
+    };
+    static const char *genVertexArrays[] = {
+        "glGenVertexArraysAPPLE",
+        "glGenVertexArrays",
+        0
+    };
+    glBindVertexArrayPtr = reinterpret_cast<PFNGLBINDVERTEXARRAY>(m_delegateRef->findExtensionProcAddress(bindVertexArray));
+    glDeleteVertexArraysPtr = reinterpret_cast<PFNGLDELETEVERTEXARRAYS>(m_delegateRef->findExtensionProcAddress(deleteVertexArrays));
+    glGenVertexArraysPtr = reinterpret_cast<PFNGLGENVERTEXARRAYS>(m_delegateRef->findExtensionProcAddress(genVertexArrays));
 }
 
 PMXRenderEngine::~PMXRenderEngine()

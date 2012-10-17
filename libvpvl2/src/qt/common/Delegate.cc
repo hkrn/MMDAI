@@ -616,9 +616,19 @@ bool Delegate::hasExtension(const char *name) const
     return m_extensions.contains(name);
 }
 
-void *Delegate::extensionProcAddress(const char *name) const
+void *Delegate::findExtensionProcAddress(const char *extensions[]) const
 {
-    return QGLContext::currentContext()->getProcAddress(name);
+    const QGLContext *context = QGLContext::currentContext();
+    const char *extension = extensions[0];
+    int i = 0;
+    while (extension) {
+        void *address = context->getProcAddress(extension);
+        if (address) {
+            return address;
+        }
+        extension = extensions[++i];
+    }
+    return 0;
 }
 
 void Delegate::setArchive(Archive *value)

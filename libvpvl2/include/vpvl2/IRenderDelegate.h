@@ -254,11 +254,13 @@ public:
     /**
      * OpenGL の拡張の関数ポインタを返します
      *
-     * @brief extensionProcAddress
+     * 複数指定されますが、引数の終端に必ず 0 が入ります
+     *
+     * @brief findExtensionProcAddress
      * @param name
      * @return
      */
-    virtual void *extensionProcAddress(const char *name) const = 0;
+    virtual void *findExtensionProcAddress(const char **extensions) const = 0;
 #endif
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG

@@ -556,6 +556,8 @@ public:
     CGparameter index;
 
 private:
+    typedef void (*PFNGLDRAWBUFFERS)(GLsizei n, const GLenum *bufs);
+
     static bool testTechnique(const CGtechnique technique,
                               const char *pass,
                               int offset,
@@ -588,9 +590,6 @@ private:
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
     void initializeBuffer();
 
-#ifndef __APPLE__
-    PFNGLDRAWBUFFERSPROC glDrawBuffers;
-#endif /* __APPLE__ */
     Effect *m_effectRef;
     IRenderDelegate *m_delegateRef;
     ScriptOutputType m_scriptOutput;

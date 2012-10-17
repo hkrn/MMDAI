@@ -439,8 +439,17 @@ public:
     bool hasExtension(const char *name) const {
         return m_extensions.find(name) != m_extensions.end();
     }
-    void *extensionProcAddress(const char *name) const {
-        return SDL_GL_GetProcAddress(name);
+    void *findExtensionProcAddress(const char *extensions[]) const {
+        const char *extension = extensions[0];
+        int i = 0;
+        while (extension) {
+            void *address = SDL_GL_GetProcAddress(extension);
+            if (address) {
+                return address;
+            }
+            extension = extensions[++i];
+        }
+        return 0;
     }
 
     IString *loadShaderSource(ShaderType /* type */, const IString * /* path */) {
