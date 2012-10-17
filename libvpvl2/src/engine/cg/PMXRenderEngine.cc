@@ -143,7 +143,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     glGenBuffers(kMaxVertexBufferObjectType, m_vertexBufferObjects);
     GLuint dvbo = m_vertexBufferObjects[kModelDynamicVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo);
-    glBufferData(GL_ARRAY_BUFFER, m_dynamicBuffer->size(),  m_dynamicBuffer->bytes(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, m_dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
     size_t offset, size;
     offset = m_dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
     size   = m_dynamicBuffer->strideSize();
@@ -156,7 +156,10 @@ bool PMXRenderEngine::upload(const IString *dir)
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo);
     GLuint svbo = m_vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
-    glBufferData(GL_ARRAY_BUFFER, m_staticBuffer->size(), m_staticBuffer->bytes(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, m_staticBuffer->size(), 0, GL_STATIC_DRAW);
+    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+    m_staticBuffer->update(address);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
     offset = m_staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
     size   = m_staticBuffer->strideSize();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -228,10 +231,10 @@ void PMXRenderEngine::update()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelDynamicVertexBuffer]);
+    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
     m_modelRef->performUpdate();
-    const ICamera *camera = m_sceneRef->camera();
-    m_dynamicBuffer->update(camera->position(), m_aabbMin, m_aabbMax);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, m_dynamicBuffer->size(), m_dynamicBuffer->bytes());
+    m_dynamicBuffer->update(address, m_sceneRef->camera()->lookAt(), m_aabbMin, m_aabbMax);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())

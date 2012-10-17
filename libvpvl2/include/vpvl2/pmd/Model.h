@@ -155,6 +155,15 @@ public:
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
 
+    const Array<Vertex *> &vertices() const { return m_vertices; }
+    const Array<int> &indices() const { return m_indices; }
+    const Array<Material *> &materials() const { return m_materials; }
+    const Array<Bone *> &bones() const { return m_bones; }
+    const Array<Morph *> &morphs() const { return m_morphs; }
+    const Array<Label *> &labels() const { return m_labels; }
+    const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
+    const Array<Joint *> &joints() const { return m_joints; }
+
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
     void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,

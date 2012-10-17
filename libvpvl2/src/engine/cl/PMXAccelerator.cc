@@ -345,6 +345,7 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
     clEnqueueReleaseGLObjects(queue, 1, &m_verticesBuffer, 0, 0, 0);
     clFinish(queue);
     /* hack */
+    /*
     size_t offset = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
     size_t size = dynamicBufferRef->strideSize();
     for (int i = 0; i < nvertices; i++) {
@@ -353,6 +354,7 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
         aabbMin.setMin(v);
         aabbMax.setMax(v);
     }
+    */
 }
 
 void PMXAccelerator::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)

@@ -78,18 +78,20 @@ public:
             kMaxStrideType
         };
         virtual ~IBuffer() {}
-        virtual const void *bytes() const = 0;
         virtual size_t size() const = 0;
         virtual size_t strideOffset(StrideType type) const = 0;
         virtual size_t strideSize() const = 0;
         virtual const void *ident() const = 0;
     };
     struct IDynamicVertexBuffer : IBuffer {
-        virtual void update(const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) = 0;
-        virtual void update(const Vector3 &cameraPosition, void *address, Vector3 &aabbMin, Vector3 &aabbMax) = 0;
+        virtual void update(void *address,
+                            const Vector3 &cameraPosition,
+                            Vector3 &aabbMin,
+                            Vector3 &aabbMax) const = 0;
         virtual void setSkinningEnable(bool value) = 0;
     };
     struct IStaticVertexBuffer : IBuffer {
+        virtual void update(void *address) const = 0;
     };
     struct IIndexBuffer : IBuffer {
         enum Type {
@@ -98,11 +100,12 @@ public:
             kIndex32,
             kMaxIndexType
         };
+        virtual const void *bytes() const = 0;
         virtual int indexAt(int value) const = 0;
         virtual Type type() const = 0;
     };
     struct IMatrixBuffer {
-        virtual void update() = 0;
+        virtual void update(void *address) = 0;
         virtual const float *bytes(int materialIndex) const = 0;
         virtual size_t size(int materialIndex) const = 0;
     };

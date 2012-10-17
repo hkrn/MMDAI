@@ -655,8 +655,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     const IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     GLuint dvbo = m_context->vertexBufferObjects[kModelDynamicVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo);
-    glBufferData(GL_ARRAY_BUFFER, dynamicBuffer->size(),
-                 m_context->dynamicBuffer->bytes(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
     size_t offset, size;
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
     size   = dynamicBuffer->strideSize();
@@ -684,8 +683,10 @@ bool PMXRenderEngine::upload(const IString *dir)
     const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     GLuint svbo = m_context->vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
-    glBufferData(GL_ARRAY_BUFFER, staticBuffer->size(),
-                 m_context->staticBuffer->bytes(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, staticBuffer->size(), 0, GL_STATIC_DRAW);
+    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+    staticBuffer->update(address);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
     offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
     size   = staticBuffer->strideSize();
     modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
@@ -782,14 +783,15 @@ void PMXRenderEngine::update()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_modelRef->performUpdate();
-    dynamicBuffer->update(m_sceneRef->camera()->lookAt(), m_aabbMin, m_aabbMax);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, dynamicBuffer->size(), dynamicBuffer->bytes());
+    dynamicBuffer->update(address, m_sceneRef->camera()->lookAt(), m_aabbMin, m_aabbMax);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->update(m_context->dynamicBuffer, m_sceneRef, m_aabbMin, m_aabbMax);
+        m_accelerator->update(dynamicBuffer, m_sceneRef, m_aabbMin, m_aabbMax);
 #endif
 }
 

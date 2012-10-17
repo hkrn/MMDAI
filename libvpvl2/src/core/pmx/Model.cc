@@ -69,7 +69,7 @@ struct Header
 struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
     struct Unit {
         Unit() {}
-        Unit(const IVertex *vertex) {
+        void update(const IVertex *vertex) {
             IBone *bone1 = vertex->bone(0),
                     *bone2 = vertex->bone(1),
                     *bone3 = vertex->bone(2),
@@ -93,20 +93,13 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
     StaticVertexBuffer(const pmx::Model *model)
         : modelRef(model)
     {
-        Array<IVertex *> vertices;
-        model->getVertexRefs(vertices);
-        const int nvertices = vertices.count();
-        for (int i = 0; i < nvertices; i++) {
-            const IVertex *vertex = vertices[i];
-            units.add(Unit(vertex));
-        }
+    }
+    ~StaticVertexBuffer() {
+        modelRef = 0;
     }
 
-    const void *bytes() const {
-        return &units[0];
-    }
     size_t size() const {
-        return strideSize() * units.count();
+        return strideSize() * modelRef->vertices().count();
     }
     size_t strideOffset(StrideType type) const {
         const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.texcoord);
@@ -136,25 +129,43 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
     size_t strideSize() const {
         return sizeof(kIdent);
     }
+    void update(void *address) const {
+        Unit *unitPtr = static_cast<Unit *>(address);
+        const Array<pmx::Vertex *> &vertices = modelRef->vertices();
+        const int nvertices = vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            unitPtr[i].update(vertices[i]);
+        }
+    }
     const void *ident() const {
         return &kIdent;
     }
 
-    const IModel *modelRef;
-    Array<Unit> units;
+    const pmx::Model *modelRef;
 };
 const StaticVertexBuffer::Unit StaticVertexBuffer::kIdent = StaticVertexBuffer::Unit();
 
 struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     struct Unit {
         Unit() {}
-        Unit(const IVertex *vertex, int index) {
+        void update(const IVertex *vertex) {
             position = vertex->origin();
             normal = vertex->normal();
+            updateMorph(vertex);
+        }
+        void update(const IVertex *vertex, float materialEdgeSize, int index, Vector3 &p) {
+            Vector3 n;
+            const float edgeSize = vertex->edgeSize() * materialEdgeSize;
+            vertex->performSkinning(p, n);
+            position = p;
+            normal = n;
             normal[3] = vertex->edgeSize();
-            delta = vertex->delta();
-            edge.setZero();
+            edge = position + normal * edgeSize;
             edge[3] = Scalar(index);
+            updateMorph(vertex);
+        }
+        void updateMorph(const IVertex *vertex) {
+            delta = vertex->delta();
             uva0 = vertex->uv(0);
             uva1 = vertex->uv(1);
             uva2 = vertex->uv(2);
@@ -173,28 +184,20 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
-    DynamicVertexBuffer(const IModel *model, const IModel::IIndexBuffer *indexBuffer)
+    DynamicVertexBuffer(const pmx::Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
           enableSkinning(true)
     {
-        model->getMaterialRefs(materials);
-        model->getVertexRefs(vertices);
-        const int nvertices = vertices.count();
-        for (int i = 0; i < nvertices; i++) {
-            const IVertex *vertex = vertices[i];
-            units.add(Unit(vertex, i));
-        }
+    }
+    ~DynamicVertexBuffer() {
+        modelRef = 0;
+        indexBufferRef = 0;
+        enableSkinning = false;
     }
 
-    void update(const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) {
-        update(cameraPosition, &units[0], aabbMin, aabbMax);
-    }
-    const void *bytes() const {
-        return &units[0];
-    }
     size_t size() const {
-        return strideSize() * units.count();
+        return strideSize() * modelRef->vertices().count();
     }
     size_t strideOffset(StrideType type) const {
         const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.position);
@@ -235,28 +238,24 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     const void *ident() const {
         return &kIdent;
     }
-    void update(const Vector3 &cameraPosition, void *address, Vector3 &aabbMin, Vector3 &aabbMax) {
+    void update(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
+        const Array<pmx::Vertex *> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
+            const Array<pmx::Material *> &materials= modelRef->materials();
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
             const int nmaterials = materials.count();
-            Vector3 position, normal;
+            Vector3 position;
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
                 const IMaterial *material = materials[i];
                 const int nindices = material->indices(), offsetTo = offset + nindices;
-                const float materialEdgeSize = material->edgeSize();
+                const float materialEdgeSize = material->edgeSize() * esf;
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
                     const IVertex *vertex = vertices[index];
-                    const float edgeSize = vertex->edgeSize() * materialEdgeSize * esf;
                     Unit &v = bufferPtr[index];
-                    vertex->performSkinning(position, normal);
-                    v.position = position;
-                    v.normal = normal;
-                    v.edge = position + normal * edgeSize;
-                    v.edge[3] = Scalar(i);
-                    updateMorph(vertex, v);
+                    v.update(vertex, materialEdgeSize, i, position);
                     aabbMin.setMin(position);
                     aabbMax.setMax(position);
                 }
@@ -268,7 +267,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             for (int i = 0; i < nvertices; i++) {
                 const IVertex *vertex = vertices[i];
                 Unit &v = bufferPtr[i];
-                updateMorph(vertex, v);
+                v.update(vertex);
             }
             aabbMin.setZero();
             aabbMax.setZero();
@@ -277,20 +276,9 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     void setSkinningEnable(bool value) {
         enableSkinning = value;
     }
-    static void updateMorph(const IVertex *vertex, Unit &v) {
-        v.delta = vertex->delta();
-        v.uva0 = vertex->uv(0);
-        v.uva1 = vertex->uv(1);
-        v.uva2 = vertex->uv(2);
-        v.uva3 = vertex->uv(3);
-        v.uva4 = vertex->uv(4);
-    }
 
-    const IModel *modelRef;
+    const pmx::Model *modelRef;
     const IModel::IIndexBuffer *indexBufferRef;
-    Array<Unit> units;
-    Array<IMaterial *> materials;
-    Array<IVertex *> vertices;
     bool enableSkinning;
 };
 const DynamicVertexBuffer::Unit DynamicVertexBuffer::kIdent = DynamicVertexBuffer::Unit();
@@ -464,8 +452,13 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         model->getVertexRefs(vertices);
         initialize();
     }
+    ~MatrixBuffer() {
+        modelRef = 0;
+        indexBufferRef = 0;
+        dynamicBufferRef = 0;
+    }
 
-    void update() {
+    void update(void *address) {
         const int nbones = bones.count();
         MeshLocalTransforms &transforms = meshes.transforms;
         for (int i = 0; i < nbones; i++) {
@@ -484,10 +477,12 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
             }
         }
         const int nvertices = vertices.count();
+        DynamicVertexBuffer::Unit *units = static_cast<DynamicVertexBuffer::Unit *>(address);
         for (int i = 0; i < nvertices; i++) {
             const IVertex *vertex = vertices[i];
-            DynamicVertexBuffer::Unit &buffer = dynamicBufferRef->units[i];
+            DynamicVertexBuffer::Unit &buffer = units[i];
             buffer.position = vertex->origin();
+            buffer.position.setW(vertex->type());
             buffer.delta = vertex->delta();
         }
     }
@@ -528,7 +523,6 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
                 default:
                     break;
                 }
-                dynamicBufferRef->units[vertexIndex].position.setW(Scalar(vertex->type()));
             }
             meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
             meshes.bones.push_back(boneIndices);
