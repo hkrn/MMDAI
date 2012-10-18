@@ -235,7 +235,7 @@ void PMXRenderEngine::update()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelDynamicVertexBuffer]);
-    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
+    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
     m_modelRef->performUpdate();
     m_dynamicBuffer->update(address, m_sceneRef->camera()->lookAt(), m_aabbMin, m_aabbMax);
     glUnmapBuffer(GL_ARRAY_BUFFER);
