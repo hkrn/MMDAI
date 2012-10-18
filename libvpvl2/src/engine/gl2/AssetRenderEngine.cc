@@ -134,8 +134,8 @@ public:
     }
 
 protected:
-    virtual void getLocations() {
-        ObjectProgram::getLocations();
+    virtual void getUniformLocations() {
+        ObjectProgram::getUniformLocations();
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
         m_modelMatrixUniformLocation = glGetUniformLocation(m_program, "modelMatrix");
         m_viewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "viewProjectionMatrix");
@@ -462,6 +462,12 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     delete fragmentShaderSource;
     if (!ret)
         return ret;
+
+    static const AssetVertex v;
+    static const size_t stride = sizeof(v);
+    const GLvoid *vertexPtr = 0;
+    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
@@ -617,11 +623,6 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
 {
-    static const AssetVertex v;
-    static const size_t stride = sizeof(v);
-    const GLvoid *vertexPtr = 0;
-    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
-    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
     const unsigned int nmeshes = node->mNumMeshes;
     float matrix4x4[16];
     Program *program = m_context->assetPrograms[node];
@@ -652,9 +653,6 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         const AssetIndices &indices = m_context->indices[mesh];
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], program);
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        program->setPosition(vertexPtr, stride);
-        program->setNormal(normalPtr, stride);
-        program->setTexCoord(texcoordPtr, stride);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     }
@@ -689,7 +687,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         const AssetVBO &vbo = m_context->vbo[mesh];
         const AssetIndices &indices = m_context->indices[mesh];
         glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        program->setPosition(vertexPtr, stride);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     }

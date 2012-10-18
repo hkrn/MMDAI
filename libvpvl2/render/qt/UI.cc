@@ -889,6 +889,10 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         if (m_settings->value("enable.physics", true).toBool())
             m_world->addModel(modelPtr.data());
+        if (!modelPtr->name()) {
+            CString s(info.fileName());
+            modelPtr->setName(&s);
+        }
         m_scene->addModel(modelPtr.data(), enginePtr.data());
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);

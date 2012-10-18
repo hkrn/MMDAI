@@ -129,6 +129,7 @@ public:
     }
     bool linkProgram(void *context) {
         GLint linked;
+        bindAttributeLocations();
         glLinkProgram(m_program);
         glGetProgramiv(m_program, GL_LINK_STATUS, &linked);
         if (!linked) {
@@ -159,7 +160,7 @@ public:
             return false;
         }
         log0(context, IRenderDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
-        getLocations();
+        getUniformLocations();
         return true;
     }
     virtual void bind() {
@@ -171,19 +172,13 @@ public:
     void setModelViewProjectionMatrix(const float value[16]) {
         glUniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
     }
-    void setPosition(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_positionAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_positionAttributeLocation);
-    }
-    void enableAttribute(GLuint value) {
-        if (value != kAddressNotFound)
-            glEnableVertexAttribArray(value);
-    }
 
 protected:
-    virtual void getLocations() {
+    virtual void bindAttributeLocations() {
+        glBindAttribLocation(m_program, IModel::IBuffer::kVertexStride, "inPosition");
+    }
+    virtual void getUniformLocations() {
         m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
-        m_positionAttributeLocation = glGetAttribLocation(m_program, "inPosition");
     }
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
         va_list ap;
@@ -246,10 +241,6 @@ public:
     void setLightViewProjectionMatrix(const GLfloat value[16]) {
         glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
     }
-    void setNormal(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_normalAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_normalAttributeLocation);
-    }
     void setNormalMatrix(const float value[16]) {
         float m[] = {
             value[0], value[1], value[2],
@@ -257,10 +248,6 @@ public:
             value[8], value[9], value[10]
         };
         glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, m);
-    }
-    void setTexCoord(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_texCoordAttributeLocation, 2, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_texCoordAttributeLocation);
     }
     void setMainTexture(GLuint value) {
         if (value) {
@@ -295,10 +282,13 @@ public:
     }
 
 protected:
-    virtual void getLocations() {
-        BaseShaderProgram::getLocations();
-        m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
-        m_texCoordAttributeLocation = glGetAttribLocation(m_program, "inTexCoord");
+    virtual void bindAttributeLocations() {
+        BaseShaderProgram::bindAttributeLocations();
+        glBindAttribLocation(m_program, IModel::IBuffer::kNormalStride, "inNormal");
+        glBindAttribLocation(m_program, IModel::IBuffer::kTextureCoordStride, "inTexCoord");
+    }
+    virtual void getUniformLocations() {
+        BaseShaderProgram::getUniformLocations();
         m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
         m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
         m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
@@ -345,8 +335,8 @@ public:
     }
 
 protected:
-    virtual void getLocations() {
-        BaseShaderProgram::getLocations();
+    virtual void getUniformLocations() {
+        BaseShaderProgram::getUniformLocations();
         m_transformUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
     }
 

@@ -80,40 +80,29 @@ class ExtendedZPlotProgram : public ZPlotProgram
 public:
     ExtendedZPlotProgram(IRenderDelegate *delegate)
         : ZPlotProgram(delegate),
-          m_boneIndicesAttributeLocation(0),
-          m_boneWeightsAttributeLocation(0),
           m_boneMatricesUniformLocation(0)
     {
     }
     ~ExtendedZPlotProgram() {
-        m_boneIndicesAttributeLocation = 0;
-        m_boneWeightsAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
     }
 
-    void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneIndicesAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setBoneWeights(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneWeightsAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
     void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
 protected:
-    virtual void getLocations() {
-        ZPlotProgram::getLocations();
-        m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
-        m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
+    virtual void bindAttributeLocations() {
+        ZPlotProgram::bindAttributeLocations();
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+    }
+    virtual void getUniformLocations() {
+        ZPlotProgram::getUniformLocations();
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
-        enableAttribute(m_boneIndicesAttributeLocation);
-        enableAttribute(m_boneWeightsAttributeLocation);
     }
 
 private:
-    GLuint m_boneIndicesAttributeLocation;
-    GLuint m_boneWeightsAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
 };
 
@@ -125,10 +114,6 @@ public:
           m_colorUniformLocation(0),
           m_edgeSizeUniformLocation(0),
           m_opacityUniformLocation(0),
-          m_normalAttributeLocation(0),
-          m_edgeAttributeLocation(0),
-          m_boneIndicesAttributeLocation(0),
-          m_boneWeightsAttributeLocation(0),
           m_boneMatricesUniformLocation(0)
     {
     }
@@ -136,10 +121,6 @@ public:
         m_colorUniformLocation = 0;
         m_edgeSizeUniformLocation = 0;
         m_opacityUniformLocation = 0;
-        m_normalAttributeLocation = 0;
-        m_edgeAttributeLocation = 0;
-        m_boneIndicesAttributeLocation = 0;
-        m_boneWeightsAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
     }
 
@@ -152,36 +133,22 @@ public:
     void setOpacity(const Scalar &value) {
         glUniform1f(m_opacityUniformLocation, value);
     }
-    void setNormal(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_normalAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_normalAttributeLocation);
-    }
-    void setVertexEdgeSize(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_edgeAttributeLocation, 1, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_edgeAttributeLocation);
-    }
-    void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneIndicesAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-    }
-    void setBoneWeights(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneWeightsAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_boneIndicesAttributeLocation);
-    }
     void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
-        enableAttribute(m_boneWeightsAttributeLocation);
     }
 
 protected:
-    virtual void getLocations() {
-        BaseShaderProgram::getLocations();
+    virtual void bindAttributeLocations() {
+        BaseShaderProgram::bindAttributeLocations();
+        glBindAttribLocation(m_program, IModel::IBuffer::kEdgeSizeStride, "inEdgeSize");
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+    }
+    virtual void getUniformLocations() {
+        BaseShaderProgram::getUniformLocations();
         m_colorUniformLocation = glGetUniformLocation(m_program, "color");
         m_edgeSizeUniformLocation = glGetUniformLocation(m_program, "edgeSize");
         m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
-        m_normalAttributeLocation = glGetAttribLocation(m_program, "inNormal");
-        m_edgeAttributeLocation = glGetAttribLocation(m_program, "inEdgeSize");
-        m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
-        m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
     }
 
@@ -189,10 +156,6 @@ private:
     GLuint m_colorUniformLocation;
     GLuint m_edgeSizeUniformLocation;
     GLuint m_opacityUniformLocation;
-    GLuint m_normalAttributeLocation;
-    GLuint m_edgeAttributeLocation;
-    GLuint m_boneIndicesAttributeLocation;
-    GLuint m_boneWeightsAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
 };
 
@@ -202,46 +165,34 @@ public:
     ShadowProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
           m_shadowMatrixUniformLocation(0),
-          m_boneIndicesAttributeLocation(0),
-          m_boneWeightsAttributeLocation(0),
           m_boneMatricesUniformLocation(0)
     {
     }
     ~ShadowProgram() {
         m_shadowMatrixUniformLocation = 0;
-        m_boneIndicesAttributeLocation = 0;
-        m_boneWeightsAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
     }
 
     void setShadowMatrix(const float value[16]) {
         glUniformMatrix4fv(m_shadowMatrixUniformLocation, 1, GL_FALSE, value);
     }
-    void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneIndicesAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_boneIndicesAttributeLocation);
-    }
-    void setBoneWeights(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneWeightsAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_boneWeightsAttributeLocation);
-    }
     void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
 protected:
-    virtual void getLocations() {
-        ObjectProgram::getLocations();
+    virtual void bindAttributeLocations() {
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+    }
+    virtual void getUniformLocations() {
+        ObjectProgram::getUniformLocations();
         m_shadowMatrixUniformLocation = glGetUniformLocation(m_program, "shadowMatrix");
-        m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
-        m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
     }
 
 private:
     GLuint m_shadowMatrixUniformLocation;
-    GLuint m_boneIndicesAttributeLocation;
-    GLuint m_boneWeightsAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
 };
 
@@ -250,8 +201,6 @@ class ModelProgram : public ObjectProgram
 public:
     ModelProgram(IRenderDelegate *delegate)
         : ObjectProgram(delegate),
-          m_uva0AttributeLocation(0),
-          m_uva1AttributeLocation(0),
           m_cameraPositionUniformLocation(0),
           m_materialColorUniformLocation(0),
           m_materialSpecularUniformLocation(0),
@@ -267,14 +216,10 @@ public:
           m_toonTextureUniformLocation(0),
           m_hasToonTextureUniformLocation(0),
           m_useToonUniformLocation(0),
-          m_boneIndicesAttributeLocation(0),
-          m_boneWeightsAttributeLocation(0),
           m_boneMatricesUniformLocation(0)
     {
     }
     ~ModelProgram() {
-        m_uva0AttributeLocation = 0;
-        m_uva1AttributeLocation = 0;
         m_cameraPositionUniformLocation = 0;
         m_materialColorUniformLocation = 0;
         m_materialSpecularUniformLocation = 0;
@@ -290,21 +235,11 @@ public:
         m_toonTextureUniformLocation = 0;
         m_hasToonTextureUniformLocation = 0;
         m_useToonUniformLocation = 0;
-        m_boneIndicesAttributeLocation = 0;
-        m_boneWeightsAttributeLocation = 0;
         m_boneMatricesUniformLocation = 0;
     }
 
     void setCameraPosition(const Vector3 &value) {
         glUniform3fv(m_cameraPositionUniformLocation, 1, value);
-    }
-    void setUVA0(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_uva0AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_uva0AttributeLocation);
-    }
-    void setUVA1(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_uva1AttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_uva1AttributeLocation);
     }
     void setMaterialColor(const Color &value) {
         glUniform4fv(m_materialColorUniformLocation, 1, value);
@@ -372,23 +307,20 @@ public:
             glUniform1i(m_hasToonTextureUniformLocation, 0);
         }
     }
-    void setBoneIndices(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneIndicesAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_boneIndicesAttributeLocation);
-    }
-    void setBoneWeights(const GLvoid *ptr, GLsizei stride) {
-        glVertexAttribPointer(m_boneWeightsAttributeLocation, 4, GL_FLOAT, GL_FALSE, stride, ptr);
-        enableAttribute(m_boneWeightsAttributeLocation);
-    }
     void setBoneMatrices(const Scalar *value, size_t size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
 protected:
-    virtual void getLocations() {
-        ObjectProgram::getLocations();
-        m_uva0AttributeLocation = glGetAttribLocation(m_program, "inUVA0");
-        m_uva1AttributeLocation = glGetAttribLocation(m_program, "inUVA1");
+    virtual void bindAttributeLocations() {
+        ObjectProgram::bindAttributeLocations();
+        glBindAttribLocation(m_program, IModel::IBuffer::kUVA0Stride, "inUVA0");
+        glBindAttribLocation(m_program, IModel::IBuffer::kUVA1Stride, "inUVA1");
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+    }
+    virtual void getUniformLocations() {
+        ObjectProgram::getUniformLocations();
         m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
         m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
         m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
@@ -404,8 +336,6 @@ protected:
         m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
         m_hasToonTextureUniformLocation = glGetUniformLocation(m_program, "hasToonTexture");
         m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
-        m_boneIndicesAttributeLocation = glGetAttribLocation(m_program, "inBoneIndices");
-        m_boneWeightsAttributeLocation = glGetAttribLocation(m_program, "inBoneWeights");
         m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
     }
 
@@ -417,8 +347,6 @@ private:
         glUniform1i(m_hasSphereTextureUniformLocation, 1);
     }
 
-    GLuint m_uva0AttributeLocation;
-    GLuint m_uva1AttributeLocation;
     GLuint m_cameraPositionUniformLocation;
     GLuint m_materialColorUniformLocation;
     GLuint m_materialSpecularUniformLocation;
@@ -434,8 +362,6 @@ private:
     GLuint m_toonTextureUniformLocation;
     GLuint m_hasToonTextureUniformLocation;
     GLuint m_useToonUniformLocation;
-    GLuint m_boneIndicesAttributeLocation;
-    GLuint m_boneWeightsAttributeLocation;
     GLuint m_boneMatricesUniformLocation;
 };
 
@@ -662,24 +588,25 @@ bool PMXRenderEngine::upload(const IString *dir)
     size_t offset, size;
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
     size   = dynamicBuffer->strideSize();
-    modelProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
+    glVertexAttribPointer(IModel::IBuffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
+                          size, reinterpret_cast<const GLvoid *>(offset));
+    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
-    modelProgram->setNormal(reinterpret_cast<const GLvoid *>(offset), size);
+    glVertexAttribPointer(IModel::IBuffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
+                          size, reinterpret_cast<const GLvoid *>(offset));
+    glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA0Stride);
-    modelProgram->setUVA0(reinterpret_cast<const GLvoid *>(offset), size);
+    glVertexAttribPointer(IModel::IBuffer::kUVA0Stride, 4, GL_FLOAT, GL_FALSE,
+                          size, reinterpret_cast<const GLvoid *>(offset));
+    glEnableVertexAttribArray(IModel::IBuffer::kUVA0Stride);
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA1Stride);
-    modelProgram->setUVA1(reinterpret_cast<const GLvoid *>(offset), size);
+    glVertexAttribPointer(IModel::IBuffer::kUVA1Stride, 4, GL_FLOAT, GL_FALSE,
+                          size, reinterpret_cast<const GLvoid *>(offset));
+    glEnableVertexAttribArray(IModel::IBuffer::kUVA1Stride);
     if (m_context->isVertexShaderSkinning) {
-        offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeSizeStride);
-        edgeProgram->setVertexEdgeSize(reinterpret_cast<const GLvoid *>(offset), size);
-        offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
-        edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
-        offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
-        edgeProgram->setNormal(reinterpret_cast<const GLvoid *>(offset), size);
-    }
-    else {
-        offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride);
-        edgeProgram->setPosition(reinterpret_cast<const GLvoid *>(offset), size);
+        glVertexAttribPointer(IModel::IBuffer::kEdgeSizeStride, 4, GL_FLOAT, GL_FALSE,
+                              size, reinterpret_cast<const GLvoid *>(offset));
+        glEnableVertexAttribArray(IModel::IBuffer::kEdgeSizeStride);
     }
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo);
@@ -692,7 +619,19 @@ bool PMXRenderEngine::upload(const IString *dir)
     glUnmapBuffer(GL_ARRAY_BUFFER);
     offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
     size   = staticBuffer->strideSize();
-    modelProgram->setTexCoord(reinterpret_cast<const GLvoid *>(offset), size);
+    glVertexAttribPointer(IModel::IBuffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE,
+                          size, reinterpret_cast<const GLvoid *>(offset));
+    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
+    if (m_context->isVertexShaderSkinning) {
+        offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride);
+        glVertexAttribPointer(IModel::IBuffer::kBoneIndexStride, 4, GL_FLOAT, GL_FALSE,
+                              size, reinterpret_cast<const GLvoid *>(offset));
+        glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
+        offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride);
+        glVertexAttribPointer(IModel::IBuffer::kBoneWeightStride, 4, GL_FLOAT, GL_FALSE,
+                              size, reinterpret_cast<const GLvoid *>(offset));
+        glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
+    }
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
@@ -804,7 +743,6 @@ void PMXRenderEngine::renderModel()
         return;
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
-    const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     float matrix4x4[16];
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                              IRenderDelegate::kWorldMatrix
@@ -838,9 +776,6 @@ void PMXRenderEngine::renderModel()
     m_modelRef->getMaterialRefs(materials);
     const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
-    const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
-            boneWeightOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride),
-            boneStride = staticBuffer->strideSize();
     const bool hasModelTransparent = !btFuzzyZero(opacity - 1.0f),
             isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     const Vector3 &lc = light->color();
@@ -869,8 +804,6 @@ void PMXRenderEngine::renderModel()
             modelProgram->setDepthTexture(0);
         if (isVertexShaderSkinning) {
             IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
-            modelProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
-            modelProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
             modelProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
         }
         if ((!hasModelTransparent && cullFaceState) || (material->isCullFaceDisabled() && cullFaceState)) {
@@ -909,13 +842,9 @@ void PMXRenderEngine::renderShadow()
     const ILight *light = m_sceneRef->light();
     shadowProgram->setLightColor(light->color());
     shadowProgram->setLightDirection(light->direction());
-    const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
-    const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
-            boneWeightOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride),
-            boneStride = staticBuffer->strideSize();
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
@@ -926,8 +855,6 @@ void PMXRenderEngine::renderShadow()
         if (material->hasShadow()) {
             if (isVertexShaderSkinning) {
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
-                shadowProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
-                shadowProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
@@ -957,17 +884,11 @@ void PMXRenderEngine::renderEdge()
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
-    const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     Scalar edgeScaleFactor = 0;
     bindVertexBuffers();
     if (isVertexShaderSkinning) {
         const ICamera *camera = m_sceneRef->camera();
-        const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
-                boneWeightOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride),
-                boneStride = staticBuffer->strideSize();
         edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position());
-        edgeProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
-        edgeProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
     }
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
     glCullFace(GL_FRONT);
@@ -996,7 +917,6 @@ void PMXRenderEngine::renderZPlot()
         return;
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
     zplotProgram->bind();
-    const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     float matrix4x4[16];
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                              IRenderDelegate::kWorldMatrix
@@ -1007,9 +927,6 @@ void PMXRenderEngine::renderZPlot()
     glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
-    const size_t boneIndexOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride),
-            boneWeightOffset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride),
-            boneStride = staticBuffer->strideSize();
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
@@ -1020,8 +937,6 @@ void PMXRenderEngine::renderZPlot()
         if (material->isShadowMapDrawn()) {
             if (isVertexShaderSkinning) {
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
-                zplotProgram->setBoneIndices(reinterpret_cast<const GLvoid *>(boneIndexOffset), boneStride);
-                zplotProgram->setBoneWeights(reinterpret_cast<const GLvoid *>(boneWeightOffset), boneStride);
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
