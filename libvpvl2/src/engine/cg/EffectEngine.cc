@@ -1579,11 +1579,15 @@ void EffectEngine::setStateFromParameter(const CGeffect effect,
     }
 }
 
-void EffectEngine::executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr)
+void EffectEngine::executePass(CGpass pass,
+                               const GLenum mode,
+                               const GLsizei count,
+                               const GLenum type,
+                               const GLvoid *ptr) const
 {
     if (cgIsPass(pass)) {
         cgSetPassState(pass);
-        glDrawElements(mode, count, type, ptr);
+        drawPrimitives(mode, count, type, ptr);
         cgResetPassState(pass);
     }
 }

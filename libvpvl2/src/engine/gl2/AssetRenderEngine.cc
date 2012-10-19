@@ -283,7 +283,7 @@ AssetRenderEngine::~AssetRenderEngine()
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_modelRef || btFuzzyZero(m_modelRef->opacity()))
+    if (!m_modelRef || !m_modelRef->isVisible())
         return;
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode);
@@ -305,7 +305,7 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_modelRef || btFuzzyZero(m_modelRef->opacity()))
+    if (!m_modelRef || !m_modelRef->isVisible())
         return;
     const aiScene *a = m_modelRef->aiScenePtr();
     renderZPlotRecurse(a, a->mRootNode);
@@ -388,6 +388,7 @@ bool AssetRenderEngine::upload(const IString *dir)
         }
     }
     ret = uploadRecurse(scene, scene->mRootNode, dir, context);
+    m_modelRef->setVisible(ret);
     m_delegateRef->releaseContext(m_modelRef, context);
     return ret;
 }

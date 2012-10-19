@@ -478,7 +478,7 @@ public:
     typedef btAlignedObjectArray<ScriptState> Script;
 
     EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate);
-    ~EffectEngine();
+    virtual ~EffectEngine();
 
     bool attachEffect(IEffect *e, const IString *dir);
     CGtechnique findTechnique(const char *pass,
@@ -555,6 +555,12 @@ public:
     IntegerParameter subsetCount;
     CGparameter index;
 
+protected:
+    virtual void drawPrimitives(const GLenum mode,
+                                const GLsizei count,
+                                const GLenum type,
+                                const GLvoid *ptr) const = 0;
+
 private:
     typedef void (*PFNGLDRAWBUFFERS)(GLsizei n, const GLenum *bufs);
 
@@ -579,7 +585,7 @@ private:
                                       CGtype testType,
                                       ScriptState::Type type,
                                       ScriptState &state);
-    static void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
+    void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const;
     void setRenderColorTargetFromState(const ScriptState &state);
     void setRenderDepthStencilTargetFromState(const ScriptState &state);
     void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);

@@ -49,6 +49,22 @@ namespace vpvl2
 namespace cg
 {
 
+class PMXEffectEngine : public EffectEngine {
+public:
+    PMXEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate)
+        : EffectEngine(scene, dir, effect, delegate)
+    {
+    }
+
+protected:
+    void drawPrimitives(const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const {
+        glDrawElements(mode, count, type, ptr);
+    }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(PMXEffectEngine)
+};
+
 PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
                                  const Scene *scene,
                                  CGcontext effectContext,
@@ -396,7 +412,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         }
         else if (einstance) {
             EffectEngine *previous = m_currentRef;
-            m_currentRef = new EffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
             if (m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_currentRef);
             }
@@ -412,7 +428,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             m_currentRef = *ee;
         }
         else if (einstance) {
-            m_currentRef = new EffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
         }
     }

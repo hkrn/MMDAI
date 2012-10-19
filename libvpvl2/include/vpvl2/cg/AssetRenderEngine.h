@@ -114,8 +114,9 @@ private:
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
-    void bindVertexBuffers(const aiNode *node);
-    void unbindVertexBuffers();
+    void bindVertexBundle(const aiNode *node);
+    void unbindVertexBundle();
+    void bindStaticVertexAttributePointers();
 
     EffectEngine *m_currentRef;
     asset::Model *m_modelRef;

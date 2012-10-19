@@ -73,6 +73,22 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
     }
 }
 
+class AssetEffectEngine : public EffectEngine {
+public:
+    AssetEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate)
+        : EffectEngine(scene, dir, effect, delegate)
+    {
+    }
+
+protected:
+    void drawPrimitives(const GLenum mode, const GLsizei count, const GLenum /* type */, const GLvoid *ptr) const {
+        glDrawArrays(mode, *static_cast<const int *>(ptr), count);
+    }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(AssetEffectEngine)
+};
+
 AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
                                      const Scene *scene,
                                      CGcontext context,
@@ -198,13 +214,14 @@ bool AssetRenderEngine::upload(const IString *dir)
         }
     }
     ret = uploadRecurse(scene, scene->mRootNode, context);
+    m_modelRef->setVisible(ret);
     m_delegateRef->releaseContext(m_modelRef, context);
     return ret;
 }
 
 void AssetRenderEngine::update()
 {
-    if (!m_modelRef->isVisible() || !m_currentRef)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
         return;
     m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
     m_currentRef->updateSceneParameters();
@@ -212,7 +229,7 @@ void AssetRenderEngine::update()
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
         return;
     if (btFuzzyZero(m_modelRef->opacity()))
         return;
@@ -243,7 +260,7 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
     if (btFuzzyZero(m_modelRef->opacity()))
         return;
@@ -305,7 +322,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
         }
         else if (einstance) {
             EffectEngine *previous = m_currentRef;
-            m_currentRef = new EffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            m_currentRef = new AssetEffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
             if (m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_currentRef);
             }
@@ -321,7 +338,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             m_currentRef = *ee;
         }
         else if (einstance) {
-            m_currentRef = new EffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            m_currentRef = new AssetEffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
         }
     }
@@ -391,20 +408,16 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Created an vertex array object (ID=%d)", vao);
     }
-    static const AssetVertex v;
     size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
     GLuint &vbo = m_vbo[node];
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vsize, &assetVertices[0].position, GL_STATIC_DRAW);
-    const void *vertexPtr = 0;
-    glVertexPointer(3, GL_FLOAT, sizeof(v), vertexPtr);
+    bindStaticVertexAttributePointers();
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding asset static vertex buffer to the vertex buffer object (ID=%d)", vbo);
     glEnableClientState(GL_VERTEX_ARRAY);
-    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
-    glNormalPointer(GL_FLOAT, sizeof(v), normalPtr);
     glEnableClientState(GL_NORMAL_ARRAY);
-    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
-    glTexCoordPointer(2, GL_FLOAT, sizeof(v), texcoordPtr);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     unbindVertexArrayObject();
@@ -429,21 +442,22 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
 {
     const unsigned int nmeshes = node->mNumMeshes;
-    const GLuint &vbo = m_vbo[node];
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    size_t offset = 0;
+    bindVertexBundle(node);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         bool hasTexture = false, hasSphereMap = false;
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
         const char *target = hasShadowMap ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+        size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
-            //FIXME:
-            //m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            const GLvoid *offsetPtr = reinterpret_cast<const GLvoid *>(&offset);
+            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, offsetPtr);
         }
+        offset += nindices;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    unbindVertexBundle();
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         renderRecurse(scene, node->mChildren[i], hasShadowMap);
@@ -452,9 +466,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
 void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)
 {
     const unsigned int nmeshes = node->mNumMeshes;
-    const GLuint &vbo = m_vbo[node];
     float opacity;
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    size_t offset = 0;
+    bindVertexBundle(node);
     glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -463,13 +477,15 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmeshes, false, false, false);
+        size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
-            //FIXME
-            //m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
+            const GLvoid *offsetPtr = reinterpret_cast<const GLvoid *>(&offset);
+            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, offsetPtr);
         }
+        offset += nindices;
     }
     glCullFace(GL_BACK);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    unbindVertexBundle();
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         renderZPlotRecurse(scene, node->mChildren[i]);
@@ -557,18 +573,30 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     }
 }
 
-void AssetRenderEngine::bindVertexBuffers(const aiNode *node)
+void AssetRenderEngine::bindVertexBundle(const aiNode *node)
 {
     if (!bindVertexArrayObject(m_vao[node])) {
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo[node]);
+        bindStaticVertexAttributePointers();
     }
 }
 
-void AssetRenderEngine::unbindVertexBuffers()
+void AssetRenderEngine::unbindVertexBundle()
 {
     if (!unbindVertexArrayObject()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
+}
+
+void AssetRenderEngine::bindStaticVertexAttributePointers()
+{
+    static const AssetVertex v;
+    const void *vertexPtr = 0;
+    glVertexPointer(3, GL_FLOAT, sizeof(v), vertexPtr);
+    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    glNormalPointer(GL_FLOAT, sizeof(v), normalPtr);
+    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
+    glTexCoordPointer(2, GL_FLOAT, sizeof(v), texcoordPtr);
 }
 
 } /* namespace cg */
