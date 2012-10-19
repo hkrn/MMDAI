@@ -237,8 +237,8 @@ void PMXAccelerator::upload(GLuint buffer, const IModel::IIndexBuffer *indexBuff
 
 void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
                             const Scene *sceneRef,
-                            Vector3 &aabbMin,
-                            Vector3 &aabbMax)
+                            Vector3 &/*aabbMin*/,
+                            Vector3 &/*aabbMax*/)
 {
     if (!m_isBufferAllocated)
         return;

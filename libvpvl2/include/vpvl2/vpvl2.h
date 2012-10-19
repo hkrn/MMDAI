@@ -49,12 +49,14 @@
 #include "vpvl2/ILabel.h"
 #include "vpvl2/ILight.h"
 #include "vpvl2/ILightKeyframe.h"
+#include "vpvl2/IMaterial.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMorph.h"
 #include "vpvl2/IMorphKeyframe.h"
 #include "vpvl2/IMotion.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/IString.h"
+#include "vpvl2/IVertex.h"
 #include "vpvl2/Scene.h"
 
 #ifdef vpvl2_ENABLE_PROJECT

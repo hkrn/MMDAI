@@ -285,6 +285,7 @@ endif()
 if(VPVL2_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl2_gl_sources)
   list(APPEND vpvl2_internal_headers
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/BaseRenderEngine.h
       ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/AssetRenderEngine.h
       ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMDRenderEngine.h
       ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMXRenderEngine.h

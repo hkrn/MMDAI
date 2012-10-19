@@ -42,35 +42,11 @@
 #include "vpvl2/Common.h"
 #ifdef VPVL2_LINK_ASSIMP
 
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/common/BaseRenderEngine.h"
 #include "vpvl2/IRenderEngine.h"
-
-#if defined(VPVL2_LINK_QT)
-#include <QtOpenGL/QtOpenGL>
-#elif defined(VPVL2_LINK_GLEW)
-#include <GL/glew.h>
-#endif /* VPVL_LINK_QT */
-
-#if defined(VPVL2_ENABLE_GLES2)
-#include <GLES2/gl2.h>
-#elif defined(VPVL2_BUILD_IOS)
-#include <OpenGLES/ES2/gl.h>
-#else
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#include <OpenGL/CGLCurrent.h>
-#else
-#include <GL/gl.h>
-#include <GL/glu.h>
-#endif /* __APPLE__ */
-#endif /* VPVL_BUILD_IOS */
 
 #include <assimp.h>
 #include <aiScene.h>
-
-class btDynamicsWorld;
-class btIDebugDraw;
 
 namespace vpvl2
 {
@@ -85,6 +61,8 @@ class Scene;
 namespace gl2
 {
 
+class BaseShaderProgram;
+
 /**
  * @file
  * @author Nagoya Institute of Technology Department of Computer Science
@@ -95,14 +73,13 @@ namespace gl2
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::common::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
 {
 public:
     class Program;
-    class PrivateContext;
 
     AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, asset::Model *model);
     virtual ~AssetRenderEngine();
@@ -122,19 +99,23 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
-protected:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
-
-    IRenderDelegate *m_delegateRef;
-
 private:
+    class PrivateContext;
     bool uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
+    bool createProgram(BaseShaderProgram *program,
+                       const IString *dir,
+                       IRenderDelegate::ShaderType vertexShaderType,
+                       IRenderDelegate::ShaderType fragmentShaderType,
+                       void *context);
+    void bindVertexBundle(const aiNode *node);
+    void unbindVertexBundle();
+    void bindStaticVertexAttributePointers();
 
-    const Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PrivateContext *m_context;
 

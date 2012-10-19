@@ -39,29 +39,8 @@
 #ifndef VPVL2_GL2_PMXRENDERENGINE_H_
 #define VPVL2_GL2_PMXRENDERENGINE_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/common/BaseRenderEngine.h"
 #include "vpvl2/IRenderEngine.h"
-
-#if defined(VPVL2_LINK_QT)
-#include <QtOpenGL/QtOpenGL>
-#include <QtOpenGL/QGLFunctions>
-#elif defined(VPVL2_LINK_GLEW)
-#include <GL/glew.h>
-#endif /* VPVL_LINK_QT */
-
-#if defined(VPVL2_ENABLE_GLES2)
-#include <GLES2/gl2.h>
-#elif defined(VPVL2_BUILD_IOS)
-#include <OpenGLES/ES2/gl.h>
-#else
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#include <OpenGL/CGLCurrent.h>
-#else
-#include <GL/gl.h>
-#endif /* __APPLE__ */
-#endif /* VPVL_BUILD_IOS */
 
 namespace vpvl2
 {
@@ -80,14 +59,12 @@ namespace gl2
 
 class BaseShaderProgram;
 
-class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::common::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
 {
 public:
-    class PrivateContext;
-
     PMXRenderEngine(IRenderDelegate *delegate,
                     const Scene *scene,
                     cl::PMXAccelerator *accelerator,
@@ -110,10 +87,7 @@ public:
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 private:
-    typedef void (*PFNGLBINDVERTEXARRAY)(GLuint id);
-    typedef void (*PFNGLDELETEVERTEXARRAYS)(GLsizei n, const GLuint *ids);
-    typedef void (*PFNGLGENVERTEXARRAYS)(GLsizei n, GLuint *ids);
-
+    class PrivateContext;
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
@@ -122,19 +96,16 @@ private:
                        IRenderDelegate::ShaderType fragmentShaderType,
                        void *context);
     bool releaseContext0(void *context);
-    void bindVertexBuffers();
-    void unbindVertexBuffers();
+    void bindVertexBundle();
+    void unbindVertexBundle();
+    void bindDynamicVertexAttributePointers();
+    void bindStaticVertexAttributePointers();
 
-    const Scene *m_sceneRef;
-    IRenderDelegate *m_delegateRef;
     cl::PMXAccelerator *m_accelerator;
     IModel *m_modelRef;
     PrivateContext *m_context;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
-    PFNGLBINDVERTEXARRAY glBindVertexArrayPtr;
-    PFNGLDELETEVERTEXARRAYS glDeleteVertexArraysPtr;
-    PFNGLGENVERTEXARRAYS glGenVertexArraysPtr;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

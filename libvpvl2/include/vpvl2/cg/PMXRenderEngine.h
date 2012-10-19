@@ -37,9 +37,10 @@
 #ifndef VPVL2_CG2_PMXRENDERENGINE_H_
 #define VPVL2_CG2_PMXRENDERENGINE_H_
 
+#include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
+#include "vpvl2/common/BaseRenderEngine.h"
 #include "vpvl2/cg/EffectEngine.h"
-#include "vpvl2/pmx/Model.h"
 
 namespace vpvl2
 {
@@ -53,7 +54,7 @@ class PMXAccelerator;
 namespace cg
 {
 
-class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::common::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
@@ -83,14 +84,13 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
-    bool isAcceleratorAvailable() const;
-    bool initializeAccelerator();
-
 private:
     bool releaseContext0(void *context);
     void release();
-    void bindVertexBuffers();
-    void unbindVertexBuffers();
+    void bindVertexBundle();
+    void unbindVertexBundle();
+    void bindDynamicVertexAttributePointers();
+    void bindStaticVertexAttributePointers();
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
 
     enum VertexBufferObjectType {
@@ -114,12 +114,7 @@ private:
         GLuint sphereTextureID;
         Color toonTextureColor;
     };
-    typedef void (*PFNGLBINDVERTEXARRAY)(GLuint id);
-    typedef void (*PFNGLDELETEVERTEXARRAYS)(GLsizei n, const GLuint *ids);
-    typedef void (*PFNGLGENVERTEXARRAYS)(GLsizei n, GLuint *ids);
 
-    const Scene *m_sceneRef;
-    IRenderDelegate *m_delegateRef;
     CGcontext m_contextRef;
     EffectEngine *m_currentRef;
     cl::PMXAccelerator *m_accelerator;
@@ -138,9 +133,6 @@ private:
     Vector3 m_aabbMax;
     bool m_cullFaceState;
     bool m_isVertexShaderSkinning;
-    PFNGLBINDVERTEXARRAY glBindVertexArrayPtr;
-    PFNGLDELETEVERTEXARRAYS glDeleteVertexArraysPtr;
-    PFNGLGENVERTEXARRAYS glGenVertexArraysPtr;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

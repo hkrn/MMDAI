@@ -36,6 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef VPVL2_GL_INTERNAL_ENGINECOMMON_H_
+#define VPVL2_GL_INTERNAL_ENGINECOMMON_H_
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderDelegate.h>
 
@@ -199,6 +201,9 @@ private:
 class ObjectProgram : public BaseShaderProgram
 {
 public:
+    static const char *const kNormalAttributeName;
+    static const char *const kTexCoordAttributeName;
+
     ObjectProgram(IRenderDelegate *delegate)
         : BaseShaderProgram(delegate),
           m_normalAttributeLocation(0),
@@ -346,3 +351,5 @@ private:
 
 } /* namespace gl2 */
 } /* namespace vpvl2 */
+
+#endif

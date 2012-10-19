@@ -77,13 +77,10 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
                                      const Scene *scene,
                                      CGcontext context,
                                      asset::Model *model)
-#ifdef VPVL2_LINK_QT
-    : QGLFunctions(),
-      #else
-    :
+    : BaseRenderEngine(scene, delegate),
+      #ifdef VPVL2_LINK_QT
+      QGLFunctions(),
       #endif /* VPVL2_LINK_QT */
-      m_delegateRef(delegate),
-      m_sceneRef(scene),
       m_currentRef(0),
       m_modelRef(model),
       m_contextRef(context),
@@ -94,6 +91,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderDelegate *delegate,
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif /* VPVL2_LINK_QT */
+    initializeExtensions();
 }
 
 AssetRenderEngine::~AssetRenderEngine()
@@ -347,22 +345,18 @@ void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, con
 
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
 {
-    bool ret = true;
-    const unsigned int nmeshes = node->mNumMeshes;
-    int totalIndices = 0;
+    AssetVertices &assetVertices = m_vertices[node];
     AssetVertex assetVertex;
+    const unsigned int nmeshes = node->mNumMeshes;
+    bool ret = true;
     m_nmeshes = nmeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const aiVector3D *vertices = mesh->mVertices;
         const aiVector3D *normals = mesh->mNormals;
         const bool hasNormals = mesh->HasNormals();
-        const bool hasColors = mesh->HasVertexColors(0);
         const bool hasTexCoords = mesh->HasTextureCoords(0);
-        const aiColor4D *colors = hasColors ? mesh->mColors[0] : 0;
         const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
-        AssetVertices &assetVertices = m_vertices[mesh];
-        AssetIndices &indices = m_indices[mesh];
         const unsigned int nfaces = mesh->mNumFaces;
         int index = 0;
         for (unsigned int j = 0; j < nfaces; j++) {
@@ -370,14 +364,6 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int k = 0; k < nindices; k++) {
                 int vertexIndex = face.mIndices[k];
-                if (hasColors) {
-                    const aiColor4D &c = colors[vertexIndex];
-                    assetVertex.color.setValue(c.r, c.g, c.b, c.a);
-                }
-                else {
-                    assetVertex.color.setZero();
-                    assetVertex.color.setW(1.0f);
-                }
                 if (hasTexCoords) {
                     const aiVector3D &p = texcoords[vertexIndex];
                     assetVertex.texcoord.setValue(p.x, p.y, 0.0f);
@@ -393,26 +379,35 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
                     assetVertex.normal.setZero();
                 }
                 const aiVector3D &v = vertices[vertexIndex];
-                assetVertex.position.setValue(v.x, v.y, v.z, Scalar(index));
+                assetVertex.position.setValue(v.x, v.y, v.z, 1.0f);
                 assetVertices.push_back(assetVertex);
-                indices.push_back(index);
                 index++;
             }
         }
-        AssetVBO &vbo = m_vbo[mesh];
-        size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
-        const int nindices = indices.size();
-        glGenBuffers(1, &vbo.vertices);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        glBufferData(GL_ARRAY_BUFFER, vsize, assetVertices[0].position, GL_STATIC_DRAW);
-        glGenBuffers(1, &vbo.indices);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, nindices * sizeof(indices[0]), &indices[0], GL_STATIC_DRAW);
-        totalIndices += nindices;
+        m_indices[mesh] = index;
     }
+    GLuint &vao = m_vao[node];
+    allocateVertexArrayObjects(&vao, 1);
+    if (bindVertexArrayObject(vao)) {
+        log0(context, IRenderDelegate::kLogInfo, "Created an vertex array object (ID=%d)", vao);
+    }
+    static const AssetVertex v;
+    size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
+    GLuint &vbo = m_vbo[node];
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vsize, &assetVertices[0].position, GL_STATIC_DRAW);
+    const void *vertexPtr = 0;
+    glVertexPointer(3, GL_FLOAT, sizeof(v), vertexPtr);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    glNormalPointer(GL_FLOAT, sizeof(v), normalPtr);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
+    glTexCoordPointer(2, GL_FLOAT, sizeof(v), texcoordPtr);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    m_nvertices = totalIndices;
+    unbindVertexArrayObject();
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], context);
@@ -424,13 +419,8 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
 
 void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 {
-    const unsigned int nmeshes = node->mNumMeshes;
-    for (unsigned int i = 0; i < nmeshes; i++) {
-        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        const AssetVBO &vbo = m_vbo[mesh];
-        glDeleteBuffers(1, &vbo.vertices);
-        glDeleteBuffers(1, &vbo.indices);
-    }
+    GLuint vbo = m_vbo[node];
+    glDeleteBuffers(1, &vbo);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         deleteRecurse(scene, node->mChildren[i]);
@@ -438,35 +428,18 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
 {
-    static const AssetVertex v;
-    const uint8_t *basePtr = reinterpret_cast<const uint8_t *>(&v.position);
-    const GLvoid *vertexPtr = 0;
-    const GLvoid *normalPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.normal) - basePtr);
-    const GLvoid *texcoordPtr = reinterpret_cast<const GLvoid *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - basePtr);
-    const size_t stride = sizeof(AssetVertex);
     const unsigned int nmeshes = node->mNumMeshes;
+    const GLuint &vbo = m_vbo[node];
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        const AssetVBO &vbo = m_vbo[mesh];
-        const AssetIndices &indices = m_indices[mesh];
         bool hasTexture = false, hasSphereMap = false;
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         const char *target = hasShadowMap ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         if (cgIsTechnique(technique)) {
-            const int nindices = indices.size();
-            glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
-            glNormalPointer(GL_FLOAT, stride, normalPtr);
-            glTexCoordPointer(2, GL_FLOAT, stride, texcoordPtr);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_NORMAL_ARRAY);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glDisableClientState(GL_NORMAL_ARRAY);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            //FIXME:
+            //m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
         }
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -478,10 +451,10 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
 
 void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)
 {
-    const GLvoid *vertexPtr = 0;
-    const size_t stride = sizeof(AssetVertex);
     const unsigned int nmeshes = node->mNumMeshes;
+    const GLuint &vbo = m_vbo[node];
     float opacity;
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -489,20 +462,14 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         bool succeeded = aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS;
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
-        const AssetVBO &vbo = m_vbo[mesh];
-        const AssetIndices &indices = m_indices[mesh];
-        glBindBuffer(GL_ARRAY_BUFFER, vbo.vertices);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo.indices);
         CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmeshes, false, false, false);
         if (cgIsTechnique(technique)) {
-            const int nindices = indices.size();
-            glVertexPointer(3, GL_FLOAT, stride, vertexPtr);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
-            glDisableClientState(GL_VERTEX_ARRAY);
+            //FIXME
+            //m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid *>(0));
         }
     }
     glCullFace(GL_BACK);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         renderZPlotRecurse(scene, node->mChildren[i]);
@@ -587,6 +554,20 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else if (m_cullFaceState) {
         glDisable(GL_CULL_FACE);
         m_cullFaceState = false;
+    }
+}
+
+void AssetRenderEngine::bindVertexBuffers(const aiNode *node)
+{
+    if (!bindVertexArrayObject(m_vao[node])) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo[node]);
+    }
+}
+
+void AssetRenderEngine::unbindVertexBuffers()
+{
+    if (!unbindVertexArrayObject()) {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 }
 
