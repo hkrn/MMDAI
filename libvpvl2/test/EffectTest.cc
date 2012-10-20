@@ -55,6 +55,22 @@ static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, co
     AssertMatrix(expected, v);
 }
 
+class MockEffectEngine : public EffectEngine {
+public:
+    MockEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate)
+        : EffectEngine(scene, dir, effect, delegate)
+    {
+    }
+
+protected:
+    void drawPrimitives(const GLenum /*mode*/,
+                        const GLsizei /*count*/,
+                        const GLenum /*type*/,
+                        const GLvoid */*ptr*/) const
+    {
+    }
+};
+
 class EffectTest : public ::testing::Test {
 public:
     void setMatrix(MockIRenderDelegate &delegate, const IModel *modelPtr, int flags) {
@@ -201,7 +217,7 @@ TEST_F(EffectTest, LoadMatrices)
     setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix  | IRenderDelegate::kTransposeMatrix);
     setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
     setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix  | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     engine.setModelMatrixParameters(modelPtr, 0, 0);
 }
 
@@ -211,7 +227,7 @@ TEST_F(EffectTest, LoadMaterialColors)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/materials.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     Vector4 v;
     float f;
     {
@@ -244,7 +260,7 @@ TEST_F(EffectTest, LoadGeometries)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/geometries.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     Vector4 v;
     cgGLGetParameter4f(engine.direction.cameraParameter(), v);
     ASSERT_EQ(Vector4(0.01, 0.02, 0.03, 0.04), v);
@@ -262,7 +278,7 @@ TEST_F(EffectTest, LoadControlObjectWithoutAsset)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(0);
@@ -299,7 +315,7 @@ TEST_F(EffectTest, LoadControlObjectWithAsset)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
     EXPECT_CALL(model, position()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
     EXPECT_CALL(model, rotation()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kRotation));
@@ -335,7 +351,7 @@ TEST_F(EffectTest, LoadControlObjectWithoutModel)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("model"));
     engine.controlObject.update(0);
@@ -355,7 +371,7 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     Transform boneTransform;
     boneTransform.setIdentity();
     boneTransform.setOrigin(kPosition);
@@ -391,7 +407,7 @@ TEST_F(EffectTest, LoadTimes)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/times.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     float f;
     cgGLGetParameter1f(engine.time.syncDisabledParameter(), &f);
     ASSERT_FLOAT_EQ(0.1, f);
@@ -409,7 +425,7 @@ TEST_F(EffectTest, LoadSpecials)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/specials.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     float f;
     cgGLGetParameter1f(engine.parthf.baseParameter(), &f);
     ASSERT_FLOAT_EQ(1.0, f);
@@ -437,7 +453,7 @@ TEST_F(EffectTest, LoadSASPreProcess)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/preprocess.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     ASSERT_EQ(EffectEngine::kScene, engine.scriptClass());
     ASSERT_EQ(IEffect::kPreProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -461,7 +477,7 @@ TEST_F(EffectTest, LoadSASStandard)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -486,7 +502,7 @@ TEST_F(EffectTest, LoadSASStandard2)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard2.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -501,7 +517,7 @@ TEST_F(EffectTest, LoadSASPostProcess)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/postprocess.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     ASSERT_EQ(EffectEngine::kSceneOrObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kPostProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -527,7 +543,7 @@ TEST_F(EffectTest, FindTechniques)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     ASSERT_STREQ("MainTec7",   cgGetTechniqueName(engine.findTechnique("object",     1, 42, true,  true,  true)));
     ASSERT_STREQ("MainTec6",   cgGetTechniqueName(engine.findTechnique("object",     2, 42, false, true,  true)));
     ASSERT_STREQ("MainTec5",   cgGetTechniqueName(engine.findTechnique("object",     3, 42, true,  false, true)));
@@ -554,7 +570,7 @@ TEST_P(FindTechnique, TestEdge)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     ASSERT_STREQ("EdgeTec", cgGetTechniqueName(engine.findTechnique("edge",
                                                                     get<0>(GetParam()),
                                                                     get<1>(GetParam()),
@@ -569,7 +585,7 @@ TEST_P(FindTechnique, TestShadow)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     ASSERT_STREQ("ShadowTec", cgGetTechniqueName(engine.findTechnique("shadow",
                                                                       get<0>(GetParam()),
                                                                       get<1>(GetParam()),
@@ -587,7 +603,7 @@ TEST_F(EffectTest, ParseSyntaxErrorsScript)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "SyntaxErrors");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
@@ -602,7 +618,7 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "RenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
@@ -644,7 +660,7 @@ TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "InvalidRenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
@@ -660,7 +676,7 @@ TEST_F(EffectTest, ParseLoopScript)
     Scene scene;
     CGeffect effectPtr;
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    MockEffectEngine engine(&scene, 0, ptr.data(), &delegate);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "Loop");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
