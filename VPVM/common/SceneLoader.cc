@@ -731,6 +731,10 @@ void SceneLoader::loadProject(const QString &path)
                 m_renderDelegate->addModelPath(model, filename);
                 IRenderEnginePtr enginePtr;
                 if (createModelEngine(model, fileInfo.absoluteDir(), enginePtr)) {
+                    if (!model->name()) {
+                        const CString s(fileInfo.fileName());
+                        model->setName(&s);
+                    }
                     sceneObject->addModel(model, enginePtr.take());
                     sceneObject->setAccelerationType(modelAccelerationType(model));
                     IModel::Type type = model->type();
