@@ -72,7 +72,7 @@ namespace pmd
 const int Joint::kNameSize;
 
 Joint::Joint(IEncoding *encodingRef)
-    : common::BaseJoint(),
+    : internal::BaseJoint(),
       m_encodingRef(encodingRef)
 {
 }

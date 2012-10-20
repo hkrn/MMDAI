@@ -36,10 +36,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_COMMON_BASEJOINT_H_
-#define VPVL2_COMMON_BASEJOINT_H_
+#ifndef VPVL2_INTERNAL_BASEJOINT_H_
+#define VPVL2_INTERNAL_BASEJOINT_H_
 
-#include "vpvl2/common/BaseRigidBody.h"
+#include "vpvl2/internal/BaseRigidBody.h"
 
 #ifndef VPVL2_NO_BULLET
 class btTypedConstraint;
@@ -51,7 +51,7 @@ BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint);
 
 namespace vpvl2
 {
-namespace common
+namespace internal
 {
 
 class VPVL2_API BaseJoint

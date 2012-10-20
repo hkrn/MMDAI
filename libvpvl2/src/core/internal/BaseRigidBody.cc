@@ -35,9 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/BaseRigidBody.h"
 #include "vpvl2/internal/util.h"
-
-#include "vpvl2/common/BaseRigidBody.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
@@ -49,7 +48,7 @@ BT_DECLARE_HANDLE(btRigidBody);
 
 namespace vpvl2
 {
-namespace common
+namespace internal
 {
 
 BaseRigidBody::BaseRigidBody()

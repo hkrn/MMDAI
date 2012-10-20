@@ -38,7 +38,7 @@
 #define VPVL2_PMD_JOINT_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/common/BaseJoint.h"
+#include "vpvl2/internal/BaseJoint.h"
 #include "vpvl2/pmd/Model.h"
 
 class btGeneric6DofSpringConstraint;
@@ -53,7 +53,7 @@ class IString;
 namespace pmd
 {
 
-class VPVL2_API Joint : public common::BaseJoint
+class VPVL2_API Joint : public internal::BaseJoint
 {
 public:
     static const int kNameSize = 20;

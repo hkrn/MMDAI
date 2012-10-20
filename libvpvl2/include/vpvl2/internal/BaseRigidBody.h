@@ -36,8 +36,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_COMMON_BASERIGIDBODY_H_
-#define VPVL2_COMMON_BASERIGIDBODY_H_
+#ifndef VPVL2_INTERNAL_BASERIGIDBODY_H_
+#define VPVL2_INTERNAL_BASERIGIDBODY_H_
 
 #include "vpvl2/Common.h"
 #include "LinearMath/btMotionState.h"
@@ -51,7 +51,7 @@ namespace vpvl2
 class IBone;
 class IString;
 
-namespace common
+namespace internal
 {
 
 class VPVL2_API BaseRigidBody

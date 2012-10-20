@@ -40,8 +40,8 @@
 #include "vpvl2/Common.h"
 #ifdef VPVL2_LINK_ASSIMP
 
-#include "vpvl2/common/BaseRenderEngine.h"
 #include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/internal/BaseRenderEngine.h"
 
 #include <assimp.h>
 #include <aiScene.h>
@@ -70,7 +70,7 @@ namespace cg
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::common::BaseRenderEngine
+class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif

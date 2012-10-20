@@ -76,7 +76,7 @@ namespace pmd
 const int RigidBody::kNameSize;
 
 RigidBody::RigidBody(IEncoding *encodingRef)
-    : common::BaseRigidBody(),
+    : internal::BaseRigidBody(),
       m_encodingRef(encodingRef)
 {
 }

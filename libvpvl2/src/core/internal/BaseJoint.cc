@@ -35,9 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/BaseJoint.h"
 #include "vpvl2/internal/util.h"
-
-#include "vpvl2/common/BaseJoint.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
@@ -45,7 +44,7 @@
 
 namespace vpvl2
 {
-namespace common
+namespace internal
 {
 
 BaseJoint::BaseJoint()

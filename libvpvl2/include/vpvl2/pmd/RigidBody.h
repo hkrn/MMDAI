@@ -38,7 +38,7 @@
 #define VPVL2_PMD_RIGIDBODY_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/common/BaseRigidBody.h"
+#include "vpvl2/internal/BaseRigidBody.h"
 #include "vpvl2/pmd/Model.h"
 
 class btCollisionShape;
@@ -54,7 +54,7 @@ class IString;
 namespace pmd
 {
 
-class VPVL2_API RigidBody : public common::BaseRigidBody
+class VPVL2_API RigidBody : public internal::BaseRigidBody
 {
 public:
     static const int kNameSize = 20;

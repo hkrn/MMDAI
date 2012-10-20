@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_BASE_RENDERENGINE_H_
-#define VPVL2_BASE_RENDERENGINE_H_
+#ifndef VPVL2_INTERNAL_BASERENDERENGINE_H_
+#define VPVL2_INTERNAL_BASERENDERENGINE_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IRenderDelegate.h"
@@ -68,7 +68,7 @@ namespace vpvl2
 
 class Scene;
 
-namespace common
+namespace internal
 {
 
 class BaseRenderEngine {

@@ -12,7 +12,7 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 project(libvpvl2)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/base vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/common vpvl2_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/internal vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
@@ -45,8 +45,8 @@ set(vpvl2_public_headers
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/BaseJoint.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/BaseRigidBody.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseJoint.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseRigidBody.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/BaseSection.h
@@ -285,7 +285,7 @@ endif()
 if(VPVL2_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl2_gl_sources)
   list(APPEND vpvl2_internal_headers
-      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/common/BaseRenderEngine.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseRenderEngine.h
       ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/AssetRenderEngine.h
       ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMDRenderEngine.h
       ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMXRenderEngine.h

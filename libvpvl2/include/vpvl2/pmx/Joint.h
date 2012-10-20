@@ -39,7 +39,7 @@
 #ifndef VPVL2_PMX_JOINT_H_
 #define VPVL2_PMX_JOINT_H_
 
-#include "vpvl2/common/BaseJoint.h"
+#include "vpvl2/internal/BaseJoint.h"
 #include "vpvl2/pmx/RigidBody.h"
 
 class btGeneric6DofConstraint;
@@ -60,7 +60,7 @@ namespace pmx
  * Constraint class represents a joint of a Polygon Model Data object.
  */
 
-class VPVL2_API Joint : public common::BaseJoint
+class VPVL2_API Joint : public internal::BaseJoint
 {
 public:
     Joint();

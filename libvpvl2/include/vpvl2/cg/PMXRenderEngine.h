@@ -39,8 +39,8 @@
 
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/common/BaseRenderEngine.h"
 #include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/internal/BaseRenderEngine.h"
 
 namespace vpvl2
 {
@@ -54,7 +54,7 @@ class PMXAccelerator;
 namespace cg
 {
 
-class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::common::BaseRenderEngine
+class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
