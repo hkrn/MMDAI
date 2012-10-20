@@ -575,7 +575,7 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
     return true;
 }
 
-const IKeyframe::TimeIndex Scene::maxFrameIndex() const
+IKeyframe::TimeIndex Scene::maxFrameIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();

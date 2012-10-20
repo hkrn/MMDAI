@@ -75,7 +75,6 @@ public:
     };
     typedef std::string UUID;
     typedef std::vector<UUID> UUIDList;
-    class PrivateContext;
 
     static const UUID kNullUUID;
     static const std::string kSettingNameKey;
@@ -115,6 +114,7 @@ public:
     void setModelSetting(const IModel *model, const std::string &key, const std::string &value);
 
 private:
+    struct PrivateContext;
     bool save0(xmlTextWriterPtr ptr);
     bool validate(bool result);
 

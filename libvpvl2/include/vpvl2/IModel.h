@@ -105,6 +105,7 @@ public:
         virtual Type type() const = 0;
     };
     struct IMatrixBuffer {
+        virtual ~IMatrixBuffer() {}
         virtual void update(void *address) = 0;
         virtual const float *bytes(int materialIndex) const = 0;
         virtual size_t size(int materialIndex) const = 0;

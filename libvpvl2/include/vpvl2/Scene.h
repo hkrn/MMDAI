@@ -97,7 +97,7 @@ public:
     void update(int flags);
     void setPreferredFPS(const Scalar &value);
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
-	const IKeyframe::TimeIndex maxFrameIndex() const;
+    IKeyframe::TimeIndex maxFrameIndex() const;
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;
     const Array<IRenderEngine *> &renderEngines() const;

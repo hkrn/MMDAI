@@ -427,6 +427,7 @@ struct IndexBuffer : public IModel::IIndexBuffer {
     };
     int nindices;
 };
+const int IndexBuffer::kIdent;
 
 struct MatrixBuffer : public IModel::IMatrixBuffer {
     typedef btAlignedObjectArray<int> BoneIndices;

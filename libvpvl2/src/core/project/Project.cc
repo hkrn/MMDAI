@@ -474,9 +474,9 @@ struct Project::PrivateContext {
             const IModel *model = it->second;
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("model"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            ModelSettings::const_iterator it = localModelSettings.find(model);
-            if (it != localModelSettings.end()) {
-                if(!writeStringMap(projectPrefix(), it->second, writer))
+            ModelSettings::const_iterator it2 = localModelSettings.find(model);
+            if (it2 != localModelSettings.end()) {
+                if(!writeStringMap(projectPrefix(), it2->second, writer))
                     return false;
             }
             VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:model */
@@ -491,9 +491,9 @@ struct Project::PrivateContext {
             const IModel *asset = it->second;
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("asset"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            ModelSettings::const_iterator it = localAssetSettings.find(asset);
-            if (it != localAssetSettings.end()) {
-                if(!writeStringMap(projectPrefix(), it->second, writer))
+            ModelSettings::const_iterator it2 = localAssetSettings.find(asset);
+            if (it2 != localAssetSettings.end()) {
+                if(!writeStringMap(projectPrefix(), it2->second, writer))
                     return false;
             }
             VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */

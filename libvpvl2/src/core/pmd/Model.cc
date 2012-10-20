@@ -316,6 +316,7 @@ struct IndexBuffer : public IModel::IIndexBuffer {
     Array<uint16_t> indicesPtr;
     int nindices;
 };
+const uint16_t IndexBuffer::kIdent;
 
 struct MatrixBuffer : public IModel::IMatrixBuffer {
     typedef btAlignedObjectArray<int> BoneIndices;
