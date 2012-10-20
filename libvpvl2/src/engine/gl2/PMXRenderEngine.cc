@@ -479,8 +479,10 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_aabbMax(kZeroV3)
 {
     m_context = new PrivateContext(modelRef);
+#ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_context->dynamicBuffer->setSkinningEnable(false);
+#endif
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif
