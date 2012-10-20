@@ -489,9 +489,11 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
 
 PMXRenderEngine::~PMXRenderEngine()
 {
-    releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
-    delete m_context;
-    m_context = 0;
+    if (m_context) {
+        releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
+        delete m_context;
+        m_context = 0;
+    }
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
 #endif
@@ -999,8 +1001,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
 
 bool PMXRenderEngine::releaseContext0(void *context)
 {
-    delete m_context;
-    m_context = 0;
+    if (m_context) {
+        releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
+        delete m_context;
+        m_context = 0;
+    }
     m_delegateRef->releaseContext(m_modelRef, context);
     return false;
 }
