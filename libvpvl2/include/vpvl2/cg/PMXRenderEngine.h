@@ -85,6 +85,7 @@ public:
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 private:
+    bool uploadMaterials(const IString *dir, void *context);
     bool releaseContext0(void *context);
     void release();
     void bindVertexBundle();

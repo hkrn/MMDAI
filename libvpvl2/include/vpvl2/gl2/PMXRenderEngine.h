@@ -95,6 +95,7 @@ private:
                        IRenderDelegate::ShaderType vertexSkinningShaderType,
                        IRenderDelegate::ShaderType fragmentShaderType,
                        void *context);
+    bool uploadMaterials(const IString *dir, void *context);
     bool releaseContext0(void *context);
     void bindVertexBundle();
     void unbindVertexBundle();

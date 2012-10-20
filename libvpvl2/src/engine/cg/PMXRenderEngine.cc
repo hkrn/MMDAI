@@ -127,6 +127,9 @@ bool PMXRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
     m_delegateRef->allocateContext(m_modelRef, context);
+    if (!uploadMaterials(dir, context)) {
+        return releaseContext0(context);
+    }
     allocateVertexArrayObjects(m_vertexArrayObjects, kMaxVertexArrayObjectType);
     GLuint vao = m_vertexArrayObjects[kEvenVertexArrayObject];
     if (bindVertexArrayObject(vao)) {
@@ -156,45 +159,6 @@ bool PMXRenderEngine::upload(const IString *dir)
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     unbindVertexArrayObject();
-    Array<IMaterial *> materials;
-    m_modelRef->getMaterialRefs(materials);
-    const int nmaterials = materials.count();
-    IRenderDelegate::Texture texture;
-    MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
-    for (int i = 0; i < nmaterials; i++) {
-        const IMaterial *material = materials[i];
-        MaterialContext &materialPrivate = materialPrivates[i];
-        const IString *path = 0;
-        GLuint textureID = 0;
-        texture.object = &textureID;
-        path = material->mainTexture();
-        if (path && m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
-        }
-        path = material->sphereTexture();
-        if (path && m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
-            materialPrivate.sphereTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-            log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
-        }
-        if (material->isSharedToonTextureUsed()) {
-            char buf[16];
-            int index = material->toonTextureIndex();
-            if (index == 0)
-                internal::snprintf(buf, sizeof(buf), "toon%d.bmp", index);
-            else
-                internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
-            IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            m_delegateRef->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
-            delete s;
-        }
-        else {
-            path = material->toonTexture();
-            if (path) {
-                m_delegateRef->getToonColor(path, dir, materialPrivate.toonTextureColor, context);
-            }
-        }
-    }
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         GLuint vbo = m_vertexBufferObjects[kModelDynamicVertexBuffer];
@@ -449,6 +413,60 @@ void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const
     va_start(ap, format);
     m_delegateRef->log(context, level, format, ap);
     va_end(ap);
+}
+
+bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
+{
+    Array<IMaterial *> materials;
+    m_modelRef->getMaterialRefs(materials);
+    const int nmaterials = materials.count();
+    IRenderDelegate::Texture texture;
+    MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
+    for (int i = 0; i < nmaterials; i++) {
+        const IMaterial *material = materials[i];
+        MaterialContext &materialPrivate = materialPrivates[i];
+        const IString *path = 0;
+        GLuint textureID = 0;
+        texture.object = &textureID;
+        path = material->mainTexture();
+        if (path) {
+            if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
+            }
+            else {
+                return false;
+            }
+        }
+        path = material->sphereTexture();
+        if (path) {
+            if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+                materialPrivate.sphereTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
+            }
+            else {
+                return false;
+            }
+        }
+        if (material->isSharedToonTextureUsed()) {
+            char buf[16];
+            int index = material->toonTextureIndex();
+            if (index == 0)
+                internal::snprintf(buf, sizeof(buf), "toon%d.bmp", index);
+            else
+                internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
+            IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
+            m_delegateRef->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
+            delete s;
+        }
+        else {
+            path = material->toonTexture();
+            if (path) {
+                m_delegateRef->getToonColor(path, dir, materialPrivate.toonTextureColor, context);
+            }
+        }
+    }
+    return true;
 }
 
 bool PMXRenderEngine::releaseContext0(void *context)
