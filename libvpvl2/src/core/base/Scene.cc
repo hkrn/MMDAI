@@ -38,7 +38,7 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd2/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
 #ifdef VPVL2_OPENGL_RENDERER

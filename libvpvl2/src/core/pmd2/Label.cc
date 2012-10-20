@@ -36,8 +36,8 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd/Bone.h" /* for Boen::kCategoryNameSize */
-#include "vpvl2/pmd/Label.h"
+#include "vpvl2/pmd2/Bone.h" /* for Bone::kCategoryNameSize */
+#include "vpvl2/pmd2/Label.h"
 
 namespace
 {
@@ -55,7 +55,7 @@ struct BoneLabel
 
 namespace vpvl2
 {
-namespace pmd
+namespace pmd2
 {
 
 Label::Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)

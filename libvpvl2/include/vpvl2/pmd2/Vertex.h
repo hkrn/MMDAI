@@ -40,7 +40,7 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IMorph.h"
 #include "vpvl2/IVertex.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd2/Model.h"
 
 namespace vpvl2
 {
@@ -48,7 +48,7 @@ namespace vpvl2
 class IEncoding;
 class IString;
 
-namespace pmd
+namespace pmd2
 {
 
 class Bone;
@@ -102,7 +102,7 @@ public:
     int m_index;
 };
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
 
 #endif

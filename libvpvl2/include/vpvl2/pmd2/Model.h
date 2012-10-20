@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_MODEL_H_
-#define VPVL2_PMD_MODEL_H_
+#ifndef VPVL2_PMD2_MODEL_H_
+#define VPVL2_PMD2_MODEL_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IModel.h"
@@ -48,7 +48,7 @@ namespace vpvl2
 class IEncoding;
 class IString;
 
-namespace pmd
+namespace pmd2
 {
 
 class Bone;
@@ -214,7 +214,7 @@ private:
     bool m_visible;
 };
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
 
 #endif

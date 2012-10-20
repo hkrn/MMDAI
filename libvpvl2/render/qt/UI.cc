@@ -67,7 +67,7 @@ BT_DECLARE_HANDLE(aiScene);
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd2/Model.h"
 #include "vpvl2/vmd/Motion.h"
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG

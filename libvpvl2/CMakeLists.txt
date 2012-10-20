@@ -11,9 +11,11 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 # project configuration
 project(libvpvl2)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core vpvl2_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/asset vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/base vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/internal vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd vpvl2_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2 vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
 set(vpvl2_public_headers
@@ -67,14 +69,14 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/asset/Model.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Joint.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Material.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/RigidBody.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Vertex.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Bone.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Joint.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Label.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Material.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Model.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Morph.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/RigidBody.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Vertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Label.h
@@ -321,10 +323,6 @@ endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
 set(vpvl2_public_headers ${vpvl2_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h)
-
-# libvpvl sources
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/asset vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd vpvl2_sources)
 
 add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})

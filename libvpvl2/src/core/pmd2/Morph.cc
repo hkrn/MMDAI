@@ -36,13 +36,13 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd/Morph.h"
-#include "vpvl2/pmd/Vertex.h"
+#include "vpvl2/pmd2/Morph.h"
+#include "vpvl2/pmd2/Vertex.h"
 
 namespace
 {
 
-using namespace vpvl2::pmd;
+using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
@@ -63,7 +63,7 @@ struct MorphUnit {
 
 namespace vpvl2
 {
-namespace pmd
+namespace pmd2
 {
 
 const int Morph::kNameSize;

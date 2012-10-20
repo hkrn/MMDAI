@@ -34,15 +34,16 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_JOINT_H_
-#define VPVL2_PMD_JOINT_H_
+#ifndef VPVL2_PMD2_RIGIDBODY_H_
+#define VPVL2_PMD2_RIGIDBODY_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/internal/BaseJoint.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/internal/BaseRigidBody.h"
+#include "vpvl2/pmd2/Model.h"
 
-class btGeneric6DofSpringConstraint;
+class btCollisionShape;
 class btRigidBody;
+class btMotionState;
 
 namespace vpvl2
 {
@@ -50,31 +51,31 @@ namespace vpvl2
 class IEncoding;
 class IString;
 
-namespace pmd
+namespace pmd2
 {
 
-class VPVL2_API Joint : public internal::BaseJoint
+class VPVL2_API RigidBody : public internal::BaseRigidBody
 {
 public:
     static const int kNameSize = 20;
 
-    Joint(IEncoding *encodingRef);
-    ~Joint();
+    RigidBody(IEncoding *encodingRef);
+    ~RigidBody();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies);
-    static size_t estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info);
+    static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones);
+    static size_t estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+    const Transform createTransform() const;
 
 private:
     IEncoding *m_encodingRef;
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Joint)
 };
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
 
 #endif

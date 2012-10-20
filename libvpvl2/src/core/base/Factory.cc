@@ -38,7 +38,7 @@
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd2/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
 #include "vpvl2/mvd/CameraKeyframe.h"
@@ -298,7 +298,7 @@ IModel *Factory::createModel(IModel::Type type) const
     case IModel::kAsset:
         return new asset::Model(m_context->encoding);
     case IModel::kPMD:
-        return new pmd::Model(m_context->encoding);
+        return new pmd2::Model(m_context->encoding);
     case IModel::kPMX:
         return new pmx::Model(m_context->encoding);
     default:

@@ -34,17 +34,17 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_MATERIAL_H_
-#define VPVL2_PMD_MATERIAL_H_
+#ifndef VPVL2_PMD2_MATERIAL_H_
+#define VPVL2_PMD2_MATERIAL_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IMaterial.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd2/Model.h"
 
 namespace vpvl2
 {
 
-namespace pmd
+namespace pmd2
 {
 
 class VPVL2_API Material : public IMaterial
@@ -130,7 +130,7 @@ private:
     bool m_enableEdge;
 };
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
 
 #endif

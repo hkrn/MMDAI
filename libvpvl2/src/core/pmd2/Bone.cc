@@ -38,12 +38,12 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd/Bone.h"
+#include "vpvl2/pmd2/Bone.h"
 
 namespace
 {
 
-using namespace vpvl2::pmd;
+using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
@@ -78,7 +78,7 @@ const float kMinRotation    = 0.00001f;
 
 namespace vpvl2
 {
-namespace pmd
+namespace pmd2
 {
 
 struct Bone::IKConstraint {

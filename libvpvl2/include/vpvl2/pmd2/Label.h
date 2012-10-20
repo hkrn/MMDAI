@@ -34,16 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_RIGIDBODY_H_
-#define VPVL2_PMD_RIGIDBODY_H_
+#ifndef VPVL2_PMD2_LABEL_H_
+#define VPVL2_PMD2_LABEL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/internal/BaseRigidBody.h"
-#include "vpvl2/pmd/Model.h"
-
-class btCollisionShape;
-class btRigidBody;
-class btMotionState;
+#include "vpvl2/ILabel.h"
+#include "vpvl2/pmd2/Model.h"
 
 namespace vpvl2
 {
@@ -51,31 +47,38 @@ namespace vpvl2
 class IEncoding;
 class IString;
 
-namespace pmd
+namespace pmd2
 {
 
-class VPVL2_API RigidBody : public internal::BaseRigidBody
+class VPVL2_API Label : public ILabel
 {
 public:
-    static const int kNameSize = 20;
+    Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special);
+    ~Label();
 
-    RigidBody(IEncoding *encodingRef);
-    ~RigidBody();
+    const IString *name() const { return m_name; }
+    const IString *englishName() const { return m_name; }
+    bool isSpecial() const { return m_special; }
+    int count() const { return m_boneRefs.count(); }
+    IBone *bone(int index) const { return m_boneRefs.at(index); }
+    IMorph *morph(int /* index */) const { return 0; }
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones);
-    static size_t estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info);
+    static bool loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones, const Array<Morph *> &morphs);
+    static size_t estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
-    const Transform createTransform() const;
 
-private:
     IEncoding *m_encodingRef;
+    IString *m_name;
+    Array<IBone *> m_boneRefs;
+    int m_index;
+    bool m_special;
 };
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
 
 #endif

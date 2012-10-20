@@ -36,12 +36,12 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd/Material.h"
+#include "vpvl2/pmd2/Material.h"
 
 namespace
 {
 
-using namespace vpvl2::pmd;
+using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
@@ -63,7 +63,7 @@ struct MaterialUnit {
 
 namespace vpvl2
 {
-namespace pmd
+namespace pmd2
 {
 
 const int Material::kNameSize;

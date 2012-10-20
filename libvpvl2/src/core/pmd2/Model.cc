@@ -36,14 +36,14 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd/Bone.h"
-#include "vpvl2/pmd/Joint.h"
-#include "vpvl2/pmd/Label.h"
-#include "vpvl2/pmd/Material.h"
-#include "vpvl2/pmd/Model.h"
-#include "vpvl2/pmd/Morph.h"
-#include "vpvl2/pmd/RigidBody.h"
-#include "vpvl2/pmd/Vertex.h"
+#include "vpvl2/pmd2/Bone.h"
+#include "vpvl2/pmd2/Joint.h"
+#include "vpvl2/pmd2/Label.h"
+#include "vpvl2/pmd2/Material.h"
+#include "vpvl2/pmd2/Model.h"
+#include "vpvl2/pmd2/Morph.h"
+#include "vpvl2/pmd2/RigidBody.h"
+#include "vpvl2/pmd2/Vertex.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
@@ -55,6 +55,7 @@ namespace
 {
 
 using namespace vpvl2;
+using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
@@ -62,8 +63,8 @@ struct Header
 {
     uint8_t signature[3];
     float version;
-    uint8_t name[pmd::Model::kNameSize];
-    uint8_t comment[pmd::Model::kCommentSize];
+    uint8_t name[Model::kNameSize];
+    uint8_t comment[Model::kCommentSize];
 };
 
 #pragma pack(pop)
@@ -83,7 +84,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
     };
     static const Unit kIdent;
 
-    StaticVertexBuffer(const pmd::Model *model)
+    StaticVertexBuffer(const Model *model)
         : modelRef(model)
     {
     }
@@ -124,7 +125,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
     }
     void update(void *address) const {
         Unit *unitPtr = static_cast<Unit *>(address);
-        const Array<pmd::Vertex *> &vertices = modelRef->vertices();
+        const Array<Vertex *> &vertices = modelRef->vertices();
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
             unitPtr[i].update(vertices[i]);
@@ -134,7 +135,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         return &kIdent;
     }
 
-    const pmd::Model *modelRef;
+    const Model *modelRef;
 };
 const StaticVertexBuffer::Unit StaticVertexBuffer::kIdent = StaticVertexBuffer::Unit();
 
@@ -167,7 +168,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
-    DynamicVertexBuffer(const pmd::Model *model, const IModel::IIndexBuffer *indexBuffer)
+    DynamicVertexBuffer(const Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
           enableSkinning(true)
@@ -215,10 +216,10 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         return sizeof(kIdent);
     }
     void update(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
-        const Array<pmd::Vertex *> &vertices = modelRef->vertices();
+        const Array<Vertex *> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-            const Array<pmd::Material *> &materials = modelRef->materials();
+            const Array<Material *> &materials = modelRef->materials();
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
             const int nmaterials = materials.count();
             Vector3 position;
@@ -256,7 +257,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         return &kIdent;
     }
 
-    const pmd::Model *modelRef;
+    const Model *modelRef;
     const IModel::IIndexBuffer *indexBufferRef;
     bool enableSkinning;
 };
@@ -414,7 +415,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
 
 class BonePredication {
 public:
-    bool operator()(const pmd::Bone *left, const pmd::Bone *right) const {
+    bool operator()(const Bone *left, const Bone *right) const {
         const IBone *parentLeft = left->parentBone(), *parentRight = right->parentBone();
         if (parentLeft && parentRight) {
             return parentLeft->index() < parentRight->index();
@@ -435,7 +436,7 @@ public:
 
 namespace vpvl2
 {
-namespace pmd
+namespace pmd2
 {
 
 const int Model::kNameSize;

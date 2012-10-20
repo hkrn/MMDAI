@@ -36,28 +36,32 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd/Joint.h"
-#include "vpvl2/pmd/RigidBody.h"
+#include "vpvl2/pmd2/Bone.h"
+#include "vpvl2/pmd2/RigidBody.h"
 
 namespace
 {
 
-using namespace vpvl2::pmd;
+using namespace vpvl2;
+using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
-struct JointUnit {
-    uint8_t name[Joint::kNameSize];
-    int bodyIDA;
-    int bodyIDB;
+struct RigidBodyUnit {
+    uint8_t name[RigidBody::kNameSize];
+    uint16_t boneID;
+    uint8_t collisionGroupID;
+    uint16_t collsionMask;
+    uint8_t shapeType;
+    float size[3];
     float position[3];
     float rotation[3];
-    float positionLowerLimit[3];
-    float positionUpperLimit[3];
-    float rotationLowerLimit[3];
-    float rotationUpperLimit[3];
-    float positionStiffness[3];
-    float rotationStiffness[3];
+    float mass;
+    float linearDamping;
+    float angularDamping;
+    float restitution;
+    float friction;
+    uint8_t type;
 };
 
 #pragma pack(pop)
@@ -66,112 +70,125 @@ struct JointUnit {
 
 namespace vpvl2
 {
-namespace pmd
+namespace pmd2
 {
 
-const int Joint::kNameSize;
+const int RigidBody::kNameSize;
 
-Joint::Joint(IEncoding *encodingRef)
-    : internal::BaseJoint(),
+RigidBody::RigidBody(IEncoding *encodingRef)
+    : internal::BaseRigidBody(),
       m_encodingRef(encodingRef)
 {
 }
 
-Joint::~Joint()
+RigidBody::~RigidBody()
 {
     m_encodingRef = 0;
 }
 
-bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     size_t size;
-    if (!internal::size32(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
+    if (!internal::size32(ptr, rest, size) || size * sizeof(RigidBodyUnit) > rest) {
         return false;
     }
-    info.jointsCount = size;
-    info.jointsPtr = ptr;
-    internal::readBytes(size * sizeof(JointUnit), ptr, rest);
+    info.rigidBodiesCount = size;
+    info.rigidBodiesPtr = ptr;
+    internal::readBytes(size * sizeof(RigidBodyUnit), ptr, rest);
     return true;
 }
 
-bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies)
+bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones)
 {
-    const int njoints = joints.count();
     const int nRigidBodies = rigidBodies.count();
-    for (int i = 0; i < njoints; i++) {
-        Joint *joint = joints[i];
-        const int rigidBodyIndex1 = joint->m_rigidBodyIndex1;
-        if (rigidBodyIndex1 >= 0) {
-            if (rigidBodyIndex1 >= nRigidBodies)
+    const int nbones = bones.count();
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = rigidBodies[i];
+        const int boneIndex = rigidBody->m_boneIndex;
+        if (boneIndex >= 0) {
+            if (boneIndex == 0xffff) {
+                rigidBody->build(NullBone::sharedReference(), i);
+            }
+            else if (boneIndex >= nbones) {
                 return false;
-            else
-                joint->m_rigidBody1Ref = rigidBodies[rigidBodyIndex1];
+            }
+            else {
+                rigidBody->build(bones[boneIndex], i);
+            }
         }
-        const int rigidBodyIndex2 = joint->m_rigidBodyIndex2;
-        if (rigidBodyIndex2 >= 0) {
-            if (rigidBodyIndex2 >= nRigidBodies)
-                return false;
-            else
-                joint->m_rigidBody2Ref = rigidBodies[rigidBodyIndex2];
+        else {
+            rigidBody->build(NullBone::sharedReference(), i);
         }
-        joint->build(i);
     }
     return true;
 }
 
-size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
+size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
 {
-    const int njoints = joints.count();
+    const int nbodies = rigidBodies.count();
     size_t size = 0;
-    for (int i = 0; i < njoints; i++) {
-        Joint *joint = joints[i];
-        size += joint->estimateSize(info);
+    for (int i = 0; i < nbodies; i++) {
+        RigidBody *rigidBody = rigidBodies[i];
+        size += rigidBody->estimateSize(info);
     }
     return size;
 }
 
-void Joint::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+void RigidBody::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
 {
-    JointUnit unit;
+    RigidBodyUnit unit;
     internal::getData(data, unit);
     m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
-    m_rigidBodyIndex1 = unit.bodyIDA;
-    m_rigidBodyIndex2 = unit.bodyIDB;
-    internal::setPositionRaw(unit.position, m_position);
+    m_boneIndex = unit.boneID;
+    m_collisionGroupID = unit.collisionGroupID;
+    m_collisionGroupMask = unit.collsionMask;
+    m_groupID = 0x0001 << unit.collsionMask;
+    m_shapeType = static_cast<ShapeType>(unit.shapeType);
+    internal::setPositionRaw(unit.size, m_size);
+    internal::setPosition(unit.position, m_position);
     internal::setPositionRaw(unit.rotation, m_rotation);
-    internal::setPositionRaw(unit.positionLowerLimit, m_positionLowerLimit);
-    internal::setPositionRaw(unit.rotationLowerLimit, m_rotationLowerLimit);
-    internal::setPositionRaw(unit.positionUpperLimit, m_positionUpperLimit);
-    internal::setPositionRaw(unit.rotationUpperLimit, m_rotationUpperLimit);
-    internal::setPositionRaw(unit.positionStiffness, m_positionStiffness);
-    internal::setPositionRaw(unit.rotationStiffness, m_rotationStiffness);
+    m_mass = unit.mass;
+    m_linearDamping = unit.linearDamping;
+    m_angularDamping = unit.angularDamping;
+    m_restitution = unit.restitution;
+    m_friction = unit.friction;
+    m_type = static_cast<ObjectType>(unit.type);
     size = sizeof(unit);
 }
 
-size_t Joint::estimateSize(const Model::DataInfo & /* info */) const
+size_t RigidBody::estimateSize(const Model::DataInfo & /* info */) const
 {
     size_t size = 0;
-    size += sizeof(JointUnit);
+    size += sizeof(RigidBodyUnit);
     return size;
 }
 
-void Joint::write(uint8_t *data, const Model::DataInfo & /* info */) const
+void RigidBody::write(uint8_t *data, const Model::DataInfo & /* info */) const
 {
-    JointUnit unit;
-    unit.bodyIDA = m_rigidBodyIndex1;
-    unit.bodyIDB = m_rigidBodyIndex2;
+    RigidBodyUnit unit;
+    unit.angularDamping = m_angularDamping;
+    unit.boneID = m_boneIndex;
+    unit.collisionGroupID = m_collisionGroupID;
+    unit.collsionMask = m_collisionGroupMask;
+    unit.friction = m_friction;
+    unit.linearDamping = m_linearDamping;
+    unit.mass = m_mass;
     uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
     internal::copyBytes(unit.name, name, sizeof(unit.name));
     m_encodingRef->disposeByteArray(name);
     internal::getPosition(m_position, unit.position);
-    internal::getPosition(m_rotation, unit.rotation);
-    internal::getPosition(m_positionLowerLimit, unit.positionLowerLimit);
-    internal::getPosition(m_rotationLowerLimit, unit.rotationLowerLimit);
-    internal::getPosition(m_positionUpperLimit, unit.positionUpperLimit);
-    internal::getPosition(m_rotationUpperLimit, unit.rotationUpperLimit);
-    internal::getPosition(m_positionStiffness, unit.positionStiffness);
-    internal::getPosition(m_rotationStiffness, unit.rotationStiffness);
+    unit.restitution = m_restitution;
+    internal::getPositionRaw(m_rotation, unit.rotation);
+    unit.shapeType = m_shapeType;
+    internal::getPositionRaw(m_size, unit.size);
+    unit.type = m_type;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+}
+
+const Transform RigidBody::createTransform() const
+{
+    const Transform &localTransform = BaseRigidBody::createTransform();
+    return Transform(Matrix3x3::getIdentity(), m_boneRef->worldTransform().getOrigin()) * localTransform;
 }
 
 }
