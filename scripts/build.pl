@@ -20,6 +20,7 @@ my $opt_help = 0;
 my $opt_man = 0;
 my $opt_march = 0;
 my $opt_no_bundle = 0;
+my $opt_print_flags = 0;
 
 GetOptions(
     'opencl'     => \$opt_opencl,
@@ -29,6 +30,7 @@ GetOptions(
     'static'     => \$opt_static,
     'nobundle'   => \$opt_no_bundle,
     'numcpu=i'   => \$opt_num_cpu,
+    'flags'      => \$opt_print_flags,
     'help|?'     => \$opt_help,
     'man'        => \$opt_man,
 ) or pod2usage(2);
@@ -77,9 +79,7 @@ my $CMAKE_VPVL_ARGS = [
     '-DVPVL_ENABLE_OPENCL:BOOL=OFF',
     '-DVPVL_LINK_ASSIMP:BOOL=ON',
     '-DVPVL_LINK_QT:BOOL=OFF',
-    '-DVPVL_BUILD_SDL:BOOL=OFF',
     '-DVPVL_BUILD_QT_RENDERER:BOOL=OFF',
-    '-DCMAKE_CXX_FLAGS=-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings',
 ];
 my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_ENABLE_NVIDIA_CG:BOOL=' . ($opt_cg ? 'ON' : 'OFF'),
@@ -90,9 +90,7 @@ my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_LINK_ASSIMP:BOOL=ON',
     '-DVPVL2_LINK_QT:BOOL=ON',
     '-DVPVL2_LINK_DEVIL:BOOL=ON',
-    '-DVPVL2_BUILD_SDL:BOOL=OFF',
     '-DVPVL2_BUILD_QT_RENDERER:BOOL=ON',
-    '-DCMAKE_CXX_FLAGS=-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings',
 ];
 my $SCONS_PORTAUDIO_ARGS = [
     'enableTests=False',
@@ -185,8 +183,8 @@ my $CONFIGURE_LIBAV_ARGS = [
     '--enable-zlib',
 ];
 
-sub build_with_cmake {
-    my ($directory, $cmake_args, $force_dynamic) = @_;
+sub rewrite_cmake_flags {
+	my ($cmake_args) = @_;
     my @args = (
         @$cmake_args,
         '-DCMAKE_BUILD_TYPE:STRING=' . $BUILD_TYPE,
@@ -195,18 +193,14 @@ sub build_with_cmake {
     if ($opt_march) {
         push @args, '-DCMAKE_OSX_ARCHITECTURES=i386;x86_64';
     }
-    if ($opt_static and !$force_dynamic) {
+    if ($opt_static) {
         push @args, '-DCMAKE_CXX_FLAGS=-fvisibility=hidden -fvisibility-inlines-hidden';
     }
-    chdir $directory;
-    mkdir $BUILD_DIRECTORY unless -d $BUILD_DIRECTORY;
-    chdir $BUILD_DIRECTORY;
-    system 'cmake', @args, '..';
-    system 'make', '-j' . $opt_num_cpu;
+	return @args;
 }
 
-sub build_with_scons {
-    my ($directory, $scons_args) = @_;
+sub rewrite_scons_flags {
+	my ($scons_args) = @_;
     my @args = @$scons_args;
     if ($opt_march) {
         push @args, (
@@ -215,8 +209,22 @@ sub build_with_scons {
             'customLinkFlags=-arch i386 -arch x86_64',
         )
     }
+	return @args;
+}
+
+sub build_with_cmake {
+    my ($directory, $cmake_args) = @_;
     chdir $directory;
-    system 'scons', @args;
+    mkdir $BUILD_DIRECTORY unless -d $BUILD_DIRECTORY;
+    chdir $BUILD_DIRECTORY;
+    system 'cmake', rewrite_cmake_flags($cmake_args), '..';
+    system 'make', '-j' . $opt_num_cpu;
+}
+
+sub build_with_scons {
+    my ($directory, $scons_args) = @_;
+    chdir $directory;
+    system 'scons', rewrite_scons_flags($scons_args);
     system 'scons', 'install';
 }
 
@@ -293,6 +301,16 @@ sub make_library {
     $ENV{'LDLAGS'} = $orig_ldflags;
 }
 
+if ($opt_print_flags) {
+	print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), '-DLIBRARY_OUTPUT_PATH=`pwd`', "\n\n";
+	print '[assimp]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_ASSIMP_ARGS)), "\n\n";
+	print '[vpvl]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL_ARGS)), "\n\n";
+	print '[vpvl2]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL2_ARGS)), "\n\n";
+	print '[portaudio]', "\n", 'scons ', join(' ', rewrite_scons_flags($SCONS_PORTAUDIO_ARGS)), "\n\n";
+	print '[libav]', "\n", './configure ', join(' ', @$CONFIGURE_LIBAV_ARGS), "\n\n";
+	exit(0);
+}
+
 # clone MMDAI sources
 system 'git', 'clone', $MMDAI_CHECKOUT_URI, $MMDAI_DIRECTORY unless -d $MMDAI_DIRECTORY;
 chdir $MMDAI_DIRECTORY;
@@ -306,7 +324,7 @@ system 'svn', 'checkout', $BULLET_CHECKOUT_URI, $BULLET_DIRECTORY unless -d $BUL
 # append LIBRARY_OUTPUT_PATH dynamically
 my $path = File::Spec->catdir($base_directory, $BULLET_DIRECTORY, $BUILD_DIRECTORY, 'lib');
 @$CMAKE_BULLET_ARGS = ( @$CMAKE_BULLET_ARGS, '-DLIBRARY_OUTPUT_PATH=' . $path );
-build_with_cmake $BULLET_DIRECTORY, $CMAKE_BULLET_ARGS, 0;
+build_with_cmake $BULLET_DIRECTORY, $CMAKE_BULLET_ARGS;
 chdir $base_directory;
 
 # checkout assimp source
@@ -314,7 +332,7 @@ system 'svn', 'checkout', $ASSIMP_CHECKOUT_URI, $ASSIMP_DIRECTORY unless -d $ASS
 my $regex = $opt_static ? 's/ADD_LIBRARY\(\s*assimp\s+SHARED/ADD_LIBRARY(assimp STATIC/gxms'
                         : 's/ADD_LIBRARY\(\s*assimp\s+STATIC/ADD_LIBRARY(assimp SHARED/gxms';
 system 'perl', '-pi', '-e', $regex, File::Spec->catfile($ASSIMP_DIRECTORY, 'code', 'CMakeLists.txt');
-build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS, 1;
+build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS;
 my $assimp_dir = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_DIRECTORY);
 my $assimp_lib_dir = File::Spec->catdir($assimp_dir, 'lib');
 mkdir $assimp_lib_dir unless -d $assimp_lib_dir;
@@ -439,11 +457,11 @@ else {
 chdir $base_directory;
 
 # build libvpvl
-build_with_cmake $VPVL_DIRECTORY, $CMAKE_VPVL_ARGS, 0;
+build_with_cmake $VPVL_DIRECTORY, $CMAKE_VPVL_ARGS;
 chdir $base_directory;
 
 # build libvpvl2
-build_with_cmake $VPVL2_DIRECTORY, $CMAKE_VPVL2_ARGS, 0;
+build_with_cmake $VPVL2_DIRECTORY, $CMAKE_VPVL2_ARGS;
 chdir $base_directory;
 
 __END__
@@ -465,6 +483,7 @@ build.pl - builds libvpvl/libvpvl2 and dependencies automatically
    -production      build as production
    -static          build as static library
    -nobundle        doesn't bundle libraries (libjpeg and libpng)
+   -flags           print all (common) build flags to each libraries
    -numcpu=<core>   specify number of CPU cores
 
 =head1 DESCRIPTION
