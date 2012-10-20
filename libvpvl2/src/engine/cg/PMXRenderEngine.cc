@@ -105,8 +105,10 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
     default:
         break;
     }
+#ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())
         m_dynamicBuffer->setSkinningEnable(false);
+#endif /* VPVL2_ENABLE_OPENCL */
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif /* VPVL2_LINK_QT */
@@ -139,9 +141,9 @@ bool PMXRenderEngine::upload(const IString *dir)
     GLuint svbo = m_vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
     glBufferData(GL_ARRAY_BUFFER, m_staticBuffer->size(), 0, GL_STATIC_DRAW);
-    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+    void *address = mapBuffer(GL_ARRAY_BUFFER);
     m_staticBuffer->update(address);
-    glUnmapBuffer(GL_ARRAY_BUFFER);
+    unmapBuffer(GL_ARRAY_BUFFER, address);
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
     GLuint ibo = m_vertexBufferObjects[kModelIndexBuffer];
@@ -190,10 +192,10 @@ void PMXRenderEngine::update()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
         return;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[kModelDynamicVertexBuffer]);
-    void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+    void *address = mapBuffer(GL_ARRAY_BUFFER);
     m_modelRef->performUpdate();
     m_dynamicBuffer->update(address, m_sceneRef->camera()->lookAt(), m_aabbMin, m_aabbMax);
-    glUnmapBuffer(GL_ARRAY_BUFFER);
+    unmapBuffer(GL_ARRAY_BUFFER, address);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable())

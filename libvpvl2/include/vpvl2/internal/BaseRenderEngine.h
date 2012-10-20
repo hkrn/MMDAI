@@ -116,12 +116,26 @@ protected:
             0
         };
 #endif
+        static const char *kMapBuffer[] = {
+            "glMapBuffer",
+            "glMapBufferARB",
+            0
+        };
+        static const char *kUnmapBuffer[] = {
+            "glUnmapBuffer",
+            "glUnmapBufferARB",
+            0
+        };
         glBindVertexArrayRef = reinterpret_cast<PFNGLBINDVERTEXARRAY>(
                     m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kBindVertexArray)));
         glDeleteVertexArraysRef = reinterpret_cast<PFNGLDELETEVERTEXARRAYS>(
                     m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kDeleteVertexArrays)));
         glGenVertexArraysRef = reinterpret_cast<PFNGLGENVERTEXARRAYS>(
                     m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kGenVertexArrays)));
+        glMapBufferRef = reinterpret_cast<PFNGLMAPBUFFER>(
+                    m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kMapBuffer)));
+        glUnmapBufferRef = reinterpret_cast<PFNGLUNMAPBUFFER>(
+                    m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kUnmapBuffer)));
     }
     void allocateVertexArrayObjects(GLuint *vao, size_t size) {
         if (glGenVertexArraysRef) {
@@ -147,6 +161,17 @@ protected:
         }
         return false;
     }
+    void *mapBuffer(GLenum target) {
+        if (glMapBufferRef) {
+            return glMapBufferRef(target, GL_WRITE_ONLY);
+        }
+        return 0;
+    }
+    void unmapBuffer(GLenum target, void * /* address */) {
+        if (glUnmapBufferRef) {
+            glUnmapBufferRef(target);
+        }
+    }
 
     const Scene *m_sceneRef;
     IRenderDelegate *m_delegateRef;
@@ -155,9 +180,13 @@ private:
     typedef void (*PFNGLBINDVERTEXARRAY)(GLuint id);
     typedef void (*PFNGLDELETEVERTEXARRAYS)(GLsizei n, const GLuint *ids);
     typedef void (*PFNGLGENVERTEXARRAYS)(GLsizei n, GLuint *ids);
+    typedef void* (*PFNGLMAPBUFFER)(GLenum target, GLenum access);
+    typedef GLboolean (*PFNGLUNMAPBUFFER)(GLenum target);
     PFNGLBINDVERTEXARRAY glBindVertexArrayRef;
     PFNGLDELETEVERTEXARRAYS glDeleteVertexArraysRef;
     PFNGLGENVERTEXARRAYS glGenVertexArraysRef;
+    PFNGLMAPBUFFER glMapBufferRef;
+    PFNGLUNMAPBUFFER glUnmapBufferRef;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRenderEngine)
 };
