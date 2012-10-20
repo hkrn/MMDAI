@@ -302,7 +302,7 @@ sub make_library {
 }
 
 if ($opt_print_flags) {
-	print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), ' -DLIBRARY_OUTPUT_PATH=`pwd`', "\n\n";
+	print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), ' -DLIBRARY_OUTPUT_PATH=`pwd`/lib', "\n\n";
 	print '[assimp]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_ASSIMP_ARGS)), "\n\n";
 	print '[vpvl]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL_ARGS)), "\n\n";
 	print '[vpvl2]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL2_ARGS)), "\n\n";
