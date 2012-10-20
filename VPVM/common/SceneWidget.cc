@@ -66,7 +66,6 @@ namespace vpvm
 {
 
 using namespace vpvl2;
-using namespace internal;
 
 static void UIAlertMVDMotion(const IMotion *motion, SceneWidget *parent)
 {
