@@ -191,10 +191,10 @@ sub rewrite_cmake_flags {
         '-DBUILD_SHARED_LIBS:BOOL=' . ($opt_static ? 'OFF' : 'ON'),
     );
     if ($opt_march) {
-        push @args, '-DCMAKE_OSX_ARCHITECTURES=i386;x86_64';
+        push @args, '-DCMAKE_OSX_ARCHITECTURES="i386;x86_64"';
     }
     if ($opt_static) {
-        push @args, '-DCMAKE_CXX_FLAGS=-fvisibility=hidden -fvisibility-inlines-hidden';
+        push @args, '-DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden"';
     }
 	return @args;
 }
@@ -302,7 +302,7 @@ sub make_library {
 }
 
 if ($opt_print_flags) {
-	print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), '-DLIBRARY_OUTPUT_PATH=`pwd`', "\n\n";
+	print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), ' -DLIBRARY_OUTPUT_PATH=`pwd`', "\n\n";
 	print '[assimp]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_ASSIMP_ARGS)), "\n\n";
 	print '[vpvl]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL_ARGS)), "\n\n";
 	print '[vpvl2]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL2_ARGS)), "\n\n";
