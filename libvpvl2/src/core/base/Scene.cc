@@ -293,7 +293,7 @@ struct Scene::PrivateContext {
             computeContext->initializeContext(hostDeviceType());
         }
 #else
-        (void) delegate;
+        (void) delegateRef;
 #endif /* VPVL2_ENABLE_OPENCL */
         return computeContext;
     }
