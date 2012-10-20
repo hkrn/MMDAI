@@ -42,9 +42,13 @@
 #include "StringHelper.h"
 
 #if !defined(NDEBUG) && !defined(QMA_DEBUG)
-#include <vpvl2/pmd/Bone.h>
-#include <vpvl2/pmd/Model.h>
-#include <vpvl2/pmd/Morph.h>
+#include <vpvl2/pmd2/Bone.h>
+#include <vpvl2/pmd2/Joint.h>
+#include <vpvl2/pmd2/Label.h>
+#include <vpvl2/pmd2/Model.h>
+#include <vpvl2/pmd2/Morph.h>
+#include <vpvl2/pmd2/RigidBody.h>
+#include <vpvl2/pmd2/Vertex.h>
 #include <vpvl2/pmx/Bone.h>
 #include <vpvl2/pmx/Joint.h>
 #include <vpvl2/pmx/Label.h>
