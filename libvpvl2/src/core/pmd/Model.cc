@@ -141,9 +141,11 @@ const StaticVertexBuffer::Unit StaticVertexBuffer::kIdent = StaticVertexBuffer::
 struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     struct Unit {
         Unit() {}
-        void update(const IVertex *vertex) {
+        void update(const IVertex *vertex, int index) {
             position = vertex->origin();
             normal = vertex->normal();
+            normal[3] = vertex->edgeSize();
+            edge[3] = Scalar(index);
             uva0.setValue(0, 0, 0, 1);
         }
         void update(const IVertex *vertex, float materialEdgeSize, int index, Vector3 &p) {
@@ -241,7 +243,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             for (int i = 0; i < nvertices; i++) {
                 const IVertex *vertex = vertices[i];
                 Unit &v = bufferPtr[i];
-                v.update(vertex);
+                v.update(vertex, i);
             }
             aabbMin.setZero();
             aabbMax.setZero();

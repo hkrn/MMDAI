@@ -84,9 +84,6 @@ public:
     ~BaseRenderEngine() {
         m_sceneRef = 0;
         m_delegateRef = 0;
-        glBindVertexArrayRef = 0;
-        glDeleteVertexArraysRef = 0;
-        glGenVertexArraysRef = 0;
     }
 
 protected:

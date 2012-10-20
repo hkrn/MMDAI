@@ -98,8 +98,10 @@ private:
     bool uploadMaterials(const IString *dir, void *context);
     bool releaseContext0(void *context);
     void bindVertexBundle();
+    void bindEdgeBundle();
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers();
+    void bindEdgeVertexAttributePointers();
     void bindStaticVertexAttributePointers();
 
     cl::PMXAccelerator *m_accelerator;

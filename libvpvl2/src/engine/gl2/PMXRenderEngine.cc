@@ -62,6 +62,8 @@ enum VertexBufferObjectType
 enum VertexArrayObjectType
 {
     kEvenVertexArrayObject,
+    kOddVertexArrayObject,
+    kEdgeVertexArrayObject,
     kMaxVertexArrayObjectType
 };
 
@@ -549,18 +551,14 @@ bool PMXRenderEngine::upload(const IString *dir)
     if (!uploadMaterials(dir, context)) {
         return releaseContext0(context);
     }
-    allocateVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
-    GLuint vao = m_context->vertexArrayObjects[kEvenVertexArrayObject];
-    if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Created an vertex array object (ID=%d)", vao);
-    }
+
     glGenBuffers(kMaxVertexBufferObjectType, m_context->vertexBufferObjects);
     GLuint dvbo = m_context->vertexBufferObjects[kModelDynamicVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo);
     glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    bindDynamicVertexAttributePointers();
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo);
+
     const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     GLuint svbo = m_context->vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
@@ -568,26 +566,56 @@ bool PMXRenderEngine::upload(const IString *dir)
     void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
     staticBuffer->update(address);
     glUnmapBuffer(GL_ARRAY_BUFFER);
-    bindStaticVertexAttributePointers();
     log0(context, IRenderDelegate::kLogInfo,
          "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_context->indexBuffer->size(),
-                 m_context->indexBuffer->bytes(), GL_STATIC_DRAW);
+
+    const IModel::IIndexBuffer *indexBuffer = m_context->indexBuffer;
+    GLuint ibo = m_context->vertexBufferObjects[kModelIndexBuffer];
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->size(), indexBuffer->bytes(), GL_STATIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
          "Binding indices to the vertex buffer object (ID=%d)",
          m_context->vertexBufferObjects[kModelIndexBuffer]);
+
+    allocateVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
+    GLuint vao = m_context->vertexArrayObjects[kEvenVertexArrayObject];
+    if (bindVertexArrayObject(vao)) {
+        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
+    bindDynamicVertexAttributePointers();
+    glBindBuffer(GL_ARRAY_BUFFER, svbo);
+    bindStaticVertexAttributePointers();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
     glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
+    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
     glEnableVertexAttribArray(IModel::IBuffer::kUVA0Stride);
     glEnableVertexAttribArray(IModel::IBuffer::kUVA1Stride);
-    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
     if (m_context->isVertexShaderSkinning) {
-        glEnableVertexAttribArray(IModel::IBuffer::kEdgeSizeStride);
         glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
         glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
     }
     unbindVertexArrayObject();
+    vao = m_context->vertexArrayObjects[kEdgeVertexArrayObject];
+    if (bindVertexArrayObject(vao)) {
+        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for edge (ID=%d)", vao);
+        glBindBuffer(GL_ARRAY_BUFFER, dvbo);
+        bindEdgeVertexAttributePointers();
+        glBindBuffer(GL_ARRAY_BUFFER, svbo);
+        bindStaticVertexAttributePointers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
+        if (m_context->isVertexShaderSkinning) {
+            glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
+            glEnableVertexAttribArray(IModel::IBuffer::kEdgeSizeStride);
+            glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
+            glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
+        }
+        unbindVertexArrayObject();
+    }
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         GLuint vbo = m_context->vertexBufferObjects[kModelDynamicVertexBuffer];
@@ -609,7 +637,7 @@ void PMXRenderEngine::update()
     void *address = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_modelRef->performUpdate();
-    dynamicBuffer->update(address, m_sceneRef->camera()->lookAt(), m_aabbMin, m_aabbMax);
+    dynamicBuffer->update(address, m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
     glUnmapBuffer(GL_ARRAY_BUFFER);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
@@ -723,13 +751,13 @@ void PMXRenderEngine::renderShadow()
     const ILight *light = m_sceneRef->light();
     shadowProgram->setLightColor(light->color());
     shadowProgram->setLightDirection(light->direction());
-    glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
+    glCullFace(GL_FRONT);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indices();
@@ -754,25 +782,29 @@ void PMXRenderEngine::renderEdge()
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();
     float matrix4x4[16];
+    const Scalar &opacity = m_modelRef->opacity();
     m_delegateRef->getMatrix(matrix4x4, m_modelRef,
                              IRenderDelegate::kWorldMatrix
                              | IRenderDelegate::kViewMatrix
                              | IRenderDelegate::kProjectionMatrix
                              | IRenderDelegate::kCameraMatrix);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
-    edgeProgram->setOpacity(m_modelRef->opacity());
+    edgeProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     Scalar edgeScaleFactor = 0;
-    bindVertexBundle();
     if (isVertexShaderSkinning) {
         const ICamera *camera = m_sceneRef->camera();
         edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position());
     }
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
+    bool isOpaque = btFuzzyZero(opacity - 1);
+    if (isOpaque)
+        glDisable(GL_BLEND);
     glCullFace(GL_FRONT);
+    bindEdgeBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indices();
@@ -789,6 +821,8 @@ void PMXRenderEngine::renderEdge()
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
+    if (isOpaque)
+        glEnable(GL_BLEND);
     edgeProgram->unbind();
 }
 
@@ -805,13 +839,13 @@ void PMXRenderEngine::renderZPlot()
                              | IRenderDelegate::kProjectionMatrix
                              | IRenderDelegate::kLightMatrix);
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
-    glCullFace(GL_FRONT);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
+    glCullFace(GL_FRONT);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indices();
@@ -982,6 +1016,17 @@ void PMXRenderEngine::bindVertexBundle()
     }
 }
 
+void PMXRenderEngine::bindEdgeBundle()
+{
+    if (!bindVertexArrayObject(m_context->vertexArrayObjects[kEdgeVertexArrayObject])) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+        bindEdgeVertexAttributePointers();
+        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
+        bindStaticVertexAttributePointers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
+    }
+}
+
 void PMXRenderEngine::unbindVertexBundle()
 {
     if (!unbindVertexArrayObject()) {
@@ -1007,7 +1052,20 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers()
     offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA1Stride);
     glVertexAttribPointer(IModel::IBuffer::kUVA1Stride, 4, GL_FLOAT, GL_FALSE,
                           size, reinterpret_cast<const GLvoid *>(offset));
+}
+
+void PMXRenderEngine::bindEdgeVertexAttributePointers()
+{
+    const IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+    size_t offset, size;
+    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride);
+    size   = dynamicBuffer->strideSize();
+    glVertexAttribPointer(IModel::IBuffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
+                          size, reinterpret_cast<const GLvoid *>(offset));
     if (m_context->isVertexShaderSkinning) {
+        offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
+        glVertexAttribPointer(IModel::IBuffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
+                              size, reinterpret_cast<const GLvoid *>(offset));
         glVertexAttribPointer(IModel::IBuffer::kEdgeSizeStride, 4, GL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
     }
