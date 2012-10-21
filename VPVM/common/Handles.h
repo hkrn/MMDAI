@@ -43,6 +43,7 @@
 
 #include <vpvl2/Common.h>
 #include <assimp.hpp>
+#include <aiMesh.h>
 
 namespace vpvl2 {
 class IBone;
@@ -50,6 +51,7 @@ class IModel;
 }
 
 class btBvhTriangleMeshShape;
+class btMotionState;
 class btRigidBody;
 class btTriangleMesh;
 
@@ -66,39 +68,6 @@ class Handles : public QObject
 
 public:
     class StaticWorld;
-    struct Texture {
-        QSize size;
-        QRectF rect;
-        GLuint textureID;
-    };
-    struct ImageHandle {
-        Texture enableMove;
-        Texture disableMove;
-        Texture enableRotate;
-        Texture disableRotate;
-    };
-    struct Vertex {
-        Vector3 position;
-        Vector3 normal;
-    };
-    struct Model {
-        Array<Vertex> vertices;
-        Array<uint16_t> indices;
-        btRigidBody *body;
-    };
-    struct RotationHandle {
-        Assimp::Importer importer;
-        Model x;
-        Model y;
-        Model z;
-        GLuint indicesBuffer;
-        GLuint verticesBuffer;
-    };
-    struct TranslationHandle : public RotationHandle {
-        Model axisX;
-        Model axisY;
-        Model axisZ;
-    };
 
     enum Flags {
         kNone          = 0x0,
@@ -165,7 +134,51 @@ private slots:
     void updateBone();
 
 private:
-    void drawModel(const Handles::Model &model,
+    struct Texture {
+        void load(const QString &path, QGLContext *context);
+        QSize size;
+        QRectF rect;
+        GLuint textureID;
+    };
+    struct ImageHandle {
+        Texture enableMove;
+        Texture disableMove;
+        Texture enableRotate;
+        Texture disableRotate;
+    };
+    struct Vertex {
+        Vector3 position;
+        Vector3 normal;
+    };
+    class Model {
+    public:
+        Model();
+        ~Model();
+        void bind();
+        void release();
+        void load(const aiMesh *mesh, QList<Vertex> &vertices);
+        void load(const aiMesh *mesh, Handles::StaticWorld *world, btMotionState *state);
+        btRigidBody *body() const { return m_body; }
+        int indices() const { return m_nindices; }
+    private:
+        void setVertexBuffer(const QList<Vertex> &vertices);
+        QGLBuffer m_vbo;
+        btRigidBody *m_body;
+        int m_nindices;
+    };
+    struct RotationHandle {
+        Assimp::Importer importer;
+        Model x;
+        Model y;
+        Model z;
+    };
+    struct TranslationHandle : public RotationHandle {
+        Model axisX;
+        Model axisY;
+        Model axisZ;
+    };
+
+    void drawModel(Model &model,
                    const QColor &color,
                    int requiredVisibilityFlags);
     void loadImageHandles();
