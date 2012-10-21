@@ -127,8 +127,12 @@ private:
     QScopedPointer<btRigidBody> m_body;
 };
 
-SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent)
-    : QGLWidget(new qt::CustomGLContext(QGLFormat(QGL::SampleBuffers)), parent),
+SceneWidget::SceneWidget(const QGLFormat format,
+                         IEncoding *encoding,
+                         Factory *factory,
+                         QSettings *settings,
+                         QWidget *parent)
+    : QGLWidget(new qt::CustomGLContext(format), parent),
       m_settingsRef(settings),
       m_grid(new Grid()),
       m_plane(new PlaneWorld()),

@@ -125,6 +125,18 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
     }
 }
 
+static QGLFormat UIGetQGLFormat()
+{
+    QGLFormat format;
+    format.setSamples(4);
+    format.setSampleBuffers(true);
+    format.setRedBufferSize(16);
+    format.setBlueBufferSize(16);
+    format.setGreenBufferSize(16);
+    format.setDepthBufferSize(32);
+    return format;
+}
+
 }
 
 struct MainWindow::WindowState {
@@ -155,7 +167,7 @@ MainWindow::MainWindow(const QHash<IEncoding::ConstantType, CString *> &constant
       m_factory(new Factory(m_encoding.data())),
       m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
       m_undo(new QUndoGroup()),
-      m_sceneWidget(new SceneWidget(m_encoding.data(), m_factory.data(), &m_settings)),
+      m_sceneWidget(new SceneWidget(UIGetQGLFormat(), m_encoding.data(), m_factory.data(), &m_settings)),
       m_sceneTabWidget(new TabWidget(&m_settings)),
       m_boneMotionModel(new BoneMotionModel(m_factory.data(), m_undo.data())),
       m_morphMotionModel(new MorphMotionModel(m_factory.data(), m_undo.data())),

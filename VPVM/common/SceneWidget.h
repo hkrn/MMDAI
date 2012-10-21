@@ -88,7 +88,11 @@ public:
         kMove
     };
 
-    explicit SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent = 0);
+    explicit SceneWidget(const QGLFormat format,
+                         IEncoding *encoding,
+                         Factory *factory,
+                         QSettings *settings,
+                         QWidget *parent = 0);
     ~SceneWidget();
 
     SceneLoader *sceneLoaderRef() const;
