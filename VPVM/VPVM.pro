@@ -9,9 +9,7 @@ BULLET_PATH = ../bullet-src
 VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 LIBAV_PATH = ../libav-src
-LIBJPEG_PATH = ../libjpeg-src
-LIBPNG_PATH = ../libpng-src
-DEVIL_PATH = ../devil-src
+NVTT_PATH = ../nvtt-src
 PORTAUDIO_PATH = ../portaudio-src
 
 # CMake prefix path (mainly for win32)
@@ -25,7 +23,8 @@ exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 # VPVL and others configuration
 INCLUDEPATH +=  $${VPVL2_PATH}/include \
                 $${ASSIMP_PATH}/include \
-                $${BULLET_PATH}/src
+                $${BULLET_PATH}/src \
+                $${NVTT_PATH}/src
 
 win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
                      $${MMDA_PATH} \
@@ -41,19 +40,12 @@ CONFIG(debug, debug|release) {
                       -L$${VPVL2_PATH}/debug/lib \
                       -L$${PORTAUDIO_PATH}/debug_native/lib \
                       -L$${LIBAV_PATH}/debug_native/lib \
-                      -L$${DEVIL_PATH}/debug_native/lib
+                      -L$${NVTT_PATH}/build-debug/lib
   unix:INCLUDEPATH += $${VPVL2_PATH}/debug/include \
                       $${PORTAUDIO_PATH}/debug_native/include
   # should not change link order because of static library link order
   LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug
   INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
-  macx {
-    # libjpeg and libpng
-    LIBS += -L$${LIBJPEG_PATH}/debug_native/lib \
-            -L$${LIBPNG_PATH}/debug_native/lib
-    INCLUDEPATH += $${LIBJPEG_PATH}/debig_native/include \
-                   $${LIBPNG_PATH}/debug_native/include
-  }
 }
 CONFIG(release, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/release/code \
@@ -61,20 +53,11 @@ CONFIG(release, debug|release) {
                       -L$${VPVL2_PATH}/release/lib \
                       -L$${PORTAUDIO_PATH}/release_native/lib \
                       -L$${LIBAV_PATH}/release_native/lib \
-                      -L$${DEVIL_PATH}/release_native/lib
-  unix:INCLUDEPATH += $${VPVL2_PATH}/release/include \
-                      -L$${DEVIL_PATH}/release_native/lib
+                      -L$${NVTT_PATH}/build-release/lib
+  unix:INCLUDEPATH += $${VPVL2_PATH}/release/include
   # should not change link order because of static library link order
   LIBS             += -lvpvl2qtcommon -lvpvl2
-  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
-                      $${DEVIL_PATH}/release_native/include
-  macx {
-    # libjpeg and libpng
-    LIBS += -L$${LIBJPEG_PATH}/release_native/lib \
-            -L$${LIBPNG_PATH}/release_native/lib
-    INCLUDEPATH += $${LIBJPEG_PATH}/release_native/include \
-                   $${LIBPNG_PATH}/release_native/include
-  }
+  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include
 }
 
 # Required libraries
@@ -88,11 +71,9 @@ LIBS += -lassimp \
         -lavformat \
         -lavutil \
         -lswscale \
-        -ljpeg \
-        -lpng \
-        -lIL \
-        -lILU \
-        -lILUT \
+        -lnvimage \
+        -lnvmath \
+        -lnvcore \
         -lxml2
 
 macx:LIBS += -framework OpenCL \

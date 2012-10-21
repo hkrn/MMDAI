@@ -14,6 +14,7 @@
         <file alias="DevIL">licenses/DevIL</file>
         <file alias="libjpeg">licenses/libjpeg</file>
         <file alias="libpng">licenses/libpng</file>
+        <file alias="nvtt">licenses/nvtt</file>
     </qresource>
     <qresource prefix="/textures">
         <file alias="toon0.bmp">images/toon0.bmp</file>

@@ -89,8 +89,11 @@ LicenseWidget::LicenseWidget(QWidget *parent)
     resize(600, 450);
     setLayout(layout.take());
 
+#ifdef VPVL2_LINK_NVTT
+    addLibrary("NVIDIA texture tools", "MIT", "http://code.google.com/p/nvidia-texture-tools/", "nvtt");
+#endif
 #ifdef VPVL2_LINK_DEVIL
-    addLibrary("libpng", "libpng", "http://libpng.org", "libpng");
+    addLibrary("libpng", "zlib", "http://libpng.org", "libpng");
     addLibrary("libjpeg", "Custom", "http://ijg.org", "libjpeg");
     addLibrary("DevIL", "LGPL", "http://openil.sf.net", "DevIL");
 #endif /* VPVL2_LINK_DEVIL */
