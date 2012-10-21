@@ -50,16 +50,27 @@
 #include <Cg/cgGL.h>
 #endif
 
-#ifdef VPVL2_LINK_DEVIL
-#define ILUT_USE_OPENGL
-#include <IL/il.h>
-#include <IL/ilu.h>
-#include <IL/ilut.h>
+#ifdef VPVL2_LINK_NVTT
+#include <nvcore/Stream.h>
+#include <nvimage/DirectDrawSurface.h>
+#include <nvimage/Image.h>
+#include <nvimage/ImageIO.h>
+#else
+namespace nv {
+class Stream {
+public:
+    Stream() {}
+    virtual ~Stream() {}
+};
+}
 #endif
 
 namespace
 {
-typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
+
+using namespace vpvl2;
+using namespace vpvl2::qt;
+
 #ifdef __APPLE__
 #define glBlitFramebufferPROC glBlitFramebuffer
 #define glDrawBuffersPROC glDrawBuffers
@@ -69,14 +80,67 @@ PFNGLBLITFRAMEBUFFERPROC glBlitFramebufferPROC;
 PFNGLDRAWBUFFERSPROC glDrawBuffersPROC;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
 #endif
-}
 
-namespace vpvl2
-{
-namespace qt
-{
+#ifdef VPVL2_LINK_NVTT
 
-static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m) {
+class ReadonlyFileStream : public nv::Stream {
+public:
+    ReadonlyFileStream(const QString &path) : m_file(path) { m_file.open(QFile::ReadOnly); }
+    ~ReadonlyFileStream() {}
+
+    bool isSaving() const { return false; }
+    bool isError() const { return m_file.error() != QFile::NoError; }
+    void seek(uint pos) { m_file.seek(pos); }
+    uint tell() const { return m_file.pos(); }
+    uint size() const { return m_file.size(); }
+    void clearError() {}
+    bool isAtEnd() const { return m_file.atEnd(); }
+    bool isSeekable() const { return m_file.isSequential(); }
+    bool isLoading() const { return true; }
+    uint serialize(void *data, uint len) { return m_file.read(static_cast<char *>(data), len); }
+
+private:
+    QFile m_file;
+};
+
+class ReadonlyMemoryStream : public nv::Stream {
+public:
+    ReadonlyMemoryStream(QByteArray &bytes) : m_buffer(&bytes) { m_buffer.open(QBuffer::ReadOnly); }
+    ~ReadonlyMemoryStream() {}
+
+    bool isSaving() const { return false; }
+    bool isError() const { return false; }
+    void seek(uint pos) { m_buffer.seek(pos); }
+    uint tell() const { return m_buffer.pos(); }
+    uint size() const { return m_buffer.size(); }
+    void clearError() {}
+    bool isAtEnd() const { return m_buffer.atEnd(); }
+    bool isSeekable() const { return m_buffer.isSequential(); }
+    bool isLoading() const { return true; }
+    uint serialize(void *data, uint len) { return m_buffer.read(static_cast<char *>(data), len); }
+
+private:
+    QBuffer m_buffer;
+};
+
+#else /* VPVL2_LINK_NVTT */
+
+class ReadonlyFileStream : public nv::Stream {
+public:
+    ReadonlyFileStream(const QString &/*path*/) {}
+    ~ReadonlyFileStream() {}
+};
+
+class ReadonlyMemoryStream : public nv::Stream {
+public:
+    ReadonlyMemoryStream(QByteArray &/*bytes*/) {}
+    ~ReadonlyMemoryStream() {}
+};
+
+#endif /* VPVL2_LINK_NVTT */
+
+static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m)
+{
     Transform transform;
     transform.setOrigin(model->position());
     transform.setRotation(model->rotation());
@@ -95,6 +159,61 @@ static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m) {
         m *= worldMatrix;
     }
 }
+
+const QString UICreatePath(const IString *dir, const IString *name)
+{
+    const QDir d(static_cast<const CString *>(dir)->value());
+    QString path = d.absoluteFilePath(static_cast<const CString *>(name)->value());
+    path.replace(0x5c, '/');
+    return path;
+}
+
+QGLContext::BindOptions UIGetTextureBindOptions(bool enableMipmap)
+{
+    // disable premultiplified alpha option
+    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
+            | QGLContext::InvertedYBindOption;
+    if (enableMipmap)
+        options |= QGLContext::MipmapBindOption;
+    return options;
+}
+
+static void UISetTexture(const Delegate::TextureCache &cache, bool isToon, Delegate::Texture &output)
+{
+    output.width = cache.width;
+    output.height = cache.height;
+    *static_cast<GLuint *>(output.object) = cache.id;
+    if (!isToon) {
+        GLuint textureID = *static_cast<const GLuint *>(output.object);
+        glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+}
+
+static void UIAddTextureCache(Delegate::PrivateContext *context,
+                              const QString &path,
+                              const Delegate::TextureCache &texture)
+{
+    if (context)
+        context->textureCache.insert(path, texture);
+}
+
+#ifdef VPVL2_LINK_NVTT
+static const QImage UIConvertNVImageToQImage(const nv::Image &image)
+{
+    const uint8_t *pixels = reinterpret_cast<const uchar *>(image.pixels());
+    QImage::Format format = image.format() == nv::Image::Format_ARGB
+            ? QImage::Format_ARGB32 : QImage::Format_RGB32;
+    return QImage(pixels, image.width(), image.height(), format);
+}
+#endif
+
+}
+
+namespace vpvl2
+{
+namespace qt
+{
 
 class Delegate::FrameBufferObject : protected QGLFunctions {
 public:
@@ -151,120 +270,23 @@ public:
     int samples;
 };
 
+QSet<QString> Delegate::loadableTextureExtensions()
+{
+    static QSet<QString> extensions;
+    if (extensions.isEmpty()) {
+        extensions << "jpg";
+        extensions << "png";
+        extensions << "bmp";
+        extensions << "sph";
+        extensions << "spa";
+    }
+    return extensions;
+}
+
 QString Delegate::readAllAsync(const QString &path)
 {
     QByteArray bytes;
     return UISlurpFile(path, bytes) ? bytes : QString();
-}
-
-QImage Delegate::loadImageAsync(const QString &path)
-{
-    QImage image(path);
-    if (!image.isNull()) {
-        return image.rgbSwapped();
-    }
-    else if (path.endsWith(".tga")) {
-        ByteArrayPtr ptr;
-        return loadTGA(path, ptr);
-    }
-    else {
-        return image; // returns null image
-    }
-}
-
-QImage Delegate::loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr)
-{
-    QFile file(path);
-    if (file.open(QFile::ReadOnly) && file.size() > 18) {
-        return loadTGA(file.readAll(), dataPtr);
-    }
-    else {
-        qWarning("Cannot open file %s: %s", qPrintable(path), qPrintable(file.errorString()));
-        return QImage();
-    }
-}
-
-QImage Delegate::loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr)
-{
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
-    uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
-    uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
-    if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-        qWarning("Loaded TGA image type is not full color");
-        return QImage();
-    }
-    uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
-    uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
-    uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
-    uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
-    if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
-        qWarning("Invalid TGA image (width=%d, height=%d, depth=%d)",
-                 width, height, depth);
-        return QImage();
-    }
-    int component = depth >> 3;
-    uint8_t *body = ptr + 18 + field;
-    /* if RLE compressed, uncompress it */
-    size_t datalen = width * height * component;
-    ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
-    if (type == 10) {
-        uint8_t *uncompressed = uncompressedPtr.data();
-        uint8_t *src = body;
-        uint8_t *dst = uncompressed;
-        while (static_cast<size_t>(dst - uncompressed) < datalen) {
-            int16_t len = (*src & 0x7f) + 1;
-            if (*src & 0x80) {
-                src++;
-                for (int i = 0; i < len; i++) {
-                    memcpy(dst, src, component);
-                    dst += component;
-                }
-                src += component;
-            }
-            else {
-                src++;
-                memcpy(dst, src, component * len);
-                dst += component * len;
-                src += component * len;
-            }
-        }
-        /* will load from uncompressed data */
-        body = uncompressed;
-    }
-    /* prepare texture data area */
-    datalen = (width * height) * 4;
-    dataPtr.reset(new uint8_t[datalen]);
-    ptr = dataPtr.data();
-    for (uint16_t h = 0; h < height; h++) {
-        uint8_t *line = NULL;
-        if (flags & 0x20) /* from up to bottom */
-            line = body + h * width * component;
-        else /* from bottom to up */
-            line = body + (height - 1 - h) * width * component;
-        for (uint16_t w = 0; w < width; w++) {
-            uint32_t index = 0;
-            if (flags & 0x10)/* from right to left */
-                index = (width - 1 - w) * component;
-            else /* from left to right */
-                index = w * component;
-            /* BGR or BGRA -> ARGB */
-            *ptr++ = line[index + 2];
-            *ptr++ = line[index + 1];
-            *ptr++ = line[index + 0];
-            *ptr++ = (depth == 32) ? line[index + 3] : 255;
-        }
-    }
-    return QImage(dataPtr.data(), width, height, QImage::Format_ARGB32);
-}
-
-QGLContext::BindOptions Delegate::textureBindOptions(bool enableMipmap)
-{
-    // disable premultiplified alpha option
-    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
-            | QGLContext::InvertedYBindOption;
-    if (enableMipmap)
-        options |= QGLContext::MipmapBindOption;
-    return options;
 }
 
 Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
@@ -321,19 +343,19 @@ bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags,
 {
     bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap, ok = false;
     if (flags & IRenderDelegate::kTexture2D) {
-        const QString &path = createPath(dir, name);
-        return uploadTextureInternal(path, texture, false, false, mipmap, ok, context);
+        const QString &path = UICreatePath(dir, name);
+        return uploadTextureInternal(path, false, false, mipmap, ok, texture, context);
     }
     else if (flags & IRenderDelegate::kToonTexture) {
         bool ret = false;
         if (dir) {
-            const QString &path = createPath(dir, name);
-            ret = uploadTextureInternal(path, texture, true, false, mipmap, ok, context);
+            const QString &path = UICreatePath(dir, name);
+            ret = uploadTextureInternal(path, true, false, mipmap, ok, texture, context);
         }
         if (!ok) {
             CString s(m_systemDir.absolutePath());
-            const QString &path = createPath(&s, name);
-            ret = uploadTextureInternal(path, texture, true, true, mipmap, ok, context);
+            const QString &path = UICreatePath(&s, name);
+            ret = uploadTextureInternal(path, true, true, mipmap, ok, texture, context);
             qDebug("Loaded a system texture: %s", qPrintable(path));
         }
         return ret;
@@ -343,14 +365,14 @@ bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags,
 
 void Delegate::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
 {
-    const QString &path = createPath(dir, name);
+    const QString &path = UICreatePath(dir, name);
     bool ok = false;
     if (m_archive || QFile::exists(path)) {
         getToonColorInternal(path, false, value, ok);
     }
     if (!ok) {
         CString s(m_systemDir.absolutePath());
-        const QString &fallback = createPath(&s, name);
+        const QString &fallback = UICreatePath(&s, name);
         getToonColorInternal(fallback, true, value, ok);
     }
 }
@@ -809,7 +831,7 @@ void Delegate::initialize(bool enableMSAA)
     const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     int shaderVersion = qMax(QString(reinterpret_cast<const char *>(shaderVersionString)).toFloat(), 1.2f) * 100;
     m_shaderSourcePrefix.sprintf("#version %d", shaderVersion);
-    foreach (const QString &extension, extensions.split(' ', QString::SkipEmptyParts)) {
+    Q_FOREACH (const QString &extension, extensions.split(' ', QString::SkipEmptyParts)) {
         m_extensions.insert(extension.trimmed());
     }
 #ifndef __APPLE__
@@ -817,14 +839,6 @@ void Delegate::initialize(bool enableMSAA)
     glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
     glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(context->getProcAddress("glRenderbufferStorageMultisample"));
 #endif /* __APPLE__ */
-#ifdef VPVL2_LINK_DEVIL
-    ilInit();
-    iluInit();
-    ilutInit();
-    ilutRenderer(ILUT_OPENGL);
-    ilEnable(IL_CONV_PAL);
-    ilutEnable(ILUT_OPENGL_CONV);
-#endif /* VPVL2_LINK_DEVIL */
 }
 
 void Delegate::setRenderColorTargets(const void *targets, const int ntargets)
@@ -1020,7 +1034,7 @@ void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
             const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
             const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
             QList<EffectAttachment> attachments;
-            foreach (const QString &line, defaultEffect) {
+            Q_FOREACH (const QString &line, defaultEffect) {
                 const QStringList &pair = line.split('=');
                 if (pair.size() == 2) {
                     const QString &key = pair.at(0).trimmed();
@@ -1121,53 +1135,62 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
     return effect;
 }
 
-const QString Delegate::createPath(const IString *dir, const QString &name)
+bool Delegate::uploadTextureNVTT(const QString &suffix,
+                                 const QString &path,
+                                 bool isToon,
+                                 bool mipmap,
+                                 QScopedPointer<nv::Stream> &stream,
+                                 Texture &texture,
+                                 PrivateContext *privateContext)
 {
-    const QDir d(static_cast<const CString *>(dir)->value());
-    QString path = d.absoluteFilePath(name);
-    path.replace(0x5c, '/');
-    return path;
-}
-
-const QString Delegate::createPath(const IString *dir, const IString *name)
-{
-    const QDir d(static_cast<const CString *>(dir)->value());
-    QString path = d.absoluteFilePath(static_cast<const CString *>(name)->value());
-    path.replace(0x5c, '/');
-    return path;
-}
-
-void Delegate::setTextureID(const TextureCache &cache, bool isToon, Texture &output)
-{
-    output.width = cache.width;
-    output.height = cache.height;
-    *static_cast<GLuint *>(output.object) = cache.id;
-    if (!isToon) {
-        GLuint textureID = *static_cast<const GLuint *>(output.object);
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#ifdef VPVL2_LINK_NVTT
+    if (suffix == "dds") {
+        nv::DirectDrawSurface surface;
+        if (surface.load(stream.take())) {
+            nv::Image nvimage;
+            surface.mipmap(&nvimage, 0, 0);
+            QImage image(UIConvertNVImageToQImage(nvimage));
+            return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
+        }
+        else {
+            qWarning("%s cannot be loaded", qPrintable(path));
+        }
     }
-}
-
-void Delegate::addTextureCache(PrivateContext *context, const QString &path, const TextureCache &texture)
-{
-    if (context)
-        context->textureCache.insert(path, texture);
+    else {
+        QScopedPointer<nv::Image> nvimage(nv::ImageIO::load(path.toUtf8().constData(), *stream));
+        if (nvimage) {
+            QImage image(UIConvertNVImageToQImage(*nvimage));
+            return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
+        }
+        else {
+            qWarning("%s cannot be loaded", qPrintable(path));
+        }
+    }
+#else
+    Q_UNUSED(suffix)
+    Q_UNUSED(path)
+    Q_UNUSED(isToon)
+    Q_UNUSED(mipmap)
+    Q_UNUSED(stream)
+    Q_UNUSED(texture)
+    Q_UNUSED(privateContext)
+#endif
+    return true;
 }
 
 bool Delegate::uploadTextureInternal(const QString &path,
-                                     Texture &texture,
                                      bool isToon,
                                      bool isSystem,
                                      bool mipmap,
                                      bool &ok,
+                                     Texture &texture,
                                      void *context)
 {
     const QFileInfo info(path);
     PrivateContext *privateContext = static_cast<PrivateContext *>(context);
     /* テクスチャのキャッシュを検索する */
     if (privateContext && privateContext->textureCache.contains(path)) {
-        setTextureID(privateContext->textureCache[path], isToon, texture);
+        UISetTexture(privateContext->textureCache[path], isToon, texture);
         ok = true;
         return true;
     }
@@ -1175,155 +1198,56 @@ bool Delegate::uploadTextureInternal(const QString &path,
      * ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く)
      * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
      */
+    const QString &suffix = info.suffix().toLower();
     if (m_archive && !isSystem) {
-        QByteArray suffix = info.suffix().toLower().toUtf8();
-        if (suffix == "sph" || suffix == "spa")
-            suffix.setRawData("bmp", 3);
         const QByteArray &bytes = m_archive->data(path);
-#ifdef VPVL2_LINK_DEVIL
-        ILuint imageID;
-        ilGenImages(1, &imageID);
-        ilBindImage(imageID);
-        ILboolean loaded = IL_FALSE;
-        loaded = ilLoadL(ilTypeFromExt(("." + suffix).constData()), bytes.constData(), bytes.size());
-        if (loaded == IL_FALSE) {
-            ILenum error = ilGetError();
-            while (error != IL_NO_ERROR) {
-                qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
-                error = ilGetError();
-            }
-            ilDeleteImages(1, &imageID);
-            ok = false;
-            return true;
-        }
-        iluFlipImage();
-        GLuint textureID = ilutGLBindTexImage();
-        size_t width = ilGetInteger(IL_IMAGE_WIDTH);
-        size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
-        ilBindImage(0);
-        ilDeleteImages(1, &imageID);
-#else
-        ByteArrayPtr ptr;
-        QImage image;
-        image.loadFromData(bytes, suffix.constData());
-        if (image.isNull() && suffix == "tga" && bytes.length() > 18) {
-            image = loadTGA(bytes, ptr);
+        if (loadableTextureExtensions().contains(suffix)) {
+            QImage image;
+            image.loadFromData(bytes);
+            return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
         }
         else {
-            image = image.rgbSwapped();
+            QByteArray immutableBytes(bytes);
+            QScopedPointer<nv::Stream> stream(new ReadonlyMemoryStream(immutableBytes));
+            return uploadTextureNVTT(suffix, path, isToon, mipmap, stream, texture, privateContext);
         }
-        if (image.isNull()) {
-            qWarning("Loading texture %s (zipped) cannot decode, ignored.", qPrintable(info.fileName()));
-            ok = false;
-            return true;
-        }
-        size_t width = image.width(), height = image.height();
-        GLuint textureID = generateTextureFromImage(image, mipmap);
-#endif
-        TextureCache cache(width, height, textureID);
-        m_texture2Paths.insert(textureID, path);
-        setTextureID(cache, isToon, texture);
-        addTextureCache(privateContext, path, cache);
-        qDebug("Loaded a zipped texture (ID=%d, width=%d, height=%d): \"%s\"",
-               textureID, int(width), int(height), qPrintable(path));
-        ok = textureID != 0;
-        return ok;
     }
-    if (info.isDir()) {
-        ok = false;
+    else if (info.isDir()) {
         return true; /* skip */
     }
-    if (!info.exists()) {
+    else if (!info.exists()) {
         qWarning("Cannot load inexist \"%s\"", qPrintable(path));
-        ok = false;
         return true; /* skip */
     }
-#ifdef VPVL2_LINK_DEVIL
-    Q_UNUSED(mipmap)
-    ILuint imageID;
-    ilGenImages(1, &imageID);
-    ilBindImage(imageID);
-    ILboolean loaded = IL_FALSE;
-    if (!path.startsWith(":textures/")) {
-        loaded = ilLoadImage(path.toLocal8Bit().constData());
+    else if (loadableTextureExtensions().contains(suffix)) {
+        QImage image(path);
+        return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
     }
     else {
-        QFile file(path);
-        file.open(QFile::ReadOnly);
-        const QByteArray &bytes = file.readAll();
-        loaded = ilLoadL(ilTypeFromExt(path.toLocal8Bit().constData()), bytes.constData(), bytes.size());
+        QScopedPointer<nv::Stream> stream(new ReadonlyFileStream(path));
+        return uploadTextureNVTT(suffix, path, isToon, mipmap, stream, texture, privateContext);
     }
-    if (loaded == IL_FALSE) {
-        ILenum error = ilGetError();
-        while (error != IL_NO_ERROR) {
-            qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
-            error = ilGetError();
-        }
-        ilDeleteImages(1, &imageID);
-        ok = false;
-        return true;
-    }
-    iluFlipImage();
-    GLuint textureID = ilutGLBindTexImage();
-    size_t width = ilGetInteger(IL_IMAGE_WIDTH);
-    size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
-    ilBindImage(0);
-    ilDeleteImages(1, &imageID);
-    TextureCache cache(width, height, textureID);
-    m_texture2Paths.insert(textureID, path);
-    setTextureID(cache, isToon, texture);
-    addTextureCache(privateContext, path, cache);
-    qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
-           textureID, width, height, qPrintable(path));
-    ok = textureID != 0;
-    return ok;
-#else
-    if (path.endsWith(".dds")) {
-        QFile file(path);
-        if (file.open(QFile::ReadOnly)) {
-            const QByteArray &bytes = file.readAll();
-            const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            DDSTexture dds(m_context);
-            GLuint textureID;
-            if (!dds.parse(data, bytes.size(), textureID)) {
-                qDebug("Cannot parse a DDS texture %s", qPrintable(path));
-                ok = false;
-                return true; /* skip */
-            }
-            TextureCache cache(dds.width(), dds.height(), textureID);
-            setTextureID(cache, isToon, texture);
-            addTextureCache(privateContext, path, cache);
-            ok = true;
-            return ok;
-        }
-        else {
-            qDebug("Cannot open a DDS texture %s: %s", qPrintable(path), qPrintable(file.errorString()));
-            ok = false;
-            return true; /* skip */
-        }
-    }
-    else {
-        const QFuture<QImage> &future = QtConcurrent::run(&Delegate::loadImageAsync, path);
-        const QImage &image = future.result();
-        GLuint textureID = generateTextureFromImage(image, mipmap);
-        TextureCache cache(image.width(), image.height(), textureID);
-        m_texture2Paths.insert(textureID, path);
-        setTextureID(cache, isToon, texture);
-        addTextureCache(privateContext, path, cache);
-        qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
-               textureID, image.width(), image.height(), qPrintable(path));
-        ok = textureID != 0;
-        return ok;
-    }
-#endif
 }
 
-GLuint Delegate::generateTextureFromImage(const QImage &image, bool mipmap)
+bool Delegate::generateTextureFromImage(const QImage &image,
+                                        const QString &path,
+                                        bool isToon,
+                                        bool mipmap,
+                                        Texture &texture,
+                                        PrivateContext *privateContext)
 {
-    return m_context->bindTexture(QGLWidget::convertToGLFormat(image),
-                                  GL_TEXTURE_2D,
-                                  GL_RGBA,
-                                  textureBindOptions(mipmap));
+    GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
+                                              GL_TEXTURE_2D,
+                                              GL_RGBA,
+                                              UIGetTextureBindOptions(mipmap));
+    size_t width = image.width(), height = image.height();
+    TextureCache cache(width, height, textureID);
+    m_texture2Paths.insert(textureID, path);
+    UISetTexture(cache, isToon, texture);
+    UIAddTextureCache(privateContext, path, cache);
+    qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
+           textureID, width, height, qPrintable(path));
+    return textureID != 0;
 }
 
 void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)

@@ -27,6 +27,7 @@ libpng-*
 Makefile*
 moc_*
 nacl
+nvtt-*
 open_jtalk-*
 portaudio-src
 release*

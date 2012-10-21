@@ -1057,7 +1057,7 @@ void Model::parseCustomToonTextures(const DataInfo &info)
     static const uint8_t kFallbackToonTextureName[] = "toon0.bmp";
     uint8_t *ptr = info.customToonTextureNamesPtr;
     m_customToonTextures.add(m_encodingRef->toString(kFallbackToonTextureName,
-                                                     sizeof(kFallbackToonTextureName),
+                                                     sizeof(kFallbackToonTextureName) - 1,
                                                      IString::kUTF8));
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         IString *customToonTexture = m_encodingRef->toString(ptr, IString::kShiftJIS, kCustomToonTextureNameSize);

@@ -43,6 +43,10 @@
 
 #include <QtOpenGL/QtOpenGL>
 
+namespace nv {
+class Stream;
+}
+
 namespace vpvl2
 {
 class Scene;
@@ -76,6 +80,7 @@ public:
         GLuint textureID;
     } OffscreenRenderTarget;
 
+    static QSet<QString> loadableTextureExtensions();
     static QString readAllAsync(const QString &path);
     static QImage loadImageAsync(const QString &path);
 
@@ -134,23 +139,27 @@ public:
 
 private:
     class FrameBufferObject;
-
-    static const QString createPath(const IString *dir, const QString &name);
-    static const QString createPath(const IString *dir, const IString *name);
-    static void setTextureID(const TextureCache &cache, bool isToon, Texture &output);
-    static void addTextureCache(PrivateContext *context, const QString &path, const TextureCache &texture);
-    static QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr);
-    static QImage loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr);
-    static QGLContext::BindOptions textureBindOptions(bool enableMipmap);
     QImage createImageFromArchive(const QFileInfo &info);
     bool uploadTextureInternal(const QString &path,
-                               Texture &texture,
                                bool isToon,
                                bool isSystem,
                                bool mipmap,
                                bool &ok,
+                               Texture &texture,
                                void *context);
-    GLuint generateTextureFromImage(const QImage &image, bool mipmap);
+    bool uploadTextureNVTT(const QString &suffix,
+                           const QString &path,
+                           bool isToon,
+                           bool mipmap,
+                           QScopedPointer<nv::Stream> &stream,
+                           Texture &texture,
+                           PrivateContext *privateContext);
+    bool generateTextureFromImage(const QImage &image,
+                                  const QString &path,
+                                  bool isToon,
+                                  bool mipmap,
+                                  Texture &texture,
+                                  PrivateContext *privateContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
@@ -181,6 +190,7 @@ private:
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;
+    QSet<QString> m_loadableExtensions;
     QSet<QString> m_extensions;
     QString m_shaderSourcePrefix;
     Vector4 m_mouseCursorPosition;

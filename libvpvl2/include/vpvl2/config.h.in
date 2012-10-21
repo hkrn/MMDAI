@@ -76,6 +76,9 @@
 /* Link libvpvl2 against DevIL */
 #cmakedefine VPVL2_LINK_DEVIL
 
+/* Link libvpvl2 against NVIDIA texture tools */
+#cmakedefine VPVL2_LINK_NVTT
+
 /* version */
 #define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
 #define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
