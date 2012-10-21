@@ -91,7 +91,7 @@ LicenseWidget::LicenseWidget(QWidget *parent)
 
 #ifdef VPVL2_LINK_NVTT
     addLibrary("NVIDIA texture tools", "MIT", "http://code.google.com/p/nvidia-texture-tools/", "nvtt");
-#endif
+#endif /* VPVL2_LINK_NVTT */
 #ifdef VPVL2_LINK_DEVIL
     addLibrary("libpng", "zlib", "http://libpng.org", "libpng");
     addLibrary("libjpeg", "Custom", "http://ijg.org", "libjpeg");
