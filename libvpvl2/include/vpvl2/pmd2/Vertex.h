@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_PMD_VERTEX_H_
-#define VPVL2_PMD_VERTEX_H_
+#ifndef VPVL2_PMD2_VERTEX_H_
+#define VPVL2_PMD2_VERTEX_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IMorph.h"
@@ -91,6 +91,7 @@ public:
     void reset();
     void mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight);
 
+private:
     Vector3 m_origin;
     Vector3 m_normal;
     Vector3 m_texcoord;
