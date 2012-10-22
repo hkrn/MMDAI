@@ -38,7 +38,6 @@
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/pmd2/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
 #include "vpvl2/mvd/CameraKeyframe.h"
@@ -49,6 +48,12 @@
 #include "vpvl2/vmd/LightKeyframe.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
+
+#ifdef VPVL2_LINK_VPVL
+#include "vpvl2/pmd/Model.h"
+#else
+#include "vpvl2/pmd2/Model.h"
+#endif
 
 namespace vpvl2
 {
@@ -298,7 +303,11 @@ IModel *Factory::createModel(IModel::Type type) const
     case IModel::kAsset:
         return new asset::Model(m_context->encoding);
     case IModel::kPMD:
+#ifdef VPVL2_LINK_VPVL
+        return new pmd::Model(m_context->encoding);
+#else
         return new pmd2::Model(m_context->encoding);
+#endif
     case IModel::kPMX:
         return new pmx::Model(m_context->encoding);
     default:

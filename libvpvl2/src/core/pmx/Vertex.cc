@@ -440,22 +440,25 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     const Vector3 &vertexPosition = m_origin + m_morphDelta;
     switch (m_type) {
     case kBdef1: {
-        const Transform &transform = m_boneRefs[0]->localTransform();
-        position = transform * vertexPosition;
-        normal = transform.getBasis() * m_normal;
+        internal::transformVertex(m_boneRefs[0]->localTransform(), vertexPosition, m_normal, position, normal);
         break;
     }
     case kBdef2:
     case kSdef: {
-        const Transform &transformA = m_boneRefs[0]->localTransform();
-        const Transform &transformB = m_boneRefs[1]->localTransform();
-        const Vector3 &v1 = transformA * vertexPosition;
-        const Vector3 &n1 = transformA.getBasis() * m_normal;
-        const Vector3 &v2 = transformB * vertexPosition;
-        const Vector3 &n2 = transformB.getBasis() * m_normal;
         float weight = m_weight[0];
-        position.setInterpolate3(v2, v1, weight);
-        normal.setInterpolate3(n2, n1, weight);
+        if (btFuzzyZero(1 - weight)) {
+            const Transform &transform = m_boneRefs[0]->localTransform();
+            internal::transformVertex(transform, vertexPosition, m_normal, position, normal);
+        }
+        else if (btFuzzyZero(weight)) {
+            const Transform &transform = m_boneRefs[1]->localTransform();
+            internal::transformVertex(transform, vertexPosition, m_normal, position, normal);
+        }
+        else {
+            const Transform &transformA = m_boneRefs[0]->localTransform();
+            const Transform &transformB = m_boneRefs[1]->localTransform();
+            internal::transformVertex(transformA, transformB, vertexPosition, m_normal, position, normal, weight);
+        }
         break;
     }
     case kBdef4: {

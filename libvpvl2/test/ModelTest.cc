@@ -5,6 +5,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/icu/Encoding.h"
 #include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd/Vertex.h"
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Joint.h"
 #include "vpvl2/pmx/Label.h"
@@ -13,6 +14,8 @@
 #include "vpvl2/pmx/Morph.h"
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
+
+#include "mock/Bone.h"
 
 using namespace ::testing;
 using namespace std::tr1;
@@ -951,6 +954,163 @@ TEST(MaterialTest, MergeEdgeSize)
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.25f);
     material.mergeMorph(&morph, 1.0);
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.4f);
+}
+
+TEST(VertexTest, PerformSkinningBdef1)
+{
+    pmx::Vertex v;
+    MockIBone bone;
+    Transform transform(Matrix3x3::getIdentity().scaled(Vector3(0.5, 0.5, 0.5)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform));
+    EXPECT_CALL(bone, index()).Times(1).WillRepeatedly(Return(0));
+    v.setType(pmx::Vertex::kBdef1);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(1.05, 2.1, 3.15), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.2, 0.25, 0.3), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightZero)
+{
+    pmx::Vertex v;
+    MockIBone bone1, bone2;
+    //Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
+    v.setType(pmx::Vertex::kBdef2);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone1);
+    v.setBone(1, &bone2);
+    v.setWeight(0, 0);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(4.025, 5.05, 6.075), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.1, 0.125, 0.15), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightOne)
+{
+    pmx::Vertex v;
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
+    //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
+    v.setType(pmx::Vertex::kBdef2);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone1);
+    v.setBone(1, &bone2);
+    v.setWeight(0, 1);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(1.075, 2.15, 3.225), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.3, 0.375, 0.45), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightHalf)
+{
+    pmx::Vertex v;
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
+    v.setType(pmx::Vertex::kBdef2);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone1);
+    v.setBone(1, &bone2);
+    v.setWeight(0, 0.5);
+    v.setWeight(1, 0.5);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    const Vector3 &v2 = (Vector3(1.075, 2.15, 3.225) + Vector3(4.025, 5.05, 6.075)) * 0.5;
+    const Vector3 &n2 = (Vector3(0.1, 0.125, 0.15) + Vector3(0.3, 0.375, 0.45)) * 0.5;
+    ASSERT_TRUE(CompareVector(v2, position));
+    ASSERT_TRUE(CompareVector(n2, normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
+{
+    MockIBone bone1, bone2;
+    //Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    Array<IBone *> bones;
+    bones.add(&bone1);
+    bones.add(&bone2);
+    vpvl::Vertex vv;
+    vv.setTexCoord(0, 1);
+    vv.setBones(0, 1);
+    vv.setWeight(0);
+    pmd::Vertex v(&vv, &bones, 0);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(4.025, 5.05, 6.075), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.1, 0.125, 0.15), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightOnePMDCompat)
+{
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    Array<IBone *> bones;
+    bones.add(&bone1);
+    bones.add(&bone2);
+    vpvl::Vertex vv;
+    vv.setTexCoord(0, 1);
+    vv.setBones(0, 1);
+    vv.setWeight(100);
+    pmd::Vertex v(&vv, &bones, 0);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(1.075, 2.15, 3.225), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.3, 0.375, 0.45), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
+{
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    Array<IBone *> bones;
+    bones.add(&bone1);
+    bones.add(&bone2);
+    vpvl::Vertex vv;
+    vv.setTexCoord(0, 1);
+    vv.setBones(0, 1);
+    vv.setWeight(50);
+    pmd::Vertex v(&vv, &bones, 0);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    const Vector3 &v2 = (Vector3(1.075, 2.15, 3.225) + Vector3(4.025, 5.05, 6.075)) * 0.5;
+    const Vector3 &n2 = (Vector3(0.1, 0.125, 0.15) + Vector3(0.3, 0.375, 0.45)) * 0.5;
+    ASSERT_TRUE(CompareVector(v2, position));
+    ASSERT_TRUE(CompareVector(n2, normal));
 }
 
 TEST(ModelTest, ParseEmpty)

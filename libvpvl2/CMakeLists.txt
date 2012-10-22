@@ -15,7 +15,8 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/asset vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/base vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/internal vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2 vpvl2_sources)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd vpvl2_sources)
+#aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2 vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
 set(vpvl2_public_headers
@@ -69,14 +70,6 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/ProjectSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/asset/Model.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Bone.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Joint.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Label.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Material.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Model.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Morph.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/RigidBody.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Vertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Bone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Joint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/Label.h
@@ -98,9 +91,9 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/Motion.h
 )
 
-IF(NOT CMAKE_BUILD_TYPE)
- SET(CMAKE_BUILD_TYPE "Release")
-ENDIF()
+if(NOT CMAKE_BUILD_TYPE)
+ set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 # declaration of function
 function(get_build_type var)
@@ -112,7 +105,7 @@ function(get_build_type var)
       set(${var} "${CMAKE_BUILD_TYPE_TOLOWER}-mingw" PARENT_SCOPE)
     else()
       set(${var} ${CMAKE_BUILD_TYPE_TOLOWER} PARENT_SCOPE)
-        endif()
+    endif()
   endif()
 endfunction()
 
@@ -148,12 +141,12 @@ function(find_bullet target)
   set(BULLET_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../bullet-src")
   set(BULLET_LIBRARY_LOCAL_DIR "${BULLET_SOURCE_DIRECTORY}/${BULLET_BUILD_TYPE}/lib")
   # find from MMDAI/bullet or environment variables
-  find_path(BULLET_INCLUDE_DIRS btBulletCollisionCommon.h PATHS "${BULLET_SOURCE_DIRECTORY}/src" $ENV{BULLET_INCLUDE_DIR})
-  if(BULLET_INCLUDE_DIRS)
-    include_directories(${BULLET_INCLUDE_DIRS})
+  find_path(BULLET_INCLUDE_DIR btBulletCollisionCommon.h PATHS "${BULLET_SOURCE_DIRECTORY}/src" $ENV{BULLET_INCLUDE_DIR})
+  if(BULLET_INCLUDE_DIR)
+    include_directories(${BULLET_INCLUDE_DIR})
   else()
-    find_path(BULLET_INCLUDE_DIRS bullet/btBulletCollisionCommon.h PATHS "${BULLET_SOURCE_DIRECTORY}/src" $ENV{BULLET_INCLUDE_DIR})
-    include_directories(${BULLET_INCLUDE_DIRS}/bullet)
+    find_path(BULLET_INCLUDE_DIR bullet/btBulletCollisionCommon.h PATHS "${BULLET_SOURCE_DIRECTORY}/src" $ENV{BULLET_INCLUDE_DIR})
+    include_directories(${BULLET_INCLUDE_DIR}/bullet)
   endif()
   if(BUILD_SHARED_LIBS OR MSVC)
     find_library(BULLET_LINEARMATH_LIB LinearMath PATHS ${BULLET_LIBRARY_LOCAL_DIR} $ENV{BULLET_LIBRARY_DIR})
@@ -178,17 +171,41 @@ function(find_assimp target)
     set(ASSIMP_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../assimp-src")
     set(ASSIMP_LOCAL_LIBRARY_DIR "${ASSIMP_SOURCE_DIRECTORY}/${ASSIMP_BUILD_TYPE}/code")
     set(ASSIMP_LOCAL_INCLUDE_DIR "${ASSIMP_SOURCE_DIRECTORY}/include")
-    find_path(ASSIMP_INCLUDE_DIRS assimp.hpp PATHS ${ASSIMP_LOCAL_INCLUDE_DIR} $ENV{ASSIMP_INCLUDE_DIR})
-    if(ASSIMP_INCLUDE_DIRS)
-      include_directories(${ASSIMP_INCLUDE_DIRS})
+    find_path(ASSIMP_INCLUDE_DIR assimp.hpp PATHS ${ASSIMP_LOCAL_INCLUDE_DIR} $ENV{ASSIMP_INCLUDE_DIR})
+    if(ASSIMP_INCLUDE_DIR)
+      include_directories(${ASSIMP_INCLUDE_DIR})
     else()
-      find_path(ASSIMP_INCLUDE_DIRS assimp/assimp.hpp PATHS ${ASSIMP_LOCAL_INCLUDE_DIR} $ENV{ASSIMP_INCLUDE_DIR})
-      include_directories(${ASSIMP_INCLUDE_DIRS}/assimp)
+      find_path(ASSIMP_INCLUDE_DIR assimp/assimp.hpp PATHS ${ASSIMP_LOCAL_INCLUDE_DIR} $ENV{ASSIMP_INCLUDE_DIR})
+      include_directories(${ASSIMP_INCLUDE_DIR}/assimp)
     endif()
     if(BUILD_SHARED_LIBS OR MSVC)
       find_library(ASSIMP_LIBRARY assimp PATHS ${ASSIMP_LOCAL_LIBRARY_DIR} $ENV{ASSIMP_LIBRARY_DIR})
     endif()
-        link_assimp(${target})
+    link_assimp(${target})
+  endif()
+endfunction()
+
+function(link_vpvl target)
+  if((BUILD_SHARED_LIBS OR MSVC) AND VPVL2_LINK_VPVL)
+    target_link_libraries(${target} ${VPVL_LIBRARY})
+  endif()
+endfunction()
+
+function(find_vpvl target)
+  if(VPVL2_LINK_VPVL)
+    get_build_type(VPVL_BUILD_TYPE)
+    set(VPVL_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../libvpvl")
+    set(VPVL_LOCAL_BUILD_DIR "${VPVL_SOURCE_DIRECTORY}/${VPVL_BUILD_TYPE}")
+    set(VPVL_LOCAL_INCLUDE_DIR "${VPVL_SOURCE_DIRECTORY}/include")
+    find_path(VPVL_INCLUDE_DIR vpvl/vpvl.h PATHS ${VPVL_LOCAL_INCLUDE_DIR} $ENV{VPVL_INCLUDE_DIR})
+    find_path(VPVL_CONFIG_DIR vpvl/config.h PATHS "${VPVL_LOCAL_BUILD_DIR}/include" $ENV{VPVL_CONFIG_DIR})
+    include_directories(${VPVL_INCLUDE_DIR} ${VPVL_CONFIG_DIR})
+    if(BUILD_SHARED_LIBS OR MSVC)
+      set(VPVL_LIBRARY_NAME vpvl)
+      append_lib_type_suffix(VPVL_LIBRARY_NAME)
+      find_library(VPVL_LIBRARY ${VPVL_LIBRARY_NAME} PATHS "${VPVL_LOCAL_BUILD_DIR}/lib" $ENV{VPVL_LIBRARY_DIR})
+    endif()
+    link_vpvl(${target})
   endif()
 endfunction()
 
@@ -227,13 +244,13 @@ function(link_devil target)
     set(DEVIL_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../devil-src")
     set(DEVIL_LOCAL_LIBRARY_DIR "${DEVIL_SOURCE_DIRECTORY}/${DEVIL_BUILD_TYPE}_native/lib")
     set(DEVIL_LOCAL_INCLUDE_DIR "${DEVIL_SOURCE_DIRECTORY}/include")
-    find_path(DEVIL_INCLUDE_DIRS IL/il.h PATHS ${DEVIL_LOCAL_INCLUDE_DIR} $ENV{DEVIL_INCLUDE_DIR})
+    find_path(DEVIL_INCLUDE_DIR IL/il.h PATHS ${DEVIL_LOCAL_INCLUDE_DIR} $ENV{DEVIL_INCLUDE_DIR})
     find_library(DEVIL_IL_LIBRARY IL PATHS ${DEVIL_LOCAL_LIBRARY_DIR} $ENV{DEVIL_LIBRARY_DIR})
     find_library(DEVIL_ILU_LIBRARY ILU PATHS ${DEVIL_LOCAL_LIBRARY_DIR} $ENV{DEVIL_LIBRARY_DIR})
     find_library(DEVIL_ILUT_LIBRARY ILUT PATHS ${DEVIL_LOCAL_LIBRARY_DIR} $ENV{DEVIL_LIBRARY_DIR})
-    if (DEVIL_INCLUDE_DIRS AND DEVIL_IL_LIBRARY AND DEVIL_ILU_LIBRARY AND DEVIL_ILUT_LIBRARY)
+    if (DEVIL_INCLUDE_DIR AND DEVIL_IL_LIBRARY AND DEVIL_ILU_LIBRARY AND DEVIL_ILUT_LIBRARY)
       target_link_libraries(${target} ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY} ${DEVIL_ILUT_LIBRARY})
-      include_directories(${DEVIL_INCLUDE_DIRS})
+      include_directories(${DEVIL_INCLUDE_DIR})
     else()
       message(FATAL_ERROR "Required DevIL is not found.")
     endif()
@@ -243,11 +260,11 @@ endfunction()
 function(link_icu_or_iconv target)
   find_library(ICU_LIBRARY_I18N icui18n)
   find_library(ICU_LIBRARY_UC icuuc)
-  find_path(ICU_INCLUDE_DIRS unicode/unistr.h)
-  if(ICU_LIBRARY_I18N AND ICU_LIBRARY_UC AND ICU_INCLUDE_DIRS)
+  find_path(ICU_INCLUDE_DIR unicode/unistr.h)
+  if(ICU_LIBRARY_I18N AND ICU_LIBRARY_UC AND ICU_INCLUDE_DIR)
     add_definitions(-DVPVL2_HAS_ICU)
     target_link_libraries(${target} ${ICU_LIBRARY_I18N} ${ICU_LIBRARY_IO} ${ICU_LIBRARY_UC})
-    include_directories(${ICU_INCLUDE_DIRS})
+    include_directories(${ICU_INCLUDE_DIR})
   else()
     find_library(ICONV_LIBRARY iconv)
     if(ICONV_LIBRARY)
@@ -301,6 +318,7 @@ option(VPVL2_LINK_ASSIMP "link against Open Asset Import Library (default is OFF
 option(VPVL2_LINK_DEVIL "link against DevIL (default is OFF)" OFF)
 option(VPVL2_LINK_GLEW "link against GLEW (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
 option(VPVL2_LINK_NVTT "link against NVIDIA Texture Tools a.k.a nvtt (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+option(VPVL2_LINK_VPVL "link against libvpvl (default is ON)" ON)
 option(VPVL2_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
 option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (enabling VPVL2_OPENGL_RENDERER is required default is OFF)" OFF)
 
@@ -310,7 +328,7 @@ else()
   set(VPVL2_LIB_TYPE STATIC)
 endif()
 
-# intercept to add source
+# intercept to add source (OpenGL)
 if(VPVL2_OPENGL_RENDERER)
   aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl2_gl_sources)
   list(APPEND vpvl2_internal_headers
@@ -341,16 +359,41 @@ if(VPVL2_OPENGL_RENDERER)
   set(VPVL2_COORDINATE_OPENGL ON BOOL)
 endif()
 
-# library configuration
+# intercept to add source (libvpvl)
+if(VPVL2_LINK_VPVL)
+  list(APPEND vpvl2_internal_headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Material.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Vertex.h
+  )
+else()
+  list(APPEND vpvl2_internal_headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Bone.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Joint.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Label.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Material.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Model.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Morph.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/RigidBody.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Vertex.h
+  )
+endif()
+
+# intercept to add source (Project)
 if(VPVL2_ENABLE_PROJECT)
   list(APPEND vpvl2_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/core/project/Project.cc)
   list(APPEND vpvl2_public_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Project.h)
 endif()
 
+# generate configuration file
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
 set(vpvl2_public_headers ${vpvl2_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h)
 
+# create libvpvl2 project
 add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 
@@ -359,12 +402,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # find libvpvl
-list(APPEND vpvl2_public_headers
-)
 find_bullet(vpvl2)
 find_assimp(vpvl2)
 find_glew(vpvl2)
 find_nvtt(vpvl2)
+find_vpvl(vpvl2)
 
 set(VPVL2_OUTPUT_NAME "vpvl2")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
@@ -527,6 +569,7 @@ else()
           PATTERN "vmd" EXCLUDE
           PATTERN "mvd" EXCLUDE
           PATTERN "pmd" EXCLUDE
+          PATTERN "pmd2" EXCLUDE
           PATTERN "pmx" EXCLUDE
           PATTERN "cg" EXCLUDE
           PATTERN "cl" EXCLUDE

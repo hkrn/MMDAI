@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,65 +34,47 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_CONFIG_H_
-#define VPVL2_CONFIG_H_
+#ifndef VPVL2_PMD_MORPH_H_
+#define VPVL2_PMD_MORPH_H_
 
-/* use OpenGL coordinate system */
-#cmakedefine VPVL2_COORDINATE_OPENGL
+#include "vpvl2/Common.h"
+#include "vpvl2/IMorph.h"
 
-/* Build libvpvl2 without BulletPhysics except LinearMath */
-#cmakedefine VPVL2_NO_BULLET
+#include "vpvl/Face.h"
 
-/* Build libvpvl2 with Open Asset Import Library */
-#cmakedefine VPVL2_LINK_ASSIMP
+namespace vpvl2
+{
 
-/* Build libvpvl2's renderer with GLSL shader */
-#cmakedefine VPVL2_ENABLE_GLSL
+class IEncoding;
+class IString;
 
-/* Build libvpvl2's renderer with NVIDIA Cg (based on vpvl::gl::Renderer) */
-#cmakedefine VPVL2_ENABLE_NVIDIA_CG
+namespace pmd
+{
 
-/* Build libvpvl2 for iOS */
-#cmakedefine VPVL2_BUILD_IOS
+class VPVL2_API Morph : public IMorph
+{
+public:
+    Morph(vpvl::Face *morph, IEncoding *encoding);
+    ~Morph();
 
-/* Link libvpvl2 against GLEW */
-#cmakedefine VPVL2_LINK_GLEW
+    const IString *name() const { return m_name; }
+    int index() const { return m_index; }
+    Category category() const;
+    Type type() const;
+    bool hasParent() const;
+    const WeightPrecision &weight() const;
+    void setWeight(const WeightPrecision &value);
+    void setIndex(int value);
 
-/* Build libvpvl2 with project file support */
-#cmakedefine VPVL2_ENABLE_PROJECT
+    IEncoding *m_encodingRef;
+    IString *m_name;
+    vpvl::Face *m_morphRef;
+    Category m_category;
+    WeightPrecision m_weight;
+    int m_index;
+};
 
-/* Link libvpvl2 against Qt */
-#cmakedefine VPVL2_LINK_QT
-
-/* Build libvpvl2 linking against OpenCL */
-#cmakedefine VPVL2_ENABLE_OPENCL
-
-/* Build libvpvl2 with rendering engines */
-#cmakedefine VPVL2_OPENGL_RENDERER
-
-/* Build libvpvl2 with OpenGL ES2 */
-#cmakedefine VPVL2_ENABLE_GLES2
-
-/* Link libvpvl2 against DevIL */
-#cmakedefine VPVL2_LINK_DEVIL
-
-/* Link libvpvl2 against NVIDIA texture tools */
-#cmakedefine VPVL2_LINK_NVTT
-
-/* Link libvpvl2 against libvpvl */
-#cmakedefine VPVL2_LINK_VPVL
-
-/* version */
-#define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
-#define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
-#define VPVL2_VERSION_MINOR @VPVL2_VERSION_MINOR@
-
-#define VPVL2_MAKE_VERSION(major, compat, minor) \
-    (((major) << 16) | ((compat) << 8) | (minor))
-#define VPVL2_VERSION VPVL2_MAKE_VERSION(VPVL2_VERSION_MAJOR, \
-                                       VPVL2_VERSION_COMPAT, \
-                                       VPVL2_VERSION_MINOR)
-
-#define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
+}
+}
 
 #endif

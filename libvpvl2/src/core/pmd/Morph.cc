@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,65 +34,77 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_CONFIG_H_
-#define VPVL2_CONFIG_H_
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/pmd/Morph.h"
 
-/* use OpenGL coordinate system */
-#cmakedefine VPVL2_COORDINATE_OPENGL
+namespace vpvl2
+{
+namespace pmd
+{
 
-/* Build libvpvl2 without BulletPhysics except LinearMath */
-#cmakedefine VPVL2_NO_BULLET
+Morph::Morph(vpvl::Face *morph, IEncoding *encoding)
+    : m_encodingRef(encoding),
+      m_name(0),
+      m_morphRef(morph),
+      m_category(kBase),
+      m_weight(0),
+      m_index(-1)
+{
+    m_name = encoding->toString(morph->name(), IString::kShiftJIS, vpvl::Face::kNameSize);
+}
 
-/* Build libvpvl2 with Open Asset Import Library */
-#cmakedefine VPVL2_LINK_ASSIMP
+Morph::~Morph()
+{
+    delete m_name;
+    m_name = 0;
+    m_morphRef = 0;
+    m_category = kBase;
+    m_weight = 0;
+    m_index = -1;
+}
 
-/* Build libvpvl2's renderer with GLSL shader */
-#cmakedefine VPVL2_ENABLE_GLSL
+IMorph::Category Morph::category() const
+{
+    switch (m_morphRef->type()) {
+    case vpvl::Face::kEye:
+        return kEye;
+    case vpvl::Face::kEyeblow:
+        return kEyeblow;
+    case vpvl::Face::kLip:
+        return kLip;
+    case vpvl::Face::kOther:
+        return kOther;
+    case vpvl::Face::kBase:
+    default:
+        return kBase;
+    }
+}
 
-/* Build libvpvl2's renderer with NVIDIA Cg (based on vpvl::gl::Renderer) */
-#cmakedefine VPVL2_ENABLE_NVIDIA_CG
+IMorph::Type Morph::type() const
+{
+    return kVertex;
+}
 
-/* Build libvpvl2 for iOS */
-#cmakedefine VPVL2_BUILD_IOS
+bool Morph::hasParent() const
+{
+    return false;
+}
 
-/* Link libvpvl2 against GLEW */
-#cmakedefine VPVL2_LINK_GLEW
+const IMorph::WeightPrecision &Morph::weight() const
+{
+    return m_weight;
+}
 
-/* Build libvpvl2 with project file support */
-#cmakedefine VPVL2_ENABLE_PROJECT
+void Morph::setWeight(const WeightPrecision &value)
+{
+    m_weight = value;
+    m_morphRef->setWeight(value);
+}
 
-/* Link libvpvl2 against Qt */
-#cmakedefine VPVL2_LINK_QT
+void Morph::setIndex(int value)
+{
+    m_index = value;
+}
 
-/* Build libvpvl2 linking against OpenCL */
-#cmakedefine VPVL2_ENABLE_OPENCL
-
-/* Build libvpvl2 with rendering engines */
-#cmakedefine VPVL2_OPENGL_RENDERER
-
-/* Build libvpvl2 with OpenGL ES2 */
-#cmakedefine VPVL2_ENABLE_GLES2
-
-/* Link libvpvl2 against DevIL */
-#cmakedefine VPVL2_LINK_DEVIL
-
-/* Link libvpvl2 against NVIDIA texture tools */
-#cmakedefine VPVL2_LINK_NVTT
-
-/* Link libvpvl2 against libvpvl */
-#cmakedefine VPVL2_LINK_VPVL
-
-/* version */
-#define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
-#define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
-#define VPVL2_VERSION_MINOR @VPVL2_VERSION_MINOR@
-
-#define VPVL2_MAKE_VERSION(major, compat, minor) \
-    (((major) << 16) | ((compat) << 8) | (minor))
-#define VPVL2_VERSION VPVL2_MAKE_VERSION(VPVL2_VERSION_MAJOR, \
-                                       VPVL2_VERSION_COMPAT, \
-                                       VPVL2_VERSION_MINOR)
-
-#define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
-
-#endif
+}
+}

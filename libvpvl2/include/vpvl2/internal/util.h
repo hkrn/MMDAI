@@ -433,6 +433,32 @@ static inline void snprintf(char *buf, size_t size, const char *format, ...)
     va_end(ap);
 }
 
+static inline void transformVertex(const Transform &transform,
+                                   const Vector3 &inPosition,
+                                   const Vector3 &inNormal,
+                                   Vector3 &outPosition,
+                                   Vector3 &outNormal)
+{
+    outPosition = transform * inPosition;
+    outNormal = transform.getBasis() * inNormal;
+}
+
+static inline void transformVertex(const Transform &transformA,
+                                   const Transform &transformB,
+                                   const Vector3 &inPosition,
+                                   const Vector3 &inNormal,
+                                   Vector3 &outPosition,
+                                   Vector3 &outNormal,
+                                   float weight)
+{
+    const Vector3 &v1 = transformA * inPosition;
+    const Vector3 &n1 = transformA.getBasis() * inNormal;
+    const Vector3 &v2 = transformB * inPosition;
+    const Vector3 &n2 = transformB.getBasis() * inNormal;
+    outPosition.setInterpolate3(v2, v1, weight);
+    outNormal.setInterpolate3(n2, n1, weight);
+}
+
 }
 }
 

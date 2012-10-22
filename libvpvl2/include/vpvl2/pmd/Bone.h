@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,65 +34,76 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_CONFIG_H_
-#define VPVL2_CONFIG_H_
+#ifndef VPVL2_PMD_BONE_H_
+#define VPVL2_PMD_BONE_H_
 
-/* use OpenGL coordinate system */
-#cmakedefine VPVL2_COORDINATE_OPENGL
+#include "vpvl2/Common.h"
+#include "vpvl2/IBone.h"
 
-/* Build libvpvl2 without BulletPhysics except LinearMath */
-#cmakedefine VPVL2_NO_BULLET
+#include "vpvl/Bone.h"
+#include "vpvl/IK.h"
 
-/* Build libvpvl2 with Open Asset Import Library */
-#cmakedefine VPVL2_LINK_ASSIMP
+namespace vpvl2
+{
 
-/* Build libvpvl2's renderer with GLSL shader */
-#cmakedefine VPVL2_ENABLE_GLSL
+class IEncoding;
+class IString;
 
-/* Build libvpvl2's renderer with NVIDIA Cg (based on vpvl::gl::Renderer) */
-#cmakedefine VPVL2_ENABLE_NVIDIA_CG
+namespace pmd
+{
 
-/* Build libvpvl2 for iOS */
-#cmakedefine VPVL2_BUILD_IOS
+class VPVL2_API Bone : public IBone
+{
+public:
+    Bone(vpvl::Bone *bone, IEncoding *encoding);
+    ~Bone();
 
-/* Link libvpvl2 against GLEW */
-#cmakedefine VPVL2_LINK_GLEW
+    const IString *name() const;
+    int index() const;
+    IBone *parentBone() const { return m_parentBone; }
+    IBone *targetBone() const { return m_targetBoneRef; }
+    const Transform &worldTransform() const;
+    const Vector3 &origin() const;
+    const Vector3 destinationOrigin() const;
+    const Vector3 &localPosition() const;
+    const Quaternion &rotation() const;
+    void getEffectorBones(Array<IBone *> &value) const;
+    void setLocalPosition(const Vector3 &value);
+    void setRotation(const Quaternion &value);
+    bool isMovable() const;
+    bool isRotateable() const;
+    bool isVisible() const;
+    bool isInteractive() const;
+    bool hasInverseKinematics() const;
+    bool hasFixedAxes() const;
+    bool hasLocalAxes() const;
+    const Vector3 &fixedAxis() const;
+    void getLocalAxes(Matrix3x3 &value) const;
+    void setInverseKinematicsEnable(bool value);
 
-/* Build libvpvl2 with project file support */
-#cmakedefine VPVL2_ENABLE_PROJECT
+    const Transform &localTransform() const;
+    void getLocalTransform(Transform &value) const;
+    void setLocalTransform(const Transform &value);
 
-/* Link libvpvl2 against Qt */
-#cmakedefine VPVL2_LINK_QT
+    void setParentBone(vpvl::Bone * value);
+    void setChildBone(vpvl::Bone *value);
+    void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
+    void updateLocalTransform();
 
-/* Build libvpvl2 linking against OpenCL */
-#cmakedefine VPVL2_ENABLE_OPENCL
+private:
+    IEncoding *m_encodingRef;
+    IString *m_name;
+    IBone *m_parentBone;
+    IBone *m_targetBoneRef;
+    IBone *m_childBone;
+    vpvl::Bone *m_boneRef;
+    Array<IBone *> m_IKLinks;
+    Vector3 m_fixedAxis;
+    Transform m_localTransform;
+    bool m_enableIK;
+};
 
-/* Build libvpvl2 with rendering engines */
-#cmakedefine VPVL2_OPENGL_RENDERER
-
-/* Build libvpvl2 with OpenGL ES2 */
-#cmakedefine VPVL2_ENABLE_GLES2
-
-/* Link libvpvl2 against DevIL */
-#cmakedefine VPVL2_LINK_DEVIL
-
-/* Link libvpvl2 against NVIDIA texture tools */
-#cmakedefine VPVL2_LINK_NVTT
-
-/* Link libvpvl2 against libvpvl */
-#cmakedefine VPVL2_LINK_VPVL
-
-/* version */
-#define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
-#define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
-#define VPVL2_VERSION_MINOR @VPVL2_VERSION_MINOR@
-
-#define VPVL2_MAKE_VERSION(major, compat, minor) \
-    (((major) << 16) | ((compat) << 8) | (minor))
-#define VPVL2_VERSION VPVL2_MAKE_VERSION(VPVL2_VERSION_MAJOR, \
-                                       VPVL2_VERSION_COMPAT, \
-                                       VPVL2_VERSION_MINOR)
-
-#define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
+}
+}
 
 #endif

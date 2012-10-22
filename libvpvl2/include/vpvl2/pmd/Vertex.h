@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2011  hkrn                                    */
+/*  Copyright (c) 2010-2012  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -34,65 +34,64 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_CONFIG_H_
-#define VPVL2_CONFIG_H_
+#ifndef VPVL2_PMD_VERTEX_H_
+#define VPVL2_PMD_VERTEX_H_
 
-/* use OpenGL coordinate system */
-#cmakedefine VPVL2_COORDINATE_OPENGL
+#include "vpvl2/Common.h"
+#include "vpvl2/IMorph.h"
+#include "vpvl2/IVertex.h"
+#include "vpvl2/pmd/Model.h"
 
-/* Build libvpvl2 without BulletPhysics except LinearMath */
-#cmakedefine VPVL2_NO_BULLET
+#include "vpvl/Vertex.h"
 
-/* Build libvpvl2 with Open Asset Import Library */
-#cmakedefine VPVL2_LINK_ASSIMP
+namespace vpvl2
+{
 
-/* Build libvpvl2's renderer with GLSL shader */
-#cmakedefine VPVL2_ENABLE_GLSL
+class IEncoding;
+class IString;
 
-/* Build libvpvl2's renderer with NVIDIA Cg (based on vpvl::gl::Renderer) */
-#cmakedefine VPVL2_ENABLE_NVIDIA_CG
+namespace pmd
+{
 
-/* Build libvpvl2 for iOS */
-#cmakedefine VPVL2_BUILD_IOS
+class Bone;
 
-/* Link libvpvl2 against GLEW */
-#cmakedefine VPVL2_LINK_GLEW
+class VPVL2_API Vertex : public IVertex
+{
+public:
+    static const int kMaxBones = 2;
 
-/* Build libvpvl2 with project file support */
-#cmakedefine VPVL2_ENABLE_PROJECT
+    Vertex(vpvl::Vertex *vertexRef, Array<IBone *> *bonesRef, int index);
+    ~Vertex();
 
-/* Link libvpvl2 against Qt */
-#cmakedefine VPVL2_LINK_QT
+    const Vector3 &origin() const;
+    const Vector3 &normal() const;
+    const Vector3 &textureCoord() const;
+    const Vector4 &uv(int /* index */) const { return kZeroV4; }
+    const Vector3 &delta() const { return kZeroV3; }
+    Type type() const { return kBdef2; }
+    float edgeSize() const;
+    float weight(int index) const;
+    IBone *bone(int index) const;
+    int index() const;
+    void performSkinning(Vector3 &position, Vector3 &normal) const;
+    void reset();
+    void setOrigin(const Vector3 &value);
+    void setNormal(const Vector3 &value);
+    void setTextureCoord(const Vector3 &value);
+    void setUV(int /*index*/, const Vector4 &/*value*/) {}
+    void setType(Type /*value*/) {}
+    void setEdgeSize(float value);
+    void setWeight(int index, float weight);
+    void setBone(int /*index*/, IBone */*value*/) {}
 
-/* Build libvpvl2 linking against OpenCL */
-#cmakedefine VPVL2_ENABLE_OPENCL
+private:
+    vpvl::Vertex *m_vertexRef;
+    Array<IBone *> *m_bonesRef;
+    Vector3 m_texcoord;
+    int m_index;
+};
 
-/* Build libvpvl2 with rendering engines */
-#cmakedefine VPVL2_OPENGL_RENDERER
-
-/* Build libvpvl2 with OpenGL ES2 */
-#cmakedefine VPVL2_ENABLE_GLES2
-
-/* Link libvpvl2 against DevIL */
-#cmakedefine VPVL2_LINK_DEVIL
-
-/* Link libvpvl2 against NVIDIA texture tools */
-#cmakedefine VPVL2_LINK_NVTT
-
-/* Link libvpvl2 against libvpvl */
-#cmakedefine VPVL2_LINK_VPVL
-
-/* version */
-#define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
-#define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
-#define VPVL2_VERSION_MINOR @VPVL2_VERSION_MINOR@
-
-#define VPVL2_MAKE_VERSION(major, compat, minor) \
-    (((major) << 16) | ((compat) << 8) | (minor))
-#define VPVL2_VERSION VPVL2_MAKE_VERSION(VPVL2_VERSION_MAJOR, \
-                                       VPVL2_VERSION_COMPAT, \
-                                       VPVL2_VERSION_MINOR)
-
-#define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
 
 #endif
