@@ -46,7 +46,7 @@ namespace vpvl2
 namespace cl
 {
 
-static const char kProgramCompileFlags[] = "-cl-fast-relaxed-math -DMAC -DGUID_ARG";
+static const char kProgramCompileFlags[] = "-cl-fast-relaxed-math";
 static const int kMaxBonesPerVertex = 4;
 
 PMXAccelerator::PMXAccelerator(Context *contextRef, IModel *modelRef)
@@ -59,6 +59,7 @@ PMXAccelerator::PMXAccelerator(Context *contextRef, IModel *modelRef)
       m_boneWeightsBuffer(0),
       m_boneIndicesBuffer(0),
       m_boneMatricesBuffer(0),
+      m_buildLogPtr(0),
       m_localWGSizeForPerformSkinning(0),
       m_boneTransform(0),
       m_isBufferAllocated(false)
@@ -85,6 +86,8 @@ PMXAccelerator::~PMXAccelerator()
     m_localWGSizeForPerformSkinning = 0;
     delete[] m_boneTransform;
     m_boneTransform = 0;
+    delete[] m_buildLogPtr;
+    m_buildLogPtr = 0;
     m_isBufferAllocated = false;
     m_contextRef = 0;
     m_modelRef = 0;
@@ -114,11 +117,11 @@ bool PMXAccelerator::createKernelProgram()
     if (err != CL_SUCCESS) {
         size_t buildLogSize;
         clGetProgramBuildInfo(m_program, device, CL_PROGRAM_BUILD_LOG, 0, 0, &buildLogSize);
-        cl_char *buildLog = new cl_char[buildLogSize + 1];
-        clGetProgramBuildInfo(m_program, device, CL_PROGRAM_BUILD_LOG, buildLogSize, buildLog, 0);
-        buildLog[buildLogSize] = 0;
-        log0(0, IRenderDelegate::kLogWarning, "Failed building a program: %s", buildLog);
-        delete[] buildLog;
+        delete[] m_buildLogPtr;
+        m_buildLogPtr = new cl_char[buildLogSize + 1];
+        clGetProgramBuildInfo(m_program, device, CL_PROGRAM_BUILD_LOG, buildLogSize, m_buildLogPtr, 0);
+        m_buildLogPtr[buildLogSize] = 0;
+        log0(0, IRenderDelegate::kLogWarning, "Failed building a program: %s", m_buildLogPtr);
         return false;
     }
     clReleaseKernel(m_performSkinningKernel);
