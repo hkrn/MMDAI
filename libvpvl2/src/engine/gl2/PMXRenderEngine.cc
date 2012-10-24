@@ -53,7 +53,8 @@ using namespace vpvl2::gl2;
 
 enum VertexBufferObjectType
 {
-    kModelDynamicVertexBuffer,
+    kModelDynamicVertexBufferEven,
+    kModelDynamicVertexBufferOdd,
     kModelStaticVertexBuffer,
     kModelIndexBuffer,
     kMaxVertexBufferObjectType
@@ -61,9 +62,10 @@ enum VertexBufferObjectType
 
 enum VertexArrayObjectType
 {
-    kEvenVertexArrayObject,
-    kOddVertexArrayObject,
-    kEdgeVertexArrayObject,
+    kVertexArrayObjectEven,
+    kVertexArrayObjectOdd,
+    kEdgeVertexArrayObjectEven,
+    kEdgeVertexArrayObjectOdd,
     kMaxVertexArrayObjectType
 };
 
@@ -377,7 +379,7 @@ class PMXRenderEngine::PrivateContext
         #endif
 {
 public:
-    PrivateContext(const IModel *model)
+    PrivateContext(const IModel *model, bool isVertexShaderSkinning)
         : modelRef(model),
           indexBuffer(0),
           staticBuffer(0),
@@ -389,12 +391,14 @@ public:
           zplotProgram(0),
           materials(0),
           cullFaceState(true),
-          isVertexShaderSkinning(false)
+          updateEven(true),
+          isVertexShaderSkinning(isVertexShaderSkinning)
     {
         model->getIndexBuffer(indexBuffer);
         model->getStaticVertexBuffer(staticBuffer);
         model->getDynamicVertexBuffer(dynamicBuffer, indexBuffer);
-        model->getMatrixBuffer(matrixBuffer, dynamicBuffer, indexBuffer);
+        if (isVertexShaderSkinning)
+            model->getMatrixBuffer(matrixBuffer, dynamicBuffer, indexBuffer);
         switch (indexBuffer->type()) {
         case IModel::IIndexBuffer::kIndex32:
             indexType = GL_UNSIGNED_INT;
@@ -447,6 +451,27 @@ public:
         isVertexShaderSkinning = false;
     }
 
+    void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) {
+        if (updateEven) {
+            vao = kVertexArrayObjectOdd;
+            vbo = kModelDynamicVertexBufferOdd;
+        }
+        else {
+            vao = kVertexArrayObjectEven;
+            vbo = kModelDynamicVertexBufferEven;
+        }
+    }
+    void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) {
+        if (updateEven) {
+            vao = kEdgeVertexArrayObjectOdd;
+            vbo = kModelDynamicVertexBufferOdd;
+        }
+        else {
+            vao = kEdgeVertexArrayObjectEven;
+            vbo = kModelDynamicVertexBufferEven;
+        }
+    }
+
     const IModel *modelRef;
     IModel::IIndexBuffer *indexBuffer;
     IModel::IStaticVertexBuffer *staticBuffer;
@@ -460,8 +485,12 @@ public:
     GLuint vertexArrayObjects[kMaxVertexArrayObjectType];
     GLenum indexType;
     MaterialTextures *materials;
+#ifdef VPVL2_ENABLE_OPENCL
+    cl::PMXAccelerator::Buffers buffers;
+#endif
     bool cullFaceState;
     bool isVertexShaderSkinning;
+    bool updateEven;
 };
 
 PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
@@ -478,9 +507,10 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
       m_aabbMin(kZeroV3),
       m_aabbMax(kZeroV3)
 {
-    m_context = new PrivateContext(modelRef);
+    bool vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
+    m_context = new PrivateContext(modelRef, vss);
 #ifdef VPVL2_ENABLE_OPENCL
-    if (m_accelerator && m_accelerator->isAvailable())
+    if (vss || (m_accelerator && m_accelerator->isAvailable()))
         m_context->dynamicBuffer->setSkinningEnable(false);
 #endif
 #ifdef VPVL2_LINK_QT
@@ -491,14 +521,17 @@ PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
 
 PMXRenderEngine::~PMXRenderEngine()
 {
+#ifdef VPVL2_ENABLE_OPENCL
+    if (m_context) {
+        m_accelerator->release(m_context->buffers);
+    }
+    delete m_accelerator;
+#endif
     if (m_context) {
         releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
         delete m_context;
         m_context = 0;
     }
-#ifdef VPVL2_ENABLE_OPENCL
-    delete m_accelerator;
-#endif
     m_delegateRef = 0;
     m_sceneRef = 0;
     m_modelRef = 0;
@@ -514,16 +547,19 @@ IModel *PMXRenderEngine::model() const
 
 bool PMXRenderEngine::upload(const IString *dir)
 {
-    bool ret = true;
+    bool ret = true, vss = false;
     void *context = 0;
-    if (!m_context)
-        m_context = new PrivateContext(m_modelRef);
+    if (!m_context) {
+        vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
+        m_context = new PrivateContext(m_modelRef, vss);
+        m_context->dynamicBuffer->setSkinningEnable(false);
+    }
+    vss = m_context->isVertexShaderSkinning;
     m_delegateRef->allocateContext(m_modelRef, context);
     EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_delegateRef);
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegateRef);
     ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_delegateRef);
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_delegateRef);
-    m_context->isVertexShaderSkinning = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
     if (!createProgram(edgeProgram, dir,
                        IRenderDelegate::kEdgeVertexShader,
                        IRenderDelegate::kEdgeWithSkinningVertexShader,
@@ -557,11 +593,17 @@ bool PMXRenderEngine::upload(const IString *dir)
     }
 
     glGenBuffers(kMaxVertexBufferObjectType, m_context->vertexBufferObjects);
-    GLuint dvbo = m_context->vertexBufferObjects[kModelDynamicVertexBuffer];
-    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
+    GLuint dvbo0 = m_context->vertexBufferObjects[kModelDynamicVertexBufferEven];
+    glBindBuffer(GL_ARRAY_BUFFER, dvbo0);
     glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
     log0(context, IRenderDelegate::kLogInfo,
-         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo);
+         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo0);
+
+    GLuint dvbo1 = m_context->vertexBufferObjects[kModelDynamicVertexBufferOdd];
+    glBindBuffer(GL_ARRAY_BUFFER, dvbo1);
+    glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo1);
 
     const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     GLuint svbo = m_context->vertexBufferObjects[kModelStaticVertexBuffer];
@@ -582,52 +624,46 @@ bool PMXRenderEngine::upload(const IString *dir)
          m_context->vertexBufferObjects[kModelIndexBuffer]);
 
     allocateVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
-    GLuint vao = m_context->vertexArrayObjects[kEvenVertexArrayObject];
+    GLuint vao = m_context->vertexArrayObjects[kVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
     }
-    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
-    bindDynamicVertexAttributePointers();
-    glBindBuffer(GL_ARRAY_BUFFER, svbo);
-    bindStaticVertexAttributePointers();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kUVA0Stride);
-    glEnableVertexAttribArray(IModel::IBuffer::kUVA1Stride);
-    if (m_context->isVertexShaderSkinning) {
-        glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
-        glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
-    }
+    createVertexBundle(dvbo0, svbo, ibo, vss);
     unbindVertexArrayObject();
-    vao = m_context->vertexArrayObjects[kEdgeVertexArrayObject];
+    vao = m_context->vertexArrayObjects[kVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for edge (ID=%d)", vao);
-        glBindBuffer(GL_ARRAY_BUFFER, dvbo);
-        bindEdgeVertexAttributePointers();
-        glBindBuffer(GL_ARRAY_BUFFER, svbo);
-        bindStaticVertexAttributePointers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-        glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
-        if (m_context->isVertexShaderSkinning) {
-            glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
-            glEnableVertexAttribArray(IModel::IBuffer::kEdgeSizeStride);
-            glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
-            glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
-        }
+        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
+        createVertexBundle(dvbo1, svbo, ibo, vss);
         unbindVertexArrayObject();
     }
+    vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectEven];
+    if (bindVertexArrayObject(vao)) {
+        log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
+    }
+    createEdgeBundle(dvbo0, svbo, ibo, vss);
+    unbindVertexArrayObject();
+    vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectOdd];
+    if (bindVertexArrayObject(vao)) {
+        log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
+        createEdgeBundle(dvbo1, svbo, ibo, vss);
+        unbindVertexArrayObject();
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
-        GLuint vbo = m_context->vertexBufferObjects[kModelDynamicVertexBuffer];
-        m_accelerator->upload(vbo, m_context->indexBuffer, context);
+        const GLuint *vbo = m_context->vertexBufferObjects;
+        cl::PMXAccelerator::Buffers &buffers = m_context->buffers;
+        m_accelerator->release(buffers);
+        buffers.add(cl::PMXAccelerator::Buffer(vbo[kModelDynamicVertexBufferEven]));
+        buffers.add(cl::PMXAccelerator::Buffer(vbo[kModelDynamicVertexBufferOdd]));
+        m_accelerator->upload(buffers, m_context->indexBuffer, context);
     }
 #endif
     m_modelRef->setVisible(true);
-    update();
+    update(); // for updating even frame
+    update(); // for updating odd frame
     log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
     m_delegateRef->releaseContext(m_modelRef, context);
     return ret;
@@ -637,17 +673,28 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+    VertexBufferObjectType vbo = m_context->updateEven
+            ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
+    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
     void *address = mapBuffer(GL_ARRAY_BUFFER);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_modelRef->performUpdate();
-    dynamicBuffer->update(address, m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
+    if (m_context->isVertexShaderSkinning) {
+        m_context->matrixBuffer->update(address);
+    }
+    else {
+        const ICamera *camera = m_sceneRef->camera();
+        dynamicBuffer->update(address, camera->position(), m_aabbMin, m_aabbMax);
+    }
     unmapBuffer(GL_ARRAY_BUFFER, address);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
-    if (m_accelerator && m_accelerator->isAvailable())
-        m_accelerator->update(dynamicBuffer, m_sceneRef, m_aabbMin, m_aabbMax);
+    if (m_accelerator && m_accelerator->isAvailable()) {
+        const cl::PMXAccelerator::Buffer &buffer = m_context->buffers[m_context->updateEven ? 0 : 1];
+        m_accelerator->update(dynamicBuffer, m_sceneRef, buffer, m_aabbMin, m_aabbMax);
+    }
 #endif
+    m_context->updateEven = m_context->updateEven ? false :true;
 }
 
 void PMXRenderEngine::renderModel()
@@ -1012,10 +1059,48 @@ bool PMXRenderEngine::releaseContext0(void *context)
     return false;
 }
 
+void PMXRenderEngine::createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
+    bindDynamicVertexAttributePointers();
+    glBindBuffer(GL_ARRAY_BUFFER, svbo);
+    bindStaticVertexAttributePointers();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
+    glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
+    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
+    glEnableVertexAttribArray(IModel::IBuffer::kUVA0Stride);
+    glEnableVertexAttribArray(IModel::IBuffer::kUVA1Stride);
+    if (vss) {
+        glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
+        glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
+    }
+    unbindVertexArrayObject();
+}
+
+void PMXRenderEngine::createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
+    bindEdgeVertexAttributePointers();
+    glBindBuffer(GL_ARRAY_BUFFER, svbo);
+    bindStaticVertexAttributePointers();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
+    if (vss) {
+        glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
+        glEnableVertexAttribArray(IModel::IBuffer::kEdgeSizeStride);
+        glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
+        glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
+    }
+}
+
 void PMXRenderEngine::bindVertexBundle()
 {
-    if (!bindVertexArrayObject(m_context->vertexArrayObjects[kEvenVertexArrayObject])) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+    VertexArrayObjectType vao;
+    VertexBufferObjectType vbo;
+    m_context->getVertexBundleType(vao, vbo);
+    if (!bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
         bindDynamicVertexAttributePointers();
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
         bindStaticVertexAttributePointers();
@@ -1025,8 +1110,11 @@ void PMXRenderEngine::bindVertexBundle()
 
 void PMXRenderEngine::bindEdgeBundle()
 {
-    if (!bindVertexArrayObject(m_context->vertexArrayObjects[kEdgeVertexArrayObject])) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelDynamicVertexBuffer]);
+    VertexArrayObjectType vao;
+    VertexBufferObjectType vbo;
+    m_context->getEdgeBundleType(vao, vbo);
+    if (!bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
         bindEdgeVertexAttributePointers();
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
         bindStaticVertexAttributePointers();

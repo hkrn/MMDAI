@@ -42,14 +42,14 @@
 #include "vpvl2/cg/EffectEngine.h"
 #include "vpvl2/internal/BaseRenderEngine.h"
 
+#ifdef VPVL2_ENABLE_OPENCL
+#include "vpvl2/cl/PMXAccelerator.h"
+#endif
+
 namespace vpvl2
 {
 
 class Scene;
-
-namespace cl {
-class PMXAccelerator;
-}
 
 namespace cg
 {
@@ -85,26 +85,18 @@ public:
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 private:
-    bool uploadMaterials(const IString *dir, void *context);
-    bool releaseContext0(void *context);
-    void release();
-    void bindVertexBundle();
-    void bindEdgeBundle();
-    void unbindVertexBundle();
-    void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
-    void bindStaticVertexAttributePointers();
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
-
     enum VertexBufferObjectType {
-        kModelDynamicVertexBuffer,
+        kModelDynamicVertexBufferEven,
+        kModelDynamicVertexBufferOdd,
         kModelStaticVertexBuffer,
         kModelIndexBuffer,
         kMaxVertexBufferObjectType
     };
     enum VertexArrayObjectType {
-        kEvenVertexArrayObject,
-        kOddVertexArrayObject,
-        kEdgeVertexArrayObject,
+        kVertexArrayObjectEven,
+        kVertexArrayObjectOdd,
+        kEdgeVertexArrayObjectEven,
+        kEdgeVertexArrayObjectOdd,
         kMaxVertexArrayObjectType
     };
     struct MaterialContext {
@@ -119,9 +111,26 @@ private:
         Color toonTextureColor;
     };
 
+    bool uploadMaterials(const IString *dir, void *context);
+    bool releaseContext0(void *context);
+    void release();
+    void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
+    void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
+    void bindVertexBundle();
+    void bindEdgeBundle();
+    void unbindVertexBundle();
+    void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
+    void bindStaticVertexAttributePointers();
+    void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
+    void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
+    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
+
     CGcontext m_contextRef;
     EffectEngine *m_currentRef;
+#ifdef VPVL2_ENABLE_OPENCL
     cl::PMXAccelerator *m_accelerator;
+    cl::PMXAccelerator::Buffers m_accelerationBuffers;
+#endif
     IModel *m_modelRef;
     IModel::IStaticVertexBuffer *m_staticBuffer;
     IModel::IDynamicVertexBuffer *m_dynamicBuffer;
@@ -136,6 +145,7 @@ private:
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
     bool m_cullFaceState;
+    bool m_updateEvenBuffer;
     bool m_isVertexShaderSkinning;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)

@@ -51,16 +51,24 @@ namespace cl
 class PMXAccelerator
 {
 public:
+    struct Buffer {
+        Buffer(GLuint n) : name(n), mem(0) {}
+        GLuint name;
+        cl_mem mem;
+    };
+    typedef Array<Buffer> Buffers;
     PMXAccelerator(Context *contextRef, IModel *modelRef);
     ~PMXAccelerator();
 
     bool isAvailable() const;
     bool createKernelProgram();
-    void upload(GLuint buffer, const IModel::IIndexBuffer *indexBufferRef, void *context);
+    void upload(Buffers &buffers, const IModel::IIndexBuffer *indexBufferRef, void *context);
     void update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
                 const Scene *sceneRef,
-                Vector3 &aabbMin,
-                Vector3 &aabbMax);
+                const Buffer &buffer,
+                Vector3 &aabbMax,
+                Vector3 &);
+    void release(Buffers &buffers) const;
 
 private:
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
@@ -72,7 +80,6 @@ private:
     Array<IVertex *> m_vertices;
     cl_program m_program;
     cl_kernel m_performSkinningKernel;
-    cl_mem m_verticesBuffer;
     cl_mem m_materialEdgeSizeBuffer;
     cl_mem m_boneWeightsBuffer;
     cl_mem m_boneIndicesBuffer;

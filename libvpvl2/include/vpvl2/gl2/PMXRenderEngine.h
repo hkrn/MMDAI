@@ -97,6 +97,8 @@ private:
                        void *context);
     bool uploadMaterials(const IString *dir, void *context);
     bool releaseContext0(void *context);
+    void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss);
+    void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss);
     void bindVertexBundle();
     void bindEdgeBundle();
     void unbindVertexBundle();
