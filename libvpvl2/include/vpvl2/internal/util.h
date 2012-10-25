@@ -75,7 +75,7 @@ static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &
                                               const IKeyframe::SmoothPrecision &y,
                                               const IKeyframe::SmoothPrecision &t)
 {
-    return x * (1 - t) + y * t;
+    return x + (y - x) * t;
 }
 
 static inline void readBytes(size_t size, uint8_t *&ptr, size_t &rest)
