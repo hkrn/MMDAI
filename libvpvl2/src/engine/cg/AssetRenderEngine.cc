@@ -81,8 +81,8 @@ public:
     }
 
 protected:
-    void drawPrimitives(const GLenum mode, const GLsizei count, const GLenum /* type */, const GLvoid *ptr) const {
-        glDrawArrays(mode, *static_cast<const int *>(ptr), count);
+    void drawPrimitives(const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const {
+        glDrawElements(mode, count, type, ptr);
     }
 
 private:
@@ -362,65 +362,48 @@ void AssetRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, con
 
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
 {
-    AssetVertices &assetVertices = m_vertices[node];
-    AssetVertex assetVertex;
     const unsigned int nmeshes = node->mNumMeshes;
     bool ret = true;
     m_nmeshes = nmeshes;
+    Vertices assetVertices;
+    Vertex assetVertex;
+    Array<int> vertexIndices;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        const aiVector3D *vertices = mesh->mVertices;
-        const aiVector3D *normals = mesh->mNormals;
-        const bool hasNormals = mesh->HasNormals();
-        const bool hasTexCoords = mesh->HasTextureCoords(0);
-        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
         const unsigned int nfaces = mesh->mNumFaces;
-        int index = 0;
         for (unsigned int j = 0; j < nfaces; j++) {
             const struct aiFace &face = mesh->mFaces[j];
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int k = 0; k < nindices; k++) {
                 int vertexIndex = face.mIndices[k];
-                if (hasTexCoords) {
-                    const aiVector3D &p = texcoords[vertexIndex];
-                    assetVertex.texcoord.setValue(p.x, p.y, 0.0f);
-                }
-                else {
-                    assetVertex.texcoord.setZero();
-                }
-                if (hasNormals) {
-                    const aiVector3D &n = normals[vertexIndex];
-                    assetVertex.normal.setValue(n.x, n.y, n.z);
-                }
-                else {
-                    assetVertex.normal.setZero();
-                }
-                const aiVector3D &v = vertices[vertexIndex];
-                assetVertex.position.setValue(v.x, v.y, v.z, 1.0f);
-                assetVertices.push_back(assetVertex);
-                index++;
+                vertexIndices.add(vertexIndex);
             }
         }
-        m_indices[mesh] = index;
+        const bool hasNormals = mesh->HasNormals();
+        const bool hasTexCoords = mesh->HasTextureCoords(0);
+        const aiVector3D *vertices = mesh->mVertices;
+        const aiVector3D *normals = hasNormals ? mesh->mNormals : 0;
+        const aiVector3D *texcoords = hasTexCoords ? mesh->mTextureCoords[0] : 0;
+        const unsigned int nvertices = mesh->mNumVertices;
+        for (unsigned int j = 0; j < nvertices; j++) {
+            const aiVector3D &vertex = vertices[j];
+            assetVertex.position.setValue(vertex.x, vertex.y, vertex.z, 1);
+            if (normals) {
+                const aiVector3D &normal = normals[j];
+                assetVertex.normal.setValue(normal.x, normal.y, normal.z);
+            }
+            if (texcoords) {
+                const aiVector3D &texcoord = texcoords[j];
+                assetVertex.texcoord.setValue(texcoord.x, texcoord.y, texcoord.z);
+            }
+            assetVertices.add(assetVertex);
+        }
+        createVertexBundle(mesh, assetVertices, vertexIndices, context);
+        assetVertices.clear();
+        vertexIndices.clear();
     }
-    GLuint &vao = m_vao[node];
-    allocateVertexArrayObjects(&vao, 1);
-    if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Created an vertex array object (ID=%d)", vao);
-    }
-    size_t vsize = assetVertices.size() * sizeof(assetVertices[0]);
-    GLuint &vbo = m_vbo[node];
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vsize, &assetVertices[0].position, GL_STATIC_DRAW);
-    bindStaticVertexAttributePointers();
-    log0(context, IRenderDelegate::kLogInfo,
-         "Binding asset static vertex buffer to the vertex buffer object (ID=%d)", vbo);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    unbindVertexArrayObject();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], context);
@@ -432,8 +415,13 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
 
 void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 {
-    GLuint vbo = m_vbo[node];
-    glDeleteBuffers(1, &vbo);
+    const unsigned int nmeshes = node->mNumMeshes;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        releaseVertexArrayObjects(&m_vao[mesh], 1);
+        glDeleteBuffers(1, &m_ibo[mesh]);
+        glDeleteBuffers(1, &m_vbo[mesh]);
+    }
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
         deleteRecurse(scene, node->mChildren[i]);
@@ -442,20 +430,17 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
 {
     const unsigned int nmeshes = node->mNumMeshes;
-    size_t offset = 0;
-    bindVertexBundle(node);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         bool hasTexture = false, hasSphereMap = false;
-        setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
         const char *target = hasShadowMap ? "object_ss" : "object";
+        setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
-            const GLvoid *offsetPtr = reinterpret_cast<const GLvoid *>(&offset);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, offsetPtr);
+            bindVertexBundle(mesh);
+            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
         }
-        offset += nindices;
     }
     unbindVertexBundle();
     const unsigned int nChildNodes = node->mNumChildren;
@@ -467,8 +452,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 {
     const unsigned int nmeshes = node->mNumMeshes;
     float opacity;
-    size_t offset = 0;
-    bindVertexBundle(node);
     glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -476,13 +459,12 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         bool succeeded = aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS;
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
+        bindVertexBundle(mesh);
         CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmeshes, false, false, false);
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
-            const GLvoid *offsetPtr = reinterpret_cast<const GLvoid *>(&offset);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, offsetPtr);
+            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
         }
-        offset += nindices;
     }
     glCullFace(GL_BACK);
     unbindVertexBundle();
@@ -573,11 +555,46 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     }
 }
 
-void AssetRenderEngine::bindVertexBundle(const aiNode *node)
+void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
+                                           const Vertices &vertices,
+                                           const Indices &indices,
+                                           void *context)
 {
-    if (!bindVertexArrayObject(m_vao[node])) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo[node]);
+    GLuint &ibo = m_ibo[mesh];
+    size_t isize = sizeof(indices[0]) * indices.count();
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, isize, &indices[0], GL_STATIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding asset index buffer to the vertex buffer object (ID=%d)", ibo);
+    GLuint &vbo = m_vbo[mesh];
+    size_t vsize = vertices.count() * sizeof(vertices[0]);
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vsize, &vertices[0].position, GL_STATIC_DRAW);
+    log0(context, IRenderDelegate::kLogInfo,
+         "Binding asset vertex buffer to the vertex buffer object (ID=%d)", vbo);
+    GLuint &vao = m_vao[mesh];
+    allocateVertexArrayObjects(&vao, 1);
+    if (bindVertexArrayObject(vao)) {
+        log0(context, IRenderDelegate::kLogInfo, "Created an vertex array object (ID=%d)", vao);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    bindStaticVertexAttributePointers();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    unbindVertexArrayObject();
+    m_indices[mesh] = indices.count();
+}
+
+void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
+{
+    if (!bindVertexArrayObject(m_vao[mesh])) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo[mesh]);
         bindStaticVertexAttributePointers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo[mesh]);
     }
 }
 
@@ -585,12 +602,13 @@ void AssetRenderEngine::unbindVertexBundle()
 {
     if (!unbindVertexArrayObject()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 }
 
 void AssetRenderEngine::bindStaticVertexAttributePointers()
 {
-    static const AssetVertex v;
+    static const Vertex v;
     const void *vertexPtr = 0;
     glVertexPointer(3, GL_FLOAT, sizeof(v), vertexPtr);
     const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));

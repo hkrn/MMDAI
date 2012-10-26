@@ -100,6 +100,14 @@ public:
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
 private:
+    struct Vertex {
+        Vertex() {}
+        vpvl2::Vector4 position;
+        vpvl2::Vector3 normal;
+        vpvl2::Vector3 texcoord;
+    };
+    typedef Array<Vertex> Vertices;
+    typedef Array<int> Indices;
     class PrivateContext;
     bool uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
@@ -112,7 +120,11 @@ private:
                        IRenderDelegate::ShaderType vertexShaderType,
                        IRenderDelegate::ShaderType fragmentShaderType,
                        void *context);
-    void bindVertexBundle(const aiNode *node);
+    void createVertexBundle(const aiMesh *mesh,
+                            const Vertices &vertices,
+                            const Indices &indices,
+                            void *context);
+    void bindVertexBundle(const aiMesh *mesh);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 

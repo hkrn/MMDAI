@@ -99,14 +99,14 @@ public:
 private:
     class PrivateContext;
     typedef std::map<std::string, GLuint> Textures;
-    struct AssetVertex {
-        AssetVertex() {}
+    struct Vertex {
+        Vertex() {}
         vpvl2::Vector4 position;
         vpvl2::Vector3 normal;
         vpvl2::Vector3 texcoord;
     };
-    typedef btAlignedObjectArray<AssetVertex> AssetVertices;
-    typedef btAlignedObjectArray<uint32_t> AssetIndices;
+    typedef Array<Vertex> Vertices;
+    typedef Array<int> Indices;
 
     void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
@@ -114,7 +114,8 @@ private:
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
-    void bindVertexBundle(const aiNode *node);
+    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices, void *context);
+    void bindVertexBundle(const aiMesh *mesh);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 
@@ -125,9 +126,9 @@ private:
     Array<EffectEngine *> m_oseffects;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, int> m_indices;
-    std::map<const struct aiNode *, AssetVertices> m_vertices;
-    std::map<const struct aiNode *, GLuint> m_vbo;
-    std::map<const struct aiNode *, GLuint> m_vao;
+    std::map<const struct aiMesh *, GLuint> m_ibo;
+    std::map<const struct aiMesh *, GLuint> m_vbo;
+    std::map<const struct aiMesh *, GLuint> m_vao;
     int m_nvertices;
     int m_nmeshes;
     bool m_cullFaceState;
