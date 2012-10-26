@@ -629,24 +629,20 @@ bool PMXRenderEngine::upload(const IString *dir)
         log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
     }
     createVertexBundle(dvbo0, svbo, ibo, vss);
-    unbindVertexArrayObject();
     vao = m_context->vertexArrayObjects[kVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
         createVertexBundle(dvbo1, svbo, ibo, vss);
-        unbindVertexArrayObject();
     }
     vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
     }
     createEdgeBundle(dvbo0, svbo, ibo, vss);
-    unbindVertexArrayObject();
     vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
         createEdgeBundle(dvbo1, svbo, ibo, vss);
-        unbindVertexArrayObject();
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1092,6 +1088,7 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, boo
         glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
         glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
     }
+    unbindVertexArrayObject();
 }
 
 void PMXRenderEngine::bindVertexBundle()

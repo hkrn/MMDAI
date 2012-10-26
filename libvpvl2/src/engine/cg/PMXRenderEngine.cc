@@ -162,24 +162,20 @@ bool PMXRenderEngine::upload(const IString *dir)
         log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
     }
     createVertexBundle(dvbo0, svbo, ibo);
-    unbindVertexArrayObject();
     vao = m_vertexArrayObjects[kVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
         createVertexBundle(dvbo1, svbo, ibo);
-        unbindVertexArrayObject();
     }
     vao = m_vertexArrayObjects[kEdgeVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
     }
     createEdgeBundle(dvbo0, svbo, ibo);
-    unbindVertexArrayObject();
     vao = m_vertexArrayObjects[kEdgeVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
         log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
         createEdgeBundle(dvbo1, svbo, ibo);
-        unbindVertexArrayObject();
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -556,6 +552,7 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo)
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    unbindVertexBundle();
 }
 
 void PMXRenderEngine::createEdgeBundle(GLuint dvbo, GLuint /* svbo */, GLuint ibo)
@@ -564,6 +561,7 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo, GLuint /* svbo */, GLuint ib
     bindDynamicVertexAttributePointers(IModel::IBuffer::kEdgeVertexStride);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glEnableClientState(GL_VERTEX_ARRAY);
+    unbindVertexBundle();
 }
 
 void PMXRenderEngine::bindVertexBundle()
