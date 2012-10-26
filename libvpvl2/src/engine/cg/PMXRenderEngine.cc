@@ -147,7 +147,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     GLuint svbo = m_vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
     glBufferData(GL_ARRAY_BUFFER, m_staticBuffer->size(), 0, GL_STATIC_DRAW);
-    void *address = mapBuffer(GL_ARRAY_BUFFER);
+    void *address = mapBuffer(GL_ARRAY_BUFFER, 0, m_staticBuffer->size());
     m_staticBuffer->update(address);
     unmapBuffer(GL_ARRAY_BUFFER, address);
     log0(context, IRenderDelegate::kLogInfo,
@@ -203,7 +203,7 @@ void PMXRenderEngine::update()
     VertexBufferObjectType vbo = m_updateEvenBuffer
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[vbo]);
-    void *address = mapBuffer(GL_ARRAY_BUFFER);
+    void *address = mapBuffer(GL_ARRAY_BUFFER, 0, m_dynamicBuffer->size());
     m_modelRef->performUpdate();
     m_dynamicBuffer->update(address, m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
     unmapBuffer(GL_ARRAY_BUFFER, address);

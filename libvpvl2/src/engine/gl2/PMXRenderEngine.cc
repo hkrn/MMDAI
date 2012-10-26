@@ -609,7 +609,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     GLuint svbo = m_context->vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
     glBufferData(GL_ARRAY_BUFFER, staticBuffer->size(), 0, GL_STATIC_DRAW);
-    void *address = mapBuffer(GL_ARRAY_BUFFER);
+    void *address = mapBuffer(GL_ARRAY_BUFFER, 0, staticBuffer->size());
     staticBuffer->update(address);
     unmapBuffer(GL_ARRAY_BUFFER, address);
     log0(context, IRenderDelegate::kLogInfo,
@@ -672,8 +672,8 @@ void PMXRenderEngine::update()
     VertexBufferObjectType vbo = m_context->updateEven
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
-    void *address = mapBuffer(GL_ARRAY_BUFFER);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+    void *address = mapBuffer(GL_ARRAY_BUFFER, 0, dynamicBuffer->size());
     m_modelRef->performUpdate();
     if (m_context->isVertexShaderSkinning) {
         m_context->matrixBuffer->update(address);
