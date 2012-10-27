@@ -80,11 +80,11 @@ public:
         m_program.link();
         m_bundle.create();
         m_bundle.bind();
-        bindVertexBuffers();
+        bindVertexBundle(false);
         m_program.enableAttributeArray("inPosition");
         m_program.enableAttributeArray("inTexCoord");
         m_bundle.release();
-        releaseVertexBuffers();
+        releaseVertexBundle(false);
     }
     void resize(const QSize &size) {
         m_size = size;
@@ -108,13 +108,9 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
         m_program.setUniformValue("mainTexture", 0);
-        if (!m_bundle.bind()) {
-            bindVertexBuffers();
-        }
+        bindVertexBundle(true);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        if (!m_bundle.release()) {
-            releaseVertexBuffers();
-        }
+        releaseVertexBundle(true);
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
@@ -143,15 +139,19 @@ private:
         m_dvbo.write(0, &positions[0], sizeof(positions));
         m_dvbo.release();
     }
-    void bindVertexBuffers() {
-        m_dvbo.bind();
-        m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 2);
-        m_svbo.bind();
-        m_program.setAttributeBuffer("inTexCoord", GL_FLOAT, 0, 2);
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.bind()) {
+            m_dvbo.bind();
+            m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 2);
+            m_svbo.bind();
+            m_program.setAttributeBuffer("inTexCoord", GL_FLOAT, 0, 2);
+        }
     }
-    void releaseVertexBuffers() {
-        m_dvbo.release();
-        m_svbo.release();
+    void releaseVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.release()) {
+            m_dvbo.release();
+            m_svbo.release();
+        }
     }
 
     QGLShaderProgram m_program;

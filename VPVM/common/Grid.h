@@ -102,11 +102,11 @@ public:
         m_bundle.initialize(QGLContext::currentContext());
         m_bundle.create();
         m_bundle.bind();
-        bindVertexBuffers();
+        bindVertexBundle(false);
         m_program.enableAttributeArray("inPosition");
         m_program.enableAttributeArray("inColor");
         m_bundle.release();
-        releaseVertexBuffers();
+        releaseVertexBundle(false);
         m_nindices = index;
     }
 
@@ -116,13 +116,9 @@ public:
             QMatrix4x4 world, view, projection;
             loader->getCameraMatrices(world, view, projection);
             m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
-            if (!m_bundle.bind()) {
-                bindVertexBuffers();
-            }
+            bindVertexBundle(true);
             glDrawElements(GL_LINES, m_nindices, GL_UNSIGNED_BYTE, 0);
-            if (!m_bundle.release()) {
-                releaseVertexBuffers();
-            }
+            releaseVertexBundle(true);
             m_program.release();
         }
     }
@@ -156,18 +152,22 @@ private:
         indices.add(index++);
         indices.add(index++);
     }
-    void bindVertexBuffers() {
-        m_vbo.bind();
-        m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
-        static const Vertex v;
-        const size_t offset = reinterpret_cast<const uint8_t *>(&v.color)
-                - reinterpret_cast<const uint8_t *>(&v.position);
-        m_program.setAttributeBuffer("inColor", GL_FLOAT, offset, 3, sizeof(Vertex));
-        m_ibo.bind();
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.bind()) {
+            m_vbo.bind();
+            m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
+            static const Vertex v;
+            const size_t offset = reinterpret_cast<const uint8_t *>(&v.color)
+                    - reinterpret_cast<const uint8_t *>(&v.position);
+            m_program.setAttributeBuffer("inColor", GL_FLOAT, offset, 3, sizeof(Vertex));
+            m_ibo.bind();
+        }
     }
-    void releaseVertexBuffers() {
-        m_vbo.release();
-        m_ibo.release();
+    void releaseVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.release()) {
+            m_vbo.release();
+            m_ibo.release();
+        }
     }
 
     QGLShaderProgram m_program;
