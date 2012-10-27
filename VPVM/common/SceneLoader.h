@@ -52,11 +52,6 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/Project.h>
 
-namespace internal {
-class Encoding;
-class World;
-}
-
 namespace vpvl2 {
 class IModel;
 class IMotion;
