@@ -237,7 +237,8 @@ HEADERS  += \
     widgets/ModelSettingWidget.h \
     dialogs/ShadowMapSettingDialog.h \
     common/BackgroundImage.h \
-    dialogs/BackgroundImageSettingDialog.h
+    dialogs/BackgroundImageSettingDialog.h \
+    common/VertexBundle.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/VPVM.qrc

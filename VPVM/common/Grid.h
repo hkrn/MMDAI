@@ -44,6 +44,7 @@
 #include <vpvl2/Scene.h>
 
 #include "SceneLoader.h"
+#include "VertexBundle.h"
 
 namespace vpvm {
 
@@ -85,6 +86,9 @@ public:
         addLine(kZeroV3, Vector3(0.0f, height, 0.0f), m_axisYColor, vertices, indices, index);
         // Z coordinate (blue)
         addLine(kZeroV3, Vector3(0.0f, 0.0f, depth), m_axisZColor, vertices, indices, index);
+        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
+        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
+        m_program.link();
         m_vbo.setUsagePattern(QGLBuffer::StaticDraw);
         m_vbo.create();
         m_vbo.bind();
@@ -95,30 +99,30 @@ public:
         m_ibo.bind();
         m_ibo.allocate(&indices[0], sizeof(uint8_t) * indices.count());
         m_ibo.release();
-        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
-        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
-        m_program.link();
+        m_bundle.initialize(QGLContext::currentContext());
+        m_bundle.create();
+        m_bundle.bind();
+        bindVertexBuffers();
         m_program.enableAttributeArray("inPosition");
         m_program.enableAttributeArray("inColor");
+        m_bundle.release();
+        releaseVertexBuffers();
         m_nindices = index;
     }
 
     void draw(const SceneLoader *loader, bool visible) {
         if (visible && m_program.isLinked()) {
             m_program.bind();
-            m_vbo.bind();
-            m_ibo.bind();
             QMatrix4x4 world, view, projection;
             loader->getCameraMatrices(world, view, projection);
             m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
-            m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
-            static const Vertex v;
-            const size_t offset = reinterpret_cast<const uint8_t *>(&v.color)
-                    - reinterpret_cast<const uint8_t *>(&v.position);
-            m_program.setAttributeBuffer("inColor", GL_FLOAT, offset, 3, sizeof(Vertex));
+            if (!m_bundle.bind()) {
+                bindVertexBuffers();
+            }
             glDrawElements(GL_LINES, m_nindices, GL_UNSIGNED_BYTE, 0);
-            m_vbo.release();
-            m_ibo.release();
+            if (!m_bundle.release()) {
+                releaseVertexBuffers();
+            }
             m_program.release();
         }
     }
@@ -152,8 +156,22 @@ private:
         indices.add(index++);
         indices.add(index++);
     }
+    void bindVertexBuffers() {
+        m_vbo.bind();
+        m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
+        static const Vertex v;
+        const size_t offset = reinterpret_cast<const uint8_t *>(&v.color)
+                - reinterpret_cast<const uint8_t *>(&v.position);
+        m_program.setAttributeBuffer("inColor", GL_FLOAT, offset, 3, sizeof(Vertex));
+        m_ibo.bind();
+    }
+    void releaseVertexBuffers() {
+        m_vbo.release();
+        m_ibo.release();
+    }
 
     QGLShaderProgram m_program;
+    VertexBundle m_bundle;
     Vector4 m_size;
     Vector3 m_lineColor;
     Vector3 m_axisXColor;

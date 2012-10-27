@@ -41,6 +41,8 @@
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
 
+#include "VertexBundle.h"
+
 namespace vpvm {
 
 class TextureDrawHelper : protected QGLFunctions
@@ -58,6 +60,7 @@ public:
 
     void load() {
         initializeGLFunctions();
+        m_bundle.initialize(QGLContext::currentContext());
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/texture.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/texture.fsh");
         m_dvbo.setUsagePattern(QGLBuffer::DynamicDraw);
@@ -75,8 +78,13 @@ public:
         m_svbo.allocate(&texcoord[0], sizeof(texcoord));
         m_svbo.release();
         m_program.link();
+        m_bundle.create();
+        m_bundle.bind();
+        bindVertexBuffers();
         m_program.enableAttributeArray("inPosition");
         m_program.enableAttributeArray("inTexCoord");
+        m_bundle.release();
+        releaseVertexBuffers();
     }
     void resize(const QSize &size) {
         m_size = size;
@@ -94,21 +102,19 @@ public:
         QMatrix4x4 modelview, projection;
         projection.ortho(0.0, m_size.width(), 0.0, m_size.height(), -1.0, 1.0);
         modelview.translate(pos);
+        updateVertexBuffer(rect);
         m_program.bind();
         m_program.setUniformValue("modelViewProjectionMatrix", projection * modelview);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
         m_program.setUniformValue("mainTexture", 0);
-        m_dvbo.bind();
-        QVector2D positions[4];
-        setVertices2D(rect, positions);
-        m_dvbo.write(0, &positions[0], sizeof(positions));
-        m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 2);
-        m_svbo.bind();
-        m_program.setAttributeBuffer("inTexCoord", GL_FLOAT, 0, 2);
+        if (!m_bundle.bind()) {
+            bindVertexBuffers();
+        }
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        m_dvbo.release();
-        m_svbo.release();
+        if (!m_bundle.release()) {
+            releaseVertexBuffers();
+        }
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
@@ -130,8 +136,26 @@ private:
         vertices2D[3].setX(rect.left());
         vertices2D[3].setY(rect.bottom());
     }
+    void updateVertexBuffer(const QRectF &rect) {
+        QVector2D positions[4];
+        setVertices2D(rect, positions);
+        m_dvbo.bind();
+        m_dvbo.write(0, &positions[0], sizeof(positions));
+        m_dvbo.release();
+    }
+    void bindVertexBuffers() {
+        m_dvbo.bind();
+        m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 2);
+        m_svbo.bind();
+        m_program.setAttributeBuffer("inTexCoord", GL_FLOAT, 0, 2);
+    }
+    void releaseVertexBuffers() {
+        m_dvbo.release();
+        m_svbo.release();
+    }
 
     QGLShaderProgram m_program;
+    VertexBundle m_bundle;
     QGLBuffer m_dvbo;
     QGLBuffer m_svbo;
     QSize m_size;
