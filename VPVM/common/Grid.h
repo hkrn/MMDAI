@@ -155,12 +155,12 @@ private:
     void bindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.bind()) {
             m_vbo.bind();
+            m_ibo.bind();
             m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
             static const Vertex v;
             const size_t offset = reinterpret_cast<const uint8_t *>(&v.color)
                     - reinterpret_cast<const uint8_t *>(&v.position);
             m_program.setAttributeBuffer("inColor", GL_FLOAT, offset, 3, sizeof(Vertex));
-            m_ibo.bind();
         }
     }
     void releaseVertexBundle(bool bundle) {
