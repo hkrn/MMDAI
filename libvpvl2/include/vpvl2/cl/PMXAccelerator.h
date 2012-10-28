@@ -84,6 +84,8 @@ private:
     cl_mem m_boneWeightsBuffer;
     cl_mem m_boneIndicesBuffer;
     cl_mem m_boneMatricesBuffer;
+    cl_mem m_aabbMinBuffer;
+    cl_mem m_aabbMaxBuffer;
     cl_char *m_buildLogPtr;
     size_t m_localWGSizeForPerformSkinning;
     float *m_boneTransform;

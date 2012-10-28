@@ -23,9 +23,9 @@ matrixMultVector3(const float16 *m, const float4 *v)
 static void
 transformVertexBdef1(const float16 *transform,
                      const float4 *inPosition,
-					 const float4 *inNormal,
-					 __global float4 *outPosition,
-					 __global float4 *outNormal)
+                     const float4 *inNormal,
+                     __global float4 *outPosition,
+                     __global float4 *outNormal)
 {
     *outPosition = matrixMultVector4(transform, inPosition);
     *outNormal   = matrixMultVector3(transform, inNormal);
@@ -33,12 +33,12 @@ transformVertexBdef1(const float16 *transform,
 
 static void
 transformVertexBdef2(const float16 *transformA,
-					 const float16 *transformB,
+                     const float16 *transformB,
                      const float4 *inPosition,
-					 const float4 *inNormal,
-					 const float weight,
-					 __global float4 *outPosition,
-					 __global float4 *outNormal)
+                     const float4 *inNormal,
+                     const float weight,
+                     __global float4 *outPosition,
+                     __global float4 *outNormal)
 {
     const float4 v1 = matrixMultVector4(transformA, inPosition);
     const float4 v2 = matrixMultVector4(transformB, inPosition);
@@ -62,6 +62,8 @@ performSkinning2(const __global float *localMatrices,
                  const int offsetNormal,
                  const int offsetMorphDelta,
                  const int offsetEdgeVertex,
+                 __global float *aabbMin,
+                 __global float *aabbMax,
                  __global float4 *vertices)
 {
     int id = get_global_id(0);
@@ -117,6 +119,9 @@ performSkinning2(const __global float *localMatrices,
         const float vertexId = position4.w;
         vertices[strideOffset + offsetPosition].w = vertexId;
         vertices[strideOffset + offsetEdgeVertex] = *positionPtr + *normalPtr * edgeSize;
+        barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE);
+        vstore4(min(vload4(0, aabbMin), *positionPtr), 0, aabbMin);
+        vstore4(max(vload4(0, aabbMax), *positionPtr), 0, aabbMax);
     }
 }
 

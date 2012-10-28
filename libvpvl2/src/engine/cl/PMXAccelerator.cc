@@ -58,6 +58,8 @@ PMXAccelerator::PMXAccelerator(Context *contextRef, IModel *modelRef)
       m_boneWeightsBuffer(0),
       m_boneIndicesBuffer(0),
       m_boneMatricesBuffer(0),
+      m_aabbMinBuffer(0),
+      m_aabbMaxBuffer(0),
       m_buildLogPtr(0),
       m_localWGSizeForPerformSkinning(0),
       m_boneTransform(0),
@@ -80,6 +82,10 @@ PMXAccelerator::~PMXAccelerator()
     m_boneIndicesBuffer = 0;
     clReleaseMemObject(m_boneWeightsBuffer);
     m_boneWeightsBuffer = 0;
+    clReleaseMemObject(m_aabbMinBuffer);
+    m_aabbMinBuffer = 0;
+    clReleaseMemObject(m_aabbMaxBuffer);
+    m_aabbMaxBuffer = 0;
     m_localWGSizeForPerformSkinning = 0;
     delete[] m_boneTransform;
     m_boneTransform = 0;
@@ -208,6 +214,18 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
         log0(context, IRenderDelegate::kLogWarning, "Failed creating boneMatricesBuffer: %d", err);
         return;
     }
+    clReleaseMemObject(m_aabbMinBuffer);
+    m_aabbMinBuffer = clCreateBuffer(computeContext, CL_MEM_READ_WRITE, sizeof(Vector3), 0, &err);
+    if (err != CL_SUCCESS) {
+        log0(context, IRenderDelegate::kLogWarning, "Failed creating aabbMinBuffer: %d", err);
+        return;
+    }
+    clReleaseMemObject(m_aabbMaxBuffer);
+    m_aabbMaxBuffer = clCreateBuffer(computeContext, CL_MEM_READ_WRITE, sizeof(Vector3), 0, &err);
+    if (err != CL_SUCCESS) {
+        log0(context, IRenderDelegate::kLogWarning, "Failed creating aabbMaxBuffer: %d", err);
+        return;
+    }
     cl_device_id device = m_contextRef->hostDevice();
     err = clGetKernelWorkGroupInfo(m_performSkinningKernel,
                                    device,
@@ -241,8 +259,8 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
 void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
                             const Scene *sceneRef,
                             const Buffer &buffer,
-                            Vector3 &/*aabbMin*/,
-                            Vector3 &/*aabbMax*/)
+                            Vector3 &aabbMin,
+                            Vector3 &aabbMax)
 {
     if (!m_isBufferAllocated)
         return;
@@ -262,6 +280,16 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
     cl_int err = clEnqueueWriteBuffer(queue, m_boneMatricesBuffer, CL_TRUE, 0, nsize, m_boneTransform, 0, 0, 0);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write boneMatricesBuffer: %d", err);
+        return;
+    }
+    err = clEnqueueWriteBuffer(queue, m_aabbMinBuffer, CL_TRUE, 0, sizeof(aabbMin), &aabbMin, 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write aabbMinBuffer: %d", err);
+        return;
+    }
+    err = clEnqueueWriteBuffer(queue, m_aabbMaxBuffer, CL_TRUE, 0, sizeof(aabbMax), &aabbMax, 0, 0, 0);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed enqueue a command to write aabbMaxBuffer: %d", err);
         return;
     }
     int argumentIndex = 0;
@@ -333,6 +361,16 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (offsetEdgeVertex): %d", argumentIndex, err);
         return;
     }
+    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_aabbMinBuffer), &m_aabbMinBuffer);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (aabbMin): %d", argumentIndex, err);
+        return;
+    }
+    err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_aabbMaxBuffer), &m_aabbMaxBuffer);
+    if (err != CL_SUCCESS) {
+        log0(0, IRenderDelegate::kLogWarning, "Failed setting %dth argument of kernel (aabbMax): %d", argumentIndex, err);
+        return;
+    }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(vertexBuffer), &vertexBuffer);
     if (err != CL_SUCCESS) {
         log0(0, IRenderDelegate::kLogWarning, "Failed setting %th argument of kernel (vertices): %d", argumentIndex, err);
@@ -346,18 +384,9 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
         return;
     }
     clEnqueueReleaseGLObjects(queue, 1, &vertexBuffer, 0, 0, 0);
+    clEnqueueReadBuffer(queue, m_aabbMinBuffer, CL_TRUE, 0, sizeof(aabbMin), &aabbMin, 0, 0, 0);
+    clEnqueueReadBuffer(queue, m_aabbMaxBuffer, CL_TRUE, 0, sizeof(aabbMax), &aabbMax, 0, 0, 0);
     clFinish(queue);
-    /* hack */
-    /*
-    size_t offset = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
-    size_t size = dynamicBufferRef->strideSize();
-    for (int i = 0; i < nvertices; i++) {
-        const uint8_t *ptr = static_cast<const uint8_t *>(dynamicBufferRef->bytes()) + offset + size * i;
-        const Vector3 &v = *reinterpret_cast<const Vector3 *>(ptr);
-        aabbMin.setMin(v);
-        aabbMax.setMax(v);
-    }
-    */
 }
 
 void PMXAccelerator::release(Buffers &buffers) const
