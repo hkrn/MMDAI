@@ -40,6 +40,7 @@
 #include "vpvl2/qt/CString.h"
 #include "SceneLoader.h"
 #include "SceneWidget.h"
+#include "VertexBundle.h"
 #include "util.h"
 
 #include <QtCore/QObject>
@@ -63,8 +64,10 @@ public:
 
     DebugDrawer()
         : m_vbo(QGLBuffer::VertexBuffer),
+          m_ibo(QGLBuffer::IndexBuffer),
           m_flags(0),
-          m_visible(true)
+          m_visible(true),
+          m_initialized(false)
     {
     }
     ~DebugDrawer() {
@@ -86,9 +89,7 @@ public:
         vertices[0].set(from, color);
         vertices[1].set(to, color);
         m_vbo.write(0, &vertices[0], sizeof(vertices));
-        m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(vertices[0]));
-        m_program.setAttributeBuffer("inColor", GL_FLOAT, 16, 3, sizeof(vertices[0]));
-        glDrawArrays(GL_LINES, 0, 2);
+        glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, 0);
     }
     void drawLine(const btVector3 &from,
                   const btVector3 &to,
@@ -108,16 +109,29 @@ public:
     }
 
     void load() {
-        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
-        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
-        m_program.link();
-        m_vbo.setUsagePattern(QGLBuffer::DynamicDraw);
-        m_vbo.create();
-        m_vbo.bind();
-        m_vbo.allocate(sizeof(Vertex) * 2);
-        m_vbo.release();
-        m_program.enableAttributeArray("inPosition");
-        m_program.enableAttributeArray("inColor");
+        if (!m_initialized) {
+            m_bundle.initialize(QGLContext::currentContext());
+            m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
+            m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
+            m_program.link();
+            m_vbo.setUsagePattern(QGLBuffer::DynamicDraw);
+            m_vbo.create();
+            m_vbo.bind();
+            m_vbo.allocate(sizeof(Vertex) * 2);
+            m_vbo.release();
+            m_ibo.setUsagePattern(QGLBuffer::StaticDraw);
+            m_ibo.create();
+            m_ibo.bind();
+            static const int indices[] = { 0, 1 };
+            m_ibo.allocate(indices, sizeof(indices));
+            m_ibo.release();
+            m_bundle.create();
+            m_bundle.bind();
+            bindVertexBundle(false);
+            m_bundle.release();
+            releaseVertexBundle(false);
+            m_initialized = true;
+        }
     }
     void setVisible(bool value) {
         m_visible = value;
@@ -330,20 +344,38 @@ private:
         glDisable(GL_BLEND);
         m_program.bind();
         m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
-        m_program.setUniformValue("boneMatrix", QMatrix4x4());
-        m_vbo.bind();
+        bindVertexBundle(false); // XXX: VAO doesn't work
     }
     void flushDrawing() {
-        m_vbo.release();
+        releaseVertexBundle(false);  // XXX: VAO doesn't work
         m_program.release();
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
     }
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.bind()) {
+            m_vbo.bind();
+            m_ibo.bind();
+            m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
+            m_program.setAttributeBuffer("inColor", GL_FLOAT, 16, 3, sizeof(Vertex));
+            m_program.enableAttributeArray("inPosition");
+            m_program.enableAttributeArray("inColor");
+        }
+    }
+    void releaseVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.release()) {
+            m_vbo.release();
+            m_ibo.release();
+        }
+    }
 
     QGLShaderProgram m_program;
+    VertexBundle m_bundle;
     QGLBuffer m_vbo;
+    QGLBuffer m_ibo;
     int m_flags;
     bool m_visible;
+    bool m_initialized;
 
     Q_DISABLE_COPY(DebugDrawer)
 };
