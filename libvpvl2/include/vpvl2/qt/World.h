@@ -67,6 +67,7 @@ public:
     void addRigidBody(btRigidBody *value);
     void removeRigidBody(btRigidBody *value);
     void stepSimulation(const Scalar &delta);
+    btDiscreteDynamicsWorld *dynamicWorldRef() const;
 
 private:
     btDefaultCollisionConfiguration m_config;

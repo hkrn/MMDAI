@@ -125,5 +125,10 @@ void World::stepSimulation(const Scalar &delta)
     m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
 }
 
+btDiscreteDynamicsWorld *World::dynamicWorldRef() const
+{
+    return m_world;
+}
+
 } /* namespace qt */
 } /* namespace vpvl2 */
