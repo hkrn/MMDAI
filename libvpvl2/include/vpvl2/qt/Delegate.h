@@ -131,6 +131,7 @@ public:
     void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
+    void renderOffscreen(const QSize &size);
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     IEffect *createEffectAsync(const IString *path);
     IEffect *createEffectAsync(IModel *model, const IString *dir);

@@ -1072,6 +1072,79 @@ void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 #endif
 }
 
+void Delegate::renderOffscreen(const QSize &size)
+{
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
+    const int nengines = engines.count();
+    QSize s;
+    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    Q_FOREACH (const Delegate::OffscreenRenderTarget &offscreen, offscreenRenderTargets()) {
+        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
+        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+        bool enableAA = false;
+        if (cgIsAnnotation(antiAlias)) {
+            int nvalues;
+            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
+            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+        }
+        size_t width = renderTarget.width, height = renderTarget.height;
+        GLuint textureID = offscreen.textureID;
+        bindOffscreenRenderTarget(textureID, width, height, enableAA);
+        setRenderColorTargets(buffers, nbuffers);
+        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
+        if (cgIsAnnotation(clearColor)) {
+            int nvalues;
+            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+            if (nvalues == 4) {
+                glClearColor(color[0], color[1], color[2], color[3]);
+            }
+        }
+        else {
+            glClearColor(1, 1, 1, 1);
+        }
+        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
+        if (cgIsAnnotation(clearDepth)) {
+            int nvalues;
+            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
+            if (nvalues == 1) {
+                glClearDepth(depth[0]);
+            }
+        }
+        else {
+            glClearDepth(0);
+        }
+        s.setWidth(width);
+        s.setHeight(height);
+        updateMatrices(s);
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
+            if (engine->hasPreProcess() || engine->hasPostProcess())
+                continue;
+            const IModel *model = engine->model();
+            const IString *name = model->name();
+            const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
+            Q_FOREACH (const Delegate::EffectAttachment &attachment, offscreen.attachments) {
+                IEffect *effect = attachment.second;
+                if (attachment.first.exactMatch(n)) {
+                    engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
+                    break;
+                }
+            }
+            engine->update();
+            engine->renderModel();
+            engine->renderEdge();
+        }
+        releaseOffscreenRenderTarget(textureID, width, height, enableAA);
+    }
+    updateMatrices(size);
+#endif
+}
+
 IEffect *Delegate::createEffectAsync(const IString *path)
 {
     IEffect *effect = 0;

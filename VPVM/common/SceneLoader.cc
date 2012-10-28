@@ -984,82 +984,6 @@ void SceneLoader::renderWindow()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void SceneLoader::renderOffscreen(const QSize &size)
-{
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    QSize s;
-    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
-    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    const int nobjects = m_renderOrderList.count();
-    foreach (const Delegate::OffscreenRenderTarget &offscreen, m_renderDelegate->offscreenRenderTargets()) {
-        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
-        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
-        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
-        bool enableAA = false;
-        if (cgIsAnnotation(antiAlias)) {
-            int nvalues;
-            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
-            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
-        }
-        size_t width = renderTarget.width, height = renderTarget.height;
-        GLuint textureID = offscreen.textureID;
-        m_renderDelegate->bindOffscreenRenderTarget(textureID, width, height, enableAA);
-        m_renderDelegate->setRenderColorTargets(buffers, nbuffers);
-        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
-        if (cgIsAnnotation(clearColor)) {
-            int nvalues;
-            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
-            if (nvalues == 4) {
-                glClearColor(color[0], color[1], color[2], color[3]);
-            }
-        }
-        else {
-            glClearColor(1, 1, 1, 1);
-        }
-        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
-        if (cgIsAnnotation(clearDepth)) {
-            int nvalues;
-            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
-            if (nvalues == 1) {
-                glClearDepth(depth[0]);
-            }
-        }
-        else {
-            glClearDepth(0);
-        }
-        s.setWidth(width);
-        s.setHeight(height);
-        m_renderDelegate->updateMatrices(s);
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        for (int i = 0; i < nobjects; i++) {
-            const QUuid &uuid = m_renderOrderList[i];
-            const Project::UUID &uuidString = uuid.toString().toStdString();
-            if (IModel *model = m_project->findModel(uuidString)) {
-                IRenderEngine *engine = m_project->findRenderEngine(model);
-                if (engine->hasPreProcess() || engine->hasPostProcess())
-                    continue;
-                const IString *name = model->name();
-                const QString &n = name ? static_cast<const CString *>(name)->value()
-                                        : m_renderDelegate->findModelPath(model);
-                foreach (const Delegate::EffectAttachment &attachment, offscreen.attachments) {
-                    IEffect *effect = attachment.second;
-                    if (attachment.first.exactMatch(n)) {
-                        engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
-                        break;
-                    }
-                }
-                engine->update();
-                engine->renderModel();
-                engine->renderEdge();
-            }
-        }
-        m_renderDelegate->releaseOffscreenRenderTarget(textureID, width, height, enableAA);
-    }
-    m_renderDelegate->updateMatrices(size);
-#endif
-}
-
 void SceneLoader::setLightViewProjectionMatrix()
 {
     Vector3 center;
@@ -1105,6 +1029,11 @@ void SceneLoader::bindDepthTexture()
     glViewport(0, 0, m_depthBuffer->width(), m_depthBuffer->height());
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void SceneLoader::renderOffscreen(const QSize &size)
+{
+    m_renderDelegate->renderOffscreen(size);
 }
 
 void SceneLoader::renderZPlot()
