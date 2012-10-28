@@ -1120,7 +1120,7 @@ void Delegate::renderOffscreen(const QSize &size)
         s.setHeight(height);
         updateMatrices(s);
         glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
             if (engine->hasPreProcess() || engine->hasPostProcess())
