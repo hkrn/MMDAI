@@ -81,7 +81,7 @@ public:
           glGenVertexArraysProcPtrRef(0)
     {
     }
-    ~BaseRenderEngine() {
+    virtual ~BaseRenderEngine() {
         m_sceneRef = 0;
         m_delegateRef = 0;
     }
