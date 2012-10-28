@@ -90,9 +90,7 @@ private slots:
     void updatePositionX(double value);
     void updatePositionY(double value);
     void updatePositionZ(double value);
-    void updateRotationX(double value);
-    void updateRotationY(double value);
-    void updateRotationZ(double value);
+    void updateRotation();
     void updateScaleFactor(double value);
     void updateOpacity(double value);
     void setAssetProperties(IModel *asset, SceneLoader *loader);

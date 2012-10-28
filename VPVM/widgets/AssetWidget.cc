@@ -114,15 +114,15 @@ AssetWidget::AssetWidget(QWidget *parent)
     formLayout.reset(new QFormLayout());
     m_rx->setRange(-180.0, 180.0);
     m_rx->setSingleStep(0.1);
-    connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
+    connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
     formLayout->addRow("X", m_rx.data());
     m_ry->setSingleStep(0.1);
     m_ry->setRange(-180.0, 180.0);
-    connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
+    connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
     formLayout->addRow("Y", m_ry.data());
     m_rz->setSingleStep(0.1);
     m_rz->setRange(-180.0, 180.0);
-    connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
+    connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
     formLayout->addRow("Z", m_rz.data());
     m_rotationGroup->setLayout(formLayout.take());
     subLayout.reset(new QHBoxLayout());
@@ -323,30 +323,13 @@ void AssetWidget::updatePositionZ(double value)
     }
 }
 
-void AssetWidget::updateRotationX(double value)
+void AssetWidget::updateRotation()
 {
     if (m_currentAssetRef) {
-        Quaternion rotation = m_currentAssetRef->rotation();
-        rotation.setRotation(Vector3(1, 0, 0), radian(value));
-        m_currentAssetRef->setRotation(rotation);
-    }
-}
-
-void AssetWidget::updateRotationY(double value)
-{
-    if (m_currentAssetRef) {
-        Quaternion rotation = m_currentAssetRef->rotation();
-        rotation.setRotation(Vector3(0, 1, 0), radian(value));
-        m_currentAssetRef->setRotation(rotation);
-    }
-}
-
-void AssetWidget::updateRotationZ(double value)
-{
-    if (m_currentAssetRef) {
-        Quaternion rotation = m_currentAssetRef->rotation();
-        rotation.setRotation(Vector3(0, 0, 1), radian(value));
-        m_currentAssetRef->setRotation(rotation);
+        const Quaternion x(Vector3(1, 0, 0), radian(m_rx->value()));
+        const Quaternion y(Vector3(0, 1, 0), radian(m_ry->value()));
+        const Quaternion z(Vector3(0, 0, 1), radian(m_rz->value()));
+        m_currentAssetRef->setRotation(x * y * z);
     }
 }
 
