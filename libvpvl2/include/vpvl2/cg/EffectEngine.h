@@ -562,6 +562,8 @@ protected:
                                 const GLvoid *ptr) const = 0;
 
 private:
+    class RectRenderEngine;
+
     typedef void (*PFNGLDRAWBUFFERS)(GLsizei n, const GLenum *bufs);
 
     static bool testTechnique(const CGtechnique technique,
@@ -598,6 +600,7 @@ private:
 
     Effect *m_effectRef;
     IRenderDelegate *m_delegateRef;
+    RectRenderEngine *m_rectRenderEngine;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     IEffect::ScriptOrderType m_scriptOrder;
@@ -609,8 +612,6 @@ private:
     btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
-    GLuint m_verticesBuffer;
-    GLuint m_indicesBuffer;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(EffectEngine)
 };

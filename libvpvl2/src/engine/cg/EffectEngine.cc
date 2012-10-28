@@ -47,6 +47,7 @@
 #include "vpvl2/IRenderDelegate.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/IString.h"
+#include "vpvl2/internal/BaseRenderEngine.h"
 
 #include <string>
 #include <sstream>
@@ -1116,8 +1117,65 @@ void TextureValueSemantic::update()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-/* Effect */
+/* Effect::RectRenderEngine */
+class EffectEngine::RectRenderEngine : public internal::BaseRenderEngine
+        #ifdef VPVL2_LINK_QT
+        , protected QGLFunctions
+        #endif
+{
+public:
+    RectRenderEngine(const Scene *sceneRef, IRenderDelegate *delegate)
+        : BaseRenderEngine(sceneRef, delegate)
+    {
+#ifdef VPVL2_LINK_QT
+        initializeGLFunctions();
+#endif
+        initializeExtensions();
+    }
+    ~RectRenderEngine() {
+        glDeleteBuffers(1, &m_verticesBuffer);
+        glDeleteBuffers(1, &m_indicesBuffer);
+    }
 
+    void initializeVertexBundle() {
+        glGenBuffers(1, &m_verticesBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(kVertices), kVertices, GL_STATIC_DRAW);
+        glGenBuffers(1, &m_indicesBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        allocateVertexArrayObjects(&m_vertexBundle, 1);
+        bindVertexArrayObject(m_vertexBundle);
+        bindVertexBundle(false);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        unbindVertexArrayObject();
+        unbindVertexBundle(false);
+    }
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !bindVertexArrayObject(m_vertexBundle)) {
+            glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+            glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
+            glTexCoordPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
+        }
+    }
+    void unbindVertexBundle(bool bundle) {
+        if (!bundle || !unbindVertexArrayObject()) {
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        }
+    }
+
+private:
+    GLuint m_vertexBundle;
+    GLuint m_verticesBuffer;
+    GLuint m_indicesBuffer;
+};
+
+/* EffectEngine */
 EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate)
     : world(delegate, IRenderDelegate::kWorldMatrix),
       view(delegate, IRenderDelegate::kViewMatrix),
@@ -1135,10 +1193,12 @@ EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effec
       index(0),
       m_effectRef(0),
       m_delegateRef(delegate),
+      m_rectRenderEngine(0),
       m_scriptOutput(kColor),
       m_scriptClass(kObject),
       m_scriptOrder(IEffect::kStandard)
 {
+    m_rectRenderEngine = new RectRenderEngine(scene, delegate);
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif
@@ -1147,8 +1207,8 @@ EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effec
 
 EffectEngine::~EffectEngine()
 {
-    glDeleteBuffers(1, &m_verticesBuffer);
-    glDeleteBuffers(1, &m_indicesBuffer);
+    delete m_rectRenderEngine;
+    m_rectRenderEngine = 0;
     m_effectRef = 0;
     m_delegateRef = 0;
 }
@@ -1302,7 +1362,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
             technique = cgGetNextTechnique(technique);
         }
     }
-    initializeBuffer();
+    m_rectRenderEngine->initializeVertexBundle();
     return true;
 }
 
@@ -1338,20 +1398,12 @@ void EffectEngine::executeProcess(const IModel *model, IEffect::ScriptOrderType 
 {
     if (!model || !m_effectRef || m_scriptOrder != order)
         return;
-    glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
-    glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
-    glTexCoordPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    m_rectRenderEngine->bindVertexBundle(true);
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model->opacity())); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
     executeTechniquePasses(technique, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    m_rectRenderEngine->unbindVertexBundle(true);
 }
 
 void EffectEngine::executeTechniquePasses(const CGtechnique technique,
@@ -1625,19 +1677,19 @@ void EffectEngine::setRenderDepthStencilTargetFromState(const ScriptState &state
     GLuint stencilBuffer = state.stencilBuffer;
     if (state.isRenderTargetBound) {
         m_delegateRef->bindRenderDepthStencilTarget(&texture,
-                                                 &depthBuffer,
-                                                 &stencilBuffer,
-                                                 state.width,
-                                                 state.height,
-                                                 kEnableRTAA);
-    }
-    else {
-        m_delegateRef->releaseRenderDepthStencilTarget(&texture,
                                                     &depthBuffer,
                                                     &stencilBuffer,
                                                     state.width,
                                                     state.height,
                                                     kEnableRTAA);
+    }
+    else {
+        m_delegateRef->releaseRenderDepthStencilTarget(&texture,
+                                                       &depthBuffer,
+                                                       &stencilBuffer,
+                                                       state.width,
+                                                       state.height,
+                                                       kEnableRTAA);
     }
 }
 
@@ -2071,18 +2123,6 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
         }
     }
     return true;
-}
-
-void EffectEngine::initializeBuffer()
-{
-    glGenBuffers(1, &m_verticesBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(kVertices), kVertices, GL_STATIC_DRAW);
-    glGenBuffers(1, &m_indicesBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 /* EffectEngine::ScriptState */
