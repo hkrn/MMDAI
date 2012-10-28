@@ -117,15 +117,6 @@ static inline bool UIIsPowerOfTwo(int value) {
     return (value & (value - 1)) == 0;
 }
 
-#ifdef GL_MULTISAMPLE
-static inline void UIEnableMultisample()
-{
-    glEnable(GL_MULTISAMPLE);
-}
-#else
-#define UIEnableMultisample() (void) 0
-#endif
-
 /* レンダリング順序を決定するためのクラス。基本的にプロジェクトの order の設定に依存する */
 class UIRenderOrderPredication
 {
@@ -927,7 +918,6 @@ void SceneLoader::releaseProject()
 
 void SceneLoader::renderWindow()
 {
-    //UIEnableMultisample();
     const int nobjects = m_renderOrderList.count();
     /* ポストプロセスの前処理 */
     for (int i = 0; i < nobjects; i++) {
@@ -936,6 +926,13 @@ void SceneLoader::renderWindow()
         if (IModel *model = m_project->findModel(uuidString)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
             IEffect *effect = engine->effect(IEffect::kPostProcess);
+            /*
+             * レンダリングエンジンの状態が自動更新されないことが原因でポストエフェクトで正しく処理されない問題があるため、
+             * アクセサリの場合のみポストエフェクト処理前に事前にレンダリングエンジンの状態の更新を行う
+             * (具体例は VIEWPORTPIXELSIZE が (0,0) になってしまい、それに依存するポストエフェクトが正しく描画されない問題)
+             */
+            if (model->type() == IModel::kAsset)
+                engine->update();
             engine->setEffect(IEffect::kPostProcess, effect, 0);
             engine->preparePostProcess();
         }
