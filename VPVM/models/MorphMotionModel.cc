@@ -405,7 +405,7 @@ void MorphMotionModel::saveTransform()
 {
     /* モデルの状態を保存しておく */
     if (m_modelRef) {
-        m_state.setModel(m_modelRef);
+        m_state.setModelRef(m_modelRef);
         m_state.save();
     }
 }
@@ -515,6 +515,7 @@ void MorphMotionModel::setPMDModel(IModel *model)
             addPMDModel(model, rootPtr(model), Keys());
         }
         m_modelRef = model;
+        m_state.setModelRef(model);
         emit modelDidChange(model);
         qDebug("Set a model in MorphMotionModel: %s", qPrintable(toQStringFromModel(model)));
     }
@@ -657,6 +658,12 @@ void MorphMotionModel::setWeight(const IMorph::WeightPrecision &value, IMorph *m
         morph->setWeight(value);
         m_sceneRef->updateModel(m_modelRef);
     }
+}
+
+void MorphMotionModel::setSceneRef(const Scene *value)
+{
+    PMDMotionModel::setSceneRef(value);
+    m_state.setSceneRef(value);
 }
 
 } /* namespace vpvm */

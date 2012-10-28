@@ -45,9 +45,9 @@ namespace vpvm
 
 using namespace vpvl2;
 
-PMDMotionModel::State::State(const Scene *sceneRef, IModel *modelRef)
-    : m_sceneRef(sceneRef),
-      m_modelRef(modelRef)
+PMDMotionModel::State::State(const Scene *scene, IModel *model)
+    : m_sceneRef(scene),
+      m_modelRef(model)
 {
 }
 

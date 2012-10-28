@@ -136,7 +136,7 @@ public:
     void drawWorld(const SceneLoader *loader) {
         if (m_program.isLinked()) {
             World *world = loader->worldRef();
-            btDiscreteDynamicsWorld *dynamicWorldRef = world->discreteDynamicWorldRef();
+            btDiscreteDynamicsWorld *dynamicWorldRef = world->dynamicWorldRef();
             btIDebugDraw *drawer = dynamicWorldRef->getDebugDrawer();
             setDebugMode(DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawConstraints);
             dynamicWorldRef->setDebugDrawer(this);

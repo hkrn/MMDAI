@@ -88,6 +88,7 @@ public:
     void setKeyframes(const KeyFramePairList &keyframes);
     void resetBone(ResetType type);
     void resetAllBones();
+    void setSceneRef(const Scene *value);
     void setPosition(int coordinate, float value);
     void setRotation(int coordinate, float value);
 

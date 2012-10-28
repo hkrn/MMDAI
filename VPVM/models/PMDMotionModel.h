@@ -67,7 +67,7 @@ class PMDMotionModel : public MotionBaseModel
 public:
     class State {
     public:
-        State(const Scene *sceneRef, IModel *modelRef);
+        State(const Scene *scene, IModel *model);
         ~State();
         void restore() const;
         void save();
@@ -77,7 +77,8 @@ public:
         void resetBones();
         void resetMorphs();
         IModel *model() const { return m_modelRef; }
-        void setModel(IModel *value) { m_modelRef = value; }
+        void setModelRef(IModel *value) { m_modelRef = value; }
+        void setSceneRef(const Scene *value) { m_sceneRef = value; }
     private:
         typedef QPair<Vector3, Quaternion> Transform;
         typedef QPair<IBone *, Transform> Bone;
@@ -105,7 +106,7 @@ public:
     void setActiveUndoStack();
     int maxFrameIndex() const;
     bool forceCameraUpdate() const;
-    void setSceneRef(const Scene *value);
+    virtual void setSceneRef(const Scene *value);
 
     IModel *selectedModel() const { return m_modelRef; }
     const Keys keys() const { return m_keys[m_modelRef]; }

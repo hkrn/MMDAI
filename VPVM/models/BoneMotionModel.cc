@@ -678,7 +678,7 @@ void BoneMotionModel::saveTransform()
         /*
          * モデルの状態を保存しておく。メモリリーク防止のため、前の状態は破棄しておく
          */
-        m_state.setModel(m_modelRef);
+        m_state.setModelRef(m_modelRef);
         m_state.save();
         Array<IBone *> bones;
         m_modelRef->getBoneRefs(bones);
@@ -858,6 +858,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
             addPMDModel(model, rootPtr(model), Keys());
         }
         m_modelRef = model;
+        m_state.setModelRef(model);
         emit modelDidChange(model);
         /* ボーン選択(最初のボーンを選択状態にする) */
         Array<IBone *> bones;
@@ -1056,6 +1057,12 @@ void BoneMotionModel::resetAllBones()
 {
     if (m_modelRef)
         addUndoCommand(new ResetAllCommand(m_sceneRef, m_modelRef));
+}
+
+void BoneMotionModel::setSceneRef(const Scene *value)
+{
+    PMDMotionModel::setSceneRef(value);
+    m_state.setSceneRef(value);
 }
 
 void BoneMotionModel::setPosition(int coordinate, float value)

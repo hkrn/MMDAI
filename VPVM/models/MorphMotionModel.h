@@ -73,6 +73,7 @@ public:
     void setKeyframes(const KeyFramePairList &keyframes);
     void setWeight(IMorph::WeightPrecision &value);
     void setWeight(const IMorph::WeightPrecision &value, IMorph *morph);
+    void setSceneRef(const Scene *value);
     IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
     bool isMorphSelected() const { return m_modelRef != 0 && selectedMorph() != 0; }
     Factory *factoryRef() const { return m_factoryRef; }

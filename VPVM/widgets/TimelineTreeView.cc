@@ -47,8 +47,8 @@ namespace vpvm
 
 TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent)
     : QTreeView(parent),
-      m_frozenTreeView(new QTreeView(this)),
-      m_rubberBand(new QRubberBand(QRubberBand::Rectangle))
+      m_rubberBand(new QRubberBand(QRubberBand::Rectangle)),
+      m_frozenTreeView(new QTreeView(this))
 {
     setModel(mbm);
     setSelectionBehavior(QAbstractItemView::SelectItems);
