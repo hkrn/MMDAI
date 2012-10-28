@@ -1039,7 +1039,6 @@ void SceneLoader::renderOffscreen(const QSize &size)
                 IRenderEngine *engine = m_project->findRenderEngine(model);
                 if (engine->hasPreProcess() || engine->hasPostProcess())
                     continue;
-                const IModel *model = engine->model();
                 const IString *name = model->name();
                 const QString &n = name ? static_cast<const CString *>(name)->value()
                                         : m_renderDelegate->findModelPath(model);
