@@ -537,11 +537,9 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
 void Scene::updateModel(IModel *model) const
 {
     if (model) {
-        /*
-        const ICamera *c = camera();
-        const Vector3 &cameraPosition = c->position() + Vector3(0, 0, c->distance());
-        model->performUpdate(cameraPosition, light()->direction());
-        */
+        model->performUpdate();
+        if (IRenderEngine *engine = findRenderEngine(model))
+            engine->update();
     }
 }
 
