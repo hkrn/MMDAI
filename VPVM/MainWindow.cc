@@ -392,7 +392,8 @@ void MainWindow::selectModel()
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
         const QUuid uuid(action->data().toString());
-        m_sceneWidget->setSelectedModel(m_sceneWidget->sceneLoaderRef()->findModel(uuid));
+        IModel *model = m_sceneWidget->sceneLoaderRef()->findModel(uuid);
+        m_sceneWidget->setSelectedModel(model, SceneWidget::kSelect);
     }
 }
 
@@ -486,7 +487,7 @@ void MainWindow::saveProject()
 
 void MainWindow::revertSelectedModel()
 {
-    m_sceneWidget->setSelectedModel(0);
+    m_sceneWidget->revertSelectedModel();
 }
 
 void MainWindow::openRecentFile()
@@ -538,14 +539,14 @@ void MainWindow::addModel(IModel *model, const QUuid &uuid)
     action->setStatusTip(tr("Select a model %1").arg(name));
     connect(action, SIGNAL(triggered()), SLOT(selectModel()));
     m_menuRetainModels->addAction(action);
-    m_sceneWidget->setSelectedModel(model);
+    m_sceneWidget->setSelectedModel(model, SceneWidget::kSelect);
 }
 
 void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
 {
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
     if (model == m_sceneWidget->sceneLoaderRef()->selectedModelRef())
-        m_sceneWidget->setSelectedModel(0);
+        m_sceneWidget->revertSelectedModel();
     /* 削除されるモデルをモデル選択のメニューから削除する */
     QAction *actionToRemove = 0;
     const QString &uuidString = uuid.toString();
@@ -1384,7 +1385,8 @@ void MainWindow::connectSceneLoader()
     connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
     connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), handles, SLOT(updateBone()));
     connect(m_sceneWidget.data(), SIGNAL(modelDidRotate(Quaternion)), handles, SLOT(updateBone()));
-    connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModel*)), m_sceneWidget.data(), SLOT(setSelectedModel(IModel*)));
+    connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModel*,SceneWidget::EditMode)),
+            m_sceneWidget.data(), SLOT(setSelectedModel(IModel*,SceneWidget::EditMode)));
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidgetRef();
     Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
@@ -1833,10 +1835,14 @@ void MainWindow::selectNextModel()
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
         int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModelRef(), actions);
-        if (index == -1 || index == actions.length() - 1)
-            m_sceneWidget->setSelectedModel(loader->findModel(actions.first()->text()));
-        else
-            m_sceneWidget->setSelectedModel(loader->findModel(actions.at(index + 1)->text()));
+        IModel *model = 0;
+        if (index == -1 || index == actions.length() - 1) {
+            model = loader->findModel(actions.first()->text());
+        }
+        else {
+            model = loader->findModel(actions.at(index + 1)->text());
+        }
+        m_sceneWidget->setSelectedModel(model, SceneWidget::kSelect);
     }
 }
 
@@ -1846,10 +1852,14 @@ void MainWindow::selectPreviousModel()
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
         int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModelRef(), actions);
-        if (index == -1 || index == 0)
-            m_sceneWidget->setSelectedModel(loader->findModel(actions.last()->text()));
-        else
-            m_sceneWidget->setSelectedModel(loader->findModel(actions.at(index - 1)->text()));
+        IModel *model = 0;
+        if (index == -1 || index == 0) {
+            model = loader->findModel(actions.last()->text());
+        }
+        else {
+            model = loader->findModel(actions.at(index - 1)->text());
+        }
+        m_sceneWidget->setSelectedModel(model, SceneWidget::kSelect);
     }
 }
 

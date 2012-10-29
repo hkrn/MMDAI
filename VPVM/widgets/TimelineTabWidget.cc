@@ -72,9 +72,13 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
       m_boneSelectButton(new QRadioButton()),
       m_boneRotateButton(new QRadioButton()),
       m_boneMoveButton(new QRadioButton()),
+      m_morphSlider(new QSlider(Qt::Horizontal)),
+      m_morphSpinbox(new QDoubleSpinBox()),
       m_interpolationDialog(new InterpolationDialog(bmm, smm)),
       m_settingsRef(settingsRef),
-      m_lastSelectedModelRef(0)
+      m_lastSelectedModelRef(0),
+      m_selectedMorphRef(0),
+      m_lastEditMode(SceneWidget::kSelect)
 {
     m_boneTimeline->setFrameIndexSpinBoxEnable(false);
     m_boneSelectButton->setChecked(true);
@@ -82,9 +86,18 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
     m_boneRotateButton->setEnabled(false);
     m_boneMoveButton->setEnabled(false);
     connect(m_boneButtonGroup.data(), SIGNAL(buttonClicked(QAbstractButton*)), SLOT(selectButton(QAbstractButton*)));
+    m_morphSlider->setEnabled(false);
+    m_morphSpinbox->setEnabled(false);
+    m_morphSlider->setRange(0, 1000);
+    m_morphSpinbox->setDecimals(3);
+    m_morphSpinbox->setSingleStep(0.01);
+    connect(m_morphSlider.data(), SIGNAL(valueChanged(int)), SLOT(updateMorphValue(int)));
+    connect(m_morphSpinbox.data(), SIGNAL(valueChanged(double)), SLOT(updateMorphValue(double)));
+    m_morphSpinbox->setRange(0, 1);
     m_boneButtonGroup->addButton(m_boneSelectButton.data());
     m_boneButtonGroup->addButton(m_boneRotateButton.data());
     m_boneButtonGroup->addButton(m_boneMoveButton.data());
+    /* ボーンのタイムラインに「選択」、「回転」、「移動」のラジオボタンを追加 */
     QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
     subLayout->addWidget(m_boneSelectButton.data());
     subLayout->addWidget(m_boneRotateButton.data());
@@ -93,6 +106,12 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
     /* hack bone timeline layout */
     reinterpret_cast<QVBoxLayout *>(m_boneTimeline->layout())->addLayout(subLayout.take());
     m_tabWidget->insertTab(kBoneTabIndex, m_boneTimeline.data(), "");
+    subLayout.reset(new QHBoxLayout());
+    subLayout->addWidget(m_morphSlider.data());
+    subLayout->addWidget(m_morphSpinbox.data());
+    subLayout->setAlignment(Qt::AlignCenter);
+    /* hack bone timeline layout */
+    reinterpret_cast<QVBoxLayout *>(m_morphTimeline->layout())->addLayout(subLayout.take());
     m_morphTimeline->setFrameIndexSpinBoxEnable(false);
     m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline.data(), "");
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline.data(), "");
@@ -100,15 +119,21 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
     connect(m_boneTimeline->treeViewRef()->frozenViewSelectionModel(),
             SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             SLOT(selectBonesByItemSelection(QItemSelection)));
+    connect(m_morphTimeline->treeViewRef()->frozenViewSelectionModel(),
+            SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            SLOT(selectMorphsByItemSelection(QItemSelection)));
     /* シグナルチェーン (motionDidSeek) を発行し、モデル側のシグナルを TimelineTabWidget のシグナルとして一本化して取り扱う */
     connect(m_boneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     connect(m_morphTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     connect(m_sceneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     connect(m_boneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(m_sceneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
+    /* モデルが選択された時タイムライン上のボタンなどの有効無効を切り替える */
     connect(bmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleBoneEnable(IModel*)));
     connect(mmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleMorphEnable(IModel*)));
-    connect(bmm, SIGNAL(bonesDidSelect(QList<IBone*>)), SLOT(toggleBoneButtonsByBone(QList<IBone*>)));
+    /* ボーンまたはモーフが選択された時のタイムライン上のボタンなどの有効無効を切り替える */
+    connect(bmm, SIGNAL(bonesDidSelect(QList<IBone*>)), SLOT(toggleBoneButtonsByBones(QList<IBone*>)));
+    connect(mmm, SIGNAL(morphsDidSelect(QList<IMorph*>)), SLOT(toggleMorphByMorph(QList<IMorph*>)));
     /* モーションを読み込んだらフローズンビューを忘れずに更新しておく(フローズンビューが勢い良くスクロール出来てしまうことを防ぐ) */
     connect(bmm, SIGNAL(motionDidUpdate(IModel*)), m_boneTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
     connect(mmm, SIGNAL(motionDidUpdate(IModel*)), m_morphTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
@@ -255,7 +280,8 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
 void TimelineTabWidget::deleteKeyframesBySelectedIndices()
 {
     /* 選択されたボーンまたはモーフに登録されているキーフレームを削除する */
-    currentSelectedTimelineWidgetRef()->treeViewRef()->deleteKeyframesBySelectedIndices();
+    TimelineTreeView *treeView = currentSelectedTimelineWidgetRef()->treeViewRef();
+    treeView->deleteKeyframesBySelectedIndices();
 }
 
 void TimelineTabWidget::copyKeyframes()
@@ -313,32 +339,31 @@ void TimelineTabWidget::previousFrame()
 
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
-    Type type;
     IModel *lastSelectedModel = 0;
+    SceneWidget::EditMode mode = SceneWidget::kNone;
     switch (index) {
     case kBoneTabIndex: {
-        static_cast<PMDMotionModel *>(m_boneTimeline->treeViewRef()->model())->setActiveUndoStack();
-        type = kBone;
+        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_boneTimeline->treeViewRef()->model());
+        mode = m_lastEditMode;
+        model->setActiveUndoStack();
         lastSelectedModel = m_lastSelectedModelRef;
         break;
     }
     case kMorphTabIndex: {
-        static_cast<PMDMotionModel *>(m_morphTimeline->treeViewRef()->model())->setActiveUndoStack();
-        type = kMorph;
+        PMDMotionModel *model = static_cast<PMDMotionModel *>(m_morphTimeline->treeViewRef()->model());
+        model->setActiveUndoStack();
         lastSelectedModel = m_lastSelectedModelRef;
         break;
     }
     case kSceneTabIndex: {
         SceneMotionModel *model = static_cast<SceneMotionModel *>(m_sceneTimeline->treeViewRef()->model());
         model->setActiveUndoStack();
-        type = kScene;
         break;
     }
     default:
         return;
     }
-    emit currentTabDidChange(type);
-    emit currentModelDidChange(lastSelectedModel);
+    emit currentModelDidChange(lastSelectedModel, mode);
 }
 
 void TimelineTabWidget::notifyCurrentTabIndex()
@@ -361,6 +386,7 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
     bool value = model ? true : false;
     m_boneTimeline->treeViewRef()->updateFrozenTreeView();
     m_boneTimeline->setFrameIndexSpinBoxEnable(value);
+    /* デフォルトは「選択」ボタンが有効になる */
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(value);
     m_boneRotateButton->setEnabled(false);
@@ -369,11 +395,12 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
 
 void TimelineTabWidget::toggleMorphEnable(IModel *model)
 {
+    bool value = model ? true : false;
     m_morphTimeline->treeViewRef()->updateFrozenTreeView();
-    m_morphTimeline->setFrameIndexSpinBoxEnable(model ? true : false);
+    m_morphTimeline->setFrameIndexSpinBoxEnable(value);
 }
 
-void TimelineTabWidget::toggleBoneButtonsByBone(const QList<IBone *> &bones)
+void TimelineTabWidget::toggleBoneButtonsByBones(const QList<IBone *> &bones)
 {
     if (!bones.isEmpty()) {
         IBone *bone = bones.first();
@@ -388,6 +415,20 @@ void TimelineTabWidget::toggleBoneButtonsByBone(const QList<IBone *> &bones)
         m_boneRotateButton->setEnabled(false);
         m_boneMoveButton->setCheckable(false);
         m_boneMoveButton->setEnabled(false);
+    }
+}
+
+void TimelineTabWidget::toggleMorphByMorph(const QList<IMorph *> &morphs)
+{
+    if (!morphs.isEmpty()) {
+        m_selectedMorphRef = morphs.first();
+        m_morphSlider->setEnabled(true);
+        m_morphSpinbox->setEnabled(true);
+    }
+    else {
+        m_selectedMorphRef = 0;
+        m_morphSlider->setEnabled(false);
+        m_morphSpinbox->setEnabled(false);
     }
 }
 
@@ -499,14 +540,29 @@ void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selecti
     }
 }
 
+void TimelineTabWidget::selectMorphsByItemSelection(const QItemSelection &selection)
+{
+    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
+    const QModelIndexList &indices = selection.indexes();
+    if (!indices.empty()) {
+        QModelIndexList morph;
+        morph.append(indices.first());
+        mmm->selectMorphsByModelIndices(morph);
+    }
+}
+
 void TimelineTabWidget::selectButton(QAbstractButton *button)
 {
-    if (button == m_boneSelectButton.data())
-        emit editModeDidSet(SceneWidget::kSelect);
-    else if (button == m_boneRotateButton.data())
-        emit editModeDidSet(SceneWidget::kRotate);
-    else if (button == m_boneMoveButton.data())
-        emit editModeDidSet(SceneWidget::kMove);
+    if (button == m_boneSelectButton.data()) {
+        m_lastEditMode = SceneWidget::kSelect;
+    }
+    else if (button == m_boneRotateButton.data()) {
+        m_lastEditMode = SceneWidget::kRotate;
+    }
+    else if (button == m_boneMoveButton.data()) {
+        m_lastEditMode = SceneWidget::kMove;
+    }
+    emit editModeDidSet(m_lastEditMode);
 }
 
 void TimelineTabWidget::setLastSelectedModel(IModel *model)
@@ -526,6 +582,7 @@ void TimelineTabWidget::setLastSelectedModel(IModel *model)
 void TimelineTabWidget::clearLastSelectedModel()
 {
     m_lastSelectedModelRef = 0;
+    m_selectedMorphRef = 0;
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
@@ -558,6 +615,21 @@ TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidgetRef() const
     default:
         qFatal("Unexpected tab index value: %d", m_tabWidget->currentIndex());
         return 0;
+    }
+}
+
+void TimelineTabWidget::updateMorphValue(int value)
+{
+    updateMorphValue(value / 1000.0);
+}
+
+void TimelineTabWidget::updateMorphValue(double value)
+{
+    if (m_morphSpinbox->value() != value && m_selectedMorphRef) {
+        MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
+        mmm->setWeight(value, m_selectedMorphRef);
+        m_morphSlider->setValue(value * 1000);
+        m_morphSpinbox->setValue(value);
     }
 }
 

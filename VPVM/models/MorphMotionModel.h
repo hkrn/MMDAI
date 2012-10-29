@@ -68,6 +68,7 @@ public:
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
     void pasteKeyframesByTimeIndex(int timeIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
+    void selectMorphsByModelIndices(const QModelIndexList &indices);
     const QString nameFromModelIndex(const QModelIndex &index) const;
 
     void setKeyframes(const KeyFramePairList &keyframes);

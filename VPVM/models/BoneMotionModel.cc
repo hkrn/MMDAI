@@ -1020,8 +1020,7 @@ void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
             }
         }
     }
-    m_selectedBones = bones;
-    emit bonesDidSelect(bones);
+    selectBones(bones);
 }
 
 void BoneMotionModel::resetBone(ResetType type)

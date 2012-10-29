@@ -99,7 +99,7 @@ void ScenePlayer::start()
     m_sceneWidgetRef->setInfoPanelVisible(false);
     m_sceneWidgetRef->setBoneWireFramesVisible(m_dialogRef->isBoneWireframesVisible());
     if (!m_dialogRef->isModelSelected())
-        m_sceneWidgetRef->setSelectedModel(0);
+        m_sceneWidgetRef->revertSelectedModel();
     /* 進捗ダイアログ作成 */
     m_progress->reset();
     m_progress->setCancelButtonText(tr("Cancel"));
@@ -142,7 +142,7 @@ void ScenePlayer::stop()
     m_sceneWidgetRef->setHandlesVisible(true);
     m_sceneWidgetRef->setInfoPanelVisible(true);
     m_sceneWidgetRef->setBoneWireFramesVisible(true);
-    m_sceneWidgetRef->setSelectedModel(m_selectedModelRef);
+    m_sceneWidgetRef->setSelectedModel(m_selectedModelRef, SceneWidget::kSelect);
     /* 再生が終わったら物理を無効にする */
     m_sceneWidgetRef->sceneLoaderRef()->stopPhysicsSimulation();
     m_sceneWidgetRef->resetMotion();

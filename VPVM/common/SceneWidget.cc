@@ -220,7 +220,7 @@ void SceneWidget::clear()
 {
     stop();
     clearSelectedBones();
-    setSelectedModel(0);
+    revertSelectedModel();
     m_loader->releaseProject();
     m_loader->createProject();
 }
@@ -289,13 +289,13 @@ void SceneWidget::setPreferredFPS(int value)
     }
 }
 
-void SceneWidget::setSelectedModel(IModel *value)
+void SceneWidget::setSelectedModel(IModel *value, EditMode mode)
 {
     /* 情報パネルに選択されたモデルの名前を更新する */
     m_loader->setSelectedModel(value);
     m_info->setModel(value);
     m_info->update();
-    m_editMode = value ? kSelect : kNone;
+    setEditMode(mode);
 }
 
 void SceneWidget::setBackgroundImage(const QString &filename)

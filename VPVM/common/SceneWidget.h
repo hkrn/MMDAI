@@ -159,8 +159,9 @@ public slots:
     void setModelVertexShaderSkinningType1Enable(bool value);
     void selectBones(const QList<IBone *> &bones);
     void setEditMode(SceneWidget::EditMode value);
-    void setSelectedModel(IModel *value);
+    void setSelectedModel(IModel *value, SceneWidget::EditMode mode);
     void setBackgroundImage(const QString &filename);
+    void revertSelectedModel() { setSelectedModel(0, kNone); }
 
 signals:
     void initailizeGLContextDidDone();
@@ -240,7 +241,6 @@ private slots:
     void translateModelDown() { translateModel(Vector3(0.0f, -0.5f, 0.0f)); }
     void translateModelLeft() { translateModel(Vector3(-0.5f, 0.0f, 0.0f)); }
     void translateModelRight() { translateModel(Vector3(0.5f, 0.0f, 0.0f)); }
-    void revertSelectedModel() { setSelectedModel(0); }
     void refreshScene() { seekMotion(m_timeIndex, true, false); }
     void refreshMotions() { seekMotion(m_timeIndex, false, false); }
     void setMoveGestureEnable(bool value) { m_enableMoveGesture = value; }

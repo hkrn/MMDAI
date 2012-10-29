@@ -629,10 +629,35 @@ void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &
     setKeyframes(keyframes);
 }
 
+void MorphMotionModel::selectMorphsByModelIndices(const QModelIndexList &indices)
+{
+    QList<IMorph *> morphs;
+    foreach (const QModelIndex &index, indices) {
+        if (index.isValid()) {
+            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+            if (item->isCategory()) {
+                int nbones = item->countChildren();
+                for (int i = 0; i < nbones; i++) {
+                    TreeItem *child = static_cast<TreeItem *>(item->child(i));
+                    IMorph *bone = child->morph();
+                    morphs.append(bone);
+                }
+            }
+            else if (IMorph *bone = item->morph()) {
+                morphs.append(bone);
+            }
+        }
+    }
+    selectMorphs(morphs);
+}
+
 void MorphMotionModel::selectMorphs(const QList<IMorph *> &morphs)
 {
-    m_selectedMorphs = morphs;
-    emit morphsDidSelect(morphs);
+    /* signal/slot による循環参照防止 */
+    if (m_selectedMorphs != morphs) {
+        m_selectedMorphs = morphs;
+        emit morphsDidSelect(morphs);
+    }
 }
 
 void MorphMotionModel::setWeight(IMorph::WeightPrecision &value)

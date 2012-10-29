@@ -51,6 +51,7 @@ class IMorph;
 
 class QAbstractButton;
 class QButtonGroup;
+class QDoubleSpinBox;
 class QRadioButton;
 class QSettings;
 class QTabWidget;
@@ -98,8 +99,7 @@ public slots:
 
 signals:
     void motionDidSeek(const IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate, bool forceEvenSame);
-    void currentTabDidChange(int type);
-    void currentModelDidChange(IModel *model);
+    void currentModelDidChange(IModel *model, SceneWidget::EditMode mode);
     void editModeDidSet(SceneWidget::EditMode mode);
 
 private slots:
@@ -119,7 +119,8 @@ private slots:
     void notifyCurrentTabIndex();
     void toggleBoneEnable(IModel *model);
     void toggleMorphEnable(IModel *model);
-    void toggleBoneButtonsByBone(const QList<IBone *> &bones);
+    void toggleBoneButtonsByBones(const QList<IBone *> &bones);
+    void toggleMorphByMorph(const QList<IMorph *> &morphs);
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();
@@ -127,9 +128,12 @@ private slots:
     void openInterpolationDialogBySelectedIndices();
     void selectBones(const QList<IBone *> &bones);
     void selectBonesByItemSelection(const QItemSelection &selection);
+    void selectMorphsByItemSelection(const QItemSelection &selection);
     void selectButton(QAbstractButton *button);
     void setLastSelectedModel(IModel *model);
     void clearLastSelectedModel();
+    void updateMorphValue(int value);
+    void updateMorphValue(double value);
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
@@ -143,11 +147,15 @@ private:
     QScopedPointer<QRadioButton> m_boneSelectButton;
     QScopedPointer<QRadioButton> m_boneRotateButton;
     QScopedPointer<QRadioButton> m_boneMoveButton;
+    QScopedPointer<QSlider> m_morphSlider;
+    QScopedPointer<QDoubleSpinBox> m_morphSpinbox;
     QScopedPointer<FrameSelectionDialog> m_frameSelectionDialog;
     QScopedPointer<FrameWeightDialog> m_frameWeightDialog;
     QScopedPointer<InterpolationDialog> m_interpolationDialog;
     QSettings *m_settingsRef;
     IModel *m_lastSelectedModelRef;
+    IMorph *m_selectedMorphRef;
+    SceneWidget::EditMode m_lastEditMode;
 
     Q_DISABLE_COPY(TimelineTabWidget)
 };

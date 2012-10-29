@@ -236,11 +236,9 @@ void PMDMotionModel::markAsNew(IModel *model)
 
 void PMDMotionModel::updateModel(IModel *model, bool seek)
 {
-    if (model) {
-        m_sceneRef->updateModel(model);
-        if (seek)
-            emit timeIndexDidChange(m_timeIndex, m_timeIndex);
-    }
+    m_sceneRef->updateModel(model ? model : m_modelRef);
+    if (seek)
+        emit timeIndexDidChange(m_timeIndex, m_timeIndex);
 }
 
 void PMDMotionModel::refreshModel(IModel *model)
