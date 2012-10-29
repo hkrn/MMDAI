@@ -542,6 +542,10 @@ void TimelineTabWidget::selectMorphs(const QList<IMorph *> &morphs)
     foreach (const QModelIndex &index, indices)
         selectionModel->select(index, QItemSelectionModel::Select);
     mmm->selectMorphs(morphs);
+    if (!morphs.isEmpty()) {
+        IMorph *morph = morphs.first();
+        updateMorphValue(morph->weight());
+    }
 }
 
 void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selection)
@@ -640,7 +644,7 @@ void TimelineTabWidget::updateMorphValue(int value)
 
 void TimelineTabWidget::updateMorphValue(double value)
 {
-    if (m_morphSpinbox->value() != value && m_selectedMorphRef) {
+    if (m_selectedMorphRef) {
         MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
         mmm->setWeight(value, m_selectedMorphRef);
         m_morphSlider->setValue(value * 1000);
