@@ -54,6 +54,7 @@ class Factory;
 class IBone;
 class IEncoding;
 class IModel;
+class IMorph;
 class IMotion;
 }
 
@@ -158,6 +159,7 @@ public slots:
     void setModelOpenSkinningEnable(bool value);
     void setModelVertexShaderSkinningType1Enable(bool value);
     void selectBones(const QList<IBone *> &bones);
+    void selectMorphs(const QList<IMorph *> &morphs);
     void setEditMode(SceneWidget::EditMode value);
     void setSelectedModel(IModel *value, SceneWidget::EditMode mode);
     void setBackgroundImage(const QString &filename);
@@ -180,6 +182,7 @@ signals:
     void handleDidMoveRelative(const Vector3 &position, IBone *bone, int mode);
     void handleDidRotate(const Scalar &angle, IBone *bone, int mode);
     void bonesDidSelect(const QList<IBone *> &bones);
+    void morphsDidSelect(const QList<IMorph *> &morphs);
     void motionDidSeek(const IKeyframe::TimeIndex &timeIndex);
     void undoDidRequest();
     void redoDidRequest();
@@ -277,6 +280,7 @@ private:
     Factory *m_factoryRef;
     IBone *m_currentSelectedBoneRef;
     QList<IBone *> m_selectedBoneRefs;
+    QList<IMorph *> m_selectedMorphRefs;
     QElapsedTimer m_timer;
     QPointF m_clickOrigin;
     QPointF m_delta;

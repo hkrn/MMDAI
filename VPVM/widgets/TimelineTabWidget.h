@@ -127,6 +127,7 @@ private slots:
     void openInterpolationDialog(const QModelIndexList &indices);
     void openInterpolationDialogBySelectedIndices();
     void selectBones(const QList<IBone *> &bones);
+    void selectMorphs(const QList<IMorph *> &morphs);
     void selectBonesByItemSelection(const QItemSelection &selection);
     void selectMorphsByItemSelection(const QItemSelection &selection);
     void selectButton(QAbstractButton *button);

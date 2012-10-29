@@ -70,6 +70,7 @@ public:
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void selectMorphsByModelIndices(const QModelIndexList &indices);
     const QString nameFromModelIndex(const QModelIndex &index) const;
+    const QModelIndexList modelIndicesFromMorphs(const QList<IMorph *> &morphs, int frameIndex) const;
 
     void setKeyframes(const KeyFramePairList &keyframes);
     void setWeight(IMorph::WeightPrecision &value);

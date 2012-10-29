@@ -439,6 +439,20 @@ const QString MorphMotionModel::nameFromModelIndex(const QModelIndex &index) con
     return item->name();
 }
 
+const QModelIndexList MorphMotionModel::modelIndicesFromMorphs(const QList<IMorph *> &morphs, int frameIndex) const
+{
+    const QSet<IMorph *> &morphSet = morphs.toSet();
+    QModelIndexList indices;
+    foreach (PMDMotionModel::ITreeItem *item, keys().values()) {
+        TreeItem *treeItem = static_cast<TreeItem *>(item);
+        if (morphSet.contains(treeItem->morph())) {
+            const QModelIndex &index = frameIndexToModelIndex(item, frameIndex);
+            indices.append(index);
+        }
+    }
+    return indices;
+}
+
 void MorphMotionModel::setKeyframes(const KeyFramePairList &keyframes)
 {
     if (m_modelRef && m_motionRef) {

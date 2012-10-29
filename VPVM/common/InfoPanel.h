@@ -53,6 +53,9 @@ public:
           m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),
           m_fontMetrics(m_font),
+          m_selectedModelName(toQStringFromModel(static_cast<IModel *>(0))),
+          m_selectedBoneName(toQStringFromBone(static_cast<IBone *>(0))),
+          m_selectedMorphName(toQStringFromMorph(static_cast<IMorph *>(0))),
           m_textureID(0),
           m_fps(0.0f),
           m_visible(true)
@@ -81,14 +84,21 @@ public:
         painter.setPen(Qt::blue);
         painter.drawText(0, height, kModelPrefix);
         painter.setPen(Qt::red);
-        painter.drawText(kModelPrefixWidth, height, m_model);
+        painter.drawText(kModelPrefixWidth, height, m_selectedModelName);
         painter.setPen(Qt::blue);
-        painter.drawText(0, height * 2, "Bone: ");
+        int boneHeightOffset = height * 2;
+        painter.drawText(0, boneHeightOffset, "Bone: ");
         painter.setPen(Qt::red);
-        painter.drawText(kModelPrefixWidth, height * 2, m_bone);
+        painter.drawText(kModelPrefixWidth, boneHeightOffset, m_selectedBoneName);
+        painter.setPen(Qt::blue);
+        int morphHeightOffset = height * 3;
+        painter.drawText(0, morphHeightOffset, "Morph: ");
+        painter.setPen(Qt::red);
+        painter.drawText(kModelPrefixWidth, morphHeightOffset, m_selectedMorphName);
         if (m_fps > 0.0f) {
+            int fpsHeightOffset = height * 4;
             painter.setPen(Qt::black);
-            painter.drawText(0, height * 3, QString("FPS: %1").arg(m_fps));
+            painter.drawText(0, fpsHeightOffset, QString("FPS: %1").arg(m_fps));
         }
         painter.end();
         deleteTexture();
@@ -104,20 +114,33 @@ public:
     }
 
     void setModel(IModel *model) {
-        m_model = toQStringFromModel(model);
+        m_selectedModelName = toQStringFromModel(model);
     }
     void setBones(const QList<IBone *> &bones, const QString &alterTextOnMultiple) {
         int nbones = bones.size();
         if (nbones > 1) {
-            m_bone = alterTextOnMultiple;
+            m_selectedBoneName = alterTextOnMultiple;
         }
         else if (nbones == 1) {
-            m_bone = toQStringFromBone(bones.first());
+            m_selectedBoneName = toQStringFromBone(bones.first());
         }
         else {
-            m_bone = toQStringFromBone(static_cast<IBone *>(0));
+            m_selectedBoneName = toQStringFromBone(static_cast<IBone *>(0));
         }
     }
+    void setMorphs(const QList<IMorph *> &morphs, const QString &alterTextOnMultiple) {
+        int nmorphs = morphs.size();
+        if (nmorphs > 1) {
+            m_selectedMorphName = alterTextOnMultiple;
+        }
+        else if (nmorphs == 1) {
+            m_selectedMorphName = toQStringFromMorph(morphs.first());
+        }
+        else {
+            m_selectedMorphName = toQStringFromMorph(static_cast<IMorph *>(0));
+        }
+    }
+
     void setFPS(float value) {
         m_fps = value;
     }
@@ -139,8 +162,10 @@ private:
     QImage m_texture;
     QFont m_font;
     QFontMetrics m_fontMetrics;
-    QString m_model;
-    QString m_bone;
+    QString m_selectedModelName;
+    QString m_selectedBoneName;
+    QString m_selectedMorphName;
+    QString m_morph;
     GLuint m_textureID;
     float m_fps;
     bool m_visible;

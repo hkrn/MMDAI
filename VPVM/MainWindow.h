@@ -148,7 +148,7 @@ private slots:
     void openShadowMapDialog();
     void openBackgroundImageDialog();
     void openUndoView();
-    void makeBonesSelectable();
+    void enableSelectingBonesAndMorphs();
     void disconnectInitialSlots();
     void resetSceneToModels();
 

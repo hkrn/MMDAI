@@ -527,6 +527,21 @@ void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
     selectionModel->clearSelection();
     foreach (const QModelIndex &index, indices)
         selectionModel->select(index, QItemSelectionModel::Select);
+    bmm->selectBones(bones);
+}
+
+void TimelineTabWidget::selectMorphs(const QList<IMorph *> &morphs)
+{
+    /* 前回の選択状態をリセットして引数に渡された対象のモーフを選択状態にする */
+    TimelineTreeView *morphTreeView = m_morphTimeline->treeViewRef();
+    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(morphTreeView->model());
+    QItemSelectionModel *selectionModel = morphTreeView->selectionModel();
+    int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
+    const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, currentFrameIndex);
+    selectionModel->clearSelection();
+    foreach (const QModelIndex &index, indices)
+        selectionModel->select(index, QItemSelectionModel::Select);
+    mmm->selectMorphs(morphs);
 }
 
 void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selection)

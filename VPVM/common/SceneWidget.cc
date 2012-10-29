@@ -794,6 +794,16 @@ void SceneWidget::selectBones(const QList<IBone *> &bones)
     }
 }
 
+void SceneWidget::selectMorphs(const QList<IMorph *> &morphs)
+{
+    /* signal/slot による循環参照防止 */
+    if (m_selectedMorphRefs != morphs) {
+        m_info->setMorphs(morphs, tr("(multiple)"));
+        m_info->update();
+        emit morphsDidSelect(morphs);
+    }
+}
+
 void SceneWidget::rotateScene(const Vector3 &delta)
 {
     ICamera *camera = m_loader->sceneRef()->camera();
@@ -1014,7 +1024,6 @@ void SceneWidget::initializeGL()
     m_grid->load();
     m_loader->updateDepthBuffer(QSize());
     m_info->setModel(0);
-    m_info->setBones(QList<IBone *>(), "");
     m_info->setFPS(0.0f);
     m_info->update();
 #endif

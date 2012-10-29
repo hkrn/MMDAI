@@ -1448,6 +1448,7 @@ void MainWindow::connectWidgets()
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveRelative(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateDelta(Vector3,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidRotate(Scalar,IBone*,int)), m_boneMotionModel.data(), SLOT(rotateAngle(Scalar,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), m_timelineTabWidget.data(), SLOT(selectBones(QList<IBone*>)));
+    connect(m_sceneWidget.data(), SIGNAL(morphsDidSelect(QList<IMorph*>)), m_timelineTabWidget.data(), SLOT(selectMorphs(QList<IMorph*>)));
     connect(m_timelineTabWidget.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),  m_sceneWidget.data(), SLOT(seekMotion(IKeyframe::TimeIndex,bool,bool)));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
@@ -1456,7 +1457,6 @@ void MainWindow::connectWidgets()
     connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_timelineTabWidget.data(), SLOT(setCurrentFrameIndexZero()));
-    connect(m_sceneWidget.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), m_boneMotionModel.data(), SLOT(selectBones(QList<IBone*>)));
     connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentFrameIndex(IMorph*)));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_sceneMotionModel.data(), SLOT(markAsNew()));
     connect(m_sceneWidget.data(), SIGNAL(handleDidGrab()), m_boneMotionModel.data(), SLOT(saveTransform()));
@@ -1479,7 +1479,7 @@ void MainWindow::connectWidgets()
     connect(morphWidget, SIGNAL(morphWillChange()), m_morphMotionModel.data(), SLOT(saveTransform()));
     connect(morphWidget, SIGNAL(morphDidChange()), m_morphMotionModel.data(), SLOT(commitTransform()));
     connect(m_undo.data(), SIGNAL(indexChanged(int)), morphWidget, SLOT(updateMorphWeightValues()));
-    makeBonesSelectable();
+    enableSelectingBonesAndMorphs();
 }
 
 void MainWindow::insertMotionToAllModels()
@@ -1939,13 +1939,15 @@ void MainWindow::updateWindowTitle()
     setWindowTitle(value);
 }
 
-void MainWindow::makeBonesSelectable()
+void MainWindow::enableSelectingBonesAndMorphs()
 {
     connect(m_boneMotionModel.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), m_sceneWidget.data(), SLOT(selectBones(QList<IBone*>)));
+    connect(m_morphMotionModel.data(), SIGNAL(morphsDidSelect(QList<IMorph*>)), m_sceneWidget.data(), SLOT(selectMorphs(QList<IMorph*>)));
 }
 
 void MainWindow::disconnectInitialSlots()
 {
+    /* モデルを読み込んだ後の初期化順序の関係でカメラモーションを読み込んだ後にプロジェクトを無更新に設定する処理を外す */
     disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoaderRef(), SLOT(setProjectDirtyFalse()));
     disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel.data(), SLOT(markAsNew()));
     disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSlots()));
