@@ -69,6 +69,7 @@ public:
     void pasteKeyframesByTimeIndex(int timeIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void selectMorphsByModelIndices(const QModelIndexList &indices);
+    bool isSelectionIdentical(const QList<IMorph *> &morphs);
     const QString nameFromModelIndex(const QModelIndex &index) const;
     const QModelIndexList modelIndicesFromMorphs(const QList<IMorph *> &morphs, int frameIndex) const;
 

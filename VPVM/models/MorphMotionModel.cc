@@ -665,10 +665,15 @@ void MorphMotionModel::selectMorphsByModelIndices(const QModelIndexList &indices
     selectMorphs(morphs);
 }
 
+bool MorphMotionModel::isSelectionIdentical(const QList<IMorph *> &morphs)
+{
+    return CompareGenericList(morphs, m_selectedMorphs);
+}
+
 void MorphMotionModel::selectMorphs(const QList<IMorph *> &morphs)
 {
     /* signal/slot による循環参照防止 */
-    if (m_selectedMorphs != morphs) {
+    if (!CompareGenericList(morphs, m_selectedMorphs)) {
         m_selectedMorphs = morphs;
         emit morphsDidSelect(morphs);
     }

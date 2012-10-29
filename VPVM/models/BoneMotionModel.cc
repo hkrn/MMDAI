@@ -1001,6 +1001,11 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
     setKeyframes(keyframes);
 }
 
+bool BoneMotionModel::isSelectionIdentical(const QList<IBone *> &bones) const
+{
+    return CompareGenericList(bones, m_selectedBones);
+}
+
 void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
 {
     QList<IBone *> bones;
@@ -1184,7 +1189,7 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
 void BoneMotionModel::selectBones(const QList<IBone *> &bones)
 {
     /* signal/slot による循環参照防止 */
-    if (bones != m_selectedBones) {
+    if (!CompareGenericList(bones, m_selectedBones)) {
         m_selectedBones = bones;
         emit bonesDidSelect(bones);
     }

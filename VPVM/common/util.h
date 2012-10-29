@@ -174,6 +174,20 @@ static const inline Vector3 vec2vec(const QVector4D &value)
     return v;
 }
 
+template<typename T>
+static inline bool CompareGenericList(const QList<T *> &left, const QList<T *> &right)
+{
+    const int nitems = left.size();
+    if (nitems == right.size()) {
+        for (int i = 0; i < nitems; i++) {
+            if (left[i] != right[i])
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
 } /* namespace vpvm */
 
 #endif // UTIL_H

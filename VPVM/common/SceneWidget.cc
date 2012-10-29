@@ -785,7 +785,7 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 void SceneWidget::selectBones(const QList<IBone *> &bones)
 {
     /* signal/slot による循環参照防止 */
-    if (m_selectedBoneRefs != bones) {
+    if (!CompareGenericList(bones, m_selectedBoneRefs)) {
         m_info->setBones(bones, tr("(multiple)"));
         m_info->update();
         m_handles->setBone(bones.isEmpty() ? 0 : bones.first());
@@ -797,7 +797,7 @@ void SceneWidget::selectBones(const QList<IBone *> &bones)
 void SceneWidget::selectMorphs(const QList<IMorph *> &morphs)
 {
     /* signal/slot による循環参照防止 */
-    if (m_selectedMorphRefs != morphs) {
+    if (!CompareGenericList(morphs, m_selectedMorphRefs)) {
         m_info->setMorphs(morphs, tr("(multiple)"));
         m_info->update();
         emit morphsDidSelect(morphs);

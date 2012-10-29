@@ -330,15 +330,13 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
                 }
             }
         }
-        if (!names.empty()) {
-            /* テーブルモデルがボーンの場合は該当ボーンを選択状態にする処理を入れる */
-            if (BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(pmm)) {
-                bmm->selectBonesByModelIndices(names);
-            }
-            /* テーブルモデルがモーフの場合は該当モーフを選択状態にする処理を入れる */
-            else if (MorphMotionModel *mmm = qobject_cast<MorphMotionModel *>(pmm)) {
-                mmm->selectMorphsByModelIndices(names);
-            }
+        /* テーブルモデルがボーンの場合は該当ボーンを選択状態にする処理を入れる */
+        if (BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(pmm)) {
+            bmm->selectBonesByModelIndices(names.isEmpty() ? indices : names);
+        }
+        /* テーブルモデルがモーフの場合は該当モーフを選択状態にする処理を入れる */
+        else if (MorphMotionModel *mmm = qobject_cast<MorphMotionModel *>(pmm)) {
+            mmm->selectMorphsByModelIndices(names.isEmpty() ? indices : names);
         }
     }
 }

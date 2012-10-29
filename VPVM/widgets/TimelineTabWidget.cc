@@ -521,13 +521,15 @@ void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
     /* 前回の選択状態をリセットして引数に渡された対象のボーンを選択状態にする */
     TimelineTreeView *boneTreeView = m_boneTimeline->treeViewRef();
     BoneMotionModel *bmm = static_cast<BoneMotionModel *>(boneTreeView->model());
-    QItemSelectionModel *selectionModel = boneTreeView->selectionModel();
-    int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
-    const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, currentFrameIndex);
-    selectionModel->clearSelection();
-    foreach (const QModelIndex &index, indices)
-        selectionModel->select(index, QItemSelectionModel::Select);
-    bmm->selectBones(bones);
+    if (!bmm->isSelectionIdentical(bones)) {
+        QItemSelectionModel *selectionModel = boneTreeView->selectionModel();
+        int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
+        const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, currentFrameIndex);
+        selectionModel->clearSelection();
+        foreach (const QModelIndex &index, indices)
+            selectionModel->select(index, QItemSelectionModel::Select);
+        bmm->selectBones(bones);
+    }
 }
 
 void TimelineTabWidget::selectMorphs(const QList<IMorph *> &morphs)
@@ -535,13 +537,15 @@ void TimelineTabWidget::selectMorphs(const QList<IMorph *> &morphs)
     /* 前回の選択状態をリセットして引数に渡された対象のモーフを選択状態にする */
     TimelineTreeView *morphTreeView = m_morphTimeline->treeViewRef();
     MorphMotionModel *mmm = static_cast<MorphMotionModel *>(morphTreeView->model());
-    QItemSelectionModel *selectionModel = morphTreeView->selectionModel();
-    int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
-    const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, currentFrameIndex);
-    selectionModel->clearSelection();
-    foreach (const QModelIndex &index, indices)
-        selectionModel->select(index, QItemSelectionModel::Select);
-    mmm->selectMorphs(morphs);
+    if (!mmm->isSelectionIdentical(morphs)) {
+        QItemSelectionModel *selectionModel = morphTreeView->selectionModel();
+        int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
+        const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, currentFrameIndex);
+        selectionModel->clearSelection();
+        foreach (const QModelIndex &index, indices)
+            selectionModel->select(index, QItemSelectionModel::Select);
+        mmm->selectMorphs(morphs);
+    }
     if (!morphs.isEmpty()) {
         IMorph *morph = morphs.first();
         updateMorphValue(morph->weight());

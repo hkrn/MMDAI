@@ -79,6 +79,7 @@ public:
     void pasteKeyframesByTimeIndex(int timeIndex);
     void pasteReversedFrame(int timeIndex);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const Vector3 &position, const Vector3 &rotation);
+    bool isSelectionIdentical(const QList<IBone *> &bones) const;
     const QString nameFromModelIndex(const QModelIndex &index) const;
     const QModelIndexList modelIndicesFromBones(const QList<IBone *> &bones, int timeIndex) const;
     KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
