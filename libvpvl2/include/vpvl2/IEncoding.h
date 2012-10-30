@@ -70,6 +70,9 @@ public:
         kSPAExtension,
         kRightKnee,
         kLeftKnee,
+        kRootBoneAsset,
+        kScaleBoneAsset,
+        kOpacityMorphAsset,
         kMaxConstantType
     };
 

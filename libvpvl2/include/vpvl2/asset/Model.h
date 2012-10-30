@@ -72,20 +72,20 @@ public:
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}
-    size_t estimateSize() const { return 1; }
+    size_t estimateSize() const { return 0; }
     void resetVertices() {}
     void resetMotionState() {}
     void performUpdate() {}
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
-    IBone *findBone(const IString * /* value */) const { return 0; }
-    IMorph *findMorph(const IString * /* value */) const { return 0; }
-    int count(ObjectType /* value */) const { return 0; }
-    void getBoneRefs(Array<IBone *> & /* value */) const {}
-    void getLabelRefs(Array<ILabel *> & /* value */) const {}
+    IBone *findBone(const IString *value) const;
+    IMorph *findMorph(const IString *value) const;
+    int count(ObjectType value) const;
+    void getBoneRefs(Array<IBone *> &value) const;
+    void getLabelRefs(Array<ILabel *> &value) const;
     void getMaterialRefs(Array<IMaterial *> & /* value */) const {}
-    void getMorphRefs(Array<IMorph *> & /* value */) const {}
-    void getVertexRefs(Array<IVertex *> & /* value */) const {}
+    void getMorphRefs(Array<IMorph *> &value) const;
+    void getVertexRefs(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     float edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
     const Vector3 &position() const { return m_position; }
@@ -124,6 +124,7 @@ public:
 
 private:
 #ifdef VPVL2_LINK_ASSIMP
+    void getVertexRefsRecurse(const aiScene *scene, const aiNode *node, Array<IVertex *> &vertices) const;
     void getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const;
     Assimp::Importer m_importer;
     const aiScene *m_scene;
@@ -132,10 +133,14 @@ private:
     IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_comment;
-    Array<IBone *> m_bones;
-    Array<IMorph *> m_morphs;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
+    mutable Array<IBone *> m_bones;
+    mutable Array<ILabel *> m_labels;
+    mutable Array<IMorph *> m_morphs;
+    mutable Array<IVertex *> m_vertices;
+    Hash<HashString, IBone *> m_name2boneRefs;
+    Hash<HashString, IMorph *> m_name2morphRefs;
     Vector3 m_position;
     Quaternion m_rotation;
     Scalar m_opacity;
