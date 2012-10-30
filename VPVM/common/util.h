@@ -179,11 +179,8 @@ static inline bool CompareGenericList(const QList<T *> &left, const QList<T *> &
 {
     const int nitems = left.size();
     if (nitems == right.size()) {
-        for (int i = 0; i < nitems; i++) {
-            if (left[i] != right[i])
-                return false;
-        }
-        return true;
+        /* 中身の全てのポインタのアドレスが両方の配列で同じであるかどうかを確認 */
+        return memcmp(&left[0], &right[0], sizeof(void *) * nitems) == 0;
     }
     return false;
 }
