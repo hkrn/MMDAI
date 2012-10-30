@@ -133,6 +133,7 @@ private slots:
     void selectButton(QAbstractButton *button);
     void setLastSelectedModel(IModel *model);
     void clearLastSelectedModel();
+    void updateMorphValue();
     void updateMorphValue(int value);
     void updateMorphValue(double value);
 
@@ -155,7 +156,6 @@ private:
     QScopedPointer<InterpolationDialog> m_interpolationDialog;
     QSettings *m_settingsRef;
     IModel *m_lastSelectedModelRef;
-    IMorph *m_selectedMorphRef;
     SceneWidget::EditMode m_lastEditMode;
 
     Q_DISABLE_COPY(TimelineTabWidget)

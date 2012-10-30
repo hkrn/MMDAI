@@ -77,7 +77,6 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
       m_interpolationDialog(new InterpolationDialog(bmm, smm)),
       m_settingsRef(settingsRef),
       m_lastSelectedModelRef(0),
-      m_selectedMorphRef(0),
       m_lastEditMode(SceneWidget::kSelect)
 {
     m_boneTimeline->setFrameIndexSpinBoxEnable(false);
@@ -126,6 +125,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
     connect(m_boneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     connect(m_morphTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
     connect(m_sceneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
+    connect(m_morphTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)), SLOT(updateMorphValue()));
     connect(m_boneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(m_sceneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     /* モデルが選択された時タイムライン上のボタンなどの有効無効を切り替える */
@@ -420,13 +420,14 @@ void TimelineTabWidget::toggleBoneButtonsByBones(const QList<IBone *> &bones)
 
 void TimelineTabWidget::toggleMorphByMorph(const QList<IMorph *> &morphs)
 {
+    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
     if (!morphs.isEmpty()) {
-        m_selectedMorphRef = morphs.first();
+        mmm->selectMorphs(morphs);
         m_morphSlider->setEnabled(true);
         m_morphSpinbox->setEnabled(true);
     }
     else {
-        m_selectedMorphRef = 0;
+        mmm->selectMorphs(QList<IMorph *>());
         m_morphSlider->setEnabled(false);
         m_morphSpinbox->setEnabled(false);
     }
@@ -605,7 +606,6 @@ void TimelineTabWidget::setLastSelectedModel(IModel *model)
 void TimelineTabWidget::clearLastSelectedModel()
 {
     m_lastSelectedModelRef = 0;
-    m_selectedMorphRef = 0;
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
@@ -616,14 +616,15 @@ void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
     QList<int> frameIndices;
     for (int i = fromIndex; i <= toIndex; i++)
         frameIndices.append(i);
-    currentSelectedTimelineWidgetRef()->treeViewRef()->selectFrameIndices(frameIndices, true);
+    TimelineTreeView *treeView = currentSelectedTimelineWidgetRef()->treeViewRef();
+    treeView->selectFrameIndices(frameIndices, true);
 }
 
 void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)
 {
     /* 指定されたフレームの位置にシークする */
     TimelineWidget *timeline = currentSelectedTimelineWidgetRef();
-    currentSelectedTimelineWidgetRef()->setCurrentTimeIndex(timeline->selectedFrameIndex() + frameIndex);
+    timeline->setCurrentTimeIndex(timeline->selectedFrameIndex() + frameIndex);
 }
 
 TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidgetRef() const
@@ -641,16 +642,27 @@ TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidgetRef() const
     }
 }
 
+void TimelineTabWidget::updateMorphValue()
+{
+    /* モーフモーションがシークされた時に呼ばれる */
+    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
+    if (IMorph *morph = mmm->selectedMorph()) {
+        updateMorphValue(morph->weight());
+    }
+}
+
 void TimelineTabWidget::updateMorphValue(int value)
 {
+    /* モーフスライダーから呼ばれる */
     updateMorphValue(value / 1000.0);
 }
 
 void TimelineTabWidget::updateMorphValue(double value)
 {
-    if (m_selectedMorphRef) {
-        MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
-        mmm->setWeight(value, m_selectedMorphRef);
+    /* モーフスライダーまたはスピンボックスから呼ばれる */
+    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
+    if (IMorph *morph = mmm->selectedMorph()) {
+        mmm->setWeight(value, morph);
         m_morphSlider->setValue(value * 1000);
         m_morphSpinbox->setValue(value);
     }
