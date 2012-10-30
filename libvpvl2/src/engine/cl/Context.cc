@@ -119,9 +119,19 @@ bool Context::initializeContext(cl_device_type hostDeviceType)
     cl_context_properties props[] = {
         CL_CONTEXT_PLATFORM,
         reinterpret_cast<cl_context_properties>(firstPlatform),
-    #ifdef __APPLE__
+    #if defined(__APPLE__)
         CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
         reinterpret_cast<cl_context_properties>(CGLGetShareGroup(CGLGetCurrentContext())),
+    #elif defined(_MSC_VER)
+        CL_GL_CONTEXT_KHR,
+        reinterpret_cast<cl_context_properties>(wglGetCurrentContext()),
+        CL_WGL_HDC_KHR,
+        reinterpret_cast<cl_context_properties>(wglGetCurrentDC()),
+    #elif defined(GLX_USE_GL)
+        CL_GL_CONTEXT_KHR,
+        reinterpret_cast<cl_context_properties>(glXGetCurrentContext()),
+        CL_GLX_DISPLAY_KHR,
+        reinterpret_cast<cl_context_properties>(glXGetCurrentDisplay()),
     #endif
         0
     };

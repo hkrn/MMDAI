@@ -52,6 +52,10 @@
 #endif /* VPVL2_LINK_GLEW */
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
+#include <GL/gl.h>
+#ifndef _MSC_VER // workaround
+#include <GL/glx.h>
+#endif /* _MSC_VER */
 #endif /* __APPLE__ */
 
 #include "vpvl2/IRenderDelegate.h"
