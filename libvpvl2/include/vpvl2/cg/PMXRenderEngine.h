@@ -49,6 +49,10 @@
 namespace vpvl2
 {
 
+namespace cl {
+class PMXAccelerator;
+}
+
 class Scene;
 
 namespace cg
@@ -127,8 +131,8 @@ private:
 
     CGcontext m_contextRef;
     EffectEngine *m_currentRef;
-#ifdef VPVL2_ENABLE_OPENCL
     cl::PMXAccelerator *m_accelerator;
+#ifdef VPVL2_ENABLE_OPENCL
     cl::PMXAccelerator::Buffers m_accelerationBuffers;
 #endif
     IModel *m_modelRef;

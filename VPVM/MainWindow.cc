@@ -120,7 +120,7 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
         QObject::connect(dialog.data(), SIGNAL(playingDidStart()), dialog.data(), SLOT(hide()));
         QObject::connect(dialog.data(), SIGNAL(playingDidStart()), player.data(), SLOT(setRestoreState()));
         QObject::connect(player.data(), SIGNAL(motionDidSeek(int)), timeline.data(), SLOT(setCurrentFrameIndex(int)));
-        QObject::connect(player.data(), SIGNAL(renderFrameDidStop()), mainWindow, SLOT(makeBonesSelectable()));
+        QObject::connect(player.data(), SIGNAL(renderFrameDidStop()), mainWindow, SLOT(enableSelectingBonesAndMorphs()));
         QObject::connect(player.data(), SIGNAL(renderFrameDidStopAndRestoreState()), dialog.data(), SLOT(show()));
     }
 }
@@ -128,12 +128,14 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
 static QGLFormat UIGetQGLFormat()
 {
     QGLFormat format;
-    format.setSamples(4);
     format.setSampleBuffers(true);
+#ifdef Q_OS_DARWIN
+    format.setSamples(4);
     format.setRedBufferSize(16);
     format.setBlueBufferSize(16);
     format.setGreenBufferSize(16);
     format.setDepthBufferSize(32);
+#endif
     return format;
 }
 
@@ -859,12 +861,9 @@ void MainWindow::buildUI()
     m_menuAcceleration->addAction(m_actionSetOpenCLSkinningType2.data());
     m_menuAcceleration->addAction(m_actionSetVertexShaderSkinningType1.data());
 
-#ifdef Q_OS_MACX
-
-#else
-    m_menuBar = menuBar();
+#ifndef Q_OS_MACX
+    m_menuBar.reset(menuBar());
 #endif
-
     m_menuFile->addAction(m_actionNewProject.data());
     m_menuFile->addAction(m_actionNewMotion.data());
     m_menuFile->addAction(m_actionLoadProject.data());
