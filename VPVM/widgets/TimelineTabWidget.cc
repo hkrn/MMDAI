@@ -159,7 +159,8 @@ TimelineTabWidget::~TimelineTabWidget()
 
 void TimelineTabWidget::addKeyframesFromSelectedIndices()
 {
-    currentSelectedTimelineWidgetRef()->treeViewRef()->addKeyframesBySelectedIndices();
+    TimelineTreeView *treeView = currentSelectedTimelineWidgetRef()->treeViewRef();
+    treeView->addKeyframesBySelectedIndices();
 }
 
 void TimelineTabWidget::loadPose(VPDFilePtr pose, IModel *model)

@@ -560,27 +560,29 @@ void BoneMotionModel::saveMotion(IMotion *motion)
 
 void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    KeyFramePairList boneKeyframes;
-    IModel *model = selectedModel();
-    /* モデルのインデックスを参照し、存在するボーンに対してボーンの現在の値からボーンのキーフレームにコピーする */
-    foreach (const QModelIndex &index, indices) {
-        int frameIndex = toTimeIndex(index);
-        if (frameIndex >= 0) {
-            const QString &name = nameFromModelIndex(index);
-            CString s(name);
-            IBone *bone = model->findBone(&s);
-            if (bone) {
-                /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
-                KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(m_motionRef));
-                newKeyframe->setDefaultInterpolationParameter();
-                newKeyframe->setName(bone->name());
-                newKeyframe->setPosition(bone->localPosition());
-                newKeyframe->setRotation(bone->rotation());
-                boneKeyframes.append(KeyFramePair(frameIndex, newKeyframe));
+    if (m_motionRef) {
+        KeyFramePairList boneKeyframes;
+        IModel *model = selectedModel();
+        /* モデルのインデックスを参照し、存在するボーンに対してボーンの現在の値からボーンのキーフレームにコピーする */
+        foreach (const QModelIndex &index, indices) {
+            int frameIndex = toTimeIndex(index);
+            if (frameIndex >= 0) {
+                const QString &name = nameFromModelIndex(index);
+                CString s(name);
+                IBone *bone = model->findBone(&s);
+                if (bone) {
+                    /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
+                    KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(m_motionRef));
+                    newKeyframe->setDefaultInterpolationParameter();
+                    newKeyframe->setName(bone->name());
+                    newKeyframe->setPosition(bone->localPosition());
+                    newKeyframe->setRotation(bone->rotation());
+                    boneKeyframes.append(KeyFramePair(frameIndex, newKeyframe));
+                }
             }
         }
+        setKeyframes(boneKeyframes);
     }
-    setKeyframes(boneKeyframes);
 }
 
 void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex)
@@ -952,23 +954,25 @@ void BoneMotionModel::removeModel()
 
 void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    KeyFramePairList keyframes;
-    /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
-    foreach (const QModelIndex &index, indices) {
-        if (index.isValid() && index.column() > 1) {
-            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (IBone *bone = item->bone()) {
-                IBoneKeyframe *keyframeToDelete = m_motionRef->findBoneKeyframe(toTimeIndex(index), bone->name(), 0);
-                if (keyframeToDelete) {
-                    KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
-                    /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
-                    clonedKeyframe->setTimeIndex(-1);
-                    keyframes.append(KeyFramePair(keyframeToDelete->timeIndex(), clonedKeyframe));
+    if (m_motionRef) {
+        KeyFramePairList keyframes;
+        /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
+        foreach (const QModelIndex &index, indices) {
+            if (index.isValid() && index.column() > 1) {
+                TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+                if (IBone *bone = item->bone()) {
+                    IBoneKeyframe *keyframeToDelete = m_motionRef->findBoneKeyframe(toTimeIndex(index), bone->name(), 0);
+                    if (keyframeToDelete) {
+                        KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
+                        /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
+                        clonedKeyframe->setTimeIndex(-1);
+                        keyframes.append(KeyFramePair(keyframeToDelete->timeIndex(), clonedKeyframe));
+                    }
                 }
             }
         }
+        addUndoCommand(new SetKeyframesCommand(this, keyframes));
     }
-    addUndoCommand(new SetKeyframesCommand(this, keyframes));
 }
 
 void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices,

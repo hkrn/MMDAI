@@ -348,24 +348,26 @@ void MorphMotionModel::saveMotion(IMotion *motion)
 
 void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    KeyFramePairList keyframes;
-    IModel *model = selectedModel();
-    /* モデルのインデックスを参照し、存在する頂点モーフに対して頂点モーフの現在の重み係数から頂点モーフのキーフレームにコピーする */
-    foreach (const QModelIndex &index, indices) {
-        int frameIndex = toTimeIndex(index);
-        if (frameIndex >= 0) {
-            const QString &name = nameFromModelIndex(index);
-            CString s(name);
-            IMorph *morph = model->findMorph(&s);
-            if (morph) {
-                KeyFramePtr keyframe(m_factoryRef->createMorphKeyframe(m_motionRef));
-                keyframe->setName(morph->name());
-                keyframe->setWeight(morph->weight());
-                keyframes.append(KeyFramePair(frameIndex, keyframe));
+    if (m_motionRef) {
+        KeyFramePairList keyframes;
+        IModel *model = selectedModel();
+        /* モデルのインデックスを参照し、存在する頂点モーフに対して頂点モーフの現在の重み係数から頂点モーフのキーフレームにコピーする */
+        foreach (const QModelIndex &index, indices) {
+            int frameIndex = toTimeIndex(index);
+            if (frameIndex >= 0) {
+                const QString &name = nameFromModelIndex(index);
+                CString s(name);
+                IMorph *morph = model->findMorph(&s);
+                if (morph) {
+                    KeyFramePtr keyframe(m_factoryRef->createMorphKeyframe(m_motionRef));
+                    keyframe->setName(morph->name());
+                    keyframe->setWeight(morph->weight());
+                    keyframes.append(KeyFramePair(frameIndex, keyframe));
+                }
             }
         }
+        setKeyframes(keyframes);
     }
-    setKeyframes(keyframes);
 }
 
 void MorphMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex)
@@ -604,24 +606,26 @@ void MorphMotionModel::removeModel()
 
 void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    KeyFramePairList keyframes;
-    /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
-    foreach (const QModelIndex &index, indices) {
-        if (index.isValid() && index.column() > 1) {
-            TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-            if (IMorph *morph = item->morph()) {
-                IMorphKeyframe *keyframeToDelete = m_motionRef->findMorphKeyframe(toTimeIndex(index), morph->name(), 0);
-                if (keyframeToDelete) {
-                    KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
-                    /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
-                    clonedKeyframe->setTimeIndex(-1);
-                    keyframes.append(KeyFramePair(keyframeToDelete->timeIndex(), clonedKeyframe));
+    if (m_motionRef) {
+        KeyFramePairList keyframes;
+        /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
+        foreach (const QModelIndex &index, indices) {
+            if (index.isValid() && index.column() > 1) {
+                TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
+                if (IMorph *morph = item->morph()) {
+                    IMorphKeyframe *keyframeToDelete = m_motionRef->findMorphKeyframe(toTimeIndex(index), morph->name(), 0);
+                    if (keyframeToDelete) {
+                        KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
+                        /* SetFramesCommand で削除するので削除に必要な条件である frameIndex を 0 未満の値にしておく */
+                        clonedKeyframe->setTimeIndex(-1);
+                        keyframes.append(KeyFramePair(keyframeToDelete->timeIndex(), clonedKeyframe));
+                    }
                 }
             }
         }
+        if (!keyframes.isEmpty())
+            addUndoCommand(new SetKeyframesCommand(this, keyframes));
     }
-    if (!keyframes.isEmpty())
-        addUndoCommand(new SetKeyframesCommand(this, keyframes));
 }
 
 void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value)
