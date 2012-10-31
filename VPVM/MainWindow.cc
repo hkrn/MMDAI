@@ -241,13 +241,13 @@ MainWindow::MainWindow(const QHash<IEncoding::ConstantType, CString *> &constant
       m_actionBoneRotationZero(new QAction(0)),
       m_actionBoneResetAll(new QAction(0)),
       m_actionBoneDialog(new QAction(0)),
-      m_actionRegisterFrame(new QAction(0)),
+      m_actionRegisterKeyframe(new QAction(0)),
       m_actionSelectAllKeyframes(new QAction(0)),
       m_actionSelectKeyframeDialog(new QAction(0)),
       m_actionKeyframeWeightDialog(new QAction(0)),
       m_actionInterpolationDialog(new QAction(0)),
       m_actionInsertEmptyFrame(new QAction(0)),
-      m_actionDeleteSelectedFrame(new QAction(0)),
+      m_actionDeleteSelectedKeyframe(new QAction(0)),
       m_actionNextFrame(new QAction(0)),
       m_actionPreviousFrame(new QAction(0)),
       m_actionCut(new QAction(0)),
@@ -351,7 +351,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
     }
     else if (m_timelineTabWidget->rect().contains(m_timelineTabWidget->mapFromGlobal(pos))) {
         QMenu menu(this);
-        menu.addAction(m_actionRegisterFrame.data());
+        menu.addAction(m_actionRegisterKeyframe.data());
         menu.addAction(m_actionSelectAllKeyframes.data());
         menu.addSeparator();
         menu.addAction(m_actionCut.data());
@@ -362,7 +362,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
         menu.addAction(m_actionUndo.data());
         menu.addAction(m_actionRedo.data());
         menu.addSeparator();
-        menu.addAction(m_actionDeleteSelectedFrame.data());
+        menu.addAction(m_actionDeleteSelectedKeyframe.data());
         menu.addSeparator();
         menu.addAction(m_actionSelectKeyframeDialog.data());
         menu.addAction(m_actionKeyframeWeightDialog.data());
@@ -750,9 +750,9 @@ void MainWindow::buildUI()
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit.data(), SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
 
-    connect(m_actionRegisterFrame.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(addKeyframesFromSelectedIndices()));
+    connect(m_actionRegisterKeyframe.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(addKeyframesFromSelectedIndices()));
     connect(m_actionInsertEmptyFrame.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(insertKeyframesBySelectedIndices()));
-    connect(m_actionDeleteSelectedFrame.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(deleteKeyframesBySelectedIndices()));
+    connect(m_actionDeleteSelectedKeyframe.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(deleteKeyframesBySelectedIndices()));
     connect(m_actionCut.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(cutKeyframes()));
     connect(m_actionCopy.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(copyKeyframes()));
     connect(m_actionPaste.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(pasteKeyframes()));
@@ -961,9 +961,9 @@ void MainWindow::buildUI()
     m_menuModel->addAction(m_actionDeleteSelectedModel.data());
     m_menuBar->addMenu(m_menuModel.data());
 
-    m_menuKeyframe->addAction(m_actionRegisterFrame.data());
+    m_menuKeyframe->addAction(m_actionRegisterKeyframe.data());
     m_menuKeyframe->addAction(m_actionInsertEmptyFrame.data());
-    m_menuKeyframe->addAction(m_actionDeleteSelectedFrame.data());
+    m_menuKeyframe->addAction(m_actionDeleteSelectedKeyframe.data());
     m_menuKeyframe->addSeparator();
     m_menuKeyframe->addAction(m_actionSelectAllKeyframes.data());
     m_menuKeyframe->addAction(m_actionSelectKeyframeDialog.data());
@@ -1004,10 +1004,17 @@ void MainWindow::buildUI()
     setCentralWidget(m_sceneWidget.data());
     updateRecentFiles();
 
+    m_actionRegisterKeyframeOnToolBar.reset(m_mainToolBar->addAction("", m_timelineTabWidget.data(), SLOT(addKeyframesFromSelectedIndices())));
+    m_actionDeleteSelectedKeyframeOnToolBar.reset(m_mainToolBar->addAction("", m_timelineTabWidget.data(), SLOT(deleteKeyframesBySelectedIndices())));
+    m_mainToolBar->addSeparator();
     m_actionCreateProjectOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(newProjectFile())));
+    m_mainToolBar->addSeparator();
     m_actionAddObjectOnToolBar.reset(m_mainToolBar->addAction("", m_sceneWidget.data(), SLOT(addFile())));
     m_actionCreateMotionOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(newMotionFile())));
     m_actionDeleteModelOnToolBar.reset(m_mainToolBar->addAction("", m_sceneWidget.data(), SLOT(deleteSelectedModel())));
+    m_mainToolBar->addSeparator();
+    m_actionEnableEffectOnToolBar.reset(m_mainToolBar->addAction(""));
+    m_actionEnableEffectOnToolBar->setCheckable(true);
     m_mainToolBar->addSeparator();
     m_actionPlayOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(invokePlayer())));
     m_actionExportVideoOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(exportVideo())));
@@ -1078,13 +1085,13 @@ void MainWindow::bindActions()
     m_actionBoneRotationZero->setShortcut(m_settings.value(kPrefix + "boneRotationZero").toString());
     m_actionBoneResetAll->setShortcut(m_settings.value(kPrefix + "boneResetAll").toString());
     m_actionBoneDialog->setShortcut(m_settings.value(kPrefix + "boneDialog").toString());
-    m_actionRegisterFrame->setShortcut(m_settings.value(kPrefix + "registerFrame", "Ctrl+E").toString());
+    m_actionRegisterKeyframe->setShortcut(m_settings.value(kPrefix + "registerFrame", "Ctrl+E").toString());
     m_actionSelectAllKeyframes->setShortcut(m_settings.value(kPrefix + "selectAllFrames", "Ctrl+A").toString());
     m_actionSelectKeyframeDialog->setShortcut(m_settings.value(kPrefix + "selectFrameDialog", "Ctrl+Alt+S").toString());
     m_actionKeyframeWeightDialog->setShortcut(m_settings.value(kPrefix + "frameWeightDialog", "Ctrl+Alt+W").toString());
     m_actionInterpolationDialog->setShortcut(m_settings.value(kPrefix + "interpolationDialog", "Ctrl+Alt+I").toString());
     m_actionInsertEmptyFrame->setShortcut(m_settings.value(kPrefix + "insertEmptyFrame", "Ctrl+I").toString());
-    m_actionDeleteSelectedFrame->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
+    m_actionDeleteSelectedKeyframe->setShortcut(m_settings.value(kPrefix + "deleteSelectedFrame", "Ctrl+K").toString());
     m_actionNextFrame->setShortcut(m_settings.value(kPrefix + "nextFrame", QKeySequence(QKeySequence::Forward).toString()).toString());
     m_actionPreviousFrame->setShortcut(m_settings.value(kPrefix + "previousFrame", QKeySequence(QKeySequence::Back).toString()).toString());
     m_actionCut->setShortcut(m_settings.value(kPrefix + "cut", QKeySequence(QKeySequence::Cut).toString()).toString());
@@ -1249,8 +1256,8 @@ void MainWindow::retranslate()
     m_actionBoneResetAll->setStatusTip(tr("Reset all bone's position and rotation to the selected model."));
     m_actionBoneDialog->setText(tr("Open bone dialog"));
     m_actionBoneDialog->setStatusTip(tr("Open bone dialog to change position or rotation of the bone manually."));
-    m_actionRegisterFrame->setText(tr("Register keyframe"));
-    m_actionRegisterFrame->setStatusTip(tr("Register keyframes by selected indices from the timeline."));
+    m_actionRegisterKeyframe->setText(tr("Register keyframe"));
+    m_actionRegisterKeyframe->setStatusTip(tr("Register keyframes by selected indices from the timeline."));
     m_actionSelectAllKeyframes->setText(tr("Select all keyframes"));
     m_actionSelectAllKeyframes->setStatusTip(tr("Select all registered keyframes."));
     m_actionSelectKeyframeDialog->setText(tr("Open keyframe range selection dialog"));
@@ -1261,8 +1268,8 @@ void MainWindow::retranslate()
     m_actionInterpolationDialog->setStatusTip(tr("Open interpolation dialog to configure interpolation parameter of keyframes."));
     m_actionInsertEmptyFrame->setText(tr("Insert empty keyframe"));
     m_actionInsertEmptyFrame->setStatusTip(tr("Insert an empty keyframe to the selected keyframe."));
-    m_actionDeleteSelectedFrame->setText(tr("Delete selected keyframe"));
-    m_actionDeleteSelectedFrame->setStatusTip(tr("Delete a selected keyframe."));
+    m_actionDeleteSelectedKeyframe->setText(tr("Delete selected keyframe"));
+    m_actionDeleteSelectedKeyframe->setStatusTip(tr("Delete a selected keyframe."));
     m_actionNextFrame->setText(tr("Next keyframe"));
     m_actionNextFrame->setStatusTip(tr("Select a next keyframe from the current keyframe."));
     m_actionPreviousFrame->setText(tr("Previous keyframe"));
@@ -1301,6 +1308,10 @@ void MainWindow::retranslate()
     m_actionAboutQt->setStatusTip(tr("About Qt."));
     m_actionClearRecentFiles->setText(tr("Clear recent files history"));
     m_actionClearRecentFiles->setStatusTip(tr("Clear the history of recently opened files."));
+    m_actionRegisterKeyframeOnToolBar->setText(tr("Register keyframes"));
+    m_actionRegisterKeyframeOnToolBar->setStatusTip(m_actionRegisterKeyframe->statusTip());
+    m_actionDeleteSelectedKeyframeOnToolBar->setText(tr("Delete keyframes"));
+    m_actionDeleteSelectedKeyframeOnToolBar->setStatusTip(m_actionDeleteSelectedKeyframeOnToolBar->statusTip());
     m_actionCreateProjectOnToolBar->setText(tr("Create project"));
     m_actionCreateProjectOnToolBar->setStatusTip(m_actionNewProject->statusTip());
     m_actionAddObjectOnToolBar->setText(tr("Add model/motion"));
@@ -1309,6 +1320,8 @@ void MainWindow::retranslate()
     m_actionCreateMotionOnToolBar->setStatusTip(tr("Create an empty model motion (discards previous model motion)."));
     m_actionDeleteModelOnToolBar->setText(tr("Delete model"));
     m_actionDeleteModelOnToolBar->setStatusTip(m_actionDeleteSelectedModel->statusTip());
+    m_actionEnableEffectOnToolBar->setText(tr("Effect"));
+    m_actionEnableEffectOnToolBar->setStatusTip(m_actionEnableEffect->statusTip());
     m_actionPlayOnToolBar->setText(tr("Play"));
     m_actionPlayOnToolBar->setStatusTip(m_actionPlay->statusTip());
     m_actionExportVideoOnToolBar->setText(tr("Export video"));
@@ -1371,6 +1384,9 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModel*)));
     connect(loader, SIGNAL(assetDidSelect(IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModel*,SceneLoader*)));
     connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), loader, SLOT(setEffectEnable(bool)));
+    connect(m_actionEnableEffectOnToolBar.data(), SIGNAL(toggled(bool)), loader, SLOT(setEffectEnable(bool)));
+    connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
+    connect(m_actionEnableEffectOnToolBar.data(), SIGNAL(toggled(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
     connect(m_actionEnablePhysics.data(), SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionSetSoftwareSkinningFallback.data(), SIGNAL(toggled(bool)), loader, SLOT(setSoftwareSkinningEnable(bool)));
     connect(m_actionSetOpenCLSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType1(bool)));
