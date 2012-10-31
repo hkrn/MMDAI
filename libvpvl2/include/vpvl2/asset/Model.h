@@ -83,7 +83,7 @@ public:
     int count(ObjectType value) const;
     void getBoneRefs(Array<IBone *> &value) const;
     void getLabelRefs(Array<ILabel *> &value) const;
-    void getMaterialRefs(Array<IMaterial *> & /* value */) const {}
+    void getMaterialRefs(Array<IMaterial *> &value) const;
     void getMorphRefs(Array<IMorph *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
@@ -124,7 +124,9 @@ public:
 
 private:
 #ifdef VPVL2_LINK_ASSIMP
-    void getVertexRefsRecurse(const aiScene *scene, const aiNode *node, Array<IVertex *> &vertices) const;
+    void setIndicesRecurse(const aiScene *scene, const aiNode *node);
+    void setMaterialRefsRecurse(const aiScene *scene, const aiNode *node) const;
+    void setVertexRefsRecurse(const aiScene *scene, const aiNode *node) const;
     void getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const;
     Assimp::Importer m_importer;
     const aiScene *m_scene;
@@ -137,8 +139,10 @@ private:
     IBone *m_parentBoneRef;
     mutable Array<IBone *> m_bones;
     mutable Array<ILabel *> m_labels;
+    mutable Array<IMaterial *> m_materials;
     mutable Array<IMorph *> m_morphs;
     mutable Array<IVertex *> m_vertices;
+    mutable Array<uint32_t> m_indices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     Vector3 m_position;

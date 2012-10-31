@@ -183,9 +183,147 @@ public:
     IMorph *morph(int /*index*/) const { return 0; }
 
 private:
-    const IString *m_name;
+    IString *m_name;
     Array<IBone *> m_bones;
 };
+
+class Material : public IMaterial {
+public:
+    Material(const aiMaterial *materialRef, IEncoding *encodingRef, int nindices, int index)
+        : m_materialRef(materialRef),
+          m_encodingRef(encodingRef),
+          m_sphereTextureRenderMode(kNone),
+          m_nindices(nindices),
+          m_index(index)
+    {
+        aiColor4D color;
+        aiGetMaterialColor(m_materialRef, AI_MATKEY_COLOR_AMBIENT, &color);
+        m_ambient.setValue(color.r, color.g, color.b, 1);
+        aiGetMaterialColor(m_materialRef, AI_MATKEY_COLOR_DIFFUSE, &color);
+        m_diffuse.setValue(color.r, color.g, color.b, color.a);
+        aiGetMaterialColor(m_materialRef, AI_MATKEY_COLOR_SPECULAR, &color);
+        m_specular.setValue(color.r, color.g, color.b, 1);
+        float shininess;
+        aiGetMaterialFloat(m_materialRef, AI_MATKEY_SHININESS, &shininess);
+        m_shininess = shininess;
+        setMaterialTextures();
+    }
+    ~Material() {
+        delete m_mainTexture;
+        m_mainTexture =0 ;
+        delete m_sphereTexture;
+        m_sphereTexture = 0;
+        m_materialRef = 0;
+        m_encodingRef = 0;
+        m_ambient.setZero();
+        m_diffuse.setZero();
+        m_specular.setZero();
+        m_shininess = 0;
+        m_nindices = 0;
+        m_index = 0;
+    }
+
+    const IString *name() const { return 0; }
+    const IString *englishName() const { return 0; }
+    const IString *userDataArea() const { return 0; }
+    const IString *mainTexture() const { return m_mainTexture; }
+    const IString *sphereTexture() const { return m_sphereTexture; }
+    const IString *toonTexture() const { return 0; }
+    SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
+    const Color &ambient() const { return m_ambient; }
+    const Color &diffuse() const { return m_diffuse; }
+    const Color &specular() const { return m_specular; }
+    const Color &edgeColor() const { return kZeroC; }
+    const Color &mainTextureBlend() const { return kWhiteColor; }
+    const Color &sphereTextureBlend() const { return kWhiteColor; }
+    const Color &toonTextureBlend() const { return kWhiteColor; }
+    float shininess() const { return m_shininess; }
+    float edgeSize() const { return 1; }
+    int index() const { return m_index; }
+    int textureIndex() const { return -1; }
+    int sphereTextureIndex() const { return -1; }
+    int toonTextureIndex() const { return -1; }
+    int indices() const { return m_nindices; }
+    bool isSharedToonTextureUsed() const { return false; }
+    bool isCullFaceDisabled() const { return !btFuzzyZero(m_diffuse.w() - 1); }
+    bool hasShadow() const { return false; }
+    bool isShadowMapDrawn() const { return !btFuzzyZero(m_diffuse.x() - 0.98f); }
+    bool isSelfShadowDrawn() const { return isShadowMapDrawn(); }
+    bool isEdgeDrawn() const { return false; }
+
+    void setName(const IString * /* value */) {}
+    void setEnglishName(const IString * /* value */) {}
+    void setUserDataArea(const IString * /* value */) {}
+    void setMainTexture(const IString */*value*/) {}
+    void setSphereTexture(const IString */*value*/) {}
+    void setToonTexture(const IString */*value*/) {}
+    void setSphereTextureRenderMode(SphereTextureRenderMode /*value*/) {}
+    void setAmbient(const Color &value) { m_ambient = value; }
+    void setDiffuse(const Color &value) { m_diffuse = value; }
+    void setSpecular(const Color &value) { m_specular = value; }
+    void setEdgeColor(const Color & /* value */) {}
+    void setShininess(float value) { m_shininess = value; }
+    void setEdgeSize(float /* value */) {}
+    void setMainTextureIndex(int /* value */) {}
+    void setSphereTextureIndex(int /* value */) {}
+    void setToonTextureIndex(int /* value */) {}
+    void setIndices(int /* value */) {}
+    void setFlags(int /* value */) {}
+
+private:
+    void setMaterialTextures() {
+        aiString texturePath;
+        if (m_materialRef->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == aiReturn_SUCCESS) {
+            const uint8_t *path = reinterpret_cast<const uint8_t *>(texturePath.data);
+            const IString *separator = m_encodingRef->stringConstant(IEncoding::kAsterisk);
+            const IString *sph = m_encodingRef->stringConstant(IEncoding::kSPHExtension);
+            const IString *spa = m_encodingRef->stringConstant(IEncoding::kSPAExtension);
+            IString *texture = m_encodingRef->toString(path, texturePath.length, IString::kShiftJIS);
+            if (texture->contains(separator)) {
+                Array<IString *> tokens;
+                texture->split(separator, 2, tokens);
+                delete texture;
+                IString *mainTexture = tokens[0];
+                if (mainTexture->endsWith(sph)) {
+                    m_sphereTexture = mainTexture;
+                    m_sphereTextureRenderMode = kMultTexture;
+                }
+                else {
+                    m_mainTexture = mainTexture;
+                }
+                if (tokens.count() == 2) {
+                    IString *subTexture = tokens[1];
+                    if (subTexture->endsWith(sph)) {
+                        m_sphereTexture = subTexture;
+                        m_sphereTextureRenderMode = kMultTexture;
+                    }
+                    else if (subTexture->endsWith(spa)) {
+                        m_sphereTexture = subTexture;
+                        m_sphereTextureRenderMode = kAddTexture;
+                    }
+                }
+            }
+            else if (texture->endsWith(sph)) {
+                m_sphereTexture = texture;
+                m_sphereTextureRenderMode = kMultTexture;
+            }
+        }
+    }
+
+    static const Color kWhiteColor;
+    const aiMaterial *m_materialRef;
+    IEncoding *m_encodingRef;
+    IString *m_mainTexture;
+    IString *m_sphereTexture;
+    SphereTextureRenderMode m_sphereTextureRenderMode;
+    Color m_ambient;
+    Color m_diffuse;
+    Color m_specular;
+    float m_shininess;
+    int m_nindices;
+    int m_index;
+};
+const Color Material::kWhiteColor = Color(1, 1, 1, 1);
 
 class OpacityMorph : public IMorph {
 public:
@@ -375,6 +513,16 @@ void Model::getLabelRefs(Array<ILabel *> &value) const
     value.copy(m_labels);
 }
 
+void Model::getMaterialRefs(Array<IMaterial *> &value) const
+{
+#ifdef VPVL2_LINK_ASSIMP
+    if (m_materials.count() == 0) {
+        setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
+    }
+    value.copy(m_materials);
+#endif
+}
+
 void Model::getMorphRefs(Array<IMorph *> &value) const
 {
     value.copy(m_morphs);
@@ -384,7 +532,7 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
 {
 #ifdef VPVL2_LINK_ASSIMP
     if (m_vertices.count() == 0) {
-        getVertexRefsRecurse(m_scene, m_scene->mRootNode, m_vertices);
+        setVertexRefsRecurse(m_scene, m_scene->mRootNode);
     }
     value.copy(m_vertices);
 #endif
@@ -455,7 +603,41 @@ void Model::setVisible(bool value)
 }
 
 #ifdef VPVL2_LINK_ASSIMP
-void Model::getVertexRefsRecurse(const aiScene *scene, const aiNode *node, Array<IVertex *> &vertices) const
+void Model::setIndicesRecurse(const aiScene *scene, const aiNode *node)
+{
+    const unsigned int nmeshes = node->mNumMeshes;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const struct aiFace *faces = mesh->mFaces;
+        const unsigned int nfaces = mesh->mNumFaces;
+        for (unsigned int j = 0; j < nfaces; j++) {
+            const struct aiFace &face = faces[j];
+            const unsigned int *indices = face.mIndices;
+            const unsigned int nindices = face.mNumIndices;
+            for (unsigned int k = 0; k < nindices; k++) {
+                m_indices.add(indices[k]);
+            }
+        }
+    }
+}
+
+void Model::setMaterialRefsRecurse(const aiScene *scene, const aiNode *node) const
+{
+    const unsigned int nmeshes = node->mNumMeshes;
+    for (unsigned int i = 0; i < nmeshes; i++) {
+        const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        const struct aiFace *faces = mesh->mFaces;
+        const unsigned int nfaces = mesh->mNumFaces;
+        unsigned int nindices = 0;
+        for (unsigned int j = 0; j < nfaces; j++) {
+            nindices += faces[j].mNumIndices;
+        }
+        m_materials.add(new Material(material, m_encodingRef, nindices, i));
+    }
+}
+
+void Model::setVertexRefsRecurse(const aiScene *scene, const aiNode *node) const
 {
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
@@ -468,7 +650,7 @@ void Model::getVertexRefsRecurse(const aiScene *scene, const aiNode *node, Array
             const aiVector3D &v = meshVertices[j];
             const aiVector3D &n = meshNormals ? meshVertices[j] : aiVector3D();
             const aiVector3D &t = meshTextureCoords ? meshTextureCoords[j] : aiVector3D();
-            vertices.add(new Vertex(Vector3(v.x, v.y, v.z), Vector3(n.x, n.y, n.z), Vector3(t.x, t.y, t.z), j));
+            m_vertices.add(new Vertex(Vector3(v.x, v.y, v.z), Vector3(n.x, n.y, n.z), Vector3(t.x, t.y, t.z), j));
         }
     }
 }
