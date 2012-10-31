@@ -78,7 +78,7 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
-    explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, QGLWidget *contextRef);
+    explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::Delegate *delegate);
     ~SceneLoader();
 
     QList<IModel *> allModels() const;
@@ -261,10 +261,10 @@ private:
 
     QScopedPointer<QGLFramebufferObject> m_depthBuffer;
     QScopedPointer<qt::World> m_world;
-    QScopedPointer<qt::Delegate> m_renderDelegate;
     QScopedPointer<Project::IDelegate> m_projectDelegate;
     QScopedPointer<Project> m_project;
     QScopedPointer<IMotion> m_camera;
+    qt::Delegate *m_renderDelegateRef;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;
     QMap<QString, IModel*> m_name2assets;

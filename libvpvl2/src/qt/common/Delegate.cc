@@ -304,7 +304,7 @@ Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWid
 
 Delegate::~Delegate()
 {
-    setScenePtr(0);
+    setSceneRef(0);
     qDeleteAll(m_renderTargets);
     m_renderTargets.clear();
     delete m_archive;
@@ -660,7 +660,7 @@ void Delegate::setArchive(Archive *value)
     m_archive = value;
 }
 
-void Delegate::setScenePtr(Scene *value)
+void Delegate::setSceneRef(Scene *value)
 {
     m_offscreens.clear();
     m_model2Paths.clear();

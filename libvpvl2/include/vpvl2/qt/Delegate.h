@@ -114,7 +114,7 @@ public:
     void releaseRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
 
     void setArchive(Archive *value);
-    void setScenePtr(Scene *value);
+    void setSceneRef(Scene *value);
     void updateMatrices(const QSizeF &size);
     void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
     void setCameraModelMatrix(const QMatrix4x4 &value);

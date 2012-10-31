@@ -178,7 +178,10 @@ template<typename T>
 static inline bool CompareGenericList(const QList<T *> &left, const QList<T *> &right)
 {
     const int nitems = left.size();
-    if (nitems == right.size()) {
+    if (nitems == 0) {
+        return true;
+    }
+    else if (nitems == right.size()) {
         /* 中身の全てのポインタのアドレスが両方の配列で同じであるかどうかを確認 */
         return memcmp(&left[0], &right[0], sizeof(void *) * nitems) == 0;
     }

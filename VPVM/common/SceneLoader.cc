@@ -228,23 +228,18 @@ const QByteArray UILoadFile(const QString &filename,
 namespace vpvm
 {
 
-SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, QGLWidget *contextRef)
+SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, Delegate *delegate)
     : QObject(),
       m_world(new World()),
       m_projectDelegate(new ProjectDelegate()),
+      m_renderDelegateRef(delegate),
       m_encodingRef(encodingRef),
       m_factoryRef(factoryRef),
       m_selectedModelRef(0),
       m_selectedAssetRef(0),
       m_depthBufferID(0)
 {
-    QHash<QString, QString> settings;
-    settings.insert("dir.system.kernels", ":kernels");
-    settings.insert("dir.system.shaders", ":shaders");
-    settings.insert("dir.system.toon", ":textures");
     createProject();
-    m_renderDelegate.reset(new Delegate(settings, sceneRef(), contextRef));
-    m_renderDelegate->initialize(true);
 }
 
 SceneLoader::~SceneLoader()
@@ -261,7 +256,7 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
         model->setName(&s);
     }
     const QString &path = dir.absoluteFilePath(baseName);
-    m_renderDelegate->addModelPath(model, path);
+    m_renderDelegateRef->addModelPath(model, path);
     IRenderEnginePtr enginePtr;
     if (createModelEngine(model, dir, enginePtr)) {
         /* モデルを SceneLoader にヒモ付けする */
@@ -285,7 +280,7 @@ bool SceneLoader::createModelEngine(IModel *model, const QDir &dir, IRenderEngin
     IEffect *effect = 0;
     int flags = 0;
     if (isEffectEnabled()) {
-        const QFuture<IEffect *> &future = QtConcurrent::run(m_renderDelegate.data(), &Delegate::createEffectAsync, model, &d);
+        const QFuture<IEffect *> &future = QtConcurrent::run(m_renderDelegateRef, &Delegate::createEffectAsync, model, &d);
         /* progress dialog */
         /*
          * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
@@ -309,12 +304,12 @@ bool SceneLoader::createModelEngine(IModel *model, const QDir &dir, IRenderEngin
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
-    enginePtr.reset(m_project->createRenderEngine(m_renderDelegate.data(), model, flags));
+    enginePtr.reset(m_project->createRenderEngine(m_renderDelegateRef, model, flags));
     if (enginePtr->upload(&d)) {
         /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &d);
-        m_renderDelegate->parseOffscreenSemantic(effect, dir);
-        m_renderDelegate->setArchive(0);
+        m_renderDelegateRef->parseOffscreenSemantic(effect, dir);
+        m_renderDelegateRef->setArchive(0);
         return true;
     }
     return false;
@@ -356,8 +351,7 @@ void SceneLoader::createProject()
         m_project->setGlobalSetting("physics.enabled", "true");
         m_project->setGlobalSetting("shadow.texture.soft", "true");
         m_project->setDirty(false);
-        if (m_renderDelegate)
-            m_renderDelegate->setScenePtr(m_project.data());
+        m_renderDelegateRef->setSceneRef(m_project.data());
         emit projectDidInitialized();
     }
 }
@@ -371,7 +365,7 @@ void SceneLoader::deleteAsset(IModel *asset)
         /* 削除対象が選択中の場合は追加後に commitAssetProperties で落ちることを防ぐために 0 にリセットする */
         if (asset == m_selectedAssetRef)
             m_selectedAssetRef = 0;
-        m_renderDelegate->removeModel(asset);
+        m_renderDelegateRef->removeModel(asset);
         m_project->removeModel(asset);
         m_project->deleteModel(asset);
         m_renderOrderList.remove(uuid);
@@ -413,7 +407,7 @@ void SceneLoader::deleteModel(IModel *&model)
                 deleteMotion(motion);
             }
         }
-        m_renderDelegate->removeModel(model);
+        m_renderDelegateRef->removeModel(model);
         m_project->removeModel(model);
         m_project->deleteModel(model);
         m_renderOrderList.remove(uuid);
@@ -483,7 +477,7 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
 
 void SceneLoader::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection) const
 {
-    m_renderDelegate->getCameraMatrices(world, view, projection);
+    m_renderDelegateRef->getCameraMatrices(world, view, projection);
 }
 
 bool SceneLoader::isProjectModified() const
@@ -494,7 +488,7 @@ bool SceneLoader::isProjectModified() const
 bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr)
 {
     IModel::Type type; /* unused */
-    const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, type, m_renderDelegate.data());
+    const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, type, m_renderDelegateRef);
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
@@ -506,7 +500,7 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &ass
             QFileInfo fileInfo(filename);
             CString name(fileInfo.completeBaseName());
             assetPtr->setName(&name);
-            m_renderDelegate->addModelPath(assetPtr.data(), filename);
+            m_renderDelegateRef->addModelPath(assetPtr.data(), filename);
             IRenderEnginePtr enginePtr;
             if (createModelEngine(assetPtr.data(), fileInfo.dir(), enginePtr)) {
                 uuid = QUuid::createUuid();
@@ -613,7 +607,7 @@ bool SceneLoader::loadModel(const QString &filename, IModelPtr &modelPtr)
      * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
      */
     IModel::Type type;
-    const QByteArray &bytes = UILoadFile(filename, kModelLoadable, kModelExtensions, type, m_renderDelegate.data());
+    const QByteArray &bytes = UILoadFile(filename, kModelLoadable, kModelExtensions, type, m_renderDelegateRef);
     bool isNullData = bytes.isNull();
     if (!isNullData) {
         if (modelPtr.isNull())
@@ -621,7 +615,7 @@ bool SceneLoader::loadModel(const QString &filename, IModelPtr &modelPtr)
         const uint8_t *dataPtr = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
         if (!modelPtr->load(dataPtr, size)) {
-            m_renderDelegate->setArchive(0);
+            m_renderDelegateRef->setArchive(0);
         }
     }
     return !isNullData && modelPtr;
@@ -719,7 +713,7 @@ void SceneLoader::loadProject(const QString &path)
             if (loadModel(filename, modelPtr)) {
                 const QFileInfo fileInfo(filename);
                 IModel *model = modelPtr.take();
-                m_renderDelegate->addModelPath(model, filename);
+                m_renderDelegateRef->addModelPath(model, filename);
                 IRenderEnginePtr enginePtr;
                 if (createModelEngine(model, fileInfo.absoluteDir(), enginePtr)) {
                     if (!model->name()) {
@@ -730,7 +724,7 @@ void SceneLoader::loadProject(const QString &path)
                     sceneObject->setAccelerationType(modelAccelerationType(model));
                     IModel::Type type = model->type();
                     if (type == IModel::kPMD || type == IModel::kPMX) {
-                        m_renderDelegate->setArchive(0);
+                        m_renderDelegateRef->setArchive(0);
                         /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
                         const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
                         model->setEdgeColor(color);
@@ -763,7 +757,7 @@ void SceneLoader::loadProject(const QString &path)
                     else if (type == IModel::kAsset) {
                         CString s(fileInfo.completeBaseName().toUtf8());
                         model->setName(&s);
-                        m_renderDelegate->setArchive(0);
+                        m_renderDelegateRef->setArchive(0);
                         m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
                         assets.append(model);
                         emit projectDidProceed(++progress);
@@ -804,7 +798,7 @@ void SceneLoader::loadProject(const QString &path)
         }
         /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
         foreach (IModel *model, lostModels) {
-            m_renderDelegate->removeModel(model);
+            m_renderDelegateRef->removeModel(model);
             m_project->removeModel(model);
             m_project->deleteModel(model);
         }
@@ -1003,7 +997,7 @@ void SceneLoader::setLightViewProjectionMatrix()
     view.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
                 QVector3D(center.x(), center.y(), center.z()),
                 QVector3D(0, 1, 0));
-    m_renderDelegate->setLightMatrices(world, view, projection);
+    m_renderDelegateRef->setLightMatrices(world, view, projection);
 }
 
 void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geometry)
@@ -1013,10 +1007,10 @@ void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geomet
     const qreal w = size.width(), h = size.height();
     const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);
     Qt::MouseButtons buttons = event->buttons();
-    m_renderDelegate->setMousePosition(value, buttons & Qt::LeftButton, IRenderDelegate::kMouseLeftPressPosition);
-    m_renderDelegate->setMousePosition(value, buttons & Qt::MiddleButton, IRenderDelegate::kMouseMiddlePressPosition);
-    m_renderDelegate->setMousePosition(value, buttons & Qt::RightButton, IRenderDelegate::kMouseRightPressPosition);
-    m_renderDelegate->setMousePosition(value, false, IRenderDelegate::kMouseCursorPosition);
+    m_renderDelegateRef->setMousePosition(value, buttons & Qt::LeftButton, IRenderDelegate::kMouseLeftPressPosition);
+    m_renderDelegateRef->setMousePosition(value, buttons & Qt::MiddleButton, IRenderDelegate::kMouseMiddlePressPosition);
+    m_renderDelegateRef->setMousePosition(value, buttons & Qt::RightButton, IRenderDelegate::kMouseRightPressPosition);
+    m_renderDelegateRef->setMousePosition(value, false, IRenderDelegate::kMouseCursorPosition);
 }
 
 void SceneLoader::bindDepthTexture()
@@ -1030,7 +1024,7 @@ void SceneLoader::bindDepthTexture()
 
 void SceneLoader::renderOffscreen(const QSize &size)
 {
-    m_renderDelegate->renderOffscreen(size);
+    m_renderDelegateRef->renderOffscreen(size);
 }
 
 void SceneLoader::renderZPlot()
@@ -1055,10 +1049,10 @@ void SceneLoader::renderZPlotToTexture()
     renderZPlot();
     releaseDepthTexture();
     QMatrix4x4 world, view, projection;
-    m_renderDelegate->getLightMatrices(world, view, projection);
+    m_renderDelegateRef->getLightMatrices(world, view, projection);
     world.scale(0.5);
     world.translate(1, 1, 1);
-    m_renderDelegate->setLightMatrices(world, view, projection);
+    m_renderDelegateRef->setLightMatrices(world, view, projection);
 }
 
 void SceneLoader::releaseDepthTexture()
@@ -1082,7 +1076,7 @@ void SceneLoader::updateDepthBuffer(const QSize &value)
 
 void SceneLoader::updateMatrices(const QSizeF &size)
 {
-    m_renderDelegate->updateMatrices(size);
+    m_renderDelegateRef->updateMatrices(size);
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const

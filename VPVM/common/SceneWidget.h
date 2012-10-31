@@ -50,6 +50,9 @@
 #include <vpvl2/Scene.h>
 
 namespace vpvl2 {
+namespace qt {
+class Delegate;
+}
 class Factory;
 class IBone;
 class IEncoding;
@@ -276,6 +279,7 @@ private:
     QScopedPointer<InfoPanel> m_info;
     QScopedPointer<PlaneWorld> m_plane;
     QScopedPointer<Handles> m_handles;
+    QScopedPointer<qt::Delegate> m_delegate;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;
     IBone *m_currentSelectedBoneRef;
