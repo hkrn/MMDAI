@@ -1559,29 +1559,24 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>最近開いたファイルの履歴を消去します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1312"/>
         <source>Register keyframes</source>
-        <translation>キーフレーム登録</translation>
+        <translation type="obsolete">キーフレーム登録</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1314"/>
         <source>Delete keyframes</source>
-        <translation>キーフレーム削除</translation>
+        <translation type="obsolete">キーフレーム削除</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1316"/>
         <source>Create project</source>
-        <translation>プロジェクト作成</translation>
+        <translation type="obsolete">プロジェクト作成</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1318"/>
         <source>Add model/motion</source>
-        <translation>モデル/モーション追加</translation>
+        <translation type="obsolete">モデル/モーション追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1320"/>
         <source>Create motion</source>
-        <translation>モーション作成</translation>
+        <translation type="obsolete">モーション作成</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="1321"/>
@@ -1589,19 +1584,16 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>新規にモデルのモーションを作成します（すでにあるモーションは破棄されます）。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1322"/>
         <source>Delete model</source>
-        <translation>モデル削除</translation>
+        <translation type="obsolete">モデル削除</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1328"/>
         <source>Export video</source>
-        <translation>動画出力</translation>
+        <translation type="obsolete">動画出力</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1330"/>
         <source>Export image</source>
-        <translation>画像出力</translation>
+        <translation type="obsolete">画像出力</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="1332"/>
@@ -1688,6 +1680,46 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <location filename="../../MainWindow.cc" line="1348"/>
         <source>Effect</source>
         <translation>エフェクト</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1312"/>
+        <source>Register Keyframes</source>
+        <translation>キーフレーム登録</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1314"/>
+        <source>Delete Keyframes</source>
+        <translation>キーフレーム削除</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1316"/>
+        <source>Create Project</source>
+        <translation>プロジェクト作成</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1318"/>
+        <source>Add Model/Motion</source>
+        <translation>モデル/モーション追加</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1320"/>
+        <source>Create Motion</source>
+        <translation>モーション作成</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1322"/>
+        <source>Delete Model</source>
+        <translation>モデル削除</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1328"/>
+        <source>Export Video</source>
+        <translation>動画出力</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1330"/>
+        <source>Export Image</source>
+        <translation>画像出力</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="1349"/>
@@ -1951,22 +1983,22 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::MorphMotionModel</name>
     <message>
-        <location filename="../../models/MorphMotionModel.cc" line="485"/>
+        <location filename="../../models/MorphMotionModel.cc" line="487"/>
         <source>Eyeblow</source>
         <translation>眉毛</translation>
     </message>
     <message>
-        <location filename="../../models/MorphMotionModel.cc" line="486"/>
+        <location filename="../../models/MorphMotionModel.cc" line="488"/>
         <source>Eye</source>
         <translation>目</translation>
     </message>
     <message>
-        <location filename="../../models/MorphMotionModel.cc" line="487"/>
+        <location filename="../../models/MorphMotionModel.cc" line="489"/>
         <source>Lip</source>
         <translation>口唇</translation>
     </message>
     <message>
-        <location filename="../../models/MorphMotionModel.cc" line="488"/>
+        <location filename="../../models/MorphMotionModel.cc" line="490"/>
         <source>Other</source>
         <translation>その他</translation>
     </message>
@@ -2378,67 +2410,67 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::TimelineTabWidget</name>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="173"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="174"/>
         <source>Select</source>
         <translation>選択</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="174"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="175"/>
         <source>Rotate</source>
         <translation>回転</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="175"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="176"/>
         <source>Move</source>
         <translation>移動</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="176"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="177"/>
         <source>Bone</source>
         <translation>ボーン</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="177"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="178"/>
         <source>Morph</source>
         <translation>モーフ</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="178"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="179"/>
         <source>Scene</source>
         <translation>場面</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="179"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="180"/>
         <source>Motion Timeline</source>
         <translation>モーションのタイムライン</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="475"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="476"/>
         <source>Not supported operation</source>
         <translation>サポートされていない処理</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="476"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="477"/>
         <source>The timeline is not supported adjusting keyframe weight.</source>
         <translation>キーフレーム調整に対応していません。</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="491"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="492"/>
         <source>No keyframes selected</source>
         <translation>キーフレームの未選択</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="492"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="493"/>
         <source>Select bone or camera keyframe(s) to open interpolation dialog.</source>
         <translation>ボーンまたはカメラのキーフレームをひとつ以上選択してください。</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="515"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="516"/>
         <source>Interpolation is not supported</source>
         <translation>補間の未サポート</translation>
     </message>
     <message>
-        <location filename="../../widgets/TimelineTabWidget.cc" line="516"/>
+        <location filename="../../widgets/TimelineTabWidget.cc" line="517"/>
         <source>Configuration of morph interpolation is not supported (always linear).</source>
         <translation>モーフの補間設定はサポートしていません（常時線形補間）。</translation>
     </message>
