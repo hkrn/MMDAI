@@ -283,8 +283,8 @@ private:
     QScopedPointer<QAction> m_actionDeleteSelectedKeyframeOnToolBar;
     QScopedPointer<QAction> m_actionSelectModelOnToolBar;
     QScopedPointer<QAction> m_actionCreateProjectOnToolBar;
-    QScopedPointer<QAction> m_actionAddObjectOnToolBar;
     QScopedPointer<QAction> m_actionCreateMotionOnToolBar;
+    QScopedPointer<QAction> m_actionAddObjectOnToolBar;
     QScopedPointer<QAction> m_actionDeleteModelOnToolBar;
     QScopedPointer<QAction> m_actionEnableEffectOnToolBar;
     QScopedPointer<QAction> m_actionPlayOnToolBar;

@@ -40,6 +40,7 @@
 #include <QtOpenGL/QtOpenGL>
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
+#include "VertexBundle.h"
 
 #include <vpvl2/Common.h>
 #include <assimp.hpp>
@@ -93,7 +94,8 @@ public:
     Handles(SceneLoader *loaderRef, const QSize &size);
     ~Handles();
 
-    void load();
+    void loadImageHandles();
+    void loadModelHandles();
     void resize(const QSize &size);
     bool testHitModel(const Vector3 &rayFrom,
                       const Vector3 &rayTo,
@@ -134,6 +136,7 @@ private slots:
     void updateBone();
 
 private:
+    class Model;
     struct Texture {
         void load(const QString &path, QGLContext *context);
         QSize size;
@@ -147,42 +150,24 @@ private:
         Texture disableRotate;
     };
     struct Vertex {
-        Vector3 position;
+        Vector4 position;
         Vector3 normal;
-    };
-    class Model {
-    public:
-        Model();
-        ~Model();
-        void bind();
-        void release();
-        void load(const aiMesh *mesh, QList<Vertex> &vertices);
-        void load(const aiMesh *mesh, Handles::StaticWorld *world, btMotionState *state);
-        btRigidBody *body() const { return m_body; }
-        int indices() const { return m_nindices; }
-    private:
-        void setVertexBuffer(const QList<Vertex> &vertices);
-        QGLBuffer m_vbo;
-        btRigidBody *m_body;
-        int m_nindices;
     };
     struct RotationHandle {
         Assimp::Importer importer;
-        Model x;
-        Model y;
-        Model z;
+        QScopedPointer<Model> x;
+        QScopedPointer<Model> y;
+        QScopedPointer<Model> z;
     };
     struct TranslationHandle : public RotationHandle {
-        Model axisX;
-        Model axisY;
-        Model axisZ;
+        QScopedPointer<Model> axisX;
+        QScopedPointer<Model> axisY;
+        QScopedPointer<Model> axisZ;
     };
 
-    void drawModel(Model &model,
-                   const QColor &color,
-                   int requiredVisibilityFlags);
-    void loadImageHandles();
-    void loadModelHandles();
+    void drawModel(Model *model, const QColor &color, int requiredVisibilityFlags);
+    void beginDrawing(const vpvl2::IModel *model);
+    void flushDrawing();
 
     QScopedPointer<TextureDrawHelper> m_helper;
     QScopedPointer<StaticWorld> m_world;
@@ -204,6 +189,7 @@ private:
     float m_prevAngle;
     int m_visibilityFlags;
     bool m_visible;
+    bool m_handleModelsAreLoaded;
 
     Q_DISABLE_COPY(Handles)
 };

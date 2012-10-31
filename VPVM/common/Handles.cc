@@ -145,25 +145,6 @@ protected:
     Handles *m_handles;
 };
 
-static void UIInitializeRenderingModel(const SceneLoader *loader,
-                                       const IModel *model,
-                                       const Transform &transform,
-                                       QGLShaderProgram *program)
-{
-    QGLFunctions func(QGLContext::currentContext());
-    QMatrix4x4 world, view, projection;
-    loader->getCameraMatrices(world, view, projection);
-    if (model) {
-        const Vector3 &position = model->position();
-        world.translate(position.x(), position.y(), position.z());
-    }
-    program->setUniformValue("modelViewProjectionMatrix", projection * view * world);
-    int boneMatrix = program->uniformLocation("boneMatrix");
-    float matrix[16];
-    transform.getOpenGLMatrix(matrix);
-    func.glUniformMatrix4fv(boneMatrix, 1, GL_FALSE, matrix);
-}
-
 }
 
 void Handles::Texture::load(const QString &path, QGLContext *context)
@@ -173,89 +154,124 @@ void Handles::Texture::load(const QString &path, QGLContext *context)
     textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
 }
 
-Handles::Model::Model()
-    : m_vbo(QGLBuffer::VertexBuffer),
-      m_body(0),
-      m_nindices(0)
-{
-}
+class Handles::Model {
+public:
+    Model(QGLShaderProgram *program)
+        : m_program(program),
+          m_vbo(QGLBuffer::VertexBuffer),
+          m_ibo(QGLBuffer::IndexBuffer),
+          m_body(0),
+          m_nindices(0)
+    {
+    }
+    ~Model() {
+    }
 
-Handles::Model::~Model()
-{
-}
-
-void Handles::Model::load(const aiMesh *mesh, QList<Handles::Vertex> &vertices)
-{
-    /* Open Asset Import Library を使って読み込んだモデルを VBO が利用出来る形に再構築 */
-    const aiVector3D *meshVertices = mesh->mVertices;
-    const aiVector3D *meshNormals = mesh->mNormals;
-    const unsigned int nfaces = mesh->mNumFaces;
-    Handles::Vertex vertex;
-    vertices.clear();
-    for (unsigned int i = 0; i < nfaces; i++) {
-        const struct aiFace &face = mesh->mFaces[i];
-        const unsigned int nindices = face.mNumIndices;
-        for (unsigned int j = 0; j < nindices; j++) {
-            const int vertexIndex = face.mIndices[j];
-            const aiVector3D &v = meshVertices[vertexIndex];
-            const aiVector3D &n = meshNormals[vertexIndex];
-            vertex.position.setValue(v.x, v.y, v.z);
-            vertex.position.setW(1);
-            vertex.normal.setValue(n.x, n.y, n.z);
-            vertices.append(vertex);
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.bind()) {
+            m_vbo.bind();
+            m_ibo.bind();
+            m_program->setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Handles::Vertex));
         }
     }
-    setVertexBuffer(vertices);
-    m_nindices = vertices.size();
-}
-
-void Handles::Model::load(const aiMesh *mesh, Handles::StaticWorld *world, btMotionState *state)
-{
-    /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
-    QList<Handles::Vertex> vertices;
-    load(mesh, vertices);
-    QScopedPointer<btTriangleMesh> triangleMesh(new btTriangleMesh());
-    const int nfaces = vertices.size() / 3;
-    for (int i = 0; i < nfaces; i++) {
-        int index = i * 3;
-        triangleMesh->addTriangle(vertices[index + 0].position,
-                                  vertices[index + 1].position,
-                                  vertices[index + 2].position);
+    void releaseVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.release()) {
+            m_vbo.release();
+            m_ibo.release();
+        }
     }
-    const btScalar &mass = 0.0f;
-    const btVector3 localInertia(0.0f, 0.0f, 0.0f);
-    QScopedPointer<btBvhTriangleMeshShape> shape(new btBvhTriangleMeshShape(triangleMesh.take(), true));
-    btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape.take(), localInertia);
-    QScopedPointer<btRigidBody> body(new btRigidBody(info));
-    /*
-     * Bone の位置情報を元に動かす静的なオブジェクトであるため KinematicObject として処理する
-     * これを行わないと stepSimulation で進めても MotionState で Bone の位置情報を引いて更新する処理が行われない
-     */
-    body->setActivationState(DISABLE_DEACTIVATION);
-    body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
-    body->setUserPointer(this);
-    world->addRigidBody(body.data());
-    m_body = body.take();
-}
+    void load(const aiMesh *mesh, QList<Handles::Vertex> &vertices) {
+        /* Open Asset Import Library を使って読み込んだモデルを VBO が利用出来る形に再構築 */
+        const unsigned int nfaces = mesh->mNumFaces;
+        QList<int> indices;
+        for (unsigned int i = 0; i < nfaces; i++) {
+            const struct aiFace &face = mesh->mFaces[i];
+            const unsigned int nindices = face.mNumIndices;
+            for (unsigned int j = 0; j < nindices; j++) {
+                const int vertexIndex = face.mIndices[j];
+                indices.append(vertexIndex);
+            }
+        }
+        const aiVector3D *meshVertices = mesh->mVertices;
+        const aiVector3D *meshNormals = mesh->mNormals;
+        const unsigned int nvertices = mesh->mNumVertices;
+        Handles::Vertex v;
+        vertices.clear();
+        for (unsigned int i = 0; i < nvertices; i++) {
+            const aiVector3D &vertex = meshVertices[i];
+            const aiVector3D &normal = meshNormals[i];
+            v.position.setValue(vertex.x, vertex.y, vertex.z, 1);
+            v.normal.setValue(normal.x, normal.y, normal.z);
+            vertices.append(v);
+        }
+        setVertexBuffer(vertices, indices);
+    }
+    void load(const aiMesh *mesh, Handles::StaticWorld *world, btMotionState *state) {
+        /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
+        QList<Handles::Vertex> vertices;
+        load(mesh, vertices);
+        QScopedPointer<btTriangleMesh> triangleMesh(new btTriangleMesh());
+        const int nfaces = vertices.size() / 3;
+        for (int i = 0; i < nfaces; i++) {
+            int index = i * 3;
+            triangleMesh->addTriangle(vertices[index + 0].position,
+                                      vertices[index + 1].position,
+                                      vertices[index + 2].position);
+        }
+        const btScalar &mass = 0.0f;
+        const btVector3 localInertia(0.0f, 0.0f, 0.0f);
+        QScopedPointer<btBvhTriangleMeshShape> shape(new btBvhTriangleMeshShape(triangleMesh.take(), true));
+        btRigidBody::btRigidBodyConstructionInfo info(mass, state, shape.take(), localInertia);
+        QScopedPointer<btRigidBody> body(new btRigidBody(info));
+        /*
+         * Bone の位置情報を元に動かす静的なオブジェクトであるため KinematicObject として処理する
+         * これを行わないと stepSimulation で進めても MotionState で Bone の位置情報を引いて更新する処理が行われない
+         */
+        body->setActivationState(DISABLE_DEACTIVATION);
+        body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
+        body->setUserPointer(this);
+        world->addRigidBody(body.data());
+        m_body = body.take();
+    }
+    btRigidBody *body() const { return m_body; }
+    int indices() const { return m_nindices; }
 
-void Handles::Model::setVertexBuffer(const QList<Handles::Vertex> &vertices)
-{
-    m_vbo.setUsagePattern(QGLBuffer::StaticDraw);
-    m_vbo.create();
-    m_vbo.bind();
-    m_vbo.allocate(&vertices[0], sizeof(vertices[0]) * vertices.size());
-    m_vbo.release();
-}
+private:
+    void setVertexBuffer(const QList<Handles::Vertex> &vertices, const QList<int> &indices) {
+        m_vbo.setUsagePattern(QGLBuffer::StaticDraw);
+        m_vbo.create();
+        m_vbo.bind();
+        m_vbo.allocate(sizeof(vertices[0]) * vertices.size());
+        void *vertexBufferPtr = m_vbo.map(QGLBuffer::WriteOnly);
+        memcpy(vertexBufferPtr, &vertices[0], m_vbo.size());
+        m_vbo.unmap();
+        m_vbo.release();
+        m_ibo.setUsagePattern(QGLBuffer::StaticDraw);
+        m_ibo.create();
+        m_ibo.bind();
+        m_ibo.allocate(sizeof(indices[0]) * indices.size());
+        void *indexBufferPtr = m_ibo.map(QGLBuffer::WriteOnly);
+        memcpy(indexBufferPtr, &indices[0], m_ibo.size());
+        m_ibo.unmap();
+        m_ibo.release();
+        m_bundle.initialize(QGLContext::currentContext());
+        m_bundle.create();
+        m_bundle.bind();
+        bindVertexBundle(false);
+        m_program->enableAttributeArray(IModel::IBuffer::kVertexStride);
+        m_bundle.release();
+        m_program->release();
+        releaseVertexBundle(false);
+        m_nindices = indices.size();
+    }
 
-void Handles::Model::bind()
-{
-    m_vbo.bind();
-}
-
-void Handles::Model::release()
-{
-    m_vbo.release();
-}
+    QGLShaderProgram *m_program;
+    VertexBundle m_bundle;
+    QGLBuffer m_vbo;
+    QGLBuffer m_ibo;
+    btRigidBody *m_body;
+    int m_nindices;
+};
 
 Handles::Handles(SceneLoader *loaderRef, const QSize &size)
     : QObject(),
@@ -268,7 +284,8 @@ Handles::Handles(SceneLoader *loaderRef, const QSize &size)
       m_prevPos3D(0.0f, 0.0f, 0.0f),
       m_prevAngle(0.0f),
       m_visibilityFlags(kVisibleAll),
-      m_visible(true)
+      m_visible(true),
+      m_handleModelsAreLoaded(false)
 {
 }
 
@@ -297,15 +314,73 @@ Handles::~Handles()
     context->deleteTexture(m_view.textureID);
 }
 
-void Handles::load()
+void Handles::loadImageHandles()
 {
     m_helper->load();
-    loadImageHandles();
-    m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
-    m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
-    if (m_program.link()) {
-        m_program.enableAttributeArray("inPosition");
-        loadModelHandles();
+    QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+    m_x.enableMove.load(":icons/x-enable-move.png", context);
+    m_x.enableRotate.load(":icons/x-enable-rotate.png", context);
+    m_y.enableMove.load(":icons/y-enable-move.png", context);
+    m_y.enableRotate.load(":icons/y-enable-rotate.png", context);
+    m_z.enableMove.load(":icons/z-enable-move.png", context);
+    m_z.enableRotate.load(":icons/z-enable-rotate.png", context);
+    m_x.disableMove.load(":icons/x-disable-move.png", context);
+    m_x.disableRotate.load(":icons/x-disable-rotate.png", context);
+    m_y.disableMove.load(":icons/y-disable-move.png", context);
+    m_y.disableRotate.load(":icons/y-disable-rotate.png", context);
+    m_z.disableMove.load(":icons/z-disable-move.png", context);
+    m_z.disableRotate.load(":icons/z-disable-rotate.png", context);
+    m_global.load(":icons/global.png", context);
+    m_local.load(":icons/local.png", context);
+    m_view.load(":icons/view.png", context);
+}
+
+void Handles::loadModelHandles()
+{
+    if (!m_handleModelsAreLoaded) {
+        m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
+        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
+        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
+        if (m_program.link()) {
+            /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
+            QFile rotationHandleFile(":models/rotation.3ds");
+            if (rotationHandleFile.open(QFile::ReadOnly)) {
+                const QByteArray &rotationHandleBytes = rotationHandleFile.readAll();
+                const uint8_t *data = reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData());
+                size_t size =  rotationHandleBytes.size();
+                const aiScene *scene = m_rotationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
+                aiMesh **meshes = scene->mMeshes;
+                m_rotationHandle.x.reset(new Model(&m_program));
+                m_rotationHandle.x->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
+                m_rotationHandle.y.reset(new Model(&m_program));
+                m_rotationHandle.y->load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
+                m_rotationHandle.z.reset(new Model(&m_program));
+                m_rotationHandle.z->load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
+            }
+            /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
+            QFile translationHandleFile(":models/translation.3ds");
+            if (translationHandleFile.open(QFile::ReadOnly)) {
+                const QByteArray &translationHandleBytes = translationHandleFile.readAll();
+                const uint8_t *data = reinterpret_cast<const uint8_t *>(translationHandleBytes.constData());
+                size_t size =  translationHandleBytes.size();
+                const aiScene *scene = m_translationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
+                aiMesh **meshes = scene->mMeshes;
+                m_translationHandle.x.reset(new Model(&m_program));
+                m_translationHandle.x->load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
+                m_translationHandle.y.reset(new Model(&m_program));
+                m_translationHandle.y->load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
+                m_translationHandle.z.reset(new Model(&m_program));
+                m_translationHandle.z->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
+                QList<Vertex> vertices;
+                m_translationHandle.axisX.reset(new Model(&m_program));
+                m_translationHandle.axisX->load(meshes[3], vertices);
+                m_translationHandle.axisY.reset(new Model(&m_program));
+                m_translationHandle.axisY->load(meshes[5], vertices);
+                m_translationHandle.axisZ.reset(new Model(&m_program));
+                m_translationHandle.axisZ->load(meshes[4], vertices);
+            }
+        }
+        m_handleModelsAreLoaded = true;
     }
 }
 
@@ -362,19 +437,19 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
             const btRigidBody *body = btRigidBody::upcast(callback.m_collisionObject);
             Handles::Model *model = static_cast<Handles::Model *>(body->getUserPointer());
             if (m_boneRef->isMovable() && m_visibilityFlags & kMove) {
-                if (model == &m_translationHandle.x && (m_visibilityFlags & kX))
+                if (model == m_translationHandle.x.data() && (m_visibilityFlags & kX))
                     flags = kModel | kMove | kX;
-                else if (model == &m_translationHandle.y && (m_visibilityFlags & kY))
+                else if (model == m_translationHandle.y.data() && (m_visibilityFlags & kY))
                     flags = kModel | kMove | kY;
-                else if (model == &m_translationHandle.z && (m_visibilityFlags & kZ))
+                else if (model == m_translationHandle.z.data() && (m_visibilityFlags & kZ))
                     flags = kModel | kMove | kZ;
             }
             if (m_boneRef->isRotateable() && m_visibilityFlags & kRotate) {
-                if (model == &m_rotationHandle.x && (m_visibilityFlags & kX))
+                if (model == m_rotationHandle.x.data() && (m_visibilityFlags & kX))
                     flags = kModel | kRotate | kX;
-                else if (model == &m_rotationHandle.y && (m_visibilityFlags & kY))
+                else if (model == m_rotationHandle.y.data() && (m_visibilityFlags & kY))
                     flags = kModel | kRotate | kY;
-                else if (model == &m_rotationHandle.z && (m_visibilityFlags & kZ))
+                else if (model == m_rotationHandle.z.data() && (m_visibilityFlags & kZ))
                     flags = kModel | kRotate | kZ;
             }
             if (setTracked)
@@ -596,19 +671,19 @@ void Handles::setVisibilityFlags(int value)
         QList<btRigidBody *> bodies;
         if (value & kMove) {
             if (value & kX)
-                bodies.append(m_translationHandle.x.body());
+                bodies.append(m_translationHandle.x->body());
             if (value & kY)
-                bodies.append(m_translationHandle.y.body());
+                bodies.append(m_translationHandle.y->body());
             if (value & kZ)
-                bodies.append(m_translationHandle.z.body());
+                bodies.append(m_translationHandle.z->body());
         }
         if (value & kRotate) {
             if (value & kX)
-                bodies.append(m_rotationHandle.x.body());
+                bodies.append(m_rotationHandle.x->body());
             if (value & kY)
-                bodies.append(m_rotationHandle.y.body());
+                bodies.append(m_rotationHandle.y->body());
             if (value & kZ)
-                bodies.append(m_rotationHandle.z.body());
+                bodies.append(m_rotationHandle.z->body());
         }
         m_world->filterObjects(bodies);
     }
@@ -676,100 +751,64 @@ void Handles::drawRotationHandle(const IModel *model)
 {
     if (!m_visible || !m_program.isLinked() || !m_boneRef)
         return;
-    glDisable(GL_DEPTH_TEST);
-    m_program.bind();
-    UIInitializeRenderingModel(m_loaderRef, model, modelHandleTransform(), &m_program);
     if (m_boneRef->isRotateable() && m_visibilityFlags & kRotate) {
-        drawModel(m_rotationHandle.x, kRed, kX);
-        drawModel(m_rotationHandle.y, kGreen, kY);
-        drawModel(m_rotationHandle.z, kBlue, kZ);
+        beginDrawing(model);
+        drawModel(m_rotationHandle.x.data(), kRed, kX);
+        drawModel(m_rotationHandle.y.data(), kGreen, kY);
+        drawModel(m_rotationHandle.z.data(), kBlue, kZ);
+        flushDrawing();
     }
-    m_program.release();
-    glEnable(GL_DEPTH_TEST);
 }
 
 void Handles::drawMoveHandle(const IModel *model)
 {
     if (!m_visible || !m_program.isLinked() || !m_boneRef)
         return;
-    glDisable(GL_DEPTH_TEST);
-    m_program.bind();
-    UIInitializeRenderingModel(m_loaderRef, model, modelHandleTransform(), &m_program);
     if (m_boneRef->isMovable() && m_visibilityFlags & kMove) {
-        drawModel(m_translationHandle.x, kRed, kX);
-        drawModel(m_translationHandle.y, kGreen, kY);
-        drawModel(m_translationHandle.z, kBlue, kZ);
-        drawModel(m_translationHandle.axisX, kRed, kX);
-        drawModel(m_translationHandle.axisY, kGreen, kY);
-        drawModel(m_translationHandle.axisZ, kBlue, kZ);
+        beginDrawing(model);
+        drawModel(m_translationHandle.x.data(), kRed, kX);
+        drawModel(m_translationHandle.y.data(), kGreen, kY);
+        drawModel(m_translationHandle.z.data(), kBlue, kZ);
+        drawModel(m_translationHandle.axisX.data(), kRed, kX);
+        drawModel(m_translationHandle.axisY.data(), kGreen, kY);
+        drawModel(m_translationHandle.axisZ.data(), kBlue, kZ);
+        flushDrawing();
     }
-    m_program.release();
-    glEnable(GL_DEPTH_TEST);
 }
 
-void Handles::drawModel(Handles::Model &model,
+void Handles::drawModel(Handles::Model *model,
                         const QColor &color,
                         int requiredVisibilityFlags)
 {
     if (m_visibilityFlags & requiredVisibilityFlags) {
-        model.bind();
-        m_program.setUniformValue("color", &model == m_trackedHandleRef ? kYellow : color);
-        m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Handles::Vertex));
-        glDrawArrays(GL_TRIANGLES, 0, model.indices());
-        model.release();
+        m_program.setUniformValue("color", model == m_trackedHandleRef ? kYellow : color);
+        model->bindVertexBundle(true);
+        glDrawElements(GL_TRIANGLES, model->indices(), GL_UNSIGNED_INT, 0);
+        model->releaseVertexBundle(true);
     }
 }
 
-void Handles::loadImageHandles()
+void Handles::beginDrawing(const IModel *model)
 {
-    QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-    m_x.enableMove.load(":icons/x-enable-move.png", context);
-    m_x.enableRotate.load(":icons/x-enable-rotate.png", context);
-    m_y.enableMove.load(":icons/y-enable-move.png", context);
-    m_y.enableRotate.load(":icons/y-enable-rotate.png", context);
-    m_z.enableMove.load(":icons/z-enable-move.png", context);
-    m_z.enableRotate.load(":icons/z-enable-rotate.png", context);
-    m_x.disableMove.load(":icons/x-disable-move.png", context);
-    m_x.disableRotate.load(":icons/x-disable-rotate.png", context);
-    m_y.disableMove.load(":icons/y-disable-move.png", context);
-    m_y.disableRotate.load(":icons/y-disable-rotate.png", context);
-    m_z.disableMove.load(":icons/z-disable-move.png", context);
-    m_z.disableRotate.load(":icons/z-disable-rotate.png", context);
-    m_global.load(":icons/global.png", context);
-    m_local.load(":icons/local.png", context);
-    m_view.load(":icons/view.png", context);
+    QMatrix4x4 world, view, projection, trans;
+    m_loaderRef->getCameraMatrices(world, view, projection);
+    if (model) {
+        const Vector3 &position = model->position();
+        world.translate(position.x(), position.y(), position.z());
+    }
+    float matrix[16];
+    modelHandleTransform().getOpenGLMatrix(matrix);
+    for (int i = 0; i < 16; i++)
+        trans.data()[i] = matrix[i];
+    glDisable(GL_DEPTH_TEST);
+    m_program.bind();
+    m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world * trans);
 }
 
-void Handles::loadModelHandles()
+void Handles::flushDrawing()
 {
-    /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
-    QFile rotationHandleFile(":models/rotation.3ds");
-    if (rotationHandleFile.open(QFile::ReadOnly)) {
-        const QByteArray &rotationHandleBytes = rotationHandleFile.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData());
-        size_t size =  rotationHandleBytes.size();
-        const aiScene *scene = m_rotationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_Fast);
-        aiMesh **meshes = scene->mMeshes;
-        m_rotationHandle.x.load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
-        m_rotationHandle.y.load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
-        m_rotationHandle.z.load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
-    }
-    /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
-    QFile translationHandleFile(":models/translation.3ds");
-    if (translationHandleFile.open(QFile::ReadOnly)) {
-        const QByteArray &translationHandleBytes = translationHandleFile.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(translationHandleBytes.constData());
-        size_t size =  translationHandleBytes.size();
-        const aiScene *scene = m_translationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_Fast);
-        aiMesh **meshes = scene->mMeshes;
-        m_translationHandle.x.load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
-        m_translationHandle.y.load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
-        m_translationHandle.z.load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
-        QList<Vertex> vertices;
-        m_translationHandle.axisX.load(meshes[3], vertices);
-        m_translationHandle.axisY.load(meshes[5], vertices);
-        m_translationHandle.axisZ.load(meshes[4], vertices);
-    }
+    m_program.release();
+    glEnable(GL_DEPTH_TEST);
 }
 
 } /* namespace vpvm */

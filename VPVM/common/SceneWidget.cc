@@ -418,6 +418,7 @@ void SceneWidget::loadModel(const QString &path, IModelPtr &modelPtr, bool skipD
         if (m_loader->loadModel(path, modelPtr)) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
                 QUuid uuid;
+                m_handles->loadModelHandles();
                 m_loader->addModel(modelPtr.data(), fi.fileName(), fi.dir(), uuid);
                 emit fileDidLoad(path);
             }
@@ -1030,7 +1031,7 @@ void SceneWidget::initializeGL()
     const QSize &s = size();
     m_handles.reset(new Handles(m_loader.data(), s));
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
-    m_handles->load();
+    m_handles->loadImageHandles();
     m_info.reset(new InfoPanel(s));
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();

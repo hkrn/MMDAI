@@ -89,6 +89,7 @@ LicenseWidget::LicenseWidget(QWidget *parent)
     resize(600, 450);
     setLayout(layout.take());
 
+    addLibrary("Glyph Icons", "CC 3.0", "http://glyphicons.com/", "GlyphIcons");
 #ifdef VPVL2_LINK_NVTT
     addLibrary("NVIDIA texture tools", "MIT", "http://code.google.com/p/nvidia-texture-tools/", "nvtt");
 #endif /* VPVL2_LINK_NVTT */
