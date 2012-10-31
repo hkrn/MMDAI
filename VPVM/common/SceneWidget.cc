@@ -384,6 +384,18 @@ void SceneWidget::setBoneWireFramesVisible(bool value)
     m_debugDrawer->setVisible(value);
 }
 
+void SceneWidget::addFile()
+{
+    loadFile(openFileDialog("sceneWidget/lastFileDirectory",
+                             tr("Open a file"),
+                             tr("Model file (*.pmd *.pmx *.zip);;"
+                                "Accessory file (*.x);;"
+                                "Model motion file (*.vmd *.mvd);;"
+                                "Pose file (*.vpd);;"
+                                "Accessory metadata file (*.vac)"),
+                             m_settingsRef));
+}
+
 void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
@@ -530,8 +542,8 @@ void SceneWidget::addAsset()
 {
     IModelPtr asset;
     loadAsset(openFileDialog("sceneWidget/lastAssetDirectory",
-                             tr("Open X file"),
-                             tr("DirectX mesh file (*.x *.zip)"),
+                             tr("Open accessory file"),
+                             tr("Accessory file (*.x *.zip)"),
                              m_settingsRef),
               asset);
     asset.take();
@@ -886,7 +898,7 @@ void SceneWidget::loadFile(const QString &path)
         }
     }
     /* モーションファイル */
-    else if (extension == "vmd") {
+    else if (extension == "vmd" || extension == "mvd") {
         IMotionPtr motionPtr;
         loadMotionToModel(path, m_loader->selectedModelRef(), motionPtr);
         if (motionPtr) {

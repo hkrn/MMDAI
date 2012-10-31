@@ -218,6 +218,7 @@ protected:
     QSettings *m_settingsRef;
 
 private slots:
+    void addFile();
     void addModel();
     void addAsset();
     void addAssetFromMetadata();

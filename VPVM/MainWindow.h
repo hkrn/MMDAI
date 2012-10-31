@@ -279,12 +279,14 @@ private:
     QScopedPointer<QAction> m_actionShowSceneDock;
     QScopedPointer<QAction> m_actionShowModelDock;
     QScopedPointer<QAction> m_actionShowModelDialog;
-    QScopedPointer<QAction> m_actionAddModelOnToolBar;
-    QScopedPointer<QAction> m_actionAddAssetOnToolBar;
     QScopedPointer<QAction> m_actionSelectModelOnToolBar;
+    QScopedPointer<QAction> m_actionCreateProjectOnToolBar;
+    QScopedPointer<QAction> m_actionAddObjectOnToolBar;
     QScopedPointer<QAction> m_actionCreateMotionOnToolBar;
-    QScopedPointer<QAction> m_actionInsertMotionOnToolBar;
     QScopedPointer<QAction> m_actionDeleteModelOnToolBar;
+    QScopedPointer<QAction> m_actionPlayOnToolBar;
+    QScopedPointer<QAction> m_actionExportImageOnToolBar;
+    QScopedPointer<QAction> m_actionExportVideoOnToolBar;
     QScopedPointer<QAction> m_actionSetSoftwareSkinningFallback;
     QScopedPointer<QAction> m_actionSetOpenCLSkinningType1;
     QScopedPointer<QAction> m_actionSetOpenCLSkinningType2;

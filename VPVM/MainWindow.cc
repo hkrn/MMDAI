@@ -264,12 +264,6 @@ MainWindow::MainWindow(const QHash<IEncoding::ConstantType, CString *> &constant
       m_actionShowSceneDock(new QAction(0)),
       m_actionShowModelDock(new QAction(0)),
       m_actionShowModelDialog(new QAction(0)),
-      m_actionAddModelOnToolBar(new QAction(0)),
-      m_actionAddAssetOnToolBar(new QAction(0)),
-      m_actionSelectModelOnToolBar(new QAction(0)),
-      m_actionCreateMotionOnToolBar(new QAction(0)),
-      m_actionInsertMotionOnToolBar(new QAction(0)),
-      m_actionDeleteModelOnToolBar(new QAction(0)),
       m_actionSetSoftwareSkinningFallback(new QAction(0)),
       m_actionSetOpenCLSkinningType1(new QAction(0)),
       m_actionSetOpenCLSkinningType2(new QAction(0)),
@@ -1010,11 +1004,14 @@ void MainWindow::buildUI()
     setCentralWidget(m_sceneWidget.data());
     updateRecentFiles();
 
-    m_actionAddModelOnToolBar.reset(m_mainToolBar->addAction("", m_sceneWidget.data(), SLOT(addModel())));
+    m_actionCreateProjectOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(newProjectFile())));
+    m_actionAddObjectOnToolBar.reset(m_mainToolBar->addAction("", m_sceneWidget.data(), SLOT(addFile())));
     m_actionCreateMotionOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(newMotionFile())));
-    m_actionInsertMotionOnToolBar.reset(m_mainToolBar->addAction("", m_sceneWidget.data(), SLOT(insertMotionToSelectedModel())));
-    m_actionAddAssetOnToolBar.reset(m_mainToolBar->addAction("", m_sceneWidget.data(), SLOT(addAsset())));
     m_actionDeleteModelOnToolBar.reset(m_mainToolBar->addAction("", m_sceneWidget.data(), SLOT(deleteSelectedModel())));
+    m_mainToolBar->addSeparator();
+    m_actionPlayOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(invokePlayer())));
+    m_actionExportVideoOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(exportVideo())));
+    m_actionExportImageOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(exportImage())));
     addToolBar(m_mainToolBar.data());
 
     retranslate();
@@ -1304,16 +1301,20 @@ void MainWindow::retranslate()
     m_actionAboutQt->setStatusTip(tr("About Qt."));
     m_actionClearRecentFiles->setText(tr("Clear recent files history"));
     m_actionClearRecentFiles->setStatusTip(tr("Clear the history of recently opened files."));
-    m_actionAddModelOnToolBar->setText(tr("Add model"));
-    m_actionAddModelOnToolBar->setStatusTip(m_actionAddModel->statusTip());
-    m_actionAddAssetOnToolBar->setText(tr("Add asset"));
-    m_actionAddAssetOnToolBar->setStatusTip(m_actionAddAsset->statusTip());
-    m_actionInsertMotionOnToolBar->setText(tr("Add motion"));
-    m_actionInsertMotionOnToolBar->setStatusTip(m_actionInsertToSelectedModel->statusTip());
+    m_actionCreateProjectOnToolBar->setText(tr("Create project"));
+    m_actionCreateProjectOnToolBar->setStatusTip(m_actionNewProject->statusTip());
+    m_actionAddObjectOnToolBar->setText(tr("Add model/motion"));
+    m_actionAddObjectOnToolBar->setStatusTip(m_actionAddModel->statusTip());
     m_actionCreateMotionOnToolBar->setText(tr("Create motion"));
     m_actionCreateMotionOnToolBar->setStatusTip(tr("Create an empty model motion (discards previous model motion)."));
     m_actionDeleteModelOnToolBar->setText(tr("Delete model"));
     m_actionDeleteModelOnToolBar->setStatusTip(m_actionDeleteSelectedModel->statusTip());
+    m_actionPlayOnToolBar->setText(tr("Play"));
+    m_actionPlayOnToolBar->setStatusTip(m_actionPlay->statusTip());
+    m_actionExportVideoOnToolBar->setText(tr("Export video"));
+    m_actionExportVideoOnToolBar->setStatusTip(m_actionExportVideo->statusTip());
+    m_actionExportImageOnToolBar->setText(tr("Export image"));
+    m_actionExportImageOnToolBar->setStatusTip(m_actionExportImage->statusTip());
     m_actionSetSoftwareSkinningFallback->setText(tr("Software skinning"));
     m_actionSetSoftwareSkinningFallback->setStatusTip(tr("Enable software skinning. This is default and stable but slow."));
     m_actionSetOpenCLSkinningType1->setText(tr("OpenCL skinning (GPU)"));
