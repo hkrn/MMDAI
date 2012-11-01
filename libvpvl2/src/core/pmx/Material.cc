@@ -368,7 +368,7 @@ bool Material::hasShadow() const
 
 bool Material::isShadowMapDrawn() const
 {
-    return internal::hasFlagBits(m_flags, 0x04 && !isPointDraw());
+    return internal::hasFlagBits(m_flags, 0x04) && !isPointDraw();
 }
 
 bool Material::isSelfShadowDrawn() const
