@@ -787,7 +787,7 @@ void Model::loadMaterials()
     const int nmaterials = materials.count();
     for (int i = 0; i < nmaterials; i++) {
         vpvl::Material *material = materials[i];
-        m_materials.add(new Material(material, m_encodingRef, i));
+        m_materials.add(new Material(material, m_encodingRef, &m_model, i));
     }
 }
 

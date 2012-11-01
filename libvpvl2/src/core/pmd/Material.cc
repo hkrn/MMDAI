@@ -49,7 +49,7 @@ namespace pmd
 
 const Color Material::kWhiteColor = Color(1, 1, 1, 1);
 
-Material::Material(vpvl::Material *materialRef, IEncoding *encodingRef, int index)
+Material::Material(vpvl::Material *materialRef, IEncoding *encodingRef, const vpvl::PMDModel *modelRef, int index)
     : m_materialRef(materialRef),
       m_encodingRef(encodingRef),
       m_mainTexture(0),
@@ -61,20 +61,26 @@ Material::Material(vpvl::Material *materialRef, IEncoding *encodingRef, int inde
       m_index(index)
 {
     if (m_materialRef->isMainSphereModulate()) {
-        m_sphereTexture = m_encodingRef->toString(m_materialRef->mainTextureName(), IString::kShiftJIS, vpvl::Material::kNameSize);
+        m_sphereTexture = m_encodingRef->toString(m_materialRef->mainTextureName(),
+                                                  IString::kShiftJIS, vpvl::Material::kNameSize);
         m_sphereTextureRenderMode = kMultTexture;
     }
     else {
-        m_mainTexture = m_encodingRef->toString(m_materialRef->mainTextureName(), IString::kShiftJIS, vpvl::Material::kNameSize);
+        m_mainTexture = m_encodingRef->toString(m_materialRef->mainTextureName(),
+                                                IString::kShiftJIS, vpvl::Material::kNameSize);
     }
     if (m_materialRef->isSubSphereAdd()) {
-        m_sphereTexture = m_encodingRef->toString(m_materialRef->subTextureName(), IString::kShiftJIS, vpvl::Material::kNameSize);
+        m_sphereTexture = m_encodingRef->toString(m_materialRef->subTextureName(),
+                                                  IString::kShiftJIS, vpvl::Material::kNameSize);
         m_sphereTextureRenderMode = kAddTexture;
     }
     else if (m_materialRef->isSubSphereModulate()) {
-        m_sphereTexture = m_encodingRef->toString(m_materialRef->subTextureName(), IString::kShiftJIS, vpvl::Material::kNameSize);
+        m_sphereTexture = m_encodingRef->toString(m_materialRef->subTextureName(),
+                                                  IString::kShiftJIS, vpvl::Material::kNameSize);
         m_sphereTextureRenderMode = kMultTexture;
     }
+    m_toonTexture = m_encodingRef->toString(modelRef->toonTexture(m_materialRef->toonID() - 1),
+                                            IString::kShiftJIS, vpvl::PMDModel::kCustomTextureNameMax);
     m_diffuse.setW(materialRef->opacity());
 }
 

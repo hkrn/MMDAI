@@ -41,7 +41,11 @@
 #include "vpvl2/IMaterial.h"
 #include "vpvl2/pmd/Model.h"
 
-#include "vpvl/Material.h"
+namespace vpvl
+{
+class Material;
+class PMDModel;
+}
 
 namespace vpvl2
 {
@@ -54,7 +58,7 @@ class VPVL2_API Material : public IMaterial
 public:
     static const int kNameSize = 20;
 
-    Material(vpvl::Material *materialRef, IEncoding *encodingRef, int index);
+    Material(vpvl::Material *materialRef, IEncoding *encodingRef, const vpvl::PMDModel *modelRef, int index);
     ~Material();
 
     const IString *name() const { return 0; }
