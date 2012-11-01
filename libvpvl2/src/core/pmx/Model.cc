@@ -557,6 +557,8 @@ Model::Model(IEncoding *encoding)
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
+      m_aabbMax(kZeroV3),
+      m_aabbMin(kZeroV3),
       m_position(kZeroV3),
       m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
@@ -1209,6 +1211,18 @@ void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
     else {
         matrixBuffer = 0;
     }
+}
+
+void Model::setAabb(const Vector3 &min, const Vector3 &max)
+{
+    m_aabbMin = min;
+    m_aabbMax = max;
+}
+
+void Model::getAabb(Vector3 &min, Vector3 &max) const
+{
+    min = m_aabbMin;
+    max = m_aabbMax;
 }
 
 }

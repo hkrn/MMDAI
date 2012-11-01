@@ -299,7 +299,9 @@ void AssetRenderEngine::renderZPlot()
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
     const aiScene *a = m_modelRef->aiScenePtr();
+    glDisable(GL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
+    glEnable(GL_CULL_FACE);
 }
 
 IModel *AssetRenderEngine::model() const
@@ -637,7 +639,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
                              | IRenderDelegate::kProjectionMatrix
                              | IRenderDelegate::kCameraMatrix);
     program->setModelViewProjectionMatrix(matrix4x4);
-    glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
@@ -648,7 +649,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         size_t nindices = m_context->indices[mesh];
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
     }
-    glCullFace(GL_BACK);
     unbindVertexBundle();
     program->unbind();
     const unsigned int nChildNodes = node->mNumChildren;

@@ -205,6 +205,8 @@ public:
     void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
                          IDynamicVertexBuffer *dynamicBuffer,
                          const IIndexBuffer *indexBuffer) const;
+    void setAabb(const Vector3 &min, const Vector3 &max);
+    void getAabb(Vector3 &min, Vector3 &max) const;
 
 private:
     void release();
@@ -238,6 +240,8 @@ private:
     IString *m_englishName;
     IString *m_comment;
     IString *m_englishComment;
+    Vector3 m_aabbMax;
+    Vector3 m_aabbMin;
     Vector3 m_position;
     Quaternion m_rotation;
     Scalar m_opacity;

@@ -414,6 +414,8 @@ Model::Model(IEncoding *encoding)
       m_comment(0),
       m_parentModelRef(0),
       m_parentBoneRef(0),
+      m_aabbMax(kZeroV3),
+      m_aabbMin(kZeroV3),
       m_position(kZeroV3),
       m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
@@ -600,6 +602,18 @@ void Model::setParentBone(IBone *value)
 void Model::setVisible(bool value)
 {
     m_visible = value;
+}
+
+void Model::setAabb(const Vector3 &min, const Vector3 &max)
+{
+    m_aabbMin = min;
+    m_aabbMax = max;
+}
+
+void Model::getAabb(Vector3 &min, Vector3 &max) const
+{
+    min = m_aabbMin;
+    max = m_aabbMax;
 }
 
 #ifdef VPVL2_LINK_ASSIMP

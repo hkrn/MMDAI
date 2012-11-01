@@ -340,6 +340,8 @@ public:
     virtual void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
                                  IDynamicVertexBuffer *dynamicBuffer,
                                  const IIndexBuffer *indexBuffer) const = 0;
+    virtual void setAabb(const Vector3 &min, const Vector3 &max) = 0;
+    virtual void getAabb(Vector3 &min, Vector3 &max) const = 0;
 };
 
 } /* namespace vpvl2 */

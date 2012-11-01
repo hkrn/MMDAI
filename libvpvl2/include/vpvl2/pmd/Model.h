@@ -114,6 +114,9 @@ public:
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
     void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer, const IIndexBuffer *indexBuffer) const;
     void getMatrixBuffer(IMatrixBuffer *&matrixBuffer, IDynamicVertexBuffer *dynamicBuffer, const IIndexBuffer *indexBuffer) const;
+    void setAabb(const Vector3 &min, const Vector3 &max);
+    void getAabb(Vector3 &min, Vector3 &max) const;
+    void setSkinnningEnable(bool value);
 
     vpvl::PMDModel *reference() const { return &m_model; }
     const Array<IBone *> &bones() const { return m_bones; }
@@ -121,23 +124,6 @@ public:
     const Array<IMaterial *> &materials() const { return m_materials; }
     const Array<IMorph *> &morphs() const { return m_morphs; }
     const Array<IVertex *> &vertices() const { return m_vertices; }
-
-    typedef btAlignedObjectArray<int> BoneIndices;
-    typedef btAlignedObjectArray<Vector4> VertexBoneIndicesAndWeights;
-    typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
-    typedef btAlignedObjectArray<VertexBoneIndicesAndWeights> MeshVertexBoneIndicesAndWeights;
-    typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
-    typedef Array<Scalar *> MeshMatrices;
-    struct SkinningMeshes {
-        MeshBoneIndices bones;
-        MeshLocalTransforms transforms;
-        MeshMatrices matrices;
-        ~SkinningMeshes() { matrices.releaseArrayAll(); }
-    };
-    void getSkinningMeshes(SkinningMeshes &meshes) const;
-    void updateSkinningMeshes(SkinningMeshes &meshes) const;
-    void overrideEdgeVerticesOffset();
-    void setSkinnningEnable(bool value);
 
 private:
     void loadBones(Hash<HashPtr, Bone *> &bone2bone);
@@ -160,6 +146,8 @@ private:
     Array<IVertex *> m_vertices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
+    Vector3 m_aabbMax;
+    Vector3 m_aabbMin;
     Vector3 m_position;
     Quaternion m_rotation;
     Scalar m_opacity;

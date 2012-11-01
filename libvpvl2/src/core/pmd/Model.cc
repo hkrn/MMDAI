@@ -399,6 +399,8 @@ Model::Model(IEncoding *encoding)
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
+      m_aabbMax(kZeroV3),
+      m_aabbMin(kZeroV3),
       m_position(kZeroV3),
       m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
@@ -700,20 +702,16 @@ void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer, IDynamicVertexBuffer *
     }
 }
 
-void Model::overrideEdgeVerticesOffset()
+void Model::setAabb(const Vector3 &min, const Vector3 &max)
 {
-    const size_t &stride = m_model.strideSize(vpvl::PMDModel::kVerticesStride);
-    const vpvl::VertexList &vertices = m_model.vertices();
-    const int nvertices = vertices.count();
-    uint8_t *verticesPtr = const_cast<uint8_t *>(static_cast<const uint8_t *>(m_model.verticesPointer()));
-    size_t edgeOffset = m_model.strideOffset(vpvl::PMDModel::kEdgeVerticesStride);
-    for (int i = 0; i < nvertices; i++) {
-        const vpvl::Vertex *vertex = vertices[i];
-        const Scalar w(vertex->isEdgeEnabled() ? 1.0f : 0.0f);
-        Vector3 &edge = *reinterpret_cast<Vector3 *>(verticesPtr + edgeOffset);
-        edge.setValue(w, w, w);
-        edgeOffset += stride;
-    }
+    m_aabbMin = min;
+    m_aabbMax = max;
+}
+
+void Model::getAabb(Vector3 &min, Vector3 &max) const
+{
+    min = m_aabbMin;
+    max = m_aabbMax;
 }
 
 void Model::setSkinnningEnable(bool value)

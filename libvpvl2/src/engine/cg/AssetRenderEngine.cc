@@ -266,7 +266,9 @@ void AssetRenderEngine::renderZPlot()
         return;
     m_currentRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
+    glDisable(GL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
+    glEnable(GL_CULL_FACE);
 }
 
 bool AssetRenderEngine::hasPreProcess() const
@@ -452,7 +454,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 {
     const unsigned int nmeshes = node->mNumMeshes;
     float opacity;
-    glCullFace(GL_FRONT);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
@@ -466,7 +467,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
         }
     }
-    glCullFace(GL_BACK);
     unbindVertexBundle();
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)

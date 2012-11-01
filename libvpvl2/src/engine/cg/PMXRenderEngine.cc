@@ -214,6 +214,7 @@ void PMXRenderEngine::update()
         m_accelerator->update(m_dynamicBuffer, m_sceneRef, buffer, m_aabbMin, m_aabbMax);
     }
 #endif
+    m_modelRef->setAabb(m_aabbMin, m_aabbMax);
     m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
     m_currentRef->updateSceneParameters();
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
@@ -336,7 +337,7 @@ void PMXRenderEngine::renderZPlot()
     const size_t indexStride = m_indexBuffer->strideSize();
     const int nmaterials = m_materials.count();
     size_t offset = 0;
-    glCullFace(GL_FRONT);
+    glDisable(GL_CULL_FACE);
     bindVertexBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
@@ -348,7 +349,7 @@ void PMXRenderEngine::renderZPlot()
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
-    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
 }
 
 bool PMXRenderEngine::hasPreProcess() const

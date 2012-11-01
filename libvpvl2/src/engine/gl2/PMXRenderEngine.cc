@@ -690,6 +690,7 @@ void PMXRenderEngine::update()
         m_accelerator->update(dynamicBuffer, m_sceneRef, buffer, m_aabbMin, m_aabbMax);
     }
 #endif
+    m_modelRef->setAabb(m_aabbMin, m_aabbMax);
     m_context->updateEven = m_context->updateEven ? false :true;
 }
 
@@ -892,7 +893,7 @@ void PMXRenderEngine::renderZPlot()
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
-    glCullFace(GL_FRONT);
+    glDisable(GL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indices();
@@ -906,7 +907,7 @@ void PMXRenderEngine::renderZPlot()
         offset += nindices * size;
     }
     unbindVertexBundle();
-    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
     zplotProgram->unbind();
 }
 

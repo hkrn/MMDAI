@@ -117,6 +117,8 @@ public:
     void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
                          IDynamicVertexBuffer */*dynamicBuffer*/,
                          const IIndexBuffer */*indexBuffer*/) const { matrixBuffer = 0; }
+    void setAabb(const Vector3 &min, const Vector3 &max);
+    void getAabb(Vector3 &min, Vector3 &max) const;
 
 #ifdef VPVL2_LINK_ASSIMP
     const aiScene *aiScenePtr() const { return m_scene; }
@@ -145,6 +147,8 @@ private:
     mutable Array<uint32_t> m_indices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
+    Vector3 m_aabbMax;
+    Vector3 m_aabbMin;
     Vector3 m_position;
     Quaternion m_rotation;
     Scalar m_opacity;
