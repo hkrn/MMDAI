@@ -1,4 +1,4 @@
-/* pmx/zplot.fsh based on three.js */
+/* pmx/zplot.fsh */
 #if __VERSION__ < 130
 #define in varying
 #define outPixelColor gl_FragColor
@@ -8,16 +8,9 @@ out vec4 outPixelColor;
 #ifdef GL_ES
 precision highp float;
 #endif
-const vec4 kBitShift = vec4(16777216.0, 65536.0, 256.0, 1.0);
-const vec4 kBitMask = vec4(0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
-
-vec4 packDepth(const float depth) {
-    vec4 res = fract(depth * kBitShift);
-    res -= res.xxyz * kBitMask;
-    return res;
-}
+in vec4 outPosition;
 
 void main() {
-    outPixelColor = packDepth(gl_FragCoord.z);
+    outPixelColor = vec4(outPosition.z / outPosition.w);
 }
 

@@ -448,14 +448,14 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
         }
     }
     else if (flags & IRenderDelegate::kLightMatrix) {
-        if (flags & IRenderDelegate::kWorldMatrix) {
-            m *= m_lightWorldMatrix;
-            m.scale(model->scaleFactor());
-        }
         if (flags & IRenderDelegate::kProjectionMatrix)
             m *= m_lightProjectionMatrix;
         if (flags & IRenderDelegate::kViewMatrix)
             m *= m_lightViewMatrix;
+        if (flags & IRenderDelegate::kWorldMatrix) {
+            m *= m_lightWorldMatrix;
+            m.scale(model->scaleFactor());
+        }
     }
     if (flags & IRenderDelegate::kInverseMatrix)
         m = m.inverted();

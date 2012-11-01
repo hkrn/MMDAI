@@ -146,21 +146,6 @@ public:
             glDeleteProgram(m_program);
             return false;
         }
-        GLint validated;
-        glValidateProgram(m_program);
-        glGetProgramiv(m_program, GL_VALIDATE_STATUS, &validated);
-        if (!validated) {
-            GLint len = 0;
-            glGetShaderiv(m_program, GL_INFO_LOG_LENGTH, &len);
-            if (len > 0) {
-                delete[] m_message;
-                m_message = new char[len];
-                glGetProgramInfoLog(m_program, len, NULL, m_message);
-                log0(context, IRenderDelegate::kLogWarning, "Validation failed: %s", m_message);
-            }
-            glDeleteProgram(m_program);
-            return false;
-        }
         log0(context, IRenderDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
         getUniformLocations();
         return true;

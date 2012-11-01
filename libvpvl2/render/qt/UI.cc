@@ -374,16 +374,83 @@ static QHash<IEncoding::ConstantType, CString *> UIBuildConstantsDictionary(QSet
     return dict;
 }
 
+class UI::ShadowMap : protected QGLFunctions {
+public:
+    ShadowMap(int width, int height)
+        : QGLFunctions(),
+          m_size(width, height, 0),
+          m_frameBuffer(0),
+          m_colorTexture(0),
+          m_depthTexture(0)
+    {
+        initializeGLFunctions();
+    }
+    ~ShadowMap() {
+        release();
+    }
+
+    void create() {
+        release();
+        glGenFramebuffers(1, &m_frameBuffer);
+        glGenTextures(1, &m_colorTexture);
+        glGenTextures(1, &m_depthTexture);
+        size_t width = m_size.x(), height = m_size.y();
+        glBindTexture(GL_TEXTURE_2D, m_colorTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, 0);
+        setTextureParameters();
+        glBindTexture(GL_TEXTURE_2D, m_depthTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+        glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+        setTextureParameters();
+        glBindTexture(GL_TEXTURE_2D, 0);
+        bind();
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorTexture, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTexture, 0);
+        unbind();
+    }
+    void bind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    }
+    void unbind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    const Vector3 &size() const { return m_size; }
+    void *bufferRef() const { return &m_colorTexture; }
+
+private:
+    void setTextureParameters() {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    }
+    void release() {
+        glDeleteFramebuffers(1, &m_frameBuffer);
+        m_frameBuffer = 0;
+        glDeleteTextures(1, &m_colorTexture);
+        m_colorTexture = 0;
+        glDeleteTextures(1, &m_depthTexture);
+        m_depthTexture = 0;
+    }
+
+    Vector3 m_size;
+    GLuint m_frameBuffer;
+    mutable GLuint m_colorTexture;
+    GLuint m_depthTexture;
+};
+
 UI::UI()
     : QGLWidget(new CustomGLContext(QGLFormat(QGL::SampleBuffers)), 0),
       m_settings(0),
-      m_fbo(0),
+      m_sm(0),
       m_world(0),
       m_delegate(0),
       m_scene(0),
       m_factory(0),
       m_encoding(0),
-      m_depthTextureID(0),
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {
@@ -400,8 +467,6 @@ UI::~UI()
 #endif
     delete m_delegate;
     m_delegate = 0;
-    delete m_fbo;
-    m_fbo = 0;
     delete m_factory;
     m_factory = 0;
     delete m_encoding;
@@ -410,6 +475,8 @@ UI::~UI()
     m_scene = 0;
     delete m_world;
     m_world = 0;
+    delete m_sm;
+    m_sm = 0;
 }
 
 void UI::load(const QString &filename)
@@ -437,11 +504,11 @@ void UI::load(const QString &filename)
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
-    if (m_fbo) {
-        m_depthTextureID = m_fbo->texture();
-        light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
-        if (m_settings->value("enable.sm", false).toBool())
-            light->setDepthTexture(&m_depthTextureID);
+    m_sm = new ShadowMap(1024, 1024);
+    if (m_settings->value("enable.sm", false).toBool()) {
+        m_sm->create();
+        light->setDepthTextureSize(m_sm->size());
+        light->setDepthTexture(m_sm->bufferRef());
     }
     if (loadScene()) {
         startTimer(1000.0f / 60.0f);
@@ -488,23 +555,6 @@ void UI::initializeGL()
     glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-    ILight *light = m_scene->light();
-    QGLFramebufferObjectFormat format;
-    format.setAttachment(QGLFramebufferObject::Depth);
-#if GL_ARB_texture_float
-    format.setInternalTextureFormat(GL_RGBA32F_ARB);
-    light->setHasFloatTexture(true);
-#endif
-    m_fbo = new QGLFramebufferObject(1024, 1024, format);
-    GLuint textureID = m_depthTextureID = m_fbo->texture();
-    if (textureID > 0) {
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
 }
 
 void UI::timerEvent(QTimerEvent *)
@@ -597,26 +647,26 @@ void UI::paintGL()
 void UI::renderDepth()
 {
     if (m_scene->light()->depthTexture()) {
-        glDisable(GL_BLEND);
-        m_fbo->bind();
-        Vector3 target = kZeroV3, center;
-        Scalar maxRadius = 0, radius;
+        m_sm->bind();
+        Vector3 target(0, 10, 0);
+        Scalar maxRadius = 0;
         const Array<IRenderEngine *> &engines = m_scene->renderEngines();
         const Array<IModel *> &models = m_scene->models();
         const int nengines = engines.count();
         const int nmodels = models.count();
         Array<Scalar> radiusArray;
         Array<Vector3> centerArray;
+        Vector3 aabbMin, aabbMax;
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
             if (model->isVisible()) {
-                // model->getBoundingSphere(center, radius);
-                radiusArray.add(radius);
-                centerArray.add(target);
-                target += center;
+                model->getAabb(aabbMin, aabbMax);
+                if (!aabbMin.isZero() && !aabbMax.isZero()) {
+                    radiusArray.add((aabbMax - aabbMin).length());
+                    centerArray.add((aabbMin + aabbMax) / 2);
+                }
             }
         }
-        target /= nmodels;
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
             if (model->isVisible()) {
@@ -635,21 +685,16 @@ void UI::renderDepth()
                                QVector3D(target.x(), target.y(), target.z()),
                                QVector3D(0, 1, 0));
         lightProjectionMatrix.perspective(angle, 1, 1, distance + maxRadius + margin);
-        QMatrix4x4 lightWorldMatrix;
-        m_delegate->setLightMatrices(lightWorldMatrix, lightViewMatrix, lightProjectionMatrix);
-        glViewport(0, 0, m_fbo->width(), m_fbo->height());
+        m_delegate->setLightMatrices(QMatrix4x4(), lightViewMatrix, lightProjectionMatrix);
+        const Vector3 &size = m_sm->size();
+        glViewport(0, 0, size.x(), size.y());
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
             engine->renderZPlot();
         }
-        m_fbo->release();
-#ifndef VPVL2_ENABLE_NVIDIA_CG
-        lightWorldMatrix.scale(0.5);
-        lightWorldMatrix.translate(1, 1, 1);
-        m_delegate->setLightMatrices(lightWorldMatrix, lightViewMatrix, lightProjectionMatrix);
-#endif
+        m_sm->unbind();
     }
 }
 

@@ -19,7 +19,7 @@ in vec3 inNormal;
 in vec2 inTexCoord;
 out vec4 outColor;
 out vec4 outTexCoord;
-out vec4 outShadowCoord;
+out vec4 outShadowPosition;
 out vec4 outUVA1;
 out vec3 outEyeView;
 out vec3 outNormal;
@@ -47,7 +47,7 @@ void main() {
     outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : calculateToon(normal);
     outUVA1 = inUVA1;
     if (hasDepthTexture) {
-        outShadowCoord = lightViewProjectionMatrix * position;
+        outShadowPosition = lightViewProjectionMatrix * position;
     }
     gl_Position = modelViewProjectionMatrix * position;
 }
