@@ -509,6 +509,7 @@ void UI::load(const QString &filename)
         m_sm->create();
         light->setDepthTextureSize(m_sm->size());
         light->setDepthTexture(m_sm->bufferRef());
+        light->setHasFloatTexture(true);
     }
     if (loadScene()) {
         startTimer(1000.0f / 60.0f);
@@ -676,7 +677,9 @@ void UI::renderDepth()
                 btSetMax(maxRadius, d);
             }
         }
+        const Vector3 &size = m_sm->size();
         const Scalar &angle = 45;
+        const Scalar &aspectRatio = size.x() / size.y();
         const Scalar &distance = maxRadius / btSin(btRadians(angle) * 0.5);
         const Scalar &margin = 50;
         const Vector3 &eye = -m_scene->light()->direction().normalized() * maxRadius + target;
@@ -684,9 +687,8 @@ void UI::renderDepth()
         lightViewMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
                                QVector3D(target.x(), target.y(), target.z()),
                                QVector3D(0, 1, 0));
-        lightProjectionMatrix.perspective(angle, 1, 1, distance + maxRadius + margin);
+        lightProjectionMatrix.perspective(angle, aspectRatio, 1, distance + maxRadius + margin);
         m_delegate->setLightMatrices(QMatrix4x4(), lightViewMatrix, lightProjectionMatrix);
-        const Vector3 &size = m_sm->size();
         glViewport(0, 0, size.x(), size.y());
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
