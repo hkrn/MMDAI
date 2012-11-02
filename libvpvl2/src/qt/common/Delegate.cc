@@ -178,19 +178,31 @@ QGLContext::BindOptions UIGetTextureBindOptions(bool enableMipmap)
     return options;
 }
 
-static void UISetTexture(const Delegate::TextureCache &cache, bool isToon, Delegate::Texture &output)
+static void UISetTexture(const Delegate::TextureCache &cache, Delegate::InternalTexture &texture)
 {
-    output.width = cache.width;
-    output.height = cache.height;
-    *static_cast<GLuint *>(output.object) = cache.id;
-    if (!isToon) {
-        GLuint textureID = *static_cast<const GLuint *>(output.object);
+    texture.reference->width = cache.width;
+    texture.reference->height = cache.height;
+    *static_cast<GLuint *>(texture.reference->object) = cache.id;
+    if (!texture.isToon) {
+        GLuint textureID = *static_cast<const GLuint *>(texture.reference->object);
         glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 }
 
-static void UIAddTextureCache(Delegate::PrivateContext *context,
+static bool UIFindTextureCache(Delegate::InternalContext *privateContext,
+                               const QString &path,
+                               Delegate::InternalTexture &texture)
+{
+    if (privateContext && privateContext->textureCache.contains(path)) {
+        UISetTexture(privateContext->textureCache[path], texture);
+        texture.ok = true;
+        return true;
+    }
+    return false;
+}
+
+static void UIAddTextureCache(Delegate::InternalContext *context,
                               const QString &path,
                               const Delegate::TextureCache &texture)
 {
@@ -326,7 +338,7 @@ Delegate::~Delegate()
 void Delegate::allocateContext(const IModel *model, void *&context)
 {
     const IString *name = model->name();
-    PrivateContext *ctx = new(std::nothrow) PrivateContext();
+    InternalContext *ctx = new(std::nothrow) InternalContext();
     context = ctx;
     qDebug("Allocated the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
 }
@@ -334,7 +346,7 @@ void Delegate::allocateContext(const IModel *model, void *&context)
 void Delegate::releaseContext(const IModel *model, void *&context)
 {
     const IString *name = model->name();
-    delete static_cast<PrivateContext *>(context);
+    delete static_cast<InternalContext *>(context);
     context = 0;
     qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
 }
@@ -342,20 +354,27 @@ void Delegate::releaseContext(const IModel *model, void *&context)
 bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
 {
     bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap, ok = false;
+    InternalTexture t;
+    t.mipmap = mipmap;
+    t.reference = &texture;
     if (flags & IRenderDelegate::kTexture2D) {
         const QString &path = UICreatePath(dir, name);
-        return uploadTextureInternal(path, false, false, mipmap, ok, texture, context);
+        t.isSystem = false;
+        t.isToon = false;
+        return uploadTextureInternal(path, t, context);
     }
     else if (flags & IRenderDelegate::kToonTexture) {
         bool ret = false;
+        t.isToon = true;
         if (dir) {
             const QString &path = UICreatePath(dir, name);
-            ret = uploadTextureInternal(path, true, false, mipmap, ok, texture, context);
+            ret = uploadTextureInternal(path, t, context);
         }
-        if (!ok) {
+        if (!t.ok) {
             CString s(m_systemDir.absolutePath());
             const QString &path = UICreatePath(&s, name);
-            ret = uploadTextureInternal(path, true, true, mipmap, ok, texture, context);
+            t.isSystem = true;
+            ret = uploadTextureInternal(path, t, context);
             qDebug("Loaded a system texture: %s", qPrintable(path));
         }
         return ret;
@@ -1210,11 +1229,9 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
 
 bool Delegate::uploadTextureNVTT(const QString &suffix,
                                  const QString &path,
-                                 bool isToon,
-                                 bool mipmap,
                                  QScopedPointer<nv::Stream> &stream,
-                                 Texture &texture,
-                                 PrivateContext *privateContext)
+                                 InternalTexture &internalTexture,
+                                 InternalContext *internalContext)
 {
 #ifdef VPVL2_LINK_NVTT
     if (suffix == "dds") {
@@ -1223,7 +1240,7 @@ bool Delegate::uploadTextureNVTT(const QString &suffix,
             nv::Image nvimage;
             surface.mipmap(&nvimage, 0, 0);
             QImage image(UIConvertNVImageToQImage(nvimage));
-            return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
+            return generateTextureFromImage(image, path, internalTexture, internalContext);
         }
         else {
             qWarning("%s cannot be loaded", qPrintable(path));
@@ -1233,7 +1250,7 @@ bool Delegate::uploadTextureNVTT(const QString &suffix,
         QScopedPointer<nv::Image> nvimage(nv::ImageIO::load(path.toUtf8().constData(), *stream));
         if (nvimage) {
             QImage image(UIConvertNVImageToQImage(*nvimage));
-            return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
+            return generateTextureFromImage(image, path, internalTexture, internalContext);
         }
         else {
             qWarning("%s cannot be loaded", qPrintable(path));
@@ -1251,20 +1268,12 @@ bool Delegate::uploadTextureNVTT(const QString &suffix,
     return true;
 }
 
-bool Delegate::uploadTextureInternal(const QString &path,
-                                     bool isToon,
-                                     bool isSystem,
-                                     bool mipmap,
-                                     bool &ok,
-                                     Texture &texture,
-                                     void *context)
+bool Delegate::uploadTextureInternal(const QString &path, InternalTexture &internalTexture, void *context)
 {
     const QFileInfo info(path);
-    PrivateContext *privateContext = static_cast<PrivateContext *>(context);
+    InternalContext *privateContext = static_cast<InternalContext *>(context);
     /* テクスチャのキャッシュを検索する */
-    if (privateContext && privateContext->textureCache.contains(path)) {
-        UISetTexture(privateContext->textureCache[path], isToon, texture);
-        ok = true;
+    if (UIFindTextureCache(privateContext, path, internalTexture)) {
         return true;
     }
     /*
@@ -1272,20 +1281,27 @@ bool Delegate::uploadTextureInternal(const QString &path,
      * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
      */
     const QString &suffix = info.suffix().toLower();
-    if (m_archive && !isSystem) {
+    if (m_archive && !internalTexture.isSystem) {
         const QByteArray &bytes = m_archive->data(path);
         if (loadableTextureExtensions().contains(suffix)) {
             QImage image;
             image.loadFromData(bytes);
-            return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
+            return generateTextureFromImage(image, path, internalTexture, privateContext);
         }
         else {
             QByteArray immutableBytes(bytes);
             QScopedPointer<nv::Stream> stream(new ReadonlyMemoryStream(immutableBytes));
-            return uploadTextureNVTT(suffix, path, isToon, mipmap, stream, texture, privateContext);
+            return uploadTextureNVTT(suffix, path, stream, internalTexture, privateContext);
         }
     }
     else if (info.isDir()) {
+        if (internalTexture.isToon) { /* force loading as white toon texture */
+            const QString &newPath = m_systemDir.absoluteFilePath("toon0.bmp");
+            if (!UIFindTextureCache(privateContext, newPath, internalTexture)) {
+                QImage image(newPath);
+                return generateTextureFromImage(image, newPath, internalTexture, privateContext);
+            }
+        }
         return true; /* skip */
     }
     else if (!info.exists()) {
@@ -1294,30 +1310,28 @@ bool Delegate::uploadTextureInternal(const QString &path,
     }
     else if (loadableTextureExtensions().contains(suffix)) {
         QImage image(path);
-        return generateTextureFromImage(image, path, isToon, mipmap, texture, privateContext);
+        return generateTextureFromImage(image, path, internalTexture, privateContext);
     }
     else {
         QScopedPointer<nv::Stream> stream(new ReadonlyFileStream(path));
-        return uploadTextureNVTT(suffix, path, isToon, mipmap, stream, texture, privateContext);
+        return uploadTextureNVTT(suffix, path, stream, internalTexture, privateContext);
     }
 }
 
 bool Delegate::generateTextureFromImage(const QImage &image,
                                         const QString &path,
-                                        bool isToon,
-                                        bool mipmap,
-                                        Texture &texture,
-                                        PrivateContext *privateContext)
+                                        InternalTexture &internalTexture,
+                                        InternalContext *internalContext)
 {
     GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
                                               GL_TEXTURE_2D,
                                               GL_RGBA,
-                                              UIGetTextureBindOptions(mipmap));
+                                              UIGetTextureBindOptions(internalTexture.mipmap));
     size_t width = image.width(), height = image.height();
     TextureCache cache(width, height, textureID);
     m_texture2Paths.insert(textureID, path);
-    UISetTexture(cache, isToon, texture);
-    UIAddTextureCache(privateContext, path, cache);
+    UISetTexture(cache, internalTexture);
+    UIAddTextureCache(internalContext, path, cache);
     qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
            textureID, width, height, qPrintable(path));
     return textureID != 0;

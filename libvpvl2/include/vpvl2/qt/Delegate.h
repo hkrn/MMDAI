@@ -70,8 +70,15 @@ public:
         int height;
         GLuint id;
     };
-    struct PrivateContext {
+    struct InternalContext {
         QHash<QString, TextureCache> textureCache;
+    };
+    struct InternalTexture {
+        Delegate::Texture *reference;
+        bool isToon;
+        bool isSystem;
+        bool mipmap;
+        bool ok;
     };
     typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
     typedef struct {
@@ -140,27 +147,20 @@ public:
 
 private:
     class FrameBufferObject;
+
     QImage createImageFromArchive(const QFileInfo &info);
     bool uploadTextureInternal(const QString &path,
-                               bool isToon,
-                               bool isSystem,
-                               bool mipmap,
-                               bool &ok,
-                               Texture &texture,
+                               InternalTexture &internalTexture,
                                void *context);
     bool uploadTextureNVTT(const QString &suffix,
                            const QString &path,
-                           bool isToon,
-                           bool mipmap,
                            QScopedPointer<nv::Stream> &stream,
-                           Texture &texture,
-                           PrivateContext *privateContext);
+                           InternalTexture &internalTexture,
+                           InternalContext *internalContext);
     bool generateTextureFromImage(const QImage &image,
                                   const QString &path,
-                                  bool isToon,
-                                  bool mipmap,
-                                  Texture &texture,
-                                  PrivateContext *privateContext);
+                                  InternalTexture &internalTexture,
+                                  InternalContext *internalContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
