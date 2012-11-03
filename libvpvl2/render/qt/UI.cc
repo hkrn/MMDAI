@@ -349,7 +349,7 @@ namespace render
 namespace qt
 {
 
-static QHash<IEncoding::ConstantType, CString *> UIBuildConstantsDictionary(QSettings *settings)
+static void UIBuildConstantsDictionary(QSettings *settings, Encoding::Dictionary &dictionary)
 {
     QMap<QString, IEncoding::ConstantType> str2const;
     str2const.insert("arm", IEncoding::kArm);
@@ -364,14 +364,12 @@ static QHash<IEncoding::ConstantType, CString *> UIBuildConstantsDictionary(QSet
     str2const.insert("spaextension", IEncoding::kSPAExtension);
     str2const.insert("sphextension", IEncoding::kSPHExtension);
     str2const.insert("wrist", IEncoding::kWrist);
-    QHash<IEncoding::ConstantType, CString *> dict;
     QMapIterator<QString, IEncoding::ConstantType> it(str2const);
     while (it.hasNext()) {
         it.next();
         const QVariant &value = settings->value("constants." + it.key());
-        dict.insert(it.value(), new CString(value.toString()));
+        dictionary.insert(it.value(), new CString(value.toString()));
     }
-    return dict;
 }
 
 class UI::ShadowMap : protected QGLFunctions {
@@ -465,6 +463,7 @@ UI::~UI()
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
+    qDeleteAll(m_dictionary);
     delete m_delegate;
     m_delegate = 0;
     delete m_factory;
@@ -483,7 +482,8 @@ void UI::load(const QString &filename)
 {
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->setIniCodec("UTF-8");
-    m_encoding = new Encoding(UIBuildConstantsDictionary(m_settings));
+    UIBuildConstantsDictionary(m_settings, m_dictionary);
+    m_encoding = new Encoding(m_dictionary);
     m_factory = new Factory(m_encoding);
     QHash<QString, QString> settings;
     foreach (const QString &key, m_settings->allKeys()) {

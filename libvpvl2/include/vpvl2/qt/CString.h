@@ -66,10 +66,10 @@ public:
     size_t length(Codec codec) const;
 
 private:
+    CString &operator=(const CString &);
     const QByteArray m_bytes;
     const QString m_value;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(CString)
 };
 
 }

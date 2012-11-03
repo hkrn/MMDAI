@@ -55,7 +55,8 @@ class CString;
 class Encoding : public IEncoding
 {
 public:
-    Encoding(const QHash<ConstantType, CString *> &dictionary);
+    typedef QHash<ConstantType, const CString *> Dictionary;
+    Encoding(const Dictionary &dictionary);
     ~Encoding();
 
     const IString *stringConstant(ConstantType value) const;
@@ -65,7 +66,7 @@ public:
     void disposeByteArray(uint8_t *value) const;
 
 private:
-    QHash<ConstantType, CString *> m_dictionary;
+    Dictionary m_dictionary;
     QTextCodec *m_sjis;
     QTextCodec *m_utf8;
     QTextCodec *m_utf16;

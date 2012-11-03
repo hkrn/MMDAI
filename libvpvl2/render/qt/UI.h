@@ -38,6 +38,7 @@
 #define VPVL2_RENDER_QT_UI_H_
 
 #include "vpvl2/IEffect.h"
+#include "vpvl2/qt/Encoding.h"
 #include "World.h"
 
 #include <QtGui/QtGui>
@@ -52,7 +53,6 @@ class IMotion;
 
 namespace qt
 {
-class CString;
 class Delegate;
 }
 
@@ -104,6 +104,7 @@ private:
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;
     ShadowMap *m_sm;
+    vpvl2::qt::Encoding::Dictionary m_dictionary;
     vpvl2::qt::World *m_world;
     vpvl2::qt::Delegate *m_delegate;
     vpvl2::Scene *m_scene;

@@ -44,7 +44,7 @@ namespace vpvl2
 namespace qt
 {
 
-Encoding::Encoding(const QHash<ConstantType, CString *> &dictionary)
+Encoding::Encoding(const Dictionary &dictionary)
     : m_dictionary(dictionary),
       m_sjis(QTextCodec::codecForName("Shift-JIS")),
       m_utf8(QTextCodec::codecForName("UTF-8")),
@@ -54,7 +54,6 @@ Encoding::Encoding(const QHash<ConstantType, CString *> &dictionary)
 
 Encoding::~Encoding()
 {
-    qDeleteAll(m_dictionary);
 }
 
 const IString *Encoding::stringConstant(ConstantType value) const
