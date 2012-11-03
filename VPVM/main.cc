@@ -147,24 +147,34 @@ int main(int argc, char *argv[])
     }
 
     // TODO: make external
-    QHash<IEncoding::ConstantType, CString *> constants;
+    Encoding::Dictionary dictionary;
     try {
-        constants.insert(IEncoding::kArm, new CString("腕"));
-        constants.insert(IEncoding::kAsterisk, new CString("*"));
-        constants.insert(IEncoding::kCenter, new CString("センター"));
-        constants.insert(IEncoding::kElbow, new CString("ひじ"));
-        constants.insert(IEncoding::kFinger, new CString("指"));
-        constants.insert(IEncoding::kLeft, new CString("左"));
-        constants.insert(IEncoding::kLeftKnee, new CString("左ひざ"));
-        constants.insert(IEncoding::kRight, new CString("右"));
-        constants.insert(IEncoding::kRightKnee, new CString("右ひざ"));
-        constants.insert(IEncoding::kSPAExtension, new CString(".spa"));
-        constants.insert(IEncoding::kSPHExtension, new CString(".sph"));
-        constants.insert(IEncoding::kWrist, new CString("手首"));
-        constants.insert(IEncoding::kRootBoneAsset, new CString("全ての親"));
-        constants.insert(IEncoding::kScaleBoneAsset, new CString("拡大率"));
-        constants.insert(IEncoding::kOpacityMorphAsset, new CString("不透明度"));
-        vpvm::MainWindow w(constants);
+        struct Pair {
+            IEncoding::ConstantType type;
+            const CString value;
+        } pairs[] = {
+            { IEncoding::kArm, CString("腕") },
+            { IEncoding::kAsterisk, CString("*") },
+            { IEncoding::kCenter, CString("センター") },
+            { IEncoding::kElbow, CString("ひじ") },
+            { IEncoding::kFinger, CString("指")} ,
+            { IEncoding::kLeft, CString("左") },
+            { IEncoding::kLeftKnee, CString("左ひざ") },
+            { IEncoding::kRight, CString("右") },
+            { IEncoding::kRightKnee, CString("右ひざ") },
+            { IEncoding::kSPAExtension, CString(".spa") },
+            { IEncoding::kSPHExtension, CString(".sph") },
+            { IEncoding::kWrist, CString("手首") },
+            { IEncoding::kRootBoneAsset, CString("全ての親") },
+            { IEncoding::kScaleBoneAsset, CString("拡大率") },
+            { IEncoding::kOpacityMorphAsset, CString("不透明度") }
+        };
+        const int nconstants = sizeof(pairs) / sizeof(pairs[0]);
+        for (int i = 0; i < nconstants; i++) {
+            Pair &pair = pairs[i];
+            dictionary.insert(pair.type, &pair.value);
+        }
+        vpvm::MainWindow w(dictionary);
         w.show();
         result = a.exec();
     } catch (std::exception &e) {
@@ -174,7 +184,6 @@ int main(int argc, char *argv[])
                       QApplication::tr("Exception caught: %1").arg(e.what()));
     }
     vpvm::LoggerWidget::destroyInstance();
-    qDeleteAll(constants);
     xmlCleanupParser();
     xmlMemoryDump();
 
