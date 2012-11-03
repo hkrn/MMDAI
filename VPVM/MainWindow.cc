@@ -1815,7 +1815,7 @@ void MainWindow::addNewMotion()
             m_boneMotionModel->removeMotion();
             m_morphMotionModel->removeMotion();
             m_sceneMotionModel->removeMotion();
-            m_sceneWidget->setEmptyMotion(model);
+            m_sceneWidget->setEmptyMotion(model, false);
             m_boneMotionModel->markAsNew(model);
             m_morphMotionModel->markAsNew(model);
             m_sceneMotionModel->setModified(false);

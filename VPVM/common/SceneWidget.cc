@@ -409,7 +409,7 @@ void SceneWidget::addModel()
                              tr("Model file (*.pmd *.pmx *.zip)"),
                              m_settingsRef),
               modelPtr);
-    setEmptyMotion(modelPtr.take());
+    setEmptyMotion(modelPtr.take(), true);
 }
 
 void SceneWidget::loadModel(const QString &path, IModelPtr &modelPtr, bool skipDialog)
@@ -523,10 +523,10 @@ void SceneWidget::loadMotionToModel(const QString &path, IModel *model, IMotionP
 
 void SceneWidget::setEmptyMotion()
 {
-    setEmptyMotion(m_loader->selectedModelRef());
+    setEmptyMotion(m_loader->selectedModelRef(), false);
 }
 
-void SceneWidget::setEmptyMotion(IModel *model)
+void SceneWidget::setEmptyMotion(IModel *model, bool skipWarning)
 {
     if (model && !m_playing) {
         IMotionPtr motion;
@@ -534,7 +534,7 @@ void SceneWidget::setEmptyMotion(IModel *model)
         m_loader->setModelMotion(motion.take(), model);
         emit newMotionDidSet(model);
     }
-    else {
+    else if (!skipWarning) {
         warning(this,
                 tr("The model is not selected."),
                 tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
@@ -549,7 +549,7 @@ void SceneWidget::addAsset()
                              tr("Accessory file (*.x *.zip)"),
                              m_settingsRef),
               asset);
-    setEmptyMotion(asset.take());
+    setEmptyMotion(asset.take(), true);
 }
 
 void SceneWidget::loadAsset(const QString &path, QScopedPointer<IModel> &modelPtr)
@@ -896,7 +896,7 @@ void SceneWidget::loadFile(const QString &path)
     if (extension == "pmd" || extension == "pmx" || extension == "zip") {
         IModelPtr modelPtr;
         loadModel(path, modelPtr);
-        setEmptyMotion(modelPtr.take());
+        setEmptyMotion(modelPtr.take(), false);
     }
     /* モーションファイル */
     else if (extension == "vmd" || extension == "mvd") {
@@ -911,7 +911,7 @@ void SceneWidget::loadFile(const QString &path)
     else if (extension == "x") {
         IModelPtr assetPtr;
         loadAsset(path, assetPtr);
-        setEmptyMotion(assetPtr.take());
+        setEmptyMotion(assetPtr.take(), false);
     }
     /* ポーズファイル */
     else if (extension == "vpd") {

@@ -140,7 +140,7 @@ public slots:
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
     void loadFile(const QString &file);
-    void setEmptyMotion(IModel *model);
+    void setEmptyMotion(IModel *model, bool skipWarning);
     void saveMetadataFromAsset(IModel *asset);
     void rotateScene(const Vector3 &delta);
     void rotateModel(const Quaternion &delta);
