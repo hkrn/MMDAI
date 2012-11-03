@@ -63,7 +63,7 @@ bool Context::isAvailable() const
     return m_context && m_queue;
 }
 
-bool Context::initializeContext(cl_device_type hostDeviceType)
+bool Context::initialize(cl_device_type hostDeviceType)
 {
     if (isAvailable())
         return true;

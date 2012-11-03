@@ -290,7 +290,10 @@ struct Scene::PrivateContext {
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (!computeContext) {
             computeContext = new cl::Context(delegateRef);
-            computeContext->initializeContext(hostDeviceType());
+            if (!computeContext->initialize(hostDeviceType())) {
+                delete computeContext;
+                computeContext = 0;
+            }
         }
 #else
         (void) delegateRef;
@@ -301,8 +304,10 @@ struct Scene::PrivateContext {
         cl::PMXAccelerator *accelerator = 0;
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
-            accelerator = new cl::PMXAccelerator(createComputeContext(delegate), modelRef);
-            accelerator->createKernelProgram();
+            if (cl::Context *context = createComputeContext(delegate)) {
+                accelerator = new cl::PMXAccelerator(context, modelRef);
+                accelerator->createKernelProgram();
+            }
         }
 #else
         (void) delegate;

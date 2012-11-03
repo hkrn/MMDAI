@@ -73,7 +73,7 @@ public:
     ~Context();
 
     bool isAvailable() const;
-    bool initializeContext(cl_device_type hostDeviceType);
+    bool initialize(cl_device_type hostDeviceType);
 
     IRenderDelegate *renderDelegate() const { return m_delegateRef; }
     cl_context computeContext() const { return m_context; }
