@@ -356,22 +356,6 @@ void SceneLoader::createProject()
     }
 }
 
-void SceneLoader::deleteAsset(IModel *asset)
-{
-    /* アクセサリをレンダリングエンジンから削除し、SceneLoader のヒモ付けも解除する */
-    if (asset && m_project->containsModel(asset)) {
-        const QUuid uuid(m_project->modelUUID(asset).c_str());
-        emit assetWillDelete(asset, uuid);
-        /* 削除対象が選択中の場合は追加後に commitAssetProperties で落ちることを防ぐために 0 にリセットする */
-        if (asset == m_selectedAssetRef)
-            m_selectedAssetRef = 0;
-        m_renderDelegateRef->removeModel(asset);
-        m_project->removeModel(asset);
-        m_project->deleteModel(asset);
-        m_renderOrderList.remove(uuid);
-    }
-}
-
 void SceneLoader::deleteCameraMotion()
 {
     /* カメラモーションをシーンから解除及び削除し、最初の視点に戻しておく */
@@ -386,13 +370,15 @@ void SceneLoader::deleteModel(IModel *&model)
 {
     if (m_project->containsModel(model)) {
         const QUuid uuid(m_project->modelUUID(model).c_str());
-        emit modelWillDelete(model, uuid);
         /*
          * 削除対象が選択中の場合選択対象から外して 0 にリセットする
          * ただし実際は先に setSelectedModel(0) で解除してしまうので予防策
          */
         if (model == m_selectedModelRef)
-            m_selectedModelRef = 0;
+            setSelectedModel(0);
+        if (model == m_selectedAssetRef)
+            setSelectedAsset(0);
+        emit modelWillDelete(model, uuid);
         /*
          * motionWillDelete を発行するため、削除対象のモデルに所属するモーションを削除する。
          * なお、データの物理削除を伴うため、配列に削除前のモーション配列をコピーしてから処理する必要がある。
@@ -421,11 +407,6 @@ void SceneLoader::deleteMotion(IMotion *&motion)
     m_project->removeMotion(motion);
     delete motion;
     motion = 0;
-}
-
-IModel *SceneLoader::findAsset(const QUuid &uuid) const
-{
-    return m_project->findModel(uuid.toString().toStdString());
 }
 
 IModel *SceneLoader::findModel(const QUuid &uuid) const
@@ -513,7 +494,7 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &ass
                 setAssetRotation(assetPtr.data(), assetPtr->rotation());
                 setAssetOpacity(assetPtr.data(), assetPtr->opacity());
                 setAssetScaleFactor(assetPtr.data(), assetPtr->scaleFactor());
-                emit assetDidAdd(assetPtr.data(), uuid);
+                emit modelDidAdd(assetPtr.data(), uuid);
             }
         }
     }
@@ -814,7 +795,7 @@ void SceneLoader::loadProject(const QString &path)
             model->setParentBone(assetParentBone(model));
             if (isAssetSelected(model))
                 selectedAssetModel = model;
-            emit assetDidAdd(model, assetUUID);
+            emit modelDidAdd(model, assetUUID);
         }
         if (selectedAssetModel)
             setSelectedAsset(selectedAssetModel);
@@ -897,11 +878,7 @@ void SceneLoader::releaseProject()
     for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         const Project::UUID &modelUUID = *it;
         IModel *model = m_project->findModel(modelUUID);
-        IModel::Type type = model->type();
-        if (type == IModel::kPMD || type == IModel::kPMX)
-            emit modelWillDelete(model, QUuid(modelUUID.c_str()));
-        else if (type == IModel::kAsset)
-            emit assetWillDelete(model, QUuid(modelUUID.c_str()));
+        emit modelWillDelete(model, QUuid(modelUUID.c_str()));
     }
     m_renderOrderList.clear();
     deleteCameraMotion();
@@ -1677,7 +1654,7 @@ void SceneLoader::setSelectedAsset(IModel *value)
         }
         m_selectedAssetRef = value;
         m_project->setModelSetting(value, "selected", "true");
-        emit assetDidSelect(value, this);
+        emit modelDidSelect(value, this);
     }
 }
 
@@ -1856,6 +1833,12 @@ void SceneLoader::setEffectEnable(bool value)
 void SceneLoader::setProjectDirtyFalse()
 {
     m_project->setDirty(false);
+}
+
+void SceneLoader::deleteModelSlot(IModel *model)
+{
+    IModel *modelPtr = model;
+    deleteModel(modelPtr);
 }
 
 bool SceneLoader::globalSetting(const char *key, bool def) const

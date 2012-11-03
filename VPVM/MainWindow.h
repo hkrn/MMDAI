@@ -42,7 +42,7 @@
 #include <QtGui/QDialog>
 #include <QtGui/QMainWindow>
 #include <vpvl2/Common.h>
-#include <vpvl2/IEncoding.h>
+#include <vpvl2/qt/Encoding.h>
 
 class QCheckBox;
 class QDoubleSpinBox;
@@ -57,9 +57,6 @@ class IBone;
 class IEncoding;
 class IModel;
 class IMotion;
-namespace qt {
-class CString;
-}
 }
 
 namespace vpvm
@@ -93,8 +90,7 @@ class MainWindow : public QMainWindow
 public:
     static const int kMaxRecentFiles = 10;
 
-    explicit MainWindow(const QHash<IEncoding::ConstantType, CString *> &constants,
-                        QWidget *parent = 0);
+    explicit MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent = 0);
     ~MainWindow();
 
 signals:

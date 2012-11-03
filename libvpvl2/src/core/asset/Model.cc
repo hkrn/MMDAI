@@ -91,7 +91,7 @@ public:
     bool isVisible() const { return false; }
     bool isInteractive() const { return true; }
     bool hasInverseKinematics() const { return false; }
-    bool hasFixedAxes() const { return true; }
+    bool hasFixedAxes() const { return false; }
     bool hasLocalAxes() const { return false; }
     const Vector3 &fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
@@ -108,18 +108,15 @@ public:
     ScaleBone(IModel *modelRef, const IEncoding *encodingRef)
         : m_encodingRef(encodingRef),
           m_modelRef(modelRef),
-          m_position(kZeroV3),
-          m_rotation(Quaternion::getIdentity())
+          m_position(kZeroV3)
     {
         const Scalar &scaleFactor = modelRef->scaleFactor();
         m_position.setValue(scaleFactor, scaleFactor, scaleFactor);
-        m_rotation.setValue(scaleFactor, scaleFactor, scaleFactor);
     }
     ~ScaleBone() {
         m_encodingRef = 0;
         m_modelRef = 0;
         m_position.setZero();
-        m_rotation.setValue(0, 0, 0, 1);
     }
 
     const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kScaleBoneAsset); }
@@ -139,14 +136,14 @@ public:
     const Vector3 &origin() const { return kZeroV3; }
     const Vector3 destinationOrigin() const { return kZeroV3; }
     const Vector3 &localPosition() const { return m_position; }
-    const Quaternion &rotation() const { return m_rotation; }
+    const Quaternion &rotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 &value) { m_position = value; }
-    void setRotation(const Quaternion &value) { m_rotation = value; }
-    bool isMovable() const { return false; }
+    void setRotation(const Quaternion & /* value */) {}
+    bool isMovable() const { return true; }
     bool isRotateable() const { return false; }
     bool isVisible() const { return false; }
-    bool isInteractive() const { return false; }
+    bool isInteractive() const { return true; }
     bool hasInverseKinematics() const { return false; }
     bool hasFixedAxes() const { return false; }
     bool hasLocalAxes() const { return false; }
@@ -158,7 +155,6 @@ private:
     const IEncoding *m_encodingRef;
     IModel *m_modelRef;
     Vector3 m_position;
-    Quaternion m_rotation;
 };
 
 class Label : public ILabel {
@@ -167,7 +163,7 @@ public:
         : m_name(0)
     {
         static const uint8_t name[] = "Root";
-        m_name = encodingRef->toString(name, sizeof(name), IString::kUTF8);
+        m_name = encodingRef->toString(name, sizeof(name) - 1, IString::kUTF8);
         m_bones.copy(bones);
     }
     ~Label() {

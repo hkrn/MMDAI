@@ -163,9 +163,9 @@ struct MainWindow::WindowState {
 namespace vpvm
 {
 
-MainWindow::MainWindow(const QHash<IEncoding::ConstantType, CString *> &constants, QWidget *parent)
+MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
     : QMainWindow(parent),
-      m_encoding(new Encoding(constants)),
+      m_encoding(new Encoding(dictionary)),
       m_factory(new Factory(m_encoding.data())),
       m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
       m_undo(new QUndoGroup()),
@@ -307,7 +307,6 @@ MainWindow::~MainWindow()
 {
     /* null アクセスが発生してしまうため、先に以下のシグナルを解除しておく */
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-    disconnect(loader, SIGNAL(assetWillDelete(IModel*,QUuid)), this, SLOT(deleteAsset(IModel*,QUuid)));
     disconnect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), this, SLOT(deleteModel(IModel*,QUuid)));
     /* 所有権が移動しているため、事前に take で所有権を放棄してメモリ解放しないようにする */
     m_modelTabWidget.take();
@@ -1370,14 +1369,11 @@ void MainWindow::connectSceneLoader()
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
     connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), SLOT(addModel(IModel*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), SLOT(deleteModel(IModel*,QUuid)));
-    connect(loader, SIGNAL(assetWillDelete(IModel*,QUuid)), SLOT(deleteAsset(IModel*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_boneMotionModel.data(), SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_boneMotionModel.data(), SLOT(loadMotion(IMotion*,const IModel*)));
     connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,IModel*)), m_timelineTabWidget.data(), SLOT(loadPose(VPDFilePtr,IModel*)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_morphMotionModel.data(), SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_morphMotionModel.data(), SLOT(loadMotion(IMotion*,const IModel*)));
-    connect(loader, SIGNAL(assetDidAdd(IModel*,QUuid)), assetWidget, SLOT(addAsset(IModel*)));
-    connect(loader, SIGNAL(assetWillDelete(IModel*,QUuid)), assetWidget, SLOT(removeAsset(IModel*)));
     connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), assetWidget, SLOT(addModel(IModel*)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), assetWidget, SLOT(removeModel(IModel*)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_timelineTabWidget.data(), SLOT(clearLastSelectedModel()));
@@ -1393,7 +1389,7 @@ void MainWindow::connectSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModel*)));
     connect(loader ,SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModel*,SceneLoader*)));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModel*)));
-    connect(loader, SIGNAL(assetDidSelect(IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModel*,SceneLoader*)));
     connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnableEffectOnToolBar.data(), SIGNAL(toggled(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
@@ -1404,8 +1400,8 @@ void MainWindow::connectSceneLoader()
     connect(m_actionSetOpenCLSkinningType2.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType2(bool)));
     connect(m_actionSetVertexShaderSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));
     connect(m_actionShowGrid.data(), SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
-    connect(assetWidget, SIGNAL(assetDidRemove(IModel*)), loader, SLOT(deleteAsset(IModel*)));
-    connect(assetWidget, SIGNAL(assetDidSelect(IModel*)), loader, SLOT(setSelectedAsset(IModel*)));
+    connect(assetWidget, SIGNAL(assetDidRemove(IModel*)), loader, SLOT(deleteModelSlot(IModel*)));
+    connect(assetWidget, SIGNAL(assetDidSelect(IModel*)), loader, SLOT(setSelectedModel(IModel*)));
     Handles *handles = m_sceneWidget->handlesRef();
     connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateBone()));
     connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateBone()));

@@ -202,6 +202,8 @@ void AssetWidget::addModel(IModel *model)
      */
     m_models.append(model);
     m_modelComboBox->addItem(toQStringFromModel(model));
+    if (model->type() == IModel::kAsset)
+        addAsset(model);
 }
 
 void AssetWidget::removeModel(IModel *model)
@@ -214,6 +216,8 @@ void AssetWidget::removeModel(IModel *model)
         m_modelComboBox->setCurrentIndex(0);
         m_modelBonesComboBox->clear();
     }
+    if (model->type() == IModel::kAsset)
+        removeAsset(model);
 }
 
 void AssetWidget::removeAsset()
@@ -230,7 +234,7 @@ void AssetWidget::changeCurrentAsset(int index)
 void AssetWidget::changeCurrentAsset(IModel *asset)
 {
     /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
-    const Vector3 &position = asset->position();
+    const Vector3 &position = asset ? asset->position() : kZeroV3;
     /* setAssetProperty からも呼ばれるので、シグナル発行前に選択したアセットと同じでないことを確認する */
     bool isAssetChanged = false;
     if (m_currentAssetRef != asset) {
@@ -243,12 +247,12 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
     m_px->setValue(position.x());
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
-    const Quaternion &rotation = asset->rotation();
+    const Quaternion &rotation = asset ? asset->rotation() : Quaternion::getIdentity();
     m_rx->setValue(degree(rotation.x()));
     m_ry->setValue(degree(rotation.y()));
     m_rz->setValue(degree(rotation.z()));
-    m_scale->setValue(asset->scaleFactor());
-    m_opacity->setValue(asset->opacity());
+    m_scale->setValue(asset ? asset->scaleFactor() : 1);
+    m_opacity->setValue(asset ? asset->opacity() : 1);
     if (isAssetChanged) {
         /* コンボボックスの更新によるシグナル発行でボーン情報が更新されてしまうため、事前にボーンを保存して再設定する */
         IModel *model = asset->parentModel();
@@ -347,13 +351,17 @@ void AssetWidget::updateOpacity(double value)
 
 void AssetWidget::setAssetProperties(IModel *asset, SceneLoader *loader)
 {
-    asset->setPosition(loader->assetPosition(asset));
-    asset->setRotation(loader->assetRotation(asset));
-    asset->setScaleFactor(loader->assetScaleFactor(asset));
-    asset->setOpacity(loader->assetOpacity(asset));
-    asset->setParentModel(loader->assetParentModel(asset));
-    asset->setParentBone(loader->assetParentBone(asset));
-    changeCurrentAsset(asset);
+    if (asset && asset->type() == IModel::kAsset) {
+        if (loader) {
+            asset->setPosition(loader->assetPosition(asset));
+            asset->setRotation(loader->assetRotation(asset));
+            asset->setScaleFactor(loader->assetScaleFactor(asset));
+            asset->setOpacity(loader->assetOpacity(asset));
+            asset->setParentModel(loader->assetParentModel(asset));
+            asset->setParentBone(loader->assetParentBone(asset));
+        }
+        changeCurrentAsset(asset);
+    }
 }
 
 void AssetWidget::setEnable(bool value)

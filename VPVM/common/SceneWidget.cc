@@ -292,6 +292,10 @@ void SceneWidget::setPreferredFPS(int value)
 
 void SceneWidget::setSelectedModel(IModel *value, EditMode mode)
 {
+    if (!value) {
+        clearSelectedBones();
+        clearSelectedMorphs();
+    }
     /* 情報パネルに選択されたモデルの名前を更新する */
     m_loader->setSelectedModel(value);
     m_info->setModel(value);
@@ -814,6 +818,7 @@ void SceneWidget::selectMorphs(const QList<IMorph *> &morphs)
     if (!CompareGenericList(morphs, m_selectedMorphRefs)) {
         m_info->setMorphs(morphs, tr("(multiple)"));
         m_info->update();
+        m_selectedMorphRefs = morphs;
         emit morphsDidSelect(morphs);
     }
 }
@@ -1024,6 +1029,7 @@ void SceneWidget::initializeGL()
     m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_delegate.data()));
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
+    connect(m_loader.data(), SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setSelectedModel(IModel*)));
     /* 背面カリングを有効にする */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -1549,6 +1555,12 @@ void SceneWidget::clearSelectedBones()
     m_selectedBoneRefs.clear();
     m_info->setBones(m_selectedBoneRefs, "");
     m_handles->setBone(0);
+}
+
+void SceneWidget::clearSelectedMorphs()
+{
+    m_selectedMorphRefs.clear();
+    m_info->setMorphs(m_selectedMorphRefs, "");
 }
 
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)

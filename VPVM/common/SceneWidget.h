@@ -164,6 +164,7 @@ public slots:
     void selectBones(const QList<IBone *> &bones);
     void selectMorphs(const QList<IMorph *> &morphs);
     void setEditMode(SceneWidget::EditMode value);
+    void setSelectedModel(IModel *value) { setSelectedModel(value, kNone); }
     void setSelectedModel(IModel *value, SceneWidget::EditMode mode);
     void setBackgroundImage(const QString &filename);
     void revertSelectedModel() { setSelectedModel(0, kNone); }
@@ -258,6 +259,7 @@ private slots:
 private:
     class PlaneWorld;
     void clearSelectedBones();
+    void clearSelectedMorphs();
     void updateScene();
     bool acceptAddingModel(IModel *model);
     bool testHitModelHandle(const QPointF &pos);

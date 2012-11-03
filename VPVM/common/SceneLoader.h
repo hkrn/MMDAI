@@ -83,6 +83,7 @@ public:
 
     QList<IModel *> allModels() const;
     void bindDepthTexture();
+    void deleteModel(IModel *&model);
     IModel *findAsset(const QUuid &uuid) const;
     IModel *findModel(const QUuid &uuid) const;
     IMotion *findMotion(const QUuid &uuid) const;
@@ -179,9 +180,8 @@ public:
 public slots:
     void addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
     void createProject();
-    void deleteAsset(IModel *asset);
+    //void deleteModel(IModel *model);
     void deleteCameraMotion();
-    void deleteModel(IModel *&model);
     void deleteMotion(IMotion *&motion);
     void loadProject(const QString &path);
     void saveMetadataFromAsset(const QString &path, IModel *asset);
@@ -238,9 +238,6 @@ signals:
     void modelDidMakePose(VPDFilePtr pose, IModel *model);
     void motionDidAdd(IMotion *motion, const IModel *model, const QUuid &uuid);
     void motionWillDelete(IMotion *motion, const QUuid &uuid);
-    void assetDidSelect(IModel *asset, SceneLoader *loader);
-    void assetDidAdd(IModel *asset, const QUuid &uuid);
-    void assetWillDelete(IModel *asset, const QUuid &uuid);
     void cameraMotionDidSet(IMotion *motion, const QUuid &uuid);
     void lightColorDidSet(const Vector3 &color);
     void lightDirectionDidSet(const Vector3 &position);
@@ -248,6 +245,7 @@ signals:
 
 private slots:
     void setProjectDirtyFalse();
+    void deleteModelSlot(IModel *model);
 
 private:
     bool createModelEngine(IModel *model, const QDir &dir, IRenderEnginePtr &enginePtr);
