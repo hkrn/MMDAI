@@ -637,7 +637,7 @@ bool SceneLoader::loadModelMotion(const QString &path, QList<IModel *> &models, 
 bool SceneLoader::loadModelMotion(const QString &path, IModel *model, IMotionPtr &motionPtr)
 {
     /* loadModelMotion に setModelMotion の追加が入ったショートカット的なメソッド */
-    if (loadModelMotion(path, model, motionPtr)) {
+    if (loadModelMotion(path, motionPtr)) {
         setModelMotion(motionPtr.data(), model);
         return true;
     }

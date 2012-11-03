@@ -391,13 +391,13 @@ void SceneWidget::setBoneWireFramesVisible(bool value)
 void SceneWidget::addFile()
 {
     loadFile(openFileDialog("sceneWidget/lastFileDirectory",
-                             tr("Open a file"),
-                             tr("Model file (*.pmd *.pmx *.zip);;"
-                                "Accessory file (*.x);;"
-                                "Model motion file (*.vmd *.mvd);;"
-                                "Pose file (*.vpd);;"
-                                "Accessory metadata file (*.vac)"),
-                             m_settingsRef));
+                            tr("Open a file"),
+                            tr("Model file (*.pmd *.pmx *.zip);;"
+                               "Accessory file (*.x);;"
+                               "Model motion file (*.vmd *.mvd);;"
+                               "Pose file (*.vpd);;"
+                               "Accessory metadata file (*.vac)"),
+                            m_settingsRef));
 }
 
 void SceneWidget::addModel()
@@ -409,10 +409,7 @@ void SceneWidget::addModel()
                              tr("Model file (*.pmd *.pmx *.zip)"),
                              m_settingsRef),
               modelPtr);
-    if (modelPtr && !m_playing) {
-        setEmptyMotion(modelPtr.data());
-        emit newMotionDidSet(modelPtr.take());
-    }
+    setEmptyMotion(modelPtr.take());
 }
 
 void SceneWidget::loadModel(const QString &path, IModelPtr &modelPtr, bool skipDialog)
@@ -531,10 +528,11 @@ void SceneWidget::setEmptyMotion()
 
 void SceneWidget::setEmptyMotion(IModel *model)
 {
-    if (model) {
+    if (model && !m_playing) {
         IMotionPtr motion;
         m_loader->newModelMotion(model, motion);
         m_loader->setModelMotion(motion.take(), model);
+        emit newMotionDidSet(model);
     }
     else {
         warning(this,
@@ -551,7 +549,7 @@ void SceneWidget::addAsset()
                              tr("Accessory file (*.x *.zip)"),
                              m_settingsRef),
               asset);
-    asset.take();
+    setEmptyMotion(asset.take());
 }
 
 void SceneWidget::loadAsset(const QString &path, QScopedPointer<IModel> &modelPtr)
@@ -898,10 +896,7 @@ void SceneWidget::loadFile(const QString &path)
     if (extension == "pmd" || extension == "pmx" || extension == "zip") {
         IModelPtr modelPtr;
         loadModel(path, modelPtr);
-        if (modelPtr && !m_playing) {
-            setEmptyMotion(modelPtr.data());
-            emit newMotionDidSet(modelPtr.take());
-        }
+        setEmptyMotion(modelPtr.take());
     }
     /* モーションファイル */
     else if (extension == "vmd" || extension == "mvd") {
@@ -916,7 +911,7 @@ void SceneWidget::loadFile(const QString &path)
     else if (extension == "x") {
         IModelPtr assetPtr;
         loadAsset(path, assetPtr);
-        assetPtr.take();
+        setEmptyMotion(assetPtr.take());
     }
     /* ポーズファイル */
     else if (extension == "vpd") {
