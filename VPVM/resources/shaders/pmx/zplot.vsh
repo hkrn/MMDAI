@@ -3,7 +3,6 @@
 #define in attribute
 #define out varying
 #endif
-//invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 in vec3 inPosition;
 out vec4 outPosition;

@@ -2,7 +2,6 @@
 #if __VERSION__ < 130
 #define in attribute
 #endif
-//invariant gl_Position;
 uniform mat4 modelViewProjectionMatrix;
 in vec3 inPosition;
 const float kOne = 1.0;
