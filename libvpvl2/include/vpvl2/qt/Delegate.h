@@ -74,7 +74,15 @@ public:
         QHash<QString, TextureCache> textureCache;
     };
     struct InternalTexture {
-        Delegate::Texture *reference;
+        InternalTexture(Delegate::Texture *r, bool m, bool t)
+            : ref(r),
+              isToon(t),
+              isSystem(false),
+              mipmap(m),
+              ok(false)
+        {
+        }
+        Delegate::Texture *ref;
         bool isToon;
         bool isSystem;
         bool mipmap;

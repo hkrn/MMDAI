@@ -180,11 +180,11 @@ QGLContext::BindOptions UIGetTextureBindOptions(bool enableMipmap)
 
 static void UISetTexture(const Delegate::TextureCache &cache, Delegate::InternalTexture &texture)
 {
-    texture.reference->width = cache.width;
-    texture.reference->height = cache.height;
-    *static_cast<GLuint *>(texture.reference->object) = cache.id;
+    texture.ref->width = cache.width;
+    texture.ref->height = cache.height;
+    *static_cast<GLuint *>(texture.ref->object) = cache.id;
     if (!texture.isToon) {
-        GLuint textureID = *static_cast<const GLuint *>(texture.reference->object);
+        GLuint textureID = *static_cast<const GLuint *>(texture.ref->object);
         glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
@@ -353,19 +353,15 @@ void Delegate::releaseContext(const IModel *model, void *&context)
 
 bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
 {
-    bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap, ok = false;
-    InternalTexture t;
-    t.mipmap = mipmap;
-    t.reference = &texture;
+    bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
+    bool isToon = flags & IRenderDelegate::kToonTexture;
+    InternalTexture t(&texture, mipmap, isToon);
     if (flags & IRenderDelegate::kTexture2D) {
         const QString &path = UICreatePath(dir, name);
-        t.isSystem = false;
-        t.isToon = false;
         return uploadTextureInternal(path, t, context);
     }
     else if (flags & IRenderDelegate::kToonTexture) {
         bool ret = false;
-        t.isToon = true;
         if (dir) {
             const QString &path = UICreatePath(dir, name);
             ret = uploadTextureInternal(path, t, context);
