@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "common/util.h"
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/PMDMotionModel.h"
@@ -195,14 +196,28 @@ void TimelineTreeView::addKeyframesBySelectedIndices()
 {
     MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
     const QModelIndexList &indices = selectionModel()->selectedIndexes();
-    m->addKeyframesByModelIndices(indices);
+    if (!indices.empty()) {
+        m->addKeyframesByModelIndices(indices);
+    }
+    else {
+        warning(this,
+                vpvm::TimelineTreeView::tr("Tried registering empty (not selected) keyframes"),
+                vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to register before registering keyframes."));
+    }
 }
 
 void TimelineTreeView::deleteKeyframesBySelectedIndices()
 {
     MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
     const QModelIndexList &indices = selectionModel()->selectedIndexes();
-    m->deleteKeyframesByModelIndices(indices);
+    if (!indices.empty()) {
+        m->deleteKeyframesByModelIndices(indices);
+    }
+    else {
+        warning(this,
+                vpvm::TimelineTreeView::tr("Tried deleting empty (not selected) keyframes"),
+                vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to delete before deleting keyframes."));
+    }
 }
 
 void TimelineTreeView::setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position,
