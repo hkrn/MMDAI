@@ -676,6 +676,7 @@ void SceneLoader::loadProject(const QString &path)
         QSet<IModel *> lostModels;
         QList<IModel *> assets;
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
+        /* プロジェクト内のモデル数を発行する */
         emit projectDidCount(modelUUIDs.size());
         const Array<IMotion *> &motions = m_project->motions();
         const int nmotions = motions.count();
@@ -797,11 +798,12 @@ void SceneLoader::loadProject(const QString &path)
                 selectedAssetModel = model;
             emit modelDidAdd(model, assetUUID);
         }
-        if (selectedAssetModel)
-            setSelectedAsset(selectedAssetModel);
         updateDepthBuffer(shadowMapSize());
         sort(true);
         m_project->setDirty(false);
+        /* エフェクトが有効であればエフェクトボタンを有効にする */
+        emit effectDidEnable(isEffectEnabled());
+        /* 読み込み完了 */
         emit projectDidLoad(true);
     }
     else {
@@ -1826,8 +1828,10 @@ void SceneLoader::setSoftwareSkinningEnable(bool value)
 
 void SceneLoader::setEffectEnable(bool value)
 {
-    if (m_project && isEffectEnabled() != value)
+    if (m_project && isEffectEnabled() != value) {
         m_project->setGlobalSetting("effect.enabled", value ? "true" : "false");
+        emit effectDidEnable(value);
+    }
 }
 
 void SceneLoader::setProjectDirtyFalse()

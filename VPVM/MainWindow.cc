@@ -1390,6 +1390,8 @@ void MainWindow::connectSceneLoader()
     connect(loader ,SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModel*,SceneLoader*)));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModel*)));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
+    connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
     connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnableEffectOnToolBar.data(), SIGNAL(toggled(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));

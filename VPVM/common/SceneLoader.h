@@ -180,7 +180,6 @@ public:
 public slots:
     void addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
     void createProject();
-    //void deleteModel(IModel *model);
     void deleteCameraMotion();
     void deleteMotion(IMotion *&motion);
     void loadProject(const QString &path);
@@ -242,6 +241,7 @@ signals:
     void lightColorDidSet(const Vector3 &color);
     void lightDirectionDidSet(const Vector3 &position);
     void preprocessDidPerform();
+    void effectDidEnable(bool value);
 
 private slots:
     void setProjectDirtyFalse();
