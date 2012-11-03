@@ -1026,6 +1026,7 @@ void SceneWidget::initializeGL()
     settings.insert("dir.system.toon", ":textures");
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
     m_delegate.reset(new Delegate(settings, 0, this));
+    m_delegate->initialize(true);
     m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_delegate.data()));
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
