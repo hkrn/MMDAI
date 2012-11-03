@@ -81,16 +81,16 @@
         <file alias="global.png">images/icons/global.png</file>
         <file alias="local.png">images/icons/local.png</file>
         <file alias="view.png">images/icons/view.png</file>
-		<file alias="film.png">images/glyph/glyphicons_008_film.png</file>
-		<file alias="magic.png">images/glyph/glyphicons_009_magic.png</file>
-		<file alias="file.png">images/glyph/glyphicons_036_file.png</file>
-		<file alias="folder.png">images/glyph/glyphicons_145_folder_plus.png</file>
-		<file alias="picture.png">images/glyph/glyphicons_159_picture.png</file>
-		<file alias="circle-plus.png">images/glyph/glyphicons_190_circle_plus.png</file>
-		<file alias="circle-minus.png">images/glyph/glyphicons_191_circle_minus.png</file>
-		<file alias="remove.png">images/glyph/glyphicons_197_remove.png</file>
-		<file alias="ok.png">images/glyph/glyphicons_198_ok.png</file>
-		<file alias="play.png">images/glyph/glyphicons_220_play_button.png</file>
+        <file alias="film.png">images/glyph/glyphicons_008_film.png</file>
+        <file alias="magic.png">images/glyph/glyphicons_009_magic.png</file>
+        <file alias="file.png">images/glyph/glyphicons_036_file.png</file>
+        <file alias="picture.png">images/glyph/glyphicons_138_picture.png</file>
+        <file alias="folder.png">images/glyph/glyphicons_145_folder_plus.png</file>
+        <file alias="circle-plus.png">images/glyph/glyphicons_190_circle_plus.png</file>
+        <file alias="circle-minus.png">images/glyph/glyphicons_191_circle_minus.png</file>
+        <file alias="remove.png">images/glyph/glyphicons_197_remove.png</file>
+        <file alias="ok.png">images/glyph/glyphicons_198_ok.png</file>
+        <file alias="play.png">images/glyph/glyphicons_220_play_button.png</file>
     </qresource>
     <qresource prefix="/models">
         <file alias="rotation.3ds">blender/rotation.3ds</file>
