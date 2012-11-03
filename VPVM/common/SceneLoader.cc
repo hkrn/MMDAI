@@ -785,7 +785,6 @@ void SceneLoader::loadProject(const QString &path)
             m_project->deleteModel(model);
         }
         /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルとアクセサリ読み込みに行う */
-        IModel *selectedAssetModel = 0;
         foreach (IModel *model, assets) {
             const QUuid assetUUID(m_project->modelUUID(model).c_str());
             model->setPosition(assetPosition(model));
@@ -794,8 +793,6 @@ void SceneLoader::loadProject(const QString &path)
             model->setOpacity(assetOpacity(model));
             model->setParentModel(assetParentModel(model));
             model->setParentBone(assetParentBone(model));
-            if (isAssetSelected(model))
-                selectedAssetModel = model;
             emit modelDidAdd(model, assetUUID);
         }
         updateDepthBuffer(shadowMapSize());
@@ -1134,23 +1131,25 @@ void SceneLoader::setLightDirection(const Vector3 &position)
 
 void SceneLoader::setModelMotion(IMotion *motion, IModel *model)
 {
-    const QUuid &uuid = QUuid::createUuid();
+    if (model) {
+        const QUuid &uuid = QUuid::createUuid();
 #ifdef IS_VPVM
-    /* 物理削除を伴うので、まず配列のコピーを用意してそこにコピーしてから削除。そうしないと SEGV が起きる */
-    Array<IMotion *> motions;
-    motions.copy(m_project->motions());
-    const int nmotions = motions.count();
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *m = motions[i];
-        if (m->parentModel() == model) {
-            m_project->removeMotion(m);
-            delete m;
+        /* 物理削除を伴うので、まず配列のコピーを用意してそこにコピーしてから削除。そうしないと SEGV が起きる */
+        Array<IMotion *> motions;
+        motions.copy(m_project->motions());
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *m = motions[i];
+            if (m->parentModel() == model) {
+                m_project->removeMotion(m);
+                delete m;
+            }
         }
-    }
 #endif
-    motion->setParentModel(model);
-    m_project->addMotion(motion, uuid.toString().toStdString());
-    emit motionDidAdd(motion, model, uuid);
+        motion->setParentModel(model);
+        m_project->addMotion(motion, uuid.toString().toStdString());
+        emit motionDidAdd(motion, model, uuid);
+    }
 }
 
 void SceneLoader::setRenderOrderList(const QList<QUuid> &value)
