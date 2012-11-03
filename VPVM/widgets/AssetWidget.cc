@@ -83,7 +83,7 @@ AssetWidget::AssetWidget(QWidget *parent)
     connect(m_assetComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentAsset(int)));
     subLayout->addWidget(m_assetComboBox.data(), 1);
     /* アクセサリ削除 */
-    connect(m_removeButton.data(), SIGNAL(clicked()), this, SLOT(removeAsset()));
+    connect(m_removeButton.data(), SIGNAL(clicked()), this, SLOT(deleteCurrentAsset()));
     subLayout->addWidget(m_removeButton.data());
     m_assetGroup->setLayout(subLayout.take());
     mainLayout->addWidget(m_assetGroup.data());
@@ -181,8 +181,7 @@ void AssetWidget::removeAsset(IModel *asset)
 {
     int index = m_assets.indexOf(asset);
     if (index >= 0) {
-        /* 該当するアセットが見つかったら表示項目から削除し、実際にアセットを削除。アセットが空なら表示を無効にしておく */
-        IModel *asset = m_assets[index];
+        /* 該当するアセットが見つかったら表示項目から削除する */
         m_assets.removeAt(index);
         m_assetComboBox->removeItem(index);
         QStringList assetNames = m_assetCompleterModel->stringList();
@@ -190,7 +189,6 @@ void AssetWidget::removeAsset(IModel *asset)
         m_assetCompleterModel->setStringList(assetNames);
         if (m_assets.count() == 0)
             setEnable(false);
-        emit assetDidRemove(asset);
     }
 }
 
@@ -220,9 +218,11 @@ void AssetWidget::removeModel(IModel *model)
         removeAsset(model);
 }
 
-void AssetWidget::removeAsset()
+void AssetWidget::deleteCurrentAsset()
 {
+    /* シグナルを通じて SceneLoader#deleteModel を呼び出して削除する */
     removeAsset(m_currentAssetRef);
+    emit assetDidRemove(m_currentAssetRef);
 }
 
 void AssetWidget::changeCurrentAsset(int index)

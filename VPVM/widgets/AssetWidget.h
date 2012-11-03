@@ -82,7 +82,7 @@ signals:
     void assetDidRemove(IModel *asset);
 
 private slots:
-    void removeAsset();
+    void deleteCurrentAsset();
     void changeCurrentAsset(int index);
     void changeCurrentAsset(IModel *asset);
     void changeCurrentModel(int index);
