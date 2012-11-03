@@ -6,6 +6,7 @@ DEFINES += IS_VPVM
 # libvpvl2 and base libraries (MMDAgent for win32)
 ASSIMP_PATH = ../assimp-src
 BULLET_PATH = ../bullet-src
+VPVL1_PATH = ../libvpvl
 VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 LIBAV_PATH = ../libav-src
@@ -37,6 +38,7 @@ win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
 CONFIG(debug, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
                       -L$${BULLET_PATH}/debug/lib \
+                      -L$${VPVL1_PATH}/debug/lib \
                       -L$${VPVL2_PATH}/debug/lib \
                       -L$${PORTAUDIO_PATH}/debug_native/lib \
                       -L$${LIBAV_PATH}/debug_native/lib \
@@ -44,19 +46,20 @@ CONFIG(debug, debug|release) {
   unix:INCLUDEPATH += $${VPVL2_PATH}/debug/include \
                       $${PORTAUDIO_PATH}/debug_native/include
   # should not change link order because of static library link order
-  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug
+  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
   INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
 }
 CONFIG(release, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/release/code \
                       -L$${BULLET_PATH}/release/lib \
+                      -L$${VPVL1_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib \
                       -L$${PORTAUDIO_PATH}/release_native/lib \
                       -L$${LIBAV_PATH}/release_native/lib \
                       -L$${NVTT_PATH}/build-release/lib
   unix:INCLUDEPATH += $${VPVL2_PATH}/release/include
   # should not change link order because of static library link order
-  LIBS             += -lvpvl2qtcommon -lvpvl2
+  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
   INCLUDEPATH      += $${LIBAV_PATH}/release_native/include
 }
 
