@@ -146,9 +146,9 @@ int main(int argc, char *argv[])
         return result;
     }
 
+    // TODO: make external
+    QHash<IEncoding::ConstantType, CString *> constants;
     try {
-        // TODO: make external
-        QHash<IEncoding::ConstantType, CString *> constants;
         constants.insert(IEncoding::kArm, new CString("腕"));
         constants.insert(IEncoding::kAsterisk, new CString("*"));
         constants.insert(IEncoding::kCenter, new CString("センター"));
@@ -161,6 +161,9 @@ int main(int argc, char *argv[])
         constants.insert(IEncoding::kSPAExtension, new CString(".spa"));
         constants.insert(IEncoding::kSPHExtension, new CString(".sph"));
         constants.insert(IEncoding::kWrist, new CString("手首"));
+        constants.insert(IEncoding::kRootBoneAsset, new CString("全ての親"));
+        constants.insert(IEncoding::kScaleBoneAsset, new CString("拡大率"));
+        constants.insert(IEncoding::kOpacityMorphAsset, new CString("不透明度"));
         vpvm::MainWindow w(constants);
         w.show();
         result = a.exec();
@@ -171,6 +174,7 @@ int main(int argc, char *argv[])
                       QApplication::tr("Exception caught: %1").arg(e.what()));
     }
     vpvm::LoggerWidget::destroyInstance();
+    qDeleteAll(constants);
     xmlCleanupParser();
     xmlMemoryDump();
 
