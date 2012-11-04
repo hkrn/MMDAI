@@ -120,10 +120,10 @@ void CameraKeyframe::read(const uint8_t *data)
     setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
 #endif
     setDistance(chunk.distance);
-    setTimeIndex(chunk.timeIndex);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
     setLayerIndex(chunk.layerIndex);
     setFov(degree(chunk.fov));
-    setPerspective(chunk.perspective);
+    setPerspective(chunk.perspective != 0);
     setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.positionIP));
     setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk.rotationIP));
     setInterpolationParameter(kFov, Motion::InterpolationTable::toQuadWord(chunk.fovIP));
@@ -145,7 +145,7 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.rotation[2] = radian(a.z());
 #endif
     chunk.distance = distance();
-    chunk.timeIndex = timeIndex();
+    chunk.timeIndex = uint64_t(timeIndex());
     chunk.layerIndex = layerIndex();
     chunk.fov = radian(fov());
     chunk.perspective = isPerspective() ? 1 : 0;

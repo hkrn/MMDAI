@@ -66,7 +66,7 @@ namespace vmd
 struct MorphAnimation::PrivateContext {
     IMorph *morph;
     Array<MorphKeyframe *> keyframes;
-    float weight;
+    IMorph::WeightPrecision weight;
     int lastIndex;
 
     bool isNull() const {

@@ -141,7 +141,7 @@ public:
     void setLocalPosition(const Vector3 &value) {
         m_position = value;
         m_position.setMax(kMaxValue);
-        const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0;
+        const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0f;
         m_modelRef->setScaleFactor(scaleFactor);
     }
     void setRotation(const Quaternion & /* value */) {}
@@ -162,7 +162,7 @@ private:
     IModel *m_modelRef;
     Vector3 m_position;
 };
-const Vector3 ScaleBone::kMaxValue = Vector3(0.01, 0.01, 0.01);
+const Vector3 ScaleBone::kMaxValue = Vector3(0.01f, 0.01f, 0.01f);
 
 class Label : public ILabel {
 public:
@@ -257,10 +257,10 @@ public:
     void setName(const IString * /* value */) {}
     void setEnglishName(const IString * /* value */) {}
     void setUserDataArea(const IString * /* value */) {}
-    void setMainTexture(const IString */*value*/) {}
-    void setSphereTexture(const IString */*value*/) {}
-    void setToonTexture(const IString */*value*/) {}
-    void setSphereTextureRenderMode(SphereTextureRenderMode /*value*/) {}
+    void setMainTexture(const IString * /* value */) {}
+    void setSphereTexture(const IString * /* value */) {}
+    void setToonTexture(const IString * /* value */) {}
+    void setSphereTextureRenderMode(SphereTextureRenderMode /* value */) {}
     void setAmbient(const Color &value) { m_ambient = value; }
     void setDiffuse(const Color &value) { m_diffuse = value; }
     void setSpecular(const Color &value) { m_specular = value; }
@@ -349,7 +349,7 @@ public:
     bool hasParent() const { return false; }
     const WeightPrecision &weight() const { return m_opacity; }
     void setWeight(const WeightPrecision &value) {
-        m_modelRef->setOpacity(value);
+        m_modelRef->setOpacity(Scalar(value));
         m_opacity = value;
     }
 
@@ -387,14 +387,14 @@ public:
     float weight(int index) const { return 0; }
     IBone *bone(int index) const { return 0; }
     int index() const { return m_index; }
-    void setOrigin(const Vector3 &/*value*/) {}
-    void setNormal(const Vector3 &/*value*/) {}
-    void setTextureCoord(const Vector3 &/*value*/) {}
-    void setUV(int /*index*/, const Vector4 &/*value*/) {}
-    void setType(Type /*value*/) {}
-    void setEdgeSize(float /*value*/) {}
-    void setWeight(int /*index*/, float /*weight*/) {}
-    void setBone(int /*index*/, IBone */*value*/) {}
+    void setOrigin(const Vector3 & /* value */) {}
+    void setNormal(const Vector3 & /* value */) {}
+    void setTextureCoord(const Vector3 & /* value */) {}
+    void setUV(int /* index */, const Vector4 & /* value */) {}
+    void setType(Type /* value */) {}
+    void setEdgeSize(float /* value */) {}
+    void setWeight(int /* index */, float /* weight */) {}
+    void setBone(int /* index */, IBone * /* value */) {}
 
 private:
     Vector3 m_origin;

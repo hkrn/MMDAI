@@ -271,13 +271,13 @@ void BoneAnimation::calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, 
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 1, y);
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 2, z);
-            context->position.setValue(x, y, z);
+            context->position.setValue(Scalar(x), Scalar(y), Scalar(z));
             if (keyframeForInterpolation->linear()[3]) {
-                context->rotation = rotationFrom.slerp(rotationTo, w);
+                context->rotation = rotationFrom.slerp(rotationTo, Scalar(w));
             }
             else {
                 const IKeyframe::SmoothPrecision &w2 = weightValue(keyframeForInterpolation, w, 3);
-                context->rotation = rotationFrom.slerp(rotationTo, w2);
+                context->rotation = rotationFrom.slerp(rotationTo, Scalar(w2));
             }
         }
     }

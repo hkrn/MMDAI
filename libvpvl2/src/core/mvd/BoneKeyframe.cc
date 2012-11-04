@@ -106,7 +106,7 @@ void BoneKeyframe::read(const uint8_t *data)
     internal::getData(data, chunk);
     internal::setPosition(chunk.position, m_position);
     internal::setRotation2(chunk.rotation, m_rotation);
-    setTimeIndex(chunk.timeIndex);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
     setLayerIndex(chunk.layerIndex);
     setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.x));
     setInterpolationParameter(kY, Motion::InterpolationTable::toQuadWord(chunk.y));
@@ -119,7 +119,7 @@ void BoneKeyframe::write(uint8_t *data) const
     BoneKeyframeChunk chunk;
     internal::getPosition(m_position, chunk.position);
     internal::getRotation2(m_rotation, chunk.rotation);
-    chunk.timeIndex = timeIndex();
+    chunk.timeIndex = uint64_t(timeIndex());
     chunk.layerIndex = layerIndex();
     tableForX().getInterpolationPair(chunk.x);
     tableForY().getInterpolationPair(chunk.y);

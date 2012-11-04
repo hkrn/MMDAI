@@ -113,10 +113,10 @@ public:
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }
     void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                const IIndexBuffer */*indexBuffer*/) const { dynamicBuffer = 0; }
+                                const IIndexBuffer * /* indexBuffer */) const { dynamicBuffer = 0; }
     void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                         IDynamicVertexBuffer */*dynamicBuffer*/,
-                         const IIndexBuffer */*indexBuffer*/) const { matrixBuffer = 0; }
+                         IDynamicVertexBuffer * /* dynamicBuffer */,
+                         const IIndexBuffer * /* indexBuffer */) const { matrixBuffer = 0; }
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
 

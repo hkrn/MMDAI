@@ -78,11 +78,11 @@ public:
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
     void setTextureCoord(const Vector3 &value);
-    void setUV(int /*index*/, const Vector4 &/*value*/) {}
-    void setType(Type /*value*/) {}
+    void setUV(int /* index */, const Vector4 & /* value */) {}
+    void setType(Type /* value */) {}
     void setEdgeSize(float value);
     void setWeight(int index, float weight);
-    void setBone(int /*index*/, IBone */*value*/) {}
+    void setBone(int /* index */, IBone * /* value */) {}
 
 private:
     vpvl::Vertex *m_vertexRef;

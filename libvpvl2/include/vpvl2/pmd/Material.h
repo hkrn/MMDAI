@@ -92,9 +92,9 @@ public:
     void setName(const IString * /* value */) {}
     void setEnglishName(const IString * /* value */) {}
     void setUserDataArea(const IString * /* value */) {}
-    void setMainTexture(const IString */*value*/) {}
-    void setSphereTexture(const IString */*value*/) {}
-    void setToonTexture(const IString */*value*/) {}
+    void setMainTexture(const IString * /* value */) {}
+    void setSphereTexture(const IString * /* value */) {}
+    void setToonTexture(const IString * /* value */) {}
     void setSphereTextureRenderMode(SphereTextureRenderMode /*value*/) {}
     void setAmbient(const Color &value);
     void setDiffuse(const Color &value);

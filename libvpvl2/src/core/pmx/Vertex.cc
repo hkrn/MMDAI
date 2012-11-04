@@ -81,8 +81,10 @@ namespace vpvl2
 namespace pmx
 {
 
+#ifndef _MSC_VER
 const int Vertex::kMaxBones;
 const int Vertex::kMaxMorphs;
+#endif
 
 Vertex::Vertex()
     : m_origin(kZeroV3),
@@ -421,18 +423,17 @@ void Vertex::mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &w
     int offset = morph->offset;
     if (internal::checkBound(offset, 0, kMaxMorphs)) {
         const Vector4 &m = morph->position, &o = m_morphUVs[offset];
-        Vector4 v(o.x() + m.x() * weight,
-                  o.y() + m.y() * weight,
-                  o.z() + m.z() * weight,
-                  o.w() + m.w() * weight);
+        Vector4 v(Scalar(o.x() + m.x() * weight),
+                  Scalar(o.y() + m.y() * weight),
+                  Scalar(o.z() + m.z() * weight),
+                  Scalar(o.w() + m.w() * weight));
         m_morphUVs[offset] = v;
     }
 }
 
 void Vertex::mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight)
 {
-    const Scalar w(weight);
-    m_morphDelta += morph->position * w;
+    m_morphDelta += morph->position * Scalar(weight);
 }
 
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const

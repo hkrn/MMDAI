@@ -98,7 +98,7 @@ const IMorph::WeightPrecision &Morph::weight() const
 void Morph::setWeight(const WeightPrecision &value)
 {
     m_weight = value;
-    m_morphRef->setWeight(value);
+    m_morphRef->setWeight(float(value));
 }
 
 void Morph::setIndex(int value)

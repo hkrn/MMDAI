@@ -54,7 +54,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         void update(const IVertex *vertex) {
             IBone *bone1 = vertex->bone(0), *bone2 = vertex->bone(1);
             texcoord = vertex->textureCoord();
-            boneIndices.setValue(bone1->index(), bone2->index(), 0, 0);
+            boneIndices.setValue(Scalar(bone1->index()), Scalar(bone2->index()), 0, 0);
             boneWeights.setValue(vertex->weight(0), 0, 0, 0);
         }
         Vector3 texcoord;
@@ -351,7 +351,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
             const IVertex *vertex = vertices[i];
             DynamicVertexBuffer::Unit &buffer = units[i];
             buffer.position = vertex->origin();
-            buffer.position.setW(vertex->type());
+            buffer.position.setW(Scalar(vertex->type()));
             buffer.delta = vertex->delta();
         }
     }

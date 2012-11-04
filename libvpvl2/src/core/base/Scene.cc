@@ -118,8 +118,8 @@ public:
         setDirection(value->direction());
     }
     void resetDefault() {
-        setColor(Vector3(0.6, 0.6, 0.6));
-        setDirection(Vector3(-0.5, -1.0, -0.5));
+        setColor(Vector3(0.6f, 0.6f, 0.6f));
+        setDirection(Vector3(-0.5f, -1.0f, -0.5f));
     }
 
 private:

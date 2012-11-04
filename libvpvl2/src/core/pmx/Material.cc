@@ -300,7 +300,7 @@ size_t Material::estimateSize(const Model::DataInfo &info) const
 
 void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight)
 {
-    Scalar w(weight);
+    Scalar w = Scalar(weight);
     btClamp(w, 0.0f, 1.0f);
     if (btFuzzyZero(w)) {
         resetMorph();

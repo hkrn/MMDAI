@@ -158,7 +158,7 @@ inline char *stringToken(char *str, const char *delim, char **ptr)
     assert(delim != NULL);
 #if defined(__MINGW32__)
     return strtok(str, delim);
-#elif defined(WIN32)
+#elif defined(_MSC_VER)
     return strtok_s(str, delim, ptr);
 #else
     return strtok_r(str, delim, ptr);
@@ -175,7 +175,7 @@ inline float stringToFloat(const char *str)
 {
     assert(str != NULL);
     char *p = 0;
-#if defined(WIN32)
+#if defined(_MSC_VER)
     return static_cast<float>(strtod(str, &p));
 #else
     return strtof(str, &p);

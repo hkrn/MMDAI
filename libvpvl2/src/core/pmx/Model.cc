@@ -74,10 +74,10 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
                     *bone2 = vertex->bone(1),
                     *bone3 = vertex->bone(2),
                     *bone4 = vertex->bone(3);
-            boneIndices.setValue(bone1 ? bone1->index() : -1,
-                                 bone2 ? bone2->index() : -1,
-                                 bone3 ? bone3->index() : -1,
-                                 bone4 ? bone4->index() : -1);
+            boneIndices.setValue(Scalar(bone1 ? bone1->index() : -1),
+                                 Scalar(bone2 ? bone2->index() : -1),
+                                 Scalar(bone3 ? bone3->index() : -1),
+                                 Scalar(bone4 ? bone4->index() : -1));
             boneWeights.setValue(vertex->weight(0),
                                  vertex->weight(1),
                                  vertex->weight(2),
@@ -485,7 +485,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
             const IVertex *vertex = vertices[i];
             DynamicVertexBuffer::Unit &buffer = units[i];
             buffer.position = vertex->origin();
-            buffer.position.setW(vertex->type());
+            buffer.position.setW(Scalar(vertex->type()));
             buffer.delta = vertex->delta();
         }
     }

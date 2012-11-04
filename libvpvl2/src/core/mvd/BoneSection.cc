@@ -101,14 +101,14 @@ public:
                     interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
                     interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
                     interpolate(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
-                    position.setValue(x, y, z);
+                    position.setValue(Scalar(x), Scalar(y), Scalar(z));
                     const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
                     if (tableForRotation.linear) {
-                        rotation = rotationFrom.slerp(rotationTo, weight);
+                        rotation = rotationFrom.slerp(rotationTo, Scalar(weight));
                     }
                     else {
                         const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
-                        rotation = rotationFrom.slerp(rotationTo, weight2);
+                        rotation = rotationFrom.slerp(rotationTo, Scalar(weight2));
                     }
                 }
             }

@@ -89,7 +89,7 @@ void MorphKeyframe::write(uint8_t *data) const
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
     m_encodingRef->disposeByteArray(name);
     chunk.timeIndex = static_cast<int>(m_timeIndex);
-    chunk.weight = m_weight;
+    chunk.weight = float(m_weight);
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
 }
 

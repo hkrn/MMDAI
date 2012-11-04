@@ -183,27 +183,27 @@ void CameraAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 1, y);
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 2, z);
-            m_position.setValue(x, y, z);
+            m_position.setValue(Scalar(x), Scalar(y), Scalar(z));
             if (keyframeForInterpolation->linear()[3]) {
-                m_angle = angleFrom.lerp(angleTo, w);
+                m_angle = angleFrom.lerp(angleTo, Scalar(w));
             }
             else {
                 const IKeyframe::SmoothPrecision &w2 = weightValue(keyframeForInterpolation, w, 3);
-                m_angle = angleFrom.lerp(angleTo, w2);
+                m_angle = angleFrom.lerp(angleTo, Scalar(w2));
             }
             if (keyframeForInterpolation->linear()[4]) {
-                m_distance = internal::lerp(distanceFrom, distanceTo, w);
+                m_distance = Scalar(internal::lerp(distanceFrom, distanceTo, w));
             }
             else {
                 const IKeyframe::SmoothPrecision &w2 = weightValue(keyframeForInterpolation, w, 4);
-                m_distance = internal::lerp(distanceFrom, distanceTo, w2);
+                m_distance = Scalar(internal::lerp(distanceFrom, distanceTo, w2));
             }
             if (keyframeForInterpolation->linear()[5]) {
-                m_fovy = internal::lerp(fovyFrom, fovyTo, w);
+                m_fovy = Scalar(internal::lerp(fovyFrom, fovyTo, w));
             }
             else {
                 const IKeyframe::SmoothPrecision &w2 = weightValue(keyframeForInterpolation, w, 5);
-                m_fovy = internal::lerp(fovyFrom, fovyTo, w2);
+                m_fovy = Scalar(internal::lerp(fovyFrom, fovyTo, w2));
             }
         }
     }

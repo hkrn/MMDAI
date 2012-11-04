@@ -80,7 +80,7 @@ const Vector3 &Vertex::textureCoord() const
 
 float Vertex::edgeSize() const
 {
-    return m_vertexRef->isEdgeEnabled() ? 1 : 0;
+    return m_vertexRef->isEdgeEnabled() ? 1.0f : 0.0f;
 }
 
 float Vertex::weight(int index) const
