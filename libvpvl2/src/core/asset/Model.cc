@@ -141,7 +141,8 @@ public:
     void setLocalPosition(const Vector3 &value) {
         m_position = value;
         m_position.setMax(kMaxValue);
-        m_modelRef->setScaleFactor(m_position.length());
+        const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0;
+        m_modelRef->setScaleFactor(scaleFactor);
     }
     void setRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return true; }
@@ -161,7 +162,7 @@ private:
     IModel *m_modelRef;
     Vector3 m_position;
 };
-const Vector3 ScaleBone::kMaxValue = Vector3(0.1, 0.1, 0.1);
+const Vector3 ScaleBone::kMaxValue = Vector3(0.01, 0.01, 0.01);
 
 class Label : public ILabel {
 public:
