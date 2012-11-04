@@ -846,6 +846,8 @@ void SceneLoader::newModelMotion(const IModel *model, IMotionPtr &motionPtr) con
                 boneKeyframe.reset(m_factoryRef->createBoneKeyframe(motionPtr.data()));
                 boneKeyframe->setDefaultInterpolationParameter();
                 boneKeyframe->setName(bone->name());
+                boneKeyframe->setPosition(bone->localPosition());
+                boneKeyframe->setRotation(bone->rotation());
                 motionPtr->addKeyframe(boneKeyframe.take());
             }
         }
@@ -858,6 +860,7 @@ void SceneLoader::newModelMotion(const IModel *model, IMotionPtr &motionPtr) con
             IMorph *morph = morphs[i];
             morphKeyframe.reset(m_factoryRef->createMorphKeyframe(motionPtr.data()));
             morphKeyframe->setName(morph->name());
+            morphKeyframe->setWeight(morph->weight());
             motionPtr->addKeyframe(morphKeyframe.take());
         }
         motionPtr->update(IKeyframe::kMorph);
