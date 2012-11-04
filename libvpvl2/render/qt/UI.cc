@@ -440,8 +440,8 @@ private:
     GLuint m_depthTexture;
 };
 
-UI::UI()
-    : QGLWidget(new CustomGLContext(QGLFormat(QGL::SampleBuffers)), 0),
+UI::UI(const QGLFormat &format)
+    : QGLWidget(new CustomGLContext(format), 0),
       m_settings(0),
       m_sm(0),
       m_world(0),
@@ -512,8 +512,8 @@ void UI::load(const QString &filename)
         light->setHasFloatTexture(true);
     }
     if (loadScene()) {
-        startTimer(1000.0f / 60.0f);
-        m_timer.start();
+        m_updateTimer.start(0, this);
+        m_refreshTimer.start();
     }
     else {
         qFatal("Unable to load scene");
@@ -560,7 +560,7 @@ void UI::initializeGL()
 
 void UI::timerEvent(QTimerEvent *)
 {
-    const Scalar &elapsed = m_timer.elapsed() / static_cast<Scalar>(60.0f);
+    const Scalar &elapsed = m_refreshTimer.elapsed() / static_cast<Scalar>(60.0f);
     Scalar delta(elapsed - m_prevElapsed);
     m_prevElapsed = elapsed;
     if (delta < 0)

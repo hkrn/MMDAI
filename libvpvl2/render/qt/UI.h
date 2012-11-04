@@ -64,7 +64,7 @@ namespace qt
 class UI : public QGLWidget, protected QGLFunctions
 {
 public:
-    UI();
+    UI(const QGLFormat &format);
     ~UI();
 
     void load(const QString &filename);
@@ -99,7 +99,8 @@ private:
     IMotion *loadMotion(const QString &path, IModel *model);
 
     QSettings *m_settings;
-    QElapsedTimer m_timer;
+    QBasicTimer m_updateTimer;
+    QElapsedTimer m_refreshTimer;
     QPoint m_prevPos;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;
