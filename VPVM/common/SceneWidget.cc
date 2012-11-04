@@ -227,7 +227,7 @@ void SceneWidget::clear()
 void SceneWidget::startAutomaticRendering()
 {
     if (!m_updateTimer.isActive()) {
-        m_updateTimer.start(0, this);
+        m_updateTimer.start(int(1000.0 / Scene::defaultFPS()), this);
     }
 }
 
