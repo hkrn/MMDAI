@@ -1319,18 +1319,24 @@ bool Delegate::generateTextureFromImage(const QImage &image,
                                         InternalTexture &internalTexture,
                                         InternalContext *internalContext)
 {
-    GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
-                                              GL_TEXTURE_2D,
-                                              GL_RGBA,
-                                              UIGetTextureBindOptions(internalTexture.mipmap));
-    size_t width = image.width(), height = image.height();
-    TextureCache cache(width, height, textureID);
-    m_texture2Paths.insert(textureID, path);
-    UISetTexture(cache, internalTexture);
-    UIAddTextureCache(internalContext, path, cache);
-    qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
-           textureID, width, height, qPrintable(path));
-    return textureID != 0;
+    if (!image.isNull()) {
+        GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
+                                                  GL_TEXTURE_2D,
+                                                  GL_RGBA,
+                                                  UIGetTextureBindOptions(internalTexture.mipmap));
+        size_t width = image.width(), height = image.height();
+        TextureCache cache(width, height, textureID);
+        m_texture2Paths.insert(textureID, path);
+        UISetTexture(cache, internalTexture);
+        UIAddTextureCache(internalContext, path, cache);
+        qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
+               textureID, width, height, qPrintable(path));
+        return textureID != 0;
+    }
+    else {
+        qWarning("Failed loading a image to convert the texture: %s", qPrintable(path));
+        return false;
+    }
 }
 
 void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
