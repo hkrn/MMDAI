@@ -208,7 +208,7 @@ QSpinBox *InterpolationDialog::createSpinBox(int defaultValue,
     connect(spinBox.data(), SIGNAL(valueChanged(int)), m_graphWidget.data(), slot);
     connect(m_graphWidget.data(), signal, spinBox.data(), SLOT(setValue(int)));
     spinBox->setValue(defaultValue);
-    return spinBox.data();
+    return spinBox.take();
 }
 
 } /* namespace vpvm */
