@@ -627,1199 +627,1199 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::MainWindow</name>
     <message>
-        <location filename="../../MainWindow.cc" line="445"/>
+        <location filename="../../MainWindow.cc" line="446"/>
         <source>Open VPVM file</source>
         <translation>VPVM を開く</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="446"/>
+        <location filename="../../MainWindow.cc" line="447"/>
         <source>VPVM file (*.xml)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="514"/>
+        <location filename="../../MainWindow.cc" line="515"/>
         <source>&amp;%1 %2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="534"/>
+        <location filename="../../MainWindow.cc" line="535"/>
         <source>Select a model %1</source>
         <translation>モデル %1 を選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="564"/>
+        <location filename="../../MainWindow.cc" line="565"/>
         <source>Select an asset %1</source>
         <translation>アクセサリ %1 を選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="593"/>
+        <location filename="../../MainWindow.cc" line="594"/>
         <source>Save model motion as a VMD/MVD file</source>
         <translation>VMD または MVD ファイルとしてモデルモーションを保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="594"/>
+        <location filename="../../MainWindow.cc" line="595"/>
         <source>Model motion file (*.vmd *.mvd)</source>
         <translation>モデルモーションファイル (*.vmd *.mvd)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="595"/>
+        <location filename="../../MainWindow.cc" line="596"/>
         <source>untitiled_model_motion.vmd</source>
         <translation>無題のモデルモーション.vmd</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="603"/>
+        <location filename="../../MainWindow.cc" line="604"/>
         <source>Save camera motion as a VMD/MVD file</source>
         <translation>VMD または MVD ファイルとしてカメラモーションを保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="604"/>
+        <location filename="../../MainWindow.cc" line="605"/>
         <source>Camera motion file (*.vmd *.mvd)</source>
         <translation>カメラモーションファイル (*.vmd *.mvd)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="605"/>
+        <location filename="../../MainWindow.cc" line="606"/>
         <source>untitiled_camera_motion.vmd</source>
         <translation>無題のカメラモーション.vmd</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="654"/>
+        <location filename="../../MainWindow.cc" line="655"/>
         <source>Save projct as a VPVM project file</source>
         <translation>プロジェクトを VPVM プロジェクトファイルとして保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="655"/>
+        <location filename="../../MainWindow.cc" line="656"/>
         <source>VPVM project file (*.xml)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="656"/>
+        <location filename="../../MainWindow.cc" line="657"/>
         <source>untitled.xml</source>
         <translation>無題プロジェクト.xml</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="699"/>
+        <location filename="../../MainWindow.cc" line="700"/>
         <source>Confirm</source>
         <translation>確認</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="700"/>
+        <location filename="../../MainWindow.cc" line="701"/>
         <source>Do you want to save your changes?</source>
         <translation>変更点を保存しますか？</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1137"/>
+        <location filename="../../MainWindow.cc" line="1138"/>
         <source>Toolbar</source>
         <translation>ツールバー</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1138"/>
+        <location filename="../../MainWindow.cc" line="1139"/>
         <source>Timeline</source>
         <translation>タイムライン</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1140"/>
+        <location filename="../../MainWindow.cc" line="1141"/>
         <source>Scene</source>
         <translation>場面</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1142"/>
+        <location filename="../../MainWindow.cc" line="1143"/>
         <source>Model</source>
         <translation>モデル</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1144"/>
+        <location filename="../../MainWindow.cc" line="1145"/>
         <source>New project</source>
         <translation>新規プロジェクト作成</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1145"/>
+        <location filename="../../MainWindow.cc" line="1146"/>
         <source>Create a new project.</source>
         <translation>新しいプロジェクトを作成します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1146"/>
+        <location filename="../../MainWindow.cc" line="1147"/>
         <source>New motion</source>
         <translation>新規モーション</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1147"/>
+        <location filename="../../MainWindow.cc" line="1148"/>
         <source>Insert a new motion to the selected model.</source>
         <translation>新規モーションを選択したモデルに追加します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1148"/>
+        <location filename="../../MainWindow.cc" line="1149"/>
         <source>Load project</source>
         <translation>プロジェクト読み込み</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1149"/>
+        <location filename="../../MainWindow.cc" line="1150"/>
         <source>Load a project to the scene.</source>
         <translation>プロジェクトを現在の場面に読み込みます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1150"/>
+        <location filename="../../MainWindow.cc" line="1151"/>
         <source>Add new model</source>
         <translation>モデルの追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1151"/>
+        <location filename="../../MainWindow.cc" line="1152"/>
         <source>Add a model to the scene.</source>
         <translation>モデルを場面に追加します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1152"/>
+        <location filename="../../MainWindow.cc" line="1153"/>
         <source>Add new asset</source>
         <translation>アクセサリの追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1153"/>
+        <location filename="../../MainWindow.cc" line="1154"/>
         <source>Add an asset to the scene.</source>
         <translation>アクセサリを場面に追加します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1155"/>
+        <location filename="../../MainWindow.cc" line="1156"/>
         <source>Insert motion to all models</source>
         <translation>モーションをすべてのモデルに追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1156"/>
+        <location filename="../../MainWindow.cc" line="1157"/>
         <source>Insert a motion to the all models.</source>
         <translation>モーションをすべてのモデルに追加します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1157"/>
+        <location filename="../../MainWindow.cc" line="1158"/>
         <source>Insert motion to selected model</source>
         <translation>モーションを選択されたモデルに追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1158"/>
+        <location filename="../../MainWindow.cc" line="1159"/>
         <source>Insert a motion to the selected model.</source>
         <translation>モーションを選択されたモデルに追加します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1159"/>
+        <location filename="../../MainWindow.cc" line="1160"/>
         <source>Save project</source>
         <translation>プロジェクトを保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1160"/>
+        <location filename="../../MainWindow.cc" line="1161"/>
         <source>Save current project to the current file.</source>
         <translation>プロジェクトを現在のファイルに保存します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1161"/>
+        <location filename="../../MainWindow.cc" line="1162"/>
         <source>Save project as</source>
         <translation>プロジェクトを別名で保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1162"/>
+        <location filename="../../MainWindow.cc" line="1163"/>
         <source>Save current project as a new project file.</source>
         <translation>プロジェクトを新しいプロジェクトファイルとして保存します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1163"/>
+        <location filename="../../MainWindow.cc" line="1164"/>
         <source>Save model motion</source>
         <translation>モデルモーションを保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1164"/>
+        <location filename="../../MainWindow.cc" line="1165"/>
         <source>Export all bone and morph keyframes to the current file.</source>
         <translation>全てのボーンとモーフのキーフレームを現在のファイルに書き出します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1165"/>
+        <location filename="../../MainWindow.cc" line="1166"/>
         <source>Save model motion as</source>
         <translation>モデルモーションを別名で保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1166"/>
+        <location filename="../../MainWindow.cc" line="1167"/>
         <source>Export all bone and morph keyframes as a new motion file.</source>
         <translation>全てのボーンとモーフのキーフレームを新しいモーションのファイルとして書き出します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1167"/>
+        <location filename="../../MainWindow.cc" line="1168"/>
         <source>Save camera motion as</source>
         <translation>カメラモーションを別名で保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1168"/>
+        <location filename="../../MainWindow.cc" line="1169"/>
         <source>Export all camera keyframes as a new motion file.</source>
         <translation>全てのカメラのキーフレームを新しいカメラモーションのファイルとして出力します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1169"/>
+        <location filename="../../MainWindow.cc" line="1170"/>
         <source>Load model pose</source>
         <translation>モデルのポーズの読み込み</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1170"/>
+        <location filename="../../MainWindow.cc" line="1171"/>
         <source>Load a model pose to the selected model.</source>
         <translation>モデルのポーズを選択されたモデルに読み込みます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1171"/>
+        <location filename="../../MainWindow.cc" line="1172"/>
         <source>Save model pose</source>
         <translation>モデルのポーズの保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1172"/>
+        <location filename="../../MainWindow.cc" line="1173"/>
         <source>Save selected frame bones as a model pose file.</source>
         <translation>選択されたボーンをポーズファイルとして書き出します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1173"/>
+        <location filename="../../MainWindow.cc" line="1174"/>
         <source>Load asset metadata</source>
         <translation>アクセサリのメタデータの読み込み</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1174"/>
+        <location filename="../../MainWindow.cc" line="1175"/>
         <source>Load asset from VAC file.</source>
         <translation>VAC ファイルからアクセサリを読み込みます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1175"/>
+        <location filename="../../MainWindow.cc" line="1176"/>
         <source>Save current asset metadata</source>
         <translation>現在のアクセサリをメタデータに保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1176"/>
+        <location filename="../../MainWindow.cc" line="1177"/>
         <source>Save current asset metadata as a VAC.</source>
         <translation>現在のアクセサリを VAC ファイルとして保存します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1177"/>
+        <location filename="../../MainWindow.cc" line="1178"/>
         <source>Export scene as image</source>
         <translation>場面を画像として出力</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1178"/>
+        <location filename="../../MainWindow.cc" line="1179"/>
         <source>Export current scene as an image.</source>
         <translation>現在の場面を画像として出力します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1179"/>
+        <location filename="../../MainWindow.cc" line="1180"/>
         <source>Export scene as video</source>
         <translation>場面を動画として出力</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1180"/>
+        <location filename="../../MainWindow.cc" line="1181"/>
         <source>Export current scene as a video.</source>
         <translation>現在の場面を動画として出力します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1181"/>
+        <location filename="../../MainWindow.cc" line="1182"/>
         <source>Set camera motion</source>
         <translation>カメラモーションの設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1182"/>
+        <location filename="../../MainWindow.cc" line="1183"/>
         <source>Set a camera motion to the scene.</source>
         <translation>現在の場面にカメラモーションを設定します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1183"/>
+        <location filename="../../MainWindow.cc" line="1184"/>
         <source>Exit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1184"/>
+        <location filename="../../MainWindow.cc" line="1185"/>
         <source>Exit this application.</source>
         <translation>このアプリケーションを終了します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1185"/>
-        <location filename="../../MainWindow.cc" line="1333"/>
+        <location filename="../../MainWindow.cc" line="1186"/>
+        <location filename="../../MainWindow.cc" line="1334"/>
         <source>Play</source>
         <translation>再生</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1186"/>
+        <location filename="../../MainWindow.cc" line="1187"/>
         <source>Play current scene.</source>
         <translation>現在の場面を再生します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1187"/>
+        <location filename="../../MainWindow.cc" line="1188"/>
         <source>Play settings</source>
         <translation>再生設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1188"/>
+        <location filename="../../MainWindow.cc" line="1189"/>
         <source>Open a dialog to set settings of playing scene.</source>
         <translation>場面再生を設定するためのダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1189"/>
+        <location filename="../../MainWindow.cc" line="1190"/>
         <source>Gravity setting</source>
         <translation>重力設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1190"/>
+        <location filename="../../MainWindow.cc" line="1191"/>
         <source>Open a dialog to set gravity for physics simulation.</source>
         <translation>物理演算で使用する重力を設定するためのダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1191"/>
+        <location filename="../../MainWindow.cc" line="1192"/>
         <source>Render order setting</source>
         <translation>描画順設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1192"/>
+        <location filename="../../MainWindow.cc" line="1193"/>
         <source>Open a dialog to set order of rendering assets and models.</source>
         <translation>アクセサリ及びモデルを描画する順序を設定するダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1193"/>
+        <location filename="../../MainWindow.cc" line="1194"/>
         <source>Screen color setting</source>
         <translation>背景色設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1194"/>
+        <location filename="../../MainWindow.cc" line="1195"/>
         <source>Open a dialog to set screen color.</source>
         <translation>背景色を設定するためのダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1195"/>
+        <location filename="../../MainWindow.cc" line="1196"/>
         <source>Shadow map setting</source>
         <translation>シャドウマップ設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1196"/>
+        <location filename="../../MainWindow.cc" line="1197"/>
         <source>Open a dialog to configure shadow map.</source>
         <translation>シャドウマップ設定のダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1197"/>
+        <location filename="../../MainWindow.cc" line="1198"/>
         <source>Enable physics simulation</source>
         <translation>物理シミュレーションの有効化</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1198"/>
+        <location filename="../../MainWindow.cc" line="1199"/>
         <source>Enable or disable physics simulation using Bullet.</source>
         <translation>Bullet を使った物理シミュレーションを有効または無効にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1199"/>
+        <location filename="../../MainWindow.cc" line="1200"/>
         <source>Show grid</source>
         <translation>グリッドの表示</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1200"/>
+        <location filename="../../MainWindow.cc" line="1201"/>
         <source>Show or hide scene grid.</source>
         <translation>グリッドを表示または非表示にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1201"/>
+        <location filename="../../MainWindow.cc" line="1202"/>
         <source>Set background image</source>
         <translation>背景画像の読み込み</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1202"/>
+        <location filename="../../MainWindow.cc" line="1203"/>
         <source>Set a background image to the scene.</source>
         <translation>場面に貼り付ける背景画像を設定します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1203"/>
+        <location filename="../../MainWindow.cc" line="1204"/>
         <source>Clear background image</source>
         <translation>背景画像の消去</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1204"/>
+        <location filename="../../MainWindow.cc" line="1205"/>
         <source>Clear current background image.</source>
         <translation>現在の背景画像を消去します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1205"/>
+        <location filename="../../MainWindow.cc" line="1206"/>
         <source>Background image setting</source>
         <translation>背景画像設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1206"/>
+        <location filename="../../MainWindow.cc" line="1207"/>
         <source>Open a dialog to configure background image.</source>
         <translation>背景画像の設定を行うためのダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1207"/>
+        <location filename="../../MainWindow.cc" line="1208"/>
         <source>Zoom in</source>
         <translation>拡大</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1208"/>
+        <location filename="../../MainWindow.cc" line="1209"/>
         <source>Zoom in the scene.</source>
         <translation>現在の場面を拡大します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1209"/>
+        <location filename="../../MainWindow.cc" line="1210"/>
         <source>Zoom out</source>
         <translation>縮小</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1210"/>
+        <location filename="../../MainWindow.cc" line="1211"/>
         <source>Zoom out the scene.</source>
         <translation>現在の場面を縮小します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1211"/>
+        <location filename="../../MainWindow.cc" line="1212"/>
         <source>Rotate up</source>
         <translation>上に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1212"/>
+        <location filename="../../MainWindow.cc" line="1213"/>
         <source>Rotate up the scene.</source>
         <translation>場面を上に回転します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1213"/>
+        <location filename="../../MainWindow.cc" line="1214"/>
         <source>Rotate down</source>
         <translation>下に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1214"/>
+        <location filename="../../MainWindow.cc" line="1215"/>
         <source>Rotate down the scene.</source>
         <translation>場面を下に回転します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1215"/>
+        <location filename="../../MainWindow.cc" line="1216"/>
         <source>Rotate left</source>
         <translation>左に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1216"/>
+        <location filename="../../MainWindow.cc" line="1217"/>
         <source>Rotate left the scene.</source>
         <translation>場面を左に回転します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1217"/>
+        <location filename="../../MainWindow.cc" line="1218"/>
         <source>Rotate right</source>
         <translation>右に回転</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1218"/>
+        <location filename="../../MainWindow.cc" line="1219"/>
         <source>Rotate right the scene.</source>
         <translation>場面を右に回転します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1219"/>
+        <location filename="../../MainWindow.cc" line="1220"/>
         <source>Translate up</source>
         <translation>上に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1220"/>
+        <location filename="../../MainWindow.cc" line="1221"/>
         <source>Translate up the scene.</source>
         <translation>場面を上に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1221"/>
+        <location filename="../../MainWindow.cc" line="1222"/>
         <source>Translate down</source>
         <translation>下に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1222"/>
+        <location filename="../../MainWindow.cc" line="1223"/>
         <source>Translate down the scene.</source>
         <translation>場面を下に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1223"/>
+        <location filename="../../MainWindow.cc" line="1224"/>
         <source>Translate left</source>
         <translation>左に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1224"/>
+        <location filename="../../MainWindow.cc" line="1225"/>
         <source>Translate left the scene.</source>
         <translation>場面を左に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1225"/>
+        <location filename="../../MainWindow.cc" line="1226"/>
         <source>Translate right</source>
         <translation>右に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1226"/>
+        <location filename="../../MainWindow.cc" line="1227"/>
         <source>Translate right the scene.</source>
         <translation>場面を右に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1227"/>
+        <location filename="../../MainWindow.cc" line="1228"/>
         <source>Reset camera</source>
         <translation>カメラ視点をリセット</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1228"/>
+        <location filename="../../MainWindow.cc" line="1229"/>
         <source>Reset camera perspective.</source>
         <translation>カメラの視点をリセットします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1229"/>
+        <location filename="../../MainWindow.cc" line="1230"/>
         <source>Select next model</source>
         <translation>次のモデルを選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1230"/>
+        <location filename="../../MainWindow.cc" line="1231"/>
         <source>Select the next model.</source>
         <translation>次のモデルを選択します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1231"/>
+        <location filename="../../MainWindow.cc" line="1232"/>
         <source>Select previous model</source>
         <translation>前のモデルを選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1232"/>
+        <location filename="../../MainWindow.cc" line="1233"/>
         <source>Select the previous model.</source>
         <translation>前のモデルを選択します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1233"/>
+        <location filename="../../MainWindow.cc" line="1234"/>
         <source>Revert selected model</source>
         <translation>選択されたモデルを未選択にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1234"/>
+        <location filename="../../MainWindow.cc" line="1235"/>
         <source>Revert the selected model.</source>
         <translation>選択されたモデルを未選択状態にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1235"/>
+        <location filename="../../MainWindow.cc" line="1236"/>
         <source>Delete selected model</source>
         <translation>選択されたモデルを削除</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1236"/>
+        <location filename="../../MainWindow.cc" line="1237"/>
         <source>Delete the selected model from the scene.</source>
         <translation>選択されたモデルを場面から削除します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1237"/>
+        <location filename="../../MainWindow.cc" line="1238"/>
         <source>Translate selected model up</source>
         <translation>選択されたモデルを上に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1238"/>
+        <location filename="../../MainWindow.cc" line="1239"/>
         <source>Translate the selected model up.</source>
         <translation>選択されたモデルを上に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1239"/>
+        <location filename="../../MainWindow.cc" line="1240"/>
         <source>Translate selected model down</source>
         <translation>選択されたモデルを下に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1240"/>
+        <location filename="../../MainWindow.cc" line="1241"/>
         <source>Translatethe the selected model down.</source>
         <translation>選択されたモデルを下に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1241"/>
+        <location filename="../../MainWindow.cc" line="1242"/>
         <source>Translate selected model left</source>
         <translation>選択されたモデルを左に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1242"/>
+        <location filename="../../MainWindow.cc" line="1243"/>
         <source>Translate the selected model left.</source>
         <translation>選択されたモデルを左に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1243"/>
+        <location filename="../../MainWindow.cc" line="1244"/>
         <source>Translate selected model right</source>
         <translation>選択されたモデルを右に移動</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1244"/>
+        <location filename="../../MainWindow.cc" line="1245"/>
         <source>Translate the selected model right.</source>
         <translation>選択されたモデルを右に移動します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1245"/>
+        <location filename="../../MainWindow.cc" line="1246"/>
         <source>Reset model position</source>
         <translation>モデルの位置を戻す</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1246"/>
+        <location filename="../../MainWindow.cc" line="1247"/>
         <source>Reset the position of selected model to zero.</source>
         <translation>選択されたモデルの位置をゼロに戻します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1247"/>
+        <location filename="../../MainWindow.cc" line="1248"/>
         <source>Make X position of bone zero</source>
         <translation>ボーンの X 位置を 0 にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1248"/>
+        <location filename="../../MainWindow.cc" line="1249"/>
         <source>Reset X axis of the selected bone to the selected model.</source>
         <translation>選択されたモデルのボーンの X 位置を 0 にリセットします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1249"/>
+        <location filename="../../MainWindow.cc" line="1250"/>
         <source>Make Y position of bone zero</source>
         <translation>ボーンの Y 位置を 0 にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1250"/>
+        <location filename="../../MainWindow.cc" line="1251"/>
         <source>Reset Y axis of the selected bone to the selected model.</source>
         <translation>選択されたモデルのボーンの Y 位置を 0 にリセットします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1251"/>
+        <location filename="../../MainWindow.cc" line="1252"/>
         <source>Make Z position of bone zero</source>
         <translation>ボーンの Z 位置を 0 にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1252"/>
+        <location filename="../../MainWindow.cc" line="1253"/>
         <source>Reset Z axis of the selected bone to the selected model.</source>
         <translation>選択されたモデルのボーンの Z 位置を 0 にリセットします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1253"/>
+        <location filename="../../MainWindow.cc" line="1254"/>
         <source>Make rotation of bone zero</source>
         <translation>回転を 0 にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1254"/>
+        <location filename="../../MainWindow.cc" line="1255"/>
         <source>Reset rotation of the selected bone to the selected model.</source>
         <translation>選択されたモデルのボーンの回転を 0 にリセットします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1255"/>
+        <location filename="../../MainWindow.cc" line="1256"/>
         <source>Reset all bone&apos;s position and rotation</source>
         <translation>全てのボーンの位置を回転をリセットする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1256"/>
+        <location filename="../../MainWindow.cc" line="1257"/>
         <source>Reset all bone&apos;s position and rotation to the selected model.</source>
         <translation>選択されたモデルのすべてのボーンの位置及び回転を 0 にリセットします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1257"/>
+        <location filename="../../MainWindow.cc" line="1258"/>
         <source>Open bone dialog</source>
         <translation>ボーンダイアログを開く</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1258"/>
+        <location filename="../../MainWindow.cc" line="1259"/>
         <source>Open bone dialog to change position or rotation of the bone manually.</source>
         <translation>ボーンの位置と回転を主導で変更するためのボーンダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1259"/>
+        <location filename="../../MainWindow.cc" line="1260"/>
         <source>Register keyframe</source>
         <translation>キーフレームを登録</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1260"/>
+        <location filename="../../MainWindow.cc" line="1261"/>
         <source>Register keyframes by selected indices from the timeline.</source>
         <translation>タイムラインから選択された範囲に対してキーフレームを登録します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1261"/>
+        <location filename="../../MainWindow.cc" line="1262"/>
         <source>Select all keyframes</source>
         <translation>全てのキーフレームを選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1262"/>
+        <location filename="../../MainWindow.cc" line="1263"/>
         <source>Select all registered keyframes.</source>
         <translation>登録済みのすべてのキーフレームを選択します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1263"/>
+        <location filename="../../MainWindow.cc" line="1264"/>
         <source>Open keyframe range selection dialog</source>
         <translation>キーフレーム範囲選択ダイアログを開く</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1264"/>
+        <location filename="../../MainWindow.cc" line="1265"/>
         <source>Open keyframe range selection dialog to select multiple frame indices.</source>
         <translation>複数のキーフレームを選択するためのキーフレーム範囲選択ダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1265"/>
+        <location filename="../../MainWindow.cc" line="1266"/>
         <source>Open keyframe weight dialog</source>
         <translation>キーフレームの重み係数設定ダイアログを開く</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1266"/>
+        <location filename="../../MainWindow.cc" line="1267"/>
         <source>Open keyframe weight dialog to set weight to selected registered keyframes.</source>
         <translation>登録されたキーフレームの重み係数を設定するためのキーフレームの重み係数設定ダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1267"/>
+        <location filename="../../MainWindow.cc" line="1268"/>
         <source>Open interpolation dialog</source>
         <translation>補間ダイアログを開く</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1268"/>
+        <location filename="../../MainWindow.cc" line="1269"/>
         <source>Open interpolation dialog to configure interpolation parameter of keyframes.</source>
         <translation>キーフレームの補間パラメータを設定するための補間ダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1269"/>
+        <location filename="../../MainWindow.cc" line="1270"/>
         <source>Insert empty keyframe</source>
         <translation>空のキーフレームを挿入</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1270"/>
+        <location filename="../../MainWindow.cc" line="1271"/>
         <source>Insert an empty keyframe to the selected keyframe.</source>
         <translation>選択されたフレームに空のキーフレームを挿入します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1271"/>
+        <location filename="../../MainWindow.cc" line="1272"/>
         <source>Delete selected keyframe</source>
         <translation>選択されたキーフレームを削除</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1272"/>
+        <location filename="../../MainWindow.cc" line="1273"/>
         <source>Delete a selected keyframe.</source>
         <translation>選択されたキーフレームを削除します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1273"/>
+        <location filename="../../MainWindow.cc" line="1274"/>
         <source>Next keyframe</source>
         <translation>次のキーフレーム</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1274"/>
+        <location filename="../../MainWindow.cc" line="1275"/>
         <source>Select a next keyframe from the current keyframe.</source>
         <translation>現在のキーフレームより次のキーフレームを選択します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1275"/>
+        <location filename="../../MainWindow.cc" line="1276"/>
         <source>Previous keyframe</source>
         <translation>前のキーフレーム</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1276"/>
+        <location filename="../../MainWindow.cc" line="1277"/>
         <source>Select a previous keyframe from the current keyframe.</source>
         <translation>現在のキーフレームより前のキーフレームを選択します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1277"/>
+        <location filename="../../MainWindow.cc" line="1278"/>
         <source>Cut</source>
         <translation>切り取り</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1278"/>
+        <location filename="../../MainWindow.cc" line="1279"/>
         <source>Cut a selected keyframe.</source>
         <translation>選択されたキーフレームを切り取ります。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1279"/>
+        <location filename="../../MainWindow.cc" line="1280"/>
         <source>Copy</source>
         <translation>コピー</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1280"/>
+        <location filename="../../MainWindow.cc" line="1281"/>
         <source>Copy a selected keyframe.</source>
         <translation>選択されたキーフレームをコピーします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1281"/>
+        <location filename="../../MainWindow.cc" line="1282"/>
         <source>Paste</source>
         <translation>ペースト</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1282"/>
+        <location filename="../../MainWindow.cc" line="1283"/>
         <source>Paste a selected keyframe.</source>
         <translation>選択されたキーフレームをペーストします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1283"/>
+        <location filename="../../MainWindow.cc" line="1284"/>
         <source>Paste with reversed</source>
         <translation>反転ペースト</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1284"/>
+        <location filename="../../MainWindow.cc" line="1285"/>
         <source>Paste a selected keyframe with reversed.</source>
         <translation>選択されたキーフレームを反転ペーストします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1285"/>
-        <location filename="../../MainWindow.cc" line="1945"/>
+        <location filename="../../MainWindow.cc" line="1286"/>
+        <location filename="../../MainWindow.cc" line="1946"/>
         <source>Undo history</source>
         <translation>巻き戻し履歴</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1286"/>
+        <location filename="../../MainWindow.cc" line="1287"/>
         <source>Open a window to view undo history.</source>
         <translation>巻き戻し履歴のウィンドウを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1287"/>
+        <location filename="../../MainWindow.cc" line="1288"/>
         <source>Logger Window</source>
         <translation>ログウィンドウ</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1288"/>
+        <location filename="../../MainWindow.cc" line="1289"/>
         <source>Open logger window.</source>
         <translation>ログウィンドウを開きます。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1289"/>
+        <location filename="../../MainWindow.cc" line="1290"/>
         <source>Enable move gesture</source>
         <translation>移動のジェスチャーを有効にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1290"/>
+        <location filename="../../MainWindow.cc" line="1291"/>
         <source>Enable moving scene/model/bone by pan gesture.</source>
         <translation>パンニングによるボーン、モデル、場面の移動を有効にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1291"/>
+        <location filename="../../MainWindow.cc" line="1292"/>
         <source>Enable rotate gesture</source>
         <translation>回転ジェスチャーを有効にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1292"/>
+        <location filename="../../MainWindow.cc" line="1293"/>
         <source>Enable rotate scene/model/bone by pinch gesture.</source>
         <translation>ピンチングによるボーン、モデル、場面の回転を有効にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1293"/>
+        <location filename="../../MainWindow.cc" line="1294"/>
         <source>Enable scale gesture</source>
         <translation>拡大ジェスチャーを有効にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1294"/>
+        <location filename="../../MainWindow.cc" line="1295"/>
         <source>Enable scale scene by pinch gesture.</source>
         <translation>ピンチングによる拡大縮小を有効にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1295"/>
+        <location filename="../../MainWindow.cc" line="1296"/>
         <source>Enable undo gesture</source>
         <translation>巻き戻しジェスチャーを有効にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1296"/>
+        <location filename="../../MainWindow.cc" line="1297"/>
         <source>Enable undo or redo by swipe gesture.</source>
         <translation>スワイプジェスチャーによる巻戻しまたはやり直しを有効にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1297"/>
+        <location filename="../../MainWindow.cc" line="1298"/>
         <source>Show timeline tab</source>
         <translation>「タイムライン」タブを表示</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1298"/>
+        <location filename="../../MainWindow.cc" line="1299"/>
         <source>Show timeline tab if it&apos;s closed.</source>
         <translation>「タイムライン」タブを表示します（閉じている場合のみ）。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1299"/>
+        <location filename="../../MainWindow.cc" line="1300"/>
         <source>Show scene tab</source>
         <translation>「場面」タブを表示</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1300"/>
+        <location filename="../../MainWindow.cc" line="1301"/>
         <source>Show scene tab if it&apos;s closed.</source>
         <translation>「場面」タブを表示します（閉じている場合のみ）。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1301"/>
+        <location filename="../../MainWindow.cc" line="1302"/>
         <source>Show model tab</source>
         <translation>「モデル」タブを表示</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1302"/>
+        <location filename="../../MainWindow.cc" line="1303"/>
         <source>Show model tab if it&apos;s closed.</source>
         <translation>「モデル」タブを表示します（閉じている場合のみ）。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1303"/>
+        <location filename="../../MainWindow.cc" line="1304"/>
         <source>Show model dialog</source>
         <translation>モデルのダイアログを表示する</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1304"/>
+        <location filename="../../MainWindow.cc" line="1305"/>
         <source>Show or hide model dialog when the model is loaded.</source>
         <translation>モデル読み込み時に出るダイアログを表示または非表示にします。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1305"/>
+        <location filename="../../MainWindow.cc" line="1306"/>
         <source>About</source>
         <translation>MMDAI2 について</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1306"/>
+        <location filename="../../MainWindow.cc" line="1307"/>
         <source>About this application.</source>
         <translation>このアプリケーションについてです。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1307"/>
+        <location filename="../../MainWindow.cc" line="1308"/>
         <source>About Qt</source>
         <translation>Qt について</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1308"/>
+        <location filename="../../MainWindow.cc" line="1309"/>
         <source>About Qt.</source>
         <translation>Qt についてです。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1309"/>
+        <location filename="../../MainWindow.cc" line="1310"/>
         <source>Clear recent files history</source>
         <translation>最近開いたファイルの履歴を消去</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1310"/>
+        <location filename="../../MainWindow.cc" line="1311"/>
         <source>Clear the history of recently opened files.</source>
         <translation>最近開いたファイルの履歴を消去します。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1322"/>
+        <location filename="../../MainWindow.cc" line="1323"/>
         <source>Create an empty model motion (discards previous model motion).</source>
         <translation>新規にモデルのモーションを作成します（すでにあるモーションは破棄されます）。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1341"/>
+        <location filename="../../MainWindow.cc" line="1342"/>
         <source>Software skinning</source>
         <translation>ソフトウェアスキニング</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1342"/>
+        <location filename="../../MainWindow.cc" line="1343"/>
         <source>Enable software skinning. This is default and stable but slow.</source>
         <translation>ソフトウェアスキニングを有効にします。これは標準で有効で、安定していますが遅いです。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1343"/>
+        <location filename="../../MainWindow.cc" line="1344"/>
         <source>OpenCL skinning (GPU)</source>
         <translation>OpenCL スキニング (GPU)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1344"/>
+        <location filename="../../MainWindow.cc" line="1345"/>
         <source>Enable OpenCL skinning with GPU. This is fast (faster than vertex shader skinning by case) but maybe causes unstable.</source>
         <translation>OpenCL + GPU によるスキニングを有効にします。これは高速（場合によっては頂点シェーダスキニングより高速）ですが、レンダリングが不安定になるかもしれません。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1345"/>
+        <location filename="../../MainWindow.cc" line="1346"/>
         <source>OpenCL skinning (CPU only)</source>
         <translation>OpenCL スキニング (CPU のみ)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1346"/>
+        <location filename="../../MainWindow.cc" line="1347"/>
         <source>Enable OpenCL skinning with CPU. This is slower than OpenCL skinning with GPU but faster than software skinning and stable basically.</source>
         <translation>OpenCL + CPU によるスキニングを有効にします。これは GPU を使った場合よりも遅いですが、ソフトウェアスキニングより高速で基本的に安定です。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1347"/>
+        <location filename="../../MainWindow.cc" line="1348"/>
         <source>Vertex shader skinning</source>
         <translation>頂点シェーダスキニング</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1348"/>
+        <location filename="../../MainWindow.cc" line="1349"/>
         <source>Enable Vertex shader skinning. This is fast but maybe causes unstable.</source>
         <translation>頂点シェーダスキニングを有効にします。これは高速ですが、レンダリングが不安定になるかもしれません。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1349"/>
+        <location filename="../../MainWindow.cc" line="1350"/>
         <source>Enable effect</source>
         <translation>エフェクトを有効にする</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1350"/>
+        <location filename="../../MainWindow.cc" line="1351"/>
         <source>Enable effect feature using NVIDIA CgFX (under development).</source>
         <translation>NVIDIA CgFX を使ってエフェクト機能を有効にします（現在開発中）。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1351"/>
+        <location filename="../../MainWindow.cc" line="1352"/>
         <source>&amp;File</source>
         <translation>ファイル(&amp;F)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1352"/>
+        <location filename="../../MainWindow.cc" line="1353"/>
         <source>&amp;Edit</source>
         <translation>編集(&amp;E)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1353"/>
+        <location filename="../../MainWindow.cc" line="1354"/>
         <source>&amp;Project</source>
         <translation>プロジェクト(&amp;P)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1354"/>
+        <location filename="../../MainWindow.cc" line="1355"/>
         <source>&amp;Scene</source>
         <translation>場面(&amp;S)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1355"/>
+        <location filename="../../MainWindow.cc" line="1356"/>
         <source>&amp;Model</source>
         <translation>モデル(&amp;M)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1356"/>
+        <location filename="../../MainWindow.cc" line="1357"/>
         <source>&amp;Keyframe</source>
         <translation>キーフレーム(&amp;K)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1330"/>
-        <location filename="../../MainWindow.cc" line="1357"/>
+        <location filename="../../MainWindow.cc" line="1331"/>
+        <location filename="../../MainWindow.cc" line="1358"/>
         <source>Effect</source>
         <translation>エフェクト</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1312"/>
+        <location filename="../../MainWindow.cc" line="1313"/>
         <source>Register Keyframes</source>
         <translation>キーフレーム登録</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1315"/>
+        <location filename="../../MainWindow.cc" line="1316"/>
         <source>Delete Keyframes</source>
         <translation>キーフレーム削除</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1318"/>
+        <location filename="../../MainWindow.cc" line="1319"/>
         <source>Create Project</source>
         <translation>プロジェクト作成</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1324"/>
+        <location filename="../../MainWindow.cc" line="1325"/>
         <source>Add Model/Motion</source>
         <translation>モデル/モーション追加</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1321"/>
+        <location filename="../../MainWindow.cc" line="1322"/>
         <source>Create Motion</source>
         <translation>モーション作成</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1327"/>
+        <location filename="../../MainWindow.cc" line="1328"/>
         <source>Delete Model</source>
         <translation>モデル削除</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1336"/>
+        <location filename="../../MainWindow.cc" line="1337"/>
         <source>Export Video</source>
         <translation>動画出力</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1339"/>
+        <location filename="../../MainWindow.cc" line="1340"/>
         <source>Export Image</source>
         <translation>画像出力</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1358"/>
+        <location filename="../../MainWindow.cc" line="1359"/>
         <source>&amp;View</source>
         <translation>ビュー(&amp;V)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1359"/>
+        <location filename="../../MainWindow.cc" line="1360"/>
         <source>Select asset</source>
         <translation>アクセサリを選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1360"/>
+        <location filename="../../MainWindow.cc" line="1361"/>
         <source>Select model</source>
         <translation>モデルを選択</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1361"/>
+        <location filename="../../MainWindow.cc" line="1362"/>
         <source>Open recent files</source>
         <translation>最近開いたファイル</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1362"/>
+        <location filename="../../MainWindow.cc" line="1363"/>
         <source>&amp;Help</source>
         <translation>ヘルプ(&amp;H)</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1363"/>
+        <location filename="../../MainWindow.cc" line="1364"/>
         <source>Set acceleration type</source>
         <translation>アクセラレーションの設定</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1531"/>
+        <location filename="../../MainWindow.cc" line="1532"/>
         <source>Save model pose as a VPD file</source>
         <translation>モデルのポーズを VPD として保存</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1532"/>
+        <location filename="../../MainWindow.cc" line="1533"/>
         <source>VPD file (*.vpd)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1533"/>
+        <location filename="../../MainWindow.cc" line="1534"/>
         <source>untitled.vpd</source>
         <translation>無題.vpd</translation>
-    </message>
-    <message>
-        <location filename="../../MainWindow.cc" line="1584"/>
-        <location filename="../../MainWindow.cc" line="1839"/>
-        <location filename="../../MainWindow.cc" line="1852"/>
-        <source>No motion to export.</source>
-        <translation>出力するモーションがありません。</translation>
     </message>
     <message>
         <location filename="../../MainWindow.cc" line="1585"/>
         <location filename="../../MainWindow.cc" line="1840"/>
         <location filename="../../MainWindow.cc" line="1853"/>
+        <source>No motion to export.</source>
+        <translation>出力するモーションがありません。</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1586"/>
+        <location filename="../../MainWindow.cc" line="1841"/>
+        <location filename="../../MainWindow.cc" line="1854"/>
         <source>Create or load a motion.</source>
         <translation>モーションを作成するか、読み込んでください。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1589"/>
+        <location filename="../../MainWindow.cc" line="1590"/>
         <source>Exporting video feature is not supported.</source>
         <translation>動画出力機能はサポートされていません。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1590"/>
+        <location filename="../../MainWindow.cc" line="1591"/>
         <source>Exporting video is disabled because OpenCV is not linked.</source>
         <translation>OpenCV がリンクされていないため、動画出力機能は無効にされています。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1599"/>
+        <location filename="../../MainWindow.cc" line="1600"/>
         <source>Export scene as an image</source>
         <translation>場面を画像として出力</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1600"/>
+        <location filename="../../MainWindow.cc" line="1601"/>
         <source>Image (*.bmp, *.jpg, *.png)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1601"/>
+        <location filename="../../MainWindow.cc" line="1602"/>
         <source>untitled.png</source>
         <translation>無題のシーン.png</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1626"/>
+        <location filename="../../MainWindow.cc" line="1627"/>
         <source>Value of &quot;Index from&quot; and &quot;Index to&quot; are equal.</source>
         <translation>「フレーム開始」と「フレーム終了」の値が同じです。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1627"/>
+        <location filename="../../MainWindow.cc" line="1628"/>
         <source>Specify different value of &quot;Index from&quot; and &quot;Index to&quot;.</source>
         <translation>「フレーム開始」と「フレーム終了」の値を異なる値にしてください。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1631"/>
+        <location filename="../../MainWindow.cc" line="1632"/>
         <source>Value of &quot;Index from&quot; is bigger than &quot;Index to&quot;.</source>
         <translation>「フレーム開始」の値が「フレーム終了」の値より大きいです。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1632"/>
+        <location filename="../../MainWindow.cc" line="1633"/>
         <source>&quot;Index from&quot; must be less than &quot;Index to&quot;.</source>
         <translation>「フレーム開始」は「フレーム終了」より小さくしなければなりません。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1636"/>
+        <location filename="../../MainWindow.cc" line="1637"/>
         <source>Export scene as a video</source>
         <translation>場面を動画として出力</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1637"/>
+        <location filename="../../MainWindow.cc" line="1638"/>
         <source>Video (*.mov)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1638"/>
+        <location filename="../../MainWindow.cc" line="1639"/>
         <source>untitled.mov</source>
         <translation>無題.mov</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1642"/>
+        <location filename="../../MainWindow.cc" line="1643"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1674"/>
+        <location filename="../../MainWindow.cc" line="1675"/>
         <source>Exporting frame %1 of %2...</source>
         <translation>%2 フレームのうち %1 フレームを出力中...</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1720"/>
+        <location filename="../../MainWindow.cc" line="1721"/>
         <source>Encoding remain frame %1 of %2...</source>
         <translation>%2 フレームのうち %1 フレームをエンコード中...</translation>
     </message>
@@ -2007,58 +2007,73 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::PlaySettingDialog</name>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="96"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="218"/>
         <source>Play</source>
         <translation>再生</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="116"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="124"/>
         <source>Open audio file</source>
         <translation>音声ファイルを開く</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="117"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="125"/>
         <source>WAV file (*.wav)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="203"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="211"/>
         <source>Open</source>
         <translation>開く</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="204"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="212"/>
         <source>Keyframe from: </source>
         <translation>フレーム開始位置：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="205"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="213"/>
         <source>Keyframe to: </source>
         <translation>フレーム終了位置：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="206"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="214"/>
         <source>Scene FPS: </source>
         <translation>場面のFPS：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="207"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="215"/>
         <source>Loop</source>
         <translation>繰り返し再生</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="208"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="216"/>
         <source>Be model selected</source>
         <translation>選択状態にする</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="209"/>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="217"/>
         <source>Draw bone wireframes</source>
         <translation>ボーンの接続状態を表示する</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="210"/>
-        <source>Playing scene setting</source>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="219"/>
+        <source>Audio File Setting</source>
+        <translation>音声ファイル設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="220"/>
+        <source>Scene Range to Play and FPS Setting</source>
+        <translation>再生する場面範囲と FPS 設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="221"/>
+        <source>Enable/Disable Setting</source>
+        <translation>有効無効の設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="222"/>
+        <source>Playing Scene Setting</source>
         <translation>場面再生設定</translation>
     </message>
 </context>
@@ -2111,12 +2126,12 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="../../ScenePlayer.cc" line="223"/>
+        <location filename="../../ScenePlayer.cc" line="222"/>
         <source>Current FPS: %1</source>
         <translation>現在のFPS：%1</translation>
     </message>
     <message>
-        <location filename="../../ScenePlayer.cc" line="226"/>
+        <location filename="../../ScenePlayer.cc" line="225"/>
         <source>Current FPS: N/A</source>
         <translation>現在のFPS：N/A</translation>
     </message>
@@ -2124,197 +2139,197 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::SceneWidget</name>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="251"/>
+        <location filename="../../common/SceneWidget.cc" line="249"/>
         <source>Loading a project %1...</source>
         <translation>プロジェクト（%1）を読み込み中...</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="394"/>
+        <location filename="../../common/SceneWidget.cc" line="391"/>
         <source>Open a file</source>
         <translation>ファイルを開く</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="395"/>
+        <location filename="../../common/SceneWidget.cc" line="392"/>
         <source>Model file (*.pmd *.pmx *.zip);;Accessory file (*.x);;Model motion file (*.vmd *.mvd);;Pose file (*.vpd);;Accessory metadata file (*.vac)</source>
         <translation>モデルファイル (*.pmd *.pmx *.zip);;アクセサリファイル (*.x);;モデルモーションファイル (*.vmd *.mvd);;ポーズファイル (*.vpd);;アクセサリメタデータ (*.vac)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="408"/>
+        <location filename="../../common/SceneWidget.cc" line="405"/>
         <source>Open PMD/PMX file</source>
         <translation>PMD/PMX ファイルを開く</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="409"/>
+        <location filename="../../common/SceneWidget.cc" line="406"/>
         <source>Model file (*.pmd *.pmx *.zip)</source>
         <translation>モデルファイル (*.pmd *.pmx *.zip)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="428"/>
+        <location filename="../../common/SceneWidget.cc" line="425"/>
         <source>Loading model error</source>
         <translation>モデルの読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="429"/>
-        <location filename="../../common/SceneWidget.cc" line="460"/>
-        <location filename="../../common/SceneWidget.cc" line="518"/>
-        <location filename="../../common/SceneWidget.cc" line="565"/>
-        <location filename="../../common/SceneWidget.cc" line="590"/>
-        <location filename="../../common/SceneWidget.cc" line="658"/>
-        <location filename="../../common/SceneWidget.cc" line="743"/>
+        <location filename="../../common/SceneWidget.cc" line="426"/>
+        <location filename="../../common/SceneWidget.cc" line="457"/>
+        <location filename="../../common/SceneWidget.cc" line="515"/>
+        <location filename="../../common/SceneWidget.cc" line="562"/>
+        <location filename="../../common/SceneWidget.cc" line="587"/>
+        <location filename="../../common/SceneWidget.cc" line="655"/>
+        <location filename="../../common/SceneWidget.cc" line="740"/>
         <source>%1 cannot be loaded</source>
         <translation>%1 は読み込むことが出来ません</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="439"/>
-        <location filename="../../common/SceneWidget.cc" line="471"/>
+        <location filename="../../common/SceneWidget.cc" line="436"/>
+        <location filename="../../common/SceneWidget.cc" line="468"/>
         <source>Load model motion from a VMD/MVD file</source>
         <translation>VMD または MVD ファイルからモデルにモーションを読み込み</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="440"/>
-        <location filename="../../common/SceneWidget.cc" line="472"/>
+        <location filename="../../common/SceneWidget.cc" line="437"/>
+        <location filename="../../common/SceneWidget.cc" line="469"/>
         <source>Model motion file (*.vmd *.mvd)</source>
         <translation>モデルモーションファイル (*.vmd *.mvd)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="459"/>
-        <location filename="../../common/SceneWidget.cc" line="517"/>
+        <location filename="../../common/SceneWidget.cc" line="456"/>
+        <location filename="../../common/SceneWidget.cc" line="514"/>
         <source>Loading model motion error</source>
         <translation>モーションの読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="481"/>
-        <location filename="../../common/SceneWidget.cc" line="539"/>
-        <location filename="../../common/SceneWidget.cc" line="664"/>
+        <location filename="../../common/SceneWidget.cc" line="478"/>
+        <location filename="../../common/SceneWidget.cc" line="536"/>
+        <location filename="../../common/SceneWidget.cc" line="661"/>
         <source>The model is not selected.</source>
         <translation>モデルが選択されていません。</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="482"/>
-        <location filename="../../common/SceneWidget.cc" line="540"/>
+        <location filename="../../common/SceneWidget.cc" line="479"/>
+        <location filename="../../common/SceneWidget.cc" line="537"/>
         <source>Select a model to insert the motion (&quot;Model&quot; &gt; &quot;Select model&quot;)</source>
         <translation>モーションを追加するにはモデルを選択して下さい（「モデル」の「モデルを選択」）</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="499"/>
+        <location filename="../../common/SceneWidget.cc" line="496"/>
         <source>Applying this motion to the different model</source>
         <translation>違うモデルへのモーションの適用</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="500"/>
+        <location filename="../../common/SceneWidget.cc" line="497"/>
         <source>This motion is created for %1. Do you apply this motion to %2?</source>
         <translation>このモーションは %1 に対して作られています。%2 にモーションを適用しますか？</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="548"/>
+        <location filename="../../common/SceneWidget.cc" line="545"/>
         <source>Open accessory file</source>
         <translation>アクセサリファイルを開く</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="549"/>
+        <location filename="../../common/SceneWidget.cc" line="546"/>
         <source>Accessory file (*.x *.zip)</source>
         <translation>アクセサリファイル (*.x *.zip)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="564"/>
-        <location filename="../../common/SceneWidget.cc" line="589"/>
+        <location filename="../../common/SceneWidget.cc" line="561"/>
+        <location filename="../../common/SceneWidget.cc" line="586"/>
         <source>Loading asset error</source>
         <translation>アクセサリの読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="573"/>
+        <location filename="../../common/SceneWidget.cc" line="570"/>
         <source>Open VAC file</source>
         <translation>VAC ファイルを開く</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="574"/>
-        <location filename="../../common/SceneWidget.cc" line="600"/>
+        <location filename="../../common/SceneWidget.cc" line="571"/>
+        <location filename="../../common/SceneWidget.cc" line="597"/>
         <source>MMD accessory metadata (*.vac)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="598"/>
+        <location filename="../../common/SceneWidget.cc" line="595"/>
         <source>Save %1 as VAC file</source>
         <translation>%1 を VAC ファイルとして保存</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="609"/>
+        <location filename="../../common/SceneWidget.cc" line="606"/>
         <source>Open VPD file</source>
         <translation>VPD を開く</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="610"/>
+        <location filename="../../common/SceneWidget.cc" line="607"/>
         <source>VPD file (*.vpd)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="621"/>
+        <location filename="../../common/SceneWidget.cc" line="618"/>
         <source>Open background image file</source>
         <translation>背景画像を開く</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="623"/>
+        <location filename="../../common/SceneWidget.cc" line="620"/>
         <source>Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.avi *.m4v *.mp4 *.mov *.mng)</source>
         <translation>画像 (*.bmp *.jpg *.gif *.png *.tif);; 動画 (*.avi *.m4v *.mp4 *.mov *.mng)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="625"/>
+        <location filename="../../common/SceneWidget.cc" line="622"/>
         <source>Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)</source>
         <translation>画像 (*.bmp *.jpg *.gif *.png *.tif);; 動画 (*.mng)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="657"/>
+        <location filename="../../common/SceneWidget.cc" line="654"/>
         <source>Loading model pose error</source>
         <translation>モデルのポーズ読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="665"/>
+        <location filename="../../common/SceneWidget.cc" line="662"/>
         <source>Select a model to set the pose (&quot;Model&quot; &gt; &quot;Select model&quot;)</source>
         <translation>ポーズを設定するにはモデルを選択して下さい（「モデル」の「モデルを選択」）</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="723"/>
+        <location filename="../../common/SceneWidget.cc" line="720"/>
         <source>Load camera motion from a VMD/MVD file</source>
         <translation>VMD または MVD ファイルからカメラにモーションを読み込み</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="724"/>
+        <location filename="../../common/SceneWidget.cc" line="721"/>
         <source>Camera motion file (*.vmd *.mvd)</source>
         <translation>カメラモーションファイル (*.vmd *.mvd)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="742"/>
+        <location filename="../../common/SceneWidget.cc" line="739"/>
         <source>Loading camera motion error</source>
         <translation>カメラモーションの読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="754"/>
+        <location filename="../../common/SceneWidget.cc" line="751"/>
         <source>Confirm</source>
         <translation>確認</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="755"/>
+        <location filename="../../common/SceneWidget.cc" line="752"/>
         <source>Do you want to delete the model &quot;%1&quot;? This cannot undo.</source>
         <translation>モデル「%1」を削除しますか？削除すると巻き戻せなくなります。</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="805"/>
-        <location filename="../../common/SceneWidget.cc" line="817"/>
+        <location filename="../../common/SceneWidget.cc" line="802"/>
+        <location filename="../../common/SceneWidget.cc" line="814"/>
         <source>(multiple)</source>
         <translation>(複数)</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="1500"/>
+        <location filename="../../common/SceneWidget.cc" line="1498"/>
         <source>Failed loading the project</source>
         <translation>プロジェクトの読み込みに失敗しました</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="1501"/>
+        <location filename="../../common/SceneWidget.cc" line="1499"/>
         <source>Failed loading the project. The project contains duplicated UUID or corrupted.</source>
         <translation>プロジェクトの読み込みに失敗しました。UUID が重複しているか、プロジェクトが壊れています。</translation>
     </message>
     <message>
-        <location filename="../../common/SceneWidget.cc" line="1510"/>
+        <location filename="../../common/SceneWidget.cc" line="1508"/>
         <source>Model Information of &quot;%1&quot;</source>
         <translation>「%1」のモデル情報</translation>
     </message>
