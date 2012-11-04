@@ -49,59 +49,67 @@ namespace vpvm
 
 PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, QWidget *parent)
     : QDialog(parent),
-      m_loader(loader),
-      m_settings(settings)
+      m_loaderRef(loader),
+      m_settingsRef(settings),
+      m_audioGroup(new QGroupBox()),
+      m_pathEdit(new QLineEdit()),
+      m_openFileButton(new QPushButton()),
+      m_timeIndexGroup(new QGroupBox()),
+      m_fromIndexLabel(new QLabel()),
+      m_toIndexLabel(new QLabel()),
+      m_sceneFPSLabel(new QLabel()),
+      m_fromIndexBox(new QSpinBox()),
+      m_toIndexBox(new QSpinBox()),
+      m_sceneFPSBox(new QComboBox()),
+      m_toggleSettingGroup(new QGroupBox()),
+      m_loopBox(new QCheckBox()),
+      m_selectModelBox(new QCheckBox()),
+      m_boneWireFramesBox(new QCheckBox()),
+      m_playButton(new QPushButton())
 {
-    int maxFrameIndex = m_loader->sceneRef()->maxFrameIndex();
-    m_pathEdit = new QLineEdit();
-    m_openFileButton = new QPushButton();
-    connect(m_openFileButton, SIGNAL(clicked()), SLOT(openFileDialog()));
-    m_fromIndexLabel = new QLabel();
-    m_fromIndexBox = new QSpinBox();
+    int maxFrameIndex = m_loaderRef->sceneRef()->maxFrameIndex();
+    connect(m_openFileButton.data(), SIGNAL(clicked()), SLOT(openFileDialog()));
     m_fromIndexBox->setRange(0, maxFrameIndex);
-    m_toIndexLabel = new QLabel();
-    m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
-    m_sceneFPSLabel = new QLabel();
-    m_sceneFPSBox = new QComboBox();
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
-    m_loopBox = new QCheckBox();
-    m_selectModelBox = new QCheckBox();
-    m_boneWireFramesBox = new QCheckBox();
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_pathEdit);
-    subLayout->addWidget(m_openFileButton);
-    mainLayout->addLayout(subLayout);
-    subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_fromIndexLabel);
-    subLayout->addWidget(m_fromIndexBox);
-    subLayout->addWidget(m_toIndexLabel);
-    subLayout->addWidget(m_toIndexBox);
-    mainLayout->addLayout(subLayout);
-    subLayout = new QHBoxLayout();
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QLayout> subLayout(new QHBoxLayout());
+    subLayout->addWidget(m_pathEdit.data());
+    subLayout->addWidget(m_openFileButton.data());
+    m_audioGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_audioGroup.data());
+    QScopedPointer<QVBoxLayout> timeIndexLayout(new QVBoxLayout());
+    subLayout.reset(new QHBoxLayout());
+    subLayout->addWidget(m_fromIndexLabel.data());
+    subLayout->addWidget(m_fromIndexBox.data());
+    subLayout->addWidget(m_toIndexLabel.data());
+    subLayout->addWidget(m_toIndexBox.data());
+    timeIndexLayout->addLayout(subLayout.take());
+    subLayout.reset(new QHBoxLayout());
     subLayout->setAlignment(Qt::AlignCenter);
-    subLayout->addWidget(m_sceneFPSLabel);
-    subLayout->addWidget(m_sceneFPSBox);
-    mainLayout->addLayout(subLayout);
-    subLayout = new QVBoxLayout();
+    subLayout->addWidget(m_sceneFPSLabel.data());
+    subLayout->addWidget(m_sceneFPSBox.data());
+    timeIndexLayout->addLayout(subLayout.take());
+    m_timeIndexGroup->setLayout(timeIndexLayout.take());
+    mainLayout->addWidget(m_timeIndexGroup.data());
+    subLayout.reset(new QVBoxLayout());
     subLayout->setAlignment(Qt::AlignCenter);
-    subLayout->addWidget(m_loopBox);
-    subLayout->addWidget(m_selectModelBox);
-    subLayout->addWidget(m_boneWireFramesBox);
-    mainLayout->addLayout(subLayout);
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    m_playButton = new QPushButton(vpvm::PlaySettingDialog::tr("Play"));
-    connect(m_playButton, SIGNAL(clicked()), SIGNAL(playingDidStart()));
-    buttons->addButton(m_playButton, QDialogButtonBox::ActionRole);
+    subLayout->addWidget(m_loopBox.data());
+    subLayout->addWidget(m_selectModelBox.data());
+    subLayout->addWidget(m_boneWireFramesBox.data());
+    m_toggleSettingGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_toggleSettingGroup.data());
+    QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel));
+    connect(m_playButton.data(), SIGNAL(clicked()), SIGNAL(playingDidStart()));
+    buttons->addButton(m_playButton.data(), QDialogButtonBox::ActionRole);
     connect(this, SIGNAL(settingsDidSave()), this, SLOT(close()));
-    connect(buttons, SIGNAL(accepted()), this, SLOT(saveSettings()));
-    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
-    mainLayout->addWidget(buttons);
+    connect(buttons.data(), SIGNAL(accepted()), SLOT(saveSettings()));
+    connect(buttons.data(), SIGNAL(rejected()), SLOT(close()));
+    mainLayout->addWidget(buttons.take());
     retranslate();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
     /* 開いてから設定を行う関係で、ダイアログを開かずにそのまま再生して即終了を防ぐため、空のイベントを発行する */
     showEvent(0);
 }
@@ -115,18 +123,18 @@ void PlaySettingDialog::openFileDialog()
     const QString &filename = vpvm::openFileDialog("playSettingDialog/lastAudioDirectory",
                                                    vpvm::PlaySettingDialog::tr("Open audio file"),
                                                    vpvm::PlaySettingDialog::tr("WAV file (*.wav)"),
-                                                   m_settings);
+                                                   m_settingsRef);
     if (!filename.isEmpty())
         m_pathEdit->setText(filename);
 }
 
 void PlaySettingDialog::saveSettings()
 {
-    m_loader->setBackgroundAudioPath(backgroundAudio());
-    m_loader->setFrameIndexPlayFrom(fromIndex());
-    m_loader->setFrameIndexPlayTo(toIndex());
-    m_loader->setSceneFPSForPlay(sceneFPS());
-    m_loader->setLoop(isLoopEnabled());
+    m_loaderRef->setBackgroundAudioPath(backgroundAudio());
+    m_loaderRef->setFrameIndexPlayFrom(fromIndex());
+    m_loaderRef->setFrameIndexPlayTo(toIndex());
+    m_loaderRef->setSceneFPSForPlay(sceneFPS());
+    m_loaderRef->setLoop(isLoopEnabled());
     emit settingsDidSave();
 }
 
@@ -167,13 +175,13 @@ bool PlaySettingDialog::isBoneWireframesVisible() const
 
 void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 {
-    int maxIndex = m_loader->sceneRef()->maxFrameIndex();
-    m_pathEdit->setText(m_loader->backgroundAudio());
+    int maxIndex = m_loaderRef->sceneRef()->maxFrameIndex();
+    m_pathEdit->setText(m_loaderRef->backgroundAudio());
     m_fromIndexBox->setMaximum(maxIndex);
-    m_fromIndexBox->setValue(m_loader->frameIndexPlayFrom());
+    m_fromIndexBox->setValue(m_loaderRef->frameIndexPlayFrom());
     m_toIndexBox->setMaximum(maxIndex);
-    m_toIndexBox->setValue(m_loader->frameIndexPlayTo());
-    switch (m_loader->sceneFPSForPlay()) {
+    m_toIndexBox->setValue(m_loaderRef->frameIndexPlayTo());
+    switch (m_loaderRef->sceneFPSForPlay()) {
     case 120:
         m_sceneFPSBox->setCurrentIndex(2);
         break;
@@ -185,9 +193,9 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
         m_sceneFPSBox->setCurrentIndex(0);
         break;
     }
-    m_loopBox->setChecked(m_loader->isLoop());
+    m_loopBox->setChecked(m_loaderRef->isLoop());
     /* 現時点でシークの実装が無いので、開始位置指定とループは無効にする */
-    const QString &audio = m_loader->backgroundAudio();
+    const QString &audio = m_loaderRef->backgroundAudio();
     if (!audio.isEmpty()) {
         m_fromIndexBox->setValue(0);
         m_fromIndexBox->setDisabled(true);
@@ -207,7 +215,11 @@ void PlaySettingDialog::retranslate()
     m_loopBox->setText(vpvm::PlaySettingDialog::tr("Loop"));
     m_selectModelBox->setText(vpvm::PlaySettingDialog::tr("Be model selected"));
     m_boneWireFramesBox->setText(vpvm::PlaySettingDialog::tr("Draw bone wireframes"));
-    setWindowTitle(vpvm::PlaySettingDialog::tr("Playing scene setting"));
+    m_playButton->setText(vpvm::PlaySettingDialog::tr("Play"));
+    m_audioGroup->setTitle(vpvm::PlaySettingDialog::tr("Audio File Setting"));
+    m_timeIndexGroup->setTitle(vpvm::PlaySettingDialog::tr("Scene Range to Play and FPS Setting"));
+    m_toggleSettingGroup->setTitle(vpvm::PlaySettingDialog::tr("Enable/Disable Setting"));
+    setWindowTitle(vpvm::PlaySettingDialog::tr("Playing Scene Setting"));
 }
 
 } /* namespace vpvm */
