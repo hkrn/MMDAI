@@ -47,6 +47,7 @@ class QSpinBox;
 namespace vpvm
 {
 
+using namespace vpvl2;
 class SceneLoader;
 
 class GravitySettingDialog : public QDialog
@@ -58,7 +59,7 @@ public:
     ~GravitySettingDialog();
 
 signals:
-    void worldGravityDidSet(const vpvl2::Vector3 &value);
+    void worldGravityDidSet(const Vector3 &value);
     void worldRandSeedDidSet(unsigned long value);
 
 private slots:
@@ -67,10 +68,10 @@ private slots:
 private:
     QDoubleSpinBox *createSpinBox(double value) const;
 
-    QDoubleSpinBox *m_axisX;
-    QDoubleSpinBox *m_axisY;
-    QDoubleSpinBox *m_axisZ;
-    QSpinBox *m_randSeed;
+    QScopedPointer<QDoubleSpinBox> m_axisX;
+    QScopedPointer<QDoubleSpinBox> m_axisY;
+    QScopedPointer<QDoubleSpinBox> m_axisZ;
+    QScopedPointer<QSpinBox> m_randSeed;
 };
 
 } /* namespace vpvm */

@@ -64,9 +64,9 @@ private slots:
     void emitFrameIndices();
 
 private:
-    QSettings *m_settings;
-    QSpinBox *m_fromIndexBox;
-    QSpinBox *m_toIndexBox;
+    QSettings *m_settingsRef;
+    QScopedPointer<QSpinBox> m_fromIndexBox;
+    QScopedPointer<QSpinBox> m_toIndexBox;
 
     Q_DISABLE_COPY(FrameSelectionDialog)
 };

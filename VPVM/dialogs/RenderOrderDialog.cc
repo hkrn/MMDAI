@@ -48,40 +48,40 @@ namespace vpvm
 using namespace vpvl2;
 
 RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
-    : QDialog(parent)
+    : QDialog(parent),
+      m_listWidget(new QListWidget()),
+      m_dialogButtonBox(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply)),
+      m_upButton(new QPushButton()),
+      m_downButton(new QPushButton()),
+      m_resetButton(new QPushButton())
 {
     /* アイテムのドラッグ・アンド・ドロップを有効にする */
-    m_listWidget = new QListWidget();
     m_listWidget->setSelectionMode(QListWidget::SingleSelection);
     m_listWidget->setDragEnabled(true);
     m_listWidget->viewport()->setAcceptDrops(true);
     m_listWidget->setDropIndicatorShown(true);
     m_listWidget->setDragDropMode(QListWidget::InternalMove);
-    QHBoxLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_listWidget);
-    QVBoxLayout *buttonLayout = new QVBoxLayout();
-    m_upButton = new QPushButton();
-    connect(m_upButton, SIGNAL(clicked()), SLOT(setOrderUp()));
-    m_downBotton = new QPushButton();
-    connect(m_downBotton, SIGNAL(clicked()), SLOT(setOrderDown()));
-    m_resetButton = new QPushButton();
-    connect(m_resetButton, SIGNAL(clicked()), SLOT(resetOrder()));
-    buttonLayout->addWidget(m_upButton);
-    buttonLayout->addWidget(m_downBotton);
-    buttonLayout->addWidget(m_resetButton);
+    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
+    subLayout->addWidget(m_listWidget.data());
+    QScopedPointer<QVBoxLayout> buttonLayout(new QVBoxLayout());
+    connect(m_upButton.data(), SIGNAL(clicked()), SLOT(setOrderUp()));
+    connect(m_downButton.data(), SIGNAL(clicked()), SLOT(setOrderDown()));
+    connect(m_resetButton.data(), SIGNAL(clicked()), SLOT(resetOrder()));
+    buttonLayout->addWidget(m_upButton.data());
+    buttonLayout->addWidget(m_downButton.data());
+    buttonLayout->addWidget(m_resetButton.data());
     buttonLayout->addStretch();
-    subLayout->addLayout(buttonLayout);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(subLayout);
-    m_dialogButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
-    connect(m_dialogButtonBox, SIGNAL(accepted()), SLOT(accept()));
-    connect(m_dialogButtonBox, SIGNAL(rejected()), SLOT(reject()));
-    connect(m_dialogButtonBox, SIGNAL(clicked(QAbstractButton*)), SLOT(handleButton(QAbstractButton*)));
+    subLayout->addLayout(buttonLayout.take());
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addLayout(subLayout.take());
+    connect(m_dialogButtonBox.data(), SIGNAL(accepted()), SLOT(accept()));
+    connect(m_dialogButtonBox.data(), SIGNAL(rejected()), SLOT(reject()));
+    connect(m_dialogButtonBox.data(), SIGNAL(clicked(QAbstractButton*)), SLOT(handleButton(QAbstractButton*)));
     connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
     connect(this, SIGNAL(renderOrderListDidSet(QList<QUuid>)), loader, SLOT(setRenderOrderList(QList<QUuid>)));
-    mainLayout->addWidget(m_dialogButtonBox);
+    mainLayout->addWidget(m_dialogButtonBox.data());
     retranslate();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
     buildOriginFromRenderOrder(loader);
     setRenderOrder(m_origin);
     setWindowTitle(tr("Render order setting dialog"));
@@ -94,7 +94,7 @@ RenderOrderDialog::~RenderOrderDialog()
 void RenderOrderDialog::retranslate()
 {
     m_upButton->setText(tr("Up"));
-    m_downBotton->setText(tr("Down"));
+    m_downButton->setText(tr("Down"));
     m_resetButton->setText(tr("Reset"));
 }
 
@@ -154,7 +154,7 @@ void RenderOrderDialog::setRenderOrder(const QList<NameUUID> &pairs)
 {
     m_listWidget->clear();
     foreach (const NameUUID &pair, pairs) {
-        QListWidgetItem *item = new QListWidgetItem(m_listWidget);
+        QListWidgetItem *item = new QListWidgetItem(m_listWidget.data());
         item->setText(pair.first);
         item->setData(QListWidgetItem::UserType, QVariant(pair.second));
     }

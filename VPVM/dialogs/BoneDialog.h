@@ -71,19 +71,19 @@ private slots:
     void dialogRejected();
 
 private:
-    QLabel *m_xPositionLabel;
-    QLabel *m_yPositionLabel;
-    QLabel *m_zPositionLabel;
-    QLabel *m_xAngleLabel;
-    QLabel *m_yAngleLabel;
-    QLabel *m_zAngleLabel;
-    QDoubleSpinBox *m_xPosition;
-    QDoubleSpinBox *m_yPosition;
-    QDoubleSpinBox *m_zPosition;
-    QDoubleSpinBox *m_xAngle;
-    QDoubleSpinBox *m_yAngle;
-    QDoubleSpinBox *m_zAngle;
-    BoneMotionModel *m_boneMotionModel;
+    QScopedPointer<QLabel> m_xPositionLabel;
+    QScopedPointer<QLabel> m_yPositionLabel;
+    QScopedPointer<QLabel> m_zPositionLabel;
+    QScopedPointer<QLabel> m_xAngleLabel;
+    QScopedPointer<QLabel> m_yAngleLabel;
+    QScopedPointer<QLabel> m_zAngleLabel;
+    QScopedPointer<QDoubleSpinBox> m_xPosition;
+    QScopedPointer<QDoubleSpinBox> m_yPosition;
+    QScopedPointer<QDoubleSpinBox> m_zPosition;
+    QScopedPointer<QDoubleSpinBox> m_xAngle;
+    QScopedPointer<QDoubleSpinBox> m_yAngle;
+    QScopedPointer<QDoubleSpinBox> m_zAngle;
+    BoneMotionModel *m_boneMotionModelRef;
 
     Q_DISABLE_COPY(BoneDialog)
 };

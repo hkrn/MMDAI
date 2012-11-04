@@ -48,6 +48,7 @@ class QItemDelegate;
 namespace vpvm
 {
 
+using namespace vpvl2;
 class MotionBaseModel;
 
 class TimelineTreeView : public QTreeView
@@ -84,7 +85,7 @@ private slots:
     void addCollapsed(const QModelIndex &index);
     void addExpanded(const QModelIndex &index);
     void selectModelIndices(const QItemSelection &selected, const QItemSelection &deselected);
-    void setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
+    void setBoneKeyframesWeightBySelectedIndices(const Vector3 &position, const Vector3 &rotation);
     void setMorphKeyframesWeightBySelectedIndices(float value);
     void updateSectionWidth(int logicalIndex, int newSize, int oldSize);
 

@@ -75,11 +75,11 @@ private:
     void buildOriginFromRenderOrder(const SceneLoader *loader);
     void setRenderOrder(const QList<NameUUID> &pairs);
 
-    QListWidget *m_listWidget;
-    QDialogButtonBox *m_dialogButtonBox;
-    QPushButton *m_upButton;
-    QPushButton *m_downBotton;
-    QPushButton *m_resetButton;
+    QScopedPointer<QListWidget> m_listWidget;
+    QScopedPointer<QDialogButtonBox> m_dialogButtonBox;
+    QScopedPointer<QPushButton> m_upButton;
+    QScopedPointer<QPushButton> m_downButton;
+    QScopedPointer<QPushButton> m_resetButton;
     QList<NameUUID> m_origin;
 };
 

@@ -86,17 +86,17 @@ private  slots:
     void saveSettings();
 
 private:
-    SceneLoader *m_loader;
-    QSettings *m_settings;
-    QLineEdit *m_pathEdit;
-    QPushButton *m_openFileButton;
-    QSpinBox *m_widthBox;
-    QSpinBox *m_heightBox;
-    QSpinBox *m_fromIndexBox;
-    QSpinBox *m_toIndexBox;
-    QSpinBox *m_videoBitrateBox;
-    QComboBox *m_sceneFPSBox;
-    QCheckBox *m_includeGridBox;
+    SceneLoader *m_loaderRef;
+    QSettings *m_settingsRef;
+    QScopedPointer<QLineEdit> m_pathEdit;
+    QScopedPointer<QPushButton> m_openFileButton;
+    QScopedPointer<QSpinBox> m_widthBox;
+    QScopedPointer<QSpinBox> m_heightBox;
+    QScopedPointer<QSpinBox> m_fromIndexBox;
+    QScopedPointer<QSpinBox> m_toIndexBox;
+    QScopedPointer<QSpinBox> m_videoBitrateBox;
+    QScopedPointer<QComboBox> m_sceneFPSBox;
+    QScopedPointer<QCheckBox> m_includeGridBox;
 
     Q_DISABLE_COPY(ExportVideoDialog)
 };

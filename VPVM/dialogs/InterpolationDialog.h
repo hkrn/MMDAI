@@ -80,14 +80,14 @@ private:
                             const char *signal,
                             const char *slot);
 
-    QLabel *m_parameterTypeLabel;
-    QComboBox *m_parameterTypeComboBox;
-    QLabel *m_presetLabel;
-    QComboBox *m_presetComboBox;
-    QGroupBox *m_parameterGroup;
-    QPushButton *m_applyAllButton;
-    QDialogButtonBox *m_buttonBox;
-    InterpolationGraphWidget *m_graphWidget;
+    QScopedPointer<QLabel> m_parameterTypeLabel;
+    QScopedPointer<QComboBox> m_parameterTypeComboBox;
+    QScopedPointer<QLabel> m_presetLabel;
+    QScopedPointer<QComboBox> m_presetComboBox;
+    QScopedPointer<QGroupBox> m_parameterGroup;
+    QScopedPointer<QPushButton> m_applyAllButton;
+    QScopedPointer<QDialogButtonBox> m_buttonBox;
+    QScopedPointer<InterpolationGraphWidget> m_graphWidget;
 
     Q_DISABLE_COPY(InterpolationDialog)
 };

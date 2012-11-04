@@ -53,57 +53,57 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
                                      const QSize &max,
                                      QSettings *settings)
     : QDialog(),
-      m_loader(loader),
-      m_settings(settings)
+      m_loaderRef(loader),
+      m_settingsRef(settings),
+      m_pathEdit(new QLineEdit()),
+      m_openFileButton(new QPushButton(vpvm::ExportVideoDialog::tr("Open"))),
+      m_widthBox(new QSpinBox()),
+      m_heightBox(new QSpinBox()),
+      m_fromIndexBox(new QSpinBox()),
+      m_toIndexBox(new QSpinBox()),
+      m_videoBitrateBox(new QSpinBox()),
+      m_sceneFPSBox(new QComboBox()),
+      m_includeGridBox(new QCheckBox(vpvm::ExportVideoDialog::tr("Include grid field")))
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QHBoxLayout *subLayout = new QHBoxLayout();
-    m_pathEdit = new QLineEdit();
-    m_openFileButton = new QPushButton(vpvm::ExportVideoDialog::tr("Open"));
-    connect(m_openFileButton, SIGNAL(clicked()), SLOT(openFileDialog()));
-    subLayout->addWidget(m_pathEdit);
-    subLayout->addWidget(m_openFileButton);
-    mainLayout->addLayout(subLayout);
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
+    connect(m_openFileButton.data(), SIGNAL(clicked()), SLOT(openFileDialog()));
+    subLayout->addWidget(m_pathEdit.data());
+    subLayout->addWidget(m_openFileButton.data());
+    mainLayout->addLayout(subLayout.take());
     int maxFrameIndex = loader->sceneRef()->maxFrameIndex();
-    m_widthBox = new QSpinBox();
     m_widthBox->setRange(min.width(), max.width());
-    m_heightBox = new QSpinBox();
     m_heightBox->setRange(min.height(), max.height());
-    m_fromIndexBox = new QSpinBox();
     m_fromIndexBox->setRange(0, maxFrameIndex);
-    m_toIndexBox = new QSpinBox();
     m_toIndexBox->setRange(0, maxFrameIndex);
-    m_videoBitrateBox = new QSpinBox();
     m_videoBitrateBox->setRange(1, 100000);
     /* 現在の実装は PNG の生形式で出力するため、ビットレート設定は反映されない */
     m_videoBitrateBox->setEnabled(false);
     m_videoBitrateBox->setValue(0);
-    m_sceneFPSBox = new QComboBox();
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
-    m_includeGridBox = new QCheckBox(vpvm::ExportVideoDialog::tr("Include grid field"));
-    QGridLayout *gridLayout = new QGridLayout();
+    QScopedPointer<QGridLayout> gridLayout(new QGridLayout());
     gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Width (px): ")), 0, 0);
-    gridLayout->addWidget(m_widthBox, 0, 1);
+    gridLayout->addWidget(m_widthBox.data(), 0, 1);
     gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Height (px): ")), 0, 2);
-    gridLayout->addWidget(m_heightBox, 0, 3);
+    gridLayout->addWidget(m_heightBox.data(), 0, 3);
     gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Keyframe from: ")), 1, 0);
-    gridLayout->addWidget(m_fromIndexBox, 1, 1);
+    gridLayout->addWidget(m_fromIndexBox.data(), 1, 1);
     gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Keyframe to: ")), 1, 2);
-    gridLayout->addWidget(m_toIndexBox, 1, 3);
+    gridLayout->addWidget(m_toIndexBox.data(), 1, 3);
     gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Video Bitrate (kbps): ")), 2, 0);
-    gridLayout->addWidget(m_videoBitrateBox, 2, 1);
+    gridLayout->addWidget(m_videoBitrateBox.data(), 2, 1);
     gridLayout->addWidget(new QLabel(vpvm::ExportVideoDialog::tr("Scene FPS: ")), 2, 2);
-    gridLayout->addWidget(m_sceneFPSBox, 2, 3);
-    mainLayout->addLayout(gridLayout);
-    mainLayout->addWidget(m_includeGridBox, 0, Qt::AlignCenter);
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    connect(buttons, SIGNAL(accepted()), this, SLOT(saveSettings()));
-    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
-    mainLayout->addWidget(buttons);
+    gridLayout->addWidget(m_sceneFPSBox.data(), 2, 3);
+    mainLayout->addLayout(gridLayout.take());
+    mainLayout->addWidget(m_includeGridBox.data(), 0, Qt::AlignCenter);
+    QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel));
+    connect(buttons.data(), SIGNAL(accepted()), SLOT(saveSettings()));
+    connect(buttons.data(), SIGNAL(rejected()), SLOT(close()));
+    mainLayout->addWidget(buttons.take());
     setWindowTitle(vpvm::ExportVideoDialog::tr("Exporting video setting"));
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
 }
 
 ExportVideoDialog::~ExportVideoDialog()
@@ -115,20 +115,20 @@ void ExportVideoDialog::openFileDialog()
     const QString &filename = vpvm::openFileDialog("exportVideoDialog/lastAudioDirectory",
                                                    vpvm::ExportVideoDialog::tr("Open audio file"),
                                                    vpvm::ExportVideoDialog::tr("WAV file (*.wav)"),
-                                                   m_settings);
+                                                   m_settingsRef);
     if (!filename.isEmpty())
         m_pathEdit->setText(filename);
 }
 
 void ExportVideoDialog::saveSettings()
 {
-    m_loader->setBackgroundAudioPath(backgroundAudio());
-    m_loader->setSceneWidth(sceneWidth());
-    m_loader->setSceneHeight(sceneHeight());
-    m_loader->setFrameIndexEncodeVideoFrom(fromIndex());
-    m_loader->setFrameIndexEncodeVideoTo(toIndex());
-    m_loader->setSceneFPSForEncodeVideo(sceneFPS());
-    m_loader->setGridIncluded(includesGrid());
+    m_loaderRef->setBackgroundAudioPath(backgroundAudio());
+    m_loaderRef->setSceneWidth(sceneWidth());
+    m_loaderRef->setSceneHeight(sceneHeight());
+    m_loaderRef->setFrameIndexEncodeVideoFrom(fromIndex());
+    m_loaderRef->setFrameIndexEncodeVideoTo(toIndex());
+    m_loaderRef->setSceneFPSForEncodeVideo(sceneFPS());
+    m_loaderRef->setGridIncluded(includesGrid());
     emit settingsDidSave();
 }
 
@@ -182,15 +182,15 @@ bool ExportVideoDialog::includesGrid() const
 
 void ExportVideoDialog::showEvent(QShowEvent * /* event */)
 {
-    int maxFrameIndex = m_loader->sceneRef()->maxFrameIndex();
-    m_pathEdit->setText(m_loader->backgroundAudio());
-    m_widthBox->setValue(m_loader->sceneWidth());
-    m_heightBox->setValue(m_loader->sceneHeight());
+    int maxFrameIndex = m_loaderRef->sceneRef()->maxFrameIndex();
+    m_pathEdit->setText(m_loaderRef->backgroundAudio());
+    m_widthBox->setValue(m_loaderRef->sceneWidth());
+    m_heightBox->setValue(m_loaderRef->sceneHeight());
     m_fromIndexBox->setMaximum(maxFrameIndex);
-    m_fromIndexBox->setValue(qBound(0, m_loader->frameIndexEncodeVideoFrom(), maxFrameIndex));
+    m_fromIndexBox->setValue(qBound(0, m_loaderRef->frameIndexEncodeVideoFrom(), maxFrameIndex));
     m_toIndexBox->setMaximum(maxFrameIndex);
     m_toIndexBox->setValue(maxFrameIndex);
-    switch (m_loader->sceneFPSForEncodeVideo()) {
+    switch (m_loaderRef->sceneFPSForEncodeVideo()) {
     case 120:
         m_sceneFPSBox->setCurrentIndex(2);
         break;
@@ -202,7 +202,7 @@ void ExportVideoDialog::showEvent(QShowEvent * /* event */)
         m_sceneFPSBox->setCurrentIndex(0);
         break;
     }
-    m_includeGridBox->setChecked(m_loader->isGridIncluded());
+    m_includeGridBox->setChecked(m_loaderRef->isGridIncluded());
 }
 
 } /* namespace vpvm */

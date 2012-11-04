@@ -66,9 +66,9 @@ private slots:
     void restoreAndClose();
 
 private:
-    QSpinBox *m_x;
-    QSpinBox *m_y;
-    QCheckBox *m_checkbox;
+    QScopedPointer<QSpinBox> m_x;
+    QScopedPointer<QSpinBox> m_y;
+    QScopedPointer<QCheckBox> m_checkbox;
     QPoint m_position;
     bool m_scaled;
 };
