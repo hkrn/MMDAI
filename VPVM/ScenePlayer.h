@@ -92,18 +92,18 @@ private:
     QScopedPointer<QProgressDialog> m_progress;
     SceneWidget *m_sceneWidgetRef;
     IModel *m_selectedModelRef;
-    QElapsedTimer m_elapsed;
-    QTimer m_renderTimer;
+    QElapsedTimer m_refreshTimer;
+    QTimer m_updateTimer;
     QString m_format;
     QByteArray m_buffer;
     Scalar m_currentFPS;
     Scalar m_prevSceneFPS;
-    qreal m_prevFrameIndex;
+    qreal m_prevTimeIndex;
     qreal m_frameStep;
     qreal m_totalStep;
-    qreal m_audioFrameIndex;
-    qreal m_prevAudioFrameIndex;
-    int m_countForFPS;
+    qreal m_audioTimeIndex;
+    qreal m_prevAudioTimeIndex;
+    int m_counterForFPS;
     bool m_restoreState;
 };
 

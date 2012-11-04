@@ -288,7 +288,8 @@ private:
     IBone *m_currentSelectedBoneRef;
     QList<IBone *> m_selectedBoneRefs;
     QList<IMorph *> m_selectedMorphRefs;
-    QElapsedTimer m_timer;
+    QBasicTimer m_updateTimer;
+    QElapsedTimer m_refreshTimer;
     QPointF m_clickOrigin;
     QPointF m_delta;
     EditMode m_editMode;
@@ -299,8 +300,6 @@ private:
     float m_prevElapsed;
     int m_frameCount;
     int m_currentFPS;
-    int m_interval;
-    int m_internalTimerID;
     int m_handleFlags;
     bool m_playing;
     bool m_enableBoneMove;

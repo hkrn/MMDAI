@@ -148,8 +148,6 @@ SceneWidget::SceneWidget(const QGLFormat format,
       m_prevElapsed(0),
       m_frameCount(0),
       m_currentFPS(0),
-      m_interval(1000.0f / Scene::defaultFPS()),
-      m_internalTimerID(0),
       m_handleFlags(0),
       m_playing(false),
       m_enableBoneMove(false),
@@ -196,7 +194,7 @@ SceneLoader *SceneWidget::sceneLoaderRef() const
 void SceneWidget::play()
 {
     m_playing = true;
-    m_timer.restart();
+    m_refreshTimer.restart();
     emit sceneDidPlay();
 }
 
@@ -228,15 +226,15 @@ void SceneWidget::clear()
 
 void SceneWidget::startAutomaticRendering()
 {
-    if (!m_internalTimerID)
-        m_internalTimerID = startTimer(m_interval);
+    if (!m_updateTimer.isActive()) {
+        m_updateTimer.start(0, this);
+    }
 }
 
 void SceneWidget::stopAutomaticRendering()
 {
-    if (m_internalTimerID) {
-        killTimer(m_internalTimerID);
-        m_internalTimerID = 0;
+    if (m_updateTimer.isActive()) {
+        m_updateTimer.stop();
     }
 }
 
@@ -281,9 +279,8 @@ void SceneWidget::setPreferredFPS(int value)
 {
     /* 一旦前のタイマーを止めてから新しい FPS に基づく間隔でタイマーを開始する */
     if (value > 0) {
-        m_interval = 1000.0f / value;
         m_loader->setPreferredFPS(value);
-        if (m_internalTimerID) {
+        if (m_updateTimer.isActive()) {
             stopAutomaticRendering();
             startAutomaticRendering();
         }
@@ -1048,7 +1045,7 @@ void SceneWidget::initializeGL()
     m_info->setFPS(0.0f);
     m_info->update();
 #endif
-    m_timer.start();
+    m_refreshTimer.start();
     startAutomaticRendering();
     emit initailizeGLContextDidDone();
 }
@@ -1352,10 +1349,10 @@ void SceneWidget::resizeGL(int w, int h)
 void SceneWidget::timerEvent(QTimerEvent *event)
 {
     /* モーション再生のタイマーが生きている => 描写命令を出す */
-    if (event->timerId() == m_internalTimerID) {
+    if (event->timerId() == m_updateTimer.timerId()) {
         if (m_playing) {
             /* タイマーの仕様上一定ではないため、差分をここで吸収する */
-            Scalar elapsed = m_timer.elapsed() / Scene::defaultFPS();
+            Scalar elapsed = m_refreshTimer.elapsed() / Scene::defaultFPS();
             Scalar diff = elapsed - m_prevElapsed;
             m_prevElapsed = elapsed;
             if (diff < 0)
@@ -1370,6 +1367,7 @@ void SceneWidget::timerEvent(QTimerEvent *event)
         }
         updateScene();
     }
+    QGLWidget::timerEvent(event);
 }
 
 void SceneWidget::wheelEvent(QWheelEvent *event)
@@ -1527,10 +1525,10 @@ bool SceneWidget::testHitModelHandle(const QPointF &pos)
 void SceneWidget::updateFPS()
 {
     /* 1秒ごとの FPS はここで計算しておく。1秒過ぎたら updateFPS を呼んだ回数を求め、タイマーを再起動させる */
-    if (m_timer.elapsed() > 1000) {
+    if (m_refreshTimer.elapsed() > 1000) {
         m_currentFPS = m_frameCount;
         m_frameCount = 0;
-        m_timer.restart();
+        m_refreshTimer.restart();
         m_info->setFPS(m_currentFPS);
         m_info->update();
         emit fpsDidUpdate(m_currentFPS);

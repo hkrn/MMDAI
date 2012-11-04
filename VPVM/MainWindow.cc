@@ -129,6 +129,7 @@ static QGLFormat UIGetQGLFormat()
 {
     QGLFormat format;
     format.setSampleBuffers(true);
+    format.setSwapInterval(60);
 #ifdef Q_OS_DARWIN
     format.setSamples(4);
     format.setRedBufferSize(16);
