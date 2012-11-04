@@ -138,7 +138,11 @@ public:
     const Vector3 &localPosition() const { return m_position; }
     const Quaternion &rotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalPosition(const Vector3 &value) { m_position = value; }
+    void setLocalPosition(const Vector3 &value) {
+        m_position = value;
+        m_position.setMax(kMaxValue);
+        m_modelRef->setScaleFactor(m_position.length());
+    }
     void setRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return true; }
     bool isRotateable() const { return false; }
@@ -152,10 +156,12 @@ public:
     void setInverseKinematicsEnable(bool /* value */) {}
 
 private:
+    static const Vector3 kMaxValue;
     const IEncoding *m_encodingRef;
     IModel *m_modelRef;
     Vector3 m_position;
 };
+const Vector3 ScaleBone::kMaxValue = Vector3(0.1, 0.1, 0.1);
 
 class Label : public ILabel {
 public:
