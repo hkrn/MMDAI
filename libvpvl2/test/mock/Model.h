@@ -100,6 +100,10 @@ class MockIModel : public IModel {
       void(IDynamicVertexBuffer *&dynamicBuffer, const IIndexBuffer *indexBuffer));
   MOCK_CONST_METHOD3(getMatrixBuffer,
       void(IMatrixBuffer *&matrixBuffer, IDynamicVertexBuffer *dynamicBuffer, const IIndexBuffer *indexBuffer));
+  MOCK_METHOD2(setAabb,
+      void(const Vector3 &min, const Vector3 &max));
+  MOCK_CONST_METHOD2(getAabb,
+      void(Vector3 &min, Vector3 &max));
 };
 
 }  // namespace vpvl2
