@@ -59,14 +59,12 @@ ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dial
       m_currentFPS(0),
       m_prevSceneFPS(0),
       m_prevTimeIndex(0),
-      m_frameStep(0),
       m_totalStep(0),
       m_audioTimeIndex(0),
       m_prevAudioTimeIndex(0),
       m_counterForFPS(0),
       m_restoreState(false)
 {
-    m_updateTimer.setSingleShot(false);
     m_progress->setWindowModality(Qt::ApplicationModal);
 }
 
@@ -82,7 +80,6 @@ void ScenePlayer::start()
     m_selectedModelRef = m_sceneWidgetRef->sceneLoaderRef()->selectedModelRef();
     m_prevSceneFPS = m_sceneWidgetRef->sceneLoaderRef()->sceneRef()->preferredFPS();
     m_prevTimeIndex = m_sceneWidgetRef->currentTimeIndex();
-    m_frameStep = 1.0 / (sceneFPS / Scene::defaultFPS());
     m_totalStep = 0;
     m_audioTimeIndex = 0;
     m_prevAudioTimeIndex = 0;
@@ -110,19 +107,18 @@ void ScenePlayer::start()
     const QString &backgroundAudio = m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio();
     if (!backgroundAudio.isEmpty() && m_player->openOutputDevice()) {
         m_player->setFileName(backgroundAudio);
-        connect(&m_updateTimer, SIGNAL(timeout()), SLOT(renderSceneFrameVariant()));
         connect(m_player.data(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
         connect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), SLOT(advanceAudioFrame(qreal)));
         m_player->startSession();
     }
     else {
-        connect(&m_updateTimer, SIGNAL(timeout()), SLOT(renderSceneFrameFixed()));
+        m_refreshTimer.start();
     }
     /* 再生用タイマー起動 */
-    m_updateTimer.start(0);
+    m_updateTimer.start(0, this);
     /* FPS 計測タイマー起動 */
     m_counterForFPS = 0;
-    m_refreshTimer.start();
+    m_countFPSTimer.start();
     emit renderFrameDidStart();
 }
 
@@ -131,8 +127,6 @@ void ScenePlayer::stop()
     /* 多重登録を防ぐためタイマーと音声出力オブジェクトのシグナルを解除しておく */
     disconnect(m_player.data(), SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
     disconnect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), this, SLOT(advanceAudioFrame(qreal)));
-    disconnect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameFixed()));
-    disconnect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameVariant()));
     /* タイマーと音声出力オブジェクトの停止 */
     m_player->stopSession();
     m_updateTimer.stop();
@@ -167,20 +161,21 @@ bool ScenePlayer::isActive() const
     return m_updateTimer.isActive();
 }
 
-void ScenePlayer::renderSceneFrameFixed()
+void ScenePlayer::timerEvent(QTimerEvent * /* event */)
 {
-    /* start() 時に計算して固定値でモーションをすすめる */
-    renderSceneFrame0(m_frameStep);
-}
-
-void ScenePlayer::renderSceneFrameVariant()
-{
-    /* advanceStep で増えた分を加算するため、値は可変 */
-    qreal diff = m_audioTimeIndex - m_prevAudioTimeIndex;
-    if (diff > 0) {
-        renderSceneFrame0(diff);
-        m_prevAudioTimeIndex = m_audioTimeIndex;
+    if (m_player->isRunning()) {
+        /* advanceStep で増えた分を加算するため、値は可変 */
+        qreal delta = m_audioTimeIndex - m_prevAudioTimeIndex;
+        if (delta > 0) {
+            renderScene(delta);
+            m_prevAudioTimeIndex = m_audioTimeIndex;
+        }
     }
+    else {
+        qreal fps(m_dialogRef->sceneFPS()), delta = m_refreshTimer.restart() / fps;
+        renderScene(delta);
+    }
+    updateCurrentFPS();
 }
 
 void ScenePlayer::advanceAudioFrame(qreal step)
@@ -189,11 +184,10 @@ void ScenePlayer::advanceAudioFrame(qreal step)
         m_audioTimeIndex += step * Scene::defaultFPS();
 }
 
-void ScenePlayer::renderSceneFrame0(qreal step)
+void ScenePlayer::renderScene(qreal step)
 {
     Scene *scene = m_sceneWidgetRef->sceneLoaderRef()->sceneRef();
     bool isReached = scene->isReachedTo(m_dialogRef->toIndex());
-    updateCurrentFPS();
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
     if ((!m_dialogRef->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
         stop();
@@ -231,10 +225,10 @@ void ScenePlayer::renderSceneFrame0(qreal step)
 
 void ScenePlayer::updateCurrentFPS()
 {
-    if (m_refreshTimer.elapsed() > 1000) {
+    if (m_countFPSTimer.elapsed() > 1000) {
         m_currentFPS = m_counterForFPS;
         m_counterForFPS = 0;
-        m_refreshTimer.restart();
+        m_countFPSTimer.restart();
     }
     m_counterForFPS++;
 }

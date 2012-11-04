@@ -71,6 +71,9 @@ public slots:
     /* これを呼ぶと再生終了時 renderFrameDidStop ではなく renderFrameDidStopAndRestoreState が呼ばれる */
     void setRestoreState() { m_restoreState = true; }
 
+protected:
+    void timerEvent(QTimerEvent *event);
+
 signals:
     void renderFrameDidStart();
     void renderFrameDidStop();
@@ -79,12 +82,10 @@ signals:
     void motionDidSeek(int frameIndex);
 
 private slots:
-    void renderSceneFrameFixed();
-    void renderSceneFrameVariant();
     void advanceAudioFrame(qreal step);
 
 private:
-    void renderSceneFrame0(qreal step);
+    void renderScene(qreal step);
     void updateCurrentFPS();
 
     const PlaySettingDialog *m_dialogRef;
@@ -92,14 +93,14 @@ private:
     QScopedPointer<QProgressDialog> m_progress;
     SceneWidget *m_sceneWidgetRef;
     IModel *m_selectedModelRef;
+    QElapsedTimer m_countFPSTimer;
     QElapsedTimer m_refreshTimer;
-    QTimer m_updateTimer;
+    QBasicTimer m_updateTimer;
     QString m_format;
     QByteArray m_buffer;
     Scalar m_currentFPS;
     Scalar m_prevSceneFPS;
     qreal m_prevTimeIndex;
-    qreal m_frameStep;
     qreal m_totalStep;
     qreal m_audioTimeIndex;
     qreal m_prevAudioTimeIndex;
