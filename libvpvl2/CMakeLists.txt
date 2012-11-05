@@ -543,6 +543,7 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2))
   link_bullet(vpvl2_sdl)
   link_glew(vpvl2_sdl)
   link_icu_or_iconv(vpvl2_sdl)
+  link_nvtt(vpvl2_sdl)
 endif()
 
 # generate configuration

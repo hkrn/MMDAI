@@ -89,6 +89,73 @@ BT_DECLARE_HANDLE(aiScene);
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+/* NVTT */
+#ifdef VPVL2_LINK_NVTT
+#include <nvcore/Stream.h>
+#include <nvimage/DirectDrawSurface.h>
+#include <nvimage/Image.h>
+#include <nvimage/ImageIO.h>
+
+namespace {
+
+class ReadonlyMemoryStream : public nv::Stream {
+public:
+    ReadonlyMemoryStream(SDL_RWops *buffer)
+        : m_buffer(buffer),
+          m_size(0)
+    {
+        size_t pos = tell();
+        SDL_RWseek(m_buffer, 0, RW_SEEK_END);
+        m_size = tell();
+        seek(pos);
+    }
+    ~ReadonlyMemoryStream() {
+        m_buffer = 0;
+        m_size = 0;
+    }
+
+    bool isSaving() const { return false; }
+    bool isError() const { return false; }
+    void seek(uint pos) { SDL_RWseek(m_buffer, pos, RW_SEEK_SET); }
+    uint tell() const { return SDL_RWtell(m_buffer); }
+    uint size() const { return m_size; }
+    void clearError() {}
+    bool isAtEnd() const { return tell() == m_size; }
+    bool isSeekable() const { return true; }
+    bool isLoading() const { return true; }
+    uint serialize(void *data, uint len) { return SDL_RWread(m_buffer, data, len, 1); }
+
+private:
+    SDL_RWops *m_buffer;
+    size_t m_size;
+};
+
+}
+
+#else
+
+namespace nv {
+class Stream {
+public:
+    Stream() {}
+    virtual ~Stream() {}
+};
+}
+
+class ReadonlyFileStream : public nv::Stream {
+public:
+    ReadonlyFileStream(const QString &/*path*/) {}
+    ~ReadonlyFileStream() {}
+};
+
+class ReadonlyMemoryStream : public nv::Stream {
+public:
+    ReadonlyMemoryStream(QByteArray &/*bytes*/) {}
+    ~ReadonlyMemoryStream() {}
+};
+
+#endif
+
 namespace {
 
 using namespace vpvl2;
@@ -210,8 +277,23 @@ public:
         GLuint id;
     };
     typedef std::map<UnicodeString, TextureCache> TextureCacheMap;
-    struct PrivateContext {
+    struct InternalContext {
         TextureCacheMap textureCache;
+    };
+    struct InternalTexture {
+        InternalTexture(Delegate::Texture *r, bool m, bool t)
+            : ref(r),
+              isToon(t),
+              isSystem(false),
+              mipmap(m),
+              ok(false)
+        {
+        }
+        Delegate::Texture *ref;
+        bool isToon;
+        bool isSystem;
+        bool mipmap;
+        bool ok;
     };
 
     Delegate(Scene *sceneRef, UIStringMap *configRef)
@@ -226,9 +308,9 @@ public:
           m_colorSwapSurface(0)
     {
         m_colorSwapSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 0, 0, 32,
-                                                  0x000000ff,
-                                                  0x0000ff00,
                                                   0x00ff0000,
+                                                  0x0000ff00,
+                                                  0x000000ff,
                                                   0xff000000);
         std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
         std::string extension;
@@ -244,32 +326,35 @@ public:
     }
 
     void allocateContext(const IModel * /* model */, void *&context) {
-        PrivateContext *ctx = new PrivateContext();
+        InternalContext *ctx = new InternalContext();
         context = ctx;
     }
     void releaseContext(const IModel * /* model */, void *&context) {
-        delete static_cast<PrivateContext *>(context);
+        delete static_cast<InternalContext *>(context);
         context = 0;
     }
     bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
-        bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap, ok = false;
+        bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
+        bool isToon = flags & IRenderDelegate::kToonTexture;
         bool ret = false;
+        InternalTexture t(&texture, mipmap, isToon);
         if (flags & IRenderDelegate::kTexture2D) {
             const UnicodeString &path = createPath(dir, name);
             std::cerr << "texture: " << String::toStdString(path) << std::endl;
-            ret = uploadTextureInternal(path, texture, false, false, mipmap, ok, context);
+            ret = uploadTextureInternal(path, t, context);
         }
-        else if (flags & IRenderDelegate::kToonTexture) {
+        else if (isToon) {
             if (dir) {
                 const UnicodeString &path = createPath(dir, name);
                 std::cerr << "toon: " << String::toStdString(path) << std::endl;
-                ret = uploadTextureInternal(path, texture, true, false, mipmap, ok, context);
+                ret = uploadTextureInternal(path, t, context);
             }
-            if (!ok) {
+            if (!t.ok) {
                 String s((*m_configRef)["dir.system.toon"]);
                 const UnicodeString &path = createPath(&s, name);
                 std::cerr << "system: " << String::toStdString(path) << std::endl;
-                ret = uploadTextureInternal(path, texture, true, true, mipmap, ok, context);
+                t.isSystem = true;
+                ret = uploadTextureInternal(path, t, context);
             }
         }
         return ret;
@@ -493,86 +578,125 @@ public:
 
 private:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name) {
-        const UnicodeString &d = static_cast<const String *>(dir)->value();
-        return d + "/" + name;
+        UnicodeString n = name;
+        return static_cast<const String *>(dir)->value() + "/" + n.findAndReplace('\\', '/');
     }
     static const UnicodeString createPath(const IString *dir, const IString *name) {
         const UnicodeString &d = static_cast<const String *>(dir)->value();
-        const UnicodeString &n = static_cast<const String *>(name)->value();
-        return d + "/" + n;
+        UnicodeString n = static_cast<const String *>(name)->value();
+        return d + "/" + n.findAndReplace('\\', '/');
     }
-    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, bool isToon,
-                               bool /* isSystem */, bool /* mipmap */, bool &ok, void *context) {
-        PrivateContext *privateContext = static_cast<PrivateContext *>(context);
+    bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) {
+        InternalContext *privateContext = static_cast<InternalContext *>(context);
         /* テクスチャのキャッシュを検索する */
         if (privateContext) {
             TextureCacheMap &tc = privateContext->textureCache;
             if (tc.find(path) != tc.end()) {
-                setTextureID(tc[path], isToon, texture);
-                ok = true;
+                setTextureID(tc[path], texture);
+                texture.ok = true;
                 return true;
             }
         }
         std::string bytes;
         if (!UILoadFile(path, bytes)) {
-            ok = false;
+            texture.ok = false;
             return true;
         }
         SDL_Surface *surface = 0;
         SDL_RWops *source = SDL_RWFromConstMem(bytes.data(), bytes.length());
         const UnicodeString &lowerPath = path.tempSubString().toLower();
+        char extension[4] = { 0 };
         if (lowerPath.endsWith(".sph") || lowerPath.endsWith(".spa")) {
-            char extension[] = "BMP";
-            surface = IMG_LoadTyped_RW(source, 0, extension);
+            memcpy(extension, "BMP" ,sizeof(extension));
         }
         else if (lowerPath.endsWith(".tga")) {
-            char extension[] = "TGA";
-            surface = IMG_LoadTyped_RW(source, 0, extension);
+            memcpy(extension, "TGA" ,sizeof(extension));
         }
         else if (lowerPath.endsWith(".png") && IMG_isPNG(source)) {
-            char extension[] = "PNG";
-            surface = IMG_LoadTyped_RW(source, 0, extension);
+            memcpy(extension, "PNG" ,sizeof(extension));
         }
         else if (lowerPath.endsWith(".bmp") && IMG_isBMP(source)) {
-            char extension[] = "BMP";
-            surface = IMG_LoadTyped_RW(source, 0, extension);
+            memcpy(extension, "BMP" ,sizeof(extension));
         }
         else if (lowerPath.endsWith(".jpg") && IMG_isJPG(source)) {
-            char extension[] = "JPG";
-            surface = IMG_LoadTyped_RW(source, 0, extension);
+            memcpy(extension, "JPG" ,sizeof(extension));
         }
+        if (*extension) {
+            surface = IMG_LoadTyped_RW(source, 0, extension);
+            surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
+        }
+#ifdef VPVL2_LINK_NVTT
+        else if (lowerPath.endsWith(".dds")) {
+            nv::DirectDrawSurface dds;
+            if (dds.load(new ReadonlyMemoryStream(source))) {
+                nv::Image *nvimage = new nv::Image();
+                dds.mipmap(nvimage, 0, 0);
+                surface = SDL_CreateRGBSurfaceFrom(nvimage->pixels(),
+                                                   nvimage->width(),
+                                                   nvimage->height(),
+                                                   32,
+                                                   nvimage->width() * 4,
+                                                   0x00ff0000,
+                                                   0x0000ff00,
+                                                   0x000000ff,
+                                                   0xff000000);
+                surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
+            }
+        }
+#endif
         SDL_FreeRW(source);
         if (!surface) {
-            ok = false;
+            texture.ok = false;
             return true;
         }
-        surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
-        GLuint textureID = 0, internal = GL_RGBA8, format = GL_RGBA;
+        GLuint textureID = 0;
         size_t width = surface->w, height = surface->h;
         glGenTextures(1, &textureID);
+#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, GL_UNSIGNED_BYTE, surface->pixels);
-        SDL_FreeSurface(surface);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA,
+                     GL_UNSIGNED_INT_8_8_8_8_REV, surface->pixels);
+        if (texture.mipmap) {
+            const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
+            typedef void (*glGenerateMipmapProcPtr)(GLuint);
+            if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
+                glGenerateMipmapProcPtrRef(GL_TEXTURE_2D);
+        }
         glBindTexture(GL_TEXTURE_2D, 0);
+#else
+        GLuint internal = GL_RGBA, format = GL_BGRA;
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format,
+                     GL_UNSIGNED_INT_8_8_8_8_REV, surface->pixels);
+        glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+        SDL_FreeSurface(surface);
         TextureCache cache(width, height, textureID);
-        setTextureID(cache, isToon, texture);
+        setTextureID(cache, texture);
         addTextureCache(path, cache, privateContext);
-        ok = textureID != 0;
-        return ok;
+        texture.ok = textureID != 0;
+        return texture.ok;
     }
-    void setTextureID(const TextureCache &cache, bool isToon, Texture &output) {
-        output.width = cache.width;
-        output.height = cache.height;
-        *const_cast<GLuint *>(static_cast<const GLuint *>(output.object)) = cache.id;
-        if (!isToon) {
-            GLuint textureID = *static_cast<const GLuint *>(output.object);
-            glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    static void setTextureID(const TextureCache &cache, InternalTexture &texture) {
+        Delegate::Texture *ref = texture.ref;
+        ref->width = cache.width;
+        ref->height = cache.height;
+        *const_cast<GLuint *>(static_cast<const GLuint *>(ref->object)) = cache.id;
+        if (!texture.isToon) {
+            GLuint textureID = *static_cast<const GLuint *>(ref->object);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
     }
-    void addTextureCache(const UnicodeString &path, const TextureCache &texture, PrivateContext *context) {
+    static void addTextureCache(const UnicodeString &path, const TextureCache &texture, InternalContext *context) {
         if (context)
             context->textureCache.insert(std::make_pair(path, texture));
     }
