@@ -380,12 +380,12 @@ public:
     const Vector3 &origin() const { return m_origin; }
     const Vector3 &normal() const { return m_normal; }
     const Vector3 &textureCoord() const { return m_texcoord; }
-    const Vector4 &uv(int index) const { return kZeroV4; }
+    const Vector4 &uv(int /* index */) const { return kZeroV4; }
     const Vector3 &delta() const { return kZeroV3; }
     Type type() const { return IVertex::kBdef1; }
     float edgeSize() const { return 0; }
-    float weight(int index) const { return 0; }
-    IBone *bone(int index) const { return 0; }
+    float weight(int /* index */) const { return 0; }
+    IBone *bone(int /* index */) const { return 0; }
     int index() const { return m_index; }
     void setOrigin(const Vector3 & /* value */) {}
     void setNormal(const Vector3 & /* value */) {}

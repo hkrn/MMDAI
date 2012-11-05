@@ -45,6 +45,10 @@
 #include "vpvl2/IString.h"
 #include <string.h>
 
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
 #if defined(WIN32)
 #include <windows.h>
 #endif
@@ -425,6 +429,7 @@ static inline void zerofill(void *ptr, size_t size)
 #endif
 }
 
+__attribute__((format(printf, 3, 4)))
 static inline void snprintf(char *buf, size_t size, const char *format, ...)
 {
     va_list ap;
