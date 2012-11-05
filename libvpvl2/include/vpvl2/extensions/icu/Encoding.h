@@ -34,16 +34,18 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_ICU_ENCODING_H_
-#define VPVL2_ICU_ENCODING_H_
+#ifndef VPVL2_EXTENSIONS_ICU_ENCODING_H_
+#define VPVL2_EXTENSIONS_ICU_ENCODING_H_
 
 #include <vpvl2/IEncoding.h>
-#include <vpvl2/icu/String.h>
+#include <vpvl2/extensions/icu/String.h>
 
 /* ICU */
 #include <unicode/unistr.h>
 
 namespace vpvl2
+{
+namespace extensions
 {
 namespace icu
 {
@@ -178,6 +180,7 @@ public:
 };
 
 } /* namespace icu */
+} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif

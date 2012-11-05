@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_ICU_STRING_H_
-#define VPVL2_ICU_STRING_H_
+#ifndef VPVL2_EXTENSIONS_ICU_STRING_H_
+#define VPVL2_EXTENSIONS_ICU_STRING_H_
 
 #include <string>
 #include <vector>
@@ -47,6 +47,8 @@
 #include <unicode/regex.h>
 
 namespace vpvl2
+{
+namespace extensions
 {
 namespace icu
 {
@@ -152,6 +154,7 @@ private:
 };
 
 } /* namespace icu */
+} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif
