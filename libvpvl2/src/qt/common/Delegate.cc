@@ -180,13 +180,16 @@ QGLContext::BindOptions UIGetTextureBindOptions(bool enableMipmap)
 
 static void UISetTexture(const Delegate::TextureCache &cache, Delegate::InternalTexture &texture)
 {
-    texture.ref->width = cache.width;
-    texture.ref->height = cache.height;
-    *static_cast<GLuint *>(texture.ref->object) = cache.id;
+    Delegate::Texture *ref = texture.ref;
+    ref->width = cache.width;
+    ref->height = cache.height;
+    *const_cast<GLuint *>(static_cast<const GLuint *>(ref->object)) = cache.id;
     if (!texture.isToon) {
-        GLuint textureID = *static_cast<const GLuint *>(texture.ref->object);
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GLuint textureID = *static_cast<const GLuint *>(ref->object);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 }
 
@@ -1320,11 +1323,11 @@ bool Delegate::generateTextureFromImage(const QImage &image,
                                         InternalContext *internalContext)
 {
     if (!image.isNull()) {
+        size_t width = image.width(), height = image.height();
         GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
                                                   GL_TEXTURE_2D,
                                                   GL_RGBA,
                                                   UIGetTextureBindOptions(internalTexture.mipmap));
-        size_t width = image.width(), height = image.height();
         TextureCache cache(width, height, textureID);
         m_texture2Paths.insert(textureID, path);
         UISetTexture(cache, internalTexture);
