@@ -549,9 +549,9 @@ endif()
 
 # generate configuration
 if(NOT WIN32)
-  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc @ONLY)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc DESTINATION ${PKGCONFIG_INSTALL_PREFIX})
+  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING "Base directory for pkgconfig files")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
 endif()
 
 # install configuration

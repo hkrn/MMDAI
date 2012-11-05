@@ -44,24 +44,31 @@
 #include "vpvl2/IRenderDelegate.h"
 
 #if defined(VPVL2_LINK_QT)
-#include <QtOpenGL/QtOpenGL>
-#include <QtOpenGL/QGLFunctions>
+  #include <QtOpenGL/QtOpenGL>
+  #include <QtOpenGL/QGLFunctions>
 #elif defined(VPVL2_LINK_GLEW)
-#include <GL/glew.h>
+  #include <GL/glew.h>
 #endif /* VPVL_LINK_QT */
 
 #if defined(VPVL2_ENABLE_GLES2)
-#include <GLES2/gl2.h>
+  #if defined(VPVL2_PLATFORM_NACL)
+    #define GL_GLEXT_PROTOTYPES /* for CHROMIUM extensions */
+  #endif /* VPVL2_PLATFORM_NACL */
+  #include <GLES2/gl2.h>
+  #include <GLES2/gl2ext.h>
 #elif defined(VPVL2_BUILD_IOS)
-#include <OpenGLES/ES2/gl.h>
-#else
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#include <OpenGL/CGLCurrent.h>
-#else
-#include <GL/gl.h>
-#endif /* __APPLE__ */
-#endif /* VPVL_BUILD_IOS */
+  #include <OpenGLES/ES2/gl.h>
+  #include <OpenGLES/ES2/glext.h>
+#else /* VPVL2_ENABLE_GLES2 */
+  #ifdef __APPLE__
+    #include <OpenGL/gl.h>
+    #include <OpenGL/glext.h>
+    #include <OpenGL/CGLCurrent.h>
+  #else /* __APPLE__ */
+    #include <GL/gl.h>
+    #include <GL/glext.h>
+  #endif /* __APPLE__ */
+#endif /* VPVL2_ENABLE_GLES2 */
 
 namespace vpvl2
 {
@@ -161,16 +168,28 @@ protected:
         }
         return false;
     }
-    void *mapBuffer(GLenum target, size_t /* offset */, size_t /* size */) {
+    void *mapBuffer(GLenum target, size_t offset, size_t size) {
+#ifdef GL_CHROMIUM_map_sub
+        return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
+#else /* GL_CHROMIUM_map_sub */
+        (void) offset;
+        (void) size;
         if (glMapBufferProcPtrRef) {
             return glMapBufferProcPtrRef(target, GL_WRITE_ONLY);
         }
         return 0;
+#endif /* GL_CHROMIUM_map_sub */
     }
-    void unmapBuffer(GLenum target, void * /* address */) {
+    void unmapBuffer(GLenum target, void *address) {
+#ifdef GL_CHROMIUM_map_sub
+        (void) target;
+        glUnmapBufferSubDataCHROMIUM(address);
+#else /* GL_CHROMIUM_map_sub */
+        (void) address;
         if (glUnmapBufferProcPtrRef) {
             glUnmapBufferProcPtrRef(target);
         }
+#endif /* GL_CHROMIUM_map_sub */
     }
 
     const Scene *m_sceneRef;
