@@ -1,5 +1,3 @@
-#include <vpvl2/ILabel.h>
-
 namespace vpvl2 {
 
 class MockILabel : public ILabel {
@@ -8,6 +6,8 @@ class MockILabel : public ILabel {
       const IString*());
   MOCK_CONST_METHOD0(englishName,
       const IString*());
+  MOCK_CONST_METHOD0(parentModelRef,
+      IModel*());
   MOCK_CONST_METHOD0(isSpecial,
       bool());
   MOCK_CONST_METHOD0(count,

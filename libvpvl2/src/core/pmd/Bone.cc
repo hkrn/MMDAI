@@ -42,8 +42,9 @@ namespace vpvl2
 namespace pmd
 {
 
-Bone::Bone(vpvl::Bone *bone, IEncoding *encoding)
-    : m_encodingRef(encoding),
+Bone::Bone(IModel *modelRef, vpvl::Bone *bone, IEncoding *encoding)
+    : m_modelRef(modelRef),
+      m_encodingRef(encoding),
       m_name(0),
       m_parentBone(0),
       m_targetBoneRef(0),
@@ -62,6 +63,7 @@ Bone::~Bone()
     m_parentBone = 0;
     delete m_childBone;
     m_childBone = 0;
+    m_modelRef = 0;
     m_targetBoneRef = 0;
     m_encodingRef = 0;
     m_boneRef = 0;
@@ -208,14 +210,14 @@ void Bone::setLocalTransform(const Transform &value)
 void Bone::setParentBone(vpvl::Bone *value)
 {
     if (value)
-        m_parentBone = new Bone(const_cast<vpvl::Bone *>(value->parent()), m_encodingRef);
+        m_parentBone = new Bone(m_modelRef, const_cast<vpvl::Bone *>(value->parent()), m_encodingRef);
 }
 
 void Bone::setChildBone(vpvl::Bone *value)
 {
     if (value) {
         const vpvl::Bone *child = value->child();
-        m_childBone = new Bone(const_cast<vpvl::Bone *>(child), m_encodingRef);
+        m_childBone = new Bone(m_modelRef, const_cast<vpvl::Bone *>(child), m_encodingRef);
         if (hasFixedAxes())
             m_fixedAxis = (child->originPosition() - m_boneRef->originPosition()).normalized();
     }

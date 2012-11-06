@@ -1,5 +1,3 @@
-#include <vpvl2/IMorph.h>
-
 namespace vpvl2 {
 
 class MockIMorph : public IMorph {
@@ -8,6 +6,8 @@ class MockIMorph : public IMorph {
       const IString*());
   MOCK_CONST_METHOD0(index,
       int());
+  MOCK_CONST_METHOD0(parentModelRef,
+      IModel*());
   MOCK_CONST_METHOD0(category,
       Category());
   MOCK_CONST_METHOD0(type,

@@ -57,6 +57,14 @@ public:
 
     virtual ~IMaterial() {}
 
+    /**
+     * 親のモデルのインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return IModel
+     */
+    virtual IModel *parentModelRef() const = 0;
+
     virtual const IString *name() const = 0;
     virtual const IString *englishName() const = 0;
     virtual const IString *userDataArea() const = 0;

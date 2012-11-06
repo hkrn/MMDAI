@@ -42,6 +42,7 @@
 namespace vpvl2
 {
 
+class IModel;
 class IString;
 
 /**
@@ -70,13 +71,21 @@ public:
     virtual int index() const = 0;
 
     /**
+     * 親のモデルのインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return IModel
+     */
+    virtual IModel *parentModelRef() const = 0;
+
+    /**
      * 親ボーンのインスタンスを返します.
      *
      * 「センター」または「全ての親」のように親ボーンが存在しない場合は 0 を返します。
      *
      * @return IBone
      */
-    virtual IBone *parentBone() const = 0;
+    virtual IBone *parentBoneRef() const = 0;
 
     /**
      * ボーンの接続元のインスタンスを返します.
@@ -86,7 +95,7 @@ public:
      * @return IBone
      * @sa hasInverseKinematics
      */
-    virtual IBone *targetBone() const = 0;
+    virtual IBone *targetBoneRef() const = 0;
 
     /**
      * ボーンのワールド変換行列を返します.
@@ -279,8 +288,9 @@ public:
     }
     const IString *name() const { return 0; }
     int index() const { return -1; }
-    IBone *parentBone() const { return 0; }
-    IBone *targetBone() const { return 0; }
+    IModel *parentModelRef() const { return 0; }
+    IBone *parentBoneRef() const { return 0; }
+    IBone *targetBoneRef() const { return 0; }
     const Transform &worldTransform() const {  return Transform::getIdentity(); }
     const Transform &localTransform() const {  return Transform::getIdentity(); }
     void getLocalTransform(Transform &world2LocalTransform) const {

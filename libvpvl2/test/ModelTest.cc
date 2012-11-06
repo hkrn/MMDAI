@@ -54,7 +54,7 @@ TEST_P(FragmentTest, ReadWriteBone)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Bone bone, bone2, parent;
+    Bone bone(0), bone2(0), parent(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -97,9 +97,9 @@ TEST_P(FragmentTest, ReadWriteBone)
     bones.add(&parent);
     bones.add(&bone2);
     Bone::loadBones(bones, bpb, apb);
-    ASSERT_EQ(&parent, bone2.parentBone());
-    ASSERT_EQ(&parent, bone2.parentInherenceBone());
-    ASSERT_EQ(&parent, bone2.targetBone());
+    ASSERT_EQ(&parent, bone2.parentBoneRef());
+    ASSERT_EQ(&parent, bone2.parentInherenceBoneRef());
+    ASSERT_EQ(&parent, bone2.targetBoneRef());
 }
 
 TEST_P(FragmentTest, ReadWriteJoint)
@@ -141,7 +141,7 @@ TEST_P(FragmentTest, ReadWriteMaterial)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Material expected, actual;
+    Material expected(0), actual(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -176,7 +176,7 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -222,7 +222,7 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -264,7 +264,7 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -344,7 +344,7 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
     size_t indexSize = GetParam();
     Encoding encoding;
     RigidBody expected, actual;
-    Bone bone;
+    Bone bone(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -378,7 +378,7 @@ TEST_P(FragmentTest, ReadWriteVertexMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -420,8 +420,8 @@ TEST_P(FragmentTest, ReadWriteVertexBdef1)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex expected, actual;
-    Bone bone1;
+    Vertex expected(0), actual(0);
+    Bone bone1(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
@@ -440,8 +440,8 @@ TEST_P(FragmentTest, ReadWriteVertexBdef2)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex expected, actual;
-    Bone bone1, bone2;
+    Vertex expected(0), actual(0);
+    Bone bone1(0), bone2(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
@@ -462,8 +462,8 @@ TEST_P(FragmentTest, ReadWriteVertexBdef4)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex expected, actual;
-    Bone bone1, bone2, bone3, bone4;
+    Vertex expected(0), actual(0);
+    Bone bone1(0), bone2(0), bone3(0), bone4(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
@@ -488,8 +488,8 @@ TEST_P(FragmentTest, ReadWriteVertexSdef)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex expected, actual;
-    Bone bone1, bone2;
+    Vertex expected(0), actual(0);
+    Bone bone1(0), bone2(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
@@ -511,7 +511,7 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     size_t indexSize = get<0>(GetParam());
     pmx::Morph::Type type = get<1>(GetParam());
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -561,7 +561,7 @@ INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentWithUVTest, Combine(Values(1, 2, 
 
 TEST(BoneTest, DefaultFlags)
 {
-    Bone bone;
+    Bone bone(0);
     ASSERT_FALSE(bone.isMovable());
     ASSERT_FALSE(bone.isRotateable());
     ASSERT_FALSE(bone.isVisible());
@@ -577,8 +577,8 @@ TEST(BoneTest, DefaultFlags)
 
 TEST(VertexTest, Boundary)
 {
-    Vertex vertex;
-    QScopedPointer<Bone> bone(new Bone());
+    Vertex vertex(0);
+    QScopedPointer<Bone> bone(new Bone(0));
     vertex.setUV(-1, Vector4(1, 1, 1, 1));
     vertex.setUV( 4, Vector4(1, 1, 1, 1));
     vertex.setWeight(-1, 0.1);
@@ -595,7 +595,7 @@ TEST(VertexTest, Boundary)
 
 TEST(MaterialTest, MergeAmbientColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.ambient.setValue(1.0, 1.0, 1.0);
@@ -657,7 +657,7 @@ TEST(MaterialTest, MergeAmbientColor)
 
 TEST(MaterialTest, MergeDiffuseColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.diffuse.setValue(1.0, 1.0, 1.0, 1.0);
@@ -718,7 +718,7 @@ TEST(MaterialTest, MergeDiffuseColor)
 
 TEST(MaterialTest, MergeSpecularColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.specular.setValue(1.0, 1.0, 1.0);
@@ -779,7 +779,7 @@ TEST(MaterialTest, MergeSpecularColor)
 
 TEST(MaterialTest, MergeShininess)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.shininess = 1.0;
@@ -838,7 +838,7 @@ TEST(MaterialTest, MergeShininess)
 
 TEST(MaterialTest, MergeEdgeColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.edgeColor.setValue(1.0, 1.0, 1.0, 1.0);
@@ -899,7 +899,7 @@ TEST(MaterialTest, MergeEdgeColor)
 
 TEST(MaterialTest, MergeEdgeSize)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.edgeSize = 1.0;
@@ -958,7 +958,7 @@ TEST(MaterialTest, MergeEdgeSize)
 
 TEST(VertexTest, PerformSkinningBdef1)
 {
-    pmx::Vertex v;
+    pmx::Vertex v(0);
     MockIBone bone;
     Transform transform(Matrix3x3::getIdentity().scaled(Vector3(0.5, 0.5, 0.5)), Vector3(1, 2, 3));
     EXPECT_CALL(bone, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform));
@@ -975,7 +975,7 @@ TEST(VertexTest, PerformSkinningBdef1)
 
 TEST(VertexTest, PerformSkinningBdef2WeightZero)
 {
-    pmx::Vertex v;
+    pmx::Vertex v(0);
     MockIBone bone1, bone2;
     //Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
     //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
@@ -997,7 +997,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightZero)
 
 TEST(VertexTest, PerformSkinningBdef2WeightOne)
 {
-    pmx::Vertex v;
+    pmx::Vertex v(0);
     MockIBone bone1, bone2;
     Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
     EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
@@ -1019,7 +1019,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightOne)
 
 TEST(VertexTest, PerformSkinningBdef2WeightHalf)
 {
-    pmx::Vertex v;
+    pmx::Vertex v(0);
     MockIBone bone1, bone2;
     Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
     EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
@@ -1056,7 +1056,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
     vv.setTexCoord(0, 1);
     vv.setBones(0, 1);
     vv.setWeight(0);
-    pmd::Vertex v(&vv, &bones, 0);
+    pmd::Vertex v(0, &vv, &bones, 0);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
     v.setNormal(Vector3(0.4, 0.5, 0.6));
     Vector3 position, normal;
@@ -1079,7 +1079,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightOnePMDCompat)
     vv.setTexCoord(0, 1);
     vv.setBones(0, 1);
     vv.setWeight(100);
-    pmd::Vertex v(&vv, &bones, 0);
+    pmd::Vertex v(0, &vv, &bones, 0);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
     v.setNormal(Vector3(0.4, 0.5, 0.6));
     Vector3 position, normal;
@@ -1102,7 +1102,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
     vv.setTexCoord(0, 1);
     vv.setBones(0, 1);
     vv.setWeight(50);
-    pmd::Vertex v(&vv, &bones, 0);
+    pmd::Vertex v(0, &vv, &bones, 0);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
     v.setNormal(Vector3(0.4, 0.5, 0.6));
     Vector3 position, normal;

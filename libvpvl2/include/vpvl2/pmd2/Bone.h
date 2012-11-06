@@ -75,8 +75,8 @@ public:
 
     const IString *name() const;
     int index() const;
-    IBone *parentBone() const;
-    IBone *targetBone() const;
+    IBone *parentBoneRef() const;
+    IBone *targetBoneRef() const;
     const Transform &worldTransform() const;
     const Transform &localTransform() const;
     void getLocalTransform(Transform &world2LocalTransform) const;

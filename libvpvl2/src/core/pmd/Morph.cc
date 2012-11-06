@@ -42,8 +42,9 @@ namespace vpvl2
 namespace pmd
 {
 
-Morph::Morph(vpvl::Face *morph, IEncoding *encoding)
-    : m_encodingRef(encoding),
+Morph::Morph(IModel *modelRef, vpvl::Face *morph, IEncoding *encoding)
+    : m_modelRef(modelRef),
+      m_encodingRef(encoding),
       m_name(0),
       m_morphRef(morph),
       m_category(kBase),
@@ -57,6 +58,7 @@ Morph::~Morph()
 {
     delete m_name;
     m_name = 0;
+    m_modelRef = 0;
     m_morphRef = 0;
     m_category = kBase;
     m_weight = 0;

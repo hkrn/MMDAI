@@ -115,8 +115,8 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug << "\n";
     debug << "     origin                      = " << bone->origin();
     debug << "\n";
-    if (bone->parentBone()) {
-        debug << "     parent                      = " << bone->parentBone()->name();
+    if (bone->parentBoneRef()) {
+        debug << "     parent                      = " << bone->parentBoneRef()->name();
         debug << "\n";
     }
     debug << "     index                       = " << bone->layerIndex();
@@ -124,19 +124,19 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug << "     offset                      = " << bone->origin();
     debug << "\n";
     if (bone->hasInverseKinematics()) {
-        debug << "     targetBone                  = " << bone->targetBone()->name();
+        debug << "     targetBone                  = " << bone->targetBoneRef()->name();
         debug << "\n";
         debug << "     constraintAngle             = " << bone->constraintAngle();
         debug << "\n";
     }
     if (bone->hasPositionInherence()) {
-        debug << "     parentPositionInherenceBone = " << bone->parentInherenceBone()->name();
+        debug << "     parentPositionInherenceBone = " << bone->parentInherenceBoneRef()->name();
         debug << "\n";
         debug << "     weight                      = " << bone->weight();
         debug << "\n";
     }
     if (bone->hasRotationInherence()) {
-        debug << "     parentRotationInherenceBone = " << bone->parentInherenceBone()->name();
+        debug << "     parentRotationInherenceBone = " << bone->parentInherenceBoneRef()->name();
         debug << "\n";
         debug << "     weight                      = " << bone->weight();
         debug << "\n";

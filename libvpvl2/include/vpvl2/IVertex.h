@@ -57,6 +57,14 @@ public:
 
     virtual ~IVertex() {}
 
+    /**
+     * 親のモデルのインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return IModel
+     */
+    virtual IModel *parentModelRef() const = 0;
+
     virtual void performSkinning(Vector3 &position, Vector3 &normal) const = 0;
     virtual void reset() = 0;
 

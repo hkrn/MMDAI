@@ -109,8 +109,9 @@ struct Bone::IKLink {
     Vector3 upperLimit;
 };
 
-Bone::Bone()
-    : m_parentBoneRef(0),
+Bone::Bone(IModel *modelRef)
+    : m_modelRef(modelRef),
+      m_parentBoneRef(0),
       m_targetBoneRef(0),
       m_parentInherenceBoneRef(0),
       m_destinationOriginBoneRef(0),
@@ -153,6 +154,7 @@ Bone::~Bone()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_modelRef = 0;
     m_parentBoneRef = 0;
     m_targetBoneRef = 0;
     m_parentInherenceBoneRef = 0;

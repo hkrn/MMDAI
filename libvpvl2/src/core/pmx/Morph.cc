@@ -103,8 +103,9 @@ namespace vpvl2
 namespace pmx
 {
 
-Morph::Morph()
-    : m_name(0),
+Morph::Morph(IModel *modelRef)
+    : m_modelRef(modelRef),
+      m_name(0),
       m_englishName(0),
       m_weight(0),
       m_category(kBase),
@@ -127,6 +128,7 @@ Morph::~Morph()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_modelRef = 0;
     m_category = kBase;
     m_type = kUnknown;
     m_index = -1;

@@ -727,7 +727,7 @@ void Model::loadBones(Hash<HashPtr, Bone *> &bone2bone)
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         vpvl::Bone *b = bones[i];
-        Bone *bone = new Bone(b, m_encodingRef);
+        Bone *bone = new Bone(this, b, m_encodingRef);
         bone->setParentBone(b);
         bone->setChildBone(b);
         m_bones.add(bone);
@@ -757,7 +757,7 @@ void Model::loadLabels(const Hash<HashPtr, Bone *> &bone2bone)
     /* build first bone label (this is special label) */
     Array<IBone *> bones2, firstBone;
     firstBone.add(m_bones[0]);
-    Label *label = new Label(reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encodingRef, true);
+    Label *label = new Label(this, reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encodingRef, true);
     m_labels.add(label);
     /* other bone labels */
     const vpvl::Array<vpvl::BoneList *> &bonesForUI = m_model.bonesForUI();
@@ -776,7 +776,7 @@ void Model::loadLabels(const Hash<HashPtr, Bone *> &bone2bone)
                 bones2.add(value);
             }
         }
-        label = new Label(name, bones2, m_encodingRef, false);
+        label = new Label(this, name, bones2, m_encodingRef, false);
         m_labels.add(label);
     }
 }
@@ -787,7 +787,7 @@ void Model::loadMaterials()
     const int nmaterials = materials.count();
     for (int i = 0; i < nmaterials; i++) {
         vpvl::Material *material = materials[i];
-        m_materials.add(new Material(material, m_encodingRef, &m_model, i));
+        m_materials.add(new Material(this, material, m_encodingRef, &m_model, i));
     }
 }
 
@@ -799,7 +799,7 @@ void Model::loadMorphs()
     for (int i = 0; i < nmorphs; i++) {
         vpvl::Face *face = morphs[i];
         if (face->type() != vpvl::Face::kBase) {
-            Morph *morph = new Morph(face, m_encodingRef);
+            Morph *morph = new Morph(this, face, m_encodingRef);
             morph->setIndex(i);
             m_morphs.add(morph);
             m_name2morphRefs.insert(morph->name()->toHashString(), morph);
@@ -813,7 +813,7 @@ void Model::loadVertices()
     const int nvertices = vertices.count();
     for (int i = 0; i < nvertices; i++) {
         vpvl::Vertex *vertex = vertices[i];
-        m_vertices.add(new Vertex(vertex, &m_bones, i));
+        m_vertices.add(new Vertex(this, vertex, &m_bones, i));
     }
 }
 

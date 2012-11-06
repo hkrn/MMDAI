@@ -6,9 +6,11 @@ class MockIBone : public IBone {
       const IString*());
   MOCK_CONST_METHOD0(index,
       int());
-  MOCK_CONST_METHOD0(parentBone,
+  MOCK_CONST_METHOD0(parentModelRef,
+      IModel*());
+  MOCK_CONST_METHOD0(parentBoneRef,
       IBone*());
-  MOCK_CONST_METHOD0(targetBone,
+  MOCK_CONST_METHOD0(targetBoneRef,
       IBone*());
   MOCK_CONST_METHOD0(worldTransform,
       const Transform&());

@@ -47,8 +47,9 @@ namespace vpvl2
 namespace pmd
 {
 
-Vertex::Vertex(vpvl::Vertex *vertexRef, Array<IBone *> *bonesRef, int index)
-    : m_vertexRef(vertexRef),
+Vertex::Vertex(IModel *modelRef, vpvl::Vertex *vertexRef, Array<IBone *> *bonesRef, int index)
+    : m_modelRef(modelRef),
+      m_vertexRef(vertexRef),
       m_bonesRef(bonesRef),
       m_texcoord(vertexRef->u(), vertexRef->v(), 0),
       m_index(index)

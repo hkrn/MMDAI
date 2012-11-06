@@ -55,13 +55,14 @@ namespace pmd
 class VPVL2_API Bone : public IBone
 {
 public:
-    Bone(vpvl::Bone *bone, IEncoding *encoding);
+    Bone(IModel *modelRef, vpvl::Bone *bone, IEncoding *encoding);
     ~Bone();
 
     const IString *name() const;
     int index() const;
-    IBone *parentBone() const { return m_parentBone; }
-    IBone *targetBone() const { return m_targetBoneRef; }
+    IModel *parentModelRef() const { return m_modelRef; }
+    IBone *parentBoneRef() const { return m_parentBone; }
+    IBone *targetBoneRef() const { return m_targetBoneRef; }
     const Transform &worldTransform() const;
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
@@ -91,6 +92,7 @@ public:
     void updateLocalTransform();
 
 private:
+    IModel *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     IBone *m_parentBone;

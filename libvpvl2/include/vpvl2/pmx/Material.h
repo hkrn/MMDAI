@@ -123,7 +123,7 @@ public:
     /**
      * Constructor
      */
-    Material();
+    Material(IModel *modelRef);
     ~Material();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
@@ -145,6 +145,7 @@ public:
     void mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight);
     void resetMorph();
 
+    IModel *parentModelRef() const { return m_modelRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const IString *userDataArea() const { return m_userDataArea; }
@@ -196,6 +197,7 @@ public:
     void setFlags(int value);
 
 private:
+    IModel *m_modelRef;
     IString *m_name;
     IString *m_englishName;
     IString *m_userDataArea;

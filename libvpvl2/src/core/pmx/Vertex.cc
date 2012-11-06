@@ -86,8 +86,9 @@ const int Vertex::kMaxBones;
 const int Vertex::kMaxMorphs;
 #endif
 
-Vertex::Vertex()
-    : m_origin(kZeroV3),
+Vertex::Vertex(IModel *modelRef)
+    : m_modelRef(modelRef),
+      m_origin(kZeroV3),
       m_morphDelta(kZeroV3),
       m_normal(kZeroV3),
       m_texcoord(kZeroV3),
@@ -111,6 +112,7 @@ Vertex::Vertex()
 
 Vertex::~Vertex()
 {
+    m_modelRef = 0;
     m_origin.setZero();
     m_morphDelta.setZero();
     m_normal.setZero();

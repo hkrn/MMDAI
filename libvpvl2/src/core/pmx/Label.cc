@@ -62,8 +62,9 @@ struct Label::Pair {
     IMorph *morph;
 };
 
-Label::Label()
-    : m_name(0),
+Label::Label(IModel *modelRef)
+    : m_modelRef(modelRef),
+      m_name(0),
       m_englishName(0),
       m_index(-1),
       m_special(false)
@@ -76,6 +77,7 @@ Label::~Label()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_modelRef = 0;
     m_pairs.releaseAll();
     m_index = -1;
     m_special = false;

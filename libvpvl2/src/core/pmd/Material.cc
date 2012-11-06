@@ -49,8 +49,13 @@ namespace pmd
 
 const Color Material::kWhiteColor = Color(1, 1, 1, 1);
 
-Material::Material(vpvl::Material *materialRef, IEncoding *encodingRef, const vpvl::PMDModel *modelRef, int index)
-    : m_materialRef(materialRef),
+Material::Material(IModel *modelRef,
+                   vpvl::Material *materialRef,
+                   IEncoding *encodingRef,
+                   const vpvl::PMDModel *originalModelRef,
+                   int index)
+    : m_modelRef(modelRef),
+      m_materialRef(materialRef),
       m_encodingRef(encodingRef),
       m_mainTexture(0),
       m_sphereTexture(0),
@@ -79,7 +84,7 @@ Material::Material(vpvl::Material *materialRef, IEncoding *encodingRef, const vp
                                                   IString::kShiftJIS, vpvl::Material::kNameSize);
         m_sphereTextureRenderMode = kMultTexture;
     }
-    m_toonTexture = m_encodingRef->toString(modelRef->toonTexture(m_materialRef->toonID() - 1),
+    m_toonTexture = m_encodingRef->toString(originalModelRef->toonTexture(m_materialRef->toonID() - 1),
                                             IString::kShiftJIS, vpvl::PMDModel::kCustomTextureNameMax);
     m_diffuse.setW(materialRef->opacity());
 }
@@ -92,6 +97,7 @@ Material::~Material()
     m_sphereTexture = 0;
     delete m_toonTexture;
     m_toonTexture = 0;
+    m_modelRef = 0;
     m_materialRef = 0;
     m_encodingRef = 0;
     m_sphereTextureRenderMode = kNone;

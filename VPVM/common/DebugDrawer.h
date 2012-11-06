@@ -178,7 +178,7 @@ public:
             if (bone->hasInverseKinematics()) {
                 linkedBones.clear();
                 bonesForIK.insert(bone);
-                bonesForIK.insert(bone->targetBone());
+                bonesForIK.insert(bone->targetBoneRef());
                 bone->getEffectorBones(linkedBones);
                 const int nlinks = linkedBones.count();
                 for (int j = 0; j < nlinks; j++) {

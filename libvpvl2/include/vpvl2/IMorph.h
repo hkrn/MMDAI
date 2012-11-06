@@ -99,6 +99,14 @@ public:
     virtual int index() const = 0;
 
     /**
+     * 親のモデルのインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return IModel
+     */
+    virtual IModel *parentModelRef() const = 0;
+
+    /**
      * モーフのカテゴリを返します.
      *
      * @return Category

@@ -43,6 +43,7 @@ namespace vpvl2
 {
 
 class IBone;
+class IModel;
 class IMorph;
 class IString;
 
@@ -68,6 +69,14 @@ public:
      * @return IString
      */
     virtual const IString *englishName() const = 0;
+
+    /**
+     * 親のモデルのインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return IModel
+     */
+    virtual IModel *parentModelRef() const = 0;
 
     /**
      * 特別枠かどうかを返します.

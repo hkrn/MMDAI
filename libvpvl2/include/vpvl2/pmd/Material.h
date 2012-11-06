@@ -58,9 +58,14 @@ class VPVL2_API Material : public IMaterial
 public:
     static const int kNameSize = 20;
 
-    Material(vpvl::Material *materialRef, IEncoding *encodingRef, const vpvl::PMDModel *modelRef, int index);
+    Material(IModel *modelRef,
+             vpvl::Material *materialRef,
+             IEncoding *encodingRef,
+             const vpvl::PMDModel *originalModelRef,
+             int index);
     ~Material();
 
+    IModel *parentModelRef() const { return m_modelRef; }
     const IString *name() const { return 0; }
     const IString *englishName() const { return 0; }
     const IString *userDataArea() const { return 0; }
@@ -110,6 +115,7 @@ public:
 
 private:
     static const Color kWhiteColor;
+    IModel *m_modelRef;
     vpvl::Material *m_materialRef;
     IEncoding *m_encodingRef;
     IString *m_mainTexture;

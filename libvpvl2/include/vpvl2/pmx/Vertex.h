@@ -67,7 +67,7 @@ public:
     /**
      * Constructor
      */
-    Vertex();
+    Vertex(IModel *modelRef);
     ~Vertex();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
@@ -90,6 +90,7 @@ public:
     void mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight);
     void performSkinning(Vector3 &position, Vector3 &normal) const;
 
+    IModel *parentModelRef() const { return m_modelRef; }
     const Vector3 &origin() const { return m_origin; }
     const Vector3 &delta() const { return m_morphDelta; }
     const Vector3 &normal() const { return m_normal; }
@@ -117,6 +118,7 @@ public:
     void setSdefR1(const Vector3 &value);
 
 private:
+    IModel *m_modelRef;
     IBone *m_boneRefs[kMaxBones];
     Vector4 m_originUVs[kMaxMorphs];
     Vector4 m_morphUVs[kMaxMorphs];

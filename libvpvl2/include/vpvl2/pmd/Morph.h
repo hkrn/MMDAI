@@ -46,6 +46,7 @@ namespace vpvl2
 {
 
 class IEncoding;
+class IModel;
 class IString;
 
 namespace pmd
@@ -54,11 +55,12 @@ namespace pmd
 class VPVL2_API Morph : public IMorph
 {
 public:
-    Morph(vpvl::Face *morph, IEncoding *encoding);
+    Morph(IModel *modelRef, vpvl::Face *morph, IEncoding *encoding);
     ~Morph();
 
     const IString *name() const { return m_name; }
     int index() const { return m_index; }
+    IModel *parentModelRef() const { return m_modelRef; }
     Category category() const;
     Type type() const;
     bool hasParent() const;
@@ -66,6 +68,7 @@ public:
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 
+    IModel *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     vpvl::Face *m_morphRef;

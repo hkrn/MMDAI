@@ -1053,7 +1053,7 @@ void Model::parseVertices(const DataInfo &info)
     uint8_t *ptr = info.verticesPtr;
     size_t size;
     for(int i = 0; i < nvertices; i++) {
-        Vertex *vertex = new Vertex();
+        Vertex *vertex = new Vertex(this);
         m_vertices.add(vertex);
         vertex->read(ptr, info, size);
         ptr += size;
@@ -1095,7 +1095,7 @@ void Model::parseMaterials(const DataInfo &info)
     uint8_t *ptr = info.materialsPtr;
     size_t size;
     for(int i = 0; i < nmaterials; i++) {
-        Material *material = new Material();
+        Material *material = new Material(this);
         m_materials.add(material);
         material->read(ptr, info, size);
         ptr += size;
@@ -1108,7 +1108,7 @@ void Model::parseBones(const DataInfo &info)
     uint8_t *ptr = info.bonesPtr;
     size_t size;
     for(int i = 0; i < nbones; i++) {
-        Bone *bone = new Bone();
+        Bone *bone = new Bone(this);
         m_bones.add(bone);
         bone->read(ptr, info, size);
         bone->performTransform();
@@ -1125,7 +1125,7 @@ void Model::parseMorphs(const DataInfo &info)
     uint8_t *ptr = info.morphsPtr;
     size_t size;
     for(int i = 0; i < nmorphs; i++) {
-        Morph *morph = new Morph();
+        Morph *morph = new Morph(this);
         m_morphs.add(morph);
         morph->read(ptr, info, size);
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
@@ -1140,7 +1140,7 @@ void Model::parseLabels(const DataInfo &info)
     uint8_t *ptr = info.labelsPtr;
     size_t size;
     for(int i = 0; i < nlabels; i++) {
-        Label *label = new Label();
+        Label *label = new Label(this);
         m_labels.add(label);
         label->read(ptr, info, size);
         ptr += size;

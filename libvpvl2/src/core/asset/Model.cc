@@ -61,8 +61,9 @@ public:
 
     const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kRootBoneAsset); }
     int index() const { return 0; }
-    IBone *parentBone() const { return 0; }
-    IBone *targetBone() const { return 0; }
+    IModel *parentModelRef() const { return m_modelRef; }
+    IBone *parentBoneRef() const { return 0; }
+    IBone *targetBoneRef() const { return 0; }
     const Transform &worldTransform() const {
         return m_worldTransform;
     }
@@ -121,8 +122,9 @@ public:
 
     const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kScaleBoneAsset); }
     int index() const { return -1; }
-    IBone *parentBone() const { return 0; }
-    IBone *targetBone() const { return 0; }
+    IModel *parentModelRef() const { return m_modelRef; }
+    IBone *parentBoneRef() const { return 0; }
+    IBone *targetBoneRef() const { return 0; }
     const Transform &worldTransform() const {
         return Transform::getIdentity();
     }
@@ -166,8 +168,9 @@ const Vector3 ScaleBone::kMaxValue = Vector3(0.01f, 0.01f, 0.01f);
 
 class Label : public ILabel {
 public:
-    Label(const Array<IBone *> &bones, const IEncoding *encodingRef)
-        : m_name(0)
+    Label(IModel *modelRef, const Array<IBone *> &bones, const IEncoding *encodingRef)
+        : m_modelRef(modelRef),
+          m_name(0)
     {
         static const uint8_t name[] = "Root";
         m_name = encodingRef->toString(name, sizeof(name) - 1, IString::kUTF8);
@@ -176,24 +179,28 @@ public:
     ~Label() {
         delete m_name;
         m_name = 0;
+        m_modelRef = 0;
     }
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_name; }
+    IModel *parentModelRef() const { return m_modelRef; }
     bool isSpecial() const { return true; }
     int count() const { return m_bones.count(); }
     IBone *bone(int index) const { return m_bones[index]; }
     IMorph *morph(int /*index*/) const { return 0; }
 
 private:
+    IModel *m_modelRef;
     IString *m_name;
     Array<IBone *> m_bones;
 };
 
 class Material : public IMaterial {
 public:
-    Material(const aiMaterial *materialRef, IEncoding *encodingRef, int nindices, int index)
+    Material(IModel *modelRef, const aiMaterial *materialRef, IEncoding *encodingRef, int nindices, int index)
         : m_materialRef(materialRef),
+          m_modelRef(modelRef),
           m_encodingRef(encodingRef),
           m_sphereTextureRenderMode(kNone),
           m_nindices(nindices),
@@ -216,6 +223,7 @@ public:
         m_mainTexture =0 ;
         delete m_sphereTexture;
         m_sphereTexture = 0;
+        m_modelRef = 0;
         m_materialRef = 0;
         m_encodingRef = 0;
         m_ambient.setZero();
@@ -226,6 +234,7 @@ public:
         m_index = 0;
     }
 
+    IModel *parentModelRef() const { return m_modelRef; }
     const IString *name() const { return 0; }
     const IString *englishName() const { return 0; }
     const IString *userDataArea() const { return 0; }
@@ -315,6 +324,7 @@ private:
 
     static const Color kWhiteColor;
     const aiMaterial *m_materialRef;
+    IModel *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_mainTexture;
     IString *m_sphereTexture;
@@ -344,6 +354,7 @@ public:
 
     const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kOpacityMorphAsset); }
     int index() const { return 0; }
+    IModel *parentModelRef() const { return m_modelRef; }
     Category category() const { return IMorph::kOther; }
     Type type() const { return IMorph::kMaterial; }
     bool hasParent() const { return false; }
@@ -361,8 +372,9 @@ private:
 
 class Vertex : public IVertex {
 public:
-    Vertex(const Vector3 &origin, const Vector3 &normal, const Vector3 &texcoord, int index)
-        : m_origin(origin),
+    Vertex(IModel *modelRef, const Vector3 &origin, const Vector3 &normal, const Vector3 &texcoord, int index)
+        : m_modelRef(modelRef),
+          m_origin(origin),
           m_normal(normal),
           m_texcoord(texcoord),
           m_index(index)
@@ -372,9 +384,11 @@ public:
         m_origin.setZero();
         m_normal.setZero();
         m_texcoord.setZero();
+        m_modelRef = 0;
         m_index = 0;
     }
 
+    IModel *parentModelRef() const { return m_modelRef; }
     void performSkinning(Vector3 &/*position*/, Vector3 &/*normal*/) const {}
     void reset() {}
     const Vector3 &origin() const { return m_origin; }
@@ -397,6 +411,7 @@ public:
     void setBone(int /* index */, IBone * /* value */) {}
 
 private:
+    IModel *m_modelRef;
     Vector3 m_origin;
     Vector3 m_normal;
     Vector3 m_texcoord;
@@ -454,7 +469,7 @@ bool Model::load(const uint8_t *data, size_t size)
     m_scene = m_importer.ReadFileFromMemory(data, size, flags);
     m_bones.add(new RootBone(this, m_encodingRef));
     m_bones.add(new ScaleBone(this, m_encodingRef));
-    m_labels.add(new Label(m_bones, m_encodingRef));
+    m_labels.add(new Label(this, m_bones, m_encodingRef));
     m_morphs.add(new OpacityMorph(this, m_encodingRef));
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -466,6 +481,8 @@ bool Model::load(const uint8_t *data, size_t size)
         IMorph *morph = m_morphs[i];
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
     }
+    setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
+    setVertexRefsRecurse(m_scene, m_scene->mRootNode);
     return m_scene != 0;
 #else
     return false;
@@ -520,12 +537,7 @@ void Model::getLabelRefs(Array<ILabel *> &value) const
 
 void Model::getMaterialRefs(Array<IMaterial *> &value) const
 {
-#ifdef VPVL2_LINK_ASSIMP
-    if (m_materials.count() == 0) {
-        setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
-    }
     value.copy(m_materials);
-#endif
 }
 
 void Model::getMorphRefs(Array<IMorph *> &value) const
@@ -535,12 +547,7 @@ void Model::getMorphRefs(Array<IMorph *> &value) const
 
 void Model::getVertexRefs(Array<IVertex *> &value) const
 {
-#ifdef VPVL2_LINK_ASSIMP
-    if (m_vertices.count() == 0) {
-        setVertexRefsRecurse(m_scene, m_scene->mRootNode);
-    }
     value.copy(m_vertices);
-#endif
 }
 
 void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
@@ -638,7 +645,7 @@ void Model::setIndicesRecurse(const aiScene *scene, const aiNode *node)
     }
 }
 
-void Model::setMaterialRefsRecurse(const aiScene *scene, const aiNode *node) const
+void Model::setMaterialRefsRecurse(const aiScene *scene, const aiNode *node)
 {
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
@@ -650,11 +657,11 @@ void Model::setMaterialRefsRecurse(const aiScene *scene, const aiNode *node) con
         for (unsigned int j = 0; j < nfaces; j++) {
             nindices += faces[j].mNumIndices;
         }
-        m_materials.add(new Material(material, m_encodingRef, nindices, i));
+        m_materials.add(new Material(this, material, m_encodingRef, nindices, i));
     }
 }
 
-void Model::setVertexRefsRecurse(const aiScene *scene, const aiNode *node) const
+void Model::setVertexRefsRecurse(const aiScene *scene, const aiNode *node)
 {
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
@@ -667,7 +674,7 @@ void Model::setVertexRefsRecurse(const aiScene *scene, const aiNode *node) const
             const aiVector3D &v = meshVertices[j];
             const aiVector3D &n = meshNormals ? meshVertices[j] : aiVector3D();
             const aiVector3D &t = meshTextureCoords ? meshTextureCoords[j] : aiVector3D();
-            m_vertices.add(new Vertex(Vector3(v.x, v.y, v.z), Vector3(n.x, n.y, n.z), Vector3(t.x, t.y, t.z), j));
+            m_vertices.add(new Vertex(this, Vector3(v.x, v.y, v.z), Vector3(n.x, n.y, n.z), Vector3(t.x, t.y, t.z), j));
         }
     }
 }

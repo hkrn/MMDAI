@@ -60,9 +60,10 @@ class VPVL2_API Vertex : public IVertex
 public:
     static const int kMaxBones = 2;
 
-    Vertex(vpvl::Vertex *vertexRef, Array<IBone *> *bonesRef, int index);
+    Vertex(IModel *modelRef, vpvl::Vertex *vertexRef, Array<IBone *> *bonesRef, int index);
     ~Vertex();
 
+    IModel *parentModelRef() const { return m_modelRef; }
     const Vector3 &origin() const;
     const Vector3 &normal() const;
     const Vector3 &textureCoord() const;
@@ -85,6 +86,7 @@ public:
     void setBone(int /* index */, IBone * /* value */) {}
 
 private:
+    IModel *m_modelRef;
     vpvl::Vertex *m_vertexRef;
     Array<IBone *> *m_bonesRef;
     Vector3 m_texcoord;

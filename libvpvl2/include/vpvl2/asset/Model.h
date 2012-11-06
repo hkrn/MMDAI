@@ -127,8 +127,8 @@ public:
 private:
 #ifdef VPVL2_LINK_ASSIMP
     void setIndicesRecurse(const aiScene *scene, const aiNode *node);
-    void setMaterialRefsRecurse(const aiScene *scene, const aiNode *node) const;
-    void setVertexRefsRecurse(const aiScene *scene, const aiNode *node) const;
+    void setMaterialRefsRecurse(const aiScene *scene, const aiNode *node);
+    void setVertexRefsRecurse(const aiScene *scene, const aiNode *node);
     void getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const;
     Assimp::Importer m_importer;
     const aiScene *m_scene;

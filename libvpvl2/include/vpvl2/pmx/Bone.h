@@ -63,7 +63,7 @@ public:
     /**
      * Constructor
      */
-    Bone();
+    Bone(IModel *modelRef);
     ~Bone();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
@@ -93,10 +93,11 @@ public:
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);
 
-    IBone *parentBone() const { return m_parentBoneRef; }
-    IBone *targetBone() const { return m_targetBoneRef; }
-    IBone *parentInherenceBone() const { return m_parentInherenceBoneRef; }
-    IBone *destinationOriginBone() const { return m_destinationOriginBoneRef; }
+    IModel *parentModelRef() const { return m_modelRef; }
+    IBone *parentBoneRef() const { return m_parentBoneRef; }
+    IBone *targetBoneRef() const { return m_targetBoneRef; }
+    IBone *parentInherenceBoneRef() const { return m_parentInherenceBoneRef; }
+    IBone *destinationOriginBoneRef() const { return m_destinationOriginBoneRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const Quaternion &rotation() const { return m_rotation; }
@@ -152,6 +153,7 @@ public:
     void setInverseKinematicsEnable(bool value);
 
 private:
+    IModel *m_modelRef;
     Array<IKLink *> m_IKLinks;
     Bone *m_parentBoneRef;
     Bone *m_targetBoneRef;

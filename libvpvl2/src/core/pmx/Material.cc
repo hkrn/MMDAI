@@ -63,8 +63,9 @@ namespace vpvl2
 namespace pmx
 {
 
-Material::Material()
-    : m_name(0),
+Material::Material(IModel *modelRef)
+    : m_modelRef(modelRef),
+      m_name(0),
       m_englishName(0),
       m_userDataArea(0),
       m_mainTextureRef(0),
@@ -91,6 +92,7 @@ Material::~Material()
     m_englishName = 0;
     delete m_userDataArea;
     m_userDataArea = 0;
+    m_modelRef = 0;
     m_mainTextureRef = 0;
     m_sphereTextureRef = 0;
     m_toonTextureRef = 0;
