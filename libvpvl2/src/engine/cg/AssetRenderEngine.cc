@@ -233,6 +233,7 @@ void AssetRenderEngine::renderModel()
         return;
     if (btFuzzyZero(m_modelRef->opacity()))
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
     const ILight *light = m_sceneRef->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     if (depthTexturePtr && light->hasFloatTexture()) {
@@ -246,6 +247,7 @@ void AssetRenderEngine::renderModel()
         glEnable(GL_CULL_FACE);
         m_cullFaceState = true;
     }
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
 }
 
 void AssetRenderEngine::renderEdge()
@@ -264,11 +266,13 @@ void AssetRenderEngine::renderZPlot()
         return;
     if (btFuzzyZero(m_modelRef->opacity()))
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     glDisable(GL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
     glEnable(GL_CULL_FACE);
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool AssetRenderEngine::hasPreProcess() const
@@ -441,7 +445,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
             bindVertexBundle(mesh);
+            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, mesh);
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, mesh);
         }
     }
     unbindVertexBundle();
@@ -464,7 +470,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmeshes, false, false, false);
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
+            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, mesh);
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
     }
     unbindVertexBundle();

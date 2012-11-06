@@ -672,6 +672,16 @@ void *Delegate::findProcedureAddress(const void **candidatesPtr) const
     return 0;
 }
 
+void Delegate::startProfileSession(ProfileType type, const void *arg)
+{
+    m_profilerTimers[ProfilerKey(type, arg)].restart();
+}
+
+void Delegate::stopProfileSession(ProfileType type, const void *arg)
+{
+    m_profilerTimers[ProfilerKey(type, arg)].elapsed();
+}
+
 void Delegate::setArchive(Archive *value)
 {
     delete m_archive;

@@ -81,6 +81,18 @@ public:
         kMouseRightPressPosition,
         kMaxMousePositionType
     };
+    enum ProfileType {
+        kProfileRenderModelProcess,
+        kProfileRenderModelMaterialDrawCall,
+        kProfileRenderEdgeProcess,
+        kProfileRenderEdgeMateiralDrawCall,
+        kProfileRenderShadowProcess,
+        kProfileRenderShadowMaterialDrawCall,
+        kProfileRenderZPlotProcess,
+        kProfileRenderZPlotMaterialDrawCall,
+        kProfileUpdateModelProcess,
+        kMaxProfileType
+    };
     enum MatrixTypeFlags {
         kWorldMatrix        = 0x001,
         kViewMatrix         = 0x002,
@@ -261,6 +273,10 @@ public:
      * @return
      */
     virtual void *findProcedureAddress(const void **candidatesPtr) const = 0;
+
+    virtual void startProfileSession(ProfileType type, const void *arg) = 0;
+
+    virtual void stopProfileSession(ProfileType type, const void *arg) = 0;
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     /**

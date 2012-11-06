@@ -200,6 +200,7 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_updateEvenBuffer
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[vbo]);
@@ -218,12 +219,14 @@ void PMXRenderEngine::update()
     m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
     m_currentRef->updateSceneParameters();
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
     const Scalar &modelOpacity = m_modelRef->opacity();
@@ -270,7 +273,9 @@ void PMXRenderEngine::renderModel()
         const int nindices = material->indices();
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
+        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
         m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
@@ -278,6 +283,7 @@ void PMXRenderEngine::renderModel()
         glEnable(GL_CULL_FACE);
         m_cullFaceState = true;
     }
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderEdge()
@@ -285,6 +291,7 @@ void PMXRenderEngine::renderEdge()
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth())
             || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
     m_currentRef->setZeroGeometryParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
@@ -298,18 +305,22 @@ void PMXRenderEngine::renderEdge()
         if (material->isEdgeDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("edge", i, nmaterials, false, false, true);
             m_currentRef->edgeColor.setGeometryColor(material->edgeColor());
+            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderShadow()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef, IRenderDelegate::kShadowMatrix);
     m_currentRef->setZeroGeometryParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
@@ -321,17 +332,21 @@ void PMXRenderEngine::renderShadow()
         const IMaterial *material = m_materials[i];
         const int nindices = material->indices();
         CGtechnique technique = m_currentRef->findTechnique("shadow", i, nmaterials, false, false, true);
+        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
         m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
     m_currentRef->setZeroGeometryParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
@@ -344,12 +359,15 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indices();
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmaterials, false, false, true);
+            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
     glEnable(GL_CULL_FACE);
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool PMXRenderEngine::hasPreProcess() const

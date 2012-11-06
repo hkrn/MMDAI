@@ -276,12 +276,14 @@ void AssetRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode);
     if (!m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
         m_context->cullFaceState = true;
     }
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
 }
 
 void AssetRenderEngine::renderEdge()
@@ -298,10 +300,12 @@ void AssetRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     glDisable(GL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
     glEnable(GL_CULL_FACE);
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
 }
 
 IModel *AssetRenderEngine::model() const
@@ -617,7 +621,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], program);
         bindVertexBundle(mesh);
         size_t nindices = m_context->indices[mesh];
+        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, mesh);
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, mesh);
     }
     unbindVertexBundle();
     program->unbind();
@@ -647,7 +653,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             continue;
         bindVertexBundle(mesh);
         size_t nindices = m_context->indices[mesh];
+        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, mesh);
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, mesh);
     }
     unbindVertexBundle();
     program->unbind();

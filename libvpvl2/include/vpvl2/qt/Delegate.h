@@ -119,6 +119,8 @@ public:
     IString *toUnicode(const uint8_t *value) const;
     bool hasExtension(const void *namePtr) const;
     void *findProcedureAddress(const void **candidatesPtr) const;
+    void startProfileSession(ProfileType type, const void *arg);
+    void stopProfileSession(ProfileType type, const void *arg);
 
     IModel *effectOwner(const IEffect *effect) const;
     IModel *findModel(const IString *name) const;
@@ -201,6 +203,8 @@ private:
     QElapsedTimer m_timer;
     QSet<QString> m_loadableExtensions;
     QSet<QString> m_extensions;
+    typedef QPair<IRenderDelegate::ProfileType, const void *> ProfilerKey;
+    QHash<ProfilerKey, QElapsedTimer> m_profilerTimers;
     QString m_shaderSourcePrefix;
     Vector4 m_mouseCursorPosition;
     Vector4 m_mouseLeftPressPosition;

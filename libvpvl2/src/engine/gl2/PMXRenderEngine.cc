@@ -669,6 +669,7 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_context->updateEven
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
@@ -692,12 +693,14 @@ void PMXRenderEngine::update()
 #endif
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
     m_context->updateEven = m_context->updateEven ? false :true;
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
     float matrix4x4[16];
@@ -772,7 +775,9 @@ void PMXRenderEngine::renderModel()
             cullFaceState = true;
         }
         const int nindices = material->indices();
+        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
         glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * size;
     }
     unbindVertexBundle();
@@ -781,12 +786,14 @@ void PMXRenderEngine::renderModel()
         glEnable(GL_CULL_FACE);
         cullFaceState = true;
     }
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderShadow()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     shadowProgram->bind();
     float matrix4x4[16];
@@ -814,19 +821,23 @@ void PMXRenderEngine::renderShadow()
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
+            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
     shadowProgram->unbind();
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderEdge()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth()) || !m_context)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();
     float matrix4x4[16];
@@ -863,7 +874,9 @@ void PMXRenderEngine::renderEdge()
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
                 edgeProgram->setSize(material->edgeSize() * edgeScaleFactor);
             }
+            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * size;
     }
@@ -872,12 +885,14 @@ void PMXRenderEngine::renderEdge()
     if (isOpaque)
         glEnable(GL_BLEND);
     edgeProgram->unbind();
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
+    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
     zplotProgram->bind();
     float matrix4x4[16];
@@ -902,13 +917,16 @@ void PMXRenderEngine::renderZPlot()
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
+            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     glEnable(GL_CULL_FACE);
     zplotProgram->unbind();
+    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool PMXRenderEngine::hasPreProcess() const
