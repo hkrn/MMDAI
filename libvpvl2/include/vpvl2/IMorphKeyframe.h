@@ -53,14 +53,14 @@ public:
     virtual ~IMorphKeyframe() {}
 
     /**
-     * IMorphKeyframe のインスタンスの完全なコピーを返します。
+     * IMorphKeyframe のインスタンスの完全なコピーを返します.
      *
      * @return IBoneKeyframe
      */
     virtual IMorphKeyframe *clone() const = 0;
 
     /**
-     * 変形係数を返します。
+     * 変形係数を返します.
      *
      * 返す値は 0.0 以上 1.0 以下になります。
      *
@@ -70,7 +70,7 @@ public:
     virtual const IMorph::WeightPrecision &weight() const = 0;
 
     /**
-     * 変形係数を設定します。
+     * 変形係数を設定します.
      *
      * 設定する値は 0.0 以上 1.0 以下でなければなりません。
      *
@@ -80,6 +80,6 @@ public:
     virtual void setWeight(const IMorph::WeightPrecision &value) = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif

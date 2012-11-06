@@ -68,7 +68,7 @@ public:
     virtual ~IMotion() {}
 
     /**
-     * オンメモリ上にある data とその長さ size に基づいてモーションを構築します。
+     * オンメモリ上にある data とその長さ size に基づいてモーションを構築します.
      *
      * モデルの読み込みに成功した場合は true を、失敗した場合は false を返し、
      * IMotion::error() が kNoError 以外の値を返すようになります。
@@ -85,7 +85,7 @@ public:
     virtual bool load(const uint8_t *data, size_t size) = 0;
 
     /**
-     * オンメモリ上にある data に IMotion のインスタンスに基づいてデータを書き込みます。
+     * オンメモリ上にある data に IMotion のインスタンスに基づいてデータを書き込みます.
      *
      * data の長さは IMotion::estimateSize() が返す値を利用してください。
      *
@@ -96,7 +96,7 @@ public:
     virtual void save(uint8_t *data) const = 0;
 
     /**
-     * IMotion::save(data) に必要なデータの長さを返します。
+     * IMotion::save(data) に必要なデータの長さを返します.
      *
      * これは save を呼ぶ前に save に渡すデータをメモリ上に確保する量を求めるときに使います。
      * save と併せて使用する必要があります。
@@ -108,7 +108,7 @@ public:
     virtual size_t estimateSize() const = 0;
 
     /**
-     * モーションが依存するモデルのポインタを返します。
+     * モーションが依存するモデルのポインタを返します.
      *
      * ボーンとモーフのモーションは原則非 null を返します。
      * カメラと照明のモーションはモデルに依存しないため、null を返します。
@@ -119,7 +119,7 @@ public:
     virtual IModel *parentModel() const = 0;
 
     /**
-     * モーションが依存するモデルを設定します。
+     * モーションが依存するモデルを設定します.
      *
      * null の設定も可能です。
      *
@@ -129,7 +129,7 @@ public:
     virtual void setParentModel(IModel *model) = 0;
 
     /**
-     * モーションを指定されたフレームの位置に移動します。
+     * モーションを指定されたフレームの位置に移動します.
      *
      * 内部的にはフレームの位置が保存されています。
      *
@@ -139,7 +139,7 @@ public:
     virtual void seek(const IKeyframe::TimeIndex &timeIndex) = 0;
 
     /**
-     * モーションを指定されたフレームの位置に移動した上で場面を更新します。
+     * モーションを指定されたフレームの位置に移動した上で場面を更新します.
      *
      * 場面オブジェクトの更新が行われること以外 seek() と同じです。
      *
@@ -149,7 +149,7 @@ public:
     virtual void seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene) = 0;
 
     /**
-     * モーションを指定されたフレームの位置分進めます。
+     * モーションを指定されたフレームの位置分進めます.
      *
      * 前回 advance または seek を呼んだ位置から引数の値を加算してフレームを進めます。
      * 内部的には IMotion::seek() を呼び出しています。
@@ -160,7 +160,7 @@ public:
     virtual void advance(const IKeyframe::TimeIndex &deltaTimeIndex) = 0;
 
     /**
-     * モーションを指定されたフレームの位置分進めた上で上で場面を更新します。
+     * モーションを指定されたフレームの位置分進めた上で上で場面を更新します.
      *
      * 場面オブジェクトの更新が行われること以外 advance() と同じです。
      *
@@ -170,13 +170,13 @@ public:
     virtual void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene) = 0;
 
     /**
-     * モーションを最初の位置にリセットします。
+     * モーションを最初の位置にリセットします.
      *
      */
     virtual void reset() = 0;
 
     /**
-     * モーションの一番後ろのフレームの位置を返します。
+     * モーションの一番後ろのフレームの位置を返します.
      *
      * @return float
      * @sa isReachedTo
@@ -184,7 +184,7 @@ public:
     virtual const IKeyframe::TimeIndex &maxTimeIndex() const = 0;
 
     /**
-     * モーションが指定されたフレームの位置まで進んでいるかを返します。
+     * モーションが指定されたフレームの位置まで進んでいるかを返します.
      *
      * @return bool
      * @sa maxFrameIndex
@@ -192,10 +192,10 @@ public:
     virtual bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const = 0;
 
     /**
-     * キーフレームを追加します。
+     * キーフレームを追加します.
      *
-     * キーフレームを追加したら必ず update を行う必要があります。
-     * そうしないと find* 系が正しい値を返さなくなってしまいます。
+     * キーフレームを追加したら必ず update を行う必要があります。そうしないと find* 系が正しい値を返さなくなってしまいます。
+     * また、メモリの所有権が IMotion 側に移動するため、メモリを解放しないようにする必要があります。
      *
      * @param IKeyframe
      * @sa replaceKeyframe
@@ -204,7 +204,7 @@ public:
     virtual void addKeyframe(IKeyframe *value) = 0;
 
     /**
-     * 指定されたキーフレームの型にあるキーフレームの数を返します。
+     * 指定されたキーフレームの型にあるキーフレームの数を返します.
      *
      * @param IKeyframe::Type
      * @return int
@@ -212,7 +212,7 @@ public:
     virtual int countKeyframes(IKeyframe::Type value) const = 0;
 
     /**
-     * キーフレームの名前と型からレイヤー数を返します。
+     * キーフレームの名前と型からレイヤー数を返します.
      *
      * @param name
      * @param type
@@ -221,15 +221,28 @@ public:
     virtual IKeyframe::LayerIndex countLayers(const IString *name,
                                               IKeyframe::Type type) const = 0;
 
+    /**
+     * 時間のインデックスとレイヤーインデックスとキーフレーム型から存在するキーフレームをすべて返します.
+     *
+     * 見つかったキーフレームは keyframes 引数に渡され、値が更新されます。
+     * 値は全てポインタの参照として渡されるため、delete でメモリを解放してはいけません。
+     *
+     * @brief getKeyframes
+     * @param timeIndex
+     * @param layerIndex
+     * @param type
+     * @param keyframes
+     */
     virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                               const IKeyframe::LayerIndex &layerIndex,
                               IKeyframe::Type type,
                               Array<IKeyframe *> &keyframes) = 0;
 
     /**
-     * キーフレームの位置と名前からボーンのキーフレームを返します。
+     * キーフレームの位置と名前からボーンのキーフレームを返します.
      *
      * 見つかった場合は IBoneKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param timeIndex
      * @param name
@@ -242,9 +255,10 @@ public:
                                             const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
-     * キーフレームの配列の添字からボーン該当するキーフレームの全てを返します。
+     * キーフレームの配列の添字からボーン該当するキーフレームの全てを返します.
      *
      * 見つかった場合は IBoneKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param index
      * @return IBoneKeyframe
@@ -253,9 +267,10 @@ public:
     virtual IBoneKeyframe *findBoneKeyframeAt(int index) const = 0;
 
     /**
-     * キーフレームの位置からカメラのキーフレームを返します。
+     * キーフレームの位置からカメラのキーフレームを返します.
      *
      * 見つかった場合は ICameraKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param timeIndex
      * @param layerIndex
@@ -266,9 +281,10 @@ public:
                                                 const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
-     * キーフレームの配列の添字からカメラのキーフレームを返します。
+     * キーフレームの配列の添字からカメラのキーフレームを返します.
      *
      * 見つかった場合は ICameraKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param index
      * @return ICameraKeyframe
@@ -277,9 +293,10 @@ public:
     virtual ICameraKeyframe *findCameraKeyframeAt(int index) const = 0;
 
     /**
-     * キーフレームの位置から照明のキーフレームを返します。
+     * キーフレームの位置から照明のキーフレームを返します.
      *
      * 見つかった場合は ILightKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param timeIndex
      * @param layerIndex
@@ -290,9 +307,10 @@ public:
                                               const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
-     * キーフレームの配列の位置から照明のキーフレームを返します。
+     * キーフレームの配列の位置から照明のキーフレームを返します.
      *
      * 見つかった場合は ILightKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param index
      * @return ILightKeyframe
@@ -301,9 +319,10 @@ public:
     virtual ILightKeyframe *findLightKeyframeAt(int index) const = 0;
 
     /**
-     * キーフレームの位置と名前からモーフのキーフレームを返します。
+     * キーフレームの位置と名前からモーフのキーフレームを返します.
      *
      * 見つかった場合は IMorphKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param timeIndex
      * @param name
@@ -316,9 +335,10 @@ public:
                                               const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
-     * キーフレームの配列の添字からモーフのキーフレームを返します。
+     * キーフレームの配列の添字からモーフのキーフレームを返します.
      *
      * 見つかった場合は IMorphKeyframe インスタンスを、見つからない場合は 0 を返します。
+     * ポインタの参照を返すため、delete でメモリを解放してはいけません。
      *
      * @param index
      * @return IMorphKeyframe
@@ -327,10 +347,10 @@ public:
     virtual IMorphKeyframe *findMorphKeyframeAt(int index) const = 0;
 
     /**
-     * キーフレームを置換します
+     * キーフレームを置換します.
      *
-     * キーフレームは内部的に削除してから追加されるため、addKeyframe 同様
-     * update を呼び出す必要があります。
+     * キーフレームは内部的に削除してから追加されるため、addKeyframe 同様 update を呼び出す必要があります。
+     * 同様にメモリの所有権が IMotion 側に移動するため、メモリを解放しないようにする必要があります。
      *
      * @param IKeyframe
      * @sa addKeyframe
@@ -339,30 +359,30 @@ public:
     virtual void replaceKeyframe(IKeyframe *value) = 0;
 
     /**
-     * 指定されたキーフレームを削除します。
+     * 指定されたキーフレームを削除します.
      *
-     * キーフレームを物理的に削除するため、呼び出し後引数の値は無効になります。
+     * キーフレームのインスタンスを delete を使って物理的に削除するため、呼び出し後引数の値は無効になり、0 にリセットされます。
      *
      * @param IKeyframe
      */
     virtual void deleteKeyframe(IKeyframe *&value) = 0;
 
     /**
-     * 指定されたキーフレームの型の情報を更新します。
+     * 指定されたキーフレームの型の情報を更新します.
      *
      * @param IKeyframe::Type
      */
     virtual void update(IKeyframe::Type type) = 0;
 
     /**
-     * モーションのコピーを作成します。
+     * モーションのコピーを作成します.
      *
      * @return IMotion
      */
     virtual IMotion *clone() const = 0;
 
     /**
-     * キーフレーム数が1つしかない場合でも反映させるかを指定します
+     * キーフレーム数が1つしかない場合でも反映させるかを指定します.
      *
      * @return bool
      * @sa setNullFrameEnable
@@ -370,7 +390,7 @@ public:
     virtual bool isNullFrameEnabled() const = 0;
 
     /**
-     * キーフレーム数が1つしかない場合でも反映させるかを設定します
+     * キーフレーム数が1つしかない場合でも反映させるかを設定します.
      *
      * @param bool
      * @sa isNullFrameEnabled
@@ -378,21 +398,21 @@ public:
     virtual void setNullFrameEnable(bool value) = 0;
 
     /**
-     * モーション名を返します。
+     * モーション名を返します.
      *
      * @return IString
      */
     virtual const IString *name() const = 0;
 
     /**
-     * モーションの型を返します。
+     * モーションの型を返します.
      *
      * @return Type
      */
     virtual Type type() const = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
 

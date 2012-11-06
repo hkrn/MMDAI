@@ -105,6 +105,6 @@ public:
     virtual void setFlags(int value) = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif

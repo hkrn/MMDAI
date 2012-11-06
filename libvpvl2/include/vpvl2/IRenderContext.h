@@ -136,7 +136,7 @@ public:
     virtual ~IRenderContext() {}
 
     /**
-     * モデルのアップロード時のみに有効な局所的なオブジェクトを作成します。
+     * モデルのアップロード時のみに有効な局所的なオブジェクトを作成します.
      *
      * 作成したオブジェクトは context に格納する必要があります。
      * 何も格納する必要がない場合は処理をスキップすることが出来ます。
@@ -149,7 +149,7 @@ public:
     virtual void allocateContext(const IModel *model, void *&context) = 0;
 
     /**
-     * allocateContext で作成したオブジェクトを破棄します。
+     * allocateContext で作成したオブジェクトを破棄します.
      *
      * context にデータが格納されているため、delete 等で破棄してください。
      * 破棄したら可能であれば context を 0 にセットしてください。
@@ -162,7 +162,7 @@ public:
     virtual void releaseContext(const IModel *model, void *&context) = 0;
 
     /**
-     * モデルのテクスチャをサーバ (GPU) にアップロードします。
+     * モデルのテクスチャをサーバ (GPU) にアップロードします.
      *
      * アップロードしたテクスチャの識別子を texture に格納してください。
      * OpenGL の場合は GLuint の値をセットします。
@@ -178,7 +178,7 @@ public:
     virtual bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) = 0;
 
     /**
-     * 行列を取得します。
+     * 取得する型に応じた行列を取得します.
      *
      * flags 変数に呼び出し側が取得したい行列の形式をビットの組み合わせで渡します。
      * 実装側は呼び出し側の要求に従って行列の結果を value に格納する必要があります。
@@ -190,7 +190,7 @@ public:
     virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
 
     /**
-     * 指定されたフォーマットと可変引数を用いてロギングを行います。
+     * 指定されたフォーマットと可変引数を用いてロギングを行います.
      *
      * ロギングは任意の出力先に書き出しを行います。この処理は無視することが出来ます。
      * 処理中は例外を投げないように処理を行う必要があります。
@@ -203,7 +203,7 @@ public:
     virtual void log(void *context, LogLevel level, const char *format, va_list ap) = 0;
 
     /**
-     * 指定された形式のエフェクトのソースを読み込みます。
+     * 指定された形式のエフェクトのソースを読み込みます.
      *
      * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
      * model の type メソッドを用いて読み込むシェーダの切り替えを行います。
@@ -217,7 +217,7 @@ public:
     virtual IString *loadShaderSource(ShaderType type, const IString *path) = 0;
 
     /**
-     * 指定された形式の (OpenGL の) シェーダのソースを読み込みます。
+     * 指定された形式の (OpenGL の) シェーダのソースを読み込みます.
      *
      * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
      * model の type メソッドを用いて読み込むシェーダの切り替えを行います。
@@ -232,7 +232,7 @@ public:
     virtual IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context) = 0;
 
     /**
-     * 指定された形式の (OpenCL の) カーネルのソースを読み込みます。
+     * 指定された形式の (OpenCL の) カーネルのソースを読み込みます.
      *
      * カーネルのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
      * 処理中は例外を投げないように処理を行う必要があります。
@@ -244,7 +244,7 @@ public:
     virtual IString *loadKernelSource(KernelType type, void *context) = 0;
 
     /**
-     * 指定された文字列を IString に変換します。
+     * 指定された文字列を IString に変換します.
      *
      * 処理中は例外を投げないように処理を行う必要があります。
      *
@@ -254,33 +254,55 @@ public:
     virtual IString *toUnicode(const uint8_t *str) const = 0;
 
     /**
-     * 指定された OpenGL の拡張が存在するかを返します
+     * 指定された OpenGL の拡張が存在するかを返します.
      *
      * @brief hasExtension
      * @param name
      * @return
+     * @sa findProcedureAddress
      */
     virtual bool hasExtension(const void *namePtr) const = 0;
 
     /**
-     * OpenGL の拡張の関数ポインタを返します
+     * OpenGL の拡張の関数ポインタを返します.
      *
      * 複数指定された文字列の引数のうち最初に見つかった関数ポインタを返すように実装する必要があります。
-     * 引数の終端に必ず 0 が入ります。
+     * 引数の終端 (sentinel) に必ず 0 が入ります。
      *
      * @brief findProcedureAddress
      * @param candidatesPtr
      * @return
+     * @sa hasExtension
      */
     virtual void *findProcedureAddress(const void **candidatesPtr) const = 0;
 
+    /**
+     * プロファイルのセッションを開始します.
+     *
+     * arg の値は type の値によって変化します。タイマーを使ってベンチマークを行う実装を想定しています。
+     *
+     * @brief startProfileSession
+     * @param type
+     * @param arg
+     * @sa stopProfileSession
+     */
     virtual void startProfileSession(ProfileType type, const void *arg) = 0;
 
+    /**
+     * プロファイルのセッションを終了します.
+     *
+     * arg の値は type の値によって変化します。タイマーを使ってベンチマークを行う実装を想定しています。
+     *
+     * @brief stopProfileSession
+     * @param type
+     * @param arg
+     * @sa startProfileSession
+     */
     virtual void stopProfileSession(ProfileType type, const void *arg) = 0;
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     /**
-     * トゥーン色を取得します。
+     * トゥーン色を取得します.
      *
      * 実装側はトゥーン色の結果を value 変数に格納する必要があります。
      * このメソッドは Cg 専用で、トゥーンテクスチャのみ uploadTexture に代わって呼び出します。
@@ -293,7 +315,7 @@ public:
     virtual void getToonColor(const IString *name, const IString *dir, Color &value, void *context) = 0;
 
     /**
-     * ビューポートの大きさを取得します。
+     * ビューポートの大きさを取得します.
      *
      * 実装側は value 変数に width を x に、height を y に設定して格納する必要があります。
      * このメソッドは Cg 専用です。
@@ -303,7 +325,7 @@ public:
     virtual void getViewport(Vector3 &value) const = 0;
 
     /**
-     * マウス座標を取得します。
+     * マウス座標を取得します.
      *
      * 実装側は type 変数に従ってマウス座標を x と y に、クリックされた時間を z に、
      * クリックされたかの真偽値を w に格納する必要があります。
@@ -315,7 +337,7 @@ public:
     virtual void getMousePosition(Vector4 &value, MousePositionType type) const = 0;
 
     /**
-     * フレーム位置あるいは起動開始からの秒数を取得します。
+     * フレーム位置あるいは起動開始からの秒数を取得します.
      *
      * 実装側は sync が true ならフレーム位置を秒数単位に変換した値を、false なら
      * 起動開始からの秒数を value 変数に格納する必要があります。
@@ -327,7 +349,7 @@ public:
     virtual void getTime(float &value, bool sync) const = 0;
 
     /**
-     * 前回からの描画の秒数を取得します。
+     * 前回からの描画の秒数を取得します.
      *
      * 実装側は sync が true なら前回の描写の経過秒数を、false なら
      * 起動開始からの秒数を value 変数に格納する必要があります。
@@ -339,7 +361,7 @@ public:
     virtual void getElapsed(float &value, bool sync) const = 0;
 
     /**
-     * アニメーションテクスチャを更新します。
+     * アニメーションテクスチャを更新します.
      *
      * 実装側は引数にしたがってアニメーションテクスチャを更新する必要があります。
      * texture 変数に作成時のテクスチャの識別子が格納されているため、
@@ -354,16 +376,95 @@ public:
      */
     virtual void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) = 0;
 
+    /**
+     * モデル名からモデルのインスタンスを返します.
+     *
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     * このメソッドは Cg 専用です。
+     *
+     * @brief findModel
+     * @param name
+     * @return IModel
+     * @sa effectOwner
+     */
     virtual IModel *findModel(const IString *name) const = 0;
 
+    /**
+     * エフェクトのインスタンスからモデルのインスタンスを返します.
+     *
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     * このメソッドは Cg 専用です。
+     *
+     * @brief effectOwner
+     * @param name
+     * @return IModel
+     * @sa findModel
+     */
     virtual IModel *effectOwner(const IEffect *effect) const = 0;
 
+    /**
+     * テクスチャバッファを設定します.
+     *
+     * void* で渡されるため、static_cast を用いて GLuint の配列にキャストする必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @brief setRenderColorTargets
+     * @param targets
+     * @param ntargets
+     * @sa bindRenderColorTarget
+     * @sa releaseRenderColorTarget
+     */
     virtual void setRenderColorTargets(const void *targets, const int ntargets) = 0;
 
+    /**
+     * テクスチャバッファをバインドします.
+     *
+     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @brief bindRenderColorTarget
+     * @param texture
+     * @param width
+     * @param height
+     * @param index
+     * @param enableAA
+     * @sa setRenderColorTargets
+     * @sa releaseRenderColorTarget
+     */
     virtual void bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
 
+    /**
+     * テクスチャバッファをリリースします.
+     *
+     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @brief releaseRenderColorTarget
+     * @param texture
+     * @param width
+     * @param height
+     * @param index
+     * @param enableAA
+     * @sa setRenderColorTargets
+     * @sa bindRenderColorTarget
+     */
     virtual void releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
 
+    /**
+     * 深度ステンシルバッファをバインドします.
+     *
+     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @brief bindRenderDepthStencilTarget
+     * @param texture
+     * @param depth
+     * @param stencil
+     * @param width
+     * @param height
+     * @param enableAA
+     * @sa releaseRenderDepthStencilTarget
+     */
     virtual void bindRenderDepthStencilTarget(void *texture,
                                               void *depth,
                                               void *stencil,
@@ -371,6 +472,21 @@ public:
                                               size_t height,
                                               bool enableAA) = 0;
 
+    /**
+     * 深度ステンシルバッファをリリースします.
+     *
+     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
+     * このメソッドは Cg 専用です。
+     *
+     * @brief releaseRenderDepthStencilTarget
+     * @param texture
+     * @param depth
+     * @param stencil
+     * @param width
+     * @param height
+     * @param enableAA
+     * @sa bindRenderDepthStencilTarget
+     */
     virtual void releaseRenderDepthStencilTarget(void *texture,
                                                  void *depth,
                                                  void *stencil,

@@ -71,14 +71,14 @@ public:
     virtual ~ICameraKeyframe() {}
 
     /**
-     * ICameraKeyframe のインスタンスの完全なコピーを返します。
+     * ICameraKeyframe のインスタンスの完全なコピーを返します.
      *
      * @return ICameraKeyframe
      */
     virtual ICameraKeyframe *clone() const = 0;
 
     /**
-     * 補間パラメータを初期状態に設定します。
+     * 補間パラメータを初期状態に設定します.
      *
      * @sa setInterpolationParameter
      * @sa getInterpolationParameter
@@ -86,7 +86,7 @@ public:
     virtual void setDefaultInterpolationParameter() = 0;
 
     /**
-     * 指定された型の補間パラメータを設定します。
+     * 指定された型の補間パラメータを設定します.
      *
      * 第２引数は以下で解釈されます。第２引数の値はそれぞれ 0 以上かつ 128 未満でなければなりません。
      * - x = x1
@@ -101,7 +101,7 @@ public:
     virtual void setInterpolationParameter(InterpolationType type, const QuadWord &value) = 0;
 
     /**
-     * 指定された型の補間パラメータを第二引数にコピーします。
+     * 指定された型の補間パラメータを第二引数にコピーします.
      *
      * 第２引数にコピーされる値の設定順は setInterpolationParameter と同じです。
      *
@@ -112,7 +112,7 @@ public:
     virtual void getInterpolationParameter(InterpolationType type, QuadWord &value) const = 0;
 
     /**
-     * カメラの注視点を返します。
+     * カメラの注視点を返します.
      *
      * @return Vector3
      * @sa setPosition
@@ -120,7 +120,7 @@ public:
     virtual const Vector3 &position() const = 0;
 
     /**
-     * カメラのアングル（オイラー角）を返します。
+     * カメラのアングル（オイラー角）を返します.
      *
      * @return Vector3
      * @sa setAngle
@@ -128,7 +128,7 @@ public:
     virtual const Vector3 &angle() const = 0;
 
     /**
-     * カメラの視野距離を返します。
+     * カメラの視野距離を返します.
      *
      * @return float
      * @sa setDistance
@@ -136,7 +136,7 @@ public:
     virtual const Scalar &distance() const = 0;
 
     /**
-     * カメラの視野角を返します。
+     * カメラの視野角を返します.
      *
      * @return float
      * @sa setFovy
@@ -144,7 +144,7 @@ public:
     virtual const Scalar &fov() const = 0;
 
     /**
-     * カメラが透視であるかを返します。
+     * カメラが透視であるかを返します.
      *
      * @return bool
      * @sa setPerspective
@@ -152,7 +152,7 @@ public:
     virtual bool isPerspective() const = 0;
 
     /**
-     * カメラの注視点を設定します。
+     * カメラの注視点を設定します.
      *
      * @param Vector3
      * @sa position
@@ -160,7 +160,7 @@ public:
     virtual void setPosition(const Vector3 &value) = 0;
 
     /**
-     * カメラのアングル（オイラー角）を設定します。
+     * カメラのアングル（オイラー角）を設定します.
      *
      * @param Vector3
      * @sa angle
@@ -168,7 +168,7 @@ public:
     virtual void setAngle(const Vector3 &value) = 0;
 
     /**
-     * カメラの視野距離を設定します。
+     * カメラの視野距離を設定します.
      *
      * @param Vector3
      * @sa distance
@@ -176,7 +176,7 @@ public:
     virtual void setDistance(const Scalar &value) = 0;
 
     /**
-     * カメラの視野角を設定します。
+     * カメラの視野角を設定します.
      *
      * @param Vector3
      * @sa fovy
@@ -184,7 +184,7 @@ public:
     virtual void setFov(const Scalar &value) = 0;
 
     /**
-     * 透視にするかを設定します。
+     * 透視にするかを設定します.
      *
      * @param bool
      * @sa isPerspective

@@ -255,6 +255,6 @@ VPVL2_API inline float degree(float value)
     return value * static_cast<float>(180.0f / kPI);
 }
 
-}
+} /* namespace vpvl2 */
 
 #endif

@@ -73,7 +73,7 @@ public:
     virtual ~IKeyframe() {}
 
     /**
-     * オンメモリ上のデータからキーフレームを構築します。
+     * オンメモリ上のデータからキーフレームを構築します.
      *
      * データは estimateSize が返す値以上の領域を確保しなければなりません。
      *
@@ -84,7 +84,7 @@ public:
     virtual void read(const uint8_t *data) = 0;
 
     /**
-     * キーフレームをオンメモリ上にのデータに書き出します。
+     * キーフレームをオンメモリ上にのデータに書き出します.
      *
      * データは estimateSize が返す値以上の領域を確保しなければなりません。
      * 呼び出し後 data にはキーフレームのデータが書き込まれます。
@@ -96,7 +96,7 @@ public:
     virtual void write(uint8_t *data) const = 0;
 
     /**
-     * read/write で必要なデータ領域の大きさを返します。
+     * read/write で必要なデータ領域の大きさを返します.
      *
      * @sa read
      * @sa write
@@ -105,7 +105,7 @@ public:
     virtual size_t estimateSize() const = 0;
 
     /**
-     * キーフレームの動作対象となる名前を返します。
+     * キーフレームの動作対象となる名前を返します.
      *
      * これはモデルに依存するボーンと表情のキーフレームで意味を持ちます。
      * モデルに依存しないカメラと照明のキーフレームでは null を返します。
@@ -116,7 +116,7 @@ public:
     virtual const IString *name() const = 0;
 
     /**
-     * キーフレームのフレーム番号を返します。
+     * キーフレームのフレーム番号を返します.
      *
      * 返す値の型は double ですが、小数点はつきません。
      *
@@ -126,7 +126,7 @@ public:
     virtual const TimeIndex &timeIndex() const = 0;
 
     /**
-     * キーフレームのレイヤー番号を返します。
+     * キーフレームのレイヤー番号を返します.
      *
      * @return Layer
      * @sa setLayerIndex
@@ -134,7 +134,7 @@ public:
     virtual const LayerIndex &layerIndex() const = 0;
 
     /**
-     * キーフレームの動作対象となる名前を設定します。
+     * キーフレームの動作対象となる名前を設定します.
      *
      * ボーンと表情のキーフレームでのみ機能します。
      * カメラと照明のキーフレームでは何もしません。
@@ -145,7 +145,7 @@ public:
     virtual void setName(const IString *value) = 0;
 
     /**
-     * キーフレームのフレーム番号を設定します。
+     * キーフレームのフレーム番号を設定します.
      *
      * @param Index
      * @sa timeIndex
@@ -153,7 +153,7 @@ public:
     virtual void setTimeIndex(const TimeIndex &value) = 0;
 
     /**
-     * キーフレームのレイヤー番号を設定します。
+     * キーフレームのレイヤー番号を設定します.
      *
      * @param Layer
      * @sa layerIndex
@@ -161,14 +161,14 @@ public:
     virtual void setLayerIndex(const LayerIndex &value) = 0;
 
     /**
-     * キーフレームの型を返します。
+     * キーフレームの型を返します.
      *
      * @return Type
      */
     virtual Type type() const = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
 

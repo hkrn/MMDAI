@@ -145,7 +145,7 @@ public:
     virtual const uint8_t *toByteArray() const = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
 

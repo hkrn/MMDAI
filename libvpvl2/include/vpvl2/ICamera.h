@@ -49,23 +49,171 @@ class VPVL2_API ICamera
 public:
     virtual ~ICamera() {}
 
+    /**
+     * カメラのビュー行列を返します.
+     *
+     * @brief modelViewTransform
+     * @return Transform
+     */
     virtual const Transform &modelViewTransform() const = 0;
+
+    /**
+     * カメラの注視点の位置を返します.
+     *
+     * @brief lookAt
+     * @return Vector3
+     * @sa position
+     * @sa setLookAt
+     */
     virtual const Vector3 &lookAt() const = 0;
+
+    /**
+     * カメラの位置を返します.
+     *
+     * カメラの位置はカメラの注視点に視野距離を Z 軸に対して加算した値となります。
+     *
+     * @brief position
+     * @return Vector3
+     * @sa lookAt
+     */
     virtual const Vector3 &position() const = 0;
+
+    /**
+     * カメラのアングル角度（全てラジアン）を返します.
+     *
+     * @brief angle
+     * @return Vector3
+     * @sa setAngle
+     */
     virtual const Vector3 &angle() const = 0;
+
+    /**
+     * カメラの視野角（ラジアンではなく角度）を返します.
+     *
+     * @brief fov
+     * @return Scalar
+     * @sa setFov
+     */
     virtual Scalar fov() const = 0;
+
+    /**
+     * カメラの視野距離を返します.
+     *
+     * @brief distance
+     * @return Scalar
+     * @sa setDistance
+     */
     virtual Scalar distance() const = 0;
+
+    /**
+     * @brief znear
+     * @return Scalar
+     * @sa setZNear
+     */
     virtual Scalar znear() const = 0;
+
+    /**
+     * @brief zfar
+     * @return Scalar
+     * @sa setZFar
+     */
     virtual Scalar zfar() const = 0;
+
+    /**
+     * 現在設定されているカメラモーションのインスタンスを返します.
+     *
+     * カメラモーションが設定されている場合は 0 以外の値を返します。
+     * メモリ上の所有権は ICamera にあるため、delete で解放してはいけません。
+     * 初期値は 0 (カメラモーション未設定) です。
+     *
+     * @brief motion
+     * @return IMotion
+     * @sa setMotion
+     */
     virtual IMotion *motion() const = 0;
+
+    /**
+     * カメラの注視点を設定します.
+     *
+     * @brief setLookAt
+     * @param value
+     * @sa lookAt
+     */
     virtual void setLookAt(const Vector3 &value) = 0;
+
+    /**
+     * カメラのアングル角度を設定します.
+     *
+     * @brief setAngle
+     * @param value
+     * @sa angle
+     */
     virtual void setAngle(const Vector3 &value) = 0;
+
+    /**
+     * カメラの視野角（ラジアンではなく角度）を設定します.
+     *
+     * @brief setFov
+     * @param value
+     * @sa fov
+     */
     virtual void setFov(Scalar value) = 0;
+
+    /**
+     * カメラの視野距離を設定します.
+     *
+     * @brief setDistance
+     * @param value
+     * @sa distance
+     */
     virtual void setDistance(Scalar value) = 0;
+
+    /**
+     * @brief setZNear
+     * @param value
+     * @sa znear
+     */
     virtual void setZNear(Scalar value) = 0;
+
+    /**
+     * @brief setZFar
+     * @param value
+     * @sa zfar
+     */
     virtual void setZFar(Scalar value) = 0;
+
+    /**
+     * カメラモーションを設定します.
+     *
+     * このメソッドを呼び出して渡したカメラモーションのメモリ上の所有権が ICamera に移動するため、
+     * もし先にメモリ解放を行う場合は先にこのメソッドの引数に 0 を渡してメモリ所有権を解放して
+     * 二重解放を行わないようにする必要があります。
+     *
+     * @brief setMotion
+     * @param value
+     * @sa motion
+     */
     virtual void setMotion(IMotion *value) = 0;
-    virtual void copyFrom(ICamera *value) = 0;
+
+    /**
+     * 別の ICamera のインスタンスを自身にコピーします.
+     *
+     * @brief copyFrom
+     * @param value
+     */
+    virtual void copyFrom(const ICamera *value) = 0;
+
+    /**
+     * カメラ設定を初期値にリセットします.
+     *
+     * カメラ設定の初期値は以下になります。
+     * lookAt = (0, 10, 0)
+     * angle  = (0, 0, 0)
+     * fov = 30
+     * distance = 50
+     *
+     * @brief resetDefault
+     */
     virtual void resetDefault() = 0;
 };
 

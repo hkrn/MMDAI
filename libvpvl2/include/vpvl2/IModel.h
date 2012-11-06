@@ -304,43 +304,189 @@ public:
      */
     virtual IMorph *findMorph(const IString *value) const = 0;
 
+    /**
+     * 型からインスタンスの数を取得します.
+     *
+     * @brief count
+     * @param value
+     * @return
+     */
     virtual int count(ObjectType value) const = 0;
+
+    /**
+     * ボーンのインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IBone インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getBoneRefs
+     * @param value
+     */
     virtual void getBoneRefs(Array<IBone *> &value) const = 0;
+
+    /**
+     * ラベルのインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての ILabel インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getLabelRefs
+     * @param value
+     */
     virtual void getLabelRefs(Array<ILabel *> &value) const = 0;
+
+    /**
+     * 材質のインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IMaterial インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getMaterialRefs
+     * @param value
+     */
     virtual void getMaterialRefs(Array<IMaterial *> &value) const = 0;
+
+    /**
+     * モーフのインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IMorph インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getMorphRefs
+     * @param value
+     */
     virtual void getMorphRefs(Array<IMorph *> &value) const = 0;
+
+    /**
+     * 頂点のインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IVertex インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getVertexRefs
+     * @param value
+     */
     virtual void getVertexRefs(Array<IVertex *> &value) const = 0;
+
+    /**
+     * カメラの位置からモデルに適用するエッジ幅を取得します.
+     *
+     * @brief edgeScaleFactor
+     * @param position
+     * @return Vector3
+     */
     virtual float edgeScaleFactor(const Vector3 &position) const = 0;
+
     virtual const Vector3 &position() const = 0;
+
     virtual const Quaternion &rotation() const = 0;
+
     virtual const Scalar &opacity() const = 0;
+
     virtual const Scalar &scaleFactor() const = 0;
+
     virtual const Vector3 &edgeColor() const = 0;
+
     virtual const Scalar &edgeWidth() const = 0;
+
     virtual IModel *parentModel() const = 0;
+
     virtual IBone *parentBone() const = 0;
+
     virtual void setName(const IString *value) = 0;
+
     virtual void setEnglishName(const IString *value) = 0;
+
     virtual void setComment(const IString *value) = 0;
+
     virtual void setEnglishComment(const IString *value) = 0;
+
     virtual void setPosition(const Vector3 &value) = 0;
+
     virtual void setRotation(const Quaternion &value) = 0;
+
     virtual void setOpacity(const Scalar &value) = 0;
+
     virtual void setScaleFactor(const Scalar &value) = 0;
+
     virtual void setEdgeColor(const Vector3 &value) = 0;
+
     virtual void setEdgeWidth(const Scalar &value) = 0;
+
     virtual void setParentModel(IModel *value) = 0;
+
     virtual void setParentBone(IBone *value) = 0;
+
     virtual void setVisible(bool value) = 0;
 
+    /**
+     * インデックスバッファを取得します.
+     *
+     * 引数は delete で一度解放してから IIndexBuffer のインスタンスが入ります。
+     *
+     * @brief getIndexBuffer
+     * @param indexBuffer
+     */
     virtual void getIndexBuffer(IIndexBuffer *&indexBuffer) const = 0;
+
+    /**
+     * 静的な頂点バッファを取得します.
+     *
+     * 引数は delete で一度解放してから IStaticVertexBuffer のインスタンスが入ります。
+     *
+     * @brief getStaticVertexBuffer
+     * @param staticBuffer
+     */
     virtual void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const = 0;
+
+    /**
+     * 動的な頂点バッファを取得します.
+     *
+     * 引数は delete で一度解放してから IDynamicVertexBuffer のインスタンスが入ります。
+     * IIndexBuffer は同じ型で取得したインスタンスを渡す必要があります。
+     * 条件を満たさない場合は dynamicBuffer に 0 が入ります。
+     *
+     * @brief getDynamicVertexBuffer
+     * @param dynamicBuffer
+     * @param indexBuffer
+     */
     virtual void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
                                         const IIndexBuffer *indexBuffer) const = 0;
+
+    /**
+     * ボーン行列のバッファを取得します.
+     *
+     * 引数は delete で一度解放してから IMatrixBuffer のインスタンスが入ります。
+     * IDynamicVertexBuffer と IIndexBuffer は同じ型で取得したインスタンスを渡す必要があります。
+     * 条件を満たさない場合は matrixBuffer に 0 が入ります。
+     *
+     * @brief getMatrixBuffer
+     * @param matrixBuffer
+     * @param dynamicBuffer
+     * @param indexBuffer
+     */
     virtual void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
                                  IDynamicVertexBuffer *dynamicBuffer,
                                  const IIndexBuffer *indexBuffer) const = 0;
+
+    /**
+     * AABB (Axis Aligned Bounding Box) の最小値と最大値を設定します.
+     *
+     * @brief setAabb
+     * @param min
+     * @param max
+     */
     virtual void setAabb(const Vector3 &min, const Vector3 &max) = 0;
+
+    /**
+     * AABB (Axis Aligned Bounding Box) の最小値と最大値を取得します.
+     *
+     * 引数に AABB の最小値と最大値が更新されます。setAabb が呼ばれていない場合はそれぞれ kZeroV3 が設定されます。
+     *
+     * @brief getAabb
+     * @param min
+     * @param max
+     */
     virtual void getAabb(Vector3 &min, Vector3 &max) const = 0;
 };
 

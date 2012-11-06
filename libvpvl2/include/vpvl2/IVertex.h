@@ -80,6 +80,6 @@ public:
     virtual void setBone(int index, IBone *value) = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif

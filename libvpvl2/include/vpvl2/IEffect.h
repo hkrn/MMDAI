@@ -61,10 +61,51 @@ public:
     };
     virtual ~IEffect() {}
 
+    /**
+     * CGcontext のインスタンスを返します.
+     *
+     * void* で返すため、static_cast で CGcontext にキャストする必要があります。
+     *
+     * @brief internalContext
+     * @return
+     */
     virtual void *internalContext() const = 0;
+
+    /**
+     * CGeffect のインスタンスを返します.
+     *
+     * void* で返すため、static_cast で CGeffect にキャストする必要があります。
+     *
+     * @brief internalPointer
+     * @return
+     */
     virtual void *internalPointer() const = 0;
+
+    /**
+     * オフスクリーンターゲットの配列を取得します.
+     *
+     * @brief getOffscreenRenderTargets
+     * @param value
+     */
     virtual void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const = 0;
+
+    /**
+     * UIWidget セマンティクスがあるパラメータの配列を返します.
+     *
+     * void* で返すため、個々に static_cast で CGparameter にキャストする必要があります。
+     * 現在実装していないため機能していません。
+     *
+     * @brief getInteractiveParameters
+     * @param value
+     */
     virtual void getInteractiveParameters(Array<void *> &value) const = 0;
+
+    /**
+     * 親の IEffect インスタンスのポインタ参照を返します.
+     *
+     * @brief parentEffect
+     * @return
+     */
     virtual IEffect *parentEffect() const = 0;
     virtual void setParentEffect(IEffect *value) = 0;
 };

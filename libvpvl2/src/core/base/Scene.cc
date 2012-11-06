@@ -113,7 +113,7 @@ public:
     void setDepthTexture(void *value) { m_depthTexture = value; }
     void setToonEnable(bool value) { m_enableToon = value; }
     void setSoftShadowEnable(bool value) { m_enableSoftShadow = value; }
-    void copyFrom(ILight *value) {
+    void copyFrom(const ILight *value) {
         setColor(value->color());
         setDirection(value->direction());
     }
@@ -181,7 +181,7 @@ public:
         m_distance.setZ(value);
         m_position = m_lookAt + m_distance;
     }
-    void copyFrom(ICamera *value) {
+    void copyFrom(const ICamera *value) {
         setLookAt(value->lookAt());
         setAngle(value->angle());
         setFov(value->fov());
