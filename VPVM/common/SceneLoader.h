@@ -55,10 +55,10 @@
 namespace vpvl2 {
 class IModel;
 class IMotion;
-class IRenderDelegate;
+class IRenderContext;
 class Project;
 namespace qt {
-class Delegate;
+class RenderContext;
 class World;
 }
 }
@@ -78,7 +78,7 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
-    explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::Delegate *delegate);
+    explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
     ~SceneLoader();
 
     QList<IModel *> allModels() const;
@@ -262,7 +262,7 @@ private:
     QScopedPointer<Project::IDelegate> m_projectDelegate;
     QScopedPointer<Project> m_project;
     QScopedPointer<IMotion> m_camera;
-    qt::Delegate *m_renderDelegateRef;
+    qt::RenderContext *m_renderContextRef;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;
     QMap<QString, IModel*> m_name2assets;

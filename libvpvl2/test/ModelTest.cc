@@ -3,7 +3,7 @@
 #include <btBulletDynamicsCommon.h>
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/icu/Encoding.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Vertex.h"
 #include "vpvl2/pmx/Bone.h"
@@ -20,8 +20,8 @@
 using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
-using namespace vpvl2::icu;
 using namespace vpvl2::pmx;
+using namespace vpvl2::extensions::icu;
 
 namespace
 {

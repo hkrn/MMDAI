@@ -39,7 +39,7 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderContext.h"
 
 #include <QtOpenGL/QtOpenGL>
 
@@ -55,7 +55,7 @@ namespace qt
 {
 class Archive;
 
-class Delegate : public IRenderDelegate, protected QGLFunctions
+class RenderContext : public IRenderContext, protected QGLFunctions
 {
 public:
     struct TextureCache {
@@ -74,7 +74,7 @@ public:
         QHash<QString, TextureCache> textureCache;
     };
     struct InternalTexture {
-        InternalTexture(Delegate::Texture *r, bool m, bool t)
+        InternalTexture(RenderContext::Texture *r, bool m, bool t)
             : ref(r),
               isToon(t),
               isSystem(false),
@@ -82,7 +82,7 @@ public:
               ok(false)
         {
         }
-        Delegate::Texture *ref;
+        RenderContext::Texture *ref;
         bool isToon;
         bool isSystem;
         bool mipmap;
@@ -99,8 +99,8 @@ public:
     static QString readAllAsync(const QString &path);
     static QImage loadImageAsync(const QString &path);
 
-    Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context);
-    ~Delegate();
+    RenderContext(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context);
+    ~RenderContext();
 
     void allocateContext(const IModel *model, void *&context);
     void releaseContext(const IModel *model, void *&context);
@@ -203,7 +203,7 @@ private:
     QElapsedTimer m_timer;
     QSet<QString> m_loadableExtensions;
     QSet<QString> m_extensions;
-    typedef QPair<IRenderDelegate::ProfileType, const void *> ProfilerKey;
+    typedef QPair<IRenderContext::ProfileType, const void *> ProfilerKey;
     QHash<ProfilerKey, QElapsedTimer> m_profilerTimers;
     QString m_shaderSourcePrefix;
     Vector4 m_mouseCursorPosition;
@@ -212,7 +212,7 @@ private:
     Vector4 m_mouseRightPressPosition;
     int m_msaaSamples;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Delegate)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
 };
 
 }

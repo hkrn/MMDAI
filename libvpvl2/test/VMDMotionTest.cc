@@ -1,7 +1,7 @@
 #include "Common.h"
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/icu/Encoding.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
@@ -19,7 +19,7 @@
 
 using namespace ::testing;
 using namespace vpvl2;
-using namespace vpvl2::icu;
+using namespace vpvl2::extensions::icu;
 using namespace vpvl2::pmx;
 
 namespace

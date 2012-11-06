@@ -39,7 +39,7 @@
 #ifndef VPVL2_GL_INTERNAL_ENGINECOMMON_H_
 #define VPVL2_GL_INTERNAL_ENGINECOMMON_H_
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderDelegate.h>
+#include <vpvl2/IRenderContext.h>
 
 #if defined(VPVL2_LINK_QT)
 #include <QtOpenGL/QtOpenGL>
@@ -79,9 +79,9 @@ class BaseShaderProgram
         #endif
 {
 public:
-    BaseShaderProgram(IRenderDelegate *delegate)
+    BaseShaderProgram(IRenderContext *renderContextRef)
         : m_program(0),
-          m_delegate(delegate),
+          m_renderContextRef(renderContextRef),
           m_modelViewProjectionUniformLocation(0),
           m_positionAttributeLocation(0),
           m_message(0)
@@ -104,7 +104,7 @@ public:
 
     bool addShaderSource(const IString *s, GLenum type, void *context) {
         if (!s) {
-            log0(context, IRenderDelegate::kLogWarning, "Empty shader source found!");
+            log0(context, IRenderContext::kLogWarning, "Empty shader source found!");
             return false;
         }
         GLuint shader = glCreateShader(type);
@@ -120,7 +120,7 @@ public:
                 delete[] m_message;
                 m_message = new char[len];
                 glGetShaderInfoLog(shader, len, NULL, m_message);
-                log0(context, IRenderDelegate::kLogWarning, "%s", m_message);
+                log0(context, IRenderContext::kLogWarning, "%s", m_message);
             }
             glDeleteShader(shader);
             return false;
@@ -141,12 +141,12 @@ public:
                 delete[] m_message;
                 m_message = new char[len];
                 glGetProgramInfoLog(m_program, len, NULL, m_message);
-                log0(context, IRenderDelegate::kLogWarning, "Link failed: %s", m_message);
+                log0(context, IRenderContext::kLogWarning, "Link failed: %s", m_message);
             }
             glDeleteProgram(m_program);
             return false;
         }
-        log0(context, IRenderDelegate::kLogInfo, "Created a shader program (ID=%d)", m_program);
+        log0(context, IRenderContext::kLogInfo, "Created a shader program (ID=%d)", m_program);
         getUniformLocations();
         return true;
     }
@@ -167,17 +167,17 @@ protected:
     virtual void getUniformLocations() {
         m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
     }
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...) {
+    void log0(void *context, IRenderContext::LogLevel level, const char *format...) {
         va_list ap;
         va_start(ap, format);
-        m_delegate->log(context, level, format, ap);
+        m_renderContextRef->log(context, level, format, ap);
         va_end(ap);
     }
 
     GLuint m_program;
 
 private:
-    IRenderDelegate *m_delegate;
+    IRenderContext *m_renderContextRef;
     GLuint m_modelViewProjectionUniformLocation;
     GLuint m_positionAttributeLocation;
     char *m_message;
@@ -189,8 +189,8 @@ public:
     static const char *const kNormalAttributeName;
     static const char *const kTexCoordAttributeName;
 
-    ObjectProgram(IRenderDelegate *delegate)
-        : BaseShaderProgram(delegate),
+    ObjectProgram(IRenderContext *renderContextRef)
+        : BaseShaderProgram(renderContextRef),
           m_normalAttributeLocation(0),
           m_texCoordAttributeLocation(0),
           m_normalMatrixUniformLocation(0),
@@ -311,8 +311,8 @@ private:
 class ZPlotProgram : public BaseShaderProgram
 {
 public:
-    ZPlotProgram(IRenderDelegate *delegate)
-        : BaseShaderProgram(delegate),
+    ZPlotProgram(IRenderContext *renderContextRef)
+        : BaseShaderProgram(renderContextRef),
           m_transformUniformLocation(0)
     {
     }

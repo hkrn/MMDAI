@@ -51,7 +51,7 @@
 
 namespace vpvl2 {
 namespace qt {
-class Delegate;
+class RenderContext;
 }
 class Factory;
 class IBone;
@@ -282,7 +282,7 @@ private:
     QScopedPointer<InfoPanel> m_info;
     QScopedPointer<PlaneWorld> m_plane;
     QScopedPointer<Handles> m_handles;
-    QScopedPointer<qt::Delegate> m_delegate;
+    QScopedPointer<qt::RenderContext> m_renderContext;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;
     IBone *m_currentSelectedBoneRef;

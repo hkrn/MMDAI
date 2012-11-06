@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 /* libvpvl2 */
-#include <vpvl2/extensions/sdl/Delegate.h>
+#include <vpvl2/extensions/sdl/RenderContext.h>
 
 /* internal headers for debug */
 #include <assert.h> /* for libvpvl via vpvl2::pmd::Model */
@@ -58,13 +58,13 @@ using namespace vpvl2::extensions::sdl;
 
 struct UIContext
 {
-    UIContext(Scene *scene, UIStringMap *config, Delegate *delegate)
+    UIContext(Scene *scene, UIStringMap *config, RenderContext *renderContextRef)
         : sceneRef(scene),
           configRef(config),
       #if SDL_VERSION_ATLEAST(2, 0, 0)
           windowRef(0),
       #endif
-          delegateRef(delegate),
+          renderContextRef(renderContextRef),
           width(640),
           height(480),
           restarted(SDL_GetTicks()),
@@ -102,7 +102,7 @@ struct UIContext
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *windowRef;
 #endif
-    Delegate *delegateRef;
+    RenderContext *renderContextRef;
     size_t width;
     size_t height;
     Uint32 restarted;
@@ -168,7 +168,7 @@ static void UIUpdateCamera(UIContext &context)
     const float &aspect = context.width / float(context.height);
     const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
             &projection = glm::perspective(camera->fov(), aspect, camera->znear(), camera->zfar());
-    context.delegateRef->setCameraMatrix(world, view, projection);
+    context.renderContextRef->setCameraMatrix(world, view, projection);
 }
 
 static void UIDrawScreen(const UIContext &context)
@@ -334,7 +334,7 @@ int main(int /* argc */, char ** /* argv[] */)
     Encoding encoding;
     Factory factory(&encoding);
     Scene scene;
-    Delegate delegate(&scene, &config);
+    RenderContext delegate(&scene, &config);
     World world;
     bool ok = false;
     const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];

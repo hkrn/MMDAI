@@ -46,7 +46,7 @@ class IEffect;
 class IModel;
 class IString;
 
-class VPVL2_API IRenderDelegate
+class VPVL2_API IRenderContext
 {
 public:
     enum LogLevel {
@@ -133,7 +133,7 @@ public:
         void *object;
     };
 
-    virtual ~IRenderDelegate() {}
+    virtual ~IRenderContext() {}
 
     /**
      * モデルのアップロード時のみに有効な局所的なオブジェクトを作成します。

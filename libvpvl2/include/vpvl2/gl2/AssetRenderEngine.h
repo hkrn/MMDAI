@@ -81,7 +81,7 @@ class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::i
 public:
     class Program;
 
-    AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, asset::Model *model);
+    AssetRenderEngine(IRenderContext *context, const Scene *scene, asset::Model *model);
     virtual ~AssetRenderEngine();
 
     IModel *model() const;
@@ -114,11 +114,11 @@ private:
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
+    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
-                       IRenderDelegate::ShaderType vertexShaderType,
-                       IRenderDelegate::ShaderType fragmentShaderType,
+                       IRenderContext::ShaderType vertexShaderType,
+                       IRenderContext::ShaderType fragmentShaderType,
                        void *context);
     void createVertexBundle(const aiMesh *mesh,
                             const Vertices &vertices,

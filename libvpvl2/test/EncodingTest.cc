@@ -1,6 +1,6 @@
 #include "Common.h"
-#include "vpvl2/icu/String.h"
-#include "vpvl2/icu/Encoding.h"
+#include "vpvl2/extensions/icu/String.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 
 #define TO_STR_C(s) reinterpret_cast<const char *>(s)
 #define TO_CSTRING(s) static_cast<const String *>(s)
@@ -8,7 +8,7 @@
 
 using namespace ::testing;
 using namespace vpvl2;
-using namespace vpvl2::icu;
+using namespace vpvl2::extensions::icu;
 
 namespace {
 

@@ -37,11 +37,11 @@
 #include "vpvl2/qt/Archive.h"
 #include "vpvl2/qt/CString.h"
 #include "vpvl2/qt/DDSTexture.h"
-#include "vpvl2/qt/Delegate.h"
+#include "vpvl2/qt/RenderContext.h"
 #include "vpvl2/qt/Util.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderDelegate.h>
+#include <vpvl2/IRenderContext.h>
 #include <QtCore/QtCore>
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -178,9 +178,9 @@ QGLContext::BindOptions UIGetTextureBindOptions(bool enableMipmap)
     return options;
 }
 
-static void UISetTexture(const Delegate::TextureCache &cache, Delegate::InternalTexture &texture)
+static void UISetTexture(const RenderContext::TextureCache &cache, RenderContext::InternalTexture &texture)
 {
-    Delegate::Texture *ref = texture.ref;
+    RenderContext::Texture *ref = texture.ref;
     ref->width = cache.width;
     ref->height = cache.height;
     *const_cast<GLuint *>(static_cast<const GLuint *>(ref->object)) = cache.id;
@@ -193,9 +193,9 @@ static void UISetTexture(const Delegate::TextureCache &cache, Delegate::Internal
     }
 }
 
-static bool UIFindTextureCache(Delegate::InternalContext *privateContext,
+static bool UIFindTextureCache(RenderContext::InternalContext *privateContext,
                                const QString &path,
-                               Delegate::InternalTexture &texture)
+                               RenderContext::InternalTexture &texture)
 {
     if (privateContext && privateContext->textureCache.contains(path)) {
         UISetTexture(privateContext->textureCache[path], texture);
@@ -205,9 +205,9 @@ static bool UIFindTextureCache(Delegate::InternalContext *privateContext,
     return false;
 }
 
-static void UIAddTextureCache(Delegate::InternalContext *context,
+static void UIAddTextureCache(RenderContext::InternalContext *context,
                               const QString &path,
-                              const Delegate::TextureCache &texture)
+                              const RenderContext::TextureCache &texture)
 {
     if (context)
         context->textureCache.insert(path, texture);
@@ -230,7 +230,7 @@ namespace vpvl2
 namespace qt
 {
 
-class Delegate::FrameBufferObject : protected QGLFunctions {
+class RenderContext::FrameBufferObject : protected QGLFunctions {
 public:
     FrameBufferObject(size_t width, size_t height, int samples, GLuint texture)
         : fbo(0),
@@ -285,7 +285,7 @@ public:
     int samples;
 };
 
-QSet<QString> Delegate::loadableTextureExtensions()
+QSet<QString> RenderContext::loadableTextureExtensions()
 {
     static QSet<QString> extensions;
     if (extensions.isEmpty()) {
@@ -298,13 +298,13 @@ QSet<QString> Delegate::loadableTextureExtensions()
     return extensions;
 }
 
-QString Delegate::readAllAsync(const QString &path)
+QString RenderContext::readAllAsync(const QString &path)
 {
     QByteArray bytes;
     return UISlurpFile(path, bytes) ? bytes : QString();
 }
 
-Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
+RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
     : m_settings(settings),
       m_systemDir(m_settings.value("dir.system.toon", "../../VPVM/resources/images")),
       m_scene(scene),
@@ -317,7 +317,7 @@ Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWid
     m_timer.start();
 }
 
-Delegate::~Delegate()
+RenderContext::~RenderContext()
 {
     setSceneRef(0);
     qDeleteAll(m_renderTargets);
@@ -338,7 +338,7 @@ Delegate::~Delegate()
     m_msaaSamples = 0;
 }
 
-void Delegate::allocateContext(const IModel *model, void *&context)
+void RenderContext::allocateContext(const IModel *model, void *&context)
 {
     const IString *name = model->name();
     InternalContext *ctx = new(std::nothrow) InternalContext();
@@ -346,7 +346,7 @@ void Delegate::allocateContext(const IModel *model, void *&context)
     qDebug("Allocated the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
 }
 
-void Delegate::releaseContext(const IModel *model, void *&context)
+void RenderContext::releaseContext(const IModel *model, void *&context)
 {
     const IString *name = model->name();
     delete static_cast<InternalContext *>(context);
@@ -354,16 +354,16 @@ void Delegate::releaseContext(const IModel *model, void *&context)
     qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
 }
 
-bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
+bool RenderContext::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
 {
-    bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
-    bool isToon = flags & IRenderDelegate::kToonTexture;
+    bool mipmap = flags & IRenderContext::kGenerateTextureMipmap;
+    bool isToon = flags & IRenderContext::kToonTexture;
     InternalTexture t(&texture, mipmap, isToon);
-    if (flags & IRenderDelegate::kTexture2D) {
+    if (flags & IRenderContext::kTexture2D) {
         const QString &path = UICreatePath(dir, name);
         return uploadTextureInternal(path, t, context);
     }
-    else if (flags & IRenderDelegate::kToonTexture) {
+    else if (flags & IRenderContext::kToonTexture) {
         bool ret = false;
         if (dir) {
             const QString &path = UICreatePath(dir, name);
@@ -381,7 +381,7 @@ bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags,
     return false;
 }
 
-void Delegate::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
+void RenderContext::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
 {
     const QString &path = UICreatePath(dir, name);
     bool ok = false;
@@ -395,7 +395,7 @@ void Delegate::getToonColor(const IString *name, const IString *dir, Color &valu
     }
 }
 
-void Delegate::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
+void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
 {
     GLuint textureID = *static_cast<GLuint *>(texture);
     QMovie *movie = 0;
@@ -425,15 +425,15 @@ void Delegate::uploadAnimatedTexture(float offset, float speed, float seek, void
     }
 }
 
-void Delegate::getMatrix(float value[], const IModel *model, int flags) const
+void RenderContext::getMatrix(float value[], const IModel *model, int flags) const
 {
     QMatrix4x4 m;
-    if (flags & IRenderDelegate::kShadowMatrix) {
-        if (flags & IRenderDelegate::kProjectionMatrix)
+    if (flags & IRenderContext::kShadowMatrix) {
+        if (flags & IRenderContext::kProjectionMatrix)
             m *= m_cameraProjectionMatrix;
-        if (flags & IRenderDelegate::kViewMatrix)
+        if (flags & IRenderContext::kViewMatrix)
             m *= m_cameraViewMatrix;
-        if (flags & IRenderDelegate::kWorldMatrix) {
+        if (flags & IRenderContext::kWorldMatrix) {
             static const Vector3 plane(0.0f, 1.0f, 0.0f);
             const ILight *light = m_scene->light();
             const Vector3 &direction = light->direction();
@@ -454,52 +454,52 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
             m.scale(model->scaleFactor());
         }
     }
-    else if (flags & IRenderDelegate::kCameraMatrix) {
-        if (flags & IRenderDelegate::kProjectionMatrix)
+    else if (flags & IRenderContext::kCameraMatrix) {
+        if (flags & IRenderContext::kProjectionMatrix)
             m *= m_cameraProjectionMatrix;
-        if (flags & IRenderDelegate::kViewMatrix)
+        if (flags & IRenderContext::kViewMatrix)
             m *= m_cameraViewMatrix;
-        if (flags & IRenderDelegate::kWorldMatrix) {
+        if (flags & IRenderContext::kWorldMatrix) {
             UIConcatModelTransformMatrix(model, m);
             m *= m_cameraModelMatrix;
             m.scale(model->scaleFactor());
         }
     }
-    else if (flags & IRenderDelegate::kLightMatrix) {
-        if (flags & IRenderDelegate::kProjectionMatrix)
+    else if (flags & IRenderContext::kLightMatrix) {
+        if (flags & IRenderContext::kProjectionMatrix)
             m *= m_lightProjectionMatrix;
-        if (flags & IRenderDelegate::kViewMatrix)
+        if (flags & IRenderContext::kViewMatrix)
             m *= m_lightViewMatrix;
-        if (flags & IRenderDelegate::kWorldMatrix) {
+        if (flags & IRenderContext::kWorldMatrix) {
             m *= m_lightWorldMatrix;
             m.scale(model->scaleFactor());
         }
     }
-    if (flags & IRenderDelegate::kInverseMatrix)
+    if (flags & IRenderContext::kInverseMatrix)
         m = m.inverted();
-    if (flags & IRenderDelegate::kTransposeMatrix)
+    if (flags & IRenderContext::kTransposeMatrix)
         m = m.transposed();
     for (int i = 0; i < 16; i++) {
         value[i] = float(m.constData()[i]);
     }
 }
 
-void Delegate::getViewport(Vector3 &value) const
+void RenderContext::getViewport(Vector3 &value) const
 {
     value.setValue(m_viewport.width(), m_viewport.height(), 0);
 }
 
-void Delegate::getTime(float &value, bool sync) const
+void RenderContext::getTime(float &value, bool sync) const
 {
     value = sync ? 0 : m_timer.elapsed() / 1000.0f;
 }
 
-void Delegate::getElapsed(float &value, bool sync) const
+void RenderContext::getElapsed(float &value, bool sync) const
 {
     value = sync ? 0 : 1.0 / 60.0;
 }
 
-void Delegate::getMousePosition(Vector4 &value, MousePositionType type) const
+void RenderContext::getMousePosition(Vector4 &value, MousePositionType type) const
 {
     switch (type) {
     case kMouseLeftPressPosition:
@@ -531,13 +531,13 @@ void Delegate::getMousePosition(Vector4 &value, MousePositionType type) const
     }
 }
 
-void Delegate::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap)
+void RenderContext::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap)
 {
     vfprintf(stderr, format, ap);
     fprintf(stderr, "%s", "\n");
 }
 
-IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
+IString *RenderContext::loadKernelSource(KernelType type, void * /* context */)
 {
     QString file;
     switch (type) {
@@ -549,7 +549,7 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
         break;
     }
     const QString &path = QDir(m_settings.value("dir.system.kernels", "../../VPVM/resources/kernels")).absoluteFilePath(file);
-    const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
+    const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
         qDebug("Loaded a kernel: %s", qPrintable(path));
@@ -560,22 +560,22 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
     }
 }
 
-IString *Delegate::loadShaderSource(ShaderType type, const IString *path)
+IString *RenderContext::loadShaderSource(ShaderType type, const IString *path)
 {
     if (type == kModelEffectTechniques) {
-        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, static_cast<const CString *>(path)->value());
+        const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, static_cast<const CString *>(path)->value());
         const QString &source = future.result();
         return !source.isNull() ? new (std::nothrow) CString(source) : 0;
     }
     return 0;
 }
 
-IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
+IString *RenderContext::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
 {
     QString file;
     if (type == kModelEffectTechniques) {
         const QString &filename = effectFilePath(model, dir);
-        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, filename);
+        const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, filename);
         const QString &source = future.result();
         return !source.isNull() ? new (std::nothrow) CString(source) : 0;
     }
@@ -633,7 +633,7 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
         break;
     }
     const QString &path = QDir(m_settings.value("dir.system.shaders", "../../VPVM/resources/shaders")).absoluteFilePath(file);
-    const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
+    const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
         qDebug("Loaded a shader: %s", qPrintable(path));
@@ -644,19 +644,19 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
     }
 }
 
-IString *Delegate::toUnicode(const uint8_t *value) const
+IString *RenderContext::toUnicode(const uint8_t *value) const
 {
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     const QString &s = codec->toUnicode(reinterpret_cast<const char *>(value));
     return new(std::nothrow) CString(s);
 }
 
-bool Delegate::hasExtension(const void *namePtr) const
+bool RenderContext::hasExtension(const void *namePtr) const
 {
     return m_extensions.contains(static_cast<const char *>(namePtr));
 }
 
-void *Delegate::findProcedureAddress(const void **candidatesPtr) const
+void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
 {
     const QGLContext *context = QGLContext::currentContext();
     const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
@@ -672,23 +672,23 @@ void *Delegate::findProcedureAddress(const void **candidatesPtr) const
     return 0;
 }
 
-void Delegate::startProfileSession(ProfileType type, const void *arg)
+void RenderContext::startProfileSession(ProfileType type, const void *arg)
 {
     m_profilerTimers[ProfilerKey(type, arg)].restart();
 }
 
-void Delegate::stopProfileSession(ProfileType type, const void *arg)
+void RenderContext::stopProfileSession(ProfileType type, const void *arg)
 {
     m_profilerTimers[ProfilerKey(type, arg)].elapsed();
 }
 
-void Delegate::setArchive(Archive *value)
+void RenderContext::setArchive(Archive *value)
 {
     delete m_archive;
     m_archive = value;
 }
 
-void Delegate::setSceneRef(Scene *value)
+void RenderContext::setSceneRef(Scene *value)
 {
     m_offscreens.clear();
     m_model2Paths.clear();
@@ -700,7 +700,7 @@ void Delegate::setSceneRef(Scene *value)
     m_scene = value;
 }
 
-void Delegate::updateMatrices(const QSizeF &size)
+void RenderContext::updateMatrices(const QSizeF &size)
 {
     float matrix[16];
     ICamera *camera = m_scene->camera();
@@ -712,33 +712,33 @@ void Delegate::updateMatrices(const QSizeF &size)
     m_viewport = size;
 }
 
-void Delegate::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+void RenderContext::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
 {
     world = m_cameraModelMatrix;
     view = m_cameraViewMatrix;
     projection = m_cameraProjectionMatrix;
 }
 
-void Delegate::setCameraModelMatrix(const QMatrix4x4 &value)
+void RenderContext::setCameraModelMatrix(const QMatrix4x4 &value)
 {
     m_cameraModelMatrix = value;
 }
 
-void Delegate::getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+void RenderContext::getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
 {
     world = m_lightWorldMatrix;
     view = m_lightViewMatrix;
     projection = m_lightProjectionMatrix;
 }
 
-void Delegate::setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection)
+void RenderContext::setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection)
 {
     m_lightWorldMatrix = world;
     m_lightViewMatrix = view;
     m_lightProjectionMatrix = projection;
 }
 
-void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositionType type)
+void RenderContext::setMousePosition(const Vector3 &value, bool pressed, MousePositionType type)
 {
     switch (type) {
     case kMouseLeftPressPosition:
@@ -758,7 +758,7 @@ void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositio
     }
 }
 
-void Delegate::addModelPath(IModel *model, const QString &filename)
+void RenderContext::addModelPath(IModel *model, const QString &filename)
 {
     if (model) {
         QFileInfo finfo(filename);
@@ -768,14 +768,14 @@ void Delegate::addModelPath(IModel *model, const QString &filename)
     }
 }
 
-const QString Delegate::findModelPath(const IModel *model) const
+const QString RenderContext::findModelPath(const IModel *model) const
 {
     QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
     const QString s = m_model2Paths[model];
     return s;
 }
 
-const QString Delegate::effectFilePath(const IModel *model, const IString *dir) const
+const QString RenderContext::effectFilePath(const IModel *model, const IString *dir) const
 {
     QDir d(static_cast<const CString *>(dir)->value());
     const QString &path = findModelPath(model);
@@ -790,7 +790,7 @@ const QString Delegate::effectFilePath(const IModel *model, const IString *dir) 
     return d.absoluteFilePath("default.cgfx");
 }
 
-IModel *Delegate::findModel(const IString *name) const
+IModel *RenderContext::findModel(const IString *name) const
 {
     IModel *model = m_scene->findModel(name);
     if (!model) {
@@ -800,21 +800,21 @@ IModel *Delegate::findModel(const IString *name) const
     return model;
 }
 
-IModel *Delegate::effectOwner(const IEffect *effect) const
+IModel *RenderContext::effectOwner(const IEffect *effect) const
 {
     QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
     IModel *model = m_effect2models[effect];
     return model;
 }
 
-const QString Delegate::effectOwnerName(const IEffect *effect) const
+const QString RenderContext::effectOwnerName(const IEffect *effect) const
 {
     QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
     const QString name = m_effectOwners[effect];
     return name;
 }
 
-void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
+void RenderContext::setEffectOwner(const IEffect *effect, IModel *model)
 {
     const CString *name = static_cast<const CString *>(model->name());
     const QString &n = name ? name->value() : findModelPath(model);
@@ -828,7 +828,7 @@ void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
     }
 }
 
-void Delegate::removeModel(IModel *model)
+void RenderContext::removeModel(IModel *model)
 {
     QMutableHashIterator<const QString, IModel *> it(m_filename2Models);
     while (it.hasNext()) {
@@ -849,7 +849,7 @@ void Delegate::removeModel(IModel *model)
     }
 }
 
-void Delegate::initialize(bool enableMSAA)
+void RenderContext::initialize(bool enableMSAA)
 {
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);
@@ -869,14 +869,14 @@ void Delegate::initialize(bool enableMSAA)
 #endif /* __APPLE__ */
 }
 
-void Delegate::setRenderColorTargets(const void *targets, const int ntargets)
+void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
 {
     glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
 }
 
 //#define DEBUG_OUTPUT_TEXTURE
 
-void Delegate::bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
+void RenderContext::bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -930,7 +930,7 @@ void Delegate::bindRenderColorTarget(void *texture, size_t width, size_t height,
     }
 }
 
-void Delegate::releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
+void RenderContext::releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -958,7 +958,7 @@ void Delegate::releaseRenderColorTarget(void *texture, size_t width, size_t heig
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Delegate::bindRenderDepthStencilTarget(void *texture,
+void RenderContext::bindRenderDepthStencilTarget(void *texture,
                                             void *depth,
                                             void *stencil,
                                             size_t width,
@@ -980,7 +980,7 @@ void Delegate::bindRenderDepthStencilTarget(void *texture,
     }
 }
 
-void Delegate::releaseRenderDepthStencilTarget(void *texture,
+void RenderContext::releaseRenderDepthStencilTarget(void *texture,
                                                void * /* depth */,
                                                void * /* stencil */,
                                                size_t width,
@@ -1007,7 +1007,7 @@ void Delegate::releaseRenderDepthStencilTarget(void *texture,
     }
 }
 
-void Delegate::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
+void RenderContext::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
 {
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
     if (buffer) {
@@ -1023,7 +1023,7 @@ void Delegate::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t 
     }
 }
 
-void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
+void RenderContext::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
 {
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
     if (buffer) {
@@ -1047,7 +1047,7 @@ void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
+void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (effect) {
@@ -1076,7 +1076,7 @@ void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
                         QString path = dir.absoluteFilePath(value);
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
                         CString s2(path);
-                        const QFuture<IEffect *> &future = QtConcurrent::run(this, &Delegate::createEffectAsync, &s2);
+                        const QFuture<IEffect *> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
                         IEffect *offscreenEffect = future.result();
                         offscreenEffect->setParentEffect(effect);
                         attachments.append(EffectAttachment(regexp, offscreenEffect));
@@ -1100,7 +1100,7 @@ void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 #endif
 }
 
-void Delegate::renderOffscreen(const QSize &size)
+void RenderContext::renderOffscreen(const QSize &size)
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     const Array<IRenderEngine *> &engines = m_scene->renderEngines();
@@ -1108,7 +1108,7 @@ void Delegate::renderOffscreen(const QSize &size)
     QSize s;
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    Q_FOREACH (const Delegate::OffscreenRenderTarget &offscreen, offscreenRenderTargets()) {
+    Q_FOREACH (const RenderContext::OffscreenRenderTarget &offscreen, offscreenRenderTargets()) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
         const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
@@ -1156,7 +1156,7 @@ void Delegate::renderOffscreen(const QSize &size)
             const IModel *model = engine->model();
             const IString *name = model->name();
             const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
-            Q_FOREACH (const Delegate::EffectAttachment &attachment, offscreen.attachments) {
+            Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreen.attachments) {
                 IEffect *effect = attachment.second;
                 if (attachment.first.exactMatch(n)) {
                     engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
@@ -1173,7 +1173,7 @@ void Delegate::renderOffscreen(const QSize &size)
 #endif
 }
 
-IEffect *Delegate::createEffectAsync(const IString *path)
+IEffect *RenderContext::createEffectAsync(const IString *path)
 {
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -1203,7 +1203,7 @@ IEffect *Delegate::createEffectAsync(const IString *path)
     return effect;
 }
 
-IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
+IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
 {
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -1236,7 +1236,7 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
     return effect;
 }
 
-bool Delegate::uploadTextureNVTT(const QString &suffix,
+bool RenderContext::uploadTextureNVTT(const QString &suffix,
                                  const QString &path,
                                  QScopedPointer<nv::Stream> &stream,
                                  InternalTexture &internalTexture,
@@ -1277,7 +1277,7 @@ bool Delegate::uploadTextureNVTT(const QString &suffix,
     return true;
 }
 
-bool Delegate::uploadTextureInternal(const QString &path, InternalTexture &internalTexture, void *context)
+bool RenderContext::uploadTextureInternal(const QString &path, InternalTexture &internalTexture, void *context)
 {
     const QFileInfo info(path);
     InternalContext *privateContext = static_cast<InternalContext *>(context);
@@ -1327,7 +1327,7 @@ bool Delegate::uploadTextureInternal(const QString &path, InternalTexture &inter
     }
 }
 
-bool Delegate::generateTextureFromImage(const QImage &image,
+bool RenderContext::generateTextureFromImage(const QImage &image,
                                         const QString &path,
                                         InternalTexture &internalTexture,
                                         InternalContext *internalContext)
@@ -1352,7 +1352,7 @@ bool Delegate::generateTextureFromImage(const QImage &image,
     }
 }
 
-void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
+void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
 {
     QImage image(path);
     if (!isSystem && m_archive) {
@@ -1378,7 +1378,7 @@ void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &v
     }
 }
 
-Delegate::FrameBufferObject *Delegate::findRenderTarget(const GLuint textureID, size_t width, size_t height)
+RenderContext::FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height)
 {
     FrameBufferObject *buffer = 0;
     if (textureID > 0) {

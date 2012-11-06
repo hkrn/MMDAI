@@ -39,7 +39,7 @@
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CustomGLContext.h>
-#include <vpvl2/qt/Delegate.h>
+#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/World.h>
 
 #include "SceneWidget.h"
@@ -1017,9 +1017,9 @@ void SceneWidget::initializeGL()
     settings.insert("dir.system.shaders", ":shaders");
     settings.insert("dir.system.toon", ":textures");
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
-    m_delegate.reset(new Delegate(settings, 0, this));
-    m_delegate->initialize(true);
-    m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_delegate.data()));
+    m_renderContext.reset(new RenderContext(settings, 0, this));
+    m_renderContext->initialize(true);
+    m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
     connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
     connect(m_loader.data(), SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setSelectedModel(IModel*)));

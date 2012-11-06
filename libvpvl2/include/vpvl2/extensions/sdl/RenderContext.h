@@ -36,7 +36,7 @@
 
 /* libvpvl2 */
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderDelegate.h>
+#include <vpvl2/IRenderContext.h>
 #include <vpvl2/extensions/icu/Encoding.h>
 
 /* SDL */
@@ -252,7 +252,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(World)
 };
 
-class Delegate : public IRenderDelegate {
+class RenderContext : public IRenderContext {
 public:
     struct TextureCache {
         TextureCache() {}
@@ -271,7 +271,7 @@ public:
         TextureCacheMap textureCache;
     };
     struct InternalTexture {
-        InternalTexture(Delegate::Texture *r, bool m, bool t)
+        InternalTexture(RenderContext::Texture *r, bool m, bool t)
             : ref(r),
               isToon(t),
               isSystem(false),
@@ -279,14 +279,14 @@ public:
               ok(false)
         {
         }
-        Delegate::Texture *ref;
+        RenderContext::Texture *ref;
         bool isToon;
         bool isSystem;
         bool mipmap;
         bool ok;
     };
 
-    Delegate(Scene *sceneRef, UIStringMap *configRef)
+    RenderContext(Scene *sceneRef, UIStringMap *configRef)
         : m_sceneRef(sceneRef),
           m_configRef(configRef),
           m_lightWorldMatrix(1),
@@ -308,7 +308,7 @@ public:
             m_extensions.insert(extension);
         }
     }
-    ~Delegate()
+    ~RenderContext()
     {
         m_sceneRef = 0;
         m_configRef = 0;
@@ -324,11 +324,11 @@ public:
         context = 0;
     }
     bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
-        bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap;
-        bool isToon = flags & IRenderDelegate::kToonTexture;
+        bool mipmap = flags & IRenderContext::kGenerateTextureMipmap;
+        bool isToon = flags & IRenderContext::kToonTexture;
         bool ret = false;
         InternalTexture t(&texture, mipmap, isToon);
-        if (flags & IRenderDelegate::kTexture2D) {
+        if (flags & IRenderContext::kTexture2D) {
             const UnicodeString &path = createPath(dir, name);
             std::cerr << "texture: " << String::toStdString(path) << std::endl;
             ret = uploadTextureInternal(path, t, context);
@@ -351,12 +351,12 @@ public:
     }
     void getMatrix(float value[], const IModel *model, int flags) const {
         glm::mat4x4 m(1);
-        if (flags & IRenderDelegate::kShadowMatrix) {
-            if (flags & IRenderDelegate::kProjectionMatrix)
+        if (flags & IRenderContext::kShadowMatrix) {
+            if (flags & IRenderContext::kProjectionMatrix)
                 m *= m_cameraProjectionMatrix;
-            if (flags & IRenderDelegate::kViewMatrix)
+            if (flags & IRenderContext::kViewMatrix)
                 m *= m_cameraViewMatrix;
-            if (flags & IRenderDelegate::kWorldMatrix) {
+            if (flags & IRenderContext::kWorldMatrix) {
                 static const Vector3 plane(0.0f, 1.0f, 0.0f);
                 const ILight *light = m_sceneRef->light();
                 const Vector3 &direction = light->direction();
@@ -376,12 +376,12 @@ public:
                 m = glm::scale(m, glm::vec3(model->scaleFactor()));
             }
         }
-        else if (flags & IRenderDelegate::kCameraMatrix) {
-            if (flags & IRenderDelegate::kProjectionMatrix)
+        else if (flags & IRenderContext::kCameraMatrix) {
+            if (flags & IRenderContext::kProjectionMatrix)
                 m *= m_cameraProjectionMatrix;
-            if (flags & IRenderDelegate::kViewMatrix)
+            if (flags & IRenderContext::kViewMatrix)
                 m *= m_cameraViewMatrix;
-            if (flags & IRenderDelegate::kWorldMatrix) {
+            if (flags & IRenderContext::kWorldMatrix) {
                 const IBone *bone = model->parentBone();
                 Transform transform;
                 transform.setOrigin(model->position());
@@ -398,19 +398,19 @@ public:
                 m = glm::scale(m, glm::vec3(model->scaleFactor()));
             }
         }
-        else if (flags & IRenderDelegate::kLightMatrix) {
-            if (flags & IRenderDelegate::kWorldMatrix) {
+        else if (flags & IRenderContext::kLightMatrix) {
+            if (flags & IRenderContext::kWorldMatrix) {
                 m *= m_lightWorldMatrix;
                 m = glm::scale(m, glm::vec3(model->scaleFactor()));
             }
-            if (flags & IRenderDelegate::kProjectionMatrix)
+            if (flags & IRenderContext::kProjectionMatrix)
                 m *= m_lightProjectionMatrix;
-            if (flags & IRenderDelegate::kViewMatrix)
+            if (flags & IRenderContext::kViewMatrix)
                 m *= m_lightViewMatrix;
         }
-        if (flags & IRenderDelegate::kInverseMatrix)
+        if (flags & IRenderContext::kInverseMatrix)
             m = glm::inverse(m);
-        if (flags & IRenderDelegate::kTransposeMatrix)
+        if (flags & IRenderContext::kTransposeMatrix)
             m = glm::transpose(m);
         memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
     }
@@ -526,6 +526,12 @@ public:
             candidate = candidates[++i];
         }
         return 0;
+    }
+    void startProfileSession(ProfileType /* type */, const void * /* arg */) {
+        // TODO: implement here
+    }
+    void stopProfileSession(ProfileType /* type */, const void * /* arg */) {
+        // TODO: implement here
     }
 
     IString *loadShaderSource(ShaderType /* type */, const IString * /* path */) {
@@ -674,7 +680,7 @@ private:
         return texture.ok;
     }
     static void setTextureID(const TextureCache &cache, InternalTexture &texture) {
-        Delegate::Texture *ref = texture.ref;
+        RenderContext::Texture *ref = texture.ref;
         ref->width = cache.width;
         ref->height = cache.height;
         *const_cast<GLuint *>(static_cast<const GLuint *>(ref->object)) = cache.id;

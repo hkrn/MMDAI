@@ -79,8 +79,8 @@ struct MaterialTextures
 class ExtendedZPlotProgram : public ZPlotProgram
 {
 public:
-    ExtendedZPlotProgram(IRenderDelegate *delegate)
-        : ZPlotProgram(delegate),
+    ExtendedZPlotProgram(IRenderContext *renderContextRef)
+        : ZPlotProgram(renderContextRef),
           m_boneMatricesUniformLocation(0)
     {
     }
@@ -110,8 +110,8 @@ private:
 class EdgeProgram : public BaseShaderProgram
 {
 public:
-    EdgeProgram(IRenderDelegate *delegate)
-        : BaseShaderProgram(delegate),
+    EdgeProgram(IRenderContext *renderContextRef)
+        : BaseShaderProgram(renderContextRef),
           m_colorUniformLocation(0),
           m_edgeSizeUniformLocation(0),
           m_opacityUniformLocation(0),
@@ -163,8 +163,8 @@ private:
 class ShadowProgram : public ObjectProgram
 {
 public:
-    ShadowProgram(IRenderDelegate *delegate)
-        : ObjectProgram(delegate),
+    ShadowProgram(IRenderContext *renderContextRef)
+        : ObjectProgram(renderContextRef),
           m_shadowMatrixUniformLocation(0),
           m_boneMatricesUniformLocation(0)
     {
@@ -200,8 +200,8 @@ private:
 class ModelProgram : public ObjectProgram
 {
 public:
-    ModelProgram(IRenderDelegate *delegate)
-        : ObjectProgram(delegate),
+    ModelProgram(IRenderContext *renderContextRef)
+        : ObjectProgram(renderContextRef),
           m_cameraPositionUniformLocation(0),
           m_materialColorUniformLocation(0),
           m_materialSpecularUniformLocation(0),
@@ -493,11 +493,11 @@ public:
     bool updateEven;
 };
 
-PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
+PMXRenderEngine::PMXRenderEngine(IRenderContext *context,
                                  const Scene *scene,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
-    : BaseRenderEngine(scene, delegate),
+    : BaseRenderEngine(scene, context),
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),
       #endif /* VPVL2_LINK_QT */
@@ -532,7 +532,7 @@ PMXRenderEngine::~PMXRenderEngine()
         delete m_context;
         m_context = 0;
     }
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
     m_sceneRef = 0;
     m_modelRef = 0;
     m_accelerator = 0;
@@ -555,36 +555,36 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_context->dynamicBuffer->setSkinningEnable(false);
     }
     vss = m_context->isVertexShaderSkinning;
-    m_delegateRef->allocateContext(m_modelRef, context);
-    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_delegateRef);
-    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_delegateRef);
-    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_delegateRef);
-    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_delegateRef);
+    m_renderContextRef->allocateContext(m_modelRef, context);
+    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_renderContextRef);
+    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_renderContextRef);
+    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_renderContextRef);
+    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_renderContextRef);
     if (!createProgram(edgeProgram, dir,
-                       IRenderDelegate::kEdgeVertexShader,
-                       IRenderDelegate::kEdgeWithSkinningVertexShader,
-                       IRenderDelegate::kEdgeFragmentShader,
+                       IRenderContext::kEdgeVertexShader,
+                       IRenderContext::kEdgeWithSkinningVertexShader,
+                       IRenderContext::kEdgeFragmentShader,
                        context)) {
         return releaseContext0(context);
     }
     if (!createProgram(modelProgram, dir,
-                       IRenderDelegate::kModelVertexShader,
-                       IRenderDelegate::kModelWithSkinningVertexShader,
-                       IRenderDelegate::kModelFragmentShader,
+                       IRenderContext::kModelVertexShader,
+                       IRenderContext::kModelWithSkinningVertexShader,
+                       IRenderContext::kModelFragmentShader,
                        context)) {
         return releaseContext0(context);
     }
     if (!createProgram(shadowProgram, dir,
-                       IRenderDelegate::kShadowVertexShader,
-                       IRenderDelegate::kShadowWithSkinningVertexShader,
-                       IRenderDelegate::kShadowFragmentShader,
+                       IRenderContext::kShadowVertexShader,
+                       IRenderContext::kShadowWithSkinningVertexShader,
+                       IRenderContext::kShadowFragmentShader,
                        context)) {
         return releaseContext0(context);
     }
     if (!createProgram(zplotProgram, dir,
-                       IRenderDelegate::kZPlotVertexShader,
-                       IRenderDelegate::kZPlotWithSkinningVertexShader,
-                       IRenderDelegate::kZPlotFragmentShader,
+                       IRenderContext::kZPlotVertexShader,
+                       IRenderContext::kZPlotWithSkinningVertexShader,
+                       IRenderContext::kZPlotFragmentShader,
                        context)) {
         return releaseContext0(context);
     }
@@ -596,13 +596,13 @@ bool PMXRenderEngine::upload(const IString *dir)
     GLuint dvbo0 = m_context->vertexBufferObjects[kModelDynamicVertexBufferEven];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo0);
     glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
+    log0(context, IRenderContext::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo0);
 
     GLuint dvbo1 = m_context->vertexBufferObjects[kModelDynamicVertexBufferOdd];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo1);
     glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
+    log0(context, IRenderContext::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo1);
 
     const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
@@ -612,36 +612,36 @@ bool PMXRenderEngine::upload(const IString *dir)
     void *address = mapBuffer(GL_ARRAY_BUFFER, 0, staticBuffer->size());
     staticBuffer->update(address);
     unmapBuffer(GL_ARRAY_BUFFER, address);
-    log0(context, IRenderDelegate::kLogInfo,
+    log0(context, IRenderContext::kLogInfo,
          "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
 
     const IModel::IIndexBuffer *indexBuffer = m_context->indexBuffer;
     GLuint ibo = m_context->vertexBufferObjects[kModelIndexBuffer];
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->size(), indexBuffer->bytes(), GL_STATIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
+    log0(context, IRenderContext::kLogInfo,
          "Binding indices to the vertex buffer object (ID=%d)",
          m_context->vertexBufferObjects[kModelIndexBuffer]);
 
     allocateVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
     GLuint vao = m_context->vertexArrayObjects[kVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
     }
     createVertexBundle(dvbo0, svbo, ibo, vss);
     vao = m_context->vertexArrayObjects[kVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
         createVertexBundle(dvbo1, svbo, ibo, vss);
     }
     vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
     }
     createEdgeBundle(dvbo0, svbo, ibo, vss);
     vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
         createEdgeBundle(dvbo1, svbo, ibo, vss);
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -660,8 +660,8 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
-    m_delegateRef->releaseContext(m_modelRef, context);
+    log0(context, IRenderContext::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
+    m_renderContextRef->releaseContext(m_modelRef, context);
     return ret;
 }
 
@@ -669,7 +669,7 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_context->updateEven
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
@@ -693,33 +693,33 @@ void PMXRenderEngine::update()
 #endif
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
     m_context->updateEven = m_context->updateEven ? false :true;
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
     float matrix4x4[16];
-    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderDelegate::kWorldMatrix
-                             | IRenderDelegate::kViewMatrix
-                             | IRenderDelegate::kProjectionMatrix
-                             | IRenderDelegate::kCameraMatrix);
+    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
+                             IRenderContext::kWorldMatrix
+                             | IRenderContext::kViewMatrix
+                             | IRenderContext::kProjectionMatrix
+                             | IRenderContext::kCameraMatrix);
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
-    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderDelegate::kWorldMatrix
-                             | IRenderDelegate::kViewMatrix
-                             | IRenderDelegate::kCameraMatrix);
+    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
+                             IRenderContext::kWorldMatrix
+                             | IRenderContext::kViewMatrix
+                             | IRenderContext::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
-    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderDelegate::kWorldMatrix
-                             | IRenderDelegate::kViewMatrix
-                             | IRenderDelegate::kProjectionMatrix
-                             | IRenderDelegate::kLightMatrix);
+    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
+                             IRenderContext::kWorldMatrix
+                             | IRenderContext::kViewMatrix
+                             | IRenderContext::kProjectionMatrix
+                             | IRenderContext::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     void *texture = light->depthTexture();
@@ -775,9 +775,9 @@ void PMXRenderEngine::renderModel()
             cullFaceState = true;
         }
         const int nindices = material->indices();
-        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
+        m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
+        m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * size;
     }
     unbindVertexBundle();
@@ -786,22 +786,22 @@ void PMXRenderEngine::renderModel()
         glEnable(GL_CULL_FACE);
         cullFaceState = true;
     }
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderShadow()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     shadowProgram->bind();
     float matrix4x4[16];
-    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderDelegate::kWorldMatrix
-                             | IRenderDelegate::kViewMatrix
-                             | IRenderDelegate::kProjectionMatrix
-                             | IRenderDelegate::kShadowMatrix);
+    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
+                             IRenderContext::kWorldMatrix
+                             | IRenderContext::kViewMatrix
+                             | IRenderContext::kProjectionMatrix
+                             | IRenderContext::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     shadowProgram->setLightColor(light->color());
@@ -821,32 +821,32 @@ void PMXRenderEngine::renderShadow()
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
-            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
+            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
+            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
     shadowProgram->unbind();
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderEdge()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth()) || !m_context)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();
     float matrix4x4[16];
     const Scalar &opacity = m_modelRef->opacity();
-    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderDelegate::kWorldMatrix
-                             | IRenderDelegate::kViewMatrix
-                             | IRenderDelegate::kProjectionMatrix
-                             | IRenderDelegate::kCameraMatrix);
+    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
+                             IRenderContext::kWorldMatrix
+                             | IRenderContext::kViewMatrix
+                             | IRenderContext::kProjectionMatrix
+                             | IRenderContext::kCameraMatrix);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
@@ -874,9 +874,9 @@ void PMXRenderEngine::renderEdge()
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
                 edgeProgram->setSize(material->edgeSize() * edgeScaleFactor);
             }
-            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
+            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
+            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * size;
     }
@@ -885,22 +885,22 @@ void PMXRenderEngine::renderEdge()
     if (isOpaque)
         glEnable(GL_BLEND);
     edgeProgram->unbind();
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
     zplotProgram->bind();
     float matrix4x4[16];
-    m_delegateRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderDelegate::kWorldMatrix
-                             | IRenderDelegate::kViewMatrix
-                             | IRenderDelegate::kProjectionMatrix
-                             | IRenderDelegate::kLightMatrix);
+    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
+                             IRenderContext::kWorldMatrix
+                             | IRenderContext::kViewMatrix
+                             | IRenderContext::kProjectionMatrix
+                             | IRenderContext::kLightMatrix);
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -917,16 +917,16 @@ void PMXRenderEngine::renderZPlot()
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
-            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
+            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
+            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     glEnable(GL_CULL_FACE);
     zplotProgram->unbind();
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool PMXRenderEngine::hasPreProcess() const
@@ -964,28 +964,28 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType /* type */, IEffect * /
     /* do nothing */
 }
 
-void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format...)
+void PMXRenderEngine::log0(void *context, IRenderContext::LogLevel level, const char *format...)
 {
     va_list ap;
     va_start(ap, format);
-    m_delegateRef->log(context, level, format, ap);
+    m_renderContextRef->log(context, level, format, ap);
     va_end(ap);
 }
 
 bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
                                     const IString *dir,
-                                    IRenderDelegate::ShaderType vertexShaderType,
-                                    IRenderDelegate::ShaderType vertexSkinningShaderType,
-                                    IRenderDelegate::ShaderType fragmentShaderType,
+                                    IRenderContext::ShaderType vertexShaderType,
+                                    IRenderContext::ShaderType vertexSkinningShaderType,
+                                    IRenderContext::ShaderType fragmentShaderType,
                                     void *context)
 {
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
     if (m_context->isVertexShaderSkinning)
-        vertexShaderSource = m_delegateRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, dir, context);
+        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, dir, context);
     else
-        vertexShaderSource = m_delegateRef->loadShaderSource(vertexShaderType, m_modelRef, dir, context);
-    fragmentShaderSource = m_delegateRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, context);
+        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, dir, context);
+    fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, context);
     program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, context);
     program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, context);
     bool ok = program->linkProgram(context);
@@ -999,7 +999,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    IRenderDelegate::Texture texture;
+    IRenderContext::Texture texture;
     MaterialTextures *materialPrivates = m_context->materials = new MaterialTextures[nmaterials];
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
@@ -1012,10 +1012,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         const IString *path = 0;
         path = material->mainTexture();
         if (path) {
-            if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, context)) {
                 materialPrivate.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
                 if (textureID > 0)
-                    log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
+                    log0(context, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -1023,10 +1023,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         }
         path = material->sphereTexture();
         if (path) {
-            if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, context)) {
                 materialPrivate.sphereTextureID = textureID = *static_cast<GLuint *>(texture.object);
                 if (textureID > 0)
-                    log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
+                    log0(context, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -1035,13 +1035,13 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
-            IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            bool ret = m_delegateRef->uploadTexture(s, 0, IRenderDelegate::kToonTexture, texture, context);
+            IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
+            bool ret = m_renderContextRef->uploadTexture(s, 0, IRenderContext::kToonTexture, texture, context);
             delete s;
             if (ret) {
                 materialPrivate.toonTextureID = textureID = *static_cast<const GLuint *>(texture.object);
                 if (textureID > 0)
-                    log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+                    log0(context, IRenderContext::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -1050,9 +1050,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         else {
             path = material->toonTexture();
             if (path) {
-                if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kToonTexture, texture, context)) {
+                if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kToonTexture, texture, context)) {
                     materialPrivate.toonTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-                    log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
+                    log0(context, IRenderContext::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
                 }
                 else {
                     return false;
@@ -1070,7 +1070,7 @@ bool PMXRenderEngine::releaseContext0(void *context)
         delete m_context;
         m_context = 0;
     }
-    m_delegateRef->releaseContext(m_modelRef, context);
+    m_renderContextRef->releaseContext(m_modelRef, context);
     return false;
 }
 

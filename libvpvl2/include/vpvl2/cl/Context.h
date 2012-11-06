@@ -58,7 +58,7 @@
 #endif /* _MSC_VER */
 #endif /* __APPLE__ */
 
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderContext.h"
 
 namespace vpvl2
 {
@@ -69,21 +69,21 @@ namespace cl
 class Context
 {
 public:
-    Context(IRenderDelegate *delegateRef);
+    Context(IRenderContext *renderContextRef);
     ~Context();
 
     bool isAvailable() const;
     bool initialize(cl_device_type hostDeviceType);
 
-    IRenderDelegate *renderDelegate() const { return m_delegateRef; }
+    IRenderContext *renderContext() const { return m_renderContextRef; }
     cl_context computeContext() const { return m_context; }
     cl_command_queue commandQueue() const { return m_queue; }
     cl_device_id hostDevice() const { return m_device; }
 
 private:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
+    void log0(void *context, IRenderContext::LogLevel level, const char *format...);
 
-    IRenderDelegate *m_delegateRef;
+    IRenderContext *m_renderContextRef;
     cl_context m_context;
     cl_command_queue m_queue;
     cl_device_id m_device;

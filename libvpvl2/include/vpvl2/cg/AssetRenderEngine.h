@@ -78,7 +78,7 @@ class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::i
 public:
     class Program;
 
-    AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, CGcontext context, asset::Model *model);
+    AssetRenderEngine(IRenderContext *renderContext, const Scene *scene, CGcontext context, asset::Model *model);
     virtual ~AssetRenderEngine();
 
     IModel *model() const;
@@ -108,7 +108,7 @@ private:
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
 
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
+    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);

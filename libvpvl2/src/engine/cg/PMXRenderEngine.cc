@@ -51,8 +51,8 @@ namespace cg
 
 class PMXEffectEngine : public EffectEngine {
 public:
-    PMXEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate)
-        : EffectEngine(scene, dir, effect, delegate)
+    PMXEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef)
+        : EffectEngine(scene, dir, effect, renderContextRef)
     {
     }
 
@@ -65,13 +65,13 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXEffectEngine)
 };
 
-PMXRenderEngine::PMXRenderEngine(IRenderDelegate *delegate,
+PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
                                  const Scene *scene,
                                  CGcontext effectContext,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
 
-    : BaseRenderEngine(scene, delegate),
+    : BaseRenderEngine(scene, renderContextRef),
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),
       #endif /* VPVL2_LINK_QT */
@@ -129,7 +129,7 @@ IModel *PMXRenderEngine::model() const
 bool PMXRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
-    m_delegateRef->allocateContext(m_modelRef, context);
+    m_renderContextRef->allocateContext(m_modelRef, context);
     if (!uploadMaterials(dir, context)) {
         return releaseContext0(context);
     }
@@ -137,12 +137,12 @@ bool PMXRenderEngine::upload(const IString *dir)
     GLuint dvbo0 = m_vertexBufferObjects[kModelDynamicVertexBufferEven];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo0);
     glBufferData(GL_ARRAY_BUFFER, m_dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
+    log0(context, IRenderContext::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo0);
     GLuint dvbo1 = m_vertexBufferObjects[kModelDynamicVertexBufferOdd];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo1);
     glBufferData(GL_ARRAY_BUFFER, m_dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo,
+    log0(context, IRenderContext::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo1);
     GLuint svbo = m_vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
@@ -150,31 +150,31 @@ bool PMXRenderEngine::upload(const IString *dir)
     void *address = mapBuffer(GL_ARRAY_BUFFER, 0, m_staticBuffer->size());
     m_staticBuffer->update(address);
     unmapBuffer(GL_ARRAY_BUFFER, address);
-    log0(context, IRenderDelegate::kLogInfo,
+    log0(context, IRenderContext::kLogInfo,
          "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
     GLuint ibo = m_vertexBufferObjects[kModelIndexBuffer];
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer->size(), m_indexBuffer->bytes(), GL_STATIC_DRAW);
-    log0(context, IRenderDelegate::kLogInfo, "Binding indices to the vertex buffer object (ID=%d)", ibo);
+    log0(context, IRenderContext::kLogInfo, "Binding indices to the vertex buffer object (ID=%d)", ibo);
     allocateVertexArrayObjects(m_vertexArrayObjects, kMaxVertexArrayObjectType);
     GLuint vao = m_vertexArrayObjects[kVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
     }
     createVertexBundle(dvbo0, svbo, ibo);
     vao = m_vertexArrayObjects[kVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
         createVertexBundle(dvbo1, svbo, ibo);
     }
     vao = m_vertexArrayObjects[kEdgeVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
     }
     createEdgeBundle(dvbo0, svbo, ibo);
     vao = m_vertexArrayObjects[kEdgeVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderDelegate::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
+        log0(context, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
         createEdgeBundle(dvbo1, svbo, ibo);
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -191,8 +191,8 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    log0(context, IRenderDelegate::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
-    m_delegateRef->releaseContext(m_modelRef, context);
+    log0(context, IRenderContext::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
+    m_renderContextRef->releaseContext(m_modelRef, context);
     return true;
 }
 
@@ -200,7 +200,7 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_updateEvenBuffer
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferObjects[vbo]);
@@ -219,14 +219,14 @@ void PMXRenderEngine::update()
     m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
     m_currentRef->updateSceneParameters();
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileUpdateModelProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
     const Scalar &modelOpacity = m_modelRef->opacity();
@@ -273,9 +273,9 @@ void PMXRenderEngine::renderModel()
         const int nindices = material->indices();
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
-        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
+        m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
-        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelMaterialDrawCall, material);
+        m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
@@ -283,7 +283,7 @@ void PMXRenderEngine::renderModel()
         glEnable(GL_CULL_FACE);
         m_cullFaceState = true;
     }
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderModelProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderEdge()
@@ -291,7 +291,7 @@ void PMXRenderEngine::renderEdge()
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth())
             || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
     m_currentRef->setZeroGeometryParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
@@ -305,23 +305,23 @@ void PMXRenderEngine::renderEdge()
         if (material->isEdgeDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("edge", i, nmaterials, false, false, true);
             m_currentRef->edgeColor.setGeometryColor(material->edgeColor());
-            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
+            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeMateiralDrawCall, material);
+            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderEdgeProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderShadow()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
-    m_currentRef->setModelMatrixParameters(m_modelRef, IRenderDelegate::kShadowMatrix);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
+    m_currentRef->setModelMatrixParameters(m_modelRef, IRenderContext::kShadowMatrix);
     m_currentRef->setZeroGeometryParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
     const int nmaterials = m_materials.count();
@@ -332,21 +332,21 @@ void PMXRenderEngine::renderShadow()
         const IMaterial *material = m_materials[i];
         const int nindices = material->indices();
         CGtechnique technique = m_currentRef->findTechnique("shadow", i, nmaterials, false, false, true);
-        m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
+        m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
-        m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowMaterialDrawCall, material);
+        m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderShadowProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
         return;
-    m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
     m_currentRef->setZeroGeometryParameters(m_modelRef);
     const size_t indexStride = m_indexBuffer->strideSize();
@@ -359,15 +359,15 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indices();
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmaterials, false, false, true);
-            m_delegateRef->startProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
+            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
             m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotMaterialDrawCall, material);
+            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * indexStride;
     }
     unbindVertexBundle();
     glEnable(GL_CULL_FACE);
-    m_delegateRef->stopProfileSession(IRenderDelegate::kProfileRenderZPlotProcess, m_modelRef);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool PMXRenderEngine::hasPreProcess() const
@@ -423,7 +423,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         }
         else if (einstance) {
             EffectEngine *previous = m_currentRef;
-            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_renderContextRef);
             if (m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_currentRef);
             }
@@ -439,7 +439,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             m_currentRef = *ee;
         }
         else if (einstance) {
-            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_delegateRef);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_renderContextRef);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
         }
     }
@@ -454,11 +454,11 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
     }
 }
 
-void PMXRenderEngine::log0(void *context, IRenderDelegate::LogLevel level, const char *format ...)
+void PMXRenderEngine::log0(void *context, IRenderContext::LogLevel level, const char *format ...)
 {
     va_list ap;
     va_start(ap, format);
-    m_delegateRef->log(context, level, format, ap);
+    m_renderContextRef->log(context, level, format, ap);
     va_end(ap);
 }
 
@@ -467,7 +467,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    IRenderDelegate::Texture texture;
+    IRenderContext::Texture texture;
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
@@ -477,9 +477,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         texture.object = &textureID;
         path = material->mainTexture();
         if (path) {
-            if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, context)) {
                 materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
+                log0(context, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -487,9 +487,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         }
         path = material->sphereTexture();
         if (path) {
-            if (m_delegateRef->uploadTexture(path, dir, IRenderDelegate::kTexture2D, texture, context)) {
+            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, context)) {
                 materialPrivate.sphereTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-                log0(context, IRenderDelegate::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
+                log0(context, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -502,14 +502,14 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
                 internal::snprintf(buf, sizeof(buf), "toon%d.bmp", index);
             else
                 internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
-            IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            m_delegateRef->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
+            IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
+            m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
             delete s;
         }
         else {
             path = material->toonTexture();
             if (path) {
-                m_delegateRef->getToonColor(path, dir, materialPrivate.toonTextureColor, context);
+                m_renderContextRef->getToonColor(path, dir, materialPrivate.toonTextureColor, context);
             }
         }
     }
@@ -518,7 +518,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
 
 bool PMXRenderEngine::releaseContext0(void *context)
 {
-    m_delegateRef->releaseContext(m_modelRef, context);
+    m_renderContextRef->releaseContext(m_modelRef, context);
     release();
     return false;
 }
@@ -553,7 +553,7 @@ void PMXRenderEngine::release()
     m_aabbMin.setZero();
     m_aabbMax.setZero();
     m_currentRef = 0;
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
     m_sceneRef = 0;
     m_modelRef = 0;
     m_accelerator = 0;

@@ -1,6 +1,6 @@
 namespace vpvl2 {
 
-class MockIRenderDelegate : public IRenderDelegate {
+class MockIRenderContext : public IRenderContext {
  public:
   MOCK_METHOD2(allocateContext,
       void(const IModel *model, void *&context));
@@ -24,6 +24,10 @@ class MockIRenderDelegate : public IRenderDelegate {
       bool(const void *namePtr));
   MOCK_CONST_METHOD1(findProcedureAddress,
       void*(const void **candidatesPtr));
+  MOCK_METHOD2(startProfileSession,
+      void(ProfileType type, const void *arg));
+  MOCK_METHOD2(stopProfileSession,
+      void(ProfileType type, const void *arg));
   MOCK_METHOD4(getToonColor,
       void(const IString *name, const IString *dir, Color &value, void *context));
   MOCK_CONST_METHOD1(getViewport,

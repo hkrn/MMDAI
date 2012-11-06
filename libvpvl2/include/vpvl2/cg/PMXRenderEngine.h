@@ -66,7 +66,7 @@ class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::int
 public:
     class PrivateContext;
 
-    PMXRenderEngine(IRenderDelegate *delegate,
+    PMXRenderEngine(IRenderContext *renderContextRef,
                     const Scene *scene,
                     CGcontext effectContext,
                     cl::PMXAccelerator *accelerator,
@@ -127,7 +127,7 @@ private:
     void bindStaticVertexAttributePointers();
     void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
+    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
 
     CGcontext m_contextRef;
     EffectEngine *m_currentRef;

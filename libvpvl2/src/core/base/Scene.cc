@@ -286,7 +286,7 @@ struct Scene::PrivateContext {
         }
     }
 #endif
-    cl::Context *createComputeContext(IRenderDelegate *delegateRef) {
+    cl::Context *createComputeContext(IRenderContext *delegateRef) {
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (!computeContext) {
             computeContext = new cl::Context(delegateRef);
@@ -300,7 +300,7 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_OPENCL */
         return computeContext;
     }
-    cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate, IModel *modelRef) {
+    cl::PMXAccelerator *createPMXAccelerator(IRenderContext *delegate, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
@@ -384,7 +384,7 @@ Scene::~Scene()
     m_context = 0;
 }
 
-IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model, int flags) const
+IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model, int flags) const
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
@@ -442,10 +442,10 @@ void Scene::addMotion(IMotion *motion)
         m_context->motions.add(motion);
 }
 
-IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
+IEffect *Scene::createEffect(const IString *path, IRenderContext *delegate)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
+    IString *source = delegate->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
     return m_context->compileEffect(source);
 #else
     (void) path;
@@ -454,10 +454,10 @@ IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
 #endif /* VPVL2_OPENGL_RENDERER */
 }
 
-IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate)
+IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderContext *delegate)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
+    IString *source = delegate->loadShaderSource(IRenderContext::kModelEffectTechniques, model, dir, 0);
     return m_context->compileEffect(source);
 #else
     (void) dir;

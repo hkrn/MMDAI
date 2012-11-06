@@ -71,7 +71,7 @@ public:
     void release(Buffers &buffers) const;
 
 private:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
+    void log0(void *context, IRenderContext::LogLevel level, const char *format...);
 
     Context *m_contextRef;
     IModel *m_modelRef;

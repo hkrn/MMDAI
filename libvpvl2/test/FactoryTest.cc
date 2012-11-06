@@ -1,7 +1,7 @@
 #include "Common.h"
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/icu/Encoding.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
@@ -22,7 +22,7 @@
 using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
-using namespace vpvl2::icu;
+using namespace vpvl2::extensions::icu;
 
 TEST(FactoryTest, CreateEmptyModels)
 {

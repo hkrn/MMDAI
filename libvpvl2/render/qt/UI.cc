@@ -35,14 +35,12 @@
 /* ----------------------------------------------------------------- */
 
 #include "UI.h"
+#include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CustomGLContext.h>
-#include <vpvl2/qt/Delegate.h>
+#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/Encoding.h>
 #include <vpvl2/qt/CString.h>
 #include <vpvl2/qt/Util.h>
-
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderDelegate.h>
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
@@ -489,7 +487,7 @@ void UI::load(const QString &filename)
     foreach (const QString &key, m_settings->allKeys()) {
         settings.insert(key, m_settings->value(key).toString());
     }
-    m_delegate = new Delegate(settings, m_scene, this);
+    m_delegate = new RenderContext(settings, m_scene, this);
     m_delegate->initialize(m_settings->value("effect.msaa", true).toBool());
     m_delegate->updateMatrices(size());
     resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
@@ -749,10 +747,10 @@ void UI::setMousePositions(QMouseEvent *event)
     const qreal w = size.width(), h = size.height();
     const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);
     Qt::MouseButtons buttons = event->buttons();
-    m_delegate->setMousePosition(value, buttons & Qt::LeftButton, IRenderDelegate::kMouseLeftPressPosition);
-    m_delegate->setMousePosition(value, buttons & Qt::MiddleButton, IRenderDelegate::kMouseMiddlePressPosition);
-    m_delegate->setMousePosition(value, buttons & Qt::RightButton, IRenderDelegate::kMouseRightPressPosition);
-    m_delegate->setMousePosition(value, false, IRenderDelegate::kMouseCursorPosition);
+    m_delegate->setMousePosition(value, buttons & Qt::LeftButton, IRenderContext::kMouseLeftPressPosition);
+    m_delegate->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
+    m_delegate->setMousePosition(value, buttons & Qt::RightButton, IRenderContext::kMouseRightPressPosition);
+    m_delegate->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
 }
 
 bool UI::loadScene()
@@ -843,7 +841,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     }
     m_delegate->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, modelPtr.data(), &s1);
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &RenderContext::createEffectAsync, modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IEffect *effect = future2.result();

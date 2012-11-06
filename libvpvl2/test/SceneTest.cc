@@ -1,14 +1,14 @@
 #include "Common.h"
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/icu/Encoding.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 #include "mock/Model.h"
 #include "mock/Motion.h"
 #include "mock/RenderEngine.h"
 
 using namespace ::testing;
 using namespace vpvl2;
-using namespace vpvl2::icu;
+using namespace vpvl2::extensions::icu;
 
 TEST(SceneTest, AddModel)
 {

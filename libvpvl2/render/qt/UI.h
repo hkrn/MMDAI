@@ -53,7 +53,7 @@ class IMotion;
 
 namespace qt
 {
-class Delegate;
+class RenderContext;
 }
 
 namespace render
@@ -107,7 +107,7 @@ private:
     ShadowMap *m_sm;
     vpvl2::qt::Encoding::Dictionary m_dictionary;
     vpvl2::qt::World *m_world;
-    vpvl2::qt::Delegate *m_delegate;
+    vpvl2::qt::RenderContext *m_delegate;
     vpvl2::Scene *m_scene;
     Factory *m_factory;
     IEncoding *m_encoding;

@@ -38,10 +38,7 @@
 #define VPVL2_INTERNAL_BASERENDERENGINE_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IRenderDelegate.h"
-
-#include "vpvl2/Common.h"
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderContext.h"
 
 #if defined(VPVL2_LINK_QT)
   #include <QtOpenGL/QtOpenGL>
@@ -80,9 +77,9 @@ namespace internal
 
 class BaseRenderEngine {
 public:
-    BaseRenderEngine(const Scene *sceneRef, IRenderDelegate *delegate)
+    BaseRenderEngine(const Scene *sceneRef, IRenderContext *context)
         : m_sceneRef(sceneRef),
-          m_delegateRef(delegate),
+          m_renderContextRef(context),
           glBindVertexArrayProcPtrRef(0),
           glDeleteVertexArraysProcPtrRef(0),
           glGenVertexArraysProcPtrRef(0)
@@ -90,7 +87,7 @@ public:
     }
     virtual ~BaseRenderEngine() {
         m_sceneRef = 0;
-        m_delegateRef = 0;
+        m_renderContextRef = 0;
     }
 
 protected:
@@ -134,15 +131,15 @@ protected:
             0
         };
         glBindVertexArrayProcPtrRef = reinterpret_cast<glBindVertexArrayProcPtr>(
-                    m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kBindVertexArray)));
+                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kBindVertexArray)));
         glDeleteVertexArraysProcPtrRef = reinterpret_cast<glDeleteVertexArraysProcPtr>(
-                    m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kDeleteVertexArrays)));
+                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kDeleteVertexArrays)));
         glGenVertexArraysProcPtrRef = reinterpret_cast<glGenVertexArraysProcPtr>(
-                    m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kGenVertexArrays)));
+                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kGenVertexArrays)));
         glMapBufferProcPtrRef = reinterpret_cast<glMapBufferProcPtr>(
-                    m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kMapBuffer)));
+                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kMapBuffer)));
         glUnmapBufferProcPtrRef = reinterpret_cast<glUnmapBufferProcPtr>(
-                    m_delegateRef->findProcedureAddress(reinterpret_cast<const void **>(kUnmapBuffer)));
+                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kUnmapBuffer)));
     }
     void allocateVertexArrayObjects(GLuint *vao, size_t size) {
         if (glGenVertexArraysProcPtrRef) {
@@ -193,7 +190,7 @@ protected:
     }
 
     const Scene *m_sceneRef;
-    IRenderDelegate *m_delegateRef;
+    IRenderContext *m_renderContextRef;
 
 private:
     typedef void (*glBindVertexArrayProcPtr)(GLuint id);

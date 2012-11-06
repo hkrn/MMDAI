@@ -65,7 +65,7 @@ class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::int
         #endif
 {
 public:
-    PMXRenderEngine(IRenderDelegate *delegate,
+    PMXRenderEngine(IRenderContext *context,
                     const Scene *scene,
                     cl::PMXAccelerator *accelerator,
                     vpvl2::IModel *modelRef);
@@ -88,12 +88,12 @@ public:
 
 private:
     class PrivateContext;
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
+    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
-                       IRenderDelegate::ShaderType vertexShaderType,
-                       IRenderDelegate::ShaderType vertexSkinningShaderType,
-                       IRenderDelegate::ShaderType fragmentShaderType,
+                       IRenderContext::ShaderType vertexShaderType,
+                       IRenderContext::ShaderType vertexSkinningShaderType,
+                       IRenderContext::ShaderType fragmentShaderType,
                        void *context);
     bool uploadMaterials(const IString *dir, void *context);
     bool releaseContext0(void *context);

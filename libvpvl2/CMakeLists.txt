@@ -38,14 +38,14 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorph.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorphKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMotion.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderDelegate.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderContext.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IString.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IVertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Scene.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/String.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/Encoding.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/sdl/Delegate.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/sdl/RenderContext.h
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
@@ -443,7 +443,7 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/DDSTexture.h
-                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Delegate.h
+                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
                               ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h)
     set(vpvl2_qt_sources ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc
