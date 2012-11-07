@@ -259,8 +259,7 @@ void PMXRenderEngine::renderModel()
         m_currentRef->materialSphereMap.setTexture(sphereTexture);
         m_currentRef->spadd.setValue(material->sphereTextureRenderMode() == IMaterial::kAddTexture);
         m_currentRef->useTexture.setValue(hasMainTexture);
-        if ((hasModelTransparent && m_cullFaceState) ||
-                (material->isCullFaceDisabled() && m_cullFaceState)) {
+        if (!hasModelTransparent && m_cullFaceState && material->isCullFaceDisabled()) {
             glDisable(GL_CULL_FACE);
             m_cullFaceState = false;
         }

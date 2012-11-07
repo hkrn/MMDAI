@@ -766,7 +766,7 @@ void PMXRenderEngine::renderModel()
             IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
             modelProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
         }
-        if ((!hasModelTransparent && cullFaceState) || (material->isCullFaceDisabled() && cullFaceState)) {
+        if (!hasModelTransparent && cullFaceState && material->isCullFaceDisabled()) {
             glDisable(GL_CULL_FACE);
             cullFaceState = false;
         }
