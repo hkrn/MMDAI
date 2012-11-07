@@ -102,42 +102,42 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::AssetWidget</name>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="158"/>
+        <location filename="../../widgets/AssetWidget.cc" line="147"/>
         <source>Asset</source>
         <translation>アクセサリ</translation>
     </message>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="159"/>
+        <location filename="../../widgets/AssetWidget.cc" line="148"/>
         <source>Assign</source>
         <translation>割り当て</translation>
     </message>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="160"/>
+        <location filename="../../widgets/AssetWidget.cc" line="149"/>
         <source>Position</source>
         <translation>位置</translation>
     </message>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="161"/>
+        <location filename="../../widgets/AssetWidget.cc" line="150"/>
         <source>Rotation</source>
         <translation>回転</translation>
     </message>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="162"/>
+        <location filename="../../widgets/AssetWidget.cc" line="151"/>
         <source>Remove</source>
         <translation>削除</translation>
     </message>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="163"/>
+        <location filename="../../widgets/AssetWidget.cc" line="152"/>
         <source>Scale</source>
         <translation>拡大率</translation>
     </message>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="164"/>
+        <location filename="../../widgets/AssetWidget.cc" line="153"/>
         <source>Opacity</source>
         <translation>不透明度</translation>
     </message>
     <message>
-        <location filename="../../widgets/AssetWidget.cc" line="165"/>
+        <location filename="../../widgets/AssetWidget.cc" line="154"/>
         <source>Ground</source>
         <translation>地面</translation>
     </message>
@@ -159,50 +159,48 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     <name>vpvm::BackgroundImageSettingDialog</name>
     <message>
         <location filename="../../dialogs/BackgroundImageSettingDialog.cc" line="69"/>
-        <source>Uniform background image</source>
+        <source>Uniform Background Image</source>
         <translation>背景画像を場面の大きさに合わせる</translation>
     </message>
     <message>
         <location filename="../../dialogs/BackgroundImageSettingDialog.cc" line="78"/>
-        <source>Background image setting</source>
+        <source>Background Image Setting</source>
         <translation>背景画像設定</translation>
     </message>
 </context>
 <context>
     <name>vpvm::BoneDialog</name>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="129"/>
-        <source>X Position</source>
-        <translation>X の位置</translation>
+        <location filename="../../dialogs/BoneDialog.cc" line="137"/>
+        <source>Position</source>
+        <translation>位置</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="130"/>
-        <source>Y Position</source>
-        <translation>Y の位置</translation>
+        <location filename="../../dialogs/BoneDialog.cc" line="138"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="142"/>
+        <source>X</source>
+        <translation>X軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="131"/>
-        <source>Z Position</source>
-        <translation>Z の位置</translation>
+        <location filename="../../dialogs/BoneDialog.cc" line="139"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="143"/>
+        <source>Y</source>
+        <translation>Y軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="132"/>
-        <source>X Axis</source>
-        <translation>X 軸</translation>
+        <location filename="../../dialogs/BoneDialog.cc" line="140"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="144"/>
+        <source>Z</source>
+        <translation>Z軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="133"/>
-        <source>Y Axis</source>
-        <translation>Y 軸</translation>
+        <location filename="../../dialogs/BoneDialog.cc" line="141"/>
+        <source>Rotation Axis</source>
+        <translation>回転軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="134"/>
-        <source>Z Axis</source>
-        <translation>Z 軸</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="135"/>
-        <source>Bone dialog of %1</source>
+        <location filename="../../dialogs/BoneDialog.cc" line="145"/>
+        <source>Bone Dialog of %1</source>
         <translation>%1のボーンダイアログ</translation>
     </message>
 </context>
@@ -256,82 +254,82 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::CameraPerspectiveWidget</name>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="200"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="189"/>
         <source>Preset</source>
         <translation>プリセット</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="201"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="190"/>
         <source>Position</source>
         <translation>位置</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="202"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="191"/>
         <source>Rotation</source>
         <translation>回転</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="203"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="192"/>
         <source>Front</source>
         <translation>前面</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="204"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="193"/>
         <source>Back</source>
         <translation>背面</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="205"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="194"/>
         <source>Top</source>
         <translation>トップ</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="206"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="195"/>
         <source>Left</source>
         <translation>左</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="207"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="196"/>
         <source>Right</source>
         <translation>右</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="208"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="197"/>
         <source>Camera</source>
         <translation>カメラ</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="209"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="198"/>
         <source>Fovy</source>
         <translation>視野角</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="210"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="199"/>
         <source>Distance</source>
         <translation>距離</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="211"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="200"/>
         <source>Follow</source>
         <translation>追従</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="212"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="201"/>
         <source>None</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="213"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="202"/>
         <source>Model</source>
         <translation>モデル</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="214"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="203"/>
         <source>Bone</source>
         <translation>ボーン</translation>
     </message>
     <message>
-        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="215"/>
+        <location filename="../../widgets/CameraPerspectiveWidget.cc" line="204"/>
         <source>Initialize</source>
         <translation>初期化</translation>
     </message>
@@ -339,57 +337,82 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::ExportVideoDialog</name>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="62"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="60"/>
         <source>Open</source>
         <translation>開く</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="85"/>
-        <source>Include grid field</source>
-        <translation>グリッドを含める</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="87"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="141"/>
         <source>Width (px): </source>
         <translation>横（px）：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="89"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="139"/>
+        <source>Audio File Setting</source>
+        <translation>音声ファイル設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="140"/>
+        <source>Scene Size Setting</source>
+        <translation>場面サイズ設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="142"/>
         <source>Height (px): </source>
         <translation>縦（px）：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="91"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="143"/>
+        <source>Frame Index Setting</source>
+        <translation>フレーム位置設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="144"/>
         <source>Keyframe from: </source>
         <translation>フレーム開始位置：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="93"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="145"/>
         <source>Keyframe to: </source>
         <translation>フレーム終了位置：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="95"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="146"/>
+        <source>Encoding Setting</source>
+        <translation>エンコード設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="147"/>
         <source>Video Bitrate (kbps): </source>
         <translation>動画のビットレート（kbps）：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="97"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="148"/>
         <source>Scene FPS: </source>
         <translation>場面のFPS：</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="105"/>
-        <source>Exporting video setting</source>
-        <translation>ビデオ出力設定</translation>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="149"/>
+        <source>Include Grid Field</source>
+        <translation>グリッドを含める</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="116"/>
-        <source>Open audio file</source>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="155"/>
+        <source>Open Audio File</source>
         <translation>音声ファイルを開く</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ExportVideoDialog.cc" line="117"/>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="180"/>
+        <source>Exporting Image Setting</source>
+        <translation>画像出力設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="181"/>
+        <source>Exporting Video Setting</source>
+        <translation>ビデオ出力設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/ExportVideoDialog.cc" line="156"/>
         <source>WAV file (*.wav)</source>
         <translation></translation>
     </message>
@@ -397,19 +420,19 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::FrameSelectionDialog</name>
     <message>
-        <location filename="../../dialogs/FrameSelectionDialog.cc" line="53"/>
-        <source>Keyframe from</source>
-        <translation>フレーム開始</translation>
+        <location filename="../../dialogs/FrameSelectionDialog.cc" line="55"/>
+        <source>Keyframe From</source>
+        <translation>フレーム開始位置</translation>
     </message>
     <message>
-        <location filename="../../dialogs/FrameSelectionDialog.cc" line="54"/>
-        <source>Keyframe to</source>
-        <translation>フレーム終了</translation>
+        <location filename="../../dialogs/FrameSelectionDialog.cc" line="56"/>
+        <source>Keyframe To</source>
+        <translation>フレーム終了位置</translation>
     </message>
     <message>
-        <location filename="../../dialogs/FrameSelectionDialog.cc" line="61"/>
-        <source>Keyframe range selection dialog</source>
-        <translation>キーフレーム範囲選択ダイアログ</translation>
+        <location filename="../../dialogs/FrameSelectionDialog.cc" line="63"/>
+        <source>Keyframe Range Selection Setting</source>
+        <translation>キーフレーム範囲選択設定</translation>
     </message>
 </context>
 <context>
@@ -444,46 +467,71 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../dialogs/FrameWeightDialog.cc" line="74"/>
-        <source>Keyframe weight</source>
+        <source>Keyframe Weight</source>
         <translation>キーフレームの重み係数</translation>
     </message>
     <message>
         <location filename="../../dialogs/FrameWeightDialog.cc" line="83"/>
-        <source>Keyframe weight dialog</source>
-        <translation>キーフレームの重み係数設定ダイアログ</translation>
+        <source>Keyframe Weight Setting</source>
+        <translation>キーフレームの重み係数設定</translation>
     </message>
 </context>
 <context>
     <name>vpvm::GravitySettingDialog</name>
     <message>
-        <location filename="../../dialogs/GravitySettingDialog.cc" line="77"/>
-        <source>Gravity setting</source>
+        <location filename="../../dialogs/GravitySettingDialog.cc" line="82"/>
+        <source>Gravity Setting</source>
         <translation>重力設定</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/GravitySettingDialog.cc" line="93"/>
+        <source>Axis and Power</source>
+        <translation>重力軸と重力</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/GravitySettingDialog.cc" line="94"/>
+        <source>Rand Seed</source>
+        <translation>ランダムシード</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/GravitySettingDialog.cc" line="95"/>
+        <source>X</source>
+        <translation>X軸</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/GravitySettingDialog.cc" line="96"/>
+        <source>Y</source>
+        <translation>Y軸</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/GravitySettingDialog.cc" line="97"/>
+        <source>Z</source>
+        <translation>Z軸</translation>
     </message>
 </context>
 <context>
     <name>vpvm::InterpolationDialog</name>
     <message>
         <location filename="../../dialogs/InterpolationDialog.cc" line="99"/>
-        <source>Keyframe interpolation setting</source>
+        <source>Keyframe Interpolation Setting</source>
         <translation>キーフレーム補間設定</translation>
     </message>
     <message>
         <location filename="../../dialogs/InterpolationDialog.cc" line="112"/>
         <location filename="../../dialogs/InterpolationDialog.cc" line="119"/>
-        <source>X axis</source>
+        <source>X Axis</source>
         <translation>X 軸</translation>
     </message>
     <message>
         <location filename="../../dialogs/InterpolationDialog.cc" line="113"/>
         <location filename="../../dialogs/InterpolationDialog.cc" line="120"/>
-        <source>Y axis</source>
+        <source>Y Axis</source>
         <translation>Y 軸</translation>
     </message>
     <message>
         <location filename="../../dialogs/InterpolationDialog.cc" line="114"/>
         <location filename="../../dialogs/InterpolationDialog.cc" line="121"/>
-        <source>Z axis</source>
+        <source>Z Axis</source>
         <translation>Z 軸</translation>
     </message>
     <message>
@@ -504,8 +552,28 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../dialogs/InterpolationDialog.cc" line="145"/>
-        <source>Parameter type</source>
+        <source>Parameter Type</source>
         <translation>パラメータタイプ</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/InterpolationDialog.cc" line="149"/>
+        <source>Linear Default</source>
+        <translation>線形補間</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/InterpolationDialog.cc" line="153"/>
+        <source>Half Reversed S-curve</source>
+        <translation>半逆S字曲線</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/InterpolationDialog.cc" line="154"/>
+        <source>Apply All</source>
+        <translation>全てのパラメータに適用</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/InterpolationDialog.cc" line="155"/>
+        <source>Interpolation Parameter Setting</source>
+        <translation>キーフレーム補間設定</translation>
     </message>
     <message>
         <location filename="../../dialogs/InterpolationDialog.cc" line="146"/>
@@ -516,11 +584,6 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <location filename="../../dialogs/InterpolationDialog.cc" line="148"/>
         <source>None</source>
         <translation>なし</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/InterpolationDialog.cc" line="149"/>
-        <source>Linear default</source>
-        <translation>線形補間</translation>
     </message>
     <message>
         <location filename="../../dialogs/InterpolationDialog.cc" line="150"/>
@@ -536,21 +599,6 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <location filename="../../dialogs/InterpolationDialog.cc" line="152"/>
         <source>Half S-curve</source>
         <translation>半S字曲線</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/InterpolationDialog.cc" line="153"/>
-        <source>Half reversed S-curve</source>
-        <translation>半逆S字曲線</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/InterpolationDialog.cc" line="154"/>
-        <source>Apply all</source>
-        <translation>全てのパラメータに適用</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/InterpolationDialog.cc" line="155"/>
-        <source>Interpolation parameter</source>
-        <translation>補間パラメータ</translation>
     </message>
 </context>
 <context>
@@ -1644,6 +1692,21 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>キーフレーム(&amp;K)</translation>
     </message>
     <message>
+        <location filename="../../MainWindow.cc" line="1586"/>
+        <source>You must create or load a motion to export a video.</source>
+        <translation>動画を出力するには先にモーションを読み込むか作成する必要があります。</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1841"/>
+        <source>You must create or load a motion to play.</source>
+        <translation>再生するには先にモーションを読み込むか作成する必要があります。</translation>
+    </message>
+    <message>
+        <location filename="../../MainWindow.cc" line="1854"/>
+        <source>You must create or load a motion to open play setting.</source>
+        <translation>再生設定を開くには先にモーションを読み込むか作成する必要があります。</translation>
+    </message>
+    <message>
         <location filename="../../MainWindow.cc" line="1331"/>
         <location filename="../../MainWindow.cc" line="1358"/>
         <source>Effect</source>
@@ -1742,13 +1805,6 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>出力するモーションがありません。</translation>
     </message>
     <message>
-        <location filename="../../MainWindow.cc" line="1586"/>
-        <location filename="../../MainWindow.cc" line="1841"/>
-        <location filename="../../MainWindow.cc" line="1854"/>
-        <source>Create or load a motion.</source>
-        <translation>モーションを作成するか、読み込んでください。</translation>
-    </message>
-    <message>
         <location filename="../../MainWindow.cc" line="1590"/>
         <source>Exporting video feature is not supported.</source>
         <translation>動画出力機能はサポートされていません。</translation>
@@ -1838,91 +1894,91 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../widgets/ModelInfoWidget.cc" line="138"/>
-        <source>Number of vertices:</source>
+        <source>Number of Vertices:</source>
         <translation>頂点数：</translation>
     </message>
     <message>
         <location filename="../../widgets/ModelInfoWidget.cc" line="139"/>
-        <source>Number of indices:</source>
+        <source>Number of Indices:</source>
         <translation>インデックス数：</translation>
     </message>
     <message>
         <location filename="../../widgets/ModelInfoWidget.cc" line="140"/>
-        <source>Number of materials:</source>
-        <translation>材質マテリアル数：</translation>
+        <source>Number of Materials:</source>
+        <translation>材質数：</translation>
     </message>
     <message>
         <location filename="../../widgets/ModelInfoWidget.cc" line="141"/>
-        <source>Number of bones:</source>
+        <source>Number of Bones:</source>
         <translation>ボーン数：</translation>
+    </message>
+    <message>
+        <location filename="../../widgets/ModelInfoWidget.cc" line="143"/>
+        <source>Number of Morphs:</source>
+        <translation>モーフ数：</translation>
+    </message>
+    <message>
+        <location filename="../../widgets/ModelInfoWidget.cc" line="144"/>
+        <source>Number of Rigid bodies:</source>
+        <translation>剛体数：</translation>
+    </message>
+    <message>
+        <location filename="../../widgets/ModelInfoWidget.cc" line="145"/>
+        <source>Number of Joints:</source>
+        <translation>ジョイント数：</translation>
     </message>
     <message>
         <location filename="../../widgets/ModelInfoWidget.cc" line="142"/>
         <source>Number of IKs:</source>
         <translation>IK数：</translation>
     </message>
-    <message>
-        <location filename="../../widgets/ModelInfoWidget.cc" line="143"/>
-        <source>Number of morphs:</source>
-        <translation>モーフ数：</translation>
-    </message>
-    <message>
-        <location filename="../../widgets/ModelInfoWidget.cc" line="144"/>
-        <source>Number of rigid bodies:</source>
-        <translation>剛体数：</translation>
-    </message>
-    <message>
-        <location filename="../../widgets/ModelInfoWidget.cc" line="145"/>
-        <source>Number of constraints:</source>
-        <translation>拘束数：</translation>
-    </message>
 </context>
 <context>
     <name>vpvm::ModelSettingWidget</name>
     <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="140"/>
-        <source>Edge offset:</source>
-        <translation>エッジ幅：</translation>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="139"/>
+        <source>Edge Offset</source>
+        <translation>エッジ幅</translation>
     </message>
     <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="141"/>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="140"/>
         <source>Color</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="142"/>
-        <source>Opacity:</source>
-        <translation>不透明度：</translation>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="141"/>
+        <source>Opacity</source>
+        <translation>不透明度</translation>
     </message>
     <message>
         <location filename="../../widgets/ModelSettingWidget.cc" line="143"/>
-        <source>Shadow</source>
-        <translation>影</translation>
-    </message>
-    <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="144"/>
-        <source>Disable shadow</source>
+        <source>Disable Shadow</source>
         <translation>影を無効にする</translation>
     </message>
     <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="145"/>
-        <source>Enable projective shadow</source>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="144"/>
+        <source>Enable Projective Shadow</source>
         <translation>投影影を有効にする</translation>
     </message>
     <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="146"/>
-        <source>Enable self shadow</source>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="145"/>
+        <source>Enable Self Shadow</source>
         <translation>セルフシャドウを有効にする</translation>
     </message>
     <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="147"/>
-        <source>Position offset</source>
-        <translation>位置</translation>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="146"/>
+        <source>Position Offset</source>
+        <translation>位置オフセット</translation>
     </message>
     <message>
-        <location filename="../../widgets/ModelSettingWidget.cc" line="148"/>
-        <source>Rotation offset</source>
-        <translation>回転</translation>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="147"/>
+        <source>Rotation Offset</source>
+        <translation>回転オフセット</translation>
+    </message>
+    <message>
+        <location filename="../../widgets/ModelSettingWidget.cc" line="142"/>
+        <source>Shadow</source>
+        <translation>影</translation>
     </message>
 </context>
 <context>
@@ -2000,7 +2056,7 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../widgets/MorphWidget.cc" line="170"/>
-        <source>Reset all morphs</source>
+        <source>Reset All Morphs</source>
         <translation>全てのモーフをリセット</translation>
     </message>
 </context>
@@ -2027,16 +2083,6 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>開く</translation>
     </message>
     <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="212"/>
-        <source>Keyframe from: </source>
-        <translation>フレーム開始位置：</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/PlaySettingDialog.cc" line="213"/>
-        <source>Keyframe to: </source>
-        <translation>フレーム終了位置：</translation>
-    </message>
-    <message>
         <location filename="../../dialogs/PlaySettingDialog.cc" line="214"/>
         <source>Scene FPS: </source>
         <translation>場面のFPS：</translation>
@@ -2047,13 +2093,23 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <translation>繰り返し再生</translation>
     </message>
     <message>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="212"/>
+        <source>Keyframe From: </source>
+        <translation>フレーム開始位置：</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/PlaySettingDialog.cc" line="213"/>
+        <source>Keyframe To: </source>
+        <translation>フレーム終了位置：</translation>
+    </message>
+    <message>
         <location filename="../../dialogs/PlaySettingDialog.cc" line="216"/>
-        <source>Be model selected</source>
+        <source>Be Model Selected</source>
         <translation>選択状態にする</translation>
     </message>
     <message>
         <location filename="../../dialogs/PlaySettingDialog.cc" line="217"/>
-        <source>Draw bone wireframes</source>
+        <source>Draw Bone Wireframes</source>
         <translation>ボーンの接続状態を表示する</translation>
     </message>
     <message>
@@ -2081,8 +2137,8 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     <name>vpvm::RenderOrderDialog</name>
     <message>
         <location filename="../../dialogs/RenderOrderDialog.cc" line="87"/>
-        <source>Render order setting dialog</source>
-        <translation>描画順設定ダイアログ</translation>
+        <source>Render Order Setting</source>
+        <translation>描画順設定</translation>
     </message>
     <message>
         <location filename="../../dialogs/RenderOrderDialog.cc" line="96"/>
@@ -2114,24 +2170,24 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../widgets/SceneLightWidget.cc" line="117"/>
-        <source>Open color dialog</source>
+        <source>Open Color Dialog</source>
         <translation>色設定ダイアログを開く</translation>
     </message>
 </context>
 <context>
     <name>vpvm::ScenePlayer</name>
     <message>
-        <location filename="../../ScenePlayer.cc" line="105"/>
+        <location filename="../../ScenePlayer.cc" line="102"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="../../ScenePlayer.cc" line="222"/>
+        <location filename="../../ScenePlayer.cc" line="216"/>
         <source>Current FPS: %1</source>
         <translation>現在のFPS：%1</translation>
     </message>
     <message>
-        <location filename="../../ScenePlayer.cc" line="225"/>
+        <location filename="../../ScenePlayer.cc" line="219"/>
         <source>Current FPS: N/A</source>
         <translation>現在のFPS：N/A</translation>
     </message>
@@ -2337,34 +2393,34 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::ShadowMapSettingDialog</name>
     <message>
-        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="108"/>
-        <source>Shadow map setting</source>
-        <translation>シャドウマップ設定</translation>
-    </message>
-    <message>
-        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="118"/>
+        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="115"/>
         <source>Size</source>
         <translation>大きさ</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="119"/>
+        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="116"/>
         <source>Center</source>
         <translation>中心点</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="120"/>
+        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="117"/>
         <source>Radius</source>
         <translation>半径</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="121"/>
-        <source>Enable soft shadow</source>
+        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="118"/>
+        <source>Enable Soft Shadow</source>
         <translation>ソフトシャドウを有効にする</translation>
     </message>
     <message>
-        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="122"/>
-        <source>Calculate light view automatically</source>
+        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="119"/>
+        <source>Calculate Light View Automatically</source>
         <translation>光源を自動的に計算する</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/ShadowMapSettingDialog.cc" line="120"/>
+        <source>Shadow Map Setting</source>
+        <translation>シャドウマップ設定</translation>
     </message>
 </context>
 <context>
