@@ -88,15 +88,15 @@ public:
 
 private:
     class PrivateContext;
-    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
+    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
                        IRenderContext::ShaderType vertexShaderType,
                        IRenderContext::ShaderType vertexSkinningShaderType,
                        IRenderContext::ShaderType fragmentShaderType,
-                       void *context);
-    bool uploadMaterials(const IString *dir, void *context);
-    bool releaseContext0(void *context);
+                       void *userData);
+    bool uploadMaterials(const IString *dir, void *userData);
+    bool releaseUserData0(void *userData);
     void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss);
     void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss);
     void bindVertexBundle();

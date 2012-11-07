@@ -338,7 +338,7 @@ RenderContext::~RenderContext()
     m_msaaSamples = 0;
 }
 
-void RenderContext::allocateContext(const IModel *model, void *&context)
+void RenderContext::allocateUserData(const IModel *model, void *&context)
 {
     const IString *name = model->name();
     InternalContext *ctx = new(std::nothrow) InternalContext();
@@ -346,7 +346,7 @@ void RenderContext::allocateContext(const IModel *model, void *&context)
     qDebug("Allocated the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
 }
 
-void RenderContext::releaseContext(const IModel *model, void *&context)
+void RenderContext::releaseUserData(const IModel *model, void *&context)
 {
     const IString *name = model->name();
     delete static_cast<InternalContext *>(context);

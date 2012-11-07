@@ -109,21 +109,21 @@ private:
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
     class PrivateContext;
-    bool uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *context);
+    bool uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *userData);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
-    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
+    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
                        IRenderContext::ShaderType vertexShaderType,
                        IRenderContext::ShaderType fragmentShaderType,
-                       void *context);
+                       void *userData);
     void createVertexBundle(const aiMesh *mesh,
                             const Vertices &vertices,
                             const Indices &indices,
-                            void *context);
+                            void *userData);
     void bindVertexBundle(const aiMesh *mesh);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();

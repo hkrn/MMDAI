@@ -315,11 +315,11 @@ public:
         SDL_FreeSurface(m_colorSwapSurface);
     }
 
-    void allocateContext(const IModel * /* model */, void *&context) {
+    void allocateUserData(const IModel * /* model */, void *&context) {
         InternalContext *ctx = new InternalContext();
         context = ctx;
     }
-    void releaseContext(const IModel * /* model */, void *&context) {
+    void releaseUserData(const IModel * /* model */, void *&context) {
         delete static_cast<InternalContext *>(context);
         context = 0;
     }

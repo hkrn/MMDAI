@@ -102,8 +102,8 @@ public:
     RenderContext(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context);
     ~RenderContext();
 
-    void allocateContext(const IModel *model, void *&context);
-    void releaseContext(const IModel *model, void *&context);
+    void allocateUserData(const IModel *model, void *&context);
+    void releaseUserData(const IModel *model, void *&context);
     bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context);
     void getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */);
     void uploadAnimatedTexture(float offset, float speed, float seek, void *texture);

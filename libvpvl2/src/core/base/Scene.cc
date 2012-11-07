@@ -394,7 +394,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model
         asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::AssetRenderEngine(delegate, this, m_context->effectContext, m);
+            engine = new cg::AssetRenderEngine(delegate, this, m);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
             engine = new gl2::AssetRenderEngine(delegate, this, m);
@@ -406,7 +406,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model
         cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, model);
+            engine = new cg::PMXRenderEngine(delegate, this, accelerator, model);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
             engine = new gl2::PMXRenderEngine(delegate, this, accelerator, model);

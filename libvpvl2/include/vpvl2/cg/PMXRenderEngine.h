@@ -68,7 +68,6 @@ public:
 
     PMXRenderEngine(IRenderContext *renderContextRef,
                     const Scene *scene,
-                    CGcontext effectContext,
                     cl::PMXAccelerator *accelerator,
                     IModel *modelRef);
     virtual ~PMXRenderEngine();
@@ -115,8 +114,8 @@ private:
         Color toonTextureColor;
     };
 
-    bool uploadMaterials(const IString *dir, void *context);
-    bool releaseContext0(void *context);
+    bool uploadMaterials(const IString *dir, void *userData);
+    bool releaseUserData0(void *userData);
     void release();
     void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
     void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
@@ -127,9 +126,8 @@ private:
     void bindStaticVertexAttributePointers();
     void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
-    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
+    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
 
-    CGcontext m_contextRef;
     EffectEngine *m_currentRef;
     cl::PMXAccelerator *m_accelerator;
 #ifdef VPVL2_ENABLE_OPENCL

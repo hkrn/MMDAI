@@ -2,10 +2,10 @@ namespace vpvl2 {
 
 class MockIRenderContext : public IRenderContext {
  public:
-  MOCK_METHOD2(allocateContext,
-      void(const IModel *model, void *&context));
-  MOCK_METHOD2(releaseContext,
-      void(const IModel *model, void *&context));
+  MOCK_METHOD2(allocateUserData,
+      void(const IModel *model, void *&userData));
+  MOCK_METHOD2(releaseUserData,
+      void(const IModel *model, void *&userData));
   MOCK_METHOD5(uploadTexture,
       bool(const IString *name, const IString *dir, int flags, Texture &texture, void *context));
   MOCK_CONST_METHOD3(getMatrix,

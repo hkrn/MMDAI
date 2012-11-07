@@ -91,7 +91,6 @@ private:
 
 AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext,
                                      const Scene *scene,
-                                     CGcontext context,
                                      asset::Model *model)
     : BaseRenderEngine(scene, renderContext),
       #ifdef VPVL2_LINK_QT
@@ -99,7 +98,6 @@ AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext,
       #endif /* VPVL2_LINK_QT */
       m_currentRef(0),
       m_modelRef(model),
-      m_contextRef(context),
       m_nvertices(0),
       m_nmeshes(0),
       m_cullFaceState(true)
@@ -149,7 +147,6 @@ AssetRenderEngine::~AssetRenderEngine()
     m_effects.releaseAll();
     m_oseffects.releaseAll();
     m_currentRef = 0;
-    m_contextRef = 0;
     m_modelRef = 0;
     m_renderContextRef = 0;
     m_sceneRef = 0;
@@ -173,7 +170,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     void *context = 0;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    m_renderContextRef->allocateContext(m_modelRef, context);
+    m_renderContextRef->allocateUserData(m_modelRef, context);
     IRenderContext::Texture texture;
     GLuint textureID = 0;
     texture.object = &textureID;
@@ -215,7 +212,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     }
     ret = uploadRecurse(scene, scene->mRootNode, context);
     m_modelRef->setVisible(ret);
-    m_renderContextRef->releaseContext(m_modelRef, context);
+    m_renderContextRef->releaseUserData(m_modelRef, context);
     return ret;
 }
 
@@ -358,15 +355,15 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
     }
 }
 
-void AssetRenderEngine::log0(void *context, IRenderContext::LogLevel level, const char *format ...)
+void AssetRenderEngine::log0(void *userData, IRenderContext::LogLevel level, const char *format ...)
 {
     va_list ap;
     va_start(ap, format);
-    m_renderContextRef->log(context, level, format, ap);
+    m_renderContextRef->log(userData, level, format, ap);
     va_end(ap);
 }
 
-bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *context)
+bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *userData)
 {
     const unsigned int nmeshes = node->mNumMeshes;
     bool ret = true;
@@ -404,7 +401,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             }
             assetVertices.add(assetVertex);
         }
-        createVertexBundle(mesh, assetVertices, vertexIndices, context);
+        createVertexBundle(mesh, assetVertices, vertexIndices, userData);
         assetVertices.clear();
         vertexIndices.clear();
     }
@@ -412,7 +409,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
-        ret = uploadRecurse(scene, node->mChildren[i], context);
+        ret = uploadRecurse(scene, node->mChildren[i], userData);
         if (!ret)
             return ret;
     }
@@ -566,26 +563,26 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
 void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
                                            const Indices &indices,
-                                           void *context)
+                                           void *userData)
 {
     GLuint &ibo = m_ibo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     glGenBuffers(1, &ibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, isize, &indices[0], GL_STATIC_DRAW);
-    log0(context, IRenderContext::kLogInfo,
+    log0(userData, IRenderContext::kLogInfo,
          "Binding asset index buffer to the vertex buffer object (ID=%d)", ibo);
     GLuint &vbo = m_vbo[mesh];
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vsize, &vertices[0].position, GL_STATIC_DRAW);
-    log0(context, IRenderContext::kLogInfo,
+    log0(userData, IRenderContext::kLogInfo,
          "Binding asset vertex buffer to the vertex buffer object (ID=%d)", vbo);
     GLuint &vao = m_vao[mesh];
     allocateVertexArrayObjects(&vao, 1);
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderContext::kLogInfo, "Created an vertex array object (ID=%d)", vao);
+        log0(userData, IRenderContext::kLogInfo, "Created an vertex array object (ID=%d)", vao);
     }
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     bindStaticVertexAttributePointers();

@@ -78,7 +78,7 @@ class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::i
 public:
     class Program;
 
-    AssetRenderEngine(IRenderContext *renderContext, const Scene *scene, CGcontext context, asset::Model *model);
+    AssetRenderEngine(IRenderContext *renderContext, const Scene *scene, asset::Model *model);
     virtual ~AssetRenderEngine();
 
     IModel *model() const;
@@ -108,20 +108,19 @@ private:
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
 
-    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
-    bool uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
+    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
+    bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
-    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices, void *context);
+    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices, void *userData);
     void bindVertexBundle(const aiMesh *mesh);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 
     EffectEngine *m_currentRef;
     asset::Model *m_modelRef;
-    CGcontext m_contextRef;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
     std::map<std::string, GLuint> m_textures;

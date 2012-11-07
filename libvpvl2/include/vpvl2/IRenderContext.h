@@ -138,7 +138,7 @@ public:
     /**
      * モデルのアップロード時のみに有効な局所的なオブジェクトを作成します.
      *
-     * 作成したオブジェクトは context に格納する必要があります。
+     * 作成したオブジェクトは userData に格納する必要があります。
      * 何も格納する必要がない場合は処理をスキップすることが出来ます。
      * 処理中は例外を投げないように処理を行う必要があります。
      *
@@ -146,20 +146,20 @@ public:
      * @param model
      * @param context
      */
-    virtual void allocateContext(const IModel *model, void *&context) = 0;
+    virtual void allocateUserData(const IModel *model, void *&userData) = 0;
 
     /**
      * allocateContext で作成したオブジェクトを破棄します.
      *
-     * context にデータが格納されているため、delete 等で破棄してください。
-     * 破棄したら可能であれば context を 0 にセットしてください。
+     * userData にデータが格納されているため、delete 等で破棄してください。
+     * 破棄したら可能であれば userData を 0 にセットしてください。
      * 処理中は例外を投げないように処理を行う必要があります。
      *
      * @sa allocateContext
      * @param model
      * @param context
      */
-    virtual void releaseContext(const IModel *model, void *&context) = 0;
+    virtual void releaseUserData(const IModel *model, void *&userData) = 0;
 
     /**
      * モデルのテクスチャをサーバ (GPU) にアップロードします.

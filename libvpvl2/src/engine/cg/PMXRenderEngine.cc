@@ -67,7 +67,6 @@ private:
 
 PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
                                  const Scene *scene,
-                                 CGcontext effectContext,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
 
@@ -75,7 +74,6 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),
       #endif /* VPVL2_LINK_QT */
-      m_contextRef(effectContext),
       m_currentRef(0),
       m_accelerator(accelerator),
       m_modelRef(modelRef),
@@ -129,9 +127,9 @@ IModel *PMXRenderEngine::model() const
 bool PMXRenderEngine::upload(const IString *dir)
 {
     void *context = 0;
-    m_renderContextRef->allocateContext(m_modelRef, context);
+    m_renderContextRef->allocateUserData(m_modelRef, context);
     if (!uploadMaterials(dir, context)) {
-        return releaseContext0(context);
+        return releaseUserData0(context);
     }
     glGenBuffers(kMaxVertexBufferObjectType, m_vertexBufferObjects);
     GLuint dvbo0 = m_vertexBufferObjects[kModelDynamicVertexBufferEven];
@@ -192,7 +190,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     update(); // for updating even frame
     update(); // for updating odd frame
     log0(context, IRenderContext::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
-    m_renderContextRef->releaseContext(m_modelRef, context);
+    m_renderContextRef->releaseUserData(m_modelRef, context);
     return true;
 }
 
@@ -454,15 +452,15 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
     }
 }
 
-void PMXRenderEngine::log0(void *context, IRenderContext::LogLevel level, const char *format ...)
+void PMXRenderEngine::log0(void *userData, IRenderContext::LogLevel level, const char *format ...)
 {
     va_list ap;
     va_start(ap, format);
-    m_renderContextRef->log(context, level, format, ap);
+    m_renderContextRef->log(userData, level, format, ap);
     va_end(ap);
 }
 
-bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
+bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
 {
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -477,9 +475,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         texture.object = &textureID;
         path = material->mainTexture();
         if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, context)) {
+            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
                 materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-                log0(context, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
+                log0(userData, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -487,9 +485,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
         }
         path = material->sphereTexture();
         if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, context)) {
+            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
                 materialPrivate.sphereTextureID = textureID = *static_cast<const GLuint *>(texture.object);
-                log0(context, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
+                log0(userData, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -503,22 +501,22 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *context)
             else
                 internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
             IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, context);
+            m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
             delete s;
         }
         else {
             path = material->toonTexture();
             if (path) {
-                m_renderContextRef->getToonColor(path, dir, materialPrivate.toonTextureColor, context);
+                m_renderContextRef->getToonColor(path, dir, materialPrivate.toonTextureColor, userData);
             }
         }
     }
     return true;
 }
 
-bool PMXRenderEngine::releaseContext0(void *context)
+bool PMXRenderEngine::releaseUserData0(void *userData)
 {
-    m_renderContextRef->releaseContext(m_modelRef, context);
+    m_renderContextRef->releaseUserData(m_modelRef, userData);
     release();
     return false;
 }
