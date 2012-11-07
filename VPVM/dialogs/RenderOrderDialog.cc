@@ -84,7 +84,7 @@ RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
     setLayout(mainLayout.take());
     buildOriginFromRenderOrder(loader);
     setRenderOrder(m_origin);
-    setWindowTitle(tr("Render order setting dialog"));
+    setWindowTitle(tr("Render Order Setting"));
 }
 
 RenderOrderDialog::~RenderOrderDialog()

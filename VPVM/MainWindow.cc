@@ -1583,7 +1583,7 @@ void MainWindow::exportVideo()
         }
         else {
             warning(this, tr("No motion to export."),
-                    tr("Create or load a motion."));
+                    tr("You must create or load a motion to export a video."));
         }
     }
     else {
@@ -1838,7 +1838,7 @@ void MainWindow::invokePlayer()
     }
     else {
         warning(this, tr("No motion to export."),
-                tr("Create or load a motion."));
+                tr("You must create or load a motion to play."));
     }
 }
 
@@ -1851,7 +1851,7 @@ void MainWindow::openPlaySettingDialog()
     }
     else {
         warning(this, tr("No motion to export."),
-                tr("Create or load a motion."));
+                tr("You must create or load a motion to open play setting."));
     }
 }
 

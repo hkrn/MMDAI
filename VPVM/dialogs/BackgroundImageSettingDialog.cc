@@ -66,7 +66,7 @@ BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, 
     connect(m_checkbox.data(), SIGNAL(clicked(bool)), SIGNAL(uniformDidEnable(bool)));
     connect(m_checkbox.data(), SIGNAL(clicked(bool)), m_x.data(), SLOT(setDisabled(bool)));
     connect(m_checkbox.data(), SIGNAL(clicked(bool)), m_y.data(), SLOT(setDisabled(bool)));
-    m_checkbox->setText(tr("Uniform background image"));
+    m_checkbox->setText(tr("Uniform Background Image"));
     m_checkbox->setChecked(m_scaled);
     mainLayout->addWidget(m_checkbox.data());
     QScopedPointer<QDialogButtonBox> box(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
@@ -75,7 +75,7 @@ BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, 
     mainLayout->addWidget(box.take());
     mainLayout->addStretch();
     setLayout(mainLayout.take());
-    setWindowTitle(tr("Background image setting"));
+    setWindowTitle(tr("Background Image Setting"));
 }
 
 BackgroundImageSettingDialog::~BackgroundImageSettingDialog()

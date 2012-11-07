@@ -142,7 +142,7 @@ void BoneDialog::retranslate()
     m_xAngleLabel->setText(vpvm::BoneDialog::tr("X"));
     m_yAngleLabel->setText(vpvm::BoneDialog::tr("Y"));
     m_zAngleLabel->setText(vpvm::BoneDialog::tr("Z"));
-    setWindowTitle(vpvm::BoneDialog::tr("Bone dialog of %1")
+    setWindowTitle(vpvm::BoneDialog::tr("Bone Dialog of %1")
                    .arg(toQStringFromBone(m_boneMotionModelRef->selectedBone())));
 }
 

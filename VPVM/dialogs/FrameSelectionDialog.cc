@@ -52,15 +52,15 @@ FrameSelectionDialog::FrameSelectionDialog(QWidget *parent)
     QScopedPointer<QFormLayout> formLayout(new QFormLayout());
     m_fromIndexBox->setAlignment(Qt::AlignRight);
     m_toIndexBox->setAlignment(Qt::AlignRight);
-    formLayout->addRow(tr("Keyframe from"), m_fromIndexBox.data());
-    formLayout->addRow(tr("Keyframe to"), m_toIndexBox.data());
+    formLayout->addRow(tr("Keyframe From"), m_fromIndexBox.data());
+    formLayout->addRow(tr("Keyframe To"), m_toIndexBox.data());
     mainLayout->addLayout(formLayout.take());
     QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel));
     connect(buttons.data(), SIGNAL(accepted()), SLOT(emitFrameIndices()));
     connect(buttons.data(), SIGNAL(rejected()), SLOT(close()));
     mainLayout->addWidget(buttons.take());
     connect(this, SIGNAL(frameIndicesDidSelect(int,int)), SLOT(close()));
-    setWindowTitle(tr("Keyframe range selection dialog"));
+    setWindowTitle(tr("Keyframe Range Selection Setting"));
     setLayout(mainLayout.take());
 }
 

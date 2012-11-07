@@ -209,12 +209,12 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 void PlaySettingDialog::retranslate()
 {
     m_openFileButton->setText(vpvm::PlaySettingDialog::tr("Open"));
-    m_fromIndexLabel->setText(vpvm::PlaySettingDialog::tr("Keyframe from: "));
-    m_toIndexLabel->setText(vpvm::PlaySettingDialog::tr("Keyframe to: "));
+    m_fromIndexLabel->setText(vpvm::PlaySettingDialog::tr("Keyframe From: "));
+    m_toIndexLabel->setText(vpvm::PlaySettingDialog::tr("Keyframe To: "));
     m_sceneFPSLabel->setText(vpvm::PlaySettingDialog::tr("Scene FPS: "));
     m_loopBox->setText(vpvm::PlaySettingDialog::tr("Loop"));
-    m_selectModelBox->setText(vpvm::PlaySettingDialog::tr("Be model selected"));
-    m_boneWireFramesBox->setText(vpvm::PlaySettingDialog::tr("Draw bone wireframes"));
+    m_selectModelBox->setText(vpvm::PlaySettingDialog::tr("Be Model Selected"));
+    m_boneWireFramesBox->setText(vpvm::PlaySettingDialog::tr("Draw Bone Wireframes"));
     m_playButton->setText(vpvm::PlaySettingDialog::tr("Play"));
     m_audioGroup->setTitle(vpvm::PlaySettingDialog::tr("Audio File Setting"));
     m_timeIndexGroup->setTitle(vpvm::PlaySettingDialog::tr("Scene Range to Play and FPS Setting"));

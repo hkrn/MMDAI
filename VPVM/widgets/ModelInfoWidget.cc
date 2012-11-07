@@ -135,14 +135,14 @@ void ModelInfoWidget::retranslate()
 {
     m_nameLabel->setText(tr("Name:"));
     m_commentLabel->setText(tr("Comment:"));
-    m_verticesCountLabel->setText(tr("Number of vertices:"));
-    m_indicesCountLabel->setText(tr("Number of indices:"));
-    m_materialsCountLabel->setText(tr("Number of materials:"));
-    m_bonesCountLabel->setText(tr("Number of bones:"));
+    m_verticesCountLabel->setText(tr("Number of Vertices:"));
+    m_indicesCountLabel->setText(tr("Number of Indices:"));
+    m_materialsCountLabel->setText(tr("Number of Materials:"));
+    m_bonesCountLabel->setText(tr("Number of Bones:"));
     m_IKsCountLabel->setText(tr("Number of IKs:"));
-    m_morphsCountLabel->setText(tr("Number of morphs:"));
-    m_rigidBodiesCountLabel->setText(tr("Number of rigid bodies:"));
-    m_constrantsCountLabel->setText(tr("Number of constraints:"));
+    m_morphsCountLabel->setText(tr("Number of Morphs:"));
+    m_rigidBodiesCountLabel->setText(tr("Number of Rigid bodies:"));
+    m_constrantsCountLabel->setText(tr("Number of Joints:"));
 }
 
 void ModelInfoWidget::setModel(IModel *model)

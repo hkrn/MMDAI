@@ -167,7 +167,7 @@ void MorphWidget::retranslate()
     m_lipGroup->setTitle(vpvm::MorphWidget::tr("Lip"));
     m_eyeblowGroup->setTitle(vpvm::MorphWidget::tr("Eyeblow"));
     m_otherGroup->setTitle(vpvm::MorphWidget::tr("Other"));
-    m_resetAllButton->setText(vpvm::MorphWidget::tr("Reset all morphs"));
+    m_resetAllButton->setText(vpvm::MorphWidget::tr("Reset All Morphs"));
 }
 
 void MorphWidget::setPMDModel(IModel *model)

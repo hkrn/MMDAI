@@ -103,7 +103,6 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     connect(this, SIGNAL(boundingSphereDidChange(Vector4)), loader, SLOT(setShadowBoundingSphere(Vector4)));
     mainLayout->addWidget(button.take());
     setLayout(mainLayout.take());
-    setWindowTitle(tr("Shadow map setting"));
     retranslate();
 }
 
@@ -116,8 +115,9 @@ void ShadowMapSettingDialog::retranslate()
     m_sizeLabel->setText(tr("Size"));
     m_centerLabel->setText(tr("Center"));
     m_radiusLabel->setText(tr("Radius"));
-    m_enableSoftShadow->setText(tr("Enable soft shadow"));
-    m_enableAutoLightView->setText(tr("Calculate light view automatically"));
+    m_enableSoftShadow->setText(tr("Enable Soft Shadow"));
+    m_enableAutoLightView->setText(tr("Calculate Light View Automatically"));
+    setWindowTitle(tr("Shadow Map Setting"));
 }
 
 void ShadowMapSettingDialog::emitSignals()

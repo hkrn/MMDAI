@@ -71,7 +71,7 @@ FrameWeightDialog::FrameWeightDialog(TimelineTabWidget::Type type, QWidget *pare
     }
     else if (type == TimelineTabWidget::kMorph) {
         QScopedPointer<QFormLayout> subLayout(new QFormLayout());
-        subLayout->addRow(tr("Keyframe weight"), createSpinBox(SLOT(setMorphWeight(double))));
+        subLayout->addRow(tr("Keyframe Weight"), createSpinBox(SLOT(setMorphWeight(double))));
         mainLayout->addLayout(subLayout.take());
         connect(this, SIGNAL(accepted()), SLOT(emitMorphWeightSignal()));
     }
@@ -80,7 +80,7 @@ FrameWeightDialog::FrameWeightDialog(TimelineTabWidget::Type type, QWidget *pare
     connect(buttons.data(), SIGNAL(rejected()), SLOT(reject()));
     mainLayout->addWidget(buttons.take());
     setLayout(mainLayout.take());
-    setWindowTitle(tr("Keyframe weight dialog"));
+    setWindowTitle(tr("Keyframe Weight Setting"));
 }
 
 FrameWeightDialog::~FrameWeightDialog()

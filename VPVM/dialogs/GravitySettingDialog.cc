@@ -79,7 +79,7 @@ GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent)
     connect(this, SIGNAL(worldGravityDidSet(Vector3)), loader, SLOT(setWorldGravity(Vector3)));
     connect(this, SIGNAL(worldRandSeedDidSet(ulong)), loader, SLOT(setRandSeed(ulong)));
     mainLayout->addWidget(button.take());
-    setWindowTitle(tr("Gravity setting"));
+    setWindowTitle(tr("Gravity Setting"));
     setLayout(mainLayout.take());
     retranslate();
 }

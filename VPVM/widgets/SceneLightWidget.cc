@@ -114,7 +114,7 @@ void SceneLightWidget::retranslate()
 {
     m_colorGroup->setTitle(tr("Color"));
     m_directionGroup->setTitle(tr("Direction"));
-    m_openColorDialog->setText(tr("Open color dialog"));
+    m_openColorDialog->setText(tr("Open Color Dialog"));
 }
 
 void SceneLightWidget::updateColor()

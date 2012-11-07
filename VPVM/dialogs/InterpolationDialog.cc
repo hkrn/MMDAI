@@ -96,7 +96,7 @@ InterpolationDialog::InterpolationDialog(BoneMotionModel *bmm, SceneMotionModel 
     setLayout(mainLayout.take());
     retranslate();
     setEnabled(false);
-    setWindowTitle(vpvm::InterpolationDialog::tr("Keyframe interpolation setting"));
+    setWindowTitle(vpvm::InterpolationDialog::tr("Keyframe Interpolation Setting"));
 }
 
 InterpolationDialog::~InterpolationDialog()
@@ -109,16 +109,16 @@ void InterpolationDialog::setMode(int mode)
     m_parameterTypeComboBox->clear();
     m_presetComboBox->setCurrentIndex(0);
     if (mode == TimelineTabWidget::kBoneTabIndex) {
-        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("X axis"));
-        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Y axis"));
-        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Z axis"));
+        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("X Axis"));
+        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Y Axis"));
+        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Z Axis"));
         m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Rotation"));
         m_graphWidget->setType(InterpolationGraphWidget::kBone);
     }
     else if (mode == TimelineTabWidget::kSceneTabIndex) {
-        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("X axis"));
-        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Y axis"));
-        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Z axis"));
+        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("X Axis"));
+        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Y Axis"));
+        m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Z Axis"));
         m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Rotation"));
         m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Fovy"));
         m_parameterTypeComboBox->addItem(vpvm::InterpolationDialog::tr("Distance"));
@@ -142,17 +142,17 @@ bool InterpolationDialog::hasValidKeyframes() const
 
 void InterpolationDialog::retranslate()
 {
-    m_parameterTypeLabel->setText(vpvm::InterpolationDialog::tr("Parameter type"));
+    m_parameterTypeLabel->setText(vpvm::InterpolationDialog::tr("Parameter Type"));
     m_presetLabel->setText(vpvm::InterpolationDialog::tr("Preset"));
     m_presetComboBox->clear();
     m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("None"), QVector4D());
-    m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("Linear default"), QVector4D(20, 107, 20, 107));
+    m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("Linear Default"), QVector4D(20, 107, 20, 107));
     m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("S-curve"), QVector4D(127, 0, 0, 127));
     m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("Reversed S-curve"), QVector4D(0, 127, 127, 0));
     m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("Half S-curve"), QVector4D(64, 64, 0, 127));
-    m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("Half reversed S-curve"), QVector4D(0, 127, 64, 64));
-    m_applyAllButton->setText(vpvm::InterpolationDialog::tr("Apply all"));
-    m_parameterGroup->setTitle(vpvm::InterpolationDialog::tr("Interpolation parameter"));
+    m_presetComboBox->addItem(vpvm::InterpolationDialog::tr("Half Reversed S-curve"), QVector4D(0, 127, 64, 64));
+    m_applyAllButton->setText(vpvm::InterpolationDialog::tr("Apply All"));
+    m_parameterGroup->setTitle(vpvm::InterpolationDialog::tr("Interpolation Parameter Setting"));
 }
 
 void InterpolationDialog::disable()

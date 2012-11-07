@@ -146,13 +146,13 @@ void ExportVideoDialog::retranslate()
     m_encodingSettingGroup->setTitle(vpvm::ExportVideoDialog::tr("Encoding Setting"));
     m_videoBitrateLabel->setText(vpvm::ExportVideoDialog::tr("Video Bitrate (kbps): "));
     m_sceneFPSLabel->setText(vpvm::ExportVideoDialog::tr("Scene FPS: "));
-    m_includeGridBox->setText(vpvm::ExportVideoDialog::tr("Include grid field"));
+    m_includeGridBox->setText(vpvm::ExportVideoDialog::tr("Include Grid Field"));
 }
 
 void ExportVideoDialog::openFileDialog()
 {
     const QString &filename = vpvm::openFileDialog("exportVideoDialog/lastAudioDirectory",
-                                                   vpvm::ExportVideoDialog::tr("Open audio file"),
+                                                   vpvm::ExportVideoDialog::tr("Open Audio File"),
                                                    vpvm::ExportVideoDialog::tr("WAV file (*.wav)"),
                                                    m_settingsRef);
     if (!filename.isEmpty())
@@ -177,8 +177,8 @@ void ExportVideoDialog::setImageConfiguration(bool value)
     m_fromIndexBox->setEnabled(!value);
     m_toIndexBox->setEnabled(!value);
     m_sceneFPSBox->setEnabled(!value);
-    setWindowTitle(value ? vpvm::ExportVideoDialog::tr("Exporting image setting")
-                     : vpvm::ExportVideoDialog::tr("Exporting video setting"));
+    setWindowTitle(value ? vpvm::ExportVideoDialog::tr("Exporting Image Setting")
+                     : vpvm::ExportVideoDialog::tr("Exporting Video Setting"));
 }
 
 const QString ExportVideoDialog::backgroundAudio() const
