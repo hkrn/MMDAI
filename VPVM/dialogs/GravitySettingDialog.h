@@ -41,6 +41,7 @@
 #include <vpvl2/Common.h>
 
 class QDoubleSpinBox;
+class QGroupBox;
 class QLabel;
 class QSpinBox;
 
@@ -63,15 +64,21 @@ signals:
     void worldRandSeedDidSet(unsigned long value);
 
 private slots:
+    void retranslate();
     void emitSignal();
 
 private:
     QDoubleSpinBox *createSpinBox(double value) const;
 
+    QScopedPointer<QGroupBox> m_axisGroup;
+    QScopedPointer<QLabel> m_axisXLabel;
     QScopedPointer<QDoubleSpinBox> m_axisX;
+    QScopedPointer<QLabel> m_axisYLabel;
     QScopedPointer<QDoubleSpinBox> m_axisY;
+    QScopedPointer<QLabel> m_axisZLabel;
     QScopedPointer<QDoubleSpinBox> m_axisZ;
-    QScopedPointer<QSpinBox> m_randSeed;
+    QScopedPointer<QLabel> m_randSeedLabel;
+    QScopedPointer<QSpinBox> m_randSeedSpinBox;
 };
 
 } /* namespace vpvm */

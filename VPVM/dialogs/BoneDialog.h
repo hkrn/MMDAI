@@ -41,6 +41,7 @@
 #include <vpvl2/Common.h>
 
 class QDoubleSpinBox;
+class QGroupBox;
 class QLabel;
 
 namespace vpvm
@@ -71,6 +72,8 @@ private slots:
     void dialogRejected();
 
 private:
+    QScopedPointer<QGroupBox> m_positionGroup;
+    QScopedPointer<QGroupBox> m_rotationGroup;
     QScopedPointer<QLabel> m_xPositionLabel;
     QScopedPointer<QLabel> m_yPositionLabel;
     QScopedPointer<QLabel> m_zPositionLabel;

@@ -50,6 +50,8 @@ FrameSelectionDialog::FrameSelectionDialog(QWidget *parent)
 {
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     QScopedPointer<QFormLayout> formLayout(new QFormLayout());
+    m_fromIndexBox->setAlignment(Qt::AlignRight);
+    m_toIndexBox->setAlignment(Qt::AlignRight);
     formLayout->addRow(tr("Keyframe from"), m_fromIndexBox.data());
     formLayout->addRow(tr("Keyframe to"), m_toIndexBox.data());
     mainLayout->addLayout(formLayout.take());

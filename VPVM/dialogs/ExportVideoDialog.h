@@ -41,6 +41,8 @@
 
 class QCheckBox;
 class QComboBox;
+class QGroupBox;
+class QLabel;
 class QLineEdit;
 class QPushButton;
 class QSettings;
@@ -82,19 +84,32 @@ protected:
     void showEvent(QShowEvent *event);
 
 private  slots:
+    void retranslate();
     void openFileDialog();
     void saveSettings();
 
 private:
+    static QSpinBox *createSpinBox(int min, int max);
+
     SceneLoader *m_loaderRef;
     QSettings *m_settingsRef;
+    QScopedPointer<QGroupBox> m_audioGroup;
     QScopedPointer<QLineEdit> m_pathEdit;
     QScopedPointer<QPushButton> m_openFileButton;
+    QScopedPointer<QGroupBox> m_sceneSizeGroup;
+    QScopedPointer<QLabel> m_widthLabel;
     QScopedPointer<QSpinBox> m_widthBox;
+    QScopedPointer<QLabel> m_heightLabel;
     QScopedPointer<QSpinBox> m_heightBox;
+    QScopedPointer<QGroupBox> m_frameIndexGroup;
+    QScopedPointer<QLabel> m_fromIndexLabel;
     QScopedPointer<QSpinBox> m_fromIndexBox;
+    QScopedPointer<QLabel> m_toIndexLabel;
     QScopedPointer<QSpinBox> m_toIndexBox;
+    QScopedPointer<QGroupBox> m_encodingSettingGroup;
+    QScopedPointer<QLabel> m_videoBitrateLabel;
     QScopedPointer<QSpinBox> m_videoBitrateBox;
+    QScopedPointer<QLabel> m_sceneFPSLabel;
     QScopedPointer<QComboBox> m_sceneFPSBox;
     QScopedPointer<QCheckBox> m_includeGridBox;
 

@@ -91,6 +91,7 @@ private slots:
     void setPositionFromBone(const QList<IBone *> &bones);
 
 private:
+    static QDoubleSpinBox *createSpinBox(double step, double min, double max);
     QSharedPointer<ICamera> createCamera() const;
 
     Vector3 m_currentPosition;

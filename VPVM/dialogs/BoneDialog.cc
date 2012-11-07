@@ -47,12 +47,14 @@ static void UISetPositionSpinBoxRange(QScopedPointer<QDoubleSpinBox> &spinbox)
 {
     spinbox->setRange(-10000, 10000);
     spinbox->setSingleStep(0.1);
+    spinbox->setAlignment(Qt::AlignRight);
 }
 
 static void UISetAngleSpinBoxRange(QScopedPointer<QDoubleSpinBox> &spinbox)
 {
     spinbox->setRange(-360.0, 360.0);
     spinbox->setSingleStep(0.1);
+    spinbox->setAlignment(Qt::AlignRight);
 }
 
 }
@@ -64,6 +66,8 @@ using namespace vpvl2;
 
 BoneDialog::BoneDialog(BoneMotionModel *bmm, QWidget *parent)
     : QDialog(parent),
+      m_positionGroup(new QGroupBox()),
+      m_rotationGroup(new QGroupBox()),
       m_xPositionLabel(new QLabel()),
       m_yPositionLabel(new QLabel()),
       m_zPositionLabel(new QLabel()),
@@ -91,6 +95,7 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm, QWidget *parent)
     UISetAngleSpinBoxRange(m_yAngle);
     connect(m_zAngle.data(), SIGNAL(valueChanged(double)), SLOT(setZAngle(double)));
     UISetAngleSpinBoxRange(m_zAngle);
+    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
     QScopedPointer<QGridLayout> gridLayout(new QGridLayout());
     gridLayout->addWidget(m_xPositionLabel.data(), 0, 0);
     gridLayout->addWidget(m_yPositionLabel.data(), 1, 0);
@@ -98,20 +103,23 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm, QWidget *parent)
     gridLayout->addWidget(m_xPosition.data(), 0, 1);
     gridLayout->addWidget(m_yPosition.data(), 1, 1);
     gridLayout->addWidget(m_zPosition.data(), 2, 1);
-    gridLayout->addWidget(m_xAngleLabel.data(), 0, 2);
-    gridLayout->addWidget(m_yAngleLabel.data(), 1, 2);
-    gridLayout->addWidget(m_zAngleLabel.data(), 2, 2);
-    gridLayout->addWidget(m_xAngle.data(), 0, 3);
-    gridLayout->addWidget(m_yAngle.data(), 1, 3);
-    gridLayout->addWidget(m_zAngle.data(), 2, 3);
+    m_positionGroup->setLayout(gridLayout.take());
+    subLayout->addWidget(m_positionGroup.data());
+    gridLayout.reset(new QGridLayout());
+    gridLayout->addWidget(m_xAngleLabel.data(), 0, 0);
+    gridLayout->addWidget(m_yAngleLabel.data(), 1, 0);
+    gridLayout->addWidget(m_zAngleLabel.data(), 2, 0);
+    gridLayout->addWidget(m_xAngle.data(), 0, 1);
+    gridLayout->addWidget(m_yAngle.data(), 1, 1);
+    gridLayout->addWidget(m_zAngle.data(), 2, 1);
+    m_rotationGroup->setLayout(gridLayout.take());
+    subLayout->addWidget(m_rotationGroup.data());
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
-    mainLayout->addLayout(gridLayout.take());
-    QScopedPointer<QVBoxLayout> subLayout(new QVBoxLayout());
+    mainLayout->addLayout(subLayout.take());
     QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
     connect(buttons.data(), SIGNAL(accepted()), SLOT(dialogAccepted()));
     connect(buttons.data(), SIGNAL(rejected()), SLOT(dialogRejected()));
-    subLayout->addWidget(buttons.take());
-    mainLayout->addLayout(subLayout.take());
+    mainLayout->addWidget(buttons.take());
     setLayout(mainLayout.take());
     setPosition(bone->localPosition());
     setRotation(bone->rotation());
@@ -126,12 +134,14 @@ BoneDialog::~BoneDialog()
 void BoneDialog::retranslate()
 {
     /* lupdate cannot parse tr() syntax correctly */
-    m_xPositionLabel->setText(vpvm::BoneDialog::tr("X Position"));
-    m_yPositionLabel->setText(vpvm::BoneDialog::tr("Y Position"));
-    m_zPositionLabel->setText(vpvm::BoneDialog::tr("Z Position"));
-    m_xAngleLabel->setText(vpvm::BoneDialog::tr("X Axis"));
-    m_yAngleLabel->setText(vpvm::BoneDialog::tr("Y Axis"));
-    m_zAngleLabel->setText(vpvm::BoneDialog::tr("Z Axis"));
+    m_positionGroup->setTitle(vpvm::BoneDialog::tr("Position"));
+    m_xPositionLabel->setText(vpvm::BoneDialog::tr("X"));
+    m_yPositionLabel->setText(vpvm::BoneDialog::tr("Y"));
+    m_zPositionLabel->setText(vpvm::BoneDialog::tr("Z"));
+    m_rotationGroup->setTitle(vpvm::BoneDialog::tr("Rotation Axis"));
+    m_xAngleLabel->setText(vpvm::BoneDialog::tr("X"));
+    m_yAngleLabel->setText(vpvm::BoneDialog::tr("Y"));
+    m_zAngleLabel->setText(vpvm::BoneDialog::tr("Z"));
     setWindowTitle(vpvm::BoneDialog::tr("Bone dialog of %1")
                    .arg(toQStringFromBone(m_boneMotionModelRef->selectedBone())));
 }

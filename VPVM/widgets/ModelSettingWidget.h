@@ -93,10 +93,10 @@ private:
     void createEdgeColorDialog(const QColor &color);
     QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
 
-    QPointer<QLabel> m_edgeOffsetLabel;
+    QPointer<QGroupBox> m_edgeGroup;
     QPointer<QDoubleSpinBox> m_edgeOffsetSpinBox;
     QPointer<QPushButton> m_edgeColorDialogOpenButton;
-    QPointer<QLabel> m_opacityLabel;
+    QPointer<QGroupBox> m_opacityGroup;
     QPointer<QSlider> m_opacitySlider;
     QPointer<QSpinBox> m_opacitySpinBox;
     QPointer<QGroupBox> m_shadowGroup;

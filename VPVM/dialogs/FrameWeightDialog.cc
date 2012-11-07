@@ -136,6 +136,7 @@ QDoubleSpinBox *FrameWeightDialog::createSpinBox(const char *slot)
 {
     QScopedPointer<QDoubleSpinBox> weightBox(new QDoubleSpinBox());
     connect(weightBox.data(), SIGNAL(valueChanged(double)), slot);
+    weightBox->setAlignment(Qt::AlignRight);
     weightBox->setMinimum(0.01);
     weightBox->setSingleStep(0.01);
     weightBox->setValue(1.0);

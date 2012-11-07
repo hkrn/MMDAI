@@ -204,6 +204,7 @@ QSpinBox *InterpolationDialog::createSpinBox(int defaultValue,
                                              const char *slot)
 {
     QScopedPointer<QSpinBox> spinBox(new QSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
     spinBox->setRange(0, 127);
     connect(spinBox.data(), SIGNAL(valueChanged(int)), m_graphWidget.data(), slot);
     connect(m_graphWidget.data(), signal, spinBox.data(), SLOT(setValue(int)));

@@ -46,6 +46,9 @@ namespace vpvm
 
 using namespace vpvl2;
 
+static const Scalar kMaxFar = 10000;
+static const Scalar kMaxAngle = 360;
+
 CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent)
     : QWidget(parent),
       m_currentPosition(0.0f, 0.0f, 0.0f),
@@ -61,18 +64,18 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent)
       m_cameraButton(new QPushButton()),
       m_fovyLabel(new QLabel()),
       m_distanceLabel(new QLabel()),
-      m_px(new QDoubleSpinBox()),
-      m_py(new QDoubleSpinBox()),
-      m_pz(new QDoubleSpinBox()),
-      m_rx(new QDoubleSpinBox()),
-      m_ry(new QDoubleSpinBox()),
-      m_rz(new QDoubleSpinBox()),
+      m_px(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_py(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_pz(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_rx(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_ry(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_rz(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
       m_followGroup(new QGroupBox()),
       m_followNone(new QRadioButton()),
       m_followModel(new QRadioButton()),
       m_followBone(new QRadioButton()),
-      m_fovy(new QDoubleSpinBox()),
-      m_distance(new QDoubleSpinBox()),
+      m_fovy(createSpinBox(0.1, 0.1, 125)),
+      m_distance(createSpinBox(1, -kMaxFar, kMaxFar)),
       m_initializeButton(new QPushButton()),
       m_currentFovy(0.0f),
       m_currentDistance(0.0f),
@@ -103,29 +106,19 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent)
     mainLayout->addWidget(m_presetGroup.data());
     /* 位置(X,Y,Z) */
     QScopedPointer<QFormLayout> formLayout(new QFormLayout());
-    const Scalar &zfar = 10000;
-    m_px->setRange(-zfar, zfar);
     connect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
     formLayout->addRow("X", m_px.data());
-    m_py->setRange(-zfar, zfar);
     connect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
     formLayout->addRow("Y", m_py.data());
-    m_pz->setRange(-zfar, zfar);
     connect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
     formLayout->addRow("Z", m_pz.data());
     m_positionGroup->setLayout(formLayout.take());
     /* 回転(X,Y,Z) */
     formLayout.reset(new QFormLayout());
-    m_rx->setRange(-180.0, 180.0);
-    m_rx->setSingleStep(0.1);
     connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
     formLayout->addRow("X", m_rx.data());
-    m_ry->setSingleStep(0.1);
-    m_ry->setRange(-180.0, 180.0);
     connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
     formLayout->addRow("Y", m_ry.data());
-    m_rz->setSingleStep(0.1);
-    m_rz->setRange(-180.0, 180.0);
     connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
     formLayout->addRow("Z", m_rz.data());
     m_rotationGroup->setLayout(formLayout.take());
@@ -144,14 +137,10 @@ CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent)
     subLayout.reset(new QHBoxLayout());
     /* 視野角 */
     subLayout->addWidget(m_fovyLabel.data());
-    m_fovy->setSingleStep(0.1);
-    m_fovy->setRange(0.1, 125.0);
     connect(m_fovy.data(), SIGNAL(valueChanged(double)), this, SLOT(updateFovy(double)));
     subLayout->addWidget(m_fovy.data());
     /* 距離 */
     subLayout->addWidget(m_distanceLabel.data());
-    m_distance->setSingleStep(1.0);
-    m_distance->setRange(-zfar, zfar);
     connect(m_distance.data(), SIGNAL(valueChanged(double)), this, SLOT(updateDistance(double)));
     subLayout->addWidget(m_distance.data());
     mainLayout->addLayout(subLayout.take());
@@ -331,6 +320,15 @@ void CameraPerspectiveWidget::setPositionFromBone(const QList<IBone *> &bones)
         m_currentPosition = bones.first()->worldTransform().getOrigin();
         emit cameraPerspectiveDidChange(createCamera());
     }
+}
+
+QDoubleSpinBox *CameraPerspectiveWidget::createSpinBox(double step, double min, double max)
+{
+    QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
+    spinBox->setRange(min, max);
+    spinBox->setSingleStep(step);
+    return spinBox.take();
 }
 
 QSharedPointer<ICamera> CameraPerspectiveWidget::createCamera() const

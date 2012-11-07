@@ -49,10 +49,10 @@ using namespace vpvl2;
 
 ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     : QWidget(parent),
-      m_edgeOffsetLabel(new QLabel()),
+      m_edgeGroup(new QGroupBox()),
       m_edgeOffsetSpinBox(new QDoubleSpinBox()),
       m_edgeColorDialogOpenButton(new QPushButton()),
-      m_opacityLabel(new QLabel()),
+      m_opacityGroup(new QGroupBox()),
       m_opacitySlider(new QSlider(Qt::Horizontal)),
       m_opacitySpinBox(new QSpinBox()),
       m_shadowGroup(new QGroupBox()),
@@ -71,7 +71,6 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
 {
     /* エッジ幅 */
     connect(m_edgeOffsetSpinBox.data(), SIGNAL(valueChanged(double)), SIGNAL(edgeOffsetDidChange(double)));
-    m_edgeOffsetSpinBox->setEnabled(false);
     m_edgeOffsetSpinBox->setSingleStep(0.1);
     m_edgeOffsetSpinBox->setRange(0.0, 2.0);
     /* エッジ色 */
@@ -83,7 +82,6 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     connect(m_opacitySpinBox.data(), SIGNAL(valueChanged(int)), m_opacitySlider.data(), SLOT(setValue(int)));
     connect(m_opacitySpinBox.data(), SIGNAL(valueChanged(int)), SLOT(emitOpacitySignal(int)));
     /* 影の種類の選択 */
-    m_shadowGroup->setEnabled(false);
     m_noShadowCheckbox->setChecked(true);
     connect(m_projectiveShadowCheckbox.data(), SIGNAL(toggled(bool)), SIGNAL(projectiveShadowDidEnable(bool)));
     connect(m_selfShadowCheckbox.data(), SIGNAL(toggled(bool)), SIGNAL(selfShadowDidEnable(bool)));
@@ -106,16 +104,16 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     QScopedPointer<QLayout> subLayout(new QHBoxLayout());
     subLayout->setAlignment(Qt::AlignCenter);
-    subLayout->addWidget(m_opacityLabel.data());
     subLayout->addWidget(m_opacitySlider.data());
     subLayout->addWidget(m_opacitySpinBox.data());
-    mainLayout->addLayout(subLayout.take());
+    m_opacityGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_opacityGroup.data());
     subLayout.reset(new QHBoxLayout());
     subLayout->setAlignment(Qt::AlignCenter);
-    subLayout->addWidget(m_edgeOffsetLabel.data());
     subLayout->addWidget(m_edgeOffsetSpinBox.data());
     subLayout->addWidget(m_edgeColorDialogOpenButton.data());
-    mainLayout->addLayout(subLayout.take());
+    m_edgeGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_edgeGroup.data());
     subLayout.reset(new QVBoxLayout());
     subLayout->addWidget(m_noShadowCheckbox.data());
     subLayout->addWidget(m_projectiveShadowCheckbox.data());
@@ -129,6 +127,7 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     mainLayout->addStretch();
     setLayout(mainLayout.take());
     retranslate();
+    setModel(0, 0);
 }
 
 ModelSettingWidget::~ModelSettingWidget()
@@ -137,15 +136,15 @@ ModelSettingWidget::~ModelSettingWidget()
 
 void ModelSettingWidget::retranslate()
 {
-    m_edgeOffsetLabel->setText(tr("Edge offset:"));
+    m_edgeGroup->setTitle(tr("Edge Offset"));
     m_edgeColorDialogOpenButton->setText(tr("Color"));
-    m_opacityLabel->setText(tr("Opacity:"));
+    m_opacityGroup->setTitle(tr("Opacity"));
     m_shadowGroup->setTitle(tr("Shadow"));
-    m_noShadowCheckbox->setText(tr("Disable shadow"));
-    m_projectiveShadowCheckbox->setText(tr("Enable projective shadow"));
-    m_selfShadowCheckbox->setText(tr("Enable self shadow"));
-    m_positionGroup->setTitle(tr("Position offset"));
-    m_rotationGroup->setTitle(tr("Rotation offset"));
+    m_noShadowCheckbox->setText(tr("Disable Shadow"));
+    m_projectiveShadowCheckbox->setText(tr("Enable Projective Shadow"));
+    m_selfShadowCheckbox->setText(tr("Enable Self Shadow"));
+    m_positionGroup->setTitle(tr("Position Offset"));
+    m_rotationGroup->setTitle(tr("Rotation Offset"));
 }
 
 void ModelSettingWidget::openEdgeColorDialog()
@@ -163,13 +162,9 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         const QColor &c = QColor::fromRgbF(color.x(), color.y(), color.z());
         createEdgeColorDialog(c);
         m_edgeOffsetSpinBox->setValue(model->edgeWidth());
-        m_edgeOffsetSpinBox->setEnabled(true);
-        m_opacitySlider->setEnabled(true);
-        m_opacitySpinBox->setEnabled(true);
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
-        m_shadowGroup->setEnabled(true);
-        m_noShadowCheckbox->setChecked(true);
         m_edgeColorDialog->setCurrentColor(c);
+        m_noShadowCheckbox->setChecked(true);
         if (loader) {
             m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
             m_selfShadowCheckbox->setChecked(loader->isSelfShadowEnabled(model));
@@ -193,13 +188,11 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
             m_ry->setValue(0.0);
             m_rz->setValue(0.0);
         }
+        setEnabled(true);
     }
     else {
         m_edgeOffsetSpinBox->setValue(0.0f);
-        m_edgeOffsetSpinBox->setEnabled(false);
-        m_shadowGroup->setEnabled(true);
-        m_opacitySlider->setEnabled(false);
-        m_opacitySpinBox->setEnabled(false);
+        m_opacitySlider->setValue(0);
         m_opacitySpinBox->setValue(0);
         m_px->setValue(0.0);
         m_py->setValue(0.0);
@@ -207,6 +200,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_rx->setValue(0.0);
         m_ry->setValue(0.0);
         m_rz->setValue(0.0);
+        setEnabled(false);
     }
     enableSignals();
 }
@@ -269,6 +263,7 @@ void ModelSettingWidget::enableSignals()
 QDoubleSpinBox *ModelSettingWidget::createSpinBox(const char *slot, double min, double max, double step) const
 {
     QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
     spinBox->setRange(min, max);
     spinBox->setSingleStep(step);
     connect(spinBox.data(), SIGNAL(valueChanged(double)), slot);

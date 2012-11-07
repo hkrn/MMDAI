@@ -96,6 +96,7 @@ private slots:
     void setAssetProperties(IModel *asset, SceneLoader *loader);
 
 private:
+    static QDoubleSpinBox *createSpinBox(double step, double min, double max);
     void setEnable(bool value);
     void updateModelBoneComboBox(IModel *model);
     int modelIndexOf(IModel *model);

@@ -48,6 +48,9 @@ namespace vpvm
 
 using namespace vpvl2;
 
+static const Scalar kMaxFar = 10000;
+static const Scalar kMaxAngle = 360;
+
 AssetWidget::AssetWidget(QWidget *parent)
     : QWidget(parent),
       m_assetGroup(new QGroupBox()),
@@ -58,14 +61,14 @@ AssetWidget::AssetWidget(QWidget *parent)
       m_modelComboBox(new QComboBox()),
       m_modelBonesComboBox(new QComboBox()),
       m_removeButton(new QPushButton()),
-      m_px(new QDoubleSpinBox()),
-      m_py(new QDoubleSpinBox()),
-      m_pz(new QDoubleSpinBox()),
-      m_rx(new QDoubleSpinBox()),
-      m_ry(new QDoubleSpinBox()),
-      m_rz(new QDoubleSpinBox()),
-      m_scale(new QDoubleSpinBox()),
-      m_opacity(new QDoubleSpinBox()),
+      m_px(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_py(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_pz(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_rx(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_ry(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_rz(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_scale(createSpinBox(0.1, 0.01, 1000)),
+      m_opacity(createSpinBox(0.01, 0, 1)),
       m_assetCompleterModel(new QStringListModel()),
       m_scaleLabel(new QLabel()),
       m_opacityLabel(new QLabel()),
@@ -98,30 +101,20 @@ AssetWidget::AssetWidget(QWidget *parent)
     m_assignGroup->setLayout(subLayout.take());
     mainLayout->addWidget(m_assignGroup.data());
     /* 位置(X,Y,Z) */
-    const Scalar &zfar = 10000;
     QScopedPointer<QFormLayout> formLayout(new QFormLayout());
-    m_px->setRange(-zfar, zfar);
     connect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
     formLayout->addRow("X", m_px.data());
-    m_py->setRange(-zfar, zfar);
     connect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
     formLayout->addRow("Y", m_py.data());
-    m_pz->setRange(-zfar, zfar);
     connect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
     formLayout->addRow("Z", m_pz.data());
     m_positionGroup->setLayout(formLayout.take());
     /* 回転(X,Y,Z) */
     formLayout.reset(new QFormLayout());
-    m_rx->setRange(-180.0, 180.0);
-    m_rx->setSingleStep(0.1);
     connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
     formLayout->addRow("X", m_rx.data());
-    m_ry->setSingleStep(0.1);
-    m_ry->setRange(-180.0, 180.0);
     connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
     formLayout->addRow("Y", m_ry.data());
-    m_rz->setSingleStep(0.1);
-    m_rz->setRange(-180.0, 180.0);
     connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
     formLayout->addRow("Z", m_rz.data());
     m_rotationGroup->setLayout(formLayout.take());
@@ -132,14 +125,10 @@ AssetWidget::AssetWidget(QWidget *parent)
     subLayout.reset(new QHBoxLayout());
     /* 拡大率 */
     subLayout->addWidget(m_scaleLabel.data());
-    m_scale->setSingleStep(0.1);
-    m_scale->setRange(0.01, 10000.0);
     connect(m_scale.data(), SIGNAL(valueChanged(double)), this, SLOT(updateScaleFactor(double)));
     subLayout->addWidget(m_scale.data());
     /* 不透明度 */
     subLayout->addWidget(m_opacityLabel.data());
-    m_opacity->setSingleStep(0.01);
-    m_opacity->setRange(0.0, 1.0);
     connect(m_opacity.data(), SIGNAL(valueChanged(double)), this, SLOT(updateOpacity(double)));
     subLayout->addWidget(m_opacity.data());
     mainLayout->addLayout(subLayout.take());
@@ -362,6 +351,15 @@ void AssetWidget::setAssetProperties(IModel *asset, SceneLoader *loader)
         }
         changeCurrentAsset(asset);
     }
+}
+
+QDoubleSpinBox *AssetWidget::createSpinBox(double step, double min, double max)
+{
+    QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
+    spinBox->setRange(min, max);
+    spinBox->setSingleStep(step);
+    return spinBox.take();
 }
 
 void AssetWidget::setEnable(bool value)

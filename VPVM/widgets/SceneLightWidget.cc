@@ -151,6 +151,7 @@ void SceneLightWidget::setQColor(const QColor &value)
 QSpinBox *SceneLightWidget::createSpinBox(const char *slot) const
 {
     QScopedPointer<QSpinBox> spinBox(new QSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
     spinBox->setRange(0, 255);
     spinBox->setSingleStep(1);
     connect(spinBox.data(), SIGNAL(valueChanged(int)), slot);
@@ -160,6 +161,7 @@ QSpinBox *SceneLightWidget::createSpinBox(const char *slot) const
 QDoubleSpinBox *SceneLightWidget::createDoubleSpinBox(const char *slot) const
 {
     QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
     spinBox->setRange(-1.0, 1.0);
     spinBox->setSingleStep(0.01);
     spinBox->setDecimals(3);

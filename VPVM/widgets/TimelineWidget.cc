@@ -159,13 +159,13 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     /* キーフレームの登録処理 */
     connect(m_button.data(), SIGNAL(clicked()), m_treeView.data(), SLOT(addKeyframesBySelectedIndices()));
-    QHBoxLayout *spinboxLayout = new QHBoxLayout();
+    QScopedPointer<QHBoxLayout> spinboxLayout(new QHBoxLayout());
     spinboxLayout->addWidget(m_label.data());
     spinboxLayout->addWidget(m_spinBox.data());
     spinboxLayout->addWidget(m_button.data());
     spinboxLayout->setAlignment(Qt::AlignCenter);
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
-    mainLayout->addLayout(spinboxLayout);
+    mainLayout->addLayout(spinboxLayout.take());
     mainLayout->addWidget(m_treeView.data());
     mainLayout->setContentsMargins(QMargins());
     QItemSelectionModel *sm = m_treeView->selectionModel();
