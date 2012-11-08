@@ -129,7 +129,6 @@ static QGLFormat UIGetQGLFormat()
 {
     QGLFormat format;
     format.setSampleBuffers(true);
-    format.setSwapInterval(60);
 #ifdef Q_OS_DARWIN
     format.setSamples(4);
     format.setRedBufferSize(16);
@@ -295,8 +294,8 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
 {
     m_actionRecentFiles.reserve(kMaxRecentFiles);
     m_loggerWidgetRef = LoggerWidget::createInstance(&m_settings);
-    buildUI();
-    connectWidgets();
+    createActionsAndMenus();
+    bindWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
     updateWindowTitle();
@@ -714,7 +713,7 @@ bool MainWindow::confirmSave(bool condition, bool &cancel)
     return false;
 }
 
-void MainWindow::buildUI()
+void MainWindow::createActionsAndMenus()
 {
     m_timelineDockWidget->setWidget(m_timelineTabWidget.data());
     m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/timelineDockWidgetGeometry").toByteArray());
@@ -1364,7 +1363,7 @@ void MainWindow::retranslate()
     m_menuAcceleration->setTitle(tr("Set acceleration type"));
 }
 
-void MainWindow::connectSceneLoader()
+void MainWindow::bindSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
@@ -1466,9 +1465,9 @@ void MainWindow::connectSceneLoader()
     loader->setCameraMotion(cameraMotionPtr.take());
 }
 
-void MainWindow::connectWidgets()
+void MainWindow::bindWidgets()
 {
-    connect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), SLOT(connectSceneLoader()));
+    connect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), SLOT(bindSceneLoader()));
     connect(m_sceneWidget.data(), SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveAbsolute(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateTo(Vector3,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveRelative(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateDelta(Vector3,IBone*,int)));

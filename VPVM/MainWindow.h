@@ -103,7 +103,7 @@ protected:
     void showEvent(QShowEvent *event);
 
 private slots:
-    void connectSceneLoader();
+    void bindSceneLoader();
     void newMotionFile();
     void newProjectFile();
     void loadProject();
@@ -158,10 +158,10 @@ private:
     bool maybeSaveMotion();
     bool maybeSaveProject();
     bool confirmSave(bool condition, bool &cancel);
-    void buildUI();
+    void createActionsAndMenus();
     void bindActions();
+    void bindWidgets();
     void retranslate();
-    void connectWidgets();
     void updateInformation();
     void updateWindowTitle();
     void saveWindowStateAndResize(const QSize &videoSize, WindowState &state);
