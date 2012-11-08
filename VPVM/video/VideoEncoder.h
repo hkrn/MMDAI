@@ -63,8 +63,8 @@ public:
     void setSceneFPS(int value);
     bool isRunning() const { return m_running; }
     bool isFinished() const { return !m_running; }
-    int sizeofVideoFrameQueue() const;
-    int sizeOfAudioSampleQueue() const;
+    int64_t sizeofVideoFrameQueue() const;
+    int64_t sizeofAudioSampleQueue() const;
 
 protected:
     virtual void run();

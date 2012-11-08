@@ -1661,6 +1661,7 @@ void MainWindow::invokeVideoEncoder()
             sampleRate = 44100;
             bitRate = 64000;
         }
+        /* エンコード設定（ファイル名決定やFPSの設定など） */
         const QSize videoSize(width, height);
         m_videoEncoder.reset(new VideoEncoder(this));
         m_videoEncoder->setFileName(filename);

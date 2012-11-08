@@ -20,7 +20,7 @@ public:
     virtual void setSceneFPS(int value) = 0;
     virtual bool isRunning() const = 0;
     virtual bool isFinished() const = 0;
-    virtual int sizeofVideoFrameQueue() const = 0;
+    virtual int64_t sizeofVideoFrameQueue() const = 0;
 
 protected:
     virtual void audioSamplesDidQueue(const QByteArray &value) = 0;
