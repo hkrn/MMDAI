@@ -45,9 +45,10 @@
 namespace vpvm
 {
 
-BoneUIDelegate::BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent) :
+BoneUIDelegate::BoneUIDelegate(BoneMotionModel *bmm, QSettings *settings, MainWindow *parent) :
     QObject(parent),
     m_parentRef(parent),
+    m_settingsRef(settings),
     m_boneMotionModelRef(bmm)
 {
 }
@@ -123,7 +124,7 @@ void BoneUIDelegate::resetAllBones()
 void BoneUIDelegate::openBoneDialog()
 {
     if (m_boneMotionModelRef->isBoneSelected()) {
-        BoneDialog *dialog = new BoneDialog(m_boneMotionModelRef, m_parentRef);
+        BoneDialog *dialog = new BoneDialog(m_boneMotionModelRef, m_settingsRef, m_parentRef);
         dialog->exec();
     }
     else {

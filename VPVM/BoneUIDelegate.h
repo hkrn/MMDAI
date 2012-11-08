@@ -39,6 +39,8 @@
 
 #include <QtCore/QObject>
 
+class QSettings;
+
 namespace vpvm
 {
 
@@ -50,7 +52,7 @@ class BoneUIDelegate : public QObject
     Q_OBJECT
 
 public:
-    BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent);
+    BoneUIDelegate(BoneMotionModel *bmm, QSettings *settings, MainWindow *parent);
     ~BoneUIDelegate();
 
 private slots:
@@ -63,6 +65,7 @@ private slots:
 
 private:
     MainWindow *m_parentRef;
+    QSettings *m_settingsRef;
     BoneMotionModel *m_boneMotionModelRef;
 
     Q_DISABLE_COPY(BoneUIDelegate)

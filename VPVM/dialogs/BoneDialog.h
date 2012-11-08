@@ -43,6 +43,7 @@
 class QDoubleSpinBox;
 class QGroupBox;
 class QLabel;
+class QSettings;
 
 namespace vpvm
 {
@@ -55,7 +56,7 @@ class BoneDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit BoneDialog(BoneMotionModel *bmm, QWidget *parent = 0);
+    explicit BoneDialog(BoneMotionModel *bmm, QSettings *settings, QWidget *parent = 0);
     ~BoneDialog();
 
 private slots:
@@ -68,24 +69,33 @@ private slots:
     void setXAngle(double value);
     void setYAngle(double value);
     void setZAngle(double value);
+    void setPositionStep(double value);
+    void setRotationStep(double value);
     void dialogAccepted();
     void dialogRejected();
 
 private:
+    static QDoubleSpinBox *createSpinBox();
+
     QScopedPointer<QGroupBox> m_positionGroup;
     QScopedPointer<QGroupBox> m_rotationGroup;
     QScopedPointer<QLabel> m_xPositionLabel;
     QScopedPointer<QLabel> m_yPositionLabel;
     QScopedPointer<QLabel> m_zPositionLabel;
+    QScopedPointer<QLabel> m_stepPositionLabel;
     QScopedPointer<QLabel> m_xAngleLabel;
     QScopedPointer<QLabel> m_yAngleLabel;
     QScopedPointer<QLabel> m_zAngleLabel;
+    QScopedPointer<QLabel> m_stepRotationLabel;
     QScopedPointer<QDoubleSpinBox> m_xPosition;
     QScopedPointer<QDoubleSpinBox> m_yPosition;
     QScopedPointer<QDoubleSpinBox> m_zPosition;
+    QScopedPointer<QDoubleSpinBox> m_stepPosition;
     QScopedPointer<QDoubleSpinBox> m_xAngle;
     QScopedPointer<QDoubleSpinBox> m_yAngle;
     QScopedPointer<QDoubleSpinBox> m_zAngle;
+    QScopedPointer<QDoubleSpinBox> m_stepRotation;
+    QSettings *m_settingsRef;
     BoneMotionModel *m_boneMotionModelRef;
 
     Q_DISABLE_COPY(BoneDialog)

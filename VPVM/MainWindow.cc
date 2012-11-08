@@ -177,7 +177,7 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_sceneMotionModel(new SceneMotionModel(m_factory.data(), m_undo.data(), m_sceneWidget.data())),
       m_modelTabWidget(new ModelTabWidget(&m_settings, m_morphMotionModel.data())),
       m_timelineTabWidget(new TimelineTabWidget(&m_settings, m_boneMotionModel.data(), m_morphMotionModel.data(), m_sceneMotionModel.data())),
-      m_boneUIDelegate(new BoneUIDelegate(m_boneMotionModel.data(), this)),
+      m_boneUIDelegate(new BoneUIDelegate(m_boneMotionModel.data(), &m_settings, this)),
       m_timelineDockWidget(new QDockWidget(this)),
       m_sceneDockWidget(new QDockWidget(this)),
       m_modelDockWidget(new QDockWidget(this)),
