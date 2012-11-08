@@ -222,7 +222,7 @@ TEST(ProjectTest, Load)
     ASSERT_EQ(size_t(4), project.modelUUIDs().size());
     ASSERT_EQ(size_t(3), project.motionUUIDs().size());
     TestGlobalSettings(project);
-    //TestLocalSettings(project);
+    TestLocalSettings(project);
     /* VMD motion for model */
     IMotion *motion = project.findMotion(kMotion1UUID);
     ASSERT_EQ(IMotion::kVMD, motion->type());

@@ -249,6 +249,7 @@ private slots:
 
 private:
     bool createModelEngine(IModel *model, const QDir &dir, IRenderEnginePtr &enginePtr);
+    void emitMotionDidAdd(const Array<IMotion *> &motions, IModel *model);
     void insertModel(IModel *model, const QString &name);
     void insertMotion(IMotion *motion, IModel *model);
     void commitAssetProperties();

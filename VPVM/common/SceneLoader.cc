@@ -697,6 +697,7 @@ void SceneLoader::loadProject(const QString &path)
                 m_renderContextRef->addModelPath(model, filename);
                 IRenderEnginePtr enginePtr;
                 if (createModelEngine(model, fileInfo.absoluteDir(), enginePtr)) {
+                    /* モデル名がないときはファイル名で補完する */
                     if (!model->name()) {
                         const CString s(fileInfo.fileName());
                         model->setName(&s);
@@ -720,18 +721,10 @@ void SceneLoader::loadProject(const QString &path)
                         const QUuid modelUUID(modelUUIDString.c_str());
                         m_renderOrderList.add(modelUUID);
                         emit modelDidAdd(model, modelUUID);
+                        /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
                         if (isModelSelected(model))
                             setSelectedModel(model);
-                        /* モデルに属するモーションを取得し、追加する */
-                        for (int i = 0; i < nmotions; i++) {
-                            IMotion *motion = motions[i];
-                            if (motion->parentModel() == model) {
-                                const Project::UUID &motionUUIDString = m_project->motionUUID(motion);
-                                const QUuid motionUUID(motionUUIDString.c_str());
-                                motion->setParentModel(model);
-                                emit motionDidAdd(motion, model, motionUUID);
-                            }
-                        }
+                        emitMotionDidAdd(motions, model);
                         emit projectDidProceed(++progress);
                         continue;
                     }
@@ -741,6 +734,10 @@ void SceneLoader::loadProject(const QString &path)
                         m_renderContextRef->setArchive(0);
                         m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
                         assets.append(model);
+                        /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
+                        if (isAssetSelected(model))
+                            setSelectedModel(model);
+                        emitMotionDidAdd(motions, model);
                         emit projectDidProceed(++progress);
                         continue;
                     }
@@ -1889,6 +1886,20 @@ Scene *SceneLoader::sceneRef() const
 qt::World *SceneLoader::worldRef() const
 {
     return m_world.data();
+}
+
+void SceneLoader::emitMotionDidAdd(const Array<IMotion *> &motions, IModel *model)
+{
+    const int nmotions = motions.count();
+    /* モデルに属するモーションを取得し、追加する */
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i];
+        if (motion->parentModel() == model) {
+            const Project::UUID &motionUUIDString = m_project->motionUUID(motion);
+            const QUuid motionUUID(motionUUIDString.c_str());
+            emit motionDidAdd(motion, model, motionUUID);
+        }
+    }
 }
 
 } /*  namespace vpvm */

@@ -1080,8 +1080,13 @@ struct Project::PrivateContext {
         if (!parentModel.empty()) {
             ModelMap::const_iterator it = models.find(parentModel);
             if (it != models.end()) {
-                if (IModel *model = models[parentModel])
-                    currentMotion->setParentModel(model);
+                currentMotion->setParentModel(it->second);
+            }
+            else {
+                ModelMap::const_iterator it2 = assets.find(parentModel);
+                if (it2 != assets.end()) {
+                    currentMotion->setParentModel(it2->second);
+                }
             }
         }
         pushState(kAnimation);
@@ -1504,9 +1509,12 @@ struct Project::PrivateContext {
         if (!uuid.empty()) {
             if (uuid != Project::kNullUUID) {
                 /* delete the previous asset before assigning to prevent memory leak */
-                IModel *&assetPtr = assets[uuid];
-                delete assetPtr;
-                assetPtr = currentAsset;
+                ModelMap::iterator it = assets.find(uuid);
+                if (it != assets.end()) {
+                    assets.erase(it);
+                    delete it->second;
+                }
+                assets.insert(std::make_pair(uuid, currentAsset));
             }
             else {
                 delete currentAsset;
@@ -1520,9 +1528,12 @@ struct Project::PrivateContext {
         if (!uuid.empty()) {
             if (uuid != Project::kNullUUID) {
                 /* delete the previous model before assigning to prevent memory leak */
-                IModel *&modelPtr = models[uuid];
-                delete modelPtr;
-                modelPtr = currentModel;
+                ModelMap::iterator it = models.find(uuid);
+                if (it != models.end()) {
+                    models.erase(it);
+                    delete it->second;
+                }
+                models.insert(std::make_pair(uuid, currentModel));
             }
             else {
                 delete currentModel;
@@ -1535,7 +1546,13 @@ struct Project::PrivateContext {
     void addMotion() {
         if (!uuid.empty()) {
             if (uuid != Project::kNullUUID && currentMotion) {
-                motions[uuid] = currentMotion;
+                MotionMap::iterator it = motions.find(uuid);
+                if (it != motions.end()) {
+                    motions.erase(it);
+                    sceneRef->removeMotion(it->second);
+                    delete it->second;
+                }
+                motions.insert(std::make_pair(uuid, currentMotion));
                 sceneRef->addMotion(currentMotion);
             }
             else {
@@ -1742,11 +1759,11 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
     if (!containsModel(model)) {
         switch (model->type()) {
         case IModel::kAsset:
-            m_context->assets[uuid] = model;
+            m_context->assets.insert(std::make_pair(uuid, model));
             break;
         case IModel::kPMD:
         case IModel::kPMX:
-            m_context->models[uuid] = model;
+            m_context->models.insert(std::make_pair(uuid, model));
             break;
         default:
             return;
@@ -1759,7 +1776,7 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
 void Project::addMotion(IMotion *motion, const UUID &uuid)
 {
     if (!containsMotion(motion)) {
-        m_context->motions[uuid] = motion;
+        m_context->motions.insert(std::make_pair(uuid, motion));
         Scene::addMotion(motion);
         setDirty(true);
     }
