@@ -321,12 +321,13 @@ bool AssetRenderEngine::upload(const IString *dir)
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions(QGLContext::currentContext());
 #endif /* VPVL2_LINK_QT */
+    void *userData = 0;
+    m_renderContextRef->allocateUserData(m_modelRef, userData);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     const aiScene *scene = m_modelRef->aiScenePtr();
     const unsigned int nmaterials = scene->mNumMaterials;
-    void *context = 0;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    m_renderContextRef->allocateUserData(m_modelRef, context);
     IRenderContext::Texture texture;
     GLuint textureID = 0;
     texture.object = &textureID;
@@ -340,53 +341,54 @@ bool AssetRenderEngine::upload(const IString *dir)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_context->textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, IRenderContext::kTexture2D, texture, context);
+                    ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, IRenderContext::kTexture2D, texture, userData);
                     if (ret) {
                         m_context->textures[mainTexture] = textureID = *static_cast<const GLuint *>(texture.object);
-                        log0(context, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                        log0(userData, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                         delete mainTexturePath;
                     }
                     else {
                         delete mainTexturePath;
-                        m_renderContextRef->releaseUserData(m_modelRef, context);
+                        m_renderContextRef->releaseUserData(m_modelRef, userData);
                         return ret;
                     }
                 }
                 if (m_context->textures[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    ret = m_renderContextRef->uploadTexture(subTexturePath, dir, IRenderContext::kTexture2D, texture, context);
+                    ret = m_renderContextRef->uploadTexture(subTexturePath, dir, IRenderContext::kTexture2D, texture, userData);
                     if (ret) {
                         m_context->textures[subTexture] = textureID = *static_cast<const GLuint *>(texture.object);
-                        log0(context, IRenderContext::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
+                        log0(userData, IRenderContext::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
                         delete subTexturePath;
                     }
                     else {
                         delete subTexturePath;
-                        m_renderContextRef->releaseUserData(m_modelRef, context);
+                        m_renderContextRef->releaseUserData(m_modelRef, userData);
                         return ret;
                     }
                 }
             }
             else if (m_context->textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, IRenderContext::kTexture2D, texture, context);
+                ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, IRenderContext::kTexture2D, texture, userData);
                 if (ret) {
                     m_context->textures[mainTexture] = textureID = *static_cast<const GLuint *>(texture.object);
-                    log0(context, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                    log0(userData, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                     delete mainTexturePath;
                 }
                 else {
                     delete mainTexturePath;
-                    m_renderContextRef->releaseUserData(m_modelRef, context);
+                    m_renderContextRef->releaseUserData(m_modelRef, userData);
                     return ret;
                 }
             }
             textureIndex++;
         }
     }
-    ret = uploadRecurse(scene, scene->mRootNode, dir, context);
+    ret = uploadRecurse(scene, scene->mRootNode, dir, userData);
     m_modelRef->setVisible(ret);
-    m_renderContextRef->releaseUserData(m_modelRef, context);
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;
 }
 

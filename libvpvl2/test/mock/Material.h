@@ -44,7 +44,7 @@ class MockIMaterial : public IMaterial {
       int());
   MOCK_CONST_METHOD0(toonTextureIndex,
       int());
-  MOCK_CONST_METHOD0(indices,
+  MOCK_CONST_METHOD0(sizeofIndices,
       int());
   MOCK_CONST_METHOD0(isSharedToonTextureUsed,
       bool());

@@ -309,9 +309,10 @@ AssertionResult CompareMaterialInterface(const IMaterial &expected, const IMater
                                   << expected.toonTextureIndex()
                                   << " actual=" << actual.toonTextureIndex();
     }
-    if (expected.indices() != actual.indices()) {
-        return AssertionFailure() << "Material#indices is not same: expected=" << expected.indices()
-                                  << " actual=" << actual.indices();
+    if (expected.sizeofIndices() != actual.sizeofIndices()) {
+        return AssertionFailure() << "Material#sizeofIndices is not same: expected="
+                                  << expected.sizeofIndices()
+                                  << " actual=" << actual.sizeofIndices();
     }
     return AssertionSuccess();
 }

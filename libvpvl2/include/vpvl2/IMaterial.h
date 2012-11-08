@@ -85,7 +85,7 @@ public:
     virtual int textureIndex() const = 0;
     virtual int sphereTextureIndex() const = 0;
     virtual int toonTextureIndex() const = 0;
-    virtual int indices() const = 0;
+    virtual int sizeofIndices() const = 0;
     virtual bool isSharedToonTextureUsed() const = 0;
     virtual bool isCullFaceDisabled() const = 0;
     virtual bool hasShadow() const = 0;

@@ -82,6 +82,7 @@ public:
         kMaxMousePositionType
     };
     enum ProfileType {
+        kProfileUploadModelProcess,
         kProfileRenderModelProcess,
         kProfileRenderModelMaterialDrawCall,
         kProfileRenderEdgeProcess,

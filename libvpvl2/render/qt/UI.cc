@@ -185,7 +185,7 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
     debug << "\n";
     debug << "         edgeSize                = " << material->edgeSize();
     debug << "\n";
-    debug << "         indices                 = " << material->indices();
+    debug << "         indices                 = " << material->sizeofIndices();
     debug << "\n";
     debug << "         isSharedToonTextureUsed = " << material->isSharedToonTextureUsed();
     debug << "\n";

@@ -194,7 +194,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
                 material->m_toonTextureRef = textures[toonTextureIndex];
         }
         material->m_index = i;
-        actualIndices += material->indices();
+        actualIndices += material->sizeofIndices();
     }
     return actualIndices == expectedIndices;
 }

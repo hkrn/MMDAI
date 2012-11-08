@@ -255,7 +255,7 @@ public:
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
     int toonTextureIndex() const { return -1; }
-    int indices() const { return m_nindices; }
+    int sizeofIndices() const { return m_nindices; }
     bool isSharedToonTextureUsed() const { return false; }
     bool isCullFaceDisabled() const { return !btFuzzyZero(m_diffuse.w() - 1); }
     bool hasShadow() const { return false; }

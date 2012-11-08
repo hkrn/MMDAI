@@ -166,7 +166,7 @@ public:
     int textureIndex() const { return m_textureIndex; }
     int sphereTextureIndex() const { return m_sphereTextureIndex; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
-    int indices() const { return m_indices; }
+    int sizeofIndices() const { return m_indices; }
     bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
     bool isCullFaceDisabled() const;
     bool hasShadow() const;

@@ -126,21 +126,22 @@ IModel *PMXRenderEngine::model() const
 
 bool PMXRenderEngine::upload(const IString *dir)
 {
-    void *context = 0;
-    m_renderContextRef->allocateUserData(m_modelRef, context);
-    if (!uploadMaterials(dir, context)) {
-        return releaseUserData0(context);
+    void *userData = 0;
+    m_renderContextRef->allocateUserData(m_modelRef, userData);
+    m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    if (!uploadMaterials(dir, userData)) {
+        return releaseUserData0(userData);
     }
     glGenBuffers(kMaxVertexBufferObjectType, m_vertexBufferObjects);
     GLuint dvbo0 = m_vertexBufferObjects[kModelDynamicVertexBufferEven];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo0);
     glBufferData(GL_ARRAY_BUFFER, m_dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(context, IRenderContext::kLogInfo,
+    log0(userData, IRenderContext::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo0);
     GLuint dvbo1 = m_vertexBufferObjects[kModelDynamicVertexBufferOdd];
     glBindBuffer(GL_ARRAY_BUFFER, dvbo1);
     glBufferData(GL_ARRAY_BUFFER, m_dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(context, IRenderContext::kLogInfo,
+    log0(userData, IRenderContext::kLogInfo,
          "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo1);
     GLuint svbo = m_vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
@@ -148,31 +149,31 @@ bool PMXRenderEngine::upload(const IString *dir)
     void *address = mapBuffer(GL_ARRAY_BUFFER, 0, m_staticBuffer->size());
     m_staticBuffer->update(address);
     unmapBuffer(GL_ARRAY_BUFFER, address);
-    log0(context, IRenderContext::kLogInfo,
+    log0(userData, IRenderContext::kLogInfo,
          "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
     GLuint ibo = m_vertexBufferObjects[kModelIndexBuffer];
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer->size(), m_indexBuffer->bytes(), GL_STATIC_DRAW);
-    log0(context, IRenderContext::kLogInfo, "Binding indices to the vertex buffer object (ID=%d)", ibo);
+    log0(userData, IRenderContext::kLogInfo, "Binding indices to the vertex buffer object (ID=%d)", ibo);
     allocateVertexArrayObjects(m_vertexArrayObjects, kMaxVertexArrayObjectType);
     GLuint vao = m_vertexArrayObjects[kVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderContext::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
+        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
     }
     createVertexBundle(dvbo0, svbo, ibo);
     vao = m_vertexArrayObjects[kVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
+        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
         createVertexBundle(dvbo1, svbo, ibo);
     }
     vao = m_vertexArrayObjects[kEdgeVertexArrayObjectEven];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
+        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
     }
     createEdgeBundle(dvbo0, svbo, ibo);
     vao = m_vertexArrayObjects[kEdgeVertexArrayObjectOdd];
     if (bindVertexArrayObject(vao)) {
-        log0(context, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
+        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
         createEdgeBundle(dvbo1, svbo, ibo);
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -182,15 +183,16 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_accelerator->release(m_accelerationBuffers);
         m_accelerationBuffers.add(cl::PMXAccelerator::Buffer(m_vertexBufferObjects[kModelDynamicVertexBufferEven]));
         m_accelerationBuffers.add(cl::PMXAccelerator::Buffer(m_vertexBufferObjects[kModelDynamicVertexBufferOdd]));
-        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer, context);
+        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer, userData);
     }
 #endif
     m_sceneRef->updateModel(m_modelRef);
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    log0(context, IRenderContext::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
-    m_renderContextRef->releaseUserData(m_modelRef, context);
+    log0(userData, IRenderContext::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
+    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_renderContextRef->releaseUserData(m_modelRef, userData);
     return true;
 }
 
@@ -267,7 +269,7 @@ void PMXRenderEngine::renderModel()
             glEnable(GL_CULL_FACE);
             m_cullFaceState = true;
         }
-        const int nindices = material->indices();
+        const int nindices = material->sizeofIndices();
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
@@ -298,7 +300,7 @@ void PMXRenderEngine::renderEdge()
     bindEdgeBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
-        const int nindices = material->indices();
+        const int nindices = material->sizeofIndices();
         if (material->isEdgeDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("edge", i, nmaterials, false, false, true);
             m_currentRef->edgeColor.setGeometryColor(material->edgeColor());
@@ -327,7 +329,7 @@ void PMXRenderEngine::renderShadow()
     bindVertexBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
-        const int nindices = material->indices();
+        const int nindices = material->sizeofIndices();
         CGtechnique technique = m_currentRef->findTechnique("shadow", i, nmaterials, false, false, true);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
@@ -353,7 +355,7 @@ void PMXRenderEngine::renderZPlot()
     bindVertexBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
-        const int nindices = material->indices();
+        const int nindices = material->sizeofIndices();
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmaterials, false, false, true);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);

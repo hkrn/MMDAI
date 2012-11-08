@@ -125,7 +125,7 @@ float Material::shininess() const
     return m_materialRef->shiness();
 }
 
-int Material::indices() const
+int Material::sizeofIndices() const
 {
     return m_materialRef->countIndices();
 }

@@ -251,7 +251,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
                 const IMaterial *material = materials[i];
-                const int nindices = material->indices(), offsetTo = offset + nindices;
+                const int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
                 const float materialEdgeSize = material->edgeSize() * esf;
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
@@ -505,7 +505,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         int offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             const IMaterial *material = materials[i];
-            const int nindices = material->indices();
+            const int nindices = material->sizeofIndices();
             for (int j = 0; j < nindices; j++) {
                 int vertexIndex = indexBufferRef->indexAt(offset + j);
                 IVertex *vertex = vertices[vertexIndex];
