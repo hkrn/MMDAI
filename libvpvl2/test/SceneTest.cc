@@ -13,31 +13,36 @@ using namespace vpvl2::extensions::icu;
 TEST(SceneTest, AddModel)
 {
     Scene scene;
-    scene.addModel(0, 0); // should not be crashed
+    /* adding an null model should not be crashed */
+    scene.addModel(0, 0);
     ASSERT_EQ(0, scene.models().count());
     ASSERT_EQ(0, scene.renderEngines().count());
     QScopedPointer<MockIModel> model(new MockIModel());
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
-    scene.addModel(model.data(), 0); // should not be added
+    /* adding a model but no rendering engine should not be added */
+    scene.addModel(model.data(), 0);
     ASSERT_EQ(0, scene.models().count());
     ASSERT_EQ(0, scene.renderEngines().count());
-     // no delegate class will be referered
+    /* no rendering context class will be referered */
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
-    scene.addModel(0, engine.data()); // should not be added
+    /* adding a rendering engine but no model should not be added */
+    scene.addModel(0, engine.data());
     ASSERT_EQ(0, scene.models().count());
     ASSERT_EQ(0, scene.renderEngines().count());
     scene.addModel(model.take(), engine.take());
-    ASSERT_EQ(1, scene.models().count()); // should be added
+    /* both model and rendering engine should be added */
+    ASSERT_EQ(1, scene.models().count());
     ASSERT_EQ(1, scene.renderEngines().count());
 }
 
 TEST(SceneTest, AddMotion)
 {
-    // no encoding class will be referered
+    /* no encoding class will be referered */
     Factory factory(0);
     Scene scene;
-    scene.addMotion(0); // should not be crashed
+    /* adding an null motion should not be crashed */
+    scene.addMotion(0);
     ASSERT_EQ(0, scene.motions().count());
     QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
     scene.addMotion(motion.take());
@@ -74,14 +79,16 @@ TEST(SceneTest, DeleteModel)
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     IModel *fakePtr = 0;
-    scene.deleteModel(fakePtr); // should not be crashed
+    /* deleting an null model should not be crashed */
+    scene.deleteModel(fakePtr);
     ASSERT_EQ(0, fakePtr);
     scene.addModel(model.data(), engine.take());
     IModel *modelPtr = model.data();
+    /* model should be deleted and set it null */
     scene.deleteModel(modelPtr);
     model.take();
     ASSERT_EQ(0, modelPtr);
-    ASSERT_EQ(0, scene.models().count()); // should be deleted
+    ASSERT_EQ(0, scene.models().count());
     ASSERT_EQ(0, scene.renderEngines().count());
 }
 
@@ -125,12 +132,14 @@ TEST(SceneTest, RemoveMotion)
 {
     Factory factory(0);
     Scene scene;
-    scene.removeMotion(0); // should not be crashed
+    /* removing an null motion should not be crashed */
+    scene.removeMotion(0);
     ASSERT_EQ(0, scene.motions().count());
     QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
     scene.addMotion(motion.data());
+    /* motion should be removed and set it null */
     scene.removeMotion(motion.data());
-    ASSERT_EQ(0, scene.motions().count()); // should be removed
+    ASSERT_EQ(0, scene.motions().count());
 }
 
 TEST(SceneTest, AdvanceMotions)

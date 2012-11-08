@@ -43,6 +43,7 @@ const Project::UUID kModel1UUID = "{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}";
 const Project::UUID kModel2UUID = "{B18ACADC-89FD-4945-9192-8E8FBC849E52}";
 const Project::UUID kMotion1UUID = "{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}";
 const Project::UUID kMotion2UUID = "{481E1B4E-FC24-4D61-841D-C8AB7CF1096D}";
+const Project::UUID kMotion3UUID = "{766CF45D-DE91-4387-9704-4B3D5B1414DC}";
 
 class Delegate : public Project::IDelegate
 {
@@ -213,14 +214,16 @@ TEST(ProjectTest, Load)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
+    /* duplicated UUID doesn't allow */
     ASSERT_FALSE(Project(&delegate, &factory).load("../../docs/project_uuid_dup.xml"));
     ASSERT_TRUE(project.load("../../docs/project.xml"));
     ASSERT_FALSE(project.isDirty());
     ASSERT_STREQ("0.1", project.version().c_str());
     ASSERT_EQ(size_t(4), project.modelUUIDs().size());
-    ASSERT_EQ(size_t(2), project.motionUUIDs().size());
+    ASSERT_EQ(size_t(3), project.motionUUIDs().size());
     TestGlobalSettings(project);
-    TestLocalSettings(project);
+    //TestLocalSettings(project);
+    /* VMD motion for model */
     IMotion *motion = project.findMotion(kMotion1UUID);
     ASSERT_EQ(IMotion::kVMD, motion->type());
     ASSERT_EQ(project.findModel(kModel1UUID), motion->parentModel());
@@ -228,6 +231,7 @@ TEST(ProjectTest, Load)
     TestMorphMotion(motion);
     TestCameraMotion(motion, false, false);
     TestLightMotion(motion);
+    /* MVD motion */
     IMotion *motion2 = project.findMotion(kMotion2UUID);
     ASSERT_EQ(IMotion::kMVD, motion2->type());
     ASSERT_EQ(project.findModel(kModel2UUID), motion2->parentModel());
@@ -235,6 +239,12 @@ TEST(ProjectTest, Load)
     TestMorphMotion(motion2);
     TestCameraMotion(motion2, true, true);
     TestLightMotion(motion2);
+    /* VMD motion for asset */
+    IMotion *motion3 = project.findMotion(kMotion3UUID);
+    ASSERT_EQ(IMotion::kVMD, motion3->type());
+    ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModel());
+    TestBoneMotion(motion3, false);
+    TestMorphMotion(motion3);
 }
 
 TEST(ProjectTest, Save)
@@ -256,9 +266,10 @@ TEST(ProjectTest, Save)
     s.sprintf("%.1f", Project::formatVersion());
     ASSERT_STREQ(qPrintable(s), project2.version().c_str());
     ASSERT_EQ(size_t(4), project2.modelUUIDs().size());
-    ASSERT_EQ(size_t(2), project2.motionUUIDs().size());
+    ASSERT_EQ(size_t(3), project2.motionUUIDs().size());
     TestGlobalSettings(project2);
     TestLocalSettings(project2);
+    /* VMD motion for model */
     IMotion *motion = project2.findMotion(kMotion1UUID);
     ASSERT_EQ(project2.findModel(kModel1UUID), motion->parentModel());
     ASSERT_EQ(IMotion::kVMD, motion->type());
@@ -266,6 +277,7 @@ TEST(ProjectTest, Save)
     TestMorphMotion(motion);
     TestCameraMotion(motion, false, false);
     TestLightMotion(motion);
+    /* MVD motion */
     IMotion *motion2 = project2.findMotion(kMotion2UUID);
     ASSERT_EQ(IMotion::kMVD, motion2->type());
     ASSERT_EQ(project2.findModel(kModel2UUID), motion2->parentModel());
@@ -273,6 +285,12 @@ TEST(ProjectTest, Save)
     TestMorphMotion(motion2);
     TestCameraMotion(motion2, true, true);
     TestLightMotion(motion2);
+    /* VMD motion for asset */
+    IMotion *motion3 = project.findMotion(kMotion3UUID);
+    ASSERT_EQ(IMotion::kVMD, motion3->type());
+    ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModel());
+    TestBoneMotion(motion3, false);
+    TestMorphMotion(motion3);
 }
 
 TEST(ProjectTest, HandleAssets)
@@ -284,23 +302,29 @@ TEST(ProjectTest, HandleAssets)
     Project project(&delegate, &factory);
     QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
     IModel *ptr = asset.data();
+    /* before adding an asset to the project */
     ASSERT_FALSE(project.containsModel(ptr));
     ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
     project.addModel(ptr, 0, uuid.toStdString());
+    /* after adding an asset to the project */
     ASSERT_TRUE(project.isDirty());
     ASSERT_TRUE(project.containsModel(ptr));
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(ptr));
     ASSERT_EQ(ptr, project.findModel(uuid.toStdString()));
+    /* finding inexists asset should returns null */
     ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
     project.removeModel(ptr);
+    /* finding removed asset should returns null */
     ASSERT_FALSE(project.containsModel(ptr));
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
     ASSERT_TRUE(project.isDirty());
     project.setDirty(false);
+    /* removing removed asset should not be dirty */
     project.removeModel(ptr);
     ASSERT_FALSE(project.isDirty());
     ptr = asset.take();
+    /* deleting removed asset should do nothing */
     project.deleteModel(ptr);
     ASSERT_FALSE(ptr);
 }
@@ -314,23 +338,29 @@ TEST(ProjectTest, HandleModels)
     Project project(&delegate, &factory);
     QScopedPointer<IModel> model(factory.createModel(IModel::kPMD));
     IModel *ptr = model.data();
+    /* before adding a model to the project */
     ASSERT_FALSE(project.containsModel(ptr));
     ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
     project.addModel(ptr, 0, uuid.toStdString());
+    /* before adding a model to the project */
     ASSERT_TRUE(project.isDirty());
     ASSERT_TRUE(project.containsModel(ptr));
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(ptr));
     ASSERT_EQ(ptr, project.findModel(uuid.toStdString()));
+    /* finding inexists model should returns null */
     ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
     project.removeModel(ptr);
+    /* finding removed model should returns null */
     ASSERT_FALSE(project.containsModel(ptr));
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
     ASSERT_TRUE(project.isDirty());
     project.setDirty(false);
+    /* removing removed model should not be dirty */
     project.removeModel(ptr);
     ASSERT_FALSE(project.isDirty());
     ptr = model.take();
+    /* deleting removed model should do nothing */
     project.deleteModel(ptr);
     ASSERT_FALSE(ptr);
 }
@@ -344,17 +374,25 @@ TEST(ProjectTest, HandleMotions)
     Project project(&delegate, &factory);
     QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
     IMotion *ptr = motion.data();
+    /* before adding a motion to the project */
     ASSERT_FALSE(project.containsMotion(ptr));
     ASSERT_EQ(Project::kNullUUID, project.motionUUID(0));
     project.addMotion(ptr, uuid.toStdString());
+    /* after adding a motion to the project */
     ASSERT_TRUE(project.isDirty());
     ASSERT_TRUE(project.containsMotion(ptr));
     ASSERT_EQ(ptr, project.findMotion(uuid.toStdString()));
+    /* finding inexists motion should returns null */
     ASSERT_EQ(static_cast<IMotion*>(0), project.findMotion(Project::kNullUUID));
     project.setDirty(false);
+    /* finding removed motion should returns null */
     project.removeMotion(ptr);
     ASSERT_FALSE(project.containsMotion(ptr));
     ASSERT_TRUE(project.isDirty());
+    project.setDirty(false);
+    /* removing removed motion should not be dirty */
+    project.removeMotion(ptr);
+    ASSERT_FALSE(project.isDirty());
 }
 
 TEST(ProjectTest, HandleNullUUID)
@@ -365,8 +403,10 @@ TEST(ProjectTest, HandleNullUUID)
     Project project(&delegate, &factory);
     QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
     IModel *ptr = asset.data();
+    /* null model can be added */
     project.addModel(ptr, 0, Project::kNullUUID);
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
+    /* and null model can be removed */
     project.removeModel(ptr);
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
     ptr = asset.take();
@@ -374,8 +414,10 @@ TEST(ProjectTest, HandleNullUUID)
     ASSERT_FALSE(ptr);
     QScopedPointer<IModel> model(factory.createModel(IModel::kPMD));
     ptr = model.data();
+    /* null model can be added */
     project.addModel(ptr, 0, Project::kNullUUID);
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
+    /* and null model can be removed */
     project.removeModel(ptr);
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
     ptr = model.take();
@@ -383,14 +425,17 @@ TEST(ProjectTest, HandleNullUUID)
     ASSERT_FALSE(ptr);
     QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
     IMotion *ptr2 = motion.data();
+    /* null motion can be added */
     project.addMotion(ptr2, Project::kNullUUID);
     ASSERT_EQ(size_t(1), project.motionUUIDs().size());
+    /* and null motion can be removed */
     project.removeMotion(ptr2);
     ASSERT_EQ(size_t(0), project.motionUUIDs().size());
     model.reset(factory.createModel(IModel::kPMD));
     ptr = model.data();
     motion.reset(factory.createMotion(IMotion::kVMD, 0));
     ptr2 = motion.data();
+    /* duplicated null motion should be integrated into one */
     project.addModel(ptr, 0, Project::kNullUUID);
     project.addMotion(ptr2, Project::kNullUUID);
     project.removeMotion(ptr2);

@@ -81,6 +81,17 @@
     <vpvm:keyframe dummy="dummy" index="2" color="3,1,2" direction="3,1,2"/>
    </vpvm:animation>
   </vpvm:motion>
+  <vpvm:motion dummy="dummy" uuid="{766CF45D-DE91-4387-9704-4B3D5B1414DC}" model="{D4403C60-3D6C-4051-9B28-51DEFE021F59}" type="vmd">
+   <vpvm:animation dummy="dummy" type="bone">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" position="1,2,3" rotation="1,2,3,4" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" position="3,1,2" rotation="4,3,2,1" ik="false" interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="morph">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" weight="0.00"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" weight="1.00"/>
+   </vpvm:animation>
+
+  </vpvm:motion>
  </vpvm:motions>
 </vpvm:project>
 
