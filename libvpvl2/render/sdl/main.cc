@@ -275,14 +275,14 @@ int main(int /* argc */, char ** /* argv[] */)
     size_t width = vpvl2::extensions::icu::String::toInt(config["window.width"], 640),
             height = vpvl2::extensions::icu::String::toInt(config["window.height"], 480);
     bool enableSW = vpvl2::extensions::icu::String::toBoolean(config["enable.opengl.software"]);
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, enableSW ? 0 : 1);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -305,6 +305,15 @@ int main(int /* argc */, char ** /* argv[] */)
         return -1;
     }
 #endif
+
+#ifdef VPVL2_LINK_GLEW
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        std::cerr << "Cannot initialize GLEW: " << glewGetErrorString(err);
+        return -1;
+    }
+#endif /* VPVL2_LINK_GLEW */
+
     std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
     std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
     std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;

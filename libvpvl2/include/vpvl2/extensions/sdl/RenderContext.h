@@ -39,10 +39,17 @@
 #include <vpvl2/IRenderContext.h>
 #include <vpvl2/extensions/icu/Encoding.h>
 
+/* GLEW */
+#ifdef VPVL2_LINK_GLEW
+#include <GL/glew.h>
+#endif /* VPVL2_LINK_GLEW */
+
 /* SDL */
 #include <SDL.h>
 #include <SDL_image.h>
+#ifndef VPVL2_LINK_GLEW
 #include <SDL_opengl.h>
+#endif /* VPVL2_LINK_GLEW */
 
 /* Bullet Physics */
 #ifndef VPVL2_NO_BULLET
@@ -50,7 +57,7 @@
 #include <btBulletDynamicsCommon.h>
 #else
 VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
-#endif
+#endif /* VPVL2_NO_BULLET */
 
 /* STL */
 #include <string>
@@ -68,7 +75,7 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #include <aiPostProcess.h>
 #else
 BT_DECLARE_HANDLE(aiScene);
-#endif
+#endif /* VPVL2_LINK_ASSIMP */
 
 /* GLM */
 #include <glm/glm.hpp>
@@ -131,17 +138,17 @@ public:
 
 class ReadonlyFileStream : public nv::Stream {
 public:
-    ReadonlyFileStream(const QString &/*path*/) {}
+    ReadonlyFileStream(const QString & /* path */) {}
     ~ReadonlyFileStream() {}
 };
 
 class ReadonlyMemoryStream : public nv::Stream {
 public:
-    ReadonlyMemoryStream(QByteArray &/*bytes*/) {}
+    ReadonlyMemoryStream(QByteArray & /* bytes */) {}
     ~ReadonlyMemoryStream() {}
 };
 
-#endif
+#endif /* VPVL2_LINK_NVTT */
 
 namespace vpvl2
 {
@@ -163,9 +170,9 @@ static bool UILoadFile(const UnicodeString &path, std::string &bytes)
         std::vector<char> data(size);
         ::fread(&data[0], size, 1, fp);
         bytes.assign(data.begin(), data.end());
+        ::fclose(fp);
         ret = true;
     }
-    ::fclose(fp);
     return ret;
 }
 
@@ -712,3 +719,4 @@ private:
 } /* namespace sdl */
 } /* namespace extensions */
 } /* namespace vpvl2 */
+
