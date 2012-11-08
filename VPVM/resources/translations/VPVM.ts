@@ -171,82 +171,98 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
 <context>
     <name>vpvm::BoneDialog</name>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="137"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="152"/>
         <source>Position</source>
         <translation>位置</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="138"/>
-        <location filename="../../dialogs/BoneDialog.cc" line="142"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="153"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="158"/>
         <source>X</source>
         <translation>X軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="139"/>
-        <location filename="../../dialogs/BoneDialog.cc" line="143"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="154"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="159"/>
         <source>Y</source>
         <translation>Y軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="140"/>
-        <location filename="../../dialogs/BoneDialog.cc" line="144"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="155"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="160"/>
         <source>Z</source>
         <translation>Z軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="141"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="156"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="161"/>
+        <source>Step Degree</source>
+        <translation>単位</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/BoneDialog.cc" line="157"/>
         <source>Rotation Axis</source>
         <translation>回転軸</translation>
     </message>
     <message>
-        <location filename="../../dialogs/BoneDialog.cc" line="145"/>
+        <location filename="../../dialogs/BoneDialog.cc" line="162"/>
         <source>Bone Dialog of %1</source>
         <translation>%1のボーンダイアログ</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/BoneDialog.cc" line="235"/>
+        <source>Confirm</source>
+        <translation>確認</translation>
+    </message>
+    <message>
+        <location filename="../../dialogs/BoneDialog.cc" line="236"/>
+        <source>Do you want to discard your changes?</source>
+        <translation>変更を破棄しますか？</translation>
     </message>
 </context>
 <context>
     <name>vpvm::BoneUIDelegate</name>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="66"/>
-        <location filename="../../BoneUIDelegate.cc" line="79"/>
-        <location filename="../../BoneUIDelegate.cc" line="92"/>
-        <location filename="../../BoneUIDelegate.cc" line="105"/>
-        <location filename="../../BoneUIDelegate.cc" line="131"/>
+        <location filename="../../BoneUIDelegate.cc" line="67"/>
+        <location filename="../../BoneUIDelegate.cc" line="80"/>
+        <location filename="../../BoneUIDelegate.cc" line="93"/>
+        <location filename="../../BoneUIDelegate.cc" line="106"/>
+        <location filename="../../BoneUIDelegate.cc" line="132"/>
         <source>The model or the bone is not selected.</source>
         <translation>モデルまたはボーンが選択されていません。</translation>
     </message>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="67"/>
+        <location filename="../../BoneUIDelegate.cc" line="68"/>
         <source>Select a model or a bone to reset X position of the bone (&quot;Model&quot; &gt; &quot;Select model&quot; or double click a bone)</source>
         <translation>X 座標をリセットするにはモデルまたはボーンを選択して下さい（「モデル」の「モデルを選択」またはボーンをダブルクリック）</translation>
     </message>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="80"/>
+        <location filename="../../BoneUIDelegate.cc" line="81"/>
         <source>Select a model or a bone to reset Y position of the bone (&quot;Model&quot; &gt; &quot;Select model&quot; or double click a bone)</source>
         <translation>Y 座標をリセットするにはモデルまたはボーンを選択して下さい（「モデル」の「モデルを選択」またはボーンをダブルクリック）</translation>
     </message>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="93"/>
+        <location filename="../../BoneUIDelegate.cc" line="94"/>
         <source>Select a model or a bone to reset Z position of the bone (&quot;Model&quot; &gt; &quot;Select model&quot; or double click a bone)</source>
         <translation>Z 座標をリセットするにはモデルまたはボーンを選択して下さい（「モデル」の「モデルを選択」またはボーンをダブルクリック）</translation>
     </message>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="106"/>
+        <location filename="../../BoneUIDelegate.cc" line="107"/>
         <source>Select a model or a bone to reset rotation of the bone (&quot;Model&quot; &gt; &quot;Select model&quot; or double click a bone)</source>
         <translation>回転をリセットするにはモデルまたはボーンを選択して下さい（「モデル」の「モデルを選択」またはボーンをダブルクリック）</translation>
     </message>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="118"/>
+        <location filename="../../BoneUIDelegate.cc" line="119"/>
         <source>The model is not selected.</source>
         <translation>モデルが選択されていません。</translation>
     </message>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="119"/>
+        <location filename="../../BoneUIDelegate.cc" line="120"/>
         <source>Select a model to reset bones (&quot;Model&quot; &gt; &quot;Select model&quot;)</source>
         <translation>ボーンをリセットするにはモデルを選択して下さい（「モデル」の「モデルを選択」）</translation>
     </message>
     <message>
-        <location filename="../../BoneUIDelegate.cc" line="132"/>
+        <location filename="../../BoneUIDelegate.cc" line="133"/>
         <source>Select a model or a bone to open this dialog (&quot;Model&quot; &gt; &quot;Select model&quot; or double click a bone)</source>
         <translation>ボーンダイアログを表示するにはモデルまたはボーンを選択して下さい（「モデル」の「モデルを選択」またはボーンをダブルクリック）</translation>
     </message>
