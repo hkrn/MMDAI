@@ -19,7 +19,7 @@ my $opt_num_cpu = 1;
 my $opt_help = 0;
 my $opt_man = 0;
 my $opt_march = 0;
-my $opt_no_bundle = 0;
+my $opt_clang = 0;
 my $opt_print_flags = 0;
 
 GetOptions(
@@ -28,7 +28,7 @@ GetOptions(
     'march'      => \$opt_march,
     'production' => \$opt_prod,
     'static'     => \$opt_static,
-    'nobundle'   => \$opt_no_bundle,
+    'clang'      => \$opt_clang,
     'numcpu=i'   => \$opt_num_cpu,
     'flags'      => \$opt_print_flags,
     'help|?'     => \$opt_help,
@@ -46,16 +46,12 @@ my $BULLET_CHECKOUT_URI = 'http://bullet.googlecode.com/svn/tags/bullet-2.77';
 my $BULLET_DIRECTORY = 'bullet' . $SOURCE_DIRECTORY_SUFFIX;
 my $ASSIMP_CHECKOUT_URI = 'https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0';
 my $ASSIMP_DIRECTORY = 'assimp' . $SOURCE_DIRECTORY_SUFFIX;
+my $NVTT_CHECKOUT_URI = 'http://nvidia-texture-tools.googlecode.com/svn/trunk';
+my $NVTT_DIRECTORY = 'nvtt' . $SOURCE_DIRECTORY_SUFFIX;
+my $NVTT_REVISION = 1357;
 my $PORTAUDIO_CHECKOUT_URI = 'https://subversion.assembla.com/svn/portaudio/portaudio/trunk';
 my $PORTAUDIO_DIRECTORY = 'portaudio' . $SOURCE_DIRECTORY_SUFFIX;
 my $PORTAUDIO_REVISION = 1788;
-my $LIBJPEG_CHECKOUT_URI = 'http://www.ijg.org/files/jpegsrc.v8d.tar.gz';
-my $LIBJPEG_DIRECTORY = 'libjpeg' . $SOURCE_DIRECTORY_SUFFIX;
-my $LIBPNG_CHECKOUT_URI = 'git://libpng.git.sourceforge.net/gitroot/libpng/libpng';
-my $LIBPNG_DIRECTORY = 'libpng' . $SOURCE_DIRECTORY_SUFFIX;
-my $LIBPNG_TAG = 'v1.5.12';
-my $DEVIL_CHECKOUT_URI = 'http://downloads.sourceforge.net/project/openil/DevIL/1.7.8/DevIL-1.7.8.tar.gz?r=&ts=&use_mirror=jaist';
-my $DEVIL_DIRECTORY = 'devil' . $SOURCE_DIRECTORY_SUFFIX;
 my $LIBAV_CHECKOUT_URI = 'git://git.libav.org/libav.git';
 my $LIBAV_DIRECTORY = 'libav' . $SOURCE_DIRECTORY_SUFFIX;
 my $LIBAV_TAG = 'v0.8.3';
@@ -70,6 +66,8 @@ my $CMAKE_BULLET_ARGS = [
 my $CMAKE_ASSIMP_ARGS = [
     '-DBUILD_ASSIMP_TOOLS:BOOL=OFF',
     '-DENABLE_BOOST_WORKAROUND:BOOL=ON',
+];
+my $CMAKE_NVTT_ARGS = [
 ];
 my $CMAKE_VPVL_ARGS = [
     '-DVPVL_ENABLE_PROJECT:BOOL=OFF',
@@ -90,7 +88,7 @@ my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_LINK_ASSIMP:BOOL=ON',
     '-DVPVL2_LINK_QT:BOOL=ON',
     '-DVPVL2_LINK_NVTT:BOOL=ON',
-    '-DVPVL2_BUILD_QT_RENDERER:BOOL=ON',
+    '-DVPVL2_BUILD_QT_RENDERER:BOOL=' . ($opt_static ? 'OFF' : 'ON'),
 ];
 my $SCONS_PORTAUDIO_ARGS = [
     'enableTests=False',
@@ -98,54 +96,6 @@ my $SCONS_PORTAUDIO_ARGS = [
     'enableStatic=' . ($opt_static ? 'True' : 'False'),
     'enableDebug=' . ($opt_prod ? 'False' : 'True'),
     'enableDebugOutput=' . ($opt_prod ? 'False' : 'True'),
-];
-my $CONFIGURE_LIBJPEG_ARGS = [
-    '--enable-shared',
-    '--disable-static',
-];
-my $CONFIGURE_LIBPNG_ARGS = [
-    '--enable-shared',
-    '--disable-static',
-];
-my $CONFIGURE_DEVIL_ARGS = [
-    '--enable-ILU=yes',
-    '--enable-ILUT=yes',
-    '--enable-blp=no',
-    '--enable-dcx=no',
-    '--enable-dicom=no',
-    '--enable-doom=no',
-    '--enable-fits=no',
-    '--enable-gif=no',
-    '--enable-icns=no',
-    '--enable-icon=no',
-    '--enable-iff=no',
-    '--enable-ilbm=no',
-    '--enable-iwi=no',
-    '--enable-lif=no',
-    '--enable-mdl=no',
-    '--enable-mp3=no',
-    '--enable-pcd=no',
-    '--enable-pcx=no',
-    '--enable-pic=no',
-    '--enable-pix=no',
-    '--enable-pnm=no',
-    '--enable-psd=no',
-    '--enable-psp=no',
-    '--enable-pxr=no',
-    '--enable-raw=no',
-    '--enable-rot=no',
-    '--enable-sgi=no',
-    '--enable-sun=no',
-    '--enable-texture=no',
-    '--enable-tpl=no',
-    '--enable-utx=no',
-    '--enable-vtf=no',
-    '--enable-wal=no',
-    '--enable-wbmp=no',
-    '--enable-wdp=no',
-    '--enable-xpm=no',
-    '--disable-sdltest',
-    '--disable-x11',
 ];
 my $CONFIGURE_LIBAV_ARGS = [
     '--enable-shared',
@@ -184,7 +134,7 @@ my $CONFIGURE_LIBAV_ARGS = [
 ];
 
 sub rewrite_cmake_flags {
-	my ($cmake_args) = @_;
+    my ($cmake_args) = @_;
     my @args = (
         @$cmake_args,
         '-DCMAKE_BUILD_TYPE:STRING=' . $BUILD_TYPE,
@@ -194,13 +144,13 @@ sub rewrite_cmake_flags {
         push @args, '-DCMAKE_OSX_ARCHITECTURES="i386;x86_64"';
     }
     if ($opt_static) {
-        push @args, '-DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden"';
+        push @args, '-DCMAKE_CXX_FLAGS=\'-fvisibility=hidden -fvisibility-inlines-hidden\'';
     }
-	return @args;
+    return @args;
 }
 
 sub rewrite_scons_flags {
-	my ($scons_args) = @_;
+    my ($scons_args) = @_;
     my @args = @$scons_args;
     if ($opt_march) {
         push @args, (
@@ -209,7 +159,7 @@ sub rewrite_scons_flags {
             'customLinkFlags=-arch i386 -arch x86_64',
         )
     }
-	return @args;
+    return @args;
 }
 
 sub build_with_cmake {
@@ -217,8 +167,14 @@ sub build_with_cmake {
     chdir $directory;
     mkdir $BUILD_DIRECTORY unless -d $BUILD_DIRECTORY;
     chdir $BUILD_DIRECTORY;
+    my %ENV_backup = %ENV;
+    if ($opt_clang) {
+        $ENV{'CC'} = 'clang';
+        $ENV{'CXX'} = 'clang++';
+    }
     system 'cmake', rewrite_cmake_flags($cmake_args), '..';
     system 'make', '-j' . $opt_num_cpu;
+    %ENV = %ENV_backup;
 }
 
 sub build_with_scons {
@@ -302,13 +258,15 @@ sub make_library {
 }
 
 if ($opt_print_flags) {
-	print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), ' -DLIBRARY_OUTPUT_PATH=`pwd`/lib', "\n\n";
-	print '[assimp]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_ASSIMP_ARGS)), "\n\n";
-	print '[vpvl]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL_ARGS)), "\n\n";
-	print '[vpvl2]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL2_ARGS)), "\n\n";
-	print '[portaudio]', "\n", 'scons ', join(' ', rewrite_scons_flags($SCONS_PORTAUDIO_ARGS)), "\n\n";
-	print '[libav]', "\n", './configure ', join(' ', @$CONFIGURE_LIBAV_ARGS), "\n\n";
-	exit(0);
+    my $output = ' -DLIBRARY_OUTPUT_PATH=`pwd`/lib';
+    print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), $output, "\n\n";
+    print '[assimp]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_ASSIMP_ARGS)), "\n\n";
+    print '[nvtt]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_NVTT_ARGS)), $output, "\n\n";
+    print '[vpvl]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL_ARGS)), "\n\n";
+    print '[vpvl2]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL2_ARGS)), "\n\n";
+    print '[portaudio]', "\n", 'scons ', join(' ', rewrite_scons_flags($SCONS_PORTAUDIO_ARGS)), "\n\n";
+    print '[libav]', "\n", './configure ', join(' ', @$CONFIGURE_LIBAV_ARGS), "\n\n";
+    exit(0);
 }
 
 # clone MMDAI sources
@@ -344,6 +302,15 @@ if ($^O eq 'MacOS' or $^O eq 'darwin') {
 }
 chdir $base_directory;
 
+# checkout nvidia texture tools sources
+system 'svn', 'checkout', '-r', $NVTT_REVISION, $NVTT_CHECKOUT_URI, $NVTT_DIRECTORY unless -d $NVTT_DIRECTORY;
+# build directory should be same as configure does
+$path = File::Spec->catdir($base_directory, $NVTT_DIRECTORY, 'build-' . $BUILD_DIRECTORY, 'lib');
+# append LIBRARY_OUTPUT_PATH dynamically
+@$CMAKE_NVTT_ARGS = ( @$CMAKE_NVTT_ARGS, '-DLIBRARY_OUTPUT_PATH=' . $path );
+build_with_cmake $NVTT_DIRECTORY, $CMAKE_NVTT_ARGS;
+chdir $base_directory;
+
 # checkout portaudio
 system 'svn', 'checkout', '-r', $PORTAUDIO_REVISION, $PORTAUDIO_CHECKOUT_URI, $PORTAUDIO_DIRECTORY unless -d $PORTAUDIO_DIRECTORY;
 my $path_portaudio_native = File::Spec->catdir($base_directory, $PORTAUDIO_DIRECTORY, $BUILD_DIRECTORY . '_native');
@@ -351,66 +318,6 @@ my $new_SCONS_PORTAUDIO_ARGS = [ @$SCONS_PORTAUDIO_ARGS, 'prefix="' . $path_port
 make_path $path_portaudio_native unless -d $path_portaudio_native;
 build_with_scons $PORTAUDIO_DIRECTORY, $new_SCONS_PORTAUDIO_ARGS;
 chdir $base_directory;
-
-# save current environment variables
-my %env_backup = %ENV;
-$ENV{'PATH'} = '/usr/bin:/bin';
-$ENV{'PKG_CONFIG_PATH'} = '/usr/lib/pkgconfig';
-
-if ($opt_static && !$opt_no_bundle) {
-    # checkout libjpeg
-    unless (-d $LIBJPEG_DIRECTORY) {
-        system 'wget', $LIBJPEG_CHECKOUT_URI;
-        system 'tar', '-xvzf', 'jpegsrc.v8d.tar.gz';
-        system 'mv', 'jpeg-8d', $LIBJPEG_DIRECTORY;
-    }
-    make_library($base_directory, $LIBJPEG_DIRECTORY, $CONFIGURE_LIBJPEG_ARGS, [ 'libjpeg.dylib', 'libjpeg.8.dylib' ]);
-    
-    # checkout libpng
-    system 'git', 'clone', $LIBPNG_CHECKOUT_URI, $LIBPNG_DIRECTORY unless -d $LIBPNG_DIRECTORY;
-    chdir $LIBPNG_DIRECTORY;
-    system 'git', 'checkout', $LIBPNG_TAG;
-    chdir $base_directory;
-    make_library($base_directory, $LIBPNG_DIRECTORY, $CONFIGURE_LIBPNG_ARGS, [ 'libpng.dylib', 'libpng15.15.dylib' ]);
-}
-
-# checkout devil
-unless (-d $DEVIL_DIRECTORY) {
-    system 'wget', $DEVIL_CHECKOUT_URI;
-    system 'tar', '-jxvf', 'DevIL-1.7.8.tar.gz';
-    system 'mv', 'devil-1.7.8', $DEVIL_DIRECTORY;
-    chdir $base_directory;
-}
-
-my $libjpeg_path = File::Spec->catdir($base_directory, $LIBJPEG_DIRECTORY);
-my $libpng_path = File::Spec->catdir($base_directory, $LIBPNG_DIRECTORY);
-if ($opt_march) {
-    my $libjpeg_lib32_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_i386');
-    my $libjpeg_lib64_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_native');
-    my $libpng_lib32_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_i386');
-    my $libpng_lib64_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_native');
-    my $ldflags32 = '-L' . $libjpeg_lib32_path . '/lib -L' . $libpng_lib32_path . '/lib';
-    my $cflags32  = $ldflags32 . ' -I' . $libjpeg_lib32_path . '/include -I' . $libpng_lib32_path . '/include'; 
-    my $ldflags64 = '-L' . $libjpeg_lib64_path . '/lib -L' . $libpng_lib64_path . '/lib';
-    my $cflags64 = $ldflags64 . ' -I' . $libjpeg_lib64_path . '/include -I' . $libpng_lib64_path . '/include'; 
-    $ENV{'CFLAGS32'} = $ENV{'CXXFLAGS32'} = $cflags32;
-    $ENV{'LDFLAGS32'} = $ldflags32;
-    $ENV{'CFLAGS64'} = $ENV{'CXXFLAGS64'} = $cflags64;
-    $ENV{'LDFLAGS64'} = $ldflags64;
-}
-else {
-    my $libjpeg_lib64_path = File::Spec->catdir($libjpeg_path, $BUILD_DIRECTORY . '_native');
-    my $libpng_lib64_path = File::Spec->catdir($libpng_path, $BUILD_DIRECTORY . '_native');
-    my $ldflags64 = '-L' . $libjpeg_lib64_path . '/lib -L' . $libpng_lib64_path . '/lib';
-    my $cflags64 = $ldflags64 . ' -I' . $libjpeg_lib64_path . '/include -I' . $libpng_lib64_path . '/include'; 
-    $ENV{'CFLAGS64'} = $ENV{'CXXFLAGS64'} = $cflags64;
-    $ENV{'LDFLAGS64'} = $ldflags64;
-}
-chdir $base_directory;
-make_library($base_directory, $DEVIL_DIRECTORY,
-	$opt_prod ? $CONFIGURE_DEVIL_ARGS : [ @$CONFIGURE_DEVIL_ARGS, '--enable-debug' ],
-    [ 'libIL.dylib', 'libIL.1.dylib', 'libILU.dylib', 'libILU.1.dylib', 'libILUT.dylib', 'libILUT.1.dylib' ]);
-%ENV = %env_backup;
 
 # checkout libav
 system 'git', 'clone', $LIBAV_CHECKOUT_URI, $LIBAV_DIRECTORY unless -d $LIBAV_DIRECTORY;
@@ -482,7 +389,7 @@ build.pl - builds libvpvl/libvpvl2 and dependencies automatically
    -march           enable building multiple architectures
    -production      build as production
    -static          build as static library
-   -nobundle        doesn't bundle libraries (libjpeg and libpng)
+   -clang           compile sources with clang instead of gcc
    -flags           print all (common) build flags to each libraries
    -numcpu=<core>   specify number of CPU cores
 
@@ -490,8 +397,8 @@ build.pl - builds libvpvl/libvpvl2 and dependencies automatically
 
 This script helps building libvpvl/libvpvl2 and dependencies.
 
- ./build.pl -opencl -march -static -production # for MacOSX build
- ./build.pl -production # for Linux build
+ ./build.pl -opencl -cg -march -static -production # for MacOSX build
+ ./build.pl -cg -static -production -clang # for Linux build
 
 =head1 OPTIONS
 
@@ -526,9 +433,9 @@ Builds libvpvl/libvpvl2 and dependencies as production (no debug symbols) instea
 
 Builds libvpvl/libvpvl2 and dependencies as static library instead of dynamic shared library.
 
-=item B<-nobundle>
+=item B<-clang>
 
-Builds DevIL without building libjpeg and libpng (for Linux platform).
+Compiles sources on CMake with clang/clang++ instead of gcc/g++ for NVTT (NVIDIA texture tools).
 
 =item B<-numcpu>
 
