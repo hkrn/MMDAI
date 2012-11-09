@@ -83,7 +83,6 @@ my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_ENABLE_NVIDIA_CG:BOOL=' . ($opt_cg ? 'ON' : 'OFF'),
     '-DVPVL2_ENABLE_OPENCL:BOOL=' . ($opt_opencl ? 'ON' : 'OFF'),
     '-DVPVL2_ENABLE_PROJECT:BOOL=ON',
-    '-DVPVL2_ENABLE_GLSL:BOOL=ON',
     '-DVPVL2_OPENGL_RENDERER:BOOL=ON',
     '-DVPVL2_LINK_ASSIMP:BOOL=ON',
     '-DVPVL2_LINK_QT:BOOL=ON',
@@ -163,10 +162,11 @@ sub rewrite_scons_flags {
 }
 
 sub build_with_cmake {
-    my ($directory, $cmake_args) = @_;
+    my ($directory, $cmake_args, $build_directory) = @_;
     chdir $directory;
-    mkdir $BUILD_DIRECTORY unless -d $BUILD_DIRECTORY;
-    chdir $BUILD_DIRECTORY;
+    $build_directory ||= $BUILD_DIRECTORY;
+    mkdir $build_directory unless -d $build_directory;
+    chdir $build_directory;
     my %ENV_backup = %ENV;
     if ($opt_clang) {
         $ENV{'CC'} = 'clang';
@@ -305,10 +305,11 @@ chdir $base_directory;
 # checkout nvidia texture tools sources
 system 'svn', 'checkout', '-r', $NVTT_REVISION, $NVTT_CHECKOUT_URI, $NVTT_DIRECTORY unless -d $NVTT_DIRECTORY;
 # build directory should be same as configure does
-$path = File::Spec->catdir($base_directory, $NVTT_DIRECTORY, 'build-' . $BUILD_DIRECTORY, 'lib');
+my $build_directory_nvtt = 'build-' . $BUILD_DIRECTORY;
+$path = File::Spec->catdir($base_directory, $NVTT_DIRECTORY, $build_directory_nvtt, 'lib');
 # append LIBRARY_OUTPUT_PATH dynamically
 @$CMAKE_NVTT_ARGS = ( @$CMAKE_NVTT_ARGS, '-DLIBRARY_OUTPUT_PATH=' . $path );
-build_with_cmake $NVTT_DIRECTORY, $CMAKE_NVTT_ARGS;
+build_with_cmake $NVTT_DIRECTORY, $CMAKE_NVTT_ARGS, $build_directory_nvtt;
 chdir $base_directory;
 
 # checkout portaudio
