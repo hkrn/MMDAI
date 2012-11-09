@@ -133,7 +133,7 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm, QSettings *settings, QWidget *paren
     mainLayout->addWidget(buttons.take());
     setLayout(mainLayout.take());
     setPosition(bone->localPosition());
-    setRotation(bone->rotation());
+    setRotation(bone->localRotation());
     retranslate();
     m_stepPosition->setSingleStep(0.001);
     m_stepRotation->setSingleStep(0.001);

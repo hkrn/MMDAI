@@ -64,7 +64,7 @@ void PMDMotionModel::State::restore() const
         IBone *b = bone.first;
         const Transform &tr = bone.second;
         b->setLocalPosition(tr.first);
-        b->setRotation(tr.second);
+        b->setLocalRotation(tr.second);
     }
     foreach (const Morph &morph, m_morphs) {
         IMorph *m = morph.first;
@@ -81,7 +81,7 @@ void PMDMotionModel::State::save()
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        Transform tr(bone->localPosition(), bone->rotation());
+        Transform tr(bone->localPosition(), bone->localRotation());
         m_bones.append(Bone(bone, tr));
     }
     Array<IMorph *> morphs;
@@ -104,7 +104,7 @@ bool PMDMotionModel::State::compact()
         const Bone &value = bones.value();
         const IBone *bone = value.first;
         const Transform &transform = value.second;
-        if (bone->localPosition() == transform.first && bone->rotation() == transform.second)
+        if (bone->localPosition() == transform.first && bone->localRotation() == transform.second)
             bones.remove();
     }
     QMutableListIterator<Morph> morphs(m_morphs);
@@ -140,7 +140,7 @@ void PMDMotionModel::State::resetBones()
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
         bone->setLocalPosition(kZeroV3);
-        bone->setRotation(Quaternion::getIdentity());
+        bone->setLocalRotation(Quaternion::getIdentity());
     }
     m_sceneRef->updateModel(m_modelRef);
 }

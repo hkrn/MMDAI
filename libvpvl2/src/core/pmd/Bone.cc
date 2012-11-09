@@ -109,7 +109,7 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
     }
 }
 
-const Quaternion &Bone::rotation() const
+const Quaternion &Bone::localRotation() const
 {
     return m_boneRef->rotation();
 }
@@ -119,7 +119,7 @@ void Bone::setLocalPosition(const Vector3 &value)
     m_boneRef->setPosition(value);
 }
 
-void Bone::setRotation(const Quaternion &value)
+void Bone::setLocalRotation(const Quaternion &value)
 {
     m_boneRef->setRotation(value);
 }

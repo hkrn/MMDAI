@@ -50,8 +50,8 @@ public:
           m_modelRef(modelRef),
           m_worldTransform(Transform::getIdentity())
     {
-        m_worldTransform.setOrigin(modelRef->position());
-        m_worldTransform.setRotation(modelRef->rotation());
+        m_worldTransform.setOrigin(modelRef->worldPosition());
+        m_worldTransform.setRotation(modelRef->worldRotation());
     }
     ~RootBone() {
         m_encodingRef = 0;
@@ -76,15 +76,15 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     const Vector3 &origin() const { return kZeroV3; }
     const Vector3 destinationOrigin() const { return kZeroV3; }
-    const Vector3 &localPosition() const { return m_modelRef->position(); }
-    const Quaternion &rotation() const { return m_modelRef->rotation(); }
+    const Vector3 &localPosition() const { return m_modelRef->worldPosition(); }
+    const Quaternion &localRotation() const { return m_modelRef->worldRotation(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 &value) {
-        m_modelRef->setPosition(value);
+        m_modelRef->setWorldPosition(value);
         m_worldTransform.setOrigin(value);
     }
-    void setRotation(const Quaternion &value) {
-        m_modelRef->setRotation(value);
+    void setLocalRotation(const Quaternion &value) {
+        m_modelRef->setWorldRotation(value);
         m_worldTransform.setRotation(value);
     }
     bool isMovable() const { return true; }
@@ -138,7 +138,7 @@ public:
     const Vector3 &origin() const { return kZeroV3; }
     const Vector3 destinationOrigin() const { return kZeroV3; }
     const Vector3 &localPosition() const { return m_position; }
-    const Quaternion &rotation() const { return Quaternion::getIdentity(); }
+    const Quaternion &localRotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 &value) {
         m_position = value;
@@ -146,7 +146,7 @@ public:
         const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0f;
         m_modelRef->setScaleFactor(scaleFactor);
     }
-    void setRotation(const Quaternion & /* value */) {}
+    void setLocalRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return true; }
     bool isRotateable() const { return false; }
     bool isVisible() const { return false; }
@@ -579,12 +579,12 @@ void Model::setEnglishComment(const IString *value)
     setComment(value);
 }
 
-void Model::setPosition(const Vector3 &value)
+void Model::setWorldPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void Model::setRotation(const Quaternion &value)
+void Model::setWorldRotation(const Quaternion &value)
 {
     m_rotation = value;
 }

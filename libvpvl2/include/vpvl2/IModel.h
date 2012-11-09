@@ -372,14 +372,14 @@ public:
      * カメラの位置からモデルに適用するエッジ幅を取得します.
      *
      * @brief edgeScaleFactor
-     * @param position
+     * @param cameraPosition
      * @return Vector3
      */
-    virtual float edgeScaleFactor(const Vector3 &position) const = 0;
+    virtual float edgeScaleFactor(const Vector3 &cameraPosition) const = 0;
 
-    virtual const Vector3 &position() const = 0;
+    virtual const Vector3 &worldPosition() const = 0;
 
-    virtual const Quaternion &rotation() const = 0;
+    virtual const Quaternion &worldRotation() const = 0;
 
     virtual const Scalar &opacity() const = 0;
 
@@ -401,9 +401,9 @@ public:
 
     virtual void setEnglishComment(const IString *value) = 0;
 
-    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setWorldPosition(const Vector3 &value) = 0;
 
-    virtual void setRotation(const Quaternion &value) = 0;
+    virtual void setWorldRotation(const Quaternion &value) = 0;
 
     virtual void setOpacity(const Scalar &value) = 0;
 

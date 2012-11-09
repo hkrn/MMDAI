@@ -104,8 +104,8 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
     ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kBone));
     ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe1->timeIndex());
     ASSERT_TRUE(keyframe1->name()->equals(&bar));
-    ASSERT_EQ(Vector3(1, 2, -3), keyframe1->position());
-    ASSERT_EQ(Quaternion(-1, -2, 3, 4), keyframe1->rotation());
+    ASSERT_EQ(Vector3(1, 2, -3), keyframe1->localPosition());
+    ASSERT_EQ(Quaternion(-1, -2, 3, 4), keyframe1->localRotation());
     // ASSERT_TRUE(ba.frameAt(0)->isIKEnabled());
     for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
         int offset = i * 4;
@@ -116,8 +116,8 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
     ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe2->timeIndex());
     ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe2->layerIndex());
     ASSERT_TRUE(keyframe2->name()->equals(&baz));
-    ASSERT_EQ(Vector3(3, 1, -2), keyframe2->position());
-    ASSERT_EQ(Quaternion(-4, -3, 2, 1), keyframe2->rotation());
+    ASSERT_EQ(Vector3(3, 1, -2), keyframe2->localPosition());
+    ASSERT_EQ(Quaternion(-4, -3, 2, 1), keyframe2->localRotation());
     // ASSERT_FALSE(ba.frameAt(1)->isIKEnabled());
     for (int i = IBoneKeyframe::kMaxInterpolationType - 1; i >= 0; i--) {
         int offset = (IBoneKeyframe::kMaxInterpolationType - 1 - i) * 4;
@@ -146,7 +146,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer, bool skipYZ)
     ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kCamera));
     const ICameraKeyframe *keyframe1 = motion->findCameraKeyframeAt(0);
     ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe1->timeIndex());
-    ASSERT_EQ(Vector3(1, 2, -3), keyframe1->position());
+    ASSERT_EQ(Vector3(1, 2, -3), keyframe1->lookAt());
     const Vector3 &angle1 = keyframe1->angle();
     ASSERT_TRUE(qFuzzyCompare(angle1.x(), -degree(1)));
     ASSERT_TRUE(qFuzzyCompare(angle1.y(), -degree(2)));
@@ -170,7 +170,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer, bool skipYZ)
     const ICameraKeyframe *keyframe2 = motion->findCameraKeyframeAt(1);
     ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe2->timeIndex());
     ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe2->layerIndex());
-    ASSERT_EQ(Vector3(3, 1, -2), keyframe2->position());
+    ASSERT_EQ(Vector3(3, 1, -2), keyframe2->lookAt());
     const Vector3 &angle2 = keyframe2->angle();
     ASSERT_TRUE(qFuzzyCompare(angle2.x(), -degree(3)));
     ASSERT_TRUE(qFuzzyCompare(angle2.y(), -degree(1)));

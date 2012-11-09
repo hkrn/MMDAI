@@ -140,8 +140,8 @@ public:
                 return lorder < rorder;
             }
             else {
-                const Vector3 &positionLeft = m_modelViewTransform * lmodel->position();
-                const Vector3 &positionRight = m_modelViewTransform * rmodel->position();
+                const Vector3 &positionLeft = m_modelViewTransform * lmodel->worldPosition();
+                const Vector3 &positionRight = m_modelViewTransform * rmodel->worldPosition();
                 return positionLeft.z() < positionRight.z();
             }
         }
@@ -329,8 +329,8 @@ QList<IModel *> SceneLoader::allModels() const
 void SceneLoader::commitAssetProperties()
 {
     if (m_selectedAssetRef) {
-        setAssetPosition(m_selectedAssetRef, m_selectedAssetRef->position());
-        setAssetRotation(m_selectedAssetRef, m_selectedAssetRef->rotation());
+        setAssetPosition(m_selectedAssetRef, m_selectedAssetRef->worldPosition());
+        setAssetRotation(m_selectedAssetRef, m_selectedAssetRef->worldRotation());
         setAssetOpacity(m_selectedAssetRef, m_selectedAssetRef->opacity());
         setAssetScaleFactor(m_selectedAssetRef, m_selectedAssetRef->scaleFactor());
         setAssetParentModel(m_selectedAssetRef, m_selectedAssetRef->parentModel());
@@ -489,8 +489,8 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &ass
                 m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, filename.toStdString());
                 m_project->setModelSetting(assetPtr.data(), "selected", "false");
                 m_renderOrderList.add(uuid);
-                setAssetPosition(assetPtr.data(), assetPtr->position());
-                setAssetRotation(assetPtr.data(), assetPtr->rotation());
+                setAssetPosition(assetPtr.data(), assetPtr->worldPosition());
+                setAssetRotation(assetPtr.data(), assetPtr->worldRotation());
                 setAssetOpacity(assetPtr.data(), assetPtr->opacity());
                 setAssetScaleFactor(assetPtr.data(), assetPtr->scaleFactor());
                 emit modelDidAdd(assetPtr.data(), uuid);
@@ -536,13 +536,13 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
                 float x = position.at(0).toFloat();
                 float y = position.at(1).toFloat();
                 float z = position.at(2).toFloat();
-                modelPtr->setPosition(Vector3(x, y, z));
+                modelPtr->setWorldPosition(Vector3(x, y, z));
             }
             if (rotation.count() == 3) {
                 float x = rotation.at(0).toFloat();
                 float y = rotation.at(1).toFloat();
                 float z = rotation.at(2).toFloat();
-                modelPtr->setRotation(Quaternion(x, y, z));
+                modelPtr->setWorldRotation(Quaternion(x, y, z));
             }
             if (!bone.isEmpty() && m_selectedModelRef) {
                 CString s(name);
@@ -711,13 +711,13 @@ void SceneLoader::loadProject(const QString &path)
                         const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
                         model->setEdgeColor(color);
                         model->setEdgeWidth(QString::fromStdString(m_project->modelSetting(model, "edge.offset")).toFloat());
-                        model->setPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
+                        model->setWorldPosition(UIGetVector3(m_project->modelSetting(model, "offset.position"), kZeroV3));
                         const std::string &os = m_project->modelSetting(model, "opacity");
                         model->setOpacity(os.empty() ? 1 : QString::fromStdString(os).toFloat());
                         /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
                         const Vector3 &angle = UIGetVector3(m_project->modelSetting(model, "offset.rotation"), kZeroV3);
                         rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
-                        model->setRotation(rotation);
+                        model->setWorldRotation(rotation);
                         const QUuid modelUUID(modelUUIDString.c_str());
                         m_renderOrderList.add(modelUUID);
                         emit modelDidAdd(model, modelUUID);
@@ -783,8 +783,8 @@ void SceneLoader::loadProject(const QString &path)
         /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルとアクセサリ読み込みに行う */
         foreach (IModel *model, assets) {
             const QUuid assetUUID(m_project->modelUUID(model).c_str());
-            model->setPosition(assetPosition(model));
-            model->setRotation(assetRotation(model));
+            model->setWorldPosition(assetPosition(model));
+            model->setWorldRotation(assetRotation(model));
             model->setScaleFactor(assetScaleFactor(model));
             model->setOpacity(assetOpacity(model));
             model->setParentModel(assetParentModel(model));
@@ -815,7 +815,7 @@ void SceneLoader::newCameraMotion(IMotionPtr &motionPtr) const
     ICamera *camera = m_project->camera();
     ILight *light = m_project->light();
     cameraKeyframe->setDefaultInterpolationParameter();
-    cameraKeyframe->setPosition(camera->lookAt());
+    cameraKeyframe->setLookAt(camera->lookAt());
     cameraKeyframe->setAngle(camera->angle());
     cameraKeyframe->setFov(camera->fov());
     cameraKeyframe->setDistance(camera->distance());
@@ -842,8 +842,8 @@ void SceneLoader::newModelMotion(const IModel *model, IMotionPtr &motionPtr) con
                 boneKeyframe.reset(m_factoryRef->createBoneKeyframe(motionPtr.data()));
                 boneKeyframe->setDefaultInterpolationParameter();
                 boneKeyframe->setName(bone->name());
-                boneKeyframe->setPosition(bone->localPosition());
-                boneKeyframe->setRotation(bone->rotation());
+                boneKeyframe->setLocalPosition(bone->localPosition());
+                boneKeyframe->setLocalRotation(bone->localRotation());
                 motionPtr->addKeyframe(boneKeyframe.take());
             }
         }
@@ -1074,10 +1074,10 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModel *asset)
         stream << toQStringFromModel(asset) << lineSeparator;
         stream << m_name2assets.key(asset) << lineSeparator;
         stream << asset->scaleFactor() << lineSeparator;
-        const Vector3 &position = asset->position();
+        const Vector3 &position = asset->worldPosition();
         stream << QString("%1,%2,%3").arg(position.x(), 0, 'f', 1)
                   .arg(position.y(), 0, 'f', 1).arg(position.z(), 0, 'f', 1) << lineSeparator;
-        const Quaternion &rotation = asset->rotation();
+        const Quaternion &rotation = asset->worldRotation();
         stream << QString("%1,%2,%3").arg(rotation.x(), 0, 'f', 1)
                   .arg(rotation.y(), 0, 'f', 1).arg(rotation.z(), 0, 'f', 1) << lineSeparator;
         const IBone *bone = asset->parentBone();
@@ -1341,7 +1341,7 @@ void SceneLoader::setModelPosition(IModel *model, const Vector3 &value)
     if (m_project && model) {
         QString str;
         str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
-        model->setPosition(value);
+        model->setWorldPosition(value);
         m_project->setModelSetting(model, "offset.position", str.toStdString());
     }
 }
@@ -1360,7 +1360,7 @@ void SceneLoader::setModelRotation(IModel *model, const Vector3 &value)
         m_project->setModelSetting(model, "offset.rotation", str.toStdString());
         Quaternion rotation;
         rotation.setEulerZYX(radian(value.x()), radian(value.y()), radian(value.z()));
-        model->setRotation(rotation);
+        model->setWorldRotation(rotation);
     }
 }
 

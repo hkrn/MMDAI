@@ -133,7 +133,7 @@ void CameraKeyframe::read(const uint8_t *data)
 void CameraKeyframe::write(uint8_t *data) const
 {
     CameraKeyframeChunk chunk;
-    internal::getPosition(position(), chunk.position);
+    internal::getPosition(lookAt(), chunk.position);
     const Vector3 &a = angle();
 #ifdef VPVL2_COORDINATE_OPENGL
     chunk.rotation[0] = radian(a.x());
@@ -168,7 +168,7 @@ ICameraKeyframe *CameraKeyframe::clone() const
     frame->setLayerIndex(m_layerIndex);
     frame->setDistance(m_distance);
     frame->setFov(m_fov);
-    frame->setPosition(m_position);
+    frame->setLookAt(m_position);
     frame->setAngle(m_angle);
     frame->setPerspective(m_perspective);
     frame->setInterpolationParameter(kX, m_interpolationPosition.parameter);
@@ -231,7 +231,7 @@ void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord 
     }
 }
 
-const Vector3 &CameraKeyframe::position() const
+const Vector3 &CameraKeyframe::lookAt() const
 {
     return m_position;
 }
@@ -256,7 +256,7 @@ bool CameraKeyframe::isPerspective() const
     return m_perspective;
 }
 
-void CameraKeyframe::setPosition(const Vector3 &value)
+void CameraKeyframe::setLookAt(const Vector3 &value)
 {
     m_position = value;
 }

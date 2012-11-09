@@ -128,8 +128,8 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     frame.setLayerIndex(42);
     frame.setTimeIndex(42);
     frame.setName(&str);
-    frame.setPosition(pos);
-    frame.setRotation(rot);
+    frame.setLocalPosition(pos);
+    frame.setLocalRotation(rot);
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -147,16 +147,16 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     ASSERT_EQ(0, nameList.key(&str));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.layerIndex(), newFrame.layerIndex());
-    ASSERT_TRUE(CompareVector(pos, newFrame.position()));
-    ASSERT_TRUE(CompareVector(rot, newFrame.rotation()));
+    ASSERT_TRUE(CompareVector(pos, newFrame.localPosition()));
+    ASSERT_TRUE(CompareVector(rot, newFrame.localRotation()));
     CompareBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
     // ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.layerIndex(), cloned->layerIndex());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
-    ASSERT_TRUE(CompareVector(pos, cloned->position()));
-    ASSERT_TRUE(CompareVector(rot, cloned->rotation()));
+    ASSERT_TRUE(CompareVector(pos, cloned->localPosition()));
+    ASSERT_TRUE(CompareVector(rot, cloned->localRotation()));
     CompareBoneInterpolationMatrix(p, *static_cast<mvd::BoneKeyframe *>(cloned.data()));
 }
 
@@ -167,7 +167,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     // initialize the camera frame to be copied
     frame.setTimeIndex(42);
     frame.setLayerIndex(42);
-    frame.setPosition(pos);
+    frame.setLookAt(pos);
     frame.setAngle(angle);
     frame.setDistance(7);
     frame.setFov(8);
@@ -190,7 +190,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     newFrame.read(ptr.data());
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.layerIndex(), newFrame.layerIndex());
-    ASSERT_TRUE(CompareVector(frame.position(), newFrame.position()));
+    ASSERT_TRUE(CompareVector(frame.lookAt(), newFrame.lookAt()));
     // compare read camera frame
     // for radian and degree calculation
     ASSERT_FLOAT_EQ(newFrame.angle().x(), frame.angle().x());
@@ -203,7 +203,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     QScopedPointer<ICameraKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_EQ(frame.layerIndex(), cloned->layerIndex());
-    ASSERT_TRUE(CompareVector(frame.position(), cloned->position()));
+    ASSERT_TRUE(CompareVector(frame.lookAt(), cloned->lookAt()));
     // for radian and degree calculation
     ASSERT_FLOAT_EQ(cloned->angle().x(), frame.angle().x());
     ASSERT_FLOAT_EQ(cloned->angle().y(), frame.angle().y());

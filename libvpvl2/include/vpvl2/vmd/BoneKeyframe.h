@@ -69,16 +69,16 @@ public:
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
-    const Vector3 &position() const { return m_position; }
-    const Quaternion &rotation() const { return m_rotation; }
+    const Vector3 &localPosition() const { return m_position; }
+    const Quaternion &localRotation() const { return m_rotation; }
     const bool *linear() const { return m_linear; }
     const SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
     bool isIKEnabled() const { return m_enableIK; }
     Type type() const { return IKeyframe::kBone; }
 
     void setName(const IString *value);
-    void setPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
+    void setLocalPosition(const Vector3 &value);
+    void setLocalRotation(const Quaternion &value);
     void setIKEnable(bool value);
 
 private:

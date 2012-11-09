@@ -157,7 +157,7 @@ public:
      * 初期状態は vpvl2::kZeroV3 と同等です。
      *
      * @return Vector3
-     * @sa setPosition
+     * @sa setLocalPosition
      */
     virtual const Vector3 &localPosition() const = 0;
 
@@ -167,9 +167,9 @@ public:
      * 初期状態は Quaternion::getIdentity() と同等です。
      *
      * @return Quaternion
-     * @sa setRotation
+     * @sa setLocalRotation
      */
-    virtual const Quaternion &rotation() const = 0;
+    virtual const Quaternion &localRotation() const = 0;
 
     /**
      * リンクするボーンの配列を引数に対して格納します.
@@ -185,7 +185,7 @@ public:
      * ボーンのローカル座標系の相対移動量を設定します.
      *
      * @param Vector3
-     * @sa position
+     * @sa localPosition
      */
     virtual void setLocalPosition(const Vector3 &value) = 0;
 
@@ -193,9 +193,9 @@ public:
      * ボーンの回転量を設定します.
      *
      * @param Quaternion
-     * @sa rotation
+     * @sa localRotation
      */
-    virtual void setRotation(const Quaternion &value) = 0;
+    virtual void setLocalRotation(const Quaternion &value) = 0;
 
     /**
      * ボーンが移動可能かを返します.
@@ -300,10 +300,10 @@ public:
     const Vector3 &origin() const { return kZeroV3; }
     const Vector3 destinationOrigin() const { return kZeroV3; }
     const Vector3 &localPosition() const { return kZeroV3; }
-    const Quaternion &rotation() const { return Quaternion::getIdentity(); }
+    const Quaternion &localRotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 & /* value */) {}
-    void setRotation(const Quaternion & /* value */) {}
+    void setLocalRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return false; }
     bool isRotateable() const { return false; }
     bool isVisible() const { return false; }

@@ -173,7 +173,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
             m_projectiveShadowCheckbox->setChecked(false);
             m_selfShadowCheckbox->setChecked(false);
         }
-        const Vector3 &position = model->position();
+        const Vector3 &position = model->worldPosition();
         m_px->setValue(position.x());
         m_py->setValue(position.y());
         m_pz->setValue(position.z());

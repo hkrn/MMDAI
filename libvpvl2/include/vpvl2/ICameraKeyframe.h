@@ -117,7 +117,7 @@ public:
      * @return Vector3
      * @sa setPosition
      */
-    virtual const Vector3 &position() const = 0;
+    virtual const Vector3 &lookAt() const = 0;
 
     /**
      * カメラのアングル（オイラー角）を返します.
@@ -157,7 +157,7 @@ public:
      * @param Vector3
      * @sa position
      */
-    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setLookAt(const Vector3 &value) = 0;
 
     /**
      * カメラのアングル（オイラー角）を設定します.

@@ -549,7 +549,7 @@ void Bone::performFullTransform()
             if (parentBone->hasRotationInherence())
                 rotation *= parentBone->m_rotationInherence;
             else
-                rotation *= parentBone->rotation() * parentBone->m_rotationMorph;
+                rotation *= parentBone->localRotation() * parentBone->m_rotationMorph;
         }
         if (!btFuzzyZero(m_weight - 1.0f))
             rotation = Quaternion::getIdentity().slerp(rotation, m_weight);
@@ -600,7 +600,7 @@ void Bone::solveInverseKinematics()
         return;
     const int nlinks = m_IKLinks.count();
     const int nloops = m_nloop;
-    Quaternion rotation, targetRotation = m_targetBoneRef->rotation();
+    Quaternion rotation, targetRotation = m_targetBoneRef->localRotation();
     Matrix3x3 matrix;
     for (int i = 0; i < nloops; i++) {
         for (int j = 0; j < nlinks; j++) {
@@ -735,7 +735,7 @@ void Bone::solveInverseKinematics()
 #endif
         }
     }
-    m_targetBoneRef->setRotation(targetRotation);
+    m_targetBoneRef->setLocalRotation(targetRotation);
 }
 
 void Bone::performUpdateLocalTransform()
@@ -762,7 +762,7 @@ void Bone::setLocalPosition(const Vector3 &value)
     m_localPosition = value;
 }
 
-void Bone::setRotation(const Quaternion &value)
+void Bone::setLocalRotation(const Quaternion &value)
 {
     m_rotation = value;
     //qDebug("%s(rotate): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());

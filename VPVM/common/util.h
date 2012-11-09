@@ -93,8 +93,8 @@ static inline void dumpBones(IModel *model)
 
 static inline void dumpBoneKeyFrame(const IBoneKeyframe *frame, int index = 0)
 {
-    const Vector3 &p = frame->position();
-    const Quaternion &q = frame->rotation();
+    const Vector3 &p = frame->localPosition();
+    const Quaternion &q = frame->localRotation();
     qDebug().nospace() << "index=" << index
                        << " timeIndex=" << frame->timeIndex()
                        << " name=" << toQStringFromBoneKeyframe(frame)

@@ -793,7 +793,7 @@ void Handles::beginDrawing(const IModel *model)
     QMatrix4x4 world, view, projection, trans;
     m_loaderRef->getCameraMatrices(world, view, projection);
     if (model) {
-        const Vector3 &position = model->position();
+        const Vector3 &position = model->worldPosition();
         world.translate(position.x(), position.y(), position.z());
     }
     float matrix[16];

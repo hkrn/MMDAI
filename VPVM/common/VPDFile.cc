@@ -214,7 +214,7 @@ void VPDFile::makePose(IModel *model)
             const Vector4 &rot = b->rotation;
             const Quaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
             bone->setLocalPosition(pos);
-            bone->setRotation(rotation);
+            bone->setLocalRotation(rotation);
         }
     }
 }

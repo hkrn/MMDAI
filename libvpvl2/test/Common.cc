@@ -480,13 +480,13 @@ AssertionResult CompareBoneKeyframe(const IBoneKeyframe &expected, const IBoneKe
         return AssertionFailure() << "IBoneKeyframe#name is not same: expected="
                                   << expected.name() << " actual=" << actual.name();
     }
-    if (expected.position() != actual.position()) {
-        return AssertionFailure() << "IBoneKeyframe#position is not same: expected="
-                                  << expected.position() << " actual=" << actual.position();
+    if (expected.localPosition() != actual.localPosition()) {
+        return AssertionFailure() << "IBoneKeyframe#localPosition is not same: expected="
+                                  << expected.localPosition() << " actual=" << actual.localPosition();
     }
-    if (expected.rotation() != actual.rotation()) {
-        return AssertionFailure() << "IBoneKeyframe#rotation is not same: expected="
-                                  << expected.rotation() << " actual=" << actual.rotation();
+    if (expected.localRotation() != actual.localRotation()) {
+        return AssertionFailure() << "IBoneKeyframe#localRotation is not same: expected="
+                                  << expected.localRotation() << " actual=" << actual.localRotation();
     }
     Quaternion eq, aq;
     for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
@@ -511,9 +511,9 @@ AssertionResult CompareCameraKeyframe(const ICameraKeyframe &expected, const ICa
         return AssertionFailure() << "ICameraKeyframe#layerIndex is not same: expected="
                                   << expected.layerIndex() << " actual=" << actual.layerIndex();
     }
-    if (expected.position() != actual.position()) {
-        return AssertionFailure() << "ICameraKeyframe#position is not same: expected="
-                                  << expected.position() << " actual=" << actual.position();
+    if (expected.lookAt() != actual.lookAt()) {
+        return AssertionFailure() << "ICameraKeyframe#lookAt is not same: expected="
+                                  << expected.lookAt() << " actual=" << actual.lookAt();
     }
     if (expected.distance() != actual.distance()) {
         return AssertionFailure() << "ICameraKeyframe#distance is not same: expected="

@@ -281,7 +281,7 @@ void CameraKeyframe::setFov(const Scalar &value)
     m_fov = value;
 }
 
-void CameraKeyframe::setPosition(const Vector3 &value)
+void CameraKeyframe::setLookAt(const Vector3 &value)
 {
     m_position = value;
 }

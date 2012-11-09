@@ -476,7 +476,7 @@ void SceneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
                     const ICamera *camera = m_sceneWidgetRef->sceneLoaderRef()->sceneRef()->camera();
                     cameraKeyframe.reset(m_factory->createCameraKeyframe(m_motionRef));
                     cameraKeyframe->setDefaultInterpolationParameter();
-                    cameraKeyframe->setPosition(camera->lookAt());
+                    cameraKeyframe->setLookAt(camera->lookAt());
                     cameraKeyframe->setAngle(camera->angle());
                     cameraKeyframe->setFov(camera->fov());
                     cameraKeyframe->setDistance(camera->distance());

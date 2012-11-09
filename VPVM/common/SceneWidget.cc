@@ -833,8 +833,8 @@ void SceneWidget::rotateModel(const Quaternion &delta)
 void SceneWidget::rotateModel(IModel *model, const Quaternion &delta)
 {
     if (model) {
-        const Quaternion &rotation = model->rotation();
-        model->setRotation(rotation * delta);
+        const Quaternion &rotation = model->worldRotation();
+        model->setWorldRotation(rotation * delta);
         emit modelDidRotate(rotation);
     }
 }
@@ -854,8 +854,8 @@ void SceneWidget::translateModel(const Vector3 &delta)
 void SceneWidget::translateModel(IModel *model, const Vector3 &delta)
 {
     if (model) {
-        const Vector3 &position = model->position();
-        model->setPosition(position + delta);
+        const Vector3 &position = model->worldPosition();
+        model->setWorldPosition(position + delta);
         emit modelDidMove(position);
     }
 }
@@ -864,8 +864,8 @@ void SceneWidget::resetModelPosition()
 {
     IModel *model = m_loader->selectedModelRef();
     if (model) {
-        const Vector3 &position = model->position();
-        model->setPosition(kZeroV3);
+        const Vector3 &position = model->worldPosition();
+        model->setWorldPosition(kZeroV3);
         emit modelDidMove(position);
     }
 }

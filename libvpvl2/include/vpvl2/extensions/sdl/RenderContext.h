@@ -391,8 +391,8 @@ public:
             if (flags & IRenderContext::kWorldMatrix) {
                 const IBone *bone = model->parentBone();
                 Transform transform;
-                transform.setOrigin(model->position());
-                transform.setRotation(model->rotation());
+                transform.setOrigin(model->worldPosition());
+                transform.setRotation(model->worldRotation());
                 Scalar matrix[16];
                 transform.getOpenGLMatrix(matrix);
                 m *= glm::make_mat4x4(matrix);

@@ -87,7 +87,7 @@ public:
     void getEffectorBones(Array<IBone *> &value) const;
 
     void setLocalPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
+    void setLocalRotation(const Quaternion &value);
     const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setLocalTransform(const Transform &value);
@@ -100,7 +100,7 @@ public:
     IBone *destinationOriginBoneRef() const { return m_destinationOriginBoneRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
-    const Quaternion &rotation() const { return m_rotation; }
+    const Quaternion &localRotation() const { return m_rotation; }
     const Vector3 &origin() const { return m_origin; }
     const Vector3 destinationOrigin() const;
     const Vector3 &localPosition() const { return m_localPosition; }

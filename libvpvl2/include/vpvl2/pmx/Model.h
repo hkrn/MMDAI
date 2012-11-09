@@ -181,16 +181,16 @@ public:
     void setComment(const IString *value);
     void setEnglishComment(const IString *value);
 
-    const Vector3 &position() const { return m_position; }
-    const Quaternion &rotation() const { return m_rotation; }
+    const Vector3 &worldPosition() const { return m_position; }
+    const Quaternion &worldRotation() const { return m_rotation; }
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return kZeroV3; }
     const Scalar &edgeWidth() const { return m_edgeWidth; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
-    void setPosition(const Vector3 &value) { m_position = value; }
-    void setRotation(const Quaternion &value) { m_rotation = value; }
+    void setWorldPosition(const Vector3 &value) { m_position = value; }
+    void setWorldRotation(const Quaternion &value) { m_rotation = value; }
     void setOpacity(const Scalar &value) { m_opacity = value; }
     void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
     void setEdgeColor(const Vector3 & /* value */) {}

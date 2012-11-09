@@ -335,8 +335,8 @@ private:
         QMatrix4x4 world, view, projection;
         loader->getCameraMatrices(world, view, projection);
         if (model) {
-            const Vector3 &position = model->position();
-            const Quaternion &rotation = model->rotation();
+            const Vector3 &position = model->worldPosition();
+            const Quaternion &rotation = model->worldRotation();
             world.translate(position.x(), position.y(), position.z());
             world.rotate(QQuaternion(rotation.w(), rotation.x(), rotation.y(), rotation.z()));
         }

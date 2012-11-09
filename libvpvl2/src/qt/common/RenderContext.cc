@@ -142,8 +142,8 @@ public:
 static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m)
 {
     Transform transform;
-    transform.setOrigin(model->position());
-    transform.setRotation(model->rotation());
+    transform.setOrigin(model->worldPosition());
+    transform.setRotation(model->worldRotation());
     QMatrix4x4 worldMatrix;
     Scalar matrix[16];
     transform.getOpenGLMatrix(matrix);

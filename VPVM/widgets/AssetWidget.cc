@@ -223,7 +223,7 @@ void AssetWidget::changeCurrentAsset(int index)
 void AssetWidget::changeCurrentAsset(IModel *asset)
 {
     /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
-    const Vector3 &position = asset ? asset->position() : kZeroV3;
+    const Vector3 &position = asset ? asset->worldPosition() : kZeroV3;
     /* setAssetProperty からも呼ばれるので、シグナル発行前に選択したアセットと同じでないことを確認する */
     bool isAssetChanged = false;
     if (m_currentAssetRef != asset) {
@@ -236,7 +236,7 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
     m_px->setValue(position.x());
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
-    const Quaternion &rotation = asset ? asset->rotation() : Quaternion::getIdentity();
+    const Quaternion &rotation = asset ? asset->worldRotation() : Quaternion::getIdentity();
     m_rx->setValue(degree(rotation.x()));
     m_ry->setValue(degree(rotation.y()));
     m_rz->setValue(degree(rotation.z()));
@@ -292,27 +292,27 @@ void AssetWidget::changeParentBone(int index)
 void AssetWidget::updatePositionX(double value)
 {
     if (m_currentAssetRef) {
-        Vector3 position = m_currentAssetRef->position();
+        Vector3 position = m_currentAssetRef->worldPosition();
         position.setX(value);
-        m_currentAssetRef->setPosition(position);
+        m_currentAssetRef->setWorldPosition(position);
     }
 }
 
 void AssetWidget::updatePositionY(double value)
 {
     if (m_currentAssetRef) {
-        Vector3 position = m_currentAssetRef->position();
+        Vector3 position = m_currentAssetRef->worldPosition();
         position.setY(value);
-        m_currentAssetRef->setPosition(position);
+        m_currentAssetRef->setWorldPosition(position);
     }
 }
 
 void AssetWidget::updatePositionZ(double value)
 {
     if (m_currentAssetRef) {
-        Vector3 position = m_currentAssetRef->position();
+        Vector3 position = m_currentAssetRef->worldPosition();
         position.setZ(value);
-        m_currentAssetRef->setPosition(position);
+        m_currentAssetRef->setWorldPosition(position);
     }
 }
 
@@ -322,7 +322,7 @@ void AssetWidget::updateRotation()
         const Quaternion x(Vector3(1, 0, 0), radian(m_rx->value()));
         const Quaternion y(Vector3(0, 1, 0), radian(m_ry->value()));
         const Quaternion z(Vector3(0, 0, 1), radian(m_rz->value()));
-        m_currentAssetRef->setRotation(x * y * z);
+        m_currentAssetRef->setWorldRotation(x * y * z);
     }
 }
 
@@ -342,8 +342,8 @@ void AssetWidget::setAssetProperties(IModel *asset, SceneLoader *loader)
 {
     if (asset && asset->type() == IModel::kAsset) {
         if (loader) {
-            asset->setPosition(loader->assetPosition(asset));
-            asset->setRotation(loader->assetRotation(asset));
+            asset->setWorldPosition(loader->assetPosition(asset));
+            asset->setWorldRotation(loader->assetRotation(asset));
             asset->setScaleFactor(loader->assetScaleFactor(asset));
             asset->setOpacity(loader->assetOpacity(asset));
             asset->setParentModel(loader->assetParentModel(asset));

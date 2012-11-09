@@ -592,8 +592,8 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 }
             }
             else {
-                const Vector3 &position = model->position();
-                const Quaternion &rotation = model->rotation();
+                const Vector3 &position = model->worldPosition();
+                const Quaternion &rotation = model->worldRotation();
                 const CGtype parameterType = cgGetParameterType(parameter);
                 if (VPVL2_CG_STREQ_CONST(item, len, "X") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, position.x());
@@ -638,7 +638,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 break;
             case CG_FLOAT3:
             case CG_FLOAT4:
-                cgSetParameter4fv(parameter, model->position());
+                cgSetParameter4fv(parameter, model->worldPosition());
                 break;
             case CG_FLOAT4x4:
                 m_renderContextRef->getMatrix(matrix4x4, model, IRenderContext::kWorldMatrix | IRenderContext::kCameraMatrix);

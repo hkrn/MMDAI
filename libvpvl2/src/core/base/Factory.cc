@@ -110,8 +110,8 @@ struct Factory::PrivateContext
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
-            keyframeTo->setPosition(keyframeFrom->position());
-            keyframeTo->setRotation(keyframeFrom->rotation());
+            keyframeTo->setLocalPosition(keyframeFrom->localPosition());
+            keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kX, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kX, value);
@@ -128,7 +128,7 @@ struct Factory::PrivateContext
             mvd::CameraKeyframe *keyframeTo = mvdCameraKeyframe = new mvd::CameraKeyframe();
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
-            keyframeTo->setPosition(keyframeFrom->position());
+            keyframeTo->setLookAt(keyframeFrom->lookAt());
             keyframeTo->setAngle(keyframeFrom->angle());
             keyframeTo->setFov(keyframeFrom->fov());
             keyframeTo->setDistance(keyframeFrom->distance());
@@ -180,8 +180,8 @@ struct Factory::PrivateContext
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
-            keyframeTo->setPosition(keyframeFrom->position());
-            keyframeTo->setRotation(keyframeFrom->rotation());
+            keyframeTo->setLocalPosition(keyframeFrom->localPosition());
+            keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kX, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kX, value);
@@ -198,7 +198,7 @@ struct Factory::PrivateContext
             vmd::CameraKeyframe *keyframeTo = vmdCameraKeyframe = new vmd::CameraKeyframe();
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
-            keyframeTo->setPosition(keyframeFrom->position());
+            keyframeTo->setLookAt(keyframeFrom->lookAt());
             keyframeTo->setAngle(keyframeFrom->angle());
             keyframeTo->setFov(keyframeFrom->fov());
             keyframeTo->setDistance(keyframeFrom->distance());

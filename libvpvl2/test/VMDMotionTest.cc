@@ -130,8 +130,8 @@ TEST(VMDMotionTest, SaveBoneKeyframe)
     // initialize the bone frame to be copied
     frame.setTimeIndex(42);
     frame.setName(&str);
-    frame.setPosition(pos);
-    frame.setRotation(rot);
+    frame.setLocalPosition(pos);
+    frame.setLocalRotation(rot);
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -148,15 +148,15 @@ TEST(VMDMotionTest, SaveBoneKeyframe)
     // compare read bone frame
     ASSERT_TRUE(newFrame.name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
-    ASSERT_TRUE(newFrame.position() == pos);
-    ASSERT_TRUE(newFrame.rotation() == rot);
+    ASSERT_TRUE(newFrame.localPosition() == pos);
+    ASSERT_TRUE(newFrame.localRotation() == rot);
     CompareBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
     ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
-    ASSERT_TRUE(cloned->position() == pos);
-    ASSERT_TRUE(cloned->rotation() == rot);
+    ASSERT_TRUE(cloned->localPosition() == pos);
+    ASSERT_TRUE(cloned->localRotation() == rot);
     CompareBoneInterpolationMatrix(p, *static_cast<vmd::BoneKeyframe *>(cloned.data()));
 }
 
@@ -166,7 +166,7 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
     // initialize the camera frame to be copied
     frame.setTimeIndex(42);
-    frame.setPosition(pos);
+    frame.setLookAt(pos);
     frame.setAngle(angle);
     frame.setDistance(7);
     frame.setFov(8);
@@ -188,7 +188,7 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
     frame.write(data);
     newFrame.read(data);
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
-    ASSERT_TRUE(newFrame.position() == frame.position());
+    ASSERT_TRUE(newFrame.lookAt() == frame.lookAt());
     // compare read camera frame
     // for radian and degree calculation
     ASSERT_TRUE(qFuzzyCompare(newFrame.angle().x(), frame.angle().x()));
@@ -200,7 +200,7 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
     // cloned camera frame shold be copied with deep
     QScopedPointer<ICameraKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
-    ASSERT_TRUE(cloned->position() == frame.position());
+    ASSERT_TRUE(cloned->lookAt() == frame.lookAt());
     // for radian and degree calculation
     ASSERT_TRUE(qFuzzyCompare(cloned->angle().x(), frame.angle().x()));
     ASSERT_TRUE(qFuzzyCompare(cloned->angle().y(), frame.angle().y()));
@@ -322,11 +322,11 @@ TEST(VMDMotionTest, ParseBoneKeyframe)
     ASSERT_TRUE(frame.name()->equals(&str));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
-    ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
-    ASSERT_TRUE(frame.rotation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
+    ASSERT_TRUE(frame.localPosition() == Vector3(2.0f, 3.0f, -4.0f));
+    ASSERT_TRUE(frame.localRotation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
 #else
-    ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, 4.0f));
-    ASSERT_TRUE(frame.rotation() == Quaternion(5.0f, 6.0f, 7.0f, 8.0f));
+    ASSERT_TRUE(frame.localPosition() == Vector3(2.0f, 3.0f, 4.0f));
+    ASSERT_TRUE(frame.localRotation() == Quaternion(5.0f, 6.0f, 7.0f, 8.0f));
 #endif
 }
 
@@ -352,7 +352,7 @@ TEST(VMDMotionTest, ParseCameraKeyframe)
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
     ASSERT_EQ(-1.0f, frame.distance());
-    ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, -4.0f));
+    ASSERT_TRUE(frame.lookAt() == Vector3(2.0f, 3.0f, -4.0f));
     ASSERT_TRUE(frame.angle() == Vector3(-degree(5.0f), -degree(6.0f), degree(7.0f)));
 #else
     ASSERT_EQ(1.0f, frame.distance());

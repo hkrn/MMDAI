@@ -322,8 +322,8 @@ TEST_F(EffectTest, LoadControlObjectWithAsset)
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
-    EXPECT_CALL(model, position()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
-    EXPECT_CALL(model, rotation()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kRotation));
+    EXPECT_CALL(model, worldPosition()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
+    EXPECT_CALL(model, worldRotation()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kRotation));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
     EXPECT_CALL(model, opacity()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kOpacity));
     EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kAsset));
@@ -385,7 +385,7 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
     EXPECT_CALL(bone, worldTransform()).Times(AnyNumber()).WillRepeatedly(ReturnRef(boneTransform));
     EXPECT_CALL(morph, weight()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
     EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
-    EXPECT_CALL(model, position()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
+    EXPECT_CALL(model, worldPosition()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
     EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kPMD));
     EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));

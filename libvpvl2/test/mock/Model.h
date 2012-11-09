@@ -49,10 +49,10 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD1(getVertexRefs,
       void(Array<IVertex *> &value));
   MOCK_CONST_METHOD1(edgeScaleFactor,
-      float(const Vector3 &position));
-  MOCK_CONST_METHOD0(position,
+      float(const Vector3 &cameraPosition));
+  MOCK_CONST_METHOD0(worldPosition,
       const Vector3&());
-  MOCK_CONST_METHOD0(rotation,
+  MOCK_CONST_METHOD0(worldRotation,
       const Quaternion&());
   MOCK_CONST_METHOD0(opacity,
       const Scalar&());
@@ -74,9 +74,9 @@ class MockIModel : public IModel {
       void(const IString *value));
   MOCK_METHOD1(setEnglishComment,
       void(const IString *value));
-  MOCK_METHOD1(setPosition,
+  MOCK_METHOD1(setWorldPosition,
       void(const Vector3 &value));
-  MOCK_METHOD1(setRotation,
+  MOCK_METHOD1(setWorldRotation,
       void(const Quaternion &value));
   MOCK_METHOD1(setOpacity,
       void(const Scalar &value));

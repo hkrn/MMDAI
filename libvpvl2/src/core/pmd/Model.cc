@@ -627,12 +627,12 @@ void Model::setEnglishComment(const IString *value)
     m_encodingRef->disposeByteArray(bytes);
 }
 
-void Model::setPosition(const Vector3 &value)
+void Model::setWorldPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void Model::setRotation(const Quaternion &value)
+void Model::setWorldRotation(const Quaternion &value)
 {
     m_rotation = value;
 }

@@ -70,7 +70,7 @@ public:
 
     const Scalar &distance() const { return m_distance; }
     const Scalar &fov() const { return m_fov; }
-    const Vector3 &position() const { return m_position; }
+    const Vector3 &lookAt() const { return m_position; }
     const Vector3 &angle() const { return m_angle; }
     bool isPerspective() const { return !m_noPerspective; }
     const bool *linear() const { return m_linear; }
@@ -79,7 +79,7 @@ public:
 
     void setDistance(const Scalar &value);
     void setFov(const Scalar &value);
-    void setPosition(const Vector3 &value);
+    void setLookAt(const Vector3 &value);
     void setAngle(const Vector3 &value);
     void setPerspective(bool value);
 

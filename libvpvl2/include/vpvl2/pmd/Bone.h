@@ -67,10 +67,10 @@ public:
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
     const Vector3 &localPosition() const;
-    const Quaternion &rotation() const;
+    const Quaternion &localRotation() const;
     void getEffectorBones(Array<IBone *> &value) const;
     void setLocalPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
+    void setLocalRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
     bool isVisible() const;

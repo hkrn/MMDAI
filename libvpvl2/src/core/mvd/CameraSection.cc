@@ -86,9 +86,9 @@ public:
                 *keyframeTo = reinterpret_cast<const CameraKeyframe *>(keyframes->at(toIndex));
         const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
         const Scalar &distanceFrom = keyframeFrom->distance(), fovyFrom = keyframeFrom->fov();
-        const Vector3 &positionFrom = keyframeFrom->position(), angleFrom = keyframeFrom->angle();
+        const Vector3 &positionFrom = keyframeFrom->lookAt(), angleFrom = keyframeFrom->angle();
         const Scalar &distanceTo = keyframeTo->distance(), fovyTo = keyframeTo->fov();
-        const Vector3 &positionTo = keyframeTo->position(), angleTo = keyframeTo->angle();
+        const Vector3 &positionTo = keyframeTo->lookAt(), angleTo = keyframeTo->angle();
         if (timeIndexFrom != timeIndexTo) {
             if (currentTimeIndex <= timeIndexFrom) {
                 distance = distanceFrom;

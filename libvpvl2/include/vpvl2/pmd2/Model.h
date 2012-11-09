@@ -131,8 +131,8 @@ public:
     void getMorphRefs(Array<IMorph *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
-    const Vector3 &position() const { return m_position; }
-    const Quaternion &rotation() const { return m_rotation; }
+    const Vector3 &worldPosition() const { return m_position; }
+    const Quaternion &worldRotation() const { return m_rotation; }
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return m_edgeColor; }
@@ -143,8 +143,8 @@ public:
     void setEnglishName(const IString *value);
     void setComment(const IString *value);
     void setEnglishComment(const IString *value);
-    void setPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
+    void setWorldPosition(const Vector3 &value);
+    void setWorldRotation(const Quaternion &value);
     void setOpacity(const Scalar &value);
     void setScaleFactor(const Scalar &value);
     void setEdgeColor(const Vector3 &value);
