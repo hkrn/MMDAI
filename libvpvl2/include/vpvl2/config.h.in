@@ -46,10 +46,7 @@
 /* Build libvpvl2 with Open Asset Import Library */
 #cmakedefine VPVL2_LINK_ASSIMP
 
-/* Build libvpvl2's renderer with GLSL shader */
-#cmakedefine VPVL2_ENABLE_GLSL
-
-/* Build libvpvl2's renderer with NVIDIA Cg (based on vpvl::gl::Renderer) */
+/* Build libvpvl2's renderer with NVIDIA Cg based rendering engines */
 #cmakedefine VPVL2_ENABLE_NVIDIA_CG
 
 /* Build libvpvl2 for iOS */
@@ -64,17 +61,17 @@
 /* Link libvpvl2 against Qt */
 #cmakedefine VPVL2_LINK_QT
 
-/* Build libvpvl2 linking against OpenCL */
+/* Build libvpvl2 with OpenCL support */
 #cmakedefine VPVL2_ENABLE_OPENCL
 
-/* Build libvpvl2 with rendering engines */
+/* Build libvpvl2 with OpenGL based rendering engines */
 #cmakedefine VPVL2_OPENGL_RENDERER
 
-/* Build libvpvl2 with OpenGL ES2 */
+/* Build libvpvl2 with OpenGL ES2 support */
 #cmakedefine VPVL2_ENABLE_GLES2
 
-/* Link libvpvl2 against DevIL */
-#cmakedefine VPVL2_LINK_DEVIL
+/* Build libvpvl2 with OpenMP support */
+#cmakedefine VPVL2_ENABLE_OPENMP
 
 /* Link libvpvl2 against NVIDIA texture tools */
 #cmakedefine VPVL2_LINK_NVTT
@@ -93,8 +90,8 @@
 #define VPVL2_MAKE_VERSION(major, compat, minor) \
     (((major) << 16) | ((compat) << 8) | (minor))
 #define VPVL2_VERSION VPVL2_MAKE_VERSION(VPVL2_VERSION_MAJOR, \
-                                       VPVL2_VERSION_COMPAT, \
-                                       VPVL2_VERSION_MINOR)
+                                         VPVL2_VERSION_COMPAT, \
+                                         VPVL2_VERSION_MINOR)
 
 #define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
 
