@@ -40,10 +40,13 @@
 #include <QtOpenGL/QGLBuffer>
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
+#include <vpvl2/IModel.h>
 
 #include "VertexBundle.h"
 
 namespace vpvm {
+
+using namespace vpvl2;
 
 class TextureDrawHelper : protected QGLFunctions
 {
@@ -63,6 +66,9 @@ public:
         m_bundle.initialize(QGLContext::currentContext());
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/texture.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/texture.fsh");
+        m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
+        m_program.bindAttributeLocation("inTexCoord", IModel::IBuffer::kTextureCoordStride);
+        m_program.link();
         m_dvbo.setUsagePattern(QGLBuffer::DynamicDraw);
         m_dvbo.create();
         m_dvbo.bind();
@@ -77,12 +83,11 @@ public:
         setVertices2D(QRectF(0.0, 0.0, 1.0, -1.0), texcoord);
         m_svbo.allocate(&texcoord[0], sizeof(texcoord));
         m_svbo.release();
-        m_program.link();
         m_bundle.create();
         m_bundle.bind();
         bindVertexBundle(false);
-        m_program.enableAttributeArray("inPosition");
-        m_program.enableAttributeArray("inTexCoord");
+        m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
+        m_program.enableAttributeArray(IModel::IBuffer::kTextureCoordStride);
         m_bundle.release();
         releaseVertexBundle(false);
     }
@@ -142,9 +147,9 @@ private:
     void bindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.bind()) {
             m_dvbo.bind();
-            m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 2);
+            m_program.setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 2);
             m_svbo.bind();
-            m_program.setAttributeBuffer("inTexCoord", GL_FLOAT, 0, 2);
+            m_program.setAttributeBuffer(IModel::IBuffer::kTextureCoordStride, GL_FLOAT, 0, 2);
         }
     }
     void releaseVertexBundle(bool bundle) {

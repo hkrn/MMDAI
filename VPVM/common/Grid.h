@@ -41,6 +41,7 @@
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
 #include <vpvl2/Common.h>
+#include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
 
 #include "SceneLoader.h"
@@ -88,6 +89,8 @@ public:
         addLine(kZeroV3, Vector3(0.0f, 0.0f, depth), m_axisZColor, vertices, indices, index);
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
+        m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
+        m_program.bindAttributeLocation("inColor", IModel::IBuffer::kNormalStride);
         m_program.link();
         m_vbo.setUsagePattern(QGLBuffer::StaticDraw);
         m_vbo.create();
@@ -103,8 +106,8 @@ public:
         m_bundle.create();
         m_bundle.bind();
         bindVertexBundle(false);
-        m_program.enableAttributeArray("inPosition");
-        m_program.enableAttributeArray("inColor");
+        m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
+        m_program.enableAttributeArray(IModel::IBuffer::kNormalStride);
         m_bundle.release();
         releaseVertexBundle(false);
         m_nindices = index;
@@ -156,11 +159,11 @@ private:
         if (!bundle || !m_bundle.bind()) {
             m_vbo.bind();
             m_ibo.bind();
-            m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
+            m_program.setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Vertex));
             static const Vertex v;
             const size_t offset = reinterpret_cast<const uint8_t *>(&v.color)
                     - reinterpret_cast<const uint8_t *>(&v.position);
-            m_program.setAttributeBuffer("inColor", GL_FLOAT, offset, 3, sizeof(Vertex));
+            m_program.setAttributeBuffer(IModel::IBuffer::kNormalStride, GL_FLOAT, offset, 3, sizeof(Vertex));
         }
     }
     void releaseVertexBundle(bool bundle) {

@@ -57,7 +57,7 @@ class DebugDrawer : public btIDebugDraw
 {
 public:
     typedef QSet<const IBone *> BoneSet;
-    static const Scalar kLength = 2.0;
+    static const Scalar kLength;
     static const Vector3 kRed;
     static const Vector3 kGreen;
     static const Vector3 kBlue;
@@ -113,6 +113,8 @@ public:
             m_bundle.initialize(QGLContext::currentContext());
             m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
             m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
+            m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
+            m_program.bindAttributeLocation("inColor", IModel::IBuffer::kNormalStride);
             m_program.link();
             m_vbo.setUsagePattern(QGLBuffer::DynamicDraw);
             m_vbo.create();
@@ -130,6 +132,8 @@ public:
             bindVertexBundle(false);
             m_bundle.release();
             releaseVertexBundle(false);
+            m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
+            m_program.enableAttributeArray(IModel::IBuffer::kNormalStride);
             m_initialized = true;
         }
     }
@@ -356,10 +360,8 @@ private:
         if (!bundle || !m_bundle.bind()) {
             m_vbo.bind();
             m_ibo.bind();
-            m_program.setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Vertex));
-            m_program.setAttributeBuffer("inColor", GL_FLOAT, 16, 3, sizeof(Vertex));
-            m_program.enableAttributeArray("inPosition");
-            m_program.enableAttributeArray("inColor");
+            m_program.setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Vertex));
+            m_program.setAttributeBuffer(IModel::IBuffer::kNormalStride, GL_FLOAT, 16, 3, sizeof(Vertex));
         }
     }
     void releaseVertexBundle(bool bundle) {
@@ -380,7 +382,7 @@ private:
     Q_DISABLE_COPY(DebugDrawer)
 };
 
-const float DebugDrawer::kLength;
+const Scalar DebugDrawer::kLength  = 2.0f;
 const Vector3 DebugDrawer::kRed   = Vector3(1, 0, 0);
 const Vector3 DebugDrawer::kGreen = Vector3(0, 1, 0);
 const Vector3 DebugDrawer::kBlue  = Vector3(0, 0, 1);

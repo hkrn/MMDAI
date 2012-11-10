@@ -171,7 +171,7 @@ public:
         if (!bundle || !m_bundle.bind()) {
             m_vbo.bind();
             m_ibo.bind();
-            m_program->setAttributeBuffer("inPosition", GL_FLOAT, 0, 3, sizeof(Handles::Vertex));
+            m_program->setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Handles::Vertex));
         }
     }
     void releaseVertexBundle(bool bundle) {
@@ -338,9 +338,9 @@ void Handles::loadImageHandles()
 void Handles::loadModelHandles()
 {
     if (!m_handleModelsAreLoaded) {
-        m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
+        m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
         if (m_program.link()) {
             /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
             QFile rotationHandleFile(":models/rotation.3ds");
