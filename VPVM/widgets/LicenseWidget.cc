@@ -41,6 +41,14 @@
 
 /* lupdate cannot parse tr() syntax correctly */
 
+namespace {
+
+static const int kNameIndex = 0;
+static const int kLicenseIndex = 1;
+static const int kWebsiteIndex = 2;
+
+}
+
 namespace vpvm
 {
 
@@ -90,6 +98,9 @@ LicenseWidget::LicenseWidget(QWidget *parent)
     setLayout(layout.take());
 
     addLibrary("Glyph Icons", "CC 3.0", "http://glyphicons.com/", "GlyphIcons");
+#ifdef VPVL2_LINK_INTEL_TBB
+    addLibrary("TBB", "GPL", "http://threadingbuildingblocks.org/", "TBB");
+#endif
 #ifdef VPVL2_LINK_NVTT
     addLibrary("NVIDIA texture tools", "MIT", "http://code.google.com/p/nvidia-texture-tools/", "nvtt");
 #endif /* VPVL2_LINK_NVTT */
@@ -126,17 +137,17 @@ void LicenseWidget::addLibrary(const QString &name,
 {
     m_path.insert(name, path);
     m_model->insertRow(0);
-    m_model->setData(m_model->index(0, 0), name);
-    m_model->setData(m_model->index(0, 1), license);
-    m_model->setData(m_model->index(0, 2), website);
+    m_model->setData(m_model->index(0, kNameIndex), name);
+    m_model->setData(m_model->index(0, kLicenseIndex), license);
+    m_model->setData(m_model->index(0, kWebsiteIndex), website);
 }
 
 void LicenseWidget::handleDoubleClick(const QModelIndex &index)
 {
     QVariant value;
     switch (index.column()) {
-    case 0: // name
-    case 1: // license
+    case kNameIndex:
+    case kLicenseIndex:
     {
         const QString &name = m_model->data(m_model->index(index.row(), 0)).toString();
         QFile file(QString(":/licenses/%1").arg(m_path[name]));
@@ -151,7 +162,7 @@ void LicenseWidget::handleDoubleClick(const QModelIndex &index)
         }
         break;
     }
-    case 2: // website
+    case kWebsiteIndex:
         value = m_model->data(index);
         QDesktopServices::openUrl(value.toString());
         break;
