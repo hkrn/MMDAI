@@ -504,6 +504,11 @@ IBone *Vertex::bone(int index) const
     return internal::checkBound(index, 0, kMaxBones) ? m_boneRefs[index] : 0;
 }
 
+IMaterial *Vertex::material() const
+{
+    return m_materialRef;
+}
+
 void Vertex::setOrigin(const Vector3 &value)
 {
     m_origin = value;
@@ -547,6 +552,11 @@ void Vertex::setBone(int index, IBone *value)
         m_boneRefs[index] = value;
         m_boneIndices[index] = value->index();
     }
+}
+
+void Vertex::setMaterial(IMaterial *value)
+{
+    m_materialRef = value;
 }
 
 void Vertex::setSdefC(const Vector3 &value)

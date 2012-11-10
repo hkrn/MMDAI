@@ -100,6 +100,7 @@ public:
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
     IBone *bone(int index) const;
+    IMaterial *material() const;
     int index() const { return m_index; }
     const Vector3 &sdefC() const { return m_c; }
     const Vector3 &sdefR0() const { return m_r0; }
@@ -113,6 +114,7 @@ public:
     void setEdgeSize(float value);
     void setWeight(int index, float weight);
     void setBone(int index, IBone *value);
+    void setMaterial(IMaterial *value);
     void setSdefC(const Vector3 &value);
     void setSdefR0(const Vector3 &value);
     void setSdefR1(const Vector3 &value);
@@ -120,6 +122,7 @@ public:
 private:
     IModel *m_modelRef;
     IBone *m_boneRefs[kMaxBones];
+    IMaterial *m_materialRef;
     Vector4 m_originUVs[kMaxMorphs];
     Vector4 m_morphUVs[kMaxMorphs];
     Vector3 m_origin;

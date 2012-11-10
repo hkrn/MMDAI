@@ -51,6 +51,7 @@ Vertex::Vertex(IModel *modelRef, vpvl::Vertex *vertexRef, Array<IBone *> *bonesR
     : m_modelRef(modelRef),
       m_vertexRef(vertexRef),
       m_bonesRef(bonesRef),
+      m_materialRef(0),
       m_texcoord(vertexRef->u(), vertexRef->v(), 0),
       m_index(index)
 {
@@ -60,6 +61,7 @@ Vertex::~Vertex()
 {
     m_vertexRef = 0;
     m_bonesRef = 0;
+    m_materialRef = 0;
     m_texcoord.setZero();
     m_index = 0;
 }
@@ -99,6 +101,11 @@ IBone *Vertex::bone(int index) const
     default:
         return 0;
     }
+}
+
+IMaterial *Vertex::material() const
+{
+    return m_materialRef;
 }
 
 int Vertex::index() const
@@ -154,6 +161,11 @@ void Vertex::setWeight(int index, float weight)
 {
     if (index == 0)
         m_vertexRef->setWeight(weight);
+}
+
+void Vertex::setMaterial(IMaterial *value)
+{
+    m_materialRef = value;
 }
 
 } /* namespace pmd */

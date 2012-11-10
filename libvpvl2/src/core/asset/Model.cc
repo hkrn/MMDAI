@@ -400,6 +400,7 @@ public:
     float edgeSize() const { return 0; }
     float weight(int /* index */) const { return 0; }
     IBone *bone(int /* index */) const { return 0; }
+    IMaterial *material() const { return 0; }
     int index() const { return m_index; }
     void setOrigin(const Vector3 & /* value */) {}
     void setNormal(const Vector3 & /* value */) {}
@@ -409,6 +410,7 @@ public:
     void setEdgeSize(float /* value */) {}
     void setWeight(int /* index */, float /* weight */) {}
     void setBone(int /* index */, IBone * /* value */) {}
+    void setMaterial(IMaterial * /* material */) {}
 
 private:
     IModel *m_modelRef;

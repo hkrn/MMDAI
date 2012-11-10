@@ -42,6 +42,7 @@
 namespace vpvl2
 {
 class IBone;
+class IMaterial;
 
 class VPVL2_API IVertex
 {
@@ -77,6 +78,7 @@ public:
     virtual float edgeSize() const = 0;
     virtual float weight(int index) const = 0;
     virtual IBone *bone(int index) const = 0;
+    virtual IMaterial *material() const = 0;
     virtual int index() const = 0;
     virtual void setOrigin(const Vector3 &value) = 0;
     virtual void setNormal(const Vector3 &value) = 0;
@@ -86,6 +88,7 @@ public:
     virtual void setEdgeSize(float value) = 0;
     virtual void setWeight(int index, float weight) = 0;
     virtual void setBone(int index, IBone *value) = 0;
+    virtual void setMaterial(IMaterial *value) = 0;
 };
 
 } /* namespace vpvl2 */

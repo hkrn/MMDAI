@@ -73,6 +73,7 @@ public:
     float edgeSize() const;
     float weight(int index) const;
     IBone *bone(int index) const;
+    IMaterial *material() const;
     int index() const;
     void performSkinning(Vector3 &position, Vector3 &normal) const;
     void reset();
@@ -84,11 +85,13 @@ public:
     void setEdgeSize(float value);
     void setWeight(int index, float weight);
     void setBone(int /* index */, IBone * /* value */) {}
+    void setMaterial(IMaterial *value);
 
 private:
     IModel *m_modelRef;
     vpvl::Vertex *m_vertexRef;
     Array<IBone *> *m_bonesRef;
+    IMaterial *m_materialRef;
     Vector3 m_texcoord;
     int m_index;
 };
