@@ -730,9 +730,9 @@ IMotion *SceneWidget::setCamera(const QString &path)
 {
     IMotion *motion = 0;
     if (QFile::exists(path)) {
-        IMotionPtr motion;
-        if (m_loader->loadCameraMotion(path, motion)) {
-            motion.take();
+        IMotionPtr motionPtr;
+        if (m_loader->loadCameraMotion(path, motionPtr)) {
+            motion = motionPtr.take();
             emit fileDidLoad(path);
         }
         else {
