@@ -54,6 +54,7 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseJoint.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseRigidBody.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/ParallelVertexProcessor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/AssetSection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/BaseSection.h
