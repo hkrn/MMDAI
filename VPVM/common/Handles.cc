@@ -180,16 +180,16 @@ public:
             m_ibo.release();
         }
     }
-    void load(const aiMesh *mesh, QList<Handles::Vertex> &vertices) {
+    void load(const aiMesh *mesh, Array<Handles::Vertex> &vertices) {
         /* Open Asset Import Library を使って読み込んだモデルを VBO が利用出来る形に再構築 */
         const unsigned int nfaces = mesh->mNumFaces;
-        QList<int> indices;
+        Array<int> indices;
         for (unsigned int i = 0; i < nfaces; i++) {
             const struct aiFace &face = mesh->mFaces[i];
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int j = 0; j < nindices; j++) {
                 const int vertexIndex = face.mIndices[j];
-                indices.append(vertexIndex);
+                indices.add(vertexIndex);
             }
         }
         const aiVector3D *meshVertices = mesh->mVertices;
@@ -202,16 +202,16 @@ public:
             const aiVector3D &normal = meshNormals[i];
             v.position.setValue(vertex.x, vertex.y, vertex.z, 1);
             v.normal.setValue(normal.x, normal.y, normal.z);
-            vertices.append(v);
+            vertices.add(v);
         }
         setVertexBuffer(vertices, indices);
     }
     void load(const aiMesh *mesh, Handles::StaticWorld *world, btMotionState *state) {
         /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
-        QList<Handles::Vertex> vertices;
+        Array<Handles::Vertex> vertices;
         load(mesh, vertices);
         QScopedPointer<btTriangleMesh> triangleMesh(new btTriangleMesh());
-        const int nfaces = vertices.size() / 3;
+        const int nfaces = vertices.count() / 3;
         for (int i = 0; i < nfaces; i++) {
             int index = i * 3;
             triangleMesh->addTriangle(vertices[index + 0].position,
@@ -237,11 +237,11 @@ public:
     int indices() const { return m_nindices; }
 
 private:
-    void setVertexBuffer(const QList<Handles::Vertex> &vertices, const QList<int> &indices) {
+    void setVertexBuffer(const Array<Handles::Vertex> &vertices, const Array<int> &indices) {
         m_vbo.setUsagePattern(QGLBuffer::StaticDraw);
         m_vbo.create();
         m_vbo.bind();
-        m_vbo.allocate(sizeof(vertices[0]) * vertices.size());
+        m_vbo.allocate(sizeof(vertices[0]) * vertices.count());
         void *vertexBufferPtr = m_vbo.map(QGLBuffer::WriteOnly);
         memcpy(vertexBufferPtr, &vertices[0], m_vbo.size());
         m_vbo.unmap();
@@ -249,7 +249,7 @@ private:
         m_ibo.setUsagePattern(QGLBuffer::StaticDraw);
         m_ibo.create();
         m_ibo.bind();
-        m_ibo.allocate(sizeof(indices[0]) * indices.size());
+        m_ibo.allocate(sizeof(indices[0]) * indices.count());
         void *indexBufferPtr = m_ibo.map(QGLBuffer::WriteOnly);
         memcpy(indexBufferPtr, &indices[0], m_ibo.size());
         m_ibo.unmap();
@@ -262,7 +262,7 @@ private:
         m_bundle.release();
         m_program->release();
         releaseVertexBundle(false);
-        m_nindices = indices.size();
+        m_nindices = indices.count();
     }
 
     QGLShaderProgram *m_program;
@@ -371,7 +371,7 @@ void Handles::loadModelHandles()
                 m_translationHandle.y->load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
                 m_translationHandle.z.reset(new Model(&m_program));
                 m_translationHandle.z->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
-                QList<Vertex> vertices;
+                Array<Vertex> vertices;
                 m_translationHandle.axisX.reset(new Model(&m_program));
                 m_translationHandle.axisX->load(meshes[3], vertices);
                 m_translationHandle.axisY.reset(new Model(&m_program));
