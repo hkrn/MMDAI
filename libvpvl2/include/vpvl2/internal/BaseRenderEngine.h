@@ -141,31 +141,31 @@ protected:
         glUnmapBufferProcPtrRef = reinterpret_cast<glUnmapBufferProcPtr>(
                     m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kUnmapBuffer)));
     }
-    void allocateVertexArrayObjects(GLuint *vao, size_t size) {
+    inline void allocateVertexArrayObjects(GLuint *vao, size_t size) {
         if (glGenVertexArraysProcPtrRef) {
             glGenVertexArraysProcPtrRef(size, vao);
         }
     }
-    void releaseVertexArrayObjects(GLuint *vao, size_t size) {
+    inline void releaseVertexArrayObjects(GLuint *vao, size_t size) {
         if (glDeleteVertexArraysProcPtrRef) {
             glDeleteVertexArraysProcPtrRef(size, vao);
         }
     }
-    bool bindVertexArrayObject(GLuint vao) {
+    inline bool bindVertexArrayObject(GLuint vao) {
         if (glBindVertexArrayProcPtrRef) {
             glBindVertexArrayProcPtrRef(vao);
             return true;
         }
         return false;
     }
-    bool unbindVertexArrayObject() {
+    inline bool unbindVertexArrayObject() {
         if (glBindVertexArrayProcPtrRef) {
             glBindVertexArrayProcPtrRef(0);
             return true;
         }
         return false;
     }
-    void *mapBuffer(GLenum target, size_t offset, size_t size) {
+    inline void *mapBuffer(GLenum target, size_t offset, size_t size) {
 #ifdef GL_CHROMIUM_map_sub
         return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
 #else /* GL_CHROMIUM_map_sub */
@@ -177,7 +177,7 @@ protected:
         return 0;
 #endif /* GL_CHROMIUM_map_sub */
     }
-    void unmapBuffer(GLenum target, void *address) {
+    inline void unmapBuffer(GLenum target, void *address) {
 #ifdef GL_CHROMIUM_map_sub
         (void) target;
         glUnmapBufferSubDataCHROMIUM(address);

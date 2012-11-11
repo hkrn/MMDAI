@@ -82,7 +82,7 @@ public:
         m_aabbMax.setMax(self.m_aabbMax);
     }
     void operator()(const tbb::blocked_range<int> &range) const {
-        Vector3 aabbMin = m_aabbMin, aabbMax = m_aabbMax, position;
+        Vector3 aabbMin(m_aabbMin), aabbMax(m_aabbMax), position;
         for (int i = range.begin(); i != range.end(); ++i) {
             const TVertex *vertex = m_verticesRef->at(i);
             const float materialEdgeSize = vertex->material()->edgeSize() * m_edgeScaleFactor;
