@@ -140,7 +140,7 @@ sub rewrite_cmake_flags {
         '-DBUILD_SHARED_LIBS:BOOL=' . ($opt_static ? 'OFF' : 'ON'),
     );
     if ($opt_march) {
-        push @args, '-DCMAKE_OSX_ARCHITECTURES="i386;x86_64"';
+        push @args, '-DCMAKE_OSX_ARCHITECTURES=\'i386;x86_64\'';
     }
     if ($opt_static) {
         push @args, '-DCMAKE_CXX_FLAGS=\'-fvisibility=hidden -fvisibility-inlines-hidden\'';
