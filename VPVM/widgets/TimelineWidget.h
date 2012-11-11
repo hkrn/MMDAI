@@ -34,22 +34,26 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINEWIDGET_H
-#define TIMELINEWIDGET_H
+#ifndef VPVM_TIMELINEWIDGET_H
+#define VPVM_TIMELINEWIDGET_H
 
 #include <QtCore/QModelIndex>
 #include <QtGui/QWidget>
 #include "vpvl2/IKeyframe.h"
-
-class MotionBaseModel;
-class TimelineHeaderView;
-class TimelineTreeView;
 
 class QLabel;
 class QPushButton;
 class QSettings;
 class QSpinBox;
 class QTreeView;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
+class MotionBaseModel;
+class TimelineHeaderView;
+class TimelineTreeView;
 
 class TimelineWidget : public QWidget
 {
@@ -67,14 +71,14 @@ public:
     int selectedFrameIndex() const;
     void setFrameIndexSpinBoxEnable(bool value);
 
-    TimelineTreeView *treeView() const { return m_treeView; }
+    TimelineTreeView *treeViewRef() const { return m_treeView.data(); }
 
 public slots:
-    void setCurrentTimeIndex(const vpvl2::IKeyframe::TimeIndex &timeIndex);
+    void setCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex);
     void setCurrentTimeIndex(int timeIndex);
 
 signals:
-    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &column, bool forceCameraUpdate, bool forceEvenSame);
+    void motionDidSeek(const IKeyframe::TimeIndex &column, bool forceCameraUpdate, bool forceEvenSame);
 
 private slots:
     void retranslate();
@@ -85,15 +89,17 @@ private slots:
     void adjustFrameColumnSize(int value);
 
 private:
-    TimelineTreeView *m_treeView;
-    TimelineHeaderView *m_headerView;
-    QLabel *m_label;
-    QPushButton *m_button;
-    QSettings *m_settings;
-    QSpinBox *m_spinBox;
+    QScopedPointer<TimelineTreeView> m_treeView;
+    QScopedPointer<TimelineHeaderView> m_headerView;
+    QScopedPointer<QLabel> m_label;
+    QScopedPointer<QPushButton> m_button;
+    QScopedPointer<QSpinBox> m_spinBox;
+    QSettings *m_settingsRef;
     QModelIndex m_index;
 
     Q_DISABLE_COPY(TimelineWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // TIMLINEWIDGET_H

@@ -34,13 +34,17 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef FRAMESELECTIONDIALOG_H
-#define FRAMESELECTIONDIALOG_H
+#ifndef VPVM_FRAMESELECTIONDIALOG_H
+#define VPVM_FRAMESELECTIONDIALOG_H
 
 #include <QtGui/QDialog>
 
 class QSettings;
 class QSpinBox;
+
+namespace vpvm
+{
+
 class SceneWidget;
 
 class FrameSelectionDialog : public QDialog
@@ -60,11 +64,13 @@ private slots:
     void emitFrameIndices();
 
 private:
-    QSettings *m_settings;
-    QSpinBox *m_fromIndexBox;
-    QSpinBox *m_toIndexBox;
+    QSettings *m_settingsRef;
+    QScopedPointer<QSpinBox> m_fromIndexBox;
+    QScopedPointer<QSpinBox> m_toIndexBox;
 
     Q_DISABLE_COPY(FrameSelectionDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // FRAMESELECTIONDIALOG_H

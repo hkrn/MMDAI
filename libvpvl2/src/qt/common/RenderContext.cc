@@ -37,11 +37,11 @@
 #include "vpvl2/qt/Archive.h"
 #include "vpvl2/qt/CString.h"
 #include "vpvl2/qt/DDSTexture.h"
-#include "vpvl2/qt/Delegate.h"
+#include "vpvl2/qt/RenderContext.h"
 #include "vpvl2/qt/Util.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderDelegate.h>
+#include <vpvl2/IRenderContext.h>
 #include <QtCore/QtCore>
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -50,16 +50,27 @@
 #include <Cg/cgGL.h>
 #endif
 
-#ifdef VPVL2_LINK_DEVIL
-#define ILUT_USE_OPENGL
-#include <IL/il.h>
-#include <IL/ilu.h>
-#include <IL/ilut.h>
+#ifdef VPVL2_LINK_NVTT
+#include <nvcore/Stream.h>
+#include <nvimage/DirectDrawSurface.h>
+#include <nvimage/Image.h>
+#include <nvimage/ImageIO.h>
+#else
+namespace nv {
+class Stream {
+public:
+    Stream() {}
+    virtual ~Stream() {}
+};
+}
 #endif
 
 namespace
 {
-typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
+
+using namespace vpvl2;
+using namespace vpvl2::qt;
+
 #ifdef __APPLE__
 #define glBlitFramebufferPROC glBlitFramebuffer
 #define glDrawBuffersPROC glDrawBuffers
@@ -69,17 +80,70 @@ PFNGLBLITFRAMEBUFFERPROC glBlitFramebufferPROC;
 PFNGLDRAWBUFFERSPROC glDrawBuffersPROC;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
 #endif
-}
 
-namespace vpvl2
-{
-namespace qt
-{
+#ifdef VPVL2_LINK_NVTT
 
-static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m) {
+class ReadonlyFileStream : public nv::Stream {
+public:
+    ReadonlyFileStream(const QString &path) : m_file(path) { m_file.open(QFile::ReadOnly); }
+    ~ReadonlyFileStream() {}
+
+    bool isSaving() const { return false; }
+    bool isError() const { return m_file.error() != QFile::NoError; }
+    void seek(uint pos) { m_file.seek(pos); }
+    uint tell() const { return m_file.pos(); }
+    uint size() const { return m_file.size(); }
+    void clearError() {}
+    bool isAtEnd() const { return m_file.atEnd(); }
+    bool isSeekable() const { return m_file.isSequential(); }
+    bool isLoading() const { return true; }
+    uint serialize(void *data, uint len) { return m_file.read(static_cast<char *>(data), len); }
+
+private:
+    QFile m_file;
+};
+
+class ReadonlyMemoryStream : public nv::Stream {
+public:
+    ReadonlyMemoryStream(QByteArray &bytes) : m_buffer(&bytes) { m_buffer.open(QBuffer::ReadOnly); }
+    ~ReadonlyMemoryStream() {}
+
+    bool isSaving() const { return false; }
+    bool isError() const { return false; }
+    void seek(uint pos) { m_buffer.seek(pos); }
+    uint tell() const { return m_buffer.pos(); }
+    uint size() const { return m_buffer.size(); }
+    void clearError() {}
+    bool isAtEnd() const { return m_buffer.atEnd(); }
+    bool isSeekable() const { return m_buffer.isSequential(); }
+    bool isLoading() const { return true; }
+    uint serialize(void *data, uint len) { return m_buffer.read(static_cast<char *>(data), len); }
+
+private:
+    QBuffer m_buffer;
+};
+
+#else /* VPVL2_LINK_NVTT */
+
+class ReadonlyFileStream : public nv::Stream {
+public:
+    ReadonlyFileStream(const QString &/*path*/) {}
+    ~ReadonlyFileStream() {}
+};
+
+class ReadonlyMemoryStream : public nv::Stream {
+public:
+    ReadonlyMemoryStream(QByteArray &/*bytes*/) {}
+    ~ReadonlyMemoryStream() {}
+};
+
+#endif /* VPVL2_LINK_NVTT */
+
+static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m)
+{
     Transform transform;
-    transform.setOrigin(model->position());
-    transform.setRotation(model->rotation());
+    transform.setOrigin(model->worldPosition());
+    transform.setRotation(model->worldRotation());
     QMatrix4x4 worldMatrix;
     Scalar matrix[16];
     transform.getOpenGLMatrix(matrix);
@@ -96,7 +160,77 @@ static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m) {
     }
 }
 
-class Delegate::FrameBufferObject : protected QGLFunctions {
+const QString UICreatePath(const IString *dir, const IString *name)
+{
+    const QDir d(static_cast<const CString *>(dir)->value());
+    QString path = d.absoluteFilePath(static_cast<const CString *>(name)->value());
+    path.replace(0x5c, '/');
+    return path;
+}
+
+QGLContext::BindOptions UIGetTextureBindOptions(bool enableMipmap)
+{
+    // disable premultiplified alpha option
+    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
+            | QGLContext::InvertedYBindOption;
+    if (enableMipmap)
+        options |= QGLContext::MipmapBindOption;
+    return options;
+}
+
+static void UISetTexture(const RenderContext::TextureCache &cache, RenderContext::InternalTexture &texture)
+{
+    RenderContext::Texture *ref = texture.ref;
+    ref->width = cache.width;
+    ref->height = cache.height;
+    *const_cast<GLuint *>(static_cast<const GLuint *>(ref->object)) = cache.id;
+    if (!texture.isToon) {
+        GLuint textureID = *static_cast<const GLuint *>(ref->object);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+}
+
+static bool UIFindTextureCache(RenderContext::InternalContext *privateContext,
+                               const QString &path,
+                               RenderContext::InternalTexture &texture)
+{
+    if (privateContext && privateContext->textureCache.contains(path)) {
+        UISetTexture(privateContext->textureCache[path], texture);
+        texture.ok = true;
+        return true;
+    }
+    return false;
+}
+
+static void UIAddTextureCache(RenderContext::InternalContext *context,
+                              const QString &path,
+                              const RenderContext::TextureCache &texture)
+{
+    if (context)
+        context->textureCache.insert(path, texture);
+}
+
+#ifdef VPVL2_LINK_NVTT
+static const QImage UIConvertNVImageToQImage(const nv::Image &image)
+{
+    const uint8_t *pixels = reinterpret_cast<const uchar *>(image.pixels());
+    QImage::Format format = image.format() == nv::Image::Format_ARGB
+            ? QImage::Format_ARGB32 : QImage::Format_RGB32;
+    return QImage(pixels, image.width(), image.height(), format);
+}
+#endif
+
+}
+
+namespace vpvl2
+{
+namespace qt
+{
+
+class RenderContext::FrameBufferObject : protected QGLFunctions {
 public:
     FrameBufferObject(size_t width, size_t height, int samples, GLuint texture)
         : fbo(0),
@@ -151,123 +285,26 @@ public:
     int samples;
 };
 
-QString Delegate::readAllAsync(const QString &path)
+QSet<QString> RenderContext::loadableTextureExtensions()
+{
+    static QSet<QString> extensions;
+    if (extensions.isEmpty()) {
+        extensions << "jpg";
+        extensions << "png";
+        extensions << "bmp";
+        extensions << "sph";
+        extensions << "spa";
+    }
+    return extensions;
+}
+
+QString RenderContext::readAllAsync(const QString &path)
 {
     QByteArray bytes;
     return UISlurpFile(path, bytes) ? bytes : QString();
 }
 
-QImage Delegate::loadImageAsync(const QString &path)
-{
-    QImage image(path);
-    if (!image.isNull()) {
-        return QGLWidget::convertToGLFormat(image.rgbSwapped());
-    }
-    else if (path.endsWith(".tga")) {
-        ByteArrayPtr ptr;
-        return QGLWidget::convertToGLFormat(loadTGA(path, ptr));
-    }
-    else {
-        return image; // returns null image
-    }
-}
-
-QImage Delegate::loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr)
-{
-    QFile file(path);
-    if (file.open(QFile::ReadOnly) && file.size() > 18) {
-        return loadTGA(file.readAll(), dataPtr);
-    }
-    else {
-        qWarning("Cannot open file %s: %s", qPrintable(path), qPrintable(file.errorString()));
-        return QImage();
-    }
-}
-
-QImage Delegate::loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr)
-{
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(data.data());
-    uint8_t field = *reinterpret_cast<uint8_t *>(ptr);
-    uint8_t type = *reinterpret_cast<uint8_t *>(ptr + 2);
-    if (type != 2 /* full color */ && type != 10 /* full color + RLE */) {
-        qWarning("Loaded TGA image type is not full color");
-        return QImage();
-    }
-    uint16_t width = *reinterpret_cast<uint16_t *>(ptr + 12);
-    uint16_t height = *reinterpret_cast<uint16_t *>(ptr + 14);
-    uint8_t depth = *reinterpret_cast<uint8_t *>(ptr + 16); /* 24 or 32 */
-    uint8_t flags = *reinterpret_cast<uint8_t *>(ptr + 17);
-    if (width == 0 || height == 0 || (depth != 24 && depth != 32)) {
-        qWarning("Invalid TGA image (width=%d, height=%d, depth=%d)",
-                 width, height, depth);
-        return QImage();
-    }
-    int component = depth >> 3;
-    uint8_t *body = ptr + 18 + field;
-    /* if RLE compressed, uncompress it */
-    size_t datalen = width * height * component;
-    ByteArrayPtr uncompressedPtr(new uint8_t[datalen]);
-    if (type == 10) {
-        uint8_t *uncompressed = uncompressedPtr.data();
-        uint8_t *src = body;
-        uint8_t *dst = uncompressed;
-        while (static_cast<size_t>(dst - uncompressed) < datalen) {
-            int16_t len = (*src & 0x7f) + 1;
-            if (*src & 0x80) {
-                src++;
-                for (int i = 0; i < len; i++) {
-                    memcpy(dst, src, component);
-                    dst += component;
-                }
-                src += component;
-            }
-            else {
-                src++;
-                memcpy(dst, src, component * len);
-                dst += component * len;
-                src += component * len;
-            }
-        }
-        /* will load from uncompressed data */
-        body = uncompressed;
-    }
-    /* prepare texture data area */
-    datalen = (width * height) * 4;
-    dataPtr.reset(new uint8_t[datalen]);
-    ptr = dataPtr.data();
-    for (uint16_t h = 0; h < height; h++) {
-        uint8_t *line = NULL;
-        if (flags & 0x20) /* from up to bottom */
-            line = body + h * width * component;
-        else /* from bottom to up */
-            line = body + (height - 1 - h) * width * component;
-        for (uint16_t w = 0; w < width; w++) {
-            uint32_t index = 0;
-            if (flags & 0x10)/* from right to left */
-                index = (width - 1 - w) * component;
-            else /* from left to right */
-                index = w * component;
-            /* BGR or BGRA -> ARGB */
-            *ptr++ = line[index + 2];
-            *ptr++ = line[index + 1];
-            *ptr++ = line[index + 0];
-            *ptr++ = (depth == 32) ? line[index + 3] : 255;
-        }
-    }
-    return QImage(dataPtr.data(), width, height, QImage::Format_ARGB32);
-}
-
-QGLContext::BindOptions Delegate::textureBindOptions(bool enableMipmap)
-{
-    // disable premultiplified alpha option
-    QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption
-            | QGLContext::InvertedYBindOption;
-    if (enableMipmap)
-        options |= QGLContext::MipmapBindOption;
-    return options;
-}
-
-Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
+RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
     : m_settings(settings),
       m_systemDir(m_settings.value("dir.system.toon", "../../VPVM/resources/images")),
       m_scene(scene),
@@ -280,9 +317,9 @@ Delegate::Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWid
     m_timer.start();
 }
 
-Delegate::~Delegate()
+RenderContext::~RenderContext()
 {
-    setScenePtr(0);
+    setSceneRef(0);
     qDeleteAll(m_renderTargets);
     m_renderTargets.clear();
     delete m_archive;
@@ -301,39 +338,42 @@ Delegate::~Delegate()
     m_msaaSamples = 0;
 }
 
-void Delegate::allocateContext(const IModel *model, void *&context)
+void RenderContext::allocateUserData(const IModel *model, void *&context)
 {
     const IString *name = model->name();
-    PrivateContext *ctx = new(std::nothrow) PrivateContext();
+    InternalContext *ctx = new(std::nothrow) InternalContext();
     context = ctx;
     qDebug("Allocated the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
 }
 
-void Delegate::releaseContext(const IModel *model, void *&context)
+void RenderContext::releaseUserData(const IModel *model, void *&context)
 {
     const IString *name = model->name();
-    delete static_cast<PrivateContext *>(context);
+    delete static_cast<InternalContext *>(context);
     context = 0;
     qDebug("Released the context: %s", name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("(null)"));
 }
 
-bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
+bool RenderContext::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
 {
-    bool mipmap = flags & IRenderDelegate::kGenerateTextureMipmap, ok = false;
-    if (flags & IRenderDelegate::kTexture2D) {
-        const QString &path = createPath(dir, name);
-        return uploadTextureInternal(path, texture, false, false, mipmap, ok, context);
+    bool mipmap = flags & IRenderContext::kGenerateTextureMipmap;
+    bool isToon = flags & IRenderContext::kToonTexture;
+    InternalTexture t(&texture, mipmap, isToon);
+    if (flags & IRenderContext::kTexture2D) {
+        const QString &path = UICreatePath(dir, name);
+        return uploadTextureInternal(path, t, context);
     }
-    else if (flags & IRenderDelegate::kToonTexture) {
+    else if (flags & IRenderContext::kToonTexture) {
         bool ret = false;
         if (dir) {
-            const QString &path = createPath(dir, name);
-            ret = uploadTextureInternal(path, texture, true, false, mipmap, ok, context);
+            const QString &path = UICreatePath(dir, name);
+            ret = uploadTextureInternal(path, t, context);
         }
-        if (!ok) {
+        if (!t.ok) {
             CString s(m_systemDir.absolutePath());
-            const QString &path = createPath(&s, name);
-            ret = uploadTextureInternal(path, texture, true, true, mipmap, ok, context);
+            const QString &path = UICreatePath(&s, name);
+            t.isSystem = true;
+            ret = uploadTextureInternal(path, t, context);
             qDebug("Loaded a system texture: %s", qPrintable(path));
         }
         return ret;
@@ -341,21 +381,21 @@ bool Delegate::uploadTexture(const IString *name, const IString *dir, int flags,
     return false;
 }
 
-void Delegate::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
+void RenderContext::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
 {
-    const QString &path = createPath(dir, name);
+    const QString &path = UICreatePath(dir, name);
     bool ok = false;
     if (m_archive || QFile::exists(path)) {
         getToonColorInternal(path, false, value, ok);
     }
     if (!ok) {
         CString s(m_systemDir.absolutePath());
-        const QString &fallback = createPath(&s, name);
+        const QString &fallback = UICreatePath(&s, name);
         getToonColorInternal(fallback, true, value, ok);
     }
 }
 
-void Delegate::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
+void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
 {
     GLuint textureID = *static_cast<GLuint *>(texture);
     QMovie *movie = 0;
@@ -385,15 +425,15 @@ void Delegate::uploadAnimatedTexture(float offset, float speed, float seek, void
     }
 }
 
-void Delegate::getMatrix(float value[], const IModel *model, int flags) const
+void RenderContext::getMatrix(float value[], const IModel *model, int flags) const
 {
     QMatrix4x4 m;
-    if (flags & IRenderDelegate::kShadowMatrix) {
-        if (flags & IRenderDelegate::kProjectionMatrix)
+    if (flags & IRenderContext::kShadowMatrix) {
+        if (flags & IRenderContext::kProjectionMatrix)
             m *= m_cameraProjectionMatrix;
-        if (flags & IRenderDelegate::kViewMatrix)
+        if (flags & IRenderContext::kViewMatrix)
             m *= m_cameraViewMatrix;
-        if (flags & IRenderDelegate::kWorldMatrix) {
+        if (flags & IRenderContext::kWorldMatrix) {
             static const Vector3 plane(0.0f, 1.0f, 0.0f);
             const ILight *light = m_scene->light();
             const Vector3 &direction = light->direction();
@@ -414,52 +454,52 @@ void Delegate::getMatrix(float value[], const IModel *model, int flags) const
             m.scale(model->scaleFactor());
         }
     }
-    else if (flags & IRenderDelegate::kCameraMatrix) {
-        if (flags & IRenderDelegate::kProjectionMatrix)
+    else if (flags & IRenderContext::kCameraMatrix) {
+        if (flags & IRenderContext::kProjectionMatrix)
             m *= m_cameraProjectionMatrix;
-        if (flags & IRenderDelegate::kViewMatrix)
+        if (flags & IRenderContext::kViewMatrix)
             m *= m_cameraViewMatrix;
-        if (flags & IRenderDelegate::kWorldMatrix) {
+        if (flags & IRenderContext::kWorldMatrix) {
             UIConcatModelTransformMatrix(model, m);
             m *= m_cameraModelMatrix;
             m.scale(model->scaleFactor());
         }
     }
-    else if (flags & IRenderDelegate::kLightMatrix) {
-        if (flags & IRenderDelegate::kWorldMatrix) {
+    else if (flags & IRenderContext::kLightMatrix) {
+        if (flags & IRenderContext::kProjectionMatrix)
+            m *= m_lightProjectionMatrix;
+        if (flags & IRenderContext::kViewMatrix)
+            m *= m_lightViewMatrix;
+        if (flags & IRenderContext::kWorldMatrix) {
             m *= m_lightWorldMatrix;
             m.scale(model->scaleFactor());
         }
-        if (flags & IRenderDelegate::kProjectionMatrix)
-            m *= m_lightProjectionMatrix;
-        if (flags & IRenderDelegate::kViewMatrix)
-            m *= m_lightViewMatrix;
     }
-    if (flags & IRenderDelegate::kInverseMatrix)
+    if (flags & IRenderContext::kInverseMatrix)
         m = m.inverted();
-    if (flags & IRenderDelegate::kTransposeMatrix)
+    if (flags & IRenderContext::kTransposeMatrix)
         m = m.transposed();
     for (int i = 0; i < 16; i++) {
         value[i] = float(m.constData()[i]);
     }
 }
 
-void Delegate::getViewport(Vector3 &value) const
+void RenderContext::getViewport(Vector3 &value) const
 {
     value.setValue(m_viewport.width(), m_viewport.height(), 0);
 }
 
-void Delegate::getTime(float &value, bool sync) const
+void RenderContext::getTime(float &value, bool sync) const
 {
     value = sync ? 0 : m_timer.elapsed() / 1000.0f;
 }
 
-void Delegate::getElapsed(float &value, bool sync) const
+void RenderContext::getElapsed(float &value, bool sync) const
 {
     value = sync ? 0 : 1.0 / 60.0;
 }
 
-void Delegate::getMousePosition(Vector4 &value, MousePositionType type) const
+void RenderContext::getMousePosition(Vector4 &value, MousePositionType type) const
 {
     switch (type) {
     case kMouseLeftPressPosition:
@@ -491,13 +531,13 @@ void Delegate::getMousePosition(Vector4 &value, MousePositionType type) const
     }
 }
 
-void Delegate::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap)
+void RenderContext::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap)
 {
     vfprintf(stderr, format, ap);
     fprintf(stderr, "%s", "\n");
 }
 
-IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
+IString *RenderContext::loadKernelSource(KernelType type, void * /* context */)
 {
     QString file;
     switch (type) {
@@ -509,7 +549,7 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
         break;
     }
     const QString &path = QDir(m_settings.value("dir.system.kernels", "../../VPVM/resources/kernels")).absoluteFilePath(file);
-    const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
+    const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
         qDebug("Loaded a kernel: %s", qPrintable(path));
@@ -520,22 +560,22 @@ IString *Delegate::loadKernelSource(KernelType type, void * /* context */)
     }
 }
 
-IString *Delegate::loadShaderSource(ShaderType type, const IString *path)
+IString *RenderContext::loadShaderSource(ShaderType type, const IString *path)
 {
     if (type == kModelEffectTechniques) {
-        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, static_cast<const CString *>(path)->value());
+        const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, static_cast<const CString *>(path)->value());
         const QString &source = future.result();
         return !source.isNull() ? new (std::nothrow) CString(source) : 0;
     }
     return 0;
 }
 
-IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
+IString *RenderContext::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
 {
     QString file;
     if (type == kModelEffectTechniques) {
         const QString &filename = effectFilePath(model, dir);
-        const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, filename);
+        const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, filename);
         const QString &source = future.result();
         return !source.isNull() ? new (std::nothrow) CString(source) : 0;
     }
@@ -544,8 +584,6 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
         file += "asset/";
         break;
     case IModel::kPMD:
-        file += "pmd/";
-        break;
     case IModel::kPMX:
         file += "pmx/";
         break;
@@ -595,31 +633,62 @@ IString *Delegate::loadShaderSource(ShaderType type, const IModel *model, const 
         break;
     }
     const QString &path = QDir(m_settings.value("dir.system.shaders", "../../VPVM/resources/shaders")).absoluteFilePath(file);
-    const QFuture<QString> &future = QtConcurrent::run(&Delegate::readAllAsync, path);
+    const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, path);
     const QString &source = future.result();
     if (!source.isNull() && !future.isCanceled()) {
         qDebug("Loaded a shader: %s", qPrintable(path));
-        return new(std::nothrow) CString("#version 120\n" + source);
+        return new(std::nothrow) CString(m_shaderSourcePrefix + source);
     }
     else {
         return 0;
     }
 }
 
-IString *Delegate::toUnicode(const uint8_t *value) const
+IString *RenderContext::toUnicode(const uint8_t *value) const
 {
     QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
     const QString &s = codec->toUnicode(reinterpret_cast<const char *>(value));
     return new(std::nothrow) CString(s);
 }
 
-void Delegate::setArchive(Archive *value)
+bool RenderContext::hasExtension(const void *namePtr) const
+{
+    return m_extensions.contains(static_cast<const char *>(namePtr));
+}
+
+void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
+{
+    const QGLContext *context = QGLContext::currentContext();
+    const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
+    const char *candidate = candidates[0];
+    int i = 0;
+    while (candidate) {
+        void *address = context->getProcAddress(candidate);
+        if (address) {
+            return address;
+        }
+        candidate = candidates[++i];
+    }
+    return 0;
+}
+
+void RenderContext::startProfileSession(ProfileType type, const void *arg)
+{
+    m_profilerTimers[ProfilerKey(type, arg)].restart();
+}
+
+void RenderContext::stopProfileSession(ProfileType type, const void *arg)
+{
+    m_profilerTimers[ProfilerKey(type, arg)].elapsed();
+}
+
+void RenderContext::setArchive(Archive *value)
 {
     delete m_archive;
     m_archive = value;
 }
 
-void Delegate::setScenePtr(Scene *value)
+void RenderContext::setSceneRef(Scene *value)
 {
     m_offscreens.clear();
     m_model2Paths.clear();
@@ -631,7 +700,7 @@ void Delegate::setScenePtr(Scene *value)
     m_scene = value;
 }
 
-void Delegate::updateMatrices(const QSizeF &size)
+void RenderContext::updateMatrices(const QSizeF &size)
 {
     float matrix[16];
     ICamera *camera = m_scene->camera();
@@ -643,33 +712,33 @@ void Delegate::updateMatrices(const QSizeF &size)
     m_viewport = size;
 }
 
-void Delegate::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+void RenderContext::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
 {
     world = m_cameraModelMatrix;
     view = m_cameraViewMatrix;
     projection = m_cameraProjectionMatrix;
 }
 
-void Delegate::setCameraModelMatrix(const QMatrix4x4 &value)
+void RenderContext::setCameraModelMatrix(const QMatrix4x4 &value)
 {
     m_cameraModelMatrix = value;
 }
 
-void Delegate::getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+void RenderContext::getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
 {
     world = m_lightWorldMatrix;
     view = m_lightViewMatrix;
     projection = m_lightProjectionMatrix;
 }
 
-void Delegate::setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection)
+void RenderContext::setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection)
 {
     m_lightWorldMatrix = world;
     m_lightViewMatrix = view;
     m_lightProjectionMatrix = projection;
 }
 
-void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositionType type)
+void RenderContext::setMousePosition(const Vector3 &value, bool pressed, MousePositionType type)
 {
     switch (type) {
     case kMouseLeftPressPosition:
@@ -689,7 +758,7 @@ void Delegate::setMousePosition(const Vector3 &value, bool pressed, MousePositio
     }
 }
 
-void Delegate::addModelPath(IModel *model, const QString &filename)
+void RenderContext::addModelPath(IModel *model, const QString &filename)
 {
     if (model) {
         QFileInfo finfo(filename);
@@ -699,14 +768,14 @@ void Delegate::addModelPath(IModel *model, const QString &filename)
     }
 }
 
-const QString Delegate::findModelPath(const IModel *model) const
+const QString RenderContext::findModelPath(const IModel *model) const
 {
     QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
     const QString s = m_model2Paths[model];
     return s;
 }
 
-const QString Delegate::effectFilePath(const IModel *model, const IString *dir) const
+const QString RenderContext::effectFilePath(const IModel *model, const IString *dir) const
 {
     QDir d(static_cast<const CString *>(dir)->value());
     const QString &path = findModelPath(model);
@@ -721,7 +790,7 @@ const QString Delegate::effectFilePath(const IModel *model, const IString *dir) 
     return d.absoluteFilePath("default.cgfx");
 }
 
-IModel *Delegate::findModel(const IString *name) const
+IModel *RenderContext::findModel(const IString *name) const
 {
     IModel *model = m_scene->findModel(name);
     if (!model) {
@@ -731,21 +800,21 @@ IModel *Delegate::findModel(const IString *name) const
     return model;
 }
 
-IModel *Delegate::effectOwner(const IEffect *effect) const
+IModel *RenderContext::effectOwner(const IEffect *effect) const
 {
     QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
     IModel *model = m_effect2models[effect];
     return model;
 }
 
-const QString Delegate::effectOwnerName(const IEffect *effect) const
+const QString RenderContext::effectOwnerName(const IEffect *effect) const
 {
     QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
     const QString name = m_effectOwners[effect];
     return name;
 }
 
-void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
+void RenderContext::setEffectOwner(const IEffect *effect, IModel *model)
 {
     const CString *name = static_cast<const CString *>(model->name());
     const QString &n = name ? name->value() : findModelPath(model);
@@ -759,7 +828,7 @@ void Delegate::setEffectOwner(const IEffect *effect, IModel *model)
     }
 }
 
-void Delegate::removeModel(IModel *model)
+void RenderContext::removeModel(IModel *model)
 {
     QMutableHashIterator<const QString, IModel *> it(m_filename2Models);
     while (it.hasNext()) {
@@ -780,35 +849,34 @@ void Delegate::removeModel(IModel *model)
     }
 }
 
-void Delegate::initialize(bool enableMSAA)
+void RenderContext::initialize(bool enableMSAA)
 {
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);
     if (enableMSAA)
         glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+    const QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    int shaderVersion = qMax(QString(reinterpret_cast<const char *>(shaderVersionString)).toFloat(), 1.2f) * 100;
+    m_shaderSourcePrefix.sprintf("#version %d", shaderVersion);
+    Q_FOREACH (const QString &extension, extensions.split(' ', QString::SkipEmptyParts)) {
+        m_extensions.insert(extension.trimmed());
+    }
 #ifndef __APPLE__
     glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(context->getProcAddress("glBlitFramebuffer"));
     glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
     glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(context->getProcAddress("glRenderbufferStorageMultisample"));
 #endif /* __APPLE__ */
-#ifdef VPVL2_LINK_DEVIL
-    ilInit();
-    iluInit();
-    ilutInit();
-    ilutRenderer(ILUT_OPENGL);
-    ilEnable(IL_CONV_PAL);
-    ilutEnable(ILUT_OPENGL_CONV);
-#endif /* VPVL2_LINK_DEVIL */
 }
 
-void Delegate::setRenderColorTargets(const void *targets, const int ntargets)
+void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
 {
     glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
 }
 
 //#define DEBUG_OUTPUT_TEXTURE
 
-void Delegate::bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
+void RenderContext::bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -862,7 +930,7 @@ void Delegate::bindRenderColorTarget(void *texture, size_t width, size_t height,
     }
 }
 
-void Delegate::releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
+void RenderContext::releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -890,7 +958,7 @@ void Delegate::releaseRenderColorTarget(void *texture, size_t width, size_t heig
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Delegate::bindRenderDepthStencilTarget(void *texture,
+void RenderContext::bindRenderDepthStencilTarget(void *texture,
                                             void *depth,
                                             void *stencil,
                                             size_t width,
@@ -912,7 +980,7 @@ void Delegate::bindRenderDepthStencilTarget(void *texture,
     }
 }
 
-void Delegate::releaseRenderDepthStencilTarget(void *texture,
+void RenderContext::releaseRenderDepthStencilTarget(void *texture,
                                                void * /* depth */,
                                                void * /* stencil */,
                                                size_t width,
@@ -939,7 +1007,7 @@ void Delegate::releaseRenderDepthStencilTarget(void *texture,
     }
 }
 
-void Delegate::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
+void RenderContext::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
 {
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
     if (buffer) {
@@ -955,7 +1023,7 @@ void Delegate::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t 
     }
 }
 
-void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
+void RenderContext::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
 {
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
     if (buffer) {
@@ -979,7 +1047,7 @@ void Delegate::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
+void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (effect) {
@@ -994,7 +1062,7 @@ void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
             const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
             const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
             QList<EffectAttachment> attachments;
-            foreach (const QString &line, defaultEffect) {
+            Q_FOREACH (const QString &line, defaultEffect) {
                 const QStringList &pair = line.split('=');
                 if (pair.size() == 2) {
                     const QString &key = pair.at(0).trimmed();
@@ -1008,7 +1076,7 @@ void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
                         QString path = dir.absoluteFilePath(value);
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
                         CString s2(path);
-                        const QFuture<IEffect *> &future = QtConcurrent::run(this, &Delegate::createEffectAsync, &s2);
+                        const QFuture<IEffect *> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
                         IEffect *offscreenEffect = future.result();
                         offscreenEffect->setParentEffect(effect);
                         attachments.append(EffectAttachment(regexp, offscreenEffect));
@@ -1032,7 +1100,80 @@ void Delegate::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 #endif
 }
 
-IEffect *Delegate::createEffectAsync(const IString *path)
+void RenderContext::renderOffscreen(const QSize &size)
+{
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
+    const int nengines = engines.count();
+    QSize s;
+    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    Q_FOREACH (const RenderContext::OffscreenRenderTarget &offscreen, offscreenRenderTargets()) {
+        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
+        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+        bool enableAA = false;
+        if (cgIsAnnotation(antiAlias)) {
+            int nvalues;
+            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
+            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+        }
+        size_t width = renderTarget.width, height = renderTarget.height;
+        GLuint textureID = offscreen.textureID;
+        bindOffscreenRenderTarget(textureID, width, height, enableAA);
+        setRenderColorTargets(buffers, nbuffers);
+        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
+        if (cgIsAnnotation(clearColor)) {
+            int nvalues;
+            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+            if (nvalues == 4) {
+                glClearColor(color[0], color[1], color[2], color[3]);
+            }
+        }
+        else {
+            glClearColor(1, 1, 1, 1);
+        }
+        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
+        if (cgIsAnnotation(clearDepth)) {
+            int nvalues;
+            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
+            if (nvalues == 1) {
+                glClearDepth(depth[0]);
+            }
+        }
+        else {
+            glClearDepth(0);
+        }
+        s.setWidth(width);
+        s.setHeight(height);
+        updateMatrices(s);
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
+            if (engine->hasPreProcess() || engine->hasPostProcess())
+                continue;
+            const IModel *model = engine->model();
+            const IString *name = model->name();
+            const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
+            Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreen.attachments) {
+                IEffect *effect = attachment.second;
+                if (attachment.first.exactMatch(n)) {
+                    engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
+                    break;
+                }
+            }
+            engine->update();
+            engine->renderModel();
+            engine->renderEdge();
+        }
+        releaseOffscreenRenderTarget(textureID, width, height, enableAA);
+    }
+    updateMatrices(size);
+#endif
+}
+
+IEffect *RenderContext::createEffectAsync(const IString *path)
 {
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -1062,7 +1203,7 @@ IEffect *Delegate::createEffectAsync(const IString *path)
     return effect;
 }
 
-IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
+IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
 {
     IEffect *effect = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -1095,204 +1236,123 @@ IEffect *Delegate::createEffectAsync(IModel *model, const IString *dir)
     return effect;
 }
 
-const QString Delegate::createPath(const IString *dir, const QString &name)
+bool RenderContext::uploadTextureNVTT(const QString &suffix,
+                                 const QString &path,
+                                 QScopedPointer<nv::Stream> &stream,
+                                 InternalTexture &internalTexture,
+                                 InternalContext *internalContext)
 {
-    const QDir d(static_cast<const CString *>(dir)->value());
-    QString path = d.absoluteFilePath(name);
-    path.replace(0x5c, '/');
-    return path;
-}
-
-const QString Delegate::createPath(const IString *dir, const IString *name)
-{
-    const QDir d(static_cast<const CString *>(dir)->value());
-    QString path = d.absoluteFilePath(static_cast<const CString *>(name)->value());
-    path.replace(0x5c, '/');
-    return path;
-}
-
-void Delegate::setTextureID(const TextureCache &cache, bool isToon, Texture &output)
-{
-    output.width = cache.width;
-    output.height = cache.height;
-    *const_cast<GLuint *>(static_cast<const GLuint *>(output.object)) = cache.id;
-    if (!isToon) {
-        GLuint textureID = *static_cast<const GLuint *>(output.object);
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#ifdef VPVL2_LINK_NVTT
+    if (suffix == "dds") {
+        nv::DirectDrawSurface surface;
+        if (surface.load(stream.take())) {
+            nv::Image nvimage;
+            surface.mipmap(&nvimage, 0, 0);
+            QImage image(UIConvertNVImageToQImage(nvimage));
+            return generateTextureFromImage(image, path, internalTexture, internalContext);
+        }
+        else {
+            qWarning("%s cannot be loaded", qPrintable(path));
+        }
     }
+    else {
+        QScopedPointer<nv::Image> nvimage(nv::ImageIO::load(path.toUtf8().constData(), *stream));
+        if (nvimage) {
+            QImage image(UIConvertNVImageToQImage(*nvimage));
+            return generateTextureFromImage(image, path, internalTexture, internalContext);
+        }
+        else {
+            qWarning("%s cannot be loaded", qPrintable(path));
+        }
+    }
+#else
+    Q_UNUSED(suffix)
+    Q_UNUSED(path)
+    Q_UNUSED(isToon)
+    Q_UNUSED(mipmap)
+    Q_UNUSED(stream)
+    Q_UNUSED(texture)
+    Q_UNUSED(privateContext)
+#endif
+    return true;
 }
 
-void Delegate::addTextureCache(PrivateContext *context, const QString &path, const TextureCache &texture)
-{
-    if (context)
-        context->textureCache.insert(path, texture);
-}
-
-bool Delegate::uploadTextureInternal(const QString &path,
-                                     Texture &texture,
-                                     bool isToon,
-                                     bool isSystem,
-                                     bool mipmap,
-                                     bool &ok,
-                                     void *context)
+bool RenderContext::uploadTextureInternal(const QString &path, InternalTexture &internalTexture, void *context)
 {
     const QFileInfo info(path);
-    PrivateContext *privateContext = static_cast<PrivateContext *>(context);
+    InternalContext *privateContext = static_cast<InternalContext *>(context);
     /* テクスチャのキャッシュを検索する */
-    if (privateContext && privateContext->textureCache.contains(path)) {
-        setTextureID(privateContext->textureCache[path], isToon, texture);
-        ok = true;
+    if (UIFindTextureCache(privateContext, path, internalTexture)) {
         return true;
     }
     /*
      * ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く)
      * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
      */
-    if (m_archive && !isSystem) {
-        QByteArray suffix = info.suffix().toLower().toUtf8();
-        if (suffix == "sph" || suffix == "spa")
-            suffix.setRawData("bmp", 3);
+    const QString &suffix = info.suffix().toLower();
+    if (m_archive && !internalTexture.isSystem) {
         const QByteArray &bytes = m_archive->data(path);
-#ifdef VPVL2_LINK_DEVIL
-        ILuint imageID;
-        ilGenImages(1, &imageID);
-        ilBindImage(imageID);
-        ILboolean loaded = IL_FALSE;
-        loaded = ilLoadL(ilTypeFromExt(("." + suffix).constData()), bytes.constData(), bytes.size());
-        if (loaded == IL_FALSE) {
-            ILenum error = ilGetError();
-            while (error != IL_NO_ERROR) {
-                qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
-                error = ilGetError();
-            }
-            ilDeleteImages(1, &imageID);
-            ok = false;
-            return true;
-        }
-        iluFlipImage();
-        GLuint textureID = ilutGLBindTexImage();
-        size_t width = ilGetInteger(IL_IMAGE_WIDTH);
-        size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
-        ilBindImage(0);
-        ilDeleteImages(1, &imageID);
-#else
-        ByteArrayPtr ptr;
-        QImage image;
-        image.loadFromData(bytes, suffix.constData());
-        if (image.isNull() && suffix == "tga" && bytes.length() > 18) {
-            image = loadTGA(bytes, ptr);
+        if (loadableTextureExtensions().contains(suffix)) {
+            QImage image;
+            image.loadFromData(bytes);
+            return generateTextureFromImage(image, path, internalTexture, privateContext);
         }
         else {
-            image = image.rgbSwapped();
+            QByteArray immutableBytes(bytes);
+            QScopedPointer<nv::Stream> stream(new ReadonlyMemoryStream(immutableBytes));
+            return uploadTextureNVTT(suffix, path, stream, internalTexture, privateContext);
         }
-        if (image.isNull()) {
-            qWarning("Loading texture %s (zipped) cannot decode, ignored.", qPrintable(info.fileName()));
-            ok = false;
-            return true;
-        }
-        GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image), GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
-        size_t width = image.width(), height = image.height();
-#endif
-        TextureCache cache(width, height, textureID);
-        m_texture2Paths.insert(textureID, path);
-        setTextureID(cache, isToon, texture);
-        addTextureCache(privateContext, path, cache);
-        qDebug("Loaded a zipped texture (ID=%d, width=%d, height=%d): \"%s\"",
-               textureID, int(width), int(height), qPrintable(path));
-        ok = textureID != 0;
-        return ok;
     }
-    if (info.isDir()) {
-        ok = false;
-        return true; /* skip */
-    }
-    if (!info.exists()) {
-        qWarning("Cannot loading inexist \"%s\"", qPrintable(path));
-        ok = false;
-        return true; /* skip */
-    }
-#ifdef VPVL2_LINK_DEVIL
-    Q_UNUSED(mipmap)
-    ILuint imageID;
-    ilGenImages(1, &imageID);
-    ilBindImage(imageID);
-    ILboolean loaded = IL_FALSE;
-    if (!path.startsWith(":textures/")) {
-        loaded = ilLoadImage(path.toLocal8Bit().constData());
-    }
-    else {
-        QFile file(path);
-        file.open(QFile::ReadOnly);
-        const QByteArray &bytes = file.readAll();
-        loaded = ilLoadL(ilTypeFromExt(path.toLocal8Bit().constData()), bytes.constData(), bytes.size());
-    }
-    if (loaded == IL_FALSE) {
-        ILenum error = ilGetError();
-        while (error != IL_NO_ERROR) {
-            qWarning("Cannot load a texture %s: %s", qPrintable(path), iluErrorString(error));
-            error = ilGetError();
-        }
-        ilDeleteImages(1, &imageID);
-        ok = false;
-        return true;
-    }
-    iluFlipImage();
-    GLuint textureID = ilutGLBindTexImage();
-    size_t width = ilGetInteger(IL_IMAGE_WIDTH);
-    size_t height = ilGetInteger(IL_IMAGE_HEIGHT);
-    ilBindImage(0);
-    ilDeleteImages(1, &imageID);
-    TextureCache cache(width, height, textureID);
-    m_texture2Paths.insert(textureID, path);
-    setTextureID(cache, isToon, texture);
-    addTextureCache(privateContext, path, cache);
-    qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
-           textureID, width, height, qPrintable(path));
-    ok = textureID != 0;
-    return ok;
-#else
-    if (path.endsWith(".dds")) {
-        QFile file(path);
-        if (file.open(QFile::ReadOnly)) {
-            const QByteArray &bytes = file.readAll();
-            const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            DDSTexture dds(m_context);
-            GLuint textureID;
-            if (!dds.parse(data, bytes.size(), textureID)) {
-                qDebug("Cannot parse a DDS texture %s", qPrintable(path));
-                ok = false;
-                return true; /* skip */
+    else if (info.isDir()) {
+        if (internalTexture.isToon) { /* force loading as white toon texture */
+            const QString &newPath = m_systemDir.absoluteFilePath("toon0.bmp");
+            if (!UIFindTextureCache(privateContext, newPath, internalTexture)) {
+                QImage image(newPath);
+                return generateTextureFromImage(image, newPath, internalTexture, privateContext);
             }
-            TextureCache cache(dds.width(), dds.height(), textureID);
-            setTextureID(cache, isToon, texture);
-            addTextureCache(privateContext, path, cache);
-            ok = true;
-            return ok;
         }
-        else {
-            qDebug("Cannot open a DDS texture %s: %s", qPrintable(path), qPrintable(file.errorString()));
-            ok = false;
-            return true; /* skip */
-        }
+        return true; /* skip */
+    }
+    else if (!info.exists()) {
+        qWarning("Cannot load inexist \"%s\"", qPrintable(path));
+        return true; /* skip */
+    }
+    else if (loadableTextureExtensions().contains(suffix)) {
+        QImage image(path);
+        return generateTextureFromImage(image, path, internalTexture, privateContext);
     }
     else {
-        const QFuture<QImage> &future = QtConcurrent::run(&Delegate::loadImageAsync, path);
-        const QImage &image = future.result();
-        GLuint textureID = m_context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, textureBindOptions(mipmap));
-        TextureCache cache(image.width(), image.height(), textureID);
-        m_texture2Paths.insert(textureID, path);
-        setTextureID(cache, isToon, texture);
-        addTextureCache(privateContext, path, cache);
-        qDebug("Loaded a texture (ID=%d, width=%d, height=%d): \"%s\"",
-               textureID, image.width(), image.height(), qPrintable(path));
-        ok = textureID != 0;
-        return ok;
+        QScopedPointer<nv::Stream> stream(new ReadonlyFileStream(path));
+        return uploadTextureNVTT(suffix, path, stream, internalTexture, privateContext);
     }
-#endif
 }
 
-void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
+bool RenderContext::generateTextureFromImage(const QImage &image,
+                                        const QString &path,
+                                        InternalTexture &internalTexture,
+                                        InternalContext *internalContext)
+{
+    if (!image.isNull()) {
+        size_t width = image.width(), height = image.height();
+        GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
+                                                  GL_TEXTURE_2D,
+                                                  GL_RGBA,
+                                                  UIGetTextureBindOptions(internalTexture.mipmap));
+        TextureCache cache(width, height, textureID);
+        m_texture2Paths.insert(textureID, path);
+        UISetTexture(cache, internalTexture);
+        UIAddTextureCache(internalContext, path, cache);
+        qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
+               textureID, width, height, qPrintable(path));
+        return textureID != 0;
+    }
+    else {
+        qWarning("Failed loading a image to convert the texture: %s", qPrintable(path));
+        return false;
+    }
+}
+
+void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
 {
     QImage image(path);
     if (!isSystem && m_archive) {
@@ -1308,13 +1368,17 @@ void Delegate::getToonColorInternal(const QString &path, bool isSystem, Color &v
         value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
         ok = true;
     }
+    else if (QFileInfo(path).isDir()) { // skip empty toon path
+        value.setValue(1, 1, 1, 1);
+        ok = true;
+    }
     else {
         value.setValue(0, 0, 0, 1);
         ok = false;
     }
 }
 
-Delegate::FrameBufferObject *Delegate::findRenderTarget(const GLuint textureID, size_t width, size_t height)
+RenderContext::FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height)
 {
     FrameBufferObject *buffer = 0;
     if (textureID > 0) {

@@ -45,58 +45,277 @@
 #include "vpvl2/pmx/Morph.h"
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
+#include "vpvl2/internal/ParallelVertexProcessor.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
 #else
-BT_DECLARE_HANDLE(btDiscreteDynamicsWorld)
+BT_DECLARE_HANDLE(btDiscreteDynamicsWorld);
 #endif
 
 namespace {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
-    struct Header
-    {
-        uint8_t signature[4];
-        float version;
-    };
+struct Header
+{
+    uint8_t signature[4];
+    float version;
+};
 
 #pragma pack(pop)
 
-}
+struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
+    struct Unit {
+        Unit() {}
+        void update(const IVertex *vertex) {
+            IBone *bone1 = vertex->bone(0),
+                    *bone2 = vertex->bone(1),
+                    *bone3 = vertex->bone(2),
+                    *bone4 = vertex->bone(3);
+            boneIndices.setValue(Scalar(bone1 ? bone1->index() : -1),
+                                 Scalar(bone2 ? bone2->index() : -1),
+                                 Scalar(bone3 ? bone3->index() : -1),
+                                 Scalar(bone4 ? bone4->index() : -1));
+            boneWeights.setValue(vertex->weight(0),
+                                 vertex->weight(1),
+                                 vertex->weight(2),
+                                 vertex->weight(3));
+            texcoord = vertex->textureCoord();
+        }
+        Vector3 texcoord;
+        Vector4 boneIndices;
+        Vector4 boneWeights;
+    };
+    static const Unit kIdent;
 
-namespace vpvl2
-{
-namespace pmx
-{
-
-struct Model::SkinnedVertex {
-    SkinnedVertex() {}
-    Vector3 position;
-    Vector3 normal;
-    Vector4 texcoord;
-    Vector3 edge;
-    Vector4 boneIndices;
-    Vector4 boneWeights;
-    Vector4 uva1;
-    Vector4 uva2;
-    Vector4 uva3;
-    Vector4 uva4;
-};
-
-struct Model::IndexBuffer {
-    IndexBuffer(const Array<int> &indices, const int nvertices)
-        : type(kIndex32),
-          indices32Ptr(0)
+    StaticVertexBuffer(const pmx::Model *model)
+        : modelRef(model)
     {
-        const int nindices = indices.count();
+    }
+    ~StaticVertexBuffer() {
+        modelRef = 0;
+    }
+
+    size_t size() const {
+        return strideSize() * modelRef->vertices().count();
+    }
+    size_t strideOffset(StrideType type) const {
+        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.texcoord);
+        switch (type) {
+        case kBoneIndexStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.boneIndices) - base;
+        case kBoneWeightStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.boneWeights) - base;
+        case kTextureCoordStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.texcoord) - base;
+        case kVertexStride:
+        case kNormalStride:
+        case kMorphDeltaStride:
+        case kEdgeSizeStride:
+        case kEdgeVertexStride:
+        case kUVA0Stride:
+        case kUVA1Stride:
+        case kUVA2Stride:
+        case kUVA3Stride:
+        case kUVA4Stride:
+        case kVertexIndexStride:
+        case kIndexStride:
+        default:
+            return 0;
+        }
+    }
+    size_t strideSize() const {
+        return sizeof(kIdent);
+    }
+    void update(void *address) const {
+        Unit *unitPtr = static_cast<Unit *>(address);
+        const Array<pmx::Vertex *> &vertices = modelRef->vertices();
+        const int nvertices = vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            unitPtr[i].update(vertices[i]);
+        }
+    }
+    const void *ident() const {
+        return &kIdent;
+    }
+
+    const pmx::Model *modelRef;
+};
+const StaticVertexBuffer::Unit StaticVertexBuffer::kIdent = StaticVertexBuffer::Unit();
+
+struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
+    struct Unit {
+        Unit() {}
+        void update(const IVertex *vertex, int index) {
+            position = vertex->origin();
+            normal = vertex->normal();
+            normal[3] = vertex->edgeSize();
+            edge[3] = Scalar(index);
+            updateMorph(vertex);
+        }
+        void update(const IVertex *vertex, float materialEdgeSize, int index, Vector3 &p) {
+            Vector3 n;
+            const float edgeSize = vertex->edgeSize() * materialEdgeSize;
+            vertex->performSkinning(p, n);
+            position = p;
+            normal = n;
+            normal[3] = edgeSize;
+            edge = position + normal * edgeSize;
+            edge[3] = Scalar(index);
+            updateMorph(vertex);
+        }
+        void updateMorph(const IVertex *vertex) {
+            delta = vertex->delta();
+            uva0 = vertex->uv(0);
+            uva1 = vertex->uv(1);
+            uva2 = vertex->uv(2);
+            uva3 = vertex->uv(3);
+            uva4 = vertex->uv(4);
+        }
+        Vector3 position;
+        Vector3 normal;
+        Vector3 delta;
+        Vector3 edge;
+        Vector4 uva0;
+        Vector4 uva1;
+        Vector4 uva2;
+        Vector4 uva3;
+        Vector4 uva4;
+    };
+    static const Unit kIdent;
+
+    typedef internal::ParallelSkinningVertexProcessor<pmx::Model, pmx::Vertex, Unit>
+        ParallelSkinningVertexProcessor;
+    typedef internal::ParallelInitializeVertexProcessor<pmx::Model, pmx::Vertex, Unit>
+        ParallelInitializeVertexProcessor;
+
+    DynamicVertexBuffer(const pmx::Model *model, const IModel::IIndexBuffer *indexBuffer)
+        : modelRef(model),
+          indexBufferRef(indexBuffer),
+          enableSkinning(true)
+    {
+    }
+    ~DynamicVertexBuffer() {
+        modelRef = 0;
+        indexBufferRef = 0;
+        enableSkinning = false;
+    }
+
+    size_t size() const {
+        return strideSize() * modelRef->vertices().count();
+    }
+    size_t strideOffset(StrideType type) const {
+        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.position);
+        switch (type) {
+        case kVertexStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.position) - base;
+        case kNormalStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.normal) - base;
+        case kMorphDeltaStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.delta) - base;
+        case kEdgeVertexStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.edge) - base;
+        case kEdgeSizeStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.normal[3]) - base;
+        case kVertexIndexStride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.edge[3]) - base;
+        case kUVA0Stride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva0) - base;
+        case kUVA1Stride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva1) - base;
+        case kUVA2Stride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva2) - base;
+        case kUVA3Stride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva3) - base;
+        case kUVA4Stride:
+            return reinterpret_cast<const uint8_t *>(&kIdent.uva4) - base;
+        case kBoneIndexStride:
+        case kBoneWeightStride:
+        case kTextureCoordStride:
+        case kIndexStride:
+        default:
+            return 0;
+        }
+    }
+    size_t strideSize() const {
+        return sizeof(kIdent);
+    }
+    const void *ident() const {
+        return &kIdent;
+    }
+    void update(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
+        const Array<pmx::Vertex *> &vertices = modelRef->vertices();
+        Unit *bufferPtr = static_cast<Unit *>(address);
+        if (enableSkinning) {
+#ifdef VPVL2_LINK_INTEL_TBB
+            ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, address);
+            tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
+            aabbMin = proc.aabbMin();
+            aabbMax = proc.aabbMax();
+#else
+            const Array<pmx::Material *> &materials = modelRef->materials();
+            const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
+            const int nmaterials = materials.count();
+            Vector3 position;
+            int offset = 0;
+            for (int i = 0; i < nmaterials; i++) {
+                const IMaterial *material = materials[i];
+                const int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
+                const float materialEdgeSize = material->edgeSize() * esf;
+                for (int j = offset; j < offsetTo; j++) {
+                    const int index = indexBufferRef->indexAt(j);
+                    const IVertex *vertex = vertices[index];
+                    Unit &v = bufferPtr[index];
+                    v.update(vertex, materialEdgeSize, i, position);
+                    aabbMin.setMin(position);
+                    aabbMax.setMax(position);
+                }
+                offset += nindices;
+            }
+#endif
+        }
+        else {
+#ifdef VPVL2_LINK_INTEL_TBB
+            tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
+                              ParallelInitializeVertexProcessor(&modelRef->vertices(), address));
+#else
+            const int nvertices = vertices.count();
+            for (int i = 0; i < nvertices; i++) {
+                const IVertex *vertex = vertices[i];
+                Unit &v = bufferPtr[i];
+                v.update(vertex, i);
+            }
+#endif
+            aabbMin.setZero();
+            aabbMax.setZero();
+        }
+    }
+    void setSkinningEnable(bool value) {
+        enableSkinning = value;
+    }
+
+    const pmx::Model *modelRef;
+    const IModel::IIndexBuffer *indexBufferRef;
+    bool enableSkinning;
+};
+const DynamicVertexBuffer::Unit DynamicVertexBuffer::kIdent = DynamicVertexBuffer::Unit();
+
+struct IndexBuffer : public IModel::IIndexBuffer {
+    static const int kIdent = 0;
+    IndexBuffer(const Array<int> &indices, const int nvertices)
+        : indexType(kIndex32),
+          indices32Ptr(0),
+          nindices(indices.count())
+    {
         if (nindices < 65536) {
-            type = kIndex16;
+            indexType = kIndex16;
             indices16Ptr = new uint16_t[nindices];
         }
         else if (nindices < 256) {
-            type = kIndex8;
+            indexType = kIndex8;
             indices8Ptr = new uint8_t[nindices];
         }
         else {
@@ -113,7 +332,7 @@ struct Model::IndexBuffer {
         }
 #ifdef VPVL2_COORDINATE_OPENGL
         for (int i = 0; i < nindices; i += 3) {
-            switch (type) {
+            switch (indexType) {
             case kIndex32:
                 btSwap(indices32Ptr[i], indices32Ptr[i + 1]);
                 break;
@@ -131,27 +350,62 @@ struct Model::IndexBuffer {
 #endif
     }
     ~IndexBuffer() {
-        switch (type) {
-        case IModel::kIndex32:
+        switch (indexType) {
+        case kIndex32:
             delete[] indices32Ptr;
             indices32Ptr = 0;
             break;
-        case IModel::kIndex16:
+        case kIndex16:
             delete[] indices16Ptr;
             indices16Ptr = 0;
             break;
-        case IModel::kIndex8:
+        case kIndex8:
             delete[] indices8Ptr;
             indices8Ptr = 0;
             break;
-        case IModel::kMaxIndexType:
+        case kMaxIndexType:
         default:
             break;
         }
     }
 
+    const void *bytes() const {
+        switch (indexType) {
+        case kIndex32:
+            return indices32Ptr;
+        case kIndex16:
+            return indices16Ptr;
+        case kIndex8:
+            return indices8Ptr;
+        case kMaxIndexType:
+        default:
+            return 0;
+        }
+    }
+    size_t size() const {
+        return strideSize() * nindices;
+    }
+    size_t strideOffset(StrideType /* type */) const {
+        return 0;
+    }
+    size_t strideSize() const {
+        switch (indexType) {
+        case kIndex32:
+            return sizeof(int);
+        case kIndex16:
+            return sizeof(uint16_t);
+        case kIndex8:
+            return sizeof(uint8_t);
+        case kMaxIndexType:
+        default:
+            return 0;
+        }
+    }
+    const void *ident() const {
+        return &kIdent;
+    }
     int indexAt(int index) const {
-        switch (type) {
+        switch (indexType) {
         case kIndex32:
             return indices32Ptr[index];
         case kIndex16:
@@ -163,8 +417,12 @@ struct Model::IndexBuffer {
             return 0;
         }
     }
+    Type type() const {
+        return indexType;
+    }
+
     void setIndexAt(int i, int value) {
-        switch (type) {
+        switch (indexType) {
         case kIndex32:
             indices32Ptr[i] = value;
             break;
@@ -179,43 +437,152 @@ struct Model::IndexBuffer {
             break;
         }
     }
-    void *toPtr() const {
-        switch (type) {
-        case kIndex32:
-            return indices32Ptr;
-        case kIndex16:
-            return indices16Ptr;
-        case kIndex8:
-            return indices8Ptr;
-        case kMaxIndexType:
-        default:
-            return 0;
-        }
-    }
-    IModel::IndexType type;
+    IModel::IIndexBuffer::Type indexType;
     union {
         int      *indices32Ptr;
         uint16_t *indices16Ptr;
         uint8_t  *indices8Ptr;
     };
+    int nindices;
 };
+const int IndexBuffer::kIdent;
+
+struct MatrixBuffer : public IModel::IMatrixBuffer {
+    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
+    typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
+    typedef Array<float *> MeshMatrices;
+    struct SkinningMeshes {
+        MeshBoneIndices bones;
+        MeshLocalTransforms transforms;
+        MeshMatrices matrices;
+        BoneIndices bdef1;
+        BoneIndices bdef2;
+        BoneIndices bdef4;
+        BoneIndices sdef;
+        ~SkinningMeshes() { matrices.releaseArrayAll(); }
+    };
+
+    MatrixBuffer(const IModel *model, const IndexBuffer *indexBuffer, DynamicVertexBuffer *dynamicBuffer)
+        : modelRef(model),
+          indexBufferRef(indexBuffer),
+          dynamicBufferRef(dynamicBuffer)
+    {
+        model->getBoneRefs(bones);
+        model->getMaterialRefs(materials);
+        model->getVertexRefs(vertices);
+        initialize();
+    }
+    ~MatrixBuffer() {
+        modelRef = 0;
+        indexBufferRef = 0;
+        dynamicBufferRef = 0;
+    }
+
+    void update(void *address) {
+        const int nbones = bones.count();
+        MeshLocalTransforms &transforms = meshes.transforms;
+        for (int i = 0; i < nbones; i++) {
+            const IBone *bone = bones[i];
+            transforms[i] = bone->localTransform();
+        }
+        const int nmaterials = materials.count();
+        for (int i = 0; i < nmaterials; i++) {
+            const BoneIndices &boneIndices = meshes.bones[i];
+            const int nBoneIndices = boneIndices.size();
+            Scalar *matrices = meshes.matrices[i];
+            for (int j = 0; j < nBoneIndices; j++) {
+                const int boneIndex = boneIndices[j];
+                const Transform &transform = transforms[boneIndex];
+                transform.getOpenGLMatrix(&matrices[j * 16]);
+            }
+        }
+        const int nvertices = vertices.count();
+        DynamicVertexBuffer::Unit *units = static_cast<DynamicVertexBuffer::Unit *>(address);
+        for (int i = 0; i < nvertices; i++) {
+            const IVertex *vertex = vertices[i];
+            DynamicVertexBuffer::Unit &buffer = units[i];
+            buffer.position = vertex->origin();
+            buffer.position.setW(Scalar(vertex->type()));
+            buffer.delta = vertex->delta();
+        }
+    }
+    const float *bytes(int materialIndex) const {
+        int nmatrices = meshes.matrices.count();
+        return internal::checkBound(materialIndex, 0, nmatrices) ? meshes.matrices[materialIndex] : 0;
+    }
+    size_t size(int materialIndex) const {
+        int nbones = meshes.bones.size();
+        return internal::checkBound(materialIndex, 0, nbones) ? meshes.bones[materialIndex].size() : 0;
+    }
+
+    void initialize() {
+        const int nmaterials = materials.count();
+        BoneIndices boneIndices;
+        meshes.transforms.resize(bones.count());
+        int offset = 0;
+        for (int i = 0; i < nmaterials; i++) {
+            const IMaterial *material = materials[i];
+            const int nindices = material->sizeofIndices();
+            for (int j = 0; j < nindices; j++) {
+                int vertexIndex = indexBufferRef->indexAt(offset + j);
+                IVertex *vertex = vertices[vertexIndex];
+                switch (vertex->type()) {
+                case IVertex::kBdef1:
+                    meshes.bdef1.push_back(vertexIndex);
+                    break;
+                case IVertex::kBdef2:
+                    meshes.bdef2.push_back(vertexIndex);
+                    break;
+                case IVertex::kBdef4:
+                    meshes.bdef4.push_back(vertexIndex);
+                    break;
+                case IVertex::kSdef:
+                    meshes.sdef.push_back(vertexIndex);
+                    break;
+                case IVertex::kMaxType:
+                default:
+                    break;
+                }
+            }
+            meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
+            meshes.bones.push_back(boneIndices);
+            boneIndices.clear();
+            offset += nindices;
+        }
+    }
+
+    const IModel *modelRef;
+    const IndexBuffer *indexBufferRef;
+    DynamicVertexBuffer *dynamicBufferRef;
+    Array<IBone *> bones;
+    Array<IMaterial *> materials;
+    Array<IVertex *> vertices;
+    SkinningMeshes meshes;
+};
+
+}
+
+namespace vpvl2
+{
+namespace pmx
+{
 
 Model::Model(IEncoding *encoding)
     : m_worldRef(0),
       m_encodingRef(encoding),
-      m_skinnedVertices(0),
-      m_indexBuffer(0),
       m_name(0),
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
+      m_aabbMax(kZeroV3),
+      m_aabbMin(kZeroV3),
       m_position(kZeroV3),
       m_rotation(Quaternion::getIdentity()),
       m_opacity(1),
       m_scaleFactor(1),
       m_edgeWidth(0),
-      m_visible(false),
-      m_enableSkinning(true)
+      m_visible(false)
 {
     internal::zerofill(&m_info, sizeof(m_info));
 }
@@ -223,66 +590,6 @@ Model::Model(IEncoding *encoding)
 Model::~Model()
 {
     release();
-}
-
-size_t Model::strideOffset(StrideType type)
-{
-    static const SkinnedVertex v;
-    static const uint8_t *base = reinterpret_cast<const uint8_t *>(&v.position);
-    switch (type) {
-    case kVertexStride:
-        return 0;
-    case kNormalStride:
-        return reinterpret_cast<const uint8_t *>(&v.normal) - base;
-    case kTexCoordStride:
-        return reinterpret_cast<const uint8_t *>(&v.texcoord) - base;
-    case kEdgeSizeStride:
-        return reinterpret_cast<const uint8_t *>(&v.normal[3]) - base;
-    case kToonCoordStride:
-        return reinterpret_cast<const uint8_t *>(&v.texcoord[2]) - base;
-    case kEdgeVertexStride:
-        return reinterpret_cast<const uint8_t *>(&v.edge) - base;
-    case kVertexIndexStride:
-        return reinterpret_cast<const uint8_t *>(&v.edge[3]) - base;
-    case kBoneIndexStride:
-        return reinterpret_cast<const uint8_t *>(&v.boneIndices) - base;
-    case kBoneWeightStride:
-        return reinterpret_cast<const uint8_t *>(&v.boneWeights) - base;
-    case kUVA1Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva1) - base;
-    case kUVA2Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva2) - base;
-    case kUVA3Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva3) - base;
-    case kUVA4Stride:
-        return reinterpret_cast<const uint8_t *>(&v.uva4) - base;
-    default:
-        return 0;
-    }
-}
-
-size_t Model::strideSize(StrideType type)
-{
-    switch (type) {
-    case kVertexStride:
-    case kNormalStride:
-    case kTexCoordStride:
-    case kEdgeSizeStride:
-    case kToonCoordStride:
-    case kEdgeVertexStride:
-    case kVertexIndexStride:
-    case kBoneIndexStride:
-    case kBoneWeightStride:
-    case kUVA1Stride:
-    case kUVA2Stride:
-    case kUVA3Stride:
-    case kUVA4Stride:
-        return sizeof(SkinnedVertex);
-    case kIndexStride:
-        return sizeof(uint32_t);
-    default:
-        return 0;
-    }
 }
 
 bool Model::load(const uint8_t *data, size_t size)
@@ -304,7 +611,7 @@ bool Model::load(const uint8_t *data, size_t size)
         if (!Bone::loadBones(m_bones, m_BPSOrderedBones, m_APSOrderedBones)
                 || !Material::loadMaterials(m_materials, m_textures, m_indices.count())
                 || !Vertex::loadVertices(m_vertices, m_bones)
-                || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_vertices)
+                || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_rigidBodies, m_vertices)
                 || !Label::loadLabels(m_labels, m_bones, m_morphs)
                 || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
                 || !Joint::loadJoints(m_joints, m_rigidBodies)) {
@@ -327,18 +634,14 @@ void Model::save(uint8_t * /* data */) const
 size_t Model::estimateSize() const
 {
     size_t size = 0;
+    IString::Codec codec = m_info.codec;
     size += sizeof(Header);
     size += sizeof(uint8_t) + 8;
-    size += internal::estimateSize(m_name);
-    size += internal::estimateSize(m_englishName);
-    size += internal::estimateSize(m_comment);
-    size += internal::estimateSize(m_englishComment);
-    const int nvertices = m_vertices.count();
-    size += sizeof(nvertices);
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices[i];
-        size += vertex->estimateSize(m_info);
-    }
+    size += internal::estimateSize(m_name, codec);
+    size += internal::estimateSize(m_englishName, codec);
+    size += internal::estimateSize(m_comment, codec);
+    size += internal::estimateSize(m_englishComment, codec);
+    size += Vertex::estimateTotalSize(m_vertices, m_info);
     const int nindices = m_indices.count();
     size += sizeof(nindices);
     size += m_info.vertexIndexSize * nindices;
@@ -346,44 +649,14 @@ size_t Model::estimateSize() const
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
         IString *texture = m_textures[i];
-        size += internal::estimateSize(texture);
+        size += internal::estimateSize(texture, codec);
     }
-    const int nmaterials = m_materials.count();
-    size += sizeof(nmaterials);
-    for (int i = 0; i < nmaterials; i++) {
-        Material *material = m_materials[i];
-        size += material->estimateSize(m_info);
-    }
-    const int nbones = m_bones.count();
-    size += sizeof(nbones);
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
-        size += bone->estimateSize(m_info);
-    }
-    const int nmorphs = m_morphs.count();
-    size += sizeof(nmorphs);
-    for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = m_morphs[i];
-        size += morph->estimateSize(m_info);
-    }
-    const int nlabels = m_labels.count();
-    size += sizeof(nlabels);
-    for (int i = 0; i < nlabels; i++) {
-        Label *label = m_labels[i];
-        size += label->estimateSize(m_info);
-    }
-    const int nbodies = m_rigidBodies.count();
-    size += sizeof(nbodies);
-    for (int i = 0; i < nbodies; i++) {
-        RigidBody *body = m_rigidBodies[i];
-        size += body->estimateSize(m_info);
-    }
-    const int njoints = m_joints.count();
-    size += sizeof(njoints);
-    for (int i = 0; i < njoints; i++) {
-        Joint *joint = m_joints[i];
-        size += joint->estimateSize(m_info);
-    }
+    size += Material::estimateTotalSize(m_materials, m_info);
+    size += Bone::estimateTotalSize(m_bones, m_info);
+    size += Morph::estimateTotalSize(m_morphs, m_info);
+    size += Label::estimateTotalSize(m_labels, m_info);
+    size += RigidBody::estimateTotalSize(m_rigidBodies, m_info);
+    size += Joint::estimateTotalSize(m_joints, m_info);
     return size;
 }
 
@@ -405,7 +678,7 @@ void Model::resetMotionState()
     }
 }
 
-void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection)
+void Model::performUpdate()
 {
     // update local transform matrix
     const int nbones = m_bones.count();
@@ -418,7 +691,7 @@ void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDir
     for (int i = 0; i < nBPSBones; i++) {
         Bone *bone = m_BPSOrderedBones[i];
         bone->performFullTransform();
-        bone->performInverseKinematics();
+        bone->solveInverseKinematics();
     }
     for (int i = 0; i < nBPSBones; i++) {
         Bone *bone = m_BPSOrderedBones[i];
@@ -437,47 +710,11 @@ void Model::performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDir
     for (int i = 0; i < nAPSBones; i++) {
         Bone *bone = m_APSOrderedBones[i];
         bone->performFullTransform();
-        bone->performInverseKinematics();
+        bone->solveInverseKinematics();
     }
     for (int i = 0; i < nAPSBones; i++) {
         Bone *bone = m_APSOrderedBones[i];
         bone->performUpdateLocalTransform();
-    }
-    const Scalar &esf = edgeScaleFactor(cameraPosition);
-    // skinning
-    if (m_enableSkinning) {
-        const int nmaterials = m_materials.count();
-        int offset = 0;
-        for (int i = 0; i < nmaterials; i++) {
-            const Material *material = m_materials[i];
-            const int nindices = material->indices(), offsetTo = offset + nindices;
-            const float materialEdgeSize = material->edgeSize();
-            for (int j = offset; j < offsetTo; j++) {
-                const int index = m_indices[j];
-                Vertex *vertex = m_vertices[index];
-                SkinnedVertex &v = m_skinnedVertices[index];
-                const Vector3 &tex = vertex->texcoord() + vertex->uv(0);
-                const float edgeSize = vertex->edgeSize();
-                vertex->performSkinning(v.position, v.normal);
-                v.texcoord.setValue(tex.x(), tex.y(), 0, 1 + lightDirection.dot(-v.normal) * 0.5f);
-                v.edge = v.position + v.normal * edgeSize * materialEdgeSize * esf;
-                v.uva1 = vertex->uv(1);
-                v.uva2 = vertex->uv(2);
-                v.uva3 = vertex->uv(3);
-                v.uva4 = vertex->uv(4);
-            }
-            offset += nindices;
-        }
-    }
-    else {
-        const int nvertices = m_vertices.count();
-        for (int i = 0; i < nvertices; i++) {
-            Vertex *vertex = m_vertices[i];
-            SkinnedVertex &v = m_skinnedVertices[i];
-            v.position = vertex->origin() + vertex->delta();
-            v.normal[3] = vertex->edgeSize();
-            v.edge[3] = Scalar(i);
-        }
     }
 }
 
@@ -521,14 +758,20 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *world)
 
 IBone *Model::findBone(const IString *value) const
 {
-    IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(value->toHashString()));
-    return bone ? *bone : 0;
+    if (value) {
+        IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(value->toHashString()));
+        return bone ? *bone : 0;
+    }
+    return 0;
 }
 
 IMorph *Model::findMorph(const IString *value) const
 {
-    IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(value->toHashString()));
-    return morph ? *morph : 0;
+    if (value) {
+        IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(value->toHashString()));
+        return morph ? *morph : 0;
+    }
+    return 0;
 }
 
 int Model::count(ObjectType value) const
@@ -570,7 +813,7 @@ int Model::count(ObjectType value) const
     }
 }
 
-void Model::getBones(Array<IBone *> &value) const
+void Model::getBoneRefs(Array<IBone *> &value) const
 {
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -579,16 +822,7 @@ void Model::getBones(Array<IBone *> &value) const
     }
 }
 
-void Model::getMorphs(Array<IMorph *> &value) const
-{
-    const int nmorphs = m_morphs.count();
-    for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = m_morphs[i];
-        value.add(morph);
-    }
-}
-
-void Model::getLabels(Array<ILabel *> &value) const
+void Model::getLabelRefs(Array<ILabel *> &value) const
 {
     const int nlabels = m_labels.count();
     for (int i = 0; i < nlabels; i++) {
@@ -597,44 +831,31 @@ void Model::getLabels(Array<ILabel *> &value) const
     }
 }
 
-void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
+void Model::getMaterialRefs(Array<IMaterial *> &value) const
 {
-    min.setZero();
-    max.setZero();
+    const int nmaterials = m_materials.count();
+    for (int i = 0; i < nmaterials; i++) {
+        IMaterial *material = m_materials[i];
+        value.add(material);
+    }
+}
+
+void Model::getMorphRefs(Array<IMorph *> &value) const
+{
+    const int nmorphs = m_morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_morphs[i];
+        value.add(morph);
+    }
+}
+
+void Model::getVertexRefs(Array<IVertex *> &value) const
+{
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
-        const Vector3 &position = m_skinnedVertices[i].position;
-        min.setMin(position);
-        max.setMax(position);
+        IVertex *vertex = m_vertices[i];
+        value.add(vertex);
     }
-}
-
-void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
-{
-    center.setZero();
-    radius = 0;
-    IBone *bone = findBone(m_encodingRef->stringConstant(IEncoding::kCenter));
-    if (bone) {
-        const Vector3 &centerPosition = bone->worldTransform().getOrigin();
-        const int nvertices = m_vertices.count();
-        for (int i = 0; i < nvertices; i++) {
-            const Vector3 &position = m_skinnedVertices[i].position;
-            btSetMax(radius, centerPosition.distance2(position));
-        }
-        center = centerPosition;
-        radius = btSqrt(radius);
-    }
-    else {
-        Vector3 min, max;
-        getBoundingBox(min, max);
-        center = (min + max) * 0.5;
-        radius = (max - min).length() * 0.5f;
-    }
-}
-
-IModel::IndexType Model::indexType() const
-{
-    return m_indexBuffer ? m_indexBuffer->type : IModel::kIndex32;
 }
 
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
@@ -779,16 +1000,6 @@ void Model::setVisible(bool value)
     m_visible = value;
 }
 
-const void *Model::vertexPtr() const
-{
-    return &m_skinnedVertices[0].position;
-}
-
-const void *Model::indicesPtr() const
-{
-    return m_indexBuffer->toPtr();
-}
-
 Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
     Scalar length = 0;
@@ -831,8 +1042,6 @@ void Model::release()
     m_labels.releaseAll();
     m_rigidBodies.releaseAll();
     m_joints.releaseAll();
-    delete[] m_skinnedVertices;
-    m_skinnedVertices = 0;
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -861,10 +1070,8 @@ void Model::parseVertices(const DataInfo &info)
     const int nvertices = info.verticesCount;
     uint8_t *ptr = info.verticesPtr;
     size_t size;
-    delete[] m_skinnedVertices;
-    m_skinnedVertices = new SkinnedVertex[nvertices];
     for(int i = 0; i < nvertices; i++) {
-        Vertex *vertex = new Vertex();
+        Vertex *vertex = new Vertex(this);
         m_vertices.add(vertex);
         vertex->read(ptr, info, size);
         ptr += size;
@@ -881,15 +1088,11 @@ void Model::parseIndices(const DataInfo &info)
         int index = internal::readUnsignedIndex(ptr, size);
         if (index >= 0 && index < nvertices) {
             m_indices.add(index);
-            //m_skinnedIndices[i] = index;
         }
         else {
             m_indices.add(0);
-            //m_skinnedIndices[i] = 0;
         }
     }
-    delete m_indexBuffer;
-    m_indexBuffer = new IndexBuffer(m_indices, nvertices);
 }
 
 void Model::parseTextures(const DataInfo &info)
@@ -908,24 +1111,17 @@ void Model::parseMaterials(const DataInfo &info)
 {
     const int nmaterials = info.materialsCount;
     uint8_t *ptr = info.materialsPtr;
-    size_t size;
+    size_t size, offset = 0;
     for(int i = 0; i < nmaterials; i++) {
-        Material *material = new Material();
+        Material *material = new Material(this);
         m_materials.add(material);
         material->read(ptr, info, size);
         ptr += size;
-    }
-    /* set initial skinned vertex value */
-    int offset = 0;
-    for (int i = 0; i < nmaterials; i++) {
-        const Material *material = m_materials[i];
-        const int nindices = material->indices(), offsetTo = offset + nindices;
-        for (int i = offset; i < offsetTo; i++) {
-            const int index = m_indices[i];
-            Vertex *vertex = m_vertices[index];
-            SkinnedVertex &v = m_skinnedVertices[index];
-            v.normal[3] = vertex->edgeSize();
-            v.edge[3] = Scalar(index);
+        int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
+        for (int j = offset; j < offsetTo; j++) {
+            const int index = m_indices.at(j);
+            IVertex *vertex = m_vertices[index];
+            vertex->setMaterial(material);
         }
         offset += nindices;
     }
@@ -937,7 +1133,7 @@ void Model::parseBones(const DataInfo &info)
     uint8_t *ptr = info.bonesPtr;
     size_t size;
     for(int i = 0; i < nbones; i++) {
-        Bone *bone = new Bone();
+        Bone *bone = new Bone(this);
         m_bones.add(bone);
         bone->read(ptr, info, size);
         bone->performTransform();
@@ -954,7 +1150,7 @@ void Model::parseMorphs(const DataInfo &info)
     uint8_t *ptr = info.morphsPtr;
     size_t size;
     for(int i = 0; i < nmorphs; i++) {
-        Morph *morph = new Morph();
+        Morph *morph = new Morph(this);
         m_morphs.add(morph);
         morph->read(ptr, info, size);
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
@@ -969,7 +1165,7 @@ void Model::parseLabels(const DataInfo &info)
     uint8_t *ptr = info.labelsPtr;
     size_t size;
     for(int i = 0; i < nlabels; i++) {
-        Label *label = new Label();
+        Label *label = new Label(this);
         m_labels.add(label);
         label->read(ptr, info, size);
         ptr += size;
@@ -1002,93 +1198,56 @@ void Model::parseJoints(const DataInfo &info)
     }
 }
 
-void Model::getSkinningMesh(SkinningMeshes &meshes) const
+void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const
 {
-    const int nmaterials = m_materials.count();
-    btHashMap<btHashInt, int> set;
-    BoneIndices boneIndices;
-    meshes.transforms.resize(m_bones.count());
-    int offset = 0;
-    for (int i = 0; i < nmaterials; i++) {
-        const Material *material = m_materials[i];
-        const int nindices = material->indices();
-        int boneIndexInteral = 0;
-        for (int j = 0; j < nindices; j++) {
-            int vertexIndex = m_indexBuffer->indexAt(offset + j);
-            Vertex *vertex = m_vertices[vertexIndex];
-            switch (vertex->type()) {
-            case Vertex::kBdef1:
-                meshes.bdef1.push_back(vertexIndex);
-                break;
-            case Vertex::kBdef2:
-                meshes.bdef2.push_back(vertexIndex);
-                break;
-            case Vertex::kBdef4:
-                meshes.bdef4.push_back(vertexIndex);
-                break;
-            case Vertex::kSdef:
-                meshes.sdef.push_back(vertexIndex);
-                break;
-            }
-            SkinnedVertex &skinnedVertex = m_skinnedVertices[vertexIndex];
-            skinnedVertex.position.setW(Scalar(vertex->type()));
-            for (int k = 0; k < 4; k++) {
-                Bone *bone = vertex->bone(k);
-                if (bone) {
-                    int boneIndex = bone->index();
-                    int *normalizedBoneIndexPtr = set.find(boneIndex), normalizedBoneIndex = 0;
-                    if (!normalizedBoneIndexPtr) {
-                        normalizedBoneIndex = boneIndexInteral++;
-                        set.insert(boneIndex, normalizedBoneIndex);
-                        boneIndices.push_back(boneIndex);
-                    }
-                    else {
-                        normalizedBoneIndex = *normalizedBoneIndexPtr;
-                    }
-                    skinnedVertex.boneIndices[k] = Scalar(normalizedBoneIndex);
-                    skinnedVertex.boneWeights[k] = vertex->weight(k);
-                }
-                else {
-                    skinnedVertex.boneIndices[k] = -1;
-                    skinnedVertex.boneWeights[k] = 0;
-                }
-            }
-        }
-        meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
-        meshes.bones.push_back(boneIndices);
-        boneIndices.clear();
-        set.clear();
-        offset += nindices;
+    delete indexBuffer;
+    indexBuffer = new IndexBuffer(m_indices, m_vertices.count());
+}
+
+void Model::getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const
+{
+    delete staticBuffer;
+    staticBuffer = new StaticVertexBuffer(this);
+}
+
+void Model::getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
+                                   const IIndexBuffer *indexBuffer) const
+{
+    delete dynamicBuffer;
+    if (indexBuffer && indexBuffer->ident() == &IndexBuffer::kIdent) {
+        dynamicBuffer = new DynamicVertexBuffer(this, indexBuffer);
+    }
+    else {
+        dynamicBuffer = 0;
     }
 }
 
-void Model::updateSkinningMesh(SkinningMeshes &meshes) const
+void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
+                            IDynamicVertexBuffer *dynamicBuffer,
+                            const IIndexBuffer *indexBuffer) const
 {
-    const int nbones = m_bones.count();
-    MeshLocalTransforms &transforms = meshes.transforms;
-    for (int i = 0; i < nbones; i++) {
-        const Bone *bone = m_bones[i];
-        transforms[i] = bone->localTransform();
+    delete matrixBuffer;
+    if (indexBuffer && indexBuffer->ident() == &IndexBuffer::kIdent &&
+            dynamicBuffer && dynamicBuffer->ident() == &DynamicVertexBuffer::kIdent) {
+        matrixBuffer = new MatrixBuffer(this,
+                                        static_cast<const IndexBuffer *>(indexBuffer),
+                                        static_cast<DynamicVertexBuffer *>(dynamicBuffer));
     }
-    const int nmaterials = m_materials.count();
-    for (int i = 0; i < nmaterials; i++) {
-        const BoneIndices &boneIndices = meshes.bones[i];
-        const int nBoneIndices = boneIndices.size();
-        Scalar *matrices = meshes.matrices[i];
-        for (int j = 0; j < nBoneIndices; j++) {
-            const int boneIndex = boneIndices[j];
-            const Transform &transform = transforms[boneIndex];
-            transform.getOpenGLMatrix(&matrices[j * 16]);
-        }
+    else {
+        matrixBuffer = 0;
     }
-    const int nvertices = m_vertices.count();
-    for (int i = 0; i < nvertices; i++)
-        m_skinnedVertices[i].position = m_vertices[i]->origin() + m_vertices[i]->delta();
 }
 
-void Model::setSkinningEnable(bool value)
+void Model::setAabb(const Vector3 &min, const Vector3 &max)
 {
-    m_enableSkinning = value;
+    m_aabbMin = min;
+    m_aabbMax = max;
+}
+
+void Model::getAabb(Vector3 &min, Vector3 &max) const
+{
+    min = m_aabbMin;
+    max = m_aabbMax;
 }
 
 }

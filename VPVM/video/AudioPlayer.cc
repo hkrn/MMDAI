@@ -36,23 +36,54 @@
 
 #include "AudioPlayer.h"
 
+namespace {
+
+bool g_initialized = false;
+
+void Pa_Terminate_Wrapper() {
+    PaError err = Pa_Terminate();
+    if (err != paNoError) {
+        qWarning("Pa_Terminate failed: %s", Pa_GetErrorText(err));
+    }
+}
+
+}
+
+namespace vpvm
+{
+
+void AudioPlayer::initializePlayer()
+{
+    if (!g_initialized) {
+        PaError err = Pa_Initialize();
+        if (err == paNoError) {
+            atexit(Pa_Terminate_Wrapper);
+            g_initialized = true;
+        }
+        else {
+            qWarning("Pa_Initialize failed: %s", Pa_GetErrorText(err));
+        }
+    }
+}
+
 AudioPlayer::AudioPlayer()
     : AudioDecoder(),
       m_stream(0),
       m_position(0)
 {
+    initializePlayer();
 }
 
 AudioPlayer::~AudioPlayer()
 {
-    AudioDecoder::stop();
+    AudioDecoder::stopSession();
     if (m_stream) {
         Pa_CloseStream(m_stream);
         m_stream = 0;
     }
 }
 
-bool AudioPlayer::initalize()
+bool AudioPlayer::openOutputDevice()
 {
     PaStreamParameters parameters;
     parameters.device = Pa_GetDefaultOutputDevice();
@@ -60,12 +91,11 @@ bool AudioPlayer::initalize()
         const PaDeviceInfo *info = Pa_GetDeviceInfo(parameters.device);
         parameters.channelCount = 2;
         parameters.sampleFormat = paInt16;
-        parameters.suggestedLatency = info->defaultLowOutputLatency;
+        parameters.suggestedLatency = info->defaultHighOutputLatency;
         parameters.hostApiSpecificStreamInfo = 0;
         qDebug("name: %s", info->name);
         qDebug() << "sampleRate:" << info->defaultSampleRate;
-        qDebug() << "defaultLowInputLatency:" << info->defaultLowInputLatency;
-        qDebug() << "defualtLowOutputLatency:" << info->defaultLowOutputLatency;
+        qDebug() << "defaultHighOutputLatency:" << info->defaultHighOutputLatency;
         PaError err = Pa_OpenStream(&m_stream, 0, &parameters, 44100.0, 1024, paClipOff, 0, 0);
         if (err == paNoError) {
             return true;
@@ -80,9 +110,9 @@ bool AudioPlayer::initalize()
     return false;
 }
 
-void AudioPlayer::stop()
+void AudioPlayer::stopSession()
 {
-    AudioDecoder::stop();
+    AudioDecoder::stopSession();
     if (m_stream)
         Pa_StopStream(m_stream);
 }
@@ -93,10 +123,13 @@ void AudioPlayer::run()
     AudioDecoder::run();
 }
 
-void AudioPlayer::decodeBuffer(const QByteArray &bytes, float position, int channels)
+void AudioPlayer::decodeBuffer(const QByteArray &bytes, qreal position, int channels)
 {
     int size = bytes.length() / (channels * sizeof(int16_t));
     Pa_WriteStream(m_stream, bytes.constData(), size);
     emit positionDidAdvance(position - m_position);
     m_position = position;
 }
+
+} /* namespace vpvm */
+

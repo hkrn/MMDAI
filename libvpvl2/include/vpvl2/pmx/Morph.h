@@ -127,15 +127,41 @@ public:
         Vector3 position;
         uint32_t index;
     };
+    struct Flip {
+        Flip()
+            : weight(0),
+              index(-1)
+        {
+        }
+        float weight;
+        int index;
+    };
+    struct Impulse {
+        Impulse()
+            : rigidBody(0),
+              velocity(kZeroV3),
+              torque(kZeroV3),
+              index(-1),
+              isLocal(false)
+        {
+        }
+        pmx::RigidBody *rigidBody;
+        Vector3 velocity;
+        Vector3 torque;
+        int index;
+        bool isLocal;
+    };
 
-    Morph();
+    Morph(IModel *modelRef);
     ~Morph();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMorphs(const Array<Morph *> &morphs,
                            const Array<pmx::Bone *> &bones,
                            const Array<pmx::Material *> &materials,
+                           const Array<pmx::RigidBody *> &rigidBodies,
                            const Array<pmx::Vertex *> &vertices);
+    static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -151,6 +177,7 @@ public:
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
+    IModel *parentModelRef() const { return m_modelRef; }
     Category category() const { return m_category; }
     Type type() const { return m_type; }
     int index() const { return m_index; }
@@ -163,6 +190,8 @@ public:
     void addMaterialMorph(Material *value);
     void addUVMorph(UV *value);
     void addVertexMorph(Vertex *value);
+    void addFlip(Flip *value);
+    void addImpulse(Impulse *value);
     void setCategory(Category value);
     void setType(Type value);
     void setIndex(int value);
@@ -172,6 +201,8 @@ public:
     const Array<Material *> &materials() const { return m_materials; }
     const Array<UV *> &uvs() const { return m_uvs; }
     const Array<Vertex *> &vertices() const { return m_vertices; }
+    const Array<Flip *> &flips() const { return m_flips; }
+    const Array<Impulse *> &impulses() const { return m_impulses; }
 
 private:
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);
@@ -179,22 +210,30 @@ private:
     static bool loadMaterials(const Array<pmx::Material *> &materials, Morph *morph);
     static bool loadUVs(const Array<pmx::Vertex *> &vertices, int offset, Morph *morph);
     static bool loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph);
+    static bool loadImpulses(const Array<pmx::RigidBody *> &rigidBodies, Morph *morph);
     void readBones(const Model::DataInfo &info, int count, uint8_t *&ptr);
     void readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr);
     void readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr);
     void readUVs(const Model::DataInfo &info, int count, int offset, uint8_t *&ptr);
     void readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr);
+    void readFlips(const Model::DataInfo &info, int count, uint8_t *&ptr);
+    void readImpulses(const Model::DataInfo &info, int count, uint8_t *&ptr);
     void writeBones(const Model::DataInfo &info, uint8_t *&ptr) const;
     void writeGroups(const Model::DataInfo &info, uint8_t *&ptr) const;
     void writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const;
     void writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const;
     void writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const;
+    void writeFlips(const Model::DataInfo &info, uint8_t *&ptr) const;
+    void writeImpulses(const Model::DataInfo &info, uint8_t *&ptr) const;
 
     Array<Vertex *> m_vertices;
     Array<UV *> m_uvs;
     Array<Bone *> m_bones;
     Array<Material *> m_materials;
     Array<Group *> m_groups;
+    Array<Flip *> m_flips;
+    Array<Impulse *> m_impulses;
+    IModel *m_modelRef;
     IString *m_name;
     IString *m_englishName;
     WeightPrecision m_weight;

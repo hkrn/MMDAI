@@ -34,11 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef ASSETWIDGET_H
-#define ASSETWIDGET_H
+#ifndef VPVM_ASSETWIDGET_H
+#define VPVM_ASSETWIDGET_H
 
 #include <QtCore/QTextStream>
 #include <QtCore/QUuid>
+#include <QtGui/QStringListModel>
 #include <QtGui/QWidget>
 
 namespace vpvl2 {
@@ -51,6 +52,11 @@ class QDoubleSpinBox;
 class QGroupBox;
 class QLabel;
 class QPushButton;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class AssetWidget : public QWidget
@@ -61,65 +67,67 @@ public:
     explicit AssetWidget(QWidget *parent = 0);
     ~AssetWidget();
 
-    vpvl2::IModel *currentAsset() const { return m_currentAsset; }
-    vpvl2::IModel *currentModel() const { return m_currentModel; }
+    IModel *currentAsset() const { return m_currentAssetRef; }
+    IModel *currentModel() const { return m_currentModelRef; }
 
 public slots:
-    void addAsset(vpvl2::IModel *asset);
-    void removeAsset(vpvl2::IModel *asset);
-    void addModel(vpvl2::IModel *model);
-    void removeModel(vpvl2::IModel *model);
+    void addAsset(IModel *asset);
+    void removeAsset(IModel *asset);
+    void addModel(IModel *model);
+    void removeModel(IModel *model);
     void retranslate();
 
 signals:
-    void assetDidSelect(vpvl2::IModel *asset);
-    void assetDidRemove(vpvl2::IModel *asset);
+    void assetDidSelect(IModel *asset);
+    void assetDidRemove(IModel *asset);
 
 private slots:
-    void removeAsset();
+    void deleteCurrentAsset();
     void changeCurrentAsset(int index);
-    void changeCurrentAsset(vpvl2::IModel *asset);
+    void changeCurrentAsset(IModel *asset);
     void changeCurrentModel(int index);
     void changeParentBone(int index);
     void updatePositionX(double value);
     void updatePositionY(double value);
     void updatePositionZ(double value);
-    void updateRotationX(double value);
-    void updateRotationY(double value);
-    void updateRotationZ(double value);
+    void updateRotation();
     void updateScaleFactor(double value);
     void updateOpacity(double value);
-    void setAssetProperties(vpvl2::IModel *asset, SceneLoader *loader);
+    void setAssetProperties(IModel *asset, SceneLoader *loader);
 
 private:
+    static QDoubleSpinBox *createSpinBox(double step, double min, double max);
     void setEnable(bool value);
-    void updateModelBoneComboBox(vpvl2::IModel *model);
-    int modelIndexOf(vpvl2::IModel *model);
+    void updateModelBoneComboBox(IModel *model);
+    int modelIndexOf(IModel *model);
 
-    QGroupBox *m_assetGroup;
-    QGroupBox *m_assignGroup;
-    QGroupBox *m_positionGroup;
-    QGroupBox *m_rotationGroup;
-    QComboBox *m_assetComboBox;
-    QComboBox *m_modelComboBox;
-    QComboBox *m_modelBonesComboBox;
-    QPushButton *m_removeButton;
-    QDoubleSpinBox *m_px;
-    QDoubleSpinBox *m_py;
-    QDoubleSpinBox *m_pz;
-    QDoubleSpinBox *m_rx;
-    QDoubleSpinBox *m_ry;
-    QDoubleSpinBox *m_rz;
-    QDoubleSpinBox *m_scale;
-    QDoubleSpinBox *m_opacity;
-    QLabel *m_scaleLabel;
-    QLabel *m_opacityLabel;
-    QList<vpvl2::IModel *> m_assets;
-    QList<vpvl2::IModel *> m_models;
-    vpvl2::IModel *m_currentAsset;
-    vpvl2::IModel *m_currentModel;
+    QScopedPointer<QGroupBox> m_assetGroup;
+    QScopedPointer<QGroupBox> m_assignGroup;
+    QScopedPointer<QGroupBox> m_positionGroup;
+    QScopedPointer<QGroupBox> m_rotationGroup;
+    QScopedPointer<QComboBox> m_assetComboBox;
+    QScopedPointer<QComboBox> m_modelComboBox;
+    QScopedPointer<QComboBox> m_modelBonesComboBox;
+    QScopedPointer<QPushButton> m_removeButton;
+    QScopedPointer<QDoubleSpinBox> m_px;
+    QScopedPointer<QDoubleSpinBox> m_py;
+    QScopedPointer<QDoubleSpinBox> m_pz;
+    QScopedPointer<QDoubleSpinBox> m_rx;
+    QScopedPointer<QDoubleSpinBox> m_ry;
+    QScopedPointer<QDoubleSpinBox> m_rz;
+    QScopedPointer<QDoubleSpinBox> m_scale;
+    QScopedPointer<QDoubleSpinBox> m_opacity;
+    QScopedPointer<QStringListModel> m_assetCompleterModel;
+    QScopedPointer<QLabel> m_scaleLabel;
+    QScopedPointer<QLabel> m_opacityLabel;
+    QList<IModel *> m_assets;
+    QList<IModel *> m_models;
+    IModel *m_currentAssetRef;
+    IModel *m_currentModelRef;
 
     Q_DISABLE_COPY(AssetWidget)
 };
+
+} /* namespace vpvl2 */
 
 #endif // ASSETWIDGET_H

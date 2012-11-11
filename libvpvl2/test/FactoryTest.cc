@@ -1,6 +1,7 @@
 #include "Common.h"
-#include "vpvl2/Factory.h"
 
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
@@ -17,6 +18,11 @@
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
+
+using namespace ::testing;
+using namespace std::tr1;
+using namespace vpvl2;
+using namespace vpvl2::extensions::icu;
 
 TEST(FactoryTest, CreateEmptyModels)
 {
@@ -103,7 +109,7 @@ ACTION_P(FindBone, bones)
 {
     MockIBone *bone = new MockIBone();
     EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    bones->append(bone);
+    (*bones)->append(bone);
     return bone;
 }
 
@@ -111,7 +117,7 @@ ACTION_P(FindMorph, morphs)
 {
     MockIMorph *morph = new MockIMorph();
     EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    morphs->append(morph);
+    (*morphs)->append(morph);
     return morph;
 }
 
@@ -119,14 +125,14 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
 {
     QFile file("motion." + get<0>(GetParam()));
     if (file.open(QFile::ReadOnly)) {
-        QByteArray bytes = file.readAll();
+        const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
         Encoding encoding;
         Factory factory(&encoding);
         MockIModel model;
-        QList<IBone *> bones;
-        QList<IMorph *> morphs;
+        QScopedPointer<QList<IBone *>, ScopedPointerListDeleter> bones(new QList<IBone *>);
+        QScopedPointer<QList<IMorph *>, ScopedPointerListDeleter> morphs(new QList<IMorph *>);
         EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
         EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
         bool ok;
@@ -135,10 +141,16 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         IMotion::Type type = get<1>(GetParam());
         QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
         ASSERT_EQ(dest->type(), type);
-        ASSERT_EQ(source->countKeyframes(IKeyframe::kBone), dest->countKeyframes(IKeyframe::kBone));
-        ASSERT_EQ(source->countKeyframes(IKeyframe::kMorph), dest->countKeyframes(IKeyframe::kMorph));
-        qDeleteAll(bones);
-        qDeleteAll(morphs);
+        const int nbkeyframes = source->countKeyframes(IKeyframe::kBone);
+        const int nmkeyframes = source->countKeyframes(IKeyframe::kMorph);
+        ASSERT_EQ(nbkeyframes, dest->countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(nmkeyframes, dest->countKeyframes(IKeyframe::kMorph));
+        for (int i = 0; i < nbkeyframes; i++) {
+            ASSERT_TRUE(CompareBoneKeyframe(*source->findBoneKeyframeAt(i), *dest->findBoneKeyframeAt(i)));
+        }
+        for (int i = 0; i < nmkeyframes; i++) {
+            ASSERT_TRUE(CompareMorphKeyframe(*source->findMorphKeyframeAt(i), *dest->findMorphKeyframeAt(i)));
+        }
     }
 }
 
@@ -146,7 +158,7 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
 {
     QFile file("camera." + get<0>(GetParam()));
     if (file.open(QFile::ReadOnly)) {
-        QByteArray bytes = file.readAll();
+        const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
         Encoding encoding;
@@ -157,7 +169,11 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
         IMotion::Type type = get<1>(GetParam());
         QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
         ASSERT_EQ(dest->type(), type);
-        ASSERT_EQ(source->countKeyframes(IKeyframe::kCamera), dest->countKeyframes(IKeyframe::kCamera));
+        const int nckeyframes = source->countKeyframes(IKeyframe::kCamera);
+        ASSERT_EQ(nckeyframes, dest->countKeyframes(IKeyframe::kCamera));
+        for (int i = 0; i < nckeyframes; i++) {
+            ASSERT_TRUE(CompareCameraKeyframe(*source->findCameraKeyframeAt(i), *dest->findCameraKeyframeAt(i)));
+        }
     }
 }
 

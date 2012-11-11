@@ -42,11 +42,12 @@ namespace vpvl2
 namespace pmd
 {
 
-Morph::Morph(vpvl::Face *morph, IEncoding *encoding)
-    : m_encodingRef(encoding),
+Morph::Morph(IModel *modelRef, vpvl::Face *morph, IEncoding *encoding)
+    : m_modelRef(modelRef),
+      m_encodingRef(encoding),
       m_name(0),
       m_morphRef(morph),
-      m_category(kReserved),
+      m_category(kBase),
       m_weight(0),
       m_index(-1)
 {
@@ -57,8 +58,9 @@ Morph::~Morph()
 {
     delete m_name;
     m_name = 0;
+    m_modelRef = 0;
     m_morphRef = 0;
-    m_category = kReserved;
+    m_category = kBase;
     m_weight = 0;
     m_index = -1;
 }
@@ -76,7 +78,7 @@ IMorph::Category Morph::category() const
         return kOther;
     case vpvl::Face::kBase:
     default:
-        return kReserved;
+        return kBase;
     }
 }
 
@@ -98,7 +100,7 @@ const IMorph::WeightPrecision &Morph::weight() const
 void Morph::setWeight(const WeightPrecision &value)
 {
     m_weight = value;
-    m_morphRef->setWeight(value);
+    m_morphRef->setWeight(float(value));
 }
 
 void Morph::setIndex(int value)

@@ -120,27 +120,17 @@ void CameraKeyframe::setDefaultInterpolationParameter()
 void CameraKeyframe::read(const uint8_t *data)
 {
     CameraKeyframeChunk chunk;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-#ifdef VPVL2_BUILD_IOS
-    float pos[3], angle[3];
-    memcpy(pos, &chunk.position, sizeof(pos));
-    memcpy(angle, &chunk.angle, sizeof(angle));
-#else
-    float *pos = chunk.position;
-    float *angle = chunk.angle;
-#endif
-
-    setTimeIndex(static_cast<float>(chunk.timeIndex));
-    setFov(static_cast<float>(chunk.viewAngle));
+    internal::getData(data, chunk);
+    setTimeIndex(static_cast<const TimeIndex>(chunk.timeIndex));
+    setFov(static_cast<const Scalar>(chunk.viewAngle));
     setPerspective(chunk.noPerspective == 0);
+    internal::setPosition(chunk.position, m_position);
 #ifdef VPVL2_COORDINATE_OPENGL
     setDistance(-chunk.distance);
-    setPosition(Vector3(pos[0], pos[1], -pos[2]));
-    setAngle(Vector3(-degree(angle[0]), -degree(angle[1]), degree(angle[2])));
+    setAngle(Vector3(-degree(chunk.angle[0]), -degree(chunk.angle[1]), degree(chunk.angle[2])));
 #else
     setDistance(chunk.distance);
-    setPosition(Vector3(pos[0], pos[1], pos[2]));
-    setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
+    setAngle(Vector3(degree(chunk.angle[0]), degree(chunk.angle[1]), degree(chunk.angle[2])));
 #endif
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
@@ -186,20 +176,20 @@ size_t CameraKeyframe::estimateSize() const
 
 ICameraKeyframe *CameraKeyframe::clone() const
 {
-    CameraKeyframe *frame = m_ptr = new CameraKeyframe();
-    internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
+    CameraKeyframe *keyframe = m_ptr = new CameraKeyframe();
+    internal::copyBytes(reinterpret_cast<uint8_t *>(keyframe->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->m_timeIndex = m_timeIndex;
-    frame->m_distance = m_distance;
-    frame->m_fov = m_fov;
-    frame->m_position = m_position;
-    frame->m_angle = m_angle;
-    frame->m_noPerspective = m_noPerspective;
-    frame->m_parameter = m_parameter;
-    frame->setInterpolationTable(m_rawInterpolationTable);
+    keyframe->m_timeIndex = m_timeIndex;
+    keyframe->m_distance = m_distance;
+    keyframe->m_fov = m_fov;
+    keyframe->m_position = m_position;
+    keyframe->m_angle = m_angle;
+    keyframe->m_noPerspective = m_noPerspective;
+    keyframe->m_parameter = m_parameter;
+    keyframe->setInterpolationTable(m_rawInterpolationTable);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
@@ -291,7 +281,7 @@ void CameraKeyframe::setFov(const Scalar &value)
     m_fov = value;
 }
 
-void CameraKeyframe::setPosition(const Vector3 &value)
+void CameraKeyframe::setLookAt(const Vector3 &value)
 {
     m_position = value;
 }

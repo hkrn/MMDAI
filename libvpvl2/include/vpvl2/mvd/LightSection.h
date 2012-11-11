@@ -72,7 +72,7 @@ public:
 
 private:
     LightKeyframe *m_keyframePtr;
-    Array<LightKeyframe *> m_allKeyframes;
+    Array<IKeyframe *> m_allKeyframes;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(LightSection)
 };

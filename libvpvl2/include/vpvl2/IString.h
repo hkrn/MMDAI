@@ -83,6 +83,21 @@ public:
     virtual bool endsWith(const IString *value) const = 0;
 
     /**
+     * 文字列を separator にもとづいて最大 maxTokens 分に分割します。
+     *
+     * maxTokens が 1 以上の場合は maxTokens 分まで分割し、それ以上の場合は例え separator があっても分割しません。
+     * maxTokens が 0 の場合は中身の文字列をコピーして tokens に 1 つのみ含まれるようにします。
+     * maxTokens が -1 以下の場合は制限なく全て分割しますが、実装依存であることに注意してください。
+     * (実際 vpvl2::icu::String#split で maxTokens を -1 にすると現状 tokens を空にするだけ)
+     * tokens は使用者側が解放します。
+     *
+     * @param IString
+     * @param maxTokens
+     * @param Array<IString *>
+     */
+    virtual void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const = 0;
+
+    /**
      * IString の完全なコピーを返します。
      *
      * @return IString
@@ -106,13 +121,18 @@ public:
     virtual bool equals(const IString *value) const = 0;
 
     /**
-     * 文字列のバイト単位の長さを返します。
-     *
-     * 文字単位の長さではなく、バイト単位の長さである必要があります。
+     * 文字列の文字単位の長さを返します。
      *
      * @return size_t
      */
-    virtual size_t length() const = 0;
+    virtual size_t size() const = 0;
+
+    /**
+     * 文字列のバイト単位の長さを返します。
+     *
+     * @return size_t
+     */
+    virtual size_t length(IString::Codec codec) const = 0;
 
     /**
      * 文字列のバイト文字列を返します。
@@ -125,7 +145,7 @@ public:
     virtual const uint8_t *toByteArray() const = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
 

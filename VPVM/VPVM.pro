@@ -3,16 +3,14 @@ TARGET = MMDAI2
 TEMPLATE = app
 DEFINES += IS_VPVM
 
-# libvpvl and base libraries (MMDAgent for win32)
+# libvpvl2 and base libraries (MMDAgent for win32)
 ASSIMP_PATH = ../assimp-src
 BULLET_PATH = ../bullet-src
-VPVL_PATH = ../libvpvl
+VPVL1_PATH = ../libvpvl
 VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 LIBAV_PATH = ../libav-src
-LIBJPEG_PATH = ../libjpeg-src
-LIBPNG_PATH = ../libpng-src
-DEVIL_PATH = ../devil-src
+NVTT_PATH = ../nvtt-src
 PORTAUDIO_PATH = ../portaudio-src
 
 # CMake prefix path (mainly for win32)
@@ -24,10 +22,10 @@ exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # VPVL and others configuration
-INCLUDEPATH +=  $${VPVL_PATH}/include \
-                $${VPVL2_PATH}/include \
+INCLUDEPATH +=  $${VPVL2_PATH}/include \
                 $${ASSIMP_PATH}/include \
-                $${BULLET_PATH}/src
+                $${BULLET_PATH}/src \
+                $${NVTT_PATH}/src
 
 win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
                      $${MMDA_PATH} \
@@ -40,47 +38,29 @@ win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
 CONFIG(debug, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
                       -L$${BULLET_PATH}/debug/lib \
-                      -L$${VPVL_PATH}/debug/lib \
+                      -L$${VPVL1_PATH}/debug/lib \
                       -L$${VPVL2_PATH}/debug/lib \
                       -L$${PORTAUDIO_PATH}/debug_native/lib \
                       -L$${LIBAV_PATH}/debug_native/lib \
-                      -L$${DEVIL_PATH}/debug_native/lib
-  unix:INCLUDEPATH += $${VPVL_PATH}/debug/include \
-                      $${VPVL2_PATH}/debug/include \
+                      -L$${NVTT_PATH}/build-debug/lib
+  unix:INCLUDEPATH += $${VPVL2_PATH}/debug/include \
                       $${PORTAUDIO_PATH}/debug_native/include
   # should not change link order because of static library link order
   LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
   INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
-  macx {
-    # libjpeg and libpng
-    LIBS += -L$${LIBJPEG_PATH}/debug_native/lib \
-            -L$${LIBPNG_PATH}/debug_native/lib
-    INCLUDEPATH += $${LIBJPEG_PATH}/debig_native/include \
-                   $${LIBPNG_PATH}/debug_native/include
-  }
 }
 CONFIG(release, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/release/code \
                       -L$${BULLET_PATH}/release/lib \
-                      -L$${VPVL_PATH}/release/lib \
+                      -L$${VPVL1_PATH}/release/lib \
                       -L$${VPVL2_PATH}/release/lib \
                       -L$${PORTAUDIO_PATH}/release_native/lib \
                       -L$${LIBAV_PATH}/release_native/lib \
-                      -L$${DEVIL_PATH}/release_native/lib
-  unix:INCLUDEPATH += $${VPVL_PATH}/release/include \
-                      $${VPVL2_PATH}/release/include \
-                      -L$${DEVIL_PATH}/release_native/lib
+                      -L$${NVTT_PATH}/build-release/lib
+  unix:INCLUDEPATH += $${VPVL2_PATH}/release/include
   # should not change link order because of static library link order
   LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
-  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
-                      $${DEVIL_PATH}/release_native/include
-  macx {
-    # libjpeg and libpng
-    LIBS += -L$${LIBJPEG_PATH}/release_native/lib \
-            -L$${LIBPNG_PATH}/release_native/lib
-    INCLUDEPATH += $${LIBJPEG_PATH}/release_native/include \
-                   $${LIBPNG_PATH}/release_native/include
-  }
+  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include
 }
 
 # Required libraries
@@ -94,11 +74,9 @@ LIBS += -lassimp \
         -lavformat \
         -lavutil \
         -lswscale \
-        -ljpeg \
-        -lpng \
-        -lIL \
-        -lILU \
-        -lILUT \
+        -lnvimage \
+        -lnvmath \
+        -lnvcore \
         -lxml2
 
 macx:LIBS += -framework OpenCL \
@@ -137,7 +115,7 @@ macx {
   CONFIG(debug, debug|release) {
     CONFIG += x86_64
   }
-  # must add -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" to libvpvl and bullet
+  # must add -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" to libvpvl2 and bullet
   CONFIG(release, debug|release) {
     CONFIG += x86 x86_64
   }
@@ -255,12 +233,15 @@ HEADERS  += \
     video/AudioDecoder.h \
     video/AVCommon.h \
     video/AudioPlayer.h \
+    video/IAudioDecoder.h \
+    video/IVideoEncoder.h \
     dialogs/RenderOrderDialog.h \
     widgets/SceneLightWidget.h \
     widgets/ModelSettingWidget.h \
     dialogs/ShadowMapSettingDialog.h \
     common/BackgroundImage.h \
-    dialogs/BackgroundImageSettingDialog.h
+    dialogs/BackgroundImageSettingDialog.h \
+    common/VertexBundle.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/VPVM.qrc

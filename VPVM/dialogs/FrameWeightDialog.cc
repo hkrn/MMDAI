@@ -38,7 +38,10 @@
 #include "common/SceneWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
+
+namespace vpvm
+{
 
 FrameWeightDialog::FrameWeightDialog(TimelineTabWidget::Type type, QWidget *parent) :
     QDialog(parent),
@@ -46,38 +49,38 @@ FrameWeightDialog::FrameWeightDialog(TimelineTabWidget::Type type, QWidget *pare
     m_rotation(1.0, 1.0, 1.0),
     m_morphWeight(1.0)
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     if (type == TimelineTabWidget::kBone) {
-        QHBoxLayout *subLayout = new QHBoxLayout();
-        QFormLayout *formLayout = new QFormLayout();
+        QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
+        QScopedPointer<QFormLayout> formLayout(new QFormLayout());
         formLayout->addRow(tr("X"), createSpinBox(SLOT(setPositionXWeight(double))));
         formLayout->addRow(tr("Y"), createSpinBox(SLOT(setPositionYWeight(double))));
         formLayout->addRow(tr("Z"), createSpinBox(SLOT(setPositionZWeight(double))));
-        QGroupBox *groupBox = new QGroupBox(tr("Position"));
-        groupBox->setLayout(formLayout);
-        subLayout->addWidget(groupBox);
-        formLayout = new QFormLayout();
+        QScopedPointer<QGroupBox> groupBox(new QGroupBox(tr("Position")));
+        groupBox->setLayout(formLayout.take());
+        subLayout->addWidget(groupBox.take());
+        formLayout.reset(new QFormLayout());
         formLayout->addRow(tr("X"), createSpinBox(SLOT(setRotationXWeight(double))));
         formLayout->addRow(tr("Y"), createSpinBox(SLOT(setRotationYWeight(double))));
         formLayout->addRow(tr("Z"), createSpinBox(SLOT(setRotationZWeight(double))));
-        groupBox = new QGroupBox(tr("Rotation"));
-        groupBox->setLayout(formLayout);
-        subLayout->addWidget(groupBox);
-        mainLayout->addLayout(subLayout);
+        groupBox.reset(new QGroupBox(tr("Rotation")));
+        groupBox->setLayout(formLayout.take());
+        subLayout->addWidget(groupBox.take());
+        mainLayout->addLayout(subLayout.take());
         connect(this, SIGNAL(accepted()), SLOT(emitBoneWeightSignal()));
     }
     else if (type == TimelineTabWidget::kMorph) {
-        QFormLayout *subLayout = new QFormLayout();
-        subLayout->addRow(tr("Keyframe weight"), createSpinBox(SLOT(setMorphWeight(double))));
-        mainLayout->addLayout(subLayout);
+        QScopedPointer<QFormLayout> subLayout(new QFormLayout());
+        subLayout->addRow(tr("Keyframe Weight"), createSpinBox(SLOT(setMorphWeight(double))));
+        mainLayout->addLayout(subLayout.take());
         connect(this, SIGNAL(accepted()), SLOT(emitMorphWeightSignal()));
     }
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    mainLayout->addWidget(buttons);
-    connect(buttons, SIGNAL(accepted()), SLOT(accept()));
-    connect(buttons, SIGNAL(rejected()), SLOT(reject()));
-    setLayout(mainLayout);
-    setWindowTitle(tr("Keyframe weight dialog"));
+    QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
+    connect(buttons.data(), SIGNAL(accepted()), SLOT(accept()));
+    connect(buttons.data(), SIGNAL(rejected()), SLOT(reject()));
+    mainLayout->addWidget(buttons.take());
+    setLayout(mainLayout.take());
+    setWindowTitle(tr("Keyframe Weight Setting"));
 }
 
 FrameWeightDialog::~FrameWeightDialog()
@@ -131,10 +134,13 @@ void FrameWeightDialog::emitMorphWeightSignal()
 
 QDoubleSpinBox *FrameWeightDialog::createSpinBox(const char *slot)
 {
-    QDoubleSpinBox *weightBox = new QDoubleSpinBox();
-    connect(weightBox, SIGNAL(valueChanged(double)), slot);
+    QScopedPointer<QDoubleSpinBox> weightBox(new QDoubleSpinBox());
+    connect(weightBox.data(), SIGNAL(valueChanged(double)), slot);
+    weightBox->setAlignment(Qt::AlignRight);
     weightBox->setMinimum(0.01);
     weightBox->setSingleStep(0.01);
     weightBox->setValue(1.0);
-    return weightBox;
+    return weightBox.take();
 }
+
+} /* namespace vpvm */

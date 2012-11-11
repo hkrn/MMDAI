@@ -43,6 +43,7 @@ namespace vpvl2
 {
 
 class IBone;
+class IModel;
 class IMorph;
 class IString;
 
@@ -56,29 +57,69 @@ public:
     virtual ~ILabel() {}
 
     /**
-     * ラベルの名前を返します。
+     * ラベルの名前を返します.
      *
      * @return IString
      */
     virtual const IString *name() const = 0;
 
     /**
-     * ラベルの英名を返します。
+     * ラベルの英名を返します.
      *
      * @return IString
      */
     virtual const IString *englishName() const = 0;
 
+    /**
+     * 親のモデルのインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return IModel
+     */
+    virtual IModel *parentModelRef() const = 0;
+
+    /**
+     * 特別枠かどうかを返します.
+     *
+     * @brief isSpecial
+     * @return
+     */
     virtual bool isSpecial() const = 0;
 
+    /**
+     * ラベルに含まれる枠数を返します.
+     *
+     * @brief count
+     * @return
+     */
     virtual int count() const = 0;
 
+    /**
+     * インデックスに対応するボーンのインスタンスを返します.
+     *
+     * インデックスに対応するボーンが見つかった場合は 0 以外の IBone のインスタンスを返します。
+     *　見つからない場合は 0 を返します。ポインタの参照を返すため、delete を行なってはいけません。
+     *
+     * @brief bone
+     * @param index
+     * @return IBone
+     */
     virtual IBone *bone(int index) const = 0;
 
+    /**
+     * インデックスに対応するモーフのインスタンスを返します.
+     *
+     * インデックスに対応するモーフが見つかった場合は 0 以外の IMorph のインスタンスを返します。
+     *　見つからない場合は 0 を返します。ポインタの参照を返すため、delete を行なってはいけません。
+     *
+     * @brief morph
+     * @param index
+     * @return IMorph
+     */
     virtual IMorph *morph(int index) const = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
 

@@ -38,6 +38,7 @@
 #define VPVL2_MVD_BASESECTION_H_
 
 #include "vpvl2/mvd/Motion.h"
+#include "vpvl2/internal/util.h"
 
 namespace vpvl2
 {

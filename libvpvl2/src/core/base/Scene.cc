@@ -38,33 +38,29 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd2/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
 #ifdef VPVL2_OPENGL_RENDERER
 #include "vpvl2/gl2/AssetRenderEngine.h"
-#include "vpvl2/gl2/PMDRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #endif
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/AssetRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
-#include "vpvl2/cg/PMDRenderEngine.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
 #else
 BT_DECLARE_HANDLE(CGcontext);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
 #include "vpvl2/cl/Context.h"
-#include "vpvl2/cl/PMDAccelerator.h"
 #include "vpvl2/cl/PMXAccelerator.h"
 #else
 namespace vpvl2 {
 namespace cl {
 class Context;
-class PMDAccelerator;
 class PMXAccelerator;
 }
 }
@@ -117,13 +113,13 @@ public:
     void setDepthTexture(void *value) { m_depthTexture = value; }
     void setToonEnable(bool value) { m_enableToon = value; }
     void setSoftShadowEnable(bool value) { m_enableSoftShadow = value; }
-    void copyFrom(ILight *value) {
+    void copyFrom(const ILight *value) {
         setColor(value->color());
         setDirection(value->direction());
     }
     void resetDefault() {
-        setColor(Vector3(0.6, 0.6, 0.6));
-        setDirection(Vector3(-0.5, -1.0, -0.5));
+        setColor(Vector3(0.6f, 0.6f, 0.6f));
+        setDirection(Vector3(-0.5f, -1.0f, -0.5f));
     }
 
 private:
@@ -136,15 +132,17 @@ private:
     bool m_hasFloatTexture;
     void *m_depthTexture;
 };
+
 class Camera : public ICamera {
 public:
     Camera()
         : m_motion(0),
           m_transform(Transform::getIdentity()),
+          m_lookAt(kZeroV3),
           m_position(kZeroV3),
           m_angle(kZeroV3),
+          m_distance(kZeroV3),
           m_fov(0),
-          m_distance(0),
           m_znear(0.1f),
           m_zfar(10000)
     {
@@ -155,31 +153,36 @@ public:
         delete m_motion;
         m_motion = 0;
         m_transform.setIdentity();
+        m_lookAt.setZero();
         m_position.setZero();
         m_angle.setZero();
+        m_distance.setZero();
         m_fov = 0;
-        m_distance = 0;
         m_znear = 0;
         m_zfar = 0;
     }
 
     const Transform &modelViewTransform() const { return m_transform; }
+    const Vector3 &lookAt() const { return m_lookAt; }
     const Vector3 &position() const { return m_position; }
     const Vector3 &angle() const { return m_angle; }
     Scalar fov() const { return m_fov; }
-    Scalar distance() const { return m_distance; }
+    Scalar distance() const { return m_distance.z(); }
     Scalar znear() const { return m_znear; }
     Scalar zfar() const { return m_zfar; }
     IMotion *motion() const { return m_motion; }
-    void setPosition(const Vector3 &value) { m_position = value; }
+    void setLookAt(const Vector3 &value) { m_lookAt = value; }
     void setAngle(const Vector3 &value) { m_angle = value; }
     void setFov(Scalar value) { m_fov = value; }
-    void setDistance(Scalar value) { m_distance = value; }
     void setZNear(Scalar value) { m_znear = value; }
     void setZFar(Scalar value) { m_zfar = value; }
     void setMotion(IMotion *value) { m_motion = value; }
-    void copyFrom(ICamera *value) {
-        setPosition(value->position());
+    void setDistance(Scalar value) {
+        m_distance.setZ(value);
+        m_position = m_lookAt + m_distance;
+    }
+    void copyFrom(const ICamera *value) {
+        setLookAt(value->lookAt());
         setAngle(value->angle());
         setFov(value->fov());
         setDistance(value->distance());
@@ -187,7 +190,7 @@ public:
         setZFar(value->zfar());
     }
     void resetDefault() {
-        setPosition(Vector3(0, 10, 0));
+        setLookAt(Vector3(0, 10, 0));
         setFov(30);
         setDistance(50);
         updateTransform();
@@ -200,17 +203,18 @@ public:
                 rotationZ(kUnitZ, vpvl2::radian(m_angle.z()));
         m_transform.setIdentity();
         m_transform.setRotation(rotationZ * rotationX * rotationY);
-        m_transform.setOrigin(m_transform * -m_position - Vector3(0, 0, m_distance));
+        m_transform.setOrigin((m_transform * -m_lookAt) - m_distance);
     }
 
 private:
     IMotion *m_motion;
     Transform m_transform;
     Quaternion m_rotation;
+    Vector3 m_lookAt;
     Vector3 m_position;
     Vector3 m_angle;
+    Vector3 m_distance;
     Scalar m_fov;
-    Scalar m_distance;
     Scalar m_znear;
     Scalar m_zfar;
 };
@@ -239,7 +243,7 @@ struct Scene::PrivateContext {
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
 #endif /* VPVL2_ENABLE_OPENCL */
@@ -249,15 +253,6 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
-    void updateModels() {
-        const Vector3 &cameraPosition = camera.position() + Vector3(0, 0, camera.distance());
-        const Vector3 &lightDirection = light.direction();
-        const int nmodels = models.count();
-        for (int i = 0; i < nmodels; i++) {
-            IModel *model = models[i];
-            model->performUpdate(cameraPosition, lightDirection);
-        }
-    }
     void updateMotionState() {
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
@@ -279,7 +274,7 @@ struct Scene::PrivateContext {
     bool isOpenCLAcceleration() const {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
     cl_uint hostDeviceType() const {
         switch (accelerationType) {
         case kOpenCLAccelerationType1:
@@ -291,35 +286,28 @@ struct Scene::PrivateContext {
         }
     }
 #endif
-    cl::Context *createComputeContext(IRenderDelegate *delegate) {
-#ifdef VPVL2_ENABLE_OPENCL
+    cl::Context *createComputeContext(IRenderContext *delegateRef) {
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (!computeContext) {
-            computeContext = new cl::Context(delegate);
-            computeContext->initializeContext(hostDeviceType());
+            computeContext = new cl::Context(delegateRef);
+            if (!computeContext->initialize(hostDeviceType())) {
+                delete computeContext;
+                computeContext = 0;
+            }
         }
 #else
-        (void) delegate;
+        (void) delegateRef;
 #endif /* VPVL2_ENABLE_OPENCL */
         return computeContext;
     }
-    cl::PMDAccelerator *createPMDAccelerator(IRenderDelegate *delegate) {
-        cl::PMDAccelerator *accelerator = 0;
-#ifdef VPVL2_ENABLE_OPENCL
-        if (isOpenCLAcceleration()) {
-            accelerator = new cl::PMDAccelerator(createComputeContext(delegate));
-            accelerator->createKernelProgram();
-        }
-#else
-        (void) delegate;
-#endif /* VPVL2_ENABLE_OPENCL */
-        return accelerator;
-    }
-    cl::PMXAccelerator *createPMXAccelerator(IRenderDelegate *delegate) {
+    cl::PMXAccelerator *createPMXAccelerator(IRenderContext *delegate, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
-            accelerator = new cl::PMXAccelerator(createComputeContext(delegate));
-            accelerator->createKernelProgram();
+            if (cl::Context *context = createComputeContext(delegate)) {
+                accelerator = new cl::PMXAccelerator(context, modelRef);
+                accelerator->createKernelProgram();
+            }
         }
 #else
         (void) delegate;
@@ -332,7 +320,7 @@ struct Scene::PrivateContext {
         if (source) {
             static const char *kCompilerArguments[] = {
                 "-DVPVM",
-                "-DVPVM_VERSION=" VPVL_VERSION_STRING,
+                "-DVPVL2_VERSION=" VPVL2_VERSION_STRING,
                 0
             };
             effect = cgCreateEffect(effectContext, reinterpret_cast<const char *>(source->toByteArray()), kCompilerArguments);
@@ -349,7 +337,7 @@ struct Scene::PrivateContext {
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
     Hash<HashPtr, IRenderEngine *> model2engineRef;
-    Hash<HashPtr, IModel *> name2modelRef;
+    Hash<HashString, IModel *> name2modelRef;
     Array<IModel *> models;
     Array<IMotion *> motions;
     Array<IRenderEngine *> engines;
@@ -371,7 +359,7 @@ ILight *Scene::createLight()
 
 bool Scene::isAcceleratorSupported()
 {
-#ifdef VPVL2_ENABLE_OPENCL
+#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
     return true;
 #else
     return false;
@@ -396,7 +384,7 @@ Scene::~Scene()
     m_context = 0;
 }
 
-IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *model, int flags) const
+IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model, int flags) const
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
@@ -406,83 +394,75 @@ IRenderEngine *Scene::createRenderEngine(IRenderDelegate *delegate, IModel *mode
         asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::AssetRenderEngine(delegate, this, m_context->effectContext, m);
+            engine = new cg::AssetRenderEngine(delegate, this, m);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
             engine = new gl2::AssetRenderEngine(delegate, this, m);
 #endif /* VPVL2_LINK_ASSIMP */
         break;
     }
-    case IModel::kPMD: {
-        cl::PMDAccelerator *accelerator = m_context->createPMDAccelerator(delegate);
-        pmd::Model *m = static_cast<pmd::Model *>(model);
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (flags & kEffectCapable)
-            engine = new cg::PMDRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
-        else
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::PMDRenderEngine(delegate, this, accelerator, m);
-        break;
-    }
+    case IModel::kPMD:
     case IModel::kPMX: {
-        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate);
-        pmx::Model *m = static_cast<pmx::Model *>(model);
+        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::PMXRenderEngine(delegate, this, m_context->effectContext, accelerator, m);
+            engine = new cg::PMXRenderEngine(delegate, this, accelerator, model);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, m);
+            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, model);
         break;
     }
     default:
         break;
     }
+#ifndef VPVL2_ENABLE_NVIDIA_CG
+    (void) flags;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+#else
+    (void) delegate;
+    (void) model;
+    (void) flags;
 #endif /* VPVL2_OPENGL_RENDERER */
     return engine;
 }
 
 void Scene::addModel(IModel *model, IRenderEngine *engine)
 {
-    const bool isSoftwareSkinning = accelerationType() == kSoftwareFallback;
-    switch (model->type()) {
-    case IModel::kPMD:
-        static_cast<pmd::Model *>(model)->setSkinnningEnable(isSoftwareSkinning);
-        break;
-    case IModel::kPMX:
-        static_cast<pmx::Model *>(model)->setSkinningEnable(isSoftwareSkinning);
-        break;
-    case IModel::kAsset:
-    default:
-        break;
+    if (model && engine) {
+        m_context->models.add(model);
+        m_context->engines.add(engine);
+        m_context->model2engineRef.insert(model, engine);
+        m_context->name2modelRef.insert(model->name()->toHashString(), model);
     }
-    m_context->models.add(model);
-    m_context->engines.add(engine);
-    m_context->model2engineRef.insert(model, engine);
-    m_context->name2modelRef.insert(model->name(), model);
 }
 
 void Scene::addMotion(IMotion *motion)
 {
-    m_context->motions.add(motion);
+    if (motion)
+        m_context->motions.add(motion);
 }
 
-IEffect *Scene::createEffect(const IString *path, IRenderDelegate *delegate)
+IEffect *Scene::createEffect(const IString *path, IRenderContext *delegate)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, path);
+    IString *source = delegate->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
     return m_context->compileEffect(source);
 #else
+    (void) path;
+    (void) delegate;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }
 
-IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate)
+IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderContext *delegate)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = delegate->loadShaderSource(IRenderDelegate::kModelEffectTechniques, model, dir, 0);
+    IString *source = delegate->loadShaderSource(IRenderContext::kModelEffectTechniques, model, dir, 0);
     return m_context->compileEffect(source);
 #else
+    (void) dir;
+    (void) model;
+    (void) delegate;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }
@@ -504,7 +484,8 @@ void Scene::deleteModel(IModel *&model)
 
 void Scene::removeMotion(IMotion *motion)
 {
-    m_context->motions.remove(motion);
+    if (motion)
+        m_context->motions.remove(motion);
 }
 
 void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
@@ -561,9 +542,9 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
 void Scene::updateModel(IModel *model) const
 {
     if (model) {
-        const ICamera *c = camera();
-        const Vector3 &cameraPosition = c->position() + Vector3(0, 0, c->distance());
-        model->performUpdate(cameraPosition, light()->direction());
+        model->performUpdate();
+        if (IRenderEngine *engine = findRenderEngine(model))
+            engine->update();
     }
 }
 
@@ -571,9 +552,6 @@ void Scene::update(int flags)
 {
     if (flags & kUpdateCamera) {
         m_context->updateCamera();
-    }
-    if (flags & kUpdateModels) {
-        m_context->updateModels();
     }
     if (flags & kUpdateRenderEngines) {
         m_context->updateRenderEngines();
@@ -600,7 +578,7 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
     return true;
 }
 
-const IKeyframe::TimeIndex Scene::maxFrameIndex() const
+IKeyframe::TimeIndex Scene::maxFrameIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
@@ -629,7 +607,7 @@ const Array<IRenderEngine *> &Scene::renderEngines() const
 
 IModel *Scene::findModel(const IString *name) const
 {
-    IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name));
+    IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name->toHashString()));
     return model ? *model : 0;
 }
 

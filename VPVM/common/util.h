@@ -34,17 +34,21 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef VPVM_UTIL_H
+#define VPVM_UTIL_H
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 #include "StringHelper.h"
 
 #if !defined(NDEBUG) && !defined(QMA_DEBUG)
-#include <vpvl2/pmd/Bone.h>
-#include <vpvl2/pmd/Model.h>
-#include <vpvl2/pmd/Morph.h>
+#include <vpvl2/pmd2/Bone.h>
+#include <vpvl2/pmd2/Joint.h>
+#include <vpvl2/pmd2/Label.h>
+#include <vpvl2/pmd2/Model.h>
+#include <vpvl2/pmd2/Morph.h>
+#include <vpvl2/pmd2/RigidBody.h>
+#include <vpvl2/pmd2/Vertex.h>
 #include <vpvl2/pmx/Bone.h>
 #include <vpvl2/pmx/Joint.h>
 #include <vpvl2/pmx/Label.h>
@@ -65,17 +69,15 @@
 #define QMA_DEBUG
 #endif
 
-namespace internal
+namespace vpvm
 {
 
 using namespace vpvl2;
 
-const static Vector3 kWorldAabbSize(10000, 10000, 10000);
-
 static inline void dumpBones(IModel *model)
 {
     Array<IBone *> bones;
-    model->getBones(bones);
+    model->getBoneRefs(bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
@@ -83,7 +85,7 @@ static inline void dumpBones(IModel *model)
         const Vector3 &p = transform.getOrigin();
         const Quaternion &q = transform.getRotation();
         qDebug().nospace() << "index=" << i
-                           << " name=" << internal::toQStringFromBone(bone)
+                           << " name=" << toQStringFromBone(bone)
                            << " position=" << QVector3D(p.x(), p.y(), p.z())
                            << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
     }
@@ -91,11 +93,11 @@ static inline void dumpBones(IModel *model)
 
 static inline void dumpBoneKeyFrame(const IBoneKeyframe *frame, int index = 0)
 {
-    const Vector3 &p = frame->position();
-    const Quaternion &q = frame->rotation();
+    const Vector3 &p = frame->localPosition();
+    const Quaternion &q = frame->localRotation();
     qDebug().nospace() << "index=" << index
                        << " timeIndex=" << frame->timeIndex()
-                       << " name=" << internal::toQStringFromBoneKeyframe(frame)
+                       << " name=" << toQStringFromBoneKeyframe(frame)
                        << " position=" << QVector3D(p.x(), p.y(), p.z())
                        << " rotation=" << QQuaternion(q.w(), q.x(), q.y(), q.z());
 }
@@ -166,11 +168,26 @@ static const inline QString openSaveDialog(const QString &name,
     return fileName;
 }
 
-static const inline Vector3 vec2vec(const QVector4D &value) {
+static const inline Vector3 vec2vec(const QVector4D &value)
+{
     Vector3 v(value.x(), value.y(), value.z());
     return v;
 }
 
+template<typename T>
+static inline bool CompareGenericList(const QList<T *> &left, const QList<T *> &right)
+{
+    const int nitems = left.size();
+    if (nitems == 0) {
+        return true;
+    }
+    else if (nitems == right.size()) {
+        /* 中身の全てのポインタのアドレスが両方の配列で同じであるかどうかを確認 */
+        return memcmp(&left[0], &right[0], sizeof(void *) * nitems) == 0;
+    }
+    return false;
 }
+
+} /* namespace vpvm */
 
 #endif // UTIL_H

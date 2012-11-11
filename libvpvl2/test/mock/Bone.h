@@ -1,5 +1,3 @@
-#include <vpvl2/IBone.h>
-
 namespace vpvl2 {
 
 class MockIBone : public IBone {
@@ -8,25 +6,33 @@ class MockIBone : public IBone {
       const IString*());
   MOCK_CONST_METHOD0(index,
       int());
-  MOCK_CONST_METHOD0(parentBone,
+  MOCK_CONST_METHOD0(parentModelRef,
+      IModel*());
+  MOCK_CONST_METHOD0(parentBoneRef,
       IBone*());
-  MOCK_CONST_METHOD0(targetBone,
+  MOCK_CONST_METHOD0(targetBoneRef,
       IBone*());
   MOCK_CONST_METHOD0(worldTransform,
       const Transform&());
+  MOCK_CONST_METHOD0(localTransform,
+      const Transform&());
+  MOCK_CONST_METHOD1(getLocalTransform,
+      void(Transform &world2LocalTransform));
+  MOCK_METHOD1(setLocalTransform,
+      void(const Transform &value));
   MOCK_CONST_METHOD0(origin,
       const Vector3&());
   MOCK_CONST_METHOD0(destinationOrigin,
       const Vector3());
-  MOCK_CONST_METHOD0(position,
+  MOCK_CONST_METHOD0(localPosition,
       const Vector3&());
-  MOCK_CONST_METHOD0(rotation,
+  MOCK_CONST_METHOD0(localRotation,
       const Quaternion&());
-  MOCK_CONST_METHOD1(getLinkedBones,
+  MOCK_CONST_METHOD1(getEffectorBones,
       void(Array<IBone *> &value));
-  MOCK_METHOD1(setPosition,
+  MOCK_METHOD1(setLocalPosition,
       void(const Vector3 &value));
-  MOCK_METHOD1(setRotation,
+  MOCK_METHOD1(setLocalRotation,
       void(const Quaternion &value));
   MOCK_CONST_METHOD0(isMovable,
       bool());
@@ -46,6 +52,16 @@ class MockIBone : public IBone {
       const Vector3&());
   MOCK_CONST_METHOD1(getLocalAxes,
       void(Matrix3x3 &value));
+  MOCK_METHOD1(setInverseKinematicsEnable,
+      void(bool value));
+};
+
+}  // namespace vpvl2
+
+namespace vpvl2 {
+
+class MockNullBone : public NullBone {
+ public:
 };
 
 }  // namespace vpvl2

@@ -42,10 +42,14 @@
 
 #include <QtGui/QtGui>
 
-BoneUIDelegate::BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent) :
+namespace vpvm
+{
+
+BoneUIDelegate::BoneUIDelegate(BoneMotionModel *bmm, QSettings *settings, MainWindow *parent) :
     QObject(parent),
-    m_parent(parent),
-    m_boneMotionModel(bmm)
+    m_parentRef(parent),
+    m_settingsRef(settings),
+    m_boneMotionModelRef(bmm)
 {
 }
 
@@ -55,78 +59,80 @@ BoneUIDelegate::~BoneUIDelegate()
 
 void BoneUIDelegate::resetBoneX()
 {
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kX);
+    if (m_boneMotionModelRef->isBoneSelected()) {
+        m_boneMotionModelRef->resetBone(BoneMotionModel::kX);
     }
     else {
-        internal::warning(m_parent,
-                          tr("The model or the bone is not selected."),
-                          tr("Select a model or a bone to reset X position of the bone "
-                             "(\"Model\" > \"Select model\" or double click a bone)"));
+        warning(m_parentRef,
+                tr("The model or the bone is not selected."),
+                tr("Select a model or a bone to reset X position of the bone "
+                   "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
 void BoneUIDelegate::resetBoneY()
 {
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kY);
+    if (m_boneMotionModelRef->isBoneSelected()) {
+        m_boneMotionModelRef->resetBone(BoneMotionModel::kY);
     }
     else {
-        internal::warning(m_parent,
-                          tr("The model or the bone is not selected."),
-                          tr("Select a model or a bone to reset Y position of the bone "
-                             "(\"Model\" > \"Select model\" or double click a bone)"));
+        warning(m_parentRef,
+                tr("The model or the bone is not selected."),
+                tr("Select a model or a bone to reset Y position of the bone "
+                   "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
 void BoneUIDelegate::resetBoneZ()
 {
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kZ);
+    if (m_boneMotionModelRef->isBoneSelected()) {
+        m_boneMotionModelRef->resetBone(BoneMotionModel::kZ);
     }
     else {
-        internal::warning(m_parent,
-                          tr("The model or the bone is not selected."),
-                          tr("Select a model or a bone to reset Z position of the bone "
-                             "(\"Model\" > \"Select model\" or double click a bone)"));
+        warning(m_parentRef,
+                tr("The model or the bone is not selected."),
+                tr("Select a model or a bone to reset Z position of the bone "
+                   "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
 void BoneUIDelegate::resetBoneRotation()
 {
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetBone(BoneMotionModel::kRotation);
+    if (m_boneMotionModelRef->isBoneSelected()) {
+        m_boneMotionModelRef->resetBone(BoneMotionModel::kRotation);
     }
     else {
-        internal::warning(m_parent,
-                          tr("The model or the bone is not selected."),
-                          tr("Select a model or a bone to reset rotation of the bone "
-                             "(\"Model\" > \"Select model\" or double click a bone)"));
+        warning(m_parentRef,
+                tr("The model or the bone is not selected."),
+                tr("Select a model or a bone to reset rotation of the bone "
+                   "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
 
 void BoneUIDelegate::resetAllBones()
 {
-    if (m_boneMotionModel->isBoneSelected()) {
-        m_boneMotionModel->resetAllBones();
+    if (m_boneMotionModelRef->isBoneSelected()) {
+        m_boneMotionModelRef->resetAllBones();
     }
     else {
-        internal::warning(m_parent,
-                          tr("The model is not selected."),
-                          tr("Select a model to reset bones (\"Model\" > \"Select model\")"));
+        warning(m_parentRef,
+                tr("The model is not selected."),
+                tr("Select a model to reset bones (\"Model\" > \"Select model\")"));
     }
 }
 
 void BoneUIDelegate::openBoneDialog()
 {
-    if (m_boneMotionModel->isBoneSelected()) {
-        BoneDialog *dialog = new BoneDialog(m_boneMotionModel, m_parent);
+    if (m_boneMotionModelRef->isBoneSelected()) {
+        BoneDialog *dialog = new BoneDialog(m_boneMotionModelRef, m_settingsRef, m_parentRef);
         dialog->exec();
     }
     else {
-        internal::warning(m_parent,
-                          tr("The model or the bone is not selected."),
-                          tr("Select a model or a bone to open this dialog "
-                             "(\"Model\" > \"Select model\" or double click a bone)"));
+        warning(m_parentRef,
+                tr("The model or the bone is not selected."),
+                tr("Select a model or a bone to open this dialog "
+                   "(\"Model\" > \"Select model\" or double click a bone)"));
     }
 }
+
+} /* namespace vpvm */

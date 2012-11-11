@@ -41,100 +41,100 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace vpvm
+{
+
 using namespace vpvl2;
 
-AssetWidget::AssetWidget(QWidget *parent) :
-    QWidget(parent),
-    m_currentAsset(0),
-    m_currentModel(0)
+static const Scalar kMaxFar = 10000;
+static const Scalar kMaxAngle = 360;
+
+AssetWidget::AssetWidget(QWidget *parent)
+    : QWidget(parent),
+      m_assetGroup(new QGroupBox()),
+      m_assignGroup(new QGroupBox()),
+      m_positionGroup(new QGroupBox()),
+      m_rotationGroup(new QGroupBox()),
+      m_assetComboBox(new QComboBox()),
+      m_modelComboBox(new QComboBox()),
+      m_modelBonesComboBox(new QComboBox()),
+      m_removeButton(new QPushButton()),
+      m_px(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_py(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_pz(createSpinBox(1, -kMaxFar, kMaxFar)),
+      m_rx(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_ry(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_rz(createSpinBox(0.1, -kMaxAngle, kMaxAngle)),
+      m_scale(createSpinBox(0.1, 0.01, 1000)),
+      m_opacity(createSpinBox(0.01, 0, 1)),
+      m_assetCompleterModel(new QStringListModel()),
+      m_scaleLabel(new QLabel()),
+      m_opacityLabel(new QLabel()),
+      m_currentAssetRef(0),
+      m_currentModelRef(0)
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QHBoxLayout *subLayout = new QHBoxLayout();
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
     /* アクセサリ選択 */
-    m_assetComboBox = new QComboBox();
-    connect(m_assetComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentAsset(int)));
-    subLayout->addWidget(m_assetComboBox, 1);
+    QScopedPointer<QCompleter> completer(new QCompleter());
+    QScopedPointer<QLineEdit> lineEdit(new QLineEdit());
+    completer->setModel(m_assetCompleterModel.data());
+    lineEdit->setCompleter(completer.take());
+    m_assetComboBox->setLineEdit(lineEdit.take());
+    connect(m_assetComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentAsset(int)));
+    subLayout->addWidget(m_assetComboBox.data(), 1);
     /* アクセサリ削除 */
-    m_removeButton = new QPushButton();
-    connect(m_removeButton, SIGNAL(clicked()), this, SLOT(removeAsset()));
-    subLayout->addWidget(m_removeButton);
-    m_assetGroup = new QGroupBox();
-    m_assetGroup->setLayout(subLayout);
-    mainLayout->addWidget(m_assetGroup);
-    subLayout = new QHBoxLayout();
+    connect(m_removeButton.data(), SIGNAL(clicked()), this, SLOT(deleteCurrentAsset()));
+    subLayout->addWidget(m_removeButton.data());
+    m_assetGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_assetGroup.data());
+    subLayout.reset(new QHBoxLayout());
     /* 所属先のモデル選択 */
-    m_modelComboBox = new QComboBox();
     m_modelComboBox->addItem("");
-    connect(m_modelComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentModel(int)));
-    subLayout->addWidget(m_modelComboBox);
+    connect(m_modelComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeCurrentModel(int)));
+    subLayout->addWidget(m_modelComboBox.data());
     /* 所属先のモデルのボーン選択 */
-    m_modelBonesComboBox = new QComboBox();
-    connect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
-    subLayout->addWidget(m_modelBonesComboBox);
-    m_assignGroup = new QGroupBox();
-    m_assignGroup->setLayout(subLayout);
-    mainLayout->addWidget(m_assignGroup);
+    connect(m_modelBonesComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
+    subLayout->addWidget(m_modelBonesComboBox.data());
+    m_assignGroup->setLayout(subLayout.take());
+    mainLayout->addWidget(m_assignGroup.data());
     /* 位置(X,Y,Z) */
-    const Scalar &zfar = 10000;
-    QFormLayout *formLayout = new QFormLayout();
-    m_px = new QDoubleSpinBox();
-    m_px->setRange(-zfar, zfar);
-    connect(m_px, SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
-    formLayout->addRow("X", m_px);
-    m_py = new QDoubleSpinBox();
-    m_py->setRange(-zfar, zfar);
-    connect(m_py, SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
-    formLayout->addRow("Y", m_py);
-    m_pz = new QDoubleSpinBox();
-    m_pz->setRange(-zfar, zfar);
-    connect(m_pz, SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
-    formLayout->addRow("Z", m_pz);
-    m_positionGroup = new QGroupBox();
-    m_positionGroup->setLayout(formLayout);
+    QScopedPointer<QFormLayout> formLayout(new QFormLayout());
+    connect(m_px.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionX(double)));
+    formLayout->addRow("X", m_px.data());
+    connect(m_py.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionY(double)));
+    formLayout->addRow("Y", m_py.data());
+    connect(m_pz.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePositionZ(double)));
+    formLayout->addRow("Z", m_pz.data());
+    m_positionGroup->setLayout(formLayout.take());
     /* 回転(X,Y,Z) */
-    formLayout = new QFormLayout();
-    m_rx = new QDoubleSpinBox();
-    m_rx->setRange(-180.0, 180.0);
-    m_rx->setSingleStep(0.1);
-    connect(m_rx, SIGNAL(valueChanged(double)), this, SLOT(updateRotationX(double)));
-    formLayout->addRow("X", m_rx);
-    m_ry = new QDoubleSpinBox();
-    m_ry->setSingleStep(0.1);
-    m_ry->setRange(-180.0, 180.0);
-    connect(m_ry, SIGNAL(valueChanged(double)), this, SLOT(updateRotationY(double)));
-    formLayout->addRow("Y", m_ry);
-    m_rz = new QDoubleSpinBox();
-    m_rz->setSingleStep(0.1);
-    m_rz->setRange(-180.0, 180.0);
-    connect(m_rz, SIGNAL(valueChanged(double)), this, SLOT(updateRotationZ(double)));
-    formLayout->addRow("Z", m_rz);
-    m_rotationGroup = new QGroupBox();
-    m_rotationGroup->setLayout(formLayout);
-    subLayout = new QHBoxLayout();
-    subLayout->addWidget(m_positionGroup);
-    subLayout->addWidget(m_rotationGroup);
-    mainLayout->addLayout(subLayout);
-    subLayout = new QHBoxLayout();
+    formLayout.reset(new QFormLayout());
+    connect(m_rx.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    formLayout->addRow("X", m_rx.data());
+    connect(m_ry.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    formLayout->addRow("Y", m_ry.data());
+    connect(m_rz.data(), SIGNAL(valueChanged(double)), this, SLOT(updateRotation()));
+    formLayout->addRow("Z", m_rz.data());
+    m_rotationGroup->setLayout(formLayout.take());
+    subLayout.reset(new QHBoxLayout());
+    subLayout->addWidget(m_positionGroup.data());
+    subLayout->addWidget(m_rotationGroup.data());
+    mainLayout->addLayout(subLayout.take());
+    subLayout.reset(new QHBoxLayout());
     /* 拡大率 */
-    m_scaleLabel = new QLabel();
-    subLayout->addWidget(m_scaleLabel);
-    m_scale = new QDoubleSpinBox();
-    m_scale->setSingleStep(0.1);
-    m_scale->setRange(0.01, 10000.0);
-    connect(m_scale, SIGNAL(valueChanged(double)), this, SLOT(updateScaleFactor(double)));
-    subLayout->addWidget(m_scale);
+    subLayout->addWidget(m_scaleLabel.data());
+    connect(m_scale.data(), SIGNAL(valueChanged(double)), this, SLOT(updateScaleFactor(double)));
+    subLayout->addWidget(m_scale.data());
     /* 不透明度 */
-    m_opacityLabel = new QLabel();
-    subLayout->addWidget(m_opacityLabel);
-    m_opacity = new QDoubleSpinBox();
-    m_opacity->setSingleStep(0.01);
-    m_opacity->setRange(0.0, 1.0);
-    connect(m_opacity, SIGNAL(valueChanged(double)), this, SLOT(updateOpacity(double)));
-    subLayout->addWidget(m_opacity);
-    mainLayout->addLayout(subLayout);
+    subLayout->addWidget(m_opacityLabel.data());
+    connect(m_opacity.data(), SIGNAL(valueChanged(double)), this, SLOT(updateOpacity(double)));
+    subLayout->addWidget(m_opacity.data());
+    mainLayout->addLayout(subLayout.take());
     mainLayout->addStretch();
     retranslate();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
     setEnable(false);
 }
 
@@ -144,22 +144,24 @@ AssetWidget::~AssetWidget()
 
 void AssetWidget::retranslate()
 {
-    m_assetGroup->setTitle(tr("Asset"));
-    m_assignGroup->setTitle(tr("Assign"));
-    m_positionGroup->setTitle(tr("Position"));
-    m_rotationGroup->setTitle(tr("Rotation"));
-    m_removeButton->setText(tr("Remove"));
-    m_scaleLabel->setText(tr("Scale"));
-    m_opacityLabel->setText(tr("Opacity"));
-    m_modelComboBox->setItemText(0, tr("Ground"));
+    m_assetGroup->setTitle(vpvm::AssetWidget::tr("Asset"));
+    m_assignGroup->setTitle(vpvm::AssetWidget::tr("Assign"));
+    m_positionGroup->setTitle(vpvm::AssetWidget::tr("Position"));
+    m_rotationGroup->setTitle(vpvm::AssetWidget::tr("Rotation"));
+    m_removeButton->setText(vpvm::AssetWidget::tr("Remove"));
+    m_scaleLabel->setText(vpvm::AssetWidget::tr("Scale"));
+    m_opacityLabel->setText(vpvm::AssetWidget::tr("Opacity"));
+    m_modelComboBox->setItemText(0, vpvm::AssetWidget::tr("Ground"));
 }
 
 void AssetWidget::addAsset(IModel *asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
+    const QString &name = toQStringFromModel(asset);
     m_assets.append(asset);
-    m_assetComboBox->addItem(internal::toQStringFromModel(asset));
+    m_assetComboBox->addItem(name);
     m_assetComboBox->setCurrentIndex(m_assetComboBox->count() - 1);
+    m_assetCompleterModel->setStringList(m_assetCompleterModel->stringList() << name);
     changeCurrentAsset(asset);
     setEnable(true);
 }
@@ -168,13 +170,14 @@ void AssetWidget::removeAsset(IModel *asset)
 {
     int index = m_assets.indexOf(asset);
     if (index >= 0) {
-        /* 該当するアセットが見つかったら表示項目から削除し、実際にアセットを削除。アセットが空なら表示を無効にしておく */
-        IModel *asset = m_assets[index];
+        /* 該当するアセットが見つかったら表示項目から削除する */
         m_assets.removeAt(index);
         m_assetComboBox->removeItem(index);
+        QStringList assetNames = m_assetCompleterModel->stringList();
+        assetNames.removeAt(index);
+        m_assetCompleterModel->setStringList(assetNames);
         if (m_assets.count() == 0)
             setEnable(false);
-        emit assetDidRemove(asset);
     }
 }
 
@@ -185,7 +188,9 @@ void AssetWidget::addModel(IModel *model)
      * モデルは SceneLoader が管理するのでポインタのみ。解放してはいけない
      */
     m_models.append(model);
-    m_modelComboBox->addItem(internal::toQStringFromModel(model));
+    m_modelComboBox->addItem(toQStringFromModel(model));
+    if (model->type() == IModel::kAsset)
+        addAsset(model);
 }
 
 void AssetWidget::removeModel(IModel *model)
@@ -198,11 +203,15 @@ void AssetWidget::removeModel(IModel *model)
         m_modelComboBox->setCurrentIndex(0);
         m_modelBonesComboBox->clear();
     }
+    if (model->type() == IModel::kAsset)
+        removeAsset(model);
 }
 
-void AssetWidget::removeAsset()
+void AssetWidget::deleteCurrentAsset()
 {
-    removeAsset(m_currentAsset);
+    /* シグナルを通じて SceneLoader#deleteModel を呼び出して削除する */
+    removeAsset(m_currentAssetRef);
+    emit assetDidRemove(m_currentAssetRef);
 }
 
 void AssetWidget::changeCurrentAsset(int index)
@@ -214,11 +223,11 @@ void AssetWidget::changeCurrentAsset(int index)
 void AssetWidget::changeCurrentAsset(IModel *asset)
 {
     /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
-    const Vector3 &position = asset->position();
+    const Vector3 &position = asset ? asset->worldPosition() : kZeroV3;
     /* setAssetProperty からも呼ばれるので、シグナル発行前に選択したアセットと同じでないことを確認する */
     bool isAssetChanged = false;
-    if (m_currentAsset != asset) {
-        m_currentAsset = asset;
+    if (m_currentAssetRef != asset) {
+        m_currentAssetRef = asset;
         int index = m_assets.indexOf(asset);
         if (index >= 0)
             m_assetComboBox->setCurrentIndex(index);
@@ -227,12 +236,12 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
     m_px->setValue(position.x());
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
-    const Quaternion &rotation = asset->rotation();
+    const Quaternion &rotation = asset ? asset->worldRotation() : Quaternion::getIdentity();
     m_rx->setValue(degree(rotation.x()));
     m_ry->setValue(degree(rotation.y()));
     m_rz->setValue(degree(rotation.z()));
-    m_scale->setValue(asset->scaleFactor());
-    m_opacity->setValue(asset->opacity());
+    m_scale->setValue(asset ? asset->scaleFactor() : 1);
+    m_opacity->setValue(asset ? asset->opacity() : 1);
     if (isAssetChanged) {
         /* コンボボックスの更新によるシグナル発行でボーン情報が更新されてしまうため、事前にボーンを保存して再設定する */
         IModel *model = asset->parentModel();
@@ -241,7 +250,7 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
         m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
         IBone *bone = asset->parentBone();
         if (bone) {
-            const QString &name = internal::toQStringFromBone(bone);
+            const QString &name = toQStringFromBone(bone);
             index = m_modelBonesComboBox->findText(name);
             if (index >= 0)
                 m_modelBonesComboBox->setCurrentIndex(index);
@@ -255,106 +264,102 @@ void AssetWidget::changeCurrentModel(int index)
     if (index > 0) {
         /* モデルのボーンリストを一旦空にして対象のモデルのボーンリストに更新しておく */
         IModel *model = m_models[index - 1];
-        m_currentModel = model;
-        m_currentAsset->setParentModel(model);
+        m_currentModelRef = model;
+        m_currentAssetRef->setParentModel(model);
         updateModelBoneComboBox(model);
     }
-    else if (m_currentAsset) {
+    else if (m_currentAssetRef) {
         /* 「地面」用。こちらは全くボーンを持たないのでボーンリストを削除した上でアセットの親ボーンを無効にしておく */
         m_modelBonesComboBox->clear();
-        m_currentAsset->setParentModel(0);
-        m_currentAsset->setParentBone(0);
+        m_currentAssetRef->setParentModel(0);
+        m_currentAssetRef->setParentBone(0);
     }
 }
 
 void AssetWidget::changeParentBone(int index)
 {
-    if (index >= 0 && m_currentModel) {
+    if (index >= 0 && m_currentModelRef) {
         Array<IBone *> bones;
-        m_currentModel->getBones(bones);
+        m_currentModelRef->getBoneRefs(bones);
         IBone *bone = bones.at(index);
-        m_currentAsset->setParentBone(bone);
+        m_currentAssetRef->setParentBone(bone);
     }
     else {
-        m_currentAsset->setParentBone(0);
+        m_currentAssetRef->setParentBone(0);
     }
 }
 
 void AssetWidget::updatePositionX(double value)
 {
-    if (m_currentAsset) {
-        Vector3 position = m_currentAsset->position();
+    if (m_currentAssetRef) {
+        Vector3 position = m_currentAssetRef->worldPosition();
         position.setX(value);
-        m_currentAsset->setPosition(position);
+        m_currentAssetRef->setWorldPosition(position);
     }
 }
 
 void AssetWidget::updatePositionY(double value)
 {
-    if (m_currentAsset) {
-        Vector3 position = m_currentAsset->position();
+    if (m_currentAssetRef) {
+        Vector3 position = m_currentAssetRef->worldPosition();
         position.setY(value);
-        m_currentAsset->setPosition(position);
+        m_currentAssetRef->setWorldPosition(position);
     }
 }
 
 void AssetWidget::updatePositionZ(double value)
 {
-    if (m_currentAsset) {
-        Vector3 position = m_currentAsset->position();
+    if (m_currentAssetRef) {
+        Vector3 position = m_currentAssetRef->worldPosition();
         position.setZ(value);
-        m_currentAsset->setPosition(position);
+        m_currentAssetRef->setWorldPosition(position);
     }
 }
 
-void AssetWidget::updateRotationX(double value)
+void AssetWidget::updateRotation()
 {
-    if (m_currentAsset) {
-        Quaternion rotation = m_currentAsset->rotation();
-        rotation.setRotation(Vector3(1, 0, 0), radian(value));
-        m_currentAsset->setRotation(rotation);
-    }
-}
-
-void AssetWidget::updateRotationY(double value)
-{
-    if (m_currentAsset) {
-        Quaternion rotation = m_currentAsset->rotation();
-        rotation.setRotation(Vector3(0, 1, 0), radian(value));
-        m_currentAsset->setRotation(rotation);
-    }
-}
-
-void AssetWidget::updateRotationZ(double value)
-{
-    if (m_currentAsset) {
-        Quaternion rotation = m_currentAsset->rotation();
-        rotation.setRotation(Vector3(0, 0, 1), radian(value));
-        m_currentAsset->setRotation(rotation);
+    if (m_currentAssetRef) {
+        const Quaternion x(Vector3(1, 0, 0), radian(m_rx->value()));
+        const Quaternion y(Vector3(0, 1, 0), radian(m_ry->value()));
+        const Quaternion z(Vector3(0, 0, 1), radian(m_rz->value()));
+        m_currentAssetRef->setWorldRotation(x * y * z);
     }
 }
 
 void AssetWidget::updateScaleFactor(double value)
 {
-    if (m_currentAsset)
-        m_currentAsset->setScaleFactor(static_cast<float>(value));
+    if (m_currentAssetRef)
+        m_currentAssetRef->setScaleFactor(static_cast<float>(value));
 }
 
 void AssetWidget::updateOpacity(double value)
 {
-    if (m_currentAsset)
-        m_currentAsset->setOpacity(static_cast<float>(value));
+    if (m_currentAssetRef)
+        m_currentAssetRef->setOpacity(static_cast<float>(value));
 }
 
 void AssetWidget::setAssetProperties(IModel *asset, SceneLoader *loader)
 {
-    asset->setPosition(loader->assetPosition(asset));
-    asset->setRotation(loader->assetRotation(asset));
-    asset->setScaleFactor(loader->assetScaleFactor(asset));
-    asset->setOpacity(loader->assetOpacity(asset));
-    asset->setParentModel(loader->assetParentModel(asset));
-    asset->setParentBone(loader->assetParentBone(asset));
-    changeCurrentAsset(asset);
+    if (asset && asset->type() == IModel::kAsset) {
+        if (loader) {
+            asset->setWorldPosition(loader->assetPosition(asset));
+            asset->setWorldRotation(loader->assetRotation(asset));
+            asset->setScaleFactor(loader->assetScaleFactor(asset));
+            asset->setOpacity(loader->assetOpacity(asset));
+            asset->setParentModel(loader->assetParentModel(asset));
+            asset->setParentBone(loader->assetParentBone(asset));
+        }
+        changeCurrentAsset(asset);
+    }
+}
+
+QDoubleSpinBox *AssetWidget::createSpinBox(double step, double min, double max)
+{
+    QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
+    spinBox->setRange(min, max);
+    spinBox->setSingleStep(step);
+    return spinBox.take();
 }
 
 void AssetWidget::setEnable(bool value)
@@ -375,18 +380,18 @@ void AssetWidget::setEnable(bool value)
 void AssetWidget::updateModelBoneComboBox(IModel *model)
 {
     /* changeParentBone が呼ばれてしまうので一時的に signal を切る */
-    disconnect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
+    disconnect(m_modelBonesComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
     m_modelBonesComboBox->clear();
     if (model) {
         Array<IBone *> bones;
-        model->getBones(bones);
+        model->getBoneRefs(bones);
         const int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
-            m_modelBonesComboBox->addItem(internal::toQStringFromBone(bone), i);
+            m_modelBonesComboBox->addItem(toQStringFromBone(bone), i);
         }
     }
-    connect(m_modelBonesComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
+    connect(m_modelBonesComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
 }
 
 int AssetWidget::modelIndexOf(IModel *model)
@@ -397,3 +402,5 @@ int AssetWidget::modelIndexOf(IModel *model)
         index += 1;
     return index;
 }
+
+} /* namespace vpvm */

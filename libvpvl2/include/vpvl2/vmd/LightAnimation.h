@@ -66,7 +66,7 @@ public:
     ~LightAnimation();
 
     void read(const uint8_t *data, int size);
-    void seek(const IKeyframe::TimeIndex &frameAt);
+    void seek(const IKeyframe::TimeIndex &timeIndexAt);
     void update();
     LightKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     LightKeyframe *frameAt(int i) const;

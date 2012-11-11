@@ -64,15 +64,15 @@ BaseAnimation::~BaseAnimation()
     m_previousTimeIndex = 0.0f;
 }
 
-void BaseAnimation::advance(const IKeyframe::TimeIndex &deltaFrame)
+void BaseAnimation::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
 {
     seek(m_currentTimeIndex);
-    m_currentTimeIndex += deltaFrame;
+    m_currentTimeIndex += deltaTimeIndex;
 }
 
-void BaseAnimation::rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaFrame)
+void BaseAnimation::rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaTimeIndex)
 {
-    m_currentTimeIndex = m_previousTimeIndex + deltaFrame - m_maxTimeIndex + target;
+    m_currentTimeIndex = m_previousTimeIndex + deltaTimeIndex - m_maxTimeIndex + target;
     m_previousTimeIndex = target;
 }
 
@@ -82,16 +82,16 @@ void BaseAnimation::reset()
     m_previousTimeIndex = 0.0f;
 }
 
-void BaseAnimation::addKeyframe(IKeyframe *frame)
+void BaseAnimation::addKeyframe(IKeyframe *keyframe)
 {
-    m_keyframes.add(frame);
+    m_keyframes.add(keyframe);
 }
 
-void BaseAnimation::deleteKeyframe(IKeyframe *&frame)
+void BaseAnimation::deleteKeyframe(IKeyframe *&keyframe)
 {
-    m_keyframes.remove(frame);
-    delete frame;
-    frame = 0;
+    m_keyframes.remove(keyframe);
+    delete keyframe;
+    keyframe = 0;
 }
 
 void BaseAnimation::getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes)

@@ -49,7 +49,7 @@ class IEncoding;
 class ILight;
 class IModel;
 class IMotion;
-class IRenderDelegate;
+class IRenderContext;
 class IRenderEngine;
 
 class VPVL2_API Scene
@@ -84,11 +84,11 @@ public:
     Scene();
     virtual ~Scene();
 
-    IRenderEngine *createRenderEngine(vpvl2::IRenderDelegate *delegate, IModel *model, int flags) const;
+    IRenderEngine *createRenderEngine(vpvl2::IRenderContext *delegate, IModel *model, int flags) const;
     void addModel(IModel *model, IRenderEngine *engine);
     void addMotion(IMotion *motion);
-    IEffect *createEffect(const IString *path, IRenderDelegate *delegate);
-    IEffect *createEffect(const IString *dir, const IModel *model, IRenderDelegate *delegate);
+    IEffect *createEffect(const IString *path, IRenderContext *delegate);
+    IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *delegate);
     void deleteModel(vpvl2::IModel *&model);
     void removeMotion(IMotion *motion);
     void advance(const IKeyframe::TimeIndex &delta, int flags);
@@ -97,7 +97,7 @@ public:
     void update(int flags);
     void setPreferredFPS(const Scalar &value);
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
-	const IKeyframe::TimeIndex maxFrameIndex() const;
+    IKeyframe::TimeIndex maxFrameIndex() const;
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;
     const Array<IRenderEngine *> &renderEngines() const;

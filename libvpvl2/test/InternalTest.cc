@@ -1,5 +1,12 @@
 #include "Common.h"
+#include "vpvl2/extensions/icu/String.h"
+#include "vpvl2/internal/util.h"
 #include <limits>
+
+using namespace ::testing;
+using namespace vpvl2;
+using namespace vpvl2::extensions::icu;
+using namespace vpvl2::internal;
 
 TEST(InternalTest, Lerp)
 {
@@ -222,10 +229,10 @@ TEST(InternalTest, SetAndGetRotation)
 TEST(InternalTest, WriteNullString)
 {
     QByteArray bytes;
-    size_t size = vpvl2::internal::estimateSize(0);
+    size_t size = vpvl2::internal::estimateSize(0, IString::kUTF8);
     bytes.resize(size);
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
-    vpvl2::internal::writeString(0, data);
+    vpvl2::internal::writeString(0, IString::kUTF8, data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
     ASSERT_EQ(0, vpvl2::internal::readSignedIndex(ptr, sizeof(int)));
 }
@@ -233,21 +240,21 @@ TEST(InternalTest, WriteNullString)
 TEST(InternalTest, WriteNotNullString)
 {
     QByteArray bytes;
-    CString str("Hello World");
-    bytes.resize(vpvl2::internal::estimateSize(&str));
+    String str("Hello World");
+    bytes.resize(vpvl2::internal::estimateSize(&str, IString::kUTF8));
     uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
-    vpvl2::internal::writeString(&str, data);
+    vpvl2::internal::writeString(&str, IString::kUTF8, data);
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    size_t length = str.length();
+    size_t length = str.length(IString::kUTF8);
     ASSERT_EQ(length, size_t(vpvl2::internal::readSignedIndex(ptr, sizeof(int))));
     ASSERT_EQ(0, qstrncmp(reinterpret_cast<const char *>(str.toByteArray()), reinterpret_cast<const char *>(ptr), length));
 }
 
 TEST(InternalTest, EstimateSize)
 {
-    CString str("Hello World");
-    ASSERT_EQ(size_t(4), vpvl2::internal::estimateSize(0));
-    ASSERT_EQ(size_t(4) + str.length(), vpvl2::internal::estimateSize(&str));
+    String str("Hello World");
+    ASSERT_EQ(size_t(4), vpvl2::internal::estimateSize(0, IString::kUTF8));
+    ASSERT_EQ(size_t(4) + str.length(IString::kUTF8), vpvl2::internal::estimateSize(&str, IString::kUTF8));
 }
 
 TEST(InternalTest, SetString)
@@ -255,7 +262,7 @@ TEST(InternalTest, SetString)
     IString *value = 0;
     vpvl2::internal::setString(0, value);
     ASSERT_EQ(static_cast<IString*>(0), value);
-    CString str("Hello World");
+    String str("Hello World");
     vpvl2::internal::setString(&str, value);
     ASSERT_TRUE(value != &str);
     ASSERT_TRUE(value->equals(&str));
@@ -267,7 +274,7 @@ TEST(InternalTest, SetStringDirect)
     IString *value = 0;
     vpvl2::internal::setStringDirect(0, value);
     ASSERT_EQ(static_cast<IString*>(0), value);
-    CString str("Hello World");
+    String str("Hello World");
     vpvl2::internal::setStringDirect(&str, value);
     ASSERT_TRUE(value == &str);
     ASSERT_TRUE(value->equals(&str));

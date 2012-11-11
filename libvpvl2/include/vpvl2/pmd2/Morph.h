@@ -34,91 +34,59 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_ICU_STRING_H_
-#define VPVL2_ICU_STRING_H_
+#ifndef VPVL2_PMD2_MORPH_H_
+#define VPVL2_PMD2_MORPH_H_
 
-#include <string>
-#include <vector>
-
-#include <vpvl2/IString.h>
-
-/* ICU */
-#include <unicode/unistr.h>
+#include "vpvl2/Common.h"
+#include "vpvl2/IMorph.h"
+#include "vpvl2/pmd2/Model.h"
 
 namespace vpvl2
 {
-namespace icu
+
+class IEncoding;
+class IString;
+
+namespace pmd2
 {
 
-static const char *kDefaultEncoding = "utf8";
+class Vertex;
 
-class String : public IString {
+class VPVL2_API Morph : public IMorph
+{
 public:
-    static const std::string toStdString(const UnicodeString &value) {
-        size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-        std::vector<char> bytes(length + 1);
-        value.extract(0, size, reinterpret_cast<char *>(&bytes[0]), kDefaultEncoding);
-        return std::string(bytes.begin(), bytes.end() - 1);
-    }
-    static bool toBoolean(const UnicodeString &value) {
-        return value == "true" || value == "1" || value == "y" || value == "yes";
-    }
-    static int toInt(const UnicodeString &value, int def = 0) {
-        int v = int(strtol(toStdString(value).c_str(), 0, 10));
-        return v != 0 ? v : def;
-    }
-    static double toDouble(const UnicodeString &value, double def = 0.0) {
-        double v = strtod(toStdString(value).c_str(), 0);
-        return v != 0.0 ? float(v) : def;
-    }
+    static const int kNameSize = 20;
 
-    String(const UnicodeString &value)
-        : m_value(value),
-          m_bytes(0)
-    {
-        size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-        m_bytes = new char[length + 1];
-        value.extract(0, size, reinterpret_cast<char *>(m_bytes), kDefaultEncoding);
-        m_bytes[length] = 0;
-    }
-    ~String() {
-        delete[] m_bytes;
-    }
+    Morph(IEncoding *encodingRef);
+    ~Morph();
 
-    bool startsWith(const IString *value) const {
-        return m_value.startsWith(static_cast<const String *>(value)->value());
-    }
-    bool contains(const IString *value) const {
-        return m_value.indexOf(static_cast<const String *>(value)->value()) != -1;
-    }
-    bool endsWith(const IString *value) const {
-        return m_value.endsWith(static_cast<const String *>(value)->value());
-    }
-    IString *clone() const {
-        return new String(m_value);
-    }
-    const HashString toHashString() const {
-        return HashString(m_bytes);
-    }
-    bool equals(const IString *value) const {
-        return m_value == static_cast<const String *>(value)->value();
-    }
-    const UnicodeString &value() const {
-        return m_value;
-    }
-    const uint8_t *toByteArray() const {
-        return reinterpret_cast<const uint8_t *>(m_bytes);
-    }
-    size_t length() const {
-        return m_value.length();
-    }
+    const IString *name() const { return m_name; }
+    int index() const { return m_index; }
+    Category category() const;
+    Type type() const;
+    bool hasParent() const;
+    const WeightPrecision &weight() const;
+    void setWeight(const WeightPrecision &value);
+    void setIndex(int value);
 
-private:
-    const UnicodeString m_value;
-    char *m_bytes;
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
+    static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
+
+    void read(const uint8_t *data, size_t &size);
+    size_t estimateSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+
+    IEncoding *m_encodingRef;
+    IString *m_name;
+    Category m_category;
+    WeightPrecision m_weight;
+    Array<Vector4> m_vertices;
+    Array<Vertex *> m_vertexRefs;
+    int m_index;
 };
 
-} /* namespace icu */
+} /* namespace pmd2 */
 } /* namespace vpvl2 */
 
 #endif

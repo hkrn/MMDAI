@@ -39,7 +39,9 @@
 #ifndef VPVL2_PMX_RIGIDBODY_H_
 #define VPVL2_PMX_RIGIDBODY_H_
 
+#include "vpvl2/internal/BaseRigidBody.h"
 #include "vpvl2/pmx/Model.h"
+#include "vpvl2/pmx/Morph.h"
 
 class btCollisionShape;
 class btRigidBody;
@@ -49,8 +51,6 @@ namespace vpvl2
 {
 namespace pmx
 {
-
-class Bone;
 
 /**
  * @file
@@ -62,105 +62,24 @@ class Bone;
  * RigidBody class represents a rigid body of a Polygon Model Data object.
  */
 
-class VPVL2_API RigidBody
+class VPVL2_API RigidBody : public internal::BaseRigidBody
 {
 public:
-    enum ShapeType {
-        kUnknownShape = -1,
-        kSphereShape,
-        kBoxShape,
-        kCapsureShape,
-        kMaxShapeType
-    };
-    enum ObjectType {
-        kStaticObject,
-        kDynamicObject,
-        kAlignedObject,
-        kMaxObjectType
-    };
-
     RigidBody();
     ~RigidBody();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies,
-                                const Array<Bone *> &bones);
+    static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones);
+    static size_t estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
-
-    void performTransformBone();
-    void setKinematic(bool value);
-    const Transform createStartTransform() const;
-    btCollisionShape *createShape() const;
-    btRigidBody *createRigidBody(btCollisionShape *shape);
-
-    btRigidBody *body() const { return m_body; }
-    Bone *bone() const { return m_bone; }
-    int boneIndex() const { return m_boneIndex; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    const Vector3 &size() const { return m_size; }
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &rotation() const { return m_rotation; }
-    float mass() const { return m_mass; }
-    float linearDamping() const { return m_linearDamping; }
-    float angularDamping() const { return m_angularDamping; }
-    float restitution() const { return m_restitution; }
-    float friction() const { return m_friction; }
-    uint16_t groupID() const { return m_groupID; }
-    uint16_t collisionGroupMask() const { return m_collisionGroupMask; }
-    uint8_t collisionGroupID() const { return m_collisionGroupID; }
-    int index() const { return m_index; }
-
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
-    void setBone(Bone *value);
-    void setAngularDamping(float value);
-    void setCollisionGroupID(uint16_t value);
-    void setCollisionMask(uint16_t value);
-    void setFriction(float value);
-    void setLinearDamping(float value);
-    void setMass(float value);
-    void setPosition(const Vector3 &value);
-    void setRestitution(float value);
-    void setRotation(const Vector3 &value);
-    void setShapeType(ShapeType value);
-    void setSize(const Vector3 &value);
-    void setType(ObjectType value);
-    void setIndex(int value);
+    void mergeMorph(const Morph::Impulse *morph, const IMorph::WeightPrecision &weight);
 
 private:
-    btRigidBody *m_body;
-    btCollisionShape *m_shape;
-    btMotionState *m_motionState;
-    btMotionState *m_kinematicMotionState;
-    Transform m_worldTransform;
-    Transform m_world2LocalTransform;
-    Bone *m_bone;
-    IString *m_name;
-    IString *m_englishName;
-    int m_boneIndex;
-    Vector3 m_size;
-    Vector3 m_position;
-    Vector3 m_rotation;
-    float m_mass;
-    float m_linearDamping;
-    float m_angularDamping;
-    float m_restitution;
-    float m_friction;
-    int m_index;
-    uint16_t m_groupID;
-    uint16_t m_collisionGroupMask;
-    uint8_t m_collisionGroupID;
-    ShapeType m_shapeType;
-    ObjectType m_type;
-
     VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
 };
-
-typedef Array<RigidBody*> RigidBodyList;
 
 } /* namespace pmx */
 } /* namespace vpvl2 */

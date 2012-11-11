@@ -114,24 +114,11 @@ void BoneKeyframe::setDefaultInterpolationParameter()
 void BoneKeyframe::read(const uint8_t *data)
 {
     BoneKeyframeChunk chunk;
-    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
-#ifdef VPVL2_BUILD_IOS
-    float pos[3], rot[4];
-    memcpy(pos, &chunk.position, sizeof(pos));
-    memcpy(rot, &chunk.rotation, sizeof(rot));
-#else
-    float *pos = chunk.position;
-    float *rot = chunk.rotation;
-#endif
+    internal::getData(data, chunk);
     internal::setStringDirect(m_encodingRef->toString(chunk.name, IString::kShiftJIS, sizeof(chunk.name)), m_namePtr);
-    setTimeIndex(static_cast<float>(chunk.timeIndex));
-#ifdef VPVL2_COORDINATE_OPENGL
-    setPosition(Vector3(pos[0], pos[1], -pos[2]));
-    setRotation(Quaternion(-rot[0], -rot[1], rot[2], rot[3]));
-#else
-    setPosition(Vector3(pos[0], pos[1], pos[2]));
-    setRotation(Quaternion(rot[0], rot[1], rot[2], rot[3]));
-#endif
+    setTimeIndex(static_cast<const TimeIndex>(chunk.timeIndex));
+    internal::setPosition(chunk.position, m_position);
+    internal::setRotation2(chunk.rotation, m_rotation);
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
                         sizeof(chunk.interpolationTable));
@@ -176,18 +163,18 @@ size_t BoneKeyframe::estimateSize() const
 
 IBoneKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_encodingRef);
-    frame->setName(m_namePtr);
-    internal::copyBytes(reinterpret_cast<uint8_t *>(frame->m_rawInterpolationTable),
+    BoneKeyframe *keyframe = m_ptr = new BoneKeyframe(m_encodingRef);
+    keyframe->setName(m_namePtr);
+    internal::copyBytes(reinterpret_cast<uint8_t *>(keyframe->m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
-    frame->setTimeIndex(m_timeIndex);
-    frame->setPosition(m_position);
-    frame->setRotation(m_rotation);
-    frame->m_parameter = m_parameter;
-    frame->setInterpolationTable(m_rawInterpolationTable);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLocalPosition(m_position);
+    keyframe->setLocalRotation(m_rotation);
+    keyframe->m_parameter = m_parameter;
+    keyframe->setInterpolationTable(m_rawInterpolationTable);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
@@ -268,12 +255,12 @@ void BoneKeyframe::setName(const IString *value)
     internal::setString(value, m_namePtr);
 }
 
-void BoneKeyframe::setPosition(const Vector3 &value)
+void BoneKeyframe::setLocalPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void BoneKeyframe::setRotation(const Quaternion &value)
+void BoneKeyframe::setLocalRotation(const Quaternion &value)
 {
     m_rotation = value;
 }

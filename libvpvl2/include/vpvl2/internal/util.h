@@ -45,6 +45,10 @@
 #include "vpvl2/IString.h"
 #include <string.h>
 
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
@@ -75,7 +79,7 @@ static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &
                                               const IKeyframe::SmoothPrecision &y,
                                               const IKeyframe::SmoothPrecision &t)
 {
-    return x * (1 - t) + y * t;
+    return x + (y - x) * t;
 }
 
 static inline void readBytes(size_t size, uint8_t *&ptr, size_t &rest)
@@ -333,17 +337,17 @@ static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
     }
 }
 
-static inline void writeString(const IString *string, uint8_t *&dst)
+static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
 {
-    size_t s = string ? string->length() : 0;
+    size_t s = string ? string->length(codec) : 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&s), sizeof(int), dst);
     if (s > 0)
         internal::writeBytes(string->toByteArray(), s, dst);
 }
 
-static inline size_t estimateSize(const IString *string)
+static inline size_t estimateSize(const IString *string, IString::Codec codec)
 {
-    return sizeof(int) + (string ? string->length() : 0);
+    return sizeof(int) + (string ? string->length(codec) : 0);
 }
 
 static inline void setString(const IString *newValue, IString *&value)
@@ -384,6 +388,12 @@ static inline void getData(const uint8_t *ptr, T &output)
 #endif
 }
 
+template<typename T>
+static inline bool checkBound(const T &value, const T &min, const T &max)
+{
+    return value >= min && value < max;
+}
+
 static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
                                            const IKeyframe::SmoothPrecision &x2,
                                            const IKeyframe::SmoothPrecision &y1,
@@ -419,12 +429,39 @@ static inline void zerofill(void *ptr, size_t size)
 #endif
 }
 
+__attribute__((format(printf, 3, 4)))
 static inline void snprintf(char *buf, size_t size, const char *format, ...)
 {
     va_list ap;
-	va_start(ap, format);
+    va_start(ap, format);
     vsnprintf(buf, size, format, ap);
     va_end(ap);
+}
+
+static inline void transformVertex(const Transform &transform,
+                                   const Vector3 &inPosition,
+                                   const Vector3 &inNormal,
+                                   Vector3 &outPosition,
+                                   Vector3 &outNormal)
+{
+    outPosition = transform * inPosition;
+    outNormal = transform.getBasis() * inNormal;
+}
+
+static inline void transformVertex(const Transform &transformA,
+                                   const Transform &transformB,
+                                   const Vector3 &inPosition,
+                                   const Vector3 &inNormal,
+                                   Vector3 &outPosition,
+                                   Vector3 &outNormal,
+                                   float weight)
+{
+    const Vector3 &v1 = transformA * inPosition;
+    const Vector3 &n1 = transformA.getBasis() * inNormal;
+    const Vector3 &v2 = transformB * inPosition;
+    const Vector3 &n2 = transformB.getBasis() * inNormal;
+    outPosition.setInterpolate3(v2, v1, weight);
+    outNormal.setInterpolate3(n2, n1, weight);
 }
 
 }

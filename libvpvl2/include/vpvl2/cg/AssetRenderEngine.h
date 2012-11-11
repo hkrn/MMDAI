@@ -41,13 +41,11 @@
 #ifdef VPVL2_LINK_ASSIMP
 
 #include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/internal/BaseRenderEngine.h"
 
 #include <assimp.h>
 #include <aiScene.h>
 #include <map>
-
-class btDynamicsWorld;
-class btIDebugDraw;
 
 namespace vpvl2
 {
@@ -72,16 +70,15 @@ namespace cg
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
 {
 public:
     class Program;
-    class PrivateContext;
 
-    AssetRenderEngine(IRenderDelegate *delegate, const Scene *scene, CGcontext context, asset::Model *model);
+    AssetRenderEngine(IRenderContext *renderContext, const Scene *scene, asset::Model *model);
     virtual ~AssetRenderEngine();
 
     IModel *model() const;
@@ -99,48 +96,38 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
-protected:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
-
-    IRenderDelegate *m_delegateRef;
-
 private:
+    class PrivateContext;
     typedef std::map<std::string, GLuint> Textures;
-    struct AssetVertex {
-        AssetVertex() {}
+    struct Vertex {
+        Vertex() {}
         vpvl2::Vector4 position;
         vpvl2::Vector3 normal;
         vpvl2::Vector3 texcoord;
-        vpvl2::Color color;
     };
-    struct AssetVBO {
-        AssetVBO()
-            : vertices(0),
-              indices(0)
-        {
-        }
-        GLuint vertices;
-        GLuint indices;
-    };
-    typedef btAlignedObjectArray<AssetVertex> AssetVertices;
-    typedef btAlignedObjectArray<uint32_t> AssetIndices;
+    typedef Array<Vertex> Vertices;
+    typedef Array<int> Indices;
 
-    bool uploadRecurse(const aiScene *scene, const aiNode *node, void *context);
+    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
+    bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
+    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices, void *userData);
+    void bindVertexBundle(const aiMesh *mesh);
+    void unbindVertexBundle();
+    void bindStaticVertexAttributePointers();
 
-    const Scene *m_sceneRef;
     EffectEngine *m_currentRef;
     asset::Model *m_modelRef;
-    CGcontext m_contextRef;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
     std::map<std::string, GLuint> m_textures;
-    std::map<const struct aiMesh *, AssetVertices> m_vertices;
-    std::map<const struct aiMesh *, AssetIndices> m_indices;
-    std::map<const struct aiMesh *, AssetVBO> m_vbo;
+    std::map<const struct aiMesh *, int> m_indices;
+    std::map<const struct aiMesh *, GLuint> m_ibo;
+    std::map<const struct aiMesh *, GLuint> m_vbo;
+    std::map<const struct aiMesh *, GLuint> m_vao;
     int m_nvertices;
     int m_nmeshes;
     bool m_cullFaceState;

@@ -37,26 +37,28 @@
 #ifndef VPVL2_CG2_PMXRENDERENGINE_H_
 #define VPVL2_CG2_PMXRENDERENGINE_H_
 
+#include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/EffectEngine.h"
-#include "vpvl2/pmx/Model.h"
+#include "vpvl2/internal/BaseRenderEngine.h"
+
+#ifdef VPVL2_ENABLE_OPENCL
+#include "vpvl2/cl/PMXAccelerator.h"
+#endif
 
 namespace vpvl2
 {
 
-class Scene;
-
 namespace cl {
 class PMXAccelerator;
 }
-namespace pmx {
-class Model;
-}
+
+class Scene;
 
 namespace cg
 {
 
-class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
@@ -64,11 +66,10 @@ class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
 public:
     class PrivateContext;
 
-    PMXRenderEngine(IRenderDelegate *delegate,
+    PMXRenderEngine(IRenderContext *renderContextRef,
                     const Scene *scene,
-                    CGcontext effectContext,
                     cl::PMXAccelerator *accelerator,
-                    pmx::Model *model);
+                    IModel *modelRef);
     virtual ~PMXRenderEngine();
 
     IModel *model() const;
@@ -86,23 +87,20 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
-    //static bool isAcceleratorSupported();
-    bool isAcceleratorAvailable() const;
-    bool initializeAccelerator();
-
-protected:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format ...);
-
-    IRenderDelegate *m_delegateRef;
-
 private:
-    bool releaseContext0(void *context);
-    void release();
-
     enum VertexBufferObjectType {
-        kModelVertices,
-        kModelIndices,
-        kVertexBufferObjectMax
+        kModelDynamicVertexBufferEven,
+        kModelDynamicVertexBufferOdd,
+        kModelStaticVertexBuffer,
+        kModelIndexBuffer,
+        kMaxVertexBufferObjectType
+    };
+    enum VertexArrayObjectType {
+        kVertexArrayObjectEven,
+        kVertexArrayObjectOdd,
+        kEdgeVertexArrayObjectEven,
+        kEdgeVertexArrayObjectOdd,
+        kMaxVertexArrayObjectType
     };
     struct MaterialContext {
         MaterialContext()
@@ -116,18 +114,40 @@ private:
         Color toonTextureColor;
     };
 
-    const Scene *m_sceneRef;
+    bool uploadMaterials(const IString *dir, void *userData);
+    bool releaseUserData0(void *userData);
+    void release();
+    void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
+    void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
+    void bindVertexBundle();
+    void bindEdgeBundle();
+    void unbindVertexBundle();
+    void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
+    void bindStaticVertexAttributePointers();
+    void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
+    void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
+    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
+
     EffectEngine *m_currentRef;
     cl::PMXAccelerator *m_accelerator;
-    pmx::Model *m_modelRef;
-    CGcontext m_contextRef;
-    pmx::Model::SkinningMeshes m_mesh;
-    GLuint m_vertexBufferObjects[kVertexBufferObjectMax];
+#ifdef VPVL2_ENABLE_OPENCL
+    cl::PMXAccelerator::Buffers m_accelerationBuffers;
+#endif
+    IModel *m_modelRef;
+    IModel::IStaticVertexBuffer *m_staticBuffer;
+    IModel::IDynamicVertexBuffer *m_dynamicBuffer;
+    IModel::IIndexBuffer *m_indexBuffer;
+    GLuint m_vertexBufferObjects[kMaxVertexBufferObjectType];
+    GLuint m_vertexArrayObjects[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
+    Array<IMaterial *> m_materials;
     GLenum m_indexType;
+    Vector3 m_aabbMin;
+    Vector3 m_aabbMax;
     bool m_cullFaceState;
+    bool m_updateEvenBuffer;
     bool m_isVertexShaderSkinning;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)

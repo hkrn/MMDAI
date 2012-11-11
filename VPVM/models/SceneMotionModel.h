@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SCENEMOTIONMODEL_H
-#define SCENEMOTIONMODEL_H
+#ifndef VPVM_SCENEMOTIONMODEL_H
+#define VPVM_SCENEMOTIONMODEL_H
 
 #include "models/MotionBaseModel.h"
 
@@ -48,6 +48,11 @@ class IModel;
 class Scene;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
+
 class SceneWidget;
 
 class SceneMotionModel : public MotionBaseModel
@@ -55,16 +60,16 @@ class SceneMotionModel : public MotionBaseModel
     Q_OBJECT
 
 public:
-    typedef QSharedPointer<vpvl2::ICameraKeyframe> CameraKeyframePtr;
+    typedef QSharedPointer<ICameraKeyframe> CameraKeyframePtr;
     typedef QPair<int, CameraKeyframePtr> CameraKeyframePair;
     typedef QList<CameraKeyframePair> CameraKeyframePairList;
-    typedef QSharedPointer<vpvl2::ILightKeyframe> LightKeyframePtr;
+    typedef QSharedPointer<ILightKeyframe> LightKeyframePtr;
     typedef QPair<int, LightKeyframePtr> LightKeyframePair;
     typedef QList<LightKeyframePair> LightKeyframePairList;
 
-    explicit SceneMotionModel(vpvl2::Factory *factory,
-                              QUndoGroup *undo,
-                              const SceneWidget *sceneWidget,
+    explicit SceneMotionModel(Factory *factoryRef,
+                              QUndoGroup *undoRef,
+                              const SceneWidget *sceneWidgetRef,
                               QObject *parent = 0);
     ~SceneMotionModel();
 
@@ -75,7 +80,7 @@ public:
     bool forceCameraUpdate() const;
     const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const;
 
-    void saveMotion(vpvl2::IMotion *motion);
+    void saveMotion(IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
     void pasteKeyframesByTimeIndex(int timeIndex);
     const QString nameFromModelIndex(const QModelIndex &index) const;
@@ -84,37 +89,39 @@ public:
     void setKeyframes(const CameraKeyframePairList &cameraKeyframes, const LightKeyframePairList &lightKeyframes);
     void setActiveUndoStack();
     void refreshScene();
-    vpvl2::Factory *factory() const { return m_factory; }
+    Factory *factory() const { return m_factory; }
 
 public slots:
     void addKeyframesByModelIndices(const QModelIndexList &indices);
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void removeMotion();
-    void loadMotion(vpvl2::IMotion *motion);
+    void loadMotion(IMotion *motion);
     void markAsNew() { setModified(false); }
 
 signals:
     void cameraMotionDidLoad();
-    void motionDidUpdate(vpvl2::IModel *model);
+    void motionDidUpdate(IModel *model);
 
 protected:
-    ITreeItem *root() const { return m_rootTreeItem; }
+    ITreeItem *rootRef() const { return m_rootTreeItem.data(); }
 
 private:
-    const SceneWidget *m_sceneWidget;
+    const SceneWidget *m_sceneWidgetRef;
+    QScopedPointer<ITreeItem> m_rootTreeItem;
+    QScopedPointer<ITreeItem> m_cameraTreeItem;
+    QScopedPointer<ITreeItem> m_lightTreeItem;
+    QScopedPointer<QUndoStack> m_stack;
     QModelIndex m_cameraIndex;
     QModelIndex m_lightIndex;
-    QUndoStack *m_stack;
     Values m_cameraData;
     Values m_lightData;
-    vpvl2::Factory *m_factory;
-    vpvl2::ICameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
-    ITreeItem *m_rootTreeItem;
-    ITreeItem *m_cameraTreeItem;
-    ITreeItem *m_lightTreeItem;
+    Factory *m_factory;
+    ICameraKeyframe::InterpolationParameter m_cameraInterpolationParameter;
 
     Q_DISABLE_COPY(SceneMotionModel)
 };
+
+}
 
 #endif // SCENEMOTIONMODEL_H

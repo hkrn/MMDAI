@@ -55,21 +55,22 @@ namespace pmd
 class VPVL2_API Bone : public IBone
 {
 public:
-    Bone(vpvl::Bone *bone, IEncoding *encoding);
+    Bone(IModel *modelRef, vpvl::Bone *bone, IEncoding *encoding);
     ~Bone();
 
     const IString *name() const;
     int index() const;
-    IBone *parentBone() const { return m_parentBone; }
-    IBone *targetBone() const { return m_targetBoneRef; }
+    IModel *parentModelRef() const { return m_modelRef; }
+    IBone *parentBoneRef() const { return m_parentBone; }
+    IBone *targetBoneRef() const { return m_targetBoneRef; }
     const Transform &worldTransform() const;
     const Vector3 &origin() const;
     const Vector3 destinationOrigin() const;
-    const Vector3 &position() const;
-    const Quaternion &rotation() const;
-    void getLinkedBones(Array<IBone *> &value) const;
-    void setPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
+    const Vector3 &localPosition() const;
+    const Quaternion &localRotation() const;
+    void getEffectorBones(Array<IBone *> &value) const;
+    void setLocalPosition(const Vector3 &value);
+    void setLocalRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
     bool isVisible() const;
@@ -79,12 +80,19 @@ public:
     bool hasLocalAxes() const;
     const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
+    void setInverseKinematicsEnable(bool value);
+
+    const Transform &localTransform() const;
+    void getLocalTransform(Transform &value) const;
+    void setLocalTransform(const Transform &value);
 
     void setParentBone(vpvl::Bone * value);
     void setChildBone(vpvl::Bone *value);
     void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
+    void updateLocalTransform();
 
 private:
+    IModel *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     IBone *m_parentBone;
@@ -93,6 +101,8 @@ private:
     vpvl::Bone *m_boneRef;
     Array<IBone *> m_IKLinks;
     Vector3 m_fixedAxis;
+    Transform m_localTransform;
+    bool m_enableIK;
 };
 
 }

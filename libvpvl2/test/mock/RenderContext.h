@@ -1,13 +1,11 @@
-#include <vpvl2/IRenderDelegate.h>
-
 namespace vpvl2 {
 
-class MockIRenderDelegate : public IRenderDelegate {
+class MockIRenderContext : public IRenderContext {
  public:
-  MOCK_METHOD2(allocateContext,
-      void(const IModel *model, void *&context));
-  MOCK_METHOD2(releaseContext,
-      void(const IModel *model, void *&context));
+  MOCK_METHOD2(allocateUserData,
+      void(const IModel *model, void *&userData));
+  MOCK_METHOD2(releaseUserData,
+      void(const IModel *model, void *&userData));
   MOCK_METHOD5(uploadTexture,
       bool(const IString *name, const IString *dir, int flags, Texture &texture, void *context));
   MOCK_CONST_METHOD3(getMatrix,
@@ -22,6 +20,14 @@ class MockIRenderDelegate : public IRenderDelegate {
       IString*(KernelType type, void *context));
   MOCK_CONST_METHOD1(toUnicode,
       IString*(const uint8_t *str));
+  MOCK_CONST_METHOD1(hasExtension,
+      bool(const void *namePtr));
+  MOCK_CONST_METHOD1(findProcedureAddress,
+      void*(const void **candidatesPtr));
+  MOCK_METHOD2(startProfileSession,
+      void(ProfileType type, const void *arg));
+  MOCK_METHOD2(stopProfileSession,
+      void(ProfileType type, const void *arg));
   MOCK_METHOD4(getToonColor,
       void(const IString *name, const IString *dir, Color &value, void *context));
   MOCK_CONST_METHOD1(getViewport,
@@ -34,10 +40,10 @@ class MockIRenderDelegate : public IRenderDelegate {
       void(float &value, bool sync));
   MOCK_METHOD4(uploadAnimatedTexture,
       void(float offset, float speed, float seek, void *texture));
-  MOCK_CONST_METHOD1(effectOwner,
-      IModel*(const IEffect *effect));
   MOCK_CONST_METHOD1(findModel,
       IModel*(const IString *name));
+  MOCK_CONST_METHOD1(effectOwner,
+      IModel*(const IEffect *effect));
   MOCK_METHOD2(setRenderColorTargets,
       void(const void *targets, const int ntargets));
   MOCK_METHOD5(bindRenderColorTarget,

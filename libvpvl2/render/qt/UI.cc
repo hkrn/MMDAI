@@ -35,14 +35,12 @@
 /* ----------------------------------------------------------------- */
 
 #include "UI.h"
+#include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CustomGLContext.h>
-#include <vpvl2/qt/Delegate.h>
+#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/Encoding.h>
 #include <vpvl2/qt/CString.h>
 #include <vpvl2/qt/Util.h>
-
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderDelegate.h>
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
@@ -67,7 +65,7 @@ BT_DECLARE_HANDLE(aiScene);
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd2/Model.h"
 #include "vpvl2/vmd/Motion.h"
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -117,8 +115,8 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug << "\n";
     debug << "     origin                      = " << bone->origin();
     debug << "\n";
-    if (bone->parentBone()) {
-        debug << "     parent                      = " << bone->parentBone()->name();
+    if (bone->parentBoneRef()) {
+        debug << "     parent                      = " << bone->parentBoneRef()->name();
         debug << "\n";
     }
     debug << "     index                       = " << bone->layerIndex();
@@ -126,19 +124,19 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug << "     offset                      = " << bone->origin();
     debug << "\n";
     if (bone->hasInverseKinematics()) {
-        debug << "     targetBone                  = " << bone->targetBone()->name();
+        debug << "     targetBone                  = " << bone->targetBoneRef()->name();
         debug << "\n";
         debug << "     constraintAngle             = " << bone->constraintAngle();
         debug << "\n";
     }
     if (bone->hasPositionInherence()) {
-        debug << "     parentPositionInherenceBone = " << bone->parentInherenceBone()->name();
+        debug << "     parentPositionInherenceBone = " << bone->parentInherenceBoneRef()->name();
         debug << "\n";
         debug << "     weight                      = " << bone->weight();
         debug << "\n";
     }
     if (bone->hasRotationInherence()) {
-        debug << "     parentRotationInherenceBone = " << bone->parentInherenceBone()->name();
+        debug << "     parentRotationInherenceBone = " << bone->parentInherenceBoneRef()->name();
         debug << "\n";
         debug << "     weight                      = " << bone->weight();
         debug << "\n";
@@ -187,7 +185,7 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
     debug << "\n";
     debug << "         edgeSize                = " << material->edgeSize();
     debug << "\n";
-    debug << "         indices                 = " << material->indices();
+    debug << "         indices                 = " << material->sizeofIndices();
     debug << "\n";
     debug << "         isSharedToonTextureUsed = " << material->isSharedToonTextureUsed();
     debug << "\n";
@@ -211,6 +209,8 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
         break;
     case pmx::Material::kSubTexture:
         debug << "         sphere                  = subtexture";
+        break;
+    case pmx::Material::kMaxSphereTextureRenderModeType:
         break;
     }
     debug << "\n";
@@ -347,22 +347,109 @@ namespace render
 namespace qt
 {
 
-UI::UI()
-    : QGLWidget(new CustomGLContext(QGLFormat(QGL::SampleBuffers)), 0),
+static void UIBuildConstantsDictionary(QSettings *settings, Encoding::Dictionary &dictionary)
+{
+    QMap<QString, IEncoding::ConstantType> str2const;
+    str2const.insert("arm", IEncoding::kArm);
+    str2const.insert("asterisk", IEncoding::kAsterisk);
+    str2const.insert("center", IEncoding::kCenter);
+    str2const.insert("elbow", IEncoding::kElbow);
+    str2const.insert("finger", IEncoding::kFinger);
+    str2const.insert("left", IEncoding::kLeft);
+    str2const.insert("leftknee", IEncoding::kLeftKnee);
+    str2const.insert("right", IEncoding::kRight);
+    str2const.insert("rightknee", IEncoding::kRightKnee);
+    str2const.insert("spaextension", IEncoding::kSPAExtension);
+    str2const.insert("sphextension", IEncoding::kSPHExtension);
+    str2const.insert("wrist", IEncoding::kWrist);
+    QMapIterator<QString, IEncoding::ConstantType> it(str2const);
+    while (it.hasNext()) {
+        it.next();
+        const QVariant &value = settings->value("constants." + it.key());
+        dictionary.insert(it.value(), new CString(value.toString()));
+    }
+}
+
+class UI::ShadowMap : protected QGLFunctions {
+public:
+    ShadowMap(int width, int height)
+        : QGLFunctions(),
+          m_size(width, height, 0),
+          m_frameBuffer(0),
+          m_colorTexture(0),
+          m_depthTexture(0)
+    {
+        initializeGLFunctions();
+    }
+    ~ShadowMap() {
+        release();
+    }
+
+    void create() {
+        release();
+        glGenFramebuffers(1, &m_frameBuffer);
+        glGenTextures(1, &m_colorTexture);
+        glGenTextures(1, &m_depthTexture);
+        size_t width = m_size.x(), height = m_size.y();
+        glBindTexture(GL_TEXTURE_2D, m_colorTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, 0);
+        setTextureParameters();
+        glBindTexture(GL_TEXTURE_2D, m_depthTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+        glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+        setTextureParameters();
+        glBindTexture(GL_TEXTURE_2D, 0);
+        bind();
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorTexture, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTexture, 0);
+        unbind();
+    }
+    void bind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    }
+    void unbind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    const Vector3 &size() const { return m_size; }
+    void *bufferRef() const { return &m_colorTexture; }
+
+private:
+    void setTextureParameters() {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    }
+    void release() {
+        glDeleteFramebuffers(1, &m_frameBuffer);
+        m_frameBuffer = 0;
+        glDeleteTextures(1, &m_colorTexture);
+        m_colorTexture = 0;
+        glDeleteTextures(1, &m_depthTexture);
+        m_depthTexture = 0;
+    }
+
+    Vector3 m_size;
+    GLuint m_frameBuffer;
+    mutable GLuint m_colorTexture;
+    GLuint m_depthTexture;
+};
+
+UI::UI(const QGLFormat &format)
+    : QGLWidget(new CustomGLContext(format), 0),
       m_settings(0),
-      m_fbo(0),
+      m_sm(0),
       m_world(0),
       m_delegate(0),
       m_scene(0),
       m_factory(0),
       m_encoding(0),
-      m_depthTextureID(0),
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {
-    Encoding *encoding = new Encoding();
-    m_encoding = encoding;
-    m_factory = new Factory(encoding);
     m_world = new World();
     m_scene = new Scene();
     setMinimumSize(320, 240);
@@ -374,10 +461,9 @@ UI::~UI()
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
+    qDeleteAll(m_dictionary);
     delete m_delegate;
     m_delegate = 0;
-    delete m_fbo;
-    m_fbo = 0;
     delete m_factory;
     m_factory = 0;
     delete m_encoding;
@@ -386,17 +472,22 @@ UI::~UI()
     m_scene = 0;
     delete m_world;
     m_world = 0;
+    delete m_sm;
+    m_sm = 0;
 }
 
 void UI::load(const QString &filename)
 {
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->setIniCodec("UTF-8");
+    UIBuildConstantsDictionary(m_settings, m_dictionary);
+    m_encoding = new Encoding(m_dictionary);
+    m_factory = new Factory(m_encoding);
     QHash<QString, QString> settings;
     foreach (const QString &key, m_settings->allKeys()) {
         settings.insert(key, m_settings->value(key).toString());
     }
-    m_delegate = new Delegate(settings, m_scene, this);
+    m_delegate = new RenderContext(settings, m_scene, this);
     m_delegate->initialize(m_settings->value("effect.msaa", true).toBool());
     m_delegate->updateMatrices(size());
     resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
@@ -411,15 +502,16 @@ void UI::load(const QString &filename)
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
-    if (m_fbo) {
-        m_depthTextureID = m_fbo->texture();
-        light->setDepthTextureSize(Vector3(m_fbo->width(), m_fbo->height(), 0.0));
-        if (m_settings->value("enable.sm", false).toBool())
-            light->setDepthTexture(&m_depthTextureID);
+    m_sm = new ShadowMap(1024, 1024);
+    if (m_settings->value("enable.sm", false).toBool()) {
+        m_sm->create();
+        light->setDepthTextureSize(m_sm->size());
+        light->setDepthTexture(m_sm->bufferRef());
+        light->setHasFloatTexture(true);
     }
     if (loadScene()) {
-        startTimer(1000.0f / 60.0f);
-        m_timer.start();
+        m_updateTimer.start(0, this);
+        m_refreshTimer.start();
     }
     else {
         qFatal("Unable to load scene");
@@ -439,8 +531,8 @@ void UI::translate(float x, float y)
 {
     ICamera *camera = m_scene->camera();
     const Vector3 &diff = camera->modelViewTransform() * Vector3(x, y, 0);
-    Vector3 position = camera->position() + diff;
-    camera->setPosition(position + diff);
+    Vector3 position = camera->lookAt() + diff;
+    camera->setLookAt(position + diff);
 }
 
 void UI::closeEvent(QCloseEvent *event)
@@ -462,33 +554,16 @@ void UI::initializeGL()
     glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-    ILight *light = m_scene->light();
-    QGLFramebufferObjectFormat format;
-    format.setAttachment(QGLFramebufferObject::Depth);
-#if GL_ARB_texture_float
-    format.setInternalTextureFormat(GL_RGBA32F_ARB);
-    light->setHasFloatTexture(true);
-#endif
-    m_fbo = new QGLFramebufferObject(1024, 1024, format);
-    GLuint textureID = m_depthTextureID = m_fbo->texture();
-    if (textureID > 0) {
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
 }
 
 void UI::timerEvent(QTimerEvent *)
 {
-    float elapsed = m_timer.elapsed() / static_cast<float>(60.0f);
-    float diff = elapsed - m_prevElapsed;
+    const Scalar &elapsed = m_refreshTimer.elapsed() / static_cast<Scalar>(60.0f);
+    Scalar delta(elapsed - m_prevElapsed);
     m_prevElapsed = elapsed;
-    if (diff < 0)
-        diff = elapsed;
-    m_scene->advance(diff, Scene::kUpdateAll);
+    if (delta < 0)
+        delta = elapsed;
+    m_scene->advance(delta, Scene::kUpdateAll);
     const Array<IMotion *> &motions = m_scene->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
@@ -498,7 +573,7 @@ void UI::timerEvent(QTimerEvent *)
             m_currentFrameIndex = 0;
         }
     }
-    m_world->stepSimulationDefault();
+    m_world->stepSimulation(delta);
     m_delegate->updateMatrices(size());
     m_scene->update(Scene::kUpdateAll);
     updateGL();
@@ -571,26 +646,26 @@ void UI::paintGL()
 void UI::renderDepth()
 {
     if (m_scene->light()->depthTexture()) {
-        glDisable(GL_BLEND);
-        m_fbo->bind();
-        Vector3 target = kZeroV3, center;
-        Scalar maxRadius = 0, radius;
+        m_sm->bind();
+        Vector3 target(0, 10, 0);
+        Scalar maxRadius = 0;
         const Array<IRenderEngine *> &engines = m_scene->renderEngines();
         const Array<IModel *> &models = m_scene->models();
         const int nengines = engines.count();
         const int nmodels = models.count();
         Array<Scalar> radiusArray;
         Array<Vector3> centerArray;
+        Vector3 aabbMin, aabbMax;
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
             if (model->isVisible()) {
-                model->getBoundingSphere(center, radius);
-                radiusArray.add(radius);
-                centerArray.add(target);
-                target += center;
+                model->getAabb(aabbMin, aabbMax);
+                if (!aabbMin.isZero() && !aabbMax.isZero()) {
+                    radiusArray.add((aabbMax - aabbMin).length());
+                    centerArray.add((aabbMin + aabbMax) / 2);
+                }
             }
         }
-        target /= nmodels;
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
             if (model->isVisible()) {
@@ -600,7 +675,9 @@ void UI::renderDepth()
                 btSetMax(maxRadius, d);
             }
         }
+        const Vector3 &size = m_sm->size();
         const Scalar &angle = 45;
+        const Scalar &aspectRatio = size.x() / size.y();
         const Scalar &distance = maxRadius / btSin(btRadians(angle) * 0.5);
         const Scalar &margin = 50;
         const Vector3 &eye = -m_scene->light()->direction().normalized() * maxRadius + target;
@@ -608,96 +685,22 @@ void UI::renderDepth()
         lightViewMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
                                QVector3D(target.x(), target.y(), target.z()),
                                QVector3D(0, 1, 0));
-        lightProjectionMatrix.perspective(angle, 1, 1, distance + maxRadius + margin);
-        QMatrix4x4 lightWorldMatrix;
-        m_delegate->setLightMatrices(lightWorldMatrix, lightViewMatrix, lightProjectionMatrix);
-        glViewport(0, 0, m_fbo->width(), m_fbo->height());
+        lightProjectionMatrix.perspective(angle, aspectRatio, 1, distance + maxRadius + margin);
+        m_delegate->setLightMatrices(QMatrix4x4(), lightViewMatrix, lightProjectionMatrix);
+        glViewport(0, 0, size.x(), size.y());
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
             engine->renderZPlot();
         }
-        m_fbo->release();
-#ifndef VPVL2_ENABLE_NVIDIA_CG
-        lightWorldMatrix.scale(0.5);
-        lightWorldMatrix.translate(1, 1, 1);
-        m_delegate->setLightMatrices(lightWorldMatrix, lightViewMatrix, lightProjectionMatrix);
-#endif
+        m_sm->unbind();
     }
 }
 
 void UI::renderOffscreen()
 {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
-    const int nengines = engines.count();
-    QSize s;
-    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
-    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    foreach (const Delegate::OffscreenRenderTarget &offscreen, m_delegate->offscreenRenderTargets()) {
-        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
-        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
-        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
-        bool enableAA = false;
-        if (cgIsAnnotation(antiAlias)) {
-            int nvalues;
-            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
-            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
-        }
-        size_t width = renderTarget.width, height = renderTarget.height;
-        GLuint textureID = offscreen.textureID;
-        m_delegate->bindOffscreenRenderTarget(textureID, width, height, enableAA);
-        m_delegate->setRenderColorTargets(buffers, nbuffers);
-        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
-        if (cgIsAnnotation(clearColor)) {
-            int nvalues;
-            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
-            if (nvalues == 4) {
-                glClearColor(color[0], color[1], color[2], color[3]);
-            }
-        }
-        else {
-            glClearColor(1, 1, 1, 1);
-        }
-        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
-        if (cgIsAnnotation(clearDepth)) {
-            int nvalues;
-            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
-            if (nvalues == 1) {
-                glClearDepth(depth[0]);
-            }
-        }
-        else {
-            glClearDepth(0);
-        }
-        s.setWidth(width);
-        s.setHeight(height);
-        m_delegate->updateMatrices(s);
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
-            if (engine->hasPreProcess() || engine->hasPostProcess())
-                continue;
-            const IModel *model = engine->model();
-            const IString *name = model->name();
-            const QString &n = name ? static_cast<const CString *>(name)->value() : m_delegate->findModelPath(model);
-            foreach (const Delegate::EffectAttachment &attachment, offscreen.attachments) {
-                IEffect *effect = attachment.second;
-                if (attachment.first.exactMatch(n)) {
-                    engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
-                    break;
-                }
-            }
-            engine->update();
-            engine->renderModel();
-            engine->renderEdge();
-        }
-        m_delegate->releaseOffscreenRenderTarget(textureID, width, height, enableAA);
-    }
-    m_delegate->updateMatrices(size());
-#endif
+    m_delegate->renderOffscreen(size());
 }
 
 void UI::renderWindow()
@@ -744,10 +747,10 @@ void UI::setMousePositions(QMouseEvent *event)
     const qreal w = size.width(), h = size.height();
     const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);
     Qt::MouseButtons buttons = event->buttons();
-    m_delegate->setMousePosition(value, buttons & Qt::LeftButton, IRenderDelegate::kMouseLeftPressPosition);
-    m_delegate->setMousePosition(value, buttons & Qt::MiddleButton, IRenderDelegate::kMouseMiddlePressPosition);
-    m_delegate->setMousePosition(value, buttons & Qt::RightButton, IRenderDelegate::kMouseRightPressPosition);
-    m_delegate->setMousePosition(value, false, IRenderDelegate::kMouseCursorPosition);
+    m_delegate->setMousePosition(value, buttons & Qt::LeftButton, IRenderContext::kMouseLeftPressPosition);
+    m_delegate->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
+    m_delegate->setMousePosition(value, buttons & Qt::RightButton, IRenderContext::kMouseRightPressPosition);
+    m_delegate->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
 }
 
 bool UI::loadScene()
@@ -838,7 +841,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     }
     m_delegate->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &Delegate::createEffectAsync, modelPtr.data(), &s1);
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &RenderContext::createEffectAsync, modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IEffect *effect = future2.result();
@@ -863,13 +866,17 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         if (m_settings->value("enable.physics", true).toBool())
             m_world->addModel(modelPtr.data());
+        if (!modelPtr->name()) {
+            CString s(info.fileName());
+            modelPtr->setName(&s);
+        }
         m_scene->addModel(modelPtr.data(), enginePtr.data());
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
         m_delegate->parseOffscreenSemantic(effect, info.absoluteDir());
+#endif
         model = modelPtr.take();
         enginePtr.take();
-#endif
     }
     else {
         return 0;

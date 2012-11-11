@@ -38,41 +38,45 @@
 
 #include <QtGui/QtGui>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 SceneLightWidget::SceneLightWidget(QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent),
+    m_colorGroup(new QGroupBox()),
+    m_directionGroup(new QGroupBox()),
+    m_r(createSpinBox(SLOT(updateColor()))),
+    m_g(createSpinBox(SLOT(updateColor()))),
+    m_b(createSpinBox(SLOT(updateColor()))),
+    m_x(createDoubleSpinBox(SLOT(updatePosition()))),
+    m_y(createDoubleSpinBox(SLOT(updatePosition()))),
+    m_z(createDoubleSpinBox(SLOT(updatePosition()))),
+    m_openColorDialog(new QPushButton())
 {
-    QHBoxLayout *subLayout = new QHBoxLayout();
+    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
     /* 色(R,G,B) */
-    QFormLayout *formLayout = new QFormLayout();
-    m_r = createSpinBox(SLOT(updateColor()));
-    formLayout->addRow("R", m_r);
-    m_g = createSpinBox(SLOT(updateColor()));
-    formLayout->addRow("G", m_g);
-    m_b = createSpinBox(SLOT(updateColor()));
-    formLayout->addRow("B", m_b);
-    m_colorGroup = new QGroupBox();
-    m_colorGroup->setLayout(formLayout);
-    subLayout->addWidget(m_colorGroup);
+    QScopedPointer<QFormLayout> formLayout(new QFormLayout());
+    formLayout->addRow("R", m_r.data());
+    formLayout->addRow("G", m_g.data());
+    formLayout->addRow("B", m_b.data());
+    m_colorGroup->setLayout(formLayout.take());
+    subLayout->addWidget(m_colorGroup.data());
     /* 位置(X,Y,Z) */
-    formLayout = new QFormLayout();
-    m_x = createDoubleSpinBox(SLOT(updatePosition()));
-    formLayout->addRow("X", m_x);
-    m_y = createDoubleSpinBox(SLOT(updatePosition()));
-    formLayout->addRow("Y", m_y);
-    m_z = createDoubleSpinBox(SLOT(updatePosition()));
-    formLayout->addRow("Z", m_z);
-    m_directionGroup = new QGroupBox();
-    m_directionGroup->setLayout(formLayout);
-    subLayout->addWidget(m_directionGroup);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(subLayout);
-    m_openColorDialog = new QPushButton();
-    connect(m_openColorDialog, SIGNAL(clicked()), SLOT(openColorDialog()));
-    mainLayout->addWidget(m_openColorDialog, 0, Qt::AlignCenter);
+    formLayout.reset(new QFormLayout());
+    formLayout->addRow("X", m_x.data());
+    formLayout->addRow("Y", m_y.data());
+    formLayout->addRow("Z", m_z.data());
+    m_directionGroup->setLayout(formLayout.take());
+    subLayout->addWidget(m_directionGroup.data());
+
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addLayout(subLayout.take());
+    connect(m_openColorDialog.data(), SIGNAL(clicked()), SLOT(openColorDialog()));
+    mainLayout->addWidget(m_openColorDialog.data(), 0, Qt::AlignCenter);
     mainLayout->addStretch();
-    setLayout(mainLayout);
+    setLayout(mainLayout.take());
     retranslate();
 }
 
@@ -82,35 +86,35 @@ SceneLightWidget::~SceneLightWidget()
 
 void SceneLightWidget::setColor(const Vector3 &value)
 {
-    disconnect(m_r, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
-    disconnect(m_g, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
-    disconnect(m_b, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    disconnect(m_r.data(), SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    disconnect(m_g.data(), SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    disconnect(m_b.data(), SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
     m_r->setValue(value.x() * m_r->maximum());
     m_g->setValue(value.y() * m_g->maximum());
     m_b->setValue(value.z() * m_b->maximum());
-    connect(m_r, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
-    connect(m_g, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
-    connect(m_b, SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    connect(m_r.data(), SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    connect(m_g.data(), SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
+    connect(m_b.data(), SIGNAL(valueChanged(int)), this, SLOT(updateColor()));
 }
 
 void SceneLightWidget::setDirection(const Vector3 &value)
 {
-    disconnect(m_x, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_y, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    disconnect(m_z, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_x.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_y.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    disconnect(m_z.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
     m_x->setValue(value.x());
     m_y->setValue(value.y());
     m_z->setValue(value.z());
-    connect(m_x, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_y, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
-    connect(m_z, SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_x.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_y.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
+    connect(m_z.data(), SIGNAL(valueChanged(double)), this, SLOT(updatePosition()));
 }
 
 void SceneLightWidget::retranslate()
 {
     m_colorGroup->setTitle(tr("Color"));
     m_directionGroup->setTitle(tr("Direction"));
-    m_openColorDialog->setText(tr("Open color dialog"));
+    m_openColorDialog->setText(tr("Open Color Dialog"));
 }
 
 void SceneLightWidget::updateColor()
@@ -146,19 +150,23 @@ void SceneLightWidget::setQColor(const QColor &value)
 
 QSpinBox *SceneLightWidget::createSpinBox(const char *slot) const
 {
-    QSpinBox *spinBox = new QSpinBox();
+    QScopedPointer<QSpinBox> spinBox(new QSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
     spinBox->setRange(0, 255);
     spinBox->setSingleStep(1);
-    connect(spinBox, SIGNAL(valueChanged(int)), slot);
-    return spinBox;
+    connect(spinBox.data(), SIGNAL(valueChanged(int)), slot);
+    return spinBox.take();
 }
 
 QDoubleSpinBox *SceneLightWidget::createDoubleSpinBox(const char *slot) const
 {
-    QDoubleSpinBox *spinBox = new QDoubleSpinBox();
+    QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
+    spinBox->setAlignment(Qt::AlignRight);
     spinBox->setRange(-1.0, 1.0);
     spinBox->setSingleStep(0.01);
     spinBox->setDecimals(3);
-    connect(spinBox, SIGNAL(valueChanged(double)), slot);
-    return spinBox;
+    connect(spinBox.data(), SIGNAL(valueChanged(double)), slot);
+    return spinBox.take();
 }
+
+} /* namespace vpvm */

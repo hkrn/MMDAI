@@ -40,58 +40,78 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
-GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent) :
-    QDialog(parent)
+GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent)
+    : QDialog(parent),
+      m_axisGroup(new QGroupBox()),
+      m_axisXLabel(new QLabel()),
+      m_axisX(createSpinBox(loader->worldGravity().x())),
+      m_axisYLabel(new QLabel()),
+      m_axisY(createSpinBox(loader->worldGravity().y())),
+      m_axisZLabel(new QLabel()),
+      m_axisZ(createSpinBox(loader->worldGravity().z())),
+      m_randSeedLabel(new QLabel()),
+      m_randSeedSpinBox(new QSpinBox())
 {
-    const Vector3 &gravity = loader->worldGravity();
-    QHBoxLayout *subLayout = new QHBoxLayout();
-    subLayout->addWidget(new QLabel("X"));
-    m_axisX = createSpinBox(gravity.x());
-    subLayout->addWidget(m_axisX);
-    subLayout->addWidget(new QLabel("Y"));
-    m_axisY = createSpinBox(gravity.y());
-    subLayout->addWidget(m_axisY);
-    subLayout->addWidget(new QLabel("Z"));
-    m_axisZ = createSpinBox(gravity.z());
-    subLayout->addWidget(m_axisZ);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(subLayout);
-    m_randSeed = new QSpinBox();
-    m_randSeed->setValue(loader->worldRandSeed());
-    subLayout = new QHBoxLayout();
-    subLayout->addWidget(new QLabel("Rand seed"), 0, Qt::AlignRight);
-    subLayout->addWidget(m_randSeed, 0, Qt::AlignLeft);
-    mainLayout->addLayout(subLayout);
-    QDialogButtonBox *button = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    connect(button, SIGNAL(accepted()), SLOT(accept()));
-    connect(button, SIGNAL(rejected()), SLOT(reject()));
+    QScopedPointer<QGridLayout> axisGroupLayout(new QGridLayout());
+    axisGroupLayout->addWidget(m_axisXLabel.data(), 0, 0, Qt::AlignCenter);
+    axisGroupLayout->addWidget(m_axisX.data(), 0, 1);
+    axisGroupLayout->addWidget(m_axisYLabel.data(), 1, 0, Qt::AlignCenter);
+    axisGroupLayout->addWidget(m_axisY.data(), 1, 1);
+    axisGroupLayout->addWidget(m_axisZLabel.data(), 2, 0, Qt::AlignCenter);
+    axisGroupLayout->addWidget(m_axisZ.data(), 2, 1);
+    m_axisGroup->setLayout(axisGroupLayout.take());
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addWidget(m_axisGroup.data());
+    m_randSeedSpinBox->setValue(loader->worldRandSeed());
+    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
+    subLayout->addWidget(m_randSeedLabel.data(), 0, Qt::AlignRight);
+    subLayout->addWidget(m_randSeedSpinBox.data(), 0, Qt::AlignLeft);
+    mainLayout->addLayout(subLayout.take());
+    QScopedPointer<QDialogButtonBox> button(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
+    connect(button.data(), SIGNAL(accepted()), SLOT(accept()));
+    connect(button.data(), SIGNAL(rejected()), SLOT(reject()));
     connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
-    connect(this, SIGNAL(worldGravityDidSet(vpvl2::Vector3)), loader, SLOT(setWorldGravity(vpvl2::Vector3)));
+    connect(this, SIGNAL(worldGravityDidSet(Vector3)), loader, SLOT(setWorldGravity(Vector3)));
     connect(this, SIGNAL(worldRandSeedDidSet(ulong)), loader, SLOT(setRandSeed(ulong)));
-    mainLayout->addWidget(button);
-    setWindowTitle(tr("Gravity setting"));
-    setLayout(mainLayout);
+    mainLayout->addWidget(button.take());
+    setWindowTitle(tr("Gravity Setting"));
+    setLayout(mainLayout.take());
+    retranslate();
 }
 
 GravitySettingDialog::~GravitySettingDialog()
 {
 }
 
+void GravitySettingDialog::retranslate()
+{
+    m_axisGroup->setTitle(tr("Axis and Power"));
+    m_randSeedLabel->setText(tr("Rand Seed"));
+    m_axisXLabel->setText(tr("X"));
+    m_axisYLabel->setText(tr("Y"));
+    m_axisZLabel->setText(tr("Z"));
+}
+
 void GravitySettingDialog::emitSignal()
 {
     const Vector3 value(m_axisX->value(), m_axisY->value(), m_axisZ->value());
     emit worldGravityDidSet(value);
-    emit worldRandSeedDidSet(m_randSeed->value());
+    emit worldRandSeedDidSet(m_randSeedSpinBox->value());
 }
 
 QDoubleSpinBox *GravitySettingDialog::createSpinBox(double value) const
 {
-    QDoubleSpinBox *spinBox = new QDoubleSpinBox();
+    QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
     spinBox->setAlignment(Qt::AlignRight);
     spinBox->setRange(-10000, 10000);
     spinBox->setSingleStep(0.1);
     spinBox->setValue(value);
-    return spinBox;
+    return spinBox.take();
 }
+
+} /* namespace vpvm */

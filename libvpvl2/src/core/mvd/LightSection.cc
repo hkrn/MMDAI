@@ -132,8 +132,10 @@ size_t LightSection::countKeyframes() const
     return m_allKeyframes.count();
 }
 
-void LightSection::addKeyframe(IKeyframe * /* keyframe */)
+void LightSection::addKeyframe(IKeyframe *keyframe)
 {
+    if (keyframe->type() == IKeyframe::kLight)
+        m_allKeyframes.add(keyframe);
 }
 
 void LightSection::deleteKeyframe(IKeyframe *&keyframe)
@@ -153,7 +155,7 @@ ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex
 {
     const int nkeyframes = m_allKeyframes.count();
     for (int i = 0; i < nkeyframes; i++) {
-        ILightKeyframe *keyframe = reinterpret_cast<ILightKeyframe *>(m_allKeyframes.at(i));
+        mvd::LightKeyframe *keyframe = reinterpret_cast<mvd::LightKeyframe *>(m_allKeyframes.at(i));
         if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
             return keyframe;
         }
@@ -163,8 +165,8 @@ ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex
 
 ILightKeyframe *LightSection::findKeyframeAt(int index) const
 {
-    if (index >= 0 && index < m_allKeyframes.count()) {
-        ILightKeyframe *keyframe = reinterpret_cast<ILightKeyframe *>(m_allKeyframes.at(index));
+    if (internal::checkBound(index, 0, m_allKeyframes.count())) {
+        mvd::LightKeyframe *keyframe = reinterpret_cast<mvd::LightKeyframe *>(m_allKeyframes.at(index));
         return keyframe;
     }
     return 0;

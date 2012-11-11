@@ -42,8 +42,9 @@ namespace vpvl2
 namespace pmd
 {
 
-Bone::Bone(vpvl::Bone *bone, IEncoding *encoding)
-    : m_encodingRef(encoding),
+Bone::Bone(IModel *modelRef, vpvl::Bone *bone, IEncoding *encoding)
+    : m_modelRef(modelRef),
+      m_encodingRef(encoding),
       m_name(0),
       m_parentBone(0),
       m_targetBoneRef(0),
@@ -62,6 +63,7 @@ Bone::~Bone()
     m_parentBone = 0;
     delete m_childBone;
     m_childBone = 0;
+    m_modelRef = 0;
     m_targetBoneRef = 0;
     m_encodingRef = 0;
     m_boneRef = 0;
@@ -93,12 +95,12 @@ const Vector3 Bone::destinationOrigin() const
     return m_boneRef->child()->localTransform().getOrigin();
 }
 
-const Vector3 &Bone::position() const
+const Vector3 &Bone::localPosition() const
 {
     return m_boneRef->position();
 }
 
-void Bone::getLinkedBones(Array<IBone *> &value) const
+void Bone::getEffectorBones(Array<IBone *> &value) const
 {
     const int nlinks = m_IKLinks.count();
     for (int i = 0; i < nlinks; i++) {
@@ -107,17 +109,17 @@ void Bone::getLinkedBones(Array<IBone *> &value) const
     }
 }
 
-const Quaternion &Bone::rotation() const
+const Quaternion &Bone::localRotation() const
 {
     return m_boneRef->rotation();
 }
 
-void Bone::setPosition(const Vector3 &value)
+void Bone::setLocalPosition(const Vector3 &value)
 {
     m_boneRef->setPosition(value);
 }
 
-void Bone::setRotation(const Quaternion &value)
+void Bone::setLocalRotation(const Quaternion &value)
 {
     m_boneRef->setRotation(value);
 }
@@ -188,17 +190,34 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     }
 }
 
+const Transform &Bone::localTransform() const
+{
+    return m_localTransform;
+}
+
+void Bone::getLocalTransform(Transform &value) const
+{
+    m_boneRef->getSkinTransform(value);
+}
+
+void Bone::setLocalTransform(const Transform &value)
+{
+    Transform transform(value);
+    m_boneRef->getSkinTransform(transform);
+    m_boneRef->setLocalTransform(transform);
+}
+
 void Bone::setParentBone(vpvl::Bone *value)
 {
     if (value)
-        m_parentBone = new Bone(const_cast<vpvl::Bone *>(value->parent()), m_encodingRef);
+        m_parentBone = new Bone(m_modelRef, const_cast<vpvl::Bone *>(value->parent()), m_encodingRef);
 }
 
 void Bone::setChildBone(vpvl::Bone *value)
 {
     if (value) {
         const vpvl::Bone *child = value->child();
-        m_childBone = new Bone(const_cast<vpvl::Bone *>(child), m_encodingRef);
+        m_childBone = new Bone(m_modelRef, const_cast<vpvl::Bone *>(child), m_encodingRef);
         if (hasFixedAxes())
             m_fixedAxis = (child->originPosition() - m_boneRef->originPosition()).normalized();
     }
@@ -222,6 +241,16 @@ void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
             m_IKLinks.add(value);
         }
     }
+}
+
+void Bone::setInverseKinematicsEnable(bool /*value*/)
+{
+}
+
+void Bone::updateLocalTransform()
+{
+    m_localTransform = m_boneRef->localTransform();
+    m_boneRef->getSkinTransform(m_localTransform);
 }
 
 }

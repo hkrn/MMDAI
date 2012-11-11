@@ -42,8 +42,9 @@ namespace vpvl2
 namespace pmd
 {
 
-Label::Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)
-    : m_encodingRef(encoding),
+Label::Label(IModel *modelRef, const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)
+    : m_modelRef(modelRef),
+      m_encodingRef(encoding),
       m_name(0),
       m_special(special)
 {
@@ -55,6 +56,7 @@ Label::~Label()
 {
     delete m_name;
     m_name = 0;
+    m_modelRef = 0;
     m_encodingRef = 0;
     m_special = false;
 }

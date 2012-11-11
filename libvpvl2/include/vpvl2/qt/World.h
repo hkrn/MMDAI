@@ -48,11 +48,12 @@ namespace vpvl2
 namespace qt
 {
 
-const static Vector3 kWorldAabbSize(10000, 10000, 10000);
-
 class World
 {
 public:
+    static const Vector3 kAabbSize;
+    static const Vector3 kDefaultGravity;
+
     World();
     ~World();
 
@@ -60,14 +61,13 @@ public:
     void setGravity(const Vector3 &value);
     unsigned long randSeed() const;
     void setRandSeed(unsigned long value);
-    void setPreferredFPS(const Scalar &value);
+    void setMotionFPS(const Scalar &value);
     void addModel(vpvl2::IModel *value);
     void removeModel(vpvl2::IModel *value);
     void addRigidBody(btRigidBody *value);
     void removeRigidBody(btRigidBody *value);
-
-    void stepSimulationDefault(const Scalar &substep = 1);
-    void stepSimulationDelta(const Scalar &delta);
+    void stepSimulation(const Scalar &delta);
+    btDiscreteDynamicsWorld *dynamicWorldRef() const;
 
 private:
     btDefaultCollisionConfiguration m_config;
@@ -75,7 +75,9 @@ private:
     btDbvtBroadphase *m_broadphase;
     btSequentialImpulseConstraintSolver *m_solver;
     btDiscreteDynamicsWorld *m_world;
-    Scalar m_preferredFPS;
+    Scalar m_motionFPS;
+    Scalar m_maxSubSteps;
+    Scalar m_fixedTimeStep;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(World)
 };

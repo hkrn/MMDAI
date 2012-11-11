@@ -62,8 +62,9 @@ struct Label::Pair {
     IMorph *morph;
 };
 
-Label::Label()
-    : m_name(0),
+Label::Label(IModel *modelRef)
+    : m_modelRef(modelRef),
+      m_name(0),
       m_englishName(0),
       m_index(-1),
       m_special(false)
@@ -76,6 +77,7 @@ Label::~Label()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_modelRef = 0;
     m_pairs.releaseAll();
     m_index = -1;
     m_special = false;
@@ -171,6 +173,18 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     return true;
 }
 
+size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
+{
+    const int nlabels = labels.count();
+    size_t size = 0;
+    size += sizeof(nlabels);
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        size += label->estimateSize(info);
+    }
+    return size;
+}
+
 void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
@@ -208,8 +222,8 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 
 void Label::write(uint8_t *data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_name, data);
-    internal::writeString(m_englishName, data);
+    internal::writeString(m_name, info.codec, data);
+    internal::writeString(m_englishName, info.codec, data);
     int npairs = m_pairs.count();
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_special), sizeof(uint8_t), data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&npairs), sizeof(npairs), data);
@@ -233,8 +247,8 @@ void Label::write(uint8_t *data, const Model::DataInfo &info) const
 size_t Label::estimateSize(const Model::DataInfo &info) const
 {
     size_t size = 0;
-    size += internal::estimateSize(m_name);
-    size += internal::estimateSize(m_englishName);
+    size += internal::estimateSize(m_name, info.codec);
+    size += internal::estimateSize(m_englishName, info.codec);
     int npairs = m_pairs.count();
     for (int i = 0; i < npairs; i++) {
         const Pair *pair = m_pairs[i];

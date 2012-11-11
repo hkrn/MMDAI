@@ -95,8 +95,8 @@ void LightKeyframe::read(const uint8_t *data)
     internal::getData(data, chunk);
     internal::setPosition(chunk.position, m_direction);
     internal::setPositionRaw(chunk.color, m_color);
-    setTimeIndex(chunk.timeIndex);
-    setEnable(chunk.enabled);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
+    setEnable(chunk.enabled != 0);
 }
 
 void LightKeyframe::write(uint8_t *data) const
@@ -104,7 +104,7 @@ void LightKeyframe::write(uint8_t *data) const
     LightKeyframeChunk chunk;
     internal::getPosition(direction(), chunk.position);
     internal::getPositionRaw(color(), chunk.color);
-    chunk.timeIndex = timeIndex();
+    chunk.timeIndex = uint64_t(timeIndex());
     chunk.enabled = isEnabled();
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
 }

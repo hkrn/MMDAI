@@ -44,9 +44,10 @@
 #include "vpvl2/ILight.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMorph.h"
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/IString.h"
+#include "vpvl2/internal/BaseRenderEngine.h"
 
 #include <string>
 #include <sstream>
@@ -236,9 +237,9 @@ void Float4Parameter::setValue(const Vector4 &value)
 
 /* MatrixSemantic */
 
-MatrixSemantic::MatrixSemantic(const IRenderDelegate *delegate, int flags)
+MatrixSemantic::MatrixSemantic(const IRenderContext *renderContextRef, int flags)
     : BaseParameter(),
-      m_delegateRef(delegate),
+      m_renderContextRef(renderContextRef),
       m_camera(0),
       m_cameraInversed(0),
       m_cameraTransposed(0),
@@ -253,7 +254,7 @@ MatrixSemantic::MatrixSemantic(const IRenderDelegate *delegate, int flags)
 
 MatrixSemantic::~MatrixSemantic()
 {
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
     m_camera = 0;
     m_cameraInversed = 0;
     m_cameraTransposed = 0;
@@ -285,21 +286,21 @@ void MatrixSemantic::addParameter(CGparameter parameter, const char *suffix)
 void MatrixSemantic::setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags)
 {
     setMatrix(model, m_camera,
-              extraCameraFlags | IRenderDelegate::kCameraMatrix);
+              extraCameraFlags | IRenderContext::kCameraMatrix);
     setMatrix(model, m_cameraInversed,
-              extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix);
+              extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix);
     setMatrix(model, m_cameraTransposed,
-              extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kTransposeMatrix);
+              extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kTransposeMatrix);
     setMatrix(model, m_cameraInverseTransposed,
-              extraCameraFlags | IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
+              extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
     setMatrix(model, m_light,
-              extraLightFlags | IRenderDelegate::kLightMatrix);
+              extraLightFlags | IRenderContext::kLightMatrix);
     setMatrix(model, m_lightInversed,
-              extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix);
+              extraLightFlags | IRenderContext::kLightMatrix | IRenderContext::kInverseMatrix);
     setMatrix(model, m_lightTransposed,
-              extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kTransposeMatrix);
+              extraLightFlags | IRenderContext::kLightMatrix | IRenderContext::kTransposeMatrix);
     setMatrix(model, m_lightInverseTransposed,
-              extraLightFlags | IRenderDelegate::kLightMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
+              extraLightFlags | IRenderContext::kLightMatrix | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
 }
 
 void MatrixSemantic::setParameter(const CGparameter sourceParameter,
@@ -331,7 +332,7 @@ void MatrixSemantic::setMatrix(const IModel *model, CGparameter parameter, int f
 {
     if (cgIsParameter(parameter)) {
         float matrix[16];
-        m_delegateRef->getMatrix(matrix, model, m_flags | flags);
+        m_renderContextRef->getMatrix(matrix, model, m_flags | flags);
         cgSetMatrixParameterfr(parameter, matrix);
     }
 }
@@ -466,9 +467,9 @@ void GeometrySemantic::setLightValue(const Vector3 &value)
 
 /* TimeSemantic */
 
-TimeSemantic::TimeSemantic(const IRenderDelegate *delegate)
+TimeSemantic::TimeSemantic(const IRenderContext *renderContextRef)
     : BaseParameter(),
-      m_delegateRef(delegate),
+      m_renderContextRef(renderContextRef),
       m_syncEnabled(0),
       m_syncDisabled(0)
 {
@@ -476,7 +477,7 @@ TimeSemantic::TimeSemantic(const IRenderDelegate *delegate)
 
 TimeSemantic::~TimeSemantic()
 {
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
     m_syncEnabled = 0;
     m_syncDisabled = 0;
 }
@@ -497,21 +498,23 @@ void TimeSemantic::update()
 {
     float value = 0;
     if (cgIsParameter(m_syncEnabled)) {
-        m_delegateRef->getTime(value, true);
+        m_renderContextRef->getTime(value, true);
         cgSetParameter1f(m_syncEnabled, value);
     }
     if (cgIsParameter(m_syncDisabled)) {
-        m_delegateRef->getTime(value, false);
+        m_renderContextRef->getTime(value, false);
         cgSetParameter1f(m_syncDisabled, value);
     }
 }
 
 /* ControlObjectSemantic */
 
-ControlObjectSemantic::ControlObjectSemantic(const IEffect *effect, const Scene *scene, const IRenderDelegate *delegate)
+ControlObjectSemantic::ControlObjectSemantic(const IEffect *effect,
+                                             const Scene *scene,
+                                             const IRenderContext *renderContextRef)
     : BaseParameter(),
       m_sceneRef(scene),
-      m_delegateRef(delegate),
+      m_renderContextRef(renderContextRef),
       m_effectRef(effect)
 {
 }
@@ -519,7 +522,7 @@ ControlObjectSemantic::ControlObjectSemantic(const IEffect *effect, const Scene 
 ControlObjectSemantic::~ControlObjectSemantic()
 {
     m_sceneRef = 0;
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
 }
 
 void ControlObjectSemantic::addParameter(CGparameter parameter)
@@ -542,13 +545,13 @@ void ControlObjectSemantic::update(const IModel *self)
         else if (VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
             IEffect *parent = m_effectRef->parentEffect();
             if (parent) {
-                const IModel *model = m_delegateRef->effectOwner(parent);
+                const IModel *model = m_renderContextRef->effectOwner(parent);
                 setParameter(model, parameter);
             }
         }
         else {
-            IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(name));
-            const IModel *model = m_delegateRef->findModel(s);
+            IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(name));
+            const IModel *model = m_renderContextRef->findModel(s);
             delete s;
             setParameter(model, parameter);
         }
@@ -566,7 +569,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
             const size_t len = strlen(item);
             const IModel::Type type = model->type();
             if (type == IModel::kPMD || type == IModel::kPMX) {
-                const IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
+                const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
                 IBone *bone = model->findBone(s);
                 IMorph *morph = model->findMorph(s);
                 delete s;
@@ -589,8 +592,8 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 }
             }
             else {
-                const Vector3 &position = model->position();
-                const Quaternion &rotation = model->rotation();
+                const Vector3 &position = model->worldPosition();
+                const Quaternion &rotation = model->worldRotation();
                 const CGtype parameterType = cgGetParameterType(parameter);
                 if (VPVL2_CG_STREQ_CONST(item, len, "X") && parameterType == CG_FLOAT) {
                     cgSetParameter1f(parameter, position.x());
@@ -635,10 +638,10 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                 break;
             case CG_FLOAT3:
             case CG_FLOAT4:
-                cgSetParameter4fv(parameter, model->position());
+                cgSetParameter4fv(parameter, model->worldPosition());
                 break;
             case CG_FLOAT4x4:
-                m_delegateRef->getMatrix(matrix4x4, model, IRenderDelegate::kWorldMatrix | IRenderDelegate::kCameraMatrix);
+                m_renderContextRef->getMatrix(matrix4x4, model, IRenderContext::kWorldMatrix | IRenderContext::kCameraMatrix);
                 cgSetMatrixParameterfr(parameter, matrix4x4);
                 break;
             default:
@@ -671,9 +674,9 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
 
 /* RenderColorTargetSemantic */
 
-RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderDelegate *delegate)
+RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderContext *renderContextRef)
     : BaseParameter(),
-      m_delegateRef(delegate)
+      m_renderContextRef(renderContextRef)
 {
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
@@ -685,7 +688,7 @@ RenderColorTargetSemantic::~RenderColorTargetSemantic()
     const int ntextures = m_textures.count();
     if (ntextures > 0)
         glDeleteTextures(ntextures, &m_textures[0]);
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
 }
 
 void RenderColorTargetSemantic::addParameter(CGparameter parameter,
@@ -701,32 +704,32 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
         const size_t len = strlen(typeName);
         const CGtype samplerType = cgGetParameterType(sampler);
         if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == CG_SAMPLERCUBE) {
-            flags = IRenderDelegate::kTextureCube;
+            flags = IRenderContext::kTextureCube;
         }
         else if (VPVL2_CG_STREQ_CONST(typeName, len, "3D") && samplerType == CG_SAMPLER3D) {
-            flags = IRenderDelegate::kTexture3D;
+            flags = IRenderContext::kTexture3D;
         }
         else if (VPVL2_CG_STREQ_CONST(typeName, len, "2D") && samplerType == CG_SAMPLER2D) {
-            flags = IRenderDelegate::kTexture2D;
+            flags = IRenderContext::kTexture2D;
         }
         else {
             return;
         }
     }
     else {
-        flags = IRenderDelegate::kTexture2D;
+        flags = IRenderContext::kTexture2D;
     }
     const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
     GLuint textureID = 0;
     if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
-        IString *s = m_delegateRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
+        IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
         if (isMimapEnabled(parameter))
-            flags |= IRenderDelegate::kGenerateTextureMipmap;
-        IRenderDelegate::Texture texture;
+            flags |= IRenderContext::kGenerateTextureMipmap;
+        IRenderContext::Texture texture;
         texture.async = false;
         texture.object = &textureID;
-        if (m_delegateRef->uploadTexture(s, dir, flags, texture, 0)) {
+        if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
             textureID = *static_cast<const GLuint *>(texture.object);
             cgGLSetupSampler(sampler, textureID);
             Texture t(texture.width, texture.height, 0, parameter, sampler, textureID);
@@ -738,17 +741,17 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
     }
     else {
         switch (flags) {
-        case IRenderDelegate::kTextureCube:
+        case IRenderContext::kTextureCube:
             break;
-        case IRenderDelegate::kTexture3D:
+        case IRenderContext::kTexture3D:
             textureID = generateTexture3D0(parameter, sampler);
             break;
-        case IRenderDelegate::kTexture2D:
+        case IRenderContext::kTexture2D:
             textureID = generateTexture2D0(parameter, sampler);
             break;
-        case IRenderDelegate::kToonTexture:
-        case IRenderDelegate::kGenerateTextureMipmap:
-        case IRenderDelegate::kMaxTextureTypeFlags:
+        case IRenderContext::kToonTexture:
+        case IRenderContext::kGenerateTextureMipmap:
+        case IRenderContext::kMaxTextureTypeFlags:
         default:
             break;
         }
@@ -900,7 +903,7 @@ void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &wi
         const float *values = cgGetFloatAnnotationValues(viewportRatioAnnotation, &nvalues);
         if (nvalues == 2) {
             Vector3 viewport;
-            m_delegateRef->getViewport(viewport);
+            m_renderContextRef->getViewport(viewport);
             float widthRatio = values[0];
             float heightRatio = values[1];
             width = btMax(1, int(viewport.x() * widthRatio));
@@ -925,7 +928,7 @@ void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &wi
         return;
     }
     Vector3 viewport;
-    m_delegateRef->getViewport(viewport);
+    m_renderContextRef->getViewport(viewport);
     width = btMax(size_t(1), size_t(viewport.x()));
     height = btMax(size_t(1), size_t(viewport.y()));
 }
@@ -953,7 +956,7 @@ void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &wi
         return;
     }
     Vector3 viewport;
-    m_delegateRef->getViewport(viewport);
+    m_renderContextRef->getViewport(viewport);
     width = btMax(size_t(1), size_t(viewport.x()));
     height = btMax(size_t(1), size_t(viewport.y()));
     depth = 24;
@@ -961,8 +964,8 @@ void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &wi
 
 /* RenderDepthStencilSemantic */
 
-RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderDelegate *delegate)
-    : RenderColorTargetSemantic(delegate)
+RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef)
+    : RenderColorTargetSemantic(renderContextRef)
 {
 }
 
@@ -996,8 +999,8 @@ void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter param
 
 /* OffscreenRenderTargetSemantic */
 
-OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(Effect *effect, IRenderDelegate *delegate)
-    : RenderColorTargetSemantic(delegate),
+OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(Effect *effect, IRenderContext *renderContextRef)
+    : RenderColorTargetSemantic(renderContextRef),
       m_effectRef(effect)
 {
 }
@@ -1024,14 +1027,14 @@ void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter paramete
 
 /* AnimatedTextureSemantic */
 
-AnimatedTextureSemantic::AnimatedTextureSemantic(IRenderDelegate *delegate)
-    : m_delegateRef(delegate)
+AnimatedTextureSemantic::AnimatedTextureSemantic(IRenderContext *renderContextRef)
+    : m_renderContextRef(renderContextRef)
 {
 }
 
 AnimatedTextureSemantic::~AnimatedTextureSemantic()
 {
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
 }
 
 void AnimatedTextureSemantic::addParameter(CGparameter parameter)
@@ -1063,13 +1066,13 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
             cgGLGetParameter1f(seekParameter, &seek);
         }
         else {
-            m_delegateRef->getTime(seek, true);
+            m_renderContextRef->getTime(seek, true);
         }
         const CGparameter texParam = renderColorTarget.findParameter(resourceName);
         const RenderColorTargetSemantic::Texture *t = renderColorTarget.findTexture(cgGetParameterName(texParam));
         if (t) {
             GLuint textureID = t->id;
-            m_delegateRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
+            m_renderContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
         }
     }
 }
@@ -1116,48 +1119,103 @@ void TextureValueSemantic::update()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-/* Effect */
+/* Effect::RectRenderEngine */
+class EffectEngine::RectRenderEngine : public internal::BaseRenderEngine
+        #ifdef VPVL2_LINK_QT
+        , protected QGLFunctions
+        #endif
+{
+public:
+    RectRenderEngine(const Scene *sceneRef, IRenderContext *renderContext)
+        : BaseRenderEngine(sceneRef, renderContext)
+    {
+#ifdef VPVL2_LINK_QT
+        initializeGLFunctions();
+#endif
+        initializeExtensions();
+    }
+    ~RectRenderEngine() {
+        glDeleteBuffers(1, &m_verticesBuffer);
+        glDeleteBuffers(1, &m_indicesBuffer);
+    }
 
-EffectEngine::EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate)
-    : world(delegate, IRenderDelegate::kWorldMatrix),
-      view(delegate, IRenderDelegate::kViewMatrix),
-      projection(delegate, IRenderDelegate::kProjectionMatrix),
-      worldView(delegate, IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix),
-      viewProjection(delegate, IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
-      worldViewProjection(delegate, IRenderDelegate::kWorldMatrix | IRenderDelegate::kViewMatrix | IRenderDelegate::kProjectionMatrix),
-      time(delegate),
-      elapsedTime(delegate),
-      controlObject(effect, scene, delegate),
-      renderColorTarget(delegate),
-      renderDepthStencilTarget(delegate),
-      animatedTexture(delegate),
-      offscreenRenderTarget(effect, delegate),
+    void initializeVertexBundle() {
+        glGenBuffers(1, &m_verticesBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(kVertices), kVertices, GL_STATIC_DRAW);
+        glGenBuffers(1, &m_indicesBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        allocateVertexArrayObjects(&m_vertexBundle, 1);
+        bindVertexArrayObject(m_vertexBundle);
+        bindVertexBundle(false);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        unbindVertexArrayObject();
+        unbindVertexBundle(false);
+    }
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !bindVertexArrayObject(m_vertexBundle)) {
+            glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+            glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
+            glTexCoordPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
+        }
+    }
+    void unbindVertexBundle(bool bundle) {
+        if (!bundle || !unbindVertexArrayObject()) {
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        }
+    }
+
+private:
+    GLuint m_vertexBundle;
+    GLuint m_verticesBuffer;
+    GLuint m_indicesBuffer;
+};
+
+/* EffectEngine */
+EffectEngine::EffectEngine(const Scene *scene,
+                           const IString *dir,
+                           Effect *effect,
+                           IRenderContext *renderContextRef)
+    : world(renderContextRef, IRenderContext::kWorldMatrix),
+      view(renderContextRef, IRenderContext::kViewMatrix),
+      projection(renderContextRef, IRenderContext::kProjectionMatrix),
+      worldView(renderContextRef, IRenderContext::kWorldMatrix | IRenderContext::kViewMatrix),
+      viewProjection(renderContextRef, IRenderContext::kViewMatrix | IRenderContext::kProjectionMatrix),
+      worldViewProjection(renderContextRef, IRenderContext::kWorldMatrix | IRenderContext::kViewMatrix | IRenderContext::kProjectionMatrix),
+      time(renderContextRef),
+      elapsedTime(renderContextRef),
+      controlObject(effect, scene, renderContextRef),
+      renderColorTarget(renderContextRef),
+      renderDepthStencilTarget(renderContextRef),
+      animatedTexture(renderContextRef),
+      offscreenRenderTarget(effect, renderContextRef),
       index(0),
-      #ifndef __APPLE__
-      glDrawBuffers(0),
-      #endif /* __APPLE__ */
       m_effectRef(0),
-      m_delegateRef(delegate),
+      m_renderContextRef(renderContextRef),
+      m_rectRenderEngine(0),
       m_scriptOutput(kColor),
       m_scriptClass(kObject),
       m_scriptOrder(IEffect::kStandard)
 {
+    m_rectRenderEngine = new RectRenderEngine(scene, renderContextRef);
 #ifdef VPVL2_LINK_QT
-    const QGLContext *context = QGLContext::currentContext();
-    initializeGLFunctions(context);
-#ifndef __APPLE__
-    glDrawBuffers = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
-#endif /* __APPLE__ */
-#endif /* VPVL2_LINK_QT */
+    initializeGLFunctions();
+#endif
     attachEffect(effect, dir);
 }
 
 EffectEngine::~EffectEngine()
 {
-    glDeleteBuffers(1, &m_verticesBuffer);
-    glDeleteBuffers(1, &m_indicesBuffer);
+    delete m_rectRenderEngine;
+    m_rectRenderEngine = 0;
     m_effectRef = 0;
-    m_delegateRef = 0;
+    m_renderContextRef = 0;
 }
 
 bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
@@ -1309,7 +1367,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
             technique = cgGetNextTechnique(technique);
         }
     }
-    initializeBuffer();
+    m_rectRenderEngine->initializeVertexBundle();
     return true;
 }
 
@@ -1345,20 +1403,12 @@ void EffectEngine::executeProcess(const IModel *model, IEffect::ScriptOrderType 
 {
     if (!model || !m_effectRef || m_scriptOrder != order)
         return;
-    glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
-    glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
-    glTexCoordPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    m_rectRenderEngine->bindVertexBundle(true);
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model->opacity())); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
     executeTechniquePasses(technique, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    m_rectRenderEngine->unbindVertexBundle(true);
 }
 
 void EffectEngine::executeTechniquePasses(const CGtechnique technique,
@@ -1433,23 +1483,23 @@ void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IMode
     const ICamera *camera = scene->camera();
     const Vector3 &cameraPosition = camera->modelViewTransform().getOrigin();
     position.setCameraValue(cameraPosition);
-    direction.setCameraValue((cameraPosition - camera->position()).normalized());
+    direction.setCameraValue((cameraPosition - camera->lookAt()).normalized());
     controlObject.update(model);
 }
 
 void EffectEngine::updateSceneParameters()
 {
     Vector3 viewport;
-    m_delegateRef->getViewport(viewport);
+    m_renderContextRef->getViewport(viewport);
     viewportPixelSize.setValue(viewport);
     Vector4 position;
-    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseCursorPosition);
+    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseCursorPosition);
     mousePosition.setValue(position);
-    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseLeftPressPosition);
+    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseLeftPressPosition);
     leftMouseDown.setValue(position);
-    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseMiddlePressPosition);
+    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseMiddlePressPosition);
     middleMouseDown.setValue(position);
-    m_delegateRef->getMousePosition(position, IRenderDelegate::kMouseRightPressPosition);
+    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseRightPressPosition);
     rightMouseDown.setValue(position);
     time.update();
     elapsedTime.update();
@@ -1586,11 +1636,15 @@ void EffectEngine::setStateFromParameter(const CGeffect effect,
     }
 }
 
-void EffectEngine::executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr)
+void EffectEngine::executePass(CGpass pass,
+                               const GLenum mode,
+                               const GLsizei count,
+                               const GLenum type,
+                               const GLvoid *ptr) const
 {
     if (cgIsPass(pass)) {
         cgSetPassState(pass);
-        glDrawElements(mode, count, type, ptr);
+        drawPrimitives(mode, count, type, ptr);
         cgResetPassState(pass);
     }
 }
@@ -1604,9 +1658,9 @@ void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
     if (state.isRenderTargetBound) {
         if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
             m_renderColorTargets.push_back(target);
-            m_delegateRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+            m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
         }
-        m_delegateRef->bindRenderColorTarget(&texture, width, height, index, kEnableRTAA);
+        m_renderContextRef->bindRenderColorTarget(&texture, width, height, index, kEnableRTAA);
         glViewport(0, 0, width, height);
     }
     else {
@@ -1614,9 +1668,9 @@ void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
         m_renderColorTargets.remove(target);
         const int nRenderColorTargets = m_renderColorTargets.size();
         if (nRenderColorTargets > 0 && target != kBaseRenderColorTargetIndex)
-            m_delegateRef->setRenderColorTargets(&m_renderColorTargets[0], nRenderColorTargets);
-        m_delegateRef->releaseRenderColorTarget(&texture, width, height, index, kEnableRTAA);
-        m_delegateRef->getViewport(viewport);
+            m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], nRenderColorTargets);
+        m_renderContextRef->releaseRenderColorTarget(&texture, width, height, index, kEnableRTAA);
+        m_renderContextRef->getViewport(viewport);
         glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
     }
 }
@@ -1627,20 +1681,20 @@ void EffectEngine::setRenderDepthStencilTargetFromState(const ScriptState &state
     GLuint depthBuffer = state.depthBuffer;
     GLuint stencilBuffer = state.stencilBuffer;
     if (state.isRenderTargetBound) {
-        m_delegateRef->bindRenderDepthStencilTarget(&texture,
-                                                 &depthBuffer,
-                                                 &stencilBuffer,
-                                                 state.width,
-                                                 state.height,
-                                                 kEnableRTAA);
-    }
-    else {
-        m_delegateRef->releaseRenderDepthStencilTarget(&texture,
+        m_renderContextRef->bindRenderDepthStencilTarget(&texture,
                                                     &depthBuffer,
                                                     &stencilBuffer,
                                                     state.width,
                                                     state.height,
                                                     kEnableRTAA);
+    }
+    else {
+        m_renderContextRef->releaseRenderDepthStencilTarget(&texture,
+                                                       &depthBuffer,
+                                                       &stencilBuffer,
+                                                       state.width,
+                                                       state.height,
+                                                       kEnableRTAA);
     }
 }
 
@@ -2074,18 +2128,6 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
         }
     }
     return true;
-}
-
-void EffectEngine::initializeBuffer()
-{
-    glGenBuffers(1, &m_verticesBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(kVertices), kVertices, GL_STATIC_DRAW);
-    glGenBuffers(1, &m_indicesBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 /* EffectEngine::ScriptState */

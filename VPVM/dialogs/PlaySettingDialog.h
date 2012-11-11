@@ -34,18 +34,23 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef PLAYSETTINGDIALOG_H
-#define PLAYSETTINGDIALOG_H
+#ifndef VPVM_PLAYSETTINGDIALOG_H
+#define VPVM_PLAYSETTINGDIALOG_H
 
 #include <QtGui/QDialog>
 
-class MainWindow;
 class QCheckBox;
 class QComboBox;
+class QGroupBox;
 class QLabel;
 class QLineEdit;
 class QSettings;
 class QSpinBox;
+
+namespace vpvm
+{
+
+class MainWindow;
 class SceneLoader;
 class SceneWidget;
 
@@ -78,22 +83,27 @@ private slots:
     void saveSettings();
 
 private:
-    SceneLoader *m_loader;
-    QSettings *m_settings;
-    QLineEdit *m_pathEdit;
-    QPushButton *m_openFileButton;
-    QLabel *m_fromIndexLabel;
-    QLabel *m_toIndexLabel;
-    QLabel *m_sceneFPSLabel;
-    QSpinBox *m_fromIndexBox;
-    QSpinBox *m_toIndexBox;
-    QComboBox *m_sceneFPSBox;
-    QCheckBox *m_loopBox;
-    QCheckBox *m_selectModelBox;
-    QCheckBox *m_boneWireFramesBox;
-    QPushButton *m_playButton;
+    SceneLoader *m_loaderRef;
+    QSettings *m_settingsRef;
+    QScopedPointer<QGroupBox> m_audioGroup;
+    QScopedPointer<QLineEdit> m_pathEdit;
+    QScopedPointer<QPushButton> m_openFileButton;
+    QScopedPointer<QGroupBox> m_timeIndexGroup;
+    QScopedPointer<QLabel> m_fromIndexLabel;
+    QScopedPointer<QLabel> m_toIndexLabel;
+    QScopedPointer<QLabel> m_sceneFPSLabel;
+    QScopedPointer<QSpinBox> m_fromIndexBox;
+    QScopedPointer<QSpinBox> m_toIndexBox;
+    QScopedPointer<QComboBox> m_sceneFPSBox;
+    QScopedPointer<QGroupBox> m_toggleSettingGroup;
+    QScopedPointer<QCheckBox> m_loopBox;
+    QScopedPointer<QCheckBox> m_selectModelBox;
+    QScopedPointer<QCheckBox> m_boneWireFramesBox;
+    QScopedPointer<QPushButton> m_playButton;
 
     Q_DISABLE_COPY(PlaySettingDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // PLAYSETTINGDIALOG_H

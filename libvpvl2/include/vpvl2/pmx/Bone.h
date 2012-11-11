@@ -63,45 +63,47 @@ public:
     /**
      * Constructor
      */
-    Bone();
+    Bone(IModel *modelRef);
     ~Bone();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones);
+    static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
-    void mergeMorph(const Morph::Bone *morph, float weight);
+    void mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight);
     void getLocalTransform(Transform &output) const;
     void getLocalTransform(const Transform &worldTransform, Transform &output) const;
     void performFullTransform();
     void performTransform();
-    void performInverseKinematics();
+    void solveInverseKinematics();
     void performUpdateLocalTransform();
     void resetIKLink();
     const Vector3 &offset() const { return m_offset; }
     const Transform &worldTransform() const { return m_worldTransform; }
     const Transform &localTransform() const { return m_localTransform; }
-    void getLinkedBones(Array<IBone *> &value) const;
+    void getEffectorBones(Array<IBone *> &value) const;
 
-    void setPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
+    void setLocalPosition(const Vector3 &value);
+    void setLocalRotation(const Quaternion &value);
     const Vector3 &fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);
 
-    Bone *parentBone() const { return m_parentBoneRef; }
-    Bone *targetBone() const { return m_targetBoneRef; }
-    Bone *parentInherenceBone() const { return m_parentInherenceBoneRef; }
-    Bone *destinationOriginBone() const { return m_destinationOriginBoneRef; }
+    IModel *parentModelRef() const { return m_modelRef; }
+    IBone *parentBoneRef() const { return m_parentBoneRef; }
+    IBone *targetBoneRef() const { return m_targetBoneRef; }
+    IBone *parentInherenceBoneRef() const { return m_parentInherenceBoneRef; }
+    IBone *destinationOriginBoneRef() const { return m_destinationOriginBoneRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
-    const Quaternion &rotation() const { return m_rotation; }
+    const Quaternion &localRotation() const { return m_rotation; }
     const Vector3 &origin() const { return m_origin; }
     const Vector3 destinationOrigin() const;
-    const Vector3 &position() const { return m_position; }
+    const Vector3 &localPosition() const { return m_localPosition; }
     const Vector3 &axis() const { return m_fixedAxis; }
     const Vector3 &axisX() const { return m_axisX; }
     const Vector3 &axisZ() const { return m_axisZ; }
@@ -146,15 +148,17 @@ public:
     void setRotationInherenceEnable(bool value);
     void setAxisFixedEnable(bool value);
     void setLocalAxisEnable(bool value);
-    void setTransformedAfterPhysicsSimulationEnable(bool value);
+    void setTransformAfterPhysicsEnable(bool value);
     void setTransformedByExternalParentEnable(bool value);
+    void setInverseKinematicsEnable(bool value);
 
 private:
+    IModel *m_modelRef;
     Array<IKLink *> m_IKLinks;
     Bone *m_parentBoneRef;
     Bone *m_targetBoneRef;
     Bone *m_parentInherenceBoneRef;
-    Bone *m_destinationOriginBoneRef;
+    IBone *m_destinationOriginBoneRef;
     IString *m_name;
     IString *m_englishName;
     Quaternion m_rotation;
@@ -165,9 +169,9 @@ private:
     Transform m_localTransform;
     Vector3 m_origin;
     Vector3 m_offset;
-    Vector3 m_position;
-    Vector3 m_positionInherence;
-    Vector3 m_positionMorph;
+    Vector3 m_localPosition;
+    Vector3 m_localPositionInherence;
+    Vector3 m_localPositionMorph;
     Vector3 m_destinationOrigin;
     Vector3 m_fixedAxis;
     Vector3 m_axisX;
@@ -183,7 +187,7 @@ private:
     int m_parentInherenceBoneIndex;
     int m_globalID;
     uint16_t m_flags;
-    bool m_simulated;
+    bool m_enableInverseKinematics;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Bone)
 };

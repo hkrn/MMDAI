@@ -38,7 +38,6 @@
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
 #include "vpvl2/mvd/CameraKeyframe.h"
@@ -49,6 +48,12 @@
 #include "vpvl2/vmd/LightKeyframe.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
+
+#ifdef VPVL2_LINK_VPVL
+#include "vpvl2/pmd/Model.h"
+#else
+#include "vpvl2/pmd2/Model.h"
+#endif
 
 namespace vpvl2
 {
@@ -105,8 +110,8 @@ struct Factory::PrivateContext
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
-            keyframeTo->setPosition(keyframeFrom->position());
-            keyframeTo->setRotation(keyframeFrom->rotation());
+            keyframeTo->setLocalPosition(keyframeFrom->localPosition());
+            keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kX, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kX, value);
@@ -123,7 +128,7 @@ struct Factory::PrivateContext
             mvd::CameraKeyframe *keyframeTo = mvdCameraKeyframe = new mvd::CameraKeyframe();
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
-            keyframeTo->setPosition(keyframeFrom->position());
+            keyframeTo->setLookAt(keyframeFrom->lookAt());
             keyframeTo->setAngle(keyframeFrom->angle());
             keyframeTo->setFov(keyframeFrom->fov());
             keyframeTo->setDistance(keyframeFrom->distance());
@@ -175,8 +180,8 @@ struct Factory::PrivateContext
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
-            keyframeTo->setPosition(keyframeFrom->position());
-            keyframeTo->setRotation(keyframeFrom->rotation());
+            keyframeTo->setLocalPosition(keyframeFrom->localPosition());
+            keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kX, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kX, value);
@@ -193,7 +198,7 @@ struct Factory::PrivateContext
             vmd::CameraKeyframe *keyframeTo = vmdCameraKeyframe = new vmd::CameraKeyframe();
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
-            keyframeTo->setPosition(keyframeFrom->position());
+            keyframeTo->setLookAt(keyframeFrom->lookAt());
             keyframeTo->setAngle(keyframeFrom->angle());
             keyframeTo->setFov(keyframeFrom->fov());
             keyframeTo->setDistance(keyframeFrom->distance());
@@ -298,7 +303,11 @@ IModel *Factory::createModel(IModel::Type type) const
     case IModel::kAsset:
         return new asset::Model(m_context->encoding);
     case IModel::kPMD:
+#ifdef VPVL2_LINK_VPVL
         return new pmd::Model(m_context->encoding);
+#else
+        return new pmd2::Model(m_context->encoding);
+#endif
     case IModel::kPMX:
         return new pmx::Model(m_context->encoding);
     default:

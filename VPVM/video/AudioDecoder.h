@@ -38,8 +38,12 @@
 #define AUDIODECODER_H
 
 #include <QtCore/QtCore>
+#include "IAudioDecoder.h"
 
-class AudioDecoder : public QThread
+namespace vpvm
+{
+
+class AudioDecoder : public QThread, public IAudioDecoder
 {
     Q_OBJECT
 
@@ -47,13 +51,16 @@ public:
     AudioDecoder();
     ~AudioDecoder();
 
+    void startSession();
+    void stopSession();
+    void waitUntilComplete();
+    void setFileName(const QString &value);
     bool canOpen() const;
-    void setFilename(const QString &filename);
-    void stop();
+    bool isFinished() const { return !m_running; }
 
 protected:
     virtual void run();
-    virtual void decodeBuffer(const QByteArray &bytes, float position, int channels);
+    virtual void decodeBuffer(const QByteArray &bytes, qreal position, int channels);
 
 signals:
     void audioDidDecode(const QByteArray &bytes);
@@ -66,5 +73,7 @@ private:
 
     Q_DISABLE_COPY(AudioDecoder)
 };
+
+}
 
 #endif // AUDIODECODER_H

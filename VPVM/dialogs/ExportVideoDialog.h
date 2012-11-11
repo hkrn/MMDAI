@@ -34,18 +34,24 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef EXPORTVIDEODIALOG_H
-#define EXPORTVIDEODIALOG_H
+#ifndef VPVM_EXPORTVIDEODIALOG_H
+#define VPVM_EXPORTVIDEODIALOG_H
 
 #include <QtGui/QDialog>
 
-class MainWindow;
 class QCheckBox;
 class QComboBox;
+class QGroupBox;
+class QLabel;
 class QLineEdit;
 class QPushButton;
 class QSettings;
 class QSpinBox;
+
+namespace vpvm
+{
+
+class MainWindow;
 class SceneLoader;
 class SceneWidget;
 
@@ -78,23 +84,38 @@ protected:
     void showEvent(QShowEvent *event);
 
 private  slots:
+    void retranslate();
     void openFileDialog();
     void saveSettings();
 
 private:
-    SceneLoader *m_loader;
-    QSettings *m_settings;
-    QLineEdit *m_pathEdit;
-    QPushButton *m_openFileButton;
-    QSpinBox *m_widthBox;
-    QSpinBox *m_heightBox;
-    QSpinBox *m_fromIndexBox;
-    QSpinBox *m_toIndexBox;
-    QSpinBox *m_videoBitrateBox;
-    QComboBox *m_sceneFPSBox;
-    QCheckBox *m_includeGridBox;
+    static QSpinBox *createSpinBox(int min, int max);
+
+    SceneLoader *m_loaderRef;
+    QSettings *m_settingsRef;
+    QScopedPointer<QGroupBox> m_audioGroup;
+    QScopedPointer<QLineEdit> m_pathEdit;
+    QScopedPointer<QPushButton> m_openFileButton;
+    QScopedPointer<QGroupBox> m_sceneSizeGroup;
+    QScopedPointer<QLabel> m_widthLabel;
+    QScopedPointer<QSpinBox> m_widthBox;
+    QScopedPointer<QLabel> m_heightLabel;
+    QScopedPointer<QSpinBox> m_heightBox;
+    QScopedPointer<QGroupBox> m_frameIndexGroup;
+    QScopedPointer<QLabel> m_fromIndexLabel;
+    QScopedPointer<QSpinBox> m_fromIndexBox;
+    QScopedPointer<QLabel> m_toIndexLabel;
+    QScopedPointer<QSpinBox> m_toIndexBox;
+    QScopedPointer<QGroupBox> m_encodingSettingGroup;
+    QScopedPointer<QLabel> m_videoBitrateLabel;
+    QScopedPointer<QSpinBox> m_videoBitrateBox;
+    QScopedPointer<QLabel> m_sceneFPSLabel;
+    QScopedPointer<QComboBox> m_sceneFPSBox;
+    QScopedPointer<QCheckBox> m_includeGridBox;
 
     Q_DISABLE_COPY(ExportVideoDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // EXPORTVIDEODIALOG_H

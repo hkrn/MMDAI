@@ -63,16 +63,16 @@ namespace vpvl2
 namespace vmd
 {
 
-struct InternalMorphKeyFrameList {
+struct MorphAnimation::PrivateContext {
     IMorph *morph;
     Array<MorphKeyframe *> keyframes;
-    float weight;
+    IMorph::WeightPrecision weight;
     int lastIndex;
 
     bool isNull() const {
         if (keyframes.count() == 1) {
-            const MorphKeyframe *keyFrame = keyframes[0];
-            return keyFrame->weight() == 0.0f;
+            const MorphKeyframe *keyframe = keyframes[0];
+            return keyframe->weight() == 0.0f;
         }
         return false;
     }
@@ -88,7 +88,7 @@ MorphAnimation::MorphAnimation(IEncoding *encoding)
 
 MorphAnimation::~MorphAnimation()
 {
-    m_name2keyframes.releaseAll();
+    m_name2contexts.releaseAll();
     m_modelRef = 0;
 }
 
@@ -97,88 +97,88 @@ void MorphAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        MorphKeyframe *frame = new MorphKeyframe(m_encodingRef);
-        m_keyframes.add(frame);
-        frame->read(ptr);
-        ptr += frame->estimateSize();
+        MorphKeyframe *keyframe = new MorphKeyframe(m_encodingRef);
+        m_keyframes.add(keyframe);
+        keyframe->read(ptr);
+        ptr += keyframe->estimateSize();
     }
 }
 
-void MorphAnimation::seek(const IKeyframe::TimeIndex &frameAt)
+void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
     if (!m_modelRef)
         return;
-    const int nnodes = m_name2keyframes.count();
+    const int ncontexts = m_name2contexts.count();
     m_modelRef->resetVertices();
-    for (int i = 0; i < nnodes; i++) {
-        InternalMorphKeyFrameList *frames = *m_name2keyframes.value(i);
-        if (m_enableNullFrame && frames->isNull())
+    for (int i = 0; i < ncontexts; i++) {
+        PrivateContext *context = *m_name2contexts.value(i);
+        if (m_enableNullFrame && context->isNull())
             continue;
-        calculateFrames(frameAt, frames);
-        IMorph *morph = frames->morph;
-        morph->setWeight(frames->weight);
+        calculateFrames(timeIndexAt, context);
+        IMorph *morph = context->morph;
+        morph->setWeight(context->weight);
     }
     m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = frameAt;
+    m_currentTimeIndex = timeIndexAt;
 }
 
 void MorphAnimation::setParentModel(IModel *model)
 {
-    buildInternalNodes(model);
+    createPrivateContexts(model);
     m_modelRef = model;
 }
 
-void MorphAnimation::buildInternalNodes(IModel *model)
+void MorphAnimation::createPrivateContexts(IModel *model)
 {
     if (!model)
         return;
-    const int nframes = m_keyframes.count();
-    m_name2keyframes.releaseAll();
+    const int nkeyframes = m_keyframes.count();
+    m_name2contexts.releaseAll();
     // Build internal node to find by name, not frame index
-    for (int i = 0; i < nframes; i++) {
-        MorphKeyframe *frame = reinterpret_cast<MorphKeyframe *>(m_keyframes.at(i));
-        const IString *name = frame->name();
+    for (int i = 0; i < nkeyframes; i++) {
+        MorphKeyframe *keyframe = reinterpret_cast<MorphKeyframe *>(m_keyframes.at(i));
+        const IString *name = keyframe->name();
         const HashString &key = name->toHashString();
-        InternalMorphKeyFrameList **ptr = m_name2keyframes[key], *node;
+        PrivateContext **ptr = m_name2contexts[key], *context;
         if (ptr) {
-            node = *ptr;
-            node->keyframes.add(frame);
+            context = *ptr;
+            context->keyframes.add(keyframe);
         }
         else {
             IMorph *morph = model->findMorph(name);
             if (morph) {
-                node = new InternalMorphKeyFrameList();
-                node->keyframes.add(frame);
-                node->morph = morph;
-                node->lastIndex = 0;
-                node->weight = 0.0f;
-                m_name2keyframes.insert(key, node);
+                context = new PrivateContext();
+                context->keyframes.add(keyframe);
+                context->morph = morph;
+                context->lastIndex = 0;
+                context->weight = 0.0f;
+                m_name2contexts.insert(key, context);
             }
         }
     }
     // Sort frames from each internal nodes by frame index ascend
-    const int nnodes = m_name2keyframes.count();
-    for (int i = 0; i < nnodes; i++) {
-        InternalMorphKeyFrameList *keyframes = *m_name2keyframes.value(i);
-        Array<MorphKeyframe *> &frames = keyframes->keyframes;
-        frames.sort(MorphAnimationKeyframePredication());
-        btSetMax(m_maxTimeIndex, frames[frames.count() - 1]->timeIndex());
+    const int ncontexts = m_name2contexts.count();
+    for (int i = 0; i < ncontexts; i++) {
+        PrivateContext *context = *m_name2contexts.value(i);
+        Array<MorphKeyframe *> &keyframes = context->keyframes;
+        keyframes.sort(MorphAnimationKeyframePredication());
+        btSetMax(m_maxTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
     }
 }
 
 void MorphAnimation::reset()
 {
     BaseAnimation::reset();
-    const int nnodes = m_name2keyframes.count();
-    for (int i = 0; i < nnodes; i++) {
-        InternalMorphKeyFrameList *node = *m_name2keyframes.value(i);
-        node->lastIndex = 0;
+    const int ncontexts = m_name2contexts.count();
+    for (int i = 0; i < ncontexts; i++) {
+        PrivateContext *context = *m_name2contexts.value(i);
+        context->lastIndex = 0;
     }
 }
 
-MorphKeyframe *MorphAnimation::frameAt(int i) const
+MorphKeyframe *MorphAnimation::keyframeAt(int i) const
 {
-    return i >= 0 && i < m_keyframes.count() ? reinterpret_cast<MorphKeyframe *>(m_keyframes[i]) : 0;
+    return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<MorphKeyframe *>(m_keyframes[i]) : 0;
 }
 
 MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
@@ -186,60 +186,60 @@ MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeInde
     if (!name)
         return 0;
     const HashString &key = name->toHashString();
-    InternalMorphKeyFrameList *const *ptr = m_name2keyframes.find(key);
+    PrivateContext *const *ptr = m_name2contexts.find(key);
     if (ptr) {
-        const InternalMorphKeyFrameList *node = *ptr;
-        const Array<MorphKeyframe *> &frames = node->keyframes;
-        int index = findKeyframeIndex(timeIndex, frames);
-        return index != -1 ? frames[index] : 0;
+        const PrivateContext *context = *ptr;
+        const Array<MorphKeyframe *> &keyframes = context->keyframes;
+        int index = findKeyframeIndex(timeIndex, keyframes);
+        return index != -1 ? keyframes[index] : 0;
     }
     return 0;
 }
 
-void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &frameAt, InternalMorphKeyFrameList *keyFrames)
+void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context)
 {
-    Array<MorphKeyframe *> &kframes = keyFrames->keyframes;
-    const int nframes = kframes.count();
-    MorphKeyframe *lastKeyFrame = kframes.at(nframes - 1);
-    const IKeyframe::TimeIndex &currentFrame = btMin(frameAt, lastKeyFrame->timeIndex());
+    const Array<MorphKeyframe *> &keyframes = context->keyframes;
+    const int nkeyframes = keyframes.count();
+    MorphKeyframe *lastKeyFrame = keyframes.at(nkeyframes - 1);
+    const IKeyframe::TimeIndex &currentTimeIndex = btMin(timeIndexAt, lastKeyFrame->timeIndex());
     // Find the next frame index bigger than the frame index of last key frame
-    int k1 = 0, k2 = 0, lastIndex = keyFrames->lastIndex;
-    if (currentFrame >= kframes.at(lastIndex)->timeIndex()) {
-        for (int i = lastIndex; i < nframes; i++) {
-            if (currentFrame <= kframes.at(i)->timeIndex()) {
+    int k1 = 0, k2 = 0, lastIndex = context->lastIndex;
+    if (currentTimeIndex >= keyframes.at(lastIndex)->timeIndex()) {
+        for (int i = lastIndex; i < nkeyframes; i++) {
+            if (currentTimeIndex <= keyframes.at(i)->timeIndex()) {
                 k2 = i;
                 break;
             }
         }
     }
     else {
-        for (int i = 0; i <= lastIndex && i < nframes; i++) {
-            if (currentFrame <= m_keyframes.at(i)->timeIndex()) {
+        for (int i = 0; i <= lastIndex && i < nkeyframes; i++) {
+            if (currentTimeIndex <= m_keyframes.at(i)->timeIndex()) {
                 k2 = i;
                 break;
             }
         }
     }
 
-    if (k2 >= nframes)
-        k2 = nframes - 1;
+    if (k2 >= nkeyframes)
+        k2 = nkeyframes - 1;
     k1 = k2 <= 1 ? 0 : k2 - 1;
-    keyFrames->lastIndex = k1;
+    context->lastIndex = k1;
 
-    const MorphKeyframe *keyFrameFrom = kframes.at(k1), *keyFrameTo = kframes.at(k2);
-    const IKeyframe::TimeIndex &timeIndexFrom = keyFrameFrom->timeIndex(), timeIndexTo = keyFrameTo->timeIndex();
-    const IMorph::WeightPrecision &weightFrom = keyFrameFrom->weight();
-    const IMorph::WeightPrecision &weightTo = keyFrameTo->weight();
+    const MorphKeyframe *keyframeFrom = keyframes.at(k1), *keyframeTo = keyframes.at(k2);
+    const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
+    const IMorph::WeightPrecision &weightFrom = keyframeFrom->weight();
+    const IMorph::WeightPrecision &weightTo = keyframeTo->weight();
 
     if (timeIndexFrom != timeIndexTo) {
-        const IKeyframe::SmoothPrecision &w = (currentFrame - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
-        keyFrames->weight = internal::lerp(weightFrom, weightTo, w);
+        const IKeyframe::SmoothPrecision &w = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+        context->weight = internal::lerp(weightFrom, weightTo, w);
     }
     else {
-        keyFrames->weight = weightFrom;
+        context->weight = weightFrom;
     }
     m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = frameAt;
+    m_currentTimeIndex = timeIndexAt;
 }
 
 }

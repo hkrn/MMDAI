@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINETREEVIEW_H
-#define TIMELINETREEVIEW_H
+#ifndef VPVM_TIMELINETREEVIEW_H
+#define VPVM_TIMELINETREEVIEW_H
 
 #include <QtCore/QModelIndex>
 #include <QtGui/QHeaderView>
@@ -43,8 +43,13 @@
 
 #include <vpvl2/Common.h>
 
-class MotionBaseModel;
 class QItemDelegate;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
+class MotionBaseModel;
 
 class TimelineTreeView : public QTreeView
 {
@@ -80,15 +85,15 @@ private slots:
     void addCollapsed(const QModelIndex &index);
     void addExpanded(const QModelIndex &index);
     void selectModelIndices(const QItemSelection &selected, const QItemSelection &deselected);
-    void setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
+    void setBoneKeyframesWeightBySelectedIndices(const Vector3 &position, const Vector3 &rotation);
     void setMorphKeyframesWeightBySelectedIndices(float value);
     void updateSectionWidth(int logicalIndex, int newSize, int oldSize);
 
 private:
     void updateFrozenTreeViewGeometry();
 
-    QRubberBand *m_rubberBand;
-    QTreeView *m_frozenTreeView;
+    QScopedPointer<QRubberBand> m_rubberBand;
+    QScopedPointer<QTreeView> m_frozenTreeView;
     QRect m_rubberBandRect;
     QModelIndexList m_expanded;
 
@@ -114,5 +119,7 @@ protected:
 private:
     Q_DISABLE_COPY(TimelineHeaderView)
 };
+
+} /* namespace vpvm */
 
 #endif // TIMELINETREEVIEW_H

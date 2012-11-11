@@ -41,23 +41,28 @@
 
 #include <portaudio.h>
 
+namespace vpvm
+{
+
 class AudioPlayer : public AudioDecoder
 {
     Q_OBJECT
 
 public:
+    static void initializePlayer();
+
     AudioPlayer();
     ~AudioPlayer();
 
-    bool initalize();
-    void stop();
+    bool openOutputDevice();
+    void stopSession();
 
 protected:
     void run();
-    void decodeBuffer(const QByteArray &bytes, float position, int channels);
+    void decodeBuffer(const QByteArray &bytes, qreal position, int channels);
 
 signals:
-    void positionDidAdvance(float diff);
+    void positionDidAdvance(qreal delta);
 
 private:
     PaStream *m_stream;
@@ -65,5 +70,7 @@ private:
 
     Q_DISABLE_COPY(AudioPlayer)
 };
+
+} /* namespace vpvm */
 
 #endif // AUDIOPLAYER_H

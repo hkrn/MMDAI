@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef PMDMOTIONMODEL_H
-#define PMDMOTIONMODEL_H
+#ifndef VPVM_PMDMOTIONMODEL_H
+#define VPVM_PMDMOTIONMODEL_H
 
 #include "models/MotionBaseModel.h"
 
@@ -55,6 +55,11 @@ class QUndoCommand;
 class QUndoGroup;
 class QUndoStack;
 
+namespace vpvm
+{
+
+using namespace vpvl2;
+
 class PMDMotionModel : public MotionBaseModel
 {
     Q_OBJECT
@@ -62,7 +67,7 @@ class PMDMotionModel : public MotionBaseModel
 public:
     class State {
     public:
-        State(const vpvl2::Scene *scene, vpvl2::IModel *model);
+        State(const Scene *scene, IModel *model);
         ~State();
         void restore() const;
         void save();
@@ -71,20 +76,21 @@ public:
         void copyFrom(const State &value);
         void resetBones();
         void resetMorphs();
-        vpvl2::IModel *model() const { return m_model; }
-        void setModel(vpvl2::IModel *value) { m_model = value; }
+        IModel *model() const { return m_modelRef; }
+        void setModelRef(IModel *value) { m_modelRef = value; }
+        void setSceneRef(const Scene *value) { m_sceneRef = value; }
     private:
-        typedef QPair<vpvl2::Vector3, vpvl2::Quaternion> Transform;
-        typedef QPair<vpvl2::IBone *, Transform> Bone;
-        typedef QPair<vpvl2::IMorph *, vpvl2::Scalar> Morph;
-        const vpvl2::Scene *m_scene;
-        vpvl2::IModel *m_model;
+        typedef QPair<Vector3, Quaternion> Transform;
+        typedef QPair<IBone *, Transform> Bone;
+        typedef QPair<IMorph *, Scalar> Morph;
+        const Scene *m_sceneRef;
+        IModel *m_modelRef;
         QList<Bone> m_bones;
         QList<Morph> m_morphs;
         Q_DISABLE_COPY(State)
     };
 
-    explicit PMDMotionModel(QUndoGroup *undo, QObject *parent = 0);
+    explicit PMDMotionModel(QUndoGroup *undoRef, QObject *parent = 0);
     ~PMDMotionModel();
 
     QVariant data(const QModelIndex &index, int role) const;
@@ -95,48 +101,50 @@ public:
     virtual void commitTransform() = 0;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    void updateModel(vpvl2::IModel *model, bool seek);
-    void refreshModel(vpvl2::IModel *model);
+    void updateModel(IModel *model, bool seek);
+    void refreshModel(IModel *model);
     void setActiveUndoStack();
     int maxFrameIndex() const;
     bool forceCameraUpdate() const;
-    void setScenePtr(const vpvl2::Scene *value);
+    virtual void setSceneRef(const Scene *value);
 
-    vpvl2::IModel *selectedModel() const { return m_model; }
-    const Keys keys() const { return m_keys[m_model]; }
-    const vpvl2::Scene *scene() const { return m_scene; }
+    IModel *selectedModel() const { return m_modelRef; }
+    const Keys keys() const { return m_keys[m_modelRef]; }
+    const Scene *scene() const { return m_sceneRef; }
 
 public slots:
-    virtual void loadMotion(vpvl2::IMotion *motion, const vpvl2::IModel *model) = 0;
-    virtual void setPMDModel(vpvl2::IModel *model) = 0;
+    virtual void loadMotion(IMotion *motion, const IModel *model) = 0;
+    virtual void setPMDModel(IModel *model) = 0;
     virtual void removeModel() = 0;
-    void markAsNew(vpvl2::IModel *model);
+    void markAsNew(IModel *model);
 
 signals:
-    void modelDidChange(vpvl2::IModel *model);
-    void motionDidUpdate(vpvl2::IModel *model);
+    void modelDidChange(IModel *model);
+    void motionDidUpdate(IModel *model);
 
 protected:
-    void removePMDModel(vpvl2::IModel *model);
-    void removePMDMotion(vpvl2::IModel *model);
-    void addPMDModel(vpvl2::IModel *model, const RootPtr &root, const Keys &keys);
-    bool hasPMDModel(vpvl2::IModel *model) const { return m_roots.contains(model); }
-    const Values values() const { return m_values[m_model]; }
-    RootPtr rootPtr() const { return rootPtr(m_model); }
-    RootPtr rootPtr(vpvl2::IModel *model) const { return m_roots[model]; }
-    ITreeItem *root() const { return rootPtr().data(); }
+    void removePMDModel(IModel *model);
+    void removePMDMotion(IModel *model);
+    void addPMDModel(IModel *model, const RootPtr &rootRef, const Keys &keys);
+    bool hasPMDModel(IModel *model) const { return m_roots.contains(model); }
+    const Values values() const { return m_values[m_modelRef]; }
+    RootPtr rootPtr() const { return rootPtr(m_modelRef); }
+    RootPtr rootPtr(IModel *model) const { return m_roots[model]; }
+    ITreeItem *rootRef() const { return rootPtr().data(); }
 
-    const vpvl2::Scene *m_scene;
-    vpvl2::IModel *m_model;
-    vpvl2::Vector3 m_lightDirection;
+    const Scene *m_sceneRef;
+    IModel *m_modelRef;
+    Vector3 m_lightDirection;
 
 private:
-    QHash<vpvl2::IModel *, Keys> m_keys;
-    QHash<vpvl2::IModel *, Values> m_values;
-    QHash<vpvl2::IModel *, RootPtr> m_roots;
-    QHash<vpvl2::IModel *, UndoStackPtr> m_stacks;
+    QHash<IModel *, Keys> m_keys;
+    QHash<IModel *, Values> m_values;
+    QHash<IModel *, RootPtr> m_roots;
+    QHash<IModel *, UndoStackPtr> m_stacks;
 
     Q_DISABLE_COPY(PMDMotionModel)
 };
+
+}
 
 #endif

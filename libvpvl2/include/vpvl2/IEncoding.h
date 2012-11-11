@@ -65,13 +65,21 @@ public:
         kArm,
         kWrist,
         kCenter,
+        kAsterisk,
+        kSPHExtension,
+        kSPAExtension,
+        kRightKnee,
+        kLeftKnee,
+        kRootBoneAsset,
+        kScaleBoneAsset,
+        kOpacityMorphAsset,
         kMaxConstantType
     };
 
     virtual ~IEncoding() {}
 
     /**
-     * 長さ size を持つ bytes 文字列を codec に基づいて変換し、IString として返します。
+     * 長さ size を持つ bytes 文字列を codec に基づいて変換し、IString として返します.
      *
      * libvpvl2 側で delete を呼ぶため、スタック上ではなくヒープ上で作成してください。
      *
@@ -83,7 +91,7 @@ public:
     virtual IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const = 0;
 
     /**
-     * 最大長 maxlen であることが保証されている bytes 文字列を codec に基づいて変換し、IString として返します。
+     * 最大長 maxlen であることが保証されている bytes 文字列を codec に基づいて変換し、IString として返します.
      *
      * 文字列の長さは strnlen などを使って文字列の長さを知る必要があります。
      * libvpvl2 側で delete を呼ぶため、スタック上ではなくヒープ上で作成してください。
@@ -96,7 +104,7 @@ public:
     virtual IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const = 0;
 
     /**
-     * value を codec に基づいて変換し、バッファとして返します。
+     * value を codec に基づいて変換し、バッファとして返します.
      *
      * libvpvl2 側で toByteArray が呼ばれた後領域を使用後必ず disposeByteArray を呼びます。
      *
@@ -108,7 +116,7 @@ public:
     virtual uint8_t *toByteArray(const IString *value, IString::Codec codec) const = 0;
 
     /**
-     * value をメモリ上から解放します。
+     * value をメモリ上から解放します.
      *
      * value は必ず toByteArray から呼ばれたものが渡されます。
      *
@@ -118,7 +126,7 @@ public:
     virtual void disposeByteArray(uint8_t *value) const = 0;
 
     /**
-     * 指定された定数から不変の文字列を返します。
+     * 指定された定数から不変の文字列を返します.
      *
      * 返す文字列は IEncoding を継承するクラスがスタックとして保持するか、あるいはヒープ上で管理していることを想定しています。
      * そのため、new してそのまま返さないようにしてください。メモリリークの原因となってしまいます。
@@ -128,6 +136,6 @@ public:
     virtual const IString *stringConstant(ConstantType value) const = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif

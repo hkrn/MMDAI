@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SHADOWMAPSETTINGDIALOG_H
-#define SHADOWMAPSETTINGDIALOG_H
+#ifndef VPVM_SHADOWMAPSETTINGDIALOG_H
+#define VPVM_SHADOWMAPSETTINGDIALOG_H
 
 #include <QtGui/QDialog>
 #include <vpvl2/Common.h>
@@ -45,6 +45,10 @@ class QDoubleSpinBox;
 class QLabel;
 class QComboBox;
 
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class ShadowMapSettingDialog : public QDialog
@@ -57,7 +61,7 @@ public:
 signals:
     void sizeDidChange(const QSize &value);
     void softShadowDidEnable(bool value);
-    void boundingSphereDidChange(const vpvl2::Vector4 &value);
+    void boundingSphereDidChange(const Vector4 &value);
 
 private slots:
     void retranslate();
@@ -65,19 +69,21 @@ private slots:
     void toggleLightViewParameter(bool value);
 
 private:
-    QDoubleSpinBox *createSpinBox(double min, double max);
+    static QDoubleSpinBox *createSpinBox(double min, double max);
 
-    QLabel *m_sizeLabel;
-    QComboBox *m_sizeComboBox;
-    QCheckBox *m_enableSoftShadow;
-    QCheckBox *m_enableAutoLightView;
-    QLabel *m_centerLabel;
-    QDoubleSpinBox *m_x;
-    QDoubleSpinBox *m_y;
-    QDoubleSpinBox *m_z;
-    QLabel *m_radiusLabel;
-    QDoubleSpinBox *m_radius;
-    vpvl2::Vector4 m_boundingSphere;
+    QScopedPointer<QLabel> m_sizeLabel;
+    QScopedPointer<QComboBox> m_sizeComboBox;
+    QScopedPointer<QCheckBox> m_enableSoftShadow;
+    QScopedPointer<QCheckBox> m_enableAutoLightView;
+    QScopedPointer<QLabel> m_centerLabel;
+    QScopedPointer<QDoubleSpinBox> m_x;
+    QScopedPointer<QDoubleSpinBox> m_y;
+    QScopedPointer<QDoubleSpinBox> m_z;
+    QScopedPointer<QLabel> m_radiusLabel;
+    QScopedPointer<QDoubleSpinBox> m_radius;
+    Vector4 m_boundingSphere;
 };
+
+} /* namespace vpvm */
 
 #endif // SHADOWMAPSETTINGDIALOG_H

@@ -34,99 +34,94 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef GRID_H
-#define GRID_H
+#ifndef VPVM_GRID_H_
+#define VPVM_GRID_H_
 
 #include <QtGlobal>
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
 #include <vpvl2/Common.h>
+#include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
 
 #include "SceneLoader.h"
+#include "VertexBundle.h"
 
-namespace internal {
+namespace vpvm {
 
 using namespace vpvl2;
 
 class Grid {
 public:
-    struct Vertex {
-        Vector3 position;
-        Vector3 color;
-    };
-
     Grid()
         : m_size(50.0, 50.0, 50.0, 5.0),
           m_lineColor(0.5, 0.5, 0.5),
           m_axisXColor(1.0, 0.0, 0.0),
           m_axisYColor(0.0, 1.0, 0.0),
           m_axisZColor(0.0, 0.0, 1.0),
-          m_vbo(0),
-          m_ibo(0),
-          m_list(0)
+          m_vbo(QGLBuffer::VertexBuffer),
+          m_ibo(QGLBuffer::IndexBuffer),
+          m_nindices(0)
     {
     }
     ~Grid() {
-        QGLFunctions func(QGLContext::currentContext());
-        if (m_vbo) {
-            func.glDeleteBuffers(1, &m_vbo);
-            m_vbo = 0;
-        }
-        if (m_ibo) {
-            func.glDeleteBuffers(1, &m_ibo);
-            m_ibo = 0;
-        }
-        if (m_list) {
-            glDeleteLists(m_list, 1);
-            m_list = 0;
-        }
     }
 
     void load() {
         // draw black grid
+        Array<Vertex> vertices;
+        Array<uint8_t> indices;
         Scalar width = m_size.x(), height = m_size.y(), depth = m_size.z(), gridSize = m_size.w();
         uint8_t index = 0;
-        for (Scalar x = -width; x <= width; x += gridSize)
-            addLine(Vector3(x, 0.0, -width), Vector3(x, 0.0, x == 0 ? 0.0 : width), m_lineColor, index);
-        for (Scalar z = -height; z <= height; z += gridSize)
-            addLine(Vector3(-height, 0.0f, z), Vector3(z == 0 ? 0.0f : height, 0.0f, z), m_lineColor, index);
+        for (Scalar x = -width; x <= width; x += gridSize) {
+            Vector3 from(x, 0.0, -width), to(x, 0.0, x == 0 ? 0.0 : width);
+            addLine(from, to, m_lineColor, vertices, indices, index);
+        }
+        for (Scalar z = -height; z <= height; z += gridSize) {
+            Vector3 from(-height, 0.0f, z), to(z == 0 ? 0.0f : height, 0.0f, z);
+            addLine(from, to, m_lineColor, vertices, indices, index);
+        }
         // X coordinate (red)
-        addLine(kZeroV3, Vector3(width, 0.0f, 0.0f), m_axisXColor, index);
+        addLine(kZeroV3, Vector3(width, 0.0f, 0.0f), m_axisXColor, vertices, indices, index);
         // Y coordinate (green)
-        addLine(kZeroV3, Vector3(0.0f, height, 0.0f), m_axisYColor, index);
+        addLine(kZeroV3, Vector3(0.0f, height, 0.0f), m_axisYColor, vertices, indices, index);
         // Z coordinate (blue)
-        addLine(kZeroV3, Vector3(0.0f, 0.0f, depth), m_axisZColor, index);
-        QGLFunctions func(QGLContext::currentContext());
-        func.glGenBuffers(1, &m_vbo);
-        func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        func.glBufferData(GL_ARRAY_BUFFER, m_vertices.count() * sizeof(Vertex), &m_vertices[0].position, GL_STATIC_DRAW);
-        func.glGenBuffers(1, &m_ibo);
-        func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-        func.glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.count() * sizeof(uint8_t), &m_indices[0], GL_STATIC_DRAW);
+        addLine(kZeroV3, Vector3(0.0f, 0.0f, depth), m_axisZColor, vertices, indices, index);
         m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
         m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
+        m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
+        m_program.bindAttributeLocation("inColor", IModel::IBuffer::kNormalStride);
         m_program.link();
+        m_vbo.setUsagePattern(QGLBuffer::StaticDraw);
+        m_vbo.create();
+        m_vbo.bind();
+        m_vbo.allocate(&vertices[0].position, sizeof(Vertex) * vertices.count());
+        m_vbo.release();
+        m_ibo.setUsagePattern(QGLBuffer::StaticDraw);
+        m_ibo.create();
+        m_ibo.bind();
+        m_ibo.allocate(&indices[0], sizeof(uint8_t) * indices.count());
+        m_ibo.release();
+        m_bundle.initialize(QGLContext::currentContext());
+        m_bundle.create();
+        m_bundle.bind();
+        bindVertexBundle(false);
+        m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
+        m_program.enableAttributeArray(IModel::IBuffer::kNormalStride);
+        m_bundle.release();
+        releaseVertexBundle(false);
+        m_nindices = index;
     }
 
     void draw(const SceneLoader *loader, bool visible) {
         if (visible && m_program.isLinked()) {
             m_program.bind();
-            QGLFunctions func(QGLContext::currentContext());
-            func.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-            func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
             QMatrix4x4 world, view, projection;
             loader->getCameraMatrices(world, view, projection);
             m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
-            int inPosition = m_program.attributeLocation("inPosition");
-            m_program.enableAttributeArray(inPosition);
-            m_program.setAttributeBuffer(inPosition, GL_FLOAT, 0, 3, sizeof(Vertex));
-            int inColor = m_program.attributeLocation("inColor");
-            m_program.enableAttributeArray(inColor);
-            m_program.setAttributeBuffer(inColor, GL_FLOAT, sizeof(Vector3), 3, sizeof(Vertex));
-            glDrawElements(GL_LINES, m_indices.count(), GL_UNSIGNED_BYTE, 0);
-            func.glBindBuffer(GL_ARRAY_BUFFER, 0);
-            func.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            bindVertexBundle(true);
+            glDrawElements(GL_LINES, m_nindices, GL_UNSIGNED_BYTE, 0);
+            releaseVertexBundle(true);
             m_program.release();
         }
     }
@@ -138,33 +133,60 @@ public:
     void setAxisZColor(const Vector3 &value) { m_axisZColor = value; }
 
 private:
-    void addLine(const Vector3 &from, const Vector3 &to, const Vector3 &color, uint8_t &index) {
-        Vertex f, t;
-        f.position = from;
-        f.color = color;
-        t.position = to;
-        t.color = color;
-        m_vertices.add(f);
-        m_vertices.add(t);
-        m_indices.add(index++);
-        m_indices.add(index++);
+    struct Vertex {
+        Vertex() {}
+        Vertex(const Vector3 &p, const Vector3 &c)
+            : position(p),
+              color(c)
+        {
+        }
+        Vector3 position;
+        Vector3 color;
+    };
+    void addLine(const Vector3 &from,
+                 const Vector3 &to,
+                 const Vector3 &color,
+                 Array<Vertex> &vertices,
+                 Array<uint8_t> &indices,
+                 uint8_t &index)
+    {
+        vertices.add(Vertex(from, color));
+        vertices.add(Vertex(to, color));
+        indices.add(index++);
+        indices.add(index++);
+    }
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.bind()) {
+            m_vbo.bind();
+            m_ibo.bind();
+            m_program.setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Vertex));
+            static const Vertex v;
+            const size_t offset = reinterpret_cast<const uint8_t *>(&v.color)
+                    - reinterpret_cast<const uint8_t *>(&v.position);
+            m_program.setAttributeBuffer(IModel::IBuffer::kNormalStride, GL_FLOAT, offset, 3, sizeof(Vertex));
+        }
+    }
+    void releaseVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.release()) {
+            m_vbo.release();
+            m_ibo.release();
+        }
     }
 
     QGLShaderProgram m_program;
-    Array<Vertex> m_vertices;
-    Array<uint8_t> m_indices;
+    VertexBundle m_bundle;
     Vector4 m_size;
     Vector3 m_lineColor;
     Vector3 m_axisXColor;
     Vector3 m_axisYColor;
     Vector3 m_axisZColor;
-    GLuint m_vbo;
-    GLuint m_ibo;
-    GLuint m_list;
+    QGLBuffer m_vbo;
+    QGLBuffer m_ibo;
+    int m_nindices;
 
     Q_DISABLE_COPY(Grid)
 };
 
-}
+} /* namespace vpvm */
 
 #endif // GRID_H

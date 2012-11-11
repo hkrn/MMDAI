@@ -1,0 +1,136 @@
+/* ----------------------------------------------------------------- */
+/*                                                                   */
+/*  Copyright (c) 2010-2012  hkrn                                    */
+/*                                                                   */
+/* All rights reserved.                                              */
+/*                                                                   */
+/* Redistribution and use in source and binary forms, with or        */
+/* without modification, are permitted provided that the following   */
+/* conditions are met:                                               */
+/*                                                                   */
+/* - Redistributions of source code must retain the above copyright  */
+/*   notice, this list of conditions and the following disclaimer.   */
+/* - Redistributions in binary form must reproduce the above         */
+/*   copyright notice, this list of conditions and the following     */
+/*   disclaimer in the documentation and/or other materials provided */
+/*   with the distribution.                                          */
+/* - Neither the name of the MMDAI project team nor the names of     */
+/*   its contributors may be used to endorse or promote products     */
+/*   derived from this software without specific prior written       */
+/*   permission.                                                     */
+/*                                                                   */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND            */
+/* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,       */
+/* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF          */
+/* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE          */
+/* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS */
+/* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,          */
+/* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED   */
+/* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,     */
+/* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON */
+/* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,   */
+/* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY    */
+/* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
+/* POSSIBILITY OF SUCH DAMAGE.                                       */
+/* ----------------------------------------------------------------- */
+
+#ifndef VPVL2_PMD2_MATERIAL_H_
+#define VPVL2_PMD2_MATERIAL_H_
+
+#include "vpvl2/Common.h"
+#include "vpvl2/IMaterial.h"
+#include "vpvl2/pmd2/Model.h"
+
+namespace vpvl2
+{
+
+namespace pmd2
+{
+
+class VPVL2_API Material : public IMaterial
+{
+public:
+    static const int kNameSize = 20;
+
+    Material(IEncoding *encodingRef);
+    ~Material();
+
+    const IString *name() const { return 0; }
+    const IString *englishName() const { return 0; }
+    const IString *userDataArea() const { return 0; }
+    const IString *mainTexture() const { return m_mainTexture; }
+    const IString *sphereTexture() const { return m_sphereTexture; }
+    const IString *toonTexture() const { return m_toonTextureRef; }
+    SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
+    const Color &ambient() const { return m_ambient; }
+    const Color &diffuse() const { return m_diffuse; }
+    const Color &specular() const { return m_specular; }
+    const Color &edgeColor() const { return m_edgeColor; }
+    const Color &mainTextureBlend() const { return kWhiteColor; }
+    const Color &sphereTextureBlend() const { return kWhiteColor; }
+    const Color &toonTextureBlend() const { return kWhiteColor; }
+    float shininess() const { return m_shininess; }
+    float edgeSize() const { return 1; }
+    int index() const { return m_index; }
+    int textureIndex() const { return -1; }
+    int sphereTextureIndex() const { return -1; }
+    int toonTextureIndex() const { return m_toonTextureIndex; }
+    int indices() const { return m_indices; }
+    bool isSharedToonTextureUsed() const;
+    bool isCullFaceDisabled() const;
+    bool hasShadow() const;
+    bool isShadowMapDrawn() const;
+    bool isSelfShadowDrawn() const;
+    bool isEdgeDrawn() const;
+
+    void setName(const IString * /* value */) {}
+    void setEnglishName(const IString * /* value */) {}
+    void setUserDataArea(const IString * /* value */) {}
+    void setMainTexture(const IString *value);
+    void setSphereTexture(const IString *value);
+    void setToonTexture(const IString *value);
+    void setSphereTextureRenderMode(SphereTextureRenderMode value);
+    void setAmbient(const Color &value);
+    void setDiffuse(const Color &value);
+    void setSpecular(const Color &value);
+    void setEdgeColor(const Color &value);
+    void setShininess(float value);
+    void setEdgeSize(float /* value */) {}
+    void setMainTextureIndex(int /* value */) {}
+    void setSphereTextureIndex(int /* value */) {}
+    void setToonTextureIndex(int /* value */) {}
+    void setIndices(int value);
+    void setFlags(int /* value */) {}
+
+    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool loadMaterials(const Array<Material *> &materials,
+                              const Array<IString *> &textures,
+                              int expectedIndices);
+    static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
+
+    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    size_t estimateSize(const Model::DataInfo &info) const;
+    void write(uint8_t *data, const Model::DataInfo &info) const;
+
+private:
+    static const Color kWhiteColor;
+    IEncoding *m_encodingRef;
+    const IString *m_mainTexture;
+    const IString *m_sphereTexture;
+    const IString *m_toonTextureRef;
+    SphereTextureRenderMode m_sphereTextureRenderMode;
+    Color m_ambient;
+    Color m_diffuse;
+    Color m_specular;
+    Color m_edgeColor;
+    float m_shininess;
+    int m_index;
+    int m_indices;
+    int m_toonTextureIndex;
+    bool m_enableEdge;
+};
+
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
+
+#endif

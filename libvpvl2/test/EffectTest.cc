@@ -1,11 +1,17 @@
 #include "Common.h"
 #include <vpvl2/cg/EffectEngine.h>
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
-#include "mock/RenderDelegate.h"
+#include "mock/RenderContext.h"
 
+using namespace ::testing;
+using namespace std::tr1;
+using namespace vpvl2;
 using namespace vpvl2::cg;
+using namespace vpvl2::extensions::icu;
 
 namespace {
 
@@ -26,7 +32,7 @@ static void AssertParameterVector3(const CGeffect effectPtr, const char *name, c
     const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
     ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
     cgGLGetParameter3f(parameter, v);
-    ASSERT_TRUE(testVector(expected, v));
+    ASSERT_TRUE(CompareVector(expected, v));
 }
 
 static void AssertParameterVector4(const CGeffect effectPtr, const char *name, const Vector4 &expected)
@@ -36,7 +42,7 @@ static void AssertParameterVector4(const CGeffect effectPtr, const char *name, c
     const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
     ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
     cgGLGetParameter4f(parameter, v);
-    ASSERT_TRUE(testVector(expected, v));
+    ASSERT_TRUE(CompareVector(expected, v));
 }
 
 static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, const float *expected)
@@ -49,31 +55,47 @@ static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, co
     AssertMatrix(expected, v);
 }
 
+class MockEffectEngine : public EffectEngine {
+public:
+    MockEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef)
+        : EffectEngine(scene, dir, effect, renderContextRef)
+    {
+    }
+
+protected:
+    void drawPrimitives(const GLenum /*mode*/,
+                        const GLsizei /*count*/,
+                        const GLenum /*type*/,
+                        const GLvoid */*ptr*/) const
+    {
+    }
+};
+
 class EffectTest : public ::testing::Test {
 public:
-    void setMatrix(MockIRenderDelegate &delegate, const IModel *modelPtr, int flags) {
-        int cw = IRenderDelegate::kWorldMatrix | flags;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cw)).Times(1).WillRepeatedly(Return());
-        int cv = IRenderDelegate::kViewMatrix | flags;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cv)).Times(1).WillRepeatedly(Return());
-        int cp = IRenderDelegate::kProjectionMatrix | flags;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cp)).Times(1).WillRepeatedly(Return());
+    void setMatrix(MockIRenderContext &renderContextRef, const IModel *modelPtr, int flags) {
+        int cw = IRenderContext::kWorldMatrix | flags;
+        EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, cw)).Times(1).WillRepeatedly(Return());
+        int cv = IRenderContext::kViewMatrix | flags;
+        EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, cv)).Times(1).WillRepeatedly(Return());
+        int cp = IRenderContext::kProjectionMatrix | flags;
+        EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, cp)).Times(1).WillRepeatedly(Return());
         int cwv = cw | cv;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwv)).Times(1).WillRepeatedly(Return());
+        EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, cwv)).Times(1).WillRepeatedly(Return());
         int cvp = cv | cp;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cvp)).Times(1).WillRepeatedly(Return());
+        EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, cvp)).Times(1).WillRepeatedly(Return());
         int cwvp = cw | cv | cp;
-        EXPECT_CALL(delegate, getMatrix(_, modelPtr, cwvp)).Times(1).WillRepeatedly(Return());
+        EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, cwvp)).Times(1).WillRepeatedly(Return());
     }
-    cg::Effect *createEffect(const QString &effectPath, Scene &scene, MockIRenderDelegate &delegate, CGeffect &ptr) {
+    cg::Effect *createEffect(const QString &effectPath, Scene &scene, MockIRenderContext &renderContextRef, CGeffect &ptr) {
         QFile file(effectPath);
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
-            CString *source = new CString(bytes);
-            EXPECT_CALL(delegate, getViewport(_)).Times(AnyNumber()).WillRepeatedly(Return());
-            EXPECT_CALL(delegate, loadShaderSource(IRenderDelegate::kModelEffectTechniques, _))
+            String *source = new String(UnicodeString::fromUTF8(bytes.constData()));
+            EXPECT_CALL(renderContextRef, getViewport(_)).Times(AnyNumber()).WillRepeatedly(Return());
+            EXPECT_CALL(renderContextRef, loadShaderSource(IRenderContext::kModelEffectTechniques, _))
                     .Times(1).WillRepeatedly(Return(source));
-            cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(0, &delegate));
+            cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(0, &renderContextRef));
             ptr = static_cast<CGeffect>(effect->internalPointer());
             return effect;
         }
@@ -85,10 +107,10 @@ public:
 
 TEST_F(EffectTest, ToBool)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, delegate, effectPtr));
+    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
     Q_UNUSED(ptr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     ASSERT_TRUE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
@@ -100,10 +122,10 @@ TEST_F(EffectTest, ToBool)
 
 TEST_F(EffectTest, ToFloat)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, delegate, effectPtr));
+    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
     Q_UNUSED(ptr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
@@ -115,10 +137,10 @@ TEST_F(EffectTest, ToFloat)
 
 TEST_F(EffectTest, ToInt)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, delegate, effectPtr));
+    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
     Q_UNUSED(ptr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     ASSERT_EQ(0, Util::toInt(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
@@ -130,10 +152,10 @@ TEST_F(EffectTest, ToInt)
 
 TEST_F(EffectTest, IsPassEquals)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, delegate, effectPtr));
+    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
     Q_UNUSED(ptr);
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     const char target[] = "This is string.";
@@ -166,10 +188,10 @@ TEST_F(EffectTest, IsIntegerParameter)
         { "TextureValue",   false },
         { "Texture2DValue", false }
     };
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, delegate, effectPtr));
+    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
     Q_UNUSED(ptr);
     const int nexpects = sizeof(expects) / sizeof(expects[0]);
     for (int i = 0; i < nexpects; i++) {
@@ -182,30 +204,32 @@ TEST_F(EffectTest, IsIntegerParameter)
 
 TEST_F(EffectTest, LoadMatrices)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     MockIModel model, *modelPtr = &model;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/matrices.cgfx", scene, delegate, effectPtr));
-    setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix);
-    setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix);
-    setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix);
-    setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix  | IRenderDelegate::kInverseMatrix);
-    setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix | IRenderDelegate::kTransposeMatrix);
-    setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix  | IRenderDelegate::kTransposeMatrix);
-    setMatrix(delegate, modelPtr, IRenderDelegate::kCameraMatrix | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
-    setMatrix(delegate, modelPtr, IRenderDelegate::kLightMatrix  | IRenderDelegate::kInverseMatrix | IRenderDelegate::kTransposeMatrix);
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/matrices.cgfx", scene, renderContextRef, effectPtr));
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kCameraMatrix);
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kLightMatrix);
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix);
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kLightMatrix  | IRenderContext::kInverseMatrix);
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kCameraMatrix | IRenderContext::kTransposeMatrix);
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kLightMatrix  | IRenderContext::kTransposeMatrix);
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
+    setMatrix(renderContextRef, modelPtr, IRenderContext::kLightMatrix  | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     engine.setModelMatrixParameters(modelPtr, 0, 0);
 }
 
 TEST_F(EffectTest, LoadMaterialColors)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/materials.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/materials.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     Vector4 v;
     float f;
     {
@@ -234,11 +258,12 @@ TEST_F(EffectTest, LoadMaterialColors)
 
 TEST_F(EffectTest, LoadGeometries)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/geometries.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/geometries.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     Vector4 v;
     cgGLGetParameter4f(engine.direction.cameraParameter(), v);
     ASSERT_EQ(Vector4(0.01, 0.02, 0.03, 0.04), v);
@@ -252,13 +277,14 @@ TEST_F(EffectTest, LoadGeometries)
 
 TEST_F(EffectTest, LoadControlObjectWithoutAsset)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
-    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
+    EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(0);
     AssertParameterFloat(effectPtr, "no_such_asset_bool", 0);
     AssertParameterFloat(effectPtr, "no_such_asset_float", 0);
@@ -288,21 +314,22 @@ static void MatrixSetIdentity(float *value, const IModel * /* model */, int /* f
 
 TEST_F(EffectTest, LoadControlObjectWithAsset)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     MockIModel model, *modelPtr = &model;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
-    EXPECT_CALL(model, position()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
-    EXPECT_CALL(model, rotation()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kRotation));
+    EXPECT_CALL(model, worldPosition()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
+    EXPECT_CALL(model, worldRotation()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kRotation));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
     EXPECT_CALL(model, opacity()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kOpacity));
     EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kAsset));
-    EXPECT_CALL(delegate, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
-    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
+    EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
+    EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(&model);
     AssertParameterFloat(effectPtr, "asset_bool", 1);
     AssertParameterFloat(effectPtr, "asset_float", kScaleFactor);
@@ -325,13 +352,14 @@ TEST_F(EffectTest, LoadControlObjectWithAsset)
 
 TEST_F(EffectTest, LoadControlObjectWithoutModel)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
-    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("model"));
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
+    EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("model"));
     engine.controlObject.update(0);
     AssertParameterFloat(effectPtr, "no_such_model_bool", 0);
     AssertParameterFloat(effectPtr, "no_such_model_float", 0);
@@ -342,28 +370,29 @@ TEST_F(EffectTest, LoadControlObjectWithoutModel)
 
 TEST_F(EffectTest, LoadControlObjectWithModel)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     MockIModel model, *modelPtr = &model;
     MockIBone bone, *bonePtr = &bone;
     MockIMorph morph, *morphPtr = &morph;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     Transform boneTransform;
     boneTransform.setIdentity();
     boneTransform.setOrigin(kPosition);
     EXPECT_CALL(bone, worldTransform()).Times(AnyNumber()).WillRepeatedly(ReturnRef(boneTransform));
     EXPECT_CALL(morph, weight()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
     EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
-    EXPECT_CALL(model, position()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
+    EXPECT_CALL(model, worldPosition()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kPosition));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(ReturnRef(kScaleFactor));
     EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kPMD));
     EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));
     EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
-    EXPECT_CALL(delegate, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
-    EXPECT_CALL(delegate, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
-    EXPECT_CALL(delegate, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<CString>("asset"));
+    EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
+    EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
+    EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(&model);
     AssertParameterFloat(effectPtr, "model_bool", 1);
     AssertParameterFloat(effectPtr, "model_float", kScaleFactor);
@@ -381,11 +410,12 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
 
 TEST_F(EffectTest, LoadTimes)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/times.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/times.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     float f;
     cgGLGetParameter1f(engine.time.syncDisabledParameter(), &f);
     ASSERT_FLOAT_EQ(0.1, f);
@@ -399,11 +429,12 @@ TEST_F(EffectTest, LoadTimes)
 
 TEST_F(EffectTest, LoadSpecials)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/specials.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/specials.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     float f;
     cgGLGetParameter1f(engine.parthf.baseParameter(), &f);
     ASSERT_FLOAT_EQ(1.0, f);
@@ -427,11 +458,12 @@ TEST_F(EffectTest, LoadSpecials)
 
 TEST_F(EffectTest, LoadSASPreProcess)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/preprocess.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/preprocess.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     ASSERT_EQ(EffectEngine::kScene, engine.scriptClass());
     ASSERT_EQ(IEffect::kPreProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -451,11 +483,12 @@ TEST_F(EffectTest, LoadSASPreProcess)
 
 TEST_F(EffectTest, LoadSASStandard)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -476,11 +509,12 @@ TEST_F(EffectTest, LoadSASStandard)
 
 TEST_F(EffectTest, LoadSASStandard2)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard2.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard2.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -491,11 +525,12 @@ TEST_F(EffectTest, LoadSASStandard2)
 
 TEST_F(EffectTest, LoadSASPostProcess)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/postprocess.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/postprocess.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     ASSERT_EQ(EffectEngine::kSceneOrObject, engine.scriptClass());
     ASSERT_EQ(IEffect::kPostProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
@@ -517,11 +552,12 @@ TEST_F(EffectTest, LoadSASPostProcess)
 
 TEST_F(EffectTest, FindTechniques)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     ASSERT_STREQ("MainTec7",   cgGetTechniqueName(engine.findTechnique("object",     1, 42, true,  true,  true)));
     ASSERT_STREQ("MainTec6",   cgGetTechniqueName(engine.findTechnique("object",     2, 42, false, true,  true)));
     ASSERT_STREQ("MainTec5",   cgGetTechniqueName(engine.findTechnique("object",     3, 42, true,  false, true)));
@@ -544,11 +580,12 @@ class FindTechnique : public EffectTest, public WithParamInterface< tuple<int, i
 
 TEST_P(FindTechnique, TestEdge)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     ASSERT_STREQ("EdgeTec", cgGetTechniqueName(engine.findTechnique("edge",
                                                                     get<0>(GetParam()),
                                                                     get<1>(GetParam()),
@@ -559,11 +596,12 @@ TEST_P(FindTechnique, TestEdge)
 
 TEST_P(FindTechnique, TestShadow)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     ASSERT_STREQ("ShadowTec", cgGetTechniqueName(engine.findTechnique("shadow",
                                                                       get<0>(GetParam()),
                                                                       get<1>(GetParam()),
@@ -577,11 +615,12 @@ INSTANTIATE_TEST_CASE_P(EffectValueTest, FindTechnique,
 
 TEST_F(EffectTest, ParseSyntaxErrorsScript)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "SyntaxErrors");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
@@ -592,11 +631,12 @@ TEST_F(EffectTest, ParseSyntaxErrorsScript)
 
 TEST_F(EffectTest, ParseRenderTargetsScript)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "RenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
@@ -634,11 +674,12 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
 
 TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "InvalidRenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
@@ -650,11 +691,12 @@ TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
 
 TEST_F(EffectTest, ParseLoopScript)
 {
-    MockIRenderDelegate delegate;
+    MockIRenderContext renderContextRef;
     Scene scene;
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, delegate, effectPtr));
-    EffectEngine engine(&scene, 0, ptr.data(), &delegate);
+    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
+    EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
     CGtechnique technique = cgGetNamedTechnique(effectPtr, "Loop");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);

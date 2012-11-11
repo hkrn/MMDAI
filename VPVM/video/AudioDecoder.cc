@@ -40,31 +40,48 @@
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 
-using namespace internal;
+using namespace vpvm;
 
 namespace {
 
-void UIOpenAudio(const QString &filename, AVFormatContext *&formatContext, AVCodecContext *&audioContext, AVStream *&stream)
+struct AVCodecContextCleaner
 {
-    formatContext = OpenInputFormat(filename, "wav");
+    static void cleanup(AVCodecContext *context) {
+        if (context)
+            avcodec_close(context);
+    }
+};
+
+struct AVFormatContextCleaner
+{
+    static void cleanup(AVFormatContext *context) {
+        av_free(context);
+    }
+};
+
+typedef QScopedPointer<AVFormatContext, AVFormatContextCleaner> AVFormatContextPtr;
+typedef QScopedPointer<AVCodecContext, AVCodecContextCleaner> AVCodecContextPtr;
+
+bool UIOpenAudio(const QString &filename,
+                 AVFormatContextPtr &formatContext,
+                 AVCodecContextPtr &audioContext,
+                 AVStream *&stream)
+{
+    formatContext.reset(OpenInputFormat(filename, "wav"));
     if (formatContext->nb_streams  < 1)
-        throw std::bad_exception();
+        return false;
     stream = formatContext->streams[0];
-    audioContext = stream->codec;
+    audioContext.reset(stream->codec);
     if (audioContext->codec_type != AVMEDIA_TYPE_AUDIO)
-        throw std::bad_exception();
-    OpenAVCodec(audioContext, avcodec_find_decoder(audioContext->codec_id));
+        return false;
+    OpenAVCodec(audioContext.data(), avcodec_find_decoder(audioContext->codec_id));
+    return true;
 }
 
-void UICloseAudio(AVFormatContext *formatContext, AVCodecContext *audioContext)
+}
+
+namespace vpvm
 {
-    if (audioContext)
-        avcodec_close(audioContext);
-    if (formatContext)
-        av_free(formatContext);
-}
-
-}
 
 AudioDecoder::AudioDecoder()
     : m_running(true)
@@ -78,71 +95,74 @@ AudioDecoder::~AudioDecoder()
 
 bool AudioDecoder::canOpen() const
 {
+    AVFormatContextPtr formatContext;
+    AVCodecContextPtr audioContext;
     bool ret = true;
-    AVFormatContext *formatContext = 0;
-    AVCodecContext *audioContext = 0;
     if (!m_filename.isEmpty()) {
-        try {
-            AVStream *stream = 0;
-            UIOpenAudio(m_filename, formatContext, audioContext, stream);
+        AVStream *stream = 0;
+        if (UIOpenAudio(m_filename, formatContext, audioContext, stream))
             ret = audioContext->channels == 2 && audioContext->sample_rate == 44100;
-        }
-        catch (std::exception &e) {
-            ret = false;
-        }
     }
     else {
         ret = false;
     }
-    UICloseAudio(formatContext, audioContext);
     return ret;
 }
 
-void AudioDecoder::setFilename(const QString &filename)
+void AudioDecoder::setFileName(const QString &filename)
 {
     m_filename = filename;
 }
 
-void AudioDecoder::stop()
+void AudioDecoder::startSession()
+{
+    m_running = true;
+    start();
+}
+
+void AudioDecoder::stopSession()
 {
     m_running = false;
 }
 
+void AudioDecoder::waitUntilComplete()
+{
+    stopSession();
+    wait();
+}
+
 void AudioDecoder::run()
 {
-    AVFormatContext *formatContext = 0;
-    AVCodecContext *audioContext = 0;
-    AVStream *stream = 0;
+    AVFormatContextPtr formatContext;
+    AVCodecContextPtr audioContext;
     QScopedArrayPointer<int16_t> samples;
+    AVStream *stream = 0;
     AVPacket packet;
     av_init_packet(&packet);
-    try {
-        UIOpenAudio(m_filename, formatContext, audioContext, stream);
+    if (UIOpenAudio(m_filename, formatContext, audioContext, stream)) {
         samples.reset(new int16_t[AVCODEC_MAX_AUDIO_FRAME_SIZE]);
-        float sampleRate = audioContext->sample_rate;
+        qreal sampleRate = audioContext->sample_rate;
         /* フォーマットからパケット単位で読み取り、その音声パケットをデコードするの繰り返しを行う */
-        m_running = true;
+        QByteArray bytes;
         while (m_running) {
             int size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-            if (av_read_frame(formatContext, &packet) < 0)
+            if (av_read_frame(formatContext.data(), &packet) < 0)
                 break;
-            int len = avcodec_decode_audio3(audioContext, samples.data(), &size, &packet);
+            int len = avcodec_decode_audio3(audioContext.data(), samples.data(), &size, &packet);
             if (len < 0)
                 break;
-            const QByteArray bytes(reinterpret_cast<const char *>(samples.data()), size);
-            float position = packet.pts / sampleRate;
+            bytes.setRawData(reinterpret_cast<const char *>(samples.data()), size);
+            qreal position = packet.pts / sampleRate;
             decodeBuffer(bytes, position, audioContext->channels);
         }
         emit audioDidDecodeComplete();
-    } catch (std::exception &e) {
-        /* TODO: エラーメッセージをわかりやすくしたい... */
-        qWarning() << e.what();
-        emit audioDidDecodeError();
     }
-    UICloseAudio(formatContext, audioContext);
 }
 
-void AudioDecoder::decodeBuffer(const QByteArray &bytes, float /* position */, int /* channels */)
+void AudioDecoder::decodeBuffer(const QByteArray &bytes, qreal /* position */, int /* channels */)
 {
     emit audioDidDecode(bytes);
 }
+
+} /* namespace vpvm */
+

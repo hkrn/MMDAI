@@ -43,117 +43,110 @@
 
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
-ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog)
-    : QObject(),
-      m_sceneWidget(sceneWidget),
-      m_dialog(dialog),
-      m_progress(0),
+ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dialog, QObject *parent)
+    : QObject(parent),
+      m_dialogRef(dialog),
+      m_player(new AudioPlayer()),
+      m_progress(new QProgressDialog()),
+      m_sceneWidgetRef(sceneWidget),
+      m_selectedModelRef(0),
       m_format(QApplication::tr("Playing scene frame %1 of %2...")),
-      m_player(0),
-      m_selected(0),
       m_currentFPS(0),
       m_prevSceneFPS(0),
-      m_prevFrameIndex(0),
-      m_frameStep(0),
+      m_prevTimeIndex(0),
       m_totalStep(0),
-      m_audioFrameIndex(0),
-      m_prevAudioFrameIndex(0),
-      m_countForFPS(0),
+      m_audioTimeIndex(0),
+      m_prevAudioTimeIndex(0),
+      m_counterForFPS(0),
       m_restoreState(false)
 {
-    m_renderTimer.setSingleShot(false);
-    m_progress = new QProgressDialog();
     m_progress->setWindowModality(Qt::ApplicationModal);
-    m_player = new AudioPlayer();
 }
 
 ScenePlayer::~ScenePlayer()
 {
-    delete m_player;
-    delete m_progress;
 }
 
 void ScenePlayer::start()
 {
     if (isActive())
         return;
-    int sceneFPS = m_dialog->sceneFPS();
-    m_selected = m_sceneWidget->sceneLoader()->selectedModel();
-    m_prevSceneFPS = m_sceneWidget->sceneLoader()->scene()->preferredFPS();
-    m_prevFrameIndex = m_sceneWidget->currentTimeIndex();
-    m_frameStep = 1.0 / (sceneFPS / Scene::defaultFPS());
+    int sceneFPS = m_dialogRef->sceneFPS();
+    m_selectedModelRef = m_sceneWidgetRef->sceneLoaderRef()->selectedModelRef();
+    m_prevSceneFPS = m_sceneWidgetRef->sceneLoaderRef()->sceneRef()->preferredFPS();
+    m_prevTimeIndex = m_sceneWidgetRef->currentTimeIndex();
     m_totalStep = 0;
-    m_audioFrameIndex = 0;
-    m_prevAudioFrameIndex = 0;
-    m_sceneWidget->stop();
+    m_audioTimeIndex = 0;
+    m_prevAudioTimeIndex = 0;
+    m_sceneWidgetRef->stop();
     /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
-    m_sceneWidget->stopAutomaticRendering();
+    m_sceneWidgetRef->stopAutomaticRendering();
     /* FPS を設定してから物理エンジンを有効にする(FPS設定を反映させるため) */
-    m_sceneWidget->setPreferredFPS(sceneFPS);
-    m_sceneWidget->sceneLoader()->startPhysicsSimulation();
+    m_sceneWidgetRef->setPreferredFPS(sceneFPS);
+    m_sceneWidgetRef->sceneLoaderRef()->startPhysicsSimulation();
     /* 場面を開始位置にシーク */
-    m_sceneWidget->seekMotion(m_dialog->fromIndex(), true, true);
+    m_sceneWidgetRef->seekMotion(m_dialogRef->fromIndex(), true, true);
     /* ハンドルも情報パネルも消す */
-    m_sceneWidget->setHandlesVisible(false);
-    m_sceneWidget->setInfoPanelVisible(false);
-    m_sceneWidget->setBoneWireFramesVisible(m_dialog->isBoneWireframesVisible());
-    if (!m_dialog->isModelSelected())
-        m_sceneWidget->setSelectedModel(0);
+    m_sceneWidgetRef->setHandlesVisible(false);
+    m_sceneWidgetRef->setInfoPanelVisible(false);
+    m_sceneWidgetRef->setBoneWireFramesVisible(m_dialogRef->isBoneWireframesVisible());
+    if (!m_dialogRef->isModelSelected())
+        m_sceneWidgetRef->revertSelectedModel();
     /* 進捗ダイアログ作成 */
     m_progress->reset();
     m_progress->setCancelButtonText(tr("Cancel"));
-    int maxRangeIndex = m_dialog->toIndex() - m_dialog->fromIndex();
+    int maxRangeIndex = m_dialogRef->toIndex() - m_dialogRef->fromIndex();
     m_progress->setRange(0, maxRangeIndex);
     m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
-    float renderTimerInterval = 1000.0 / sceneFPS;
     /* 音声出力準備 */
-    m_player->setFilename(m_sceneWidget->sceneLoader()->backgroundAudio());
-    if (m_player->initalize()) {
-        connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameVariant()));
-        connect(m_player, SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
-        connect(m_player, SIGNAL(positionDidAdvance(float)), SLOT(advanceAudioFrame(float)));
-        m_player->start();
+    const QString &backgroundAudio = m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio();
+    if (!backgroundAudio.isEmpty() && m_player->openOutputDevice()) {
+        m_player->setFileName(backgroundAudio);
+        connect(m_player.data(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
+        connect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), SLOT(advanceAudioFrame(qreal)));
+        m_player->startSession();
     }
     else {
-        connect(&m_renderTimer, SIGNAL(timeout()), SLOT(renderSceneFrameFixed()));
+        m_refreshTimer.start();
     }
     /* 再生用タイマー起動 */
-    m_renderTimer.start(renderTimerInterval);
+    m_updateTimer.start(0, this);
     /* FPS 計測タイマー起動 */
-    m_countForFPS = 0;
-    m_elapsed.start();
+    m_counterForFPS = 0;
+    m_countFPSTimer.start();
     emit renderFrameDidStart();
 }
 
 void ScenePlayer::stop()
 {
     /* 多重登録を防ぐためタイマーと音声出力オブジェクトのシグナルを解除しておく */
-    disconnect(m_player, SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
-    disconnect(m_player, SIGNAL(positionDidAdvance(float)), this, SLOT(advanceAudioFrame(float)));
-    disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameFixed()));
-    disconnect(&m_renderTimer, SIGNAL(timeout()), this, SLOT(renderSceneFrameVariant()));
+    disconnect(m_player.data(), SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
+    disconnect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), this, SLOT(advanceAudioFrame(qreal)));
     /* タイマーと音声出力オブジェクトの停止 */
-    m_player->stop();
-    m_renderTimer.stop();
+    m_player->stopSession();
+    m_updateTimer.stop();
     m_progress->reset();
     /* ハンドルと情報パネルを復帰させる */
-    m_sceneWidget->setHandlesVisible(true);
-    m_sceneWidget->setInfoPanelVisible(true);
-    m_sceneWidget->setBoneWireFramesVisible(true);
-    m_sceneWidget->setSelectedModel(m_selected);
+    m_sceneWidgetRef->setHandlesVisible(true);
+    m_sceneWidgetRef->setInfoPanelVisible(true);
+    m_sceneWidgetRef->setBoneWireFramesVisible(true);
+    m_sceneWidgetRef->setSelectedModel(m_selectedModelRef, SceneWidget::kSelect);
     /* 再生が終わったら物理を無効にする */
-    m_sceneWidget->sceneLoader()->stopPhysicsSimulation();
-    m_sceneWidget->resetMotion();
-    m_sceneWidget->setPreferredFPS(m_prevSceneFPS);
+    m_sceneWidgetRef->sceneLoaderRef()->stopPhysicsSimulation();
+    m_sceneWidgetRef->resetMotion();
+    m_sceneWidgetRef->setPreferredFPS(m_prevSceneFPS);
     /* フレーム位置を再生前に戻す */
-    m_sceneWidget->seekMotion(m_prevFrameIndex, true, true);
+    m_sceneWidgetRef->seekMotion(m_prevTimeIndex, true, true);
     /* SceneWidget を常時レンダリング状態に戻しておく */
-    m_sceneWidget->startAutomaticRendering();
+    m_sceneWidgetRef->startAutomaticRendering();
     m_totalStep = 0;
-    m_audioFrameIndex = 0;
-    m_prevAudioFrameIndex = 0;
+    m_audioTimeIndex = 0;
+    m_prevAudioTimeIndex = 0;
     if (m_restoreState) {
         m_restoreState = false;
         emit renderFrameDidStopAndRestoreState();
@@ -165,70 +158,79 @@ void ScenePlayer::stop()
 
 bool ScenePlayer::isActive() const
 {
-    return m_renderTimer.isActive();
+    return m_updateTimer.isActive();
 }
 
-void ScenePlayer::renderSceneFrameFixed()
+void ScenePlayer::timerEvent(QTimerEvent * /* event */)
 {
-    /* start() 時に計算して固定値でモーションをすすめる */
-    renderSceneFrame0(m_frameStep);
-}
-
-void ScenePlayer::renderSceneFrameVariant()
-{
-    /* advanceStep で増えた分を加算するため、値は可変 */
-    float diff = m_audioFrameIndex - m_prevAudioFrameIndex;
-    if (diff > 0) {
-        renderSceneFrame0(diff);
-        m_prevAudioFrameIndex = m_audioFrameIndex;
+    if (m_player->isRunning()) {
+        /* advanceStep で増えた分を加算するため、値は可変 */
+        qreal delta = m_audioTimeIndex - m_prevAudioTimeIndex;
+        if (delta > 0) {
+            renderScene(delta);
+            m_prevAudioTimeIndex = m_audioTimeIndex;
+        }
     }
+    else {
+        qreal fps(m_dialogRef->sceneFPS()), delta = m_refreshTimer.restart() / fps;
+        renderScene(delta);
+    }
+    updateCurrentFPS();
 }
 
-void ScenePlayer::advanceAudioFrame(float step)
+void ScenePlayer::advanceAudioFrame(qreal step)
 {
     if (step >= 0)
-        m_audioFrameIndex += step * Scene::defaultFPS();
+        m_audioTimeIndex += step * Scene::defaultFPS();
 }
 
-void ScenePlayer::renderSceneFrame0(float step)
+void ScenePlayer::renderScene(qreal step)
 {
-    if (m_elapsed.elapsed() > 1000) {
-        m_currentFPS = m_countForFPS;
-        m_countForFPS = 0;
-        m_elapsed.restart();
-    }
-    m_countForFPS++;
-    Scene *scene = m_sceneWidget->sceneLoader()->scene();
-    bool isReached = scene->isReachedTo(m_dialog->toIndex());
+    Scene *scene = m_sceneWidgetRef->sceneLoaderRef()->sceneRef();
+    bool isReached = scene->isReachedTo(m_dialogRef->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
-    if ((!m_dialog->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
+    if ((!m_dialogRef->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
         stop();
     }
     else {
         int value;
         if (isReached) {
             /* ループする場合はモーションと物理演算をリセットしてから開始位置に移動する */
-            SceneLoader *loader = m_sceneWidget->sceneLoader();
-            value = m_dialog->fromIndex();
+            SceneLoader *loader = m_sceneWidgetRef->sceneLoaderRef();
+            value = m_dialogRef->fromIndex();
             loader->stopPhysicsSimulation();
-            m_sceneWidget->resetMotion();
+            m_sceneWidgetRef->resetMotion();
             loader->startPhysicsSimulation();
-            m_sceneWidget->seekMotion(value, true, true);
-            m_totalStep = 0.0f;
+            m_sceneWidgetRef->seekMotion(value, true, true);
+            m_totalStep = 0;
             value = 0;
         }
         else {
             value = int(m_totalStep);
-            m_sceneWidget->advanceMotion(step);
+            m_sceneWidgetRef->advanceMotion(step);
             m_totalStep += step;
         }
         m_progress->setValue(value);
-        m_progress->setLabelText(m_format.arg(value).arg(m_dialog->toIndex() - m_dialog->fromIndex()));
-        if (m_currentFPS > 0)
+        m_progress->setLabelText(m_format.arg(value).arg(m_dialogRef->toIndex() - m_dialogRef->fromIndex()));
+        if (m_currentFPS > 0) {
             m_progress->setWindowTitle(tr("Current FPS: %1").arg(int(m_currentFPS)));
-        else
+        }
+        else {
             m_progress->setWindowTitle(tr("Current FPS: N/A"));
-        if (m_dialog->isModelSelected())
+        }
+        if (m_dialogRef->isModelSelected())
             emit motionDidSeek(value);
     }
 }
+
+void ScenePlayer::updateCurrentFPS()
+{
+    if (m_countFPSTimer.elapsed() > 1000) {
+        m_currentFPS = m_counterForFPS;
+        m_counterForFPS = 0;
+        m_countFPSTimer.restart();
+    }
+    m_counterForFPS++;
+}
+
+} /* namespace vpvm */

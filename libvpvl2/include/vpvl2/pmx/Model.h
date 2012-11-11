@@ -69,8 +69,6 @@ class Vertex;
 class VPVL2_API Model : public IModel
 {
 public:
-    struct SkinnedVertex;
-
     enum StrideType {
         kVertexStride,
         kNormalStride,
@@ -136,27 +134,23 @@ public:
     Model(IEncoding *encoding);
     ~Model();
 
-    static size_t strideOffset(StrideType type);
-    static size_t strideSize(StrideType type);
-
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
     size_t estimateSize() const;
 
     void resetVertices();
     void resetMotionState();
-    void performUpdate(const Vector3 &cameraPosition, const Vector3 &lightDirection);
+    void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
-    void getBones(Array<IBone *> &value) const;
-    void getMorphs(Array<IMorph *> &value) const;
-    void getLabels(Array<ILabel *> &value) const;
-    void getBoundingBox(Vector3 &min, Vector3 &max) const;
-    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    IndexType indexType() const;
+    void getBoneRefs(Array<IBone *> &value) const;
+    void getLabelRefs(Array<ILabel *> &value) const;
+    void getMaterialRefs(Array<IMaterial *> &value) const;
+    void getMorphRefs(Array<IMorph *> &value) const;
+    void getVertexRefs(Array<IVertex *> &value) const;
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
@@ -187,16 +181,16 @@ public:
     void setComment(const IString *value);
     void setEnglishComment(const IString *value);
 
-    const Vector3 &position() const { return m_position; }
-    const Quaternion &rotation() const { return m_rotation; }
+    const Vector3 &worldPosition() const { return m_position; }
+    const Quaternion &worldRotation() const { return m_rotation; }
     const Scalar &opacity() const { return m_opacity; }
     const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return kZeroV3; }
     const Scalar &edgeWidth() const { return m_edgeWidth; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
-    void setPosition(const Vector3 &value) { m_position = value; }
-    void setRotation(const Quaternion &value) { m_rotation = value; }
+    void setWorldPosition(const Vector3 &value) { m_position = value; }
+    void setWorldRotation(const Quaternion &value) { m_rotation = value; }
     void setOpacity(const Scalar &value) { m_opacity = value; }
     void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
     void setEdgeColor(const Vector3 & /* value */) {}
@@ -204,27 +198,17 @@ public:
     void setParentModel(IModel * /* value */) {}
     void setParentBone(IBone * /* value */) {}
 
-    typedef btAlignedObjectArray<int> BoneIndices;
-    typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
-    typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
-    typedef Array<Scalar *> MeshMatrices;
-    struct SkinningMeshes {
-        MeshBoneIndices bones;
-        MeshLocalTransforms transforms;
-        MeshMatrices matrices;
-        BoneIndices bdef1;
-        BoneIndices bdef2;
-        BoneIndices bdef4;
-        BoneIndices sdef;
-        ~SkinningMeshes() { matrices.releaseArrayAll(); }
-    };
-    void getSkinningMesh(SkinningMeshes &meshes) const;
-    void updateSkinningMesh(SkinningMeshes &meshes) const;
-    void setSkinningEnable(bool value);
+    void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
+    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
+    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
+                                const IIndexBuffer *indexBuffer) const;
+    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
+                         IDynamicVertexBuffer *dynamicBuffer,
+                         const IIndexBuffer *indexBuffer) const;
+    void setAabb(const Vector3 &min, const Vector3 &max);
+    void getAabb(Vector3 &min, Vector3 &max) const;
 
 private:
-    struct IndexBuffer;
-
     void release();
     void parseNamesAndComments(const DataInfo &info);
     void parseVertices(const DataInfo &info);
@@ -252,12 +236,12 @@ private:
     Array<Joint *> m_joints;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
-    SkinnedVertex *m_skinnedVertices;
-    IndexBuffer *m_indexBuffer;
     IString *m_name;
     IString *m_englishName;
     IString *m_comment;
     IString *m_englishComment;
+    Vector3 m_aabbMax;
+    Vector3 m_aabbMin;
     Vector3 m_position;
     Quaternion m_rotation;
     Scalar m_opacity;
@@ -265,7 +249,6 @@ private:
     Scalar m_edgeWidth;
     DataInfo m_info;
     bool m_visible;
-    bool m_enableSkinning;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };

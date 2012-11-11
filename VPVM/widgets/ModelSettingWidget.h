@@ -34,9 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELSETTINGWIDGET_H
-#define MODELSETTINGWIDGET_H
+#ifndef VPVM_MODELSETTINGWIDGET_H
+#define VPVM_MODELSETTINGWIDGET_H
 
+#include <QtCore/QPointer>
 #include <QtGui/QWidget>
 #include <vpvl2/Common.h>
 
@@ -53,6 +54,11 @@ class QPushButton;
 class QRadioButton;
 class QSlider;
 class QSpinBox;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class ModelSettingWidget : public QWidget
@@ -66,17 +72,17 @@ public:
 signals:
     void edgeOffsetDidChange(double value);
     void edgeColorDidChange(const QColor &color);
-    void opacityDidChange(const vpvl2::Scalar &value);
-    void positionOffsetDidChange(const vpvl2::Vector3 &value);
-    void rotationOffsetDidChange(const vpvl2::Vector3 &value);
+    void opacityDidChange(const Scalar &value);
+    void positionOffsetDidChange(const Vector3 &value);
+    void rotationOffsetDidChange(const Vector3 &value);
     void projectiveShadowDidEnable(bool value);
     void selfShadowDidEnable(bool value);
 
 private slots:
     void retranslate();
     void openEdgeColorDialog();
-    void setModel(vpvl2::IModel *model, SceneLoader *loader);
-    void setPositionOffset(const vpvl2::Vector3 &position);
+    void setModel(IModel *model, SceneLoader *loader);
+    void setPositionOffset(const Vector3 &position);
     void updatePosition();
     void updateRotation();
     void emitOpacitySignal(int value);
@@ -87,26 +93,28 @@ private:
     void createEdgeColorDialog(const QColor &color);
     QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
 
-    QLabel *m_edgeOffsetLabel;
-    QDoubleSpinBox *m_edgeOffsetSpinBox;
-    QPushButton *m_edgeColorDialogOpenButton;
-    QColorDialog *m_edgeColorDialog;
-    QLabel *m_opacityLabel;
-    QSlider *m_opacitySlider;
-    QSpinBox *m_opacitySpinBox;
-    QGroupBox *m_shadowGroup;
-    QButtonGroup *m_shadowButtonsGroup;
-    QRadioButton *m_noShadowCheckbox;
-    QRadioButton *m_projectiveShadowCheckbox;
-    QRadioButton *m_selfShadowCheckbox;
-    QDoubleSpinBox *m_px;
-    QDoubleSpinBox *m_py;
-    QDoubleSpinBox *m_pz;
-    QGroupBox *m_positionGroup;
-    QDoubleSpinBox *m_rx;
-    QDoubleSpinBox *m_ry;
-    QDoubleSpinBox *m_rz;
-    QGroupBox *m_rotationGroup;
+    QPointer<QGroupBox> m_edgeGroup;
+    QPointer<QDoubleSpinBox> m_edgeOffsetSpinBox;
+    QPointer<QPushButton> m_edgeColorDialogOpenButton;
+    QPointer<QGroupBox> m_opacityGroup;
+    QPointer<QSlider> m_opacitySlider;
+    QPointer<QSpinBox> m_opacitySpinBox;
+    QPointer<QGroupBox> m_shadowGroup;
+    QPointer<QButtonGroup> m_shadowButtonsGroup;
+    QPointer<QRadioButton> m_noShadowCheckbox;
+    QPointer<QRadioButton> m_projectiveShadowCheckbox;
+    QPointer<QRadioButton> m_selfShadowCheckbox;
+    QPointer<QDoubleSpinBox> m_px;
+    QPointer<QDoubleSpinBox> m_py;
+    QPointer<QDoubleSpinBox> m_pz;
+    QPointer<QGroupBox> m_positionGroup;
+    QPointer<QDoubleSpinBox> m_rx;
+    QPointer<QDoubleSpinBox> m_ry;
+    QPointer<QDoubleSpinBox> m_rz;
+    QPointer<QGroupBox> m_rotationGroup;
+    QScopedPointer<QColorDialog> m_edgeColorDialog;
 };
+
+} /* namespace vpvm */
 
 #endif // MODELSETTINGWIDGET_H

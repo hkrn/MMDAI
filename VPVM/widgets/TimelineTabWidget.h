@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef TIMELINETABWIDGET_H
-#define TIMELINETABWIDGET_H
+#ifndef VPVM_TIMELINETABWIDGET_H
+#define VPVM_TIMELINETABWIDGET_H
 
 #include <QtGui/QWidget>
 #include <QtGui/QAbstractItemView>
@@ -51,9 +51,14 @@ class IMorph;
 
 class QAbstractButton;
 class QButtonGroup;
+class QDoubleSpinBox;
 class QRadioButton;
 class QSettings;
 class QTabWidget;
+
+namespace vpvm
+{
+
 class FrameSelectionDialog;
 class FrameWeightDialog;
 class InterpolationDialog;
@@ -79,7 +84,7 @@ public:
     static const int kMorphTabIndex = 2;
     static const int kInterpolationTabIndex = 3;
 
-    explicit TimelineTabWidget(QSettings *settings,
+    explicit TimelineTabWidget(QSettings *settingsRef,
                                BoneMotionModel *bmm,
                                MorphMotionModel *mmm,
                                SceneMotionModel *smm,
@@ -88,19 +93,18 @@ public:
 
 public slots:
     void addKeyframesFromSelectedIndices();
-    void loadPose(VPDFilePtr pose, vpvl2::IModel *model);
-    void savePose(VPDFile *pose, vpvl2::IModel *model);
+    void loadPose(VPDFilePtr pose, IModel *model);
+    void savePose(VPDFile *pose, IModel *model);
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
-    void motionDidSeek(const vpvl2::IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate, bool forceEvenSame);
-    void currentTabDidChange(int type);
-    void currentModelDidChange(vpvl2::IModel *model);
+    void motionDidSeek(const IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate, bool forceEvenSame);
+    void currentModelDidChange(IModel *model, SceneWidget::EditMode mode);
     void editModeDidSet(SceneWidget::EditMode mode);
 
 private slots:
     void retranslate();
-    void addMorphKeyframesAtCurrentFrameIndex(vpvl2::IMorph *morph);
+    void addMorphKeyframesAtCurrentFrameIndex(IMorph *morph);
     void setCurrentFrameIndex(int value);
     void setCurrentFrameIndexZero();
     void insertKeyframesBySelectedIndices();
@@ -113,39 +117,50 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
-    void toggleBoneEnable(vpvl2::IModel *model);
-    void toggleMorphEnable(vpvl2::IModel *model);
-    void toggleBoneButtonsByBone(const QList<vpvl2::IBone *> &bones);
+    void toggleBoneEnable(IModel *model);
+    void toggleMorphEnable(IModel *model);
+    void toggleBoneButtonsByBones(const QList<IBone *> &bones);
+    void toggleMorphByMorph(const QList<IMorph *> &morphs);
     void selectAllRegisteredKeyframes();
     void openFrameSelectionDialog();
     void openFrameWeightDialog();
     void openInterpolationDialog(const QModelIndexList &indices);
     void openInterpolationDialogBySelectedIndices();
-    void selectBones(const QList<vpvl2::IBone *> &bones);
+    void selectBones(const QList<IBone *> &bones);
+    void selectMorphs(const QList<IMorph *> &morphs);
     void selectBonesByItemSelection(const QItemSelection &selection);
+    void selectMorphsByItemSelection(const QItemSelection &selection);
     void selectButton(QAbstractButton *button);
-    void setLastSelectedModel(vpvl2::IModel *model);
+    void setLastSelectedModel(IModel *model);
     void clearLastSelectedModel();
+    void updateMorphValue();
+    void updateMorphValue(int value);
+    void updateMorphValue(double value);
 
 private:
     void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
-    TimelineWidget *currentSelectedTimelineWidget() const;
+    TimelineWidget *currentSelectedTimelineWidgetRef() const;
 
-    QSettings *m_settings;
-    QTabWidget *m_tabWidget;
-    TimelineWidget *m_boneTimeline;
-    TimelineWidget *m_morphTimeline;
-    TimelineWidget *m_sceneTimeline;
-    QButtonGroup *m_boneButtonGroup;
-    QRadioButton *m_boneSelectButton;
-    QRadioButton *m_boneRotateButton;
-    QRadioButton *m_boneMoveButton;
-    FrameSelectionDialog *m_frameSelectionDialog;
-    FrameWeightDialog *m_frameWeightDialog;
-    InterpolationDialog *m_interpolationDialog;
-    vpvl2::IModel *m_lastSelectedModel;
+    QScopedPointer<QTabWidget> m_tabWidget;
+    QScopedPointer<TimelineWidget> m_boneTimeline;
+    QScopedPointer<TimelineWidget> m_morphTimeline;
+    QScopedPointer<TimelineWidget> m_sceneTimeline;
+    QScopedPointer<QButtonGroup> m_boneButtonGroup;
+    QScopedPointer<QRadioButton> m_boneSelectButton;
+    QScopedPointer<QRadioButton> m_boneRotateButton;
+    QScopedPointer<QRadioButton> m_boneMoveButton;
+    QScopedPointer<QSlider> m_morphSlider;
+    QScopedPointer<QDoubleSpinBox> m_morphSpinbox;
+    QScopedPointer<FrameSelectionDialog> m_frameSelectionDialog;
+    QScopedPointer<FrameWeightDialog> m_frameWeightDialog;
+    QScopedPointer<InterpolationDialog> m_interpolationDialog;
+    QSettings *m_settingsRef;
+    IModel *m_lastSelectedModelRef;
+    SceneWidget::EditMode m_lastEditMode;
 
     Q_DISABLE_COPY(TimelineTabWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // TIMELINETABWIDGET_H

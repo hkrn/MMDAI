@@ -63,8 +63,9 @@ namespace vpvl2
 namespace pmx
 {
 
-Material::Material()
-    : m_name(0),
+Material::Material(IModel *modelRef)
+    : m_modelRef(modelRef),
+      m_name(0),
       m_englishName(0),
       m_userDataArea(0),
       m_mainTextureRef(0),
@@ -91,6 +92,7 @@ Material::~Material()
     m_englishName = 0;
     delete m_userDataArea;
     m_userDataArea = 0;
+    m_modelRef = 0;
     m_mainTextureRef = 0;
     m_sphereTextureRef = 0;
     m_toonTextureRef = 0;
@@ -192,9 +194,21 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
                 material->m_toonTextureRef = textures[toonTextureIndex];
         }
         material->m_index = i;
-        actualIndices += material->indices();
+        actualIndices += material->sizeofIndices();
     }
     return actualIndices == expectedIndices;
+}
+
+size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
+{
+    const int nmaterials = materials.count();
+    size_t size = 0;
+    size += sizeof(nmaterials);
+    for (int i = 0; i < nmaterials; i++) {
+        Material *material = materials[i];
+        size += material->estimateSize(info);
+    }
+    return size;
 }
 
 void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
@@ -248,8 +262,8 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
 
 void Material::write(uint8_t *data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_name, data);
-    internal::writeString(m_englishName, data);
+    internal::writeString(m_name, info.codec, data);
+    internal::writeString(m_englishName, info.codec, data);
     MaterialUnit mu;
     internal::getColor(m_ambient.base, mu.ambient);
     internal::getColor(m_diffuse.base, mu.diffuse);
@@ -268,54 +282,55 @@ void Material::write(uint8_t *data, const Model::DataInfo &info) const
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_toonTextureIndex), sizeof(uint8_t), data);
     else
         internal::writeSignedIndex(m_toonTextureIndex, textureIndexSize, data);
-    internal::writeString(m_userDataArea, data);
+    internal::writeString(m_userDataArea, info.codec, data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_indices), sizeof(int), data);
 }
 
 size_t Material::estimateSize(const Model::DataInfo &info) const
 {
     size_t size = 0, textureIndexSize = info.textureIndexSize;
-    size += internal::estimateSize(m_name);
-    size += internal::estimateSize(m_englishName);
+    size += internal::estimateSize(m_name, info.codec);
+    size += internal::estimateSize(m_englishName, info.codec);
     size += sizeof(MaterialUnit);
     size += textureIndexSize * 2;
     size += sizeof(uint16_t);
     size += m_useSharedToonTexture ? sizeof(uint8_t) : textureIndexSize;
-    size += internal::estimateSize(m_userDataArea);
+    size += internal::estimateSize(m_userDataArea, info.codec);
     size += sizeof(int);
     return size;
 }
 
-void Material::mergeMorph(const Morph::Material *morph, float weight)
+void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight)
 {
-    btClamp(weight, 0.0f, 1.0f);
-    if (btFuzzyZero(weight)) {
+    Scalar w = Scalar(weight);
+    btClamp(w, 0.0f, 1.0f);
+    if (btFuzzyZero(w)) {
         resetMorph();
     }
     else {
         switch (morph->operation) {
         case 0: { // modulate
-            m_ambient.calculateMulWeight(morph->ambient, weight);
-            m_diffuse.calculateMulWeight(morph->diffuse, weight);
-            m_specular.calculateMulWeight(morph->specular, weight);
-            m_shininess.setY(1.0f - (1.0f - morph->shininess) * weight);
-            m_edgeColor.calculateMulWeight(morph->edgeColor, weight);
-            m_edgeSize.setY(1.0f - (1.0f - morph->edgeSize) * weight);
-            m_mainTextureBlend.calculateMulWeight(morph->textureWeight, weight);
-            m_sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, weight);
-            m_toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, weight);
+            m_ambient.calculateMulWeight(morph->ambient, w);
+            m_diffuse.calculateMulWeight(morph->diffuse, w);
+            m_specular.calculateMulWeight(morph->specular, w);
+            m_shininess.setY(1.0f - (1.0f - morph->shininess) * w);
+            m_edgeColor.calculateMulWeight(morph->edgeColor, w);
+            m_edgeSize.setY(1.0f - (1.0f - morph->edgeSize) * w);
+            m_mainTextureBlend.calculateMulWeight(morph->textureWeight, w);
+            m_sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, w);
+            m_toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, w);
             break;
         }
         case 1: { // add
-            m_ambient.calculateAddWeight(morph->ambient, weight);
-            m_diffuse.calculateAddWeight(morph->diffuse, weight);
-            m_specular.calculateAddWeight(morph->specular, weight);
-            m_shininess.setZ(morph->shininess * weight);
-            m_edgeColor.calculateAddWeight(morph->edgeColor, weight);
-            m_edgeSize.setZ(morph->edgeSize * weight);
-            m_mainTextureBlend.calculateAddWeight(morph->textureWeight, weight);
-            m_sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, weight);
-            m_toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, weight);
+            m_ambient.calculateAddWeight(morph->ambient, w);
+            m_diffuse.calculateAddWeight(morph->diffuse, w);
+            m_specular.calculateAddWeight(morph->specular, w);
+            m_shininess.setZ(morph->shininess * w);
+            m_edgeColor.calculateAddWeight(morph->edgeColor, w);
+            m_edgeSize.setZ(morph->edgeSize * w);
+            m_mainTextureBlend.calculateAddWeight(morph->textureWeight, w);
+            m_sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, w);
+            m_toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, w);
             break;
         }
         default:
@@ -350,22 +365,37 @@ bool Material::isCullFaceDisabled() const
 }
 bool Material::hasShadow() const
 {
-    return internal::hasFlagBits(m_flags, 0x02);
+    return internal::hasFlagBits(m_flags, 0x02) && !isPointDraw();
 }
 
 bool Material::isShadowMapDrawn() const
 {
-    return internal::hasFlagBits(m_flags, 0x04);
+    return internal::hasFlagBits(m_flags, 0x04) && !isPointDraw();
 }
 
 bool Material::isSelfShadowDrawn() const
 {
-    return internal::hasFlagBits(m_flags, 0x08);
+    return internal::hasFlagBits(m_flags, 0x08) && !isPointDraw();
 }
 
 bool Material::isEdgeDrawn() const
 {
-    return internal::hasFlagBits(m_flags, 0x10);
+    return internal::hasFlagBits(m_flags, 0x10) && !isPointDraw() && !isLineDraw();
+}
+
+bool Material::hasVertexColor() const
+{
+    return internal::hasFlagBits(m_flags, 0x20);
+}
+
+bool Material::isPointDraw() const
+{
+    return internal::hasFlagBits(m_flags, 0x40);
+}
+
+bool Material::isLineDraw() const
+{
+    return internal::hasFlagBits(m_flags, 0x80);
 }
 
 void Material::setName(const IString *value)

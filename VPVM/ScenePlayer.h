@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef SCENEPLAYER_H
-#define SCENEPLAYER_H
+#ifndef VPVM_SCENEPLAYER_H
+#define VPVM_SCENEPLAYER_H
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>
@@ -47,6 +47,10 @@ namespace vpvl2 {
 class IModel;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
 class AudioPlayer;
 class SceneWidget;
 class PlaySettingDialog;
@@ -56,7 +60,7 @@ class ScenePlayer : public QObject
     Q_OBJECT
 
 public:
-    ScenePlayer(SceneWidget *sceneWidget, PlaySettingDialog *dialog);
+    ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dialog, QObject *parent = 0);
     ~ScenePlayer();
 
     void start();
@@ -67,6 +71,9 @@ public slots:
     /* これを呼ぶと再生終了時 renderFrameDidStop ではなく renderFrameDidStopAndRestoreState が呼ばれる */
     void setRestoreState() { m_restoreState = true; }
 
+protected:
+    void timerEvent(QTimerEvent *event);
+
 signals:
     void renderFrameDidStart();
     void renderFrameDidStop();
@@ -75,31 +82,32 @@ signals:
     void motionDidSeek(int frameIndex);
 
 private slots:
-    void renderSceneFrameFixed();
-    void renderSceneFrameVariant();
-    void advanceAudioFrame(float step);
+    void advanceAudioFrame(qreal step);
 
 private:
-    void renderSceneFrame0(float step);
+    void renderScene(qreal step);
+    void updateCurrentFPS();
 
-    QElapsedTimer m_elapsed;
-    QTimer m_renderTimer;
-    SceneWidget *m_sceneWidget;
-    PlaySettingDialog *m_dialog;
-    QProgressDialog *m_progress;
+    const PlaySettingDialog *m_dialogRef;
+    QScopedPointer<AudioPlayer> m_player;
+    QScopedPointer<QProgressDialog> m_progress;
+    SceneWidget *m_sceneWidgetRef;
+    IModel *m_selectedModelRef;
+    QElapsedTimer m_countFPSTimer;
+    QElapsedTimer m_refreshTimer;
+    QBasicTimer m_updateTimer;
     QString m_format;
     QByteArray m_buffer;
-    AudioPlayer *m_player;
-    vpvl2::IModel *m_selected;
-    vpvl2::Scalar m_currentFPS;
-    vpvl2::Scalar m_prevSceneFPS;
-    float m_prevFrameIndex;
-    float m_frameStep;
-    float m_totalStep;
-    float m_audioFrameIndex;
-    float m_prevAudioFrameIndex;
-    int m_countForFPS;
+    Scalar m_currentFPS;
+    Scalar m_prevSceneFPS;
+    qreal m_prevTimeIndex;
+    qreal m_totalStep;
+    qreal m_audioTimeIndex;
+    qreal m_prevAudioTimeIndex;
+    int m_counterForFPS;
     bool m_restoreState;
 };
+
+} /* namespace vpvm */
 
 #endif // SCENEPLAYER_H

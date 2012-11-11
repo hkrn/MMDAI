@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef RENDERORDERDIALOG_H
-#define RENDERORDERDIALOG_H
+#ifndef VPVM_RENDERORDERDIALOG_H
+#define VPVM_RENDERORDERDIALOG_H
 
 #include <QtCore/QString>
 #include <QtCore/QUuid>
@@ -44,6 +44,10 @@
 class QAbstractButton;
 class QDialogButtonBox;
 class QListWidget;
+
+namespace vpvm
+{
+
 class SceneLoader;
 
 class RenderOrderDialog : public QDialog
@@ -71,12 +75,14 @@ private:
     void buildOriginFromRenderOrder(const SceneLoader *loader);
     void setRenderOrder(const QList<NameUUID> &pairs);
 
-    QListWidget *m_listWidget;
-    QDialogButtonBox *m_dialogButtonBox;
-    QPushButton *m_upButton;
-    QPushButton *m_downBotton;
-    QPushButton *m_resetButton;
+    QScopedPointer<QListWidget> m_listWidget;
+    QScopedPointer<QDialogButtonBox> m_dialogButtonBox;
+    QScopedPointer<QPushButton> m_upButton;
+    QScopedPointer<QPushButton> m_downButton;
+    QScopedPointer<QPushButton> m_resetButton;
     QList<NameUUID> m_origin;
 };
+
+} /* namespace vpvm */
 
 #endif // RENDERORDERDIALOG_H

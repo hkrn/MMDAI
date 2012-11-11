@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef STRINGHELPER_H
-#define STRINGHELPER_H
+#ifndef VPVM_STRINGHELPER_H
+#define VPVM_STRINGHELPER_H
 
 #include <QtCore/QString>
 
@@ -54,7 +54,7 @@ class IMotion;
 class IString;
 }
 
-namespace internal {
+namespace vpvm {
 
 using namespace vpvl2;
 
@@ -69,6 +69,6 @@ const QString toQStringFromMorph(const IMorph *value);
 const QString toQStringFromBoneKeyframe(const IBoneKeyframe *value);
 const QString toQStringFromMorphKeyframe(const IMorphKeyframe *value);
 
-}
+} /* namespace vpvm */
 
 #endif

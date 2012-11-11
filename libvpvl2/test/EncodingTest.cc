@@ -1,8 +1,14 @@
 #include "Common.h"
+#include "vpvl2/extensions/icu/String.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 
 #define TO_STR_C(s) reinterpret_cast<const char *>(s)
-#define TO_CSTRING(s) static_cast<const CString *>(s)
+#define TO_CSTRING(s) static_cast<const String *>(s)
 #define TO_BYTES(s) TO_STR_C(TO_CSTRING(s)->toByteArray())
+
+using namespace ::testing;
+using namespace vpvl2;
+using namespace vpvl2::extensions::icu;
 
 namespace {
 
@@ -33,17 +39,22 @@ TEST_P(ConvertTest, ToString)
     const QByteArray &bytes = codec->fromUnicode(source);
     const uint8_t *stringInBytes = reinterpret_cast<const uint8_t *>(bytes.constData());
     QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
-    ASSERT_STREQ(source.toUtf8().constData(), TO_CSTRING(result.data())->value().toUtf8().constData());
+    ASSERT_STREQ(source.toUtf8().constData(), String::toStdString(TO_CSTRING(result.data())->value()).c_str());
 }
 
 TEST_P(ConvertTest, ToByteArray)
 {
     Encoding encoding;
     const IString::Codec codecEnum = GetParam();
-    const CString source("東京特許許可局局長");
+#ifdef VPVL2_ICU_ENCODING_H_
+    const String source(UnicodeString::fromUTF8("東京特許許可局局長"));
+#else
+    const String source("東京特許許可局局長");
+#endif
     const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
     uint8_t *stringInBytes = encoding.toByteArray(&source, codecEnum);
-    EXPECT_STREQ(codec->fromUnicode(source.value()).constData(), TO_STR_C(stringInBytes));
+    const QString &s = QString::fromStdString(String::toStdString(source.value()));
+    EXPECT_STREQ(codec->fromUnicode(s).constData(), TO_STR_C(stringInBytes));
     encoding.disposeByteArray(stringInBytes);
 }
 
@@ -66,7 +77,7 @@ TEST(EncodingTest, ConvertNullToString)
     QScopedPointer<IString> result(encoding.toString(0, IString::kUTF8, 0));
     IString *s = result.data();
     ASSERT_TRUE(s);
-    ASSERT_EQ(0, s->length());
+    ASSERT_EQ(0, s->size());
     ASSERT_EQ(0, s->toByteArray()[0]);
 }
 

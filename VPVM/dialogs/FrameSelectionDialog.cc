@@ -38,25 +38,30 @@
 #include "common/SceneWidget.h"
 
 #include <QtGui/QtGui>
-#include <vpvl/vpvl.h>
+#include <vpvl2/vpvl2.h>
 
-FrameSelectionDialog::FrameSelectionDialog(QWidget *parent) :
-    QDialog(parent)
+namespace vpvm
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    m_fromIndexBox = new QSpinBox();
-    m_toIndexBox = new QSpinBox();
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(tr("Keyframe from"), m_fromIndexBox);
-    formLayout->addRow(tr("Keyframe to"), m_toIndexBox);
-    mainLayout->addLayout(formLayout);
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    mainLayout->addWidget(buttons);
-    connect(buttons, SIGNAL(accepted()), this, SLOT(emitFrameIndices()));
-    connect(buttons, SIGNAL(rejected()), this, SLOT(close()));
-    connect(this, SIGNAL(frameIndicesDidSelect(int,int)), this, SLOT(close()));
-    setWindowTitle(tr("Keyframe range selection dialog"));
-    setLayout(mainLayout);
+
+FrameSelectionDialog::FrameSelectionDialog(QWidget *parent)
+    : QDialog(parent),
+      m_fromIndexBox(new QSpinBox()),
+      m_toIndexBox(new QSpinBox())
+{
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QFormLayout> formLayout(new QFormLayout());
+    m_fromIndexBox->setAlignment(Qt::AlignRight);
+    m_toIndexBox->setAlignment(Qt::AlignRight);
+    formLayout->addRow(tr("Keyframe From"), m_fromIndexBox.data());
+    formLayout->addRow(tr("Keyframe To"), m_toIndexBox.data());
+    mainLayout->addLayout(formLayout.take());
+    QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel));
+    connect(buttons.data(), SIGNAL(accepted()), SLOT(emitFrameIndices()));
+    connect(buttons.data(), SIGNAL(rejected()), SLOT(close()));
+    mainLayout->addWidget(buttons.take());
+    connect(this, SIGNAL(frameIndicesDidSelect(int,int)), SLOT(close()));
+    setWindowTitle(tr("Keyframe Range Selection Setting"));
+    setLayout(mainLayout.take());
 }
 
 FrameSelectionDialog::~FrameSelectionDialog()
@@ -74,3 +79,5 @@ void FrameSelectionDialog::emitFrameIndices()
 {
     emit frameIndicesDidSelect(m_fromIndexBox->value(), m_toIndexBox->value());
 }
+
+} /* namespace vpvm */

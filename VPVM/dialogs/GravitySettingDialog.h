@@ -34,15 +34,21 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef GRAVITYSETTINGDIALOG_H
-#define GRAVITYSETTINGDIALOG_H
+#ifndef VPVM_GRAVITYSETTINGDIALOG_H
+#define VPVM_GRAVITYSETTINGDIALOG_H
 
 #include <QtGui/QDialog>
 #include <vpvl2/Common.h>
 
 class QDoubleSpinBox;
+class QGroupBox;
 class QLabel;
 class QSpinBox;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class GravitySettingDialog : public QDialog
@@ -54,19 +60,27 @@ public:
     ~GravitySettingDialog();
 
 signals:
-    void worldGravityDidSet(const vpvl2::Vector3 &value);
+    void worldGravityDidSet(const Vector3 &value);
     void worldRandSeedDidSet(unsigned long value);
 
 private slots:
+    void retranslate();
     void emitSignal();
 
 private:
     QDoubleSpinBox *createSpinBox(double value) const;
 
-    QDoubleSpinBox *m_axisX;
-    QDoubleSpinBox *m_axisY;
-    QDoubleSpinBox *m_axisZ;
-    QSpinBox *m_randSeed;
+    QScopedPointer<QGroupBox> m_axisGroup;
+    QScopedPointer<QLabel> m_axisXLabel;
+    QScopedPointer<QDoubleSpinBox> m_axisX;
+    QScopedPointer<QLabel> m_axisYLabel;
+    QScopedPointer<QDoubleSpinBox> m_axisY;
+    QScopedPointer<QLabel> m_axisZLabel;
+    QScopedPointer<QDoubleSpinBox> m_axisZ;
+    QScopedPointer<QLabel> m_randSeedLabel;
+    QScopedPointer<QSpinBox> m_randSeedSpinBox;
 };
+
+} /* namespace vpvm */
 
 #endif // GRAVITYSETTINGDIALOG_H

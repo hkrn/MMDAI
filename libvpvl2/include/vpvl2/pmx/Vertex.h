@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_VERTEX_H_
 #define VPVL2_PMX_VERTEX_H_
 
+#include "vpvl2/IVertex.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 
@@ -57,25 +58,22 @@ namespace pmx
  * Vertex class represents a morph of a Polygon Vertex Extended object.
  */
 
-class VPVL2_API Vertex
+class VPVL2_API Vertex : public IVertex
 {
 public:
-    enum Type {
-        kBdef1,
-        kBdef2,
-        kBdef4,
-        kSdef
-    };
+    static const int kMaxBones = 4;
+    static const int kMaxMorphs = 5; /* TexCoord + UVA1-4 */
 
     /**
      * Constructor
      */
-    Vertex();
+    Vertex(IModel *modelRef);
     ~Vertex();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices,
                              const Array<Bone *> &bones);
+    static size_t estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -88,39 +86,45 @@ public:
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
     void reset();
-    void mergeMorph(const Morph::UV *morph, float weight);
-    void mergeMorph(const Morph::Vertex *morph, float weight);
-    void performSkinning(Vector3 &position, Vector3 &normal);
+    void mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &weight);
+    void mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight);
+    void performSkinning(Vector3 &position, Vector3 &normal) const;
 
+    IModel *parentModelRef() const { return m_modelRef; }
     const Vector3 &origin() const { return m_origin; }
     const Vector3 &delta() const { return m_morphDelta; }
     const Vector3 &normal() const { return m_normal; }
-    const Vector3 &texcoord() const { return m_texcoord; }
+    const Vector3 &textureCoord() const { return m_texcoord; }
     const Vector4 &uv(int index) const;
     Type type() const { return m_type; }
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
-    Bone *bone(int index) const;
+    IBone *bone(int index) const;
+    IMaterial *material() const;
+    int index() const { return m_index; }
     const Vector3 &sdefC() const { return m_c; }
     const Vector3 &sdefR0() const { return m_r0; }
     const Vector3 &sdefR1() const { return m_r1; }
 
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
-    void setTexCoord(const Vector3 &value);
+    void setTextureCoord(const Vector3 &value);
     void setUV(int index, const Vector4 &value);
     void setType(Type value);
     void setEdgeSize(float value);
     void setWeight(int index, float weight);
-    void setBone(int index, Bone *value);
+    void setBone(int index, IBone *value);
+    void setMaterial(IMaterial *value);
     void setSdefC(const Vector3 &value);
     void setSdefR0(const Vector3 &value);
     void setSdefR1(const Vector3 &value);
 
 private:
-    Bone *m_boneRefs[4];
-    Vector4 m_originUVs[4];
-    Vector4 m_morphUVs[5]; /* TexCoord + UVA1-4 */
+    IModel *m_modelRef;
+    IBone *m_boneRefs[kMaxBones];
+    IMaterial *m_materialRef;
+    Vector4 m_originUVs[kMaxMorphs];
+    Vector4 m_morphUVs[kMaxMorphs];
     Vector3 m_origin;
     Vector3 m_morphDelta;
     Vector3 m_normal;
@@ -130,8 +134,9 @@ private:
     Vector3 m_r1;
     Type m_type;
     float m_edgeSize;
-    float m_weight[4];
-    int m_boneIndices[4];
+    float m_weight[kMaxBones];
+    int m_boneIndices[kMaxBones];
+    int m_index;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };

@@ -84,8 +84,8 @@ public:
             const BoneKeyframe *keyframeFrom = reinterpret_cast<const BoneKeyframe *>(keyframes->at(fromIndex)),
                     *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes->at(toIndex));
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
-            const Vector3 &positionFrom = keyframeFrom->position(), &positionTo = keyframeTo->position();
-            const Quaternion &rotationFrom = keyframeFrom->rotation(), &rotationTo = keyframeTo->rotation();
+            const Vector3 &positionFrom = keyframeFrom->localPosition(), &positionTo = keyframeTo->localPosition();
+            const Quaternion &rotationFrom = keyframeFrom->localRotation(), &rotationTo = keyframeTo->localRotation();
             if (timeIndexFrom != timeIndexTo) {
                 if (currentTimeIndex <= timeIndexFrom) {
                     position = positionFrom;
@@ -101,14 +101,14 @@ public:
                     interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
                     interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
                     interpolate(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
-                    position.setValue(x, y, z);
+                    position.setValue(Scalar(x), Scalar(y), Scalar(z));
                     const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
                     if (tableForRotation.linear) {
-                        rotation = rotationFrom.slerp(rotationTo, weight);
+                        rotation = rotationFrom.slerp(rotationTo, Scalar(weight));
                     }
                     else {
                         const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
-                        rotation = rotationFrom.slerp(rotationTo, weight2);
+                        rotation = rotationFrom.slerp(rotationTo, Scalar(weight2));
                     }
                 }
             }
@@ -116,8 +116,8 @@ public:
                 position = positionFrom;
                 rotation = rotationFrom;
             }
-            boneRef->setPosition(position);
-            boneRef->setRotation(rotation);
+            boneRef->setLocalPosition(position);
+            boneRef->setLocalRotation(rotation);
         }
     }
 };
@@ -306,7 +306,7 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
         PrivateContext *contextPtr = *context;
         addKeyframe0(keyframe, contextPtr->keyframes);
     }
-    else {
+    else if (m_modelRef) {
         PrivateContext *contextPtr = m_contextPtr = new PrivateContext();
         contextPtr->boneRef = m_modelRef->findBone(keyframe->name());
         BaseSectionContext::KeyframeCollection *kc = contextPtr->keyframes = new BaseSectionContext::KeyframeCollection();
@@ -350,7 +350,7 @@ IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
         const PrivateContext::KeyframeCollection *keyframes = (*context)->keyframes;
         const int nkeyframes = keyframes->count();
         for (int i = 0; i < nkeyframes; i++) {
-            IBoneKeyframe *keyframe = reinterpret_cast<IBoneKeyframe *>(keyframes->at(i));
+            mvd::BoneKeyframe *keyframe = reinterpret_cast<mvd::BoneKeyframe *>(keyframes->at(i));
             if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
                 return keyframe;
             }
@@ -361,8 +361,8 @@ IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
 
 IBoneKeyframe *BoneSection::findKeyframeAt(int index) const
 {
-    if (index >= 0 && index < m_allKeyframeRefs.count()) {
-        IBoneKeyframe *keyframe = reinterpret_cast<IBoneKeyframe *>(m_allKeyframeRefs[index]);
+    if (internal::checkBound(index, 0, m_allKeyframeRefs.count())) {
+        mvd::BoneKeyframe *keyframe = reinterpret_cast<mvd::BoneKeyframe *>(m_allKeyframeRefs[index]);
         return keyframe;
     }
     return 0;

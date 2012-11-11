@@ -34,11 +34,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef APPLICATION_H
-#define APPLICATION_H
+#ifndef VPVM_APPLICATION_H_
+#define VPVM_APPLICATION_H_
 
 #include <QtGui/QApplication>
 #include <QtGui/QFileOpenEvent>
+
+namespace vpvm
+{
 
 class Application : public QApplication
 {
@@ -51,8 +54,7 @@ signals:
     void fileDidRequest(const QString &filename);
 
 protected:
-    bool event(QEvent *event)
-    {
+    bool event(QEvent *event) {
         if (event->type() == QEvent::FileOpen) {
             QFileOpenEvent *foe = static_cast<QFileOpenEvent *>(event);
             emit fileDidRequest(foe->file());
@@ -63,5 +65,7 @@ protected:
 private:
     Q_DISABLE_COPY(Application)
 };
+
+} /* namespace vpvm */
 
 #endif // APPLICATION_H

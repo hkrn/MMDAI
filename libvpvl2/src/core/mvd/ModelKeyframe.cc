@@ -113,11 +113,11 @@ void ModelKeyframe::read(const uint8_t *data)
 {
     ModelKeyframeChunk chunk;
     internal::getData(data, chunk);
-    setTimeIndex(chunk.timeIndex);
-    setVisible(chunk.visible);
-    setShadowEnable(chunk.shadow);
-    setAddBlendEnable(chunk.addBlend);
-    setPhysicsEnable(chunk.physics);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
+    setVisible(chunk.visible != 0);
+    setShadowEnable(chunk.shadow != 0);
+    setAddBlendEnable(chunk.addBlend != 0);
+    setPhysicsEnable(chunk.physics != 0);
     setPhysicsStillMode(chunk.physicsStillMode);
     setEdgeWidth(chunk.edgeWidth);
     const uint8_t *bonesOfIKPtr = data + size();
@@ -129,7 +129,7 @@ void ModelKeyframe::read(const uint8_t *data)
 void ModelKeyframe::write(uint8_t *data) const
 {
     ModelKeyframeChunk chunk;
-    chunk.timeIndex = timeIndex();
+    chunk.timeIndex = uint64_t(timeIndex());
     chunk.visible = isVisible();
     chunk.shadow = isShadowEnabled();
     chunk.addBlend = isAddBlendEnabled();

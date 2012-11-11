@@ -86,9 +86,9 @@ public:
                 *keyframeTo = reinterpret_cast<const CameraKeyframe *>(keyframes->at(toIndex));
         const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
         const Scalar &distanceFrom = keyframeFrom->distance(), fovyFrom = keyframeFrom->fov();
-        const Vector3 &positionFrom = keyframeFrom->position(), angleFrom = keyframeFrom->angle();
+        const Vector3 &positionFrom = keyframeFrom->lookAt(), angleFrom = keyframeFrom->angle();
         const Scalar &distanceTo = keyframeTo->distance(), fovyTo = keyframeTo->fov();
-        const Vector3 &positionTo = keyframeTo->position(), angleTo = keyframeTo->angle();
+        const Vector3 &positionTo = keyframeTo->lookAt(), angleTo = keyframeTo->angle();
         if (timeIndexFrom != timeIndexTo) {
             if (currentTimeIndex <= timeIndexFrom) {
                 distance = distanceFrom;
@@ -114,30 +114,30 @@ public:
                 interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 0, x);
                 interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 1, y);
                 interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 2, z);
-                position.setValue(x, y, z);
+                position.setValue(Scalar(x), Scalar(y), Scalar(z));
                 const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
                 if (tableForRotation.linear) {
-                    angle = angleFrom.lerp(angleTo, weight);
+                    angle = angleFrom.lerp(angleTo, Scalar(weight));
                 }
                 else {
                     const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
-                    angle = angleFrom.lerp(angleTo, weight2);
+                    angle = angleFrom.lerp(angleTo, Scalar(weight2));
                 }
                 const Motion::InterpolationTable &tableForDistance = keyframeTo->tableForDistance();
                 if (tableForDistance.linear) {
-                    distance = internal::lerp(distanceFrom, distanceTo, weight);
+                    distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight));
                 }
                 else {
                     const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForDistance, weight);
-                    distance = internal::lerp(distanceFrom, distanceTo, weight2);
+                    distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight2));
                 }
                 const Motion::InterpolationTable &tableForFov = keyframeTo->tableForFov();
                 if (tableForFov.linear) {
-                    fov = internal::lerp(fovyFrom, fovyTo, weight);
+                    fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight));
                 }
                 else {
                     const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForFov, weight);
-                    fov = internal::lerp(fovyFrom, fovyTo, weight2);
+                    fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight2));
                 }
             }
         }
@@ -304,7 +304,7 @@ ICameraKeyframe *CameraSection::findKeyframe(const IKeyframe::TimeIndex &timeInd
     const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
     const int nkeyframes = keyframes->count();
     for (int i = 0; i < nkeyframes; i++) {
-        ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes->at(i));
+        mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(i));
         if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
             return keyframe;
         }
@@ -316,8 +316,8 @@ ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
 {
     if (m_contextPtr) {
         const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-        if (index >= 0 && index < keyframes->count()) {
-            ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes->at(index));
+        if (internal::checkBound(index, 0, keyframes->count())) {
+            mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(index));
             return keyframe;
         }
     }

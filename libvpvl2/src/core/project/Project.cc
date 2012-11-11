@@ -38,6 +38,23 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/Project.h"
+#include "vpvl2/mvd/AssetKeyframe.h"
+#include "vpvl2/mvd/AssetSection.h"
+#include "vpvl2/mvd/BoneKeyframe.h"
+#include "vpvl2/mvd/BoneSection.h"
+#include "vpvl2/mvd/CameraKeyframe.h"
+#include "vpvl2/mvd/CameraSection.h"
+#include "vpvl2/mvd/EffectKeyframe.h"
+#include "vpvl2/mvd/EffectSection.h"
+#include "vpvl2/mvd/LightKeyframe.h"
+#include "vpvl2/mvd/LightSection.h"
+#include "vpvl2/mvd/ModelKeyframe.h"
+#include "vpvl2/mvd/ModelSection.h"
+#include "vpvl2/mvd/MorphKeyframe.h"
+#include "vpvl2/mvd/MorphSection.h"
+#include "vpvl2/mvd/ProjectKeyframe.h"
+#include "vpvl2/mvd/ProjectSection.h"
+#include "vpvl2/mvd/Motion.h"
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
 #include "vpvl2/vmd/CameraAnimation.h"
@@ -55,8 +72,8 @@
 #include <sstream>
 #include <map>
 
-#define VPVL2_XML_RC(rc) { if (rc < 0) { fprintf(stderr, "Failed at %s:%d\n", __FILE__, __LINE__); return false; } }
 #define VPVL2_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
+#define VPVL2_XML_RC(rc) { if (rc < 0) { fprintf(stderr, "Failed at %s:%d\n", __FILE__, __LINE__); return false; } }
 
 namespace
 {
@@ -71,15 +88,30 @@ static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format,
     return ret;
 }
 
+
+static inline float StringToInt(const char *str)
+{
+    assert(str);
+    char *p = 0;
+    return strtoul(str, &p, 10);
+}
+
 static inline float StringToFloat(const char *str)
 {
     assert(str);
     char *p = 0;
 #if defined(WIN32)
-    return static_cast<float>(strtod(str, &p));
+    return float(strtod(str, &p));
 #else
     return strtof(str, &p);
 #endif
+}
+
+static inline double StringToDouble(const char *str)
+{
+    assert(str);
+    char *p = 0;
+    return strtod(str, &p);
 }
 
 }
@@ -87,8 +119,7 @@ static inline float StringToFloat(const char *str)
 namespace vpvl2
 {
 
-class Project::PrivateContext {
-public:
+struct Project::PrivateContext {
     enum State {
         kInitial,
         kProject,
@@ -99,353 +130,32 @@ public:
         kAssets,
         kAsset,
         kMotions,
-        kAssetMotion,
         kAnimation,
-        kBoneMotion,
-        kMorphMotion,
-        kCameraMotion,
-        kLightMotion
+        kVMDBoneMotion,
+        kVMDMorphMotion,
+        kVMDCameraMotion,
+        kVMDLightMotion,
+        kMVDAssetMotion,
+        kMVDBoneMotion,
+        kMVDCameraMotion,
+        kMVDEffectMotion,
+        kMVDLightMotion,
+        kMVDModelMotion,
+        kMVDMorphMotion,
+        kMVDProjectMotion
     };
+    static const int kElementContentBufferSize = 128;
+    static const std::string kEmpty;
     typedef std::map<std::string, std::string> StringMap;
-    const static int kAttributeBufferSize = 32;
-    const static int kElementContentBufferSize = 128;
-    const static std::string kEmpty;
     typedef std::map<Project::UUID, IModel *> ModelMap;
     typedef std::map<Project::UUID, IMotion *> MotionMap;
+    typedef std::map<const IModel *, StringMap> ModelSettings;
 
-    PrivateContext(Scene *parent, Project::IDelegate *delegate, Factory *factory)
-        : delegate(delegate),
-          factory(factory),
-          currentString(0),
-          currentAsset(0),
-          currentModel(0),
-          currentMotion(0),
-          state(kInitial),
-          depth(0),
-          dirty(false),
-          m_parent(parent)
-    {
-        internal::zerofill(&saxHandler, sizeof(saxHandler));
+    static inline const xmlChar *projectPrefix() {
+        return reinterpret_cast<const xmlChar *>("vpvm");
     }
-    ~PrivateContext() {
-        internal::zerofill(&saxHandler, sizeof(saxHandler));
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            IModel *model = (*it).second;
-            m_parent->deleteModel(model);
-        }
-        assets.clear();
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            IModel *model = (*it).second;
-            m_parent->deleteModel(model);
-        }
-        models.clear();
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            IMotion *motion = (*it).second;
-            m_parent->removeMotion(motion);
-            delete motion;
-        }
-        motions.clear();
-        delete currentString;
-        currentString = 0;
-        delete currentAsset;
-        currentAsset = 0;
-        delete currentModel;
-        currentModel = 0;
-        delete currentMotion;
-        currentMotion = 0;
-        state = kInitial;
-        depth = 0;
-        dirty = false;
-        m_parent = 0;
-    }
-
-    bool isDuplicatedUUID(const Project::UUID &uuid, std::set<Project::UUID> &set) const {
-        if (set.find(uuid) != set.end())
-            return true;
-        set.insert(uuid);
-        return false;
-    }
-    bool checkDuplicateUUID() const {
-        std::set<Project::UUID> set;
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            if (isDuplicatedUUID((*it).first, set))
-                return false;
-        }
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            if (isDuplicatedUUID((*it).first, set))
-                return false;
-        }
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            if (isDuplicatedUUID((*it).first, set))
-                return false;
-        }
-        return true;
-    }
-    void pushState(State s) {
-        state = s;
-        depth++;
-        // fprintf(stderr, "PUSH: depth = %d, state = %s\n", depth, toString(state));
-    }
-    void popState(State s) {
-        state = s;
-        depth--;
-        // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
-    }
-    IModel *findModel(const Project::UUID &value) const {
-        if (value == Project::kNullUUID)
-            return 0;
-        ModelMap::const_iterator it = assets.find(value);
-        if (it != assets.end())
-            return (*it).second;
-        it = models.find(value);
-        if (it != models.end())
-            return (*it).second;
-        return 0;
-    }
-    const Project::UUID &findModelUUID(const IModel *value) const {
-        if (!value)
-            return Project::kNullUUID;
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            if ((*it).second == value)
-                return (*it).first;
-        }
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            if ((*it).second == value)
-                return (*it).first;
-        }
-        return Project::kNullUUID;
-    }
-    IMotion *findMotion(const Project::UUID &value) const {
-        if (value == Project::kNullUUID)
-            return 0;
-        MotionMap::const_iterator it = motions.find(value);
-        if (it != motions.end())
-            return (*it).second;
-        return 0;
-    }
-    const Project::UUID &findMotionUUID(const IMotion *value) const {
-        if (!value)
-            return Project::kNullUUID;
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            if ((*it).second == value)
-                return (*it).first;
-        }
-        return Project::kNullUUID;
-    }
-    bool removeModel(const IModel *model) {
-        for (ModelMap::iterator it = assets.begin(); it != assets.end(); it++) {
-            if ((*it).second == model) {
-                assets.erase(it);
-                return true;
-            }
-        }
-        for (ModelMap::iterator it = models.begin(); it != models.end(); it++) {
-            if ((*it).second == model) {
-                models.erase(it);
-                return true;
-            }
-        }
-        return false;
-    }
-    bool removeMotion(const IMotion *motion) {
-        for (MotionMap::iterator it = motions.begin(); it != motions.end(); it++) {
-            if ((*it).second == motion) {
-                motions.erase(it);
-                return true;
-            }
-        }
-        return false;
-    }
-    bool writeStringMap(const xmlChar *prefix, const StringMap &map, xmlTextWriterPtr &writer) {
-        for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
-            if (it->first.empty() || it->second.empty())
-                continue;
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL2_CAST_XC("value"), 0));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(it->first.c_str())));
-            VPVL2_XML_RC(xmlTextWriterWriteCDATA(writer, VPVL2_CAST_XC(it->second.c_str())));
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
-        }
-        return true;
-    }
-    bool save(xmlTextWriterPtr &writer) {
-        uint8_t buffer[kElementContentBufferSize];
-        if (!writer)
-            return false;
-        static const xmlChar *kPrefix = reinterpret_cast<const xmlChar *>(projectPrefix());
-        static const xmlChar *kNSURI = reinterpret_cast<const xmlChar *>(projectNamespaceURI());
-        VPVL2_XML_RC(xmlTextWriterSetIndent(writer, 1));
-        VPVL2_XML_RC(xmlTextWriterStartDocument(writer, 0, "UTF-8", 0));
-        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("project"), kNSURI));
-        StringPrintf(buffer, sizeof(buffer), "%s", libraryVersionString());
-        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("version"), VPVL2_CAST_XC(buffer)));
-        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("settings"), 0));
-        if(!writeStringMap(kPrefix, globalSettings, writer))
-            return false;
-        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
-        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("models"), 0));
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            const Project::UUID &uuid = (*it).first;
-            const IModel *model = (*it).second;
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("model"), 0));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            if(!writeStringMap(kPrefix, localModelSettings[model], writer))
-                return false;
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:model */
-        }
-        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
-        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("assets"), 0));
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            const Project::UUID &uuid = (*it).first;
-            const IModel *asset = (*it).second;
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("asset"), 0));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            if(!writeStringMap(kPrefix, localAssetSettings[asset], writer))
-                return false;
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
-        }
-        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
-        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("motions"), 0));
-        int nframes = 0;
-        Quaternion ix, iy, iz, ir, ifv, idt;
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            const std::string &motionUUID = (*it).first;
-            IMotion *motionPtr = (*it).second;
-            if (motionPtr->type() != IMotion::kVMD)
-                continue;
-            const vmd::Motion *motion = reinterpret_cast<vmd::Motion *>(motionPtr);
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("motion"), 0));
-            const std::string &modelUUID = this->findModelUUID(motion->parentModel());
-            if (modelUUID != Project::kNullUUID)
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("animation"), 0));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("bone")));
-            const vmd::BoneAnimation &ba = motion->boneAnimation();
-            nframes = ba.countKeyframes();
-            for (int j = 0; j < nframes; j++) {
-                const vmd::BoneKeyframe *frame = static_cast<vmd::BoneKeyframe *>(ba.frameAt(j));
-                const std::string &name = delegate->toStdFromString(frame->name());
-                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
-                StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
-                const Vector3 &position = frame->position();
-                StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
-                const Quaternion &rotation = frame->rotation();
-                StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
-                             -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("rotation"), VPVL2_CAST_XC(buffer)));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("ik"), VPVL2_CAST_XC(frame->isIKEnabled() ? "true" : "false")));
-                frame->getInterpolationParameter(vmd::BoneKeyframe::kX, ix);
-                frame->getInterpolationParameter(vmd::BoneKeyframe::kY, iy);
-                frame->getInterpolationParameter(vmd::BoneKeyframe::kZ, iz);
-                frame->getInterpolationParameter(vmd::BoneKeyframe::kRotation, ir);
-                StringPrintf(buffer, sizeof(buffer),
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f"
-                             , ix.x(), ix.y(), ix.z(), ix.w()
-                             , iy.x(), iy.y(), iy.z(), iy.w()
-                             , iz.x(), iz.y(), iz.z(), iz.w()
-                             , ir.x(), ir.y(), ir.z(), ir.w()
-                             );
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("interpolation"), VPVL2_CAST_XC(buffer)));
-                VPVL2_XML_RC(xmlTextWriterEndElement(writer));
-            }
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("animation"), 0));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("morph")));
-            const vmd::MorphAnimation &fa = motion->morphAnimation();
-            nframes = fa.countKeyframes();
-            for (int j = 0; j < nframes; j++) {
-                const vmd::MorphKeyframe *frame = static_cast<vmd::MorphKeyframe *>(fa.frameAt(j));
-                const std::string &name = delegate->toStdFromString(frame->name());
-                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
-                StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
-                StringPrintf(buffer, sizeof(buffer), "%.4f", frame->weight());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("weight"), VPVL2_CAST_XC(buffer)));
-                VPVL2_XML_RC(xmlTextWriterEndElement(writer));
-            }
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("animation"), 0));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("camera")));
-            const vmd::CameraAnimation &ca = motion->cameraAnimation();
-            nframes = ca.countKeyframes();
-            for (int j = 0; j < nframes; j++) {
-                const vmd::CameraKeyframe *frame = static_cast<vmd::CameraKeyframe *>(ca.frameAt(j));
-                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
-                const Vector3 &position = frame->position();
-                StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
-                const Vector3 &angle = frame->angle();
-                StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
-                             vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
-                StringPrintf(buffer, sizeof(buffer), "%.8f", frame->fov());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
-                StringPrintf(buffer, sizeof(buffer), "%.8f", frame->distance());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("distance"), VPVL2_CAST_XC(buffer)));
-                frame->getInterpolationParameter(vmd::CameraKeyframe::kX, ix);
-                frame->getInterpolationParameter(vmd::CameraKeyframe::kY, iy);
-                frame->getInterpolationParameter(vmd::CameraKeyframe::kZ, iz);
-                frame->getInterpolationParameter(vmd::CameraKeyframe::kRotation, ir);
-                frame->getInterpolationParameter(vmd::CameraKeyframe::kFov, ifv);
-                frame->getInterpolationParameter(vmd::CameraKeyframe::kDistance, idt);
-                StringPrintf(buffer, sizeof(buffer),
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f,"
-                             "%.f,%.f,%.f,%.f"
-                             , ix.x(), ix.y(), ix.z(), ix.w()
-                             , iy.x(), iy.y(), iy.z(), iy.w()
-                             , iz.x(), iz.y(), iz.z(), iz.w()
-                             , ir.x(), ir.y(), ir.z(), ir.w()
-                             , idt.x(), idt.y(), idt.z(), idt.w()
-                             , ifv.x(), ifv.y(), ifv.z(), ifv.w()
-                             );
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("interpolation"), VPVL2_CAST_XC(buffer)));
-                VPVL2_XML_RC(xmlTextWriterEndElement(writer));
-            }
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
-            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("animation"), 0));
-            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("light")));
-            const vmd::LightAnimation &la = motion->lightAnimation();
-            nframes = la.countKeyframes();
-            for (int j = 0; j < nframes; j++) {
-                const vmd::LightKeyframe *frame = static_cast<vmd::LightKeyframe *>(la.frameAt(j));
-                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, kPrefix, VPVL2_CAST_XC("keyframe"), 0));
-                StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(frame->timeIndex()));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
-                const Vector3 &color = frame->color();
-                StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", color.x(), color.y(), color.z());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("color"), VPVL2_CAST_XC(buffer)));
-                const Vector3 &direction = frame->direction();
-                StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", direction.x(), direction.y(), direction.z());
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("direction"), VPVL2_CAST_XC(buffer)));
-                VPVL2_XML_RC(xmlTextWriterEndElement(writer));
-            }
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
-            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
-        }
-        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motions */
-        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:project */
-        VPVL2_XML_RC(xmlTextWriterEndDocument(writer));
-        return true;
-    }
-
-    static const char *projectPrefix() {
-        return "vpvm";
-    }
-    static const char *projectNamespaceURI() {
-        return "https://github.com/hkrn/MMDAI/";
+    static inline const xmlChar *projectNamespaceURI() {
+        return reinterpret_cast<const xmlChar *>("https://github.com/hkrn/MMDAI/");
     }
     static const char *toString(State s) {
         switch (s) {
@@ -467,34 +177,41 @@ public:
             return "kAsset";
         case kMotions:
             return "kMotions";
-        case kAssetMotion:
-            return "kAssetMotion";
         case kAnimation:
             return "kAnimation";
-        case kBoneMotion:
-            return "kBoneMotion";
-        case kMorphMotion:
-            return "kVerticesMotion";
-        case kCameraMotion:
-            return "kCameraMotion";
-        case kLightMotion:
-            return "kLightMotion";
+        case kVMDBoneMotion:
+            return "kVMDBoneMotion";
+        case kVMDMorphMotion:
+            return "kVMDMorphMotion";
+        case kVMDCameraMotion:
+            return "kVMDCameraMotion";
+        case kVMDLightMotion:
+            return "kVMDLightMotion";
+        case kMVDAssetMotion:
+            return "kMVDAssetMotion";
+        case kMVDBoneMotion:
+            return "kMVDBoneMotion";
+        case kMVDCameraMotion:
+            return "kMVDCameraMotion";
+        case kMVDEffectMotion:
+            return "kMVDEffectMotion";
+        case kMVDLightMotion:
+            return "kMVDLightMotion";
+        case kMVDModelMotion:
+            return "kMVDModelMotion";
+        case kMVDMorphMotion:
+            return "kMVDMorphMotion";
+        case kMVDProjectMotion:
+            return "kMVDProjectMotion";
         default:
             return "kUnknown";
         }
     }
-    static bool equals(const xmlChar *prefix, const xmlChar *localname, const char *dst) {
-        static const char *kPrefix = projectPrefix();
-        return equals(prefix, kPrefix) && equals(localname, dst);
+    static inline bool equals(const xmlChar *prefix, const xmlChar *localname, const char *dst) {
+        return xmlStrcmp(prefix, projectPrefix()) == 0 && equals(localname, dst);
     }
-
-    static bool equals(const xmlChar *name, const char *dst) {
+    static inline bool equals(const xmlChar *name, const char *dst) {
         return xmlStrcmp(name, reinterpret_cast<const xmlChar *>(dst)) == 0;
-    }
-    static void newString(const xmlChar **attributes, int index, std::string &value) {
-        value = std::string(
-                    reinterpret_cast<const char *>(attributes[index + 3]),
-                    reinterpret_cast<const char *>(attributes[index + 4]));
     }
     static void splitString(const std::string &value, Array<std::string> &tokens) {
         const std::string &delimiter = ",";
@@ -534,6 +251,527 @@ public:
         return false;
     }
 
+    PrivateContext(Scene *scene, Project::IDelegate *delegate, Factory *factory)
+        : delegateRef(delegate),
+          sceneRef(scene),
+          factoryRef(factory),
+          currentString(0),
+          currentAsset(0),
+          currentModel(0),
+          currentMotion(0),
+          currentMotionType(IMotion::kVMD),
+          state(kInitial),
+          depth(0),
+          dirty(false)
+    {
+        internal::zerofill(&saxHandler, sizeof(saxHandler));
+    }
+    ~PrivateContext() {
+        internal::zerofill(&saxHandler, sizeof(saxHandler));
+        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            IModel *model = it->second;
+            sceneRef->deleteModel(model);
+        }
+        assets.clear();
+        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            IModel *model = it->second;
+            sceneRef->deleteModel(model);
+        }
+        models.clear();
+        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            IMotion *motion = it->second;
+            sceneRef->removeMotion(motion);
+            delete motion;
+        }
+        motions.clear();
+        delete currentString;
+        currentString = 0;
+        delete currentAsset;
+        currentAsset = 0;
+        delete currentModel;
+        currentModel = 0;
+        delete currentMotion;
+        currentMotion = 0;
+        state = kInitial;
+        depth = 0;
+        dirty = false;
+        sceneRef = 0;
+        delegateRef = 0;
+        factoryRef = 0;
+    }
+
+    bool isDuplicatedUUID(const Project::UUID &uuid, std::set<Project::UUID> &set) const {
+        if (set.find(uuid) != set.end())
+            return true;
+        set.insert(uuid);
+        return false;
+    }
+    bool checkDuplicateUUID() const {
+        std::set<Project::UUID> set;
+        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            if (isDuplicatedUUID(it->first, set))
+                return false;
+        }
+        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            if (isDuplicatedUUID(it->first, set))
+                return false;
+        }
+        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            if (isDuplicatedUUID(it->first, set))
+                return false;
+        }
+        return true;
+    }
+    void pushState(State s) {
+        state = s;
+        depth++;
+        // fprintf(stderr, "PUSH: depth = %d, state = %s\n", depth, toString(state));
+    }
+    void popState(State s) {
+        state = s;
+        depth--;
+        // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
+    }
+    IModel *findModel(const Project::UUID &value) const {
+        if (value == Project::kNullUUID)
+            return 0;
+        ModelMap::const_iterator it = assets.find(value);
+        if (it != assets.end())
+            return it->second;
+        it = models.find(value);
+        if (it != models.end())
+            return it->second;
+        return 0;
+    }
+    const Project::UUID &findModelUUID(const IModel *value) const {
+        if (!value)
+            return Project::kNullUUID;
+        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            if (it->second == value)
+                return it->first;
+        }
+        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            if (it->second == value)
+                return it->first;
+        }
+        return Project::kNullUUID;
+    }
+    IMotion *findMotion(const Project::UUID &value) const {
+        if (value == Project::kNullUUID)
+            return 0;
+        MotionMap::const_iterator it = motions.find(value);
+        if (it != motions.end())
+            return it->second;
+        return 0;
+    }
+    const Project::UUID &findMotionUUID(const IMotion *value) const {
+        if (!value)
+            return Project::kNullUUID;
+        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            if (it->second == value)
+                return it->first;
+        }
+        return Project::kNullUUID;
+    }
+    bool removeModel(const IModel *model) {
+        for (ModelMap::iterator it = assets.begin(); it != assets.end(); it++) {
+            if (it->second == model) {
+                assets.erase(it);
+                return true;
+            }
+        }
+        for (ModelMap::iterator it = models.begin(); it != models.end(); it++) {
+            if (it->second == model) {
+                models.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+    bool removeMotion(const IMotion *motion) {
+        for (MotionMap::iterator it = motions.begin(); it != motions.end(); it++) {
+            if (it->second == motion) {
+                motions.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool save(xmlTextWriterPtr writer) const {
+        uint8_t buffer[kElementContentBufferSize];
+        if (!writer)
+            return false;
+        VPVL2_XML_RC(xmlTextWriterSetIndent(writer, 1));
+        VPVL2_XML_RC(xmlTextWriterStartDocument(writer, 0, "UTF-8", 0));
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("project"), projectNamespaceURI()));
+        StringPrintf(buffer, sizeof(buffer), "%.1f", Project::formatVersion());
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("version"), VPVL2_CAST_XC(buffer)));
+        if (!writeSettings(writer))
+            return false;
+        if (!writeModels(writer))
+            return false;
+        if (!writeAssets(writer))
+            return false;
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motions"), 0));
+        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+            const std::string &motionUUID = it->first;
+            IMotion *motionPtr = it->second;
+            IMotion::Type motionType = motionPtr->type();
+            if (motionType == IMotion::kVMD) {
+                const vmd::Motion *motion = static_cast<const vmd::Motion *>(motionPtr);
+                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
+                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("vmd")));
+                const std::string &modelUUID = findModelUUID(motion->parentModel());
+                if (modelUUID != Project::kNullUUID)
+                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
+                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
+                if (!writeVMDBoneKeyframes(writer, motion))
+                    return false;
+                if (!writeVMDMorphKeyframes(writer, motion))
+                    return false;
+                if (!writeVMDCameraKeyframes(writer, motion))
+                    return false;
+                if (!writeVMDLightKeyframes(writer, motion))
+                    return false;
+                VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
+            }
+            else if (motionType == IMotion::kMVD) {
+                const mvd::Motion *motion = static_cast<const mvd::Motion *>(motionPtr);
+                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
+                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("mvd")));
+                const std::string &modelUUID = findModelUUID(motion->parentModel());
+                if (modelUUID != Project::kNullUUID)
+                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
+                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
+                if (!writeMVDBoneKeyframes(writer, motion))
+                    return false;
+                if (!writeMVDMorphKeyframes(writer, motion))
+                    return false;
+                if (!writeMVDCameraKeyframes(writer, motion))
+                    return false;
+                if (!writeMVDLightKeyframes(writer, motion))
+                    return false;
+                VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
+            }
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motions */
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:project */
+        VPVL2_XML_RC(xmlTextWriterEndDocument(writer));
+        return true;
+    }
+    bool writeSettings(xmlTextWriterPtr writer) const {
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("settings"), 0));
+        if(!writeStringMap(projectPrefix(), globalSettings, writer))
+            return false;
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
+        return true;
+    }
+    bool writeModels(xmlTextWriterPtr writer) const {
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("models"), 0));
+        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+            const Project::UUID &uuid = it->first;
+            const IModel *model = it->second;
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("model"), 0));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
+            ModelSettings::const_iterator it2 = localModelSettings.find(model);
+            if (it2 != localModelSettings.end()) {
+                if(!writeStringMap(projectPrefix(), it2->second, writer))
+                    return false;
+            }
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:model */
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:models */
+        return true;
+    }
+    bool writeAssets(xmlTextWriterPtr writer) const {
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("assets"), 0));
+        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+            const Project::UUID &uuid = it->first;
+            const IModel *asset = it->second;
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("asset"), 0));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
+            ModelSettings::const_iterator it2 = localAssetSettings.find(asset);
+            if (it2 != localAssetSettings.end()) {
+                if(!writeStringMap(projectPrefix(), it2->second, writer))
+                    return false;
+            }
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
+        return true;
+    }
+    bool writeVMDBoneKeyframes(xmlTextWriterPtr writer, const vmd::Motion *motion) const {
+        Quaternion ix, iy, iz, ir;
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("bone")));
+        const vmd::BoneAnimation &ba = motion->boneAnimation();
+        int nkeyframes = ba.countKeyframes();
+        for (int i = 0; i < nkeyframes; i++) {
+            const vmd::BoneKeyframe *keyframe = static_cast<const vmd::BoneKeyframe *>(ba.keyframeAt(i));
+            const std::string &name = delegateRef->toStdFromString(keyframe->name());
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
+            StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &position = keyframe->localPosition();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
+            const Quaternion &rotation = keyframe->localRotation();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
+                         -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("rotation"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("ik"), VPVL2_CAST_XC(keyframe->isIKEnabled() ? "true" : "false")));
+            keyframe->getInterpolationParameter(IBoneKeyframe::kX, ix);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kY, iy);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kZ, iz);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kRotation, ir);
+            StringPrintf(buffer, sizeof(buffer),
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f"
+                         , ix.x(), ix.y(), ix.z(), ix.w()
+                         , iy.x(), iy.y(), iy.z(), iy.w()
+                         , iz.x(), iz.y(), iz.z(), iz.w()
+                         , ir.x(), ir.y(), ir.z(), ir.w()
+                         );
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("interpolation"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeVMDCameraKeyframes(xmlTextWriterPtr writer, const vmd::Motion *motion) const {
+        Quaternion ix, iy, iz, ir, ifv, idt;
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("camera")));
+        const vmd::CameraAnimation &ca = motion->cameraAnimation();
+        int nkeyframes = ca.countKeyframes();
+        for (int i = 0; i < nkeyframes; i++) {
+            const vmd::CameraKeyframe *keyframe = static_cast<const vmd::CameraKeyframe *>(ca.frameAt(i));
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &position = keyframe->lookAt();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &angle = keyframe->angle();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
+                         vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->fov());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->distance());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("distance"), VPVL2_CAST_XC(buffer)));
+            keyframe->getInterpolationParameter(ICameraKeyframe::kX, ix);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kY, iy);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kZ, iz);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kRotation, ir);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kFov, ifv);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, idt);
+            StringPrintf(buffer, sizeof(buffer),
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f"
+                         , ix.x(), ix.y(), ix.z(), ix.w()
+                         , iy.x(), iy.y(), iy.z(), iy.w()
+                         , iz.x(), iz.y(), iz.z(), iz.w()
+                         , ir.x(), ir.y(), ir.z(), ir.w()
+                         , idt.x(), idt.y(), idt.z(), idt.w()
+                         , ifv.x(), ifv.y(), ifv.z(), ifv.w()
+                         );
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("interpolation"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeVMDLightKeyframes(xmlTextWriterPtr writer, const vmd::Motion *motion) const {
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("light")));
+        const vmd::LightAnimation &la = motion->lightAnimation();
+        int nkeyframes = la.countKeyframes();
+        for (int i = 0; i < nkeyframes; i++) {
+            const vmd::LightKeyframe *keyframe = static_cast<vmd::LightKeyframe *>(la.frameAt(i));
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &color = keyframe->color();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", color.x(), color.y(), color.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("color"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &direction = keyframe->direction();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", direction.x(), direction.y(), direction.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("direction"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeVMDMorphKeyframes(xmlTextWriterPtr writer, const vmd::Motion *motion) const {
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("morph")));
+        const vmd::MorphAnimation &fa = motion->morphAnimation();
+        int nkeyframes = fa.countKeyframes();
+        for (int i = 0; i < nkeyframes; i++) {
+            const vmd::MorphKeyframe *keyframe = static_cast<vmd::MorphKeyframe *>(fa.keyframeAt(i));
+            const std::string &name = delegateRef->toStdFromString(keyframe->name());
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
+            StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.4f", keyframe->weight());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("weight"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeMVDBoneKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
+        Quaternion ix, iy, iz, ir;
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("bone")));
+        int nkeyframes = motion->countKeyframes(IKeyframe::kBone);
+        for (int i = 0; i < nkeyframes; i++) {
+            const mvd::BoneKeyframe *keyframe = static_cast<const mvd::BoneKeyframe *>(motion->findBoneKeyframeAt(i));
+            const std::string &name = delegateRef->toStdFromString(keyframe->name());
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
+            StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->layerIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("layer"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &position = keyframe->localPosition();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
+            const Quaternion &rotation = keyframe->localRotation();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
+                         -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("rotation"), VPVL2_CAST_XC(buffer)));
+            keyframe->getInterpolationParameter(IBoneKeyframe::kX, ix);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kY, iy);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kZ, iz);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kRotation, ir);
+            StringPrintf(buffer, sizeof(buffer),
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f"
+                         , ix.x(), ix.y(), ix.z(), ix.w()
+                         , iy.x(), iy.y(), iy.z(), iy.w()
+                         , iz.x(), iz.y(), iz.z(), iz.w()
+                         , ir.x(), ir.y(), ir.z(), ir.w()
+                         );
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("interpolation"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeMVDCameraKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
+        Quaternion ix, ir, ifv, idt;
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("camera")));
+        int nkeyframes = motion->countKeyframes(IKeyframe::kCamera);
+        for (int i = 0; i < nkeyframes; i++) {
+            const mvd::CameraKeyframe *keyframe = static_cast<const mvd::CameraKeyframe *>(motion->findCameraKeyframeAt(i));
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->layerIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("layer"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &position = keyframe->lookAt();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &angle = keyframe->angle();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
+                         vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->fov());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->distance());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("distance"), VPVL2_CAST_XC(buffer)));
+            keyframe->getInterpolationParameter(ICameraKeyframe::kX, ix);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kRotation, ir);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kFov, ifv);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, idt);
+            StringPrintf(buffer, sizeof(buffer),
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f,"
+                         "%.f,%.f,%.f,%.f"
+                         , ix.x(), ix.y(), ix.z(), ix.w()
+                         , ir.x(), ir.y(), ir.z(), ir.w()
+                         , idt.x(), idt.y(), idt.z(), idt.w()
+                         , ifv.x(), ifv.y(), ifv.z(), ifv.w()
+                         );
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("interpolation"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeMVDLightKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("light")));
+        int nkeyframes = motion->countKeyframes(IKeyframe::kLight);
+        for (int i = 0; i < nkeyframes; i++) {
+            const mvd::LightKeyframe *keyframe = static_cast<const mvd::LightKeyframe *>(motion->findLightKeyframeAt(i));
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &color = keyframe->color();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", color.x(), color.y(), color.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("color"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &direction = keyframe->direction();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", direction.x(), direction.y(), direction.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("direction"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeMVDMorphKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("morph")));
+        int nkeyframes = motion->countKeyframes(IKeyframe::kMorph);
+        for (int i = 0; i < nkeyframes; i++) {
+            const mvd::MorphKeyframe *keyframe = static_cast<const mvd::MorphKeyframe *>(motion->findMorphKeyframeAt(i));
+            const std::string &name = delegateRef->toStdFromString(keyframe->name());
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
+            StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.4f", keyframe->weight());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("weight"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeStringMap(const xmlChar *prefix, const StringMap &map, xmlTextWriterPtr writer) const {
+        for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
+            if (it->first.empty() || it->second.empty())
+                continue;
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL2_CAST_XC("value"), 0));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(it->first.c_str())));
+            VPVL2_XML_RC(xmlTextWriterWriteCDATA(writer, VPVL2_CAST_XC(it->second.c_str())));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:value */
+        }
+        return true;
+    }
+
     static void startElement(void *context,
                              const xmlChar *localname,
                              const xmlChar *prefix,
@@ -545,17 +783,8 @@ public:
                              const xmlChar **attributes)
     {
         PrivateContext *self = static_cast<PrivateContext *>(context);
-        char attributeName[kAttributeBufferSize];
-        std::string value;
-        int index = 0;
         if (self->depth == 0 && equals(prefix, localname, "project")) {
-            for (int i = 0; i < nattributes; i++, index += 5) {
-                if (equals(attributes[index], "version")) {
-                    newString(attributes, index, value);
-                    self->version = value;
-                }
-            }
-            self->pushState(kProject);
+            self->readVersion(attributes, nattributes);
         }
         else if (self->depth == 1 && self->state == kProject) {
             if (equals(prefix, localname, "settings")) {
@@ -576,94 +805,24 @@ public:
         }
         else if (self->depth == 2) {
             if (self->state == kSettings && equals(prefix, localname, "value")) {
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    if (equals(attributes[index], "name")) {
-                        newString(attributes, index, value);
-                        self->key = value;
-                    }
-                }
+                self->readGlobalSettingKey(attributes, nattributes);
             }
             if (self->state == kModels && equals(prefix, localname, "model")) {
-                delete self->currentModel;
-                self->currentModel = self->factory->createModel(IModel::kPMD);
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    if (equals(attributes[index], "uuid")) {
-                        newString(attributes, index, value);
-                        self->uuid = value;
-                    }
-                }
-                self->pushState(kModel);
+                self->readModel(attributes, nattributes);
             }
             else if (self->state == kAssets && equals(prefix, localname, "asset")) {
-                delete self->currentAsset;
-                self->currentAsset = self->factory->createModel(IModel::kAsset);
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    if (equals(attributes[index], "uuid")) {
-                        newString(attributes, index, value);
-                        self->uuid = value;
-                    }
-                }
-                self->pushState(kAsset);
+                self->readAsset(attributes, nattributes);
             }
             else if (self->state == kMotions && equals(prefix, localname, "motion")) {
-                bool found = false;
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    const xmlChar *name = attributes[index];
-                    if (equals(name, "uuid")) {
-                        newString(attributes, index, value);
-                        self->uuid = value;
-                        continue;
-                    }
-                    else if (equals(name, "model")) {
-                        newString(attributes, index, value);
-                        self->parentModel = value;
-                        continue;
-                    }
-                    else if (!equals(name, "type")) {
-                        continue;
-                    }
-                    strncpy(attributeName, reinterpret_cast<const char *>(attributes[index + 3]), sizeof(attributeName));
-                    attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "asset", 5) == 0) {
-                        self->pushState(kAssetMotion);
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    delete self->currentMotion;
-                    self->currentMotion = self->factory->createMotion(IMotion::kVMD, 0);
-                    self->pushState(kAnimation);
-                }
+                self->readMotion(attributes, nattributes);
             }
         }
         else if (self->depth == 3) {
             if ((self->state == kModel || self->state == kAsset) && equals(prefix, localname, "value")) {
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    if (equals(attributes[index], "name")) {
-                        newString(attributes, index, value);
-                        self->key = value;
-                    }
-                }
+                self->readLocalSettingKey(attributes, nattributes);
             }
             else if (self->state == kAnimation && equals(prefix, localname, "animation")) {
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    if (!equals(attributes[index], "type"))
-                        continue;
-                    strncpy(attributeName, reinterpret_cast<const char *>(attributes[index + 3]), sizeof(attributeName));
-                    attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "bone", 4) == 0) {
-                        self->pushState(kBoneMotion);
-                    }
-                    else if (strncmp(attributeName, "light", 5) == 0) {
-                        self->pushState(kLightMotion);
-                    }
-                    else if (strncmp(attributeName, "morph", 5) == 0) {
-                        self->pushState(kMorphMotion);
-                    }
-                    else if (strncmp(attributeName, "camera", 6) == 0) {
-                        self->pushState(kCameraMotion);
-                    }
-                }
+                self->readMotionType(attributes, nattributes);
             }
             else if (equals(prefix, localname, "keyframe")) {
 #if 0
@@ -676,178 +835,43 @@ public:
             }
         }
         else if (self->depth == 4 && equals(localname, "keyframe")) {
-            Array<std::string> tokens;
-            Vector3 vec3(0, 0, 0);
-            Vector4 vec4(0, 0, 0, 0);
-            QuadWord qw(0, 0, 0, 0);
             switch (self->state) {
-            case kBoneMotion:
-            {
-                IBoneKeyframe *keyframe = self->factory->createBoneKeyframe(self->currentMotion);
-                keyframe->setDefaultInterpolationParameter();
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
-                    attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "ik", 2) == 0) {
-                        newString(attributes, index, value);
-                        // keyframe->setIKEnable(value == "true");
-                    }
-                    else if (strncmp(attributeName, "name", 4) == 0) {
-                        newString(attributes, index, value);
-                        delete self->currentString;
-                        self->currentString = self->delegate->toStringFromStd(value);
-                        keyframe->setName(self->currentString);
-                    }
-                    else if (strncmp(attributeName, "index", 5) == 0) {
-                        newString(attributes, index, value);
-                        keyframe->setTimeIndex(StringToFloat(value.c_str()));
-                    }
-                    else if (strncmp(attributeName, "position", 8) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (createVector3(tokens, vec3)) {
-#ifdef VPVL2_COORDINATE_OPENGL
-                            vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
-#else
-                            vec3.setValue(vec3.x(), vec3.y(), vec3.z());
-#endif
-                            keyframe->setPosition(vec3);
-                        }
-                    }
-                    else if (strncmp(attributeName, "rotation", 8) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (createVector4(tokens, vec4)) {
-                            Quaternion rotation;
-#ifdef VPVL2_COORDINATE_OPENGL
-                            rotation.setValue(-vec4.x(), -vec4.y(), vec4.z(), vec4.w());
-#else
-                            rotation.setValue(vec4.x(), vec4.y(), vec4.z(), vec4.w());
-#endif
-                            keyframe->setRotation(rotation);
-                        }
-                    }
-                    else if (strncmp(attributeName, "interpolation", 12) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (tokens.count() == 16) {
-                            for (int i = 0; i < 4; i++) {
-                                setQuadWordValues(tokens, qw, i * 4);
-                                keyframe->setInterpolationParameter(static_cast<vmd::BoneKeyframe::InterpolationType>(i), qw);
-                            }
-                        }
-                    }
-                }
-                self->currentMotion->addKeyframe(keyframe);
+            case kVMDBoneMotion:
+                self->readVMDBoneKeyframe(attributes, nattributes);
                 break;
-            }
-            case kMorphMotion:
-            {
-                IMorphKeyframe *keyframe = self->factory->createMorphKeyframe(self->currentMotion);
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
-                    attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "name", 4) == 0) {
-                        newString(attributes, index, value);
-                        delete self->currentString;
-                        self->currentString = self->delegate->toStringFromStd(value);
-                        keyframe->setName(self->currentString);
-                    }
-                    else if (strncmp(attributeName, "index", 5) == 0) {
-                        newString(attributes, index, value);
-                        keyframe->setTimeIndex(StringToFloat(value.c_str()));
-                    }
-                    else if (strncmp(attributeName, "weight", 6) == 0) {
-                        newString(attributes, index, value);
-                        keyframe->setWeight(StringToFloat(value.c_str()));
-                    }
-                }
-                self->currentMotion->addKeyframe(keyframe);
+            case kVMDMorphMotion:
+                self->readVMDMorphKeyframe(attributes, nattributes);
                 break;
-            }
-            case kCameraMotion:
-            {
-                vmd::CameraKeyframe *keyframe = new vmd::CameraKeyframe();
-                keyframe->setDefaultInterpolationParameter();
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
-                    attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "fovy", 4) == 0) {
-                        newString(attributes, index, value);
-                        keyframe->setFov(StringToFloat(value.c_str()));
-                    }
-                    else if (strncmp(attributeName, "index", 5) == 0) {
-                        newString(attributes, index, value);
-                        keyframe->setTimeIndex(StringToFloat(value.c_str()));
-                    }
-                    else if (strncmp(attributeName, "angle", 5) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (createVector3(tokens, vec3)) {
-#ifdef VPVL2_COORDINATE_OPENGL
-                            vec3.setValue(-degree(vec3.x()), -degree(vec3.y()), -degree(vec3.z()));
-#else
-                            vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
-#endif
-                            reinterpret_cast<vmd::CameraKeyframe *>(keyframe)->setAngle(vec3);
-                        }
-                    }
-                    else if (strncmp(attributeName, "position", 8) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (createVector3(tokens, vec3)) {
-#ifdef VPVL2_COORDINATE_OPENGL
-                            vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
-#else
-                            vec3.setValue(vec3.x(), vec3.y(), vec3.z());
-#endif
-                            keyframe->setPosition(vec3);
-                        }
-                    }
-                    else if (strncmp(attributeName, "distance", 8) == 0) {
-                        newString(attributes, index, value);
-                        keyframe->setDistance(StringToFloat(value.c_str()));
-                    }
-                    else if (strncmp(attributeName, "interpolation", 12) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (tokens.count() == 24) {
-                            for (int i = 0; i < 6; i++) {
-                                setQuadWordValues(tokens, qw, i * 4);
-                                keyframe->setInterpolationParameter(static_cast<vmd::CameraKeyframe::InterpolationType>(i), qw);
-                            }
-                        }
-                    }
-                }
-                self->currentMotion->addKeyframe(keyframe);
+            case kVMDCameraMotion:
+                self->readVMDCameraKeyframe(attributes, nattributes);
                 break;
-            }
-            case kLightMotion:
-            {
-                vmd::LightKeyframe *keyframe = new vmd::LightKeyframe();
-                for (int i = 0; i < nattributes; i++, index += 5) {
-                    strncpy(attributeName, reinterpret_cast<const char *>(attributes[index]), sizeof(attributeName));
-                    attributeName[sizeof(attributeName) - 1] = 0;
-                    if (strncmp(attributeName, "index", 5) == 0) {
-                        newString(attributes, index, value);
-                        keyframe->setTimeIndex(StringToFloat(value.c_str()));
-                    }
-                    else if (strncmp(attributeName, "color", 5) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (createVector3(tokens, vec3))
-                            keyframe->setColor(vec3);
-                    }
-                    else if (strncmp(attributeName, "direction", 9) == 0) {
-                        newString(attributes, index, value);
-                        splitString(value, tokens);
-                        if (createVector3(tokens, vec3))
-                            keyframe->setDirection(vec3);
-                    }
-                }
-                self->currentMotion->addKeyframe(keyframe);
+            case kVMDLightMotion:
+                self->readVMDLightKeyframe(attributes, nattributes);
                 break;
-            }
+            case kMVDAssetMotion:
+                self->readMVDAssetKeyframe(attributes, nattributes);
+                break;
+            case kMVDBoneMotion:
+                self->readMVDBoneKeyframe(attributes, nattributes);
+                break;
+            case kMVDCameraMotion:
+                self->readMVDCameraKeyframe(attributes, nattributes);
+                break;
+            case kMVDEffectMotion:
+                self->readMVDEffectKeyframe(attributes, nattributes);
+                break;
+            case kMVDLightMotion:
+                self->readMVDLightKeyframe(attributes, nattributes);
+                break;
+            case kMVDModelMotion:
+                self->readMVDModelKeyframe(attributes, nattributes);
+                break;
+            case kMVDMorphMotion:
+                self->readMVDMorphKeyframe(attributes, nattributes);
+                break;
+            case kMVDProjectMotion:
+                self->readMVDProjectKeyframe(attributes, nattributes);
+                break;
             case kInitial:
             case kProject:
             case kSettings:
@@ -857,7 +881,6 @@ public:
             case kAssets:
             case kAsset:
             case kMotions:
-            case kAssetMotion:
             case kAnimation:
             default:
                 break;
@@ -871,22 +894,22 @@ public:
         PrivateContext *self = static_cast<PrivateContext *>(context);
         if (self->state == kSettings) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            self->globalSettings[self->key] = value;
+            self->globalSettings[self->settingKey] = value;
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            if (self->key == kSettingURIKey && value.find(".pmx") != std::string::npos) {
+            if (self->settingKey == kSettingURIKey && value.find(".pmx") != std::string::npos) {
                 StringMap values = self->localModelSettings[self->currentModel];
                 self->localModelSettings.erase(self->currentModel);
                 delete self->currentModel;
-                self->currentModel = self->factory->createModel(IModel::kPMX);
+                self->currentModel = self->factoryRef->createModel(IModel::kPMX);
                 self->localModelSettings[self->currentModel] = values;
             }
-            self->localModelSettings[self->currentModel][self->key] = value;
+            self->localModelSettings[self->currentModel][self->settingKey] = value;
         }
         else if (self->state == kAsset) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            self->localAssetSettings[self->currentAsset][self->key] = value;
+            self->localAssetSettings[self->currentAsset][self->settingKey] = value;
         }
     }
     static void endElement(void *context,
@@ -902,69 +925,19 @@ public:
             switch (self->state) {
             case kAsset:
                 if (equals(prefix, localname, "asset")) {
-                    if (!self->uuid.empty()) {
-                        if (self->uuid != Project::kNullUUID) {
-                            /* delete the previous asset before assigning to prevent memory leak */
-                            IModel *&assetPtr = self->assets[self->uuid];
-                            delete assetPtr;
-                            assetPtr = self->currentAsset;
-                        }
-                        else {
-                            delete self->currentAsset;
-                        }
-                        self->currentAsset = 0;
-                    }
-                    self->popState(kAssets);
-                    self->uuid = "";
+                    self->addAsset();
                 }
-                self->key = "";
+                self->settingKey.clear();
                 break;
             case kModel:
                 if (equals(prefix, localname, "model")) {
-                    if (!self->uuid.empty()) {
-                        if (self->uuid != Project::kNullUUID) {
-                            /* delete the previous model before assigning to prevent memory leak */
-                            IModel *&modelPtr = self->models[self->uuid];
-                            delete modelPtr;
-                            modelPtr = self->currentModel;
-                        }
-                        else {
-                            delete self->currentModel;
-                        }
-                        self->currentModel = 0;
-                    }
-                    self->popState(kModels);
-                    self->uuid = "";
+                    self->addModel();
                 }
-                self->key = "";
+                self->settingKey.clear();
                 break;
             case kAnimation:
                 if (equals(prefix, localname, "motion")) {
-                    if (!self->uuid.empty()) {
-                        if (self->uuid != Project::kNullUUID) {
-                            self->motions[self->uuid] = self->currentMotion;
-                            const std::string &parentModel = self->parentModel;
-                            if (!parentModel.empty()) {
-                                ModelMap::const_iterator it = self->models.find(parentModel);
-                                if (it != self->models.end()) {
-                                    if (IModel *model = self->models[parentModel])
-                                        self->currentMotion->setParentModel(model);
-                                }
-                            }
-                            self->m_parent->addMotion(self->currentMotion);
-                        }
-                        else {
-                            delete self->currentMotion;
-                        }
-                        self->currentMotion = 0;
-                    }
-                    self->uuid = self->parentModel = "";
-                    self->popState(kMotions);
-                }
-                break;
-            case kAssetMotion:
-                if (equals(prefix, localname, "motion")) {
-                    self->popState(kMotions);
+                    self->addMotion();
                 }
                 break;
             case kInitial:
@@ -974,10 +947,18 @@ public:
             case kModels:
             case kAssets:
             case kMotions:
-            case kBoneMotion:
-            case kMorphMotion:
-            case kCameraMotion:
-            case kLightMotion:
+            case kVMDBoneMotion:
+            case kVMDMorphMotion:
+            case kVMDCameraMotion:
+            case kVMDLightMotion:
+            case kMVDAssetMotion:
+            case kMVDBoneMotion:
+            case kMVDCameraMotion:
+            case kMVDEffectMotion:
+            case kMVDLightMotion:
+            case kMVDModelMotion:
+            case kMVDMorphMotion:
+            case kMVDProjectMotion:
             default:
                 break;
             }
@@ -999,7 +980,7 @@ public:
             case kSettings:
                 if (equals(prefix, localname, "settings"))
                     self->popState(kProject);
-                self->key = "";
+                self->settingKey.clear();
                 break;
             case kPhysics:
                 if (equals(prefix, localname, "physics"))
@@ -1009,12 +990,19 @@ public:
             case kProject:
             case kModel:
             case kAsset:
-            case kAssetMotion:
             case kAnimation:
-            case kBoneMotion:
-            case kMorphMotion:
-            case kCameraMotion:
-            case kLightMotion:
+            case kVMDBoneMotion:
+            case kVMDMorphMotion:
+            case kVMDCameraMotion:
+            case kVMDLightMotion:
+            case kMVDAssetMotion:
+            case kMVDBoneMotion:
+            case kMVDCameraMotion:
+            case kMVDEffectMotion:
+            case kMVDLightMotion:
+            case kMVDModelMotion:
+            case kMVDMorphMotion:
+            case kMVDProjectMotion:
             default:
                 break;
             }
@@ -1023,52 +1011,616 @@ public:
             self->depth--;
         }
     }
-    static void error(void *context, const char *format, ...)
-    {
+
+    void readVersion(const xmlChar **attributes, int nattributes) {
+        std::string key, value;
+        for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+            readAttributeString(attributes, index, key, value);
+            if (key == "version") {
+                version = value;
+            }
+        }
+        pushState(kProject);
+    }
+    void readGlobalSettingKey(const xmlChar **attributes, int nattributes) {
+        std::string key, value;
+        for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+            readAttributeString(attributes, index, key, value);
+            if (key == "name") {
+                settingKey = value;
+            }
+        }
+    }
+    void readModel(const xmlChar **attributes, int nattributes) {
+        std::string key, value;
+        delete currentModel;
+        currentModel = factoryRef->createModel(IModel::kPMD);
+        for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+            readAttributeString(attributes, index, key, value);
+            if (key == "uuid") {
+                uuid = value;
+            }
+        }
+        pushState(kModel);
+    }
+    void readAsset(const xmlChar **attributes, int nattributes) {
+        std::string key, value;
+        delete currentAsset;
+        currentAsset = factoryRef->createModel(IModel::kAsset);
+        for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+            readAttributeString(attributes, index, key, value);
+            if (key ==  "uuid") {
+                uuid = value;
+            }
+        }
+        pushState(kAsset);
+    }
+    void readMotion(const xmlChar **attributes, int nattributes) {
+        std::string key, value;
+        currentMotionType = IMotion::kVMD;
+        for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+            readAttributeString(attributes, index, key, value);
+            if (key == "uuid") {
+                uuid = value;
+                continue;
+            }
+            else if (key == "model") {
+                parentModel = value;
+                continue;
+            }
+            else if (key != "type") {
+                continue;
+            }
+            if (value == "mvd") {
+                currentMotionType = IMotion::kMVD;
+            }
+        }
+        delete currentMotion;
+        currentMotion = factoryRef->createMotion(currentMotionType, 0);
+        if (!parentModel.empty()) {
+            ModelMap::const_iterator it = models.find(parentModel);
+            if (it != models.end()) {
+                currentMotion->setParentModel(it->second);
+            }
+            else {
+                ModelMap::const_iterator it2 = assets.find(parentModel);
+                if (it2 != assets.end()) {
+                    currentMotion->setParentModel(it2->second);
+                }
+            }
+        }
+        pushState(kAnimation);
+    }
+    void readLocalSettingKey(const xmlChar **attributes, int nattributes) {
+        readGlobalSettingKey(attributes, nattributes);
+    }
+    void readMotionType(const xmlChar **attributes, int nattributes) {
+        std::string key, value;
+        bool isMVD = currentMotionType == IMotion::kMVD;
+        for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+            readAttributeString(attributes, index, key, value);
+            if (key != "type")
+                continue;
+            if (isMVD) {
+                if (value == "bone") {
+                    pushState(kMVDBoneMotion);
+                }
+                else if (value == "asset") {
+                    pushState(kMVDAssetMotion);
+                }
+                if (value == "model") {
+                    pushState(kMVDModelMotion);
+                }
+                else if (value == "light") {
+                    pushState(kMVDLightMotion);
+                }
+                else if (value == "morph") {
+                    pushState(kMVDMorphMotion);
+                }
+                else if (value == "camera") {
+                    pushState(kMVDCameraMotion);
+                }
+                else if (value == "effect") {
+                    pushState(kMVDEffectMotion);
+                }
+                else if (value == "project") {
+                    pushState(kMVDProjectMotion);
+                }
+            }
+            else {
+                if (value == "bone") {
+                    pushState(kVMDBoneMotion);
+                }
+                else if (value == "light") {
+                    pushState(kVMDLightMotion);
+                }
+                else if (value == "morph") {
+                    pushState(kVMDMorphMotion);
+                }
+                else if (value == "camera") {
+                    pushState(kVMDCameraMotion);
+                }
+            }
+        }
+    }
+    void readVMDBoneKeyframe(const xmlChar **attributes, int nattributes) {
+        IBoneKeyframe *keyframe = factoryRef->createBoneKeyframe(currentMotion);
+        if (keyframe) {
+            Array<std::string> tokens;
+            Vector4 vec4(kZeroV4);
+            Vector3 vec3(kZeroV3);
+            QuadWord qw(0, 0, 0, 0);
+            std::string key, value;
+            keyframe->setDefaultInterpolationParameter();
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "ik") {
+                    // keyframe->setIKEnable(value == "true");
+                }
+                else if (key == "name") {
+                    delete currentString;
+                    currentString = delegateRef->toStringFromStd(value);
+                    keyframe->setName(currentString);
+                }
+                else if (key == "index") {
+                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                }
+                else if (key == "position") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3)) {
+#ifdef VPVL2_COORDINATE_OPENGL
+                        vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
+#else
+                        vec3.setValue(vec3.x(), vec3.y(), vec3.z());
+#endif
+                        keyframe->setLocalPosition(vec3);
+                    }
+                }
+                else if (key == "rotation") {
+                    splitString(value, tokens);
+                    if (createVector4(tokens, vec4)) {
+                        Quaternion rotation;
+#ifdef VPVL2_COORDINATE_OPENGL
+                        rotation.setValue(-vec4.x(), -vec4.y(), vec4.z(), vec4.w());
+#else
+                        rotation.setValue(vec4.x(), vec4.y(), vec4.z(), vec4.w());
+#endif
+                        keyframe->setLocalRotation(rotation);
+                    }
+                }
+                else if (key == "interpolation") {
+                    splitString(value, tokens);
+                    if (tokens.count() == 16) {
+                        for (int i = 0; i < 4; i++) {
+                            setQuadWordValues(tokens, qw, i * 4);
+                            keyframe->setInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), qw);
+                        }
+                    }
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readVMDCameraKeyframe(const xmlChar **attributes, int nattributes) {
+        ICameraKeyframe *keyframe = factoryRef->createCameraKeyframe(currentMotion);
+        if (keyframe) {
+            Vector3 vec3(kZeroV3);
+            QuadWord qw(0, 0, 0, 0);
+            Array<std::string> tokens;
+            std::string key, value;
+            keyframe->setDefaultInterpolationParameter();
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "fovy") {
+                    keyframe->setFov(StringToFloat(value.c_str()));
+                }
+                else if (key == "index") {
+                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                }
+                else if (key == "angle") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3)) {
+#ifdef VPVL2_COORDINATE_OPENGL
+                        vec3.setValue(-degree(vec3.x()), -degree(vec3.y()), -degree(vec3.z()));
+#else
+                        vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
+#endif
+                        keyframe->setAngle(vec3);
+                    }
+                }
+                else if (key == "position") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3)) {
+#ifdef VPVL2_COORDINATE_OPENGL
+                        vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
+#else
+                        vec3.setValue(vec3.x(), vec3.y(), vec3.z());
+#endif
+                        keyframe->setLookAt(vec3);
+                    }
+                }
+                else if (key == "distance") {
+                    keyframe->setDistance(StringToFloat(value.c_str()));
+                }
+                else if (key == "interpolation") {
+                    splitString(value, tokens);
+                    if (tokens.count() == 24) {
+                        for (int i = 0; i < 6; i++) {
+                            setQuadWordValues(tokens, qw, i * 4);
+                            keyframe->setInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), qw);
+                        }
+                    }
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readVMDLightKeyframe(const xmlChar **attributes, int nattributes) {
+        ILightKeyframe *keyframe = factoryRef->createLightKeyframe(currentMotion);
+        if (keyframe) {
+            Array<std::string> tokens;
+            Vector3 vec3(kZeroV3);
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "index") {
+                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                }
+                else if (key == "color") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3))
+                        keyframe->setColor(vec3);
+                }
+                else if (key == "direction") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3))
+                        keyframe->setDirection(vec3);
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readVMDMorphKeyframe(const xmlChar **attributes, int nattributes) {
+        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        if (keyframe) {
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "name") {
+                    delete currentString;
+                    currentString = delegateRef->toStringFromStd(value);
+                    keyframe->setName(currentString);
+                }
+                else if (key == "index") {
+                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                }
+                else if (key == "weight") {
+                    keyframe->setWeight(StringToFloat(value.c_str()));
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDAssetKeyframe(const xmlChar **attributes, int nattributes) {
+        // FIXME: add createAssetKeyframe
+        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        if (keyframe) {
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDBoneKeyframe(const xmlChar **attributes, int nattributes) {
+        IBoneKeyframe *keyframe = factoryRef->createBoneKeyframe(currentMotion);
+        if (keyframe) {
+            Array<std::string> tokens;
+            Vector4 vec4(kZeroV4);
+            Vector3 vec3(kZeroV3);
+            QuadWord qw(0, 0, 0, 0);
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "name") {
+                    delete currentString;
+                    currentString = delegateRef->toStringFromStd(value);
+                    keyframe->setName(currentString);
+                }
+                else if (key == "index") {
+                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                }
+                else if (key == "layer") {
+                    keyframe->setLayerIndex(StringToInt(value.c_str()));
+                }
+                else if (key == "position") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3)) {
+#ifdef VPVL2_COORDINATE_OPENGL
+                        vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
+#else
+                        vec3.setValue(vec3.x(), vec3.y(), vec3.z());
+#endif
+                        keyframe->setLocalPosition(vec3);
+                    }
+                }
+                else if (key == "rotation") {
+                    splitString(value, tokens);
+                    if (createVector4(tokens, vec4)) {
+                        Quaternion rotation;
+#ifdef VPVL2_COORDINATE_OPENGL
+                        rotation.setValue(-vec4.x(), -vec4.y(), vec4.z(), vec4.w());
+#else
+                        rotation.setValue(vec4.x(), vec4.y(), vec4.z(), vec4.w());
+#endif
+                        keyframe->setLocalRotation(rotation);
+                    }
+                }
+                else if (key == "interpolation") {
+                    splitString(value, tokens);
+                    if (tokens.count() == 16) {
+                        for (int i = 0; i < 4; i++) {
+                            setQuadWordValues(tokens, qw, i * 4);
+                            keyframe->setInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), qw);
+                        }
+                    }
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDCameraKeyframe(const xmlChar **attributes, int nattributes) {
+        ICameraKeyframe *keyframe = factoryRef->createCameraKeyframe(currentMotion);
+        if (keyframe) {
+            Array<std::string> tokens;
+            Vector3 vec3(kZeroV3);
+            QuadWord qw(0, 0, 0, 0);
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "fovy") {
+                    keyframe->setFov(StringToFloat(value.c_str()));
+                }
+                else if (key == "index") {
+                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                }
+                else if (key == "layer") {
+                    keyframe->setLayerIndex(StringToInt(value.c_str()));
+                }
+                else if (key == "angle") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3)) {
+#ifdef VPVL2_COORDINATE_OPENGL
+                        vec3.setValue(-degree(vec3.x()), -degree(vec3.y()), -degree(vec3.z()));
+#else
+                        vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
+#endif
+                        keyframe->setAngle(vec3);
+                    }
+                }
+                else if (key == "position") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3)) {
+#ifdef VPVL2_COORDINATE_OPENGL
+                        vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
+#else
+                        vec3.setValue(vec3.x(), vec3.y(), vec3.z());
+#endif
+                        keyframe->setLookAt(vec3);
+                    }
+                }
+                else if (key == "distance") {
+                    keyframe->setDistance(StringToFloat(value.c_str()));
+                }
+                else if (key == "interpolation") {
+                    splitString(value, tokens);
+                    if (tokens.count() == 16) {
+                        for (int i = 0; i < 4; i++) {
+                            setQuadWordValues(tokens, qw, i * 4);
+                            keyframe->setInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i + 2), qw);
+                        }
+                    }
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDEffectKeyframe(const xmlChar **attributes, int nattributes) {
+        // FIXME: add createEffectKeyframe
+        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        if (keyframe) {
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDLightKeyframe(const xmlChar **attributes, int nattributes) {
+        ILightKeyframe *keyframe = factoryRef->createLightKeyframe(currentMotion);
+        if (keyframe) {
+            Array<std::string> tokens;
+            Vector3 vec3(kZeroV3);
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "index") {
+                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                }
+                else if (key == "color") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3))
+                        keyframe->setColor(vec3);
+                }
+                else if (key == "direction") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3))
+                        keyframe->setDirection(vec3);
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDModelKeyframe(const xmlChar **attributes, int nattributes) {
+        // FIXME: add createModelKeyframe
+        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        if (keyframe) {
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDMorphKeyframe(const xmlChar **attributes, int nattributes) {
+        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        if (keyframe) {
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+                if (key == "name") {
+                    delete currentString;
+                    currentString = delegateRef->toStringFromStd(value);
+                    keyframe->setName(currentString);
+                }
+                else if (key == "index") {
+                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                }
+                else if (key == "weight") {
+                    keyframe->setWeight(StringToFloat(value.c_str()));
+                }
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+    void readMVDProjectKeyframe(const xmlChar **attributes, int nattributes) {
+        // FIXME: add createModelKeyframe
+        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        if (keyframe) {
+            std::string key, value;
+            for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
+                readAttributeString(attributes, index, key, value);
+            }
+            currentMotion->addKeyframe(keyframe);
+        }
+    }
+
+    void addAsset() {
+        if (!uuid.empty()) {
+            if (uuid != Project::kNullUUID) {
+                /* delete the previous asset before assigning to prevent memory leak */
+                ModelMap::iterator it = assets.find(uuid);
+                if (it != assets.end()) {
+                    assets.erase(it);
+                    delete it->second;
+                }
+                assets.insert(std::make_pair(uuid, currentAsset));
+            }
+            else {
+                delete currentAsset;
+            }
+            currentAsset = 0;
+        }
+        popState(kAssets);
+        uuid.clear();
+    }
+    void addModel() {
+        if (!uuid.empty()) {
+            if (uuid != Project::kNullUUID) {
+                /* delete the previous model before assigning to prevent memory leak */
+                ModelMap::iterator it = models.find(uuid);
+                if (it != models.end()) {
+                    models.erase(it);
+                    delete it->second;
+                }
+                models.insert(std::make_pair(uuid, currentModel));
+            }
+            else {
+                delete currentModel;
+            }
+            currentModel = 0;
+        }
+        popState(kModels);
+        uuid.clear();
+    }
+    void addMotion() {
+        if (!uuid.empty()) {
+            if (uuid != Project::kNullUUID && currentMotion) {
+                MotionMap::iterator it = motions.find(uuid);
+                if (it != motions.end()) {
+                    motions.erase(it);
+                    sceneRef->removeMotion(it->second);
+                    delete it->second;
+                }
+                motions.insert(std::make_pair(uuid, currentMotion));
+                sceneRef->addMotion(currentMotion);
+            }
+            else {
+                delete currentMotion;
+            }
+            currentMotion = 0;
+        }
+        uuid.clear();
+        parentModel.clear();
+        popState(kMotions);
+    }
+    static inline void readAttributeString(const xmlChar **attributes,
+                                           int index,
+                                           std::string &key,
+                                           std::string &value) {
+        key.assign(reinterpret_cast<const char *>(attributes[index]));
+        value.assign(reinterpret_cast<const char *>(attributes[index + 3]),
+                     reinterpret_cast<const char *>(attributes[index + 4]));
+    }
+
+    static void error(void *context, const char *format, ...) {
         PrivateContext *self = static_cast<PrivateContext *>(context);
         va_list ap;
         va_start(ap, format);
-        self->delegate->error(format, ap);
+        self->delegateRef->error(format, ap);
         va_end(ap);
     }
-    static void warning(void *context, const char *format, ...)
-    {
+    static void warning(void *context, const char *format, ...) {
         PrivateContext *self = static_cast<PrivateContext *>(context);
         va_list ap;
         va_start(ap, format);
-        self->delegate->warning(format, ap);
+        self->delegateRef->warning(format, ap);
         va_end(ap);
     }
 
     xmlSAXHandler saxHandler;
-    Project::IDelegate *delegate;
-    Factory *factory;
+    Project::IDelegate *delegateRef;
+    Scene *sceneRef;
+    Factory *factoryRef;
     ModelMap assets;
     ModelMap models;
     MotionMap motions;
     StringMap globalSettings;
-    std::map<const IModel *, StringMap> localAssetSettings;
-    std::map<const IModel *, StringMap> localModelSettings;
+    ModelSettings localAssetSettings;
+    ModelSettings localModelSettings;
     std::string version;
-    std::string key;
+    std::string settingKey;
     std::string parentModel;
     Project::UUID uuid;
     const IString *currentString;
     IModel *currentAsset;
     IModel *currentModel;
     IMotion *currentMotion;
+    IMotion::Type currentMotionType;
     State state;
     int depth;
     bool dirty;
-
-private:
-    Scene *m_parent;
 };
 
 const std::string Project::PrivateContext::kEmpty = "";
 const Project::UUID Project::kNullUUID = "{00000000-0000-0000-0000-000000000000}";
 const std::string Project::kSettingNameKey = "name";
 const std::string Project::kSettingURIKey = "uri";
+
+float Project::formatVersion()
+{
+    return 2.0;
+}
 
 bool Project::isReservedSettingKey(const std::string &key)
 {
@@ -1146,10 +1698,10 @@ const Project::UUIDList Project::modelUUIDs() const
     Project::UUIDList uuids;
     const PrivateContext::ModelMap &assets = m_context->assets;
     for (PrivateContext::ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++)
-        uuids.push_back((*it).first);
+        uuids.push_back(it->first);
     const PrivateContext::ModelMap &models = m_context->models;
     for (PrivateContext::ModelMap::const_iterator it = models.begin(); it != models.end(); it++)
-        uuids.push_back((*it).first);
+        uuids.push_back(it->first);
     return uuids;
 }
 
@@ -1158,16 +1710,16 @@ const Project::UUIDList Project::motionUUIDs() const
     const PrivateContext::MotionMap &motions = m_context->motions;
     Project::UUIDList uuids;
     for (PrivateContext::MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++)
-        uuids.push_back((*it).first);
+        uuids.push_back(it->first);
     return uuids;
 }
 
-IModel *Project::model(const UUID &uuid) const
+IModel *Project::findModel(const UUID &uuid) const
 {
     return m_context->findModel(uuid);
 }
 
-IMotion *Project::motion(const UUID &uuid) const
+IMotion *Project::findMotion(const UUID &uuid) const
 {
     return m_context->findMotion(uuid);
 }
@@ -1207,11 +1759,11 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
     if (!containsModel(model)) {
         switch (model->type()) {
         case IModel::kAsset:
-            m_context->assets[uuid] = model;
+            m_context->assets.insert(std::make_pair(uuid, model));
             break;
         case IModel::kPMD:
         case IModel::kPMX:
-            m_context->models[uuid] = model;
+            m_context->models.insert(std::make_pair(uuid, model));
             break;
         default:
             return;
@@ -1224,7 +1776,7 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
 void Project::addMotion(IMotion *motion, const UUID &uuid)
 {
     if (!containsMotion(motion)) {
-        m_context->motions[uuid] = motion;
+        m_context->motions.insert(std::make_pair(uuid, motion));
         Scene::addMotion(motion);
         setDirty(true);
     }

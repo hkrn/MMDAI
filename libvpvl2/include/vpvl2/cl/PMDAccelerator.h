@@ -60,7 +60,7 @@ public:
     void updateModel(pmd::Model *model, const Scene *scene);
 
 private:
-    void log0(void *context, IRenderDelegate::LogLevel level, const char *format...);
+    void log0(void *context, IRenderContext::LogLevel level, const char *format...);
 
     Context *m_contextRef;
     cl_program m_program;

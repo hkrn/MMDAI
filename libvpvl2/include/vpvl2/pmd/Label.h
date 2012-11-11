@@ -54,16 +54,18 @@ namespace pmd
 class VPVL2_API Label : public ILabel
 {
 public:
-    Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special);
+    Label(IModel *modelRef, const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special);
     ~Label();
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_name; }
+    IModel *parentModelRef() const { return m_modelRef; }
     bool isSpecial() const { return m_special; }
     int count() const { return m_boneRefs.count(); }
     IBone *bone(int index) const { return m_boneRefs.at(index); }
     IMorph *morph(int /* index */) const { return 0; }
 
+    IModel *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     Array<IBone *> m_boneRefs;

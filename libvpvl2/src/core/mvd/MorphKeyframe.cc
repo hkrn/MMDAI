@@ -99,15 +99,15 @@ void MorphKeyframe::read(const uint8_t *data)
     MorphKeyframeChunk chunk;
     internal::getData(data, chunk);
     setWeight(chunk.weight);
-    setTimeIndex(chunk.timeIndex);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
     setInterpolationParameter(kWeight, Motion::InterpolationTable::toQuadWord(chunk.weightIP));
 }
 
 void MorphKeyframe::write(uint8_t *data) const
 {
     MorphKeyframeChunk chunk;
-    chunk.weight = weight();
-    chunk.timeIndex = timeIndex();
+    chunk.weight = float(weight());
+    chunk.timeIndex = uint64_t(timeIndex());
     tableForWeight().getInterpolationPair(chunk.weightIP);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
 }

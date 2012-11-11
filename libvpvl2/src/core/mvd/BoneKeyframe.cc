@@ -106,7 +106,7 @@ void BoneKeyframe::read(const uint8_t *data)
     internal::getData(data, chunk);
     internal::setPosition(chunk.position, m_position);
     internal::setRotation2(chunk.rotation, m_rotation);
-    setTimeIndex(chunk.timeIndex);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
     setLayerIndex(chunk.layerIndex);
     setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.x));
     setInterpolationParameter(kY, Motion::InterpolationTable::toQuadWord(chunk.y));
@@ -119,7 +119,7 @@ void BoneKeyframe::write(uint8_t *data) const
     BoneKeyframeChunk chunk;
     internal::getPosition(m_position, chunk.position);
     internal::getRotation2(m_rotation, chunk.rotation);
-    chunk.timeIndex = timeIndex();
+    chunk.timeIndex = uint64_t(timeIndex());
     chunk.layerIndex = layerIndex();
     tableForX().getInterpolationPair(chunk.x);
     tableForY().getInterpolationPair(chunk.y);
@@ -139,8 +139,8 @@ IBoneKeyframe *BoneKeyframe::clone() const
     frame->setName(m_namePtr);
     frame->setTimeIndex(m_timeIndex);
     frame->setLayerIndex(m_layerIndex);
-    frame->setPosition(m_position);
-    frame->setRotation(m_rotation);
+    frame->setLocalPosition(m_position);
+    frame->setLocalRotation(m_rotation);
     frame->setInterpolationParameter(kX, m_interpolationX.parameter);
     frame->setInterpolationParameter(kY, m_interpolationY.parameter);
     frame->setInterpolationParameter(kZ, m_interpolationZ.parameter);
@@ -197,22 +197,22 @@ void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &v
     }
 }
 
-const Vector3 &BoneKeyframe::position() const
+const Vector3 &BoneKeyframe::localPosition() const
 {
     return m_position;
 }
 
-const Quaternion &BoneKeyframe::rotation() const
+const Quaternion &BoneKeyframe::localRotation() const
 {
     return m_rotation;
 }
 
-void BoneKeyframe::setPosition(const Vector3 &value)
+void BoneKeyframe::setLocalPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void BoneKeyframe::setRotation(const Quaternion &value)
+void BoneKeyframe::setLocalRotation(const Quaternion &value)
 {
     m_rotation = value;
 }

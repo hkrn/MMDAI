@@ -34,18 +34,22 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef VPVM_MAINWINDOW_H
+#define VPVM_MAINWINDOW_H
 
 #include <QtCore/QSettings>
 #include <QtCore/QUuid>
 #include <QtGui/QDialog>
 #include <QtGui/QMainWindow>
 #include <vpvl2/Common.h>
+#include <vpvl2/qt/Encoding.h>
 
-namespace internal {
-class Player;
-}
+class QCheckBox;
+class QDoubleSpinBox;
+class QPushButton;
+class QSpinBox;
+class QSplitter;
+class QUndoGroup;
 
 namespace vpvl2 {
 class Factory;
@@ -55,6 +59,11 @@ class IModel;
 class IMotion;
 }
 
+namespace vpvm
+{
+
+using namespace vpvl2;
+using namespace vpvl2::qt;
 class AudioDecoder;
 class BoneMotionModel;
 class BoneUIDelegate;
@@ -63,19 +72,16 @@ class MorphMotionModel;
 class LicenseWidget;
 class LoggerWidget;
 class ModelTabWidget;
+class Player;
 class PlaySettingDialog;
 class SceneMotionModel;
 class SceneWidget;
 class ScenePlayer;
 class TabWidget;
 class TimelineTabWidget;
-class VideoEncoder;
-class QCheckBox;
-class QDoubleSpinBox;
-class QPushButton;
-class QSpinBox;
-class QSplitter;
-class QUndoGroup;
+
+class IAudioDecoder;
+class IVideoEncoder;
 
 class MainWindow : public QMainWindow
 {
@@ -84,7 +90,7 @@ class MainWindow : public QMainWindow
 public:
     static const int kMaxRecentFiles = 10;
 
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent = 0);
     ~MainWindow();
 
 signals:
@@ -97,7 +103,7 @@ protected:
     void showEvent(QShowEvent *event);
 
 private slots:
-    void connectSceneLoader();
+    void bindSceneLoader();
     void newMotionFile();
     void newProjectFile();
     void loadProject();
@@ -107,16 +113,16 @@ private slots:
     void saveProject();
     void saveProjectAs();
     void selectModel();
-    void setCurrentModel(vpvl2::IModel *model);
+    void setCurrentModel(IModel *model);
     void revertSelectedModel();
     void openRecentFile();
     void addRecentFile(const QString &filename);
     void updateRecentFiles();
     void clearRecentFiles();
-    void addModel(vpvl2::IModel *model, const QUuid &uuid);
-    void deleteModel(vpvl2::IModel *model, const QUuid &uuid);
-    void addAsset(vpvl2::IModel *asset, const QUuid &uuid);
-    void deleteAsset(vpvl2::IModel *asset, const QUuid &uuid);
+    void addModel(IModel *model, const QUuid &uuid);
+    void deleteModel(IModel *model, const QUuid &uuid);
+    void addAsset(IModel *asset, const QUuid &uuid);
+    void deleteAsset(IModel *asset, const QUuid &uuid);
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
@@ -138,7 +144,7 @@ private slots:
     void openShadowMapDialog();
     void openBackgroundImageDialog();
     void openUndoView();
-    void makeBonesSelectable();
+    void enableSelectingBonesAndMorphs();
     void disconnectInitialSlots();
     void resetSceneToModels();
 
@@ -146,168 +152,174 @@ private:
     struct WindowState;
     bool saveMotionAs(QString &filename);
     bool saveMotionFile(const QString &filename);
-    bool saveMotionFile(const QString &filename, vpvl2::IMotion *motion);
+    bool saveMotionFile(const QString &filename, IMotion *motion);
     bool saveProjectAs(QString &filename);
     bool saveProjectFile(const QString &filename);
     bool maybeSaveMotion();
     bool maybeSaveProject();
     bool confirmSave(bool condition, bool &cancel);
-    void buildUI();
+    void createActionsAndMenus();
     void bindActions();
+    void bindWidgets();
     void retranslate();
-    void connectWidgets();
     void updateInformation();
     void updateWindowTitle();
     void saveWindowStateAndResize(const QSize &videoSize, WindowState &state);
     void restoreWindowState(const WindowState &state);
 
-    vpvl2::IEncoding *m_encoding;
-    vpvl2::Factory *m_factory;
+    QScopedPointer<IEncoding> m_encoding;
+    QScopedPointer<Factory> m_factory;
     QSettings m_settings;
-    QUndoGroup *m_undo;
-    LicenseWidget *m_licenseWidget;
-    LoggerWidget *m_loggerWidget;
-    SceneWidget *m_sceneWidget;
-    TabWidget *m_sceneTabWidget;
-    ModelTabWidget *m_modelTabWidget;
-    TimelineTabWidget *m_timelineTabWidget;
-    BoneMotionModel *m_boneMotionModel;
-    MorphMotionModel *m_morphMotionModel;
-    SceneMotionModel *m_sceneMotionModel;
-    ExportVideoDialog *m_exportingVideoDialog;
-    PlaySettingDialog *m_playSettingDialog;
-    BoneUIDelegate *m_boneUIDelegate;
-    AudioDecoder *m_audioDecoder;
-    VideoEncoder *m_videoEncoder;
-    ScenePlayer *m_player;
+    QScopedPointer<QUndoGroup> m_undo;
+    QScopedPointer<LicenseWidget> m_licenseWidget;
+    QScopedPointer<SceneWidget> m_sceneWidget;
+    QScopedPointer<TabWidget> m_sceneTabWidget;
+    QScopedPointer<BoneMotionModel> m_boneMotionModel;
+    QScopedPointer<MorphMotionModel> m_morphMotionModel;
+    QScopedPointer<SceneMotionModel> m_sceneMotionModel;
+    QScopedPointer<ModelTabWidget> m_modelTabWidget;
+    QScopedPointer<TimelineTabWidget> m_timelineTabWidget;
+    QScopedPointer<ExportVideoDialog> m_exportingVideoDialog;
+    QScopedPointer<PlaySettingDialog> m_playSettingDialog;
+    QScopedPointer<BoneUIDelegate> m_boneUIDelegate;
+    QScopedPointer<IAudioDecoder> m_audioDecoder;
+    QScopedPointer<IVideoEncoder> m_videoEncoder;
+    QScopedPointer<ScenePlayer> m_player;
+    QScopedPointer<QDockWidget> m_timelineDockWidget;
+    QScopedPointer<QDockWidget> m_sceneDockWidget;
+    QScopedPointer<QDockWidget> m_modelDockWidget;
+    QScopedPointer<QToolBar> m_mainToolBar;
+    QList<QAction *> m_actionRecentFiles;
+    QScopedPointer<QAction> m_actionClearRecentFiles;
+    QScopedPointer<QAction> m_actionNewProject;
+    QScopedPointer<QAction> m_actionNewMotion;
+    QScopedPointer<QAction> m_actionLoadProject;
+    QScopedPointer<QAction> m_actionAddModel;
+    QScopedPointer<QAction> m_actionAddAsset;
+    QScopedPointer<QAction> m_actionInsertToAllModels;
+    QScopedPointer<QAction> m_actionInsertToSelectedModel;
+    QScopedPointer<QAction> m_actionSetCamera;
+    QScopedPointer<QAction> m_actionSaveProject;
+    QScopedPointer<QAction> m_actionSaveProjectAs;
+    QScopedPointer<QAction> m_actionSaveMotion;
+    QScopedPointer<QAction> m_actionSaveMotionAs;
+    QScopedPointer<QAction> m_actionSaveCameraMotionAs;
+    QScopedPointer<QAction> m_actionLoadModelPose;
+    QScopedPointer<QAction> m_actionSaveModelPose;
+    QScopedPointer<QAction> m_actionLoadAssetMetadata;
+    QScopedPointer<QAction> m_actionSaveAssetMetadata;
+    QScopedPointer<QAction> m_actionExportImage;
+    QScopedPointer<QAction> m_actionExportVideo;
+    QScopedPointer<QAction> m_actionExit;
+    QScopedPointer<QAction> m_actionAbout;
+    QScopedPointer<QAction> m_actionAboutQt;
+    QScopedPointer<QAction> m_actionPlay;
+    QScopedPointer<QAction> m_actionPlaySettings;
+    QScopedPointer<QAction> m_actionOpenGravitySettingsDialog;
+    QScopedPointer<QAction> m_actionOpenRenderOrderDialog;
+    QScopedPointer<QAction> m_actionOpenScreenColorDialog;
+    QScopedPointer<QAction> m_actionOpenShadowMapDialog;
+    QScopedPointer<QAction> m_actionEnablePhysics;
+    QScopedPointer<QAction> m_actionShowGrid;
+    QScopedPointer<QAction> m_actionSetBackgroundImage;
+    QScopedPointer<QAction> m_actionClearBackgroundImage;
+    QScopedPointer<QAction> m_actionOpenBackgroundImageDialog;
+    QScopedPointer<QAction> m_actionZoomIn;
+    QScopedPointer<QAction> m_actionZoomOut;
+    QScopedPointer<QAction> m_actionRotateUp;
+    QScopedPointer<QAction> m_actionRotateDown;
+    QScopedPointer<QAction> m_actionRotateLeft;
+    QScopedPointer<QAction> m_actionRotateRight;
+    QScopedPointer<QAction> m_actionTranslateUp;
+    QScopedPointer<QAction> m_actionTranslateDown;
+    QScopedPointer<QAction> m_actionTranslateLeft;
+    QScopedPointer<QAction> m_actionTranslateRight;
+    QScopedPointer<QAction> m_actionResetCamera;
+    QScopedPointer<QAction> m_actionSelectNextModel;
+    QScopedPointer<QAction> m_actionSelectPreviousModel;
+    QScopedPointer<QAction> m_actionRevertSelectedModel;
+    QScopedPointer<QAction> m_actionDeleteSelectedModel;
+    QScopedPointer<QAction> m_actionTranslateModelUp;
+    QScopedPointer<QAction> m_actionTranslateModelDown;
+    QScopedPointer<QAction> m_actionTranslateModelLeft;
+    QScopedPointer<QAction> m_actionTranslateModelRight;
+    QScopedPointer<QAction> m_actionResetModelPosition;
+    QScopedPointer<QAction> m_actionBoneXPosZero;
+    QScopedPointer<QAction> m_actionBoneYPosZero;
+    QScopedPointer<QAction> m_actionBoneZPosZero;
+    QScopedPointer<QAction> m_actionBoneRotationZero;
+    QScopedPointer<QAction> m_actionBoneResetAll;
+    QScopedPointer<QAction> m_actionBoneDialog;
+    QScopedPointer<QAction> m_actionRegisterKeyframe;
+    QScopedPointer<QAction> m_actionSelectAllKeyframes;
+    QScopedPointer<QAction> m_actionSelectKeyframeDialog;
+    QScopedPointer<QAction> m_actionKeyframeWeightDialog;
+    QScopedPointer<QAction> m_actionInterpolationDialog;
+    QScopedPointer<QAction> m_actionInsertEmptyFrame;
+    QScopedPointer<QAction> m_actionDeleteSelectedKeyframe;
+    QScopedPointer<QAction> m_actionNextFrame;
+    QScopedPointer<QAction> m_actionPreviousFrame;
+    QScopedPointer<QAction> m_actionCut;
+    QScopedPointer<QAction> m_actionCopy;
+    QScopedPointer<QAction> m_actionPaste;
+    QScopedPointer<QAction> m_actionReversedPaste;
+    QScopedPointer<QAction> m_actionUndo;
+    QScopedPointer<QAction> m_actionRedo;
+    QScopedPointer<QAction> m_actionOpenUndoView;
+    QScopedPointer<QAction> m_actionViewLogMessage;
+    QScopedPointer<QAction> m_actionEnableMoveGesture;
+    QScopedPointer<QAction> m_actionEnableRotateGesture;
+    QScopedPointer<QAction> m_actionEnableScaleGesture;
+    QScopedPointer<QAction> m_actionEnableUndoGesture;
+    QScopedPointer<QAction> m_actionShowTimelineDock;
+    QScopedPointer<QAction> m_actionShowSceneDock;
+    QScopedPointer<QAction> m_actionShowModelDock;
+    QScopedPointer<QAction> m_actionShowModelDialog;
+    QScopedPointer<QAction> m_actionRegisterKeyframeOnToolBar;
+    QScopedPointer<QAction> m_actionDeleteSelectedKeyframeOnToolBar;
+    QScopedPointer<QAction> m_actionSelectModelOnToolBar;
+    QScopedPointer<QAction> m_actionCreateProjectOnToolBar;
+    QScopedPointer<QAction> m_actionCreateMotionOnToolBar;
+    QScopedPointer<QAction> m_actionAddObjectOnToolBar;
+    QScopedPointer<QAction> m_actionDeleteModelOnToolBar;
+    QScopedPointer<QAction> m_actionEnableEffectOnToolBar;
+    QScopedPointer<QAction> m_actionPlayOnToolBar;
+    QScopedPointer<QAction> m_actionExportImageOnToolBar;
+    QScopedPointer<QAction> m_actionExportVideoOnToolBar;
+    QScopedPointer<QAction> m_actionSetSoftwareSkinningFallback;
+    QScopedPointer<QAction> m_actionSetOpenCLSkinningType1;
+    QScopedPointer<QAction> m_actionSetOpenCLSkinningType2;
+    QScopedPointer<QAction> m_actionSetVertexShaderSkinningType1;
+    QScopedPointer<QAction> m_actionEnableEffect;
+    QScopedPointer<QMenuBar> m_menuBar;
+    QScopedPointer<QMenu> m_menuFile;
+    QScopedPointer<QMenu> m_menuEdit;
+    QScopedPointer<QMenu> m_menuProject;
+    QScopedPointer<QMenu> m_menuScene;
+    QScopedPointer<QMenu> m_menuModel;
+    QScopedPointer<QMenu> m_menuKeyframe;
+    QScopedPointer<QMenu> m_menuEffect;
+    QScopedPointer<QMenu> m_menuView;
+    QScopedPointer<QMenu> m_menuRetainModels;
+    QScopedPointer<QMenu> m_menuRetainAssets;
+    QScopedPointer<QMenu> m_menuRecentFiles;
+    QScopedPointer<QMenu> m_menuHelp;
+    QScopedPointer<QMenu> m_menuAcceleration;
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
-
-    vpvl2::IModel *m_model;
-    vpvl2::IBone *m_bone;
-    vpvl2::Vector3 m_position;
-    vpvl2::Vector3 m_angle;
-    vpvl2::Scalar m_fovy;
-    vpvl2::Scalar m_distance;
+    LoggerWidget *m_loggerWidgetRef;
+    IModel *m_modelRef;
+    IBone *m_boneRef;
+    Vector3 m_position;
+    Vector3 m_angle;
+    Scalar m_fovy;
+    Scalar m_distance;
     int m_currentFPS;
 
-    QDockWidget *m_timelineDockWidget;
-    QDockWidget *m_sceneDockWidget;
-    QDockWidget *m_modelDockWidget;
-    QToolBar *m_mainToolBar;
-    QAction *m_actionRecentFiles[kMaxRecentFiles];
-    QAction *m_actionClearRecentFiles;
-    QAction *m_actionNewProject;
-    QAction *m_actionNewMotion;
-    QAction *m_actionLoadProject;
-    QAction *m_actionAddModel;
-    QAction *m_actionAddAsset;
-    QAction *m_actionInsertToAllModels;
-    QAction *m_actionInsertToSelectedModel;
-    QAction *m_actionSetCamera;
-    QAction *m_actionSaveProject;
-    QAction *m_actionSaveProjectAs;
-    QAction *m_actionSaveMotion;
-    QAction *m_actionSaveMotionAs;
-    QAction *m_actionSaveCameraMotionAs;
-    QAction *m_actionLoadModelPose;
-    QAction *m_actionSaveModelPose;
-    QAction *m_actionLoadAssetMetadata;
-    QAction *m_actionSaveAssetMetadata;
-    QAction *m_actionExportImage;
-    QAction *m_actionExportVideo;
-    QAction *m_actionExit;
-    QAction *m_actionAbout;
-    QAction *m_actionAboutQt;
-    QAction *m_actionPlay;
-    QAction *m_actionPlaySettings;
-    QAction *m_actionOpenGravitySettingsDialog;
-    QAction *m_actionOpenRenderOrderDialog;
-    QAction *m_actionOpenScreenColorDialog;
-    QAction *m_actionOpenShadowMapDialog;
-    QAction *m_actionEnablePhysics;
-    QAction *m_actionShowGrid;
-    QAction *m_actionSetBackgroundImage;
-    QAction *m_actionClearBackgroundImage;
-    QAction *m_actionOpenBackgroundImageDialog;
-    QAction *m_actionZoomIn;
-    QAction *m_actionZoomOut;
-    QAction *m_actionRotateUp;
-    QAction *m_actionRotateDown;
-    QAction *m_actionRotateLeft;
-    QAction *m_actionRotateRight;
-    QAction *m_actionTranslateUp;
-    QAction *m_actionTranslateDown;
-    QAction *m_actionTranslateLeft;
-    QAction *m_actionTranslateRight;
-    QAction *m_actionResetCamera;
-    QAction *m_actionSelectNextModel;
-    QAction *m_actionSelectPreviousModel;
-    QAction *m_actionRevertSelectedModel;
-    QAction *m_actionDeleteSelectedModel;
-    QAction *m_actionTranslateModelUp;
-    QAction *m_actionTranslateModelDown;
-    QAction *m_actionTranslateModelLeft;
-    QAction *m_actionTranslateModelRight;
-    QAction *m_actionResetModelPosition;
-    QAction *m_actionBoneXPosZero;
-    QAction *m_actionBoneYPosZero;
-    QAction *m_actionBoneZPosZero;
-    QAction *m_actionBoneRotationZero;
-    QAction *m_actionBoneResetAll;
-    QAction *m_actionBoneDialog;
-    QAction *m_actionRegisterFrame;
-    QAction *m_actionSelectAllKeyframes;
-    QAction *m_actionSelectKeyframeDialog;
-    QAction *m_actionKeyframeWeightDialog;
-    QAction *m_actionInterpolationDialog;
-    QAction *m_actionInsertEmptyFrame;
-    QAction *m_actionDeleteSelectedFrame;
-    QAction *m_actionNextFrame;
-    QAction *m_actionPreviousFrame;
-    QAction *m_actionCut;
-    QAction *m_actionCopy;
-    QAction *m_actionPaste;
-    QAction *m_actionReversedPaste;
-    QAction *m_actionUndo;
-    QAction *m_actionRedo;
-    QAction *m_actionOpenUndoView;
-    QAction *m_actionViewLogMessage;
-    QAction *m_actionEnableMoveGesture;
-    QAction *m_actionEnableRotateGesture;
-    QAction *m_actionEnableScaleGesture;
-    QAction *m_actionEnableUndoGesture;
-    QAction *m_actionShowTimelineDock;
-    QAction *m_actionShowSceneDock;
-    QAction *m_actionShowModelDock;
-    QAction *m_actionShowModelDialog;
-    QAction *m_actionAddModelOnToolBar;
-    QAction *m_actionAddAssetOnToolBar;
-    QAction *m_actionSelectModelOnToolBar;
-    QAction *m_actionCreateMotionOnToolBar;
-    QAction *m_actionInsertMotionOnToolBar;
-    QAction *m_actionDeleteModelOnToolBar;
-    QAction *m_actionSetSoftwareSkinningFallback;
-    QAction *m_actionSetOpenCLSkinningType1;
-    QAction *m_actionSetOpenCLSkinningType2;
-    QAction *m_actionSetVertexShaderSkinningType1;
-    QAction *m_actionEnableEffect;
-    QMenuBar *m_menuBar;
-    QMenu *m_menuFile;
-    QMenu *m_menuEdit;
-    QMenu *m_menuProject;
-    QMenu *m_menuScene;
-    QMenu *m_menuModel;
-    QMenu *m_menuKeyframe;
-    QMenu *m_menuEffect;
-    QMenu *m_menuView;
-    QMenu *m_menuRetainModels;
-    QMenu *m_menuRetainAssets;
-    QMenu *m_menuRecentFiles;
-    QMenu *m_menuHelp;
-    QMenu *m_menuAcceleration;
 
     Q_DISABLE_COPY(MainWindow)
 };
+
+}
 
 #endif // MAINWINDOW_H

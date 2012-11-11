@@ -36,13 +36,18 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include <vpvl/Project.h> /* for libxml2's functions and constants */
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Encoding.h>
+#include <libxml/xmlwriter.h>
 #include <portaudio.h>
 #include "common/Application.h"
 #include "common/LoggerWidget.h"
 #include "common/util.h"
 #include "video/VideoEncoder.h"
 #include "MainWindow.h"
+
+using namespace vpvl2;
+using namespace vpvl2::qt;
 
 static void SetSearchPaths(const QCoreApplication &app)
 {
@@ -119,14 +124,11 @@ int main(int argc, char *argv[])
     xmlInitCharEncodingHandlers();
     xmlInitGlobals();
     xmlInitParser();
-    Pa_Initialize();
-    VideoEncoder::initialize();
 
-    Application a(argc, argv);
-    QWidget fake;
+    vpvm::Application a(argc, argv);
     QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
-    a.setApplicationVersion("0.25.1");
+    a.setApplicationVersion("0.26.0");
     a.setOrganizationDomain("mmdai.github.com");
     a.setOrganizationName("MMDAI");
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
@@ -135,25 +137,53 @@ int main(int argc, char *argv[])
 
     int result = -1;
     if (!vpvl2::isLibraryVersionCorrect(VPVL2_VERSION)) {
-        internal::warning(&fake,
-                          QApplication::tr("libvpvl2 version mismatch"),
-                          QApplication::tr("libvpvl2's version is incorrect (expected: %1 actual: %2).\n"
-                                           "Please replace libvpvl to correct version or reinstall MMDAI.")
-                          .arg(VPVL2_VERSION_STRING).arg(vpvl2::libraryVersionString()));
+        QWidget fake;
+        vpvm::warning(&fake,
+                      QApplication::tr("libvpvl2 version mismatch"),
+                      QApplication::tr("libvpvl2's version is incorrect (expected: %1 actual: %2).\n"
+                                       "Please replace libvpvl to correct version or reinstall MMDAI.")
+                      .arg(VPVL2_VERSION_STRING).arg(vpvl2::libraryVersionString()));
         return result;
     }
 
+    // TODO: make external
+    Encoding::Dictionary dictionary;
     try {
-        MainWindow w;
+        struct Pair {
+            IEncoding::ConstantType type;
+            const CString value;
+        } pairs[] = {
+            { IEncoding::kArm, CString("腕") },
+            { IEncoding::kAsterisk, CString("*") },
+            { IEncoding::kCenter, CString("センター") },
+            { IEncoding::kElbow, CString("ひじ") },
+            { IEncoding::kFinger, CString("指")} ,
+            { IEncoding::kLeft, CString("左") },
+            { IEncoding::kLeftKnee, CString("左ひざ") },
+            { IEncoding::kRight, CString("右") },
+            { IEncoding::kRightKnee, CString("右ひざ") },
+            { IEncoding::kSPAExtension, CString(".spa") },
+            { IEncoding::kSPHExtension, CString(".sph") },
+            { IEncoding::kWrist, CString("手首") },
+            { IEncoding::kRootBoneAsset, CString("全ての親") },
+            { IEncoding::kScaleBoneAsset, CString("拡大率") },
+            { IEncoding::kOpacityMorphAsset, CString("不透明度") }
+        };
+        const int nconstants = sizeof(pairs) / sizeof(pairs[0]);
+        for (int i = 0; i < nconstants; i++) {
+            Pair &pair = pairs[i];
+            dictionary.insert(pair.type, &pair.value);
+        }
+        vpvm::MainWindow w(dictionary);
         w.show();
         result = a.exec();
     } catch (std::exception &e) {
-        internal::warning(&fake,
-                          QApplication::tr("Exception caught"),
-                          QApplication::tr("Exception caught: %1").arg(e.what()));
+        QWidget fake;
+        vpvm::warning(&fake,
+                      QApplication::tr("Exception caught"),
+                      QApplication::tr("Exception caught: %1").arg(e.what()));
     }
-    LoggerWidget::destroyInstance();
-    Pa_Terminate();
+    vpvm::LoggerWidget::destroyInstance();
     xmlCleanupParser();
     xmlMemoryDump();
 

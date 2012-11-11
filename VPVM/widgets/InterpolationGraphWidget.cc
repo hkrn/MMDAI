@@ -40,12 +40,15 @@
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 
 InterpolationGraphWidget::InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent)
     : QWidget(parent),
-      m_boneMotionModel(bmm),
-      m_sceneMotionModel(smm),
+      m_boneMotionModelRef(bmm),
+      m_sceneMotionModelRef(smm),
       m_type(kBone),
       m_index(0),
       m_p1Clicked(false),
@@ -76,7 +79,7 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
     m_boneKeyframes.clear();
     m_cameraKeyframes.clear();
     if (m_type == kBone) {
-        const BoneMotionModel::KeyFramePairList &keyframes = m_boneMotionModel->keyframesFromModelIndices(indices);
+        const BoneMotionModel::KeyFramePairList &keyframes = m_boneMotionModelRef->keyframesFromModelIndices(indices);
         if (!keyframes.isEmpty()) {
             IBoneKeyframe *keyframe = keyframes.first().second.data();
             keyframe->getInterpolationParameter(IBoneKeyframe::kX, m_boneIP.x);
@@ -90,7 +93,7 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
         }
     }
     else if (m_type == kCamera) {
-        const SceneMotionModel::CameraKeyframePairList &keyframes = m_sceneMotionModel->keyframesFromModelIndices(indices);
+        const SceneMotionModel::CameraKeyframePairList &keyframes = m_sceneMotionModelRef->keyframesFromModelIndices(indices);
         if (!keyframes.isEmpty()) {
             ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes.first().second.data());
             keyframe->getInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
@@ -133,7 +136,7 @@ void InterpolationGraphWidget::save()
         keyframe->setInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
     }
     if (!m_boneKeyframes.isEmpty())
-        m_boneMotionModel->setKeyframes(m_boneKeyframes);
+        m_boneMotionModelRef->setKeyframes(m_boneKeyframes);
     foreach (const SceneMotionModel::CameraKeyframePair &pair, m_cameraKeyframes) {
         ICameraKeyframe *keyframe = pair.second.data();
         keyframe->setInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
@@ -144,7 +147,7 @@ void InterpolationGraphWidget::save()
         keyframe->setInterpolationParameter(ICameraKeyframe::kFov, m_cameraIP.fov);
     }
     if (!m_cameraKeyframes.isEmpty())
-        m_sceneMotionModel->setKeyframes(m_cameraKeyframes, SceneMotionModel::LightKeyframePairList());
+        m_sceneMotionModelRef->setKeyframes(m_cameraKeyframes, SceneMotionModel::LightKeyframePairList());
 }
 
 void InterpolationGraphWidget::setX1(int value)
@@ -344,3 +347,5 @@ void InterpolationGraphWidget::setDefault(QuadWord &q)
 {
     q.setValue(20, 20, 107, 107);
 }
+
+} /* namespace vpvm */

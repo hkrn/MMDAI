@@ -44,70 +44,50 @@ namespace vpvl2
 namespace qt
 {
 
-Encoding::Encoding()
-    : m_sjis(QTextCodec::codecForName("Shift-JIS")),
+Encoding::Encoding(const Dictionary &dictionary)
+    : m_dictionary(dictionary),
+      m_sjis(QTextCodec::codecForName("Shift-JIS")),
       m_utf8(QTextCodec::codecForName("UTF-8")),
       m_utf16(QTextCodec::codecForName("UTF-16"))
 {
 }
 
-Encoding::~Encoding() {
+Encoding::~Encoding()
+{
 }
 
 const IString *Encoding::stringConstant(ConstantType value) const
 {
-    switch (value) {
-    case kLeft: {
-        static const CString s("左");
-        return &s;
+    if (m_dictionary.contains(value)) {
+        return m_dictionary[value];
     }
-    case kRight: {
-        static const CString s("右");
-        return &s;
-    }
-    case kFinger: {
-        static const CString s("指");
-        return &s;
-    }
-    case kElbow: {
-        static const CString s("ひじ");
-        return &s;
-    }
-    case kArm: {
-        static const CString s("腕");
-        return &s;
-    }
-    case kWrist: {
-        static const CString s("手首");
-        return &s;
-    }
-    case kCenter: {
-        static const CString s("センター");
-        return &s;
-    }
-    default: {
+    else {
         static const CString s("");
         return &s;
-    }
     }
 }
 
 IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec codec) const
 {
     IString *s = 0;
-    const char *str = reinterpret_cast<const char *>(value);
-    switch (codec) {
-    case IString::kShiftJIS:
-        s = new CString(m_sjis->toUnicode(str, size));
-        break;
-    case IString::kUTF8:
-        s = new CString(m_utf8->toUnicode(str, size));
-        break;
-    case IString::kUTF16:
-        s = new CString(m_utf16->toUnicode(str, size));
-        break;
-    default:
-        break;
+    if (value) {
+        const char *str = reinterpret_cast<const char *>(value);
+        switch (codec) {
+        case IString::kShiftJIS:
+            s = new CString(m_sjis->toUnicode(str, size));
+            break;
+        case IString::kUTF8:
+            s = new CString(m_utf8->toUnicode(str, size));
+            break;
+        case IString::kUTF16:
+            s = new CString(m_utf16->toUnicode(str, size));
+            break;
+        default:
+            break;
+        }
+    }
+    else {
+        s = new CString("");
     }
     return s;
 }

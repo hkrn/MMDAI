@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef FRAMEWEIGHTDIALOG_H
-#define FRAMEWEIGHTDIALOG_H
+#ifndef VPVM_FRAMEWEIGHTDIALOG_H
+#define VPVM_FRAMEWEIGHTDIALOG_H
 
 #include "widgets/TimelineTabWidget.h" /* for TimelineTabWidget::Type */
 
@@ -43,6 +43,10 @@
 
 class QSettings;
 class QDoubleSpinBox;
+
+namespace vpvm
+{
+
 class SceneWidget;
 
 class FrameWeightDialog : public QDialog
@@ -65,17 +69,19 @@ private slots:
     void emitMorphWeightSignal();
 
 signals:
-    void boneWeightDidSet(const vpvl2::Vector3 &position, const vpvl2::Vector3 &rotation);
+    void boneWeightDidSet(const Vector3 &position, const Vector3 &rotation);
     void morphKeyframeWeightDidSet(float weight);
 
 private:
     QDoubleSpinBox *createSpinBox(const char *slot);
 
-    vpvl2::Vector3 m_position;
-    vpvl2::Vector3 m_rotation;
+    Vector3 m_position;
+    Vector3 m_rotation;
     float m_morphWeight;
 
     Q_DISABLE_COPY(FrameWeightDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // FRAMESELECTIONDIALOG_H

@@ -39,6 +39,7 @@
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CustomGLContext.h>
+#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/World.h>
 
 #include "SceneWidget.h"
@@ -62,17 +63,19 @@
 #include <GL/glu.h>
 #endif /* Q_OS_DARWIN */
 
+namespace vpvm
+{
+
 using namespace vpvl2;
-using namespace internal;
 
 static void UIAlertMVDMotion(const IMotion *motion, SceneWidget *parent)
 {
     /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
     if (motion->type() == IMotion::kMVD) {
-        internal::warning(parent,
-                          QApplication::tr("The MVD file cannot save to the project currently"),
-                          QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
-                                           "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
+        warning(parent,
+                QApplication::tr("The MVD file cannot save to the project currently"),
+                QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
+                                 "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
     }
 }
 
@@ -80,34 +83,27 @@ class SceneWidget::PlaneWorld {
 public:
     PlaneWorld()
         : m_dispatcher(&m_config),
-          m_broadphase(-internal::kWorldAabbSize, internal::kWorldAabbSize),
+          m_broadphase(-qt::World::kAabbSize, qt::World::kAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
-          m_state(0),
-          m_shape(0),
-          m_body(0)
+          m_state(new btDefaultMotionState()),
+          m_shape(new btBoxShape(btVector3(qt::World::kAabbSize.x(), qt::World::kAabbSize.y(), 0.01))),
+          m_body(new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0, m_state.data(), m_shape.data())))
     {
-        m_state = new btDefaultMotionState();
-        m_shape = new btBoxShape(btVector3(internal::kWorldAabbSize.x(), internal::kWorldAabbSize.y(), 0.01));
-        btRigidBody::btRigidBodyConstructionInfo info(0, m_state, m_shape);
-        m_body = new btRigidBody(info);
-        m_world.addRigidBody(m_body);
+        m_world.addRigidBody(m_body.data());
     }
     ~PlaneWorld()
     {
-        m_world.removeRigidBody(m_body);
-        delete m_body;
-        delete m_shape;
-        delete m_state;
+        m_world.removeRigidBody(m_body.data());
     }
 
     void updateTransform(const Transform &value) {
         m_body->setWorldTransform(value);
         m_world.stepSimulation(1);
     }
-    void draw(const SceneLoader *loader, internal::DebugDrawer *drawer) {
+    void draw(const SceneLoader *loader, DebugDrawer *drawer) {
         const btTransform &worldTransform = m_body->getWorldTransform();
         m_world.setDebugDrawer(drawer);
-        drawer->drawShape(&m_world, m_shape, loader, worldTransform, btVector3(1, 0, 0));
+        drawer->drawShape(&m_world, m_shape.data(), loader, worldTransform, btVector3(1, 0, 0));
         m_world.setDebugDrawer(0);
     }
     bool test(const Vector3 &from, const Vector3 &to, Vector3 &hit) {
@@ -127,34 +123,31 @@ private:
     btAxisSweep3 m_broadphase;
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
-    btDefaultMotionState *m_state;
-    btBoxShape *m_shape;
-    btRigidBody *m_body;
+    QScopedPointer<btDefaultMotionState> m_state;
+    QScopedPointer<btBoxShape> m_shape;
+    QScopedPointer<btRigidBody> m_body;
 };
 
-SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *settings, QWidget *parent)
-    : QGLWidget(new qt::CustomGLContext(QGLFormat(QGL::SampleBuffers)), parent),
-      m_loader(0),
-      m_settings(settings),
-      m_background(0),
-      m_encoding(encoding),
-      m_factory(factory),
-      m_currentSelectedBone(0),
-      m_lastBonePosition(kZeroV3),
-      m_totalDelta(0.0f),
-      m_debugDrawer(0),
-      m_grid(0),
-      m_info(0),
-      m_plane(0),
-      m_handles(0),
+SceneWidget::SceneWidget(const QGLFormat format,
+                         IEncoding *encoding,
+                         Factory *factory,
+                         QSettings *settings,
+                         QWidget *parent)
+    : QGLWidget(new qt::CustomGLContext(format), parent),
+      m_settingsRef(settings),
+      m_grid(new Grid()),
+      m_plane(new PlaneWorld()),
+      m_encodingRef(encoding),
+      m_factoryRef(factory),
+      m_currentSelectedBoneRef(0),
       m_editMode(kSelect),
-      m_lastDistance(0.0f),
-      m_prevElapsed(0.0f),
-      m_timeIndex(0.0f),
+      m_lastBonePosition(kZeroV3),
+      m_totalDelta(0),
+      m_timeIndex(0),
+      m_lastDistance(0),
+      m_prevElapsed(0),
       m_frameCount(0),
       m_currentFPS(0),
-      m_interval(1000.0f / Scene::defaultFPS()),
-      m_internalTimerID(0),
       m_handleFlags(0),
       m_playing(false),
       m_enableBoneMove(false),
@@ -168,16 +161,14 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
       m_enableUpdateGL(true),
       m_isImageHandleRectIntersect(false)
 {
-    m_grid = new Grid();
-    m_plane = new PlaneWorld();
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
-    connect(this, SIGNAL(cameraPerspectiveDidSet(const vpvl2::ICamera*)),
-            this, SLOT(updatePlaneWorld(const vpvl2::ICamera*)));
-    setShowModelDialog(m_settings->value("sceneWidget/showModelDialog", true).toBool());
-    setMoveGestureEnable(m_settings->value("sceneWidget/enableMoveGesture", false).toBool());
-    setRotateGestureEnable(m_settings->value("sceneWidget/enableRotateGesture", true).toBool());
-    setScaleGestureEnable(m_settings->value("sceneWidget/enableScaleGesture", true).toBool());
-    setUndoGestureEnable(m_settings->value("sceneWidget/enableUndoGesture", true).toBool());
+    connect(this, SIGNAL(cameraPerspectiveDidSet(const ICamera*)),
+            this, SLOT(updatePlaneWorld(const ICamera*)));
+    setShowModelDialog(m_settingsRef->value("sceneWidget/showModelDialog", true).toBool());
+    setMoveGestureEnable(m_settingsRef->value("sceneWidget/enableMoveGesture", false).toBool());
+    setRotateGestureEnable(m_settingsRef->value("sceneWidget/enableRotateGesture", true).toBool());
+    setScaleGestureEnable(m_settingsRef->value("sceneWidget/enableScaleGesture", true).toBool());
+    setUndoGestureEnable(m_settingsRef->value("sceneWidget/enableUndoGesture", true).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
     setMinimumSize(540, 480);
@@ -193,27 +184,17 @@ SceneWidget::SceneWidget(IEncoding *encoding, Factory *factory, QSettings *setti
 
 SceneWidget::~SceneWidget()
 {
-    delete m_handles;
-    m_handles = 0;
-    delete m_info;
-    m_info = 0;
-    delete m_grid;
-    m_grid = 0;
-    delete m_plane;
-    m_plane = 0;
-    delete m_background;
-    m_background = 0;
 }
 
-SceneLoader *SceneWidget::sceneLoader() const
+SceneLoader *SceneWidget::sceneLoaderRef() const
 {
-    return m_loader;
+    return m_loader.data();
 }
 
 void SceneWidget::play()
 {
     m_playing = true;
-    m_timer.restart();
+    m_refreshTimer.restart();
     emit sceneDidPlay();
 }
 
@@ -238,22 +219,22 @@ void SceneWidget::clear()
 {
     stop();
     clearSelectedBones();
-    setSelectedModel(0);
+    revertSelectedModel();
     m_loader->releaseProject();
     m_loader->createProject();
 }
 
 void SceneWidget::startAutomaticRendering()
 {
-    if (!m_internalTimerID)
-        m_internalTimerID = startTimer(m_interval);
+    if (!m_updateTimer.isActive()) {
+        m_updateTimer.start(int(1000.0 / Scene::defaultFPS()), this);
+    }
 }
 
 void SceneWidget::stopAutomaticRendering()
 {
-    if (m_internalTimerID) {
-        killTimer(m_internalTimerID);
-        m_internalTimerID = 0;
+    if (m_updateTimer.isActive()) {
+        m_updateTimer.stop();
     }
 }
 
@@ -262,9 +243,9 @@ void SceneWidget::loadProject(const QString &filename)
     QScopedPointer<QProgressDialog> dialog(new QProgressDialog());
     QProgressDialog *ptr = dialog.data();
     /* プロジェクトの読み込みが完了したらダイアログを閉じるようにする */
-    connect(m_loader, SIGNAL(projectDidLoad(bool)), ptr, SLOT(close()));
-    connect(m_loader, SIGNAL(projectDidCount(int)), ptr, SLOT(setMaximum(int)));
-    connect(m_loader, SIGNAL(projectDidProceed(int)), ptr, SLOT(setValue(int)));
+    connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), ptr, SLOT(close()));
+    connect(m_loader.data(), SIGNAL(projectDidCount(int)), ptr, SLOT(setMaximum(int)));
+    connect(m_loader.data(), SIGNAL(projectDidProceed(int)), ptr, SLOT(setValue(int)));
     dialog->setLabelText(tr("Loading a project %1...").arg(QFileInfo(filename).fileName()));
     dialog->setWindowModality(Qt::WindowModal);
     dialog->setCancelButton(0);
@@ -298,22 +279,25 @@ void SceneWidget::setPreferredFPS(int value)
 {
     /* 一旦前のタイマーを止めてから新しい FPS に基づく間隔でタイマーを開始する */
     if (value > 0) {
-        m_interval = 1000.0f / value;
         m_loader->setPreferredFPS(value);
-        if (m_internalTimerID) {
+        if (m_updateTimer.isActive()) {
             stopAutomaticRendering();
             startAutomaticRendering();
         }
     }
 }
 
-void SceneWidget::setSelectedModel(IModel *value)
+void SceneWidget::setSelectedModel(IModel *value, EditMode mode)
 {
+    if (!value) {
+        clearSelectedBones();
+        clearSelectedMorphs();
+    }
     /* 情報パネルに選択されたモデルの名前を更新する */
     m_loader->setSelectedModel(value);
     m_info->setModel(value);
     m_info->update();
-    m_editMode = value ? kSelect : kNone;
+    setEditMode(mode);
 }
 
 void SceneWidget::setBackgroundImage(const QString &filename)
@@ -323,65 +307,65 @@ void SceneWidget::setBackgroundImage(const QString &filename)
 
 void SceneWidget::setModelEdgeOffset(double value)
 {
-    if (IModel *model = m_loader->selectedModel()) {
+    if (IModel *model = m_loader->selectedModelRef()) {
         m_loader->setModelEdgeOffset(model, static_cast<float>(value));
-        m_loader->scene()->updateModel(model);
+        m_loader->sceneRef()->updateModel(model);
     }
     refreshMotions();
 }
 
 void SceneWidget::setModelOpacity(const Scalar &value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setModelOpacity(model, value);
     refreshMotions();
 }
 
 void SceneWidget::setModelEdgeColor(const QColor &color)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setModelEdgeColor(model, color);
     refreshMotions();
 }
 
 void SceneWidget::setModelPositionOffset(const Vector3 &value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setModelPosition(model, value);
     refreshMotions();
 }
 
 void SceneWidget::setModelRotationOffset(const Vector3 &value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setModelRotation(model, value);
     refreshMotions();
 }
 
 void SceneWidget::setModelProjectiveShadowEnable(bool value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setProjectiveShadowEnable(model, value);
     refreshMotions();
 }
 
 void SceneWidget::setModelSelfShadowEnable(bool value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setSelfShadowEnable(model, value);
     refreshMotions();
 }
 
 void SceneWidget::setModelOpenSkinningEnable(bool value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setSelfShadowEnable(model, value);
     refreshMotions();
 }
 
 void SceneWidget::setModelVertexShaderSkinningType1Enable(bool value)
 {
-    if (IModel *model = m_loader->selectedModel())
+    if (IModel *model = m_loader->selectedModelRef())
         m_loader->setSelfShadowEnable(model, value);
     refreshMotions();
 }
@@ -401,213 +385,215 @@ void SceneWidget::setBoneWireFramesVisible(bool value)
     m_debugDrawer->setVisible(value);
 }
 
+void SceneWidget::addFile()
+{
+    loadFile(openFileDialog("sceneWidget/lastFileDirectory",
+                            tr("Open a file"),
+                            tr("Model file (*.pmd *.pmx *.zip);;"
+                               "Accessory file (*.x);;"
+                               "Model motion file (*.vmd *.mvd);;"
+                               "Pose file (*.vpd);;"
+                               "Accessory metadata file (*.vac)"),
+                            m_settingsRef));
+}
+
 void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
-    IModel *model = addModel(openFileDialog("sceneWidget/lastModelDirectory",
-                                            tr("Open PMD/PMX file"),
-                                            tr("Model file (*.pmd *.pmx *.zip)"),
-                                            m_settings));
-    if (model && !m_playing) {
-        setEmptyMotion(model);
-        emit newMotionDidSet(model);
-    }
+    IModelPtr modelPtr;
+    loadModel(openFileDialog("sceneWidget/lastModelDirectory",
+                             tr("Open PMD/PMX file"),
+                             tr("Model file (*.pmd *.pmx *.zip)"),
+                             m_settingsRef),
+              modelPtr);
+    setEmptyMotion(modelPtr.take(), true);
 }
 
-IModel *SceneWidget::addModel(const QString &path, bool skipDialog)
+void SceneWidget::loadModel(const QString &path, IModelPtr &modelPtr, bool skipDialog)
 {
     QFileInfo fi(path);
-    IModel *model = 0;
     if (fi.exists()) {
-        if (m_loader->loadModel(path, model)) {
-            if (skipDialog || (!m_showModelDialog || acceptAddingModel(model))) {
+        if (m_loader->loadModel(path, modelPtr)) {
+            if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
                 QUuid uuid;
-                m_loader->addModel(model, fi.fileName(), fi.dir(), uuid);
+                m_handles->loadModelHandles();
+                m_loader->addModel(modelPtr.data(), fi.fileName(), fi.dir(), uuid);
                 emit fileDidLoad(path);
-            }
-            else {
-                delete model;
-                model = 0;
             }
         }
         else {
-            internal::warning(this, tr("Loading model error"),
-                              tr("%1 cannot be loaded").arg(fi.fileName()));
+            warning(this, tr("Loading model error"),
+                    tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
-    return model;
 }
 
 void SceneWidget::insertMotionToAllModels()
 {
     /* モーションを追加したら即座に反映させるために updateMotion を呼んでおく */
-    IMotion *motion = insertMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                             tr("Load model motion from a VMD/MVD file"),
-                                                             tr("Model motion file (*.vmd *.mvd)"),
-                                                             m_settings));
-    IModel *selected = m_loader->selectedModel();
-    if (motion && selected) {
+    IMotionPtr motionPtr;
+    loadMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
+                                         tr("Load model motion from a VMD/MVD file"),
+                                         tr("Model motion file (*.vmd *.mvd)"),
+                                         m_settingsRef),
+                          motionPtr);
+    if (motionPtr) {
+        motionPtr.take();
         refreshMotions();
     }
 }
 
-IMotion *SceneWidget::insertMotionToAllModels(const QString &path)
+void SceneWidget::loadMotionToAllModels(const QString &path, IMotionPtr &motionPtr)
 {
-    IMotion *motion = 0;
     if (QFile::exists(path)) {
         QList<IModel *> models;
-        motion = m_loader->loadModelMotion(path, models);
-        if (motion) {
-            UIAlertMVDMotion(motion, this);
+        if (m_loader->loadModelMotion(path, models, motionPtr)) {
+            UIAlertMVDMotion(motionPtr.data(), this);
             seekMotion(0, false, true);
             emit fileDidLoad(path);
         }
         else {
-            internal::warning(this, tr("Loading model motion error"),
-                              tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            warning(this, tr("Loading model motion error"),
+                    tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
-    return motion;
 }
 
 void SceneWidget::insertMotionToSelectedModel()
 {
-    IModel *model = m_loader->selectedModel();
+    IModel *model = m_loader->selectedModelRef();
     if (model) {
-        IMotion *motion = insertMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                                     tr("Load model motion from a VMD/MVD file"),
-                                                                     tr("Model motion file (*.vmd *.mvd)"),
-                                                                     m_settings));
-        if (motion) {
-            UIAlertMVDMotion(motion, this);
+        IMotionPtr motionPtr;
+        loadMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
+                                                 tr("Load model motion from a VMD/MVD file"),
+                                                 tr("Model motion file (*.vmd *.mvd)"),
+                                                 m_settingsRef),
+                                  motionPtr);
+        if (motionPtr) {
+            UIAlertMVDMotion(motionPtr.take(), this);
             refreshMotions();
         }
     }
     else {
-        internal::warning(this, tr("The model is not selected."),
-                          tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+        warning(this, tr("The model is not selected."),
+                tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
     }
 }
 
-IMotion *SceneWidget::insertMotionToSelectedModel(const QString &path)
+void SceneWidget::loadMotionToSelectedModel(const QString &path, IMotionPtr &motionPtr)
 {
-    return insertMotionToModel(path, m_loader->selectedModel());
+    loadMotionToModel(path, m_loader->selectedModelRef(), motionPtr);
 }
 
-IMotion *SceneWidget::insertMotionToModel(const QString &path, IModel *model)
+void SceneWidget::loadMotionToModel(const QString &path, IModel *model, IMotionPtr &motionPtr)
 {
-    IMotion *motion = 0;
     if (model) {
         if (QFile::exists(path)) {
-            motion = m_loader->loadModelMotion(path);
-            if (motion) {
+            if (m_loader->loadModelMotion(path, motionPtr)) {
                 /* 違うモデルに適用しようとしているかどうかの確認 */
-                if (!model->name()->equals(motion->name())) {
-                    int ret = internal::warning(0,
-                                                tr("Applying this motion to the different model"),
-                                                tr("This motion is created for %1. Do you apply this motion to %2?")
-                                                .arg(internal::toQStringFromMotion(motion))
-                                                .arg(internal::toQStringFromModel(model)),
-                                                "",
-                                                QMessageBox::Yes|QMessageBox::No);
+                if (!model->name()->equals(motionPtr->name())) {
+                    int ret = warning(0,
+                                      tr("Applying this motion to the different model"),
+                                      tr("This motion is created for %1. Do you apply this motion to %2?")
+                                      .arg(toQStringFromMotion(motionPtr.data()))
+                                      .arg(toQStringFromModel(model)),
+                                      "",
+                                      QMessageBox::Yes|QMessageBox::No);
                     if (ret == QMessageBox::Yes) {
-                        UIAlertMVDMotion(motion, this);
-                        m_loader->setModelMotion(motion, model);
-                    }
-                    else {
-                        delete motion;
-                        motion = 0;
-                        return motion;
+                        UIAlertMVDMotion(motionPtr.data(), this);
+                        m_loader->setModelMotion(motionPtr.data(), model);
                     }
                 }
                 else {
-                    m_loader->setModelMotion(motion, model);
+                    m_loader->setModelMotion(motionPtr.data(), model);
                 }
                 seekMotion(0, false, true);
                 emit fileDidLoad(path);
             }
             else {
-                internal::warning(this, tr("Loading model motion error"),
-                                  tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+                warning(this, tr("Loading model motion error"),
+                        tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
             }
         }
     }
-    return motion;
 }
 
 void SceneWidget::setEmptyMotion()
 {
-    setEmptyMotion(m_loader->selectedModel());
+    setEmptyMotion(m_loader->selectedModelRef(), false);
 }
 
-void SceneWidget::setEmptyMotion(IModel *model)
+void SceneWidget::setEmptyMotion(IModel *model, bool skipWarning)
 {
-    if (model) {
-        IMotion *modelMotion = m_loader->newModelMotion(model);
-        m_loader->setModelMotion(modelMotion, model);
+    if (model && !m_playing) {
+        IMotionPtr motion;
+        m_loader->newModelMotion(model, motion);
+        m_loader->setModelMotion(motion.take(), model);
+        emit newMotionDidSet(model);
     }
-    else
-        internal::warning(this,
-                          tr("The model is not selected."),
-                          tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+    else if (!skipWarning) {
+        warning(this,
+                tr("The model is not selected."),
+                tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+    }
 }
 
 void SceneWidget::addAsset()
 {
-    addAsset(openFileDialog("sceneWidget/lastAssetDirectory",
-                            tr("Open X file"),
-                            tr("DirectX mesh file (*.x *.zip)"),
-                            m_settings));
+    IModelPtr asset;
+    loadAsset(openFileDialog("sceneWidget/lastAssetDirectory",
+                             tr("Open accessory file"),
+                             tr("Accessory file (*.x *.zip)"),
+                             m_settingsRef),
+              asset);
+    setEmptyMotion(asset.take(), true);
 }
 
-IModel *SceneWidget::addAsset(const QString &path)
+void SceneWidget::loadAsset(const QString &path, QScopedPointer<IModel> &modelPtr)
 {
-    IModel *asset = 0;
     QFileInfo fi(path);
     if (fi.exists()) {
         QUuid uuid;
-        if (m_loader->loadAsset(path, uuid, asset)) {
+        if (m_loader->loadAsset(path, uuid, modelPtr)) {
             emit fileDidLoad(path);
         }
         else {
-            internal::warning(this, tr("Loading asset error"),
-                              tr("%1 cannot be loaded").arg(fi.fileName()));
+            warning(this, tr("Loading asset error"),
+                    tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
-    return asset;
 }
 
 void SceneWidget::addAssetFromMetadata()
 {
-    addAssetFromMetadata(openFileDialog("sceneWidget/lastAssetDirectory",
-                                        tr("Open VAC file"),
-                                        tr("MMD accessory metadata (*.vac)"),
-                                        m_settings));
+    loadAssetFromMetadata(openFileDialog("sceneWidget/lastAssetDirectory",
+                                         tr("Open VAC file"),
+                                         tr("MMD accessory metadata (*.vac)"),
+                                         m_settingsRef));
 }
 
-IModel *SceneWidget::addAssetFromMetadata(const QString &path)
+void SceneWidget::loadAssetFromMetadata(const QString &path)
 {
     QFileInfo fi(path);
-    IModel *asset = 0;
     if (fi.exists()) {
         QUuid uuid;
-        asset = m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid);
-        if (asset) {
+        IModelPtr asset;
+        if (m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid, asset)) {
+            asset.take();
             setFocus();
         }
         else {
-            internal::warning(this, tr("Loading asset error"),
-                              tr("%1 cannot be loaded").arg(fi.fileName()));
+            warning(this, tr("Loading asset error"),
+                    tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
-    return asset;
 }
 
 void SceneWidget::saveMetadataFromAsset(IModel *asset)
 {
     if (asset) {
         QString filename = QFileDialog::getSaveFileName(this, tr("Save %1 as VAC file")
-                                                        .arg(internal::toQStringFromModel(asset)), "",
+                                                        .arg(toQStringFromModel(asset)), "",
                                                         tr("MMD accessory metadata (*.vac)"));
         m_loader->saveMetadataFromAsset(filename, asset);
     }
@@ -615,14 +601,14 @@ void SceneWidget::saveMetadataFromAsset(IModel *asset)
 
 void SceneWidget::insertPoseToSelectedModel()
 {
-    IModel *model = m_loader->selectedModel();
+    IModel *model = m_loader->selectedModelRef();
     VPDFilePtr ptr = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
                                                               tr("Open VPD file"),
                                                               tr("VPD file (*.vpd)"),
-                                                              m_settings),
+                                                              m_settingsRef),
                                                model);
     if (!ptr.isNull())
-        m_loader->scene()->updateModel(model);
+        m_loader->sceneRef()->updateModel(model);
 }
 
 void SceneWidget::setBackgroundImage()
@@ -635,7 +621,7 @@ void SceneWidget::setBackgroundImage()
                                          #else
                                              tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)"),
                                          #endif
-                                             m_settings);
+                                             m_settingsRef);
     if (!filename.isEmpty())
         setBackgroundImage(filename);
 }
@@ -665,15 +651,15 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
         if (QFile::exists(filename)) {
             ptr = m_loader->loadModelPose(filename, model);
             if (ptr.isNull()) {
-                internal::warning(this, tr("Loading model pose error"),
-                                  tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
+                warning(this, tr("Loading model pose error"),
+                        tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
             }
         }
     }
     else
-        internal::warning(this,
-                          tr("The model is not selected."),
-                          tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
+        warning(this,
+                tr("The model is not selected."),
+                tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
     return ptr;
 }
 
@@ -681,11 +667,11 @@ void SceneWidget::advanceMotion(const IKeyframe::TimeIndex &delta)
 {
     if (delta <= 0)
         return;
-    Scene *scene = m_loader->scene();
+    Scene *scene = m_loader->sceneRef();
     scene->advance(delta, Scene::kUpdateAll);
     scene->update(Scene::kUpdateAll);
     if (m_loader->isPhysicsEnabled())
-        m_loader->world()->stepSimulationDelta(delta);
+        m_loader->worldRef()->stepSimulation(delta);
     updateScene();
 }
 
@@ -701,7 +687,7 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
        advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある。
        force でカメラと照明を強制的に動かすことが出来る(例として場面タブからシークした場合)。
      */
-    Scene *scene = m_loader->scene();
+    Scene *scene = m_loader->sceneRef();
     int flags = forceCameraUpdate ? Scene::kUpdateAll : Scene::kUpdateModels | Scene::kUpdateRenderEngines;
     scene->seek(timeIndex, flags);
     scene->update(flags);
@@ -713,7 +699,7 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
 
 void SceneWidget::resetMotion()
 {
-    Scene *scene = m_loader->scene();
+    Scene *scene = m_loader->sceneRef();
     const Array<IMotion *> &motions = scene->motions();
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
@@ -733,7 +719,7 @@ void SceneWidget::setCamera()
     IMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
                                                tr("Load camera motion from a VMD/MVD file"),
                                                tr("Camera motion file (*.vmd *.mvd)"),
-                                               m_settings));
+                                               m_settingsRef));
     if (motion) {
         UIAlertMVDMotion(motion, this);
         refreshScene();
@@ -744,13 +730,14 @@ IMotion *SceneWidget::setCamera(const QString &path)
 {
     IMotion *motion = 0;
     if (QFile::exists(path)) {
-        motion = m_loader->loadCameraMotion(path);
-        if (motion) {
+        IMotionPtr motionPtr;
+        if (m_loader->loadCameraMotion(path, motionPtr)) {
+            motion = motionPtr.take();
             emit fileDidLoad(path);
         }
         else {
-            internal::warning(this, tr("Loading camera motion error"),
-                              tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            warning(this, tr("Loading camera motion error"),
+                    tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
     return motion;
@@ -758,14 +745,14 @@ IMotion *SceneWidget::setCamera(const QString &path)
 
 void SceneWidget::deleteSelectedModel()
 {
-    IModel *selected = m_loader->selectedModel();
+    IModel *selected = m_loader->selectedModelRef();
     if (selected) {
-        int ret = internal::warning(0,
-                                    tr("Confirm"),
-                                    tr("Do you want to delete the model \"%1\"? This cannot undo.")
-                                    .arg(internal::toQStringFromModel(selected)),
-                                    "",
-                                    QMessageBox::Yes | QMessageBox::No);
+        int ret = warning(0,
+                          tr("Confirm"),
+                          tr("Do you want to delete the model \"%1\"? This cannot undo.")
+                          .arg(toQStringFromModel(selected)),
+                          "",
+                          QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::Yes) {
             /* モデルを削除しても IBone への参照が残ってしまうので中身を空にする */
             clearSelectedBones();
@@ -776,14 +763,14 @@ void SceneWidget::deleteSelectedModel()
 
 void SceneWidget::resetCamera()
 {
-    ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->sceneRef()->camera();
     camera->resetDefault();
     emit cameraPerspectiveDidSet(camera);
 }
 
 void SceneWidget::setCameraPerspective(const QSharedPointer<ICamera> &camera)
 {
-    ICamera *c1 = camera.data(), *c2 = m_loader->scene()->camera();
+    ICamera *c1 = camera.data(), *c2 = m_loader->sceneRef()->camera();
     c2->copyFrom(c1);
     emit cameraPerspectiveDidSet(c2);
 }
@@ -811,63 +798,74 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 void SceneWidget::selectBones(const QList<IBone *> &bones)
 {
     /* signal/slot による循環参照防止 */
-    if (m_selectedBones != bones) {
+    if (!CompareGenericList(bones, m_selectedBoneRefs)) {
         m_info->setBones(bones, tr("(multiple)"));
         m_info->update();
         m_handles->setBone(bones.isEmpty() ? 0 : bones.first());
-        m_selectedBones = bones;
+        m_selectedBoneRefs = bones;
         emit bonesDidSelect(bones);
+    }
+}
+
+void SceneWidget::selectMorphs(const QList<IMorph *> &morphs)
+{
+    /* signal/slot による循環参照防止 */
+    if (!CompareGenericList(morphs, m_selectedMorphRefs)) {
+        m_info->setMorphs(morphs, tr("(multiple)"));
+        m_info->update();
+        m_selectedMorphRefs = morphs;
+        emit morphsDidSelect(morphs);
     }
 }
 
 void SceneWidget::rotateScene(const Vector3 &delta)
 {
-    ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->sceneRef()->camera();
     camera->setAngle(camera->angle() + delta);
     emit cameraPerspectiveDidSet(camera);
 }
 
 void SceneWidget::rotateModel(const Quaternion &delta)
 {
-    rotateModel(m_loader->selectedModel(), delta);
+    rotateModel(m_loader->selectedModelRef(), delta);
 }
 
 void SceneWidget::rotateModel(IModel *model, const Quaternion &delta)
 {
     if (model) {
-        const Quaternion &rotation = model->rotation();
-        model->setRotation(rotation * delta);
+        const Quaternion &rotation = model->worldRotation();
+        model->setWorldRotation(rotation * delta);
         emit modelDidRotate(rotation);
     }
 }
 
 void SceneWidget::translateScene(const Vector3 &delta)
 {
-    ICamera *camera = m_loader->scene()->camera();
-    camera->setPosition(camera->position() + camera->modelViewTransform().getBasis().inverse() * delta);
+    ICamera *camera = m_loader->sceneRef()->camera();
+    camera->setLookAt(camera->lookAt() + camera->modelViewTransform().getBasis().inverse() * delta);
     emit cameraPerspectiveDidSet(camera);
 }
 
 void SceneWidget::translateModel(const Vector3 &delta)
 {
-    translateModel(m_loader->selectedModel(), delta);
+    translateModel(m_loader->selectedModelRef(), delta);
 }
 
 void SceneWidget::translateModel(IModel *model, const Vector3 &delta)
 {
     if (model) {
-        const Vector3 &position = model->position();
-        model->setPosition(position + delta);
+        const Vector3 &position = model->worldPosition();
+        model->setWorldPosition(position + delta);
         emit modelDidMove(position);
     }
 }
 
 void SceneWidget::resetModelPosition()
 {
-    IModel *model = m_loader->selectedModel();
+    IModel *model = m_loader->selectedModelRef();
     if (model) {
-        const Vector3 &position = model->position();
-        model->setPosition(kZeroV3);
+        const Vector3 &position = model->worldPosition();
+        model->setWorldPosition(kZeroV3);
         emit modelDidMove(position);
     }
 }
@@ -884,41 +882,44 @@ void SceneWidget::renderBackgroundObjects()
     /* 背景画像描写 */
     m_background->draw();
     /* グリッドの描写 */
-    m_grid->draw(m_loader, m_loader->isGridVisible());
+    m_grid->draw(m_loader.data(), m_loader->isGridVisible());
 }
 
-void SceneWidget::loadFile(const QString &file)
+void SceneWidget::loadFile(const QString &path)
 {
     /* モデルファイル */
-    QFileInfo fileInfo(file);
+    QFileInfo fileInfo(path);
     const QString &extension = fileInfo.suffix().toLower();
     if (extension == "pmd" || extension == "pmx" || extension == "zip") {
-        IModel *model = addModel(file);
-        if (model && !m_playing) {
-            setEmptyMotion(model);
-            emit newMotionDidSet(model);
-        }
+        IModelPtr modelPtr;
+        loadModel(path, modelPtr);
+        setEmptyMotion(modelPtr.take(), false);
     }
     /* モーションファイル */
-    else if (extension == "vmd") {
-        IMotion *motion = insertMotionToModel(file, m_loader->selectedModel());
-        if (motion)
+    else if (extension == "vmd" || extension == "mvd") {
+        IMotionPtr motionPtr;
+        loadMotionToModel(path, m_loader->selectedModelRef(), motionPtr);
+        if (motionPtr) {
             refreshMotions();
+            motionPtr.take();
+        }
     }
     /* アクセサリファイル */
     else if (extension == "x") {
-        addAsset(file);
+        IModelPtr assetPtr;
+        loadAsset(path, assetPtr);
+        setEmptyMotion(assetPtr.take(), false);
     }
     /* ポーズファイル */
     else if (extension == "vpd") {
-        IModel *model = m_loader->selectedModel();
-        VPDFilePtr ptr = insertPoseToSelectedModel(file, model);
+        IModel *model = m_loader->selectedModelRef();
+        VPDFilePtr ptr = insertPoseToSelectedModel(path, model);
         if (!ptr.isNull())
-            m_loader->scene()->updateModel(model);
+            m_loader->sceneRef()->updateModel(model);
     }
     /* アクセサリ情報ファイル */
     else if (extension == "vac") {
-        addAssetFromMetadata(file);
+        loadAssetFromMetadata(path);
     }
 }
 
@@ -940,7 +941,7 @@ void SceneWidget::setEditMode(SceneWidget::EditMode value)
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
-    ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->sceneRef()->camera();
     Scalar fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
         Scalar fovy = camera->fov();
@@ -967,11 +968,11 @@ bool SceneWidget::event(QEvent *event)
 
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
-    m_settings->setValue("sceneWidget/showModelDialog", showModelDialog());
-    m_settings->setValue("sceneWidget/enableMoveGesture", isMoveGestureEnabled());
-    m_settings->setValue("sceneWidget/enableRotateGesture", isRotateGestureEnabled());
-    m_settings->setValue("sceneWidget/enableScaleGesture", isScaleGestureEnabled());
-    m_settings->setValue("sceneWidget/enableUndoGesture", isUndoGestureEnabled());
+    m_settingsRef->setValue("sceneWidget/showModelDialog", showModelDialog());
+    m_settingsRef->setValue("sceneWidget/enableMoveGesture", isMoveGestureEnabled());
+    m_settingsRef->setValue("sceneWidget/enableRotateGesture", isRotateGestureEnabled());
+    m_settingsRef->setValue("sceneWidget/enableScaleGesture", isScaleGestureEnabled());
+    m_settingsRef->setValue("sceneWidget/enableUndoGesture", isUndoGestureEnabled());
     stopAutomaticRendering();
     event->accept();
 }
@@ -1007,48 +1008,44 @@ void SceneWidget::dropEvent(QDropEvent *event)
 void SceneWidget::initializeGL()
 {
     initializeGLFunctions(context());
+    qDebug("VPVL2 version: %s (%d)", VPVL2_VERSION_STRING, VPVL2_VERSION);
+    qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
+    qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
+    qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
+    QHash<QString, QString> settings;
+    settings.insert("dir.system.kernels", ":kernels");
+    settings.insert("dir.system.shaders", ":shaders");
+    settings.insert("dir.system.toon", ":textures");
+    /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
+    m_renderContext.reset(new RenderContext(settings, 0, this));
+    m_renderContext->initialize(true);
+    m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
+    connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
+    connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
+    connect(m_loader.data(), SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setSelectedModel(IModel*)));
     /* 背面カリングを有効にする */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    /* OpenGL の初期化が最低条件なため、Renderer はここでインスタンスを作成する */
-    if (!m_loader) {
-        qDebug("VPVL2 version: %s (%d)", VPVL2_VERSION_STRING, VPVL2_VERSION);
-        qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
-        qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
-        qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
-        m_loader = new SceneLoader(m_encoding, m_factory, this);
-        connect(m_loader, SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
-        connect(m_loader, SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
-    }
 #ifdef IS_VPVM
     const QSize &s = size();
-    if (!m_handles) {
-        m_handles = new Handles(m_loader, s);
-        /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
-        m_handles->load();
-    }
-    if (!m_info) {
-        m_info = new InfoPanel(s);
-        /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
-        m_info->load();
-    }
-    if (!m_debugDrawer) {
-        m_debugDrawer = new DebugDrawer();
-        /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
-        m_debugDrawer->load();
-    }
-    if (!m_background) {
-        m_background = new BackgroundImage(s);
-    }
+    m_handles.reset(new Handles(m_loader.data(), s));
+    /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
+    m_handles->loadImageHandles();
+    m_info.reset(new InfoPanel(s));
+    /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
+    m_info->load();
+    m_debugDrawer.reset(new DebugDrawer());
+    /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
+    m_debugDrawer->load();
+    m_background.reset(new BackgroundImage(s));
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
     m_grid->load();
     m_loader->updateDepthBuffer(QSize());
     m_info->setModel(0);
-    m_info->setBones(QList<IBone *>(), "");
     m_info->setFPS(0.0f);
     m_info->update();
 #endif
-    m_timer.start();
+    m_refreshTimer.start();
     startAutomaticRendering();
     emit initailizeGLContextDidDone();
 }
@@ -1067,7 +1064,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_loader->setMousePosition(event, geometry());
     m_plane->test(znear, zfar, hit);
     /* 今は決め打ちの値にしている */
-    const Scalar &delta = 0.0005 * m_loader->scene()->camera()->distance();
+    const Scalar &delta = 0.0005 * m_loader->sceneRef()->camera()->distance();
     m_delta.setX(delta);
     m_delta.setY(delta);
     /*
@@ -1075,8 +1072,8 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
      * また、右下のハンドル処理はひとつ以上ボーンが選択されていなければならない。
      */
     bool movable = false, rotateable = false;
-    if (!m_selectedBones.isEmpty()) {
-        IBone *bone = m_selectedBones.last();
+    if (!m_selectedBoneRefs.isEmpty()) {
+        IBone *bone = m_selectedBoneRefs.last();
         movable = bone->isMovable();
         rotateable = bone->isRotateable();
         /* 右下のハンドルを掴まれた */
@@ -1121,7 +1118,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     Q_UNUSED(hit)
 #endif
     /* モデルが選択状態にある */
-    if (IModel *model = m_loader->selectedModel()) {
+    if (IModel *model = m_loader->selectedModelRef()) {
         /* ボーン選択モードである */
         if (m_editMode == kSelect) {
             IBone *nearestBone = findNearestBone(model, znear, zfar, 0.1);
@@ -1130,7 +1127,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
                 QList<IBone *> selectedBones;
                 /* CTRL が押されている場合は前回の選択状態を引き継ぐ */
                 if (event->modifiers() & Qt::CTRL)
-                    selectedBones.append(m_selectedBones);
+                    selectedBones.append(m_selectedBoneRefs);
                 /* すでにボーンが選択済みの場合は選択状態を外す */
                 if (selectedBones.contains(nearestBone))
                     selectedBones.removeOne(nearestBone);
@@ -1149,7 +1146,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
             /* 移動ボーンでかつ範囲内にある */
             IBone *bone = m_handles->currentBone();
             if (bone->isMovable() && intersectsBone(bone, znear, zfar, 0.5)) {
-                m_currentSelectedBone = bone;
+                m_currentSelectedBoneRef = bone;
                 m_lastBonePosition = bone->worldTransform().getOrigin();
                 setCursor(Qt::ClosedHandCursor);
                 emit handleDidGrab();
@@ -1173,12 +1170,12 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
     IBone *bone = m_handles->currentBone();
     m_isImageHandleRectIntersect = false;
     m_loader->setMousePosition(event, geometry());
-    if (m_currentSelectedBone) {
+    if (m_currentSelectedBoneRef) {
         Vector3 znear, zfar, hit;
         makeRay(pos, znear, zfar);
         m_plane->test(znear, zfar, hit);
         const Vector3 &delta = hit - m_lastBonePosition;
-        emit handleDidMoveAbsolute(delta, m_currentSelectedBone, 'G');
+        emit handleDidMoveAbsolute(delta, m_currentSelectedBoneRef, 'G');
     }
     else if (event->buttons() & Qt::LeftButton) {
         const Qt::KeyboardModifiers modifiers = event->modifiers();
@@ -1196,7 +1193,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-            ILight *light = m_loader->scene()->light();
+            ILight *light = m_loader->sceneRef()->light();
             const Vector3 &direction = light->direction();
             Quaternion rx(0.0f, diff.y() * radian(0.1f), 0.0f),
                     ry(0.0f, diff.x() * radian(0.1f), 0.0f);
@@ -1269,16 +1266,16 @@ void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
      */
     bool isModelHandle = flags & Handles::kModel;
     bool isImageHandle = flags & Handles::kEnable && !Handles::isToggleButton(flags);
-    if (isModelHandle || isImageHandle || m_currentSelectedBone)
+    if (isModelHandle || isImageHandle || m_currentSelectedBoneRef)
         emit handleDidRelease();
-    m_currentSelectedBone = 0;
+    m_currentSelectedBoneRef = 0;
     m_lastBonePosition.setZero();
 }
 
 void SceneWidget::paintGL()
 {
 #ifdef IS_VPVM
-    Scene *scene = m_loader->scene();
+    Scene *scene = m_loader->sceneRef();
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     if (m_editMode != kSelect) {
         //m_loader->renderZPlotToTexture();
@@ -1296,38 +1293,38 @@ void SceneWidget::paintGL()
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;
-    IModel *model = m_loader->selectedModel();
-    if (!m_selectedBones.isEmpty())
-        bone = m_selectedBones.first();
+    IModel *model = m_loader->selectedModelRef();
+    if (!m_selectedBoneRefs.isEmpty())
+        bone = m_selectedBoneRefs.first();
     switch (m_editMode) {
     case kSelect: /* ボーン選択モード */
         /* モデルのボーンの接続部分をレンダリング */
         if (!(m_handleFlags & Handles::kEnable)) {
             QSet<const IBone *> boneSet;
-            foreach (const IBone *bone, m_selectedBones)
+            foreach (const IBone *bone, m_selectedBoneRefs)
                 boneSet.insert(bone);
-            m_debugDrawer->drawModelBones(model, m_loader, boneSet);
+            m_debugDrawer->drawModelBones(model, m_loader.data(), boneSet);
         }
         /* 右下のハンドルが領域に入ってる場合は軸を表示する */
         if (m_isImageHandleRectIntersect)
-            m_debugDrawer->drawBoneTransform(bone, model, m_loader, m_handles->modeFromConstraint());
+            m_debugDrawer->drawBoneTransform(bone, model, m_loader.data(), m_handles->modeFromConstraint());
         /*
          * 情報パネルと右下のハンドルを最後にレンダリング(表示上最上位に持っていく)
          * 右下の操作ハンドルはモデルが選択されていない場合は非表示にするように変更
          */
-        if (m_loader->selectedModel())
+        if (m_loader->selectedModelRef())
             m_handles->drawImageHandles(bone);
         m_info->draw();
         break;
     case kRotate: /* 回転モード */
         /* kRotate と kMove の場合はレンダリングがうまくいかない関係でモデルのハンドルを最後に持ってく */
-        m_debugDrawer->drawMovableBone(bone, model, m_loader);
+        m_debugDrawer->drawMovableBone(bone, model, m_loader.data());
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawRotationHandle(model);
         break;
     case kMove: /* 移動モード */
-        m_debugDrawer->drawMovableBone(bone, model, m_loader);
+        m_debugDrawer->drawMovableBone(bone, model, m_loader.data());
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawMoveHandle(model);
@@ -1352,10 +1349,10 @@ void SceneWidget::resizeGL(int w, int h)
 void SceneWidget::timerEvent(QTimerEvent *event)
 {
     /* モーション再生のタイマーが生きている => 描写命令を出す */
-    if (event->timerId() == m_internalTimerID) {
+    if (event->timerId() == m_updateTimer.timerId()) {
         if (m_playing) {
             /* タイマーの仕様上一定ではないため、差分をここで吸収する */
-            Scalar elapsed = m_timer.elapsed() / Scene::defaultFPS();
+            Scalar elapsed = m_refreshTimer.elapsed() / Scene::defaultFPS();
             Scalar diff = elapsed - m_prevElapsed;
             m_prevElapsed = elapsed;
             if (diff < 0)
@@ -1364,12 +1361,13 @@ void SceneWidget::timerEvent(QTimerEvent *event)
             updateFPS();
         }
         else {
-            /* 非再生中(編集中)はモーションを一切動かさず、カメラとレンダリングエンジンの状態更新だけ行う */
-            Scene *scene = m_loader->scene();
-            scene->update(Scene::kUpdateCamera | Scene::kUpdateRenderEngines);
+            /* 非再生中(編集中)はモーションを一切動かさず、カメラの状態更新だけ行う */
+            Scene *scene = m_loader->sceneRef();
+            scene->update(Scene::kUpdateCamera);
         }
         updateScene();
     }
+    QGLWidget::timerEvent(event);
 }
 
 void SceneWidget::wheelEvent(QWheelEvent *event)
@@ -1405,8 +1403,8 @@ void SceneWidget::panTriggered(QPanGesture *event)
     /* 移動のジェスチャー */
     const QPointF &delta = event->delta();
     const Vector3 newDelta(delta.x() * -0.25, delta.y() * 0.25, 0.0f);
-    if (!m_selectedBones.isEmpty()) {
-        IBone *bone = m_selectedBones.last();
+    if (!m_selectedBoneRefs.isEmpty()) {
+        IBone *bone = m_selectedBoneRefs.last();
         switch (state) {
         case Qt::GestureStarted:
             emit handleDidGrab();
@@ -1421,7 +1419,7 @@ void SceneWidget::panTriggered(QPanGesture *event)
             break;
         }
     }
-    else if (IModel *model = m_loader->selectedModel())
+    else if (IModel *model = m_loader->selectedModelRef())
         translateModel(model, newDelta);
     else
         translateScene(newDelta);
@@ -1431,14 +1429,14 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
 {
     const Qt::GestureState state = event->state();
     QPinchGesture::ChangeFlags flags = event->changeFlags();
-    ICamera *camera = m_loader->scene()->camera();
+    ICamera *camera = m_loader->sceneRef()->camera();
     /* 回転ジェスチャー */
     if (m_enableRotateGesture && flags & QPinchGesture::RotationAngleChanged) {
         qreal value = event->rotationAngle() - event->lastRotationAngle();
-        const Scalar &radian = vpvl2::radian(value);
+        const Scalar &radian = btRadians(value);
         /* ボーンが選択されている場合はボーンの回転 (現時点でY軸のみ) */
-        if (!m_selectedBones.isEmpty()) {
-            IBone *bone = m_selectedBones.last();
+        if (!m_selectedBoneRefs.isEmpty()) {
+            IBone *bone = m_selectedBoneRefs.last();
             int mode = m_handles->modeFromConstraint(), axis = 'Y' << 8;
             switch (state) {
             case Qt::GestureStarted:
@@ -1455,7 +1453,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
             }
         }
         /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
-        else if (IModel *model = m_loader->selectedModel()) {
+        else if (IModel *model = m_loader->selectedModelRef()) {
             Quaternion rotation(0.0f, 0.0f, 0.0f, 1.0f);
             rotation.setEulerZYX(0.0f, -radian, 0.0f);
             rotateModel(model, rotation);
@@ -1496,9 +1494,9 @@ void SceneWidget::swipeTriggered(QSwipeGesture *event)
 void SceneWidget::openErrorDialogIfFailed(bool loadingProjectFailed)
 {
     if (!loadingProjectFailed) {
-        internal::warning(this,
-                          tr("Failed loading the project"),
-                          tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
+        warning(this,
+                tr("Failed loading the project"),
+                tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
     }
 }
 
@@ -1506,8 +1504,8 @@ bool SceneWidget::acceptAddingModel(IModel *model)
 {
     /* モデルを追加する前にモデルの名前とコメントを出すダイアログを表示 */
     QMessageBox mbox;
-    QString comment = internal::toQStringFromString(model->comment());
-    mbox.setText(tr("Model Information of \"%1\"").arg(internal::toQStringFromModel(model)));
+    QString comment = toQStringFromString(model->comment());
+    mbox.setText(tr("Model Information of \"%1\"").arg(toQStringFromModel(model)));
     mbox.setInformativeText(comment.replace("\n", "<br>"));
     mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     return mbox.exec() == QMessageBox::Ok;
@@ -1527,10 +1525,10 @@ bool SceneWidget::testHitModelHandle(const QPointF &pos)
 void SceneWidget::updateFPS()
 {
     /* 1秒ごとの FPS はここで計算しておく。1秒過ぎたら updateFPS を呼んだ回数を求め、タイマーを再起動させる */
-    if (m_timer.elapsed() > 1000) {
+    if (m_refreshTimer.elapsed() > 1000) {
         m_currentFPS = m_frameCount;
         m_frameCount = 0;
-        m_timer.restart();
+        m_refreshTimer.restart();
         m_info->setFPS(m_currentFPS);
         m_info->update();
         emit fpsDidUpdate(m_currentFPS);
@@ -1543,14 +1541,20 @@ void SceneWidget::updateScene()
     m_loader->updateMatrices(QSizeF(size()));
     if (m_enableUpdateGL)
         updateGL();
-    emit cameraPerspectiveDidSet(m_loader->scene()->camera());
+    emit cameraPerspectiveDidSet(m_loader->sceneRef()->camera());
 }
 
 void SceneWidget::clearSelectedBones()
 {
-    m_selectedBones.clear();
-    m_info->setBones(m_selectedBones, "");
+    m_selectedBoneRefs.clear();
+    m_info->setBones(m_selectedBoneRefs, "");
     m_handles->setBone(0);
+}
+
+void SceneWidget::clearSelectedMorphs()
+{
+    m_selectedMorphRefs.clear();
+    m_info->setMorphs(m_selectedMorphRefs, "");
 }
 
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)
@@ -1648,7 +1652,7 @@ IBone *SceneWidget::findNearestBone(const IModel *model,
 {
     static const Vector3 size(threshold, threshold, threshold);
     Array<IBone *> bones;
-    model->getBones(bones);
+    model->getBoneRefs(bones);
     const int nbones = bones.count();
     IBone *nearestBone = 0;
     Scalar hitLambda = 1.0f;
@@ -1678,3 +1682,5 @@ bool SceneWidget::intersectsBone(const IBone *bone,
     Vector3 normal;
     return btRayAabb(znear, zfar, min, max, hitLambda, normal);
 }
+
+} /*  namespace vpvm */

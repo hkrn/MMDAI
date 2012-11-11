@@ -34,19 +34,17 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef HANDLES_H
-#define HANDLES_H
+#ifndef VPVM_HANDLES_H_
+#define VPVM_HANDLES_H_
 
 #include <QtOpenGL/QtOpenGL>
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
+#include "VertexBundle.h"
 
 #include <vpvl2/Common.h>
 #include <assimp.hpp>
-
-namespace internal {
-class TextureDrawHelper;
-}
+#include <aiMesh.h>
 
 namespace vpvl2 {
 class IBone;
@@ -54,9 +52,16 @@ class IModel;
 }
 
 class btBvhTriangleMeshShape;
+class btMotionState;
 class btRigidBody;
 class btTriangleMesh;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
+class TextureDrawHelper;
 
 class Handles : public QObject
 {
@@ -64,39 +69,6 @@ class Handles : public QObject
 
 public:
     class StaticWorld;
-    struct Texture {
-        QSize size;
-        QRectF rect;
-        GLuint textureID;
-    };
-    struct ImageHandle {
-        Texture enableMove;
-        Texture disableMove;
-        Texture enableRotate;
-        Texture disableRotate;
-    };
-    struct Vertex {
-        vpvl2::Vector3 position;
-        vpvl2::Vector3 normal;
-    };
-    struct Model {
-        vpvl2::Array<Vertex> vertices;
-        vpvl2::Array<uint16_t> indices;
-        btRigidBody *body;
-    };
-    struct RotationHandle {
-        Assimp::Importer importer;
-        Model x;
-        Model y;
-        Model z;
-        GLuint indicesBuffer;
-        GLuint verticesBuffer;
-    };
-    struct TranslationHandle : public RotationHandle {
-        Model axisX;
-        Model axisY;
-        Model axisZ;
-    };
 
     enum Flags {
         kNone          = 0x0,
@@ -119,42 +91,43 @@ public:
 
     static bool isToggleButton(int value);
 
-    Handles(SceneLoader *loader, const QSize &size);
+    Handles(SceneLoader *loaderRef, const QSize &size);
     ~Handles();
 
-    void load();
+    void loadImageHandles();
+    void loadModelHandles();
     void resize(const QSize &size);
-    bool testHitModel(const vpvl2::Vector3 &rayFrom,
-                      const vpvl2::Vector3 &rayTo,
+    bool testHitModel(const Vector3 &rayFrom,
+                      const Vector3 &rayTo,
                       bool setTracked,
                       int &flags,
-                      vpvl2::Vector3 &pick);
+                      Vector3 &pick);
     bool testHitImage(const QPointF &p,
                       bool movable,
                       bool rotateable,
                       int &flags,
                       QRectF &rect);
-    void drawImageHandles(vpvl2::IBone *bone);
-    void drawRotationHandle(const vpvl2::IModel *model);
-    void drawMoveHandle(const vpvl2::IModel *model);
-    btScalar angle(const vpvl2::Vector3 &pos) const;
+    void drawImageHandles(IBone *bone);
+    void drawRotationHandle(const IModel *model);
+    void drawMoveHandle(const IModel *model);
+    btScalar angle(const Vector3 &pos) const;
 
-    void setPoint3D(const vpvl2::Vector3 &value);
+    void setPoint3D(const Vector3 &value);
     void setPoint2D(const QPointF &value);
     void setAngle(float value);
     void setRotateDirection(bool value);
-    const vpvl2::Vector3 diffPoint3D(const vpvl2::Vector3 &value) const;
+    const Vector3 diffPoint3D(const Vector3 &value) const;
     const QPointF diffPoint2D(const QPointF &value) const;
     float diffAngle(float value) const;
-    vpvl2::IBone *currentBone() const { return m_bone; }
+    IBone *currentBone() const { return m_boneRef; }
     bool isPoint3DZero() const { return m_prevPos3D.isZero(); }
     bool isAngleZero() const { return m_prevAngle == 0.0f; }
     Flags constraint() const { return m_constraint; }
     int modeFromConstraint() const;
-    const vpvl2::Transform modelHandleTransform() const;
+    const Transform modelHandleTransform() const;
 
     void setState(Flags value);
-    void setBone(vpvl2::IBone *value);
+    void setBone(IBone *value);
     void setLocal(bool value);
     void setVisible(bool value);
     void setVisibilityFlags(int value);
@@ -163,20 +136,47 @@ private slots:
     void updateBone();
 
 private:
-    void drawModel(const Handles::Model &model,
-                   const QColor &color,
-                   int requiredVisibilityFlags);
-    void loadImageHandles();
-    void loadModelHandles();
+    class Model;
+    struct Texture {
+        void load(const QString &path, QGLContext *context);
+        QSize size;
+        QRectF rect;
+        GLuint textureID;
+    };
+    struct ImageHandle {
+        Texture enableMove;
+        Texture disableMove;
+        Texture enableRotate;
+        Texture disableRotate;
+    };
+    struct Vertex {
+        Vector4 position;
+        Vector3 normal;
+    };
+    struct RotationHandle {
+        Assimp::Importer importer;
+        QScopedPointer<Model> x;
+        QScopedPointer<Model> y;
+        QScopedPointer<Model> z;
+    };
+    struct TranslationHandle : public RotationHandle {
+        QScopedPointer<Model> axisX;
+        QScopedPointer<Model> axisY;
+        QScopedPointer<Model> axisZ;
+    };
 
-    internal::TextureDrawHelper *m_helper;
-    vpvl2::IBone *m_bone;
-    StaticWorld *m_world;
-    SceneLoader *m_loader;
+    void drawModel(Model *model, const QColor &color, int requiredVisibilityFlags);
+    void beginDrawing(const vpvl2::IModel *model);
+    void flushDrawing();
+
+    QScopedPointer<TextureDrawHelper> m_helper;
+    QScopedPointer<StaticWorld> m_world;
+    IBone *m_boneRef;
+    SceneLoader *m_loaderRef;
     QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;
     TranslationHandle m_translationHandle;
-    Model *m_trackedHandle;
+    Model *m_trackedHandleRef;
     ImageHandle m_x;
     ImageHandle m_y;
     ImageHandle m_z;
@@ -184,13 +184,16 @@ private:
     Texture m_local;
     Texture m_view;
     Flags m_constraint;
-    vpvl2::Vector3 m_prevPos3D;
+    Vector3 m_prevPos3D;
     QPointF m_prevPos2D;
     float m_prevAngle;
     int m_visibilityFlags;
     bool m_visible;
+    bool m_handleModelsAreLoaded;
 
     Q_DISABLE_COPY(Handles)
 };
+
+} /* namespace vpvm */
 
 #endif // HANDLES_H

@@ -34,10 +34,15 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef BONEUIDELEGATE_H
-#define BONEUIDELEGATE_H
+#ifndef VPVM_BONEUIDELEGATE_H
+#define VPVM_BONEUIDELEGATE_H
 
 #include <QtCore/QObject>
+
+class QSettings;
+
+namespace vpvm
+{
 
 class BoneMotionModel;
 class MainWindow;
@@ -47,7 +52,7 @@ class BoneUIDelegate : public QObject
     Q_OBJECT
 
 public:
-    BoneUIDelegate(BoneMotionModel *bmm, MainWindow *parent);
+    BoneUIDelegate(BoneMotionModel *bmm, QSettings *settings, MainWindow *parent);
     ~BoneUIDelegate();
 
 private slots:
@@ -59,10 +64,13 @@ private slots:
     void openBoneDialog();
 
 private:
-    MainWindow *m_parent;
-    BoneMotionModel *m_boneMotionModel;
+    MainWindow *m_parentRef;
+    QSettings *m_settingsRef;
+    BoneMotionModel *m_boneMotionModelRef;
 
     Q_DISABLE_COPY(BoneUIDelegate)
 };
+
+} /* namespace vpvm */
 
 #endif // BONEUIDELEGATE_H

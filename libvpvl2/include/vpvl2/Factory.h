@@ -67,7 +67,7 @@ public:
     ~Factory();
 
     /**
-     * type (IModel::Type) に基づいた空の Model インスタンスを作成します。
+     * type (IModel::Type) に基づいた空の Model インスタンスを作成します.
      *
      * IModel::Type 以外の値を指定した場合は null を返します。
      *
@@ -77,7 +77,7 @@ public:
     IModel *createModel(IModel::Type type) const;
 
     /**
-     * オンメモリ上にあるデータとその長さを元に読み込み済みの Model インスタンスを作成します。
+     * オンメモリ上にあるデータとその長さを元に読み込み済みの Model インスタンスを作成します.
      *
      * 読み込みに成功した場合第３引数の ok が true に、失敗した場合は false にセットされます。
      * 読み込みの成功可否にかかわらず IModel インスタンスを返します。
@@ -90,7 +90,7 @@ public:
     IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
 
     /**
-     * 空の Motion インスタンスを返します。
+     * 空の Motion インスタンスを返します.
      *
      * @param type
      * @param model
@@ -99,7 +99,7 @@ public:
     IMotion *createMotion(vpvl2::IMotion::Type type, IModel *model) const;
 
     /**
-     * オンメモリ上にあるデータとその長さを元に読み込み済みの Motion インスタンスを作成します。
+     * オンメモリ上にあるデータとその長さを元に読み込み済みの Motion インスタンスを作成します.
      *
      * 読み込みに成功した場合第４引数の ok が true に、失敗した場合は false にセットされます。
      * 読み込みの成功可否にかかわらず IMotion インスタンスを返します。
@@ -116,7 +116,7 @@ public:
     IMotion *createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const;
 
     /**
-     * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します。
+     * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します.
      *
      * @param motion
      * @return IBoneKeyframe
@@ -124,7 +124,7 @@ public:
     IBoneKeyframe *createBoneKeyframe(const IMotion *motion) const;
 
     /**
-     * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します。
+     * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します.
      *
      * @param motion
      * @return ICameraKeyframe
@@ -132,7 +132,7 @@ public:
     ICameraKeyframe *createCameraKeyframe(const IMotion *motion) const;
 
     /**
-     * ILightKeyframe (照明のキーフレーム) のインスタンスを返します。
+     * ILightKeyframe (照明のキーフレーム) のインスタンスを返します.
      *
      * @param motion
      * @return ILightKeyframe
@@ -140,13 +140,21 @@ public:
     ILightKeyframe *createLightKeyframe(const IMotion *motion) const;
 
     /**
-     * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します。
+     * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します.
      *
      * @param motion
      * @return IMorphKeyframe
      */
     IMorphKeyframe *createMorphKeyframe(const IMotion *motion) const;
 
+    /**
+     * IMotion のインスタンスを destType の型に変換して返します.
+     *
+     * @brief convertMotion
+     * @param source
+     * @param destType
+     * @return
+     */
     IMotion *convertMotion(IMotion *source, IMotion::Type destType) const;
 
 private:

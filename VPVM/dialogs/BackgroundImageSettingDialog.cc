@@ -39,40 +39,43 @@
 #include "common/SceneLoader.h"
 #include "BackgroundImageSettingDialog.h"
 
-BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, QWidget *parent) :
-    QDialog(parent),
-    m_position(loader->backgroundImagePosition()),
-    m_scaled(loader->isBackgroundImageUniformEnabled())
+namespace vpvm
 {
-    QFormLayout *subLayout = new QFormLayout();
-    m_x = new QSpinBox();
+
+BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, QWidget *parent)
+    : QDialog(parent),
+      m_x(new QSpinBox()),
+      m_y(new QSpinBox()),
+      m_checkbox(new QCheckBox()),
+      m_position(loader->backgroundImagePosition()),
+      m_scaled(loader->isBackgroundImageUniformEnabled())
+{
+    QScopedPointer<QFormLayout> subLayout(new QFormLayout());
     m_x->setRange(-maximumWidth(), maximumWidth());
     m_x->setValue(m_position.x());
     m_x->setDisabled(m_scaled);
-    connect(m_x, SIGNAL(valueChanged(int)), SLOT(setPositionX(int)));
-    subLayout->addRow("X", m_x);
-    m_y = new QSpinBox();
+    connect(m_x.data(), SIGNAL(valueChanged(int)), SLOT(setPositionX(int)));
+    subLayout->addRow("X", m_x.data());
     m_y->setRange(-maximumHeight(), maximumHeight());
     m_y->setValue(m_position.y());
     m_y->setDisabled(m_scaled);
-    connect(m_y, SIGNAL(valueChanged(int)), SLOT(setPositionY(int)));
-    subLayout->addRow("Y", m_y);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addLayout(subLayout);
-    m_checkbox = new QCheckBox();
-    connect(m_checkbox, SIGNAL(clicked(bool)), SIGNAL(uniformDidEnable(bool)));
-    connect(m_checkbox, SIGNAL(clicked(bool)), m_x, SLOT(setDisabled(bool)));
-    connect(m_checkbox, SIGNAL(clicked(bool)), m_y, SLOT(setDisabled(bool)));
-    m_checkbox->setText(tr("Uniform background image"));
+    connect(m_y.data(), SIGNAL(valueChanged(int)), SLOT(setPositionY(int)));
+    subLayout->addRow("Y", m_y.data());
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addLayout(subLayout.take());
+    connect(m_checkbox.data(), SIGNAL(clicked(bool)), SIGNAL(uniformDidEnable(bool)));
+    connect(m_checkbox.data(), SIGNAL(clicked(bool)), m_x.data(), SLOT(setDisabled(bool)));
+    connect(m_checkbox.data(), SIGNAL(clicked(bool)), m_y.data(), SLOT(setDisabled(bool)));
+    m_checkbox->setText(tr("Uniform Background Image"));
     m_checkbox->setChecked(m_scaled);
-    mainLayout->addWidget(m_checkbox);
-    QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    connect(box, SIGNAL(accepted()), SLOT(close()));
-    connect(box, SIGNAL(rejected()), SLOT(restoreAndClose()));
-    mainLayout->addWidget(box);
+    mainLayout->addWidget(m_checkbox.data());
+    QScopedPointer<QDialogButtonBox> box(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
+    connect(box.data(), SIGNAL(accepted()), SLOT(close()));
+    connect(box.data(), SIGNAL(rejected()), SLOT(restoreAndClose()));
+    mainLayout->addWidget(box.take());
     mainLayout->addStretch();
-    setLayout(mainLayout);
-    setWindowTitle(tr("Background image setting"));
+    setLayout(mainLayout.take());
+    setWindowTitle(tr("Background Image Setting"));
 }
 
 BackgroundImageSettingDialog::~BackgroundImageSettingDialog()
@@ -95,3 +98,5 @@ void BackgroundImageSettingDialog::restoreAndClose()
     emit uniformDidEnable(m_scaled);
     close();
 }
+
+} /* namespace vpvm */

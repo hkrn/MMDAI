@@ -38,7 +38,7 @@
 #define VPVL2_CG_ENGINECOMMON_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
 
@@ -51,7 +51,7 @@
 namespace vpvl2
 {
 class IModel;
-class IRenderDelegate;
+class IRenderContext;
 class IString;
 class Scene;
 
@@ -142,7 +142,7 @@ private:
 class MatrixSemantic : public BaseParameter
 {
 public:
-    MatrixSemantic(const IRenderDelegate *delegate, int flags);
+    MatrixSemantic(const IRenderContext *renderContextRef, int flags);
     ~MatrixSemantic();
 
     void addParameter(CGparameter parameter, const char *suffix);
@@ -157,7 +157,7 @@ private:
                       CGparameter &baseParameter);
     void setMatrix(const IModel *model, CGparameter parameter, int flags);
 
-    const IRenderDelegate *m_delegateRef;
+    const IRenderContext *m_renderContextRef;
     CGparameter m_camera;
     CGparameter m_cameraInversed;
     CGparameter m_cameraTransposed;
@@ -228,7 +228,7 @@ private:
 class TimeSemantic : public BaseParameter
 {
 public:
-    TimeSemantic(const IRenderDelegate *delegate);
+    TimeSemantic(const IRenderContext *renderContextRef);
     ~TimeSemantic();
 
     void addParameter(CGparameter parameter);
@@ -238,7 +238,7 @@ public:
     CGparameter syncDisabledParameter() const { return m_syncDisabled; } /* for test */
 
 private:
-    const IRenderDelegate *m_delegateRef;
+    const IRenderContext *m_renderContextRef;
     CGparameter m_syncEnabled;
     CGparameter m_syncDisabled;
 
@@ -248,7 +248,7 @@ private:
 class ControlObjectSemantic : public BaseParameter
 {
 public:
-    ControlObjectSemantic(const IEffect *effect, const Scene *scene, const IRenderDelegate *delegate);
+    ControlObjectSemantic(const IEffect *effect, const Scene *scene, const IRenderContext *renderContextRef);
     ~ControlObjectSemantic();
 
     void addParameter(CGparameter parameter);
@@ -258,7 +258,7 @@ private:
     void setParameter(const IModel *model, const CGparameter parameter);
 
     const Scene *m_sceneRef;
-    const IRenderDelegate *m_delegateRef;
+    const IRenderContext *m_renderContextRef;
     const IEffect *m_effectRef;
     Array<CGparameter> m_parameters;
 
@@ -289,7 +289,7 @@ public:
         GLuint id;
     };
 
-    RenderColorTargetSemantic(IRenderDelegate *delegate);
+    RenderColorTargetSemantic(IRenderContext *renderContextRef);
     ~RenderColorTargetSemantic();
 
     void addParameter(CGparameter parameter,
@@ -324,7 +324,7 @@ private:
     void getSize2(const CGparameter parameter, size_t &width, size_t &height);
     void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth);
 
-    IRenderDelegate *m_delegateRef;
+    IRenderContext *m_renderContextRef;
     Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
     Hash<HashString, Texture> m_name2textures;
@@ -350,7 +350,7 @@ public:
         GLuint id;
     };
 
-    RenderDepthStencilTargetSemantic(IRenderDelegate *delegate);
+    RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef);
     ~RenderDepthStencilTargetSemantic();
 
     const Buffer *findRenderBuffer(const char *name) const;
@@ -372,7 +372,7 @@ private:
 class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 {
 public:
-    OffscreenRenderTargetSemantic(Effect *effect, IRenderDelegate *delegate);
+    OffscreenRenderTargetSemantic(Effect *effect, IRenderContext *renderContextRef);
     ~OffscreenRenderTargetSemantic();
 
     void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir);
@@ -392,14 +392,14 @@ private:
 class AnimatedTextureSemantic : public BaseParameter
 {
 public:
-    AnimatedTextureSemantic(IRenderDelegate *delegate);
+    AnimatedTextureSemantic(IRenderContext *renderContextRef);
     ~AnimatedTextureSemantic();
 
     void addParameter(CGparameter parameter);
     void update(const RenderColorTargetSemantic &renderColorTarget);
 
 private:
-    IRenderDelegate *m_delegateRef;
+    IRenderContext *m_renderContextRef;
     Array<CGparameter> m_parameters;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AnimatedTextureSemantic)
@@ -477,8 +477,8 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
 
-    EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderDelegate *delegate);
-    ~EffectEngine();
+    EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef);
+    virtual ~EffectEngine();
 
     bool attachEffect(IEffect *e, const IString *dir);
     CGtechnique findTechnique(const char *pass,
@@ -555,7 +555,17 @@ public:
     IntegerParameter subsetCount;
     CGparameter index;
 
+protected:
+    virtual void drawPrimitives(const GLenum mode,
+                                const GLsizei count,
+                                const GLenum type,
+                                const GLvoid *ptr) const = 0;
+
 private:
+    class RectRenderEngine;
+
+    typedef void (*PFNGLDRAWBUFFERS)(GLsizei n, const GLenum *bufs);
+
     static bool testTechnique(const CGtechnique technique,
                               const char *pass,
                               int offset,
@@ -577,7 +587,7 @@ private:
                                       CGtype testType,
                                       ScriptState::Type type,
                                       ScriptState &state);
-    static void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
+    void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const;
     void setRenderColorTargetFromState(const ScriptState &state);
     void setRenderDepthStencilTargetFromState(const ScriptState &state);
     void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
@@ -588,11 +598,9 @@ private:
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
     void initializeBuffer();
 
-#ifndef __APPLE__
-    PFNGLDRAWBUFFERSPROC glDrawBuffers;
-#endif /* __APPLE__ */
     Effect *m_effectRef;
-    IRenderDelegate *m_delegateRef;
+    IRenderContext *m_renderContextRef;
+    RectRenderEngine *m_rectRenderEngine;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     IEffect::ScriptOrderType m_scriptOrder;
@@ -604,8 +612,6 @@ private:
     btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
-    GLuint m_verticesBuffer;
-    GLuint m_indicesBuffer;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(EffectEngine)
 };

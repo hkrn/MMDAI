@@ -31,9 +31,9 @@ file.motion = motion.vmd
 file.camera = camera.vmd
 
 ; トゥーンテクスチャ、シェーダ及びカーネルのソースがあるディレクトリ先
-; dir.system.toon = ../../QMA2/resources/images
-; dir.system.kernels = ../../QMA2/resources/kernels
-; dir.system.shaders = ../../QMA2/resources/shaders
+; dir.system.toon = ../../VPVM/resources/images
+; dir.system.kernels = ../../VPVM/resources/kernels
+; dir.system.shaders = ../../VPVM/resources/shaders
 
 ; ウィンドウの幅
 ; window.width = 640

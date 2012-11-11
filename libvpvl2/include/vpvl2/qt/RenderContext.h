@@ -39,9 +39,13 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
-#include "vpvl2/IRenderDelegate.h"
+#include "vpvl2/IRenderContext.h"
 
 #include <QtOpenGL/QtOpenGL>
+
+namespace nv {
+class Stream;
+}
 
 namespace vpvl2
 {
@@ -51,7 +55,7 @@ namespace qt
 {
 class Archive;
 
-class Delegate : public IRenderDelegate, protected QGLFunctions
+class RenderContext : public IRenderContext, protected QGLFunctions
 {
 public:
     struct TextureCache {
@@ -66,8 +70,23 @@ public:
         int height;
         GLuint id;
     };
-    struct PrivateContext {
+    struct InternalContext {
         QHash<QString, TextureCache> textureCache;
+    };
+    struct InternalTexture {
+        InternalTexture(RenderContext::Texture *r, bool m, bool t)
+            : ref(r),
+              isToon(t),
+              isSystem(false),
+              mipmap(m),
+              ok(false)
+        {
+        }
+        RenderContext::Texture *ref;
+        bool isToon;
+        bool isSystem;
+        bool mipmap;
+        bool ok;
     };
     typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
     typedef struct {
@@ -76,14 +95,15 @@ public:
         GLuint textureID;
     } OffscreenRenderTarget;
 
+    static QSet<QString> loadableTextureExtensions();
     static QString readAllAsync(const QString &path);
     static QImage loadImageAsync(const QString &path);
 
-    Delegate(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context);
-    ~Delegate();
+    RenderContext(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context);
+    ~RenderContext();
 
-    void allocateContext(const IModel *model, void *&context);
-    void releaseContext(const IModel *model, void *&context);
+    void allocateUserData(const IModel *model, void *&context);
+    void releaseUserData(const IModel *model, void *&context);
     bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context);
     void getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */);
     void uploadAnimatedTexture(float offset, float speed, float seek, void *texture);
@@ -97,6 +117,11 @@ public:
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *toUnicode(const uint8_t *value) const;
+    bool hasExtension(const void *namePtr) const;
+    void *findProcedureAddress(const void **candidatesPtr) const;
+    void startProfileSession(ProfileType type, const void *arg);
+    void stopProfileSession(ProfileType type, const void *arg);
+
     IModel *effectOwner(const IEffect *effect) const;
     IModel *findModel(const IString *name) const;
     void setRenderColorTargets(const void *targets, const int ntargets);
@@ -106,7 +131,7 @@ public:
     void releaseRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
 
     void setArchive(Archive *value);
-    void setScenePtr(Scene *value);
+    void setSceneRef(Scene *value);
     void updateMatrices(const QSizeF &size);
     void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
     void setCameraModelMatrix(const QMatrix4x4 &value);
@@ -123,6 +148,7 @@ public:
     void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
+    void renderOffscreen(const QSize &size);
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     IEffect *createEffectAsync(const IString *path);
     IEffect *createEffectAsync(IModel *model, const IString *dir);
@@ -132,21 +158,19 @@ public:
 private:
     class FrameBufferObject;
 
-    static const QString createPath(const IString *dir, const QString &name);
-    static const QString createPath(const IString *dir, const IString *name);
-    static void setTextureID(const TextureCache &cache, bool isToon, Texture &output);
-    static void addTextureCache(PrivateContext *context, const QString &path, const TextureCache &texture);
-    static QImage loadTGA(const QString &path, QScopedArrayPointer<uint8_t> &dataPtr);
-    static QImage loadTGA(QByteArray data, QScopedArrayPointer<uint8_t> &dataPtr);
-    static QGLContext::BindOptions textureBindOptions(bool enableMipmap);
     QImage createImageFromArchive(const QFileInfo &info);
     bool uploadTextureInternal(const QString &path,
-                               Texture &texture,
-                               bool isToon,
-                               bool isSystem,
-                               bool mipmap,
-                               bool &ok,
+                               InternalTexture &internalTexture,
                                void *context);
+    bool uploadTextureNVTT(const QString &suffix,
+                           const QString &path,
+                           QScopedPointer<nv::Stream> &stream,
+                           InternalTexture &internalTexture,
+                           InternalContext *internalContext);
+    bool generateTextureFromImage(const QImage &image,
+                                  const QString &path,
+                                  InternalTexture &internalTexture,
+                                  InternalContext *internalContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
 
@@ -177,13 +201,18 @@ private:
     QMatrix4x4 m_cameraViewMatrix;
     QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;
+    QSet<QString> m_loadableExtensions;
+    QSet<QString> m_extensions;
+    typedef QPair<IRenderContext::ProfileType, const void *> ProfilerKey;
+    QHash<ProfilerKey, QElapsedTimer> m_profilerTimers;
+    QString m_shaderSourcePrefix;
     Vector4 m_mouseCursorPosition;
     Vector4 m_mouseLeftPressPosition;
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
     int m_msaaSamples;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Delegate)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
 };
 
 }

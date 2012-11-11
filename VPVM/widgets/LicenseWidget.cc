@@ -39,12 +39,26 @@
 #include <QtGui/QtGui>
 #include <vpvl2/config.h>
 
-LicenseWidget::LicenseWidget(QWidget *parent) :
-    QWidget(parent),
-    m_text(0)
+/* lupdate cannot parse tr() syntax correctly */
+
+namespace {
+
+static const int kNameIndex = 0;
+static const int kLicenseIndex = 1;
+static const int kWebsiteIndex = 2;
+
+}
+
+namespace vpvm
 {
-    QVBoxLayout *layout = new QVBoxLayout();
-    QLabel *copyrightLabel = new QLabel();
+
+LicenseWidget::LicenseWidget(QWidget *parent)
+    : QWidget(parent),
+      m_model(new QStandardItemModel(0, 3)),
+      m_text(new QTextEdit())
+{
+    QScopedPointer<QVBoxLayout> layout(new QVBoxLayout());
+    QScopedPointer<QLabel> copyrightLabel(new QLabel());
     copyrightLabel->setText(QString("<h3>%1 %2+alpha</h3>"
                                     "<div style='font-size:10px'><p>"
                                     "Copyright (C) 2009-2011 Nagoya Institute of Technology Department of Computer Science (MMDAgent)<br>"
@@ -53,40 +67,45 @@ LicenseWidget::LicenseWidget(QWidget *parent) :
                                     "<p>%3</p><p>%4</p></div>")
                             .arg(qApp->applicationName())
                             .arg(qApp->applicationVersion())
-                            .arg(tr("MMDAI2 (will be VPVM) is an application to edit or create a motion compatible with MMD ("
-                                    "<a href='http://www.geocities.jp/higuchuu4/index.htm'>MikuMikuDance</a> "
-                                    "created by Yuu Higuchi). This doesn't intend to be the successor of MMD."))
-                            .arg(tr("Below table is a list of libraries MMDAI2 uses. "
-                                    "Double click a row to show the license text or open the website")));
+                            .arg(vpvm::LicenseWidget::tr("MMDAI2 (will be VPVM) is an application to edit or create a motion compatible with MMD ("
+                                                         "<a href='http://www.geocities.jp/higuchuu4/index.htm'>MikuMikuDance</a> "
+                                                         "created by Yuu Higuchi). This doesn't intend to be the successor of MMD."))
+                            .arg(vpvm::LicenseWidget::tr("Below table is a list of libraries MMDAI2 uses. "
+                                                         "Double click a row to show the license text or open the website")));
     copyrightLabel->setWordWrap(true);
-    layout->addWidget(copyrightLabel);
+    layout->addWidget(copyrightLabel.take());
     QTreeView *tree = new QTreeView();
-    QAbstractItemModel *model = new QStandardItemModel(0, 3);
-    model->setHeaderData(0, Qt::Horizontal, tr("Name"));
-    model->setHeaderData(1, Qt::Horizontal, tr("License"));
-    model->setHeaderData(2, Qt::Horizontal, tr("Website"));
+    m_model->setHeaderData(0, Qt::Horizontal, vpvm::LicenseWidget::tr("Name"));
+    m_model->setHeaderData(1, Qt::Horizontal, vpvm::LicenseWidget::tr("License"));
+    m_model->setHeaderData(2, Qt::Horizontal, vpvm::LicenseWidget::tr("Website"));
     connect(tree, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(handleDoubleClick(QModelIndex)));
     tree->setRootIsDecorated(false);
     tree->setAlternatingRowColors(true);
-    tree->setModel(model);
+    tree->setModel(m_model.data());
     tree->setEditTriggers(QTreeView::NoEditTriggers);
     layout->addWidget(tree);
-    QLabel *aboutIconLabel = new QLabel;
+    QScopedPointer<QLabel> aboutIconLabel(new QLabel());
     aboutIconLabel->setText(
                 "<div style='font-size:10px'>" +
-                tr("MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
-                   "VOCALOID is the trademark of YAMAHA Corporation.") + "</div>");
+                vpvm::LicenseWidget::tr("MIKU Hatsune and other CV series are product of CRYPTON FUTURE MEDIA, INC.<br>"
+                                        "VOCALOID is the trademark of YAMAHA Corporation.") + "</div>");
     aboutIconLabel->setWordWrap(true);
     aboutIconLabel->setOpenExternalLinks(true);
     aboutIconLabel->setTextInteractionFlags(Qt::TextBrowserInteraction);
-    layout->addWidget(aboutIconLabel);
-    setWindowTitle(QString(tr("About %1")).arg(qApp->applicationName()));
+    layout->addWidget(aboutIconLabel.take());
+    setWindowTitle(QString(vpvm::LicenseWidget::tr("About %1")).arg(qApp->applicationName()));
     resize(600, 450);
-    setLayout(layout);
-    m_model = model;
+    setLayout(layout.take());
 
+    addLibrary("Glyph Icons", "CC 3.0", "http://glyphicons.com/", "GlyphIcons");
+#ifdef VPVL2_LINK_INTEL_TBB
+    addLibrary("TBB", "GPL", "http://threadingbuildingblocks.org/", "TBB");
+#endif
+#ifdef VPVL2_LINK_NVTT
+    addLibrary("NVIDIA texture tools", "MIT", "http://code.google.com/p/nvidia-texture-tools/", "nvtt");
+#endif /* VPVL2_LINK_NVTT */
 #ifdef VPVL2_LINK_DEVIL
-    addLibrary("libpng", "libpng", "http://libpng.org", "libpng");
+    addLibrary("libpng", "zlib", "http://libpng.org", "libpng");
     addLibrary("libjpeg", "Custom", "http://ijg.org", "libjpeg");
     addLibrary("DevIL", "LGPL", "http://openil.sf.net", "DevIL");
 #endif /* VPVL2_LINK_DEVIL */
@@ -118,26 +137,23 @@ void LicenseWidget::addLibrary(const QString &name,
 {
     m_path.insert(name, path);
     m_model->insertRow(0);
-    m_model->setData(m_model->index(0, 0), name);
-    m_model->setData(m_model->index(0, 1), license);
-    m_model->setData(m_model->index(0, 2), website);
+    m_model->setData(m_model->index(0, kNameIndex), name);
+    m_model->setData(m_model->index(0, kLicenseIndex), license);
+    m_model->setData(m_model->index(0, kWebsiteIndex), website);
 }
 
 void LicenseWidget::handleDoubleClick(const QModelIndex &index)
 {
     QVariant value;
     switch (index.column()) {
-    case 0: // name
-    case 1: // license
+    case kNameIndex:
+    case kLicenseIndex:
     {
-        QString license = m_model->data(index).toString();
-        QString name = m_model->data(m_model->index(index.row(), 0)).toString();
+        const QString &name = m_model->data(m_model->index(index.row(), 0)).toString();
         QFile file(QString(":/licenses/%1").arg(m_path[name]));
         if (file.exists() && file.open(QFile::ReadOnly | QFile::Text)) {
             QTextStream stream(&file);
-            if (!m_text)
-                m_text = new QTextEdit;
-            m_text->setWindowTitle(tr("%1's license").arg(name));
+            m_text->setWindowTitle(vpvm::LicenseWidget::tr("%1's license").arg(name));
             m_text->setReadOnly(true);
             m_text->setHtml(QString("<pre>%1</pre>").arg(stream.readAll()));
             m_text->resize(600, 500);
@@ -146,10 +162,11 @@ void LicenseWidget::handleDoubleClick(const QModelIndex &index)
         }
         break;
     }
-    case 2: // website
+    case kWebsiteIndex:
         value = m_model->data(index);
         QDesktopServices::openUrl(value.toString());
         break;
     }
 }
 
+} /* namespace vpvm */

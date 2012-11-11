@@ -41,6 +41,9 @@
 #include <QtCore/QtCore>
 #include "vpvl2/qt/CString.h"
 
+namespace vpvm
+{
+
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
@@ -65,7 +68,7 @@ VPDFile::~VPDFile()
 bool VPDFile::load(QTextStream &stream)
 {
     QString line;
-    stream.setCodec(internal::getTextCodec());
+    stream.setCodec(getTextCodec());
     if (stream.readLine() != "Vocaloid Pose Data file") {
         m_error = kInvalidSignatureError;
         return false;
@@ -181,7 +184,7 @@ void VPDFile::save(QTextStream &stream)
             "  %.06f,%.06f,%.06f,%.06f;\t\t// Quatanion x,y,z,w\r\n"
             "}\r\n"
             "\r\n";
-    QTextCodec *codec = internal::getTextCodec();
+    QTextCodec *codec = getTextCodec();
     stream.setCodec(codec);
     stream << headerTemplate.arg(m_bones.size());
     uint32_t i = 0;
@@ -210,8 +213,8 @@ void VPDFile::makePose(IModel *model)
             const Vector3 &pos = b->position;
             const Vector4 &rot = b->rotation;
             const Quaternion rotation(rot.x(), rot.y(), rot.z(), rot.w());
-            bone->setPosition(pos);
-            bone->setRotation(rotation);
+            bone->setLocalPosition(pos);
+            bone->setLocalRotation(rotation);
         }
     }
 }
@@ -231,3 +234,6 @@ VPDFile *VPDFile::clone()
     newPose->m_error = m_error;
     return newPose.take();
 }
+
+} /* namespace vpvm */
+

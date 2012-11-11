@@ -34,19 +34,21 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef DEBUGDRAWER_H
-#define DEBUGDRAWER_H
+#ifndef VPVM_DEBUGDRAWER_H_
+#define VPVM_DEBUGDRAWER_H_
 
 #include "vpvl2/qt/CString.h"
 #include "SceneLoader.h"
 #include "SceneWidget.h"
+#include "VertexBundle.h"
 #include "util.h"
 
 #include <QtCore/QObject>
 #include <btBulletDynamicsCommon.h>
 #include <vpvl2/Common.h>
+#include <vpvl2/qt/World.h>
 
-namespace internal {
+namespace vpvm {
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
@@ -55,23 +57,24 @@ class DebugDrawer : public btIDebugDraw
 {
 public:
     typedef QSet<const IBone *> BoneSet;
+    static const Scalar kLength;
+    static const Vector3 kRed;
+    static const Vector3 kGreen;
+    static const Vector3 kBlue;
 
     DebugDrawer()
-        : m_flags(0),
-          m_visible(true)
-    {}
-    virtual ~DebugDrawer() {}
-
-    static void setLine(const btVector3 &from, const btVector3 &to, QVector3D *lines) {
-        lines[0].setX(from.x());
-        lines[0].setY(from.y());
-        lines[0].setZ(from.z());
-        lines[1].setX(to.x());
-        lines[1].setY(to.y());
-        lines[1].setZ(to.z());
+        : m_vbo(QGLBuffer::VertexBuffer),
+          m_ibo(QGLBuffer::IndexBuffer),
+          m_flags(0),
+          m_visible(true),
+          m_initialized(false)
+    {
     }
+    ~DebugDrawer() {
+    }
+
     void draw3dText(const btVector3 & /* location */, const char *textString) {
-        fprintf(stderr, "[INFO]: %s\n", textString);
+        qDebug("[INFO]: %s\n", textString);
     }
     void drawContactPoint(const btVector3 &PointOnB,
                           const btVector3 &normalOnB,
@@ -79,32 +82,24 @@ public:
                           int /* lifeTime */,
                           const btVector3 &color)
     {
-        QVector3D lines[2];
-        setLine(PointOnB, PointOnB + normalOnB * distance, lines);
-        m_program.setUniformValue("color", QColor::fromRgbF(color.x(), color.y(), color.z()));
-        m_program.setAttributeArray("inPosition", lines);
-        glDrawArrays(GL_LINES, 0, 2);
+        drawLine(PointOnB, PointOnB + normalOnB * distance, color);
     }
     void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
-        QVector3D lines[2];
-        setLine(from, to, lines);
-        m_program.setUniformValue("color", QColor::fromRgbF(color.x(), color.y(), color.z()));
-        m_program.setAttributeArray("inPosition", lines);
-        glDrawArrays(GL_LINES, 0, 2);
+        Vertex vertices[2];
+        vertices[0].set(from, color);
+        vertices[1].set(to, color);
+        m_vbo.write(0, &vertices[0], sizeof(vertices));
+        glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, 0);
     }
     void drawLine(const btVector3 &from,
                   const btVector3 &to,
                   const btVector3 &fromColor,
                   const btVector3 & /* toColor */)
     {
-        QVector3D lines[2];
-        setLine(from, to, lines);
-        m_program.setUniformValue("color", QColor::fromRgbF(fromColor.x(), fromColor.y(), fromColor.z()));
-        m_program.setAttributeArray("inPosition", lines);
-        glDrawArrays(GL_LINES, 0, 2);
+        drawLine(from, to, fromColor);
     }
     void reportErrorWarning(const char *warningString) {
-        fprintf(stderr, "[ERROR]: %s\n", warningString);
+        qWarning("[ERROR]: %s\n", warningString);
     }
     int getDebugMode() const {
         return m_flags;
@@ -114,10 +109,33 @@ public:
     }
 
     void load() {
-        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
-        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
-        m_program.link();
-        m_program.enableAttributeArray("inPosition");
+        if (!m_initialized) {
+            m_bundle.initialize(QGLContext::currentContext());
+            m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
+            m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
+            m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
+            m_program.bindAttributeLocation("inColor", IModel::IBuffer::kNormalStride);
+            m_program.link();
+            m_vbo.setUsagePattern(QGLBuffer::DynamicDraw);
+            m_vbo.create();
+            m_vbo.bind();
+            m_vbo.allocate(sizeof(Vertex) * 2);
+            m_vbo.release();
+            m_ibo.setUsagePattern(QGLBuffer::StaticDraw);
+            m_ibo.create();
+            m_ibo.bind();
+            static const int indices[] = { 0, 1 };
+            m_ibo.allocate(indices, sizeof(indices));
+            m_ibo.release();
+            m_bundle.create();
+            m_bundle.bind();
+            bindVertexBundle(false);
+            m_bundle.release();
+            releaseVertexBundle(false);
+            m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
+            m_program.enableAttributeArray(IModel::IBuffer::kNormalStride);
+            m_initialized = true;
+        }
     }
     void setVisible(bool value) {
         m_visible = value;
@@ -128,9 +146,23 @@ public:
                    const btTransform &transform,
                    const btVector3 &color) {
         if (m_program.isLinked()) {
-            setProgramParameters(loader, 0);
+            beginDrawing(loader, 0);
             world->debugDrawObject(transform, shape, color);
-            m_program.release();
+            flushDrawing();
+        }
+    }
+    void drawWorld(const SceneLoader *loader) {
+        if (m_program.isLinked()) {
+            World *world = loader->worldRef();
+            btDiscreteDynamicsWorld *dynamicWorldRef = world->dynamicWorldRef();
+            btIDebugDraw *drawer = dynamicWorldRef->getDebugDrawer();
+            setDebugMode(DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawConstraints);
+            dynamicWorldRef->setDebugDrawer(this);
+            beginDrawing(loader, 0);
+            dynamicWorldRef->debugDrawWorld();
+            flushDrawing();
+            setDebugMode(DBG_NoDebug);
+            dynamicWorldRef->setDebugDrawer(drawer);
         }
     }
 
@@ -138,11 +170,10 @@ public:
         if (!model || !m_visible || !m_program.isLinked())
             return;
         Array<IBone *> bones;
-        model->getBones(bones);
+        model->getBoneRefs(bones);
         const int nbones = bones.count();
-        glDisable(GL_DEPTH_TEST);
         /* シェーダのパラメータ設定 */
-        setProgramParameters(loader, model);
+        beginDrawing(loader, model);
         /* IK ボーンの収集 */
         BoneSet bonesForIK;
         Array<IBone *> linkedBones;
@@ -151,8 +182,8 @@ public:
             if (bone->hasInverseKinematics()) {
                 linkedBones.clear();
                 bonesForIK.insert(bone);
-                bonesForIK.insert(bone->targetBone());
-                bone->getLinkedBones(linkedBones);
+                bonesForIK.insert(bone->targetBoneRef());
+                bone->getEffectorBones(linkedBones);
                 const int nlinks = linkedBones.count();
                 for (int j = 0; j < nlinks; j++) {
                     IBone *linkedBone = linkedBones[j];
@@ -172,44 +203,35 @@ public:
             bool skipDrawingLine = (bone->destinationOrigin() == origin);
             drawBone(bone, selectedBones, bonesForIK, skipDrawingLine);
         }
-        m_program.release();
-        glEnable(GL_DEPTH_TEST);
+        flushDrawing();
     }
     void drawMovableBone(const IBone *bone, const IModel *model, const SceneLoader *loader) {
         if (!bone || !bone->isMovable() || !m_program.isLinked())
             return;
-        glDisable(GL_DEPTH_TEST);
-        setProgramParameters(loader, model);
-        m_program.setUniformValue("color", QColor::fromRgbF(0, 1, 1));
+        beginDrawing(loader, model);
         drawSphere(bone->worldTransform().getOrigin(), 0.5, Vector3(0.0f, 1.0f, 1.0f));
-        m_program.release();
-        glEnable(GL_DEPTH_TEST);
+        flushDrawing();
     }
     void drawBoneTransform(const IBone *bone, const IModel *model, const SceneLoader *loader, int mode) {
         /* 固定軸がある場合は軸表示なし */
         if (!m_visible || !bone || !m_program.isLinked() || bone->hasFixedAxes())
             return;
-        glDisable(GL_DEPTH_TEST);
-        /* シェーダのパラメータ設定 */
-        setProgramParameters(loader, model);
         /* ボーン表示 */
         BoneSet selectedBones;
         selectedBones.insert(bone);
-        drawBone(bone, selectedBones, BoneSet(), false);
+        //drawBone(bone, selectedBones, BoneSet(), false);
+        /* シェーダのパラメータ設定 */
+        beginDrawing(loader, model);
         /* 軸表示 */
-        static const Scalar kLength = 2.0;
-        static const Vector3 kRed   = Vector3(1, 0, 0);
-        static const Vector3 kGreen = Vector3(0, 1, 0);
-        static const Vector3 kBlue  = Vector3(0, 0, 1);
         if (mode == 'V') {
             /* モデルビュー行列を元に軸表示 */
             const Transform &transform = bone->worldTransform();
             const Vector3 &origin = bone->worldTransform().getOrigin();
             QMatrix4x4 world, view, projection;
             loader->getCameraMatrices(world, view, projection);
-            drawLine(origin, transform * (internal::vec2vec(view.row(0)) * kLength), kRed);
-            drawLine(origin, transform * (internal::vec2vec(view.row(1)) * kLength), kGreen);
-            drawLine(origin, transform * (internal::vec2vec(view.row(2)) * kLength), kBlue);
+            drawLine(origin, transform * (vec2vec(view.row(0)) * kLength), kRed);
+            drawLine(origin, transform * (vec2vec(view.row(1)) * kLength), kGreen);
+            drawLine(origin, transform * (vec2vec(view.row(2)) * kLength), kBlue);
         }
         else if (mode == 'L') {
             if (bone->hasLocalAxes()) {
@@ -238,85 +260,34 @@ public:
             drawLine(origin, origin + Vector3(0, kLength, 0), kGreen);
             drawLine(origin, origin + Vector3(0, 0, kLength), kBlue);
         }
-        glEnable(GL_DEPTH_TEST);
-        m_program.release();
+        flushDrawing();
     }
 
 private:
-    void setProgramParameters(const SceneLoader *loader, const IModel *model) {
-        QMatrix4x4 world, view, projection;
-        loader->getCameraMatrices(world, view, projection);
-        if (model) {
-            const Vector3 &position = model->position();
-            const Quaternion &rotation = model->rotation();
-            world.translate(position.x(), position.y(), position.z());
-            world.rotate(QQuaternion(rotation.w(), rotation.x(), rotation.y(), rotation.z()));
+    struct Vertex {
+        Vertex() {}
+        Vertex(const Vector3 &v, const QColor &c)
+            : position(v),
+              color(c.redF(), c.greenF(), c.blueF())
+        {
         }
-        m_program.bind();
-        m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
-        m_program.setUniformValue("boneMatrix", QMatrix4x4());
-    }
-    void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK, bool skipDrawingLine) {
-        static const QColor kColorRed = QColor::fromRgbF(1.0, 0.0, 0.0);
-        static const QColor kColorOrange = QColor::fromRgbF(1.0, 0.75, 0.0);
-        static const QColor kColorBlue = QColor::fromRgbF(0.0, 0.0, 1.0);
-        static const Scalar sphereRadius = 0.2f;
-        if (!bone || !bone->isVisible())
-            return;
-        const Vector3 &dest = bone->destinationOrigin();
-        const Vector3 &origin = bone->worldTransform().getOrigin();
-        /* 選択中の場合は赤色で表示 */
-        if (selected.contains(bone)) {
-            drawSphere(origin, sphereRadius, Vector3(1.0f, 0.0f, 0.0f));
-            m_program.setUniformValue("color", kColorRed);
+        void set(const Vector3 &v, const Vector3 &c) {
+            position = v;
+            color = c;
         }
-        /* 固定軸(例:捻り)ありのボーンの場合は球体のみ紫色、接続部分を青で表示 */
-        else if (bone->hasFixedAxes()) {
-            drawSphere(origin, sphereRadius, Vector3(1.0, 0.0, 1.0f));
-            m_program.setUniformValue("color", kColorBlue);
-        }
-        /* IK ボーンの場合は橙色で表示 */
-        else if (IK.contains(bone)) {
-            drawSphere(origin, sphereRadius, Vector3(1.0f, 0.75f, 0.0f));
-            m_program.setUniformValue("color", kColorOrange);
-        }
-        /* 上記以外の場合は青色で表示 */
-        else {
-            drawSphere(origin, sphereRadius, Vector3(0.0f, 0.0f, 1.0f));
-            m_program.setUniformValue("color", kColorBlue);
-        }
-        if (!skipDrawingLine) {
-            /* 描写 */
-            Transform tr = Transform::getIdentity();
-            Array<Vector3> vertices;
-            static const int indices[] = {
-                0, 1, 2, 3
-            };
-            const Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
-            /* ボーン接続を表示するための頂点設定 */
-            tr.setOrigin(Vector3(coneRadius, 0.0f, 0.0f));
-            vertices.add(tr * origin);
-            vertices.add(dest);
-            tr.setOrigin(Vector3(-coneRadius, 0.0f, 0.0f));
-            vertices.add(tr * origin);
-            vertices.add(dest);
-            m_program.setAttributeArray("inPosition",
-                                        reinterpret_cast<const GLfloat *>(&vertices[0]),
-                                        3,
-                                        sizeof(Vector3));
-            glDrawElements(GL_LINE_LOOP, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
-        }
-    }
-    const IBone *findSpecialBone(const IModel *model) const {
+        Vector3 position;
+        Vector3 color;
+    };
+    static const IBone *findSpecialBone(const IModel *model) {
+        static const CString kRoot("Root");
         Array<ILabel *> labels;
-        model->getLabels(labels);
+        model->getLabelRefs(labels);
         const int nlabels = labels.count();
         for (int i = 0; i < nlabels; i++) {
             const ILabel *label = labels[i];
             const int nchildren = label->count();
             if (label->isSpecial()) {
                 /* 特殊枠でかつ先頭ボーンかどうか */
-                static const CString kRoot("Root");
                 if (nchildren > 0 && label->name()->equals(&kRoot)) {
                     const IBone *bone = label->bone(0);
                     return bone;
@@ -326,13 +297,96 @@ private:
         return 0;
     }
 
+    void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK, bool skipDrawingLine) {
+        static const Scalar sphereRadius = 0.2f;
+        if (!bone || !bone->isVisible())
+            return;
+        const Vector3 &dest = bone->destinationOrigin();
+        const Vector3 &origin = bone->worldTransform().getOrigin();
+        Vector3 color;
+        /* 選択中の場合は赤色で表示 */
+        if (selected.contains(bone)) {
+            drawSphere(origin, sphereRadius, Vector3(1.0f, 0.0f, 0.0f));
+            color = kRed;
+        }
+        /* 固定軸(例:捻り)ありのボーンの場合は球体のみ紫色、接続部分を青で表示 */
+        else if (bone->hasFixedAxes()) {
+            drawSphere(origin, sphereRadius, Vector3(1.0, 0.0, 1.0f));
+            color = kBlue;
+        }
+        /* IK ボーンの場合は橙色で表示 */
+        else if (IK.contains(bone)) {
+            drawSphere(origin, sphereRadius, Vector3(1.0f, 0.75f, 0.0f));
+            color.setValue(1, 0.75, 0);
+        }
+        /* 上記以外の場合は青色で表示 */
+        else {
+            drawSphere(origin, sphereRadius, Vector3(0.0f, 0.0f, 1.0f));
+            color = kBlue;
+        }
+        if (!skipDrawingLine) {
+            /* 描写 */
+            Transform tr = Transform::getIdentity();
+            const Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
+            /* ボーン接続を表示するための頂点設定 */
+            tr.setOrigin(Vector3(coneRadius, 0.0f, 0.0f));
+            drawLine(tr * origin, dest, color);
+            tr.setOrigin(Vector3(-coneRadius, 0.0f, 0.0f));
+            drawLine(tr * origin, dest, color);
+        }
+    }
+    void beginDrawing(const SceneLoader *loader, const IModel *model) {
+        QMatrix4x4 world, view, projection;
+        loader->getCameraMatrices(world, view, projection);
+        if (model) {
+            const Vector3 &position = model->worldPosition();
+            const Quaternion &rotation = model->worldRotation();
+            world.translate(position.x(), position.y(), position.z());
+            world.rotate(QQuaternion(rotation.w(), rotation.x(), rotation.y(), rotation.z()));
+        }
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        m_program.bind();
+        m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
+        bindVertexBundle(false); // XXX: VAO doesn't work
+    }
+    void flushDrawing() {
+        releaseVertexBundle(false);  // XXX: VAO doesn't work
+        m_program.release();
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+    }
+    void bindVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.bind()) {
+            m_vbo.bind();
+            m_ibo.bind();
+            m_program.setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Vertex));
+            m_program.setAttributeBuffer(IModel::IBuffer::kNormalStride, GL_FLOAT, 16, 3, sizeof(Vertex));
+        }
+    }
+    void releaseVertexBundle(bool bundle) {
+        if (!bundle || !m_bundle.release()) {
+            m_vbo.release();
+            m_ibo.release();
+        }
+    }
+
     QGLShaderProgram m_program;
+    VertexBundle m_bundle;
+    QGLBuffer m_vbo;
+    QGLBuffer m_ibo;
     int m_flags;
     bool m_visible;
+    bool m_initialized;
 
     Q_DISABLE_COPY(DebugDrawer)
 };
 
-}
+const Scalar DebugDrawer::kLength  = 2.0f;
+const Vector3 DebugDrawer::kRed   = Vector3(1, 0, 0);
+const Vector3 DebugDrawer::kGreen = Vector3(0, 1, 0);
+const Vector3 DebugDrawer::kBlue  = Vector3(0, 0, 1);
+
+} /* namespace vpvm */
 
 #endif // DEBUGDRAWER_H

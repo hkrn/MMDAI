@@ -34,19 +34,23 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELTABWIDGET_H
-#define MODELTABWIDGET_H
+#ifndef VPVM_MODELTABWIDGET_H
+#define VPVM_MODELTABWIDGET_H
 
 #include <QtGui/QWidget>
+
+class QCloseEvent;
+class QTabWidget;
+class QSettings;
+
+namespace vpvm
+{
 
 class BoneMotionModel;
 class MorphMotionModel;
 class MorphWidget;
 class ModelInfoWidget;
 class ModelSettingWidget;
-class QCloseEvent;
-class QTabWidget;
-class QSettings;
 class SceneMotionModel;
 
 class ModelTabWidget : public QWidget
@@ -54,14 +58,14 @@ class ModelTabWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ModelTabWidget(QSettings *settings,
+    explicit ModelTabWidget(QSettings *settingsRef,
                             MorphMotionModel *mmm,
-                            QWidget *parent);
+                            QWidget *parent = 0);
     ~ModelTabWidget();
 
-    MorphWidget *morphWidget() const { return m_morphWidget; }
-    ModelInfoWidget *modelInfoWidget() const { return m_modelInfoWidget; }
-    ModelSettingWidget *modelSettingWidget() const { return m_modelSettingWidget; }
+    MorphWidget *morphWidget() const { return m_morphWidget.data(); }
+    ModelInfoWidget *modelInfoWidget() const { return m_modelInfoWidget.data(); }
+    ModelSettingWidget *modelSettingWidget() const { return m_modelSettingWidget.data(); }
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -70,13 +74,15 @@ private slots:
     void retranslate();
 
 private:
-    QTabWidget *m_tabWidget;
-    QSettings *m_settings;
-    MorphWidget *m_morphWidget;
-    ModelInfoWidget *m_modelInfoWidget;
-    ModelSettingWidget *m_modelSettingWidget;
+    QScopedPointer<QTabWidget> m_tabWidget;
+    QScopedPointer<MorphWidget> m_morphWidget;
+    QScopedPointer<ModelInfoWidget> m_modelInfoWidget;
+    QScopedPointer<ModelSettingWidget> m_modelSettingWidget;
+    QSettings *m_settingsRef;
 
     Q_DISABLE_COPY(ModelTabWidget)
 };
+
+} /* namespace vpvm */
 
 #endif // MODELWIDGET_H

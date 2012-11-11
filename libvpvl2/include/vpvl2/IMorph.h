@@ -67,10 +67,12 @@ public:
         kUVA3,
         kUVA4,
         kMaterial,
+        kFlip,
+        kImpulse,
         kMaxMorphType
     };
     enum Category {
-        kReserved,
+        kBase,
         kEyeblow,
         kEye,
         kLip,
@@ -81,44 +83,52 @@ public:
     virtual ~IMorph() {}
 
     /**
-     * モーフの名前を返します。
+     * モーフの名前を返します.
      *
      * @return IString
      */
     virtual const IString *name() const = 0;
 
     /**
-     * モーフの ID を返します。
+     * モーフの ID を返します.
      *
-     * 常にユニークでなければなりません。
+     * 常にユニークな値で返します。
      *
      * @return int
      */
     virtual int index() const = 0;
 
     /**
-     * モーフのカテゴリを返します。
+     * 親のモデルのインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return IModel
+     */
+    virtual IModel *parentModelRef() const = 0;
+
+    /**
+     * モーフのカテゴリを返します.
      *
      * @return Category
      */
     virtual Category category() const = 0;
 
     /**
-     * モーフの種類を返します。
+     * モーフの種類を返します.
      *
      * @return Type
      */
     virtual Type type() const = 0;
 
     /**
-     * グループモーフに所属しているかを返します。
+     * グループモーフに所属しているかを返します.
      *
      * @return bool
      */
     virtual bool hasParent() const = 0;
 
     /**
-     * 係数を返します。
+     * モーフの変形度係数を返します.
      *
      * @return float
      * @sa setWeight
@@ -126,7 +136,7 @@ public:
     virtual const WeightPrecision &weight() const = 0;
 
     /**
-     * 係数 value に基づいて変形を行います。
+     * 係数 value に基づいて変形を行います.
      *
      * value は 0.0 以上 1.0 以下でなければなりません。
      *
@@ -136,6 +146,6 @@ public:
     virtual void setWeight(const WeightPrecision &value) = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif

@@ -3,10 +3,9 @@
 #define in attribute
 #endif
 uniform mat4 modelViewProjectionMatrix;
-uniform mat4 boneMatrix;
 in vec4 inPosition;
 
 void main() {
-    gl_Position = modelViewProjectionMatrix * boneMatrix * inPosition;
+    gl_Position = modelViewProjectionMatrix * inPosition;
 }
 

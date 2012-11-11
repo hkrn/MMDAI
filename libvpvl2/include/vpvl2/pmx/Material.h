@@ -37,6 +37,7 @@
 #ifndef VPVL2_PMX_MATERIAL_H_
 #define VPVL2_PMX_MATERIAL_H_
 
+#include "vpvl2/IMaterial.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 
@@ -54,15 +55,9 @@ namespace pmx
  * Material class represents a morph of a Polygon Material Extended object.
  */
 
-class VPVL2_API Material
+class VPVL2_API Material : public IMaterial
 {
 public:
-    enum SphereTextureRenderMode {
-        kNone,
-        kMultTexture,
-        kAddTexture,
-        kSubTexture
-    };
     struct RGB3 {
         Color result;
         Vector3 base;
@@ -128,13 +123,14 @@ public:
     /**
      * Constructor
      */
-    Material();
+    Material(IModel *modelRef);
     ~Material();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
     static bool loadMaterials(const Array<Material *> &materials,
                               const Array<IString *> &textures,
                               int expectedIndices);
+    static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -146,9 +142,10 @@ public:
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
-    void mergeMorph(const Morph::Material *morph, float weight);
+    void mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight);
     void resetMorph();
 
+    IModel *parentModelRef() const { return m_modelRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const IString *userDataArea() const { return m_userDataArea; }
@@ -169,13 +166,16 @@ public:
     int textureIndex() const { return m_textureIndex; }
     int sphereTextureIndex() const { return m_sphereTextureIndex; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
-    int indices() const { return m_indices; }
+    int sizeofIndices() const { return m_indices; }
     bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
     bool isCullFaceDisabled() const;
     bool hasShadow() const;
     bool isShadowMapDrawn() const;
     bool isSelfShadowDrawn() const;
     bool isEdgeDrawn() const;
+    bool hasVertexColor() const;
+    bool isPointDraw() const;
+    bool isLineDraw() const;
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
@@ -197,6 +197,7 @@ public:
     void setFlags(int value);
 
 private:
+    IModel *m_modelRef;
     IString *m_name;
     IString *m_englishName;
     IString *m_userDataArea;

@@ -2,7 +2,10 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 #include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmd/Vertex.h"
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Joint.h"
 #include "vpvl2/pmx/Label.h"
@@ -12,7 +15,13 @@
 #include "vpvl2/pmx/RigidBody.h"
 #include "vpvl2/pmx/Vertex.h"
 
+#include "mock/Bone.h"
+
+using namespace ::testing;
+using namespace std::tr1;
+using namespace vpvl2;
 using namespace vpvl2::pmx;
+using namespace vpvl2::extensions::icu;
 
 namespace
 {
@@ -21,7 +30,7 @@ static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bo
 {
     vertex.setOrigin(Vector3(0.01, 0.02, 0.03));
     vertex.setNormal(Vector3(0.11, 0.12, 0.13));
-    vertex.setTexCoord(Vector3(0.21, 0.22, 0.0));
+    vertex.setTextureCoord(Vector3(0.21, 0.22, 0.0));
     vertex.setUV(0, Vector4(0.31, 0.32, 0.33, 0.34));
     vertex.setType(type);
     vertex.setEdgeSize(0.1);
@@ -35,39 +44,6 @@ static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bo
     vertex.setSdefR1(Vector3(0.61, 0.62, 0.63));
 }
 
-static void CompareVertex(const Vertex &expected, const Vertex &vertex2, const Array<Bone *> &bones)
-{
-    ASSERT_TRUE(testVector(expected.origin(), vertex2.origin()));
-    ASSERT_TRUE(testVector(expected.normal(), vertex2.normal()));
-    ASSERT_TRUE(testVector(expected.texcoord(), vertex2.texcoord()));
-    ASSERT_TRUE(testVector(expected.uv(0), vertex2.uv(0)));
-    ASSERT_TRUE(testVector(expected.uv(1), kZeroV4));
-    ASSERT_EQ(expected.type(), vertex2.type());
-    ASSERT_EQ(expected.edgeSize(), vertex2.edgeSize());
-    if (expected.type() == Vertex::kSdef) {
-        ASSERT_TRUE(testVector(expected.sdefC(), vertex2.sdefC()));
-        ASSERT_TRUE(testVector(expected.sdefR0(), vertex2.sdefR0()));
-        ASSERT_TRUE(testVector(expected.sdefR1(), vertex2.sdefR1()));
-    }
-    else {
-        ASSERT_TRUE(testVector(vertex2.sdefC(), kZeroV3));
-        ASSERT_TRUE(testVector(vertex2.sdefR0(), kZeroV3));
-        ASSERT_TRUE(testVector(vertex2.sdefR1(), kZeroV3));
-    }
-    Array<Vertex *> vertices;
-    vertices.add(const_cast<Vertex *>(&expected));
-    Vertex::loadVertices(vertices, bones);
-    const int nbones = bones.count();
-    for (int i = 0; i < nbones; i++) {
-        ASSERT_EQ(expected.bone(i), bones[i]);
-        ASSERT_TRUE(bones[i]->index() != -1);
-        if (nbones == 4)
-            ASSERT_FLOAT_EQ(vertex2.weight(i), 0.2f + 0.1f * i);
-    }
-    if (nbones == 2)
-        ASSERT_FLOAT_EQ(vertex2.weight(0), 0.2f);
-}
-
 class FragmentTest : public TestWithParam<size_t> {};
 
 class FragmentWithUVTest : public TestWithParam< tuple<size_t, pmx::Morph::Type > > {};
@@ -78,9 +54,9 @@ TEST_P(FragmentTest, ReadWriteBone)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Bone bone, bone2, parent;
+    Bone bone(0), bone2(0), parent(0);
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
@@ -107,7 +83,7 @@ TEST_P(FragmentTest, ReadWriteBone)
     bone.setRotationInherenceEnable(true);
     bone.setAxisFixedEnable(true);
     bone.setLocalAxisEnable(true);
-    bone.setTransformedAfterPhysicsSimulationEnable(true);
+    bone.setTransformAfterPhysicsEnable(true);
     bone.setTransformedByExternalParentEnable(true);
     // write constructed bone and read it
     size_t size = bone.estimateSize(info), read;
@@ -116,137 +92,94 @@ TEST_P(FragmentTest, ReadWriteBone)
     bone2.read(data.data(), info, read);
     // compare read bone
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(bone2.name()->equals(bone.name()));
-    ASSERT_TRUE(bone2.englishName()->equals(bone.englishName()));
-    ASSERT_TRUE(testVector(bone.origin(), bone2.origin()));
-    ASSERT_TRUE(testVector(bone.destinationOrigin(), bone2.destinationOrigin() - bone.origin()));
-    ASSERT_TRUE(testVector(bone.axis(), bone2.axis()));
-    ASSERT_TRUE(testVector(bone.axisX(), bone2.axisX()));
-    ASSERT_TRUE(testVector(bone.axisZ(), bone2.axisZ()));
-    ASSERT_EQ(bone.layerIndex(), bone2.layerIndex());
-    ASSERT_EQ(bone.externalIndex(), bone2.externalIndex());
-    ASSERT_TRUE(bone2.isRotateable());
-    ASSERT_TRUE(bone2.isMovable());
-    ASSERT_TRUE(bone2.isVisible());
-    ASSERT_TRUE(bone2.isInteractive());
-    ASSERT_TRUE(bone2.hasInverseKinematics());
-    ASSERT_TRUE(bone2.hasPositionInherence());
-    ASSERT_TRUE(bone2.hasRotationInherence());
-    ASSERT_TRUE(bone2.hasFixedAxes());
-    ASSERT_TRUE(bone2.hasLocalAxes());
-    ASSERT_TRUE(bone2.isTransformedAfterPhysicsSimulation());
-    ASSERT_TRUE(bone2.isTransformedByExternalParent());
+    ASSERT_TRUE(CompareBone(bone, bone2));
     Array<Bone *> bones, apb, bpb;
     bones.add(&parent);
     bones.add(&bone2);
     Bone::loadBones(bones, bpb, apb);
-    ASSERT_EQ(&parent, bone2.parentBone());
-    ASSERT_EQ(&parent, bone2.parentInherenceBone());
-    ASSERT_EQ(&parent, bone2.targetBone());
+    ASSERT_EQ(&parent, bone2.parentBoneRef());
+    ASSERT_EQ(&parent, bone2.parentInherenceBoneRef());
+    ASSERT_EQ(&parent, bone2.targetBoneRef());
 }
 
 TEST_P(FragmentTest, ReadWriteJoint)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Joint joint, joint2;
+    Joint expected, actual;
     RigidBody body, body2;
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.rigidBodyIndexSize = indexSize;
     // construct joint
     body.setIndex(0);
     body2.setIndex(1);
-    joint.setName(&name);
-    joint.setEnglishName(&englishName);
-    joint.setRigidBody1(&body);
-    joint.setRigidBody2(&body2);
-    joint.setPosition(Vector3(0.01, 0.02, 0.03));
-    joint.setRotation(Vector3(0.11, 0.12, 0.13));
-    joint.setPositionLowerLimit(Vector3(0.21, 0.22, 0.23));
-    joint.setRotationLowerLimit(Vector3(0.31, 0.32, 0.33));
-    joint.setPositionUpperLimit(Vector3(0.41, 0.42, 0.43));
-    joint.setRotationUpperLimit(Vector3(0.51, 0.52, 0.53));
-    joint.setPositionStiffness(Vector3(0.61, 0.62, 0.63));
-    joint.setRotationStiffness(Vector3(0.71, 0.72, 0.73));
+    expected.setName(&name);
+    expected.setEnglishName(&englishName);
+    expected.setRigidBody1(&body);
+    expected.setRigidBody2(&body2);
+    expected.setPosition(Vector3(0.01, 0.02, 0.03));
+    expected.setRotation(Vector3(0.11, 0.12, 0.13));
+    expected.setPositionLowerLimit(Vector3(0.21, 0.22, 0.23));
+    expected.setRotationLowerLimit(Vector3(0.31, 0.32, 0.33));
+    expected.setPositionUpperLimit(Vector3(0.41, 0.42, 0.43));
+    expected.setRotationUpperLimit(Vector3(0.51, 0.52, 0.53));
+    expected.setPositionStiffness(Vector3(0.61, 0.62, 0.63));
+    expected.setRotationStiffness(Vector3(0.71, 0.72, 0.73));
     // write constructed joint and read it
-    size_t size = joint.estimateSize(info), read;
+    size_t size = expected.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    joint.write(data.data(), info);
-    joint2.read(data.data(), info, read);
+    expected.write(data.data(), info);
+    actual.read(data.data(), info, read);
     ASSERT_EQ(size, read);
-    // compare read joint
-    ASSERT_TRUE(joint2.name()->equals(joint.name()));
-    ASSERT_TRUE(joint2.englishName()->equals(joint.englishName()));
-    ASSERT_EQ(joint.position(), joint2.position());
-    ASSERT_EQ(joint.rotation(), joint2.rotation());
-    ASSERT_EQ(joint.positionLowerLimit(), joint2.positionLowerLimit());
-    ASSERT_EQ(joint.rotationLowerLimit(), joint2.rotationLowerLimit());
-    ASSERT_EQ(joint.positionUpperLimit(), joint2.positionUpperLimit());
-    ASSERT_EQ(joint.rotationUpperLimit(), joint2.rotationUpperLimit());
-    ASSERT_EQ(joint.positionStiffness(), joint2.positionStiffness());
-    ASSERT_EQ(joint.rotationStiffness(), joint2.rotationStiffness());
-    ASSERT_EQ(body.index(), joint2.rigidBodyIndex1());
-    ASSERT_EQ(body2.index(), joint2.rigidBodyIndex2());
+    ASSERT_TRUE(CompareJoint(expected, actual, body, body2));
 }
 
 TEST_P(FragmentTest, ReadWriteMaterial)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Material material, material2;
+    Material expected(0), actual(0);
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.textureIndexSize = indexSize;
     // construct material
-    material.setName(&name);
-    material.setEnglishName(&englishName);
-    material.setSphereTextureRenderMode(Material::kSubTexture);
-    material.setAmbient(Color(0.01, 0.02, 0.03, 1.0));
-    material.setDiffuse(Color(0.11, 0.12, 0.13, 0.14));
-    material.setSpecular(Color(0.21, 0.22, 0.23, 1.0));
-    material.setEdgeColor(Color(0.31, 0.32, 0.33, 0.34));
-    material.setShininess(0.1);
-    material.setEdgeSize(0.2);
-    material.setMainTextureIndex(1);
-    material.setSphereTextureIndex(2);
-    material.setToonTextureIndex(3);
-    material.setIndices(4);
-    material.setFlags(5);
+    expected.setName(&name);
+    expected.setEnglishName(&englishName);
+    expected.setSphereTextureRenderMode(Material::kSubTexture);
+    expected.setAmbient(Color(0.01, 0.02, 0.03, 1.0));
+    expected.setDiffuse(Color(0.11, 0.12, 0.13, 0.14));
+    expected.setSpecular(Color(0.21, 0.22, 0.23, 1.0));
+    expected.setEdgeColor(Color(0.31, 0.32, 0.33, 0.34));
+    expected.setShininess(0.1);
+    expected.setEdgeSize(0.2);
+    expected.setMainTextureIndex(1);
+    expected.setSphereTextureIndex(2);
+    expected.setToonTextureIndex(3);
+    expected.setIndices(4);
+    expected.setFlags(5);
     // write contructed material and read it
-    size_t size = material.estimateSize(info), read;
+    size_t size = expected.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    material.write(data.data(), info);
-    material2.read(data.data(), info, read);
+    expected.write(data.data(), info);
+    actual.read(data.data(), info, read);
     // compare read material
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(material2.name()->equals(material.name()));
-    ASSERT_TRUE(material2.englishName()->equals(material.englishName()));
-    ASSERT_TRUE(testVector(material.ambient(), material2.ambient()));
-    ASSERT_TRUE(testVector(material.diffuse(), material2.diffuse()));
-    ASSERT_TRUE(testVector(material.specular(), material2.specular()));
-    ASSERT_TRUE(testVector(material.edgeColor(), material2.edgeColor()));
-    ASSERT_EQ(material.sphereTextureRenderMode(), material2.sphereTextureRenderMode());
-    ASSERT_EQ(material.shininess(), material2.shininess());
-    ASSERT_EQ(material.edgeSize(), material2.edgeSize());
-    ASSERT_EQ(material.textureIndex(), material2.textureIndex());
-    ASSERT_EQ(material.sphereTextureIndex(), material2.sphereTextureIndex());
-    ASSERT_EQ(material.toonTextureIndex(), material2.toonTextureIndex());
-    ASSERT_EQ(material.indices(), material2.indices());
+    ASSERT_TRUE(CompareMaterialInterface(expected, actual));
 }
 
 TEST_P(FragmentTest, ReadWriteBoneMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.boneIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -275,13 +208,12 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Bone *> &bones = morph2.bones();
     ASSERT_EQ(bones.count(), 2);
-    ASSERT_TRUE(testVector(bone1->position, bones[0]->position));
-    ASSERT_TRUE(testVector(bone1->rotation, bones[0]->rotation));
+    ASSERT_TRUE(CompareVector(bone1->position, bones[0]->position));
+    ASSERT_TRUE(CompareVector(bone1->rotation, bones[0]->rotation));
     ASSERT_EQ(bone1->index, bones[0]->index);
-    ASSERT_TRUE(testVector(bone2->position, bones[1]->position));
-    ASSERT_TRUE(testVector(bone2->rotation, bones[1]->rotation));
+    ASSERT_TRUE(CompareVector(bone2->position, bones[1]->position));
+    ASSERT_TRUE(CompareVector(bone2->rotation, bones[1]->rotation));
     ASSERT_EQ(bone2->index, bones[1]->index);
-    // delete bone1 and bone2 at Morph destructor
     bone1.take();
     bone2.take();
 }
@@ -290,10 +222,10 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.morphIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -324,7 +256,6 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
     ASSERT_EQ(group1->index, groups[0]->index);
     ASSERT_EQ(group2->weight, groups[1]->weight);
     ASSERT_EQ(group2->index, groups[1]->index);
-    // delete group1 and group2 at Morph destructor
     group1.take();
     group2.take();
 }
@@ -333,10 +264,10 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.materialIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -381,29 +312,28 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Material *> &materials = morph2.materials();
     ASSERT_EQ(materials.count(), 2);
-    ASSERT_TRUE(testVector(material1->ambient, materials[0]->ambient));
-    ASSERT_TRUE(testVector(material1->diffuse, materials[0]->diffuse));
-    ASSERT_TRUE(testVector(material1->specular, materials[0]->specular));
-    ASSERT_TRUE(testVector(material1->edgeColor, materials[0]->edgeColor));
-    ASSERT_TRUE(testVector(material1->sphereTextureWeight, materials[0]->sphereTextureWeight));
-    ASSERT_TRUE(testVector(material1->textureWeight, materials[0]->textureWeight));
-    ASSERT_TRUE(testVector(material1->toonTextureWeight, materials[0]->toonTextureWeight));
+    ASSERT_TRUE(CompareVector(material1->ambient, materials[0]->ambient));
+    ASSERT_TRUE(CompareVector(material1->diffuse, materials[0]->diffuse));
+    ASSERT_TRUE(CompareVector(material1->specular, materials[0]->specular));
+    ASSERT_TRUE(CompareVector(material1->edgeColor, materials[0]->edgeColor));
+    ASSERT_TRUE(CompareVector(material1->sphereTextureWeight, materials[0]->sphereTextureWeight));
+    ASSERT_TRUE(CompareVector(material1->textureWeight, materials[0]->textureWeight));
+    ASSERT_TRUE(CompareVector(material1->toonTextureWeight, materials[0]->toonTextureWeight));
     ASSERT_EQ(material1->edgeSize, materials[0]->edgeSize);
     ASSERT_EQ(material1->shininess, materials[0]->shininess);
     ASSERT_EQ(material1->operation, materials[0]->operation);
     ASSERT_EQ(material1->index, materials[0]->index);
-    ASSERT_TRUE(testVector(material2->ambient, materials[1]->ambient));
-    ASSERT_TRUE(testVector(material2->diffuse, materials[1]->diffuse));
-    ASSERT_TRUE(testVector(material2->specular, materials[1]->specular));
-    ASSERT_TRUE(testVector(material2->edgeColor, materials[1]->edgeColor));
-    ASSERT_TRUE(testVector(material2->sphereTextureWeight, materials[1]->sphereTextureWeight));
-    ASSERT_TRUE(testVector(material2->textureWeight, materials[1]->textureWeight));
-    ASSERT_TRUE(testVector(material2->toonTextureWeight, materials[1]->toonTextureWeight));
+    ASSERT_TRUE(CompareVector(material2->ambient, materials[1]->ambient));
+    ASSERT_TRUE(CompareVector(material2->diffuse, materials[1]->diffuse));
+    ASSERT_TRUE(CompareVector(material2->specular, materials[1]->specular));
+    ASSERT_TRUE(CompareVector(material2->edgeColor, materials[1]->edgeColor));
+    ASSERT_TRUE(CompareVector(material2->sphereTextureWeight, materials[1]->sphereTextureWeight));
+    ASSERT_TRUE(CompareVector(material2->textureWeight, materials[1]->textureWeight));
+    ASSERT_TRUE(CompareVector(material2->toonTextureWeight, materials[1]->toonTextureWeight));
     ASSERT_EQ(material2->edgeSize, materials[1]->edgeSize);
     ASSERT_EQ(material2->shininess, materials[1]->shininess);
     ASSERT_EQ(material2->operation, materials[1]->operation);
     ASSERT_EQ(material2->index, materials[1]->index);
-    // delete material1 and mateiral2 at Morph destructor
     material1.take();
     material2.take();
 }
@@ -413,58 +343,45 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    RigidBody body, body2;
-    Bone bone;
+    RigidBody expected, actual;
+    Bone bone(0);
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
     bone.setIndex(1);
-    body.setName(&name);
-    body.setEnglishName(&englishName);
-    body.setBone(&bone);
-    body.setAngularDamping(0.01);
-    body.setCollisionGroupID(1);
-    body.setCollisionMask(2);
-    body.setFriction(0.11);
-    body.setLinearDamping(0.21);
-    body.setMass(0.31);
-    body.setPosition(Vector3(0.41, 0.42, 0.43));
-    body.setRestitution(0.51);
-    body.setRotation(Vector3(0.61, 0.62, 0.63));
-    body.setShapeType(RigidBody::kCapsureShape);
-    body.setSize(Vector3(0.71, 0.72, 0.73));
-    body.setType(RigidBody::kAlignedObject);
-    size_t size = body.estimateSize(info), read;
+    expected.setName(&name);
+    expected.setEnglishName(&englishName);
+    expected.setBone(&bone);
+    expected.setAngularDamping(0.01);
+    expected.setCollisionGroupID(1);
+    expected.setCollisionMask(2);
+    expected.setFriction(0.11);
+    expected.setLinearDamping(0.21);
+    expected.setMass(0.31);
+    expected.setPosition(Vector3(0.41, 0.42, 0.43));
+    expected.setRestitution(0.51);
+    expected.setRotation(Vector3(0.61, 0.62, 0.63));
+    expected.setShapeType(RigidBody::kCapsureShape);
+    expected.setSize(Vector3(0.71, 0.72, 0.73));
+    expected.setType(RigidBody::kAlignedObject);
+    size_t size = expected.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    body.write(data.data(), info);
-    body2.read(data.data(), info, read);
+    expected.write(data.data(), info);
+    actual.read(data.data(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(body2.name()->equals(body.name()));
-    ASSERT_TRUE(body2.englishName()->equals(body.englishName()));
-    ASSERT_EQ(bone.index(), body2.boneIndex());
-    ASSERT_EQ(body.angularDamping(), body2.angularDamping());
-    ASSERT_EQ(body.collisionGroupID(), body2.collisionGroupID());
-    ASSERT_EQ(body.collisionGroupMask(), body2.collisionGroupMask());
-    ASSERT_EQ(body.friction(), body2.friction());
-    ASSERT_EQ(body.linearDamping(), body2.linearDamping());
-    ASSERT_EQ(body.mass(), body2.mass());
-    ASSERT_EQ(body.position(), body2.position());
-    ASSERT_EQ(body.restitution(), body2.restitution());
-    ASSERT_EQ(body.rotation(), body2.rotation());
-    ASSERT_EQ(body.size(), body2.size());
-    ASSERT_EQ(bone.index(), body2.boneIndex());
+    ASSERT_TRUE(CompareRigidBody(expected, actual, bone));
 }
 
 TEST_P(FragmentTest, ReadWriteVertexMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -491,11 +408,10 @@ TEST_P(FragmentTest, ReadWriteVertexMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Vertex *> &vertices = morph2.vertices();
     ASSERT_EQ(vertices.count(), 2);
-    ASSERT_TRUE(testVector(vertex1->position, vertices[0]->position));
+    ASSERT_TRUE(CompareVector(vertex1->position, vertices[0]->position));
     ASSERT_EQ(vertex1->index, vertices[0]->index);
-    ASSERT_TRUE(testVector(vertex2->position, vertices[1]->position));
+    ASSERT_TRUE(CompareVector(vertex2->position, vertices[1]->position));
     ASSERT_EQ(vertex2->index, vertices[1]->index);
-    // delete vertex1 and vertex2 at Morph destructor
     vertex1.take();
     vertex2.take();
 }
@@ -504,50 +420,50 @@ TEST_P(FragmentTest, ReadWriteVertexBdef1)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1;
+    Vertex expected(0), actual(0);
+    Bone bone1(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
-    SetVertex(vertex, Vertex::kBdef1, bones);
+    SetVertex(expected, Vertex::kBdef1, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
+    size_t size = expected.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    vertex.write(data.data(), info);
-    vertex2.read(data.data(), info, read);
+    expected.write(data.data(), info);
+    actual.read(data.data(), info, read);
     ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
+    ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
 TEST_P(FragmentTest, ReadWriteVertexBdef2)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1, bone2;
+    Vertex expected(0), actual(0);
+    Bone bone1(0), bone2(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
     bone2.setIndex(1);
     bones.add(&bone2);
-    SetVertex(vertex, Vertex::kBdef2, bones);
+    SetVertex(expected, Vertex::kBdef2, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
+    size_t size = expected.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    vertex.write(data.data(), info);
-    vertex2.read(data.data(), info, read);
+    expected.write(data.data(), info);
+    actual.read(data.data(), info, read);
     ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
+    ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
 TEST_P(FragmentTest, ReadWriteVertexBdef4)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1, bone2, bone3, bone4;
+    Vertex expected(0), actual(0);
+    Bone bone1(0), bone2(0), bone3(0), bone4(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
@@ -557,38 +473,37 @@ TEST_P(FragmentTest, ReadWriteVertexBdef4)
     bones.add(&bone3);
     bone4.setIndex(3);
     bones.add(&bone4);
-    SetVertex(vertex, Vertex::kBdef4, bones);
+    SetVertex(expected, Vertex::kBdef4, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
-    uint8_t *data = new uint8_t[size];
-    vertex.write(data, info);
-    vertex2.read(data, info, read);
+    size_t size = expected.estimateSize(info), read;
+    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
+    expected.write(data.data(), info);
+    actual.read(data.data(), info, read);
     ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
-    delete[] data;
+    ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
 TEST_P(FragmentTest, ReadWriteVertexSdef)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
-    Vertex vertex, vertex2;
-    Bone bone1, bone2;
+    Vertex expected(0), actual(0);
+    Bone bone1(0), bone2(0);
     Model::DataInfo info;
     bone1.setIndex(0);
     bones.add(&bone1);
     bone2.setIndex(1);
     bones.add(&bone2);
-    SetVertex(vertex, Vertex::kSdef, bones);
+    SetVertex(expected, Vertex::kSdef, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
-    size_t size = vertex.estimateSize(info), read;
+    size_t size = expected.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    vertex.write(data.data(), info);
-    vertex2.read(data.data(), info, read);
+    expected.write(data.data(), info);
+    actual.read(data.data(), info, read);
     ASSERT_EQ(size, read);
-    CompareVertex(vertex, vertex2, bones);
+    ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
 TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
@@ -596,10 +511,10 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     size_t indexSize = get<0>(GetParam());
     pmx::Morph::Type type = get<1>(GetParam());
     Encoding encoding;
-    Morph morph, morph2;
+    Morph morph(0), morph2(0);
     QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
-    CString name("Japanese"), englishName("English");
+    String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
@@ -626,28 +541,27 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::UV *> &uvs = morph2.uvs();
     ASSERT_EQ(uvs.count(), 2);
-    ASSERT_TRUE(testVector(uv1->position, uvs[0]->position));
+    ASSERT_TRUE(CompareVector(uv1->position, uvs[0]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[0]->offset);
     ASSERT_EQ(uv1->index, uvs[0]->index);
-    ASSERT_TRUE(testVector(uv2->position, uvs[1]->position));
+    ASSERT_TRUE(CompareVector(uv2->position, uvs[1]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[1]->offset);
     ASSERT_EQ(uv2->index, uvs[1]->index);
-    // delete uv1 and uv2 at Morph destructor
     uv1.take();
     uv2.take();
 }
 
 INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentTest, Values(1, 2, 4));
 INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentWithUVTest, Combine(Values(1, 2, 4),
-                                                                        Values(pmx::Morph::kTexCoord,
-                                                                               pmx::Morph::kUVA1,
-                                                                               pmx::Morph::kUVA2,
-                                                                               pmx::Morph::kUVA3,
-                                                                               pmx::Morph::kUVA4)));
+                                                                   Values(pmx::Morph::kTexCoord,
+                                                                          pmx::Morph::kUVA1,
+                                                                          pmx::Morph::kUVA2,
+                                                                          pmx::Morph::kUVA3,
+                                                                          pmx::Morph::kUVA4)));
 
 TEST(BoneTest, DefaultFlags)
 {
-    Bone bone;
+    Bone bone(0);
     ASSERT_FALSE(bone.isMovable());
     ASSERT_FALSE(bone.isRotateable());
     ASSERT_FALSE(bone.isVisible());
@@ -663,210 +577,209 @@ TEST(BoneTest, DefaultFlags)
 
 TEST(VertexTest, Boundary)
 {
-    Vertex vertex;
-    Bone *bone = new Bone();
+    Vertex vertex(0);
+    QScopedPointer<Bone> bone(new Bone(0));
     vertex.setUV(-1, Vector4(1, 1, 1, 1));
     vertex.setUV( 4, Vector4(1, 1, 1, 1));
     vertex.setWeight(-1, 0.1);
     vertex.setWeight( 4, 0.1);
-    vertex.setBone(-1, bone);
-    vertex.setBone( 4, bone);
+    vertex.setBone(-1, bone.data());
+    vertex.setBone( 4, bone.data());
     ASSERT_EQ(vertex.uv(-1).x(), 0.0f);
     ASSERT_EQ(vertex.uv(4).x(), 0.0f);
     ASSERT_EQ(vertex.bone(-1), static_cast<IBone *>(0));
     ASSERT_EQ(vertex.bone(4), static_cast<IBone *>(0));
     ASSERT_EQ(vertex.weight(-1), 0.0f);
     ASSERT_EQ(vertex.weight(4), 0.0f);
-    delete bone;
 }
 
 TEST(MaterialTest, MergeAmbientColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.ambient.setValue(1.0, 1.0, 1.0);
     morph.operation = 0;
     material.setAmbient(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.resetMorph();
     // mod (0.0)
     morph.ambient.setValue(0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.6, 0.6, 0.6, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.4, 0.4, 0.4, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.2, 0.2, 0.2, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.0, 0.0, 0.0, 1.0), material.ambient()));
     material.resetMorph();
     // add (0.2)
     morph.ambient.setValue(0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.85, 0.85, 0.85, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.9, 0.9, 0.9, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(1.0, 1.0, 1.0, 1.0), material.ambient()));
     material.resetMorph();
     // add (0.6)
     morph.ambient.setValue(0.6, 0.6, 0.6);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(1.1, 1.1, 1.1, 1.0), material.ambient()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(1.25, 1.25, 1.25, 1.0), material.ambient()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.0), material.ambient()));
+    ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.0), material.ambient()));
 }
 
 TEST(MaterialTest, MergeDiffuseColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.diffuse.setValue(1.0, 1.0, 1.0, 1.0);
     morph.operation = 0;
     material.setDiffuse(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.resetMorph();
     // mod (0.0)
     morph.diffuse.setValue(0.0, 0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 0.6), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.6, 0.6, 0.6, 0.6), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 0.4), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.4, 0.4, 0.4, 0.4), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 0.2), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.2, 0.2, 0.2, 0.2), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 0.0), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.0, 0.0, 0.0, 0.0), material.diffuse()));
     material.resetMorph();
     // add (0.2)
     morph.diffuse.setValue(0.2, 0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 0.85), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.85, 0.85, 0.85, 0.85), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 0.9), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.9, 0.9, 0.9, 0.9), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(1.0, 1.0, 1.0, 1.0), material.diffuse()));
     material.resetMorph();
     // add (0.6)
     morph.diffuse.setValue(0.6, 0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.diffuse()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 0.95), material.diffuse()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.1), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(1.1, 1.1, 1.1, 1.1), material.diffuse()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.25), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(1.25, 1.25, 1.25, 1.25), material.diffuse()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.4), material.diffuse()));
+    ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.4), material.diffuse()));
 }
 
 TEST(MaterialTest, MergeSpecularColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.specular.setValue(1.0, 1.0, 1.0);
     morph.operation = 0;
     material.setSpecular(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.resetMorph();
     // mod (0.0)
     morph.specular.setValue(0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.6, 0.6, 0.6, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.4, 0.4, 0.4, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.2, 0.2, 0.2, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.0, 0.0, 0.0, 1.0), material.specular()));
     material.resetMorph();
     // add (0.2)
     morph.specular.setValue(0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.85, 0.85, 0.85, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.9, 0.9, 0.9, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(1.0, 1.0, 1.0, 1.0), material.specular()));
     material.resetMorph();
     // add (0.6)
     morph.specular.setValue(0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(1.1, 1.1, 1.1, 1.0), material.specular()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(1.25, 1.25, 1.25, 1.0), material.specular()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.0), material.specular()));
+    ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.0), material.specular()));
 }
 
 TEST(MaterialTest, MergeShininess)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.shininess = 1.0;
@@ -925,68 +838,68 @@ TEST(MaterialTest, MergeShininess)
 
 TEST(MaterialTest, MergeEdgeColor)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.edgeColor.setValue(1.0, 1.0, 1.0, 1.0);
     morph.operation = 0;
     material.setEdgeColor(Color(0.8, 0.8, 0.8, 0.8));
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.resetMorph();
     // mod (0.0)
     morph.edgeColor.setValue(0.0, 0.0, 0.0, 0.0);
     morph.operation = 0;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.6, 0.6, 0.6, 0.6), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.6, 0.6, 0.6, 0.6), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.4, 0.4, 0.4, 0.4), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.4, 0.4, 0.4, 0.4), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.2, 0.2, 0.2, 0.2), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.2, 0.2, 0.2, 0.2), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(0.0, 0.0, 0.0, 0.0), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.0, 0.0, 0.0, 0.0), material.edgeColor()));
     material.resetMorph();
     // add (0.2)
     morph.edgeColor.setValue(0.2, 0.2, 0.2, 0.2);
     morph.operation = 1;
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.85, 0.85, 0.85, 0.85), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.85, 0.85, 0.85, 0.85), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(0.9, 0.9, 0.9, 0.9), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.9, 0.9, 0.9, 0.9), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.0, 1.0, 1.0, 1.0), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(1.0, 1.0, 1.0, 1.0), material.edgeColor()));
     material.resetMorph();
     // add (0.6)
     morph.edgeColor.setValue(0.6, 0.6, 0.6, 0.6);
     material.mergeMorph(&morph, 0.0);
-    ASSERT_TRUE(testVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.8, 0.8, 0.8, 0.8), material.edgeColor()));
     material.mergeMorph(&morph, 0.25);
-    ASSERT_TRUE(testVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(0.95, 0.95, 0.95, 0.95), material.edgeColor()));
     material.mergeMorph(&morph, 0.5);
-    ASSERT_TRUE(testVector(Color(1.1, 1.1, 1.1, 1.1), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(1.1, 1.1, 1.1, 1.1), material.edgeColor()));
     material.mergeMorph(&morph, 0.75);
-    ASSERT_TRUE(testVector(Color(1.25, 1.25, 1.25, 1.25), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(1.25, 1.25, 1.25, 1.25), material.edgeColor()));
     material.mergeMorph(&morph, 1.0);
-    ASSERT_TRUE(testVector(Color(1.4, 1.4, 1.4, 1.4), material.edgeColor()));
+    ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.4), material.edgeColor()));
 }
 
 TEST(MaterialTest, MergeEdgeSize)
 {
-    Material material;
+    Material material(0);
     Morph::Material morph;
     // mod (1.0)
     morph.edgeSize = 1.0;
@@ -1041,6 +954,163 @@ TEST(MaterialTest, MergeEdgeSize)
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.25f);
     material.mergeMorph(&morph, 1.0);
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.4f);
+}
+
+TEST(VertexTest, PerformSkinningBdef1)
+{
+    pmx::Vertex v(0);
+    MockIBone bone;
+    Transform transform(Matrix3x3::getIdentity().scaled(Vector3(0.5, 0.5, 0.5)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform));
+    EXPECT_CALL(bone, index()).Times(1).WillRepeatedly(Return(0));
+    v.setType(pmx::Vertex::kBdef1);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(1.05, 2.1, 3.15), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.2, 0.25, 0.3), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightZero)
+{
+    pmx::Vertex v(0);
+    MockIBone bone1, bone2;
+    //Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
+    v.setType(pmx::Vertex::kBdef2);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone1);
+    v.setBone(1, &bone2);
+    v.setWeight(0, 0);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(4.025, 5.05, 6.075), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.1, 0.125, 0.15), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightOne)
+{
+    pmx::Vertex v(0);
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
+    //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
+    v.setType(pmx::Vertex::kBdef2);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone1);
+    v.setBone(1, &bone2);
+    v.setWeight(0, 1);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(1.075, 2.15, 3.225), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.3, 0.375, 0.45), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightHalf)
+{
+    pmx::Vertex v(0);
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
+    v.setType(pmx::Vertex::kBdef2);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    v.setBone(0, &bone1);
+    v.setBone(1, &bone2);
+    v.setWeight(0, 0.5);
+    v.setWeight(1, 0.5);
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    const Vector3 &v2 = (Vector3(1.075, 2.15, 3.225) + Vector3(4.025, 5.05, 6.075)) * 0.5;
+    const Vector3 &n2 = (Vector3(0.1, 0.125, 0.15) + Vector3(0.3, 0.375, 0.45)) * 0.5;
+    ASSERT_TRUE(CompareVector(v2, position));
+    ASSERT_TRUE(CompareVector(n2, normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
+{
+    MockIBone bone1, bone2;
+    //Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    Array<IBone *> bones;
+    bones.add(&bone1);
+    bones.add(&bone2);
+    vpvl::Vertex vv;
+    vv.setTexCoord(0, 1);
+    vv.setBones(0, 1);
+    vv.setWeight(0);
+    pmd::Vertex v(0, &vv, &bones, 0);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(4.025, 5.05, 6.075), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.1, 0.125, 0.15), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightOnePMDCompat)
+{
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    Array<IBone *> bones;
+    bones.add(&bone1);
+    bones.add(&bone2);
+    vpvl::Vertex vv;
+    vv.setTexCoord(0, 1);
+    vv.setBones(0, 1);
+    vv.setWeight(100);
+    pmd::Vertex v(0, &vv, &bones, 0);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    ASSERT_TRUE(CompareVector(Vector3(1.075, 2.15, 3.225), position));
+    ASSERT_TRUE(CompareVector(Vector3(0.3, 0.375, 0.45), normal));
+}
+
+TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
+{
+    MockIBone bone1, bone2;
+    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    Array<IBone *> bones;
+    bones.add(&bone1);
+    bones.add(&bone2);
+    vpvl::Vertex vv;
+    vv.setTexCoord(0, 1);
+    vv.setBones(0, 1);
+    vv.setWeight(50);
+    pmd::Vertex v(0, &vv, &bones, 0);
+    v.setOrigin(Vector3(0.1, 0.2, 0.3));
+    v.setNormal(Vector3(0.4, 0.5, 0.6));
+    Vector3 position, normal;
+    v.performSkinning(position, normal);
+    const Vector3 &v2 = (Vector3(1.075, 2.15, 3.225) + Vector3(4.025, 5.05, 6.075)) * 0.5;
+    const Vector3 &n2 = (Vector3(0.1, 0.125, 0.15) + Vector3(0.3, 0.375, 0.45)) * 0.5;
+    ASSERT_TRUE(CompareVector(v2, position));
+    ASSERT_TRUE(CompareVector(n2, normal));
 }
 
 TEST(ModelTest, ParseEmpty)

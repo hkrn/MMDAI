@@ -65,7 +65,7 @@ public:
     virtual void setHasFloatTexture(bool value) = 0;
     virtual void setToonEnable(bool value) = 0;
     virtual void setSoftShadowEnable(bool value) = 0;
-    virtual void copyFrom(ILight *value) = 0;
+    virtual void copyFrom(const ILight *value) = 0;
     virtual void resetDefault() = 0;
 };
 

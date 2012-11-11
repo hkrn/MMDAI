@@ -41,7 +41,10 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 #if 1
-    vpvl2::render::qt::UI ui;
+    QGLFormat format;
+    format.setSampleBuffers(true);
+    format.setSwapInterval(60);
+    vpvl2::render::qt::UI ui(format);
     ui.show();
     ui.load(QDir::current().absoluteFilePath("config.ini"));
     return app.exec();

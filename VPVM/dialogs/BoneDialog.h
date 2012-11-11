@@ -34,53 +34,73 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef BONEDIALOG_H
-#define BONEDIALOG_H
+#ifndef VPVM_BONEDIALOG_H
+#define VPVM_BONEDIALOG_H
 
 #include <QtGui/QDialog>
 #include <vpvl2/Common.h>
 
-class BoneMotionModel;
 class QDoubleSpinBox;
+class QGroupBox;
 class QLabel;
+class QSettings;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
+class BoneMotionModel;
 
 class BoneDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit BoneDialog(BoneMotionModel *bmm, QWidget *parent = 0);
+    explicit BoneDialog(BoneMotionModel *bmm, QSettings *settings, QWidget *parent = 0);
     ~BoneDialog();
 
 private slots:
     void retranslate();
-    void setPosition(const vpvl2::Vector3 &position);
-    void setRotation(const vpvl2::Quaternion &rotation);
+    void setPosition(const Vector3 &position);
+    void setRotation(const Quaternion &rotation);
     void setXPosition(double value);
     void setYPosition(double value);
     void setZPosition(double value);
     void setXAngle(double value);
     void setYAngle(double value);
     void setZAngle(double value);
+    void setPositionStep(double value);
+    void setRotationStep(double value);
     void dialogAccepted();
     void dialogRejected();
 
 private:
-    QLabel *m_xPositionLabel;
-    QLabel *m_yPositionLabel;
-    QLabel *m_zPositionLabel;
-    QLabel *m_xAngleLabel;
-    QLabel *m_yAngleLabel;
-    QLabel *m_zAngleLabel;
-    QDoubleSpinBox *m_xPosition;
-    QDoubleSpinBox *m_yPosition;
-    QDoubleSpinBox *m_zPosition;
-    QDoubleSpinBox *m_xAngle;
-    QDoubleSpinBox *m_yAngle;
-    QDoubleSpinBox *m_zAngle;
-    BoneMotionModel *m_boneMotionModel;
+    static QDoubleSpinBox *createSpinBox();
+
+    QScopedPointer<QGroupBox> m_positionGroup;
+    QScopedPointer<QGroupBox> m_rotationGroup;
+    QScopedPointer<QLabel> m_xPositionLabel;
+    QScopedPointer<QLabel> m_yPositionLabel;
+    QScopedPointer<QLabel> m_zPositionLabel;
+    QScopedPointer<QLabel> m_stepPositionLabel;
+    QScopedPointer<QLabel> m_xAngleLabel;
+    QScopedPointer<QLabel> m_yAngleLabel;
+    QScopedPointer<QLabel> m_zAngleLabel;
+    QScopedPointer<QLabel> m_stepRotationLabel;
+    QScopedPointer<QDoubleSpinBox> m_xPosition;
+    QScopedPointer<QDoubleSpinBox> m_yPosition;
+    QScopedPointer<QDoubleSpinBox> m_zPosition;
+    QScopedPointer<QDoubleSpinBox> m_stepPosition;
+    QScopedPointer<QDoubleSpinBox> m_xAngle;
+    QScopedPointer<QDoubleSpinBox> m_yAngle;
+    QScopedPointer<QDoubleSpinBox> m_zAngle;
+    QScopedPointer<QDoubleSpinBox> m_stepRotation;
+    QSettings *m_settingsRef;
+    BoneMotionModel *m_boneMotionModelRef;
 
     Q_DISABLE_COPY(BoneDialog)
 };
+
+} /* namespace vpvm */
 
 #endif // BONEDIALOG_H

@@ -34,11 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef MODELINFOWIDGET_H
-#define MODELINFOWIDGET_H
+#ifndef VPVM_MODELINFOWIDGET_H
+#define VPVM_MODELINFOWIDGET_H
 
 #include <QtGui/QWidget>
-#include <vpvl/Common.h>
 
 namespace vpvl2 {
 class IModel;
@@ -47,6 +46,11 @@ class IModel;
 class QLabel;
 class QLineEdit;
 class QTextEdit;
+
+namespace vpvm
+{
+
+using namespace vpvl2;
 class SceneLoader;
 
 class ModelInfoWidget : public QWidget
@@ -59,29 +63,31 @@ public:
 
 private slots:
     void retranslate();
-    void setModel(vpvl2::IModel *model);
+    void setModel(IModel *model);
 
 private:
-    QLabel *m_nameLabel;
-    QLineEdit *m_nameValueLabel;
-    QLabel *m_commentLabel;
-    QTextEdit *m_commentValueLabel;
-    QLabel *m_verticesCountLabel;
-    QLineEdit *m_verticesCountValueLabel;
-    QLabel *m_indicesCountLabel;
-    QLineEdit *m_indicesCountValueLabel;
-    QLabel *m_materialsCountLabel;
-    QLineEdit *m_materialsCountValueLabel;
-    QLabel *m_bonesCountLabel;
-    QLineEdit *m_bonesCountValueLabel;
-    QLabel *m_IKsCountLabel;
-    QLineEdit *m_IKsCountValueLabel;
-    QLabel *m_morphsCountLabel;
-    QLineEdit *m_morphsCountValueLabel;
-    QLabel *m_rigidBodiesCountLabel;
-    QLineEdit *m_rigidBodiesCountValueLabel;
-    QLabel *m_constrantsCountLabel;
-    QLineEdit *m_constrantsCountValueLabel;
+    QScopedPointer<QLabel> m_nameLabel;
+    QScopedPointer<QLineEdit> m_nameValueLabel;
+    QScopedPointer<QLabel> m_commentLabel;
+    QScopedPointer<QTextEdit> m_commentValueLabel;
+    QScopedPointer<QLabel> m_verticesCountLabel;
+    QScopedPointer<QLineEdit> m_verticesCountValueLabel;
+    QScopedPointer<QLabel> m_indicesCountLabel;
+    QScopedPointer<QLineEdit> m_indicesCountValueLabel;
+    QScopedPointer<QLabel> m_materialsCountLabel;
+    QScopedPointer<QLineEdit> m_materialsCountValueLabel;
+    QScopedPointer<QLabel> m_bonesCountLabel;
+    QScopedPointer<QLineEdit> m_bonesCountValueLabel;
+    QScopedPointer<QLabel> m_IKsCountLabel;
+    QScopedPointer<QLineEdit> m_IKsCountValueLabel;
+    QScopedPointer<QLabel> m_morphsCountLabel;
+    QScopedPointer<QLineEdit> m_morphsCountValueLabel;
+    QScopedPointer<QLabel> m_rigidBodiesCountLabel;
+    QScopedPointer<QLineEdit> m_rigidBodiesCountValueLabel;
+    QScopedPointer<QLabel> m_constrantsCountLabel;
+    QScopedPointer<QLineEdit> m_constrantsCountValueLabel;
 };
+
+} /* namespace vpvm */
 
 #endif // MODELINFOWIDGET_H

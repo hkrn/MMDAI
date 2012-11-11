@@ -320,6 +320,7 @@ bool Motion::load(const uint8_t *data, size_t size)
         parseModelSections(info);
         parseMorphSections(info);
         parseProjectSections(info);
+        m_info.copy(info);
         return true;
     }
     return false;
@@ -328,18 +329,19 @@ bool Motion::load(const uint8_t *data, size_t size)
 void Motion::save(uint8_t *data) const
 {
     Header header;
+    IString::Codec codec = m_info.codec;
     internal::zerofill(&header, sizeof(header));
     memcpy(header.signature, kSignature, sizeof(header.signature) - 1);
     header.version = 1.0;
     header.encoding = 1;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
-    internal::writeString(m_name, data);
-    internal::writeString(m_name2, data);
+    internal::writeString(m_name, codec, data);
+    internal::writeString(m_name2, codec, data);
     float fps = 30.0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&fps), sizeof(fps), data);
-    internal::writeString(m_reserved, data);
-    m_nameListSection->write(data);
-    data += m_nameListSection->estimateSize();
+    internal::writeString(m_reserved, codec, data);
+    m_nameListSection->write(data, m_info);
+    data += m_nameListSection->estimateSize(m_info);
     m_boneSection->write(data);
     data += m_boneSection->estimateSize();
     m_morphSection->write(data);
@@ -365,12 +367,13 @@ void Motion::save(uint8_t *data) const
 size_t Motion::estimateSize() const
 {
     size_t size = 0;
+    IString::Codec codec = m_info.codec;
     size += sizeof(Header);
-    size += internal::estimateSize(m_name);
-    size += internal::estimateSize(m_name2);
+    size += internal::estimateSize(m_name, codec);
+    size += internal::estimateSize(m_name2, codec);
     size += sizeof(float);
-    size += internal::estimateSize(m_reserved);
-    size += m_nameListSection->estimateSize();
+    size += internal::estimateSize(m_reserved, codec);
+    size += m_nameListSection->estimateSize(m_info);
     size += m_boneSection->estimateSize();
     size += m_morphSection->estimateSize();
     size += m_modelSection->estimateSize();
@@ -405,7 +408,7 @@ void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
     if (m_cameraSection->countKeyframes() > 0) {
         m_cameraSection->seek(timeIndex);
         ICamera *camera = scene->camera();
-        camera->setPosition(m_cameraSection->position());
+        camera->setLookAt(m_cameraSection->position());
         camera->setAngle(m_cameraSection->angle());
         camera->setFov(m_cameraSection->fov());
         camera->setDistance(m_cameraSection->distance());
@@ -428,7 +431,7 @@ void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *sce
     if (m_cameraSection->countKeyframes() > 0) {
         m_cameraSection->advance(deltaTimeIndex);
         ICamera *camera = scene->camera();
-        camera->setPosition(m_cameraSection->position());
+        camera->setLookAt(m_cameraSection->position());
         camera->setAngle(m_cameraSection->angle());
         camera->setFov(m_cameraSection->fov());
         camera->setDistance(m_cameraSection->distance());

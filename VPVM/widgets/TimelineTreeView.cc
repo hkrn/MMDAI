@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "common/util.h"
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/PMDMotionModel.h"
@@ -42,9 +43,13 @@
 
 #include <QtGui/QtGui>
 
+namespace vpvm
+{
+
 TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent)
     : QTreeView(parent),
-      m_rubberBand(0)
+      m_rubberBand(new QRubberBand(QRubberBand::Rectangle)),
+      m_frozenTreeView(new QTreeView(this))
 {
     setModel(mbm);
     setSelectionBehavior(QAbstractItemView::SelectItems);
@@ -54,11 +59,9 @@ TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate
     setUniformRowHeights(true);
     setSortingEnabled(false);
     setItemsExpandable(false);
-    m_frozenTreeView = new QTreeView(this);
-    QItemDelegate *itemDelegate = new QItemDelegate();
-    m_frozenTreeView->setItemDelegate(itemDelegate);
-    connect(m_frozenTreeView, SIGNAL(collapsed(QModelIndex)), SLOT(addCollapsed(QModelIndex)));
-    connect(m_frozenTreeView, SIGNAL(expanded(QModelIndex)), SLOT(addExpanded(QModelIndex)));
+    m_frozenTreeView->setItemDelegate(new QItemDelegate());
+    connect(m_frozenTreeView.data(), SIGNAL(collapsed(QModelIndex)), SLOT(addCollapsed(QModelIndex)));
+    connect(m_frozenTreeView.data(), SIGNAL(expanded(QModelIndex)), SLOT(addExpanded(QModelIndex)));
     connect(m_frozenTreeView->verticalScrollBar(), SIGNAL(valueChanged(int)),
             verticalScrollBar(), SLOT(setValue(int)));
     connect(verticalScrollBar(), SIGNAL(valueChanged(int)),
@@ -70,7 +73,6 @@ TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate
 
 TimelineTreeView::~TimelineTreeView()
 {
-    delete m_rubberBand;
 }
 
 void TimelineTreeView::initializeFrozenView()
@@ -78,7 +80,7 @@ void TimelineTreeView::initializeFrozenView()
     QAbstractItemModel *m = model();
     m_frozenTreeView->setModel(m);
     m_frozenTreeView->header()->setResizeMode(QHeaderView::Fixed);
-    viewport()->stackUnder(m_frozenTreeView);
+    viewport()->stackUnder(m_frozenTreeView.data());
     updateFrozenTreeView();
     m_frozenTreeView->setColumnWidth(0, columnWidth(0));
     m_frozenTreeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -194,14 +196,28 @@ void TimelineTreeView::addKeyframesBySelectedIndices()
 {
     MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
     const QModelIndexList &indices = selectionModel()->selectedIndexes();
-    m->addKeyframesByModelIndices(indices);
+    if (!indices.empty()) {
+        m->addKeyframesByModelIndices(indices);
+    }
+    else {
+        warning(this,
+                vpvm::TimelineTreeView::tr("Tried registering empty (not selected) keyframes"),
+                vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to register before registering keyframes."));
+    }
 }
 
 void TimelineTreeView::deleteKeyframesBySelectedIndices()
 {
     MotionBaseModel *m = static_cast<MotionBaseModel *>(model());
     const QModelIndexList &indices = selectionModel()->selectedIndexes();
-    m->deleteKeyframesByModelIndices(indices);
+    if (!indices.empty()) {
+        m->deleteKeyframesByModelIndices(indices);
+    }
+    else {
+        warning(this,
+                vpvm::TimelineTreeView::tr("Tried deleting empty (not selected) keyframes"),
+                vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to delete before deleting keyframes."));
+    }
 }
 
 void TimelineTreeView::setBoneKeyframesWeightBySelectedIndices(const vpvl2::Vector3 &position,
@@ -228,8 +244,6 @@ void TimelineTreeView::mousePressEvent(QMouseEvent *event)
     if (v->rect().contains(v->mapFromGlobal(pos))) {
         m_rubberBandRect.setTopLeft(pos);
         m_rubberBandRect.setBottomRight(pos);
-        if (!m_rubberBand)
-            m_rubberBand = new QRubberBand(QRubberBand::Rectangle);
         m_rubberBand->setGeometry(m_rubberBandRect);
         m_rubberBand->show();
     }
@@ -332,9 +346,13 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
             }
         }
         /* テーブルモデルがボーンの場合は該当ボーンを選択状態にする処理を入れる */
-        BoneMotionModel *bmm = 0;
-        if (!names.empty() && (bmm = qobject_cast<BoneMotionModel *>(pmm)))
-            bmm->selectBonesByModelIndices(names);
+        if (BoneMotionModel *bmm = qobject_cast<BoneMotionModel *>(pmm)) {
+            bmm->selectBonesByModelIndices(names.isEmpty() ? indices : names);
+        }
+        /* テーブルモデルがモーフの場合は該当モーフを選択状態にする処理を入れる */
+        else if (MorphMotionModel *mmm = qobject_cast<MorphMotionModel *>(pmm)) {
+            mmm->selectMorphsByModelIndices(names.isEmpty() ? indices : names);
+        }
     }
 }
 
@@ -369,3 +387,5 @@ void TimelineHeaderView::mousePressEvent(QMouseEvent *e)
     emit frameIndexDidSelect(MotionBaseModel::toTimeIndex(modelIndex));
     QHeaderView::mousePressEvent(e);
 }
+
+} /* namespace vpvm */

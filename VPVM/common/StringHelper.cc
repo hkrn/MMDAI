@@ -40,7 +40,8 @@
 #include <QtCore/QtCore>
 #include "vpvl2/qt/CString.h"
 
-namespace internal {
+namespace vpvm
+{
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
@@ -111,4 +112,4 @@ const QString toQStringFromMorphKeyframe(const IMorphKeyframe *value)
     return s;
 }
 
-}
+} /* namespace vpvm */

@@ -44,8 +44,9 @@
 #include "vpvl2/IMorph.h"
 #include "vpvl2/IString.h"
 
-#include "vpvl/Asset.h"
 #ifdef VPVL2_LINK_ASSIMP
+#include <assimp.hpp>
+#include <aiPostProcess.h>
 #include <aiScene.h>
 #endif
 
@@ -67,61 +68,92 @@ public:
     const IString *englishName() const { return m_name; }
     const IString *comment() const { return m_name; }
     const IString *englishComment() const { return m_name; }
-    bool isVisible() const { return !btFuzzyZero(opacity()); }
+    bool isVisible() const { return m_visible && !btFuzzyZero(opacity()); }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}
-    size_t estimateSize() const { return 1; }
+    size_t estimateSize() const { return 0; }
     void resetVertices() {}
     void resetMotionState() {}
-    void performUpdate(const Vector3 & /* cameraPosition */, const Vector3 & /* lightDirection */) {}
+    void performUpdate() {}
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
-    IBone *findBone(const IString * /* value */) const { return 0; }
-    IMorph *findMorph(const IString * /* value */) const { return 0; }
-    int count(ObjectType /* value */) const { return 0; }
-    void getBones(Array<IBone *> & /* value */) const {}
-    void getMorphs(Array<IMorph *> & /* value */) const {}
-    void getLabels(Array<ILabel *> & /* value */) const {}
+    IBone *findBone(const IString *value) const;
+    IMorph *findMorph(const IString *value) const;
+    int count(ObjectType value) const;
+    void getBoneRefs(Array<IBone *> &value) const;
+    void getLabelRefs(Array<ILabel *> &value) const;
+    void getMaterialRefs(Array<IMaterial *> &value) const;
+    void getMorphRefs(Array<IMorph *> &value) const;
+    void getVertexRefs(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
-    void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    IndexType indexType() const { return kIndex32; }
-    const Vector3 &position() const { return m_asset.position(); }
-    const Quaternion &rotation() const { return m_asset.rotation(); }
-    const Scalar &opacity() const { return m_asset.opacity(); }
-    const Scalar &scaleFactor() const { return m_asset.scaleFactor(); }
+    float edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
+    const Vector3 &worldPosition() const { return m_position; }
+    const Quaternion &worldRotation() const { return m_rotation; }
+    const Scalar &opacity() const { return m_opacity; }
+    const Scalar &scaleFactor() const { return m_scaleFactor; }
     const Vector3 &edgeColor() const { return kZeroV3; }
     const Scalar &edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
     IModel *parentModel() const { return m_parentModelRef; }
     IBone *parentBone() const { return m_parentBoneRef; }
     void setName(const IString *value);
-    void setEnglishName(const IString *value) { setName(value); }
+    void setEnglishName(const IString *value);
     void setComment(const IString *value);
-    void setEnglishComment(const IString *value) { setComment(value); }
-    void setPosition(const Vector3 &value) { m_asset.setPosition(value); }
-    void setRotation(const Quaternion &value) { m_asset.setRotation(value); }
-    void setOpacity(const Scalar &value) { m_asset.setOpacity(value); }
-    void setScaleFactor(const Scalar &value) { m_asset.setScaleFactor(value); }
+    void setEnglishComment(const IString *value);
+    void setWorldPosition(const Vector3 &value);
+    void setWorldRotation(const Quaternion &value);
+    void setOpacity(const Scalar &value);
+    void setScaleFactor(const Scalar &value);
     void setEdgeColor(const Vector3 & /* value */) {}
     void setEdgeWidth(const Scalar & /* value */) {}
-    void setParentModel(IModel *value) { m_parentModelRef = value; }
-    void setParentBone(IBone *value) { m_parentBoneRef = value; }
+    void setParentModel(IModel *value);
+    void setParentBone(IBone *value);
+    void setVisible(bool value);
 
-    vpvl::Asset *ptr() { return &m_asset; }
+    void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
+    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }
+    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
+                                const IIndexBuffer * /* indexBuffer */) const { dynamicBuffer = 0; }
+    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
+                         IDynamicVertexBuffer * /* dynamicBuffer */,
+                         const IIndexBuffer * /* indexBuffer */) const { matrixBuffer = 0; }
+    void setAabb(const Vector3 &min, const Vector3 &max);
+    void getAabb(Vector3 &min, Vector3 &max) const;
+
+#ifdef VPVL2_LINK_ASSIMP
+    const aiScene *aiScenePtr() const { return m_scene; }
+#endif
 
 private:
 #ifdef VPVL2_LINK_ASSIMP
+    void setIndicesRecurse(const aiScene *scene, const aiNode *node);
+    void setMaterialRefsRecurse(const aiScene *scene, const aiNode *node);
+    void setVertexRefsRecurse(const aiScene *scene, const aiNode *node);
     void getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vector3 &min, Vector3 &max) const;
+    Assimp::Importer m_importer;
+    const aiScene *m_scene;
 #endif
 
-    vpvl::Asset m_asset;
     IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_comment;
-    Array<IBone *> m_bones;
-    Array<IMorph *> m_morphs;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
+    mutable Array<IBone *> m_bones;
+    mutable Array<ILabel *> m_labels;
+    mutable Array<IMaterial *> m_materials;
+    mutable Array<IMorph *> m_morphs;
+    mutable Array<IVertex *> m_vertices;
+    mutable Array<uint32_t> m_indices;
+    Hash<HashString, IBone *> m_name2boneRefs;
+    Hash<HashString, IMorph *> m_name2morphRefs;
+    Vector3 m_aabbMax;
+    Vector3 m_aabbMin;
+    Vector3 m_position;
+    Quaternion m_rotation;
+    Scalar m_opacity;
+    Scalar m_scaleFactor;
+    bool m_visible;
 };
 
 } /* namespace asset */

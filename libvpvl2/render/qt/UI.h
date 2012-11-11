@@ -38,6 +38,7 @@
 #define VPVL2_RENDER_QT_UI_H_
 
 #include "vpvl2/IEffect.h"
+#include "vpvl2/qt/Encoding.h"
 #include "World.h"
 
 #include <QtGui/QtGui>
@@ -45,75 +46,77 @@
 
 namespace vpvl2
 {
-    class Factory;
-    class Scene;
-    class IModel;
-    class IMotion;
+class Factory;
+class Scene;
+class IModel;
+class IMotion;
 
-    namespace qt
-    {
-    class CString;
-    class Delegate;
-    }
+namespace qt
+{
+class RenderContext;
+}
 
-    namespace render
-    {
-    namespace qt
-    {
+namespace render
+{
+namespace qt
+{
 
-    class UI : public QGLWidget, protected QGLFunctions
-    {
-    public:
-        UI();
-        ~UI();
+class UI : public QGLWidget, protected QGLFunctions
+{
+public:
+    UI(const QGLFormat &format);
+    ~UI();
 
-        void load(const QString &filename);
-        void rotate(float x, float y);
-        void translate(float x, float y);
+    void load(const QString &filename);
+    void rotate(float x, float y);
+    void translate(float x, float y);
 
-    protected:
-        void closeEvent(QCloseEvent *event);
-        void initializeGL();
-        void timerEvent(QTimerEvent *event);
-        void mousePressEvent(QMouseEvent *event);
-        void mouseMoveEvent(QMouseEvent *event);
-        void mouseReleaseEvent(QMouseEvent *event);
-        void wheelEvent(QWheelEvent *event);
-        void resizeGL(int w, int h);
-        void paintGL();
+protected:
+    void closeEvent(QCloseEvent *event);
+    void initializeGL();
+    void timerEvent(QTimerEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+    void wheelEvent(QWheelEvent *event);
+    void resizeGL(int w, int h);
+    void paintGL();
 
-    private:
-        void renderDepth();
-        void renderOffscreen();
-        void renderWindow();
-        void setMousePositions(QMouseEvent *event);
-        bool loadScene();
-        IModel *createModelAsync(const QString &path) const;
-        IEffect *createEffectAsync(const IString *path);
-        IEffect *createEffectAsync(IModel *model, const IString *dir);
-        IMotion *createMotionAsync(const QString &path, IModel *model) const;
-        IModel *addModel(const QString &path, QProgressDialog &dialog);
-        IMotion *addMotion(const QString &path, IModel *model);
-        IMotion *loadMotion(const QString &path, IModel *model);
+private:
+    class ShadowMap;
 
-        QSettings *m_settings;
-        QElapsedTimer m_timer;
-        QGLFramebufferObject *m_fbo;
-        QPoint m_prevPos;
-        QMatrix4x4 m_projectionMatrix;
-        QMatrix4x4 m_modelViewMatrix;
-        vpvl2::qt::World *m_world;
-        vpvl2::qt::Delegate *m_delegate;
-        vpvl2::Scene *m_scene;
-        Factory *m_factory;
-        IEncoding *m_encoding;
-        GLuint m_depthTextureID;
-        float m_prevElapsed;
-        float m_currentFrameIndex;
-    };
+    void renderDepth();
+    void renderOffscreen();
+    void renderWindow();
+    void setMousePositions(QMouseEvent *event);
+    bool loadScene();
+    IModel *createModelAsync(const QString &path) const;
+    IEffect *createEffectAsync(const IString *path);
+    IEffect *createEffectAsync(IModel *model, const IString *dir);
+    IMotion *createMotionAsync(const QString &path, IModel *model) const;
+    IModel *addModel(const QString &path, QProgressDialog &dialog);
+    IMotion *addMotion(const QString &path, IModel *model);
+    IMotion *loadMotion(const QString &path, IModel *model);
 
-    }
-    }
+    QSettings *m_settings;
+    QBasicTimer m_updateTimer;
+    QElapsedTimer m_refreshTimer;
+    QPoint m_prevPos;
+    QMatrix4x4 m_projectionMatrix;
+    QMatrix4x4 m_modelViewMatrix;
+    ShadowMap *m_sm;
+    vpvl2::qt::Encoding::Dictionary m_dictionary;
+    vpvl2::qt::World *m_world;
+    vpvl2::qt::RenderContext *m_delegate;
+    vpvl2::Scene *m_scene;
+    Factory *m_factory;
+    IEncoding *m_encoding;
+    float m_prevElapsed;
+    float m_currentFrameIndex;
+};
+
+}
+}
 }
 
 #endif

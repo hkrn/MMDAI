@@ -41,19 +41,24 @@ namespace vpvl2
 namespace qt
 {
 
+const Vector3 World::kAabbSize = Vector3(10000, 10000, 10000);
+const Vector3 World::kDefaultGravity = Vector3(0, -9.8f, 0);
+
 World::World()
     : m_dispatcher(0),
       m_broadphase(0),
       m_solver(0),
       m_world(0),
-      m_preferredFPS(0)
+      m_motionFPS(0),
+      m_maxSubSteps(0),
+      m_fixedTimeStep(0)
 {
     m_dispatcher = new btCollisionDispatcher(&m_config);
     m_broadphase = new btDbvtBroadphase();
     m_solver = new btSequentialImpulseConstraintSolver();
     m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
-    setGravity(Vector3(0.0f, -9.8f, 0.0f));
-    setPreferredFPS(Scene::defaultFPS());
+    setGravity(kDefaultGravity);
+    setMotionFPS(Scene::defaultFPS());
 }
 
 World::~World()
@@ -88,9 +93,11 @@ void World::setRandSeed(unsigned long value)
     m_solver->setRandSeed(value);
 }
 
-void World::setPreferredFPS(const Scalar &value)
+void World::setMotionFPS(const Scalar &value)
 {
-    m_preferredFPS = value;
+    m_motionFPS = value;
+    m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
+    m_fixedTimeStep = 1 / value;
 }
 
 void World::addModel(vpvl2::IModel *value)
@@ -113,15 +120,14 @@ void World::removeRigidBody(btRigidBody *value)
     m_world->removeRigidBody(value);
 }
 
-void World::stepSimulationDefault(const Scalar &substep)
+void World::stepSimulation(const Scalar &delta)
 {
-    m_world->stepSimulation(1, substep, 1.0 / m_preferredFPS);
+    m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
 }
 
-void World::stepSimulationDelta(const Scalar &delta)
+btDiscreteDynamicsWorld *World::dynamicWorldRef() const
 {
-    const Scalar &step = delta / m_preferredFPS;
-    m_world->stepSimulation(step, 1.0 / m_preferredFPS);
+    return m_world;
 }
 
 } /* namespace qt */

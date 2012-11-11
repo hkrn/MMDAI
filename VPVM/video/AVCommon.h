@@ -52,9 +52,10 @@ extern "C" {
 #include <QtCore/QSize>
 #include <QtCore/QString>
 
-namespace internal {
+namespace vpvm
+{
 
-double ComputePresentTimeStamp(AVStream *stream);
+double ComputePresentTimeStamp(const AVStream *stream);
 
 void RescalePresentTimeStamp(const AVFrame *codedFrame, const AVStream *stream, AVPacket &packet);
 
@@ -98,6 +99,6 @@ AVFormatContext *OpenInputFormat(const QString &filename, const char *shortname)
 
 AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format);
 
-}
+} /* namespace vpvm */
 
 #endif // AVCOMMON_H

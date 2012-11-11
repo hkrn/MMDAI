@@ -180,29 +180,29 @@ void Motion::save(uint8_t *data) const
     int nBoneFrames = m_boneMotion.countKeyframes();
     internal::writeBytes(reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames), data);
     for (int i = 0; i < nBoneFrames; i++) {
-        BoneKeyframe *frame = m_boneMotion.frameAt(i);
-        frame->write(data);
+        BoneKeyframe *keyframe = m_boneMotion.keyframeAt(i);
+        keyframe->write(data);
         data += BoneKeyframe::strideSize();
     }
     int nMorphFrames = m_morphMotion.countKeyframes();
     internal::writeBytes(reinterpret_cast<uint8_t *>(&nMorphFrames), sizeof(nMorphFrames), data);
     for (int i = 0; i < nMorphFrames; i++) {
-        MorphKeyframe *frame = m_morphMotion.frameAt(i);
-        frame->write(data);
+        MorphKeyframe *keyframe = m_morphMotion.keyframeAt(i);
+        keyframe->write(data);
         data += MorphKeyframe::strideSize();
     }
     int nCameraFrames = m_cameraMotion.countKeyframes();
     internal::writeBytes(reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames), data);
     for (int i = 0; i < nCameraFrames; i++) {
-        CameraKeyframe *frame = m_cameraMotion.frameAt(i);
-        frame->write(data);
+        CameraKeyframe *keyframe = m_cameraMotion.frameAt(i);
+        keyframe->write(data);
         data += CameraKeyframe::strideSize();
     }
     int nLightFrames = m_lightMotion.countKeyframes();
     internal::writeBytes(reinterpret_cast<uint8_t *>(&nLightFrames), sizeof(nLightFrames), data);
     for (int i = 0; i < nLightFrames; i++) {
-        LightKeyframe *frame = m_lightMotion.frameAt(i);
-        frame->write(data);
+        LightKeyframe *keyframe = m_lightMotion.frameAt(i);
+        keyframe->write(data);
         data += LightKeyframe::strideSize();
     }
     int empty = 0;
@@ -251,7 +251,7 @@ void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
     if (m_cameraMotion.countKeyframes() > 0) {
         m_cameraMotion.seek(timeIndex);
         ICamera *camera = scene->camera();
-        camera->setPosition(m_cameraMotion.position());
+        camera->setLookAt(m_cameraMotion.position());
         camera->setAngle(m_cameraMotion.angle());
         camera->setFov(m_cameraMotion.fovy());
         camera->setDistance(m_cameraMotion.distance());
@@ -286,7 +286,7 @@ void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *sce
     if (m_cameraMotion.countKeyframes() > 0) {
         m_cameraMotion.advance(deltaTimeIndex);
         ICamera *camera = scene->camera();
-        camera->setPosition(m_cameraMotion.position());
+        camera->setLookAt(m_cameraMotion.position());
         camera->setAngle(m_cameraMotion.angle());
         camera->setFov(m_cameraMotion.fovy());
         camera->setDistance(m_cameraMotion.distance());
@@ -458,7 +458,7 @@ IBoneKeyframe *Motion::findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
 
 IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
 {
-    return m_boneMotion.frameAt(index);
+    return m_boneMotion.keyframeAt(index);
 }
 
 ICameraKeyframe *Motion::findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
@@ -492,7 +492,7 @@ IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
 
 IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
 {
-    return m_morphMotion.frameAt(index);
+    return m_morphMotion.keyframeAt(index);
 }
 
 void Motion::deleteKeyframe(IKeyframe *&value)
@@ -551,7 +551,7 @@ IMotion *Motion::clone() const
     IMotion *dest = m_motionPtr = new Motion(m_modelRef, m_encodingRef);
     const int nbkeyframes = m_boneMotion.countKeyframes();
     for (int i = 0; i < nbkeyframes; i++) {
-        BoneKeyframe *keyframe = m_boneMotion.frameAt(i);
+        BoneKeyframe *keyframe = m_boneMotion.keyframeAt(i);
         dest->addKeyframe(keyframe->clone());
     }
     const int nckeyframes = m_cameraMotion.countKeyframes();
@@ -566,7 +566,7 @@ IMotion *Motion::clone() const
     }
     const int nmkeyframes = m_morphMotion.countKeyframes();
     for (int i = 0; i < nmkeyframes; i++) {
-        MorphKeyframe *keyframe = m_morphMotion.frameAt(i);
+        MorphKeyframe *keyframe = m_morphMotion.keyframeAt(i);
         dest->addKeyframe(keyframe->clone());
     }
     m_motionPtr = 0;

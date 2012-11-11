@@ -39,6 +39,7 @@
 #ifndef VPVL2_PMX_JOINT_H_
 #define VPVL2_PMX_JOINT_H_
 
+#include "vpvl2/internal/BaseJoint.h"
 #include "vpvl2/pmx/RigidBody.h"
 
 class btGeneric6DofConstraint;
@@ -59,70 +60,21 @@ namespace pmx
  * Constraint class represents a joint of a Polygon Model Data object.
  */
 
-class VPVL2_API Joint
+class VPVL2_API Joint : public internal::BaseJoint
 {
 public:
     Joint();
     ~Joint();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadJoints(const Array<Joint *> &joints,
-                           const Array<RigidBody *> &rigidBodies);
+    static bool loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies);
+    static size_t estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
-    btGeneric6DofSpringConstraint *constraint() const { return m_constraint; }
-    RigidBody *rigidBody1() const { return m_rigidBody1Ref; }
-    RigidBody *rigidBody2() const { return m_rigidBody2Ref; }
-    int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
-    int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &rotation() const { return m_rotation; }
-    const Vector3 &positionLowerLimit() const { return m_positionLowerLimit; }
-    const Vector3 &positionUpperLimit() const { return m_positionUpperLimit; }
-    const Vector3 &rotationLowerLimit() const { return m_rotationLowerLimit; }
-    const Vector3 &rotationUpperLimit() const { return m_rotationUpperLimit; }
-    const Vector3 &positionStiffness() const { return m_positionStiffness; }
-    const Vector3 &rotationStiffness() const { return m_rotationStiffness; }
-    int index() const { return m_index; }
-
-    void setRigidBody1(RigidBody *value);
-    void setRigidBody2(RigidBody *value);
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
-    void setPosition(const Vector3 &value);
-    void setRotation(const Vector3 &value);
-    void setPositionLowerLimit(const Vector3 &value);
-    void setPositionUpperLimit(const Vector3 &value);
-    void setRotationLowerLimit(const Vector3 &value);
-    void setRotationUpperLimit(const Vector3 &value);
-    void setPositionStiffness(const Vector3 &value);
-    void setRotationStiffness(const Vector3 &value);
-    void setIndex(int value);
-    btGeneric6DofSpringConstraint *createConstraint() const;
-
 private:
-    btGeneric6DofSpringConstraint *m_constraint;
-    RigidBody *m_rigidBody1Ref;
-    RigidBody *m_rigidBody2Ref;
-    IString *m_name;
-    IString *m_englishName;
-    Vector3 m_position;
-    Vector3 m_rotation;
-    Vector3 m_positionLowerLimit;
-    Vector3 m_rotationLowerLimit;
-    Vector3 m_positionUpperLimit;
-    Vector3 m_rotationUpperLimit;
-    Vector3 m_positionStiffness;
-    Vector3 m_rotationStiffness;
-    int m_rigidBodyIndex1;
-    int m_rigidBodyIndex2;
-    int m_index;
-
     VPVL2_DISABLE_COPY_AND_ASSIGN(Joint)
 };
 

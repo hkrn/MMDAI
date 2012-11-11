@@ -120,10 +120,10 @@ void CameraKeyframe::read(const uint8_t *data)
     setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
 #endif
     setDistance(chunk.distance);
-    setTimeIndex(chunk.timeIndex);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
     setLayerIndex(chunk.layerIndex);
     setFov(degree(chunk.fov));
-    setPerspective(chunk.perspective);
+    setPerspective(chunk.perspective != 0);
     setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.positionIP));
     setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk.rotationIP));
     setInterpolationParameter(kFov, Motion::InterpolationTable::toQuadWord(chunk.fovIP));
@@ -133,7 +133,7 @@ void CameraKeyframe::read(const uint8_t *data)
 void CameraKeyframe::write(uint8_t *data) const
 {
     CameraKeyframeChunk chunk;
-    internal::getPosition(position(), chunk.position);
+    internal::getPosition(lookAt(), chunk.position);
     const Vector3 &a = angle();
 #ifdef VPVL2_COORDINATE_OPENGL
     chunk.rotation[0] = radian(a.x());
@@ -145,7 +145,7 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.rotation[2] = radian(a.z());
 #endif
     chunk.distance = distance();
-    chunk.timeIndex = timeIndex();
+    chunk.timeIndex = uint64_t(timeIndex());
     chunk.layerIndex = layerIndex();
     chunk.fov = radian(fov());
     chunk.perspective = isPerspective() ? 1 : 0;
@@ -168,7 +168,7 @@ ICameraKeyframe *CameraKeyframe::clone() const
     frame->setLayerIndex(m_layerIndex);
     frame->setDistance(m_distance);
     frame->setFov(m_fov);
-    frame->setPosition(m_position);
+    frame->setLookAt(m_position);
     frame->setAngle(m_angle);
     frame->setPerspective(m_perspective);
     frame->setInterpolationParameter(kX, m_interpolationPosition.parameter);
@@ -231,7 +231,7 @@ void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord 
     }
 }
 
-const Vector3 &CameraKeyframe::position() const
+const Vector3 &CameraKeyframe::lookAt() const
 {
     return m_position;
 }
@@ -256,7 +256,7 @@ bool CameraKeyframe::isPerspective() const
     return m_perspective;
 }
 
-void CameraKeyframe::setPosition(const Vector3 &value)
+void CameraKeyframe::setLookAt(const Vector3 &value)
 {
     m_position = value;
 }

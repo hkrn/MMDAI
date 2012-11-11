@@ -52,14 +52,14 @@ public:
     virtual ~ILightKeyframe() {}
 
     /**
-     * ILightKeyframe のインスタンスの完全なコピーを返します。
+     * ILightKeyframe のインスタンスの完全なコピーを返します.
      *
      * @return ILightKeyframe
      */
     virtual ILightKeyframe *clone() const = 0;
 
     /**
-     * 照明の色を返します。
+     * 照明の色を返します.
      *
      * @return Vector3
      * @sa setColor
@@ -67,7 +67,7 @@ public:
     virtual const Vector3 &color() const = 0;
 
     /**
-     * 照明の方向を返します。
+     * 照明の方向を返します.
      *
      * @return Vector3
      * @sa setDirection
@@ -75,7 +75,7 @@ public:
     virtual const Vector3 &direction() const = 0;
 
     /**
-     * 照明の色を設定します。
+     * 照明の色を設定します.
      *
      * それぞれの値は 0.0 以上 1.0 以下でなければなりません。
      *
@@ -85,7 +85,7 @@ public:
     virtual void setColor(const Vector3 &value) = 0;
 
     /**
-     * 照明の方向を設定します。
+     * 照明の方向を設定します.
      *
      * それぞれの値は -1.0 以上 1.0 以下でなければなりません。
      *
@@ -95,6 +95,6 @@ public:
     virtual void setDirection(const Vector3 &value) = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif

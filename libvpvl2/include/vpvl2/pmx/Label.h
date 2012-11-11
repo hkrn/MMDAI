@@ -58,18 +58,17 @@ namespace pmx
 class VPVL2_API Label : public ILabel
 {
 public:
-    struct Pair;
-
     /**
      * Constructor
      */
-    Label();
+    Label(IModel *modelRef);
     ~Label();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadLabels(const Array<Label *> &labels,
                            const Array<Bone *> &bones,
                            const Array<Morph *> &morphs);
+    static size_t estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -82,6 +81,7 @@ public:
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
+    IModel *parentModelRef() const { return m_modelRef; }
     int index() const { return m_index; }
     bool isSpecial() const { return m_special; }
     IBone *bone(int index) const;
@@ -97,6 +97,8 @@ public:
     void removeMorph(IMorph *value);
 
 private:
+    struct Pair;
+    IModel *m_modelRef;
     IString *m_name;
     IString *m_englishName;
     Array<Pair *> m_pairs;
