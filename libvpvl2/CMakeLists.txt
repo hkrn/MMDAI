@@ -237,40 +237,40 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
   include(${QT_USE_FILE})
   target_link_libraries(vpvl2 ${QT_LIBRARIES})
+  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common vpvl2qtcommon_sources)
+  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip vpvl2qtcommon_sources)
+  set(vpvl2qtcommon_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Archive.h
+                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h
+                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h
+                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/DDSTexture.h
+                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h
+                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
+                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h)
+  set(vpvl2_qt_sources ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc
+                       ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/UI.cc)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/render/qt
+                      ${CMAKE_CURRENT_SOURCE_DIR}/render/qt
+                      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt)
+  if(APPLE)
+    add_definitions(-DUSE_FILE32API)
+    find_library(COCOA_LIBRARY Cocoa)
+    find_path(COCOA_INCLUDE_DIR Cocoa/Cocoa.h)
+    include_directories(${COCOA_INCLUDE_DIR})
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/osx vpvl2qtcommon_sources)
+  endif()
+  add_library(vpvl2qtcommon ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
+  link_nvtt(vpvl2qtcommon)
+  if(APPLE)
+    target_link_libraries(vpvl2qtcommon ${COCOA_LIBRARY})
+  endif()
+  target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
+  set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
+  append_lib_type_suffix(VPVL2QTCOMMON_OUTPUT_NAME)
+  append_lib_linkage_suffix(VPVL2QTCOMMON_OUTPUT_NAME)
+  set_target_properties(vpvl2qtcommon PROPERTIES OUTPUT_NAME ${VPVL2QTCOMMON_OUTPUT_NAME}
+                                                 VERSION ${VPVL2_VERSION}
+                                                 SOVERSION ${VPVL2_VERSION_COMPATIBLE})
   if(VPVL2_BUILD_QT_RENDERER)
-    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common vpvl2qtcommon_sources)
-    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip vpvl2qtcommon_sources)
-    set(vpvl2qtcommon_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Archive.h
-                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h
-                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h
-                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/DDSTexture.h
-                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h
-                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
-                              ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h)
-    set(vpvl2_qt_sources ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc
-                         ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/UI.cc)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/render/qt
-                        ${CMAKE_CURRENT_SOURCE_DIR}/render/qt
-                        ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt)
-    if(APPLE)
-      add_definitions(-DUSE_FILE32API)
-      find_library(COCOA_LIBRARY Cocoa)
-      find_path(COCOA_INCLUDE_DIR Cocoa/Cocoa.h)
-      include_directories(${COCOA_INCLUDE_DIR})
-      aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/osx vpvl2qtcommon_sources)
-    endif()
-    add_library(vpvl2qtcommon ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
-    link_nvtt(vpvl2qtcommon)
-    if(APPLE)
-      target_link_libraries(vpvl2qtcommon ${COCOA_LIBRARY})
-    endif()
-    target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
-    set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
-    append_lib_type_suffix(VPVL2QTCOMMON_OUTPUT_NAME)
-    append_lib_linkage_suffix(VPVL2QTCOMMON_OUTPUT_NAME)
-    set_target_properties(vpvl2qtcommon PROPERTIES OUTPUT_NAME ${VPVL2QTCOMMON_OUTPUT_NAME}
-                                                   VERSION ${VPVL2_VERSION}
-                                                   SOVERSION ${VPVL2_VERSION_COMPATIBLE})
     add_executable(vpvl2_qt ${vpvl2_qt_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
     target_link_libraries(vpvl2_qt vpvl2 vpvl2qtcommon ${QT_LIBRARIES})
   endif()
