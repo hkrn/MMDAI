@@ -66,6 +66,7 @@ public:
         : m_vbo(QGLBuffer::VertexBuffer),
           m_ibo(QGLBuffer::IndexBuffer),
           m_flags(0),
+          m_index(0),
           m_visible(true),
           m_initialized(false)
     {
@@ -85,11 +86,10 @@ public:
         drawLine(PointOnB, PointOnB + normalOnB * distance, color);
     }
     void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
-        Vertex vertices[2];
-        vertices[0].set(from, color);
-        vertices[1].set(to, color);
-        m_vbo.write(0, &vertices[0], sizeof(vertices));
-        glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, 0);
+        m_vertices.append(Vertex(from, color));
+        m_vertices.append(Vertex(to, color));
+        m_indices.append(m_index++);
+        m_indices.append(m_index++);
     }
     void drawLine(const btVector3 &from,
                   const btVector3 &to,
@@ -110,7 +110,6 @@ public:
 
     void load() {
         if (!m_initialized) {
-            m_bundle.initialize(QGLContext::currentContext());
             m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
             m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
             m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
@@ -118,22 +117,14 @@ public:
             m_program.link();
             m_vbo.setUsagePattern(QGLBuffer::DynamicDraw);
             m_vbo.create();
-            m_vbo.bind();
-            m_vbo.allocate(sizeof(Vertex) * 2);
-            m_vbo.release();
-            m_ibo.setUsagePattern(QGLBuffer::StaticDraw);
+            m_ibo.setUsagePattern(QGLBuffer::DynamicDraw);
             m_ibo.create();
-            m_ibo.bind();
-            static const int indices[] = { 0, 1 };
-            m_ibo.allocate(indices, sizeof(indices));
-            m_ibo.release();
+            m_bundle.initialize(QGLContext::currentContext());
             m_bundle.create();
             m_bundle.bind();
             bindVertexBundle(false);
             m_bundle.release();
             releaseVertexBundle(false);
-            m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
-            m_program.enableAttributeArray(IModel::IBuffer::kNormalStride);
             m_initialized = true;
         }
     }
@@ -266,14 +257,10 @@ public:
 private:
     struct Vertex {
         Vertex() {}
-        Vertex(const Vector3 &v, const QColor &c)
+        Vertex(const Vector3 &v, const Vector3 &c)
             : position(v),
-              color(c.redF(), c.greenF(), c.blueF())
+              color(c)
         {
-        }
-        void set(const Vector3 &v, const Vector3 &c) {
-            position = v;
-            color = c;
         }
         Vector3 position;
         Vector3 color;
@@ -344,17 +331,24 @@ private:
             world.translate(position.x(), position.y(), position.z());
             world.rotate(QQuaternion(rotation.w(), rotation.x(), rotation.y(), rotation.z()));
         }
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
         m_program.bind();
         m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
         bindVertexBundle(false); // XXX: VAO doesn't work
     }
     void flushDrawing() {
+        int nindices = m_indices.size();
+        m_vbo.allocate(&m_vertices[0], nindices * sizeof(m_vertices[0]));
+        m_ibo.allocate(&m_indices[0], nindices * sizeof(m_indices[0]));
+        glDrawElements(GL_LINES, nindices, GL_UNSIGNED_INT, 0);
         releaseVertexBundle(false);  // XXX: VAO doesn't work
-        m_program.release();
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
+        m_program.release();
+        m_vertices.clear();
+        m_indices.clear();
+        m_index = 0;
     }
     void bindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.bind()) {
@@ -362,6 +356,8 @@ private:
             m_ibo.bind();
             m_program.setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Vertex));
             m_program.setAttributeBuffer(IModel::IBuffer::kNormalStride, GL_FLOAT, 16, 3, sizeof(Vertex));
+            m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
+            m_program.enableAttributeArray(IModel::IBuffer::kNormalStride);
         }
     }
     void releaseVertexBundle(bool bundle) {
@@ -371,11 +367,14 @@ private:
         }
     }
 
+    QVarLengthArray<Vertex> m_vertices;
+    QVarLengthArray<int> m_indices;
     QGLShaderProgram m_program;
     VertexBundle m_bundle;
     QGLBuffer m_vbo;
     QGLBuffer m_ibo;
     int m_flags;
+    int m_index;
     bool m_visible;
     bool m_initialized;
 
