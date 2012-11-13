@@ -121,7 +121,11 @@ private:
         const char *candidate = candidates[0];
         int i = 0;
         while (candidate) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+            void *address = reinterpret_cast<void *>(context->getProcAddress(candidate));
+#else
             void *address = context->getProcAddress(candidate);
+#endif
             if (address) {
                 return address;
             }

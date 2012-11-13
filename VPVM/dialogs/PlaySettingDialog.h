@@ -37,7 +37,12 @@
 #ifndef VPVM_PLAYSETTINGDIALOG_H
 #define VPVM_PLAYSETTINGDIALOG_H
 
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QDialog>
+#else
 #include <QtGui/QDialog>
+#endif
 
 class QCheckBox;
 class QComboBox;

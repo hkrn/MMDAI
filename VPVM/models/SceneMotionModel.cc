@@ -556,7 +556,7 @@ void SceneMotionModel::loadMotion(IMotion *motion)
         m_lightData.clear();
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setFrameIndexColumnMax(motion);
-        reset();
+        resetModel();
         /* カメラのキーフレームをテーブルのモデルデータにコピーする */
         QScopedPointer<ICameraKeyframe> newCameraKeyframe;
         for (int i = 0; i < nCameraFrames; i++) {
@@ -585,7 +585,7 @@ void SceneMotionModel::loadMotion(IMotion *motion)
         m_motionRef = motion;
         emit cameraMotionDidLoad();
     }
-    reset();
+    resetModel();
 }
 
 void SceneMotionModel::setKeyframes(const CameraKeyframePairList &cameraKeyframes, const LightKeyframePairList &lightKeyframes)
@@ -607,7 +607,7 @@ void SceneMotionModel::setActiveUndoStack()
 void SceneMotionModel::refreshScene()
 {
     setFrameIndexColumnMax(0);
-    reset();
+    resetModel();
 }
 
 void SceneMotionModel::removeMotion()
@@ -617,7 +617,7 @@ void SceneMotionModel::removeMotion()
     m_cameraData.clear();
     m_lightData.clear();
     setModified(false);
-    reset();
+    resetModel();
 }
 
 void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)

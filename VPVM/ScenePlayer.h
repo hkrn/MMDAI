@@ -39,7 +39,11 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QProgressDialog>
+#else
 #include <QtGui/QProgressDialog>
+#endif
 
 #include <vpvl2/Common.h>
 

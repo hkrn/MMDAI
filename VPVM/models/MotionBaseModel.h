@@ -39,9 +39,15 @@
 
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QAbstractItemView>
+#include <QtWidgets/QUndoStack>
+#include <QtWidgets/QUndoGroup>
+#else
 #include <QtGui/QAbstractItemView>
 #include <QtGui/QUndoStack>
 #include <QtGui/QUndoGroup>
+#endif
 #include "vpvl2/IKeyframe.h"
 
 namespace vpvl2 {
@@ -134,6 +140,7 @@ signals:
 protected:
     virtual ITreeItem *rootRef() const = 0;
     void addUndoCommand(QUndoCommand *command);
+    void resetModel();
 
     IMotion *m_motionRef;
     QUndoGroup *m_undoRef;

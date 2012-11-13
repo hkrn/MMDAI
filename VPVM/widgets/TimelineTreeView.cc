@@ -79,7 +79,10 @@ void TimelineTreeView::initializeFrozenView()
 {
     QAbstractItemModel *m = model();
     m_frozenTreeView->setModel(m);
+    // TODO: alternative of setResizeMode
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     m_frozenTreeView->header()->setResizeMode(QHeaderView::Fixed);
+#endif
     viewport()->stackUnder(m_frozenTreeView.data());
     updateFrozenTreeView();
     m_frozenTreeView->setColumnWidth(0, columnWidth(0));
@@ -368,10 +371,13 @@ TimelineHeaderView::TimelineHeaderView(Qt::Orientation orientation,
     : QHeaderView(orientation, parent)
 {
     setDefaultAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+    // TODO: alternative of setResizeMode
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     setResizeMode(QHeaderView::Fixed);
-    setStretchLastSection(stretchLastSection);
     setClickable(true);
     setMovable(false);
+#endif
+    setStretchLastSection(stretchLastSection);
     setSortIndicatorShown(false);
     setDefaultSectionSize(16);
 }

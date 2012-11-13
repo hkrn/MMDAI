@@ -193,6 +193,16 @@ void MotionBaseModel::addUndoCommand(QUndoCommand *command)
         activeStack->push(command);
 }
 
+void MotionBaseModel::resetModel()
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    beginResetModel();
+    endResetModel();
+#else
+    reset();
+#endif
+}
+
 void MotionBaseModel::setFrameIndexColumnMax0(int newValue)
 {
     int oldValue = m_frameIndexColumnMax;
@@ -206,7 +216,7 @@ void MotionBaseModel::setFrameIndexColumnMax0(int newValue)
     }
     m_frameIndexColumnMax = newValue;
     m_frameIndexColumnOffset = newValue;
-    reset();
+    resetModel();
     emit frameIndexColumnMaxDidChange(newValue, oldValue);
 }
 

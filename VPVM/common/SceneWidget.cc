@@ -1052,7 +1052,11 @@ void SceneWidget::initializeGL()
 
 void SceneWidget::mousePressEvent(QMouseEvent *event)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    const QPointF &pos = event->localPos();
+#else
     const QPointF &pos = event->posF();
+#endif
     int flags;
     m_lockTouchEvent = true;
     m_clickOrigin = pos;
@@ -1166,7 +1170,11 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
 
 void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    const QPointF &pos = event->localPos();
+#else
     const QPointF &pos = event->posF();
+#endif
     IBone *bone = m_handles->currentBone();
     m_isImageHandleRectIntersect = false;
     m_loader->setMousePosition(event, geometry());
@@ -1246,7 +1254,12 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
 void SceneWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     /* 回転モードの場合は回転ハンドルに入っているか? */
-    if (testHitModelHandle(event->posF()))
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    const QPointF &pos = event->localPos();
+#else
+    const QPointF &pos = event->posF();
+#endif
+    if (testHitModelHandle(pos))
         setCursor(Qt::OpenHandCursor);
     else
         unsetCursor();

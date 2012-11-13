@@ -879,7 +879,7 @@ void BoneMotionModel::setPMDModel(IModel *model)
         emit modelDidChange(0);
     }
     /* テーブルモデルを更新 */
-    reset();
+    resetModel();
 }
 
 void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
@@ -891,7 +891,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
         QScopedPointer<IBoneKeyframe> newKeyframe;
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setFrameIndexColumnMax(motion);
-        reset();
+        resetModel();
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
@@ -937,7 +937,7 @@ void BoneMotionModel::removeMotion()
     m_motionRef = 0;
     setModified(false);
     removePMDMotion(m_modelRef);
-    reset();
+    resetModel();
 }
 
 void BoneMotionModel::removeModel()
@@ -948,7 +948,7 @@ void BoneMotionModel::removeModel()
      */
     removeMotion();
     removePMDModel(m_modelRef);
-    reset();
+    resetModel();
     m_boneTransformStates.clear();
     emit modelDidChange(0);
 }

@@ -39,8 +39,13 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QUuid>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QMainWindow>
+#else
 #include <QtGui/QDialog>
 #include <QtGui/QMainWindow>
+#endif
 #include <vpvl2/Common.h>
 #include <vpvl2/qt/Encoding.h>
 

@@ -247,7 +247,12 @@ void PMDMotionModel::refreshModel(IModel *model)
         /* モデルのフレーム移動なしの更新とテーブルモデルの更新両方を含む */
         updateModel(model, true);
         setFrameIndexColumnMax(0);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        beginResetModel();
+        endResetModel();
+#else
         reset();
+#endif
         emit motionDidUpdate(model);
     }
 }

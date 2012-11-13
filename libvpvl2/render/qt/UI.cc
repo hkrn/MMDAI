@@ -45,6 +45,9 @@
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 #include <QtOpenGL/QtOpenGL>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtConcurrent/QtConcurrent>
+#endif
 
 #ifdef VPVL2_LINK_ASSIMP
 #include <assimp.hpp>
@@ -742,7 +745,11 @@ void UI::renderWindow()
 
 void UI::setMousePositions(QMouseEvent *event)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    const QPointF &pos = event->localPos();
+#else
     const QPointF &pos = event->posF();
+#endif
     const QSizeF &size = geometry().size() / 2;
     const qreal w = size.width(), h = size.height();
     const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);

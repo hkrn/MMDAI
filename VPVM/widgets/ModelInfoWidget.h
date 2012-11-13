@@ -37,7 +37,12 @@
 #ifndef VPVM_MODELINFOWIDGET_H
 #define VPVM_MODELINFOWIDGET_H
 
-#include <QtGui/QWidget>
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QDialog>
+#else
+#include <QtGui/QDialog>
+#endif
 
 namespace vpvl2 {
 class IModel;

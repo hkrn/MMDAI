@@ -37,7 +37,12 @@
 #ifndef VPVM_APPLICATION_H_
 #define VPVM_APPLICATION_H_
 
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QApplication>
+#else
 #include <QtGui/QApplication>
+#endif
 #include <QtGui/QFileOpenEvent>
 
 namespace vpvm

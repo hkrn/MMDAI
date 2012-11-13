@@ -38,6 +38,16 @@
 #define VPVM_MORPHWIDGET_H
 
 #include <QtCore/QPointer>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtCore/QStringListModel>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QCompleter>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QSlider>
+#include <QtWidgets/QWidget>
+#else
 #include <QtGui/QComboBox>
 #include <QtGui/QCompleter>
 #include <QtGui/QGroupBox>
@@ -46,6 +56,7 @@
 #include <QtGui/QSlider>
 #include <QtGui/QStringListModel>
 #include <QtGui/QWidget>
+#endif
 #include <vpvl2/Common.h>
 
 namespace vpvl2 {

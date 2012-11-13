@@ -37,7 +37,12 @@
 #ifndef VPVM_SCENELIGHTWIDGET_H
 #define VPVM_SCENELIGHTWIDGET_H
 
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QWidget>
+#else
 #include <QtGui/QWidget>
+#endif
 #include <vpvl2/Common.h>
 
 class QDoubleSpinBox;

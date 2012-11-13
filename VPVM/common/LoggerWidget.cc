@@ -36,7 +36,11 @@
 
 #include "LoggerWidget.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QtWidgets>
+#else
 #include <QtGui/QtGui>
+#endif
 
 namespace {
 vpvm::LoggerWidget *g_instance = 0;
@@ -45,11 +49,19 @@ vpvm::LoggerWidget *g_instance = 0;
 namespace vpvm
 {
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+static void LoggerWidgetHandleMessage(QtMsgType /* type */, const QMessageLogContext & /* context */, const QString &message)
+#else
 static void LoggerWidgetHandleMessage(QtMsgType /* type */, const char *message)
+#endif
 {
     QString datetime = QDateTime::currentDateTime().toString(Qt::ISODate);
     g_instance->addMessage(datetime + " " + message);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    fprintf(stderr, "%s %s\n", qPrintable(datetime), qPrintable(message));
+#else
     fprintf(stderr, "%s %s\n", qPrintable(datetime), message);
+#endif
 }
 
 LoggerWidget *LoggerWidget::createInstance(QSettings *settings)
@@ -89,13 +101,21 @@ LoggerWidget::LoggerWidget(QSettings *settings, QWidget *parent)
     setWindowTitle(tr("Log Window"));
     resize(QSize(640, 480));
     g_instance = this;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    qInstallMessageHandler(LoggerWidgetHandleMessage);
+#else
     qInstallMsgHandler(LoggerWidgetHandleMessage);
+#endif
     connect(this, SIGNAL(messageDidAdd(QString)), m_textEdit, SLOT(append(QString)));
 }
 
 LoggerWidget::~LoggerWidget()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    qInstallMessageHandler(0);
+#else
     qInstallMsgHandler(0);
+#endif
 }
 
 void LoggerWidget::addMessage(const QString &message)

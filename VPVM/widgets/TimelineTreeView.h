@@ -38,8 +38,13 @@
 #define VPVM_TIMELINETREEVIEW_H
 
 #include <QtCore/QModelIndex>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QTreeView>
+#else
 #include <QtGui/QHeaderView>
 #include <QtGui/QTreeView>
+#endif
 
 #include <vpvl2/Common.h>
 

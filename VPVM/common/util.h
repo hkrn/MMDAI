@@ -38,6 +38,10 @@
 #define VPVM_UTIL_H
 
 #include <QtGui/QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QtWidgets>
+#endif
+
 #include <vpvl2/vpvl2.h>
 #include "StringHelper.h"
 
@@ -111,10 +115,14 @@ static inline void dumpBoneKeyFrames(const IMotion *motion)
 
 static inline const QMatrix4x4 toMatrix4x4(float matrixf[16])
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    return QMatrix4x4(matrixf);
+#else
     qreal matrixd[16];
     for (int i = 0; i < 16; i++)
         matrixd[i] = matrixf[i];
     return QMatrix4x4(matrixd);
+#endif
 }
 
 static inline int warning(QWidget *parent,

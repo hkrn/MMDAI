@@ -45,6 +45,9 @@
 
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtConcurrent/QtConcurrent>
+#endif
 #include <vpvl2/vpvl2.h>
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -977,7 +980,11 @@ void SceneLoader::setLightViewProjectionMatrix()
 
 void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geometry)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    const QPointF &pos = event->localPos();
+#else
     const QPointF &pos = event->posF();
+#endif
     const QSizeF &size = geometry.size() / 2;
     const qreal w = size.width(), h = size.height();
     const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);

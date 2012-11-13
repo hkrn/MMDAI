@@ -37,8 +37,14 @@
 #ifndef VPVM_INTERPOLATIONDIALOG_H
 #define VPVM_INTERPOLATIONDIALOG_H
 
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QAbstractItemView>
+#else
 #include <QtGui/QWidget>
 #include <QtGui/QAbstractItemView>
+#endif
 #include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/ICameraKeyframe.h>
 

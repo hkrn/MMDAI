@@ -37,12 +37,22 @@
 #ifndef VPVM_PERSPECTIONWIDGET_H
 #define VPVM_PERSPECTIONWIDGET_H
 
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QWidget>
+#else
 #include <QtGui/QDoubleSpinBox>
 #include <QtGui/QGroupBox>
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
 #include <QtGui/QRadioButton>
 #include <QtGui/QWidget>
+#endif
 #include <vpvl2/Common.h>
 #include <vpvl2/Scene.h>
 

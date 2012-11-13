@@ -39,7 +39,11 @@
 
 #include <QtCore/QString>
 #include <QtCore/QUuid>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QDialog>
+#else
 #include <QtGui/QDialog>
+#endif
 
 class QAbstractButton;
 class QDialogButtonBox;

@@ -40,6 +40,9 @@
 #include "widgets/TimelineTreeView.h"
 
 #include <QtGui/QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QtWidgets>
+#endif
 
 /* lupdate cannot parse tr() syntax correctly */
 
@@ -149,7 +152,10 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     connect(m_treeView->horizontalScrollBar(), SIGNAL(actionTriggered(int)), SLOT(adjustFrameColumnSize(int)));
     connect(m_headerView.data(), SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentTimeIndexAndSelect(int)));
     m_treeView->setHeader(m_headerView.data());
+    // TODO: alternative of setResizeMode
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     m_headerView->setResizeMode(0, QHeaderView::ResizeToContents);
+#endif
     m_treeView->initializeFrozenView();
     m_spinBox->setAlignment(Qt::AlignRight);
     connect(m_spinBox.data(), SIGNAL(valueChanged(int)), SLOT(setCurrentTimeIndex(int)));
