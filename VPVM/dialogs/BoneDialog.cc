@@ -111,6 +111,7 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm, QSettings *settings, QWidget *paren
     gridLayout->addWidget(m_zPosition.data(), 2, 1);
     gridLayout->addWidget(m_stepPosition.data(), 3, 1);
     m_positionGroup->setLayout(gridLayout.take());
+    m_positionGroup->setEnabled(bone->isMovable());
     subLayout->addWidget(m_positionGroup.data());
     gridLayout.reset(new QGridLayout());
     gridLayout->addWidget(m_xAngleLabel.data(), 0, 0);
@@ -122,6 +123,7 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm, QSettings *settings, QWidget *paren
     gridLayout->addWidget(m_zAngle.data(), 2, 1);
     gridLayout->addWidget(m_stepRotation.data(), 3, 1);
     m_rotationGroup->setLayout(gridLayout.take());
+    m_rotationGroup->setEnabled(bone->isRotateable());
     subLayout->addWidget(m_rotationGroup.data());
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     mainLayout->addLayout(subLayout.take());
