@@ -180,10 +180,10 @@ public:
             m_ibo.release();
         }
     }
-    void load(const aiMesh *mesh, Array<Handles::Vertex> &vertices) {
+    void load(const aiMesh *mesh, Array<Handles::Vertex> &vertices, Array<int> &indices) {
         /* Open Asset Import Library を使って読み込んだモデルを VBO が利用出来る形に再構築 */
         const unsigned int nfaces = mesh->mNumFaces;
-        Array<int> indices;
+        indices.clear();
         for (unsigned int i = 0; i < nfaces; i++) {
             const struct aiFace &face = mesh->mFaces[i];
             const unsigned int nindices = face.mNumIndices;
@@ -209,14 +209,15 @@ public:
     void load(const aiMesh *mesh, Handles::StaticWorld *world, btMotionState *state) {
         /* ハンドルのモデルを読み込んだ上で衝突判定を行うために作られたフィールドに追加する */
         Array<Handles::Vertex> vertices;
-        load(mesh, vertices);
+        Array<int> indices;
         QScopedPointer<btTriangleMesh> triangleMesh(new btTriangleMesh());
-        const int nfaces = vertices.count() / 3;
+        load(mesh, vertices, indices);
+        const int nfaces = indices.count() / 3;
         for (int i = 0; i < nfaces; i++) {
             int index = i * 3;
-            triangleMesh->addTriangle(vertices[index + 0].position,
-                                      vertices[index + 1].position,
-                                      vertices[index + 2].position);
+            triangleMesh->addTriangle(vertices[indices[index + 0]].position,
+                                      vertices[indices[index + 1]].position,
+                                      vertices[indices[index + 2]].position);
         }
         const btScalar &mass = 0.0f;
         const btVector3 localInertia(0.0f, 0.0f, 0.0f);
@@ -372,12 +373,13 @@ void Handles::loadModelHandles()
                 m_translationHandle.z.reset(new Model(&m_program));
                 m_translationHandle.z->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
                 Array<Vertex> vertices;
+                Array<int> indices;
                 m_translationHandle.axisX.reset(new Model(&m_program));
-                m_translationHandle.axisX->load(meshes[3], vertices);
+                m_translationHandle.axisX->load(meshes[3], vertices, indices);
                 m_translationHandle.axisY.reset(new Model(&m_program));
-                m_translationHandle.axisY->load(meshes[5], vertices);
+                m_translationHandle.axisY->load(meshes[5], vertices, indices);
                 m_translationHandle.axisZ.reset(new Model(&m_program));
-                m_translationHandle.axisZ->load(meshes[4], vertices);
+                m_translationHandle.axisZ->load(meshes[4], vertices, indices);
             }
         }
         m_handleModelsAreLoaded = true;
