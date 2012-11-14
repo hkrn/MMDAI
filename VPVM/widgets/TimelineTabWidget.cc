@@ -556,23 +556,55 @@ void TimelineTabWidget::selectMorphs(const QList<IMorph *> &morphs)
 
 void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selection)
 {
-    BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
+    TimelineTreeView *treeViewRef = m_boneTimeline->treeViewRef();
+    BoneMotionModel *bmm = static_cast<BoneMotionModel *>(treeViewRef->model());
     const QModelIndexList &indices = selection.indexes();
     if (!indices.empty()) {
+        const QModelIndex &index = indices.first();
         QModelIndexList bone;
-        bone.append(indices.first());
+        bone.append(index);
+        /* 最初に選択されたボーンのインデックスを BoneMotionModel の selectBones に伝播させる */
         bmm->selectBonesByModelIndices(bone);
+        if (index.column() == 0) {
+            QItemSelection newSelection;
+            /*
+             *上で選択された部分がカテゴリの場合は名前からボーンを経由してモデルのインデックスを検索して
+             * 現在のタイムラインのフレーム位置にあるフレームを選択状態にする
+             */
+            CString s(bmm->nameFromModelIndex(index));
+            QList<IBone *> bones; bones.append(bmm->selectedModel()->findBone(&s));
+            const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, m_boneTimeline->currentFrameIndex());
+            foreach (const QModelIndex &index, indices)
+                newSelection.append(QItemSelectionRange(index));
+            treeViewRef->selectionModel()->select(newSelection, QItemSelectionModel::ClearAndSelect);
+        }
     }
 }
 
 void TimelineTabWidget::selectMorphsByItemSelection(const QItemSelection &selection)
 {
-    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
+    TimelineTreeView *treeViewRef = m_morphTimeline->treeViewRef();
+    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(treeViewRef->model());
     const QModelIndexList &indices = selection.indexes();
     if (!indices.empty()) {
+        const QModelIndex &index = indices.first();
         QModelIndexList morph;
-        morph.append(indices.first());
+        morph.append(index);
+        /* 最初に選択されたモーフのインデックスを MorphMotionModel の selectMorphs に伝播させる */
         mmm->selectMorphsByModelIndices(morph);
+        if (index.column() == 0) {
+            QItemSelection newSelection;
+            /*
+             *上で選択された部分がカテゴリの場合は名前からモーフを経由してモデルのインデックスを検索して
+             * 現在のタイムラインのフレーム位置にあるフレームを選択状態にする
+             */
+            CString s(mmm->nameFromModelIndex(index));
+            QList<IMorph *> morphs; morphs.append(mmm->selectedModel()->findMorph(&s));
+            const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, m_morphTimeline->currentFrameIndex());
+            foreach (const QModelIndex &index, indices)
+                newSelection.append(QItemSelectionRange(index));
+            treeViewRef->selectionModel()->select(newSelection, QItemSelectionModel::ClearAndSelect);
+        }
     }
 }
 
