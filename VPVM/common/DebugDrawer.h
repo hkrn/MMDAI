@@ -339,16 +339,18 @@ private:
     }
     void flushDrawing() {
         int nindices = m_indices.size();
-        m_vbo.allocate(&m_vertices[0], nindices * sizeof(m_vertices[0]));
-        m_ibo.allocate(&m_indices[0], nindices * sizeof(m_indices[0]));
-        glDrawElements(GL_LINES, nindices, GL_UNSIGNED_INT, 0);
+        if (nindices > 0) {
+            m_vbo.allocate(&m_vertices[0], nindices * sizeof(m_vertices[0]));
+            m_ibo.allocate(&m_indices[0], nindices * sizeof(m_indices[0]));
+            glDrawElements(GL_LINES, nindices, GL_UNSIGNED_INT, 0);
+            m_program.release();
+            m_vertices.clear();
+            m_indices.clear();
+            m_index = 0;
+        }
         releaseVertexBundle(false);  // XXX: VAO doesn't work
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
-        m_program.release();
-        m_vertices.clear();
-        m_indices.clear();
-        m_index = 0;
     }
     void bindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.bind()) {
