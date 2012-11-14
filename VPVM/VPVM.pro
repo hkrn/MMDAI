@@ -1,5 +1,6 @@
 QT += core gui opengl
-QT += widgets concurrent
+greaterThan(QT_MAJOR_VERSION, 4):QT += widgets concurrent
+
 TARGET = MMDAI2
 TEMPLATE = app
 DEFINES += IS_VPVM
