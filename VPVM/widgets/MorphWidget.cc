@@ -206,9 +206,11 @@ void MorphWidget::setPMDModel(IModel *model)
             }
         }
         setEnabled(true);
+        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
         setEnabled(false);
+        qDebug("Reset MorphWidget");
     }
     m_eyesCompleterModel->setStringList(eyes);
     m_lipsCompleterModel->setStringList(lips);

@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "common/StringHelper.h"
 #include "common/util.h"
 #include "models/PMDMotionModel.h"
 
@@ -306,6 +307,7 @@ void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys 
 
 void PMDMotionModel::removePMDModel(IModel *model)
 {
+    qDebug("Removing a model from PMDMotionModel: %s", qPrintable(toQStringFromModel(m_modelRef)));
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
     m_modelRef = 0;
     /* モーションのポインタを残すとダングリングポインタと化してクラッシュするので、ゼロクリアする */
@@ -320,6 +322,7 @@ void PMDMotionModel::removePMDModel(IModel *model)
 
 void PMDMotionModel::removePMDMotion(IModel *model)
 {
+    qDebug("Removing a motion from PMDMotionModel: %s", qPrintable(toQStringFromMotion(m_motionRef)));
     /* テーブルのモデルのデータの破棄と巻き戻しスタックの破棄を行う。モーションは削除されない */
     if (m_values.contains(model))
         m_values[model].clear();

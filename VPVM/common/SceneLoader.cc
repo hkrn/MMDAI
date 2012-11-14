@@ -1649,7 +1649,7 @@ bool SceneLoader::isAssetSelected(const IModel *value) const
 
 void SceneLoader::setSelectedAsset(IModel *value)
 {
-    if (m_project) {
+    if (m_project && value != m_selectedAssetRef) {
         commitAssetProperties();
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         Project::UUIDList::const_iterator it = modelUUIDs.begin(), end = modelUUIDs.end();

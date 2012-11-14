@@ -36,6 +36,7 @@
 
 #include "ModelSettingWidget.h"
 #include "common/SceneLoader.h"
+#include "common/StringHelper.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
@@ -189,6 +190,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
             m_rz->setValue(0.0);
         }
         setEnabled(true);
+        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
         m_edgeOffsetSpinBox->setValue(0.0f);
@@ -201,6 +203,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_ry->setValue(0.0);
         m_rz->setValue(0.0);
         setEnabled(false);
+        qDebug("Reset ModelSettingWidget");
     }
     enableSignals();
 }

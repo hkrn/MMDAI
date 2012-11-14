@@ -158,6 +158,7 @@ void AssetWidget::addAsset(IModel *asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
     const QString &name = toQStringFromModel(asset);
+    qDebug("Added an asset to AssetWidget: %s", qPrintable(name));
     m_assets.append(asset);
     m_assetComboBox->addItem(name);
     m_assetComboBox->setCurrentIndex(m_assetComboBox->count() - 1);
@@ -178,6 +179,7 @@ void AssetWidget::removeAsset(IModel *asset)
         m_assetCompleterModel->setStringList(assetNames);
         if (m_assets.count() == 0)
             setEnable(false);
+        qDebug("Removed an asset from AssetWidget: %s", qPrintable(toQStringFromModel(asset)));
     }
 }
 
@@ -191,6 +193,7 @@ void AssetWidget::addModel(IModel *model)
     m_modelComboBox->addItem(toQStringFromModel(model));
     if (model->type() == IModel::kAsset)
         addAsset(model);
+    qDebug("Added a model to AssetWidget: %s", qPrintable(toQStringFromModel(model)));
 }
 
 void AssetWidget::removeModel(IModel *model)
@@ -205,13 +208,19 @@ void AssetWidget::removeModel(IModel *model)
     }
     if (model->type() == IModel::kAsset)
         removeAsset(model);
+    qDebug("Removed a model from AssetWidget: %s", qPrintable(toQStringFromModel(model)));
 }
 
 void AssetWidget::deleteCurrentAsset()
 {
-    /* シグナルを通じて SceneLoader#deleteModel を呼び出して削除する */
-    removeAsset(m_currentAssetRef);
-    emit assetDidRemove(m_currentAssetRef);
+    /*
+     * シグナルを通じて SceneLoader#deleteModel を呼び出して削除する
+     * また、削除過程で m_currentAssetRef が変更されてしまうため削除するモデルのポインタを保存しておく
+     * (そのまま m_currentAssetRef を渡してしまうと m_currentAssetRef が別の値に変わり別のアクセサリも削除されてしまう)
+     */
+    IModel *currentAssetRef = m_currentAssetRef;
+    removeAsset(currentAssetRef);
+    emit assetDidRemove(currentAssetRef);
 }
 
 void AssetWidget::changeCurrentAsset(int index)

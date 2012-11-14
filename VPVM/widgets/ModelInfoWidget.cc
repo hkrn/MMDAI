@@ -158,6 +158,7 @@ void ModelInfoWidget::setModel(IModel *model)
         m_morphsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMorph)));
         m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kRigidBody)));
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kJoint)));
+        qDebug("Set a model to ModelInfoWidget: %s", qPrintable(toQStringFromModel(model)));
     }
     else {
         m_nameValueLabel->setText("N/A");
@@ -170,6 +171,7 @@ void ModelInfoWidget::setModel(IModel *model)
         m_morphsCountValueLabel->setText("0");
         m_rigidBodiesCountValueLabel->setText("0");
         m_constrantsCountValueLabel->setText("0");
+        qDebug("Reset ModelInfoWidget");
     }
 }
 
