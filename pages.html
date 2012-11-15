@@ -1,0 +1,13 @@
+---
+layout: page
+title: ページ
+header: ページ
+group: navigation
+---
+{% include JB/setup %}
+
+<h2>全てのページ</h2>
+<ul>
+{% assign pages_list = site.pages %}
+{% include JB/pages_list %}
+</ul>

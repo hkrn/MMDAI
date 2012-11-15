@@ -1,0 +1,45 @@
+permalink: /:categories/:year/:month/:day/:title 
+
+exclude: [".rvmrc", ".rbenv-version", "README.md", "Rakefile", "changelog.md"]
+auto: true
+pygments: true
+
+title : MMDAI Project Portal2
+tagline:
+author :
+  name : hkrn
+  github : hkrn
+  twitter : shimacpyon
+
+production_url : http://hkrn.github.com/mmdai
+JB :
+  version : 0.2.13
+  BASE_PATH : "http://hkrn.github.com/mmdai"
+  ASSET_PATH : false
+  archive_path: /archive.html
+  categories_path : /categories.html
+  tags_path : /tags.html
+  comments :
+    provider : disqus
+    disqus :
+      short_name : jekyllbootstrap
+    livefyre :
+      site_id : 123
+    intensedebate :
+      account : 123abc
+    facebook :
+      appid : 123
+      num_posts: 5
+      width: 580
+      colorscheme: light
+  analytics :
+    provider : google 
+    google : 
+        tracking_id : 'UA-123-12'
+    getclicky :
+      site_id : 
+    mixpanel :
+        token : '_MIXPANEL_TOKEN_'
+  sharing :
+    provider : false
+

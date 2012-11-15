@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vpvm:project version="0.1" xmlns:vpvm="https://github.com/hkrn/MMDAI/">
+ <vpvm:settings>
+  <vpvm:value dummy="dummy" name="height"><![CDATA[480]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="preferredFPS"><![CDATA[30]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="showGrid"><![CDATA[true]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="showInformation"><![CDATA[true]]></vpvm:value>
+  <vpvm:value dummy="dummy" name="width"><![CDATA[640]]></vpvm:value>
+ </vpvm:settings>
+ <vpvm:physics dummy="dummy" enabled="true"/>
+ <vpvm:models>
+  <!-- null model to test handling correctly -->
+  <vpvm:model dummy="dummy" uuid="{00000000-0000-0000-0000-000000000000}" />
+  <!-- duplicated dummy model to test memory leak -->
+  <vpvm:model dummy="dummy" uuid="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}" />
+  <vpvm:model dummy="dummy" uuid="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}">
+   <vpvm:value dummy="dummy" name="name"><![CDATA[foo]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[model:/foo/bar/baz]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="edge"><![CDATA[1.0]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="position"><![CDATA[1,2,3]]></vpvm:value>
+  </vpvm:model>
+  <vpvm:model dummy="dummy" uuid="{B18ACADC-89FD-4945-9192-8E8FBC849E52}">
+   <vpvm:value dummy="dummy" name="name"><![CDATA[bar]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[model:/baz/bar/foo]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="edge"><![CDATA[0.5]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="position"><![CDATA[3,2,1]]></vpvm:value>
+  </vpvm:model>
+ </vpvm:models>
+ <vpvm:assets>
+  <!-- null asset to test handling correctly -->
+  <vpvm:asset dummy="dummy" uuid="{00000000-0000-0000-0000-000000000000}" />
+  <!-- duplicated dummy asset to test memory leak -->
+  <vpvm:asset dummy="dummy" uuid="{EEBC6A85-F333-429A-ADF8-B6188908A517}" />
+  <vpvm:asset dummy="dummy" uuid="{EEBC6A85-F333-429A-ADF8-B6188908A517}">
+   <vpvm:value dummy="dummy" name="name"><![CDATA[foo]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[asset:/foo/bar/baz]]></vpvm:value>
+  </vpvm:asset>
+  <vpvm:asset dummy="dummy" uuid="{D4403C60-3D6C-4051-9B28-51DEFE021F59}">
+   <vpvm:value dummy="dummy" name="name"><![CDATA[bar]]></vpvm:value>
+   <vpvm:value dummy="dummy" name="uri"><![CDATA[asset:/baz/bar/foo]]></vpvm:value>
+  </vpvm:asset>
+ </vpvm:assets>
+ <vpvm:motions>
+  <!-- null motion to test handling correctly -->
+  <vpvm:motion dummy="dummy" uuid="{00000000-0000-0000-0000-000000000000}" />
+  <!-- duplicated dummy motion to test memory leak -->
+  <vpvm:motion dummy="dummy" uuid="{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}" model="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}" /> <!-- duplicated motion -->
+  <vpvm:motion dummy="dummy" uuid="{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}" model="{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}">
+   <vpvm:animation dummy="dummy" type="bone">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" position="1,2,3" rotation="1,2,3,4" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" position="3,1,2" rotation="4,3,2,1" ik="false" interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="morph">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" weight="0.00"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" weight="1.00"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="camera">
+    <vpvm:keyframe dummy="dummy" index="1" position="1,2,3" angle="1,2,3" fovy="15" distance="150" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24"/>
+    <vpvm:keyframe dummy="dummy" index="2" position="3,1,2" angle="3,1,2" fovy="30" distance="300" interpolation="24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="light">
+    <vpvm:keyframe dummy="dummy" index="1" color="1,2,3" direction="1,2,3"/>
+    <vpvm:keyframe dummy="dummy" index="2" color="3,1,2" direction="3,1,2"/>
+   </vpvm:animation>
+  </vpvm:motion>
+  <vpvm:motion dummy="dummy" uuid="{481E1B4E-FC24-4D61-841D-C8AB7CF1096D}" model="{B18ACADC-89FD-4945-9192-8E8FBC849E52}" type="mvd">
+   <vpvm:animation dummy="dummy" type="bone">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" layer="0" position="1,2,3" rotation="1,2,3,4" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" layer="1" position="3,1,2" rotation="4,3,2,1" ik="false" interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="morph">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" weight="0.00"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" weight="1.00"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="camera">
+    <vpvm:keyframe dummy="dummy" index="1" layer="0" position="1,2,3" angle="1,2,3" fovy="15" distance="150" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+    <vpvm:keyframe dummy="dummy" index="2" layer="1" position="3,1,2" angle="3,1,2" fovy="30" distance="300" interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="light">
+    <vpvm:keyframe dummy="dummy" index="1" color="1,2,3" direction="1,2,3"/>
+    <vpvm:keyframe dummy="dummy" index="2" color="3,1,2" direction="3,1,2"/>
+   </vpvm:animation>
+  </vpvm:motion>
+  <vpvm:motion dummy="dummy" uuid="{766CF45D-DE91-4387-9704-4B3D5B1414DC}" model="{D4403C60-3D6C-4051-9B28-51DEFE021F59}" type="vmd">
+   <vpvm:animation dummy="dummy" type="bone">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" position="1,2,3" rotation="1,2,3,4" interpolation="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" position="3,1,2" rotation="4,3,2,1" ik="false" interpolation="16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="morph">
+    <vpvm:keyframe dummy="dummy" name="bar" index="1" weight="0.00"/>
+    <vpvm:keyframe dummy="dummy" name="baz" index="2" weight="1.00"/>
+   </vpvm:animation>
+
+  </vpvm:motion>
+ </vpvm:motions>
+</vpvm:project>
+
