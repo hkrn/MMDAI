@@ -11,10 +11,10 @@ author :
   github : hkrn
   twitter : shimacpyon
 
-production_url : http://hkrn.github.com/mmdai
+production_url : http://hkrn.github.com/MMDAI
 JB :
   version : 0.2.13
-  BASE_PATH : "http://hkrn.github.com/mmdai"
+  BASE_PATH : "http://hkrn.github.com/MMDAI"
   ASSET_PATH : false
   archive_path: /archive.html
   categories_path : /categories.html
