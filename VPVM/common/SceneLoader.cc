@@ -1902,6 +1902,11 @@ void SceneLoader::emitMotionDidAdd(const Array<IMotion *> &motions, IModel *mode
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
         if (motion->parentModel() == model) {
+            /*
+             * プロジェクト読み込み時点では仕様上インスタンス化のみで実際にモデルを読み込んだ状態ではないので、
+             * ここでモーションに親のモデルを設定してモーションを再度読み込みし直す必要がある
+             */
+            motion->setParentModel(model);
             const Project::UUID &motionUUIDString = m_project->motionUUID(motion);
             const QUuid motionUUID(motionUUIDString.c_str());
             emit motionDidAdd(motion, model, motionUUID);

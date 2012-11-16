@@ -1552,6 +1552,12 @@ struct Project::PrivateContext {
                     sceneRef->removeMotion(it->second);
                     delete it->second;
                 }
+                if (!parentModel.empty()) {
+                    ModelMap::const_iterator it = models.find(parentModel);
+                    if (it != models.end()) {
+                        currentMotion->setParentModel(it->second);
+                    }
+                }
                 motions.insert(std::make_pair(uuid, currentMotion));
                 sceneRef->addMotion(currentMotion);
             }
