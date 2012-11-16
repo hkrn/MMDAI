@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl2/Common.h>
+#include <vpvl2/IMaterial.h>
 
 #ifdef VPVL2_LINK_INTEL_TBB
 #include <tbb/tbb.h>
@@ -85,7 +86,8 @@ public:
         Vector3 aabbMin(m_aabbMin), aabbMax(m_aabbMax), position;
         for (int i = range.begin(); i != range.end(); ++i) {
             const TVertex *vertex = m_verticesRef->at(i);
-            const float materialEdgeSize = vertex->material()->edgeSize() * m_edgeScaleFactor;
+            const IMaterial *material = vertex->material();
+            const float materialEdgeSize = (material ? material->edgeSize() : 0) * m_edgeScaleFactor;
             TUnit &v = m_bufferPtr[i];
             v.update(vertex, materialEdgeSize, i, position);
             aabbMin.setMin(position);
