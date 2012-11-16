@@ -260,6 +260,8 @@ void SceneWidget::loadProject(const QString &filename)
     m_background->setImage(m_loader->backgroundImage());
     m_background->setImagePosition(m_loader->backgroundImagePosition());
     m_background->setUniformEnable(m_loader->isBackgroundImageUniformEnabled());
+    /* ハンドルの遅延読み込み */
+    m_handles->loadModelHandles();
     m_enableUpdateGL = true;
     seekMotion(0, true, true);
     startAutomaticRendering();
