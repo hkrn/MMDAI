@@ -247,7 +247,6 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   set(vpvl2qtcommon_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Archive.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h
-							${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/DebugDrawer.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h
 							${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/TextureDrawHelper.h
