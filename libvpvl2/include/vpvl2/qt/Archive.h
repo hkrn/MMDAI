@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_QT_ARCHIVE_H
-#define VPVL2_QT_ARCHIVE_H
+#ifndef VPVL2_QT_ARCHIVE_H_
+#define VPVL2_QT_ARCHIVE_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/qt/unzip.h"
@@ -84,7 +84,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
 };
 
-}
-}
+} /* namespace qt */
+} /* namespace vpvl2 */
 
-#endif // ARCHIVE_H
+#endif // VPVL2_QT_ARCHIVE_H_

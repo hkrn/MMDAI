@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_QT_DELEGATE_H_
-#define VPVL2_QT_DELEGATE_H_
+#ifndef VPVL2_QT_RENDERCONTEXT_H_
+#define VPVL2_QT_RENDERCONTEXT_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
@@ -215,7 +215,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
 };
 
-}
-}
+} /* namespace qt */
+} /* namespace vpvl2 */
 
-#endif
+#endif /* VPVL2_QT_RENDERCONTEXT_H_ */

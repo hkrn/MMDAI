@@ -39,10 +39,12 @@
 
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
-#include "TextureDrawHelper.h"
+#include <vpvl2/qt/TextureDrawHelper.h>
 #include "util.h"
 
 namespace vpvm {
+
+using namespace vpvl2::qt;
 
 class InfoPanel
 {

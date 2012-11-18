@@ -74,7 +74,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(Encoding)
 };
 
-}
-}
+} /* namespace qt */
+} /* namespace vpvl2 */
 
-#endif
+#endif /* VPVL2_QT_ENCODING_H_ */

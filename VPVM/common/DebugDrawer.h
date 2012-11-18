@@ -37,10 +37,11 @@
 #ifndef VPVM_DEBUGDRAWER_H_
 #define VPVM_DEBUGDRAWER_H_
 
-#include "vpvl2/qt/CString.h"
+#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/VertexBundle.h>
+
 #include "SceneLoader.h"
 #include "SceneWidget.h"
-#include "VertexBundle.h"
 #include "util.h"
 
 #include <QtCore/QObject>

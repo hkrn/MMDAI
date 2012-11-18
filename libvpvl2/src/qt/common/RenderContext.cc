@@ -36,7 +36,6 @@
 
 #include "vpvl2/qt/Archive.h"
 #include "vpvl2/qt/CString.h"
-#include "vpvl2/qt/DDSTexture.h"
 #include "vpvl2/qt/RenderContext.h"
 #include "vpvl2/qt/Util.h"
 

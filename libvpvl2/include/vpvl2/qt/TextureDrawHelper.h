@@ -34,19 +34,20 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVM_TEXTUREDRAWHELPER_H
-#define VPVM_TEXTUREDRAWHELPER_H
+#ifndef VPVL2_QT_TEXTUREDRAWHELPER_H_
+#define VPVL2_QT_TEXTUREDRAWHELPER_H_
 
 #include <QtOpenGL/QGLBuffer>
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
 #include <vpvl2/IModel.h>
 
-#include "VertexBundle.h"
+#include "vpvl2/qt/VertexBundle.h"
 
-namespace vpvm {
-
-using namespace vpvl2;
+namespace vpvl2
+{
+namespace qt
+{
 
 class TextureDrawHelper : protected QGLFunctions
 {
@@ -159,13 +160,14 @@ private:
         }
     }
 
-    QGLShaderProgram m_program;
     VertexBundle m_bundle;
+    QGLShaderProgram m_program;
     QGLBuffer m_dvbo;
     QGLBuffer m_svbo;
     QSize m_size;
 };
 
-} /* namespace vpvm */
+} /* namespace qt */
+} /* namespace vpvl2 */
 
-#endif // TEXTUREDRAWHELPER_H
+#endif // VPVL2_QT_TEXTUREDRAWHELPER_H

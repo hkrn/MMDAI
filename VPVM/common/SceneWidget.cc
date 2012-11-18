@@ -40,6 +40,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/World.h>
 
 #include "SceneWidget.h"
@@ -51,7 +52,6 @@
 #include "Handles.h"
 #include "InfoPanel.h"
 #include "SceneLoader.h"
-#include "TextureDrawHelper.h"
 #include "util.h"
 
 #include <QtGui/QtGui>

@@ -43,13 +43,14 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/qt/VertexBundle.h>
 
 #include "SceneLoader.h"
-#include "VertexBundle.h"
 
 namespace vpvm {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 class Grid {
 public:

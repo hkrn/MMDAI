@@ -39,9 +39,11 @@
 
 #include <QtGui/QImage>
 #include <QtOpenGL/QtOpenGL>
-#include "TextureDrawHelper.h"
+#include <vpvl2/qt/TextureDrawHelper.h>
 
 namespace vpvm {
+
+using namespace vpvl2::qt;
 
 class BackgroundImage {
 public:

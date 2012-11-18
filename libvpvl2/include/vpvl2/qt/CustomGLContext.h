@@ -57,5 +57,5 @@ protected:
 } /* namespace qt */
 } /* namespace vpvl2 */
 
-#endif
+#endif /* VPVL2_QT_CUSTOMGLCONTEXT_H_ */
 

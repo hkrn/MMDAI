@@ -201,7 +201,6 @@ HEADERS  += \
     common/Application.h \
     common/VPDFile.h \
     common/InfoPanel.h \
-    common/DebugDrawer.h \
     common/LoggerWidget.h \
     common/StringHelper.h \
     models/MotionBaseModel.h \
@@ -230,7 +229,6 @@ HEADERS  += \
     widgets/ModelInfoWidget.h \
     video/VideoEncoder.h \
     ScenePlayer.h \
-    common/TextureDrawHelper.h \
     dialogs/GravitySettingDialog.h \
     video/AudioDecoder.h \
     video/AVCommon.h \
@@ -242,8 +240,7 @@ HEADERS  += \
     widgets/ModelSettingWidget.h \
     dialogs/ShadowMapSettingDialog.h \
     common/BackgroundImage.h \
-    dialogs/BackgroundImageSettingDialog.h \
-    common/VertexBundle.h
+    dialogs/BackgroundImageSettingDialog.h
 
 CODECFORTR = UTF-8
 RESOURCES += resources/VPVM.qrc

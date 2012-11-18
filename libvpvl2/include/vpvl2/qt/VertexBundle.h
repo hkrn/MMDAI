@@ -34,12 +34,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVM_VERTEXARRAY_H
-#define VPVM_VERTEXARRAY_H
+#ifndef VPVL2_QT_VERTEXARRAY_H_
+#define VPVL2_QT_VERTEXARRAY_H_
 
 #include <QtOpenGL/QtOpenGL>
 
-namespace vpvm
+namespace vpvl2
+{
+namespace qt
 {
 
 class VertexBundle {
@@ -143,6 +145,7 @@ private:
     GLuint m_name;
 };
 
-} /* namespace vpvm */
+} /* namespace qt */
+} /* namespace vpvl2 */
 
-#endif // VPVM_VERTEXARRAY_H
+#endif // VPVL2_QT_VERTEXARRAY_H_

@@ -40,15 +40,18 @@
 #include <QtOpenGL/QtOpenGL>
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
-#include "VertexBundle.h"
 
 #include <vpvl2/Common.h>
+#include <vpvl2/qt/VertexBundle.h>
 #include <assimp.hpp>
 #include <aiMesh.h>
 
 namespace vpvl2 {
 class IBone;
 class IModel;
+namespace qt {
+class TextureDrawHelper;
+}
 }
 
 class btBvhTriangleMeshShape;
@@ -60,8 +63,8 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 class SceneLoader;
-class TextureDrawHelper;
 
 class Handles : public QObject
 {

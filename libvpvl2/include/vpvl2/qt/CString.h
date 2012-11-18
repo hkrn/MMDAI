@@ -72,7 +72,7 @@ private:
 
 };
 
-}
-}
+} /* namespace qt */
+} /* namespace vpvl2 */
 
-#endif
+#endif /* VPVL2_QT_CSTRING_H_ */
