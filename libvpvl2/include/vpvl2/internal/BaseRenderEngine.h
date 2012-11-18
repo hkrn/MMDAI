@@ -96,37 +96,48 @@ protected:
 #ifdef __APPLE__
         static const char *kBindVertexArray[] = {
             "glBindVertexArrayAPPLE",
+            "glBindVertexArrayOES",
             0
         };
         static const char *kDeleteVertexArrays[] = {
             "glDeleteVertexArraysAPPLE",
+            "glDeleteVertexArraysOES",
             0
         };
         static const char *kGenVertexArrays[] = {
             "glGenVertexArraysAPPLE",
+            "glGenVertexArraysOES",
             0
         };
 #else
         static const char *kBindVertexArray[] = {
             "glBindVertexArray",
+            "glBindVertexArrayOES",
+            "glBindVertexArrayEXT",
             0
         };
         static const char *kDeleteVertexArrays[] = {
             "glDeleteVertexArrays",
+            "glDeleteVertexArraysOES",
+            "glDeleteVertexArraysEXT",
             0
         };
         static const char *kGenVertexArrays[] = {
             "glGenVertexArrays",
+            "glGenVertexArraysEXT",
+            "glGenVertexArraysOES",
             0
         };
 #endif
         static const char *kMapBuffer[] = {
             "glMapBuffer",
+            "glMapBufferOES",
             "glMapBufferARB",
             0
         };
         static const char *kUnmapBuffer[] = {
             "glUnmapBuffer",
+            "glUnmapBufferOES",
             "glUnmapBufferARB",
             0
         };
