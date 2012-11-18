@@ -52,7 +52,7 @@ public:
           m_backgroundTexture(0),
           m_uniformImage(false)
     {
-        m_backgroundDrawer->load();
+        m_backgroundDrawer->load(QDir(":shaders"));
     }
     ~BackgroundImage() {
         glDeleteTextures(1, &m_backgroundTexture);

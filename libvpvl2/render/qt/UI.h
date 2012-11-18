@@ -54,12 +54,15 @@ class IMotion;
 namespace qt
 {
 class RenderContext;
+class TextureDrawHelper;
 }
 
 namespace render
 {
 namespace qt
 {
+
+using namespace vpvl2::qt;
 
 class UI : public QGLWidget, protected QGLFunctions
 {
@@ -98,25 +101,26 @@ private:
     IMotion *addMotion(const QString &path, IModel *model);
     IMotion *loadMotion(const QString &path, IModel *model);
 
-    QSettings *m_settings;
+    QScopedPointer<QSettings> m_settings;
+    QScopedPointer<World> m_world;
+    QScopedPointer<RenderContext> m_delegate;
+    QScopedPointer<Scene> m_scene;
+    QScopedPointer<Factory> m_factory;
+    QScopedPointer<ShadowMap> m_sm;
+    QScopedPointer<IEncoding> m_encoding;
+    QScopedPointer<TextureDrawHelper> m_helper;
     QBasicTimer m_updateTimer;
     QElapsedTimer m_refreshTimer;
     QPoint m_prevPos;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;
-    ShadowMap *m_sm;
-    vpvl2::qt::Encoding::Dictionary m_dictionary;
-    vpvl2::qt::World *m_world;
-    vpvl2::qt::RenderContext *m_delegate;
-    vpvl2::Scene *m_scene;
-    Factory *m_factory;
-    IEncoding *m_encoding;
+    Encoding::Dictionary m_dictionary;
     float m_prevElapsed;
     float m_currentFrameIndex;
 };
 
-}
-}
-}
+} /* namespace qt */
+} /* namespace render */
+} /* namespace vpvl2 */
 
 #endif

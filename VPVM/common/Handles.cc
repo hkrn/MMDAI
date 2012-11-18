@@ -317,7 +317,7 @@ Handles::~Handles()
 
 void Handles::loadImageHandles()
 {
-    m_helper->load();
+    m_helper->load(QDir(":shaders"));
     QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
     m_x.enableMove.load(":icons/x-enable-move.png", context);
     m_x.enableRotate.load(":icons/x-enable-rotate.png", context);

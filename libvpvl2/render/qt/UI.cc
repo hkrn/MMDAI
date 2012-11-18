@@ -36,10 +36,11 @@
 
 #include "UI.h"
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/CustomGLContext.h>
-#include <vpvl2/qt/RenderContext.h>
-#include <vpvl2/qt/Encoding.h>
 #include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/CustomGLContext.h>
+#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
 #include <QtCore/QtCore>
@@ -443,20 +444,13 @@ private:
 
 UI::UI(const QGLFormat &format)
     : QGLWidget(new CustomGLContext(format), 0),
-      m_settings(0),
-      m_sm(0),
-      m_world(0),
-      m_delegate(0),
-      m_scene(0),
-      m_factory(0),
-      m_encoding(0),
+      m_world(new World()),
+      m_scene(new Scene()),
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {
-    m_world = new World();
-    m_scene = new Scene();
-    setMinimumSize(320, 240);
     setMouseTracking(true);
+    setWindowTitle("MMDAI2 rendering test program with Qt");
 }
 
 UI::~UI()
@@ -465,35 +459,27 @@ UI::~UI()
     Assimp::DefaultLogger::kill();
 #endif
     qDeleteAll(m_dictionary);
-    delete m_delegate;
-    m_delegate = 0;
-    delete m_factory;
-    m_factory = 0;
-    delete m_encoding;
-    m_encoding = 0;
-    delete m_scene;
-    m_scene = 0;
-    delete m_world;
-    m_world = 0;
-    delete m_sm;
-    m_sm = 0;
 }
 
 void UI::load(const QString &filename)
 {
-    m_settings = new QSettings(filename, QSettings::IniFormat, this);
+    m_settings.reset(new QSettings(filename, QSettings::IniFormat, this));
     m_settings->setIniCodec("UTF-8");
-    UIBuildConstantsDictionary(m_settings, m_dictionary);
-    m_encoding = new Encoding(m_dictionary);
-    m_factory = new Factory(m_encoding);
+    UIBuildConstantsDictionary(m_settings.data(), m_dictionary);
+    m_encoding.reset(new Encoding(m_dictionary));
+    m_factory.reset(new Factory(m_encoding.data()));
     QHash<QString, QString> settings;
     foreach (const QString &key, m_settings->allKeys()) {
         settings.insert(key, m_settings->value(key).toString());
     }
-    m_delegate = new RenderContext(settings, m_scene, this);
+    const QSize s(m_settings->value("window.width", 960).toInt(), m_settings->value("window.height", 640).toInt());
+    const QSize &margin = qApp->desktop()->screenGeometry().size() - s;
+    move((margin / 2).width(), (margin / 2).height());
+    resize(s);
+    setMinimumSize(640, 480);
+    m_delegate.reset(new RenderContext(settings, m_scene.data(), this));
     m_delegate->initialize(m_settings->value("effect.msaa", true).toBool());
     m_delegate->updateMatrices(size());
-    resize(m_settings->value("window.width", 640).toInt(), m_settings->value("window.height", 480).toInt());
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
     if (m_settings->value("enable.opencl", false).toBool())
         m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
@@ -505,7 +491,10 @@ void UI::load(const QString &filename)
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
-    m_sm = new ShadowMap(1024, 1024);
+    m_sm.reset(new ShadowMap(1024, 1024));
+    m_helper.reset(new TextureDrawHelper(size()));
+    m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
+    m_helper->resize(size());
     if (m_settings->value("enable.sm", false).toBool()) {
         m_sm->create();
         light->setDepthTextureSize(m_sm->size());
@@ -631,6 +620,8 @@ void UI::wheelEvent(QWheelEvent *event)
 void UI::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
+    if (m_helper)
+        m_helper->resize(QSize(w, h));
 }
 
 void UI::paintGL()
@@ -644,6 +635,8 @@ void UI::paintGL()
     renderDepth();
     renderOffscreen();
     renderWindow();
+    if (const GLuint *bufferRef = static_cast<GLuint *>(m_sm->bufferRef()))
+        m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
 }
 
 void UI::renderDepth()
@@ -651,7 +644,7 @@ void UI::renderDepth()
     if (m_scene->light()->depthTexture()) {
         m_sm->bind();
         Vector3 target(0, 10, 0);
-        Scalar maxRadius = 0;
+        Scalar maxRadius = 50;
         const Array<IRenderEngine *> &engines = m_scene->renderEngines();
         const Array<IModel *> &models = m_scene->models();
         const int nengines = engines.count();
@@ -669,6 +662,7 @@ void UI::renderDepth()
                 }
             }
         }
+        /*
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
             if (model->isVisible()) {
@@ -678,17 +672,16 @@ void UI::renderDepth()
                 btSetMax(maxRadius, d);
             }
         }
+        */
         const Vector3 &size = m_sm->size();
         const Scalar &angle = 45;
         const Scalar &aspectRatio = size.x() / size.y();
-        const Scalar &distance = maxRadius / btSin(btRadians(angle) * 0.5);
-        const Scalar &margin = 50;
         const Vector3 &eye = -m_scene->light()->direction().normalized() * maxRadius + target;
         QMatrix4x4 lightViewMatrix, lightProjectionMatrix;
         lightViewMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
                                QVector3D(target.x(), target.y(), target.z()),
                                QVector3D(0, 1, 0));
-        lightProjectionMatrix.perspective(angle, aspectRatio, 1, distance + maxRadius + margin);
+        lightProjectionMatrix.perspective(angle, aspectRatio, 1, 10000);
         m_delegate->setLightMatrices(QMatrix4x4(), lightViewMatrix, lightProjectionMatrix);
         glViewport(0, 0, size.x(), size.y());
         glClearColor(1, 1, 1, 1);
@@ -848,7 +841,8 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     }
     m_delegate->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate, &RenderContext::createEffectAsync, modelPtr.data(), &s1);
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate.data(),
+                                                          &RenderContext::createEffectAsync, modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IEffect *effect = future2.result();
@@ -868,7 +862,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     Q_UNUSED(effect)
 #endif
     IModel *model = 0;
-    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_delegate, modelPtr.data(), flags));
+    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_delegate.data(), modelPtr.data(), flags));
     if (enginePtr->upload(&s1)) {
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         if (m_settings->value("enable.physics", true).toBool())

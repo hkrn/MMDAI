@@ -62,11 +62,11 @@ public:
     ~TextureDrawHelper() {
     }
 
-    void load() {
+    void load(const QDir &dir, const QRectF &baseTexCoord = QRectF(0.0, 0.0, 1.0, -1.0)) {
         initializeGLFunctions();
         m_bundle.initialize(QGLContext::currentContext());
-        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/texture.vsh");
-        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/texture.fsh");
+        m_program.addShaderFromSourceFile(QGLShader::Vertex, dir.absoluteFilePath("texture.vsh"));
+        m_program.addShaderFromSourceFile(QGLShader::Fragment, dir.absoluteFilePath("texture.fsh"));
         m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
         m_program.bindAttributeLocation("inTexCoord", IModel::IBuffer::kTextureCoordStride);
         m_program.link();
@@ -81,7 +81,7 @@ public:
         m_svbo.create();
         m_svbo.bind();
         QVector2D texcoord[4];
-        setVertices2D(QRectF(0.0, 0.0, 1.0, -1.0), texcoord);
+        setVertices2D(baseTexCoord, texcoord);
         m_svbo.allocate(&texcoord[0], sizeof(texcoord));
         m_svbo.release();
         m_bundle.create();
