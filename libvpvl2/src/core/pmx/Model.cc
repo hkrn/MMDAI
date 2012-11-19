@@ -250,11 +250,13 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const Array<pmx::Vertex *> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-#ifdef VPVL2_LINK_INTEL_TBB
-            ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, address);
+#if defined(VPVL2_LINK_INTEL_TBB)
+            ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
             tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
             aabbMin = proc.aabbMin();
             aabbMax = proc.aabbMax();
+#elif defined(VPVL2_ENABLE_OPENMP)
+            internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
 #else
             const Array<pmx::Material *> &materials = modelRef->materials();
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
@@ -278,9 +280,11 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
 #endif
         }
         else {
-#ifdef VPVL2_LINK_INTEL_TBB
+#if defined(VPVL2_LINK_INTEL_TBB)
             tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
                               ParallelInitializeVertexProcessor(&modelRef->vertices(), address));
+#elif defined(VPVL2_ENABLE_OPENMP)
+            internal::InitializeModelVerticesOMP(vertices, bufferPtr);
 #else
             const int nvertices = vertices.count();
             for (int i = 0; i < nvertices; i++) {

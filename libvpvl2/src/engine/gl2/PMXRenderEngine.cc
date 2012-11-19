@@ -504,8 +504,8 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *context,
       m_accelerator(accelerator),
       m_modelRef(modelRef),
       m_context(0),
-      m_aabbMin(kZeroV3),
-      m_aabbMax(kZeroV3)
+      m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
+      m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY)
 {
     bool vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
     m_context = new PrivateContext(modelRef, vss);

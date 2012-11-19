@@ -49,7 +49,8 @@ CONFIG(debug, debug|release) {
                       $${PORTAUDIO_PATH}/debug_native/include
   # should not change link order because of static library link order
   LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
-  INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include
+  INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include \
+                      $${PORTAUDIO_PATH}/debug_native/include
 }
 CONFIG(release, debug|release) {
   unix:LIBS        += -L$${ASSIMP_PATH}/release/code \
@@ -62,7 +63,8 @@ CONFIG(release, debug|release) {
   unix:INCLUDEPATH += $${VPVL2_PATH}/release/include
   # should not change link order because of static library link order
   LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
-  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include
+  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
+                      $${PORTAUDIO_PATH}/release_native/include
 }
 
 # Required libraries

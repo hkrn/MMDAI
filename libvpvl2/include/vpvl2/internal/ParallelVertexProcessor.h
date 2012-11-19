@@ -47,6 +47,65 @@ namespace vpvl2
 namespace internal
 {
 
+#ifdef VPVL2_ENABLE_OPENMP
+static inline bool GreaterOMP(const Vector3 &left, const Vector3 &right)
+{
+    return left.x() < right.x() ||  left.y() < right.y() || left.z() < right.z();
+}
+
+static inline bool LessOMP(const Vector3 &left, const Vector3 &right)
+{
+    return left.x() > right.x() ||  left.y() > right.y() || left.z() > right.z();
+}
+
+template<typename TModel, typename TVertex, typename TUnit>
+static void UpdateModelVerticesOMP(const TModel *modelRef,
+                                   const Array<TVertex *> &verticesRef,
+                                   const Vector3 &cameraPosition,
+                                   TUnit *bufferPtr)
+{
+    const int edgeScaleFactor = modelRef->edgeScaleFactor(cameraPosition);
+    const int nvertices = verticesRef.count();
+    Vector3 position, aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
+            aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
+#pragma omp parallel for
+    for (int i = 0; i < nvertices; ++i) {
+        const TVertex *vertex = verticesRef[i];
+        const IMaterial *material = vertex->material();
+        const float materialEdgeSize = (material ? material->edgeSize() : 0) * edgeScaleFactor;
+        TUnit &v = bufferPtr[i];
+        v.update(vertex, materialEdgeSize, i, position);
+#pragma omp flush(aabbMin)
+        if (LessOMP(aabbMin, position)) {
+#pragma omp critical
+            {
+                aabbMin.setMin(position);
+            }
+        }
+#pragma omp flush(aabbMax)
+        if (GreaterOMP(aabbMax, position)) {
+#pragma omp critical
+            {
+                aabbMax.setMax(position);
+            }
+        }
+    }
+}
+
+template<typename TVertex, typename TUnit>
+static void InitializeModelVerticesOMP(const Array<TVertex *> &verticesRef,
+                                       TUnit *bufferPtr)
+{
+    const int nvertices = verticesRef.count();
+#pragma omp parallel for
+    for (int i = 0; i < nvertices; ++i) {
+        const TVertex *vertex = verticesRef[i];
+        TUnit &v = bufferPtr[i];
+        v.update(vertex, i);
+    }
+}
+#endif
+
 template<typename TModel, typename TVertex, typename TUnit>
 class ParallelSkinningVertexProcessor {
 public:
@@ -56,8 +115,8 @@ public:
                                     void *address)
         : m_verticesRef(verticesRef),
           m_edgeScaleFactor(modelRef->edgeScaleFactor(cameraPosition)),
-          m_aabbMin(kZeroV3),
-          m_aabbMax(kZeroV3),
+          m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
+          m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
           m_bufferPtr(static_cast<TUnit *>(address))
     {
     }
@@ -73,8 +132,8 @@ public:
     ParallelSkinningVertexProcessor(const ParallelSkinningVertexProcessor &self, tbb::split split)
         : m_verticesRef(self.m_verticesRef),
           m_edgeScaleFactor(self.m_edgeScaleFactor),
-          m_aabbMin(kZeroV3),
-          m_aabbMax(kZeroV3),
+          m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
+          m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
           m_bufferPtr(self.m_bufferPtr)
     {
     }
