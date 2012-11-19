@@ -37,11 +37,17 @@
 #ifndef VPVL2_QT_WORLD_H_
 #define VPVL2_QT_WORLD_H_
 
+#include <QtCore/QScopedPointer>
 #include <vpvl2/Common.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
 
-#include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
+
+class btCollisionDispatcher;
+class btDbvtBroadphase;
+class btRigidBody;
+class btSequentialImpulseConstraintSolver;
 
 namespace vpvl2
 {
@@ -71,10 +77,10 @@ public:
 
 private:
     btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher *m_dispatcher;
-    btDbvtBroadphase *m_broadphase;
-    btSequentialImpulseConstraintSolver *m_solver;
-    btDiscreteDynamicsWorld *m_world;
+    QScopedPointer<btCollisionDispatcher> m_dispatcher;
+    QScopedPointer<btDbvtBroadphase> m_broadphase;
+    QScopedPointer<btSequentialImpulseConstraintSolver> m_solver;
+    QScopedPointer<btDiscreteDynamicsWorld> m_world;
     Scalar m_motionFPS;
     Scalar m_maxSubSteps;
     Scalar m_fixedTimeStep;

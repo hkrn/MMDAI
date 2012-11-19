@@ -36,6 +36,49 @@
 
 #include "vpvl2/qt/World.h"
 
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btSimulationIslandManager.h>
+
+#include <BulletMultiThreaded/PlatformDefinitions.h>
+#include <BulletMultiThreaded/SpuGatheringCollisionDispatcher.h>
+#include <BulletMultiThreaded/SpuNarrowPhaseCollisionTask/SpuGatheringCollisionTask.h>
+#ifdef WIN32
+#include <BulletMultiThreaded/Win32ThreadSupport.h>
+#else
+#include <BulletMultiThreaded/PosixThreadSupport.h>
+#endif
+#include <BulletMultiThreaded/SequentialThreadSupport.h>
+#include <BulletMultiThreaded/btParallelConstraintSolver.h>
+
+namespace {
+
+static btThreadSupportInterface *CreateThreadSupportInstance(bool sequential)
+{
+    if (sequential) {
+        SequentialThreadSupport::SequentialThreadConstructionInfo info("SequentialThreadSupport::solverThreads",
+                                                                       SolverThreadFunc, SolverlsMemoryFunc);
+        QScopedPointer<SequentialThreadSupport> thread(new SequentialThreadSupport(info));
+        thread->startSPU();
+        return thread.take();
+    }
+    else {
+#ifdef WIN32
+        Win32ThreadSupport::Win32ThreadConstructionInfo info("Win32ThreadSupport::solverThreads",
+                                                             SolverThreadFunc, SolverlsMemoryFunc, 8);
+        QScopedPointer<Win32ThreadSupport> thread(new PosixThreadSupport(info));
+        thread->startSPU();
+#else
+        PosixThreadSupport::ThreadConstructionInfo info("PosixThreadSupport::solverThreads",
+                                                        SolverThreadFunc, SolverlsMemoryFunc, 8);
+        QScopedPointer<PosixThreadSupport> thread(new PosixThreadSupport(info));
+#endif
+        return thread.take();
+    }
+}
+
+} /* namespace anonymous */
+
 namespace vpvl2
 {
 namespace qt
@@ -45,32 +88,24 @@ const Vector3 World::kAabbSize = Vector3(10000, 10000, 10000);
 const Vector3 World::kDefaultGravity = Vector3(0, -9.8f, 0);
 
 World::World()
-    : m_dispatcher(0),
-      m_broadphase(0),
-      m_solver(0),
-      m_world(0),
+    : m_dispatcher(new btCollisionDispatcher(&m_config)),
+      m_broadphase(new btDbvtBroadphase()),
+      m_solver(new btSequentialImpulseConstraintSolver()),
+      // m_solver(new btParallelConstraintSolver(CreateThreadSupportInstance(true))),
+      m_world(new btDiscreteDynamicsWorld(m_dispatcher.data(), m_broadphase.data(), m_solver.data(), &m_config)),
       m_motionFPS(0),
       m_maxSubSteps(0),
       m_fixedTimeStep(0)
 {
-    m_dispatcher = new btCollisionDispatcher(&m_config);
-    m_broadphase = new btDbvtBroadphase();
-    m_solver = new btSequentialImpulseConstraintSolver();
-    m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
+    m_world->getSimulationIslandManager()->setSplitIslands(false);
+    m_world->getSolverInfo().m_solverMode = SOLVER_SIMD + SOLVER_USE_WARMSTARTING;
+    m_world->getDispatchInfo().m_enableSPU = true;
     setGravity(kDefaultGravity);
     setMotionFPS(Scene::defaultFPS());
 }
 
 World::~World()
 {
-    delete m_dispatcher;
-    m_dispatcher = 0;
-    delete m_broadphase;
-    m_broadphase = 0;
-    delete m_solver;
-    m_solver = 0;
-    delete m_world;
-    m_world = 0;
 }
 
 const Vector3 World::gravity() const
@@ -102,12 +137,12 @@ void World::setMotionFPS(const Scalar &value)
 
 void World::addModel(vpvl2::IModel *value)
 {
-    value->joinWorld(m_world);
+    value->joinWorld(m_world.data());
 }
 
 void World::removeModel(vpvl2::IModel *value)
 {
-    value->leaveWorld(m_world);
+    value->leaveWorld(m_world.data());
 }
 
 void World::addRigidBody(btRigidBody *value)
@@ -127,7 +162,7 @@ void World::stepSimulation(const Scalar &delta)
 
 btDiscreteDynamicsWorld *World::dynamicWorldRef() const
 {
-    return m_world;
+    return m_world.data();
 }
 
 } /* namespace qt */
