@@ -37,6 +37,8 @@
 #include <qglobal.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/World.h>
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 
 #include "SceneLoader.h"
 #include "Handles.h"
