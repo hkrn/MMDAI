@@ -17,8 +17,12 @@ function(link_bullet target)
     if(VPVL2_NO_BULLET)
       target_link_libraries(${target} ${BULLET_LINEARMATH_LIB})
     else()
-      target_link_libraries(${target} ${BULLET_COLLISION_LIB} ${BULLET_DYNAMICS_LIB} ${BULLET_SOFTBODY_LIB} ${BULLET_LINEARMATH_LIB})
-        endif()
+      target_link_libraries(${target} ${BULLET_COLLISION_LIB}
+                                      ${BULLET_DYNAMICS_LIB}
+                                      ${BULLET_LINEARMATH_LIB}
+                                      ${BULLET_MULTITHREADED_LIB}
+                                      ${BULLET_SOFTBODY_LIB})
+    endif()
   endif()
 endfunction()
 
@@ -39,6 +43,7 @@ function(find_bullet target)
     if(NOT VPVL2_NO_BULLET)
       find_library(BULLET_COLLISION_LIB BulletCollision PATHS ${BULLET_LIBRARY_LOCAL_DIR} $ENV{BULLET_LIBRARY_DIR})
       find_library(BULLET_DYNAMICS_LIB BulletDynamics PATHS ${BULLET_LIBRARY_LOCAL_DIR} $ENV{BULLET_LIBRARY_DIR})
+      find_library(BULLET_MULTITHREADED_LIB BulletMultiThreaded PATHS ${BULLET_LIBRARY_LOCAL_DIR} $ENV{BULLET_LIBRARY_DIR})
       find_library(BULLET_SOFTBODY_LIB BulletSoftBody PATHS ${BULLET_LIBRARY_LOCAL_DIR} $ENV{BULLET_LIBRARY_DIR})
     endif()
   endif()
