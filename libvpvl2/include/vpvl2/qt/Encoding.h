@@ -67,9 +67,9 @@ public:
 
 private:
     Dictionary m_dictionary;
-    QTextCodec *m_sjis;
-    QTextCodec *m_utf8;
-    QTextCodec *m_utf16;
+    QTextCodec *m_sjisCodecRef;
+    QTextCodec *m_utf8CodecRef;
+    QTextCodec *m_utf16CodecRef;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Encoding)
 };

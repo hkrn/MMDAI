@@ -46,9 +46,9 @@ namespace qt
 
 Encoding::Encoding(const Dictionary &dictionary)
     : m_dictionary(dictionary),
-      m_sjis(QTextCodec::codecForName("Shift-JIS")),
-      m_utf8(QTextCodec::codecForName("UTF-8")),
-      m_utf16(QTextCodec::codecForName("UTF-16"))
+      m_sjisCodecRef(QTextCodec::codecForName("Shift-JIS")),
+      m_utf8CodecRef(QTextCodec::codecForName("UTF-8")),
+      m_utf16CodecRef(QTextCodec::codecForName("UTF-16"))
 {
 }
 
@@ -74,13 +74,13 @@ IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec co
         const char *str = reinterpret_cast<const char *>(value);
         switch (codec) {
         case IString::kShiftJIS:
-            s = new CString(m_sjis->toUnicode(str, size));
+            s = new CString(m_sjisCodecRef->toUnicode(str, size));
             break;
         case IString::kUTF8:
-            s = new CString(m_utf8->toUnicode(str, size));
+            s = new CString(m_utf8CodecRef->toUnicode(str, size));
             break;
         case IString::kUTF16:
-            s = new CString(m_utf16->toUnicode(str, size));
+            s = new CString(m_utf16CodecRef->toUnicode(str, size));
             break;
         default:
             break;
@@ -105,13 +105,13 @@ uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
         QByteArray bytes;
         switch (codec) {
         case IString::kShiftJIS:
-            bytes = m_sjis->fromUnicode(s->value());
+            bytes = m_sjisCodecRef->fromUnicode(s->value());
             break;
         case IString::kUTF8:
-            bytes = m_utf8->fromUnicode(s->value());
+            bytes = m_utf8CodecRef->fromUnicode(s->value());
             break;
         case IString::kUTF16:
-            bytes = m_utf16->fromUnicode(s->value());
+            bytes = m_utf16CodecRef->fromUnicode(s->value());
             break;
         default:
             break;

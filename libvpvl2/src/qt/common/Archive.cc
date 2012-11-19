@@ -46,9 +46,9 @@ namespace qt
 Archive::Archive()
     : m_file(0),
       m_error(kNone),
-      m_codec(0)
+      m_codecRef(0)
 {
-    m_codec = QTextCodec::codecForName("Shift-JIS");
+    m_codecRef = QTextCodec::codecForName("Shift-JIS");
 }
 
 Archive::~Archive()
@@ -58,7 +58,7 @@ Archive::~Archive()
 
 void Archive::setTextCodec(QTextCodec *value)
 {
-    m_codec = value;
+    m_codecRef = value;
 }
 
 bool Archive::open(const QString &filename, QStringList &entries)

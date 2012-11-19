@@ -78,7 +78,7 @@ private:
     unzFile m_file;
     unz_global_info64 m_header;
     ErrorType m_error;
-    QTextCodec *m_codec;
+    QTextCodec *m_codecRef;
     QHash<QString, QByteArray> m_entries;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
