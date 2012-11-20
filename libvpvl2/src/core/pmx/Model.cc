@@ -277,12 +277,14 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                 }
                 offset += nindices;
             }
-#endif
+#endif /* VPVL2_LINK_INTEL_TBB */
         }
         else {
 #if defined(VPVL2_LINK_INTEL_TBB)
+            static tbb::affinity_partitioner affinityPartitioner;
             tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
-                              ParallelInitializeVertexProcessor(&modelRef->vertices(), address));
+                              ParallelInitializeVertexProcessor(&modelRef->vertices(), address),
+                              affinityPartitioner);
 #elif defined(VPVL2_ENABLE_OPENMP)
             internal::InitializeModelVerticesOMP(vertices, bufferPtr);
 #else
@@ -292,7 +294,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                 Unit &v = bufferPtr[i];
                 v.update(vertex, i);
             }
-#endif
+#endif /* VPVL2_LINK_INTEL_TBB */
             aabbMin.setZero();
             aabbMax.setZero();
         }
@@ -351,7 +353,7 @@ struct IndexBuffer : public IModel::IIndexBuffer {
                 break;
             }
         }
-#endif
+#endif /* VPVL2_COORDINATE_OPENGL */
     }
     ~IndexBuffer() {
         switch (indexType) {
@@ -565,6 +567,52 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
     SkinningMeshes meshes;
 };
 
+#ifdef VPVL2_LINK_INTEL_TBB
+
+class ParallelUpdateLocalTransformProcessor {
+public:
+    ParallelUpdateLocalTransformProcessor(Array<pmx::Bone *> *bonesRef)
+        : m_bonesRef(bonesRef)
+    {
+    }
+    ~ParallelUpdateLocalTransformProcessor() {
+        m_bonesRef = 0;
+    }
+
+    void operator()(const tbb::blocked_range<int> &range) const {
+        for (int i = range.begin(); i != range.end(); ++i) {
+            pmx::Bone *bone = m_bonesRef->at(i);
+            bone->performUpdateLocalTransform();
+        }
+    }
+
+private:
+    mutable Array<pmx::Bone *> *m_bonesRef;
+};
+
+class ParallelUpdateRigidBodyProcessor {
+public:
+    ParallelUpdateRigidBodyProcessor(Array<pmx::RigidBody *> *rigidBodiesRef)
+        : m_rigidBodiesRef(rigidBodiesRef)
+    {
+    }
+    ~ParallelUpdateRigidBodyProcessor() {
+        m_rigidBodiesRef = 0;
+    }
+
+    void operator()(const tbb::blocked_range<int> &range) const {
+        for (int i = range.begin(); i != range.end(); ++i) {
+            pmx::RigidBody *body = m_rigidBodiesRef->at(i);
+            body->performTransformBone();
+        }
+    }
+
+private:
+    mutable Array<pmx::RigidBody *> *m_rigidBodiesRef;
+};
+
+#endif /* VPVL2_LINK_INTEL_TBB */
+
 }
 
 namespace vpvl2
@@ -697,17 +745,29 @@ void Model::performUpdate()
         bone->performFullTransform();
         bone->solveInverseKinematics();
     }
+#ifdef VPVL2_LINK_INTEL_TBB
+    static tbb::affinity_partitioner updateLocalTransformAffinityPartitioner;
+    tbb::parallel_for(tbb::blocked_range<int>(0, nBPSBones),
+                      ParallelUpdateLocalTransformProcessor(&m_BPSOrderedBones),
+                      updateLocalTransformAffinityPartitioner);
+#else /* VPVL2_LINK_INTEL_TBB */
     for (int i = 0; i < nBPSBones; i++) {
         Bone *bone = m_BPSOrderedBones[i];
         bone->performUpdateLocalTransform();
     }
+#endif /* VPVL2_LINK_INTEL_TBB */
     // physics simulation
     if (m_worldRef) {
         const int nRigidBodies = m_rigidBodies.count();
+#ifdef VPVL2_LINK_INTEL_TBB
+    tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies),
+                      ParallelUpdateRigidBodyProcessor(&m_rigidBodies));
+#else /* VPVL2_LINK_INTEL_TBB */
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_rigidBodies[i];
             rigidBody->performTransformBone();
         }
+#endif /* VPVL2_LINK_INTEL_TBB */
     }
     // after physics simulation
     const int nAPSBones = m_APSOrderedBones.count();
@@ -716,10 +776,16 @@ void Model::performUpdate()
         bone->performFullTransform();
         bone->solveInverseKinematics();
     }
+#ifdef VPVL2_LINK_INTEL_TBB
+    tbb::parallel_for(tbb::blocked_range<int>(0, nAPSBones),
+                      ParallelUpdateLocalTransformProcessor(&m_APSOrderedBones),
+                      updateLocalTransformAffinityPartitioner);
+#else /* VPVL2_LINK_INTEL_TBB */
     for (int i = 0; i < nAPSBones; i++) {
         Bone *bone = m_APSOrderedBones[i];
         bone->performUpdateLocalTransform();
     }
+#endif /* VPVL2_LINK_INTEL_TBB */
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)

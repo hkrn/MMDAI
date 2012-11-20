@@ -48,6 +48,7 @@ namespace internal
 {
 
 #ifdef VPVL2_ENABLE_OPENMP
+
 static inline bool GreaterOMP(const Vector3 &left, const Vector3 &right)
 {
     return left.x() < right.x() ||  left.y() < right.y() || left.z() < right.z();
@@ -104,7 +105,8 @@ static void InitializeModelVerticesOMP(const Array<TVertex *> &verticesRef,
         v.update(vertex, i);
     }
 }
-#endif
+
+#endif /* VPVL2_ENABLE_OPENMP */
 
 template<typename TModel, typename TVertex, typename TUnit>
 class ParallelSkinningVertexProcessor {
@@ -155,7 +157,7 @@ public:
         m_aabbMin = aabbMin;
         m_aabbMax = aabbMax;
     }
-#endif
+#endif /* VPVL2_LINK_INTEL_TBB */
 
 private:
     const Array<TVertex *> *m_verticesRef;
@@ -193,7 +195,7 @@ public:
             v.update(vertex, i);
         }
     }
-#endif
+#endif /* VPVL2_LINK_INTEL_TBB */
 
 private:
     const Array<TVertex *> *m_verticesRef;
