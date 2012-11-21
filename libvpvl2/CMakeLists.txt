@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "/Users/hkrn/Qt5.0.0beta2/5.0.0-beta2/clang_64/lib/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Functions.cmake)
 
 set(VPVL2_VERSION_MAJOR 0)

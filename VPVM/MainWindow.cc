@@ -256,6 +256,7 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_actionReversedPaste(new QAction(0)),
       m_actionOpenUndoView(new QAction(0)),
       m_actionViewLogMessage(new QAction(0)),
+      m_actionEnableGestures(new QAction(0)),
       m_actionEnableMoveGesture(new QAction(0)),
       m_actionEnableRotateGesture(new QAction(0)),
       m_actionEnableScaleGesture(new QAction(0)),
@@ -293,7 +294,7 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_currentFPS(-1)
 {
     m_actionRecentFiles.reserve(kMaxRecentFiles);
-    m_loggerWidgetRef = LoggerWidget::createInstance(&m_settings);
+    m_loggerWidgetRef = LoggerWidget::sharedInstance(&m_settings);
     createActionsAndMenus();
     bindWidgets();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
@@ -814,6 +815,9 @@ void MainWindow::createActionsAndMenus()
     m_actionEnableEffect->setChecked(false);
 
     connect(m_actionViewLogMessage.data(), SIGNAL(triggered()), m_loggerWidgetRef, SLOT(show()));
+    m_actionEnableGestures->setCheckable(true);
+    m_actionEnableGestures->setChecked(m_sceneWidget->isGesturesEnabled());
+    connect(m_actionEnableGestures.data(), SIGNAL(triggered(bool)), m_sceneWidget.data(), SLOT(setGesturesEnable(bool)));
     m_actionEnableMoveGesture->setCheckable(true);
     m_actionEnableMoveGesture->setChecked(m_sceneWidget->isMoveGestureEnabled());
     connect(m_actionEnableMoveGesture.data(), SIGNAL(triggered(bool)), m_sceneWidget.data(), SLOT(setMoveGestureEnable(bool)));
@@ -944,7 +948,6 @@ void MainWindow::createActionsAndMenus()
 
     m_menuModel->addMenu(m_menuRetainModels.data());
 
-    //if (Asset::isSupported())
     m_menuScene->addMenu(m_menuRetainAssets.data());
     m_menuModel->addAction(m_actionSelectNextModel.data());
     m_menuModel->addAction(m_actionSelectPreviousModel.data());
@@ -989,13 +992,12 @@ void MainWindow::createActionsAndMenus()
     m_menuView->addAction(m_actionShowModelDock.data());
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionShowModelDialog.data());
-#ifdef QMA2_ENABLE_GESTURE
     m_menuView->addSeparator();
+    m_menuView->addAction(m_actionEnableGestures.data());
     m_menuView->addAction(m_actionEnableMoveGesture.data());
     m_menuView->addAction(m_actionEnableRotateGesture.data());
     m_menuView->addAction(m_actionEnableScaleGesture.data());
     m_menuView->addAction(m_actionEnableUndoGesture.data());
-#endif
     m_menuBar->addMenu(m_menuView.data());
     m_menuHelp->addAction(m_actionAbout.data());
     m_menuHelp->addAction(m_actionAboutQt.data());
@@ -1102,6 +1104,7 @@ void MainWindow::bindActions()
     m_actionRedo->setShortcut(m_settings.value(kPrefix + "redoFrame", QKeySequence(QKeySequence::Redo).toString()).toString());
     m_actionOpenUndoView->setShortcut(m_settings.value(kPrefix + "undoView").toString());
     m_actionViewLogMessage->setShortcut(m_settings.value(kPrefix + "viewLogMessage").toString());
+    m_actionEnableGestures->setShortcut(m_settings.value(kPrefix + "enableGestures").toString());
     m_actionEnableMoveGesture->setShortcut(m_settings.value(kPrefix + "enableMoveGesture").toString());
     m_actionEnableRotateGesture->setShortcut(m_settings.value(kPrefix + "enableRotateGesture").toString());
     m_actionEnableScaleGesture->setShortcut(m_settings.value(kPrefix + "enableScaleGesture").toString());
@@ -1151,7 +1154,6 @@ void MainWindow::retranslate()
     m_actionAddModel->setStatusTip(tr("Add a model to the scene."));
     m_actionAddAsset->setText(tr("Add new asset"));
     m_actionAddAsset->setStatusTip(tr("Add an asset to the scene."));
-    // m_actionAddAsset->setEnabled(Asset::isSupported());
     m_actionInsertToAllModels->setText(tr("Insert motion to all models"));
     m_actionInsertToAllModels->setStatusTip(tr("Insert a motion to the all models."));
     m_actionInsertToSelectedModel->setText(tr("Insert motion to selected model"));
@@ -1286,6 +1288,8 @@ void MainWindow::retranslate()
     m_actionOpenUndoView->setStatusTip(tr("Open a window to view undo history."));
     m_actionViewLogMessage->setText(tr("Logger Window"));
     m_actionViewLogMessage->setStatusTip(tr("Open logger window."));
+    m_actionEnableGestures->setText(tr("Enable gestures feature"));
+    m_actionEnableGestures->setStatusTip(tr("Enable below gesture features."));
     m_actionEnableMoveGesture->setText(tr("Enable move gesture"));
     m_actionEnableMoveGesture->setStatusTip(tr("Enable moving scene/model/bone by pan gesture."));
     m_actionEnableRotateGesture->setText(tr("Enable rotate gesture"));
@@ -1557,7 +1561,7 @@ void MainWindow::exportImage()
 {
     if (!m_exportingVideoDialog) {
         SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        const QSize min(160, 160);
+        const QSize &min = m_sceneWidget->size();
         const QSize &max = m_sceneWidget->maximumSize();
         m_exportingVideoDialog.reset(new ExportVideoDialog(loader, min, max, &m_settings));
     }

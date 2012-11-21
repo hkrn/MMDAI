@@ -432,7 +432,8 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
         m_context->models.add(model);
         m_context->engines.add(engine);
         m_context->model2engineRef.insert(model, engine);
-        m_context->name2modelRef.insert(model->name()->toHashString(), model);
+        if (const IString *name = model->name())
+            m_context->name2modelRef.insert(name->toHashString(), model);
     }
 }
 
@@ -607,8 +608,11 @@ const Array<IRenderEngine *> &Scene::renderEngines() const
 
 IModel *Scene::findModel(const IString *name) const
 {
-    IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name->toHashString()));
-    return model ? *model : 0;
+    if (name) {
+        IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name->toHashString()));
+        return model ? *model : 0;
+    }
+    return 0;
 }
 
 IRenderEngine *Scene::findRenderEngine(IModel *model) const

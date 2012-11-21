@@ -206,10 +206,12 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
 #ifdef VPVL2_LINK_INTEL_TBB
-            ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, address);
+            ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
             tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
             aabbMin = proc.aabbMin();
             aabbMax = proc.aabbMax();
+#elif defined(VPVL2_ENABLE_OPENMP)
+            internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
 #else
             const Array<IMaterial *> &materials = modelRef->materials();
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
@@ -236,6 +238,8 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
 #ifdef VPVL2_LINK_INTEL_TBB
             tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
                               ParallelInitializeVertexProcessor(&modelRef->vertices(), address));
+#elif defined(VPVL2_ENABLE_OPENMP)
+            internal::InitializeModelVerticesOMP(vertices, bufferPtr);
 #else
             const int nvertices = vertices.count();
             for (int i = 0; i < nvertices; i++) {
@@ -411,6 +415,30 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
     SkinningMeshes meshes;
 };
 
+#ifdef VPVL2_LINK_INTEL_TBB
+
+class ParallelUpdateLocalTransformProcessor {
+public:
+    ParallelUpdateLocalTransformProcessor(Array<IBone *> *bonesRef)
+        : m_bonesRef(bonesRef)
+    {
+    }
+    ~ParallelUpdateLocalTransformProcessor() {
+        m_bonesRef = 0;
+    }
+
+    void operator()(const tbb::blocked_range<int> &range) const {
+        for (int i = range.begin(); i != range.end(); ++i) {
+            Bone *bone = static_cast<Bone *>(m_bonesRef->at(i));
+            bone->updateLocalTransform();
+        }
+    }
+
+private:
+    mutable Array<IBone *> *m_bonesRef;
+};
+
+#endif /* VPVL2_LINK_INTEL_TBB */
 
 Model::Model(IEncoding *encoding)
     : m_encodingRef(encoding),
@@ -509,10 +537,15 @@ void Model::performUpdate()
 {
     m_model.updateImmediate();
     const int nbones = m_bones.count();
+#ifdef VPVL2_LINK_INTEL_TBB
+    tbb::parallel_for(tbb::blocked_range<int>(0, nbones),
+                      ParallelUpdateLocalTransformProcessor(&m_bones));
+#else
     for (int i = 0; i < nbones; i++) {
         Bone *bone = static_cast<Bone *>(m_bones[i]);
         bone->updateLocalTransform();
     }
+#endif
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)

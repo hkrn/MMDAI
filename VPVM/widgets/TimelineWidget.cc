@@ -219,13 +219,13 @@ void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
 
 void TimelineWidget::setCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex)
 {
-    setCurrentTimeIndex(int(timeIndex));
+    setCurrentTimeIndex(int(timeIndex), true);
 }
 
-void TimelineWidget::setCurrentTimeIndex(int timeIndex)
+void TimelineWidget::setCurrentTimeIndex(int timeIndex, bool forceSeek)
 {
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
-    setCurrentTimeIndex(model->index(0, MotionBaseModel::toModelIndex(timeIndex)));
+    setCurrentTimeIndex(model->index(0, MotionBaseModel::toModelIndex(timeIndex)), forceSeek);
 }
 
 void TimelineWidget::setCurrentTimeIndexBySpinBox()
@@ -252,7 +252,7 @@ void TimelineWidget::setCurrentTimeIndexAndSelect(int frameIndex)
     m_treeView->selectFrameIndices(frameIndices, false);
 }
 
-void TimelineWidget::setCurrentTimeIndex(const QModelIndex &index)
+void TimelineWidget::setCurrentTimeIndex(const QModelIndex &index, bool forceSeek)
 {
     if (!index.isValid())
         return;
@@ -263,7 +263,7 @@ void TimelineWidget::setCurrentTimeIndex(const QModelIndex &index)
     m_treeView->scrollTo(index);
     m_spinBox->setValue(frameIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
-    emit motionDidSeek(frameIndex, model->forceCameraUpdate(), false);
+    emit motionDidSeek(frameIndex, model->forceCameraUpdate(), forceSeek);
 }
 
 void TimelineWidget::adjustFrameColumnSize(int value)

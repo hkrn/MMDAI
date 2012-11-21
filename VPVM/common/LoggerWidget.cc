@@ -43,7 +43,7 @@
 #endif
 
 namespace {
-vpvm::LoggerWidget *g_instance = 0;
+QScopedPointer<vpvm::LoggerWidget> g_instance;
 }
 
 namespace vpvm
@@ -64,17 +64,28 @@ static void LoggerWidgetHandleMessage(QtMsgType /* type */, const char *message)
 #endif
 }
 
-LoggerWidget *LoggerWidget::createInstance(QSettings *settings)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+static void LoggerWidgetHandleMessageNULL(QtMsgType /* type */, const QMessageLogContext & /* context */, const QString & /* message */)
+#else
+static void LoggerWidgetHandleMessageNULL(QtMsgType /* type */, const char * /* message */)
+#endif
 {
-    if (!g_instance)
-        g_instance = new LoggerWidget(settings);
-    return g_instance;
 }
 
-void LoggerWidget::destroyInstance()
+LoggerWidget *LoggerWidget::sharedInstance(QSettings *settings)
 {
-    delete g_instance;
-    g_instance = 0;
+    if (!g_instance)
+        g_instance.reset(new LoggerWidget(settings));
+    return g_instance.data();
+}
+
+void LoggerWidget::quietLogMessages()
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    qInstallMessageHandler(LoggerWidgetHandleMessageNULL);
+#else
+    qInstallMsgHandler(LoggerWidgetHandleMessageNULL);
+#endif
 }
 
 LoggerWidget::LoggerWidget(QSettings *settings, QWidget *parent)
@@ -100,7 +111,6 @@ LoggerWidget::LoggerWidget(QSettings *settings, QWidget *parent)
     setLayout(layout);
     setWindowTitle(tr("Log Window"));
     resize(QSize(640, 480));
-    g_instance = this;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     qInstallMessageHandler(LoggerWidgetHandleMessage);
 #else

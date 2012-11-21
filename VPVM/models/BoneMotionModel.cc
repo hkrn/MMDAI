@@ -119,10 +119,10 @@ public:
     LoadPoseCommand(BoneMotionModel *bmm, VPDFilePtr pose, int frameIndex)
         : QUndoCommand(),
           m_keys(bmm->keys()),
+          m_pose(pose.data()->clone()),
           m_bmm(bmm),
           m_model(bmm->selectedModel()),
           m_motion(bmm->currentMotionRef()),
-          m_pose(0),
           m_frameIndex(frameIndex)
     {
         /* 現在のフレームにある全てのボーンのキーフレーム情報を参照する。キーフレームがあれば undo のために保存しておく */
@@ -132,11 +132,9 @@ public:
             if (data.canConvert(QVariant::ByteArray))
                 m_modelIndices.append(ModelIndex(index, data.toByteArray()));
         }
-        m_pose = pose.data()->clone();
         setText(QApplication::tr("Load a pose to %1").arg(frameIndex));
     }
     virtual ~LoadPoseCommand() {
-        delete m_pose;
     }
 
     virtual void undo() {
@@ -211,10 +209,10 @@ public:
 private:
     const BoneMotionModel::Keys m_keys;
     QList<ModelIndex> m_modelIndices;
+    QScopedPointer<VPDFile> m_pose;
     BoneMotionModel *m_bmm;
     IModel *m_model;
     IMotion *m_motion;
-    VPDFile *m_pose;
     int m_frameIndex;
 };
 
