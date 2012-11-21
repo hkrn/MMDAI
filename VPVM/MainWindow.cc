@@ -1557,7 +1557,7 @@ void MainWindow::exportImage()
 {
     if (!m_exportingVideoDialog) {
         SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        const QSize min(160, 160);
+        const QSize &min = m_sceneWidget->size();
         const QSize &max = m_sceneWidget->maximumSize();
         m_exportingVideoDialog.reset(new ExportVideoDialog(loader, min, max, &m_settings));
     }
