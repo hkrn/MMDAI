@@ -126,6 +126,7 @@ int main(int argc, char *argv[])
     xmlInitParser();
 
     vpvm::Application a(argc, argv);
+    vpvm::LoggerWidget::quietLogMessages();
     QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
     a.setApplicationVersion("0.26.0");
@@ -185,7 +186,6 @@ int main(int argc, char *argv[])
                       QApplication::tr("Exception caught"),
                       QApplication::tr("Exception caught: %1").arg(e.what()));
     }
-    vpvm::LoggerWidget::destroyInstance();
     xmlCleanupParser();
     xmlMemoryDump();
 
