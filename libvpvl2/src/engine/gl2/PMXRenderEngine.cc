@@ -661,7 +661,8 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    log0(userData, IRenderContext::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
+    log0(userData, IRenderContext::kLogInfo, "Created the model: %s",
+         m_modelRef->name() ? m_modelRef->name()->toByteArray() : 0);
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;

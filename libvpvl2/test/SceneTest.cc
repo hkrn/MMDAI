@@ -51,11 +51,13 @@ TEST(SceneTest, AddMotion)
 
 TEST(SceneTest, FindModel)
 {
+    Scene scene;
+    /* adding an null motion should not be crashed */
+    scene.findModel(0);
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     QScopedPointer<MockIModel> model(new MockIModel());
     String s(UnicodeString::fromUTF8("foo_bar_baz")), s2(s.value());
     EXPECT_CALL(*model, name()).WillOnce(Return(&s));
-    Scene scene;
     scene.addModel(model.data(), engine.take());
     ASSERT_EQ(model.take(), scene.findModel(&s2));
 }
