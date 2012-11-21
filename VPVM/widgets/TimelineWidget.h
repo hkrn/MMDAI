@@ -79,7 +79,7 @@ public:
 
 public slots:
     void setCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex);
-    void setCurrentTimeIndex(int timeIndex);
+    void setCurrentTimeIndex(int timeIndex, bool forceSeek = false);
 
 signals:
     void motionDidSeek(const IKeyframe::TimeIndex &column, bool forceCameraUpdate, bool forceEvenSame);
@@ -89,7 +89,7 @@ private slots:
     void setCurrentTimeIndexBySpinBox();
     void setCurrentTimeIndexAndExpandBySpinBox();
     void setCurrentTimeIndexAndSelect(int frameIndex);
-    void setCurrentTimeIndex(const QModelIndex &index);
+    void setCurrentTimeIndex(const QModelIndex &index, bool forceSeek = false);
     void adjustFrameColumnSize(int value);
 
 private:

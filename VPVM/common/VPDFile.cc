@@ -69,23 +69,29 @@ bool VPDFile::load(QTextStream &stream)
 {
     QString line;
     stream.setCodec(getTextCodec());
+
+    /* ヘッダーがあってるかを確認する */
     if (stream.readLine() != "Vocaloid Pose Data file") {
         m_error = kInvalidSignatureError;
         return false;
     }
+    /* 空の行を読み飛ばす */
     while (line.isEmpty())
         line = stream.readLine();
+
+    /* ボーン数を読み取る */
     line = QString(stream.readLine().split(QRegExp("\\s+"), QString::SkipEmptyParts).at(0)).remove(';');
-    //.remove(lastSemiColonRegExp);
     int nbones = line.toInt();
     if (nbones == 0) {
         m_error = kInvalidHeaderError;
         return false;
     }
-    line = "";
+    line.clear();
+    /* 空の行を読み飛ばす */
     while (line.isEmpty())
         line = stream.readLine();
 
+    /* トークンを追加する */
     QStringList tokens;
     while (!line.isNull()) {
         tokens.append(line.trimmed().split(QRegExp("[\r\n\t]"), QString::SkipEmptyParts));
@@ -96,6 +102,7 @@ bool VPDFile::load(QTextStream &stream)
         InternalParseState state = kNone;
         Bone *bone = 0;
         foreach (QString token, tokens) {
+            /* コメントを読み飛ばす */
             if (token.startsWith("//"))
                 continue;
             switch (state) {
@@ -159,6 +166,8 @@ bool VPDFile::load(QTextStream &stream)
                 else
                     throw kEndError;
             }
+            default:
+                break;
             }
         }
     } catch (Error e) {

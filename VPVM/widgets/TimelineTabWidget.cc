@@ -165,8 +165,8 @@ void TimelineTabWidget::addKeyframesFromSelectedIndices()
 
 void TimelineTabWidget::loadPose(VPDFilePtr pose, IModel *model)
 {
-    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
-    m->loadPose(pose, model, m_boneTimeline->selectedFrameIndex());
+    BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
+    bmm->loadPose(pose, model, m_boneTimeline->selectedFrameIndex());
 }
 
 void TimelineTabWidget::retranslate()
