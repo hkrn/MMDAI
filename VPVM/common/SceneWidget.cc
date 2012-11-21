@@ -171,7 +171,6 @@ SceneWidget::SceneWidget(const QGLFormat format,
     setUndoGestureEnable(m_settingsRef->value("sceneWidget/enableUndoGesture", true).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
-    setMinimumSize(540, 480);
     /* 通常はマウスを動かしても mouseMove が呼ばれないため、マウスが動いたら常時 mouseEvent を呼ぶようにする */
     setMouseTracking(true);
 #ifdef QMA2_ENABLE_GESTURE
