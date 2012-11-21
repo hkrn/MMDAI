@@ -154,6 +154,7 @@ SceneWidget::SceneWidget(const QGLFormat format,
       m_enableBoneRotate(false),
       m_showModelDialog(false),
       m_lockTouchEvent(false),
+      m_enableGestures(false),
       m_enableMoveGesture(false),
       m_enableRotateGesture(false),
       m_enableScaleGesture(false),
@@ -164,21 +165,12 @@ SceneWidget::SceneWidget(const QGLFormat format,
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
     connect(this, SIGNAL(cameraPerspectiveDidSet(const ICamera*)),
             this, SLOT(updatePlaneWorld(const ICamera*)));
-    setShowModelDialog(m_settingsRef->value("sceneWidget/showModelDialog", true).toBool());
-    setMoveGestureEnable(m_settingsRef->value("sceneWidget/enableMoveGesture", false).toBool());
-    setRotateGestureEnable(m_settingsRef->value("sceneWidget/enableRotateGesture", true).toBool());
-    setScaleGestureEnable(m_settingsRef->value("sceneWidget/enableScaleGesture", true).toBool());
-    setUndoGestureEnable(m_settingsRef->value("sceneWidget/enableUndoGesture", true).toBool());
     setAcceptDrops(true);
     setAutoFillBackground(false);
+    setShowModelDialog(m_settingsRef->value("sceneWidget/showModelDialog", true).toBool());
     /* 通常はマウスを動かしても mouseMove が呼ばれないため、マウスが動いたら常時 mouseEvent を呼ぶようにする */
     setMouseTracking(true);
-#ifdef QMA2_ENABLE_GESTURE
-    /* ジェスチャを有効にすると突然死が発生しやすいことを確認しているため無効化 */
-    grabGesture(Qt::PanGesture);
-    grabGesture(Qt::PinchGesture);
-    grabGesture(Qt::SwipeGesture);
-#endif
+    setGesturesEnable(m_settingsRef->value("sceneWidget/enableGestures", false).toBool());
 }
 
 SceneWidget::~SceneWidget()
@@ -886,6 +878,27 @@ void SceneWidget::renderBackgroundObjects()
     m_grid->draw(m_loader.data(), m_loader->isGridVisible());
 }
 
+void SceneWidget::setGesturesEnable(bool value)
+{
+    if (value) {
+        grabGesture(Qt::PanGesture);
+        grabGesture(Qt::PinchGesture);
+        grabGesture(Qt::SwipeGesture);
+        setMoveGestureEnable(m_settingsRef->value("sceneWidget/enableMoveGesture", false).toBool());
+        setRotateGestureEnable(m_settingsRef->value("sceneWidget/enableRotateGesture", true).toBool());
+        setScaleGestureEnable(m_settingsRef->value("sceneWidget/enableScaleGesture", true).toBool());
+        setUndoGestureEnable(m_settingsRef->value("sceneWidget/enableUndoGesture", true).toBool());
+        qDebug("Gestures enabled");
+    }
+    else {
+        ungrabGesture(Qt::PanGesture);
+        ungrabGesture(Qt::PinchGesture);
+        ungrabGesture(Qt::SwipeGesture);
+        qDebug("Gestures disabled");
+    }
+    m_enableGestures = value;
+}
+
 void SceneWidget::loadFile(const QString &path)
 {
     /* モデルファイル */
@@ -970,6 +983,7 @@ bool SceneWidget::event(QEvent *event)
 void SceneWidget::closeEvent(QCloseEvent *event)
 {
     m_settingsRef->setValue("sceneWidget/showModelDialog", showModelDialog());
+    m_settingsRef->setValue("sceneWidget/enableGestures", isGesturesEnabled());
     m_settingsRef->setValue("sceneWidget/enableMoveGesture", isMoveGestureEnabled());
     m_settingsRef->setValue("sceneWidget/enableRotateGesture", isRotateGestureEnabled());
     m_settingsRef->setValue("sceneWidget/enableScaleGesture", isScaleGestureEnabled());

@@ -124,6 +124,7 @@ public:
     const QList<IBone *> &selectedBones() const { return m_selectedBoneRefs; }
     const IKeyframe::TimeIndex &currentTimeIndex() const { return m_timeIndex; }
     bool isPlaying() const { return m_playing; }
+    bool isGesturesEnabled() const { return m_enableGestures; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
     bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
@@ -233,6 +234,7 @@ private slots:
     void resetModelPosition();
     void updatePlaneWorld(const ICamera *camera);
     void renderBackgroundObjects();
+    void setGesturesEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
     void openErrorDialogIfFailed(bool loadingProjectFailed);
     void zoomIn() { zoom(true, Qt::NoModifier); }
@@ -306,6 +308,7 @@ private:
     bool m_enableBoneRotate;
     bool m_showModelDialog;
     bool m_lockTouchEvent;
+    bool m_enableGestures;
     bool m_enableMoveGesture;
     bool m_enableRotateGesture;
     bool m_enableScaleGesture;

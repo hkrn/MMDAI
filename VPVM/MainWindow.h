@@ -272,6 +272,7 @@ private:
     QScopedPointer<QAction> m_actionRedo;
     QScopedPointer<QAction> m_actionOpenUndoView;
     QScopedPointer<QAction> m_actionViewLogMessage;
+    QScopedPointer<QAction> m_actionEnableGestures;
     QScopedPointer<QAction> m_actionEnableMoveGesture;
     QScopedPointer<QAction> m_actionEnableRotateGesture;
     QScopedPointer<QAction> m_actionEnableScaleGesture;
