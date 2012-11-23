@@ -26,6 +26,7 @@ exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 # VPVL and others configuration
 INCLUDEPATH +=  $${VPVL2_PATH}/include \
                 $${ASSIMP_PATH}/include \
+                $${PORTAUDIO_PATH}/include \
                 $${BULLET_PATH}/src \
                 $${NVTT_PATH}/src
 
