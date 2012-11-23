@@ -20,6 +20,9 @@ my $opt_help = 0;
 my $opt_man = 0;
 my $opt_march = 0;
 my $opt_clang = 0;
+my $opt_tbb = 0;
+my $opt_openmp = 0;
+my $opt_sdl = 0;
 my $opt_print_flags = 0;
 
 GetOptions(
@@ -29,6 +32,9 @@ GetOptions(
     'production' => \$opt_prod,
     'static'     => \$opt_static,
     'clang'      => \$opt_clang,
+    'tbb'        => \$opt_tbb,
+    'openmp'     => \$opt_openmp,
+    'sdl=i'      => \$opt_sdl,
     'numcpu=i'   => \$opt_num_cpu,
     'flags'      => \$opt_print_flags,
     'help|?'     => \$opt_help,
@@ -82,12 +88,17 @@ my $CMAKE_VPVL_ARGS = [
 my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_ENABLE_NVIDIA_CG:BOOL=' . ($opt_cg ? 'ON' : 'OFF'),
     '-DVPVL2_ENABLE_OPENCL:BOOL=' . ($opt_opencl ? 'ON' : 'OFF'),
+    '-DVPVL2_ENABLE_OPENMP:BOOL=' . ($opt_openmp ? 'ON' : 'OFF'),
     '-DVPVL2_ENABLE_PROJECT:BOOL=ON',
     '-DVPVL2_OPENGL_RENDERER:BOOL=ON',
     '-DVPVL2_LINK_ASSIMP:BOOL=ON',
-    '-DVPVL2_LINK_QT:BOOL=ON',
+    '-DVPVL2_LINK_INTEL_TBB:BOOL=' . ($opt_tbb ? 'ON' : 'OFF'),
+    '-DVPVL2_LINK_GLEW:BOOL=' . ($opt_sdl ? 'ON' : 'OFF'),
     '-DVPVL2_LINK_NVTT:BOOL=ON',
-    '-DVPVL2_BUILD_QT_RENDERER:BOOL=' . ($opt_static ? 'OFF' : 'ON'),
+    '-DVPVL2_LINK_QT:BOOL=' . ($opt_sdl ? 'OFF' : 'ON'),
+    '-DVPVL2_LINK_SDL1:BOOL=' . ($opt_sdl == 1 ? 'ON' : 'OFF'),
+    '-DVPVL2_LINK_SDL2:BOOL=' . ($opt_sdl == 2 ? 'ON' : 'OFF'),
+    '-DVPVL2_BUILD_QT_RENDERER:BOOL=' . (($opt_static or $opt_sdl) ? 'OFF' : 'ON'),
 ];
 my $SCONS_PORTAUDIO_ARGS = [
     'enableTests=False',
@@ -391,6 +402,9 @@ build.pl - builds libvpvl/libvpvl2 and dependencies automatically
    -production      build as production
    -static          build as static library
    -clang           compile sources with clang instead of gcc
+   -tbb             enable Intel TBB build option
+   -openmp          enable OpenMP build option
+   -sdl=<version>   enable SDL build option
    -flags           print all (common) build flags to each libraries
    -numcpu=<core>   specify number of CPU cores
 
@@ -437,6 +451,22 @@ Builds libvpvl/libvpvl2 and dependencies as static library instead of dynamic sh
 =item B<-clang>
 
 Compiles sources on CMake with clang/clang++ instead of gcc/g++ for NVTT (NVIDIA texture tools).
+
+=item B<-tbb>
+
+Enable Intel Threading Building Blocks build option. This option requires Intel Threading 
+Building Blocks to build. Fore more info, see <http://threadingbuildingblocks.org>.
+
+=item B<-openmp>
+
+Enable OpenMP build option. This option must satisfy that compiler is gcc >= 4.4 and
+B<-tbb> option is not enabled.
+
+=item B<-sdl>
+
+Enable SDL build option instead of Qt. This option must specify version of SDL (1 or 2) and
+depends GLM, GLEW and ICU. For more info see <http://libsdl.org> (SDL),
+<http://glm.g-truc.net/> (GLM), <http://glew.sf.net> (GLEW) and <http://icu-project.org> (ICU)
 
 =item B<-numcpu>
 
