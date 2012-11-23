@@ -274,17 +274,25 @@ int main(int /* argc */, char ** /* argv[] */)
 
     size_t width = vpvl2::extensions::icu::String::toInt(config["window.width"], 640),
             height = vpvl2::extensions::icu::String::toInt(config["window.height"], 480);
-    bool enableSW = vpvl2::extensions::icu::String::toBoolean(config["enable.opengl.software"]);
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, enableSW ? 0 : 1);
+    int redSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.red"], 8),
+            greenSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.green"], 8),
+            blueSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.blue"], 8),
+            alphaSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.alpha"], 8),
+            depthSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.depth"], 24),
+            stencilSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.stencil"], 8),
+            samplesSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.samples"], 4);
+    bool enableSW = vpvl2::extensions::icu::String::toBoolean(config["opengl.enable.software"]),
+            enableAA = vpvl2::extensions::icu::String::toBoolean(config["opengl.enable.aa"]);
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, redSize);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, greenSize);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, blueSize);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, alphaSize);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthSize);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, stencilSize);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, enableAA ? 1 : 0);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, enableAA ? samplesSize : 0);
+    if (enableSW)
+        SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           width, height, SDL_WINDOW_OPENGL);
