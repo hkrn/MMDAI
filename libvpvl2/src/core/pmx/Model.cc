@@ -751,6 +751,7 @@ void Model::performUpdate()
                       ParallelUpdateLocalTransformProcessor(&m_BPSOrderedBones),
                       updateLocalTransformAffinityPartitioner);
 #else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
     for (int i = 0; i < nBPSBones; i++) {
         Bone *bone = m_BPSOrderedBones[i];
         bone->performUpdateLocalTransform();
@@ -763,6 +764,7 @@ void Model::performUpdate()
     tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies),
                       ParallelUpdateRigidBodyProcessor(&m_rigidBodies));
 #else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_rigidBodies[i];
             rigidBody->performTransformBone();
@@ -781,6 +783,7 @@ void Model::performUpdate()
                       ParallelUpdateLocalTransformProcessor(&m_APSOrderedBones),
                       updateLocalTransformAffinityPartitioner);
 #else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
     for (int i = 0; i < nAPSBones; i++) {
         Bone *bone = m_APSOrderedBones[i];
         bone->performUpdateLocalTransform();
