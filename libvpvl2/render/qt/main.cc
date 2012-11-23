@@ -48,7 +48,6 @@ int main(int argc, char *argv[])
 #if 1
     QGLFormat format;
     format.setSampleBuffers(true);
-    format.setSwapInterval(60);
     vpvl2::render::qt::UI ui(format);
     ui.show();
     ui.load(QDir::current().absoluteFilePath("config.ini"));
