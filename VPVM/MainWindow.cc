@@ -1409,11 +1409,9 @@ void MainWindow::bindSceneLoader()
     connect(assetWidget, SIGNAL(assetDidRemove(IModel*)), loader, SLOT(deleteModelSlot(IModel*)));
     connect(assetWidget, SIGNAL(assetDidSelect(IModel*)), loader, SLOT(setSelectedModel(IModel*)));
     Handles *handles = m_sceneWidget->handlesRef();
-    connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateBone()));
-    connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateBone()));
-    connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget.data(), SIGNAL(modelDidRotate(Quaternion)), handles, SLOT(updateBone()));
+    connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateHandleModel()));
+    connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateHandleModel()));
+    connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateHandleModel()));
     connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModel*,SceneWidget::EditMode)),
             m_sceneWidget.data(), SLOT(setSelectedModel(IModel*,SceneWidget::EditMode)));
     /* カメラの初期値を設定。シグナル発行前に行う */

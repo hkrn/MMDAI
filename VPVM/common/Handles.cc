@@ -234,6 +234,7 @@ public:
         world->addRigidBody(body.data());
         m_body = body.take();
     }
+
     btRigidBody *body() const { return m_body; }
     int indices() const { return m_nindices; }
 
@@ -432,7 +433,7 @@ bool Handles::testHitModel(const Vector3 &rayFrom,
 {
     flags = kNone;
     if (m_boneRef) {
-        btCollisionWorld::ClosestRayResultCallback callback(rayFrom,rayTo);
+        btCollisionWorld::ClosestRayResultCallback callback(rayFrom, rayTo);
         m_world->world()->rayTest(rayFrom, rayTo, callback);
         m_trackedHandleRef = 0;
         if (callback.hasHit()) {
@@ -616,6 +617,9 @@ const Transform Handles::modelHandleTransform() const
             transform.setBasis(newBasis);
         }
     }
+    if (IModel *model = m_loaderRef->selectedModelRef()) {
+        transform.setOrigin(transform.getOrigin() + model->worldPosition());
+    }
     return transform;
 }
 
@@ -652,7 +656,7 @@ float Handles::diffAngle(float value) const
 void Handles::setBone(IBone *value)
 {
     m_boneRef = value;
-    updateBone();
+    updateHandleModel();
 }
 
 void Handles::setState(Flags value)
@@ -692,7 +696,7 @@ void Handles::setVisibilityFlags(int value)
     m_visibilityFlags = value;
 }
 
-void Handles::updateBone()
+void Handles::updateHandleModel()
 {
     /* ボーンの位置情報を更新したら stepSimulation で MotionState を経由してハンドルの位置情報に反映させる */
     m_world->world()->stepSimulation(1);
@@ -749,12 +753,12 @@ void Handles::drawImageHandles(IBone *bone)
     }
 }
 
-void Handles::drawRotationHandle(const IModel *model)
+void Handles::drawRotationHandle()
 {
     if (!m_visible || !m_program.isLinked() || !m_boneRef)
         return;
     if (m_boneRef->isRotateable() && m_visibilityFlags & kRotate) {
-        beginDrawing(model);
+        beginDrawing();
         drawModel(m_rotationHandle.x.data(), kRed, kX);
         drawModel(m_rotationHandle.y.data(), kGreen, kY);
         drawModel(m_rotationHandle.z.data(), kBlue, kZ);
@@ -762,12 +766,12 @@ void Handles::drawRotationHandle(const IModel *model)
     }
 }
 
-void Handles::drawMoveHandle(const IModel *model)
+void Handles::drawMoveHandle()
 {
     if (!m_visible || !m_program.isLinked() || !m_boneRef)
         return;
     if (m_boneRef->isMovable() && m_visibilityFlags & kMove) {
-        beginDrawing(model);
+        beginDrawing();
         drawModel(m_translationHandle.x.data(), kRed, kX);
         drawModel(m_translationHandle.y.data(), kGreen, kY);
         drawModel(m_translationHandle.z.data(), kBlue, kZ);
@@ -790,14 +794,10 @@ void Handles::drawModel(Handles::Model *model,
     }
 }
 
-void Handles::beginDrawing(const IModel *model)
+void Handles::beginDrawing()
 {
     QMatrix4x4 world, view, projection, trans;
     m_loaderRef->getCameraMatrices(world, view, projection);
-    if (model) {
-        const Vector3 &position = model->worldPosition();
-        world.translate(position.x(), position.y(), position.z());
-    }
     float matrix[16];
     modelHandleTransform().getOpenGLMatrix(matrix);
     for (int i = 0; i < 16; i++)
