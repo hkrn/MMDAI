@@ -1044,6 +1044,8 @@ void SceneWidget::initializeGL()
 #ifdef IS_VPVM
     const QSize &s = size();
     m_handles.reset(new Handles(m_loader.data(), s));
+    connect(this, SIGNAL(modelDidMove(Vector3)), m_handles.data(), SLOT(updateHandleModel()));
+    connect(this, SIGNAL(modelDidRotate(Quaternion)), m_handles.data(), SLOT(updateHandleModel()));
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->loadImageHandles();
     m_info.reset(new InfoPanel(s));
@@ -1349,13 +1351,13 @@ void SceneWidget::paintGL()
         m_debugDrawer->drawMovableBone(bone, model, m_loader.data());
         m_handles->drawImageHandles(bone);
         m_info->draw();
-        m_handles->drawRotationHandle(model);
+        m_handles->drawRotationHandle();
         break;
     case kMove: /* 移動モード */
         m_debugDrawer->drawMovableBone(bone, model, m_loader.data());
         m_handles->drawImageHandles(bone);
         m_info->draw();
-        m_handles->drawMoveHandle(model);
+        m_handles->drawMoveHandle();
         break;
     case kNone: /* モデル選択なし */
     default:
@@ -1688,7 +1690,7 @@ IBone *SceneWidget::findNearestBone(const IModel *model,
     /* 操作可能なボーンを探す */
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        const Vector3 &o = bone->worldTransform().getOrigin(),
+        const Vector3 &o = model->worldPosition() + bone->worldTransform().getOrigin(),
                 min = o - size, max = o + size;
         if (btRayAabb(znear, zfar, min, max, hitLambda, normal) && bone->isInteractive()) {
             nearestBone = bone;
