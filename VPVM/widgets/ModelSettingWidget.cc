@@ -52,7 +52,6 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     : QWidget(parent),
       m_edgeGroup(new QGroupBox()),
       m_edgeOffsetSpinBox(new QDoubleSpinBox()),
-      m_edgeColorDialogOpenButton(new QPushButton()),
       m_opacityGroup(new QGroupBox()),
       m_opacitySlider(new QSlider(Qt::Horizontal)),
       m_opacitySpinBox(new QSpinBox()),
@@ -74,8 +73,6 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     connect(m_edgeOffsetSpinBox.data(), SIGNAL(valueChanged(double)), SIGNAL(edgeOffsetDidChange(double)));
     m_edgeOffsetSpinBox->setSingleStep(0.1);
     m_edgeOffsetSpinBox->setRange(0.0, 2.0);
-    /* エッジ色 */
-    connect(m_edgeColorDialogOpenButton.data(), SIGNAL(clicked()), SLOT(openEdgeColorDialog()));
     /* 不透明度 */
     m_opacitySlider->setRange(0, 100);
     m_opacitySpinBox->setRange(0, 100);
@@ -112,7 +109,6 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     subLayout.reset(new QHBoxLayout());
     subLayout->setAlignment(Qt::AlignCenter);
     subLayout->addWidget(m_edgeOffsetSpinBox.data());
-    subLayout->addWidget(m_edgeColorDialogOpenButton.data());
     m_edgeGroup->setLayout(subLayout.take());
     mainLayout->addWidget(m_edgeGroup.data());
     subLayout.reset(new QVBoxLayout());
@@ -138,7 +134,6 @@ ModelSettingWidget::~ModelSettingWidget()
 void ModelSettingWidget::retranslate()
 {
     m_edgeGroup->setTitle(tr("Edge Offset"));
-    m_edgeColorDialogOpenButton->setText(tr("Color"));
     m_opacityGroup->setTitle(tr("Opacity"));
     m_shadowGroup->setTitle(tr("Shadow"));
     m_noShadowCheckbox->setText(tr("Disable Shadow"));
@@ -148,23 +143,13 @@ void ModelSettingWidget::retranslate()
     m_rotationGroup->setTitle(tr("Rotation Offset"));
 }
 
-void ModelSettingWidget::openEdgeColorDialog()
-{
-    createEdgeColorDialog(QColor(Qt::black));
-    m_edgeColorDialog->show();
-}
-
 void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
 {
     /* 予期せぬ値変更を伴うシグナル発行防止のため、一時的に無効にする */
     disableSignals();
     if (model) {
-        const Vector3 &color = model->edgeColor();
-        const QColor &c = QColor::fromRgbF(color.x(), color.y(), color.z());
-        createEdgeColorDialog(c);
         m_edgeOffsetSpinBox->setValue(model->edgeWidth());
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
-        m_edgeColorDialog->setCurrentColor(c);
         m_noShadowCheckbox->setChecked(true);
         if (loader) {
             m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
@@ -215,15 +200,6 @@ void ModelSettingWidget::setPositionOffset(const Vector3 &position)
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
     enableSignals();
-}
-
-void ModelSettingWidget::createEdgeColorDialog(const QColor &color)
-{
-    if (!m_edgeColorDialog) {
-        m_edgeColorDialog.reset(new QColorDialog(color, this));
-        connect(m_edgeColorDialog.data(), SIGNAL(currentColorChanged(QColor)), SIGNAL(edgeColorDidChange(QColor)));
-        m_edgeColorDialog->setOption(QColorDialog::NoButtons);
-    }
 }
 
 void ModelSettingWidget::updatePosition()

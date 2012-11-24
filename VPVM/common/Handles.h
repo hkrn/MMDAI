@@ -111,8 +111,8 @@ public:
                       int &flags,
                       QRectF &rect);
     void drawImageHandles(IBone *bone);
-    void drawRotationHandle(const IModel *model);
-    void drawMoveHandle(const IModel *model);
+    void drawRotationHandle();
+    void drawMoveHandle();
     btScalar angle(const Vector3 &pos) const;
 
     void setPoint3D(const Vector3 &value);
@@ -136,7 +136,7 @@ public:
     void setVisibilityFlags(int value);
 
 private slots:
-    void updateBone();
+    void updateHandleModel();
 
 private:
     class Model;
@@ -169,7 +169,7 @@ private:
     };
 
     void drawModel(Model *model, const QColor &color, int requiredVisibilityFlags);
-    void beginDrawing(const vpvl2::IModel *model);
+    void beginDrawing();
     void flushDrawing();
 
     QScopedPointer<TextureDrawHelper> m_helper;

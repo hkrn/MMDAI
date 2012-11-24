@@ -26,7 +26,7 @@ ldd ${app_name} | grep libavcodec.so | perl -ne 'print [split(/\s+/, $_)]->[1], 
 ldd ${app_name} | grep libavformat.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
 ldd ${app_name} | grep libavutil.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
 ldd ${app_name} | grep libswscale.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
-ldd ${app_name} | grep libportaudio.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../portaudio-src/build/scons/posix/% lib
+ldd ${app_name} | grep libportaudio.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../portaudio-src/release_native/lib/% lib
 ldd ${app_name} | grep libIL | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../devil-src/release_native/lib/% lib
 ldd ${app_name} | grep libILU | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp % ../devil-src/release_native/lib/% lib
 ldd ${app_name} | grep libILUT | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp % ../devil-src/release_native/lib/% lib

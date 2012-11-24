@@ -85,7 +85,8 @@ BoneDialog::BoneDialog(BoneMotionModel *bmm, QSettings *settings, QWidget *paren
       m_zAngle(createSpinBox()),
       m_stepRotation(createSpinBox()),
       m_settingsRef(settings),
-      m_boneMotionModelRef(bmm)
+      m_boneMotionModelRef(bmm),
+      m_dirty(false)
 {
     IBone *bone = m_boneMotionModelRef->selectedBone();
     connect(m_xPosition.data(), SIGNAL(valueChanged(double)), SLOT(setXPosition(double)));
@@ -182,31 +183,37 @@ void BoneDialog::setRotation(const Quaternion &rotation)
 void BoneDialog::setXPosition(double value)
 {
     m_boneMotionModelRef->setPosition('X', value);
+    m_dirty = true;
 }
 
 void BoneDialog::setYPosition(double value)
 {
     m_boneMotionModelRef->setPosition('Y', value);
+    m_dirty = true;
 }
 
 void BoneDialog::setZPosition(double value)
 {
     m_boneMotionModelRef->setPosition('Z', value);
+    m_dirty = true;
 }
 
 void BoneDialog::setXAngle(double value)
 {
     m_boneMotionModelRef->setRotation('X', radian(value));
+    m_dirty = true;
 }
 
 void BoneDialog::setYAngle(double value)
 {
     m_boneMotionModelRef->setRotation('Y', radian(value));
+    m_dirty = true;
 }
 
 void BoneDialog::setZAngle(double value)
 {
     m_boneMotionModelRef->setRotation('Z', radian(value));
+    m_dirty = true;
 }
 
 void BoneDialog::setPositionStep(double value)
@@ -228,24 +235,31 @@ void BoneDialog::dialogAccepted()
     m_boneMotionModelRef->mutableState()->discard();
     m_settingsRef->setValue("boneDialog/positionStep", m_stepPosition->value());
     m_settingsRef->setValue("boneDialog/rotationStep", m_stepRotation->value());
+    m_dirty = false;
     close();
 }
 
 void BoneDialog::dialogRejected()
 {
-    int ret = warning(0,
-                      vpvm::BoneDialog::tr("Confirm"),
-                      vpvm::BoneDialog::tr("Do you want to discard your changes?"),
-                      "",
-                      QMessageBox::Yes | QMessageBox::No);
-    switch (ret) {
-    case QMessageBox::Yes:
-        m_boneMotionModelRef->mutableState()->restore();
+    if (m_dirty) {
+        int ret = warning(0,
+                          vpvm::BoneDialog::tr("Confirm"),
+                          vpvm::BoneDialog::tr("Do you want to discard your changes?"),
+                          "",
+                          QMessageBox::Yes | QMessageBox::No);
+        switch (ret) {
+        case QMessageBox::Yes:
+            m_boneMotionModelRef->mutableState()->restore();
+            m_dirty = false;
+            close();
+            break;
+        case QMessageBox::No:
+        default:
+            break;
+        }
+    }
+    else {
         close();
-        break;
-    case QMessageBox::No:
-    default:
-        break;
     }
 }
 

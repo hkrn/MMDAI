@@ -75,7 +75,6 @@ public:
 
 signals:
     void edgeOffsetDidChange(double value);
-    void edgeColorDidChange(const QColor &color);
     void opacityDidChange(const Scalar &value);
     void positionOffsetDidChange(const Vector3 &value);
     void rotationOffsetDidChange(const Vector3 &value);
@@ -84,7 +83,6 @@ signals:
 
 private slots:
     void retranslate();
-    void openEdgeColorDialog();
     void setModel(IModel *model, SceneLoader *loader);
     void setPositionOffset(const Vector3 &position);
     void updatePosition();
@@ -94,12 +92,10 @@ private slots:
 private:
     void disableSignals();
     void enableSignals();
-    void createEdgeColorDialog(const QColor &color);
     QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
 
     QPointer<QGroupBox> m_edgeGroup;
     QPointer<QDoubleSpinBox> m_edgeOffsetSpinBox;
-    QPointer<QPushButton> m_edgeColorDialogOpenButton;
     QPointer<QGroupBox> m_opacityGroup;
     QPointer<QSlider> m_opacitySlider;
     QPointer<QSpinBox> m_opacitySpinBox;
@@ -116,7 +112,6 @@ private:
     QPointer<QDoubleSpinBox> m_ry;
     QPointer<QDoubleSpinBox> m_rz;
     QPointer<QGroupBox> m_rotationGroup;
-    QScopedPointer<QColorDialog> m_edgeColorDialog;
 };
 
 } /* namespace vpvm */

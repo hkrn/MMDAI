@@ -102,6 +102,7 @@ private:
     QScopedPointer<QDoubleSpinBox> m_stepRotation;
     QSettings *m_settingsRef;
     BoneMotionModel *m_boneMotionModelRef;
+    bool m_dirty;
 
     Q_DISABLE_COPY(BoneDialog)
 };

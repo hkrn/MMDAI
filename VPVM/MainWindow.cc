@@ -1409,11 +1409,9 @@ void MainWindow::bindSceneLoader()
     connect(assetWidget, SIGNAL(assetDidRemove(IModel*)), loader, SLOT(deleteModelSlot(IModel*)));
     connect(assetWidget, SIGNAL(assetDidSelect(IModel*)), loader, SLOT(setSelectedModel(IModel*)));
     Handles *handles = m_sceneWidget->handlesRef();
-    connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateBone()));
-    connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateBone()));
-    connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), handles, SLOT(updateBone()));
-    connect(m_sceneWidget.data(), SIGNAL(modelDidRotate(Quaternion)), handles, SLOT(updateBone()));
+    connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateHandleModel()));
+    connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateHandleModel()));
+    connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateHandleModel()));
     connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModel*,SceneWidget::EditMode)),
             m_sceneWidget.data(), SLOT(setSelectedModel(IModel*,SceneWidget::EditMode)));
     /* カメラの初期値を設定。シグナル発行前に行う */
@@ -1500,7 +1498,6 @@ void MainWindow::bindWidgets()
     connect(modelSettingWidget, SIGNAL(opacityDidChange(Scalar)), m_sceneWidget.data(), SLOT(setModelOpacity(Scalar)));
     connect(modelSettingWidget, SIGNAL(projectiveShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelProjectiveShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(selfShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelSelfShadowEnable(bool)));
-    connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget.data(), SLOT(setModelEdgeColor(QColor)));
     connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelPositionOffset(Vector3)));
     connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelRotationOffset(Vector3)));
     connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), modelSettingWidget, SLOT(setPositionOffset(Vector3)));
@@ -1895,10 +1892,9 @@ void MainWindow::selectPreviousModel()
 
 void MainWindow::showLicenseWidget()
 {
-    if (!m_licenseWidget) {
+    if (!m_licenseWidget)
         m_licenseWidget.reset(new LicenseWidget());
-        m_licenseWidget->show();
-    }
+    m_licenseWidget->show();
 }
 
 void MainWindow::openGravitySettingDialog()

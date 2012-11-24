@@ -180,41 +180,6 @@ QGLContext::BindOptions UIGetTextureBindOptions(bool enableMipmap)
     return options;
 }
 
-static void UISetTexture(const RenderContext::TextureCache &cache, RenderContext::InternalTexture &texture)
-{
-    RenderContext::Texture *ref = texture.ref;
-    ref->width = cache.width;
-    ref->height = cache.height;
-    *const_cast<GLuint *>(static_cast<const GLuint *>(ref->object)) = cache.id;
-    if (!texture.isToon) {
-        GLuint textureID = *static_cast<const GLuint *>(ref->object);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-}
-
-static bool UIFindTextureCache(RenderContext::InternalContext *privateContext,
-                               const QString &path,
-                               RenderContext::InternalTexture &texture)
-{
-    if (privateContext && privateContext->textureCache.contains(path)) {
-        UISetTexture(privateContext->textureCache[path], texture);
-        texture.ok = true;
-        return true;
-    }
-    return false;
-}
-
-static void UIAddTextureCache(RenderContext::InternalContext *context,
-                              const QString &path,
-                              const RenderContext::TextureCache &texture)
-{
-    if (context)
-        context->textureCache.insert(path, texture);
-}
-
 #ifdef VPVL2_LINK_NVTT
 static const QImage UIConvertNVImageToQImage(const nv::Image &image)
 {
@@ -698,8 +663,8 @@ void RenderContext::setSceneRef(Scene *value)
 {
     m_offscreens.clear();
     m_model2Paths.clear();
-    QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker)
-            qDeleteAll(m_texture2Movies);
+    QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker);
+    qDeleteAll(m_texture2Movies);
     qDeleteAll(m_effectCaches);
     m_texture2Movies.clear();
     m_effectCaches.clear();
@@ -965,11 +930,11 @@ void RenderContext::releaseRenderColorTarget(void *texture, size_t width, size_t
 }
 
 void RenderContext::bindRenderDepthStencilTarget(void *texture,
-                                            void *depth,
-                                            void *stencil,
-                                            size_t width,
-                                            size_t height,
-                                            bool enableAA)
+                                                 void *depth,
+                                                 void *stencil,
+                                                 size_t width,
+                                                 size_t height,
+                                                 bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -987,11 +952,11 @@ void RenderContext::bindRenderDepthStencilTarget(void *texture,
 }
 
 void RenderContext::releaseRenderDepthStencilTarget(void *texture,
-                                               void * /* depth */,
-                                               void * /* stencil */,
-                                               size_t width,
-                                               size_t height,
-                                               bool enableAA)
+                                                    void * /* depth */,
+                                                    void * /* stencil */,
+                                                    size_t width,
+                                                    size_t height,
+                                                    bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -1243,10 +1208,10 @@ IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
 }
 
 bool RenderContext::uploadTextureNVTT(const QString &suffix,
-                                 const QString &path,
-                                 QScopedPointer<nv::Stream> &stream,
-                                 InternalTexture &internalTexture,
-                                 InternalContext *internalContext)
+                                      const QString &path,
+                                      QScopedPointer<nv::Stream> &stream,
+                                      InternalTexture &internalTexture,
+                                      InternalContext *internalContext)
 {
 #ifdef VPVL2_LINK_NVTT
     if (suffix == "dds") {
@@ -1278,7 +1243,7 @@ bool RenderContext::uploadTextureNVTT(const QString &suffix,
     Q_UNUSED(mipmap)
     Q_UNUSED(stream)
     Q_UNUSED(texture)
-    Q_UNUSED(privateContext)
+    Q_UNUSED(internalContext)
 #endif
     return true;
 }
@@ -1286,9 +1251,9 @@ bool RenderContext::uploadTextureNVTT(const QString &suffix,
 bool RenderContext::uploadTextureInternal(const QString &path, InternalTexture &internalTexture, void *context)
 {
     const QFileInfo info(path);
-    InternalContext *privateContext = static_cast<InternalContext *>(context);
+    InternalContext *internalContext = static_cast<InternalContext *>(context);
     /* テクスチャのキャッシュを検索する */
-    if (UIFindTextureCache(privateContext, path, internalTexture)) {
+    if (internalContext && internalContext->findTextureCache(path, internalTexture)) {
         return true;
     }
     /*
@@ -1301,20 +1266,20 @@ bool RenderContext::uploadTextureInternal(const QString &path, InternalTexture &
         if (loadableTextureExtensions().contains(suffix)) {
             QImage image;
             image.loadFromData(bytes);
-            return generateTextureFromImage(image, path, internalTexture, privateContext);
+            return generateTextureFromImage(image, path, internalTexture, internalContext);
         }
         else {
             QByteArray immutableBytes(bytes);
             QScopedPointer<nv::Stream> stream(new ReadonlyMemoryStream(immutableBytes));
-            return uploadTextureNVTT(suffix, path, stream, internalTexture, privateContext);
+            return uploadTextureNVTT(suffix, path, stream, internalTexture, internalContext);
         }
     }
     else if (info.isDir()) {
         if (internalTexture.isToon) { /* force loading as white toon texture */
             const QString &newPath = m_systemDir.absoluteFilePath("toon0.bmp");
-            if (!UIFindTextureCache(privateContext, newPath, internalTexture)) {
+            if (internalContext && !internalContext->findTextureCache(newPath, internalTexture)) {
                 QImage image(newPath);
-                return generateTextureFromImage(image, newPath, internalTexture, privateContext);
+                return generateTextureFromImage(image, newPath, internalTexture, internalContext);
             }
         }
         return true; /* skip */
@@ -1325,18 +1290,18 @@ bool RenderContext::uploadTextureInternal(const QString &path, InternalTexture &
     }
     else if (loadableTextureExtensions().contains(suffix)) {
         QImage image(path);
-        return generateTextureFromImage(image, path, internalTexture, privateContext);
+        return generateTextureFromImage(image, path, internalTexture, internalContext);
     }
     else {
         QScopedPointer<nv::Stream> stream(new ReadonlyFileStream(path));
-        return uploadTextureNVTT(suffix, path, stream, internalTexture, privateContext);
+        return uploadTextureNVTT(suffix, path, stream, internalTexture, internalContext);
     }
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,
-                                        const QString &path,
-                                        InternalTexture &internalTexture,
-                                        InternalContext *internalContext)
+                                             const QString &path,
+                                             InternalTexture &internalTexture,
+                                             InternalContext *internalContext)
 {
     if (!image.isNull()) {
         size_t width = image.width(), height = image.height();
@@ -1346,11 +1311,13 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                                   UIGetTextureBindOptions(internalTexture.mipmap));
         TextureCache cache(width, height, textureID);
         m_texture2Paths.insert(textureID, path);
-        UISetTexture(cache, internalTexture);
-        UIAddTextureCache(internalContext, path, cache);
+        internalTexture.assign(cache);
+        if (internalContext)
+            internalContext->addTextureCache(path, cache);
         qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
                textureID, width, height, qPrintable(path));
-        return textureID != 0;
+        bool ok = internalTexture.ok = textureID != 0;
+        return ok;
     }
     else {
         qWarning("Failed loading a image to convert the texture: %s", qPrintable(path));
