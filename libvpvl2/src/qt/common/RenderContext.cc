@@ -699,8 +699,8 @@ void RenderContext::setSceneRef(Scene *value)
 {
     m_offscreens.clear();
     m_model2Paths.clear();
-    QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker)
-            qDeleteAll(m_texture2Movies);
+    QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker);
+    qDeleteAll(m_texture2Movies);
     qDeleteAll(m_effectCaches);
     m_texture2Movies.clear();
     m_effectCaches.clear();
@@ -966,11 +966,11 @@ void RenderContext::releaseRenderColorTarget(void *texture, size_t width, size_t
 }
 
 void RenderContext::bindRenderDepthStencilTarget(void *texture,
-                                            void *depth,
-                                            void *stencil,
-                                            size_t width,
-                                            size_t height,
-                                            bool enableAA)
+                                                 void *depth,
+                                                 void *stencil,
+                                                 size_t width,
+                                                 size_t height,
+                                                 bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -988,11 +988,11 @@ void RenderContext::bindRenderDepthStencilTarget(void *texture,
 }
 
 void RenderContext::releaseRenderDepthStencilTarget(void *texture,
-                                               void * /* depth */,
-                                               void * /* stencil */,
-                                               size_t width,
-                                               size_t height,
-                                               bool enableAA)
+                                                    void * /* depth */,
+                                                    void * /* stencil */,
+                                                    size_t width,
+                                                    size_t height,
+                                                    bool enableAA)
 {
     GLuint textureID = *static_cast<const GLuint *>(texture);
     FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
@@ -1244,10 +1244,10 @@ IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
 }
 
 bool RenderContext::uploadTextureNVTT(const QString &suffix,
-                                 const QString &path,
-                                 QScopedPointer<nv::Stream> &stream,
-                                 InternalTexture &internalTexture,
-                                 InternalContext *internalContext)
+                                      const QString &path,
+                                      QScopedPointer<nv::Stream> &stream,
+                                      InternalTexture &internalTexture,
+                                      InternalContext *internalContext)
 {
 #ifdef VPVL2_LINK_NVTT
     if (suffix == "dds") {
@@ -1335,9 +1335,9 @@ bool RenderContext::uploadTextureInternal(const QString &path, InternalTexture &
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,
-                                        const QString &path,
-                                        InternalTexture &internalTexture,
-                                        InternalContext *internalContext)
+                                             const QString &path,
+                                             InternalTexture &internalTexture,
+                                             InternalContext *internalContext)
 {
     if (!image.isNull()) {
         size_t width = image.width(), height = image.height();
