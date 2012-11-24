@@ -155,7 +155,6 @@ public slots:
     void setCameraPerspective(const QSharedPointer<ICamera> &camera);
     void setModelEdgeOffset(double value);
     void setModelOpacity(const Scalar &value);
-    void setModelEdgeColor(const QColor &color);
     void setModelPositionOffset(const Vector3 &value);
     void setModelRotationOffset(const Vector3 &value);
     void setModelProjectiveShadowEnable(bool value);

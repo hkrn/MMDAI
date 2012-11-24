@@ -314,13 +314,6 @@ void SceneWidget::setModelOpacity(const Scalar &value)
     refreshMotions();
 }
 
-void SceneWidget::setModelEdgeColor(const QColor &color)
-{
-    if (IModel *model = m_loader->selectedModelRef())
-        m_loader->setModelEdgeColor(model, color);
-    refreshMotions();
-}
-
 void SceneWidget::setModelPositionOffset(const Vector3 &value)
 {
     if (IModel *model = m_loader->selectedModelRef())

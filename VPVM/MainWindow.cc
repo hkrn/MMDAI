@@ -1498,7 +1498,6 @@ void MainWindow::bindWidgets()
     connect(modelSettingWidget, SIGNAL(opacityDidChange(Scalar)), m_sceneWidget.data(), SLOT(setModelOpacity(Scalar)));
     connect(modelSettingWidget, SIGNAL(projectiveShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelProjectiveShadowEnable(bool)));
     connect(modelSettingWidget, SIGNAL(selfShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelSelfShadowEnable(bool)));
-    connect(modelSettingWidget, SIGNAL(edgeColorDidChange(QColor)), m_sceneWidget.data(), SLOT(setModelEdgeColor(QColor)));
     connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelPositionOffset(Vector3)));
     connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelRotationOffset(Vector3)));
     connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), modelSettingWidget, SLOT(setPositionOffset(Vector3)));
