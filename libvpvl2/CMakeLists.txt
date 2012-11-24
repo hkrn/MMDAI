@@ -5,7 +5,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Functions.cmake)
 
 set(VPVL2_VERSION_MAJOR 0)
 set(VPVL2_VERSION_COMPAT 8)
-set(VPVL2_VERSION_MINOR 0)
+set(VPVL2_VERSION_MINOR 1)
 
 # set library version
 set(VPVL2_VERSION "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.${VPVL2_VERSION_MINOR}")
@@ -307,9 +307,10 @@ if(VPVL2_OPENGL_RENDERER)
     find_package(Cg REQUIRED)
     target_link_libraries(vpvl2 ${CG_LIBRARY} ${CG_GL_LIBRARY})
     # workaround for framework include path
-    if(APPLE)
-      find_path(CG_INCLUDE_DIR Cg/cg.h)
-    endif()
+	if(APPLE)
+      find_path(CG_INCLUDE_DIR_APPLE Cg/cg.h STRING CACHE)
+	  set(CG_INCLUDE_DIR ${CG_INCLUDE_DIR_APPLE})
+	endif()
     include_directories(${CG_INCLUDE_DIR})
   endif()
   if(VPVL2_ENABLE_OPENCL)
