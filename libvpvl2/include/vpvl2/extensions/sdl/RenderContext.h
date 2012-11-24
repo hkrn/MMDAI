@@ -274,9 +274,6 @@ public:
         GLuint id;
     };
     typedef std::map<UnicodeString, TextureCache> TextureCacheMap;
-    struct InternalContext {
-        TextureCacheMap textureCache;
-    };
     struct InternalTexture {
         InternalTexture(RenderContext::Texture *r, bool m, bool t)
             : ref(r),
@@ -286,11 +283,30 @@ public:
               ok(false)
         {
         }
+        void assign(const TextureCache &cache) {
+            ref->width = cache.width;
+            ref->height = cache.height;
+            *static_cast<GLuint *>(ref->object) = cache.id;
+        }
         RenderContext::Texture *ref;
         bool isToon;
         bool isSystem;
         bool mipmap;
         bool ok;
+    };
+    struct InternalContext {
+        TextureCacheMap textureCache;
+        void addTextureCache(const UnicodeString &path, const TextureCache &cache) {
+            textureCache.insert(std::make_pair(path, cache));
+        }
+        bool findTextureCache(const UnicodeString &path, InternalTexture &texture) {
+            if (textureCache.find(path) != textureCache.end()) {
+                texture.assign(textureCache[path]);
+                texture.ok = true;
+                return true;
+            }
+            return false;
+        }
     };
 
     RenderContext(Scene *sceneRef, UIStringMap *configRef)
@@ -590,15 +606,10 @@ private:
         return d + "/" + n.findAndReplace('\\', '/');
     }
     bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) {
-        InternalContext *privateContext = static_cast<InternalContext *>(context);
+        InternalContext *internalContext = static_cast<InternalContext *>(context);
         /* テクスチャのキャッシュを検索する */
-        if (privateContext) {
-            TextureCacheMap &tc = privateContext->textureCache;
-            if (tc.find(path) != tc.end()) {
-                setTextureID(tc[path], texture);
-                texture.ok = true;
-                return true;
-            }
+        if (internalContext && internalContext->findTextureCache(path, texture)) {
+            return true;
         }
         std::string bytes;
         if (!UILoadFile(path, bytes)) {
@@ -681,27 +692,11 @@ private:
 #endif
         SDL_FreeSurface(surface);
         TextureCache cache(width, height, textureID);
-        setTextureID(cache, texture);
-        addTextureCache(path, cache, privateContext);
-        texture.ok = textureID != 0;
-        return texture.ok;
-    }
-    static void setTextureID(const TextureCache &cache, InternalTexture &texture) {
-        RenderContext::Texture *ref = texture.ref;
-        ref->width = cache.width;
-        ref->height = cache.height;
-        *const_cast<GLuint *>(static_cast<const GLuint *>(ref->object)) = cache.id;
-        if (!texture.isToon) {
-            GLuint textureID = *static_cast<const GLuint *>(ref->object);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
-    }
-    static void addTextureCache(const UnicodeString &path, const TextureCache &texture, InternalContext *context) {
-        if (context)
-            context->textureCache.insert(std::make_pair(path, texture));
+        texture.assign(cache);
+        if (internalContext)
+            internalContext->addTextureCache(path, cache);
+        bool ok = texture.ok = textureID != 0;
+        return ok;
     }
 
     Scene *m_sceneRef;

@@ -70,9 +70,6 @@ public:
         int height;
         GLuint id;
     };
-    struct InternalContext {
-        QHash<QString, TextureCache> textureCache;
-    };
     struct InternalTexture {
         InternalTexture(RenderContext::Texture *r, bool m, bool t)
             : ref(r),
@@ -82,11 +79,30 @@ public:
               ok(false)
         {
         }
+        void assign(const RenderContext::TextureCache &cache) {
+            ref->width = cache.width;
+            ref->height = cache.height;
+            *static_cast<GLuint *>(ref->object) = cache.id;
+        }
         RenderContext::Texture *ref;
         bool isToon;
         bool isSystem;
         bool mipmap;
         bool ok;
+    };
+    struct InternalContext {
+        QHash<QString, TextureCache> textureCache;
+        void addTextureCache(const QString &path, const RenderContext::TextureCache &cache) {
+            textureCache.insert(path, cache);
+        }
+        bool findTextureCache(const QString &path, RenderContext::InternalTexture &texture) {
+            if (textureCache.contains(path)) {
+                texture.assign(textureCache[path]);
+                texture.ok = true;
+                return true;
+            }
+            return false;
+        }
     };
     typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
     typedef struct {
