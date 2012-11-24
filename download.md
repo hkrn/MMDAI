@@ -8,7 +8,7 @@ group: navigation
 
 過去分のバイナリは [hkrn.minus.com](http://hkrn.minus.com) にあります
 
-VPVM a.k.a MMDAI2 0.26.0
+VPVM a.k.a MMDAI2 0.26.1
 ------------------------
 
  - [MacOSX Intel 32/64bit](http://bowlroll.net/up/dl2185)
