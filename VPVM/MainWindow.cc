@@ -1892,10 +1892,9 @@ void MainWindow::selectPreviousModel()
 
 void MainWindow::showLicenseWidget()
 {
-    if (!m_licenseWidget) {
+    if (!m_licenseWidget)
         m_licenseWidget.reset(new LicenseWidget());
-        m_licenseWidget->show();
-    }
+    m_licenseWidget->show();
 }
 
 void MainWindow::openGravitySettingDialog()
