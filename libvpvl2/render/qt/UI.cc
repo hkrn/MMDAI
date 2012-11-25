@@ -228,13 +228,75 @@ QDebug operator<<(QDebug debug, const pmx::Morph *morph)
         return debug.space();
     }
     debug.nospace();
-    debug << "Morph id      = " << morph->index();
+    debug << "Morph id       = " << morph->index();
     debug << "\n";
-    debug << "      name    = " << morph->name();
+    debug << "      name     = " << morph->name();
     debug << "\n";
-    debug << "      english = " << morph->englishName();
+    debug << "      english  = " << morph->englishName();
     debug << "\n";
-    debug << "      weight  = " << morph->weight();
+    debug << "      weight   = " << morph->weight();
+    debug << "\n";
+    debug << "      category = ";
+    switch (morph->category()) {
+    case IMorph::kBase:
+        debug << "kBase";
+        break;
+    case IMorph::kEyeblow:
+        debug << "kEyeblow";
+        break;
+    case IMorph::kEye:
+        debug << "kEye";
+        break;
+    case IMorph::kLip:
+        debug << "kLip";
+        break;
+    case IMorph::kOther:
+        debug << "kOther";
+        break;
+    default:
+        debug << "(unknown)";
+        break;
+    }
+    debug << "\n";
+    debug << "      type     = ";
+    switch (morph->type()) {
+    case IMorph::kGroup:
+        debug << "kGroup";
+        break;
+    case IMorph::kVertex:
+        debug << "kVertex";
+        break;
+    case IMorph::kBone:
+        debug << "kBone";
+        break;
+    case IMorph::kTexCoord:
+        debug << "kTexCoord";
+        break;
+    case IMorph::kUVA1:
+        debug << "kUVA1";
+        break;
+    case IMorph::kUVA2:
+        debug << "kUVA2";
+        break;
+    case IMorph::kUVA3:
+        debug << "kUVA3";
+        break;
+    case IMorph::kUVA4:
+        debug << "kUVA4";
+        break;
+    case IMorph::kMaterial:
+        debug << "kMaterial";
+        break;
+    case IMorph::kFlip:
+        debug << "kFlip";
+        break;
+    case IMorph::kImpulse:
+        debug << "kImpulse";
+        break;
+    default:
+        debug << "(unknown)";
+        break;
+    }
     debug << "\n";
     return debug.space();
 }
@@ -883,7 +945,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         return 0;
     }
 #if 0
-    pmx::Model *pmx = dynamic_cast<pmx::Model*>(res);
+    pmx::Model *pmx = dynamic_cast<pmx::Model*>(model);
     if (pmx) {
         const Array<pmx::Material *> &materials = pmx->materials();
         const int nmaterials = materials.count();

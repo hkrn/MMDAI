@@ -48,6 +48,10 @@ my $MMDAI_CHECKOUT_URI = 'git://github.com/hkrn/MMDAI.git';
 my $MMDAI_DIRECTORY = 'MMDAI';
 my $VPVL_DIRECTORY = 'libvpvl';
 my $VPVL2_DIRECTORY = 'libvpvl2';
+my $GTEST_CHECKOUT_URI = 'http://googletest.googlecode.com/svn/tags/release-1.6.0';
+my $GTEST_DIRECTORY = 'gtest-1.6.0';
+my $GMOCK_CHECKOUT_URI = 'http://googlemock.googlecode.com/svn/tags/release-1.6.0';
+my $GMOCK_DIRECTORY = 'gmock-1.6.0';
 my $BULLET_CHECKOUT_URI = 'http://bullet.googlecode.com/svn/tags/bullet-2.77';
 my $BULLET_DIRECTORY = 'bullet' . $SOURCE_DIRECTORY_SUFFIX;
 my $ASSIMP_CHECKOUT_URI = 'https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0';
@@ -287,6 +291,12 @@ chdir $MMDAI_DIRECTORY;
 my $base_directory = Cwd::cwd();
 chdir $base_directory;
 system 'git', 'pull', '--rebase';
+
+# checkout gtest/gmock 1.6.0 (even ignore svn:external)
+chdir $base_directory . '/libvpvl2/test';
+system 'svn', 'checkout', $GTEST_CHECKOUT_URI, $GTEST_DIRECTORY unless -d $GTEST_DIRECTORY;
+system 'svn', 'checkout', '--ignore-externals', $GMOCK_CHECKOUT_URI, $GMOCK_DIRECTORY unless -d $GMOCK_DIRECTORY;
+chdir $base_directory;
 
 # checkout bullet sources
 system 'svn', 'checkout', $BULLET_CHECKOUT_URI, $BULLET_DIRECTORY unless -d $BULLET_DIRECTORY;
