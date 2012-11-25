@@ -9,15 +9,15 @@ class MockIVertex : public IVertex {
   MOCK_METHOD0(reset,
       void());
   MOCK_CONST_METHOD0(origin,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(normal,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(textureCoord,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD1(uv,
-      const Vector4&(int index));
+      Vector4(int index));
   MOCK_CONST_METHOD0(delta,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(type,
       Type());
   MOCK_CONST_METHOD0(edgeSize,
@@ -26,6 +26,8 @@ class MockIVertex : public IVertex {
       float(int index));
   MOCK_CONST_METHOD1(bone,
       IBone*(int index));
+  MOCK_CONST_METHOD0(material,
+      IMaterial*());
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_METHOD1(setOrigin,
@@ -44,6 +46,8 @@ class MockIVertex : public IVertex {
       void(int index, float weight));
   MOCK_METHOD2(setBone,
       void(int index, IBone *value));
+  MOCK_METHOD1(setMaterial,
+      void(IMaterial *value));
 };
 
 }  // namespace vpvl2

@@ -57,15 +57,16 @@ class VPVL2_API Morph : public IMorph
 public:
     static const int kNameSize = 20;
 
-    Morph(IEncoding *encodingRef);
+    Morph(IModel *parentModelRef, IEncoding *encodingRef);
     ~Morph();
 
+    IModel *parentModelRef() const { return m_parentModelRef; }
     const IString *name() const { return m_name; }
     int index() const { return m_index; }
     Category category() const;
     Type type() const;
     bool hasParent() const;
-    const WeightPrecision &weight() const;
+    WeightPrecision weight() const;
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 
@@ -77,6 +78,7 @@ public:
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
 
+    IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     Category m_category;

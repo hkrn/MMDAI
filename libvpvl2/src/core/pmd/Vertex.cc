@@ -66,17 +66,17 @@ Vertex::~Vertex()
     m_index = 0;
 }
 
-const Vector3 &Vertex::origin() const
+Vector3 Vertex::origin() const
 {
     return m_vertexRef->position();
 }
 
-const Vector3 &Vertex::normal() const
+Vector3 Vertex::normal() const
 {
     return m_vertexRef->normal();
 }
 
-const Vector3 &Vertex::textureCoord() const
+Vector3 Vertex::textureCoord() const
 {
     return m_texcoord;
 }

@@ -190,9 +190,9 @@ public:
         saveCurrentTimeIndex(m_currentTimeIndex + deltaTimeIndex);
     }
 
-    const IKeyframe::TimeIndex &maxTimeIndex() const { return m_maxTimeIndex; }
-    const IKeyframe::TimeIndex &currentTimeIndex() const { return m_currentTimeIndex; }
-    const IKeyframe::TimeIndex &previousTimeIndex() const { return m_previousTimeIndex; }
+    IKeyframe::TimeIndex maxTimeIndex() const { return m_maxTimeIndex; }
+    IKeyframe::TimeIndex currentTimeIndex() const { return m_currentTimeIndex; }
+    IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
     void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {

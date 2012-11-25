@@ -106,7 +106,7 @@ public:
      * @return Transform
      * @sa origin
      */
-    virtual const Transform &worldTransform() const = 0;
+    virtual Transform worldTransform() const = 0;
 
     /**
      * ボーンのローカル変換行列を返します.
@@ -117,7 +117,7 @@ public:
      * @return Transform
      * @sa origin
      */
-    virtual const Transform &localTransform() const = 0;
+    virtual Transform localTransform() const = 0;
 
     /**
      * ワールド行列をローカル行列に変換します.
@@ -140,7 +140,7 @@ public:
      * @return Vector3
      * @sa worldTransform
      */
-    virtual const Vector3 &origin() const = 0;
+    virtual Vector3 origin() const = 0;
 
     /**
      * ボーンの接続先の位置を返します.
@@ -149,7 +149,7 @@ public:
      *
      * @return Vector3
      */
-    virtual const Vector3 destinationOrigin() const = 0;
+    virtual Vector3 destinationOrigin() const = 0;
 
     /**
      * 現在のボーンのローカル座標系の相対移動量を返します.
@@ -159,7 +159,7 @@ public:
      * @return Vector3
      * @sa setLocalPosition
      */
-    virtual const Vector3 &localPosition() const = 0;
+    virtual Vector3 localPosition() const = 0;
 
     /**
      * 現在のボーンの回転量を返します.
@@ -169,7 +169,7 @@ public:
      * @return Quaternion
      * @sa setLocalRotation
      */
-    virtual const Quaternion &localRotation() const = 0;
+    virtual Quaternion localRotation() const = 0;
 
     /**
      * リンクするボーンの配列を引数に対して格納します.
@@ -254,7 +254,7 @@ public:
      * @param Matrix3x3
      * @sa getLocalAxes
      */
-    virtual const Vector3 &fixedAxis() const = 0;
+    virtual Vector3 fixedAxis() const = 0;
 
     /**
      * ボーンのローカル軸の行列を返します.
@@ -291,16 +291,16 @@ public:
     IModel *parentModelRef() const { return 0; }
     IBone *parentBoneRef() const { return 0; }
     IBone *targetBoneRef() const { return 0; }
-    const Transform &worldTransform() const {  return Transform::getIdentity(); }
-    const Transform &localTransform() const {  return Transform::getIdentity(); }
+    Transform worldTransform() const {  return Transform::getIdentity(); }
+    Transform localTransform() const {  return Transform::getIdentity(); }
     void getLocalTransform(Transform &world2LocalTransform) const {
         world2LocalTransform = Transform::getIdentity();
     }
     void setLocalTransform(const Transform & /* value */) {}
-    const Vector3 &origin() const { return kZeroV3; }
-    const Vector3 destinationOrigin() const { return kZeroV3; }
-    const Vector3 &localPosition() const { return kZeroV3; }
-    const Quaternion &localRotation() const { return Quaternion::getIdentity(); }
+    Vector3 origin() const { return kZeroV3; }
+    Vector3 destinationOrigin() const { return kZeroV3; }
+    Vector3 localPosition() const { return kZeroV3; }
+    Quaternion localRotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 & /* value */) {}
     void setLocalRotation(const Quaternion & /* value */) {}
@@ -311,7 +311,7 @@ public:
     bool hasInverseKinematics() const { return false; }
     bool hasFixedAxes() const { return false; }
     bool hasLocalAxes() const { return false; }
-    const Vector3 &fixedAxis() const { return kZeroV3; }
+    Vector3 fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
 private:

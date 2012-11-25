@@ -77,14 +77,14 @@ public:
     int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &rotation() const { return m_rotation; }
-    const Vector3 &positionLowerLimit() const { return m_positionLowerLimit; }
-    const Vector3 &positionUpperLimit() const { return m_positionUpperLimit; }
-    const Vector3 &rotationLowerLimit() const { return m_rotationLowerLimit; }
-    const Vector3 &rotationUpperLimit() const { return m_rotationUpperLimit; }
-    const Vector3 &positionStiffness() const { return m_positionStiffness; }
-    const Vector3 &rotationStiffness() const { return m_rotationStiffness; }
+    Vector3 position() const { return m_position; }
+    Vector3 rotation() const { return m_rotation; }
+    Vector3 positionLowerLimit() const { return m_positionLowerLimit; }
+    Vector3 positionUpperLimit() const { return m_positionUpperLimit; }
+    Vector3 rotationLowerLimit() const { return m_rotationLowerLimit; }
+    Vector3 rotationUpperLimit() const { return m_rotationUpperLimit; }
+    Vector3 positionStiffness() const { return m_positionStiffness; }
+    Vector3 rotationStiffness() const { return m_rotationStiffness; }
     int index() const { return m_index; }
 
     void setRigidBody1(BaseRigidBody *value);

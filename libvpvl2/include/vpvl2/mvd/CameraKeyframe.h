@@ -65,10 +65,10 @@ public:
     void setDefaultInterpolationParameter();
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
-    const Vector3 &lookAt() const;
-    const Vector3 &angle() const;
-    const Scalar &distance() const;
-    const Scalar &fov() const;
+    Vector3 lookAt() const;
+    Vector3 angle() const;
+    Scalar distance() const;
+    Scalar fov() const;
     bool isPerspective() const;
     void setLookAt(const Vector3 &value);
     void setAngle(const Vector3 &value);

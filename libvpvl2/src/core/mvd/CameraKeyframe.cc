@@ -231,22 +231,22 @@ void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord 
     }
 }
 
-const Vector3 &CameraKeyframe::lookAt() const
+Vector3 CameraKeyframe::lookAt() const
 {
     return m_position;
 }
 
-const Vector3 &CameraKeyframe::angle() const
+Vector3 CameraKeyframe::angle() const
 {
     return m_angle;
 }
 
-const Scalar &CameraKeyframe::distance() const
+Scalar CameraKeyframe::distance() const
 {
     return m_distance;
 }
 
-const Scalar &CameraKeyframe::fov() const
+Scalar CameraKeyframe::fov() const
 {
     return m_fov;
 }

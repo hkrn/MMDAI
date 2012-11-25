@@ -64,8 +64,8 @@ public:
     }
 
     const IString *name() const { return m_namePtr; }
-    const TimeIndex &timeIndex() const { return m_timeIndex; }
-    const LayerIndex &layerIndex() const { return m_layerIndex; }
+    TimeIndex timeIndex() const { return m_timeIndex; }
+    LayerIndex layerIndex() const { return m_layerIndex; }
     void setTimeIndex(const IKeyframe::TimeIndex &value) { m_timeIndex = value; }
     void setLayerIndex(const LayerIndex &value) { m_layerIndex = value; }
 

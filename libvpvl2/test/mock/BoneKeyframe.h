@@ -11,9 +11,9 @@ class MockIBoneKeyframe : public IBoneKeyframe {
   MOCK_CONST_METHOD2(getInterpolationParameter,
       void(InterpolationType type, QuadWord &value));
   MOCK_CONST_METHOD0(localPosition,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(localRotation,
-      const Quaternion&());
+      Quaternion());
   MOCK_METHOD1(setLocalPosition,
       void(const Vector3 &value));
   MOCK_METHOD1(setLocalRotation,

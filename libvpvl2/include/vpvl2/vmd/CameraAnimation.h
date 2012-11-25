@@ -71,10 +71,10 @@ public:
     CameraKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     CameraKeyframe *frameAt(int i) const;
 
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &angle() const { return m_angle; }
-    const Scalar &distance() const { return m_distance; }
-    const Scalar &fovy() const { return m_fovy; }
+    Vector3 position() const { return m_position; }
+    Vector3 angle() const { return m_angle; }
+    Scalar distance() const { return m_distance; }
+    Scalar fovy() const { return m_fovy; }
 
 private:
     static IKeyframe::SmoothPrecision weightValue(const CameraKeyframe *keyFrame,

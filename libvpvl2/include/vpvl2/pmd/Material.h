@@ -73,13 +73,13 @@ public:
     const IString *sphereTexture() const { return m_sphereTexture; }
     const IString *toonTexture() const { return m_toonTexture; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
-    const Color &ambient() const;
-    const Color &diffuse() const;
-    const Color &specular() const;
-    const Color &edgeColor() const { return kZeroC; }
-    const Color &mainTextureBlend() const { return kWhiteColor; }
-    const Color &sphereTextureBlend() const { return kWhiteColor; }
-    const Color &toonTextureBlend() const { return kWhiteColor; }
+    Color ambient() const;
+    Color diffuse() const;
+    Color specular() const;
+    Color edgeColor() const { return kZeroC; }
+    Color mainTextureBlend() const { return kWhiteColor; }
+    Color sphereTextureBlend() const { return kWhiteColor; }
+    Color toonTextureBlend() const { return kWhiteColor; }
     float shininess() const;
     float edgeSize() const { return 1; }
     int index() const { return m_index; }

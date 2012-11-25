@@ -55,7 +55,7 @@ public:
      * @brief modelViewTransform
      * @return Transform
      */
-    virtual const Transform &modelViewTransform() const = 0;
+    virtual Transform modelViewTransform() const = 0;
 
     /**
      * カメラの注視点の位置を返します.
@@ -65,7 +65,7 @@ public:
      * @sa position
      * @sa setLookAt
      */
-    virtual const Vector3 &lookAt() const = 0;
+    virtual Vector3 lookAt() const = 0;
 
     /**
      * カメラの位置を返します.
@@ -76,7 +76,7 @@ public:
      * @return Vector3
      * @sa lookAt
      */
-    virtual const Vector3 &position() const = 0;
+    virtual Vector3 position() const = 0;
 
     /**
      * カメラのアングル角度（全てラジアン）を返します.
@@ -85,7 +85,7 @@ public:
      * @return Vector3
      * @sa setAngle
      */
-    virtual const Vector3 &angle() const = 0;
+    virtual Vector3 angle() const = 0;
 
     /**
      * カメラの視野角（ラジアンではなく角度）を返します.

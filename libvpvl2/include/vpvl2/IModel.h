@@ -377,17 +377,17 @@ public:
      */
     virtual float edgeScaleFactor(const Vector3 &cameraPosition) const = 0;
 
-    virtual const Vector3 &worldPosition() const = 0;
+    virtual Vector3 worldPosition() const = 0;
 
-    virtual const Quaternion &worldRotation() const = 0;
+    virtual Quaternion worldRotation() const = 0;
 
-    virtual const Scalar &opacity() const = 0;
+    virtual Scalar opacity() const = 0;
 
-    virtual const Scalar &scaleFactor() const = 0;
+    virtual Scalar scaleFactor() const = 0;
 
-    virtual const Vector3 &edgeColor() const = 0;
+    virtual Vector3 edgeColor() const = 0;
 
-    virtual const Scalar &edgeWidth() const = 0;
+    virtual Scalar edgeWidth() const = 0;
 
     virtual IModel *parentModel() const = 0;
 

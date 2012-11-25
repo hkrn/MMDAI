@@ -316,7 +316,7 @@ void Motion::reset()
     m_active = true;
 }
 
-const IKeyframe::TimeIndex &Motion::maxTimeIndex() const
+IKeyframe::TimeIndex Motion::maxTimeIndex() const
 {
     return btMax(btMax(btMax(m_boneMotion.maxTimeIndex(), m_morphMotion.maxTimeIndex()), m_cameraMotion.maxTimeIndex()), m_lightMotion.maxTimeIndex());
 }

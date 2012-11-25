@@ -68,10 +68,10 @@ public:
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
-    const Scalar &distance() const { return m_distance; }
-    const Scalar &fov() const { return m_fov; }
-    const Vector3 &lookAt() const { return m_position; }
-    const Vector3 &angle() const { return m_angle; }
+    Scalar distance() const { return m_distance; }
+    Scalar fov() const { return m_fov; }
+    Vector3 lookAt() const { return m_position; }
+    Vector3 angle() const { return m_angle; }
     bool isPerspective() const { return !m_noPerspective; }
     const bool *linear() const { return m_linear; }
     const IKeyframe::SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }

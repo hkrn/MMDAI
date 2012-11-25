@@ -197,12 +197,12 @@ void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &v
     }
 }
 
-const Vector3 &BoneKeyframe::localPosition() const
+Vector3 BoneKeyframe::localPosition() const
 {
     return m_position;
 }
 
-const Quaternion &BoneKeyframe::localRotation() const
+Quaternion BoneKeyframe::localRotation() const
 {
     return m_rotation;
 }

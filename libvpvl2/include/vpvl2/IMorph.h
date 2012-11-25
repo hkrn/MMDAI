@@ -133,7 +133,7 @@ public:
      * @return float
      * @sa setWeight
      */
-    virtual const WeightPrecision &weight() const = 0;
+    virtual WeightPrecision weight() const = 0;
 
     /**
      * 係数 value に基づいて変形を行います.

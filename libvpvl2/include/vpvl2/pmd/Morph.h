@@ -64,7 +64,7 @@ public:
     Category category() const;
     Type type() const;
     bool hasParent() const;
-    const WeightPrecision &weight() const;
+    WeightPrecision weight() const;
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 

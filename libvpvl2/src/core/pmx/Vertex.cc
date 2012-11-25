@@ -489,7 +489,7 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     }
 }
 
-const Vector4 &Vertex::uv(int index) const
+Vector4 Vertex::uv(int index) const
 {
     return internal::checkBound(index, 0, kMaxMorphs) ? m_morphUVs[index] : kZeroV4;
 }

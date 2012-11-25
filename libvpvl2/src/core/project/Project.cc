@@ -1673,17 +1673,17 @@ bool Project::save(xmlBufferPtr &buffer)
     return save0(xmlNewTextWriterMemory(buffer, 0));
 }
 
-const std::string &Project::version() const
+std::string Project::version() const
 {
     return m_context->version;
 }
 
-const std::string &Project::globalSetting(const std::string &key) const
+std::string Project::globalSetting(const std::string &key) const
 {
     return m_context->globalSettings[key];
 }
 
-const std::string &Project::modelSetting(const IModel *model, const std::string &key) const
+std::string Project::modelSetting(const IModel *model, const std::string &key) const
 {
     if (model) {
         switch (model->type()) {
@@ -1730,12 +1730,12 @@ IMotion *Project::findMotion(const UUID &uuid) const
     return m_context->findMotion(uuid);
 }
 
-const Project::UUID &Project::modelUUID(const IModel *model) const
+Project::UUID Project::modelUUID(const IModel *model) const
 {
     return m_context->findModelUUID(model);
 }
 
-const Project::UUID &Project::motionUUID(const IMotion *motion) const
+Project::UUID Project::motionUUID(const IMotion *motion) const
 {
     return m_context->findMotionUUID(motion);
 }

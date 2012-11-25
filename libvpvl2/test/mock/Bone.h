@@ -13,21 +13,21 @@ class MockIBone : public IBone {
   MOCK_CONST_METHOD0(targetBoneRef,
       IBone*());
   MOCK_CONST_METHOD0(worldTransform,
-      const Transform&());
+      Transform());
   MOCK_CONST_METHOD0(localTransform,
-      const Transform&());
+      Transform());
   MOCK_CONST_METHOD1(getLocalTransform,
       void(Transform &world2LocalTransform));
   MOCK_METHOD1(setLocalTransform,
       void(const Transform &value));
   MOCK_CONST_METHOD0(origin,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(destinationOrigin,
-      const Vector3());
+      Vector3());
   MOCK_CONST_METHOD0(localPosition,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(localRotation,
-      const Quaternion&());
+      Quaternion());
   MOCK_CONST_METHOD1(getEffectorBones,
       void(Array<IBone *> &value));
   MOCK_METHOD1(setLocalPosition,
@@ -49,7 +49,7 @@ class MockIBone : public IBone {
   MOCK_CONST_METHOD0(hasLocalAxes,
       bool());
   MOCK_CONST_METHOD0(fixedAxis,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD1(getLocalAxes,
       void(Matrix3x3 &value));
   MOCK_METHOD1(setInverseKinematicsEnable,

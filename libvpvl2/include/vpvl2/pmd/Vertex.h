@@ -64,11 +64,11 @@ public:
     ~Vertex();
 
     IModel *parentModelRef() const { return m_modelRef; }
-    const Vector3 &origin() const;
-    const Vector3 &normal() const;
-    const Vector3 &textureCoord() const;
-    const Vector4 &uv(int /* index */) const { return kZeroV4; }
-    const Vector3 &delta() const { return kZeroV3; }
+    Vector3 origin() const;
+    Vector3 normal() const;
+    Vector3 textureCoord() const;
+    Vector4 uv(int /* index */) const { return kZeroV4; }
+    Vector3 delta() const { return kZeroV3; }
     Type type() const { return kBdef2; }
     float edgeSize() const;
     float weight(int index) const;

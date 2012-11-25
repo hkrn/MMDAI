@@ -1,15 +1,15 @@
-#include <vpvl2/ICamera.h>
-
 namespace vpvl2 {
 
 class MockICamera : public ICamera {
  public:
   MOCK_CONST_METHOD0(modelViewTransform,
-      const Transform&());
+      Transform());
+  MOCK_CONST_METHOD0(lookAt,
+      Vector3());
   MOCK_CONST_METHOD0(position,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(angle,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(fov,
       Scalar());
   MOCK_CONST_METHOD0(distance,
@@ -20,7 +20,7 @@ class MockICamera : public ICamera {
       Scalar());
   MOCK_CONST_METHOD0(motion,
       IMotion*());
-  MOCK_METHOD1(setPosition,
+  MOCK_METHOD1(setLookAt,
       void(const Vector3 &value));
   MOCK_METHOD1(setAngle,
       void(const Vector3 &value));
@@ -35,7 +35,7 @@ class MockICamera : public ICamera {
   MOCK_METHOD1(setMotion,
       void(IMotion *value));
   MOCK_METHOD1(copyFrom,
-      void(ICamera *value));
+      void(const ICamera *value));
   MOCK_METHOD0(resetDefault,
       void());
 };

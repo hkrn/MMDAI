@@ -152,7 +152,7 @@ void MorphKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &
     }
 }
 
-const IMorph::WeightPrecision &MorphKeyframe::weight() const
+IMorph::WeightPrecision MorphKeyframe::weight() const
 {
     return m_weight;
 }

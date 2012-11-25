@@ -51,17 +51,17 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD1(edgeScaleFactor,
       float(const Vector3 &cameraPosition));
   MOCK_CONST_METHOD0(worldPosition,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(worldRotation,
-      const Quaternion&());
+      Quaternion());
   MOCK_CONST_METHOD0(opacity,
-      const Scalar&());
+      Scalar());
   MOCK_CONST_METHOD0(scaleFactor,
-      const Scalar&());
+      Scalar());
   MOCK_CONST_METHOD0(edgeColor,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(edgeWidth,
-      const Scalar&());
+      Scalar());
   MOCK_CONST_METHOD0(parentModel,
       IModel*());
   MOCK_CONST_METHOD0(parentBone,

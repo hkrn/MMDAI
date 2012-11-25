@@ -116,7 +116,7 @@ public:
      * @return Vector3
      * @sa setLocalPosition
      */
-    virtual const Vector3 &localPosition() const = 0;
+    virtual Vector3 localPosition() const = 0;
 
     /**
      * 回転量を返します.
@@ -124,7 +124,7 @@ public:
      * @return Quaternion
      * @sa setLocalRotation
      */
-    virtual const Quaternion &localRotation() const = 0;
+    virtual Quaternion localRotation() const = 0;
 
     /**
      * 移動量を設定します.

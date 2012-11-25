@@ -455,7 +455,7 @@ void Motion::reset()
     m_active = true;
 }
 
-const IKeyframe::TimeIndex &Motion::maxTimeIndex() const
+IKeyframe::TimeIndex Motion::maxTimeIndex() const
 {
     return btMax(m_assetSection->maxTimeIndex(),
                  btMax(m_boneSection->maxTimeIndex(),

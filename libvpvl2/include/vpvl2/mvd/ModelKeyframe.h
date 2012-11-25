@@ -67,8 +67,8 @@ public:
     bool isAddBlendEnabled() const;
     bool isPhysicsEnabled() const;
     uint8_t physicsStillMode() const;
-    const Scalar &edgeWidth() const;
-    const Color &edgeColor() const;
+    Scalar edgeWidth() const;
+    Color edgeColor() const;
     void setVisible(bool value);
     void setShadowEnable(bool value);
     void setAddBlendEnable(bool value);

@@ -181,12 +181,12 @@ uint8_t ModelKeyframe::physicsStillMode() const
     return m_physicsStillMode;
 }
 
-const Scalar &ModelKeyframe::edgeWidth() const
+Scalar ModelKeyframe::edgeWidth() const
 {
     return m_edgeWidth;
 }
 
-const Color &ModelKeyframe::edgeColor() const
+Color ModelKeyframe::edgeColor() const
 {
     return m_edgeColor;
 }

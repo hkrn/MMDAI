@@ -324,12 +324,12 @@ ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
     return 0;
 }
 
-const Vector3 &CameraSection::position() const
+Vector3 CameraSection::position() const
 {
     return m_contextPtr ? m_contextPtr->position : kZeroV3;
 }
 
-const Vector3 &CameraSection::angle() const
+Vector3 CameraSection::angle() const
 {
     return m_contextPtr ? m_contextPtr->angle : kZeroV3;
 }

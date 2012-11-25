@@ -123,7 +123,7 @@ public:
      * @return Index
      * @sa setTimeIndex
      */
-    virtual const TimeIndex &timeIndex() const = 0;
+    virtual TimeIndex timeIndex() const = 0;
 
     /**
      * キーフレームのレイヤー番号を返します.
@@ -131,7 +131,7 @@ public:
      * @return Layer
      * @sa setLayerIndex
      */
-    virtual const LayerIndex &layerIndex() const = 0;
+    virtual LayerIndex layerIndex() const = 0;
 
     /**
      * キーフレームの動作対象となる名前を設定します.

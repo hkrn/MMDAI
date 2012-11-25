@@ -131,12 +131,12 @@ public:
     void getMorphRefs(Array<IMorph *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
-    const Vector3 &worldPosition() const { return m_position; }
-    const Quaternion &worldRotation() const { return m_rotation; }
-    const Scalar &opacity() const { return m_opacity; }
-    const Scalar &scaleFactor() const { return m_scaleFactor; }
-    const Vector3 &edgeColor() const { return m_edgeColor; }
-    const Scalar &edgeWidth() const { return m_edgeWidth; }
+    Vector3 worldPosition() const { return m_position; }
+    Quaternion worldRotation() const { return m_rotation; }
+    Scalar opacity() const { return m_opacity; }
+    Scalar scaleFactor() const { return m_scaleFactor; }
+    Vector3 edgeColor() const { return m_edgeColor; }
+    Scalar edgeWidth() const { return m_edgeWidth; }
     IModel *parentModel() const { return 0; }
     IBone *parentBone() const { return 0; }
     void setName(const IString *value);

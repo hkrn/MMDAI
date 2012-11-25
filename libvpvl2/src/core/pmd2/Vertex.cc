@@ -66,13 +66,15 @@ namespace pmd2
 
 const int Vertex::kMaxBones;
 
-Vertex::Vertex()
-    : m_origin(kZeroV3),
+Vertex::Vertex(IModel *parentModelRef)
+    : m_parentModelRef(parentModelRef),
+      m_origin(kZeroV3),
       m_normal(kZeroV3),
       m_texcoord(kZeroV3),
       m_morphDelta(kZeroV3),
       m_edgeSize(0),
       m_weight(0),
+      m_materialRef(0),
       m_index(-1)
 {
 }
@@ -241,6 +243,11 @@ void Vertex::setBone(int index, IBone *value)
 {
     if (internal::checkBound(index, 0, kMaxBones))
         m_boneRefs[index] = value;
+}
+
+void Vertex::setMaterial(IMaterial *value)
+{
+    m_materialRef = value;
 }
 
 }

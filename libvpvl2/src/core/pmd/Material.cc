@@ -105,17 +105,17 @@ Material::~Material()
     m_index = -1;
 }
 
-const Color &Material::ambient() const
+Color Material::ambient() const
 {
     return m_materialRef->ambient();
 }
 
-const Color &Material::diffuse() const
+Color Material::diffuse() const
 {
     return m_diffuse;
 }
 
-const Color &Material::specular() const
+Color Material::specular() const
 {
     return m_materialRef->specular();
 }

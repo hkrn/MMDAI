@@ -125,12 +125,12 @@ ILightKeyframe *LightKeyframe::clone() const
     return frame;
 }
 
-const Vector3 &LightKeyframe::color() const
+Vector3 LightKeyframe::color() const
 {
     return m_color;
 }
 
-const Vector3 &LightKeyframe::direction() const
+Vector3 LightKeyframe::direction() const
 {
     return m_direction;
 }

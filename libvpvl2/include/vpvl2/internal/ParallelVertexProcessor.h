@@ -127,8 +127,8 @@ public:
         m_bufferPtr = 0;
     }
 
-    const Vector3 &aabbMin() const { return m_aabbMin; }
-    const Vector3 &aabbMax() const { return m_aabbMax; }
+    Vector3 aabbMin() const { return m_aabbMin; }
+    Vector3 aabbMax() const { return m_aabbMax; }
 
 #ifdef VPVL2_LINK_INTEL_TBB
     ParallelSkinningVertexProcessor(const ParallelSkinningVertexProcessor &self, tbb::split split)

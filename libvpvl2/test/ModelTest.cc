@@ -961,7 +961,7 @@ TEST(VertexTest, PerformSkinningBdef1)
     pmx::Vertex v(0);
     MockIBone bone;
     Transform transform(Matrix3x3::getIdentity().scaled(Vector3(0.5, 0.5, 0.5)), Vector3(1, 2, 3));
-    EXPECT_CALL(bone, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform));
+    EXPECT_CALL(bone, localTransform()).Times(1).WillRepeatedly(Return(transform));
     EXPECT_CALL(bone, index()).Times(1).WillRepeatedly(Return(0));
     v.setType(pmx::Vertex::kBdef1);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
@@ -981,7 +981,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightZero)
     //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
     EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
     Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
-    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
     EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
     v.setType(pmx::Vertex::kBdef2);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
@@ -1000,7 +1000,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightOne)
     pmx::Vertex v(0);
     MockIBone bone1, bone2;
     Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
-    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(Return(transform1));
     EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
     //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
     //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
@@ -1022,10 +1022,10 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalf)
     pmx::Vertex v(0);
     MockIBone bone1, bone2;
     Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
-    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(Return(transform1));
     EXPECT_CALL(bone1, index()).Times(1).WillRepeatedly(Return(0));
     Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
-    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
     EXPECT_CALL(bone2, index()).Times(1).WillRepeatedly(Return(1));
     v.setType(pmx::Vertex::kBdef2);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
@@ -1048,7 +1048,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
     //Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
     //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
     Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
-    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
     Array<IBone *> bones;
     bones.add(&bone1);
     bones.add(&bone2);
@@ -1069,7 +1069,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightOnePMDCompat)
 {
     MockIBone bone1, bone2;
     Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
-    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(Return(transform1));
     //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
     //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
     Array<IBone *> bones;
@@ -1092,9 +1092,9 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
 {
     MockIBone bone1, bone2;
     Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
-    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
+    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(Return(transform1));
     Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
-    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
+    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
     Array<IBone *> bones;
     bones.add(&bone1);
     bones.add(&bone2);

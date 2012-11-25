@@ -97,9 +97,9 @@ public:
         m_depthTextureSize.setZero();
     }
 
-    const Vector3 &color() const { return m_color; }
-    const Vector3 &direction() const { return m_direction; }
-    const Vector3 &depthTextureSize() const { return m_depthTextureSize; }
+    Vector3 color() const { return m_color; }
+    Vector3 direction() const { return m_direction; }
+    Vector3 depthTextureSize() const { return m_depthTextureSize; }
     void *depthTexture() const { return m_depthTexture; }
     bool hasFloatTexture() const { return m_hasFloatTexture; }
     bool isToonEnabled() const { return m_enableToon; }
@@ -162,10 +162,10 @@ public:
         m_zfar = 0;
     }
 
-    const Transform &modelViewTransform() const { return m_transform; }
-    const Vector3 &lookAt() const { return m_lookAt; }
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &angle() const { return m_angle; }
+    Transform modelViewTransform() const { return m_transform; }
+    Vector3 lookAt() const { return m_lookAt; }
+    Vector3 position() const { return m_position; }
+    Vector3 angle() const { return m_angle; }
     Scalar fov() const { return m_fov; }
     Scalar distance() const { return m_distance.z(); }
     Scalar znear() const { return m_znear; }
@@ -366,7 +366,7 @@ bool Scene::isAcceleratorSupported()
 #endif
 }
 
-const Scalar &Scene::defaultFPS()
+Scalar Scene::defaultFPS()
 {
     static const Scalar kDefaultFPS = 30;
     return kDefaultFPS;
@@ -631,7 +631,7 @@ ICamera *Scene::camera() const
     return &m_context->camera;
 }
 
-const Scalar &Scene::preferredFPS() const
+Scalar Scene::preferredFPS() const
 {
     return m_context->preferredFPS;
 }

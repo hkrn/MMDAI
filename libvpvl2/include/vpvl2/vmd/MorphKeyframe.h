@@ -64,7 +64,7 @@ public:
     size_t estimateSize() const;
     IMorphKeyframe *clone() const;
 
-    const IMorph::WeightPrecision &weight() const {  return m_weight; }
+    IMorph::WeightPrecision weight() const {  return m_weight; }
     Type type() const { return IKeyframe::kMorph; }
 
     void setName(const IString *value);

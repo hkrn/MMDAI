@@ -80,22 +80,22 @@ int Bone::index() const
     return m_boneRef->id();
 }
 
-const Transform &Bone::worldTransform() const
+Transform Bone::worldTransform() const
 {
     return m_boneRef->localTransform();
 }
 
-const Vector3 &Bone::origin() const
+Vector3 Bone::origin() const
 {
     return m_boneRef->originPosition();
 }
 
-const Vector3 Bone::destinationOrigin() const
+Vector3 Bone::destinationOrigin() const
 {
     return m_boneRef->child()->localTransform().getOrigin();
 }
 
-const Vector3 &Bone::localPosition() const
+Vector3 Bone::localPosition() const
 {
     return m_boneRef->position();
 }
@@ -109,7 +109,7 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
     }
 }
 
-const Quaternion &Bone::localRotation() const
+Quaternion Bone::localRotation() const
 {
     return m_boneRef->rotation();
 }
@@ -163,7 +163,7 @@ bool Bone::hasLocalAxes() const
     return finger || arm || elbow || wrist;
 }
 
-const Vector3 &Bone::fixedAxis() const
+Vector3 Bone::fixedAxis() const
 {
     return m_fixedAxis;
 }
@@ -190,7 +190,7 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     }
 }
 
-const Transform &Bone::localTransform() const
+Transform Bone::localTransform() const
 {
     return m_localTransform;
 }

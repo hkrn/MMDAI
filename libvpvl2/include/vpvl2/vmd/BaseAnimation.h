@@ -74,9 +74,9 @@ public:
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes);
 
     int countKeyframes() const { return m_keyframes.count(); }
-    const IKeyframe::TimeIndex &previousTimeIndex() const { return m_previousTimeIndex; }
-    const IKeyframe::TimeIndex &currentTimeIndex() const { return m_currentTimeIndex; }
-    const IKeyframe::TimeIndex &maxTimeIndex() const { return m_maxTimeIndex; }
+    IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
+    IKeyframe::TimeIndex currentTimeIndex() const { return m_currentTimeIndex; }
+    IKeyframe::TimeIndex maxTimeIndex() const { return m_maxTimeIndex; }
 
 protected:
     template<typename T>

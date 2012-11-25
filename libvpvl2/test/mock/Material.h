@@ -19,19 +19,19 @@ class MockIMaterial : public IMaterial {
   MOCK_CONST_METHOD0(sphereTextureRenderMode,
       SphereTextureRenderMode());
   MOCK_CONST_METHOD0(ambient,
-      const Color&());
+      Color());
   MOCK_CONST_METHOD0(diffuse,
-      const Color&());
+      Color());
   MOCK_CONST_METHOD0(specular,
-      const Color&());
+      Color());
   MOCK_CONST_METHOD0(edgeColor,
-      const Color&());
+      Color());
   MOCK_CONST_METHOD0(mainTextureBlend,
-      const Color&());
+      Color());
   MOCK_CONST_METHOD0(sphereTextureBlend,
-      const Color&());
+      Color());
   MOCK_CONST_METHOD0(toonTextureBlend,
-      const Color&());
+      Color());
   MOCK_CONST_METHOD0(shininess,
       float());
   MOCK_CONST_METHOD0(edgeSize,

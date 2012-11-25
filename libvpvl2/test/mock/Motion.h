@@ -23,7 +23,7 @@ class MockIMotion : public IMotion {
   MOCK_METHOD0(reset,
       void());
   MOCK_CONST_METHOD0(maxTimeIndex,
-      const IKeyframe::TimeIndex&());
+      IKeyframe::TimeIndex());
   MOCK_CONST_METHOD1(isReachedTo,
       bool(const IKeyframe::TimeIndex &timeIndex));
   MOCK_METHOD1(addKeyframe,

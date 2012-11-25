@@ -172,7 +172,7 @@ public:
     void write(uint8_t *data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
-    const WeightPrecision &weight() const { return m_weight; }
+    WeightPrecision weight() const { return m_weight; }
     void setWeight(const WeightPrecision &value);
 
     const IString *name() const { return m_name; }

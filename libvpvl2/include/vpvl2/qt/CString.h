@@ -60,7 +60,7 @@ public:
     IString *clone() const;
     const HashString toHashString() const;
     bool equals(const IString *value) const;
-    const QString &value() const;
+    QString value() const;
     const uint8_t *toByteArray() const;
     size_t size() const;
     size_t length(Codec codec) const;

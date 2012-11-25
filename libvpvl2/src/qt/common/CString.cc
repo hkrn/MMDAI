@@ -114,7 +114,7 @@ bool CString::equals(const IString *value) const
     return m_value == static_cast<const CString *>(value)->m_value;
 }
 
-const QString &CString::value() const
+QString CString::value() const
 {
     return m_value;
 }

@@ -69,7 +69,7 @@ public:
     void setDefaultInterpolationParameter();
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
-    const IMorph::WeightPrecision &weight() const;
+    IMorph::WeightPrecision weight() const;
     void setWeight(const IMorph::WeightPrecision &value);
     void setName(const IString *value);
     Type type() const;

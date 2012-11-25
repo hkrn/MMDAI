@@ -92,7 +92,7 @@ bool Morph::hasParent() const
     return false;
 }
 
-const IMorph::WeightPrecision &Morph::weight() const
+IMorph::WeightPrecision Morph::weight() const
 {
     return m_weight;
 }

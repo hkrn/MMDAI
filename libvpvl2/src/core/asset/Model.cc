@@ -64,20 +64,20 @@ public:
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
     IBone *targetBoneRef() const { return 0; }
-    const Transform &worldTransform() const {
+    Transform worldTransform() const {
         return m_worldTransform;
     }
-    const Transform &localTransform() const {
+    Transform localTransform() const {
         return m_worldTransform;
     }
     void getLocalTransform(Transform &world2LocalTransform) const {
         world2LocalTransform = m_worldTransform;
     }
     void setLocalTransform(const Transform & /* value */) {}
-    const Vector3 &origin() const { return kZeroV3; }
-    const Vector3 destinationOrigin() const { return kZeroV3; }
-    const Vector3 &localPosition() const { return m_modelRef->worldPosition(); }
-    const Quaternion &localRotation() const { return m_modelRef->worldRotation(); }
+    Vector3 origin() const { return kZeroV3; }
+    Vector3 destinationOrigin() const { return kZeroV3; }
+    Vector3 localPosition() const { return m_modelRef->worldPosition(); }
+    Quaternion localRotation() const { return m_modelRef->worldRotation(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 &value) {
         m_modelRef->setWorldPosition(value);
@@ -94,7 +94,7 @@ public:
     bool hasInverseKinematics() const { return false; }
     bool hasFixedAxes() const { return false; }
     bool hasLocalAxes() const { return false; }
-    const Vector3 &fixedAxis() const { return kZeroV3; }
+    Vector3 fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
 
@@ -125,20 +125,20 @@ public:
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
     IBone *targetBoneRef() const { return 0; }
-    const Transform &worldTransform() const {
+    Transform worldTransform() const {
         return Transform::getIdentity();
     }
-    const Transform &localTransform() const {
+    Transform localTransform() const {
         return Transform::getIdentity();
     }
     void getLocalTransform(Transform &world2LocalTransform) const {
         world2LocalTransform = Transform::getIdentity();
     }
     void setLocalTransform(const Transform & /* value */) {}
-    const Vector3 &origin() const { return kZeroV3; }
-    const Vector3 destinationOrigin() const { return kZeroV3; }
-    const Vector3 &localPosition() const { return m_position; }
-    const Quaternion &localRotation() const { return Quaternion::getIdentity(); }
+    Vector3 origin() const { return kZeroV3; }
+    Vector3 destinationOrigin() const { return kZeroV3; }
+    Vector3 localPosition() const { return m_position; }
+    Quaternion localRotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 &value) {
         m_position = value;
@@ -154,7 +154,7 @@ public:
     bool hasInverseKinematics() const { return false; }
     bool hasFixedAxes() const { return false; }
     bool hasLocalAxes() const { return false; }
-    const Vector3 &fixedAxis() const { return kZeroV3; }
+    Vector3 fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
 
@@ -242,13 +242,13 @@ public:
     const IString *sphereTexture() const { return m_sphereTexture; }
     const IString *toonTexture() const { return 0; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
-    const Color &ambient() const { return m_ambient; }
-    const Color &diffuse() const { return m_diffuse; }
-    const Color &specular() const { return m_specular; }
-    const Color &edgeColor() const { return kZeroC; }
-    const Color &mainTextureBlend() const { return kWhiteColor; }
-    const Color &sphereTextureBlend() const { return kWhiteColor; }
-    const Color &toonTextureBlend() const { return kWhiteColor; }
+    Color ambient() const { return m_ambient; }
+    Color diffuse() const { return m_diffuse; }
+    Color specular() const { return m_specular; }
+    Color edgeColor() const { return kZeroC; }
+    Color mainTextureBlend() const { return kWhiteColor; }
+    Color sphereTextureBlend() const { return kWhiteColor; }
+    Color toonTextureBlend() const { return kWhiteColor; }
     float shininess() const { return m_shininess; }
     float edgeSize() const { return 1; }
     int index() const { return m_index; }
@@ -358,7 +358,7 @@ public:
     Category category() const { return IMorph::kOther; }
     Type type() const { return IMorph::kMaterial; }
     bool hasParent() const { return false; }
-    const WeightPrecision &weight() const { return m_opacity; }
+    WeightPrecision weight() const { return m_opacity; }
     void setWeight(const WeightPrecision &value) {
         m_modelRef->setOpacity(Scalar(value));
         m_opacity = value;
@@ -391,11 +391,11 @@ public:
     IModel *parentModelRef() const { return m_modelRef; }
     void performSkinning(Vector3 &/*position*/, Vector3 &/*normal*/) const {}
     void reset() {}
-    const Vector3 &origin() const { return m_origin; }
-    const Vector3 &normal() const { return m_normal; }
-    const Vector3 &textureCoord() const { return m_texcoord; }
-    const Vector4 &uv(int /* index */) const { return kZeroV4; }
-    const Vector3 &delta() const { return kZeroV3; }
+    Vector3 origin() const { return m_origin; }
+    Vector3 normal() const { return m_normal; }
+    Vector3 textureCoord() const { return m_texcoord; }
+    Vector4 uv(int /* index */) const { return kZeroV4; }
+    Vector3 delta() const { return kZeroV3; }
     Type type() const { return IVertex::kBdef1; }
     float edgeSize() const { return 0; }
     float weight(int /* index */) const { return 0; }

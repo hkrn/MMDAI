@@ -69,8 +69,8 @@ public:
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
-    const Vector3 &localPosition() const { return m_position; }
-    const Quaternion &localRotation() const { return m_rotation; }
+    Vector3 localPosition() const { return m_position; }
+    Quaternion localRotation() const { return m_rotation; }
     const bool *linear() const { return m_linear; }
     const SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
     bool isIKEnabled() const { return m_enableIK; }

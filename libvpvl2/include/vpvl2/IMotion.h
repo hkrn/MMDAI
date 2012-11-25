@@ -181,7 +181,7 @@ public:
      * @return float
      * @sa isReachedTo
      */
-    virtual const IKeyframe::TimeIndex &maxTimeIndex() const = 0;
+    virtual IKeyframe::TimeIndex maxTimeIndex() const = 0;
 
     /**
      * モーションが指定されたフレームの位置まで進んでいるかを返します.

@@ -91,13 +91,13 @@ public:
     bool save(const char *path);
     bool save(xmlBufferPtr &buffer);
 
-    const std::string &version() const;
-    const std::string &globalSetting(const std::string &key) const;
-    const std::string &modelSetting(const IModel *model, const std::string &key) const;
+    std::string version() const;
+    std::string globalSetting(const std::string &key) const;
+    std::string modelSetting(const IModel *model, const std::string &key) const;
     const UUIDList modelUUIDs() const;
     const UUIDList motionUUIDs() const;
-    const UUID &modelUUID(const IModel *model) const;
-    const UUID &motionUUID(const IMotion *motion) const;
+    UUID modelUUID(const IModel *model) const;
+    UUID motionUUID(const IMotion *motion) const;
     IModel *findModel(const UUID &uuid) const;
     IMotion *findMotion(const UUID &uuid) const;
     bool containsModel(const IModel *model) const;

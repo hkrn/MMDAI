@@ -68,8 +68,9 @@ namespace pmd2
 
 const int Morph::kNameSize;
 
-Morph::Morph(IEncoding *encodingRef)
-    : m_encodingRef(encodingRef),
+Morph::Morph(IModel *parentModelRef, IEncoding *encodingRef)
+    : m_parentModelRef(parentModelRef),
+      m_encodingRef(encodingRef),
       m_name(0),
       m_category(kBase),
       m_weight(0),
@@ -235,7 +236,7 @@ bool Morph::hasParent() const
     return false;
 }
 
-const IMorph::WeightPrecision &Morph::weight() const
+IMorph::WeightPrecision Morph::weight() const
 {
     return m_weight;
 }

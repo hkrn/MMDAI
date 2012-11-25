@@ -125,7 +125,7 @@ public:
     bool equals(const IString *value) const {
         return m_value == static_cast<const String *>(value)->value();
     }
-    const UnicodeString &value() const {
+    UnicodeString value() const {
         return m_value;
     }
     const uint8_t *toByteArray() const {

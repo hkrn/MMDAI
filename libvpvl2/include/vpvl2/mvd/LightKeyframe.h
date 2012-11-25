@@ -61,8 +61,8 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     ILightKeyframe *clone() const;
-    const Vector3 &color() const;
-    const Vector3 &direction() const;
+    Vector3 color() const;
+    Vector3 direction() const;
     bool isEnabled() const;
     void setColor(const Vector3 &value);
     void setDirection(const Vector3 &value);

@@ -71,8 +71,8 @@ public:
     LightKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     LightKeyframe *frameAt(int i) const;
 
-    const Vector3 &color() const { return m_color; }
-    const Vector3 &direction() const { return m_direction; }
+    Vector3 color() const { return m_color; }
+    Vector3 direction() const { return m_direction; }
 
 private:
     Vector3 m_color;

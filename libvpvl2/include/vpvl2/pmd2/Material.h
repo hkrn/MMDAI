@@ -52,9 +52,10 @@ class VPVL2_API Material : public IMaterial
 public:
     static const int kNameSize = 20;
 
-    Material(IEncoding *encodingRef);
+    Material(IModel *parentModelRef, IEncoding *encodingRef);
     ~Material();
 
+    IModel *parentModelRef() const { return m_parentModelRef; }
     const IString *name() const { return 0; }
     const IString *englishName() const { return 0; }
     const IString *userDataArea() const { return 0; }
@@ -62,20 +63,20 @@ public:
     const IString *sphereTexture() const { return m_sphereTexture; }
     const IString *toonTexture() const { return m_toonTextureRef; }
     SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
-    const Color &ambient() const { return m_ambient; }
-    const Color &diffuse() const { return m_diffuse; }
-    const Color &specular() const { return m_specular; }
-    const Color &edgeColor() const { return m_edgeColor; }
-    const Color &mainTextureBlend() const { return kWhiteColor; }
-    const Color &sphereTextureBlend() const { return kWhiteColor; }
-    const Color &toonTextureBlend() const { return kWhiteColor; }
+    Color ambient() const { return m_ambient; }
+    Color diffuse() const { return m_diffuse; }
+    Color specular() const { return m_specular; }
+    Color edgeColor() const { return m_edgeColor; }
+    Color mainTextureBlend() const { return kWhiteColor; }
+    Color sphereTextureBlend() const { return kWhiteColor; }
+    Color toonTextureBlend() const { return kWhiteColor; }
     float shininess() const { return m_shininess; }
     float edgeSize() const { return 1; }
     int index() const { return m_index; }
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
-    int indices() const { return m_indices; }
+    int sizeofIndices() const { return m_indices; }
     bool isSharedToonTextureUsed() const;
     bool isCullFaceDisabled() const;
     bool hasShadow() const;
@@ -114,6 +115,7 @@ public:
 
 private:
     static const Color kWhiteColor;
+    IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
     const IString *m_mainTexture;
     const IString *m_sphereTexture;

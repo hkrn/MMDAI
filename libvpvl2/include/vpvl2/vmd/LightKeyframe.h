@@ -64,8 +64,8 @@ public:
     void setColor(const Vector3 &value);
     void setDirection(const Vector3 &value);
 
-    const Vector3 &color() const { return m_color; }
-    const Vector3 &direction() const { return m_direction; }
+    Vector3 color() const { return m_color; }
+    Vector3 direction() const { return m_direction; }
     Type type() const { return IKeyframe::kLight; }
 
 private:

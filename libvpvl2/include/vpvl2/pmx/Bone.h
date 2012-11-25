@@ -81,14 +81,14 @@ public:
     void solveInverseKinematics();
     void performUpdateLocalTransform();
     void resetIKLink();
-    const Vector3 &offset() const { return m_offset; }
-    const Transform &worldTransform() const { return m_worldTransform; }
-    const Transform &localTransform() const { return m_localTransform; }
+    Vector3 offset() const { return m_offset; }
+    Transform worldTransform() const { return m_worldTransform; }
+    Transform localTransform() const { return m_localTransform; }
     void getEffectorBones(Array<IBone *> &value) const;
 
     void setLocalPosition(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
-    const Vector3 &fixedAxis() const;
+    Vector3 fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);
@@ -100,13 +100,13 @@ public:
     IBone *destinationOriginBoneRef() const { return m_destinationOriginBoneRef; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
-    const Quaternion &localRotation() const { return m_rotation; }
-    const Vector3 &origin() const { return m_origin; }
-    const Vector3 destinationOrigin() const;
-    const Vector3 &localPosition() const { return m_localPosition; }
-    const Vector3 &axis() const { return m_fixedAxis; }
-    const Vector3 &axisX() const { return m_axisX; }
-    const Vector3 &axisZ() const { return m_axisZ; }
+    Quaternion localRotation() const { return m_rotation; }
+    Vector3 origin() const { return m_origin; }
+    Vector3 destinationOrigin() const;
+    Vector3 localPosition() const { return m_localPosition; }
+    Vector3 axis() const { return m_fixedAxis; }
+    Vector3 axisX() const { return m_axisX; }
+    Vector3 axisZ() const { return m_axisZ; }
     float constraintAngle() const { return m_angleConstraint; }
     float weight() const { return m_weight; }
     int index() const { return m_index; }

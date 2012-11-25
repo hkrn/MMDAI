@@ -768,7 +768,7 @@ void Bone::setLocalRotation(const Quaternion &value)
     //qDebug("%s(rotate): %.f,%.f,%.f,.%f", m_name->toByteArray(), value.w(), value.x(), value.y(), value.z());
 }
 
-const Vector3 Bone::destinationOrigin() const
+Vector3 Bone::destinationOrigin() const
 {
     if (m_destinationOriginBoneRef)
         return m_destinationOriginBoneRef->worldTransform().getOrigin();
@@ -776,7 +776,7 @@ const Vector3 Bone::destinationOrigin() const
         return m_worldTransform.getOrigin() + m_worldTransform.getBasis() * m_destinationOrigin;
 }
 
-const Vector3 &Bone::fixedAxis() const
+Vector3 Bone::fixedAxis() const
 {
     return m_fixedAxis;
 }

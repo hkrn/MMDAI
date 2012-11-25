@@ -145,9 +145,9 @@ public:
     int boneIndex() const { return m_boneIndex; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
-    const Vector3 &size() const { return m_size; }
-    const Vector3 &position() const { return m_position; }
-    const Vector3 &rotation() const { return m_rotation; }
+    Vector3 size() const { return m_size; }
+    Vector3 position() const { return m_position; }
+    Vector3 rotation() const { return m_rotation; }
     float mass() const { return m_mass; }
     float linearDamping() const { return m_linearDamping; }
     float angularDamping() const { return m_angularDamping; }

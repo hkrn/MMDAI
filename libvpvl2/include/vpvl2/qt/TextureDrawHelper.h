@@ -120,7 +120,7 @@ public:
         m_program.release();
         glEnable(GL_DEPTH_TEST);
     }
-    const QSize &size() {
+    QSize size() {
         return m_size;
     }
     bool isAvailable() const {

@@ -64,7 +64,7 @@ public:
      * @return Vector3
      * @sa setColor
      */
-    virtual const Vector3 &color() const = 0;
+    virtual Vector3 color() const = 0;
 
     /**
      * 照明の方向を返します.
@@ -72,7 +72,7 @@ public:
      * @return Vector3
      * @sa setDirection
      */
-    virtual const Vector3 &direction() const = 0;
+    virtual Vector3 direction() const = 0;
 
     /**
      * 照明の色を設定します.

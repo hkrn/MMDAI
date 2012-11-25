@@ -79,7 +79,7 @@ public:
     static ICamera *createCamera();
     static ILight *createLight();
     static bool isAcceleratorSupported();
-    static const Scalar &defaultFPS();
+    static Scalar defaultFPS();
 
     Scene();
     virtual ~Scene();
@@ -105,7 +105,7 @@ public:
     IRenderEngine *findRenderEngine(IModel *model) const;
     ILight *light() const;
     ICamera *camera() const;
-    const Scalar &preferredFPS() const;
+    Scalar preferredFPS() const;
 
     AccelerationType accelerationType() const;
     void setAccelerationType(AccelerationType value);

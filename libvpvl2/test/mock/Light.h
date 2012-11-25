@@ -1,15 +1,13 @@
-#include <vpvl2/ILight.h>
-
 namespace vpvl2 {
 
 class MockILight : public ILight {
  public:
   MOCK_CONST_METHOD0(color,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(direction,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(depthTextureSize,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(depthTexture,
       void*());
   MOCK_CONST_METHOD0(hasFloatTexture,
@@ -37,7 +35,7 @@ class MockILight : public ILight {
   MOCK_METHOD1(setSoftShadowEnable,
       void(bool value));
   MOCK_METHOD1(copyFrom,
-      void(ILight *value));
+      void(const ILight *value));
   MOCK_METHOD0(resetDefault,
       void());
 };

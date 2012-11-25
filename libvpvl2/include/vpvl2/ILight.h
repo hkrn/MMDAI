@@ -49,9 +49,9 @@ class VPVL2_API ILight
 public:
     virtual ~ILight() {}
 
-    virtual const Vector3 &color() const = 0;
-    virtual const Vector3 &direction() const = 0;
-    virtual const Vector3 &depthTextureSize() const = 0;
+    virtual Vector3 color() const = 0;
+    virtual Vector3 direction() const = 0;
+    virtual Vector3 depthTextureSize() const = 0;
     virtual void *depthTexture() const = 0;
     virtual bool hasFloatTexture() const = 0;
     virtual bool isToonEnabled() const = 0;

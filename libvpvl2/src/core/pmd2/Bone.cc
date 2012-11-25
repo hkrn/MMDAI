@@ -91,8 +91,9 @@ struct Bone::IKConstraint {
 const int Bone::kNameSize;
 const int Bone::kCategoryNameSize;
 
-Bone::Bone(IEncoding *encodingRef)
-    : m_encodingRef(encodingRef),
+Bone::Bone(IModel *parentModelRef, IEncoding *encodingRef)
+    : m_parentModelRef(parentModelRef),
+      m_encodingRef(encodingRef),
       m_name(0),
       m_parentBoneRef(0),
       m_targetBoneRef(0),
@@ -297,7 +298,7 @@ void Bone::write(uint8_t *data, const Model::DataInfo & /* info */) const
 void Bone::performTransform()
 {
     if (m_type == kUnderRotate && m_targetBoneRef) {
-        const Quaternion &rotation = m_rotation * m_targetBoneRef->rotation();
+        const Quaternion &rotation = m_rotation * m_targetBoneRef->localRotation();
         m_worldTransform.setRotation(rotation);
     }
     else if (m_type == kFollowRotate && m_childBoneRef) {
@@ -322,7 +323,7 @@ void Bone::solveInverseKinematics()
     const Array<Bone *> &effectors = m_constraint->effectors;
     const int neffectors = effectors.count();
     Bone *targetBoneRef = m_constraint->target;
-    const Quaternion originTargetRotation = targetBoneRef->rotation();
+    const Quaternion &originTargetRotation = targetBoneRef->localRotation();
     const Vector3 &destPosition = m_worldTransform.getOrigin();
     const Scalar &angleLimit = m_constraint->angle;
     Quaternion q;
@@ -363,7 +364,7 @@ void Bone::solveInverseKinematics()
                     matrix.setIdentity();
                     matrix.setRotation(q);
                     matrix.getEulerZYX(z, y, x);
-                    matrix.setRotation(effector->rotation());
+                    matrix.setRotation(effector->localRotation());
                     matrix.getEulerZYX(cz, cy, cx);
                     if (x + cx > SIMD_PI)
                         x = SIMD_PI - cx;
@@ -374,12 +375,12 @@ void Bone::solveInverseKinematics()
                         continue;
                     q.setEulerZYX(0.0f, 0.0f, x);
                 }
-                const Quaternion &q2 = q * effector->rotation();
-                effector->setRotation(q2);
+                const Quaternion &q2 = q * effector->localRotation();
+                effector->setLocalRotation(q2);
             }
             else {
-                const Quaternion &q2 = effector->rotation() * q;
-                effector->setRotation(q2);
+                const Quaternion &q2 = effector->localRotation() * q;
+                effector->setLocalRotation(q2);
             }
             for (int k = j; k >= 0; k--) {
                 Bone *bone = effectors[k];
@@ -388,7 +389,7 @@ void Bone::solveInverseKinematics()
             targetBoneRef->performTransform();
         }
     }
-    targetBoneRef->setRotation(originTargetRotation);
+    targetBoneRef->setLocalRotation(originTargetRotation);
     targetBoneRef->performTransform();
 }
 
@@ -402,22 +403,27 @@ int Bone::index() const
     return m_index;
 }
 
-IBone *Bone::parentBone() const
+IModel *Bone::parentModelRef() const
+{
+    return m_parentModelRef;
+}
+
+IBone *Bone::parentBoneRef() const
 {
     return m_parentBoneRef;
 }
 
-IBone *Bone::targetBone() const
+IBone *Bone::targetBoneRef() const
 {
     return m_targetBoneRef;
 }
 
-const Transform &Bone::worldTransform() const
+Transform Bone::worldTransform() const
 {
     return m_worldTransform;
 }
 
-const Transform &Bone::localTransform() const
+Transform Bone::localTransform() const
 {
     return m_localTransform;
 }
@@ -437,22 +443,22 @@ void Bone::setLocalTransform(const Transform &value)
     m_localTransform = value;
 }
 
-const Vector3 &Bone::origin() const
+Vector3 Bone::origin() const
 {
     return m_origin;
 }
 
-const Vector3 Bone::destinationOrigin() const
+Vector3 Bone::destinationOrigin() const
 {
     return m_parentBoneRef ? m_parentBoneRef->origin() : kZeroV3;
 }
 
-const Vector3 &Bone::localPosition() const
+Vector3 Bone::localPosition() const
 {
     return m_localPosition;
 }
 
-const Quaternion &Bone::rotation() const
+Quaternion Bone::localRotation() const
 {
     return m_rotation;
 }
@@ -474,7 +480,7 @@ void Bone::setLocalPosition(const Vector3 &value)
     m_localPosition = value;
 }
 
-void Bone::setRotation(const Quaternion &value)
+void Bone::setLocalRotation(const Quaternion &value)
 {
     m_rotation = value;
 }
@@ -521,7 +527,7 @@ bool Bone::hasLocalAxes() const
     return false;
 }
 
-const Vector3 &Bone::fixedAxis() const
+Vector3 Bone::fixedAxis() const
 {
     return m_fixedAxis;
 }

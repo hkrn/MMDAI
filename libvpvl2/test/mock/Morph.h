@@ -15,7 +15,7 @@ class MockIMorph : public IMorph {
   MOCK_CONST_METHOD0(hasParent,
       bool());
   MOCK_CONST_METHOD0(weight,
-      const WeightPrecision&());
+      WeightPrecision());
   MOCK_METHOD1(setWeight,
       void(const WeightPrecision &value));
 };

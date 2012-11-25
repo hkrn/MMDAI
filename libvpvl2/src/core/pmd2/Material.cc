@@ -69,8 +69,9 @@ namespace pmd2
 const int Material::kNameSize;
 const Color Material::kWhiteColor(1, 1, 1, 1);
 
-Material::Material(IEncoding *encodingRef)
-    : m_encodingRef(encodingRef),
+Material::Material(IModel *parentModelRef, IEncoding *encodingRef)
+    : m_parentModelRef(parentModelRef),
+      m_encodingRef(encodingRef),
       m_mainTexture(0),
       m_sphereTexture(0),
       m_toonTextureRef(0),
@@ -136,7 +137,7 @@ bool Material::loadMaterials(const Array<Material *> &materials,
             }
         }
         material->m_index = i;
-        actualIndices += material->indices();
+        actualIndices += material->sizeofIndices();
     }
     return actualIndices == expectedIndices;
 }

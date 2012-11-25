@@ -117,7 +117,7 @@ public:
      * @return Vector3
      * @sa setPosition
      */
-    virtual const Vector3 &lookAt() const = 0;
+    virtual Vector3 lookAt() const = 0;
 
     /**
      * カメラのアングル（オイラー角）を返します.
@@ -125,7 +125,7 @@ public:
      * @return Vector3
      * @sa setAngle
      */
-    virtual const Vector3 &angle() const = 0;
+    virtual Vector3 angle() const = 0;
 
     /**
      * カメラの視野距離を返します.
@@ -133,7 +133,7 @@ public:
      * @return float
      * @sa setDistance
      */
-    virtual const Scalar &distance() const = 0;
+    virtual Scalar distance() const = 0;
 
     /**
      * カメラの視野角を返します.
@@ -141,7 +141,7 @@ public:
      * @return float
      * @sa setFovy
      */
-    virtual const Scalar &fov() const = 0;
+    virtual Scalar fov() const = 0;
 
     /**
      * カメラが透視であるかを返します.

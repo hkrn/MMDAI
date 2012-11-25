@@ -70,25 +70,26 @@ public:
     static const int kNameSize = 20;
     static const int kCategoryNameSize = 50;
 
-    Bone(IEncoding *encodingRef);
+    Bone(IModel *parentModelRef, IEncoding *encodingRef);
     ~Bone();
 
     const IString *name() const;
     int index() const;
+    IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
     IBone *targetBoneRef() const;
-    const Transform &worldTransform() const;
-    const Transform &localTransform() const;
+    Transform worldTransform() const;
+    Transform localTransform() const;
     void getLocalTransform(Transform &world2LocalTransform) const;
     void getLocalTransform(const Transform &worldTransform, Transform &output) const;
     void setLocalTransform(const Transform &value);
-    const Vector3 &origin() const;
-    const Vector3 destinationOrigin() const;
-    const Vector3 &localPosition() const;
-    const Quaternion &rotation() const;
+    Vector3 origin() const;
+    Vector3 destinationOrigin() const;
+    Vector3 localPosition() const;
+    Quaternion localRotation() const;
     void getEffectorBones(Array<IBone *> &value) const;
     void setLocalPosition(const Vector3 &value);
-    void setRotation(const Quaternion &value);
+    void setLocalRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
     bool isVisible() const;
@@ -96,7 +97,7 @@ public:
     bool hasInverseKinematics() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
-    const Vector3 &fixedAxis() const;
+    Vector3 fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setInverseKinematicsEnable(bool value);
 
@@ -117,6 +118,7 @@ public:
 
 private:
     struct IKConstraint;
+    IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     IBone *m_parentBoneRef;

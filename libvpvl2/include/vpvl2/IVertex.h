@@ -69,11 +69,11 @@ public:
     virtual void performSkinning(Vector3 &position, Vector3 &normal) const = 0;
     virtual void reset() = 0;
 
-    virtual const Vector3 &origin() const = 0;
-    virtual const Vector3 &normal() const = 0;
-    virtual const Vector3 &textureCoord() const = 0;
-    virtual const Vector4 &uv(int index) const = 0;
-    virtual const Vector3 &delta() const = 0;
+    virtual Vector3 origin() const = 0;
+    virtual Vector3 normal() const = 0;
+    virtual Vector3 textureCoord() const = 0;
+    virtual Vector4 uv(int index) const = 0;
+    virtual Vector3 delta() const = 0;
     virtual Type type() const = 0;
     virtual float edgeSize() const = 0;
     virtual float weight(int index) const = 0;

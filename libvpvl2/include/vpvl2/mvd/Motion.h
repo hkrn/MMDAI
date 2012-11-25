@@ -208,7 +208,7 @@ public:
     void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene);
     void reload();
     void reset();
-    const IKeyframe::TimeIndex &maxTimeIndex() const;
+    IKeyframe::TimeIndex maxTimeIndex() const;
     bool isReachedTo(const IKeyframe::TimeIndex &atEnd) const;
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);

@@ -63,11 +63,11 @@ public:
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return m_parentBone; }
     IBone *targetBoneRef() const { return m_targetBoneRef; }
-    const Transform &worldTransform() const;
-    const Vector3 &origin() const;
-    const Vector3 destinationOrigin() const;
-    const Vector3 &localPosition() const;
-    const Quaternion &localRotation() const;
+    Transform worldTransform() const;
+    Vector3 origin() const;
+    Vector3 destinationOrigin() const;
+    Vector3 localPosition() const;
+    Quaternion localRotation() const;
     void getEffectorBones(Array<IBone *> &value) const;
     void setLocalPosition(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
@@ -78,11 +78,11 @@ public:
     bool hasInverseKinematics() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
-    const Vector3 &fixedAxis() const;
+    Vector3 fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setInverseKinematicsEnable(bool value);
 
-    const Transform &localTransform() const;
+    Transform localTransform() const;
     void getLocalTransform(Transform &value) const;
     void setLocalTransform(const Transform &value);
 

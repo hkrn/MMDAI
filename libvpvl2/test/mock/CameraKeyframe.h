@@ -11,13 +11,13 @@ class MockICameraKeyframe : public ICameraKeyframe {
   MOCK_CONST_METHOD2(getInterpolationParameter,
       void(InterpolationType type, QuadWord &value));
   MOCK_CONST_METHOD0(lookAt,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(angle,
-      const Vector3&());
+      Vector3());
   MOCK_CONST_METHOD0(distance,
-      const Scalar&());
+      Scalar());
   MOCK_CONST_METHOD0(fov,
-      const Scalar&());
+      Scalar());
   MOCK_CONST_METHOD0(isPerspective,
       bool());
   MOCK_METHOD1(setLookAt,

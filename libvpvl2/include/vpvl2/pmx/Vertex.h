@@ -91,20 +91,20 @@ public:
     void performSkinning(Vector3 &position, Vector3 &normal) const;
 
     IModel *parentModelRef() const { return m_modelRef; }
-    const Vector3 &origin() const { return m_origin; }
-    const Vector3 &delta() const { return m_morphDelta; }
-    const Vector3 &normal() const { return m_normal; }
-    const Vector3 &textureCoord() const { return m_texcoord; }
-    const Vector4 &uv(int index) const;
+    Vector3 origin() const { return m_origin; }
+    Vector3 delta() const { return m_morphDelta; }
+    Vector3 normal() const { return m_normal; }
+    Vector3 textureCoord() const { return m_texcoord; }
+    Vector4 uv(int index) const;
     Type type() const { return m_type; }
     float edgeSize() const { return m_edgeSize; }
     float weight(int index) const;
     IBone *bone(int index) const;
     IMaterial *material() const;
     int index() const { return m_index; }
-    const Vector3 &sdefC() const { return m_c; }
-    const Vector3 &sdefR0() const { return m_r0; }
-    const Vector3 &sdefR1() const { return m_r1; }
+    Vector3 sdefC() const { return m_c; }
+    Vector3 sdefR0() const { return m_r0; }
+    Vector3 sdefR1() const { return m_r1; }
 
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);

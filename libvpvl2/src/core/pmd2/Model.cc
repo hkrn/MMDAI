@@ -226,7 +226,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
                 const IMaterial *material = materials[i];
-                const int nindices = material->indices(), offsetTo = offset + nindices;
+                const int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
                     const IVertex *vertex = vertices[index];
@@ -392,7 +392,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         int offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             const IMaterial *material = materials[i];
-            const int nindices = material->indices();
+            const int nindices = material->sizeofIndices();
             for (int j = 0; j < nindices; j++) {
                 int vertexIndex = indexBufferRef->indexAt(offset + j);
                 meshes.bdef2.push_back(vertexIndex);
@@ -416,7 +416,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
 class BonePredication {
 public:
     bool operator()(const Bone *left, const Bone *right) const {
-        const IBone *parentLeft = left->parentBone(), *parentRight = right->parentBone();
+        const IBone *parentLeft = left->parentBoneRef(), *parentRight = right->parentBoneRef();
         if (parentLeft && parentRight) {
             return parentLeft->index() < parentRight->index();
         }
@@ -857,12 +857,12 @@ void Model::setEnglishComment(const IString *value)
     internal::setString(value, m_englishComment);
 }
 
-void Model::setPosition(const Vector3 &value)
+void Model::setWorldPosition(const Vector3 &value)
 {
     m_position = value;
 }
 
-void Model::setRotation(const Quaternion &value)
+void Model::setWorldRotation(const Quaternion &value)
 {
     m_rotation = value;
 }
@@ -975,7 +975,7 @@ void Model::parseVertices(const DataInfo &info)
     uint8_t *ptr = info.verticesPtr;
     size_t size;
     for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = new Vertex();
+        Vertex *vertex = new Vertex(this);
         m_vertices.add(vertex);
         vertex->read(ptr, info, size);
         ptr += size;
@@ -998,7 +998,7 @@ void Model::parseMaterials(const DataInfo &info)
     uint8_t *ptr = info.materialsPtr;
     size_t size;
     for (int i = 0; i < nmaterials; i++) {
-        Material *material = new Material(m_encodingRef);
+        Material *material = new Material(this, m_encodingRef);
         m_materials.add(material);
         material->read(ptr, info, size);
         ptr += size;
@@ -1011,7 +1011,7 @@ void Model::parseBones(const DataInfo &info)
     uint8_t *ptr = info.bonesPtr;
     size_t size;
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = new Bone(m_encodingRef);
+        Bone *bone = new Bone(this, m_encodingRef);
         m_bones.add(bone);
         m_sortedBones.add(bone);
         bone->readBone(ptr, info, size);
@@ -1040,7 +1040,7 @@ void Model::parseMorphs(const DataInfo &info)
     uint8_t *ptr = info.morphsPtr;
     size_t size;
     for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = new Morph(m_encodingRef);
+        Morph *morph = new Morph(this, m_encodingRef);
         m_morphs.add(morph);
         morph->read(ptr, size);
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
