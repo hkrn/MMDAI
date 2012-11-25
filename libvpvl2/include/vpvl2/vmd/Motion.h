@@ -138,13 +138,23 @@ public:
     ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                         const IKeyframe::LayerIndex &layerIndex) const;
     ICameraKeyframe *findCameraKeyframeAt(int index) const;
+    IEffectKeyframe *findEffectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                        const IString *name,
+                                        const IKeyframe::LayerIndex &layerIndex) const;
+    IEffectKeyframe *findEffectKeyframeAt(int index) const;
     ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                       const IKeyframe::LayerIndex &layerIndex) const;
     ILightKeyframe *findLightKeyframeAt(int index) const;
+    IModelKeyframe *findModelKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                      const IKeyframe::LayerIndex &layerIndex) const;
+    IModelKeyframe *findModelKeyframeAt(int index) const;
     IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                       const IString *name,
                                       const IKeyframe::LayerIndex &layerIndex) const;
     IMorphKeyframe *findMorphKeyframeAt(int index) const;
+    IProjectKeyframe *findProjectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                          const IKeyframe::LayerIndex &layerIndex) const;
+    IProjectKeyframe *findProjectKeyframeAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);

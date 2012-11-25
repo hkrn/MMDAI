@@ -135,18 +135,18 @@ size_t BoneKeyframe::estimateSize() const
 
 IBoneKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyframe *frame = m_ptr = new BoneKeyframe(m_nameListSectionRef);
-    frame->setName(m_namePtr);
-    frame->setTimeIndex(m_timeIndex);
-    frame->setLayerIndex(m_layerIndex);
-    frame->setLocalPosition(m_position);
-    frame->setLocalRotation(m_rotation);
-    frame->setInterpolationParameter(kX, m_interpolationX.parameter);
-    frame->setInterpolationParameter(kY, m_interpolationY.parameter);
-    frame->setInterpolationParameter(kZ, m_interpolationZ.parameter);
-    frame->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
+    BoneKeyframe *keyframe = m_ptr = new BoneKeyframe(m_nameListSectionRef);
+    keyframe->setName(m_namePtr);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLayerIndex(m_layerIndex);
+    keyframe->setLocalPosition(m_position);
+    keyframe->setLocalRotation(m_rotation);
+    keyframe->setInterpolationParameter(kX, m_interpolationX.parameter);
+    keyframe->setInterpolationParameter(kY, m_interpolationY.parameter);
+    keyframe->setInterpolationParameter(kZ, m_interpolationZ.parameter);
+    keyframe->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 void BoneKeyframe::setDefaultInterpolationParameter()

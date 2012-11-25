@@ -195,6 +195,10 @@ public:
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
+    virtual void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes) {
+        keyframes->add(keyframe);
+        btSetMax(m_maxTimeIndex, keyframe->timeIndex());
+    }
     void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {
         m_previousTimeIndex = m_currentTimeIndex;
         m_currentTimeIndex = timeIndex;

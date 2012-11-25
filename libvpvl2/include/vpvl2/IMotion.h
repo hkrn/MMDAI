@@ -45,9 +45,12 @@ namespace vpvl2
 
 class IBoneKeyframe;
 class ICameraKeyframe;
+class IEffectKeyframe;
 class ILightKeyframe;
 class IModel;
+class IModelKeyframe;
 class IMorphKeyframe;
+class IProjectKeyframe;
 class IString;
 class Scene;
 
@@ -292,6 +295,12 @@ public:
      */
     virtual ICameraKeyframe *findCameraKeyframeAt(int index) const = 0;
 
+    virtual IEffectKeyframe *findEffectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                                const IString *name,
+                                                const IKeyframe::LayerIndex &layerIndex) const = 0;
+
+    virtual IEffectKeyframe *findEffectKeyframeAt(int index) const = 0;
+
     /**
      * キーフレームの位置から照明のキーフレームを返します.
      *
@@ -317,6 +326,11 @@ public:
      * @sa findLightKeyframe
      */
     virtual ILightKeyframe *findLightKeyframeAt(int index) const = 0;
+
+    virtual IModelKeyframe *findModelKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                              const IKeyframe::LayerIndex &layerIndex) const = 0;
+
+    virtual IModelKeyframe *findModelKeyframeAt(int index) const = 0;
 
     /**
      * キーフレームの位置と名前からモーフのキーフレームを返します.
@@ -345,6 +359,11 @@ public:
      * @sa findMorphKeyframe
      */
     virtual IMorphKeyframe *findMorphKeyframeAt(int index) const = 0;
+
+    virtual IProjectKeyframe *findProjectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                                  const IKeyframe::LayerIndex &layerIndex) const = 0;
+
+    virtual IProjectKeyframe *findProjectKeyframeAt(int index) const = 0;
 
     /**
      * キーフレームを置換します.

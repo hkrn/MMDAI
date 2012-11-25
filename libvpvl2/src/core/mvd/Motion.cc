@@ -143,7 +143,7 @@ Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
       m_morphSection(0),
       m_nameListSection(0),
       m_projectSection(0),
-      m_modelRef(modelRef),
+      m_parentModelRef(modelRef),
       m_encodingRef(encodingRef),
       m_name(0),
       m_name2(0),
@@ -221,12 +221,14 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     while (rest > 0) {
         const SectionTag &sectionHeader = *reinterpret_cast<const SectionTag *>(ptr);
         if (!internal::validateSize(ptr, sizeof(sectionHeader), rest)) {
+            fprintf(stderr, "section failed");
             return false;
         }
         uint8_t *startPtr = ptr;
         switch (static_cast<SectionType>(sectionHeader.type)) {
         case kNameListSection: {
             if (!NameListSection::preparse(ptr, rest, info)) {
+                fprintf(stderr, "name failed");
                 return false;
             }
             info.nameListSectionPtr = startPtr;
@@ -234,6 +236,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         }
         case kBoneSection: {
             if (!BoneSection::preparse(ptr, rest, info)) {
+                fprintf(stderr, "bone failed");
                 return false;
             }
             info.boneSectionPtrs.add(startPtr);
@@ -241,6 +244,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         }
         case kMorphSection: {
             if (!MorphSection::preparse(ptr, rest, info)) {
+                fprintf(stderr, "morph failed");
                 return false;
             }
             info.morphSectionPtrs.add(startPtr);
@@ -346,6 +350,8 @@ void Motion::save(uint8_t *data) const
     data += m_boneSection->estimateSize();
     m_morphSection->write(data);
     data += m_morphSection->estimateSize();
+    /* to update IK bones enable/disable state */
+    m_modelSection->setParentModel(m_parentModelRef);
     m_modelSection->write(data);
     data += m_modelSection->estimateSize();
     m_assetSection->write(data);
@@ -388,7 +394,7 @@ size_t Motion::estimateSize() const
 
 void Motion::setParentModel(IModel *model)
 {
-    m_modelRef = model;
+    m_parentModelRef = model;
     m_boneSection->setParentModel(model);
     m_modelSection->setParentModel(model);
     m_morphSection->setParentModel(model);
@@ -540,12 +546,21 @@ void Motion::replaceKeyframe(IKeyframe *value)
         break;
     }
     case IKeyframe::kEffect: {
+        IKeyframe *prev = m_effectSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
+        m_effectSection->deleteKeyframe(prev);
+        m_effectSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kLight: {
+        IKeyframe *prev = m_lightSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        m_lightSection->deleteKeyframe(prev);
+        m_lightSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kModel: {
+        IKeyframe *prev = m_modelSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        m_modelSection->deleteKeyframe(prev);
+        m_modelSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kMorph: {
@@ -555,6 +570,9 @@ void Motion::replaceKeyframe(IKeyframe *value)
         break;
     }
     case IKeyframe::kProject: {
+        IKeyframe *prev = m_projectSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        m_projectSection->deleteKeyframe(prev);
+        m_projectSection->addKeyframe(value);
         break;
     }
     default:
@@ -657,6 +675,18 @@ ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
     return m_cameraSection->findKeyframeAt(index);
 }
 
+IEffectKeyframe *Motion::findEffectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                            const IString *name,
+                                            const IKeyframe::LayerIndex &layerIndex) const
+{
+    return m_effectSection->findKeyframe(timeIndex, name, layerIndex);
+}
+
+IEffectKeyframe *Motion::findEffectKeyframeAt(int index) const
+{
+    return m_effectSection->findKeyframeAt(index);
+}
+
 ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                           const IKeyframe::LayerIndex &layerIndex) const
 {
@@ -666,6 +696,17 @@ ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
 ILightKeyframe *Motion::findLightKeyframeAt(int index) const
 {
     return m_lightSection->findKeyframeAt(index);
+}
+
+IModelKeyframe *Motion::findModelKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                          const IKeyframe::LayerIndex &layerIndex) const
+{
+    return m_modelSection->findKeyframe(timeIndex, layerIndex);
+}
+
+IModelKeyframe *Motion::findModelKeyframeAt(int index) const
+{
+    return m_modelSection->findKeyframeAt(index);
 }
 
 IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
@@ -678,6 +719,17 @@ IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
 IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
 {
     return m_morphSection->findKeyframeAt(index);
+}
+
+IProjectKeyframe *Motion::findProjectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                              const IKeyframe::LayerIndex &layerIndex) const
+{
+    return m_projectSection->findKeyframe(timeIndex, layerIndex);
+}
+
+IProjectKeyframe *Motion::findProjectKeyframeAt(int index) const
+{
+    return m_projectSection->findKeyframeAt(index);
 }
 
 void Motion::deleteKeyframe(IKeyframe *&value)
@@ -741,7 +793,7 @@ void Motion::update(IKeyframe::Type type)
 
 IMotion *Motion::clone() const
 {
-    IMotion *motion = m_motionPtr = new Motion(m_modelRef, m_encodingRef);
+    IMotion *motion = m_motionPtr = new Motion(m_parentModelRef, m_encodingRef);
     int nBoneKeyframes = countKeyframes(IKeyframe::kBone);
     for (int i = 0; i < nBoneKeyframes; i++) {
         IBoneKeyframe *keyframe = findBoneKeyframeAt(i);
@@ -791,7 +843,7 @@ void Motion::parseBoneSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.boneSectionPtrs;
     const int nsections = sections.count();
-    m_boneSection = new BoneSection(m_modelRef, m_nameListSection);
+    m_boneSection = new BoneSection(m_parentModelRef, m_nameListSection);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_boneSection->read(ptr);
@@ -835,7 +887,7 @@ void Motion::parseModelSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.modelSectionPtrs;
     const int nsections = sections.count();
-    m_modelSection = new ModelSection(m_modelRef, m_nameListSection, info.adjustAlignment);
+    m_modelSection = new ModelSection(m_parentModelRef, m_nameListSection, info.adjustAlignment);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_modelSection->read(ptr);
@@ -846,7 +898,7 @@ void Motion::parseMorphSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.morphSectionPtrs;
     const int nsections = sections.count();
-    m_morphSection = new MorphSection(m_modelRef, m_nameListSection);
+    m_morphSection = new MorphSection(m_parentModelRef, m_nameListSection);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_morphSection->read(ptr);

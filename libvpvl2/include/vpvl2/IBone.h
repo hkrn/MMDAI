@@ -278,6 +278,8 @@ public:
      * @sa hasInverseKinematics
      */
     virtual void setInverseKinematicsEnable(bool value) = 0;
+
+    virtual bool isInverseKinematicsEnabled() const = 0;
 };
 
 class NullBone : public IBone {
@@ -314,6 +316,7 @@ public:
     Vector3 fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
+    bool isInverseKinematicsEnabled() const { return false; }
 private:
     NullBone() {}
     ~NullBone() {}

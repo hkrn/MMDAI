@@ -849,6 +849,11 @@ bool Bone::isTransformedByExternalParent() const
     return internal::hasFlagBits(m_flags, 0x2000);
 }
 
+bool Bone::isInverseKinematicsEnabled() const
+{
+    return m_enableInverseKinematics;
+}
+
 void Bone::setLocalTransform(const Transform &value)
 {
     m_localTransform = value;

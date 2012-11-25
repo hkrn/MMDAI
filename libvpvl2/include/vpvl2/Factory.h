@@ -46,8 +46,11 @@ namespace vpvl2
 
 class IBoneKeyframe;
 class ICameraKeyframe;
+class IEffectKeyframe;
 class ILightKeyframe;
+class IModelKeyframe;
 class IMorphKeyframe;
+class IProjectKeyframe;
 class IEncoding;
 class IModel;
 class IMotion;
@@ -118,6 +121,8 @@ public:
     /**
      * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します.
      *
+     * 引数に NULL を渡された場合必ず 0 を返します。
+     *
      * @param motion
      * @return IBoneKeyframe
      */
@@ -126,13 +131,28 @@ public:
     /**
      * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します.
      *
+     * 引数に NULL を渡された場合必ず 0 を返します。
+     *
      * @param motion
      * @return ICameraKeyframe
      */
     ICameraKeyframe *createCameraKeyframe(const IMotion *motion) const;
 
     /**
+     * IEffectKeyframe (エフェクトのキーフレーム) のインスタンスを返します.
+     *
+     * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
+     * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ICameraKeyframe
+     */
+    IEffectKeyframe *createEffectKeyframe(const IMotion *motion) const;
+
+    /**
      * ILightKeyframe (照明のキーフレーム) のインスタンスを返します.
+     *
+     * 引数に NULL を渡された場合必ず 0 を返します。
      *
      * @param motion
      * @return ILightKeyframe
@@ -140,7 +160,20 @@ public:
     ILightKeyframe *createLightKeyframe(const IMotion *motion) const;
 
     /**
+     * IModelKeyframe (モデルのキーフレーム) のインスタンスを返します.
+     *
+     * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
+     * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ICameraKeyframe
+     */
+    IModelKeyframe *createModelKeyframe(const IMotion *motion) const;
+
+    /**
      * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します.
+     *
+     * 引数に NULL を渡された場合必ず 0 を返します。
      *
      * @param motion
      * @return IMorphKeyframe
@@ -148,7 +181,21 @@ public:
     IMorphKeyframe *createMorphKeyframe(const IMotion *motion) const;
 
     /**
+     * IProjectKeyframe (プロジェクトのキーフレーム) のインスタンスを返します.
+     *
+     * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
+     * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ICameraKeyframe
+     */
+    IProjectKeyframe *createProjectKeyframe(const IMotion *motion) const;
+
+    /**
      * IMotion のインスタンスを destType の型に変換して返します.
+     *
+     * source のインスタンスの型と destType が一致する場合は source のコピーを返します。
+     * source が NULL の場合または destType が不正の場合は必ず 0 を返します。
      *
      * @brief convertMotion
      * @param source

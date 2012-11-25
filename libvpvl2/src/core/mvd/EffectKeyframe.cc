@@ -63,12 +63,30 @@ struct EffectKeyframeChunk {
 
 EffectKeyframe::EffectKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_ptr(0),
+      m_encoding(encoding),
+      m_parentModelRef(0),
+      m_parentBoneRef(0),
+      m_scaleFactor(0),
+      m_opacity(0),
+      m_visible(false),
+      m_addBlend(false),
+      m_shadow(false)
 {
 }
 
 EffectKeyframe::~EffectKeyframe()
 {
+    delete m_ptr;
+    m_ptr = 0;
+    m_encoding = 0;
+    m_parentModelRef = 0;
+    m_parentBoneRef = 0;
+    m_scaleFactor = 0;
+    m_opacity = 0;
+    m_visible = false;
+    m_addBlend = false;
+    m_shadow = false;
 }
 
 size_t EffectKeyframe::size()
@@ -101,12 +119,21 @@ size_t EffectKeyframe::estimateSize() const
     return size();
 }
 
-/*
 IEffectKeyframe *EffectKeyframe::clone() const
 {
-    return 0;
+    EffectKeyframe *keyframe = m_ptr = new EffectKeyframe(m_encoding);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLayerIndex(m_layerIndex);
+    keyframe->setVisible(m_visible);
+    keyframe->setAddBlendEnable(m_addBlend);
+    keyframe->setShadowEnable(m_shadow);
+    keyframe->setScaleFactor(m_scaleFactor);
+    keyframe->setOpacity(m_opacity);
+    keyframe->setParentModelRef(m_parentModelRef);
+    keyframe->setParentBoneRef(m_parentBoneRef);
+    m_ptr = 0;
+    return keyframe;
 }
-*/
 
 void EffectKeyframe::setName(const IString * /* value */)
 {
@@ -115,6 +142,76 @@ void EffectKeyframe::setName(const IString * /* value */)
 IKeyframe::Type EffectKeyframe::type() const
 {
     return kEffect;
+}
+
+bool EffectKeyframe::isVisible() const
+{
+    return m_visible;
+}
+
+bool EffectKeyframe::isAddBlendEnabled() const
+{
+    return m_addBlend;
+}
+
+bool EffectKeyframe::isShadowEnabled() const
+{
+    return m_shadow;
+}
+
+float EffectKeyframe::scaleFactor() const
+{
+    return m_scaleFactor;
+}
+
+float EffectKeyframe::opacity() const
+{
+    return m_opacity;
+}
+
+IModel *EffectKeyframe::parentModelRef() const
+{
+    return m_parentModelRef;
+}
+
+IBone *EffectKeyframe::parentBoneRef() const
+{
+    return m_parentBoneRef;
+}
+
+void EffectKeyframe::setVisible(bool value)
+{
+    m_visible = value;
+}
+
+void EffectKeyframe::setAddBlendEnable(bool value)
+{
+    m_addBlend = value;
+}
+
+void EffectKeyframe::setShadowEnable(bool value)
+{
+    m_shadow = value;
+}
+
+void EffectKeyframe::setScaleFactor(float value)
+{
+    m_scaleFactor = value;
+}
+
+void EffectKeyframe::setOpacity(float value)
+{
+    m_opacity = value;
+}
+
+void EffectKeyframe::setParentModelRef(IModel *value)
+{
+    m_parentModelRef = value;
+}
+
+void EffectKeyframe::setParentBoneRef(IBone *value)
+{
+    m_parentBoneRef = value;
 }
 
 } /* namespace mvd */

@@ -72,8 +72,9 @@ void AssertMatrix(const float *expected, const float *actual);
 
 struct ScopedPointerListDeleter {
     template<typename T>
-    static inline void cleanup(QList<T *> *list) {
-        qDeleteAll(*list);
+    static inline void cleanup(vpvl2::Array<T *> *list) {
+        if (list)
+            list->releaseAll();
     }
 };
 

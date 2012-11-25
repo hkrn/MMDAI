@@ -97,6 +97,7 @@ public:
     Vector3 fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
+    bool isInverseKinematicsEnabled() const { return false; }
 
 private:
     const IEncoding *m_encodingRef;
@@ -157,6 +158,7 @@ public:
     Vector3 fixedAxis() const { return kZeroV3; }
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
+    bool isInverseKinematicsEnabled() const { return false; }
 
 private:
     static const Vector3 kMaxValue;

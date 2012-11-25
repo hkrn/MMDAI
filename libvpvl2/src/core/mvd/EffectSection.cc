@@ -135,5 +135,22 @@ void EffectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 {
 }
 
+int EffectSection::countLayers(const IString *name) const
+{
+    return 0;
+}
+
+IEffectKeyframe *EffectSection::findKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+                                             const IString * /* name */,
+                                             const IKeyframe::LayerIndex & /* layerIndex */) const
+{
+    return 0;
+}
+
+IEffectKeyframe *EffectSection::findKeyframeAt(int /* index */) const
+{
+    return 0;
+}
+
 } /* namespace mvd */
 } /* namespace vpvl2 */

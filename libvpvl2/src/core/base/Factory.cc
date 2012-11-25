@@ -41,8 +41,11 @@
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
 #include "vpvl2/mvd/CameraKeyframe.h"
+#include "vpvl2/mvd/EffectKeyframe.h"
 #include "vpvl2/mvd/LightKeyframe.h"
+#include "vpvl2/mvd/ModelKeyframe.h"
 #include "vpvl2/mvd/MorphKeyframe.h"
+#include "vpvl2/mvd/ProjectKeyframe.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
 #include "vpvl2/vmd/CameraKeyframe.h"
 #include "vpvl2/vmd/LightKeyframe.h"
@@ -371,6 +374,19 @@ ICameraKeyframe *Factory::createCameraKeyframe(const IMotion *motion) const
     return 0;
 }
 
+IEffectKeyframe *Factory::createEffectKeyframe(const IMotion *motion) const
+{
+    if (motion) {
+        switch (motion->type()) {
+        case IMotion::kMVD:
+            return new mvd::EffectKeyframe(m_context->encoding);
+        default:
+            break;
+        }
+    }
+    return 0;
+}
+
 ILightKeyframe *Factory::createLightKeyframe(const IMotion *motion) const
 {
     if (motion) {
@@ -379,6 +395,19 @@ ILightKeyframe *Factory::createLightKeyframe(const IMotion *motion) const
             return new mvd::LightKeyframe();
         case IMotion::kVMD:
             return new vmd::LightKeyframe();
+        default:
+            break;
+        }
+    }
+    return 0;
+}
+
+IModelKeyframe *Factory::createModelKeyframe(const IMotion *motion) const
+{
+    if (motion) {
+        switch (motion->type()) {
+        case IMotion::kMVD:
+            return new mvd::ModelKeyframe(static_cast<const mvd::Motion *>(motion)->nameListSection(), 0);
         default:
             break;
         }
@@ -401,17 +430,32 @@ IMorphKeyframe *Factory::createMorphKeyframe(const IMotion *motion) const
     return 0;
 }
 
+IProjectKeyframe *Factory::createProjectKeyframe(const IMotion *motion) const
+{
+    if (motion) {
+        switch (motion->type()) {
+        case IMotion::kMVD:
+            return new mvd::ProjectKeyframe(m_context->encoding);
+        default:
+            break;
+        }
+    }
+    return 0;
+}
+
 IMotion *Factory::convertMotion(IMotion *source, IMotion::Type destType) const
 {
-    IMotion::Type sourceType = source->type();
-    if (sourceType == destType) {
-        return source->clone();
-    }
-    else if (sourceType == IMotion::kVMD && destType == IMotion::kMVD) {
-        return m_context->createMVDFromVMD(static_cast<vmd::Motion *>(source));
-    }
-    else if (sourceType == IMotion::kMVD && destType == IMotion::kVMD) {
-        return m_context->createVMDFromMVD(static_cast<mvd::Motion *>(source));
+    if (source) {
+        IMotion::Type sourceType = source->type();
+        if (sourceType == destType) {
+            return source->clone();
+        }
+        else if (sourceType == IMotion::kVMD && destType == IMotion::kMVD) {
+            return m_context->createMVDFromVMD(static_cast<vmd::Motion *>(source));
+        }
+        else if (sourceType == IMotion::kMVD && destType == IMotion::kVMD) {
+            return m_context->createVMDFromMVD(static_cast<mvd::Motion *>(source));
+        }
     }
     return 0;
 }

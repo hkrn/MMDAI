@@ -228,13 +228,23 @@ public:
     ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                         const IKeyframe::LayerIndex &layerIndex) const;
     ICameraKeyframe *findCameraKeyframeAt(int index) const;
+    IEffectKeyframe *findEffectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                        const IString *name,
+                                        const IKeyframe::LayerIndex &layerIndex) const;
+    IEffectKeyframe *findEffectKeyframeAt(int index) const;
     ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                       const IKeyframe::LayerIndex &layerIndex) const;
     ILightKeyframe *findLightKeyframeAt(int index) const;
+    IModelKeyframe *findModelKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                      const IKeyframe::LayerIndex &layerIndex) const;
+    IModelKeyframe *findModelKeyframeAt(int index) const;
     IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                       const IString *name,
                                       const IKeyframe::LayerIndex &layerIndex) const;
     IMorphKeyframe *findMorphKeyframeAt(int index) const;
+    IProjectKeyframe *findProjectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                          const IKeyframe::LayerIndex &layerIndex) const;
+    IProjectKeyframe *findProjectKeyframeAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
@@ -242,7 +252,7 @@ public:
     IMotion *clone() const;
 
     const IString *name() const { return m_name; }
-    IModel *parentModel() const { return m_modelRef; }
+    IModel *parentModel() const { return m_parentModelRef; }
     Error error() const { return m_error; }
     const DataInfo &result() const { return m_info; }
     NameListSection *nameListSection() const { return m_nameListSection; }
@@ -271,7 +281,7 @@ private:
     MorphSection *m_morphSection;
     NameListSection *m_nameListSection;
     ProjectSection *m_projectSection;
-    IModel *m_modelRef;
+    IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_name2;

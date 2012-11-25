@@ -34,72 +34,50 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_MVD_MODELKEYFRAME_H_
-#define VPVL2_MVD_MODELKEYFRAME_H_
+#ifndef VPVL2_IEFFECTKEYFRAME_H_
+#define VPVL2_IEFFECTKEYFRAME_H_
 
-#include "vpvl2/IModelKeyframe.h"
-#include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/IKeyframe.h"
 
 namespace vpvl2
 {
+
 class IBone;
-class IEncoding;
+class IModel;
 
-namespace mvd
-{
-
-class VPVL2_API ModelKeyframe : public vmd::BaseKeyframe, public IModelKeyframe
+/**
+ * エフェクトのキーフレームをあらわすインターフェースです。
+ *
+ */
+class VPVL2_API IEffectKeyframe : public virtual IKeyframe
 {
 public:
-    ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKBones);
-    ~ModelKeyframe();
+    virtual ~IEffectKeyframe() {}
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_t countOfIK, Motion::DataInfo &info);
+    /**
+     * IEffectKeyframe のインスタンスの完全なコピーを返します.
+     *
+     * @return IBoneKeyframe
+     */
+    virtual IEffectKeyframe *clone() const = 0;
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
-    IModelKeyframe *clone() const;
-    void setIKBones(const Array<IBone *> &bones);
+    virtual bool isVisible() const = 0;
+    virtual bool isAddBlendEnabled() const = 0;
+    virtual bool isShadowEnabled() const = 0;
+    virtual float scaleFactor() const = 0;
+    virtual float opacity() const = 0;
+    virtual IModel *parentModelRef() const = 0;
+    virtual IBone *parentBoneRef() const = 0;
 
-    bool isVisible() const;
-    bool isShadowEnabled() const;
-    bool isAddBlendEnabled() const;
-    bool isPhysicsEnabled() const;
-    uint8_t physicsStillMode() const;
-    Scalar edgeWidth() const;
-    Color edgeColor() const;
-    void setVisible(bool value);
-    void setShadowEnable(bool value);
-    void setAddBlendEnable(bool value);
-    void setPhysicsEnable(bool value);
-    void setPhysicsStillMode(uint8_t value);
-    void setEdgeWidth(const Scalar &value);
-    void setEdgeColor(const Color &value);
-
-    void setName(const IString *value);
-    Type type() const;
-
-private:
-    mutable ModelKeyframe *m_ptr;
-    NameListSection *m_nameListSectionRef;
-    Array<bool> m_bonesOfIK;
-    Color m_edgeColor;
-    Scalar m_edgeWidth;
-    int m_countOfIKBones;
-    uint8_t m_physicsStillMode;
-    bool m_visible;
-    bool m_shadow;
-    bool m_addBlend;
-    bool m_physics;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(ModelKeyframe)
+    virtual void setVisible(bool value) = 0;
+    virtual void setAddBlendEnable(bool value) = 0;
+    virtual void setShadowEnable(bool value) = 0;
+    virtual void setScaleFactor(float value) = 0;
+    virtual void setOpacity(float value) = 0;
+    virtual void setParentModelRef(IModel *value) = 0;
+    virtual void setParentBoneRef(IBone *value) = 0;
 };
 
-} /* namespace mvd */
 } /* namespace vpvl2 */
 
 #endif
-

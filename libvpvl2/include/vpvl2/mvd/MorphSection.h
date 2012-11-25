@@ -67,6 +67,7 @@ public:
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       Array<IKeyframe *> &keyframes);
+    IKeyframe::LayerIndex countLayers(const IString *name) const;
     IMorphKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                  const IString *name,
                                  const IKeyframe::LayerIndex &layerIndex) const;

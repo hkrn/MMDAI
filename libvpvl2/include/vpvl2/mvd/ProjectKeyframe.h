@@ -37,7 +37,7 @@
 #ifndef VPVL2_MVD_PROJECTKEYFRAME_H_
 #define VPVL2_MVD_PROJECTKEYFRAME_H_
 
-// #include "vpvl2/IProjectKeyframe.h"
+#include "vpvl2/IProjectKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
 #include "vpvl2/vmd/BaseKeyframe.h"
 
@@ -48,7 +48,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API ProjectKeyframe : public vmd::BaseKeyframe //, public IProjectKeyframe
+class VPVL2_API ProjectKeyframe : public vmd::BaseKeyframe, public IProjectKeyframe
 {
 public:
     ProjectKeyframe(IEncoding *encoding);
@@ -60,12 +60,29 @@ public:
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
-    // IProjectKeyframe *clone() const;
+    IProjectKeyframe *clone() const;
     void setName(const IString *value);
     Type type() const;
 
+    float gravityFactor() const;
+    Vector3 gravityDirection() const;
+    int shadowMode() const;
+    float shadowDistance() const;
+    float shadowDepth() const;
+    void setGravityFactor(float value);
+    void setGravityDirection(const Vector3 &value);
+    void setShadowMode(int value);
+    void setShadowDistance(float value);
+    void setShadowDepth(float value);
+
 private:
+    mutable ProjectKeyframe *m_ptr;
     IEncoding *m_encoding;
+    Vector3 m_gravityDirection;
+    float m_gravityFactor;
+    float m_shadowDistance;
+    float m_shadowDepth;
+    int m_shadowMode;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectKeyframe)
 };

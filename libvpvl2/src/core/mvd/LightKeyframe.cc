@@ -116,13 +116,14 @@ size_t LightKeyframe::estimateSize() const
 
 ILightKeyframe *LightKeyframe::clone() const
 {
-    LightKeyframe *frame = m_ptr = new LightKeyframe();
-    frame->setTimeIndex(m_timeIndex);
-    frame->setColor(m_color);
-    frame->setDirection(m_direction);
-    frame->setEnable(m_enabled);
+    LightKeyframe *keyframe = m_ptr = new LightKeyframe();
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLayerIndex(m_layerIndex);
+    keyframe->setColor(m_color);
+    keyframe->setDirection(m_direction);
+    keyframe->setEnable(m_enabled);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 Vector3 LightKeyframe::color() const

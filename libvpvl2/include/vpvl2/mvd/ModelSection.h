@@ -58,7 +58,7 @@ public:
     void release();
     void read(const uint8_t *data);
     void seek(const IKeyframe::TimeIndex &timeIndex);
-    void setParentModel(IModel *model);
+    void setParentModel(const IModel *parentModelRef);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;
@@ -67,13 +67,14 @@ public:
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       Array<IKeyframe *> &keyframes);
+    IKeyframe::LayerIndex countLayers(const IString *name) const;
+    IModelKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                 const IKeyframe::LayerIndex &layerIndex) const;
+    IModelKeyframe *findKeyframeAt(int index) const;
 
 private:
     class PrivateContext;
-    IModel *m_modelRef;
-    ModelKeyframe *m_keyframePtr;
     PrivateContext *m_contextPtr;
-    size_t m_adjustAlighment;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelSection)
 };

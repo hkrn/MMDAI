@@ -54,6 +54,8 @@ class MockIBone : public IBone {
       void(Matrix3x3 &value));
   MOCK_METHOD1(setInverseKinematicsEnable,
       void(bool value));
+  MOCK_CONST_METHOD0(isInverseKinematicsEnabled,
+      bool());
 };
 
 }  // namespace vpvl2

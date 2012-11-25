@@ -163,20 +163,20 @@ size_t CameraKeyframe::estimateSize() const
 
 ICameraKeyframe *CameraKeyframe::clone() const
 {
-    CameraKeyframe *frame = m_ptr = new CameraKeyframe();
-    frame->setTimeIndex(m_timeIndex);
-    frame->setLayerIndex(m_layerIndex);
-    frame->setDistance(m_distance);
-    frame->setFov(m_fov);
-    frame->setLookAt(m_position);
-    frame->setAngle(m_angle);
-    frame->setPerspective(m_perspective);
-    frame->setInterpolationParameter(kX, m_interpolationPosition.parameter);
-    frame->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
-    frame->setInterpolationParameter(kFov, m_interpolationFov.parameter);
-    frame->setInterpolationParameter(kDistance, m_interpolationDistance.parameter);
+    CameraKeyframe *keyframe = m_ptr = new CameraKeyframe();
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLayerIndex(m_layerIndex);
+    keyframe->setDistance(m_distance);
+    keyframe->setFov(m_fov);
+    keyframe->setLookAt(m_position);
+    keyframe->setAngle(m_angle);
+    keyframe->setPerspective(m_perspective);
+    keyframe->setInterpolationParameter(kX, m_interpolationPosition.parameter);
+    keyframe->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
+    keyframe->setInterpolationParameter(kFov, m_interpolationFov.parameter);
+    keyframe->setInterpolationParameter(kDistance, m_interpolationDistance.parameter);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 void CameraKeyframe::setDefaultInterpolationParameter()

@@ -42,14 +42,26 @@ class MockIMotion : public IMotion {
       ICameraKeyframe*(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::LayerIndex &layerIndex));
   MOCK_CONST_METHOD1(findCameraKeyframeAt,
       ICameraKeyframe*(int index));
+  MOCK_CONST_METHOD3(findEffectKeyframe,
+      IEffectKeyframe*(const IKeyframe::TimeIndex &timeIndex, const IString *name, const IKeyframe::LayerIndex &layerIndex));
+  MOCK_CONST_METHOD1(findEffectKeyframeAt,
+      IEffectKeyframe*(int index));
   MOCK_CONST_METHOD2(findLightKeyframe,
       ILightKeyframe*(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::LayerIndex &layerIndex));
   MOCK_CONST_METHOD1(findLightKeyframeAt,
       ILightKeyframe*(int index));
+  MOCK_CONST_METHOD2(findModelKeyframe,
+      IModelKeyframe*(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::LayerIndex &layerIndex));
+  MOCK_CONST_METHOD1(findModelKeyframeAt,
+      IModelKeyframe*(int index));
   MOCK_CONST_METHOD3(findMorphKeyframe,
       IMorphKeyframe*(const IKeyframe::TimeIndex &timeIndex, const IString *name, const IKeyframe::LayerIndex &layerIndex));
   MOCK_CONST_METHOD1(findMorphKeyframeAt,
       IMorphKeyframe*(int index));
+  MOCK_CONST_METHOD2(findProjectKeyframe,
+      IProjectKeyframe*(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::LayerIndex &layerIndex));
+  MOCK_CONST_METHOD1(findProjectKeyframeAt,
+      IProjectKeyframe*(int index));
   MOCK_METHOD1(replaceKeyframe,
       void(IKeyframe *value));
   MOCK_METHOD1(deleteKeyframe,

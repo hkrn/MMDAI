@@ -124,6 +124,7 @@ public:
     bool hasLocalAxes() const;
     bool isTransformedAfterPhysicsSimulation() const;
     bool isTransformedByExternalParent() const;
+    bool isInverseKinematicsEnabled() const;
 
     void setParentBone(Bone *value);
     void setParentInherenceBone(Bone *value, float weight);

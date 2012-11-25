@@ -109,7 +109,7 @@ ACTION_P(FindBone, bones)
 {
     MockIBone *bone = new MockIBone();
     EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    (*bones)->append(bone);
+    (*bones)->add(bone);
     return bone;
 }
 
@@ -117,7 +117,7 @@ ACTION_P(FindMorph, morphs)
 {
     MockIMorph *morph = new MockIMorph();
     EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    (*morphs)->append(morph);
+    (*morphs)->add(morph);
     return morph;
 }
 
@@ -131,8 +131,8 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         Encoding encoding;
         Factory factory(&encoding);
         MockIModel model;
-        QScopedPointer<QList<IBone *>, ScopedPointerListDeleter> bones(new QList<IBone *>);
-        QScopedPointer<QList<IMorph *>, ScopedPointerListDeleter> morphs(new QList<IMorph *>);
+        QScopedPointer<Array<IBone *>, ScopedPointerListDeleter> bones(new Array<IBone *>);
+        QScopedPointer<Array<IMorph *>, ScopedPointerListDeleter> morphs(new Array<IMorph *>);
         EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
         EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
         bool ok;

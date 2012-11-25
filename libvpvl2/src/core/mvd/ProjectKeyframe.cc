@@ -60,12 +60,25 @@ struct ProjectKeyframeChunk {
 
 ProjectKeyframe::ProjectKeyframe(IEncoding *encoding)
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_ptr(0),
+      m_encoding(encoding),
+      m_gravityDirection(kZeroV3),
+      m_gravityFactor(0),
+      m_shadowDistance(0),
+      m_shadowDepth(0),
+      m_shadowMode(0)
 {
 }
 
 ProjectKeyframe::~ProjectKeyframe()
 {
+    delete m_ptr;
+    m_ptr = 0;
+    m_gravityDirection.setZero();
+    m_gravityFactor = 0;
+    m_shadowDistance = 0;
+    m_shadowDepth = 0;
+    m_shadowMode = 0;
 }
 
 size_t ProjectKeyframe::size()
@@ -85,12 +98,29 @@ bool ProjectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Mot
     return true;
 }
 
-void ProjectKeyframe::read(const uint8_t * /* data */)
+void ProjectKeyframe::read(const uint8_t *data)
 {
+    ProjectKeyframeChunk chunk;
+    internal::getData(data, chunk);
+    setTimeIndex(TimeIndex(chunk.timeIndex));
+    setGravityFactor(chunk.gravityFactor);
+    Vector3 gravityDirection;
+    internal::setPositionRaw(chunk.gravityDirection, gravityDirection);
+    setGravityDirection(gravityDirection);
+    setShadowMode(chunk.shadowMode);
+    setShadowDistance(chunk.shadowDistance);
+    setShadowDepth(chunk.shadowDepth);
 }
 
 void ProjectKeyframe::write(uint8_t * /* data */) const
 {
+    ProjectKeyframeChunk chunk;
+    chunk.timeIndex = uint64_t(timeIndex());
+    chunk.gravityFactor = gravityFactor();
+    internal::getPositionRaw(gravityDirection(), chunk.gravityDirection);
+    chunk.shadowMode = shadowMode();
+    chunk.shadowDistance = shadowDistance();
+    chunk.shadowDepth = shadowDepth();
 }
 
 size_t ProjectKeyframe::estimateSize() const
@@ -98,12 +128,19 @@ size_t ProjectKeyframe::estimateSize() const
     return size();
 }
 
-/*
 IProjectKeyframe *ProjectKeyframe::clone() const
 {
-    return 0;
+    ProjectKeyframe *keyframe = m_ptr = new ProjectKeyframe(m_encoding);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLayerIndex(m_layerIndex);
+    keyframe->setGravityFactor(m_gravityFactor);
+    keyframe->setGravityDirection(m_gravityDirection);
+    keyframe->setShadowMode(m_shadowMode);
+    keyframe->setShadowDistance(m_shadowDistance);
+    keyframe->setShadowDepth(m_shadowDepth);
+    m_ptr = 0;
+    return keyframe;
 }
-*/
 
 void ProjectKeyframe::setName(const IString * /* value */)
 {
@@ -112,6 +149,56 @@ void ProjectKeyframe::setName(const IString * /* value */)
 IKeyframe::Type ProjectKeyframe::type() const
 {
     return kProject;
+}
+
+float ProjectKeyframe::gravityFactor() const
+{
+    return m_gravityFactor;
+}
+
+Vector3 ProjectKeyframe::gravityDirection() const
+{
+    return m_gravityDirection;
+}
+
+int ProjectKeyframe::shadowMode() const
+{
+    return m_shadowMode;
+}
+
+float ProjectKeyframe::shadowDistance() const
+{
+    return m_shadowDistance;
+}
+
+float ProjectKeyframe::shadowDepth() const
+{
+    return m_shadowDepth;
+}
+
+void ProjectKeyframe::setGravityFactor(float value)
+{
+    m_gravityFactor = value;
+}
+
+void ProjectKeyframe::setGravityDirection(const Vector3 &value)
+{
+    m_gravityDirection = value;
+}
+
+void ProjectKeyframe::setShadowMode(int value)
+{
+    m_shadowMode = value;
+}
+
+void ProjectKeyframe::setShadowDistance(float value)
+{
+    m_shadowDistance = value;
+}
+
+void ProjectKeyframe::setShadowDepth(float value)
+{
+    m_shadowDepth = value;
 }
 
 } /* namespace mvd */

@@ -31,6 +31,7 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ICamera.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ICameraKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IEffect.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IEffectKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IEncoding.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILabel.h
@@ -38,9 +39,11 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/ILightKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMaterial.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IModel.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IModelKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorph.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMorphKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IMotion.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IProjectKeyframe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderContext.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IRenderEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IString.h
@@ -249,7 +252,7 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h
-							${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/TextureDrawHelper.h
+                                                        ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/TextureDrawHelper.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/VertexBundle.h
                             ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h)
   set(vpvl2_qt_sources ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc
@@ -308,10 +311,10 @@ if(VPVL2_OPENGL_RENDERER)
     find_package(Cg REQUIRED)
     target_link_libraries(vpvl2 ${CG_LIBRARY} ${CG_GL_LIBRARY})
     # workaround for framework include path
-	if(APPLE)
+        if(APPLE)
       find_path(CG_INCLUDE_DIR_APPLE Cg/cg.h STRING CACHE)
-	  set(CG_INCLUDE_DIR ${CG_INCLUDE_DIR_APPLE})
-	endif()
+          set(CG_INCLUDE_DIR ${CG_INCLUDE_DIR_APPLE})
+        endif()
     include_directories(${CG_INCLUDE_DIR})
   endif()
   if(VPVL2_ENABLE_OPENCL)

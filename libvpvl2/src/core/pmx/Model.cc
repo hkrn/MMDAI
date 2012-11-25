@@ -1143,7 +1143,7 @@ void Model::parseVertices(const DataInfo &info)
     const int nvertices = info.verticesCount;
     uint8_t *ptr = info.verticesPtr;
     size_t size;
-    for(int i = 0; i < nvertices; i++) {
+    for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = new Vertex(this);
         m_vertices.add(vertex);
         vertex->read(ptr, info, size);
@@ -1157,7 +1157,7 @@ void Model::parseIndices(const DataInfo &info)
     const int nvertices = info.verticesCount;
     uint8_t *ptr = info.indicesPtr;
     size_t size = info.vertexIndexSize;
-    for(int i = 0; i < nindices; i++) {
+    for (int i = 0; i < nindices; i++) {
         int index = internal::readUnsignedIndex(ptr, size);
         if (index >= 0 && index < nvertices) {
             m_indices.add(index);
@@ -1174,7 +1174,7 @@ void Model::parseTextures(const DataInfo &info)
     uint8_t *ptr = info.texturesPtr;
     uint8_t *texturePtr;
     size_t nTextureSize, rest = SIZE_MAX;
-    for(int i = 0; i < ntextures; i++) {
+    for (int i = 0; i < ntextures; i++) {
         internal::sizeText(ptr, rest, texturePtr, nTextureSize);
         m_textures.add(m_encodingRef->toString(texturePtr, nTextureSize, info.codec));
     }
@@ -1185,7 +1185,7 @@ void Model::parseMaterials(const DataInfo &info)
     const int nmaterials = info.materialsCount;
     uint8_t *ptr = info.materialsPtr;
     size_t size, offset = 0;
-    for(int i = 0; i < nmaterials; i++) {
+    for (int i = 0; i < nmaterials; i++) {
         Material *material = new Material(this);
         m_materials.add(material);
         material->read(ptr, info, size);
@@ -1205,7 +1205,7 @@ void Model::parseBones(const DataInfo &info)
     const int nbones = info.bonesCount;
     uint8_t *ptr = info.bonesPtr;
     size_t size;
-    for(int i = 0; i < nbones; i++) {
+    for (int i = 0; i < nbones; i++) {
         Bone *bone = new Bone(this);
         m_bones.add(bone);
         bone->read(ptr, info, size);

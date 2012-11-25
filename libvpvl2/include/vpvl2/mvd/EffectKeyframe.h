@@ -37,7 +37,7 @@
 #ifndef VPVL2_MVD_EFFECTKEYFRAME_H_
 #define VPVL2_MVD_EFFECTKEYFRAME_H_
 
-// #include "vpvl2/IEffectKeyframe.h"
+#include "vpvl2/IEffectKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
 #include "vpvl2/vmd/BaseKeyframe.h"
 
@@ -48,7 +48,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API EffectKeyframe : public vmd::BaseKeyframe
+class VPVL2_API EffectKeyframe : public vmd::BaseKeyframe, public IEffectKeyframe
 {
 public:
     EffectKeyframe(IEncoding *encoding);
@@ -60,12 +60,35 @@ public:
     void read(const uint8_t *data);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
-    // IEffectKeyframe *clone() const;
+    IEffectKeyframe *clone() const;
     void setName(const IString *value);
     Type type() const;
 
+    bool isVisible() const;
+    bool isAddBlendEnabled() const;
+    bool isShadowEnabled() const;
+    float scaleFactor() const;
+    float opacity() const;
+    IModel *parentModelRef() const;
+    IBone *parentBoneRef() const;
+    void setVisible(bool value);
+    void setAddBlendEnable(bool value);
+    void setShadowEnable(bool value);
+    void setScaleFactor(float value);
+    void setOpacity(float value);
+    void setParentModelRef(IModel *value);
+    void setParentBoneRef(IBone *value);
+
 private:
+    mutable EffectKeyframe *m_ptr;
     IEncoding *m_encoding;
+    IModel *m_parentModelRef;
+    IBone *m_parentBoneRef;
+    float m_scaleFactor;
+    float m_opacity;
+    bool m_visible;
+    bool m_addBlend;
+    bool m_shadow;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(EffectKeyframe)
 };

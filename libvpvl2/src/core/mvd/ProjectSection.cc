@@ -124,5 +124,21 @@ void ProjectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 {
 }
 
+IKeyframe::LayerIndex ProjectSection::countLayers() const
+{
+    return 1;
+}
+
+IProjectKeyframe *ProjectSection::findKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+                                               const IKeyframe::LayerIndex & /* layerIndex */) const
+{
+    return 0;
+}
+
+IProjectKeyframe *ProjectSection::findKeyframeAt(int /* index */) const
+{
+    return 0;
+}
+
 } /* namespace mvd */
 } /* namespace vpvl2 */

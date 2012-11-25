@@ -63,6 +63,7 @@ struct ModelKeyframeChunk {
 
 ModelKeyframe::ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKBones)
     : BaseKeyframe(),
+      m_ptr(0),
       m_nameListSectionRef(nameListSectionRef),
       m_edgeColor(kZeroC),
       m_edgeWidth(0),
@@ -78,6 +79,8 @@ ModelKeyframe::ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKB
 
 ModelKeyframe::~ModelKeyframe()
 {
+    delete m_ptr;
+    m_ptr = 0;
     m_nameListSectionRef = 0;
     m_edgeColor.setZero();
     m_edgeWidth = 0;
@@ -136,7 +139,9 @@ void ModelKeyframe::write(uint8_t *data) const
     chunk.physics = isPhysicsEnabled();
     chunk.physicsStillMode = physicsStillMode();
     chunk.edgeWidth = edgeWidth();
-    // chunk.edgeColor;
+    const Color &ec = edgeColor();
+    for (int i = 0; i < 4; i++)
+        chunk.edgeColor[i] = ec[i];
     internal::zerofill(chunk.reserved, sizeof(chunk.reserved));
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
     for (int i = 0; i < m_countOfIKBones; i++) {
@@ -149,12 +154,33 @@ size_t ModelKeyframe::estimateSize() const
     return size() + sizeof(uint8_t) * m_countOfIKBones;
 }
 
-/*
 IModelKeyframe *ModelKeyframe::clone() const
 {
-    return 0;
+    ModelKeyframe *keyframe = m_ptr = new ModelKeyframe(m_nameListSectionRef, m_countOfIKBones);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLayerIndex(m_layerIndex);
+    keyframe->setVisible(m_visible);
+    keyframe->setAddBlendEnable(m_addBlend);
+    keyframe->setShadowEnable(m_shadow);
+    keyframe->setPhysicsEnable(m_physics);
+    keyframe->setPhysicsStillMode(m_physicsStillMode);
+    keyframe->setEdgeWidth(m_edgeWidth);
+    keyframe->setEdgeColor(m_edgeColor);
+    keyframe->m_bonesOfIK.copy(m_bonesOfIK);
+    m_ptr = 0;
+    return keyframe;
 }
-*/
+
+void ModelKeyframe::setIKBones(const Array<IBone *> &bones)
+{
+    const int nbones = bones.count();
+    m_bonesOfIK.resize(nbones);
+    for (int i = 0; i < nbones; i++) {
+        const IBone *bone = bones[i];
+        m_bonesOfIK[i] = bone->isInverseKinematicsEnabled();
+    }
+    m_countOfIKBones = m_bonesOfIK.count();
+}
 
 bool ModelKeyframe::isVisible() const
 {

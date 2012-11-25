@@ -66,6 +66,7 @@ public:
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       Array<IKeyframe *> &keyframes);
+    IKeyframe::LayerIndex countLayers() const;
     ILightKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                  const IKeyframe::LayerIndex &layerIndex) const;
     ILightKeyframe *findKeyframeAt(int index) const;

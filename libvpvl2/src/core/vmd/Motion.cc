@@ -472,6 +472,18 @@ ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
     return m_cameraMotion.frameAt(index);
 }
 
+IEffectKeyframe *Motion::findEffectKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+                                            const IString * /* name */,
+                                            const IKeyframe::LayerIndex & /* layerIndex */) const
+{
+    return 0;
+}
+
+IEffectKeyframe *Motion::findEffectKeyframeAt(int /* index */) const
+{
+    return 0;
+}
+
 ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                           const IKeyframe::LayerIndex &layerIndex) const
 {
@@ -481,6 +493,17 @@ ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
 ILightKeyframe *Motion::findLightKeyframeAt(int index) const
 {
     return m_lightMotion.frameAt(index);
+}
+
+IModelKeyframe *Motion::findModelKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+                                          const IKeyframe::LayerIndex & /* layerIndex */) const
+{
+    return 0;
+}
+
+IModelKeyframe *Motion::findModelKeyframeAt(int /* index */) const
+{
+    return 0;
 }
 
 IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
@@ -493,6 +516,17 @@ IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
 IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
 {
     return m_morphMotion.keyframeAt(index);
+}
+
+IProjectKeyframe *Motion::findProjectKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+                                              const IKeyframe::LayerIndex & /* layerIndex */) const
+{
+    return 0;
+}
+
+IProjectKeyframe *Motion::findProjectKeyframeAt(int /* index */) const
+{
+    return 0;
 }
 
 void Motion::deleteKeyframe(IKeyframe *&value)

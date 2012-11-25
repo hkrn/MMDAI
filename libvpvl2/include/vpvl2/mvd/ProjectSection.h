@@ -64,6 +64,10 @@ public:
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       Array<IKeyframe *> &keyframes);
+    IKeyframe::LayerIndex countLayers() const;
+    IProjectKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                   const IKeyframe::LayerIndex &layerIndex) const;
+    IProjectKeyframe *findKeyframeAt(int index) const;
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectSection)

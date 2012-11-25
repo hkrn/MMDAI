@@ -243,8 +243,14 @@ void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
     }
 }
 
-void Bone::setInverseKinematicsEnable(bool /*value*/)
+void Bone::setInverseKinematicsEnable(bool value)
 {
+    m_boneRef->setSimulated(!value);
+}
+
+bool Bone::isInverseKinematicsEnabled() const
+{
+    return !m_boneRef->isSimulated();
 }
 
 void Bone::updateLocalTransform()

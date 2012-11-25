@@ -119,12 +119,13 @@ size_t MorphKeyframe::estimateSize() const
 
 IMorphKeyframe *MorphKeyframe::clone() const
 {
-    MorphKeyframe *frame = m_ptr = new MorphKeyframe(m_nameListSectionRef);
-    frame->setTimeIndex(m_timeIndex);
-    frame->setWeight(m_weight);
-    frame->setInterpolationParameter(kWeight, m_interpolationWeight.parameter);
+    MorphKeyframe *keyframe = m_ptr = new MorphKeyframe(m_nameListSectionRef);
+    keyframe->setTimeIndex(m_timeIndex);
+    keyframe->setLayerIndex(m_layerIndex);
+    keyframe->setWeight(m_weight);
+    keyframe->setInterpolationParameter(kWeight, m_interpolationWeight.parameter);
     m_ptr = 0;
-    return frame;
+    return keyframe;
 }
 
 void MorphKeyframe::setDefaultInterpolationParameter()

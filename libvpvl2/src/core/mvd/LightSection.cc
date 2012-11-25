@@ -150,6 +150,11 @@ void LightSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 {
 }
 
+IKeyframe::LayerIndex LightSection::countLayers() const
+{
+    return 1;
+}
+
 ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                            const IKeyframe::LayerIndex &layerIndex) const
 {

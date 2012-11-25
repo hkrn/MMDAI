@@ -58,20 +58,26 @@ struct CameraSectionHeader {
 
 class CameraSection::PrivateContext : public BaseSectionContext {
 public:
+    CameraKeyframe *keyframePtr;
     Vector3 position;
     Vector3 angle;
     Scalar distance;
     Scalar fov;
     IKeyframe::LayerIndex countOfLayers;
     PrivateContext()
-        : position(kZeroV3),
+        : BaseSectionContext(),
+          keyframePtr(0),
+          position(kZeroV3),
           angle(kZeroV3),
           distance(0),
           fov(0),
           countOfLayers(1)
     {
+        keyframes = new KeyframeCollection();
     }
     ~PrivateContext() {
+        delete keyframePtr;
+        keyframePtr = 0;
         position.setZero();
         angle.setZero();
         distance = 0;
@@ -152,9 +158,9 @@ public:
 
 CameraSection::CameraSection(NameListSection *nameListSectionRef)
     : BaseSection(nameListSectionRef),
-      m_keyframePtr(0),
       m_contextPtr(0)
 {
+    m_contextPtr = new PrivateContext();
 }
 
 CameraSection::~CameraSection()
@@ -184,8 +190,6 @@ bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
 
 void CameraSection::release()
 {
-    delete m_keyframePtr;
-    m_keyframePtr = 0;
     delete m_contextPtr;
     m_contextPtr = 0;
 }
@@ -198,93 +202,79 @@ void CameraSection::read(const uint8_t *data)
     const size_t sizeOfkeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
-    delete m_contextPtr;
-    m_contextPtr = new PrivateContext();
-    m_contextPtr->keyframes = new PrivateContext::KeyframeCollection();
     m_contextPtr->keyframes->reserve(nkeyframes);
     m_contextPtr->countOfLayers = header.countOfLayers;
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = new CameraKeyframe();
-        m_keyframePtr->read(ptr);
-        addKeyframe0(m_keyframePtr, m_contextPtr->keyframes);
+        IKeyframe *keyframe = m_contextPtr->keyframePtr = new CameraKeyframe();
+        keyframe->read(ptr);
+        addKeyframe0(keyframe, m_contextPtr->keyframes);
         ptr += sizeOfkeyframe;
     }
     m_contextPtr->keyframes->sort(KeyframeTimeIndexPredication());
-    m_keyframePtr = 0;
+    m_contextPtr->keyframePtr = 0;
 }
 
 void CameraSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    if (m_contextPtr)
-        m_contextPtr->seek(timeIndex);
+    m_contextPtr->seek(timeIndex);
     saveCurrentTimeIndex(timeIndex);
 }
 
 void CameraSection::write(uint8_t *data) const
 {
-    if (m_contextPtr) {
-        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-        const int nkeyframes = keyframes->count();
-        const int nlayers = m_contextPtr->countOfLayers;
-        Motion::SectionTag tag;
-        tag.type = Motion::kCameraSection;
-        tag.minor = 0;
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
-        CameraSectionHeader header;
-        header.countOfKeyframes = nkeyframes;
-        header.countOfLayers = nlayers;
-        header.reserved = 0;
-        header.sizeOfKeyframe = CameraKeyframe::size();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
-        for (int i = 0; i < nlayers; i++) {
-            internal::writeSignedIndex(0, sizeof(uint8_t), data);
-        }
-        for (int i = 0; i < nkeyframes; i++) {
-            const IKeyframe *keyframe = keyframes->at(i);
-            keyframe->write(data);
-            data += keyframe->estimateSize();
-        }
+    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+    const int nkeyframes = keyframes->count();
+    const int nlayers = m_contextPtr->countOfLayers;
+    Motion::SectionTag tag;
+    tag.type = Motion::kCameraSection;
+    tag.minor = 0;
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+    CameraSectionHeader header;
+    header.countOfKeyframes = nkeyframes;
+    header.countOfLayers = nlayers;
+    header.reserved = 0;
+    header.sizeOfKeyframe = CameraKeyframe::size();
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    for (int i = 0; i < nlayers; i++) {
+        internal::writeSignedIndex(0, sizeof(uint8_t), data);
+    }
+    for (int i = 0; i < nkeyframes; i++) {
+        const IKeyframe *keyframe = keyframes->at(i);
+        keyframe->write(data);
+        data += keyframe->estimateSize();
     }
 }
 
 size_t CameraSection::estimateSize() const
 {
     size_t size = 0;
-    if (m_contextPtr) {
-        size += sizeof(Motion::SectionTag);
-        size += sizeof(CameraSectionHeader);
-        size += sizeof(uint8_t) * m_contextPtr->countOfLayers;
-        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-        const int nkeyframes = keyframes->count();
-        for (int i = 0; i < nkeyframes; i++) {
-            const IKeyframe *keyframe = keyframes->at(i);
-            size += keyframe->estimateSize();
-        }
+    size += sizeof(Motion::SectionTag);
+    size += sizeof(CameraSectionHeader);
+    size += sizeof(uint8_t) * m_contextPtr->countOfLayers;
+    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+    const int nkeyframes = keyframes->count();
+    for (int i = 0; i < nkeyframes; i++) {
+        const IKeyframe *keyframe = keyframes->at(i);
+        size += keyframe->estimateSize();
     }
     return size;
 }
 
 size_t CameraSection::countKeyframes() const
 {
-    return m_contextPtr ? m_contextPtr->keyframes->count() : 0;
+    return m_contextPtr->keyframes->count();
 }
 
 void CameraSection::addKeyframe(IKeyframe *keyframe)
 {
-    if (!m_contextPtr) {
-        m_contextPtr = new PrivateContext();
-        m_contextPtr->keyframes = new PrivateContext::KeyframeCollection();
-    }
     addKeyframe0(keyframe, m_contextPtr->keyframes);
 }
 
 void CameraSection::deleteKeyframe(IKeyframe *&keyframe)
 {
-    if (m_contextPtr) {
-        m_contextPtr->keyframes->remove(keyframe);
-        delete keyframe;
-        keyframe = 0;
-    }
+    m_contextPtr->keyframes->remove(keyframe);
+    delete keyframe;
+    keyframe = 0;
 }
 
 void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
@@ -295,7 +285,7 @@ void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 
 IKeyframe::LayerIndex CameraSection::countLayers() const
 {
-    return m_contextPtr ? m_contextPtr->countOfLayers : 0;
+    return m_contextPtr->countOfLayers;
 }
 
 ICameraKeyframe *CameraSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
@@ -314,40 +304,32 @@ ICameraKeyframe *CameraSection::findKeyframe(const IKeyframe::TimeIndex &timeInd
 
 ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
 {
-    if (m_contextPtr) {
-        const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-        if (internal::checkBound(index, 0, keyframes->count())) {
-            mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(index));
-            return keyframe;
-        }
+    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
+    if (internal::checkBound(index, 0, keyframes->count())) {
+        mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(index));
+        return keyframe;
     }
     return 0;
 }
 
 Vector3 CameraSection::position() const
 {
-    return m_contextPtr ? m_contextPtr->position : kZeroV3;
+    return m_contextPtr->position;
 }
 
 Vector3 CameraSection::angle() const
 {
-    return m_contextPtr ? m_contextPtr->angle : kZeroV3;
+    return m_contextPtr->angle;
 }
 
 Scalar CameraSection::fov() const
 {
-    return m_contextPtr ? m_contextPtr->fov : 0;
+    return m_contextPtr->fov;
 }
 
 Scalar CameraSection::distance() const
 {
-    return m_contextPtr ? m_contextPtr->distance : 0;
-}
-
-void CameraSection::addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes)
-{
-    keyframes->add(keyframe);
-    btSetMax(m_maxTimeIndex, keyframe->timeIndex());
+    return m_contextPtr->distance;
 }
 
 } /* namespace mvd */

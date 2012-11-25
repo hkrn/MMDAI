@@ -32,6 +32,39 @@ using namespace vpvl2::pmx;
 namespace
 {
 
+class MockModelAdapter {
+public:
+    MockModelAdapter(MockIModel &model)
+        : m_bones(new Array<IBone *>()),
+          m_morphs(new Array<IMorph *>())
+    {
+        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Invoke(this, &MockModelAdapter::addBone));
+        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Invoke(this, &MockModelAdapter::addMorph));
+        EXPECT_CALL(model, getBoneRefs(_)).Times(AtLeast(1)).WillRepeatedly(Invoke(this, &MockModelAdapter::getBonesRef));
+    }
+private:
+    IBone *addBone(const IString *name) {
+        QScopedPointer<MockIBone> bone(new MockIBone());
+        EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(name));
+        EXPECT_CALL(*bone, isInverseKinematicsEnabled()).Times(AnyNumber()).WillRepeatedly(Return(false));
+        EXPECT_CALL(*bone, hasInverseKinematics()).Times(AnyNumber()).WillRepeatedly(Return(false));
+        m_bones->add(bone.data());
+        return bone.take();
+    }
+    IMorph *addMorph(const IString *name) {
+        QScopedPointer<MockIMorph> morph(new MockIMorph());
+        EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(name));
+        m_morphs->add(morph.data());
+        return morph.take();
+    }
+    void getBonesRef(Array<IBone *> &a) {
+        a.copy(*m_bones);
+    }
+
+    QScopedPointer<Array<IBone *>, ScopedPointerListDeleter> m_bones;
+    QScopedPointer<Array<IMorph *>, ScopedPointerListDeleter> m_morphs;
+};
+
 static void CompareBoneInterpolationMatrix(const QuadWord p[], const mvd::BoneKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
@@ -263,22 +296,6 @@ TEST(MVDMotionTest, SaveLightKeyframe)
 }
 */
 
-ACTION_P(FindBone, bones)
-{
-    MockIBone *bone = new MockIBone();
-    EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    bones->data()->append(bone);
-    return bone;
-}
-
-ACTION_P(FindMorph, morphs)
-{
-    MockIMorph *morph = new MockIMorph();
-    EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    morphs->data()->append(morph);
-    return morph;
-}
-
 TEST(MVDMotionTest, SaveModelMotion)
 {
     QFile file("motion.mvd");
@@ -288,10 +305,7 @@ TEST(MVDMotionTest, SaveModelMotion)
         size_t size = bytes.size();
         Encoding encoding;
         MockIModel model;
-        QScopedPointer<QList<IBone *>, ScopedPointerListDeleter> bones(new QList<IBone *>());
-        QScopedPointer<QList<IMorph *>, ScopedPointerListDeleter> morphs(new QList<IMorph *>());
-        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
-        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
+        MockModelAdapter adapter(model); Q_UNUSED(adapter);
         mvd::Motion motion(&model, &encoding);
         ASSERT_TRUE(motion.load(data, size));
         size_t newSize = motion.estimateSize();

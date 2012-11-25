@@ -81,6 +81,7 @@ public:
     Vector3 fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setInverseKinematicsEnable(bool value);
+    bool isInverseKinematicsEnabled() const;
 
     Transform localTransform() const;
     void getLocalTransform(Transform &value) const;

@@ -370,9 +370,8 @@ IBoneKeyframe *BoneSection::findKeyframeAt(int index) const
 
 void BoneSection::addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes)
 {
-    keyframes->add(keyframe);
+    BaseSection::addKeyframe0(keyframe, keyframes);
     m_allKeyframeRefs.add(keyframe);
-    btSetMax(m_maxTimeIndex, keyframe->timeIndex());
 }
 
 } /* namespace mvd */
