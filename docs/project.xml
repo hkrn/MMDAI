@@ -80,6 +80,28 @@
     <vpvm:keyframe dummy="dummy" index="1" color="1,2,3" direction="1,2,3"/>
     <vpvm:keyframe dummy="dummy" index="2" color="3,1,2" direction="3,1,2"/>
    </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="model">
+    <vpvm:keyframe dummy="dummy" index="1">
+     <vpvm:ik dummy="dummy" name="foo" enabled="true"/>
+     <vpvm:ik dummy="dummy" name="bar" enabled="false"/>
+    </vpvm:keyframe>
+    <vpvm:keyframe dummy="dummy" index="2">
+     <vpvm:ik dummy="dummy" name="foo" enabled="false"/>
+     <vpvm:ik dummy="dummy" name="bar" enabled="true"/>
+    </vpvm:keyframe>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="effect">
+    <vpvm:keyframe dummy="dummy" index="1"/>
+    <vpvm:keyframe dummy="dummy" index="2"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="project">
+    <vpvm:keyframe dummy="dummy" index="1"/>
+    <vpvm:keyframe dummy="dummy" index="2"/>
+   </vpvm:animation>
+   <vpvm:animation dummy="dummy" type="unknown">
+    <vpvm:keyframe dummy="dummy" index="1"/>
+    <vpvm:keyframe dummy="dummy" index="2"/>
+   </vpvm:animation>
   </vpvm:motion>
   <vpvm:motion dummy="dummy" uuid="{766CF45D-DE91-4387-9704-4B3D5B1414DC}" model="{D4403C60-3D6C-4051-9B28-51DEFE021F59}" type="vmd">
    <vpvm:animation dummy="dummy" type="bone">
