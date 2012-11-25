@@ -56,8 +56,11 @@ public:
     }
 
     const std::string toStdFromString(const IString *value) const {
-        const std::string &s = String::toStdString(static_cast<const String *>(value)->value());
-        return s;
+        if (value) {
+            const std::string &s = String::toStdString(static_cast<const String *>(value)->value());
+            return s;
+        }
+        return std::string();
     }
     IString *toStringFromStd(const std::string &value) const {
         const QString &s = m_codec->toUnicode(value.c_str());
