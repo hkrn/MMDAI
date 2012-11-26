@@ -71,6 +71,9 @@ public:
     IEffectKeyframe *findKeyframeAt(int index) const;
 
 private:
+    class PrivateContext;
+    PrivateContext *m_context;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(EffectSection)
 };
 

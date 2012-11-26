@@ -65,18 +65,13 @@ class BaseSectionContext
 {
 public:
     typedef Array<IKeyframe *> KeyframeCollection;
-    KeyframeCollection *keyframes;
+    KeyframeCollection keyframes;
     BaseSectionContext()
-        : keyframes(0),
-          m_lastIndex(0)
+        : m_lastIndex(0)
     {
     }
     virtual ~BaseSectionContext() {
-        if (keyframes) {
-            keyframes->releaseAll();
-            delete keyframes;
-            keyframes = 0;
-        }
+        keyframes.releaseAll();
         m_lastIndex = 0;
     }
 
@@ -86,14 +81,14 @@ protected:
                              int &fromIndex,
                              int &toIndex) const
     {
-        const int nframes = keyframes->count();
-        IKeyframe *lastKeyFrame = keyframes->at(nframes - 1);
+        const int nframes = keyframes.count();
+        IKeyframe *lastKeyFrame = keyframes[nframes - 1];
         currentKeyframe = btMin(seekIndex, lastKeyFrame->timeIndex());
         // Find the next frame index bigger than the frame index of last key frame
         fromIndex = toIndex = 0;
-        if (currentKeyframe >= keyframes->at(m_lastIndex)->timeIndex()) {
+        if (currentKeyframe >= keyframes[m_lastIndex]->timeIndex()) {
             for (int i = m_lastIndex; i < nframes; i++) {
-                if (currentKeyframe <= keyframes->at(i)->timeIndex()) {
+                if (currentKeyframe <= keyframes[i]->timeIndex()) {
                     toIndex = i;
                     break;
                 }
@@ -101,7 +96,7 @@ protected:
         }
         else {
             for (int i = 0; i <= m_lastIndex && i < nframes; i++) {
-                if (currentKeyframe <= keyframes->at(i)->timeIndex()) {
+                if (currentKeyframe <= keyframes[i]->timeIndex()) {
                     toIndex = i;
                     break;
                 }
@@ -152,8 +147,7 @@ class VPVL2_API BaseSection
 {
 public:
     BaseSection(NameListSection *nameListSectionRef)
-        : m_keyframeListPtr(0),
-          m_nameListSectionRef(nameListSectionRef),
+        : m_nameListSectionRef(nameListSectionRef),
           m_maxTimeIndex(0),
           m_currentTimeIndex(0),
           m_previousTimeIndex(0)
@@ -164,11 +158,6 @@ public:
     }
 
     virtual void release() {
-        if (m_keyframeListPtr) {
-            m_keyframeListPtr->releaseAll();
-            delete m_keyframeListPtr;
-            m_keyframeListPtr = 0;
-        }
         m_nameListSectionRef = 0;
         m_currentTimeIndex = 0;
         m_previousTimeIndex = 0;
@@ -195,8 +184,8 @@ public:
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
-    virtual void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes) {
-        keyframes->add(keyframe);
+    virtual void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection &keyframes) {
+        keyframes.add(keyframe);
         btSetMax(m_maxTimeIndex, keyframe->timeIndex());
     }
     void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {
@@ -204,7 +193,6 @@ protected:
         m_currentTimeIndex = timeIndex;
     }
 
-    BaseSectionContext::KeyframeCollection *m_keyframeListPtr;
     NameListSection *m_nameListSectionRef;
     IKeyframe::TimeIndex m_maxTimeIndex;
     IKeyframe::TimeIndex m_currentTimeIndex;

@@ -74,7 +74,7 @@ public:
 
 private:
     class PrivateContext;
-    PrivateContext *m_contextPtr;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelSection)
 };

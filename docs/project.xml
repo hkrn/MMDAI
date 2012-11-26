@@ -81,22 +81,26 @@
     <vpvm:keyframe dummy="dummy" index="2" color="3,1,2" direction="3,1,2"/>
    </vpvm:animation>
    <vpvm:animation dummy="dummy" type="model">
-    <vpvm:keyframe dummy="dummy" index="1">
+    <vpvm:keyframe dummy="dummy" index="1" visible="true" addblend="false" physics.enable="true" physics.mode="0" edge.width="0.24" edge.color="0.1,0.2,0.3,0.4">
+<!--
      <vpvm:ik dummy="dummy" name="foo" enabled="true"/>
      <vpvm:ik dummy="dummy" name="bar" enabled="false"/>
+-->
     </vpvm:keyframe>
-    <vpvm:keyframe dummy="dummy" index="2">
+    <vpvm:keyframe dummy="dummy" index="2" visible="false" addblend="true" physics.enable="false" physics.mode="1" edge.width="0.42" edge.color="0.4,0.3,0.2,0.1">
+<!--
      <vpvm:ik dummy="dummy" name="foo" enabled="false"/>
      <vpvm:ik dummy="dummy" name="bar" enabled="true"/>
+-->
     </vpvm:keyframe>
    </vpvm:animation>
    <vpvm:animation dummy="dummy" type="effect">
-    <vpvm:keyframe dummy="dummy" index="1"/>
-    <vpvm:keyframe dummy="dummy" index="2"/>
+    <vpvm:keyframe dummy="dummy" index="1" visible="true" addblend="false" shadow="true" scale="0.42" opacity="0.24"/>
+    <vpvm:keyframe dummy="dummy" index="2" visible="false" addblend="true" shadow="false" scale="0.24" opacity="0.42"/>
    </vpvm:animation>
    <vpvm:animation dummy="dummy" type="project">
-    <vpvm:keyframe dummy="dummy" index="1"/>
-    <vpvm:keyframe dummy="dummy" index="2"/>
+    <vpvm:keyframe dummy="dummy" index="1" gravity.factor="9.8" gravity.direction="0.1,0.2,0.3" shadow.mode="0" shadow.depth="0.24" shadow.distance="0.42"/>
+    <vpvm:keyframe dummy="dummy" index="2" gravity.factor="8.9" gravity.direction="0.3,0.1,0.2" shadow.mode="1" shadow.depth="0.42" shadow.distance="0.24"/>
    </vpvm:animation>
    <vpvm:animation dummy="dummy" type="unknown">
     <vpvm:keyframe dummy="dummy" index="1"/>

@@ -72,8 +72,8 @@ public:
     ILightKeyframe *findKeyframeAt(int index) const;
 
 private:
-    LightKeyframe *m_keyframePtr;
-    Array<IKeyframe *> m_allKeyframes;
+    class PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(LightSection)
 };

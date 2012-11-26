@@ -74,7 +74,7 @@ public:
     IBoneKeyframe *findKeyframeAt(int index) const;
 
 private:
-    void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection *keyframes);
+    void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection &keyframes);
 
     class PrivateContext;
     IModel *m_modelRef;

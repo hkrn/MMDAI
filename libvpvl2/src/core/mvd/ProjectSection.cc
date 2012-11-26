@@ -56,13 +56,30 @@ struct ProjectSectionHeader {
 
 #pragma pack(pop)
 
+class ProjectSection::PrivateContext : public BaseSectionContext {
+public:
+    PrivateContext()
+        : keyframePtr(0)
+    {
+    }
+    ~PrivateContext() {
+        delete keyframePtr;
+        keyframePtr = 0;
+    }
+    ProjectKeyframe *keyframePtr;
+};
+
 ProjectSection::ProjectSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+    : BaseSection(nameListSectionRef),
+      m_context(0)
 {
+    m_context = new ProjectSection::PrivateContext();
 }
 
 ProjectSection::~ProjectSection()
 {
+    delete m_context;
+    m_context = 0;
 }
 
 bool ProjectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -105,15 +122,17 @@ size_t ProjectSection::estimateSize() const
 
 size_t ProjectSection::countKeyframes() const
 {
-    return 0;
+    return m_context->keyframes.count();
 }
 
-void ProjectSection::addKeyframe(IKeyframe * /* keyframe */)
+void ProjectSection::addKeyframe(IKeyframe *keyframe)
 {
+    addKeyframe0(keyframe, m_context->keyframes);
 }
 
 void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)
 {
+    m_context->keyframes.remove(keyframe);
     delete keyframe;
     keyframe = 0;
 }
@@ -129,14 +148,27 @@ IKeyframe::LayerIndex ProjectSection::countLayers() const
     return 1;
 }
 
-IProjectKeyframe *ProjectSection::findKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
-                                               const IKeyframe::LayerIndex & /* layerIndex */) const
+IProjectKeyframe *ProjectSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                                               const IKeyframe::LayerIndex &layerIndex) const
 {
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    const int nkeyframes = keyframes.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        ProjectKeyframe *keyframe = reinterpret_cast<ProjectKeyframe *>(keyframes[i]);
+        if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
+            return keyframe;
+        }
+    }
     return 0;
 }
 
-IProjectKeyframe *ProjectSection::findKeyframeAt(int /* index */) const
+IProjectKeyframe *ProjectSection::findKeyframeAt(int index) const
 {
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    if (internal::checkBound(index, 0, keyframes.count())) {
+        ProjectKeyframe *keyframe = reinterpret_cast<ProjectKeyframe *>(keyframes[index]);
+        return keyframe;
+    }
     return 0;
 }
 

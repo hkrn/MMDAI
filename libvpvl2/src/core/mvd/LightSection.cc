@@ -56,10 +56,24 @@ struct LightSectionHeader {
 
 #pragma pack(pop)
 
+class LightSection::PrivateContext : public BaseSectionContext {
+public:
+    PrivateContext()
+        : keyframePtr(0)
+    {
+    }
+    ~PrivateContext() {
+        delete keyframePtr;
+        keyframePtr = 0;
+    }
+    LightKeyframe *keyframePtr;
+};
+
 LightSection::LightSection(NameListSection *nameListSectionRef)
     : BaseSection(nameListSectionRef),
-      m_keyframePtr(0)
+      m_context(0)
 {
+    m_context = new LightSection::PrivateContext();
 }
 
 LightSection::~LightSection()
@@ -89,9 +103,8 @@ bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 
 void LightSection::release()
 {
-    delete m_keyframePtr;
-    m_keyframePtr = 0;
-    m_allKeyframes.releaseAll();
+    delete m_context;
+    m_context = 0;
 }
 
 void LightSection::read(const uint8_t *data)
@@ -102,15 +115,15 @@ void LightSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + header.reserved2;
-    m_allKeyframes.reserve(nkeyframes);
+    m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = new LightKeyframe();
-        m_keyframePtr->read(ptr);
-        m_allKeyframes.add(m_keyframePtr);
-        btSetMax(m_maxTimeIndex, m_keyframePtr->timeIndex());
+        LightKeyframe *keyframe = m_context->keyframePtr = new LightKeyframe();
+        keyframe->read(ptr);
+        addKeyframe0(keyframe, m_context->keyframes);
         ptr += sizeOfKeyframe;
     }
-    m_allKeyframes.sort(KeyframeTimeIndexPredication());
+    m_context->keyframePtr = 0;
+    m_context->keyframes.sort(KeyframeTimeIndexPredication());
 }
 
 void LightSection::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -129,17 +142,17 @@ size_t LightSection::estimateSize() const
 
 size_t LightSection::countKeyframes() const
 {
-    return m_allKeyframes.count();
+    return m_context->keyframes.count();
 }
 
 void LightSection::addKeyframe(IKeyframe *keyframe)
 {
-    if (keyframe->type() == IKeyframe::kLight)
-        m_allKeyframes.add(keyframe);
+    addKeyframe0(keyframe, m_context->keyframes);
 }
 
 void LightSection::deleteKeyframe(IKeyframe *&keyframe)
 {
+    m_context->keyframes.remove(keyframe);
     delete keyframe;
     keyframe = 0;
 }
@@ -158,9 +171,9 @@ IKeyframe::LayerIndex LightSection::countLayers() const
 ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                            const IKeyframe::LayerIndex &layerIndex) const
 {
-    const int nkeyframes = m_allKeyframes.count();
+    const int nkeyframes = m_context->keyframes.count();
     for (int i = 0; i < nkeyframes; i++) {
-        mvd::LightKeyframe *keyframe = reinterpret_cast<mvd::LightKeyframe *>(m_allKeyframes.at(i));
+        LightKeyframe *keyframe = reinterpret_cast<LightKeyframe *>(m_context->keyframes[i]);
         if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
             return keyframe;
         }
@@ -170,8 +183,8 @@ ILightKeyframe *LightSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex
 
 ILightKeyframe *LightSection::findKeyframeAt(int index) const
 {
-    if (internal::checkBound(index, 0, m_allKeyframes.count())) {
-        mvd::LightKeyframe *keyframe = reinterpret_cast<mvd::LightKeyframe *>(m_allKeyframes.at(index));
+    if (internal::checkBound(index, 0, m_context->keyframes.count())) {
+        LightKeyframe *keyframe = reinterpret_cast<LightKeyframe *>(m_context->keyframes[index]);
         return keyframe;
     }
     return 0;

@@ -89,29 +89,26 @@ static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format,
 }
 
 
-static inline float StringToInt(const char *str)
+static inline float StringToInt(const std::string &value)
 {
-    assert(str);
     char *p = 0;
-    return strtoul(str, &p, 10);
+    return strtoul(value.c_str(), &p, 10);
 }
 
-static inline float StringToFloat(const char *str)
+static inline double StringToDouble(const std::string &value)
 {
-    assert(str);
     char *p = 0;
-#if defined(WIN32)
-    return float(strtod(str, &p));
-#else
-    return strtof(str, &p);
-#endif
+    return strtod(value.c_str(), &p);
 }
 
-static inline double StringToDouble(const char *str)
+static inline float StringToFloat(const std::string &value)
 {
-    assert(str);
-    char *p = 0;
-    return strtod(str, &p);
+    return float(StringToDouble(value));
+}
+
+static inline bool StringToBool(const std::string &value)
+{
+    return value == "true";
 }
 
 }
@@ -452,6 +449,12 @@ struct Project::PrivateContext {
                     return false;
                 if (!writeMVDLightKeyframes(writer, motion))
                     return false;
+                if (!writeMVDEffectKeyframes(writer, motion))
+                    return false;
+                if (!writeMVDProjectKeyframes(writer, motion))
+                    return false;
+                if (!writeMVDModelKeyframes(writer, motion))
+                    return false;
                 VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
             }
         }
@@ -720,6 +723,28 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
         return true;
     }
+    bool writeMVDEffectKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("effect")));
+        int nkeyframes = motion->countKeyframes(IKeyframe::kEffect);
+        for (int i = 0; i < nkeyframes; i++) {
+            const mvd::EffectKeyframe *keyframe = static_cast<const mvd::EffectKeyframe *>(motion->findEffectKeyframeAt(i));
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("visible"), VPVL2_CAST_XC(keyframe->isVisible() ? "true" : "false")));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("addblend"), VPVL2_CAST_XC(keyframe->isAddBlendEnabled() ? "true" : "false")));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("shadow"), VPVL2_CAST_XC(keyframe->isShadowEnabled() ? "true" : "false")));
+            StringPrintf(buffer, sizeof(buffer), "%.4f", keyframe->scaleFactor());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("scale"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.4f", keyframe->opacity());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("opacity"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
     bool writeMVDLightKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
@@ -741,6 +766,32 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
         return true;
     }
+    bool writeMVDModelKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("model")));
+        int nkeyframes = motion->countKeyframes(IKeyframe::kModel);
+        for (int i = 0; i < nkeyframes; i++) {
+            const mvd::ModelKeyframe *keyframe = static_cast<const mvd::ModelKeyframe *>(motion->findModelKeyframeAt(i));
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("visible"), VPVL2_CAST_XC(keyframe->isVisible() ? "true" : "false")));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("addblend"), VPVL2_CAST_XC(keyframe->isAddBlendEnabled() ? "true" : "false")));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("physics.enable"), VPVL2_CAST_XC(keyframe->isPhysicsEnabled() ? "true" : "false")));
+            StringPrintf(buffer, sizeof(buffer), "%d", keyframe->physicsStillMode());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("physics.mode"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.4f", keyframe->edgeWidth());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("edge.width"), VPVL2_CAST_XC(buffer)));
+            const Color &edgeColor = keyframe->edgeColor();
+            StringPrintf(buffer, sizeof(buffer), "%.4f,%.4f,%.4f,%.4f", edgeColor.x(), edgeColor.y(), edgeColor.z(), edgeColor.w());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("edge.color"), VPVL2_CAST_XC(buffer)));
+            // TODO: implement writing IK state
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
     bool writeMVDMorphKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
@@ -755,6 +806,32 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%.4f", keyframe->weight());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("weight"), VPVL2_CAST_XC(buffer)));
+            VPVL2_XML_RC(xmlTextWriterEndElement(writer));
+        }
+        VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
+        return true;
+    }
+    bool writeMVDProjectKeyframes(xmlTextWriterPtr writer, const mvd::Motion *motion) const {
+        uint8_t buffer[kElementContentBufferSize];
+        VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
+        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("project")));
+        int nkeyframes = motion->countKeyframes(IKeyframe::kProject);
+        for (int i = 0; i < nkeyframes; i++) {
+            const mvd::ProjectKeyframe *keyframe = static_cast<const mvd::ProjectKeyframe *>(motion->findProjectKeyframeAt(i));
+            VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
+            StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->gravityFactor());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("gravity.factor"), VPVL2_CAST_XC(buffer)));
+            const Vector3 &direction = keyframe->gravityDirection();
+            StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", direction.x(), direction.y(), direction.z());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("gravity.direction"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%d", keyframe->shadowMode());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("shadow.mode"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->shadowDepth());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("shadow.depth"), VPVL2_CAST_XC(buffer)));
+            StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->shadowDistance());
+            VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("shadow.distance"), VPVL2_CAST_XC(buffer)));
             VPVL2_XML_RC(xmlTextWriterEndElement(writer));
         }
         VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* animation */
@@ -1163,7 +1240,7 @@ struct Project::PrivateContext {
                     keyframe->setName(currentString);
                 }
                 else if (key == "index") {
-                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                    keyframe->setTimeIndex(StringToFloat(value));
                 }
                 else if (key == "position") {
                     splitString(value, tokens);
@@ -1212,10 +1289,10 @@ struct Project::PrivateContext {
             for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
                 readAttributeString(attributes, index, key, value);
                 if (key == "fovy") {
-                    keyframe->setFov(StringToFloat(value.c_str()));
+                    keyframe->setFov(StringToFloat(value));
                 }
                 else if (key == "index") {
-                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                    keyframe->setTimeIndex(StringToFloat(value));
                 }
                 else if (key == "angle") {
                     splitString(value, tokens);
@@ -1240,7 +1317,7 @@ struct Project::PrivateContext {
                     }
                 }
                 else if (key == "distance") {
-                    keyframe->setDistance(StringToFloat(value.c_str()));
+                    keyframe->setDistance(StringToFloat(value));
                 }
                 else if (key == "interpolation") {
                     splitString(value, tokens);
@@ -1264,7 +1341,7 @@ struct Project::PrivateContext {
             for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
                 readAttributeString(attributes, index, key, value);
                 if (key == "index") {
-                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                    keyframe->setTimeIndex(StringToFloat(value));
                 }
                 else if (key == "color") {
                     splitString(value, tokens);
@@ -1292,10 +1369,10 @@ struct Project::PrivateContext {
                     keyframe->setName(currentString);
                 }
                 else if (key == "index") {
-                    keyframe->setTimeIndex(StringToFloat(value.c_str()));
+                    keyframe->setTimeIndex(StringToFloat(value));
                 }
                 else if (key == "weight") {
-                    keyframe->setWeight(StringToFloat(value.c_str()));
+                    keyframe->setWeight(StringToFloat(value));
                 }
             }
             currentMotion->addKeyframe(keyframe);
@@ -1328,10 +1405,10 @@ struct Project::PrivateContext {
                     keyframe->setName(currentString);
                 }
                 else if (key == "index") {
-                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                    keyframe->setTimeIndex(StringToDouble(value));
                 }
                 else if (key == "layer") {
-                    keyframe->setLayerIndex(StringToInt(value.c_str()));
+                    keyframe->setLayerIndex(StringToInt(value));
                 }
                 else if (key == "position") {
                     splitString(value, tokens);
@@ -1379,13 +1456,13 @@ struct Project::PrivateContext {
             for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
                 readAttributeString(attributes, index, key, value);
                 if (key == "fovy") {
-                    keyframe->setFov(StringToFloat(value.c_str()));
+                    keyframe->setFov(StringToFloat(value));
                 }
                 else if (key == "index") {
-                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                    keyframe->setTimeIndex(StringToDouble(value));
                 }
                 else if (key == "layer") {
-                    keyframe->setLayerIndex(StringToInt(value.c_str()));
+                    keyframe->setLayerIndex(StringToInt(value));
                 }
                 else if (key == "angle") {
                     splitString(value, tokens);
@@ -1410,7 +1487,7 @@ struct Project::PrivateContext {
                     }
                 }
                 else if (key == "distance") {
-                    keyframe->setDistance(StringToFloat(value.c_str()));
+                    keyframe->setDistance(StringToFloat(value));
                 }
                 else if (key == "interpolation") {
                     splitString(value, tokens);
@@ -1426,12 +1503,33 @@ struct Project::PrivateContext {
         }
     }
     void readMVDEffectKeyframe(const xmlChar **attributes, int nattributes) {
-        // FIXME: add createEffectKeyframe
-        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        IEffectKeyframe *keyframe = factoryRef->createEffectKeyframe(currentMotion);
         if (keyframe) {
             std::string key, value;
             for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
                 readAttributeString(attributes, index, key, value);
+                if (key == "index") {
+                    keyframe->setTimeIndex(StringToDouble(value));
+                }
+                else if (key == "visible") {
+                    keyframe->setVisible(StringToBool(value));
+                }
+                else if (key == "addblend") {
+                    keyframe->setAddBlendEnable(StringToBool(value));
+                }
+                else if (key == "shadow") {
+                    keyframe->setShadowEnable(StringToBool(value));
+                }
+                else if (key == "scale") {
+                    keyframe->setScaleFactor(StringToFloat(value));
+                }
+                else if (key == "opacity") {
+                    keyframe->setOpacity(StringToFloat(value));
+                }
+                else if (key == "model") {
+                }
+                else if (key == "bone") {
+                }
             }
             currentMotion->addKeyframe(keyframe);
         }
@@ -1445,7 +1543,7 @@ struct Project::PrivateContext {
             for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
                 readAttributeString(attributes, index, key, value);
                 if (key == "index") {
-                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                    keyframe->setTimeIndex(StringToDouble(value));
                 }
                 else if (key == "color") {
                     splitString(value, tokens);
@@ -1462,12 +1560,39 @@ struct Project::PrivateContext {
         }
     }
     void readMVDModelKeyframe(const xmlChar **attributes, int nattributes) {
-        // FIXME: add createModelKeyframe
-        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        IModelKeyframe *keyframe = factoryRef->createModelKeyframe(currentMotion);
         if (keyframe) {
+            Array<std::string> tokens;
+            Vector4 vec4(kZeroV4);
             std::string key, value;
             for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
                 readAttributeString(attributes, index, key, value);
+                if (key == "index") {
+                    keyframe->setTimeIndex(StringToDouble(value));
+                }
+                else if (key == "visible") {
+                    keyframe->setVisible(StringToBool(value));
+                }
+                else if (key == "addblend") {
+                    keyframe->setAddBlendEnable(StringToBool(value));
+                }
+                else if (key == "shadow") {
+                    keyframe->setShadowEnable(StringToBool(value));
+                }
+                else if (key == "physics.enable") {
+                    keyframe->setPhysicsEnable(StringToBool(value));
+                }
+                else if (key == "physics.mode") {
+                    keyframe->setPhysicsStillMode(StringToInt(value));
+                }
+                else if (key == "edge.width") {
+                    keyframe->setEdgeWidth(StringToFloat(value));
+                }
+                else if (key == "edge.color") {
+                    splitString(value, tokens);
+                    if (createVector4(tokens, vec4))
+                        keyframe->setEdgeColor(vec4);
+                }
             }
             currentMotion->addKeyframe(keyframe);
         }
@@ -1484,22 +1609,43 @@ struct Project::PrivateContext {
                     keyframe->setName(currentString);
                 }
                 else if (key == "index") {
-                    keyframe->setTimeIndex(StringToDouble(value.c_str()));
+                    keyframe->setTimeIndex(StringToDouble(value));
                 }
                 else if (key == "weight") {
-                    keyframe->setWeight(StringToFloat(value.c_str()));
+                    keyframe->setWeight(StringToFloat(value));
                 }
             }
             currentMotion->addKeyframe(keyframe);
         }
     }
     void readMVDProjectKeyframe(const xmlChar **attributes, int nattributes) {
-        // FIXME: add createModelKeyframe
-        IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion);
+        IProjectKeyframe *keyframe = factoryRef->createProjectKeyframe(currentMotion);
         if (keyframe) {
+            Array<std::string> tokens;
+            Vector3 vec3(kZeroV3);
             std::string key, value;
             for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
                 readAttributeString(attributes, index, key, value);
+                if (key == "index") {
+                    keyframe->setTimeIndex(StringToDouble(value));
+                }
+                else if (key == "gravity.factor") {
+                    keyframe->setGravityFactor(StringToFloat(value));
+                }
+                else if (key == "gravity.direction") {
+                    splitString(value, tokens);
+                    if (createVector3(tokens, vec3))
+                        keyframe->setGravityDirection(vec3);
+                }
+                else if (key == "shadow.mode") {
+                    keyframe->setShadowMode(StringToInt(value));
+                }
+                else if (key == "shadow.depth") {
+                    keyframe->setShadowDepth(StringToFloat(value));
+                }
+                else if (key == "shadow.distance") {
+                    keyframe->setShadowDistance(StringToFloat(value));
+                }
             }
             currentMotion->addKeyframe(keyframe);
         }
@@ -1553,9 +1699,9 @@ struct Project::PrivateContext {
                     delete it->second;
                 }
                 if (!parentModel.empty()) {
-                    ModelMap::const_iterator it = models.find(parentModel);
-                    if (it != models.end()) {
-                        currentMotion->setParentModel(it->second);
+                    ModelMap::const_iterator it2 = models.find(parentModel);
+                    if (it2 != models.end()) {
+                        currentMotion->setParentModel(it2->second);
                     }
                 }
                 motions.insert(std::make_pair(uuid, currentMotion));

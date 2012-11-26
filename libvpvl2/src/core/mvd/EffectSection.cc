@@ -62,13 +62,30 @@ struct EffectParameter {
 
 #pragma pack(pop)
 
+class EffectSection::PrivateContext : public BaseSectionContext {
+public:
+    PrivateContext()
+        : keyframePtr(0)
+    {
+    }
+    ~PrivateContext() {
+        delete keyframePtr;
+        keyframePtr = 0;
+    }
+    EffectKeyframe *keyframePtr;
+};
+
 EffectSection::EffectSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+    : BaseSection(nameListSectionRef),
+      m_context(0)
 {
+    m_context = new EffectSection::PrivateContext();
 }
 
 EffectSection::~EffectSection()
 {
+    delete m_context;
+    m_context = 0;
 }
 
 bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -116,15 +133,17 @@ size_t EffectSection::estimateSize() const
 
 size_t EffectSection::countKeyframes() const
 {
-    return 0;
+    return m_context->keyframes.count();
 }
 
-void EffectSection::addKeyframe(IKeyframe * /* keyframe */)
+void EffectSection::addKeyframe(IKeyframe *keyframe)
 {
+    addKeyframe0(keyframe, m_context->keyframes);
 }
 
 void EffectSection::deleteKeyframe(IKeyframe *&keyframe)
 {
+    m_context->keyframes.remove(keyframe);
     delete keyframe;
     keyframe = 0;
 }
@@ -135,20 +154,33 @@ void EffectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 {
 }
 
-int EffectSection::countLayers(const IString *name) const
+int EffectSection::countLayers(const IString * /* name */) const
 {
-    return 0;
+    return 1;
 }
 
-IEffectKeyframe *EffectSection::findKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+IEffectKeyframe *EffectSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                              const IString * /* name */,
-                                             const IKeyframe::LayerIndex & /* layerIndex */) const
+                                             const IKeyframe::LayerIndex &layerIndex) const
 {
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    const int nkeyframes = keyframes.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        EffectKeyframe *keyframe = reinterpret_cast<EffectKeyframe *>(keyframes[i]);
+        if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
+            return keyframe;
+        }
+    }
     return 0;
 }
 
-IEffectKeyframe *EffectSection::findKeyframeAt(int /* index */) const
+IEffectKeyframe *EffectSection::findKeyframeAt(int index) const
 {
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    if (internal::checkBound(index, 0, keyframes.count())) {
+        EffectKeyframe *keyframe = reinterpret_cast<EffectKeyframe *>(keyframes[index]);
+        return keyframe;
+    }
     return 0;
 }
 

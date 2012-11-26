@@ -73,7 +73,6 @@ public:
           fov(0),
           countOfLayers(1)
     {
-        keyframes = new KeyframeCollection();
     }
     ~PrivateContext() {
         delete keyframePtr;
@@ -88,8 +87,8 @@ public:
         int fromIndex, toIndex;
         IKeyframe::TimeIndex currentTimeIndex;
         findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
-        const CameraKeyframe *keyframeFrom = reinterpret_cast<const CameraKeyframe *>(keyframes->at(fromIndex)),
-                *keyframeTo = reinterpret_cast<const CameraKeyframe *>(keyframes->at(toIndex));
+        const CameraKeyframe *keyframeFrom = reinterpret_cast<const CameraKeyframe *>(keyframes[fromIndex]),
+                *keyframeTo = reinterpret_cast<const CameraKeyframe *>(keyframes[toIndex]);
         const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
         const Scalar &distanceFrom = keyframeFrom->distance(), fovyFrom = keyframeFrom->fov();
         const Vector3 &positionFrom = keyframeFrom->lookAt(), angleFrom = keyframeFrom->angle();
@@ -158,9 +157,9 @@ public:
 
 CameraSection::CameraSection(NameListSection *nameListSectionRef)
     : BaseSection(nameListSectionRef),
-      m_contextPtr(0)
+      m_context(0)
 {
-    m_contextPtr = new PrivateContext();
+    m_context = new PrivateContext();
 }
 
 CameraSection::~CameraSection()
@@ -190,8 +189,8 @@ bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
 
 void CameraSection::release()
 {
-    delete m_contextPtr;
-    m_contextPtr = 0;
+    delete m_context;
+    m_context = 0;
 }
 
 void CameraSection::read(const uint8_t *data)
@@ -202,29 +201,29 @@ void CameraSection::read(const uint8_t *data)
     const size_t sizeOfkeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
-    m_contextPtr->keyframes->reserve(nkeyframes);
-    m_contextPtr->countOfLayers = header.countOfLayers;
+    m_context->keyframes.reserve(nkeyframes);
+    m_context->countOfLayers = header.countOfLayers;
     for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_contextPtr->keyframePtr = new CameraKeyframe();
+        IKeyframe *keyframe = m_context->keyframePtr = new CameraKeyframe();
         keyframe->read(ptr);
-        addKeyframe0(keyframe, m_contextPtr->keyframes);
+        addKeyframe0(keyframe, m_context->keyframes);
         ptr += sizeOfkeyframe;
     }
-    m_contextPtr->keyframes->sort(KeyframeTimeIndexPredication());
-    m_contextPtr->keyframePtr = 0;
+    m_context->keyframes.sort(KeyframeTimeIndexPredication());
+    m_context->keyframePtr = 0;
 }
 
 void CameraSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    m_contextPtr->seek(timeIndex);
+    m_context->seek(timeIndex);
     saveCurrentTimeIndex(timeIndex);
 }
 
 void CameraSection::write(uint8_t *data) const
 {
-    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-    const int nkeyframes = keyframes->count();
-    const int nlayers = m_contextPtr->countOfLayers;
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    const int nkeyframes = keyframes.count();
+    const int nlayers = m_context->countOfLayers;
     Motion::SectionTag tag;
     tag.type = Motion::kCameraSection;
     tag.minor = 0;
@@ -239,7 +238,7 @@ void CameraSection::write(uint8_t *data) const
         internal::writeSignedIndex(0, sizeof(uint8_t), data);
     }
     for (int i = 0; i < nkeyframes; i++) {
-        const IKeyframe *keyframe = keyframes->at(i);
+        const IKeyframe *keyframe = keyframes[i];
         keyframe->write(data);
         data += keyframe->estimateSize();
     }
@@ -250,11 +249,11 @@ size_t CameraSection::estimateSize() const
     size_t size = 0;
     size += sizeof(Motion::SectionTag);
     size += sizeof(CameraSectionHeader);
-    size += sizeof(uint8_t) * m_contextPtr->countOfLayers;
-    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-    const int nkeyframes = keyframes->count();
+    size += sizeof(uint8_t) * m_context->countOfLayers;
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    const int nkeyframes = keyframes.count();
     for (int i = 0; i < nkeyframes; i++) {
-        const IKeyframe *keyframe = keyframes->at(i);
+        const IKeyframe *keyframe = keyframes[i];
         size += keyframe->estimateSize();
     }
     return size;
@@ -262,17 +261,17 @@ size_t CameraSection::estimateSize() const
 
 size_t CameraSection::countKeyframes() const
 {
-    return m_contextPtr->keyframes->count();
+    return m_context->keyframes.count();
 }
 
 void CameraSection::addKeyframe(IKeyframe *keyframe)
 {
-    addKeyframe0(keyframe, m_contextPtr->keyframes);
+    addKeyframe0(keyframe, m_context->keyframes);
 }
 
 void CameraSection::deleteKeyframe(IKeyframe *&keyframe)
 {
-    m_contextPtr->keyframes->remove(keyframe);
+    m_context->keyframes.remove(keyframe);
     delete keyframe;
     keyframe = 0;
 }
@@ -285,16 +284,16 @@ void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 
 IKeyframe::LayerIndex CameraSection::countLayers() const
 {
-    return m_contextPtr->countOfLayers;
+    return m_context->countOfLayers;
 }
 
 ICameraKeyframe *CameraSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                              const IKeyframe::LayerIndex &layerIndex) const
 {
-    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-    const int nkeyframes = keyframes->count();
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    const int nkeyframes = keyframes.count();
     for (int i = 0; i < nkeyframes; i++) {
-        mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(i));
+        CameraKeyframe *keyframe = reinterpret_cast<CameraKeyframe *>(keyframes[i]);
         if (keyframe->timeIndex() == timeIndex && keyframe->layerIndex() == layerIndex) {
             return keyframe;
         }
@@ -304,9 +303,9 @@ ICameraKeyframe *CameraSection::findKeyframe(const IKeyframe::TimeIndex &timeInd
 
 ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
 {
-    const PrivateContext::KeyframeCollection *keyframes = m_contextPtr->keyframes;
-    if (internal::checkBound(index, 0, keyframes->count())) {
-        mvd::CameraKeyframe *keyframe = reinterpret_cast<mvd::CameraKeyframe *>(keyframes->at(index));
+    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
+    if (internal::checkBound(index, 0, keyframes.count())) {
+        CameraKeyframe *keyframe = reinterpret_cast<CameraKeyframe *>(keyframes[index]);
         return keyframe;
     }
     return 0;
@@ -314,22 +313,22 @@ ICameraKeyframe *CameraSection::findKeyframeAt(int index) const
 
 Vector3 CameraSection::position() const
 {
-    return m_contextPtr->position;
+    return m_context->position;
 }
 
 Vector3 CameraSection::angle() const
 {
-    return m_contextPtr->angle;
+    return m_context->angle;
 }
 
 Scalar CameraSection::fov() const
 {
-    return m_contextPtr->fov;
+    return m_context->fov;
 }
 
 Scalar CameraSection::distance() const
 {
-    return m_contextPtr->distance;
+    return m_context->distance;
 }
 
 } /* namespace mvd */
