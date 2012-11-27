@@ -62,7 +62,8 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     IModelKeyframe *clone() const;
-    void setIKBones(const Array<IBone *> &bones);
+    void mergeIKState(const Hash<btHashInt, vpvl2::IBone *> &bones) const;
+    void setIKState(const Hash<btHashInt, vpvl2::IBone *> &bones);
 
     bool isVisible() const;
     bool isShadowEnabled() const;

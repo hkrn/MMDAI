@@ -171,13 +171,23 @@ IModelKeyframe *ModelKeyframe::clone() const
     return keyframe;
 }
 
-void ModelKeyframe::setIKBones(const Array<IBone *> &bones)
+void ModelKeyframe::mergeIKState(const Hash<btHashInt, IBone *> &bones) const
+{
+    const int nbones = m_bonesOfIK.count();
+    for (int i = 0; i < nbones; i++) {
+        if (IBone *const *bone = bones.find(i)) {
+            (*bone)->setInverseKinematicsEnable(m_bonesOfIK[i]);
+        }
+    }
+}
+
+void ModelKeyframe::setIKState(const Hash<btHashInt, IBone *> &bones)
 {
     const int nbones = bones.count();
     m_bonesOfIK.resize(nbones);
     for (int i = 0; i < nbones; i++) {
-        const IBone *bone = bones[i];
-        m_bonesOfIK[i] = bone->isInverseKinematicsEnabled();
+        const IBone *const *bone = bones.value(i);
+        m_bonesOfIK[i] = (*bone)->isInverseKinematicsEnabled();
     }
     m_countOfIKBones = m_bonesOfIK.count();
 }

@@ -60,9 +60,10 @@ struct ModelSectionHeader {
 
 class ModelSection::PrivateContext : public BaseSectionContext {
 public:
-    PrivateContext(IModel *m, size_t a)
+    PrivateContext(IModel *m, NameListSection *n, size_t a)
         : BaseSectionContext(),
           modelRef(m),
+          nameListSectionRef(n),
           keyframePtr(0),
           adjustAlignment(a),
           sizeOfIKBones(0)
@@ -72,12 +73,69 @@ public:
         delete keyframePtr;
         keyframePtr = 0;
         modelRef = 0;
+        nameListSectionRef = 0;
         adjustAlignment = 0;
         sizeOfIKBones = 0;
     }
+
+    void seek(const IKeyframe::TimeIndex &timeIndex) {
+        if (keyframes.count() > 0) {
+            int fromIndex, toIndex;
+            IKeyframe::TimeIndex currentTimeIndex;
+            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            const ModelKeyframe *keyframeFrom = reinterpret_cast<const ModelKeyframe *>(keyframes[fromIndex]),
+                    *keyframeTo = reinterpret_cast<const ModelKeyframe *>(keyframes[toIndex]), *keyframe = 0;
+            const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
+            const Color &edgeColorFrom = keyframeFrom->edgeColor(), &edgeColorTo = keyframeTo->edgeColor();
+            const Scalar &edgeWidthFrom = keyframeFrom->edgeWidth(), &edgeWidthTo = keyframeTo->edgeWidth();
+            if (timeIndexFrom != timeIndexTo && timeIndexFrom < currentTimeIndex) {
+                if (timeIndexTo <= currentTimeIndex) {
+                    modelRef->setEdgeColor(edgeColorTo);
+                    modelRef->setEdgeWidth(edgeWidthTo);
+                    keyframe = keyframeTo;
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    modelRef->setEdgeColor(edgeColorFrom.lerp(edgeColorFrom, Scalar(w)));
+                    modelRef->setEdgeWidth(internal::lerp(edgeWidthFrom, edgeWidthTo, w));
+                    keyframe = keyframeFrom;
+                }
+            }
+            else {
+                modelRef->setEdgeColor(edgeColorFrom);
+                modelRef->setEdgeWidth(edgeWidthFrom);
+                keyframe = keyframeFrom;
+            }
+            modelRef->setVisible(keyframe->isVisible());
+            Hash<btHashInt, IBone *> bones;
+            const int nbones = boneIDs.count();
+            for (int i = 0; i < nbones; i++) {
+                const IString *name = nameListSectionRef->value(boneIDs[i]);
+                if (IBone *bone = modelRef->findBone(name)) {
+                    bones.insert(i, bone);
+                }
+            }
+            keyframe->mergeIKState(bones);
+        }
+    }
+    void getIKBones(Hash<btHashInt, IBone *> &bonesOfIK) const {
+        if (modelRef) {
+            Array<IBone *> allBones;
+            modelRef->getBoneRefs(allBones);
+            const int nbones = allBones.count();
+            for (int i = 0; i < nbones; i++) {
+                IBone *bone = allBones[i];
+                if (bone->hasInverseKinematics()) {
+                    bonesOfIK.insert(bone->index(), bone);
+                }
+            }
+        }
+    }
+
     IModel *modelRef;
+    NameListSection *nameListSectionRef;
     ModelKeyframe *keyframePtr;
-    Array<IBone *> bones;
+    Array<int> boneIDs;
     size_t adjustAlignment;
     int sizeOfIKBones;
 };
@@ -86,7 +144,7 @@ ModelSection::ModelSection(IModel *model, NameListSection *nameListSectionRef, s
     : BaseSection(nameListSectionRef),
       m_context(0)
 {
-    m_context = new PrivateContext(model, align);
+    m_context = new PrivateContext(model, nameListSectionRef, align);
 }
 
 ModelSection::~ModelSection()
@@ -134,15 +192,11 @@ void ModelSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe + m_context->adjustAlignment;
     const int nkeyframes = header.countOfKeyframes;
     const int nBonesOfIK = header.countOfIKBones;
-    m_context->bones.reserve(nBonesOfIK);
+    m_context->boneIDs.reserve(nBonesOfIK);
     ptr += sizeof(header);
     for (int i = 0; i < nBonesOfIK; i++) {
         int key = *reinterpret_cast<int *>(ptr);
-        const IString *s = m_nameListSectionRef->value(key);
-        if (m_context->modelRef && s) {
-            IBone *bone = m_context->modelRef->findBone(s);
-            m_context->bones.add(bone);
-        }
+        m_context->boneIDs.add(key);
         ptr += sizeof(int);
     }
     ptr += header.sizeOfIKBones - sizeof(int) * (nBonesOfIK + 1);
@@ -161,34 +215,19 @@ void ModelSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void ModelSection::setParentModel(const IModel *parentModelRef)
+void ModelSection::setParentModel(IModel *parentModelRef)
 {
-    Array<IBone *> allBones, bonesOfIK;
-    if (parentModelRef)
-        parentModelRef->getBoneRefs(allBones);
-    const int nbones = allBones.count();
-    for (int i = 0; i < nbones; i++) {
-        IBone *bone = allBones[i];
-        if (bone->hasInverseKinematics()) {
-            bonesOfIK.add(bone);
-        }
-    }
-    const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
-    const int nkeyframes = keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        ModelKeyframe *keyframe = reinterpret_cast<ModelKeyframe *>(keyframes[i]);
-        keyframe->setIKBones(bonesOfIK);
-    }
-    m_context->bones.copy(bonesOfIK);
+    m_context->modelRef = parentModelRef;
 }
 
 void ModelSection::write(uint8_t *data) const
 {
     const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
-    const Array<IBone *> &bones = m_context->bones;
     const int nkeyframes = keyframes.count();
-    const int nbones = bones.count();
     Motion::SectionTag tag;
+    Hash<btHashInt, IBone *> bones;
+    m_context->getIKBones(bones);
+    const int nbones = bones.count();
     tag.type = Motion::kModelSection;
     tag.minor = 1;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
@@ -200,12 +239,13 @@ void ModelSection::write(uint8_t *data) const
     header.sizeOfKeyframe = ModelKeyframe::size() + sizeof(uint8_t) * nbones - m_context->adjustAlignment;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
     for (int i = 0; i < nbones; i++) {
-        const IBone *bone = bones[i];
-        int key = m_nameListSectionRef->key(bone->name());
+        const IBone *const *bone = bones.value(i);
+        int key = m_nameListSectionRef->key((*bone)->name());
         internal::writeSignedIndex(key, sizeof(key), data);
     }
     for (int i = 0; i < nkeyframes; i++) {
-        const IKeyframe *keyframe = keyframes[i];
+        ModelKeyframe *keyframe = reinterpret_cast<ModelKeyframe *>(keyframes[i]);
+        keyframe->setIKState(bones);
         keyframe->write(data);
         data += keyframe->estimateSize();
     }
@@ -216,7 +256,9 @@ size_t ModelSection::estimateSize() const
     size_t size = 0;
     size += sizeof(Motion::SectionTag);
     size += sizeof(ModelSectionHeader);
-    size += m_context->bones.count() * sizeof(int);
+    Hash<btHashInt, IBone *> bones;
+    m_context->getIKBones(bones);
+    size += bones.count() * sizeof(int);
     const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
     const int nkeyframes = keyframes.count();
     for (int i = 0; i < nkeyframes; i++) {
