@@ -61,10 +61,10 @@ struct BoneKeyframeChunk {
 
 #pragma pack(pop)
 
-BoneKeyframe::BoneKeyframe(NameListSection *nameListSectionRef)
+BoneKeyframe::BoneKeyframe(const Motion *motionRef)
     : BaseKeyframe(),
       m_ptr(0),
-      m_nameListSectionRef(nameListSectionRef),
+      m_motionRef(motionRef),
       m_position(kZeroV3),
       m_rotation(Quaternion::getIdentity())
 {
@@ -72,8 +72,9 @@ BoneKeyframe::BoneKeyframe(NameListSection *nameListSectionRef)
 
 BoneKeyframe::~BoneKeyframe()
 {
+    delete m_ptr;
     m_ptr = 0;
-    m_nameListSectionRef = 0;
+    m_motionRef = 0;
     m_position.setZero();
     m_rotation.setValue(0, 0, 0, 1);
 }
@@ -135,7 +136,7 @@ size_t BoneKeyframe::estimateSize() const
 
 IBoneKeyframe *BoneKeyframe::clone() const
 {
-    BoneKeyframe *keyframe = m_ptr = new BoneKeyframe(m_nameListSectionRef);
+    BoneKeyframe *keyframe = m_ptr = new BoneKeyframe(m_motionRef);
     keyframe->setName(m_namePtr);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
@@ -220,12 +221,17 @@ void BoneKeyframe::setLocalRotation(const Quaternion &value)
 void BoneKeyframe::setName(const IString *value)
 {
     internal::setString(value, m_namePtr);
-    m_nameListSectionRef->addName(value);
+    m_motionRef->nameListSection()->addName(value);
 }
 
 IKeyframe::Type BoneKeyframe::type() const
 {
     return kBone;
+}
+
+const Motion *BoneKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
 }
 
 const Motion::InterpolationTable &BoneKeyframe::tableForX() const

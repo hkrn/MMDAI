@@ -55,7 +55,7 @@ public:
         kWeight
     };
 
-    MorphKeyframe(NameListSection *nameListSectionRef);
+    MorphKeyframe(const Motion *motionRef);
     ~MorphKeyframe();
 
     static size_t size();
@@ -74,11 +74,12 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    const Motion *parentMotionRef() const;
     const Motion::InterpolationTable &tableForWeight() const;
 
 private:
     mutable MorphKeyframe *m_ptr;
-    NameListSection *m_nameListSectionRef;
+    const Motion *m_motionRef;
     IMorph::WeightPrecision m_weight;
     Motion::InterpolationTable m_interpolationWeight;
 

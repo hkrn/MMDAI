@@ -109,7 +109,7 @@ struct Factory::PrivateContext
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBone);
         QuadWord value;
         for (int i = 0; i < nBoneKeyframes; i++) {
-            mvd::BoneKeyframe *keyframeTo = mvdBoneKeyframe = new mvd::BoneKeyframe(nameList);
+            mvd::BoneKeyframe *keyframeTo = mvdBoneKeyframe = new mvd::BoneKeyframe(motion);
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
@@ -128,7 +128,7 @@ struct Factory::PrivateContext
         }
         const int nCameraKeyframes = source->countKeyframes(IKeyframe::kCamera);
         for (int i = 0; i < nCameraKeyframes; i++) {
-            mvd::CameraKeyframe *keyframeTo = mvdCameraKeyframe = new mvd::CameraKeyframe();
+            mvd::CameraKeyframe *keyframeTo = mvdCameraKeyframe = new mvd::CameraKeyframe(motion);
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setLookAt(keyframeFrom->lookAt());
@@ -149,7 +149,7 @@ struct Factory::PrivateContext
         }
         const int nLightKeyframes = source->countKeyframes(IKeyframe::kLight);
         for (int i = 0; i < nLightKeyframes; i++) {
-            mvd::LightKeyframe *keyframeTo = mvdLightKeyframe = new mvd::LightKeyframe();
+            mvd::LightKeyframe *keyframeTo = mvdLightKeyframe = new mvd::LightKeyframe(motion);
             const ILightKeyframe *keyframeFrom = source->findLightKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setColor(keyframeFrom->color());
@@ -159,7 +159,7 @@ struct Factory::PrivateContext
         }
         const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorph);
         for (int i = 0; i < nMorphKeyframes; i++) {
-            mvd::MorphKeyframe *keyframeTo = mvdMorphKeyframe = new mvd::MorphKeyframe(nameList);
+            mvd::MorphKeyframe *keyframeTo = mvdMorphKeyframe = new mvd::MorphKeyframe(motion);
             const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
@@ -349,7 +349,7 @@ IBoneKeyframe *Factory::createBoneKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
-            return new mvd::BoneKeyframe(static_cast<const mvd::Motion *>(motion)->nameListSection());
+            return new mvd::BoneKeyframe(static_cast<const mvd::Motion *>(motion));
         case IMotion::kVMD:
             return new vmd::BoneKeyframe(m_context->encoding);
         default:
@@ -364,7 +364,7 @@ ICameraKeyframe *Factory::createCameraKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
-            return new mvd::CameraKeyframe();
+            return new mvd::CameraKeyframe(static_cast<const mvd::Motion *>(motion));
         case IMotion::kVMD:
             return new vmd::CameraKeyframe();
         default:
@@ -379,7 +379,7 @@ IEffectKeyframe *Factory::createEffectKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
-            return new mvd::EffectKeyframe(m_context->encoding);
+            return new mvd::EffectKeyframe(static_cast<const mvd::Motion *>(motion));
         default:
             break;
         }
@@ -392,7 +392,7 @@ ILightKeyframe *Factory::createLightKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
-            return new mvd::LightKeyframe();
+            return new mvd::LightKeyframe(static_cast<const mvd::Motion *>(motion));
         case IMotion::kVMD:
             return new vmd::LightKeyframe();
         default:
@@ -407,7 +407,7 @@ IModelKeyframe *Factory::createModelKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
-            return new mvd::ModelKeyframe(static_cast<const mvd::Motion *>(motion)->nameListSection(), 0);
+            return new mvd::ModelKeyframe(static_cast<const mvd::Motion *>(motion), 0);
         default:
             break;
         }
@@ -420,7 +420,7 @@ IMorphKeyframe *Factory::createMorphKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
-            return new mvd::MorphKeyframe(static_cast<const mvd::Motion *>(motion)->nameListSection());
+            return new mvd::MorphKeyframe(static_cast<const mvd::Motion *>(motion));
         case IMotion::kVMD:
             return new vmd::MorphKeyframe(m_context->encoding);
         default:
@@ -435,7 +435,7 @@ IProjectKeyframe *Factory::createProjectKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
-            return new mvd::ProjectKeyframe(m_context->encoding);
+            return new mvd::ProjectKeyframe(static_cast<const mvd::Motion *>(motion));
         default:
             break;
         }

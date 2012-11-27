@@ -61,10 +61,10 @@ struct EffectKeyframeChunk {
 
 #pragma pack(pop)
 
-EffectKeyframe::EffectKeyframe(IEncoding *encoding)
+EffectKeyframe::EffectKeyframe(const Motion *motionRef)
     : BaseKeyframe(),
       m_ptr(0),
-      m_encoding(encoding),
+      m_motionRef(motionRef),
       m_parentModelRef(0),
       m_parentBoneRef(0),
       m_scaleFactor(0),
@@ -79,7 +79,7 @@ EffectKeyframe::~EffectKeyframe()
 {
     delete m_ptr;
     m_ptr = 0;
-    m_encoding = 0;
+    m_motionRef = 0;
     m_parentModelRef = 0;
     m_parentBoneRef = 0;
     m_scaleFactor = 0;
@@ -121,7 +121,7 @@ size_t EffectKeyframe::estimateSize() const
 
 IEffectKeyframe *EffectKeyframe::clone() const
 {
-    EffectKeyframe *keyframe = m_ptr = new EffectKeyframe(m_encoding);
+    EffectKeyframe *keyframe = m_ptr = new EffectKeyframe(m_motionRef);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setVisible(m_visible);
@@ -142,6 +142,11 @@ void EffectKeyframe::setName(const IString * /* value */)
 IKeyframe::Type EffectKeyframe::type() const
 {
     return kEffect;
+}
+
+const Motion *EffectKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
 }
 
 bool EffectKeyframe::isVisible() const

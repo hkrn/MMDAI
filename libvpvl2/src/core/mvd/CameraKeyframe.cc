@@ -63,9 +63,10 @@ struct CameraKeyframeChunk {
 
 #pragma pack(pop)
 
-CameraKeyframe::CameraKeyframe()
+CameraKeyframe::CameraKeyframe(const Motion *motionRef)
     : BaseKeyframe(),
       m_ptr(0),
+      m_motionRef(motionRef),
       m_position(kZeroV3),
       m_angle(kZeroV3),
       m_distance(0),
@@ -163,7 +164,7 @@ size_t CameraKeyframe::estimateSize() const
 
 ICameraKeyframe *CameraKeyframe::clone() const
 {
-    CameraKeyframe *keyframe = m_ptr = new CameraKeyframe();
+    CameraKeyframe *keyframe = m_ptr = new CameraKeyframe(m_motionRef);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setDistance(m_distance);
@@ -288,6 +289,11 @@ void CameraKeyframe::setName(const IString * /* value */)
 IKeyframe::Type CameraKeyframe::type() const
 {
     return kCamera;
+}
+
+const Motion *CameraKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
 }
 
 const Motion::InterpolationTable &CameraKeyframe::tableForPosition() const

@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API ProjectKeyframe : public vmd::BaseKeyframe, public IProjectKeyframe
 {
 public:
-    ProjectKeyframe(IEncoding *encoding);
+    ProjectKeyframe(const Motion *motionRef);
     ~ProjectKeyframe();
 
     static size_t size();
@@ -63,6 +63,7 @@ public:
     IProjectKeyframe *clone() const;
     void setName(const IString *value);
     Type type() const;
+    const Motion *parentMotionRef() const;
 
     float gravityFactor() const;
     Vector3 gravityDirection() const;
@@ -77,7 +78,7 @@ public:
 
 private:
     mutable ProjectKeyframe *m_ptr;
-    IEncoding *m_encoding;
+    const Motion *m_motionRef;
     Vector3 m_gravityDirection;
     float m_gravityFactor;
     float m_shadowDistance;

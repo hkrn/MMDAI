@@ -50,7 +50,7 @@ class MorphKeyframe;
 class VPVL2_API MorphSection : public BaseSection
 {
 public:
-    MorphSection(IModel *model, NameListSection *nameListSectionRef);
+    MorphSection(const Motion *motionRef, IModel *modelRef);
     ~MorphSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);

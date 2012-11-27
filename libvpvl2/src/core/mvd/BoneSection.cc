@@ -118,9 +118,9 @@ public:
     }
 };
 
-BoneSection::BoneSection(IModel *model, NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef),
-      m_modelRef(model),
+BoneSection::BoneSection(const Motion *motionRef, IModel *modelRef)
+    : BaseSection(motionRef),
+      m_modelRef(modelRef),
       m_keyframePtr(0),
       m_contextPtr(0)
 {
@@ -177,7 +177,7 @@ void BoneSection::read(const uint8_t *data)
     const int key = header.key;
     const IString *name = m_nameListSectionRef->value(key);
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = new BoneKeyframe(m_nameListSectionRef);
+        m_keyframePtr = new BoneKeyframe(m_motionRef);
         m_keyframePtr->read(ptr);
         m_keyframePtr->setName(name);
         addKeyframe0(m_keyframePtr, m_contextPtr->keyframes);
@@ -204,17 +204,17 @@ void BoneSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void BoneSection::setParentModel(IModel *model)
+void BoneSection::setParentModel(IModel *modelRef)
 {
-    m_modelRef = model;
-    if (model) {
+    m_modelRef = modelRef;
+    if (modelRef) {
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
             PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
             PrivateContext *contextRef = *context;
             const int *key = m_context2names.find(contextRef);
             if (key) {
-                IBone *bone = model->findBone(m_nameListSectionRef->value(*key));
+                IBone *bone = modelRef->findBone(m_nameListSectionRef->value(*key));
                 contextRef->boneRef = bone;
             }
             else {

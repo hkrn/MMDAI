@@ -52,7 +52,7 @@ namespace mvd
 class VPVL2_API ModelKeyframe : public vmd::BaseKeyframe, public IModelKeyframe
 {
 public:
-    ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKBones);
+    ModelKeyframe(const Motion *motionRef, int countOfIKBones);
     ~ModelKeyframe();
 
     static size_t size();
@@ -62,6 +62,7 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     IModelKeyframe *clone() const;
+    const Motion *parentMotionRef() const;
     void mergeIKState(const Hash<btHashInt, vpvl2::IBone *> &bones) const;
     void setIKState(const Hash<btHashInt, vpvl2::IBone *> &bones);
 
@@ -85,7 +86,7 @@ public:
 
 private:
     mutable ModelKeyframe *m_ptr;
-    NameListSection *m_nameListSectionRef;
+    const Motion *m_motionRef;
     Array<bool> m_bonesOfIK;
     Color m_edgeColor;
     Scalar m_edgeWidth;

@@ -182,5 +182,10 @@ void NameListSection::addName(const IString *name)
     }
 }
 
+IEncoding *NameListSection::encodingRef() const
+{
+    return m_encoding;
+}
+
 } /* namespace mvd */
 } /* namespace vpvl2 */

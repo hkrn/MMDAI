@@ -60,9 +60,9 @@ struct AssetKeyframeChunk {
 
 #pragma pack(pop)
 
-AssetKeyframe::AssetKeyframe(IEncoding *encoding)
+AssetKeyframe::AssetKeyframe(const Motion *motionRef)
     : BaseKeyframe(),
-      m_encoding(encoding)
+      m_motionRef(motionRef)
 {
 }
 
@@ -106,6 +106,11 @@ IAssetKeyframe *AssetKeyframe::clone() const
     return 0;
 }
 */
+
+const Motion *AssetKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
+}
 
 void AssetKeyframe::setName(const IString * /* value */)
 {

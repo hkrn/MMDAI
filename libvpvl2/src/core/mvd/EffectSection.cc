@@ -75,8 +75,8 @@ public:
     EffectKeyframe *keyframePtr;
 };
 
-EffectSection::EffectSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef),
+EffectSection::EffectSection(const Motion *motionRef)
+    : BaseSection(motionRef),
       m_context(0)
 {
     m_context = new EffectSection::PrivateContext();

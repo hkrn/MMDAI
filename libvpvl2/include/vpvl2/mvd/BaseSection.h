@@ -42,10 +42,12 @@
 
 namespace vpvl2
 {
+
 class IEncoding;
 
 namespace mvd
 {
+
 class NameListSection;
 
 class KeyframeTimeIndexPredication
@@ -141,13 +143,17 @@ protected:
     }
 
     mutable int m_lastIndex;
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseSectionContext)
 };
 
 class VPVL2_API BaseSection
 {
 public:
-    BaseSection(NameListSection *nameListSectionRef)
-        : m_nameListSectionRef(nameListSectionRef),
+    BaseSection(const Motion *motionRef)
+        : m_motionRef(motionRef),
+          m_nameListSectionRef(motionRef->nameListSection()),
           m_maxTimeIndex(0),
           m_currentTimeIndex(0),
           m_previousTimeIndex(0)
@@ -179,6 +185,7 @@ public:
         saveCurrentTimeIndex(m_currentTimeIndex + deltaTimeIndex);
     }
 
+    const Motion *parentMotionRef() const { return m_motionRef; }
     IKeyframe::TimeIndex maxTimeIndex() const { return m_maxTimeIndex; }
     IKeyframe::TimeIndex currentTimeIndex() const { return m_currentTimeIndex; }
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
@@ -193,10 +200,14 @@ protected:
         m_currentTimeIndex = timeIndex;
     }
 
+    const Motion *m_motionRef;
     NameListSection *m_nameListSectionRef;
     IKeyframe::TimeIndex m_maxTimeIndex;
     IKeyframe::TimeIndex m_currentTimeIndex;
     IKeyframe::TimeIndex m_previousTimeIndex;
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseSection)
 };
 
 } /* namespace mvd */

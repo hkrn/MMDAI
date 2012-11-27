@@ -153,8 +153,8 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
 {
     Encoding encoding;
     String str("This is test.");
-    mvd::NameListSection nameList(&encoding);
-    mvd::BoneKeyframe frame(&nameList), newFrame(&nameList);
+    mvd::Motion motion(0, &encoding);
+    mvd::BoneKeyframe frame(&motion), newFrame(&motion);
     Vector3 pos(1, 2, 3);
     Quaternion rot(4, 5, 6, 7);
     // initialize the bone frame to be copied
@@ -177,7 +177,7 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     frame.write(ptr.data());
     newFrame.read(ptr.data());
     // compare read bone frame
-    ASSERT_EQ(0, nameList.key(&str));
+    ASSERT_EQ(0, motion.nameListSection()->key(&str));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.layerIndex(), newFrame.layerIndex());
     ASSERT_TRUE(CompareVector(pos, newFrame.localPosition()));
@@ -195,7 +195,9 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
 
 TEST(MVDMotionTest, SaveCameraKeyframe)
 {
-    mvd::CameraKeyframe frame, newFrame;
+    Encoding encoding;
+    mvd::Motion motion(0, &encoding);
+    mvd::CameraKeyframe frame(&motion), newFrame(&motion);
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
     // initialize the camera frame to be copied
     frame.setTimeIndex(42);
@@ -249,9 +251,9 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
 TEST(MVDMotionTest, SaveMorphKeyframe)
 {
     Encoding encoding;
-    String str("This is a test.");
-    mvd::NameListSection nameList(&encoding);
-    mvd::MorphKeyframe frame(&nameList), newFrame(&nameList);
+    String str("This is test.");
+    mvd::Motion motion(0, &encoding);
+    mvd::MorphKeyframe frame(&motion), newFrame(&motion);
     // initialize the morph frame to be copied
     frame.setName(&str);
     frame.setTimeIndex(42);
@@ -261,7 +263,7 @@ TEST(MVDMotionTest, SaveMorphKeyframe)
     frame.write(ptr.data());
     newFrame.read(ptr.data());
     // compare read morph frame
-    ASSERT_EQ(0, nameList.key(&str));
+    ASSERT_EQ(0, motion.nameListSection()->key(&str));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.weight(), newFrame.weight());
     // cloned morph frame shold be copied with deep
@@ -344,8 +346,8 @@ TEST(MVDMotionTest, SaveCameraMotion)
 TEST(MVDMotionTest, BoneInterpolation)
 {
     Encoding encoding;
-    mvd::NameListSection nameList(&encoding);
-    mvd::BoneKeyframe frame(&nameList);
+    mvd::Motion motion(0, &encoding);
+    mvd::BoneKeyframe frame(&motion);
     QuadWord n;
     frame.getInterpolationParameter(mvd::BoneKeyframe::kX, n);
     ASSERT_TRUE(CompareVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
@@ -363,7 +365,9 @@ TEST(MVDMotionTest, BoneInterpolation)
 
 TEST(MVDMotionTest, CameraInterpolation)
 {
-    mvd::CameraKeyframe frame;
+    Encoding encoding;
+    mvd::Motion motion(0, &encoding);
+    mvd::CameraKeyframe frame(&motion);
     QuadWord n;
     frame.getInterpolationParameter(mvd::CameraKeyframe::kX, n);
     ASSERT_TRUE(CompareVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
@@ -393,7 +397,7 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
     // mock bone
     EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
-    QScopedPointer<IBoneKeyframe> keyframePtr(new mvd::BoneKeyframe(motion.nameListSection()));
+    QScopedPointer<IBoneKeyframe> keyframePtr(new mvd::BoneKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setName(&name);
     {
@@ -411,7 +415,7 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
         // find a bone keyframe with timeIndex and name
         ASSERT_EQ(keyframe, motion.findBoneKeyframe(42, &name, 0));
     }
-    keyframePtr.reset(new mvd::BoneKeyframe(motion.nameListSection()));
+    keyframePtr.reset(new mvd::BoneKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setName(&name);
     {
@@ -436,7 +440,7 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
     Model model(&encoding);
     mvd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
-    QScopedPointer<ICameraKeyframe> keyframePtr(new mvd::CameraKeyframe());
+    QScopedPointer<ICameraKeyframe> keyframePtr(new mvd::CameraKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setDistance(42);
     {
@@ -454,7 +458,7 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
         // find a camera keyframe with timeIndex
         ASSERT_EQ(keyframe, motion.findCameraKeyframe(42, 0));
     }
-    keyframePtr.reset(new mvd::CameraKeyframe());
+    keyframePtr.reset(new mvd::CameraKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setDistance(84);
     {
@@ -532,7 +536,7 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
     // mock morph
     EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
-    QScopedPointer<IMorphKeyframe> keyframePtr(new mvd::MorphKeyframe(motion.nameListSection()));
+    QScopedPointer<IMorphKeyframe> keyframePtr(new mvd::MorphKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setName(&name);
     {
@@ -549,7 +553,7 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
         ASSERT_EQ(0, motion.findMorphKeyframe(42, &name, 1));
         ASSERT_EQ(keyframe, motion.findMorphKeyframe(42, &name, 0));
     }
-    keyframePtr.reset(new mvd::MorphKeyframe(motion.nameListSection()));
+    keyframePtr.reset(new mvd::MorphKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setName(&name);
     {

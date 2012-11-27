@@ -50,7 +50,7 @@ class CameraKeyframe;
 class VPVL2_API CameraSection : public BaseSection
 {
 public:
-    CameraSection(NameListSection *nameListSectionRef);
+    CameraSection(const Motion *motionRef);
     ~CameraSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);

@@ -61,10 +61,10 @@ struct ModelKeyframeChunk {
 
 #pragma pack(pop)
 
-ModelKeyframe::ModelKeyframe(NameListSection *nameListSectionRef, int countOfIKBones)
+ModelKeyframe::ModelKeyframe(const Motion *motionRef, int countOfIKBones)
     : BaseKeyframe(),
       m_ptr(0),
-      m_nameListSectionRef(nameListSectionRef),
+      m_motionRef(motionRef),
       m_edgeColor(kZeroC),
       m_edgeWidth(0),
       m_countOfIKBones(countOfIKBones),
@@ -81,7 +81,7 @@ ModelKeyframe::~ModelKeyframe()
 {
     delete m_ptr;
     m_ptr = 0;
-    m_nameListSectionRef = 0;
+    m_motionRef = 0;
     m_edgeColor.setZero();
     m_edgeWidth = 0;
     m_countOfIKBones = 0;
@@ -156,7 +156,7 @@ size_t ModelKeyframe::estimateSize() const
 
 IModelKeyframe *ModelKeyframe::clone() const
 {
-    ModelKeyframe *keyframe = m_ptr = new ModelKeyframe(m_nameListSectionRef, m_countOfIKBones);
+    ModelKeyframe *keyframe = m_ptr = new ModelKeyframe(m_motionRef, m_countOfIKBones);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setVisible(m_visible);
@@ -169,6 +169,11 @@ IModelKeyframe *ModelKeyframe::clone() const
     keyframe->m_bonesOfIK.copy(m_bonesOfIK);
     m_ptr = 0;
     return keyframe;
+}
+
+const Motion *ModelKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
 }
 
 void ModelKeyframe::mergeIKState(const Hash<btHashInt, IBone *> &bones) const

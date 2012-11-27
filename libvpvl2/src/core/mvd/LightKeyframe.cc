@@ -56,9 +56,10 @@ struct LightKeyframeChunk {
 
 #pragma pack(pop)
 
-LightKeyframe::LightKeyframe()
+LightKeyframe::LightKeyframe(const Motion *motionRef)
     : BaseKeyframe(),
       m_ptr(0),
+      m_motionRef(motionRef),
       m_color(kZeroV3),
       m_direction(kZeroV3)
 {
@@ -116,7 +117,7 @@ size_t LightKeyframe::estimateSize() const
 
 ILightKeyframe *LightKeyframe::clone() const
 {
-    LightKeyframe *keyframe = m_ptr = new LightKeyframe();
+    LightKeyframe *keyframe = m_ptr = new LightKeyframe(m_motionRef);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setColor(m_color);
@@ -163,6 +164,11 @@ void LightKeyframe::setName(const IString * /* value */)
 IKeyframe::Type LightKeyframe::type() const
 {
     return kLight;
+}
+
+const Motion *LightKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
 }
 
 } /* namespace mvd */

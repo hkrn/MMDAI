@@ -50,7 +50,7 @@ class ModelKeyframe;
 class VPVL2_API ModelSection : public BaseSection
 {
 public:
-    ModelSection(IModel *model, NameListSection *nameListSectionRef, size_t align);
+    ModelSection(const Motion *motionRef, IModel *modelRef, size_t align);
     ~ModelSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
@@ -58,7 +58,7 @@ public:
     void release();
     void read(const uint8_t *data);
     void seek(const IKeyframe::TimeIndex &timeIndex);
-    void setParentModel(IModel *parentModelRef);
+    void setParentModel(IModel *modelRef);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;

@@ -151,8 +151,8 @@ public:
     }
 };
 
-CameraSection::CameraSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef),
+CameraSection::CameraSection(const Motion *motionRef)
+    : BaseSection(motionRef),
       m_context(0)
 {
     m_context = new PrivateContext();
@@ -200,7 +200,7 @@ void CameraSection::read(const uint8_t *data)
     m_context->keyframes.reserve(nkeyframes);
     m_context->countOfLayers = header.countOfLayers;
     for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->keyframePtr = new CameraKeyframe();
+        IKeyframe *keyframe = m_context->keyframePtr = new CameraKeyframe(m_motionRef);
         keyframe->read(ptr);
         addKeyframe0(keyframe, m_context->keyframes);
         ptr += sizeOfkeyframe;

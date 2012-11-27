@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API CameraKeyframe : public vmd::BaseKeyframe, public ICameraKeyframe
 {
 public:
-    CameraKeyframe();
+    CameraKeyframe(const Motion *motionRef);
     ~CameraKeyframe();
 
     static size_t size();
@@ -78,6 +78,7 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    const Motion *parentMotionRef() const;
     const Motion::InterpolationTable &tableForPosition() const;
     const Motion::InterpolationTable &tableForRotation() const;
     const Motion::InterpolationTable &tableForFov() const;
@@ -85,6 +86,7 @@ public:
 
 private:
     mutable CameraKeyframe *m_ptr;
+    const Motion *m_motionRef;
     Vector3 m_position;
     Vector3 m_angle;
     float m_distance;

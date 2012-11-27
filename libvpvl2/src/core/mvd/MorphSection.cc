@@ -103,9 +103,9 @@ public:
     }
 };
 
-MorphSection::MorphSection(IModel *model, NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef),
-      m_modelRef(model),
+MorphSection::MorphSection(const Motion *motionRef, IModel *modelRef)
+    : BaseSection(motionRef),
+      m_modelRef(modelRef),
       m_keyframePtr(0),
       m_contextPtr(0)
 {
@@ -160,7 +160,7 @@ void MorphSection::read(const uint8_t *data)
     m_contextPtr->keyframes.reserve(nkeyframes);
     ptr += sizeof(header) + header.reserved;
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = new MorphKeyframe(m_nameListSectionRef);
+        m_keyframePtr = new MorphKeyframe(m_motionRef);
         m_keyframePtr->read(ptr);
         addKeyframe0(m_keyframePtr, m_contextPtr->keyframes);
         ptr += sizeOfKeyframe;

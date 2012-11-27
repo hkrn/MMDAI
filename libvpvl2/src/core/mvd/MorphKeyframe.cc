@@ -56,10 +56,10 @@ struct MorphKeyframeChunk {
 
 #pragma pack(pop)
 
-MorphKeyframe::MorphKeyframe(NameListSection *nameListSectionRef)
+MorphKeyframe::MorphKeyframe(const Motion *motionRef)
     : BaseKeyframe(),
       m_ptr(0),
-      m_nameListSectionRef(nameListSectionRef),
+      m_motionRef(motionRef),
       m_weight(0)
 {
 }
@@ -68,7 +68,7 @@ MorphKeyframe::~MorphKeyframe()
 {
     delete m_ptr;
     m_ptr = 0;
-    m_nameListSectionRef = 0;
+    m_motionRef = 0;
     m_weight = 0;
 }
 
@@ -119,7 +119,7 @@ size_t MorphKeyframe::estimateSize() const
 
 IMorphKeyframe *MorphKeyframe::clone() const
 {
-    MorphKeyframe *keyframe = m_ptr = new MorphKeyframe(m_nameListSectionRef);
+    MorphKeyframe *keyframe = m_ptr = new MorphKeyframe(m_motionRef);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setWeight(m_weight);
@@ -166,12 +166,17 @@ void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 void MorphKeyframe::setName(const IString *value)
 {
     internal::setString(value, m_namePtr);
-    m_nameListSectionRef->addName(value);
+    m_motionRef->nameListSection()->addName(value);
 }
 
 IMorphKeyframe::Type MorphKeyframe::type() const
 {
     return kMorph;
+}
+
+const Motion *MorphKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
 }
 
 const Motion::InterpolationTable &MorphKeyframe::tableForWeight() const

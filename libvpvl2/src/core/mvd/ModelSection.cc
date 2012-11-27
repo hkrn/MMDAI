@@ -140,11 +140,11 @@ public:
     int sizeOfIKBones;
 };
 
-ModelSection::ModelSection(IModel *model, NameListSection *nameListSectionRef, size_t align)
-    : BaseSection(nameListSectionRef),
+ModelSection::ModelSection(const Motion *motionRef, IModel *modelRef, size_t align)
+    : BaseSection(motionRef),
       m_context(0)
 {
-    m_context = new PrivateContext(model, nameListSectionRef, align);
+    m_context = new PrivateContext(modelRef, motionRef->nameListSection(), align);
 }
 
 ModelSection::~ModelSection()
@@ -202,7 +202,7 @@ void ModelSection::read(const uint8_t *data)
     ptr += header.sizeOfIKBones - sizeof(int) * (nBonesOfIK + 1);
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        ModelKeyframe *keyframe = m_context->keyframePtr = new ModelKeyframe(m_nameListSectionRef, nBonesOfIK);
+        ModelKeyframe *keyframe = m_context->keyframePtr = new ModelKeyframe(m_motionRef, nBonesOfIK);
         keyframe->read(ptr);
         addKeyframe0(keyframe, m_context->keyframes);
         ptr += sizeOfKeyframe;
@@ -215,9 +215,9 @@ void ModelSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void ModelSection::setParentModel(IModel *parentModelRef)
+void ModelSection::setParentModel(IModel *modelRef)
 {
-    m_context->modelRef = parentModelRef;
+    m_context->modelRef = modelRef;
 }
 
 void ModelSection::write(uint8_t *data) const

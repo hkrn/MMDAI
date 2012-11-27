@@ -63,6 +63,7 @@ public:
     const IString *value(int key) const;
     void getNames(Array<const IString *> &names) const;
     void addName(const vpvl2::IString *name);
+    IEncoding *encodingRef() const;
 
 private:
     Array<const IString *> m_names;

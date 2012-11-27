@@ -100,8 +100,8 @@ public:
     Vector3 direction;
 };
 
-LightSection::LightSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef),
+LightSection::LightSection(const Motion *motionRef)
+    : BaseSection(motionRef),
       m_context(0)
 {
     m_context = new LightSection::PrivateContext();
@@ -148,7 +148,7 @@ void LightSection::read(const uint8_t *data)
     ptr += sizeof(header) + header.reserved2;
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        LightKeyframe *keyframe = m_context->keyframePtr = new LightKeyframe();
+        LightKeyframe *keyframe = m_context->keyframePtr = new LightKeyframe(m_motionRef);
         keyframe->read(ptr);
         addKeyframe0(keyframe, m_context->keyframes);
         ptr += sizeOfKeyframe;

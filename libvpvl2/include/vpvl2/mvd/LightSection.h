@@ -50,7 +50,7 @@ class LightKeyframe;
 class VPVL2_API LightSection : public BaseSection
 {
 public:
-    LightSection(NameListSection *nameListSectionRef);
+    LightSection(const Motion *motionRef);
     ~LightSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);

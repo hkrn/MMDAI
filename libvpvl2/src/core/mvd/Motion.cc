@@ -152,14 +152,14 @@ Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
       m_active(true)
 {
     m_nameListSection = new NameListSection(encodingRef);
-    m_assetSection = new AssetSection(m_nameListSection);
-    m_boneSection = new BoneSection(modelRef, m_nameListSection);
-    m_cameraSection = new CameraSection(m_nameListSection);
-    m_effectSection = new EffectSection(m_nameListSection);
-    m_lightSection = new LightSection(m_nameListSection);
-    m_modelSection = new ModelSection(modelRef, m_nameListSection, 0);
-    m_morphSection = new MorphSection(modelRef, m_nameListSection);
-    m_projectSection = new ProjectSection(m_nameListSection);
+    m_assetSection = new AssetSection(this);
+    m_boneSection = new BoneSection(this, modelRef);
+    m_cameraSection = new CameraSection(this);
+    m_effectSection = new EffectSection(this);
+    m_lightSection = new LightSection(this);
+    m_modelSection = new ModelSection(this, modelRef, 0);
+    m_morphSection = new MorphSection(this, modelRef);
+    m_projectSection = new ProjectSection(this);
 }
 
 Motion::~Motion()
@@ -844,7 +844,7 @@ void Motion::parseAssetSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.assetSectionPtrs;
     const int nsections = sections.count();
-    m_assetSection = new AssetSection(m_nameListSection);
+    m_assetSection = new AssetSection(this);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_assetSection->read(ptr);
@@ -855,7 +855,7 @@ void Motion::parseBoneSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.boneSectionPtrs;
     const int nsections = sections.count();
-    m_boneSection = new BoneSection(m_parentModelRef, m_nameListSection);
+    m_boneSection = new BoneSection(this, m_parentModelRef);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_boneSection->read(ptr);
@@ -866,7 +866,7 @@ void Motion::parseCameraSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.cameraSectionPtrs;
     const int nsections = sections.count();
-    m_cameraSection = new CameraSection(m_nameListSection);
+    m_cameraSection = new CameraSection(this);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_cameraSection->read(ptr);
@@ -877,7 +877,7 @@ void Motion::parseEffectSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.effectSectionPtrs;
     const int nsections = sections.count();
-    m_effectSection = new EffectSection(m_nameListSection);
+    m_effectSection = new EffectSection(this);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_effectSection->read(ptr);
@@ -888,7 +888,7 @@ void Motion::parseLightSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.lightSectionPtrs;
     const int nsections = sections.count();
-    m_lightSection = new LightSection(m_nameListSection);
+    m_lightSection = new LightSection(this);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_lightSection->read(ptr);
@@ -899,7 +899,7 @@ void Motion::parseModelSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.modelSectionPtrs;
     const int nsections = sections.count();
-    m_modelSection = new ModelSection(m_parentModelRef, m_nameListSection, info.adjustAlignment);
+    m_modelSection = new ModelSection(this, m_parentModelRef, info.adjustAlignment);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_modelSection->read(ptr);
@@ -910,7 +910,7 @@ void Motion::parseMorphSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.morphSectionPtrs;
     const int nsections = sections.count();
-    m_morphSection = new MorphSection(m_parentModelRef, m_nameListSection);
+    m_morphSection = new MorphSection(this, m_parentModelRef);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_morphSection->read(ptr);
@@ -921,7 +921,7 @@ void Motion::parseProjectSections(const DataInfo &info)
 {
     const Array<uint8_t *> &sections = info.projectSectionPtrs;
     const int nsections = sections.count();
-    m_projectSection = new ProjectSection(m_nameListSection);
+    m_projectSection = new ProjectSection(this);
     for (int i = 0; i < nsections; i++) {
         const uint8_t *ptr = sections[i];
         m_projectSection->read(ptr);

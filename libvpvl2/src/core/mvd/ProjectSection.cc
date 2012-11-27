@@ -69,8 +69,8 @@ public:
     ProjectKeyframe *keyframePtr;
 };
 
-ProjectSection::ProjectSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef),
+ProjectSection::ProjectSection(Motion *motionRef)
+    : BaseSection(motionRef),
       m_context(0)
 {
     m_context = new ProjectSection::PrivateContext();

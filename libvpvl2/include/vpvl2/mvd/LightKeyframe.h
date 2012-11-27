@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API LightKeyframe : public vmd::BaseKeyframe, public ILightKeyframe
 {
 public:
-    LightKeyframe();
+    LightKeyframe(const Motion *motionRef);
     ~LightKeyframe();
 
     static size_t size();
@@ -69,9 +69,11 @@ public:
     void setEnable(bool value);
     void setName(const IString *value);
     Type type() const;
+    const Motion *parentMotionRef() const;
 
 private:
     mutable LightKeyframe *m_ptr;
+    const Motion *m_motionRef;
     Vector3 m_color;
     Vector3 m_direction;
     bool m_enabled;

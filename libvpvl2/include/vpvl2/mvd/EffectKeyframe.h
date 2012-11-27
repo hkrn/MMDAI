@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API EffectKeyframe : public vmd::BaseKeyframe, public IEffectKeyframe
 {
 public:
-    EffectKeyframe(IEncoding *encoding);
+    EffectKeyframe(const Motion *motionRef);
     ~EffectKeyframe();
 
     static size_t size();
@@ -63,6 +63,7 @@ public:
     IEffectKeyframe *clone() const;
     void setName(const IString *value);
     Type type() const;
+    const Motion *parentMotionRef() const;
 
     bool isVisible() const;
     bool isAddBlendEnabled() const;
@@ -81,7 +82,7 @@ public:
 
 private:
     mutable EffectKeyframe *m_ptr;
-    IEncoding *m_encoding;
+    const Motion *m_motionRef;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
     float m_scaleFactor;

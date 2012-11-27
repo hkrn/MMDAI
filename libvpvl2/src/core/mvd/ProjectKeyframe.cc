@@ -58,10 +58,10 @@ struct ProjectKeyframeChunk {
 
 #pragma pack(pop)
 
-ProjectKeyframe::ProjectKeyframe(IEncoding *encoding)
+ProjectKeyframe::ProjectKeyframe(const Motion *motionRef)
     : BaseKeyframe(),
       m_ptr(0),
-      m_encoding(encoding),
+      m_motionRef(motionRef),
       m_gravityDirection(kZeroV3),
       m_gravityFactor(0),
       m_shadowDistance(0),
@@ -74,6 +74,7 @@ ProjectKeyframe::~ProjectKeyframe()
 {
     delete m_ptr;
     m_ptr = 0;
+    m_motionRef = 0;
     m_gravityDirection.setZero();
     m_gravityFactor = 0;
     m_shadowDistance = 0;
@@ -130,7 +131,7 @@ size_t ProjectKeyframe::estimateSize() const
 
 IProjectKeyframe *ProjectKeyframe::clone() const
 {
-    ProjectKeyframe *keyframe = m_ptr = new ProjectKeyframe(m_encoding);
+    ProjectKeyframe *keyframe = m_ptr = new ProjectKeyframe(m_motionRef);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setGravityFactor(m_gravityFactor);
@@ -149,6 +150,11 @@ void ProjectKeyframe::setName(const IString * /* value */)
 IKeyframe::Type ProjectKeyframe::type() const
 {
     return kProject;
+}
+
+const Motion *ProjectKeyframe::parentMotionRef() const
+{
+    return m_motionRef;
 }
 
 float ProjectKeyframe::gravityFactor() const

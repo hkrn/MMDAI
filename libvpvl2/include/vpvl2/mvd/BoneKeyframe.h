@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API BoneKeyframe : public vmd::BaseKeyframe, public IBoneKeyframe
 {
 public:
-    BoneKeyframe(NameListSection *nameListSectionRef);
+    BoneKeyframe(const Motion *motionRef);
     ~BoneKeyframe();
 
     static size_t size();
@@ -72,6 +72,7 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    const Motion *parentMotionRef() const;
     const Motion::InterpolationTable &tableForX() const;
     const Motion::InterpolationTable &tableForY() const;
     const Motion::InterpolationTable &tableForZ() const;
@@ -79,7 +80,7 @@ public:
 
 private:
     mutable BoneKeyframe *m_ptr;
-    NameListSection *m_nameListSectionRef;
+    const Motion *m_motionRef;
     Vector3 m_position;
     Quaternion m_rotation;
     Motion::InterpolationTable m_interpolationX;

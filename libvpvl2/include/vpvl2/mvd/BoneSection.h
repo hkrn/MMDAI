@@ -50,7 +50,7 @@ class BoneKeyframe;
 class VPVL2_API BoneSection : public BaseSection
 {
 public:
-    BoneSection(IModel *model, NameListSection *nameListSectionRef);
+    BoneSection(const Motion *motionRef, IModel *modelRef);
     ~BoneSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
@@ -58,7 +58,7 @@ public:
     void release();
     void read(const uint8_t *data);
     void seek(const IKeyframe::TimeIndex &timeIndex);
-    void setParentModel(IModel *model);
+    void setParentModel(IModel *modelRef);
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     size_t countKeyframes() const;

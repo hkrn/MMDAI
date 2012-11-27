@@ -51,7 +51,7 @@ namespace mvd
 class VPVL2_API AssetKeyframe : public vmd::BaseKeyframe
 {
 public:
-    AssetKeyframe(IEncoding *encoding);
+    AssetKeyframe(const Motion *motionRef);
     ~AssetKeyframe();
 
     static size_t size();
@@ -62,11 +62,12 @@ public:
     size_t estimateSize() const;
     // IAssetKeyframe *clone() const;
 
+    const Motion *parentMotionRef() const;
     void setName(const IString *value);
     Type type() const;
 
 private:
-    IEncoding *m_encoding;
+    const Motion *m_motionRef;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetKeyframe)
 };

@@ -49,7 +49,7 @@ namespace mvd
 class VPVL2_API ProjectSection : public BaseSection
 {
 public:
-    ProjectSection(NameListSection *nameListSectionRef);
+    ProjectSection(Motion *motionRef);
     ~ProjectSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);

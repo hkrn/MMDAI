@@ -56,8 +56,8 @@ struct AssetSectionHeader {
 
 #pragma pack(pop)
 
-AssetSection::AssetSection(NameListSection *nameListSectionRef)
-    : BaseSection(nameListSectionRef)
+AssetSection::AssetSection(const Motion *motionRef)
+    : BaseSection(motionRef)
 {
 }
 

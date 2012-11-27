@@ -41,7 +41,9 @@
 
 namespace vpvl2
 {
+
 class IEncoding;
+class Motion;
 
 namespace mvd
 {
@@ -49,7 +51,7 @@ namespace mvd
 class VPVL2_API AssetSection : public BaseSection
 {
 public:
-    AssetSection(NameListSection *nameListSectionRef);
+    AssetSection(const Motion *motionRef);
     ~AssetSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);

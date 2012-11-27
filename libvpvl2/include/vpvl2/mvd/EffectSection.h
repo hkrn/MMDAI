@@ -49,7 +49,7 @@ namespace mvd
 class VPVL2_API EffectSection : public BaseSection
 {
 public:
-    EffectSection(NameListSection *nameListSectionRef);
+    EffectSection(const Motion *motionRef);
     ~EffectSection();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
