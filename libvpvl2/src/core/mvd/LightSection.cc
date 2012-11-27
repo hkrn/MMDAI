@@ -66,7 +66,38 @@ public:
         delete keyframePtr;
         keyframePtr = 0;
     }
+
+    void seek(const IKeyframe::TimeIndex &timeIndex) {
+        if (keyframes.count() > 0) {
+            int fromIndex, toIndex;
+            IKeyframe::TimeIndex currentTimeIndex;
+            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            const LightKeyframe *keyframeFrom = reinterpret_cast<const LightKeyframe *>(keyframes[fromIndex]),
+                    *keyframeTo = reinterpret_cast<const LightKeyframe *>(keyframes[toIndex]);
+            const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
+            const Vector3 &colorFrom = keyframeFrom->color(), &colorTo = keyframeTo->color();
+            const Vector3 &directionFrom = keyframeFrom->direction(), &directionTo = keyframeTo->direction();
+            if (timeIndexFrom != timeIndexTo && timeIndexFrom < currentTimeIndex) {
+                if (timeIndexTo <= currentTimeIndex) {
+                    color = colorTo;
+                    direction = directionTo;
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    color = colorFrom.lerp(colorTo, Scalar(w));
+                    direction = directionFrom.lerp(directionTo, Scalar(w));
+                }
+            }
+            else {
+                color = colorFrom;
+                direction = directionFrom;
+            }
+        }
+    }
+
     LightKeyframe *keyframePtr;
+    Vector3 color;
+    Vector3 direction;
 };
 
 LightSection::LightSection(NameListSection *nameListSectionRef)
@@ -188,6 +219,16 @@ ILightKeyframe *LightSection::findKeyframeAt(int index) const
         return keyframe;
     }
     return 0;
+}
+
+Vector3 LightSection::color() const
+{
+    return m_context->color;
+}
+
+Vector3 LightSection::direction() const
+{
+    return m_context->direction;
 }
 
 } /* namespace mvd */

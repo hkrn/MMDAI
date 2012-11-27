@@ -71,7 +71,7 @@ public:
         weight = 0;
     }
     void seek(const IKeyframe::TimeIndex &timeIndex) {
-        if (morphRef) {
+        if (morphRef && keyframes.count() > 0) {
             int fromIndex, toIndex;
             IKeyframe::TimeIndex currentTimeIndex;
             findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
@@ -79,11 +79,8 @@ public:
                     *keyframeTo = reinterpret_cast<const MorphKeyframe *>(keyframes[toIndex]);
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
             const IMorph::WeightPrecision &weightFrom = keyframeFrom->weight(), &weightTo = keyframeTo->weight();
-            if (timeIndexFrom != timeIndexTo) {
-                if (currentTimeIndex <= timeIndexFrom) {
-                    weight = weightFrom;
-                }
-                else if (currentTimeIndex >= timeIndexTo) {
+            if (timeIndexFrom != timeIndexTo && timeIndexFrom < currentTimeIndex) {
+                if (timeIndexTo <= currentTimeIndex) {
                     weight = weightTo;
                 }
                 else {

@@ -71,6 +71,9 @@ public:
                                  const IKeyframe::LayerIndex &layerIndex) const;
     ILightKeyframe *findKeyframeAt(int index) const;
 
+    Vector3 color() const;
+    Vector3 direction() const;
+
 private:
     class PrivateContext;
     PrivateContext *m_context;

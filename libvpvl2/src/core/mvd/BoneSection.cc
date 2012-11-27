@@ -77,7 +77,7 @@ public:
         countOfLayers = 0;
     }
     void seek(const IKeyframe::TimeIndex &timeIndex) {
-        if (boneRef) {
+        if (boneRef && keyframes.count() > 0) {
             int fromIndex, toIndex;
             IKeyframe::TimeIndex currentTimeIndex;
             findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
@@ -86,12 +86,8 @@ public:
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
             const Vector3 &positionFrom = keyframeFrom->localPosition(), &positionTo = keyframeTo->localPosition();
             const Quaternion &rotationFrom = keyframeFrom->localRotation(), &rotationTo = keyframeTo->localRotation();
-            if (timeIndexFrom != timeIndexTo) {
-                if (currentTimeIndex <= timeIndexFrom) {
-                    position = positionFrom;
-                    rotation = rotationFrom;
-                }
-                else if (currentTimeIndex >= timeIndexTo) {
+            if (timeIndexFrom != timeIndexTo && timeIndexFrom < currentTimeIndex) {
+                if (timeIndexTo <= currentTimeIndex) {
                     position = positionTo;
                     rotation = rotationTo;
                 }

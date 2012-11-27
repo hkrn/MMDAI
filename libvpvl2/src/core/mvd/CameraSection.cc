@@ -84,73 +84,69 @@ public:
         countOfLayers = 0;
     }
     void seek(const IKeyframe::TimeIndex &timeIndex) {
-        int fromIndex, toIndex;
-        IKeyframe::TimeIndex currentTimeIndex;
-        findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
-        const CameraKeyframe *keyframeFrom = reinterpret_cast<const CameraKeyframe *>(keyframes[fromIndex]),
-                *keyframeTo = reinterpret_cast<const CameraKeyframe *>(keyframes[toIndex]);
-        const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
-        const Scalar &distanceFrom = keyframeFrom->distance(), fovyFrom = keyframeFrom->fov();
-        const Vector3 &positionFrom = keyframeFrom->lookAt(), angleFrom = keyframeFrom->angle();
-        const Scalar &distanceTo = keyframeTo->distance(), fovyTo = keyframeTo->fov();
-        const Vector3 &positionTo = keyframeTo->lookAt(), angleTo = keyframeTo->angle();
-        if (timeIndexFrom != timeIndexTo) {
-            if (currentTimeIndex <= timeIndexFrom) {
-                distance = distanceFrom;
-                position = positionFrom;
-                angle = angleFrom;
-                fov = fovyFrom;
-            }
-            else if (currentTimeIndex >= timeIndexTo) {
-                distance = distanceTo;
-                position = positionTo;
-                angle = angleTo;
-                fov = fovyTo;
-            }
-            else if (timeIndexTo - timeIndexFrom <= 1.0f) {
-                distance = distanceFrom;
-                position = positionFrom;
-                angle = angleFrom;
-                fov = fovyFrom;
+        if (keyframes.count() > 0) {
+            int fromIndex, toIndex;
+            IKeyframe::TimeIndex currentTimeIndex;
+            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            const CameraKeyframe *keyframeFrom = reinterpret_cast<const CameraKeyframe *>(keyframes[fromIndex]),
+                    *keyframeTo = reinterpret_cast<const CameraKeyframe *>(keyframes[toIndex]);
+            const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
+            const Scalar &distanceFrom = keyframeFrom->distance(), fovyFrom = keyframeFrom->fov();
+            const Vector3 &positionFrom = keyframeFrom->lookAt(), angleFrom = keyframeFrom->angle();
+            const Scalar &distanceTo = keyframeTo->distance(), fovyTo = keyframeTo->fov();
+            const Vector3 &positionTo = keyframeTo->lookAt(), angleTo = keyframeTo->angle();
+            if (timeIndexFrom != timeIndexTo && timeIndexFrom < currentTimeIndex) {
+                if (timeIndexTo <= currentTimeIndex) {
+                    distance = distanceTo;
+                    position = positionTo;
+                    angle = angleTo;
+                    fov = fovyTo;
+                }
+                else if (timeIndexTo - timeIndexFrom <= 1.0f) {
+                    distance = distanceFrom;
+                    position = positionFrom;
+                    angle = angleFrom;
+                    fov = fovyFrom;
+                }
+                else {
+                    const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
+                    IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
+                    interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 0, x);
+                    interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 1, y);
+                    interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 2, z);
+                    position.setValue(Scalar(x), Scalar(y), Scalar(z));
+                    const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
+                    if (tableForRotation.linear) {
+                        angle = angleFrom.lerp(angleTo, Scalar(weight));
+                    }
+                    else {
+                        const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
+                        angle = angleFrom.lerp(angleTo, Scalar(weight2));
+                    }
+                    const Motion::InterpolationTable &tableForDistance = keyframeTo->tableForDistance();
+                    if (tableForDistance.linear) {
+                        distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight));
+                    }
+                    else {
+                        const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForDistance, weight);
+                        distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight2));
+                    }
+                    const Motion::InterpolationTable &tableForFov = keyframeTo->tableForFov();
+                    if (tableForFov.linear) {
+                        fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight));
+                    }
+                    else {
+                        const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForFov, weight);
+                        fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight2));
+                    }
+                }
             }
             else {
-                const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
-                IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
-                interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 0, x);
-                interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 1, y);
-                interpolate(keyframeTo->tableForPosition(), positionFrom, positionTo, weight, 2, z);
-                position.setValue(Scalar(x), Scalar(y), Scalar(z));
-                const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
-                if (tableForRotation.linear) {
-                    angle = angleFrom.lerp(angleTo, Scalar(weight));
-                }
-                else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
-                    angle = angleFrom.lerp(angleTo, Scalar(weight2));
-                }
-                const Motion::InterpolationTable &tableForDistance = keyframeTo->tableForDistance();
-                if (tableForDistance.linear) {
-                    distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight));
-                }
-                else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForDistance, weight);
-                    distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight2));
-                }
-                const Motion::InterpolationTable &tableForFov = keyframeTo->tableForFov();
-                if (tableForFov.linear) {
-                    fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight));
-                }
-                else {
-                    const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForFov, weight);
-                    fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight2));
-                }
+                distance = distanceFrom;
+                position = positionFrom;
+                angle = angleFrom;
+                fov = fovyFrom;
             }
-        }
-        else {
-            distance = distanceFrom;
-            position = positionFrom;
-            angle = angleFrom;
-            fov = fovyFrom;
         }
     }
 };
