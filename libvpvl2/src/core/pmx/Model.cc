@@ -832,7 +832,8 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *world)
 IBone *Model::findBone(const IString *value) const
 {
     if (value) {
-        IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(value->toHashString()));
+        const HashString &key = value->toHashString();
+        IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(key));
         return bone ? *bone : 0;
     }
     return 0;
@@ -841,7 +842,8 @@ IBone *Model::findBone(const IString *value) const
 IMorph *Model::findMorph(const IString *value) const
 {
     if (value) {
-        IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(value->toHashString()));
+        const HashString &key = value->toHashString();
+        IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(key));
         return morph ? *morph : 0;
     }
     return 0;
