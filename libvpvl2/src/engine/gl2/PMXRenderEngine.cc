@@ -391,8 +391,8 @@ public:
           zplotProgram(0),
           materials(0),
           cullFaceState(true),
-          updateEven(true),
-          isVertexShaderSkinning(isVertexShaderSkinning)
+          isVertexShaderSkinning(isVertexShaderSkinning),
+          updateEven(true)
     {
         model->getIndexBuffer(indexBuffer);
         model->getStaticVertexBuffer(staticBuffer);
@@ -815,7 +815,7 @@ void PMXRenderEngine::renderShadow()
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     size_t offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
-    glCullFace(GL_FRONT);
+    glDisable(GL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->sizeofIndices();
@@ -831,7 +831,7 @@ void PMXRenderEngine::renderShadow()
         offset += nindices * size;
     }
     unbindVertexBundle();
-    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
     shadowProgram->unbind();
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
 }
