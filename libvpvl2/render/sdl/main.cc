@@ -54,6 +54,7 @@
 namespace {
 
 using namespace vpvl2;
+using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::sdl;
 
 struct UIContext
@@ -351,7 +352,7 @@ int main(int /* argc */, char ** /* argv[] */)
     Encoding encoding;
     Factory factory(&encoding);
     Scene scene;
-    RenderContext delegate(&scene, &config);
+    RenderContext renderContext(&scene, &config);
     World world;
     bool ok = false;
     const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];
@@ -368,16 +369,16 @@ int main(int /* argc */, char ** /* argv[] */)
                 &modelPath = config[prefix + "/path"];
         int indexOf = modelPath.lastIndexOf("/");
         String dir(modelPath.tempSubString(0, indexOf));
-        if (UILoadFile(modelPath, data)) {
+        if (renderContext.loadFile(modelPath, data)) {
             int flags = 0;
             IModel *model = factory.createModel(UICastData(data), data.size(), ok);
-            IRenderEngine *engine = scene.createRenderEngine(&delegate, model, flags);
+            IRenderEngine *engine = scene.createRenderEngine(&renderContext, model, flags);
             model->setEdgeWidth(float(vpvl2::extensions::icu::String::toDouble(config[prefix + "/edge.width"])));
             if (engine->upload(&dir)) {
                 if (String::toBoolean(config[prefix + "/enable.physics"]))
                     world.addModel(model);
                 scene.addModel(model, engine);
-                if (UILoadFile(motionPath, data)) {
+                if (renderContext.loadFile(motionPath, data)) {
                     IMotion *motion = factory.createMotion(UICastData(data), data.size(), model, ok);
                     scene.addMotion(motion);
                 }
@@ -390,11 +391,11 @@ int main(int /* argc */, char ** /* argv[] */)
         stream << "assets/" << (i + 1);
         const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
                 &assetPath = config[prefix + "/path"];
-        if (UILoadFile(assetPath, data)) {
+        if (renderContext.loadFile(assetPath, data)) {
             int indexOf = assetPath.lastIndexOf("/");
             String dir(assetPath.tempSubString(0, indexOf));
             IModel *asset = factory.createModel(UICastData(data), data.size(), ok);
-            IRenderEngine *engine = scene.createRenderEngine(&delegate, asset, 0);
+            IRenderEngine *engine = scene.createRenderEngine(&renderContext, asset, 0);
             if (engine->upload(&dir)) {
                 scene.addModel(asset, engine);
             }
@@ -409,7 +410,7 @@ int main(int /* argc */, char ** /* argv[] */)
     glCullFace(GL_BACK);
     glClearColor(0, 0, 1, 0);
 
-    UIContext context(&scene, &config, &delegate);
+    UIContext context(&scene, &config, &renderContext);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     context.windowRef = window;
 #endif

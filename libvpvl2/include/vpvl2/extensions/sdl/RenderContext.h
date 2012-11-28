@@ -35,14 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 /* libvpvl2 */
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderContext.h>
-#include <vpvl2/extensions/icu/Encoding.h>
-
-/* GLEW */
-#ifdef VPVL2_LINK_GLEW
-#include <GL/glew.h>
-#endif /* VPVL2_LINK_GLEW */
+#include <vpvl2/extensions/BaseRenderContext.h>
 
 /* SDL */
 #include <SDL.h>
@@ -51,45 +44,7 @@
 #include <SDL_opengl.h>
 #endif /* VPVL2_LINK_GLEW */
 
-/* Bullet Physics */
-#ifndef VPVL2_NO_BULLET
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-#else
-VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
-#endif /* VPVL2_NO_BULLET */
-
-/* STL */
-#include <string>
-#include <map>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <set>
-
-/* Open Asset Import Library */
-#ifdef VPVL2_LINK_ASSIMP
-#include <assimp.hpp>
-#include <DefaultLogger.h>
-#include <Logger.h>
-#include <aiPostProcess.h>
-#else
-BT_DECLARE_HANDLE(aiScene);
-#endif /* VPVL2_LINK_ASSIMP */
-
-/* GLM */
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-/* NVTT */
 #ifdef VPVL2_LINK_NVTT
-#include <nvcore/Stream.h>
-#include <nvimage/DirectDrawSurface.h>
-#include <nvimage/Image.h>
-#include <nvimage/ImageIO.h>
-
 namespace {
 
 class ReadonlyMemoryStream : public nv::Stream {
@@ -138,13 +93,13 @@ public:
 
 class ReadonlyFileStream : public nv::Stream {
 public:
-    ReadonlyFileStream(const QString & /* path */) {}
+    ReadonlyFileStream(const std::string & /* path */) {}
     ~ReadonlyFileStream() {}
 };
 
 class ReadonlyMemoryStream : public nv::Stream {
 public:
-    ReadonlyMemoryStream(QByteArray & /* bytes */) {}
+    ReadonlyMemoryStream(std::string & /* bytes */) {}
     ~ReadonlyMemoryStream() {}
 };
 
@@ -158,166 +113,10 @@ namespace sdl
 {
 using namespace icu;
 
-static bool UILoadFile(const UnicodeString &path, std::string &bytes)
-{
-    bytes.clear();
-    FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
-    bool ret = false;
-    if (fp) {
-        ::fseek(fp, 0, SEEK_END);
-        size_t size = ::ftell(fp);
-        ::fseek(fp, 0, SEEK_SET);
-        std::vector<char> data(size);
-        ::fread(&data[0], size, 1, fp);
-        bytes.assign(data.begin(), data.end());
-        ::fclose(fp);
-        ret = true;
-    }
-    return ret;
-}
-
-static const uint8_t *UICastData(const std::string &data)
-{
-    return reinterpret_cast<const uint8_t *>(data.c_str());
-}
-
-typedef std::map<UnicodeString, UnicodeString> UIStringMap;
-
-class World {
+class RenderContext : public BaseRenderContext {
 public:
-    World()
-        : m_dispatcher(0),
-          m_broadphase(0),
-          m_solver(0),
-          m_world(0),
-          m_motionFPS(0),
-          m_fixedTimeStep(0),
-          m_maxSubSteps(0)
-    {
-        m_dispatcher = new btCollisionDispatcher(&m_config);
-        m_broadphase = new btDbvtBroadphase();
-        m_solver = new btSequentialImpulseConstraintSolver();
-        m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
-        setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
-        setPreferredFPS(vpvl2::Scene::defaultFPS());
-    }
-    ~World() {
-        const int nmodels = m_modelRefs.count();
-        for (int i = 0; i < nmodels; i++) {
-            removeModel(m_modelRefs[i]);
-        }
-        delete m_dispatcher;
-        m_dispatcher = 0;
-        delete m_broadphase;
-        m_broadphase = 0;
-        delete m_solver;
-        m_solver = 0;
-        delete m_world;
-        m_world = 0;
-        m_motionFPS = 0;
-        m_maxSubSteps = 0;
-        m_fixedTimeStep = 0;
-    }
-    const vpvl2::Vector3 gravity() const { return m_world->getGravity(); }
-    void setGravity(const vpvl2::Vector3 &value) { m_world->setGravity(value); }
-    unsigned long randSeed() const { return m_solver->getRandSeed(); }
-    void setRandSeed(unsigned long value) { m_solver->setRandSeed(value); }
-    void setPreferredFPS(const vpvl2::Scalar &value) {
-        m_motionFPS = value;
-        m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
-        m_fixedTimeStep = 1.0 / value;
-    }
-    void addModel(vpvl2::IModel *value) {
-        value->joinWorld(m_world);
-        m_modelRefs.add(value);
-    }
-    void removeModel(vpvl2::IModel *value) {
-        value->leaveWorld(m_world);
-        m_modelRefs.remove(value);
-    }
-    void addRigidBody(btRigidBody *value) {
-        m_world->addRigidBody(value);
-    }
-    void removeRigidBody(btRigidBody *value) {
-        m_world->removeRigidBody(value);
-    }
-    void stepSimulation(const vpvl2::Scalar &delta) {
-        m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
-    }
-
-private:
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher *m_dispatcher;
-    btDbvtBroadphase *m_broadphase;
-    btSequentialImpulseConstraintSolver *m_solver;
-    btDiscreteDynamicsWorld *m_world;
-    vpvl2::Scalar m_motionFPS;
-    Array<IModel *> m_modelRefs;
-    Scalar m_fixedTimeStep;
-    int m_maxSubSteps;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(World)
-};
-
-class RenderContext : public IRenderContext {
-public:
-    struct TextureCache {
-        TextureCache() {}
-        TextureCache(int w, int h, GLuint i)
-            : width(w),
-              height(h),
-              id(i)
-        {
-        }
-        int width;
-        int height;
-        GLuint id;
-    };
-    typedef std::map<UnicodeString, TextureCache> TextureCacheMap;
-    struct InternalTexture {
-        InternalTexture(RenderContext::Texture *r, bool m, bool t)
-            : ref(r),
-              isToon(t),
-              isSystem(false),
-              mipmap(m),
-              ok(false)
-        {
-        }
-        void assign(const TextureCache &cache) {
-            ref->width = cache.width;
-            ref->height = cache.height;
-            *static_cast<GLuint *>(ref->object) = cache.id;
-        }
-        RenderContext::Texture *ref;
-        bool isToon;
-        bool isSystem;
-        bool mipmap;
-        bool ok;
-    };
-    struct InternalContext {
-        TextureCacheMap textureCache;
-        void addTextureCache(const UnicodeString &path, const TextureCache &cache) {
-            textureCache.insert(std::make_pair(path, cache));
-        }
-        bool findTextureCache(const UnicodeString &path, InternalTexture &texture) {
-            if (textureCache.find(path) != textureCache.end()) {
-                texture.assign(textureCache[path]);
-                texture.ok = true;
-                return true;
-            }
-            return false;
-        }
-    };
-
     RenderContext(Scene *sceneRef, UIStringMap *configRef)
-        : m_sceneRef(sceneRef),
-          m_configRef(configRef),
-          m_lightWorldMatrix(1),
-          m_lightViewMatrix(1),
-          m_lightProjectionMatrix(1),
-          m_cameraWorldMatrix(1),
-          m_cameraViewMatrix(1),
-          m_cameraProjectionMatrix(1),
+        : BaseRenderContext(sceneRef, configRef),
           m_colorSwapSurface(0)
     {
         m_colorSwapSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 0, 0, 32,
@@ -325,218 +124,13 @@ public:
                                                   0x0000ff00,
                                                   0x000000ff,
                                                   0xff000000);
-        std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
-        std::string extension;
-        while (std::getline(in, extension, ' ')) {
-            m_extensions.insert(extension);
-        }
     }
     ~RenderContext()
     {
-        m_sceneRef = 0;
-        m_configRef = 0;
         SDL_FreeSurface(m_colorSwapSurface);
+        m_colorSwapSurface = 0;
     }
 
-    void allocateUserData(const IModel * /* model */, void *&context) {
-        InternalContext *ctx = new InternalContext();
-        context = ctx;
-    }
-    void releaseUserData(const IModel * /* model */, void *&context) {
-        delete static_cast<InternalContext *>(context);
-        context = 0;
-    }
-    bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
-        bool mipmap = flags & IRenderContext::kGenerateTextureMipmap;
-        bool isToon = flags & IRenderContext::kToonTexture;
-        bool ret = false;
-        InternalTexture t(&texture, mipmap, isToon);
-        if (flags & IRenderContext::kTexture2D) {
-            const UnicodeString &path = createPath(dir, name);
-            std::cerr << "texture: " << String::toStdString(path) << std::endl;
-            ret = uploadTextureInternal(path, t, context);
-        }
-        else if (isToon) {
-            if (dir) {
-                const UnicodeString &path = createPath(dir, name);
-                std::cerr << "toon: " << String::toStdString(path) << std::endl;
-                ret = uploadTextureInternal(path, t, context);
-            }
-            if (!t.ok) {
-                String s((*m_configRef)["dir.system.toon"]);
-                const UnicodeString &path = createPath(&s, name);
-                std::cerr << "system: " << String::toStdString(path) << std::endl;
-                t.isSystem = true;
-                ret = uploadTextureInternal(path, t, context);
-            }
-        }
-        return ret;
-    }
-    void getMatrix(float value[], const IModel *model, int flags) const {
-        glm::mat4x4 m(1);
-        if (flags & IRenderContext::kShadowMatrix) {
-            if (flags & IRenderContext::kProjectionMatrix)
-                m *= m_cameraProjectionMatrix;
-            if (flags & IRenderContext::kViewMatrix)
-                m *= m_cameraViewMatrix;
-            if (flags & IRenderContext::kWorldMatrix) {
-                static const Vector3 plane(0.0f, 1.0f, 0.0f);
-                const ILight *light = m_sceneRef->light();
-                const Vector3 &direction = light->direction();
-                const Scalar dot = plane.dot(-direction);
-                float matrix[16];
-                for (int i = 0; i < 4; i++) {
-                    int offset = i * 4;
-                    for (int j = 0; j < 4; j++) {
-                        int index = offset + j;
-                        matrix[index] = plane[i] * direction[j];
-                        if (i == j)
-                            matrix[index] += dot;
-                    }
-                }
-                m *= glm::make_mat4x4(matrix);
-                m *= m_cameraWorldMatrix;
-                m = glm::scale(m, glm::vec3(model->scaleFactor()));
-            }
-        }
-        else if (flags & IRenderContext::kCameraMatrix) {
-            if (flags & IRenderContext::kProjectionMatrix)
-                m *= m_cameraProjectionMatrix;
-            if (flags & IRenderContext::kViewMatrix)
-                m *= m_cameraViewMatrix;
-            if (flags & IRenderContext::kWorldMatrix) {
-                const IBone *bone = model->parentBone();
-                Transform transform;
-                transform.setOrigin(model->worldPosition());
-                transform.setRotation(model->worldRotation());
-                Scalar matrix[16];
-                transform.getOpenGLMatrix(matrix);
-                m *= glm::make_mat4x4(matrix);
-                if (bone) {
-                    transform = bone->worldTransform();
-                    transform.getOpenGLMatrix(matrix);
-                    m *= glm::make_mat4x4(matrix);
-                }
-                m *= m_cameraWorldMatrix;
-                m = glm::scale(m, glm::vec3(model->scaleFactor()));
-            }
-        }
-        else if (flags & IRenderContext::kLightMatrix) {
-            if (flags & IRenderContext::kWorldMatrix) {
-                m *= m_lightWorldMatrix;
-                m = glm::scale(m, glm::vec3(model->scaleFactor()));
-            }
-            if (flags & IRenderContext::kProjectionMatrix)
-                m *= m_lightProjectionMatrix;
-            if (flags & IRenderContext::kViewMatrix)
-                m *= m_lightViewMatrix;
-        }
-        if (flags & IRenderContext::kInverseMatrix)
-            m = glm::inverse(m);
-        if (flags & IRenderContext::kTransposeMatrix)
-            m = glm::transpose(m);
-        memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
-    }
-    void log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) {
-        char buf[1024];
-        vsnprintf(buf, sizeof(buf), format, ap);
-        std::cerr << buf << std::endl;
-    }
-    IString *loadShaderSource(ShaderType type, const IModel *model, const IString * /* dir */, void * /* context */) {
-        std::string file;
-        switch (model->type()) {
-        case IModel::kAsset:
-            file += "asset/";
-            break;
-        case IModel::kPMD:
-            file += "pmd/";
-            break;
-        case IModel::kPMX:
-            file += "pmx/";
-            break;
-        default:
-            break;
-        }
-        switch (type) {
-        case kEdgeVertexShader:
-            file += "edge.vsh";
-            break;
-        case kEdgeFragmentShader:
-            file += "edge.fsh";
-            break;
-        case kModelVertexShader:
-            file += "model.vsh";
-            break;
-        case kModelFragmentShader:
-            file += "model.fsh";
-            break;
-        case kShadowVertexShader:
-            file += "shadow.vsh";
-            break;
-        case kShadowFragmentShader:
-            file += "shadow.fsh";
-            break;
-        case kZPlotVertexShader:
-            file += "zplot.vsh";
-            break;
-        case kZPlotFragmentShader:
-            file += "zplot.fsh";
-            break;
-        case kEdgeWithSkinningVertexShader:
-            file += "skinning/edge.vsh";
-            break;
-        case kModelWithSkinningVertexShader:
-            file += "skinning/model.vsh";
-            break;
-        case kShadowWithSkinningVertexShader:
-            file += "skinning/shadow.vsh";
-            break;
-        case kZPlotWithSkinningVertexShader:
-            file += "skinning/zplot.vsh";
-            break;
-        case kModelEffectTechniques:
-        case kMaxShaderType:
-        default:
-            break;
-        }
-        UnicodeString path = (*m_configRef)["dir.system.shaders"];
-        path.append("/");
-        path.append(UnicodeString::fromUTF8(file));
-        std::string bytes;
-        if (UILoadFile(path, bytes)) {
-            return new(std::nothrow) String(UnicodeString::fromUTF8("#version 120\n" + bytes));
-        }
-        else {
-            return 0;
-        }
-    }
-    IString *loadKernelSource(KernelType type, void * /* context */) {
-        std::string file;
-        switch (type) {
-        case kModelSkinningKernel:
-            file += "skinning.cl";
-            break;
-        default:
-            break;
-        }
-        UnicodeString path = (*m_configRef)["dir.system.kernels"];
-        path.append("/");
-        path.append(UnicodeString::fromUTF8(file));
-        std::string bytes;
-        if (UILoadFile(path, bytes)) {
-            return new(std::nothrow) String(UnicodeString::fromUTF8(bytes));
-        }
-        else {
-            return 0;
-        }
-    }
-    IString *toUnicode(const uint8_t *str) const {
-        const char *s = reinterpret_cast<const char *>(str);
-        return new(std::nothrow) String(UnicodeString(s, strlen(s), "shift_jis"));
-    }
-    bool hasExtension(const void *namePtr) const {
-        return m_extensions.find(static_cast<const char *>(namePtr)) != m_extensions.end();
-    }
     void *findProcedureAddress(const void **candidatesPtr) const {
         const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
         const char *candidate = candidates[0];
@@ -550,61 +144,23 @@ public:
         }
         return 0;
     }
-    void startProfileSession(ProfileType /* type */, const void * /* arg */) {
-        // TODO: implement here
-    }
-    void stopProfileSession(ProfileType /* type */, const void * /* arg */) {
-        // TODO: implement here
-    }
-
-    IString *loadShaderSource(ShaderType /* type */, const IString * /* path */) {
-        return 0;
-    }
-    void getToonColor(const IString * /* name */, const IString * /* dir */, Color & /* value */, void * /* context */) {
-    }
-    void getViewport(Vector3 & /* value */) const {
-    }
-    void getMousePosition(Vector4 & /* value */, MousePositionType /* type */) const {
-    }
-    void getTime(float & /* value */, bool /* sync */) const {
-    }
-    void getElapsed(float & /* value */, bool /* sync */) const {
-    }
-    void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
-    }
-    IModel *findModel(const IString * /* name */) const {
-        return 0;
-    }
-    IModel *effectOwner(const IEffect * /* effect */) const {
-        return 0;
-    }
-    void setRenderColorTargets(const void * /* targets */, const int /* ntargets */) {
-    }
-    void bindRenderColorTarget(void * /* texture */, size_t /* width */, size_t /* height */, int /* index */, bool /* enableAA */) {
-    }
-    void releaseRenderColorTarget(void * /* texture */, size_t /* width */, size_t /* height */, int /* index */, bool /* enableAA */) {
-    }
-    void bindRenderDepthStencilTarget(void * /* texture */, void * /* depth */, void * /* stencil */, size_t /* width */, size_t /* height */, bool /* enableAA */) {
-    }
-    void releaseRenderDepthStencilTarget(void * /* texture */, void * /* depth */, void * /* stencil */, size_t /* width */, size_t /* height */, bool /* enableAA */) {
-    }
-
-    void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
-        m_cameraWorldMatrix = world;
-        m_cameraViewMatrix = view;
-        m_cameraProjectionMatrix = projection;
+    bool loadFile(const UnicodeString &path, std::string &bytes) {
+        FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
+        bool ret = false;
+        if (fp) {
+            ::fseek(fp, 0, SEEK_END);
+            size_t size = ::ftell(fp);
+            ::fseek(fp, 0, SEEK_SET);
+            std::vector<char> data(size);
+            ::fread(&data[0], size, 1, fp);
+            bytes.assign(data.begin(), data.end());
+            ::fclose(fp);
+            ret = true;
+        }
+        return ret;
     }
 
 private:
-    static const UnicodeString createPath(const IString *dir, const UnicodeString &name) {
-        UnicodeString n = name;
-        return static_cast<const String *>(dir)->value() + "/" + n.findAndReplace('\\', '/');
-    }
-    static const UnicodeString createPath(const IString *dir, const IString *name) {
-        const UnicodeString &d = static_cast<const String *>(dir)->value();
-        UnicodeString n = static_cast<const String *>(name)->value();
-        return d + "/" + n.findAndReplace('\\', '/');
-    }
     bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) {
         InternalContext *internalContext = static_cast<InternalContext *>(context);
         /* テクスチャのキャッシュを検索する */
@@ -612,7 +168,7 @@ private:
             return true;
         }
         std::string bytes;
-        if (!UILoadFile(path, bytes)) {
+        if (!loadFile(path, bytes)) {
             texture.ok = false;
             return true;
         }
@@ -699,16 +255,7 @@ private:
         return ok;
     }
 
-    Scene *m_sceneRef;
-    UIStringMap *m_configRef;
-    glm::mat4x4 m_lightWorldMatrix;
-    glm::mat4x4 m_lightViewMatrix;
-    glm::mat4x4 m_lightProjectionMatrix;
-    glm::mat4x4 m_cameraWorldMatrix;
-    glm::mat4x4 m_cameraViewMatrix;
-    glm::mat4x4 m_cameraProjectionMatrix;
     SDL_Surface *m_colorSwapSurface;
-    std::set<std::string> m_extensions;
 };
 
 } /* namespace sdl */
