@@ -38,6 +38,7 @@
 
 #ifndef VPVL2_GL_INTERNAL_ENGINECOMMON_H_
 #define VPVL2_GL_INTERNAL_ENGINECOMMON_H_
+
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderContext.h>
 
@@ -51,13 +52,13 @@
 #include <GLES2/gl2.h>
 #elif defined(VPVL2_BUILD_IOS)
 #include <OpenGLES/ES2/gl.h>
+#elif defined(VPVL2_LINK_GLEW)
+#include <GL/glew.h>
 #else
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/CGLCurrent.h>
-#elif defined(VPVL2_LINK_GLEW)
-#include <GL/glew.h>
 #else
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -69,8 +70,6 @@ namespace vpvl2
 namespace gl2
 {
 
-const GLsizei kShadowMappingTextureWidth = 1024;
-const GLsizei kShadowMappingTextureHeight = 1024;
 const GLuint kAddressNotFound = GLuint(-1);
 
 class BaseShaderProgram

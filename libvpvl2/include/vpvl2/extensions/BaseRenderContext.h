@@ -34,6 +34,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#ifndef VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
+#define VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
+
 /* libvpvl2 */
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderContext.h>
@@ -43,6 +46,7 @@
 #ifdef VPVL2_LINK_GLEW
 #include <GL/glew.h>
 #elif defined(__APPLE__)
+#include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #endif /* VPVL2_LINK_GLEW */
@@ -503,6 +507,35 @@ protected:
         UnicodeString n = static_cast<const String *>(name)->value();
         return d + "/" + n.findAndReplace('\\', '/');
     }
+    GLuint createTexture(const void *ptr, size_t width, size_t height, bool mipmap) const {
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA,
+                     GL_UNSIGNED_INT_8_8_8_8_REV, ptr);
+        if (mipmap) {
+            const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
+            typedef void (*glGenerateMipmapProcPtr)(GLuint);
+            if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
+                glGenerateMipmapProcPtrRef(GL_TEXTURE_2D);
+        }
+        glBindTexture(GL_TEXTURE_2D, 0);
+#else
+        GLuint internal = GL_RGBA, format = GL_BGRA;
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format,
+                     GL_UNSIGNED_INT_8_8_8_8_REV, surface->pixels);
+        glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+        return textureID;
+    }
     virtual bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) = 0;
 
     Scene *m_sceneRef;
@@ -519,3 +552,4 @@ protected:
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
+#endif /* VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_ */

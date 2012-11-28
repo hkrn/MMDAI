@@ -53,6 +53,7 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/String.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/Encoding.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/sdl/RenderContext.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/sfml/RenderContext.h
 )
 set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/util.h
@@ -126,6 +127,7 @@ option(VPVL2_LINK_GLEW "link against GLEW (enabling VPVL2_OPENGL_RENDERER is req
 option(VPVL2_LINK_NVTT "link against NVIDIA Texture Tools a.k.a nvtt (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
 option(VPVL2_LINK_VPVL "link against libvpvl (default is ON)" ON)
 option(VPVL2_LINK_INTEL_TBB "link against Intel Threading Building Blocks (default is OFF)" OFF)
+option(VPVL2_LINK_SFML "Enable linking against SFML 2.0 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
 
 if(BUILD_SHARED_LIBS)
   set(VPVL2_LIB_TYPE SHARED)
@@ -365,15 +367,36 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2))
     endif()
   endif()
   find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../glm-src)
-  set(vpvl2_sdl_sources render/sdl/main.cc)
-  add_executable(vpvl2_sdl ${vpvl2_sdl_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
-  target_link_libraries(vpvl2_sdl vpvl2 ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
   include_directories(${GLM_INCLUDE_DIR})
+  set(vpvl2_sdl_sources render/sdl/main.cc)
+  add_executable(vpvl2_sdl ${vpvl2_sdl_sources} ${vpvl2_public_headers})
+  target_link_libraries(vpvl2_sdl vpvl2 ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
   link_assimp(vpvl2_sdl)
   link_bullet(vpvl2_sdl)
   link_glew(vpvl2_sdl)
   link_icu_or_iconv(vpvl2_sdl)
   link_nvtt(vpvl2_sdl)
+elseif(VPVL2_OPENGL_RENDERER AND VPVL2_LINK_SFML)
+  find_sfml()
+  find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../glm-src)
+  include_directories(${GLM_INCLUDE_DIR})
+  set(vpvl2_sfml_sources render/sfml/main.cc)
+  add_executable(vpvl2_sfml ${vpvl2_sfml_sources} ${vpvl2_public_headers})
+  target_link_libraries(vpvl2_sfml vpvl2 ${SFML_GRAPHICS_LIBRARY}
+                                         ${SFML_WINDOW_LIBRARY}
+                                         ${SFML_SYSTEM_LIBRARY}
+                                         ${OPENGL_gl_LIBRARY})
+  link_assimp(vpvl2_sfml)
+  link_bullet(vpvl2_sfml)
+  link_glew(vpvl2_sfml)
+  link_icu_or_iconv(vpvl2_sfml)
+  link_nvtt(vpvl2_sfml)
+  if(APPLE AND NOT VPVL2_LINK_GLEW)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+    find_path(COREFOUNDATION_INCLUDE_PATH CoreFoundation/CoreFoundation.h)
+    target_link_libraries(vpvl2_sfml ${COREFOUNDATION_FRAMEWORK})
+    include_directories(${COREFOUNDATION_INCLUDE_PATH})
+  endif()
 endif()
 
 # generate configuration

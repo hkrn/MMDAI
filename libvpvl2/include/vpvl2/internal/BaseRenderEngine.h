@@ -56,7 +56,7 @@
 #elif defined(VPVL2_BUILD_IOS)
   #include <OpenGLES/ES2/gl.h>
   #include <OpenGLES/ES2/glext.h>
-#else /* VPVL2_ENABLE_GLES2 */
+#elif !defined(VPVL2_LINK_GLEW) /* VPVL2_ENABLE_GLES2 */
   #ifdef __APPLE__
     #include <OpenGL/gl.h>
     #include <OpenGL/glext.h>
@@ -92,6 +92,18 @@ public:
 
 protected:
     void initializeExtensions() {
+#ifdef VPVL2_LINK_GLEW
+        static bool g_initialized = false;
+        if (!g_initialized) {
+            glewInit();
+            g_initialized = true;
+        }
+        glBindVertexArrayProcPtrRef = glBindVertexArray;
+        glDeleteVertexArraysProcPtrRef = glDeleteVertexArrays;
+        glGenVertexArraysProcPtrRef = glGenVertexArrays;
+        glMapBufferProcPtrRef = glMapBuffer;
+        glUnmapBufferProcPtrRef = glUnmapBuffer;
+#else /* VPVL2_LINK_GLEW */
         /* TODO: finding extension process */
 #ifdef __APPLE__
         static const char *kBindVertexArray[] = {
@@ -109,7 +121,7 @@ protected:
             "glGenVertexArraysOES",
             0
         };
-#else
+#else /* __APPLE__ */
         static const char *kBindVertexArray[] = {
             "glBindVertexArray",
             "glBindVertexArrayOES",
@@ -128,7 +140,7 @@ protected:
             "glGenVertexArraysOES",
             0
         };
-#endif
+#endif /* __APPLE__ */
         static const char *kMapBuffer[] = {
             "glMapBuffer",
             "glMapBufferOES",
@@ -151,6 +163,7 @@ protected:
                     m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kMapBuffer)));
         glUnmapBufferProcPtrRef = reinterpret_cast<glUnmapBufferProcPtr>(
                     m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kUnmapBuffer)));
+#endif /* VPVL2_LINK_GLEW */
     }
     inline void allocateVertexArrayObjects(GLuint *vao, size_t size) {
         if (glGenVertexArraysProcPtrRef) {

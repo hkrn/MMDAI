@@ -34,51 +34,47 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
-#define VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
+#ifndef VPVL2_EXTENSIONS_SFML_RENDERCONTEXT_H_
+#define VPVL2_EXTENSIONS_SFML_RENDERCONTEXT_H_
 
 /* libvpvl2 */
 #include <vpvl2/extensions/BaseRenderContext.h>
 
-/* SDL */
-#include <SDL.h>
-#include <SDL_image.h>
-#ifndef VPVL2_LINK_GLEW
-#include <SDL_opengl.h>
-#endif /* VPVL2_LINK_GLEW */
+/* SFML */
+#include <SFML/System.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 #ifdef VPVL2_LINK_NVTT
 namespace {
 
 class ReadonlyMemoryStream : public nv::Stream {
 public:
-    ReadonlyMemoryStream(SDL_RWops *buffer)
+    ReadonlyMemoryStream(const std::string &buffer)
         : m_buffer(buffer),
-          m_size(0)
+          m_size(buffer.size())
     {
-        size_t pos = tell();
-        SDL_RWseek(m_buffer, 0, RW_SEEK_END);
-        m_size = tell();
-        seek(pos);
     }
     ~ReadonlyMemoryStream() {
-        m_buffer = 0;
         m_size = 0;
     }
 
     bool isSaving() const { return false; }
     bool isError() const { return false; }
-    void seek(uint pos) { SDL_RWseek(m_buffer, pos, RW_SEEK_SET); }
-    uint tell() const { return SDL_RWtell(m_buffer); }
+    void seek(uint pos) { m_buffer.seekg(pos, std::ios_base::beg); }
+    uint tell() const { return uint(m_buffer.tellg()); }
     uint size() const { return m_size; }
     void clearError() {}
     bool isAtEnd() const { return tell() == m_size; }
     bool isSeekable() const { return true; }
     bool isLoading() const { return true; }
-    uint serialize(void *data, uint len) { return SDL_RWread(m_buffer, data, len, 1); }
+    uint serialize(void *data, uint len) {
+        m_buffer.read(static_cast<char *>(data), len);
+        return len;
+    }
 
 private:
-    SDL_RWops *m_buffer;
+    mutable std::istringstream m_buffer;
     size_t m_size;
 };
 
@@ -112,39 +108,21 @@ namespace vpvl2
 {
 namespace extensions
 {
-namespace sdl
+namespace sfml
 {
 using namespace icu;
 
 class RenderContext : public BaseRenderContext {
 public:
     RenderContext(Scene *sceneRef, UIStringMap *configRef)
-        : BaseRenderContext(sceneRef, configRef),
-          m_colorSwapSurface(0)
+        : BaseRenderContext(sceneRef, configRef)
     {
-        m_colorSwapSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 0, 0, 32,
-                                                  0x00ff0000,
-                                                  0x0000ff00,
-                                                  0x000000ff,
-                                                  0xff000000);
     }
     ~RenderContext()
     {
-        SDL_FreeSurface(m_colorSwapSurface);
-        m_colorSwapSurface = 0;
     }
 
-    void *findProcedureAddress(const void **candidatesPtr) const {
-        const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
-        const char *candidate = candidates[0];
-        int i = 0;
-        while (candidate) {
-            void *address = SDL_GL_GetProcAddress(candidate);
-            if (address) {
-                return address;
-            }
-            candidate = candidates[++i];
-        }
+    void *findProcedureAddress(const void ** /* candidatesPtr */) const {
         return 0;
     }
     bool loadFile(const UnicodeString &path, std::string &bytes) {
@@ -165,66 +143,42 @@ public:
 
 private:
     bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) {
+        if (path[path.length() - 1] == '/') {
+            return true;
+        }
         InternalContext *internalContext = static_cast<InternalContext *>(context);
-        /* テクスチャのキャッシュを検索する */
         if (internalContext && internalContext->findTextureCache(path, texture)) {
             return true;
         }
-        std::string bytes;
-        if (!loadFile(path, bytes)) {
-            texture.ok = false;
-            return true;
-        }
-        SDL_Surface *surface = 0;
-        SDL_RWops *source = SDL_RWFromConstMem(bytes.data(), bytes.length());
-        const UnicodeString &lowerPath = path.tempSubString().toLower();
-        char extension[4] = { 0 };
-        if (lowerPath.endsWith(".sph") || lowerPath.endsWith(".spa")) {
-            memcpy(extension, "BMP" ,sizeof(extension));
-        }
-        else if (lowerPath.endsWith(".tga")) {
-            memcpy(extension, "TGA" ,sizeof(extension));
-        }
-        else if (lowerPath.endsWith(".png") && IMG_isPNG(source)) {
-            memcpy(extension, "PNG" ,sizeof(extension));
-        }
-        else if (lowerPath.endsWith(".bmp") && IMG_isBMP(source)) {
-            memcpy(extension, "BMP" ,sizeof(extension));
-        }
-        else if (lowerPath.endsWith(".jpg") && IMG_isJPG(source)) {
-            memcpy(extension, "JPG" ,sizeof(extension));
-        }
-        if (*extension) {
-            surface = IMG_LoadTyped_RW(source, 0, extension);
-            surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
-        }
+        sf::Image image;
+        size_t width = 0, height = 0;
+        GLuint textureID = 0;
+        if (!image.loadFromFile(String::toStdString(path))) {
 #ifdef VPVL2_LINK_NVTT
-        else if (lowerPath.endsWith(".dds")) {
             nv::DirectDrawSurface dds;
-            if (dds.load(new ReadonlyMemoryStream(source))) {
-                nv::Image *nvimage = new nv::Image();
-                dds.mipmap(nvimage, 0, 0);
-                surface = SDL_CreateRGBSurfaceFrom(nvimage->pixels(),
-                                                   nvimage->width(),
-                                                   nvimage->height(),
-                                                   32,
-                                                   nvimage->width() * 4,
-                                                   0x00ff0000,
-                                                   0x0000ff00,
-                                                   0x000000ff,
-                                                   0xff000000);
-                surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
-            }
-        }
+            std::string bytes;
+            if (!loadFile(path, bytes) || !dds.load(new ReadonlyMemoryStream(bytes)))
+                return false;
+            nv::Image *nvimage = new nv::Image();
+            dds.mipmap(nvimage, 0, 0);
+            width = nvimage->width();
+            height = nvimage->height();
+            textureID = createTexture(nvimage->pixels(), width, height, texture.mipmap);
+#else
+            return false;
 #endif
-        SDL_FreeRW(source);
-        if (!surface) {
-            texture.ok = false;
-            return true;
         }
-        size_t width = surface->w, height = surface->h;
-        GLuint textureID = createTexture(surface->pixels, width, height, texture.mipmap);
-        SDL_FreeSurface(surface);
+        else {
+            const sf::Vector2u &size = image.getSize();
+            width = size.x;
+            height = size.y;
+            glGenTextures(1, &textureID);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
         TextureCache cache(width, height, textureID);
         texture.assign(cache);
         if (internalContext)
@@ -233,11 +187,10 @@ private:
         return ok;
     }
 
-    SDL_Surface *m_colorSwapSurface;
 };
 
 } /* namespace sdl */
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
-#endif /* VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_ */
+#endif /* VPVL2_EXTENSIONS_SFML_RENDERCONTEXT_H_ */

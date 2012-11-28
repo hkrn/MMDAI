@@ -82,6 +82,9 @@
 /* Link libvpvl2 against Intel Threading Building Blocks */
 #cmakedefine VPVL2_LINK_INTEL_TBB
 
+/* Link libvpvl2 against SFML */
+#cmakedefine VPVL2_LINK_SFML
+
 /* Platform is NativeClient PPAPI */
 #cmakedefine VPVL2_PLATFORM_NACL
 
