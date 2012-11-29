@@ -153,38 +153,38 @@ private:
         sf::Image image;
         size_t width = 0, height = 0;
         GLuint textureID = 0;
-        if (!image.loadFromFile(String::toStdString(path))) {
+        if (path.endsWith(".dds")) {
 #ifdef VPVL2_LINK_NVTT
             nv::DirectDrawSurface dds;
             std::string bytes;
             if (!loadFile(path, bytes) || !dds.load(new ReadonlyMemoryStream(bytes)))
                 return false;
-            nv::Image *nvimage = new nv::Image();
-            dds.mipmap(nvimage, 0, 0);
-            width = nvimage->width();
-            height = nvimage->height();
-            textureID = createTexture(nvimage->pixels(), width, height, texture.mipmap);
+            nv::Image nvimage;
+            dds.mipmap(&nvimage, 0, 0);
+            width = nvimage.width();
+            height = nvimage.height();
+            textureID = createTexture(nvimage.pixels(), width, height,
+                                      GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, false);
 #else
             return false;
 #endif
         }
-        else {
+        else if (image.loadFromFile(String::toStdString(path))) {
             const sf::Vector2u &size = image.getSize();
             width = size.x;
             height = size.y;
-            glGenTextures(1, &textureID);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.getPixelsPtr());
-            glBindTexture(GL_TEXTURE_2D, 0);
+            textureID = createTexture(image.getPixelsPtr(), width, height,
+                                      GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, false);
         }
-        TextureCache cache(width, height, textureID);
-        texture.assign(cache);
-        if (internalContext)
-            internalContext->addTextureCache(path, cache);
-        bool ok = texture.ok = textureID != 0;
-        return ok;
+        bool ok = true;
+        if (textureID) {
+            TextureCache cache(width, height, textureID);
+            texture.assign(cache);
+            if (internalContext)
+                internalContext->addTextureCache(path, cache);
+            ok = texture.ok = textureID != 0;
+        }
+        return true;
     }
 
 };

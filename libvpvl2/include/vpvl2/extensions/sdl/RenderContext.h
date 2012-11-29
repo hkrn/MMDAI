@@ -202,13 +202,13 @@ private:
         else if (lowerPath.endsWith(".dds")) {
             nv::DirectDrawSurface dds;
             if (dds.load(new ReadonlyMemoryStream(source))) {
-                nv::Image *nvimage = new nv::Image();
-                dds.mipmap(nvimage, 0, 0);
-                surface = SDL_CreateRGBSurfaceFrom(nvimage->pixels(),
-                                                   nvimage->width(),
-                                                   nvimage->height(),
+                nv::Image image;
+                dds.mipmap(&image, 0, 0);
+                surface = SDL_CreateRGBSurfaceFrom(image.pixels(),
+                                                   image.width(),
+                                                   image.height(),
                                                    32,
-                                                   nvimage->width() * 4,
+                                                   image.width() * 4,
                                                    0x00ff0000,
                                                    0x0000ff00,
                                                    0x000000ff,
@@ -223,7 +223,8 @@ private:
             return true;
         }
         size_t width = surface->w, height = surface->h;
-        GLuint textureID = createTexture(surface->pixels, width, height, texture.mipmap);
+        GLuint textureID = createTexture(surface->pixels, width, height, GL_BGRA,
+                                         GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, true);
         SDL_FreeSurface(surface);
         TextureCache cache(width, height, textureID);
         texture.assign(cache);

@@ -507,33 +507,33 @@ protected:
         UnicodeString n = static_cast<const String *>(name)->value();
         return d + "/" + n.findAndReplace('\\', '/');
     }
-    GLuint createTexture(const void *ptr, size_t width, size_t height, bool mipmap) const {
+    void generateMipmap() const {
+#ifdef VPVL2_LINK_GLEW
+        if (glewIsSupported("glGenerateMipmap"))
+            glGenerateMipmap(GL_TEXTURE_2D);
+#else
+        const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
+        typedef void (*glGenerateMipmapProcPtr)(GLuint);
+        if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
+            glGenerateMipmapProcPtrRef(GL_TEXTURE_2D);
+#endif
+    }
+    GLuint createTexture(const void *ptr, size_t width, size_t height, GLenum format, GLenum type, bool mipmap, bool canOptimize) const {
         GLuint textureID;
         glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 #if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA,
-                     GL_UNSIGNED_INT_8_8_8_8_REV, ptr);
-        if (mipmap) {
-            const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
-            typedef void (*glGenerateMipmapProcPtr)(GLuint);
-            if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
-                glGenerateMipmapProcPtrRef(GL_TEXTURE_2D);
+        if (canOptimize) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+            glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         }
-        glBindTexture(GL_TEXTURE_2D, 0);
-#else
-        GLuint internal = GL_RGBA, format = GL_BGRA;
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format,
-                     GL_UNSIGNED_INT_8_8_8_8_REV, surface->pixels);
-        glBindTexture(GL_TEXTURE_2D, 0);
 #endif
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, type, ptr);
+        if (mipmap)
+            generateMipmap();
+        glBindTexture(GL_TEXTURE_2D, 0);
         return textureID;
     }
     virtual bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) = 0;
