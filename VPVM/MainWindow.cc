@@ -1451,12 +1451,7 @@ void MainWindow::bindSceneLoader()
     else if (loader->isVertexShaderSkinningType1Enabled()) {
         m_actionSetVertexShaderSkinningType1->setChecked(true);
     }
-    else if (Scene::isAcceleratorSupported()) {
-        m_actionSetOpenCLSkinningType2->setChecked(true);
-    }
-    else {
-        m_actionSetSoftwareSkinningFallback->setChecked(true);
-    }
+    m_actionSetSoftwareSkinningFallback->setChecked(true);
     /*
      * 空のカメラモーションを登録
      * アクセラレーションの設定の後にやるのは setDirtyFalse の後に アクセラレーションの設定変更によって

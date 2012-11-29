@@ -82,6 +82,7 @@ LIBS += -lassimp \
         -lnvimage \
         -lnvmath \
         -lnvcore \
+        -ltbb \
         -lxml2
 
 macx:LIBS += -framework OpenCL \
