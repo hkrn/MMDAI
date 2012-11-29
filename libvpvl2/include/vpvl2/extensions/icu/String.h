@@ -90,13 +90,13 @@ public:
     }
 
     bool startsWith(const IString *value) const {
-        return m_value.startsWith(static_cast<const String *>(value)->value());
+        return m_value.startsWith(static_cast<const String *>(value)->value()) == TRUE;
     }
     bool contains(const IString *value) const {
         return m_value.indexOf(static_cast<const String *>(value)->value()) != -1;
     }
     bool endsWith(const IString *value) const {
-        return m_value.endsWith(static_cast<const String *>(value)->value());
+        return m_value.endsWith(static_cast<const String *>(value)->value()) == TRUE;
     }
     void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const {
         tokens.clear();
@@ -124,7 +124,7 @@ public:
         return HashString(reinterpret_cast<const char *>(m_bytes));
     }
     bool equals(const IString *value) const {
-        return m_value == static_cast<const String *>(value)->value();
+        return (m_value == static_cast<const String *>(value)->value()) == TRUE;
     }
     UnicodeString value() const {
         return m_value;

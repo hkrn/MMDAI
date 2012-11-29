@@ -161,6 +161,7 @@ function(find_sfml)
     find_library(SFML_SYSTEM_LIBRARY sfml-system REQUIRED)
     find_library(SFML_WINDOW_LIBRARY sfml-window REQUIRED)
     find_path(SFML_INCLUDE_DIR SFML/System.h REQUIRED)
+    include_directories(${SFML_INCLUDE_DIR})
   endif()
 endfunction()
 

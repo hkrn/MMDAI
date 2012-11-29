@@ -577,7 +577,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
                     }
                 }
                 else if (morph && parameterType == CG_FLOAT) {
-                    cgSetParameter1f(parameter, morph->weight());
+                    cgSetParameter1f(parameter, float(morph->weight()));
                 }
             }
             else {

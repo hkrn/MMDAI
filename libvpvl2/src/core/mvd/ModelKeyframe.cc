@@ -141,7 +141,7 @@ void ModelKeyframe::write(uint8_t *data) const
     chunk.edgeWidth = edgeWidth();
     const Color &ec = edgeColor();
     for (int i = 0; i < 4; i++)
-        chunk.edgeColor[i] = ec[i];
+        chunk.edgeColor[i] = uint8_t(ec[i] * 255);
     internal::zerofill(chunk.reserved, sizeof(chunk.reserved));
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
     for (int i = 0; i < m_countOfIKBones; i++) {

@@ -64,7 +64,9 @@
     #include <OpenGL/CGLCurrent.h>
   #else /* __APPLE__ */
     #include <GL/gl.h>
+#ifndef _MSC_VER
     #include <GL/glext.h>
+#endif
   #endif /* __APPLE__ */
 #endif /* VPVL2_ENABLE_GLES2 */
 
@@ -99,11 +101,11 @@ protected:
             glewInit();
             g_initialized = true;
         }
-        glBindVertexArrayProcPtrRef = glBindVertexArray;
-        glDeleteVertexArraysProcPtrRef = glDeleteVertexArrays;
-        glGenVertexArraysProcPtrRef = glGenVertexArrays;
-        glMapBufferProcPtrRef = glMapBuffer;
-        glUnmapBufferProcPtrRef = glUnmapBuffer;
+        glBindVertexArrayProcPtrRef = reinterpret_cast<glBindVertexArrayProcPtr>(glBindVertexArray);
+        glDeleteVertexArraysProcPtrRef = reinterpret_cast<glDeleteVertexArraysProcPtr>(glDeleteVertexArrays);
+        glGenVertexArraysProcPtrRef = reinterpret_cast<glGenVertexArraysProcPtr>(glGenVertexArrays);
+        glMapBufferProcPtrRef = reinterpret_cast<glMapBufferProcPtr>(glMapBuffer);
+        glUnmapBufferProcPtrRef = reinterpret_cast<glUnmapBufferProcPtr>(glUnmapBuffer);
 #else /* VPVL2_LINK_GLEW */
         /* TODO: finding extension process */
 #ifdef __APPLE__

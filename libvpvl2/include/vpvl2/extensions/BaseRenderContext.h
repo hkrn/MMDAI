@@ -148,7 +148,7 @@ public:
     void setPreferredFPS(const vpvl2::Scalar &value) {
         m_motionFPS = value;
         m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
-        m_fixedTimeStep = 1.0 / value;
+        m_fixedTimeStep = 1.0f / value;
     }
     void addModel(vpvl2::IModel *value) {
         value->joinWorld(m_world);
@@ -263,8 +263,8 @@ public:
         context = 0;
     }
     bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
-        bool mipmap = flags & IRenderContext::kGenerateTextureMipmap;
-        bool isToon = flags & IRenderContext::kToonTexture;
+        bool mipmap = (flags & IRenderContext::kGenerateTextureMipmap) == kGenerateTextureMipmap;
+        bool isToon = (flags & IRenderContext::kToonTexture) == kToonTexture;
         bool ret = false;
         InternalTexture t(&texture, mipmap, isToon);
         if (flags & IRenderContext::kTexture2D) {

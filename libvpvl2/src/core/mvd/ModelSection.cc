@@ -97,7 +97,7 @@ public:
                 else {
                     const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     modelRef->setEdgeColor(edgeColorFrom.lerp(edgeColorFrom, Scalar(w)));
-                    modelRef->setEdgeWidth(internal::lerp(edgeWidthFrom, edgeWidthTo, w));
+                    modelRef->setEdgeWidth(Scalar(internal::lerp(edgeWidthFrom, edgeWidthTo, w)));
                     keyframe = keyframeFrom;
                 }
             }
