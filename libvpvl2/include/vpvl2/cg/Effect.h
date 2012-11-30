@@ -40,6 +40,7 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
+#include "vpvl2/IRenderContext.h"
 
 #if defined(VPVL2_LINK_GLEW)
 #include <GL/glew.h>
@@ -61,16 +62,18 @@ public:
         return cgIsAnnotation(name) && cgIsAnnotation(widget);
     }
 
-    Effect(CGcontext context, CGeffect effect)
+    Effect(IRenderContext *renderContext, CGcontext context, CGeffect effect)
         : m_contextRef(context),
           m_effect(effect),
-          m_parentEffectRef(0)
+          m_parentEffectRef(0),
+          m_parentFrameBufferObject(renderContext->createFrameBufferObject())
     {
     }
     ~Effect() {
         cgDestroyEffect(m_effect);
         m_contextRef = 0;
         m_parentEffectRef = 0;
+        m_parentFrameBufferObject = 0;
     }
 
     void addOffscreenRenderTarget(CGparameter texture, CGparameter sampler, size_t width, size_t height) {
@@ -95,6 +98,7 @@ public:
     }
     IEffect *parentEffect() const { return m_parentEffectRef; }
     void setParentEffect(IEffect *value) { m_parentEffectRef = value; }
+    FrameBufferObject *parentFrameBufferObject() const { return m_parentFrameBufferObject; }
 
 private:
     CGcontext m_contextRef;
@@ -102,6 +106,7 @@ private:
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<void *> m_interactiveParameters;
     IEffect *m_parentEffectRef;
+    FrameBufferObject *m_parentFrameBufferObject;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };

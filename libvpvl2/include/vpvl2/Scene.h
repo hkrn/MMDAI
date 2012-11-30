@@ -85,11 +85,11 @@ public:
     Scene();
     virtual ~Scene();
 
-    IRenderEngine *createRenderEngine(vpvl2::IRenderContext *delegate, IModel *model, int flags) const;
+    IRenderEngine *createRenderEngine(vpvl2::IRenderContext *renderContext, IModel *model, int flags) const;
     void addModel(IModel *model, IRenderEngine *engine);
     void addMotion(IMotion *motion);
-    IEffect *createEffect(const IString *path, IRenderContext *delegate);
-    IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *delegate);
+    IEffect *createEffect(const IString *path, IRenderContext *renderContext);
+    IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext);
     void deleteModel(vpvl2::IModel *&model);
     void removeMotion(IMotion *motion);
     void advance(const IKeyframe::TimeIndex &delta, int flags);

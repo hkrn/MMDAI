@@ -153,10 +153,7 @@ public:
     IModel *effectOwner(const IEffect *effect) const;
     IModel *findModel(const IString *name) const;
     void setRenderColorTargets(const void *targets, const int ntargets);
-    void bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA);
-    void bindRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
-    void releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA);
-    void releaseRenderDepthStencilTarget(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA);
+    FrameBufferObject *createFrameBufferObject();
 
     void setArchive(Archive *value);
     void setSceneRef(Scene *value);

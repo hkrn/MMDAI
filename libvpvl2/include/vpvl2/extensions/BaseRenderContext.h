@@ -41,6 +41,7 @@
 /* libvpvl2 */
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IRenderContext.h>
+#include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/icu/Encoding.h>
 
 /* GLEW */
@@ -464,9 +465,38 @@ public:
     }
     void getToonColor(const IString * /* name */, const IString * /* dir */, Color & /* value */, void * /* context */) {
     }
-    void getViewport(Vector3 & /* value */) const {
+    void getViewport(Vector3 &value) const {
+        value.setValue(m_viewport.x, m_viewport.y, 0);
     }
-    void getMousePosition(Vector4 & /* value */, MousePositionType /* type */) const {
+    void getMousePosition(Vector4 &value, MousePositionType type) const {
+        switch (type) {
+        case kMouseLeftPressPosition:
+            value.setValue(m_mouseLeftPressPosition.x,
+                           m_mouseLeftPressPosition.y,
+                           m_mouseLeftPressPosition.z,
+                           m_mouseLeftPressPosition.w);
+            break;
+        case kMouseMiddlePressPosition:
+            value.setValue(m_mouseMiddlePressPosition.x,
+                           m_mouseMiddlePressPosition.y,
+                           m_mouseMiddlePressPosition.z,
+                           m_mouseMiddlePressPosition.w);
+            break;
+        case kMouseRightPressPosition:
+            value.setValue(m_mouseRightPressPosition.x,
+                           m_mouseRightPressPosition.y,
+                           m_mouseRightPressPosition.z,
+                           m_mouseRightPressPosition.w);
+            break;
+        case kMouseCursorPosition:
+            value.setValue(m_mouseCursorPosition.x,
+                           m_mouseCursorPosition.y,
+                           m_mouseCursorPosition.z,
+                           m_mouseCursorPosition.w);
+            break;
+        default:
+            break;
+        }
     }
     void getTime(float & /* value */, bool /* sync */) const {
     }
@@ -480,15 +510,10 @@ public:
     IModel *effectOwner(const IEffect * /* effect */) const {
         return 0;
     }
-    void setRenderColorTargets(const void * /* targets */, const int /* ntargets */) {
+    void setRenderColorTargets(const void *targets, const int ntargets) {
     }
-    void bindRenderColorTarget(void * /* texture */, size_t /* width */, size_t /* height */, int /* index */, bool /* enableAA */) {
-    }
-    void releaseRenderColorTarget(void * /* texture */, size_t /* width */, size_t /* height */, int /* index */, bool /* enableAA */) {
-    }
-    void bindRenderDepthStencilTarget(void * /* texture */, void * /* depth */, void * /* stencil */, size_t /* width */, size_t /* height */, bool /* enableAA */) {
-    }
-    void releaseRenderDepthStencilTarget(void * /* texture */, void * /* depth */, void * /* stencil */, size_t /* width */, size_t /* height */, bool /* enableAA */) {
+    FrameBufferObject *createFrameBufferObject() {
+        return new FrameBufferObject(m_viewport.x, m_viewport.y, 4);
     }
 
     void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
@@ -496,6 +521,28 @@ public:
         m_cameraViewMatrix = view;
         m_cameraProjectionMatrix = projection;
     }
+    void setViewport(const glm::vec2 &value) {
+        m_viewport = value;
+    }
+    void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type) {
+        switch (type) {
+        case kMouseLeftPressPosition:
+            m_mouseLeftPressPosition = glm::vec4(value.x, value.y, pressed, 0);
+            break;
+        case kMouseMiddlePressPosition:
+            m_mouseMiddlePressPosition = glm::vec4(value.x, value.y, pressed, 0);
+            break;
+        case kMouseRightPressPosition:
+            m_mouseRightPressPosition = glm::vec4(value.x, value.y, pressed, 0);
+            break;
+        case kMouseCursorPosition:
+            m_mouseCursorPosition = glm::vec4(value.x, value.y, 0, 0);
+            break;
+        default:
+            break;
+        }
+    }
+
     virtual bool loadFile(const UnicodeString &path, std::string &bytes) = 0;
 
 protected:
@@ -547,6 +594,11 @@ protected:
     glm::mat4x4 m_cameraWorldMatrix;
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
+    glm::vec4 m_mouseCursorPosition;
+    glm::vec4 m_mouseLeftPressPosition;
+    glm::vec4 m_mouseMiddlePressPosition;
+    glm::vec4 m_mouseRightPressPosition;
+    glm::vec2 m_viewport;
     std::set<std::string> m_extensions;
 };
 

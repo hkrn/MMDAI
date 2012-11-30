@@ -286,35 +286,35 @@ struct Scene::PrivateContext {
         }
     }
 #endif
-    cl::Context *createComputeContext(IRenderContext *delegateRef) {
+    cl::Context *createComputeContext(IRenderContext *renderContextRef) {
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (!computeContext) {
-            computeContext = new cl::Context(delegateRef);
+            computeContext = new cl::Context(renderContextRef);
             if (!computeContext->initialize(hostDeviceType())) {
                 delete computeContext;
                 computeContext = 0;
             }
         }
 #else
-        (void) delegateRef;
+        (void) renderContextRef;
 #endif /* VPVL2_ENABLE_OPENCL */
         return computeContext;
     }
-    cl::PMXAccelerator *createPMXAccelerator(IRenderContext *delegate, IModel *modelRef) {
+    cl::PMXAccelerator *createPMXAccelerator(IRenderContext *renderContext, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
-            if (cl::Context *context = createComputeContext(delegate)) {
+            if (cl::Context *context = createComputeContext(renderContext)) {
                 accelerator = new cl::PMXAccelerator(context, modelRef);
                 accelerator->createKernelProgram();
             }
         }
 #else
-        (void) delegate;
+        (void) renderContext;
 #endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
-    IEffect *compileEffect(IString *source) {
+    IEffect *compileEffect(IRenderContext *renderContext, IString *source) {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         CGeffect effect = 0;
         if (source) {
@@ -323,10 +323,12 @@ struct Scene::PrivateContext {
                 "-DVPVL2_VERSION=" VPVL2_VERSION_STRING,
                 0
             };
-            effect = cgCreateEffect(effectContext, reinterpret_cast<const char *>(source->toByteArray()), kCompilerArguments);
+            effect = cgCreateEffect(effectContext,
+                                    reinterpret_cast<const char *>(source->toByteArray()),
+                                    kCompilerArguments);
         }
         delete source;
-        return new cg::Effect(effectContext, cgIsEffect(effect) ? effect : 0);
+        return new cg::Effect(renderContext, effectContext, cgIsEffect(effect) ? effect : 0);
 #else
         delete source;
         return 0;
@@ -384,7 +386,7 @@ Scene::~Scene()
     m_context = 0;
 }
 
-IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model, int flags) const
+IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *model, int flags) const
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
@@ -394,22 +396,22 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model
         asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::AssetRenderEngine(delegate, this, m);
+            engine = new cg::AssetRenderEngine(renderContext, this, m);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::AssetRenderEngine(delegate, this, m);
+            engine = new gl2::AssetRenderEngine(renderContext, this, m);
 #endif /* VPVL2_LINK_ASSIMP */
         break;
     }
     case IModel::kPMD:
     case IModel::kPMX: {
-        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
+        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(renderContext, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (flags & kEffectCapable)
-            engine = new cg::PMXRenderEngine(delegate, this, accelerator, model);
+            engine = new cg::PMXRenderEngine(renderContext, this, accelerator, model);
         else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, model);
+            engine = new gl2::PMXRenderEngine(renderContext, this, accelerator, model);
         break;
     }
     default:
@@ -419,7 +421,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model
     (void) flags;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 #else
-    (void) delegate;
+    (void) renderContext;
     (void) model;
     (void) flags;
 #endif /* VPVL2_OPENGL_RENDERER */
@@ -443,27 +445,27 @@ void Scene::addMotion(IMotion *motion)
         m_context->motions.add(motion);
 }
 
-IEffect *Scene::createEffect(const IString *path, IRenderContext *delegate)
+IEffect *Scene::createEffect(const IString *path, IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = delegate->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
-    return m_context->compileEffect(source);
+    IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
+    return m_context->compileEffect(renderContext, source);
 #else
     (void) path;
-    (void) delegate;
+    (void) renderContext;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }
 
-IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderContext *delegate)
+IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = delegate->loadShaderSource(IRenderContext::kModelEffectTechniques, model, dir, 0);
-    return m_context->compileEffect(source);
+    IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, model, dir, 0);
+    return m_context->compileEffect(renderContext, source);
 #else
     (void) dir;
     (void) model;
-    (void) delegate;
+    (void) renderContext;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
 }

@@ -51,13 +51,24 @@
 
 namespace vpvl2
 {
+
 class IModel;
 class IRenderContext;
 class IString;
 class Scene;
 
+namespace extensions
+{
+namespace gl
+{
+class FrameBufferObject;
+}
+}
+
 namespace cg
 {
+
+using namespace extensions::gl;
 
 class Util
 {
@@ -478,7 +489,10 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
 
-    EffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef);
+    EffectEngine(const Scene *scene,
+                 const IString *dir,
+                 Effect *effect,
+                 IRenderContext *renderContextRef);
     virtual ~EffectEngine();
 
     bool attachEffect(IEffect *e, const IString *dir);
@@ -565,8 +579,6 @@ protected:
 private:
     class RectRenderEngine;
 
-    typedef void (*PFNGLDRAWBUFFERS)(GLsizei n, const GLenum *bufs);
-
     static bool testTechnique(const CGtechnique technique,
                               const char *pass,
                               int offset,
@@ -575,33 +587,33 @@ private:
                               bool hasSphereMap,
                               bool useToon);
     static bool containsSubset(const CGannotation annotation, int subset, int nmaterials);
-    void setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
-                                               const std::string &value,
-                                               ScriptState::Type type,
-                                               ScriptState &state);
-    void setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
-                                                      const std::string &value,
-                                                      ScriptState::Type type,
-                                                      ScriptState &state);
-    static void setStateFromParameter(const CGeffect effect,
-                                      const std::string &value,
-                                      CGtype testType,
-                                      ScriptState::Type type,
-                                      ScriptState &state);
+    void setScriptStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
+                                                     const std::string &value,
+                                                     ScriptState::Type type,
+                                                     ScriptState &state);
+    void setScriptStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
+                                                            const std::string &value,
+                                                            ScriptState::Type type,
+                                                            ScriptState &state);
+    static void setScriptStateFromParameter(const CGeffect effect,
+                                            const std::string &value,
+                                            CGtype testType,
+                                            ScriptState::Type type,
+                                            ScriptState &state);
     void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const;
-    void setRenderColorTargetFromState(const ScriptState &state);
-    void setRenderDepthStencilTargetFromState(const ScriptState &state);
+    void setRenderColorTargetFromScriptState(const ScriptState &state);
+    void setRenderDepthStencilTargetFromScriptState(const ScriptState &state);
     void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
     void addTechniquePasses(const CGtechnique technique);
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
     void setTextureParameters(CGparameter parameter, const IString *dir);
     bool parsePassScript(const CGpass pass);
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
-    void initializeBuffer();
 
     Effect *m_effectRef;
     IRenderContext *m_renderContextRef;
     RectRenderEngine *m_rectRenderEngine;
+    FrameBufferObject *m_frameBufferObjectRef;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     IEffect::ScriptOrderType m_scriptOrder;

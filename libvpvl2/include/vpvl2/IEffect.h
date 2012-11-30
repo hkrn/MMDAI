@@ -43,6 +43,16 @@
 namespace vpvl2
 {
 
+namespace extensions
+{
+namespace gl
+{
+class FrameBufferObject;
+}
+}
+
+using namespace extensions::gl;
+
 class IEffect
 {
 public:
@@ -108,7 +118,10 @@ public:
      * @return
      */
     virtual IEffect *parentEffect() const = 0;
+
     virtual void setParentEffect(IEffect *value) = 0;
+
+    virtual FrameBufferObject *parentFrameBufferObject() const = 0;
 };
 
 } /* namespace vpvl2 */

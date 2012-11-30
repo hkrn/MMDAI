@@ -34,19 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "vpvl2/vpvl2.h"
 #include "vpvl2/cg/EffectEngine.h"
 
-#include "vpvl2/Common.h"
-#include "vpvl2/Scene.h"
-#include "vpvl2/IBone.h"
-#include "vpvl2/ICamera.h"
-#include "vpvl2/IEffect.h"
-#include "vpvl2/ILight.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMorph.h"
-#include "vpvl2/IRenderContext.h"
-#include "vpvl2/IRenderEngine.h"
-#include "vpvl2/IString.h"
+#include "vpvl2/extensions/gl/FrameBufferObject.h"
 #include "vpvl2/internal/BaseRenderEngine.h"
 
 #include <string>
@@ -1198,15 +1189,18 @@ EffectEngine::EffectEngine(const Scene *scene,
       index(0),
       m_effectRef(0),
       m_renderContextRef(renderContextRef),
+      m_frameBufferObjectRef(effect ? effect->parentFrameBufferObject() : 0),
       m_rectRenderEngine(0),
       m_scriptOutput(kColor),
       m_scriptClass(kObject),
       m_scriptOrder(IEffect::kStandard)
 {
-    m_rectRenderEngine = new RectRenderEngine(scene, renderContextRef);
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif
+    m_rectRenderEngine = new RectRenderEngine(scene, renderContextRef);
+    if (m_frameBufferObjectRef)
+        m_frameBufferObjectRef->create();
     attachEffect(effect, dir);
 }
 
@@ -1214,6 +1208,7 @@ EffectEngine::~EffectEngine()
 {
     delete m_rectRenderEngine;
     m_rectRenderEngine = 0;
+    m_frameBufferObjectRef = 0;
     m_effectRef = 0;
     m_renderContextRef = 0;
 }
@@ -1230,6 +1225,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
     CGeffect value = static_cast<CGeffect>(effect->internalPointer());
     if (!cgIsEffect(value))
         return false;
+    m_rectRenderEngine->initializeVertexBundle();
     CGparameter parameter = cgGetFirstEffectParameter(value);
     bool ownTechniques = false, foundSAS = false;
     while (parameter) {
@@ -1367,7 +1363,6 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
             technique = cgGetNextTechnique(technique);
         }
     }
-    m_rectRenderEngine->initializeVertexBundle();
     return true;
 }
 
@@ -1571,10 +1566,10 @@ bool EffectEngine::containsSubset(const CGannotation annotation, int subset, int
     return false;
 }
 
-void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
-                                                         const std::string &value,
-                                                         ScriptState::Type type,
-                                                         ScriptState &state)
+void EffectEngine::setScriptStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
+                                                               const std::string &value,
+                                                               ScriptState::Type type,
+                                                               ScriptState &state)
 {
     bool bound = false;
     state.type = type;
@@ -1597,10 +1592,10 @@ void EffectEngine::setStateFromRenderColorTargetSemantic(const RenderColorTarget
     state.isRenderTargetBound = bound;
 }
 
-void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
-                                                                const std::string &value,
-                                                                ScriptState::Type type,
-                                                                ScriptState &state)
+void EffectEngine::setScriptStateFromRenderDepthStencilTargetSemantic(const RenderDepthStencilTargetSemantic &semantic,
+                                                                      const std::string &value,
+                                                                      ScriptState::Type type,
+                                                                      ScriptState &state)
 {
     bool bound = false;
     state.type = type;
@@ -1623,11 +1618,11 @@ void EffectEngine::setStateFromRenderDepthStencilTargetSemantic(const RenderDept
     state.isRenderTargetBound = bound;
 }
 
-void EffectEngine::setStateFromParameter(const CGeffect effect,
-                                         const std::string &value,
-                                         CGtype testType,
-                                         ScriptState::Type type,
-                                         ScriptState &state)
+void EffectEngine::setScriptStateFromParameter(const CGeffect effect,
+                                               const std::string &value,
+                                               CGtype testType,
+                                               ScriptState::Type type,
+                                               ScriptState &state)
 {
     CGparameter parameter = cgGetNamedEffectParameter(effect, value.c_str());
     if (cgIsParameter(parameter) && cgGetParameterType(parameter) == testType) {
@@ -1649,52 +1644,45 @@ void EffectEngine::executePass(CGpass pass,
     }
 }
 
-void EffectEngine::setRenderColorTargetFromState(const ScriptState &state)
+void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
 {
     GLuint texture = state.texture;
     const size_t width = state.width, height = state.height;
-    const int index = state.type - ScriptState::kRenderColorTarget0;
-    const int target = kBaseRenderColorTargetIndex + index;
-    if (state.isRenderTargetBound) {
-        if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
-            m_renderColorTargets.push_back(target);
-            m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+    const int index = state.type - ScriptState::kRenderColorTarget0, target = GL_COLOR_ATTACHMENT0 + index;
+    if (m_frameBufferObjectRef) {
+        if (state.isRenderTargetBound) {
+            if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
+                m_renderColorTargets.push_back(target);
+                m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+            }
+            else {
+                m_frameBufferObjectRef->blit();
+            }
+            m_frameBufferObjectRef->bindTexture(texture, index);
+            glViewport(0, 0, width, height);
         }
-        m_renderContextRef->bindRenderColorTarget(&texture, width, height, index, kEnableRTAA);
-        glViewport(0, 0, width, height);
-    }
-    else {
-        Vector3 viewport;
-        m_renderColorTargets.remove(target);
-        const int nRenderColorTargets = m_renderColorTargets.size();
-        if (nRenderColorTargets > 0 && target != kBaseRenderColorTargetIndex)
-            m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], nRenderColorTargets);
-        m_renderContextRef->releaseRenderColorTarget(&texture, width, height, index, kEnableRTAA);
-        m_renderContextRef->getViewport(viewport);
-        glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
+        else {
+            if (m_renderColorTargets.size() > 1) {
+                m_renderColorTargets.remove(target);
+                m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+            }
+            else {
+                Vector3 viewport;
+                m_frameBufferObjectRef->blit();
+                m_frameBufferObjectRef->unbind();
+                m_renderColorTargets.clear();
+                m_renderContextRef->setRenderColorTargets(0, 0);
+                m_renderContextRef->getViewport(viewport);
+                glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
+            }
+        }
     }
 }
 
-void EffectEngine::setRenderDepthStencilTargetFromState(const ScriptState &state)
+void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state)
 {
-    GLuint texture = state.texture;
-    GLuint depthBuffer = state.depthBuffer;
-    GLuint stencilBuffer = state.stencilBuffer;
-    if (state.isRenderTargetBound) {
-        m_renderContextRef->bindRenderDepthStencilTarget(&texture,
-                                                    &depthBuffer,
-                                                    &stencilBuffer,
-                                                    state.width,
-                                                    state.height,
-                                                    kEnableRTAA);
-    }
-    else {
-        m_renderContextRef->releaseRenderDepthStencilTarget(&texture,
-                                                       &depthBuffer,
-                                                       &stencilBuffer,
-                                                       state.width,
-                                                       state.height,
-                                                       kEnableRTAA);
+    if (m_frameBufferObjectRef && state.isRenderTargetBound) {
+        m_frameBufferObjectRef->bindDepthStencilBuffer();
     }
 }
 
@@ -1745,10 +1733,10 @@ void EffectEngine::executeScript(const Script *script,
             case ScriptState::kRenderColorTarget1:
             case ScriptState::kRenderColorTarget2:
             case ScriptState::kRenderColorTarget3:
-                setRenderColorTargetFromState(state);
+                setRenderColorTargetFromScriptState(state);
                 break;
             case ScriptState::kRenderDepthStencilTarget:
-                setRenderDepthStencilTargetFromState(state);
+                setRenderDepthStencilTargetFromScriptState(state);
                 break;
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {
@@ -1899,46 +1887,46 @@ bool EffectEngine::parsePassScript(const CGpass pass)
                 const std::string &value = Util::trim(segment.substr(offset + 1));
                 newState.setFromState(lastState);
                 if (command == "RenderColorTarget" || command == "RenderColorTarget0") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget0,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget0,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                     renderColorTarget0DidSet = true;
                 }
                 else if (renderColorTarget0DidSet && command == "RenderColorTarget1") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget1,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget1,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                 }
                 else if (renderColorTarget0DidSet && command == "RenderColorTarget2") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget2,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget2,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                 }
                 else if (renderColorTarget0DidSet && command == "RenderColorTarget3") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget3,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget3,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                 }
                 else if (command == "RenderDepthStencilTarget") {
-                    setStateFromRenderDepthStencilTargetSemantic(renderDepthStencilTarget,
-                                                                 value,
-                                                                 ScriptState::kRenderDepthStencilTarget,
-                                                                 newState);
+                    setScriptStateFromRenderDepthStencilTargetSemantic(renderDepthStencilTarget,
+                                                                       value,
+                                                                       ScriptState::kRenderDepthStencilTarget,
+                                                                       newState);
                     useDepthStencilBuffer = newState.isRenderTargetBound;
                 }
                 else if (command == "ClearSetColor") {
-                    setStateFromParameter(effect, value, CG_FLOAT4, ScriptState::kClearSetColor, newState);
+                    setScriptStateFromParameter(effect, value, CG_FLOAT4, ScriptState::kClearSetColor, newState);
                 }
                 else if (command == "ClearSetDepth") {
-                    setStateFromParameter(effect, value, CG_FLOAT, ScriptState::kClearSetDepth, newState);
+                    setScriptStateFromParameter(effect, value, CG_FLOAT, ScriptState::kClearSetDepth, newState);
                 }
                 else if (command == "Clear") {
                     if (value == "Color" && useRenderBuffer) {
@@ -2007,47 +1995,47 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
                 const std::string &value = Util::trim(segment.substr(offset + 1));
                 newState.setFromState(lastState);
                 if (command == "RenderColorTarget" || command == "RenderColorTarget0") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget0,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget0,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                     renderColorTarget0DidSet = true;
                 }
                 else if (renderColorTarget0DidSet && command == "RenderColorTarget1") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget1,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget1,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                 }
                 else if (renderColorTarget0DidSet && command == "RenderColorTarget2") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget2,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget2,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                 }
                 else if (renderColorTarget0DidSet && command == "RenderColorTarget3") {
-                    setStateFromRenderColorTargetSemantic(renderColorTarget,
-                                                          value,
-                                                          ScriptState::kRenderColorTarget3,
-                                                          newState);
+                    setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
+                                                                value,
+                                                                ScriptState::kRenderColorTarget3,
+                                                                newState);
                     useRenderBuffer = newState.isRenderTargetBound;
                 }
                 else if (command == "RenderDepthStencilTarget") {
-                    setStateFromRenderDepthStencilTargetSemantic(renderDepthStencilTarget,
-                                                                 value,
-                                                                 ScriptState::kRenderDepthStencilTarget,
-                                                                 newState);
+                    setScriptStateFromRenderDepthStencilTargetSemantic(renderDepthStencilTarget,
+                                                                       value,
+                                                                       ScriptState::kRenderDepthStencilTarget,
+                                                                       newState);
                     useDepthStencilBuffer = newState.isRenderTargetBound;
                     renderDepthStencilTargetDidSet = true;
                 }
                 else if (command == "ClearSetColor") {
-                    setStateFromParameter(effect, value, CG_FLOAT4, ScriptState::kClearSetColor, newState);
+                    setScriptStateFromParameter(effect, value, CG_FLOAT4, ScriptState::kClearSetColor, newState);
                 }
                 else if (command == "ClearSetDepth") {
-                    setStateFromParameter(effect, value, CG_FLOAT, ScriptState::kClearSetDepth, newState);
+                    setScriptStateFromParameter(effect, value, CG_FLOAT, ScriptState::kClearSetDepth, newState);
                 }
                 else if (command == "Clear") {
                     if (value == "Color" && useRenderBuffer) {

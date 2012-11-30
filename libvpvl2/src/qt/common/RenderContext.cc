@@ -779,102 +779,32 @@ void RenderContext::initialize(bool enableMSAA)
 
 void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
 {
-    glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
+    if (ntargets > 0)
+        glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
+    else
+        glDrawBuffer(GL_BACK);
 }
 
-void RenderContext::bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
+FrameBufferObject *RenderContext::createFrameBufferObject()
 {
-    GLuint textureID = *static_cast<const GLuint *>(texture);
-    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
-    if (buffer) {
-        FrameBufferObject *fbo = m_previousFrameBufferPtrs[index];
-        if (enableAA && fbo) {
-            fbo->blit();
-        }
-        const int target = GL_COLOR_ATTACHMENT0 + index;
-        buffer->bindFrameBuffer();
-        glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, textureID, 0);
-        if (enableAA && buffer->hasMSAA()) {
-            buffer->bindFrameBufferMSAA();
-            buffer->bindColorBufferMSAA(index);
-            m_previousFrameBufferPtrs.insert(index, buffer);
-        }
-    }
+    return new FrameBufferObject(m_viewport.width(), m_viewport.height(), 4);
 }
 
-void RenderContext::releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA)
+void RenderContext::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool /* enableAA */)
 {
-    GLuint textureID = *static_cast<const GLuint *>(texture);
-    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
-    if (buffer) {
-        FrameBufferObject *fbo = m_previousFrameBufferPtrs[index];
-        if (enableAA && fbo) {
-            fbo->blit();
-            fbo = 0;
-        }
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void RenderContext::bindRenderDepthStencilTarget(void *texture,
-                                                 void *depth,
-                                                 void *stencil,
-                                                 size_t width,
-                                                 size_t height,
-                                                 bool enableAA)
-{
-    GLuint textureID = *static_cast<const GLuint *>(texture);
-    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
-    if (buffer) {
-        GLuint depthBuffer = *static_cast<GLuint *>(depth);
-        GLuint stencilBuffer = *static_cast<GLuint *>(stencil);
-        buffer->bindFrameBuffer();
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, stencilBuffer);
-        if (enableAA && buffer->hasMSAA()) {
-            buffer->bindFrameBufferMSAA();
-            buffer->bindDepthStencilBufferMSAA();
-        }
-    }
-}
-
-void RenderContext::releaseRenderDepthStencilTarget(void *texture,
-                                                    void * /* depth */,
-                                                    void * /* stencil */,
-                                                    size_t width,
-                                                    size_t height,
-                                                    bool enableAA)
-{
-    GLuint textureID = *static_cast<const GLuint *>(texture);
-    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
-    if (buffer)
-        buffer->unbind(enableAA);
-}
-
-void RenderContext::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
-{
-    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
-    if (buffer) {
-        buffer->bindFrameBuffer();
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID, 0);
+    if (FrameBufferObject *buffer = findRenderTarget(textureID, width, height)) {
+        buffer->bindTexture(textureID, 0);
         buffer->bindDepthStencilBuffer();
-        if (enableAA && buffer->hasMSAA()) {
-            buffer->bindFrameBufferMSAA();
-            buffer->bindColorBufferMSAA(0);
-            buffer->bindDepthStencilBufferMSAA();
-        }
     }
 }
 
 void RenderContext::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
 {
-    FrameBufferObject *buffer = findRenderTarget(textureID, width, height);
-    if (buffer) {
-        if (enableAA && buffer->hasMSAA()) {
+    if (FrameBufferObject *buffer = findRenderTarget(textureID, width, height)) {
+        if (enableAA)
             buffer->blit();
-        }
+        buffer->unbind();
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
@@ -1215,8 +1145,10 @@ FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_
     FrameBufferObject *buffer = 0;
     if (textureID > 0) {
         if (!m_renderTargets.contains(textureID)) {
-            m_renderTargets.insert(textureID, new FrameBufferObject(width, height, m_msaaSamples, textureID));
-            buffer = m_renderTargets[textureID];
+            QScopedPointer<FrameBufferObject> fbo(new FrameBufferObject(width, height, m_msaaSamples));
+            m_renderTargets.insert(textureID, fbo.data());
+            fbo->create();
+            buffer = fbo.take();
         }
         else {
             buffer = m_renderTargets[textureID];

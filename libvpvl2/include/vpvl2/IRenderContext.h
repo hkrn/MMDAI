@@ -47,6 +47,16 @@ class IEffect;
 class IModel;
 class IString;
 
+namespace extensions
+{
+namespace gl
+{
+class FrameBufferObject;
+}
+}
+
+using namespace extensions::gl;
+
 class VPVL2_API IRenderContext
 {
 public:
@@ -405,96 +415,26 @@ public:
     virtual IModel *effectOwner(const IEffect *effect) const = 0;
 
     /**
-     * テクスチャバッファを設定します.
+     * 描画するレンダーターゲットのカラーバッファの配列を設定します.
      *
      * void* で渡されるため、static_cast を用いて GLuint の配列にキャストする必要があります。
-     * このメソッドは Cg 専用です。
+     * OpenGL の glDrawBuffers に渡すことを想定して作られています。このメソッドは Cg 専用です。
      *
      * @brief setRenderColorTargets
      * @param targets
      * @param ntargets
-     * @sa bindRenderColorTarget
-     * @sa releaseRenderColorTarget
      */
     virtual void setRenderColorTargets(const void *targets, const int ntargets) = 0;
 
     /**
-     * テクスチャバッファをバインドします.
+     * エフェクト毎に使われるレンダーターゲットに対するフレームバッファを作成します.
      *
-     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
      * このメソッドは Cg 専用です。
      *
-     * @brief bindRenderColorTarget
-     * @param texture
-     * @param width
-     * @param height
-     * @param index
-     * @param enableAA
-     * @sa setRenderColorTargets
-     * @sa releaseRenderColorTarget
+     * @brief createFrameBufferObject
+     * @return
      */
-    virtual void bindRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
-
-    /**
-     * テクスチャバッファをリリースします.
-     *
-     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
-     * このメソッドは Cg 専用です。
-     *
-     * @brief releaseRenderColorTarget
-     * @param texture
-     * @param width
-     * @param height
-     * @param index
-     * @param enableAA
-     * @sa setRenderColorTargets
-     * @sa bindRenderColorTarget
-     */
-    virtual void releaseRenderColorTarget(void *texture, size_t width, size_t height, int index, bool enableAA) = 0;
-
-    /**
-     * 深度ステンシルバッファをバインドします.
-     *
-     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
-     * このメソッドは Cg 専用です。
-     *
-     * @brief bindRenderDepthStencilTarget
-     * @param texture
-     * @param depth
-     * @param stencil
-     * @param width
-     * @param height
-     * @param enableAA
-     * @sa releaseRenderDepthStencilTarget
-     */
-    virtual void bindRenderDepthStencilTarget(void *texture,
-                                              void *depth,
-                                              void *stencil,
-                                              size_t width,
-                                              size_t height,
-                                              bool enableAA) = 0;
-
-    /**
-     * 深度ステンシルバッファをリリースします.
-     *
-     * void* で渡されるため、static_cast を用いて GLuint にキャストする必要があります。
-     * このメソッドは Cg 専用です。
-     *
-     * @brief releaseRenderDepthStencilTarget
-     * @param texture
-     * @param depth
-     * @param stencil
-     * @param width
-     * @param height
-     * @param enableAA
-     * @sa bindRenderDepthStencilTarget
-     */
-    virtual void releaseRenderDepthStencilTarget(void *texture,
-                                                 void *depth,
-                                                 void *stencil,
-                                                 size_t width,
-                                                 size_t height,
-                                                 bool enableAA) = 0;
+    virtual FrameBufferObject *createFrameBufferObject() = 0;
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };
