@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_QT_ENCODING_H_
 #define VPVL2_QT_ENCODING_H_
 

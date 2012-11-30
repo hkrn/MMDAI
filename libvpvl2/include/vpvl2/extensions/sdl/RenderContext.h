@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
 #define VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
 

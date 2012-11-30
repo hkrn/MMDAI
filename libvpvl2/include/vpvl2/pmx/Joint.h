@@ -36,6 +36,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_PMX_JOINT_H_
 #define VPVL2_PMX_JOINT_H_
 

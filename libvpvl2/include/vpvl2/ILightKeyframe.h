@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_ILIGHTKEYFRAME_H_
 #define VPVL2_ILIGHTKEYFRAME_H_
 

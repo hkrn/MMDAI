@@ -36,6 +36,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_GL2_PMXRENDERENGINE_H_
 #define VPVL2_GL2_PMXRENDERENGINE_H_
 

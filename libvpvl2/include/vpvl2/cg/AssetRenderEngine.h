@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_CG_ASSETRENDERENGINE_H_
 #define VPVL2_CG_ASSETRENDERENGINE_H_
 

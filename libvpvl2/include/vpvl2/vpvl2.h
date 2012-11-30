@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef vpvl2_vpvl2_H_
 #define vpvl2_vpvl2_H_
 

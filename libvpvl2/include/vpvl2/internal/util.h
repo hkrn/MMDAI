@@ -36,6 +36,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_INTERNAL_UTIL_H_
 #define VPVL2_INTERNAL_UTIL_H_
 

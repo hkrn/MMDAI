@@ -36,6 +36,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_INTERNAL_BASEJOINT_H_
 #define VPVL2_INTERNAL_BASEJOINT_H_
 

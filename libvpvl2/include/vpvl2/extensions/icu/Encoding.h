@@ -34,6 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_EXTENSIONS_ICU_ENCODING_H_
 #define VPVL2_EXTENSIONS_ICU_ENCODING_H_
 

@@ -36,6 +36,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_VMD_MORPHANIMATION_H_
 #define VPVL2_VMD_MORPHANIMATION_H_
 

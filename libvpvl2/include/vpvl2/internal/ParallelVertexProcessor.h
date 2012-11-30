@@ -34,6 +34,10 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
+#ifndef VPVL2_INTERNAL_PARALLELVERTEXPROCESSOR_H_
+#define VPVL2_INTERNAL_PARALLELVERTEXPROCESSOR_H_
+
 #include <vpvl2/Common.h>
 #include <vpvl2/IMaterial.h>
 
@@ -204,3 +208,5 @@ private:
 
 } /* namespace internal */
 } /* namespace vpvl2 */
+
+#endif
