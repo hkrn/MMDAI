@@ -50,6 +50,7 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/IVertex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Scene.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/BaseRenderContext.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/gl/FrameBufferObject.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/String.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/Encoding.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/sdl/RenderContext.h

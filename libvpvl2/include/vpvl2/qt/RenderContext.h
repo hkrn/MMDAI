@@ -49,10 +49,21 @@ class Stream;
 
 namespace vpvl2
 {
+
+namespace extensions
+{
+namespace gl
+{
+class FrameBufferObject;
+}
+}
+
 class Scene;
 
 namespace qt
 {
+
+using namespace extensions::gl;
 class Archive;
 
 class RenderContext : public IRenderContext, protected QGLFunctions
@@ -172,8 +183,6 @@ public:
     const QList<OffscreenRenderTarget> &offscreenRenderTargets() const { return m_offscreens; }
 
 private:
-    class FrameBufferObject;
-
     QImage createImageFromArchive(const QFileInfo &info);
     bool uploadTextureInternal(const QString &path,
                                InternalTexture &internalTexture,
