@@ -136,7 +136,7 @@ public:
             glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         }
     }
-    void bindTexture(GLuint textureID, int index) {
+    void bindTexture(GLuint textureID, GLenum format, int index) {
         const int target = GL_COLOR_ATTACHMENT0 + index;
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, textureID, 0);
@@ -149,7 +149,7 @@ public:
             else {
                 glGenRenderbuffers(1, &buffer);
                 glBindRenderbuffer(GL_RENDERBUFFER, buffer);
-                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_RGBA8, m_width, m_height);
+                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
                 m_colorMSAA.insert(index, buffer);
             }
@@ -166,13 +166,6 @@ public:
         }
     }
     void unbind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
-        if (m_fboMSAA) {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_fboMSAA);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-        }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     bool hasMSAA() const {

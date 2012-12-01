@@ -129,6 +129,7 @@ public:
             : async(true),
               width(0),
               height(0),
+              format(0),
               object(0)
         {
         }
@@ -136,12 +137,14 @@ public:
             async = true;
             width = 0;
             height = 0;
+            format = 0;
             object = 0;
         }
 
         bool async;
         int width;
         int height;
+        int format;
         void *object;
     };
 

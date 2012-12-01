@@ -69,6 +69,7 @@ public:
         void *samplerParameter;
         size_t width;
         size_t height;
+        int format;
     };
     virtual ~IEffect() {}
 
@@ -119,8 +120,20 @@ public:
      */
     virtual IEffect *parentEffect() const = 0;
 
+    /**
+     * 親の IEffect インスタンスのポインタ参照を設定します.
+     *
+     * @brief parentEffect
+     * @param value
+     */
     virtual void setParentEffect(IEffect *value) = 0;
 
+    /**
+     * 親のフレームバッファの参照を返します.
+     *
+     * @brief parentFrameBufferObject
+     * @return
+     */
     virtual FrameBufferObject *parentFrameBufferObject() const = 0;
 };
 

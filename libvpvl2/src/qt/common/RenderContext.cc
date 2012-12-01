@@ -598,7 +598,9 @@ void RenderContext::setArchive(Archive *value)
 
 void RenderContext::setSceneRef(Scene *value)
 {
-    m_offscreens.clear();
+#ifdef VPVL2_LINK_NVIDIA_CG
+    m_offscreenTextures.clear();
+#endif
     m_model2Paths.clear();
     QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker);
     qDeleteAll(m_texture2Movies);
@@ -698,44 +700,6 @@ const QString RenderContext::effectFilePath(const IModel *model, const IString *
     return d.absoluteFilePath("default.cgfx");
 }
 
-IModel *RenderContext::findModel(const IString *name) const
-{
-    IModel *model = m_scene->findModel(name);
-    if (!model) {
-        const QString &s = static_cast<const CString *>(name)->value();
-        model = m_filename2Models[s];
-    }
-    return model;
-}
-
-IModel *RenderContext::effectOwner(const IEffect *effect) const
-{
-    QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
-    IModel *model = m_effect2models[effect];
-    return model;
-}
-
-const QString RenderContext::effectOwnerName(const IEffect *effect) const
-{
-    QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
-    const QString name = m_effectOwners[effect];
-    return name;
-}
-
-void RenderContext::setEffectOwner(const IEffect *effect, IModel *model)
-{
-    const CString *name = static_cast<const CString *>(model->name());
-    const QString &n = name ? name->value() : findModelPath(model);
-    {
-        QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
-        m_effectOwners.insert(effect, n);
-    }
-    {
-        QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
-        m_effect2models.insert(effect, model);
-    }
-}
-
 void RenderContext::removeModel(IModel *model)
 {
     QMutableHashIterator<const QString, IModel *> it(m_filename2Models);
@@ -777,225 +741,6 @@ void RenderContext::initialize(bool enableMSAA)
 #endif /* __APPLE__ */
 }
 
-void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
-{
-    if (ntargets > 0)
-        glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
-    else
-        glDrawBuffer(GL_BACK);
-}
-
-FrameBufferObject *RenderContext::createFrameBufferObject()
-{
-    return new FrameBufferObject(m_viewport.width(), m_viewport.height(), 4);
-}
-
-void RenderContext::bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool /* enableAA */)
-{
-    if (FrameBufferObject *buffer = findRenderTarget(textureID, width, height)) {
-        buffer->bindTexture(textureID, 0);
-        buffer->bindDepthStencilBuffer();
-    }
-}
-
-void RenderContext::releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA)
-{
-    if (FrameBufferObject *buffer = findRenderTarget(textureID, width, height)) {
-        if (enableAA)
-            buffer->blit();
-        buffer->unbind();
-    }
-}
-
-void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
-{
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    if (effect) {
-        static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
-        Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        effect->getOffscreenRenderTargets(offscreenRenderTargets);
-        const int nOffscreenRenderTargets = offscreenRenderTargets.count();
-        /* オフスクリーンレンダーターゲットの設定 */
-        for (int i = 0; i < nOffscreenRenderTargets; i++) {
-            const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
-            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
-            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-            const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
-            QList<EffectAttachment> attachments;
-            Q_FOREACH (const QString &line, defaultEffect) {
-                const QStringList &pair = line.split('=');
-                if (pair.size() == 2) {
-                    const QString &key = pair.at(0).trimmed();
-                    const QString &value = pair.at(1).trimmed();
-                    QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
-                    if (key == "self") {
-                        const QString &name = effectOwnerName(effect);
-                        regexp.setPattern(name);
-                    }
-                    if (value != "hide" && value != "none") {
-                        QString path = dir.absoluteFilePath(value);
-                        path.replace(kExtensionReplaceRegExp, ".cgfx");
-                        CString s2(path);
-                        const QFuture<IEffect *> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
-                        IEffect *offscreenEffect = future.result();
-                        offscreenEffect->setParentEffect(effect);
-                        attachments.append(EffectAttachment(regexp, offscreenEffect));
-                    }
-                    else {
-                        attachments.append(EffectAttachment(regexp, 0));
-                    }
-                }
-            }
-            CGparameter sampler = static_cast<CGparameter>(renderTarget.samplerParameter);
-            OffscreenRenderTarget offscreen;
-            offscreen.attachments = attachments;
-            offscreen.renderTarget = renderTarget;
-            offscreen.textureID = cgGLGetTextureParameter(sampler);
-            m_offscreens.append(offscreen);
-        }
-    }
-#else
-    Q_UNUSED(effect)
-    Q_UNUSED(dir)
-#endif
-}
-
-void RenderContext::renderOffscreen(const QSize &size)
-{
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
-    const int nengines = engines.count();
-    QSize s;
-    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
-    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    Q_FOREACH (const RenderContext::OffscreenRenderTarget &offscreen, offscreenRenderTargets()) {
-        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
-        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
-        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
-        bool enableAA = false;
-        if (cgIsAnnotation(antiAlias)) {
-            int nvalues;
-            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
-            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
-        }
-        size_t width = renderTarget.width, height = renderTarget.height;
-        GLuint textureID = offscreen.textureID;
-        bindOffscreenRenderTarget(textureID, width, height, enableAA);
-        setRenderColorTargets(buffers, nbuffers);
-        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
-        if (cgIsAnnotation(clearColor)) {
-            int nvalues;
-            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
-            if (nvalues == 4) {
-                glClearColor(color[0], color[1], color[2], color[3]);
-            }
-        }
-        else {
-            glClearColor(1, 1, 1, 1);
-        }
-        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
-        if (cgIsAnnotation(clearDepth)) {
-            int nvalues;
-            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
-            if (nvalues == 1) {
-                glClearDepth(depth[0]);
-            }
-        }
-        else {
-            glClearDepth(0);
-        }
-        s.setWidth(width);
-        s.setHeight(height);
-        updateMatrices(s);
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
-            if (engine->hasPreProcess() || engine->hasPostProcess())
-                continue;
-            const IModel *model = engine->model();
-            const IString *name = model->name();
-            const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
-            Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreen.attachments) {
-                IEffect *effect = attachment.second;
-                if (attachment.first.exactMatch(n)) {
-                    engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
-                    break;
-                }
-            }
-            engine->update();
-            engine->renderModel();
-            engine->renderEdge();
-        }
-        releaseOffscreenRenderTarget(textureID, width, height, enableAA);
-    }
-    updateMatrices(size);
-#endif
-}
-
-IEffect *RenderContext::createEffectAsync(const IString *path)
-{
-    IEffect *effect = 0;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    const QString &key = static_cast<const CString *>(path)->value();
-    QMutexLocker locker(&m_effectCachesLock);
-    if (m_effectCaches.contains(key)) {
-        qDebug("Fetched an effect from cache: %s", qPrintable(key));
-        effect = m_effectCaches[key];
-    }
-    else if (QFile::exists(key)) {
-        locker.unlock();
-        effect = m_scene->createEffect(path, this);
-        qDebug("Loading an effect: %s", qPrintable(key));
-        if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(key));
-            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
-        }
-        locker.relock();
-        m_effectCaches.insert(key, effect);
-    }
-    else {
-        qDebug("Cannot load an effect: %s", qPrintable(key));
-    }
-#else
-    Q_UNUSED(path)
-#endif
-    return effect;
-}
-
-IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
-{
-    IEffect *effect = 0;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    const IString *name = model->name();
-    const QString &key = effectFilePath(model, dir);
-    QMutexLocker locker(&m_effectCachesLock);
-    if (m_effectCaches.contains(key)) {
-        qDebug("Fetched an effect from cache: %s", qPrintable(key));
-        effect = m_effectCaches[key];
-    }
-    else if (QFile::exists(key)) {
-        locker.unlock();
-        effect = m_scene->createEffect(dir, model, this);
-        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
-        if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(key)) ;
-            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
-        }
-        locker.relock();
-        m_effectCaches.insert(key, effect);
-        setEffectOwner(effect, model);
-    }
-    else {
-        qDebug("Cannot load an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
-    }
-#else
-    Q_UNUSED(model)
-    Q_UNUSED(dir)
-#endif
-    return effect;
-}
-
 bool RenderContext::uploadTextureNVTT(const QString &suffix,
                                       const QString &path,
                                       QScopedPointer<nv::Stream> &stream,
@@ -1028,10 +773,8 @@ bool RenderContext::uploadTextureNVTT(const QString &suffix,
 #else
     Q_UNUSED(suffix)
     Q_UNUSED(path)
-    Q_UNUSED(isToon)
-    Q_UNUSED(mipmap)
     Q_UNUSED(stream)
-    Q_UNUSED(texture)
+    Q_UNUSED(internalTexture)
     Q_UNUSED(internalContext)
 #endif
     return true;
@@ -1098,7 +841,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                                   GL_TEXTURE_2D,
                                                   GL_RGBA,
                                                   UIGetTextureBindOptions(internalTexture.mipmap));
-        TextureCache cache(width, height, textureID);
+        TextureCache cache(width, height, textureID, GL_RGBA);
         m_texture2Paths.insert(textureID, path);
         internalTexture.assign(cache);
         if (internalContext)
@@ -1140,6 +883,47 @@ void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Col
     }
 }
 
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+
+IModel *RenderContext::findModel(const IString *name) const
+{
+    IModel *model = m_scene->findModel(name);
+    if (!model) {
+        const QString &s = static_cast<const CString *>(name)->value();
+        model = m_filename2Models[s];
+    }
+    return model;
+}
+
+IModel *RenderContext::effectOwner(const IEffect *effect) const
+{
+    QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
+    IModel *model = m_effect2models[effect];
+    return model;
+}
+
+const QString RenderContext::effectOwnerName(const IEffect *effect) const
+{
+    QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
+    const QString name = m_effectOwners[effect];
+    return name;
+}
+
+void RenderContext::setEffectOwner(const IEffect *effect, IModel *model)
+{
+    const CString *name = static_cast<const CString *>(model->name());
+    const QString &n = name ? name->value() : findModelPath(model);
+    {
+        QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
+        m_effectOwners.insert(effect, n);
+    }
+    {
+        QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
+        m_effect2models.insert(effect, model);
+    }
+}
+
 FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height)
 {
     FrameBufferObject *buffer = 0;
@@ -1156,6 +940,207 @@ FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_
     }
     return buffer;
 }
+
+void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
+{
+    if (ntargets > 0)
+        glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
+    else
+        glDrawBuffer(GL_BACK);
+}
+
+FrameBufferObject *RenderContext::createFrameBufferObject()
+{
+    return new FrameBufferObject(m_viewport.width(), m_viewport.height(), m_msaaSamples);
+}
+
+void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool /* enableAA */)
+{
+    const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
+    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height)) {
+        buffer->bindTexture(texture.textureID, texture.textureFormat, 0);
+        buffer->bindDepthStencilBuffer();
+    }
+}
+
+void RenderContext::releaseOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
+{
+    const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
+    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height)) {
+        if (enableAA)
+            buffer->blit();
+        buffer->unbind();
+    }
+}
+
+void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
+{
+    if (effect) {
+        static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
+        Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
+        effect->getOffscreenRenderTargets(offscreenRenderTargets);
+        const int nOffscreenRenderTargets = offscreenRenderTargets.count();
+        /* オフスクリーンレンダーターゲットの設定 */
+        for (int i = 0; i < nOffscreenRenderTargets; i++) {
+            const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
+            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
+            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
+            const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
+            QList<EffectAttachment> attachments;
+            Q_FOREACH (const QString &line, defaultEffect) {
+                const QStringList &pair = line.split('=');
+                if (pair.size() == 2) {
+                    const QString &key = pair.at(0).trimmed();
+                    const QString &value = pair.at(1).trimmed();
+                    QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                    if (key == "self") {
+                        const QString &name = effectOwnerName(effect);
+                        regexp.setPattern(name);
+                    }
+                    if (value != "hide" && value != "none") {
+                        QString path = dir.absoluteFilePath(value);
+                        path.replace(kExtensionReplaceRegExp, ".cgfx");
+                        CString s2(path);
+                        const QFuture<IEffect *> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
+                        IEffect *offscreenEffect = future.result();
+                        offscreenEffect->setParentEffect(effect);
+                        attachments.append(EffectAttachment(regexp, offscreenEffect));
+                    }
+                    else {
+                        attachments.append(EffectAttachment(regexp, 0));
+                    }
+                }
+            }
+            m_offscreenTextures.append(OffscreenTexture(renderTarget, attachments));
+        }
+    }
+}
+
+void RenderContext::renderOffscreen(const QSize &size)
+{
+    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
+    const int nengines = engines.count();
+    QSize s;
+    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    Q_FOREACH (const RenderContext::OffscreenTexture &offscreen, offscreenTextures()) {
+        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
+        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+        bool enableAA = false;
+        if (cgIsAnnotation(antiAlias)) {
+            int nvalues;
+            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
+            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+        }
+        bindOffscreenRenderTarget(offscreen, enableAA);
+        setRenderColorTargets(buffers, nbuffers);
+        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
+        if (cgIsAnnotation(clearColor)) {
+            int nvalues;
+            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+            if (nvalues == 4) {
+                glClearColor(color[0], color[1], color[2], color[3]);
+            }
+        }
+        else {
+            glClearColor(1, 1, 1, 1);
+        }
+        const CGannotation clearDepth = cgGetNamedParameterAnnotation(parameter, "ClearDepth");
+        if (cgIsAnnotation(clearDepth)) {
+            int nvalues;
+            const float *depth = cgGetFloatAnnotationValues(clearDepth, &nvalues);
+            if (nvalues == 1) {
+                glClearDepth(depth[0]);
+            }
+        }
+        else {
+            glClearDepth(0);
+        }
+        size_t width = renderTarget.width, height = renderTarget.height;
+        s.setWidth(width);
+        s.setHeight(height);
+        updateMatrices(s);
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
+            if (engine->hasPreProcess() || engine->hasPostProcess())
+                continue;
+            const IModel *model = engine->model();
+            const IString *name = model->name();
+            const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
+            Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreen.attachments) {
+                IEffect *effect = attachment.second;
+                if (attachment.first.exactMatch(n)) {
+                    engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
+                    break;
+                }
+            }
+            engine->update();
+            engine->renderModel();
+            engine->renderEdge();
+        }
+        releaseOffscreenRenderTarget(offscreen, enableAA);
+    }
+    updateMatrices(size);
+}
+
+IEffect *RenderContext::createEffectAsync(const IString *path)
+{
+    IEffect *effect = 0;
+    const QString &key = static_cast<const CString *>(path)->value();
+    QMutexLocker locker(&m_effectCachesLock);
+    if (m_effectCaches.contains(key)) {
+        qDebug("Fetched an effect from cache: %s", qPrintable(key));
+        effect = m_effectCaches[key];
+    }
+    else if (QFile::exists(key)) {
+        locker.unlock();
+        effect = m_scene->createEffect(path, this);
+        qDebug("Loading an effect: %s", qPrintable(key));
+        if (!effect->internalPointer()) {
+            qWarning("%s cannot be compiled", qPrintable(key));
+            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        }
+        locker.relock();
+        m_effectCaches.insert(key, effect);
+    }
+    else {
+        qDebug("Cannot load an effect: %s", qPrintable(key));
+    }
+    return effect;
+}
+
+IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
+{
+    IEffect *effect = 0;
+    const IString *name = model->name();
+    const QString &key = effectFilePath(model, dir);
+    QMutexLocker locker(&m_effectCachesLock);
+    if (m_effectCaches.contains(key)) {
+        qDebug("Fetched an effect from cache: %s", qPrintable(key));
+        effect = m_effectCaches[key];
+    }
+    else if (QFile::exists(key)) {
+        locker.unlock();
+        effect = m_scene->createEffect(dir, model, this);
+        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
+        if (!effect->internalPointer()) {
+            qWarning("%s cannot be compiled", qPrintable(key)) ;
+            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
+        }
+        locker.relock();
+        m_effectCaches.insert(key, effect);
+        setEffectOwner(effect, model);
+    }
+    else {
+        qDebug("Cannot load an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
+    }
+    return effect;
+}
+
+#endif
 
 }
 }

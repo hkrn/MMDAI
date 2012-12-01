@@ -42,7 +42,13 @@
 #include "vpvl2/IEffect.h"
 #include "vpvl2/IRenderContext.h"
 
+#include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
+#endif
 
 namespace nv {
 class Stream;
@@ -72,15 +78,17 @@ class RenderContext : public IRenderContext, protected QGLFunctions
 public:
     struct TextureCache {
         TextureCache() {}
-        TextureCache(int w, int h, GLuint i)
+        TextureCache(int w, int h, GLuint i, GLenum f)
             : width(w),
               height(h),
-              id(i)
+              id(i),
+              format(f)
         {
         }
         int width;
         int height;
         GLuint id;
+        GLenum format;
     };
     struct InternalTexture {
         InternalTexture(RenderContext::Texture *r, bool m, bool t)
@@ -94,6 +102,7 @@ public:
         void assign(const RenderContext::TextureCache &cache) {
             ref->width = cache.width;
             ref->height = cache.height;
+            ref->format = cache.format;
             *static_cast<GLuint *>(ref->object) = cache.id;
         }
         RenderContext::Texture *ref;
@@ -116,12 +125,6 @@ public:
             return false;
         }
     };
-    typedef QPair<QRegExp, vpvl2::IEffect *> EffectAttachment;
-    typedef struct {
-        IEffect::OffscreenRenderTarget renderTarget;
-        QList<EffectAttachment> attachments;
-        GLuint textureID;
-    } OffscreenRenderTarget;
 
     static QSet<QString> loadableTextureExtensions();
     static QString readAllAsync(const QString &path);
@@ -150,11 +153,6 @@ public:
     void startProfileSession(ProfileType type, const void *arg);
     void stopProfileSession(ProfileType type, const void *arg);
 
-    IModel *effectOwner(const IEffect *effect) const;
-    IModel *findModel(const IString *name) const;
-    void setRenderColorTargets(const void *targets, const int ntargets);
-    FrameBufferObject *createFrameBufferObject();
-
     void setArchive(Archive *value);
     void setSceneRef(Scene *value);
     void updateMatrices(const QSizeF &size);
@@ -170,15 +168,35 @@ public:
     void setEffectOwner(const IEffect *effect, IModel *model);
     void removeModel(IModel *model);
     void initialize(bool enableMSAA);
-    void bindOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
-    void releaseOffscreenRenderTarget(GLuint textureID, size_t width, size_t height, bool enableAA);
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    typedef QPair<QRegExp, IEffect *> EffectAttachment;
+    struct OffscreenTexture {
+        OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const QList<EffectAttachment> &a)
+            : renderTarget(r),
+              attachments(a),
+              textureID(cgGLGetTextureParameter(static_cast<CGparameter>(r.samplerParameter))),
+              textureFormat(r.format)
+        {
+        }
+        IEffect::OffscreenRenderTarget renderTarget;
+        QList<EffectAttachment> attachments;
+        GLuint textureID;
+        GLenum textureFormat;
+    };
+    IModel *effectOwner(const IEffect *effect) const;
+    IModel *findModel(const IString *name) const;
+    void setRenderColorTargets(const void *targets, const int ntargets);
+    FrameBufferObject *createFrameBufferObject();
+    void bindOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
+    void releaseOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
     void renderOffscreen(const QSize &size);
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     IEffect *createEffectAsync(const IString *path);
     IEffect *createEffectAsync(IModel *model, const IString *dir);
-
-    const QList<OffscreenRenderTarget> &offscreenRenderTargets() const { return m_offscreens; }
+    const QList<OffscreenTexture> &offscreenTextures() const { return m_offscreenTextures; }
+#endif
 
 private:
     QImage createImageFromArchive(const QFileInfo &info);
@@ -207,7 +225,6 @@ private:
     QGLWidget *m_context;
     Archive *m_archive;
     QSizeF m_viewport;
-    QList<OffscreenRenderTarget> m_offscreens;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<const QString, IModel *> m_filename2Models;
     QHash<GLuint, QString> m_texture2Paths;
@@ -234,6 +251,10 @@ private:
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
     int m_msaaSamples;
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    QList<OffscreenTexture> m_offscreenTextures;
+#endif
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
 };

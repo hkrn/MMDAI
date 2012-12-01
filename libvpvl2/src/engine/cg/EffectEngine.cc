@@ -71,8 +71,6 @@ static const int kIndices[] = { 0, 1, 2, 3 };
 static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertices[0]);
 static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
 static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
-static const int kBaseRenderColorTargetIndex = GL_COLOR_ATTACHMENT0;
-static const bool kEnableRTAA = true;
 
 }
 
@@ -721,9 +719,8 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
         texture.async = false;
         texture.object = &textureID;
         if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
-            textureID = *static_cast<const GLuint *>(texture.object);
             cgGLSetupSampler(sampler, textureID);
-            Texture t(texture.width, texture.height, 0, parameter, sampler, textureID);
+            Texture t(texture, 0, parameter, sampler);
             m_name2textures.insert(cgGetParameterName(parameter), t);
             m_path2parameters.insert(name, parameter);
             m_textures.add(textureID);
@@ -833,16 +830,18 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   const CGparameter sampler,
                                                   GLuint texture,
                                                   size_t width,
-                                                  size_t height)
+                                                  size_t height,
+                                                  GLenum &format)
 {
-    GLenum internal, format, type;
-    getTextureFormat(parameter, internal, format, type);
+    GLenum textureInternal, textureFormat, byteAlignType;
+    getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, internal, width, height, 0, format, type, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, textureInternal, width, height, 0, textureFormat, byteAlignType, 0);
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
-    Texture t(width, height, 0, parameter, sampler, texture);
+    format = textureInternal;
+    Texture t(width, height, 0, parameter, sampler, texture, textureInternal);
     m_name2textures.insert(cgGetParameterName(parameter), t);
 }
 
@@ -860,7 +859,7 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
-    Texture t(width, height, depth, parameter, sampler, texture);
+    Texture t(width, height, depth, parameter, sampler, texture, internal);
     m_name2textures.insert(cgGetParameterName(parameter), t);
 }
 
@@ -869,9 +868,10 @@ GLuint RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter
     size_t width, height;
     getSize2(parameter, width, height);
     GLuint texture;
+    GLenum format;
     glGenTextures(1, &texture);
     m_textures.add(texture);
-    generateTexture2D(parameter, sampler, texture, width, height);
+    generateTexture2D(parameter, sampler, texture, width, height, format);
     return texture;
 }
 
@@ -1010,10 +1010,11 @@ void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter paramete
                                                       const CGparameter sampler,
                                                       GLuint texture,
                                                       size_t width,
-                                                      size_t height)
+                                                      size_t height,
+                                                      GLenum &format)
 {
-    RenderColorTargetSemantic::generateTexture2D(parameter, sampler, texture, width, height);
-    m_effectRef->addOffscreenRenderTarget(parameter, sampler, width, height);
+    RenderColorTargetSemantic::generateTexture2D(parameter, sampler, texture, width, height, format);
+    m_effectRef->addOffscreenRenderTarget(parameter, sampler, width, height, format);
 }
 
 /* AnimatedTextureSemantic */
@@ -1658,11 +1659,12 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
             else {
                 m_frameBufferObjectRef->blit();
             }
-            m_frameBufferObjectRef->bindTexture(texture, index);
+            m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             glViewport(0, 0, width, height);
         }
         else {
             if (m_renderColorTargets.size() > 1) {
+                m_frameBufferObjectRef->blit();
                 m_renderColorTargets.remove(target);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
@@ -2167,6 +2169,7 @@ void EffectEngine::ScriptState::setFromState(const ScriptState &other)
 void EffectEngine::ScriptState::setFromTexture(const RenderColorTargetSemantic::Texture *t)
 {
     texture = t->id;
+    textureFormat = t->format;
     width = t->width;
     height = t->height;
     parameter = t->parameter;

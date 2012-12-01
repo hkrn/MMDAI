@@ -76,12 +76,18 @@ public:
         m_parentFrameBufferObject = 0;
     }
 
-    void addOffscreenRenderTarget(CGparameter texture, CGparameter sampler, size_t width, size_t height) {
+    void addOffscreenRenderTarget(CGparameter texture,
+                                  CGparameter sampler,
+                                  size_t width,
+                                  size_t height,
+                                  GLenum format)
+    {
         OffscreenRenderTarget target;
         target.textureParameter = texture;
         target.samplerParameter = sampler;
         target.width = width;
         target.height = height;
+        target.format = format;
         m_offscreenRenderTargets.add(target);
     }
     void addInteractiveParameter(CGparameter value) {

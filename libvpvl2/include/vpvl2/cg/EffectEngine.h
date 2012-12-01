@@ -284,13 +284,24 @@ class RenderColorTargetSemantic : public BaseParameter
 {
 public:
     struct Texture {
-        Texture(int w, int h, int d, CGparameter p, CGparameter s, GLuint i)
+        Texture(int w, int h, int d, CGparameter p, CGparameter s, GLuint i, GLenum f)
             : width(w),
               height(h),
               depth(d),
               parameter(p),
               sampler(s),
-              id(i)
+              id(i),
+              format(f)
+        {
+        }
+        Texture(const IRenderContext::Texture &t, int d, CGparameter p, CGparameter s)
+            : width(t.width),
+              height(t.height),
+              depth(d),
+              parameter(p),
+              sampler(s),
+              id(*static_cast<const GLuint *>(t.object)),
+              format(t.format)
         {
         }
         int width;
@@ -299,6 +310,7 @@ public:
         CGparameter parameter;
         CGparameter sampler;
         GLuint id;
+        GLenum format;
     };
 
     RenderColorTargetSemantic(IRenderContext *renderContextRef);
@@ -322,7 +334,8 @@ protected:
                                    const CGparameter sampler,
                                    GLuint texture,
                                    size_t width,
-                                   size_t height);
+                                   size_t height,
+                                   GLenum &format);
     virtual void generateTexture3D(const CGparameter parameter,
                                    const CGparameter sampler,
                                    GLuint texture,
@@ -394,7 +407,8 @@ protected:
                            const CGparameter sampler,
                            GLuint texture,
                            size_t width,
-                           size_t height);
+                           size_t height,
+                           GLenum &format);
 
 private:
     Effect *m_effectRef;
@@ -482,6 +496,7 @@ public:
         GLuint texture;
         GLuint depthBuffer;
         GLuint stencilBuffer;
+        GLenum textureFormat;
         size_t width;
         size_t height;
         bool enterLoop;
