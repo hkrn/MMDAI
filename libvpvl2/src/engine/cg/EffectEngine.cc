@@ -1651,26 +1651,31 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
     const size_t width = state.width, height = state.height;
     const int index = state.type - ScriptState::kRenderColorTarget0, target = GL_COLOR_ATTACHMENT0 + index;
     if (m_frameBufferObjectRef) {
+        const int nRenderColorTargets = m_renderColorTargets.size();
         if (state.isRenderTargetBound) {
-            if (m_renderColorTargets.findLinearSearch(target) == m_renderColorTargets.size()) {
+            if (m_renderColorTargets.findLinearSearch(target) == nRenderColorTargets) {
                 m_renderColorTargets.push_back(target);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
-            }
-            else {
-                m_frameBufferObjectRef->blit();
             }
             m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             glViewport(0, 0, width, height);
         }
-        else {
-            if (m_renderColorTargets.size() > 1) {
-                m_frameBufferObjectRef->blit();
+        else if (nRenderColorTargets > 0) {
+            if (index > 0) {
+                m_frameBufferObjectRef->blit(index);
                 m_renderColorTargets.remove(target);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
             else {
                 Vector3 viewport;
-                m_frameBufferObjectRef->blit();
+                for (int i = 0; i < nRenderColorTargets; i++) {
+                    const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
+                    m_frameBufferObjectRef->blit(index2);
+                }
+                for (int i = 0; i < nRenderColorTargets; i++) {
+                    const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
+                    m_frameBufferObjectRef->unbindColorBuffer(index2);
+                }
                 m_frameBufferObjectRef->unbind();
                 m_renderColorTargets.clear();
                 m_renderContextRef->setRenderColorTargets(0, 0);
@@ -1683,8 +1688,13 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
 
 void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state)
 {
-    if (m_frameBufferObjectRef && state.isRenderTargetBound) {
-        m_frameBufferObjectRef->bindDepthStencilBuffer();
+    if (m_frameBufferObjectRef) {
+        if (state.isRenderTargetBound) {
+            m_frameBufferObjectRef->bindDepthStencilBuffer();
+        }
+        else {
+            m_frameBufferObjectRef->unbindDepthStencilBuffer();
+        }
     }
 }
 

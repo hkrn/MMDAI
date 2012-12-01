@@ -943,9 +943,8 @@ FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_
 
 void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
 {
-    if (ntargets > 0)
-        glDrawBuffersPROC(ntargets, static_cast<const GLuint *>(targets));
-    else
+    glDrawBuffersPROC(ntargets, static_cast<const GLenum *>(targets));
+    if (ntargets == 0)
         glDrawBuffer(GL_BACK);
 }
 
@@ -967,9 +966,11 @@ void RenderContext::releaseOffscreenRenderTarget(const OffscreenTexture &texture
 {
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
     if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height)) {
-        if (enableAA)
-            buffer->blit();
+        if (enableAA) {
+            buffer->blit(0);
+        }
         buffer->unbind();
+        setRenderColorTargets(0, 0);
     }
 }
 

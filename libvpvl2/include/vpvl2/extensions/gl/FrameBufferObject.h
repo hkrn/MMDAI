@@ -125,19 +125,24 @@ public:
             glGenFramebuffers(1, &m_fboMSAA);
             glGenRenderbuffers(1, &m_depthMSAA);
             glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);
-            glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH_COMPONENT24, m_width, m_height);
+            glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
         }
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
-    void blit() {
+    void blit(int index) {
         if (m_fboMSAA) {
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
+            while (glGetError()) {}
+            const GLenum target = GL_COLOR_ATTACHMENT0 + index;
             glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboMSAA);
-            glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
+            glReadBuffer(target);
+            glDrawBuffers(1, &target);
+            glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height,
+                                  GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
     }
     void bindTexture(GLuint textureID, GLenum format, int index) {
-        const int target = GL_COLOR_ATTACHMENT0 + index;
+        const GLenum target = GL_COLOR_ATTACHMENT0 + index;
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, textureID, 0);
         if (m_fboMSAA) {
@@ -163,6 +168,26 @@ public:
         if (m_fboMSAA) {
             glBindFramebuffer(GL_FRAMEBUFFER, m_fboMSAA);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthMSAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthMSAA);
+        }
+    }
+    void unbindColorBuffer(int index) {
+        const GLenum target = GL_COLOR_ATTACHMENT0 + index;
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, 0, 0);
+        if (m_fboMSAA) {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_fboMSAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, target, GL_RENDERBUFFER, 0);
+        }
+    }
+    void unbindDepthStencilBuffer() {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+        if (m_fboMSAA) {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_fboMSAA);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
         }
     }
     void unbind() {
