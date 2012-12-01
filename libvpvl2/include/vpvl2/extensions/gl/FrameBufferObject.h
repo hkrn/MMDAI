@@ -146,7 +146,11 @@ public:
         glGenRenderbuffers(1, &m_depth);
         glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
+#ifdef __APPLE__
+        if (m_samples > 0) {
+#else
         if (m_samples > 0 && glBlitFramebufferPROC && glDrawBuffersPROC && glRenderbufferStorageMultisamplePROC) {
+#endif /* __APPLE__ */
             glGenFramebuffers(1, &m_fboMSAA);
             glGenRenderbuffers(1, &m_depthMSAA);
             glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);
