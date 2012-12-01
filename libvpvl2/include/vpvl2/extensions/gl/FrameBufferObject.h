@@ -115,13 +115,38 @@ public:
 
     void create() {
 #ifdef VPVL2_LINK_QT
-        initializeGLFunctions();
-#endif
+        const QGLContext *context = QGLContext::currentContext();
+        initializeGLFunctions(context);
+#ifndef __APPLE__
+        glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(
+                    context->getProcAddress("glBlitFramebuffer"));
+        if (!glBlitFramebufferPROC) {
+            glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(
+                        context->getProcAddress("glBlitFramebufferEXT"));
+        }
+        glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(
+                    context->getProcAddress("glDrawBuffers"));
+        if (!glDrawBuffersPROC) {
+            glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(
+                        context->getProcAddress("glDrawBuffersARB"));
+        }
+        glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(
+                    context->getProcAddress("glRenderbufferStorageMultisample"));
+        if (!glRenderbufferStorageMultisamplePROC) {
+            glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(
+                        context->getProcAddress("glRenderbufferStorageMultisampleEXT"));
+        }
+#endif /* __APPLE__ */
+#else
+        glBlitFramebufferPROC = glBlitFramebuffer;
+        glDrawBuffersPROC = glDrawBuffers;
+        glRenderbufferStorageMultisamplePROC = glRenderbufferStorageMultisample;
+#endif /* VPVL2_LINK_QT */
         glGenFramebuffers(1, &m_fbo);
         glGenRenderbuffers(1, &m_depth);
         glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
-        if (m_samples > 0) {
+        if (m_samples > 0 && glBlitFramebufferPROC && glDrawBuffersPROC && glRenderbufferStorageMultisamplePROC) {
             glGenFramebuffers(1, &m_fboMSAA);
             glGenRenderbuffers(1, &m_depthMSAA);
             glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);
@@ -136,7 +161,7 @@ public:
             glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboMSAA);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
             glReadBuffer(target);
-            glDrawBuffers(1, &target);
+            glDrawBuffersPROC(1, &target);
             glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height,
                                   GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }

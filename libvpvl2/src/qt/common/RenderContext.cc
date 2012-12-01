@@ -735,9 +735,9 @@ void RenderContext::initialize(bool enableMSAA)
         m_extensions.insert(extension.trimmed());
     }
 #ifndef __APPLE__
-    glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(context->getProcAddress("glBlitFramebuffer"));
     glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
-    glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(context->getProcAddress("glRenderbufferStorageMultisample"));
+    if (!glDrawBuffersPROC)
+        glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffersARB"));
 #endif /* __APPLE__ */
 }
 
