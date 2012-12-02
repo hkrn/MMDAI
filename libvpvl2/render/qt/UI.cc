@@ -769,31 +769,37 @@ void UI::renderWindow()
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearDepth(1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    QVarLengthArray<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
-        IEffect *effect = engine->effect(IEffect::kPostProcess);
-        engine->setEffect(IEffect::kPostProcess, effect, 0);
+        if (IEffect *effect = engine->effect(IEffect::kPreProcess)) {
+            engine->setEffect(IEffect::kPreProcess, effect, 0);
+            enginesForPreProcess.append(engine);
+        }
+        else if (IEffect *effect = engine->effect(IEffect::kPostProcess)) {
+            engine->setEffect(IEffect::kPostProcess, effect, 0);
+            enginesForPostProcess.append(engine);
+        }
+        else {
+            IEffect *effect2 = engine->effect(IEffect::kStandard);
+            engine->setEffect(IEffect::kStandard, effect2, 0);
+            enginesForStandard.append(engine);
+        }
+    }
+    Q_FOREACH (IRenderEngine *engine, enginesForPostProcess) {
         engine->preparePostProcess();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        IEffect *effect = engine->effect(IEffect::kPreProcess);
-        engine->setEffect(IEffect::kPreProcess, effect, 0);
+    Q_FOREACH (IRenderEngine *engine, enginesForPreProcess) {
         engine->performPreProcess();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        IEffect *effect = engine->effect(IEffect::kStandard);
-        engine->setEffect(IEffect::kStandard, effect, 0);
+    Q_FOREACH (IRenderEngine *engine, enginesForStandard) {
         engine->renderModel();
         engine->renderEdge();
         engine->renderShadow();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        IEffect *effect = engine->effect(IEffect::kPostProcess);
-        engine->setEffect(IEffect::kPostProcess, effect, 0);
+    Q_FOREACH (IRenderEngine *engine, enginesForPostProcess) {
         engine->performPostProcess();
     }
 }
