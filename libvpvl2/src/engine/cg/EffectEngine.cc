@@ -886,7 +886,7 @@ GLuint RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter
     return texture;
 }
 
-void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &width, size_t &height)
+void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &width, size_t &height) const
 {
     const CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewPortRatio");
     int nvalues = 0;
@@ -924,7 +924,7 @@ void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &wi
     height = btMax(size_t(1), size_t(viewport.y()));
 }
 
-void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth)
+void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth) const
 {
     int nvalues = 0;
     const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
@@ -962,30 +962,18 @@ RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderContex
 
 RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 {
-    const int nRenderBuffers = m_renderBuffers.count();
-    if (nRenderBuffers > 0)
-        glDeleteRenderbuffers(nRenderBuffers, &m_renderBuffers[0]);
+}
+
+void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter)
+{
+    size_t width, height;
+    getSize2(parameter, width, height);
+    m_buffers.insert(cgGetParameterName(parameter), Buffer(width, height, parameter));
 }
 
 const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic::findRenderBuffer(const char *name) const
 {
-    return m_name2buffer.find(name);
-}
-
-void RenderDepthStencilTargetSemantic::generateTexture2D(const CGparameter parameter,
-                                                         const CGparameter /* sampler */,
-                                                         GLuint /* texture */,
-                                                         size_t width,
-                                                         size_t height)
-{
-    GLuint renderBuffer;
-    glGenRenderbuffers(1, &renderBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    m_renderBuffers.add(renderBuffer);
-    Buffer buffer(width, height, parameter, renderBuffer);
-    m_name2buffer.insert(cgGetParameterName(parameter), buffer);
+    return m_buffers.find(name);
 }
 
 /* OffscreenRenderTargetSemantic */
@@ -1308,7 +1296,7 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
             textureValue.addParameter(parameter);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
-            renderDepthStencilTarget.addParameter(parameter, 0, dir, false, false);
+            renderDepthStencilTarget.addParameter(parameter);
         }
         else if (!foundSAS && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
             setStandardsGlobal(parameter, ownTechniques);
@@ -1657,6 +1645,9 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
                 m_renderColorTargets.push_back(target);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
+            else {
+                m_frameBufferObjectRef->blit(index);
+            }
             m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             glViewport(0, 0, width, height);
         }
@@ -1675,6 +1666,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
                 for (int i = 0; i < nRenderColorTargets; i++) {
                     const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
                     m_frameBufferObjectRef->unbindColorBuffer(index2);
+                    m_frameBufferObjectRef->unbindDepthStencilBuffer();
                 }
                 m_frameBufferObjectRef->unbind();
                 m_renderColorTargets.clear();
@@ -1692,7 +1684,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
         if (state.isRenderTargetBound) {
             m_frameBufferObjectRef->bindDepthStencilBuffer();
         }
-        else {
+        else if (m_renderColorTargets.size() > 0) {
             m_frameBufferObjectRef->unbindDepthStencilBuffer();
         }
     }
@@ -2178,21 +2170,22 @@ void EffectEngine::ScriptState::setFromState(const ScriptState &other)
 
 void EffectEngine::ScriptState::setFromTexture(const RenderColorTargetSemantic::Texture *t)
 {
-    texture = t->id;
-    textureFormat = t->format;
-    width = t->width;
-    height = t->height;
-    parameter = t->parameter;
+    if (t) {
+        texture = t->id;
+        textureFormat = t->format;
+        width = t->width;
+        height = t->height;
+        parameter = t->parameter;
+    }
 }
 
 void EffectEngine::ScriptState::setFromBuffer(const RenderDepthStencilTargetSemantic::Buffer *b)
 {
-    const GLuint id = b->id;
-    width = b->width;
-    height = b->height;
-    parameter = b->parameter;
-    depthBuffer = id;
-    stencilBuffer = id;
+    if (b) {
+        width = b->width;
+        height = b->height;
+        parameter = b->parameter;
+    }
 }
 
 }

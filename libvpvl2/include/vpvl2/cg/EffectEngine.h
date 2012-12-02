@@ -342,12 +342,12 @@ protected:
                                    size_t width,
                                    size_t height,
                                    size_t depth);
+    void getSize2(const CGparameter parameter, size_t &width, size_t &height) const;
+    void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth) const;
 
 private:
     GLuint generateTexture2D0(const CGparameter parameter, const CGparameter sampler);
     GLuint generateTexture3D0(const CGparameter parameter, const CGparameter sampler);
-    void getSize2(const CGparameter parameter, size_t &width, size_t &height);
-    void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth);
 
     IRenderContext *m_renderContextRef;
     Array<CGparameter> m_parameters;
@@ -362,34 +362,25 @@ class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
 {
 public:
     struct Buffer {
-        Buffer(int w, int h, CGparameter p, GLuint i)
+        Buffer(int w, int h, CGparameter p)
             : width(w),
               height(h),
-              parameter(p),
-              id(i)
+              parameter(p)
         {
         }
         int width;
         int height;
         CGparameter parameter;
-        GLuint id;
     };
 
     RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef);
     ~RenderDepthStencilTargetSemantic();
 
+    void addParameter(CGparameter parameter);
     const Buffer *findRenderBuffer(const char *name) const;
 
-protected:
-    void generateTexture2D(const CGparameter parameter,
-                           const CGparameter sampler,
-                           GLuint texture,
-                           size_t width,
-                           size_t height);
-
 private:
-    Array<GLuint> m_renderBuffers;
-    Hash<HashString, Buffer> m_name2buffer;
+    Hash<HashString, Buffer> m_buffers;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderDepthStencilTargetSemantic)
 };
