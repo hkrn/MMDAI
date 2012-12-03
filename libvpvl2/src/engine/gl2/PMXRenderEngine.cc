@@ -952,7 +952,7 @@ void PMXRenderEngine::performPreProcess()
     /* do nothing */
 }
 
-void PMXRenderEngine::performPostProcess()
+void PMXRenderEngine::performPostProcess(IEffect * /* nextPostEffect */)
 {
     /* do nothing */
 }

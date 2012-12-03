@@ -293,13 +293,13 @@ void AssetRenderEngine::preparePostProcess()
 void AssetRenderEngine::performPreProcess()
 {
     if (m_currentRef)
-        m_currentRef->executeProcess(m_modelRef, IEffect::kPreProcess);
+        m_currentRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
 }
 
-void AssetRenderEngine::performPostProcess()
+void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
     if (m_currentRef)
-        m_currentRef->executeProcess(m_modelRef, IEffect::kPostProcess);
+        m_currentRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
 }
 
 IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType type) const
@@ -445,7 +445,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         if (cgIsTechnique(technique)) {
             bindVertexBundle(mesh);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
         }
     }
@@ -470,7 +470,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
     }

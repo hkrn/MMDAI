@@ -188,6 +188,7 @@ public:
     IModel *findModel(const IString *name) const;
     void setRenderColorTargets(const void *targets, const int ntargets);
     FrameBufferObject *createFrameBufferObject();
+    bool hasFrameBufferObjectBound() const;
     void bindOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
@@ -251,6 +252,7 @@ private:
     Vector4 m_mouseMiddlePressPosition;
     Vector4 m_mouseRightPressPosition;
     int m_msaaSamples;
+    bool m_frameBufferObjectBound;
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     QList<OffscreenTexture> m_offscreenTextures;

@@ -84,7 +84,7 @@ public:
     bool hasPostProcess() const;
     void preparePostProcess();
     void performPreProcess();
-    void performPostProcess();
+    void performPostProcess(IEffect *nextPostEffect);
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 

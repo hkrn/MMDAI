@@ -63,7 +63,7 @@ public:
     virtual bool hasPostProcess() const = 0;
     virtual void preparePostProcess() = 0;
     virtual void performPreProcess() = 0;
-    virtual void performPostProcess() = 0;
+    virtual void performPostProcess(IEffect *nextPostEffect) = 0;
     virtual IEffect *effect(IEffect::ScriptOrderType type) const = 0;
     virtual void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir) = 0;
 };

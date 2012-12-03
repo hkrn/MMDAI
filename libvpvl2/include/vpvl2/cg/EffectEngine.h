@@ -388,7 +388,7 @@ private:
 class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 {
 public:
-    OffscreenRenderTargetSemantic(Effect *effect, IRenderContext *renderContextRef);
+    OffscreenRenderTargetSemantic(Effect *effectRef, IRenderContext *renderContextRef);
     ~OffscreenRenderTargetSemantic();
 
     void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir);
@@ -483,6 +483,7 @@ public:
             kDrawBuffer
         } type;
         CGparameter parameter;
+        CGparameter sampler;
         CGpass pass;
         GLuint texture;
         GLuint depthBuffer;
@@ -510,8 +511,11 @@ public:
                               bool useToon) const;
     void executeScriptExternal();
     bool hasTechniques(IEffect::ScriptOrderType order) const;
-    void executeProcess(const IModel *model, IEffect::ScriptOrderType order);
+    void executeProcess(const IModel *model,
+                        const IEffect *nextPostEffectRef,
+                        IEffect::ScriptOrderType order);
     void executeTechniquePasses(const CGtechnique technique,
+                                const IEffect *nextPostEffectRef,
                                 const GLenum mode,
                                 const GLsizei count,
                                 const GLenum type,
@@ -606,10 +610,19 @@ private:
                                             CGtype testType,
                                             ScriptState::Type type,
                                             ScriptState &state);
-    void executePass(CGpass pass, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const;
-    void setRenderColorTargetFromScriptState(const ScriptState &state);
-    void setRenderDepthStencilTargetFromScriptState(const ScriptState &state);
-    void executeScript(const Script *script, const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr);
+    void executePass(CGpass pass,
+                     const GLenum mode,
+                     const GLsizei count,
+                     const GLenum type,
+                     const GLvoid *ptr) const;
+    void setRenderColorTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef);
+    void setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef);
+    void executeScript(const Script *script,
+                       const IEffect *nextPostEffectRef,
+                       const GLenum mode,
+                       const GLsizei count,
+                       const GLenum type,
+                       const GLvoid *ptr);
     void addTechniquePasses(const CGtechnique technique);
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
     void setTextureParameters(CGparameter parameter, const IString *dir);

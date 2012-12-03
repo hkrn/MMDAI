@@ -273,7 +273,8 @@ void PMXRenderEngine::renderModel()
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
-        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+        m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
+                                             reinterpret_cast<const GLvoid *>(offset));
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * indexStride;
     }
@@ -305,7 +306,8 @@ void PMXRenderEngine::renderEdge()
             CGtechnique technique = m_currentRef->findTechnique("edge", i, nmaterials, false, false, true);
             m_currentRef->edgeColor.setGeometryColor(material->edgeColor());
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+            m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
+                                                 reinterpret_cast<const GLvoid *>(offset));
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * indexStride;
@@ -332,7 +334,8 @@ void PMXRenderEngine::renderShadow()
         const int nindices = material->sizeofIndices();
         CGtechnique technique = m_currentRef->findTechnique("shadow", i, nmaterials, false, false, true);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
-        m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+        m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
+                                             reinterpret_cast<const GLvoid *>(offset));
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         offset += nindices * indexStride;
     }
@@ -359,7 +362,8 @@ void PMXRenderEngine::renderZPlot()
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmaterials, false, false, true);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
-            m_currentRef->executeTechniquePasses(technique, GL_TRIANGLES, nindices, m_indexType, reinterpret_cast<const GLvoid *>(offset));
+            m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
+                                                 reinterpret_cast<const GLvoid *>(offset));
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * indexStride;
@@ -388,13 +392,13 @@ void PMXRenderEngine::preparePostProcess()
 void PMXRenderEngine::performPreProcess()
 {
     if (m_currentRef)
-        m_currentRef->executeProcess(m_modelRef, IEffect::kPreProcess);
+        m_currentRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
 }
 
-void PMXRenderEngine::performPostProcess()
+void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
     if (m_currentRef)
-        m_currentRef->executeProcess(m_modelRef, IEffect::kPostProcess);
+        m_currentRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
 }
 
 IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const

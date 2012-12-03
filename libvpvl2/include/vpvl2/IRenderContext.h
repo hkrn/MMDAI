@@ -439,6 +439,8 @@ public:
      */
     virtual FrameBufferObject *createFrameBufferObject() = 0;
 
+    virtual bool hasFrameBufferObjectBound() const = 0;
+
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };
 

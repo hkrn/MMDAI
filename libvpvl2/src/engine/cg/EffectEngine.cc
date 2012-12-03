@@ -978,9 +978,9 @@ const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic
 
 /* OffscreenRenderTargetSemantic */
 
-OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(Effect *effect, IRenderContext *renderContextRef)
+OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(Effect *effectRef, IRenderContext *renderContextRef)
     : RenderColorTargetSemantic(renderContextRef),
-      m_effectRef(effect)
+      m_effectRef(effectRef)
 {
 }
 
@@ -1375,7 +1375,7 @@ CGtechnique EffectEngine::findTechnique(const char *pass,
 void EffectEngine::executeScriptExternal()
 {
     if (m_scriptOrder == IEffect::kPostProcess)
-        executeScript(&m_externalScript, 0, 0, 0, 0);
+        executeScript(&m_externalScript, 0, 0, 0, 0, 0);
 }
 
 bool EffectEngine::hasTechniques(IEffect::ScriptOrderType order) const
@@ -1383,19 +1383,29 @@ bool EffectEngine::hasTechniques(IEffect::ScriptOrderType order) const
     return m_scriptOrder == order ? m_techniqueScripts.size() > 0 : false;
 }
 
-void EffectEngine::executeProcess(const IModel *model, IEffect::ScriptOrderType order)
+void EffectEngine::executeProcess(const IModel *model,
+                                  const IEffect *nextPostEffectRef,
+                                  IEffect::ScriptOrderType order)
 {
     if (!model || !m_effectRef || m_scriptOrder != order)
         return;
+    if (nextPostEffectRef) {
+        m_frameBufferObjectRef->blit(0);
+        m_frameBufferObjectRef->bindSwapBuffer();
+    }
     m_rectRenderEngine->bindVertexBundle(true);
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model->opacity())); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
-    executeTechniquePasses(technique, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
+    executeTechniquePasses(technique, nextPostEffectRef, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
     m_rectRenderEngine->unbindVertexBundle(true);
+    if (nextPostEffectRef) {
+        m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
+    }
 }
 
 void EffectEngine::executeTechniquePasses(const CGtechnique technique,
+                                          const IEffect *nextPostEffectRef,
                                           const GLenum mode,
                                           const GLsizei count,
                                           const GLenum type,
@@ -1403,14 +1413,14 @@ void EffectEngine::executeTechniquePasses(const CGtechnique technique,
 {
     if (cgIsTechnique(technique)) {
         const Script *tss = m_techniqueScripts.find(technique);
-        executeScript(tss, mode, count, type, ptr);
+        executeScript(tss, nextPostEffectRef, mode, count, type, ptr);
         const Passes *passes = m_techniquePasses.find(technique);
         if (passes) {
             const int npasses = passes->size();
             for (int i = 0; i < npasses; i++) {
                 CGpass pass = passes->at(i);
                 const Script *pss = m_passScripts.find(pass);
-                executeScript(pss, mode, count, type, ptr);
+                executeScript(pss, nextPostEffectRef, mode, count, type, ptr);
             }
         }
     }
@@ -1633,7 +1643,7 @@ void EffectEngine::executePass(CGpass pass,
     }
 }
 
-void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
+void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef)
 {
     GLuint texture = state.texture;
     const size_t width = state.width, height = state.height;
@@ -1651,7 +1661,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
             m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             glViewport(0, 0, width, height);
         }
-        else if (nRenderColorTargets > 0) {
+        else if (!nextPostEffectRef && nRenderColorTargets > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
             if (index > 0) {
                 m_frameBufferObjectRef->blit(index);
                 m_renderColorTargets.remove(target);
@@ -1678,19 +1688,20 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
     }
 }
 
-void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state)
+void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef)
 {
     if (m_frameBufferObjectRef) {
         if (state.isRenderTargetBound) {
             m_frameBufferObjectRef->bindDepthStencilBuffer();
         }
-        else if (m_renderColorTargets.size() > 0) {
+        else if (!nextPostEffectRef && m_renderColorTargets.size() > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
             m_frameBufferObjectRef->unbindDepthStencilBuffer();
         }
     }
 }
 
 void EffectEngine::executeScript(const Script *script,
+                                 const IEffect *nextPostEffectRef,
                                  const GLenum mode,
                                  const GLsizei count,
                                  const GLenum type,
@@ -1737,10 +1748,10 @@ void EffectEngine::executeScript(const Script *script,
             case ScriptState::kRenderColorTarget1:
             case ScriptState::kRenderColorTarget2:
             case ScriptState::kRenderColorTarget3:
-                setRenderColorTargetFromScriptState(state);
+                setRenderColorTargetFromScriptState(state, nextPostEffectRef);
                 break;
             case ScriptState::kRenderDepthStencilTarget:
-                setRenderDepthStencilTargetFromScriptState(state);
+                setRenderDepthStencilTargetFromScriptState(state, nextPostEffectRef);
                 break;
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {
@@ -1753,7 +1764,7 @@ void EffectEngine::executeScript(const Script *script,
                 }
                 break;
             case ScriptState::kPass:
-                executeScript(m_passScripts.find(state.pass), mode, count, type, ptr);
+                executeScript(m_passScripts.find(state.pass), nextPostEffectRef, mode, count, type, ptr);
                 break;
             case ScriptState::kScriptExternal:
             case ScriptState::kUnknown:
@@ -2127,6 +2138,7 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
 EffectEngine::ScriptState::ScriptState()
     : type(kUnknown),
       parameter(0),
+      sampler(0),
       pass(0),
       texture(0),
       depthBuffer(0),
@@ -2147,6 +2159,7 @@ void EffectEngine::ScriptState::reset()
 {
     type = kUnknown;
     parameter = 0;
+    sampler = 0;
     pass = 0;
     texture = 0;
     depthBuffer = 0;
@@ -2176,6 +2189,7 @@ void EffectEngine::ScriptState::setFromTexture(const RenderColorTargetSemantic::
         width = t->width;
         height = t->height;
         parameter = t->parameter;
+        sampler = t->sampler;
     }
 }
 

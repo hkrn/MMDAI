@@ -214,7 +214,8 @@ RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *sce
       m_scene(scene),
       m_context(context),
       m_archive(0),
-      m_msaaSamples(0)
+      m_msaaSamples(0),
+      m_frameBufferObjectBound(false)
 {
     for (int i = 0; i < 4; i++)
         m_previousFrameBufferPtrs.insert(i, 0);
@@ -944,6 +945,7 @@ FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_
 void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
 {
     glDrawBuffersPROC(ntargets, static_cast<const GLenum *>(targets));
+    m_frameBufferObjectBound = ntargets > 0;
     if (ntargets == 0)
         glDrawBuffer(GL_BACK);
 }
@@ -951,6 +953,11 @@ void RenderContext::setRenderColorTargets(const void *targets, const int ntarget
 FrameBufferObject *RenderContext::createFrameBufferObject()
 {
     return new FrameBufferObject(m_viewport.width(), m_viewport.height(), m_msaaSamples);
+}
+
+bool RenderContext::hasFrameBufferObjectBound() const
+{
+    return m_frameBufferObjectBound;
 }
 
 void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool /* enableAA */)

@@ -788,7 +788,17 @@ void UI::renderWindow()
             enginesForStandard.append(engine);
         }
     }
-    Q_FOREACH (IRenderEngine *engine, enginesForPostProcess) {
+    QHash<IRenderEngine *, IEffect *> nextPostEffects;
+    IEffect *nextPostEffectRef = 0;
+    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        IEffect *effect = engine->effect(IEffect::kPostProcess);
+        nextPostEffects.insert(engine, nextPostEffectRef);
+        nextPostEffectRef = effect;
+    }
+    //Q_FOREACH (IRenderEngine *engine, enginesForPostProcess) {
+    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
         engine->preparePostProcess();
     }
     Q_FOREACH (IRenderEngine *engine, enginesForPreProcess) {
@@ -800,7 +810,8 @@ void UI::renderWindow()
         engine->renderShadow();
     }
     Q_FOREACH (IRenderEngine *engine, enginesForPostProcess) {
-        engine->performPostProcess();
+        IEffect *nextPostEffect = nextPostEffects[engine];
+        engine->performPostProcess(nextPostEffect);
     }
 }
 

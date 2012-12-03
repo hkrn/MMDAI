@@ -417,7 +417,7 @@ void AssetRenderEngine::performPreProcess()
     /* do nothing */
 }
 
-void AssetRenderEngine::performPostProcess()
+void AssetRenderEngine::performPostProcess(IEffect * /* nextPostEffect */)
 {
     /* do nothing */
 }

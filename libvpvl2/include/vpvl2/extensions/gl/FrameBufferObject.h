@@ -89,6 +89,9 @@ public:
         m_depth(0),
         m_fboMSAA(0),
         m_depthMSAA(0),
+        m_fboSwap(0),
+        m_colorSwap(0),
+        m_depthSwap(0),
         m_width(width),
         m_height(height),
         m_samples(samples)
@@ -108,6 +111,12 @@ public:
         m_fboMSAA = 0;
         glDeleteRenderbuffers(1, &m_depthMSAA);
         m_depthMSAA = 0;
+        glDeleteFramebuffers(1, &m_fboSwap);
+        m_fboSwap = 0;
+        glDeleteRenderbuffers(1, &m_colorSwap);
+        m_colorSwap = 0;
+        glDeleteRenderbuffers(1, &m_depthSwap);
+        m_depthSwap = 0;
         m_width = 0;
         m_height = 0;
         m_samples = 0;
@@ -160,12 +169,11 @@ public:
     }
     void blit(int index) {
         if (m_fboMSAA) {
-            while (glGetError()) {}
             const GLenum target = GL_COLOR_ATTACHMENT0 + index;
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboMSAA);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
-            glReadBuffer(target);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboMSAA);
             glDrawBuffersPROC(1, &target);
+            glReadBuffer(target);
             glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height,
                                   GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
@@ -186,9 +194,11 @@ public:
                 glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
                 m_colorMSAA.insert(index, buffer);
+                m_colorFormats.insert(index, format);
             }
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, target, GL_RENDERBUFFER, buffer);
         }
+        m_boundTextureTargets.insert(index, index);
     }
     void bindDepthStencilBuffer() {
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -208,6 +218,7 @@ public:
             glBindFramebuffer(GL_FRAMEBUFFER, m_fboMSAA);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, target, GL_RENDERBUFFER, 0);
         }
+        m_boundTextureTargets.remove(index);
     }
     void unbindDepthStencilBuffer() {
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -226,6 +237,51 @@ public:
         return m_fboMSAA != 0;
     }
 
+    void bindSwapBuffer() {
+        if (!m_fboSwap) {
+            GLuint format = *m_colorFormats.find(0);
+            glGenFramebuffers(1, &m_fboSwap);
+            glGenRenderbuffers(1, &m_colorSwap);
+            glGenRenderbuffers(1, &m_depthSwap);
+            if (m_fboMSAA) {
+                glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
+                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
+                glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
+                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            }
+            else {
+                glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
+                glRenderbufferStorage(GL_RENDERBUFFER, format, m_width, m_height);
+                glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
+                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            }
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fboSwap);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorSwap);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+    void transferSwapBuffer(FrameBufferObject *destination) {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboSwap);
+        if (destination->m_fboMSAA) {
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination->m_fboMSAA);
+        }
+        else {
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination->m_fbo);
+        }
+        const GLuint target = GL_COLOR_ATTACHMENT0;
+        glDrawBuffersPROC(1, &target);
+        glReadBuffer(target);
+        glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, destination->m_width, destination->m_height,
+                              GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+        destination->blit(0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
 #if defined(VPVL2_LINK_QT)
     void getImage(QImage &output) {
         QImage image(m_width, m_height, QImage::Format_ARGB32_Premultiplied);
@@ -238,10 +294,15 @@ public:
 
 private:
     Hash<btHashInt, GLuint> m_colorMSAA;
+    Hash<btHashInt, GLenum> m_colorFormats;
+    Hash<btHashInt, int> m_boundTextureTargets;
     GLuint m_fbo;
     GLuint m_depth;
     GLuint m_fboMSAA;
     GLuint m_depthMSAA;
+    GLuint m_fboSwap;
+    GLuint m_colorSwap;
+    GLuint m_depthSwap;
     size_t m_width;
     size_t m_height;
     int m_samples;
