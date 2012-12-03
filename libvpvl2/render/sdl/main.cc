@@ -176,25 +176,30 @@ static void UIDrawScreen(const UIContext &context)
 {
     glViewport(0, 0, context.width, context.height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    const Array<IRenderEngine *> &engines = context.sceneRef->renderEngines();
-    const int nengines = engines.count();
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
+    Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
+    Hash<HashPtr, IEffect *> nextPostEffects;
+    context.sceneRef->getRenderEnginesByRenderOrder(enginesForPreProcess,
+                                                    enginesForStandard,
+                                                    enginesForPostProcess,
+                                                    nextPostEffects);
+    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
         engine->preparePostProcess();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
+    for (int i = 0, nengines = enginesForPreProcess.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForPreProcess[i];
         engine->performPreProcess();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
+    for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
         engine->renderShadow();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        engine->performPostProcess();
+    for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        IEffect *const *nextPostEffect = nextPostEffects[engine];
+        engine->performPostProcess(*nextPostEffect);
     }
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_GL_SwapWindow(context.windowRef);

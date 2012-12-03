@@ -85,17 +85,21 @@ public:
     Scene();
     virtual ~Scene();
 
-    IRenderEngine *createRenderEngine(vpvl2::IRenderContext *renderContext, IModel *model, int flags) const;
+    IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags) const;
     void addModel(IModel *model, IRenderEngine *engine);
     void addMotion(IMotion *motion);
     IEffect *createEffect(const IString *path, IRenderContext *renderContext);
     IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext);
-    void deleteModel(vpvl2::IModel *&model);
+    void deleteModel(IModel *&model);
     void removeMotion(IMotion *motion);
     void advance(const IKeyframe::TimeIndex &delta, int flags);
     void seek(const IKeyframe::TimeIndex &timeIndex, int flags);
     void updateModel(IModel *model) const;
     void update(int flags);
+    void getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreProcess,
+                                       Array<IRenderEngine *> &enginesForStandard,
+                                       Array<IRenderEngine *> &enginesForPostProcess,
+                                       Hash<HashPtr, IEffect *> &nextPostEffects) const;
     void setPreferredFPS(const Scalar &value);
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
     IKeyframe::TimeIndex maxFrameIndex() const;

@@ -564,6 +564,43 @@ void Scene::update(int flags)
     }
 }
 
+void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreProcess,
+                                          Array<IRenderEngine *> &enginesForStandard,
+                                          Array<IRenderEngine *> &enginesForPostProcess,
+                                          Hash<HashPtr, IEffect *> &nextPostEffects) const
+{
+    enginesForPreProcess.clear();
+    enginesForStandard.clear();
+    enginesForPostProcess.clear();
+    nextPostEffects.clear();
+    const Array<IRenderEngine *> &engines = m_context->engines;
+    const int nengines = engines.count();
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        if (IEffect *effect = engine->effect(IEffect::kPreProcess)) {
+            engine->setEffect(IEffect::kPreProcess, effect, 0);
+            enginesForPreProcess.add(engine);
+        }
+        else if (IEffect *effect = engine->effect(IEffect::kPostProcess)) {
+            engine->setEffect(IEffect::kPostProcess, effect, 0);
+            enginesForPostProcess.add(engine);
+        }
+        else {
+            IEffect *effect2 = engine->effect(IEffect::kStandard);
+            engine->setEffect(IEffect::kStandard, effect2, 0);
+            enginesForStandard.add(engine);
+        }
+    }
+    IEffect *nextPostEffectRef = 0;
+    nextPostEffects.clear();
+    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        IEffect *effect = engine->effect(IEffect::kPostProcess);
+        nextPostEffects.insert(engine, nextPostEffectRef);
+        nextPostEffectRef = effect;
+    }
+}
+
 void Scene::setPreferredFPS(const Scalar &value)
 {
     m_context->preferredFPS = value;

@@ -45,25 +45,30 @@ static void UIDrawScreen(const Scene &scene, size_t width, size_t height)
 {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    const Array<IRenderEngine *> &engines = scene.renderEngines();
-    const int nengines = engines.count();
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
+    Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
+    Hash<HashPtr, IEffect *> nextPostEffects;
+    scene.getRenderEnginesByRenderOrder(enginesForPreProcess,
+                                        enginesForStandard,
+                                        enginesForPostProcess,
+                                        nextPostEffects);
+    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
         engine->preparePostProcess();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
+    for (int i = 0, nengines = enginesForPreProcess.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForPreProcess[i];
         engine->performPreProcess();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
+    for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
         engine->renderShadow();
     }
-    for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
-        engine->performPostProcess();
+    for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        IEffect *const *nextPostEffect = nextPostEffects[engine];
+        engine->performPostProcess(*nextPostEffect);
     }
 }
 
