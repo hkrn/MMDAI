@@ -515,6 +515,9 @@ public:
     FrameBufferObject *createFrameBufferObject() {
         return new FrameBufferObject(m_viewport.x, m_viewport.y, 4);
     }
+    bool hasFrameBufferObjectBound() const {
+        return false;
+    }
 
     void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
         m_cameraWorldMatrix = world;
