@@ -24,8 +24,8 @@ class MockIRenderEngine : public IRenderEngine {
       void());
   MOCK_METHOD0(performPreProcess,
       void());
-  MOCK_METHOD0(performPostProcess,
-      void());
+  MOCK_METHOD1(performPostProcess,
+      void(IEffect *nextPostEffect));
   MOCK_CONST_METHOD1(effect,
       IEffect*(IEffect::ScriptOrderType type));
   MOCK_METHOD3(setEffect,

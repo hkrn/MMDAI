@@ -46,14 +46,10 @@ class MockIRenderContext : public IRenderContext {
       IModel*(const IEffect *effect));
   MOCK_METHOD2(setRenderColorTargets,
       void(const void *targets, const int ntargets));
-  MOCK_METHOD5(bindRenderColorTarget,
-      void(void *texture, size_t width, size_t height, int index, bool enableAA));
-  MOCK_METHOD5(releaseRenderColorTarget,
-      void(void *texture, size_t width, size_t height, int index, bool enableAA));
-  MOCK_METHOD6(bindRenderDepthStencilTarget,
-      void(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA));
-  MOCK_METHOD6(releaseRenderDepthStencilTarget,
-      void(void *texture, void *depth, void *stencil, size_t width, size_t height, bool enableAA));
+  MOCK_METHOD0(createFrameBufferObject,
+      FrameBufferObject*());
+  MOCK_CONST_METHOD0(hasFrameBufferObjectBound,
+      bool());
 };
 
 }  // namespace vpvl2

@@ -95,6 +95,8 @@ public:
             EXPECT_CALL(renderContextRef, getViewport(_)).Times(AnyNumber()).WillRepeatedly(Return());
             EXPECT_CALL(renderContextRef, loadShaderSource(IRenderContext::kModelEffectTechniques, _))
                     .Times(1).WillRepeatedly(Return(source));
+            EXPECT_CALL(renderContextRef, createFrameBufferObject())
+                    .Times(1).WillRepeatedly(Return(static_cast<FrameBufferObject *>(0)));
             cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffect(0, &renderContextRef));
             ptr = static_cast<CGeffect>(effect->internalPointer());
             return effect;
@@ -710,7 +712,7 @@ TEST_F(EffectTest, ParseLoopScript)
     ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn2"), script->at(2).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopEnd, script->at(3).type);
     // try executing the script to get the value of LoopIndexIn
-    engine.executeTechniquePasses(technique, 0 , 0, 0, 0);
+    engine.executeTechniquePasses(technique, 0, 0 , 0, 0, 0);
     Vector3 value;
     cgGLGetParameter1f(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn"), value);
     ASSERT_FLOAT_EQ(42, value.x());
