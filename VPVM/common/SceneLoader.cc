@@ -891,61 +891,66 @@ void SceneLoader::releaseProject()
 void SceneLoader::renderWindow()
 {
     const int nobjects = m_renderOrderList.count();
-    /* ポストプロセスの前処理 */
+    QVarLengthArray<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
+    QHash<IRenderEngine *, IEffect *> nextPostEffects;
     for (int i = 0; i < nobjects; i++) {
         const QUuid &uuid = m_renderOrderList[i];
         const Project::UUID &uuidString = uuid.toString().toStdString();
         if (IModel *model = m_project->findModel(uuidString)) {
-            IRenderEngine *engine = m_project->findRenderEngine(model);
-            IEffect *effect = engine->effect(IEffect::kPostProcess);
-            /*
-             * レンダリングエンジンの状態が自動更新されないことが原因でポストエフェクトで正しく処理されない問題があるため、
-             * アクセサリの場合のみポストエフェクト処理前に事前にレンダリングエンジンの状態の更新を行う
-             * (具体例は VIEWPORTPIXELSIZE が (0,0) になってしまい、それに依存するポストエフェクトが正しく描画されない問題)
-             */
-            if (model->type() == IModel::kAsset)
-                engine->update();
-            engine->setEffect(IEffect::kPostProcess, effect, 0);
-            engine->preparePostProcess();
+            if (IRenderEngine *engine = m_project->findRenderEngine(model)) {
+                if (IEffect *effect = engine->effect(IEffect::kPreProcess)) {
+                    engine->setEffect(IEffect::kPreProcess, effect, 0);
+                    enginesForPreProcess.append(engine);
+                }
+                else if (IEffect *effect = engine->effect(IEffect::kPostProcess)) {
+                    engine->setEffect(IEffect::kPostProcess, effect, 0);
+                    enginesForPostProcess.append(engine);
+                }
+                else {
+                    IEffect *effect2 = engine->effect(IEffect::kStandard);
+                    engine->setEffect(IEffect::kStandard, effect2, 0);
+                    enginesForStandard.append(engine);
+                }
+            }
         }
     }
+    IEffect *nextPostEffectRef = 0;
+    for (int i = enginesForPostProcess.size() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        IEffect *effect = engine->effect(IEffect::kPostProcess);
+        nextPostEffects.insert(engine, nextPostEffectRef);
+        nextPostEffectRef = effect;
+    }
+    /* ポストプロセスの前処理 */
+    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        /*
+         * レンダリングエンジンの状態が自動更新されないことが原因でポストエフェクトで正しく処理されない問題があるため、
+         * アクセサリの場合のみポストエフェクト処理前に事前にレンダリングエンジンの状態の更新を行う
+         * (具体例は VIEWPORTPIXELSIZE が (0,0) になってしまい、それに依存するポストエフェクトが正しく描画されない問題)
+         */
+        if (engine->model()->type() == IModel::kAsset)
+            engine->update();
+        engine->preparePostProcess();
+    }
     /* プリプロセス */
-    for (int i = 0; i < nobjects; i++) {
-        const QUuid &uuid = m_renderOrderList[i];
-        const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->findModel(uuidString)) {
-            IRenderEngine *engine = m_project->findRenderEngine(model);
-            IEffect *effect = engine->effect(IEffect::kPreProcess);
-            engine->setEffect(IEffect::kPreProcess, effect, 0);
-            engine->performPreProcess();
-        }
+    foreach (IRenderEngine *engine, enginesForPreProcess) {
+        engine->performPreProcess();
     }
     emit preprocessDidPerform();
     /* 通常の描写 */
-    for (int i = 0; i < nobjects; i++) {
-        const QUuid &uuid = m_renderOrderList[i];
-        const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->findModel(uuidString)) {
-            IRenderEngine *engine = m_project->findRenderEngine(model);
-            IEffect *effect = engine->effect(IEffect::kStandard);
-            engine->setEffect(IEffect::kStandard, effect, 0);
-            if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
-                engine->renderShadow();
-            }
-            engine->renderModel();
-            engine->renderEdge();
+    foreach (IRenderEngine *engine, enginesForStandard) {
+        IModel *model = engine->model();
+        if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
+            engine->renderShadow();
         }
+        engine->renderModel();
+        engine->renderEdge();
     }
     /* ポストプロセス */
-    for (int i = 0; i < nobjects; i++) {
-        const QUuid &uuid = m_renderOrderList[i];
-        const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->findModel(uuidString)) {
-            IRenderEngine *engine = m_project->findRenderEngine(model);
-            IEffect *effect = engine->effect(IEffect::kPostProcess);
-            engine->setEffect(IEffect::kPostProcess, effect, 0);
-            engine->performPostProcess();
-        }
+    foreach (IRenderEngine *engine, enginesForPostProcess) {
+        IEffect *effect = nextPostEffects[engine];
+        engine->performPostProcess(effect);
     }
     /* Cg でリセットされてしまうため、アルファブレンドを再度有効にする */
     glEnable(GL_BLEND);
