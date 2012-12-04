@@ -1688,10 +1688,18 @@ const std::string &Project::modelSetting(const IModel *model, const std::string 
     if (model) {
         switch (model->type()) {
         case IModel::kAsset:
-            return containsModel(model) ? m_context->localAssetSettings[model][key] : PrivateContext::kEmpty;
+            if (containsModel(model)) {
+                const std::string &value = m_context->localAssetSettings[model][key];
+                return value;
+            }
+            return PrivateContext::kEmpty;
         case IModel::kPMD:
         case IModel::kPMX:
-            return containsModel(model) ? m_context->localModelSettings[model][key] : PrivateContext::kEmpty;
+            if (containsModel(model)) {
+                const std::string &value = m_context->localModelSettings[model][key];
+                return value;
+            }
+            return PrivateContext::kEmpty;
         default:
             return PrivateContext::kEmpty;
         }
