@@ -150,14 +150,16 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
     if (model) {
         m_edgeOffsetSpinBox->setValue(model->edgeWidth());
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
-        m_noShadowCheckbox->setChecked(true);
         if (loader) {
             m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
             m_selfShadowCheckbox->setChecked(loader->isSelfShadowEnabled(model));
+            bool noShadow = !m_projectiveShadowCheckbox->isChecked() && !m_selfShadowCheckbox->isChecked();
+            m_noShadowCheckbox->setChecked(noShadow);
         }
         else {
             m_projectiveShadowCheckbox->setChecked(false);
             m_selfShadowCheckbox->setChecked(false);
+            m_noShadowCheckbox->setChecked(true);
         }
         const Vector3 &position = model->worldPosition();
         m_px->setValue(position.x());
