@@ -1402,6 +1402,9 @@ void EffectEngine::executeProcess(const IModel *model,
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
     }
+    else {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
 void EffectEngine::executeTechniquePasses(const CGtechnique technique,
@@ -1660,6 +1663,9 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
             }
             m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             glViewport(0, 0, width, height);
+        }
+        else if (nextPostEffectRef && nRenderColorTargets > 0) {
+            m_renderColorTargets.clear();
         }
         else if (!nextPostEffectRef && nRenderColorTargets > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
             if (index > 0) {
