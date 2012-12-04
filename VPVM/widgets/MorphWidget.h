@@ -127,7 +127,6 @@ private:
     QPointer<QPushButton> m_otherRegisterButton;
     QPointer<QPushButton> m_resetAllButton;
     MorphMotionModel *m_morphMotionModelRef;
-    bool m_seek;
 
     Q_DISABLE_COPY(MorphWidget)
 };
