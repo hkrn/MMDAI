@@ -98,28 +98,7 @@ public:
     {
     }
     ~FrameBufferObject() {
-        const int nbuffers = m_colorMSAA.count();
-        for (int i = 0; i < nbuffers; i++) {
-            const GLuint *buffer = m_colorMSAA.value(i);
-            glDeleteBuffers(1, buffer);
-        }
-        glDeleteFramebuffers(1, &m_fbo);
-        m_fbo = 0;
-        glDeleteRenderbuffers(1, &m_depth);
-        m_depth = 0;
-        glDeleteFramebuffers(1, &m_fboMSAA);
-        m_fboMSAA = 0;
-        glDeleteRenderbuffers(1, &m_depthMSAA);
-        m_depthMSAA = 0;
-        glDeleteFramebuffers(1, &m_fboSwap);
-        m_fboSwap = 0;
-        glDeleteRenderbuffers(1, &m_colorSwap);
-        m_colorSwap = 0;
-        glDeleteRenderbuffers(1, &m_depthSwap);
-        m_depthSwap = 0;
-        m_width = 0;
-        m_height = 0;
-        m_samples = 0;
+        release();
     }
 
     void create(bool enableAA) {
@@ -222,6 +201,17 @@ public:
     void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+    void resize(size_t width, size_t height) {
+        if (m_width != width || m_height != height) {
+            bool enableAA = m_fboMSAA ? true : false;
+            int samples = m_samples;
+            release();
+            m_width = width;
+            m_height = height;
+            m_samples = samples;
+            create(enableAA);
+        }
+    }
     bool hasMSAA() const {
         return m_fboMSAA != 0;
     }
@@ -252,8 +242,6 @@ public:
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-    void transferFrameBuffer(FrameBufferObject *destination) {
     }
     void transferSwapBuffer(FrameBufferObject *destination) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboSwap);
@@ -295,6 +283,32 @@ public:
 #endif
 
 private:
+    void release() {
+        const int nbuffers = m_colorMSAA.count();
+        for (int i = 0; i < nbuffers; i++) {
+            const GLuint *buffer = m_colorMSAA.value(i);
+            glDeleteBuffers(1, buffer);
+        }
+        m_colorMSAA.clear();
+        glDeleteFramebuffers(1, &m_fbo);
+        m_fbo = 0;
+        glDeleteRenderbuffers(1, &m_depth);
+        m_depth = 0;
+        glDeleteFramebuffers(1, &m_fboMSAA);
+        m_fboMSAA = 0;
+        glDeleteRenderbuffers(1, &m_depthMSAA);
+        m_depthMSAA = 0;
+        glDeleteFramebuffers(1, &m_fboSwap);
+        m_fboSwap = 0;
+        glDeleteRenderbuffers(1, &m_colorSwap);
+        m_colorSwap = 0;
+        glDeleteRenderbuffers(1, &m_depthSwap);
+        m_depthSwap = 0;
+        m_width = 0;
+        m_height = 0;
+        m_samples = 0;
+    }
+
     Hash<btHashInt, GLuint> m_colorMSAA;
     Hash<btHashInt, GLenum> m_colorFormats;
     Hash<btHashInt, int> m_boundTextureTargets;
