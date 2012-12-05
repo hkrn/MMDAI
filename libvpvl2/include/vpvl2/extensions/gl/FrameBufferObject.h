@@ -122,7 +122,7 @@ public:
         m_samples = 0;
     }
 
-    void create() {
+    void create(bool enableAA) {
 #ifdef VPVL2_LINK_QT
         const QGLContext *context = QGLContext::currentContext();
         initializeGLFunctions(context);
@@ -156,7 +156,7 @@ public:
         glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
 #ifdef __APPLE__
-        if (m_samples > 0) {
+        if (enableAA && m_samples > 0) {
 #else
         if (m_samples > 0 && glBlitFramebufferPROC && glDrawBuffersPROC && glRenderbufferStorageMultisamplePROC) {
 #endif /* __APPLE__ */
@@ -166,17 +166,6 @@ public:
             glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
         }
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    }
-    void blit(int index) {
-        if (m_fboMSAA) {
-            const GLenum target = GL_COLOR_ATTACHMENT0 + index;
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboMSAA);
-            glDrawBuffersPROC(1, &target);
-            glReadBuffer(target);
-            glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height,
-                                  GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
-        }
     }
     void bindTexture(GLuint textureID, GLenum format, int index) {
         const GLenum target = GL_COLOR_ATTACHMENT0 + index;
@@ -264,6 +253,8 @@ public:
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
+    void transferFrameBuffer(FrameBufferObject *destination) {
+    }
     void transferSwapBuffer(FrameBufferObject *destination) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboSwap);
         if (destination->m_fboMSAA) {
@@ -277,9 +268,20 @@ public:
         glReadBuffer(target);
         glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, destination->m_width, destination->m_height,
                               GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
-        destination->blit(0);
+        destination->transferMSAABuffer(0);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    void transferMSAABuffer(int index) {
+        if (m_fboMSAA) {
+            const GLenum target = GL_COLOR_ATTACHMENT0 + index;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboMSAA);
+            glDrawBuffersPROC(1, &target);
+            glReadBuffer(target);
+            glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height,
+                                  GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+        }
     }
 
 #if defined(VPVL2_LINK_QT)

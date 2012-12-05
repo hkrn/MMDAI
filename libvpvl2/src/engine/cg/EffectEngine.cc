@@ -1189,7 +1189,7 @@ EffectEngine::EffectEngine(const Scene *scene,
 #endif
     m_rectRenderEngine = new RectRenderEngine(scene, renderContextRef);
     if (m_frameBufferObjectRef)
-        m_frameBufferObjectRef->create();
+        m_frameBufferObjectRef->create(true);
     attachEffect(effect, dir);
 }
 
@@ -1390,7 +1390,7 @@ void EffectEngine::executeProcess(const IModel *model,
     if (!model || !m_effectRef || m_scriptOrder != order)
         return;
     if (nextPostEffectRef) {
-        m_frameBufferObjectRef->blit(0);
+        m_frameBufferObjectRef->transferMSAABuffer(0);
         m_frameBufferObjectRef->bindSwapBuffer();
     }
     m_rectRenderEngine->bindVertexBundle(true);
@@ -1659,7 +1659,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
             else {
-                m_frameBufferObjectRef->blit(index);
+                m_frameBufferObjectRef->transferMSAABuffer(index);
             }
             m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             glViewport(0, 0, width, height);
@@ -1669,7 +1669,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
         }
         else if (!nextPostEffectRef && nRenderColorTargets > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
             if (index > 0) {
-                m_frameBufferObjectRef->blit(index);
+                m_frameBufferObjectRef->transferMSAABuffer(index);
                 m_renderColorTargets.remove(target);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
@@ -1677,7 +1677,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
                 Vector3 viewport;
                 for (int i = 0; i < nRenderColorTargets; i++) {
                     const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
-                    m_frameBufferObjectRef->blit(index2);
+                    m_frameBufferObjectRef->transferMSAABuffer(index2);
                 }
                 for (int i = 0; i < nRenderColorTargets; i++) {
                     const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;

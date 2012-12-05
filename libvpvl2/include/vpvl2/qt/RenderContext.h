@@ -214,7 +214,7 @@ private:
                                   InternalTexture &internalTexture,
                                   InternalContext *internalContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
-    FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height);
+    FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA);
 
     const QHash<QString, QString> m_settings;
     const QDir m_systemDir;

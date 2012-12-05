@@ -925,14 +925,14 @@ void RenderContext::setEffectOwner(const IEffect *effect, IModel *model)
     }
 }
 
-FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height)
+FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA)
 {
     FrameBufferObject *buffer = 0;
     if (textureID > 0) {
         if (!m_renderTargets.contains(textureID)) {
             QScopedPointer<FrameBufferObject> fbo(new FrameBufferObject(width, height, m_msaaSamples));
             m_renderTargets.insert(textureID, fbo.data());
-            fbo->create();
+            fbo->create(enableAA);
             buffer = fbo.take();
         }
         else {
@@ -960,10 +960,10 @@ bool RenderContext::hasFrameBufferObjectBound() const
     return m_frameBufferObjectBound;
 }
 
-void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool /* enableAA */)
+void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height)) {
+    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
         buffer->bindTexture(texture.textureID, texture.textureFormat, 0);
         buffer->bindDepthStencilBuffer();
     }
@@ -972,10 +972,10 @@ void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, b
 void RenderContext::releaseOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height)) {
-        if (enableAA) {
-            buffer->blit(0);
-        }
+    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
+        buffer->transferMSAABuffer(0);
+        buffer->unbindColorBuffer(0);
+        buffer->unbindDepthStencilBuffer();
         buffer->unbind();
         setRenderColorTargets(0, 0);
     }
@@ -993,7 +993,7 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
             const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
             const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
             const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-            const QStringList defaultEffect = QString(cgGetStringAnnotationValue(annotation)).split(";");
+            const QStringList defaultEffect(QString(cgGetStringAnnotationValue(annotation)).split(";"));
             QList<EffectAttachment> attachments;
             Q_FOREACH (const QString &line, defaultEffect) {
                 const QStringList &pair = line.split('=');
@@ -1041,8 +1041,15 @@ void RenderContext::renderOffscreen(const QSize &size)
             const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
             enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
         }
-        bindOffscreenRenderTarget(offscreen, enableAA);
         setRenderColorTargets(buffers, nbuffers);
+        bindOffscreenRenderTarget(offscreen, enableAA);
+        size_t width = renderTarget.width, height = renderTarget.height;
+        s.setWidth(width);
+        s.setHeight(height);
+        updateMatrices(s);
+        glViewport(0, 0, width, height);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
         const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         if (cgIsAnnotation(clearColor)) {
             int nvalues;
@@ -1063,13 +1070,8 @@ void RenderContext::renderOffscreen(const QSize &size)
             }
         }
         else {
-            glClearDepth(0);
+            glClearDepth(1);
         }
-        size_t width = renderTarget.width, height = renderTarget.height;
-        s.setWidth(width);
-        s.setHeight(height);
-        updateMatrices(s);
-        glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
@@ -1079,8 +1081,8 @@ void RenderContext::renderOffscreen(const QSize &size)
             const IString *name = model->name();
             const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
             Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreen.attachments) {
-                IEffect *effect = attachment.second;
                 if (attachment.first.exactMatch(n)) {
+                    IEffect *effect = attachment.second;
                     engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
                     break;
                 }
