@@ -1656,13 +1656,15 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
         if (state.isRenderTargetBound) {
             if (m_renderColorTargets.findLinearSearch(target) == nRenderColorTargets) {
                 m_renderColorTargets.push_back(target);
+                m_frameBufferObjectRef->resize(width, height);
+                m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
             else {
+                m_frameBufferObjectRef->resize(width, height);
+                m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
                 m_frameBufferObjectRef->transferMSAABuffer(index);
             }
-            m_frameBufferObjectRef->resize(width, height);
-            m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             glViewport(0, 0, width, height);
         }
         else if (nextPostEffectRef && nRenderColorTargets > 0) {
