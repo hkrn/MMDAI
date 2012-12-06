@@ -52,7 +52,6 @@ ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dial
     : QObject(parent),
       m_dialogRef(dialog),
       m_player(new AudioPlayer()),
-      m_progress(new QProgressDialog()),
       m_sceneWidgetRef(sceneWidget),
       m_selectedModelRef(0),
       m_format(QApplication::tr("Playing scene frame %1 of %2...")),
@@ -63,9 +62,9 @@ ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dial
       m_audioTimeIndex(0),
       m_prevAudioTimeIndex(0),
       m_counterForFPS(0),
-      m_restoreState(false)
+      m_restoreState(false),
+      m_cancelled(false)
 {
-    m_progress->setWindowModality(Qt::ApplicationModal);
 }
 
 ScenePlayer::~ScenePlayer()
@@ -98,11 +97,7 @@ void ScenePlayer::start()
     if (!m_dialogRef->isModelSelected())
         m_sceneWidgetRef->revertSelectedModel();
     /* 進捗ダイアログ作成 */
-    m_progress->reset();
-    m_progress->setCancelButtonText(tr("Cancel"));
-    int maxRangeIndex = m_dialogRef->toIndex() - m_dialogRef->fromIndex();
-    m_progress->setRange(0, maxRangeIndex);
-    m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
+    emit playerDidPlay(tr("Playing scene"), true);
     /* 音声出力準備 */
     const QString &backgroundAudio = m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio();
     if (!backgroundAudio.isEmpty() && m_player->openOutputDevice()) {
@@ -130,7 +125,7 @@ void ScenePlayer::stop()
     /* タイマーと音声出力オブジェクトの停止 */
     m_player->stopSession();
     m_updateTimer.stop();
-    m_progress->reset();
+    emit playerDidStop();
     /* ハンドルと情報パネルを復帰させる */
     m_sceneWidgetRef->setHandlesVisible(true);
     m_sceneWidgetRef->setInfoPanelVisible(true);
@@ -147,6 +142,7 @@ void ScenePlayer::stop()
     m_totalStep = 0;
     m_audioTimeIndex = 0;
     m_prevAudioTimeIndex = 0;
+    m_cancelled = false;
     if (m_restoreState) {
         m_restoreState = false;
         emit renderFrameDidStopAndRestoreState();
@@ -184,12 +180,17 @@ void ScenePlayer::advanceAudioFrame(qreal step)
         m_audioTimeIndex += step * Scene::defaultFPS();
 }
 
+void ScenePlayer::cancel()
+{
+    m_cancelled = true;
+}
+
 void ScenePlayer::renderScene(qreal step)
 {
     Scene *scene = m_sceneWidgetRef->sceneLoaderRef()->sceneRef();
     bool isReached = scene->isReachedTo(m_dialogRef->toIndex());
     /* 再生完了かつループではない、またはユーザによってキャンセルされた場合再生用のタイマーイベントを終了する */
-    if ((!m_dialogRef->isLoopEnabled() && isReached) || m_progress->wasCanceled()) {
+    if ((!m_dialogRef->isLoopEnabled() && isReached) || m_cancelled) {
         stop();
     }
     else {
@@ -210,13 +211,13 @@ void ScenePlayer::renderScene(qreal step)
             m_sceneWidgetRef->advanceMotion(step);
             m_totalStep += step;
         }
-        m_progress->setValue(value);
-        m_progress->setLabelText(m_format.arg(value).arg(m_dialogRef->toIndex() - m_dialogRef->fromIndex()));
+        int maxIndex = m_dialogRef->toIndex() - m_dialogRef->fromIndex();
+        emit playerDidUpdate(value, maxIndex, m_format.arg(value).arg(maxIndex));
         if (m_currentFPS > 0) {
-            m_progress->setWindowTitle(tr("Current FPS: %1").arg(int(m_currentFPS)));
+            emit playerDidUpdateTitle(tr("Current FPS: %1").arg(int(m_currentFPS)));
         }
         else {
-            m_progress->setWindowTitle(tr("Current FPS: N/A"));
+            emit playerDidUpdateTitle(tr("Current FPS: N/A"));
         }
         if (m_dialogRef->isModelSelected())
             emit motionDidSeek(value);

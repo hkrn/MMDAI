@@ -283,7 +283,6 @@ bool SceneLoader::createModelEngine(IModel *model, const QDir &dir, IRenderEngin
     int flags = 0;
     if (isEffectEnabled()) {
         const QFuture<IEffect *> &future = QtConcurrent::run(m_renderContextRef, &RenderContext::createEffectAsync, model, &d);
-        /* progress dialog */
         /*
          * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
          * プロジェクトの新規作成毎またはデストラクタで解放するため、解放する必要はない(むしろ解放してはいけない)
@@ -679,7 +678,10 @@ void SceneLoader::loadProject(const QString &path)
         QList<IModel *> assets;
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         /* プロジェクト内のモデル数を発行する */
-        emit projectDidCount(modelUUIDs.size());
+        const int nModelUUIDs = modelUUIDs.size();
+        const QString &loadingProgressText = tr("Loading a project... (%1 of %2)");
+        emit projectDidOpenProgress(tr("Loading progress of %1").arg(QFileInfo(path).baseName()), false);
+        emit projectDidUpdateProgress(0, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
         const Array<IMotion *> &motions = m_project->motions();
         const int nmotions = motions.count();
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
@@ -724,11 +726,11 @@ void SceneLoader::loadProject(const QString &path)
                         const QUuid modelUUID(modelUUIDString.c_str());
                         m_renderOrderList.add(modelUUID);
                         emit modelDidAdd(model, modelUUID);
+                        emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
                         /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
                         if (isModelSelected(model))
                             setSelectedModel(model);
                         emitMotionDidAdd(motions, model);
-                        emit projectDidProceed(++progress);
                         continue;
                     }
                     else if (type == IModel::kAsset) {
@@ -741,7 +743,6 @@ void SceneLoader::loadProject(const QString &path)
                         if (isAssetSelected(model))
                             setSelectedModel(model);
                         emitMotionDidAdd(motions, model);
-                        emit projectDidProceed(++progress);
                         continue;
                     }
                 }
@@ -752,7 +753,7 @@ void SceneLoader::loadProject(const QString &path)
                      name.c_str(),
                      qPrintable(filename));
             lostModels.insert(modelPtr.take());
-            emit projectDidProceed(++progress);
+            emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
         }
         sceneObject->setAccelerationType(accelerationType);
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
@@ -783,7 +784,7 @@ void SceneLoader::loadProject(const QString &path)
             m_project->removeModel(model);
             m_project->deleteModel(model);
         }
-        /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルとアクセサリ読み込みに行う */
+        /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルを読み込んだ後にアクセサリ読み込みを行う */
         foreach (IModel *model, assets) {
             const QUuid assetUUID(m_project->modelUUID(model).c_str());
             model->setWorldPosition(assetPosition(model));
@@ -793,6 +794,7 @@ void SceneLoader::loadProject(const QString &path)
             model->setParentModel(assetParentModel(model));
             model->setParentBone(assetParentBone(model));
             emit modelDidAdd(model, assetUUID);
+            emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
         }
         updateDepthBuffer(shadowMapSize());
         sort(true);

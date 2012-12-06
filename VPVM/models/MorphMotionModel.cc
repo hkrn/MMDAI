@@ -549,9 +549,11 @@ void MorphMotionModel::loadMotion(IMotion *motion, const IModel *model)
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_modelRef) {
         const int nkeyframes = motion->countKeyframes(IKeyframe::kMorph);
+        const QString &loadingProgressText = tr("Loading morph keyframes %1 of %2");
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setFrameIndexColumnMax(motion);
         resetModel();
+        emit motionDidOpenProgress(QString(), false);
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);
@@ -570,11 +572,13 @@ void MorphMotionModel::loadMotion(IMotion *motion, const IModel *model)
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 setData(modelIndex, bytes);
             }
+            emit motionDidUpdateProgress(i, nkeyframes, loadingProgressText.arg(i).arg(nkeyframes));
         }
         /* 読み込まれたモーションを現在のモーションとして登録する。あとは SetFramesCommand#undo と同じ */
         m_motionRef = motion;
         refreshModel(m_modelRef);
         setModified(false);
+        emit motionDidLoad();
         qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(toQStringFromModel(model)));
     }
     else {

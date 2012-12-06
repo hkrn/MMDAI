@@ -190,6 +190,8 @@ signals:
     void motionDidSeek(const IKeyframe::TimeIndex &timeIndex);
     void undoDidRequest();
     void redoDidRequest();
+    void fileDidOpenProgress(const QString &title, bool cancellable);
+    void fileDidUpdateProgress(int value, int max, const QString &text);
 
 protected slots:
     void setShowModelDialog(bool value) { m_showModelDialog = value; }
@@ -265,6 +267,7 @@ private:
     bool acceptAddingModel(IModel *model);
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();
+    void loadModelMotion(const QScopedPointer<IMotion> &motionPtr, const QString &path, IModel *model);
     void grabImageHandle(const Scalar &deltaValue);
     void grabModelHandleByRaycast(const QPointF &pos,
                                   const QPointF &diff,

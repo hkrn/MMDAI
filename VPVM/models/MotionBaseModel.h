@@ -136,6 +136,9 @@ signals:
     void motionDidModify(bool value);
     void timeIndexDidChange(const IKeyframe::TimeIndex &newFrameIndex, const IKeyframe::TimeIndex &oldFrameIndex);
     void frameIndexColumnMaxDidChange(int newValue, int oldValue);
+    void motionDidOpenProgress(const QString &title, bool value);
+    void motionDidUpdateProgress(int value, int max, const QString &text);
+    void motionDidLoad();
 
 protected:
     virtual ITreeItem *rootRef() const = 0;

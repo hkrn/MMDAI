@@ -51,6 +51,7 @@
 
 class QCheckBox;
 class QDoubleSpinBox;
+class QProgressDialog;
 class QPushButton;
 class QSpinBox;
 class QSplitter;
@@ -152,6 +153,10 @@ private slots:
     void enableSelectingBonesAndMorphs();
     void disconnectInitialSlots();
     void resetSceneToModels();
+    void openProgress(const QString &title, bool cancellable);
+    void updateProgress(int value, int max, const QString &text);
+    void updateProgressTitle(const QString &title);
+    void closeProgress();
 
 private:
     struct WindowState;
@@ -311,6 +316,7 @@ private:
     QScopedPointer<QMenu> m_menuRecentFiles;
     QScopedPointer<QMenu> m_menuHelp;
     QScopedPointer<QMenu> m_menuAcceleration;
+    QScopedPointer<QProgressDialog> m_progress;
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
     LoggerWidget *m_loggerWidgetRef;
@@ -321,7 +327,7 @@ private:
     Scalar m_fovy;
     Scalar m_distance;
     int m_currentFPS;
-
+    int m_nestProgressCount;
 
     Q_DISABLE_COPY(MainWindow)
 };

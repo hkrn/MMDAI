@@ -227,8 +227,8 @@ public slots:
 
 signals:
     void projectDidInitialized();
-    void projectDidCount(int value);
-    void projectDidProceed(int value);
+    void projectDidOpenProgress(const QString &title, bool cancellable);
+    void projectDidUpdateProgress(int value, int max, const QString &text);
     void projectDidLoad(bool loaded);
     void projectDidSave();
     void modelDidSelect(IModel *model, SceneLoader *loader);

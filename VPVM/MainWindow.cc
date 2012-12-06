@@ -122,6 +122,10 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
         QObject::connect(player.data(), SIGNAL(motionDidSeek(int)), timeline.data(), SLOT(setCurrentFrameIndex(int)));
         QObject::connect(player.data(), SIGNAL(renderFrameDidStop()), mainWindow, SLOT(enableSelectingBonesAndMorphs()));
         QObject::connect(player.data(), SIGNAL(renderFrameDidStopAndRestoreState()), dialog.data(), SLOT(show()));
+        QObject::connect(player.data(), SIGNAL(playerDidPlay(QString,bool)), mainWindow, SLOT(openProgress(QString,bool)));
+        QObject::connect(player.data(), SIGNAL(playerDidUpdate(int,int,QString)), mainWindow, SLOT(updateProgress(int,int,QString)));
+        QObject::connect(player.data(), SIGNAL(playerDidUpdateTitle(QString)), mainWindow, SLOT(updateProgressTitle(QString)));
+        QObject::connect(player.data(), SIGNAL(playerDidStop()), mainWindow, SLOT(closeProgress()));
     }
 }
 
@@ -291,7 +295,8 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_angle(0.0f, 0.0f, 0.0f),
       m_fovy(0.0f),
       m_distance(0.0f),
-      m_currentFPS(-1)
+      m_currentFPS(-1),
+      m_nestProgressCount(0)
 {
     m_actionRecentFiles.reserve(kMaxRecentFiles);
     m_loggerWidgetRef = LoggerWidget::sharedInstance(&m_settings);
@@ -1371,6 +1376,7 @@ void MainWindow::bindSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
+    disconnect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), this, SLOT(bindSceneLoader()));
     connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), SLOT(addModel(IModel*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), SLOT(deleteModel(IModel*,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_boneMotionModel.data(), SLOT(removeModel()));
@@ -1391,11 +1397,14 @@ void MainWindow::bindSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_boneMotionModel.data(), SLOT(setPMDModel(IModel*)));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_morphMotionModel.data(), SLOT(setPMDModel(IModel*)));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModel*)));
-    connect(loader ,SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModel*,SceneLoader*)));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModel*)));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModel*,SceneLoader*)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
+    connect(loader, SIGNAL(projectDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
+    connect(loader, SIGNAL(projectDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
+    connect(loader, SIGNAL(projectDidLoad(bool)), SLOT(closeProgress()));
     connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnableEffectOnToolBar.data(), SIGNAL(toggled(bool)), loader, SLOT(setEffectEnable(bool)));
     connect(m_actionEnableEffect.data(), SIGNAL(triggered(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
@@ -1464,6 +1473,7 @@ void MainWindow::bindSceneLoader()
 
 void MainWindow::bindWidgets()
 {
+    connect(m_timelineTabWidget.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),  m_sceneWidget.data(), SLOT(seekMotion(IKeyframe::TimeIndex,bool,bool)));
     connect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), SLOT(bindSceneLoader()));
     connect(m_sceneWidget.data(), SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveAbsolute(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateTo(Vector3,IBone*,int)));
@@ -1471,14 +1481,19 @@ void MainWindow::bindWidgets()
     connect(m_sceneWidget.data(), SIGNAL(handleDidRotate(Scalar,IBone*,int)), m_boneMotionModel.data(), SLOT(rotateAngle(Scalar,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), m_timelineTabWidget.data(), SLOT(selectBones(QList<IBone*>)));
     connect(m_sceneWidget.data(), SIGNAL(morphsDidSelect(QList<IMorph*>)), m_timelineTabWidget.data(), SLOT(selectMorphs(QList<IMorph*>)));
-    connect(m_timelineTabWidget.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),  m_sceneWidget.data(), SLOT(seekMotion(IKeyframe::TimeIndex,bool,bool)));
-    connect(m_boneMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
-    connect(m_morphMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_boneMotionModel.data(), SLOT(markAsNew(IModel*)));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_morphMotionModel.data(), SLOT(markAsNew(IModel*)));
-    connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
-    connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_timelineTabWidget.data(), SLOT(setCurrentFrameIndexZero()));
+    connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
+    connect(m_boneMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
+    connect(m_boneMotionModel.data(), SIGNAL(motionDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
+    connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
+    connect(m_boneMotionModel.data(), SIGNAL(motionDidLoad()), SLOT(closeProgress()));
+    connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
+    connect(m_morphMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
+    connect(m_morphMotionModel.data(), SIGNAL(motionDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
+    connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
+    connect(m_morphMotionModel.data(), SIGNAL(motionDidLoad()), SLOT(closeProgress()));
     connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentFrameIndex(IMorph*)));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_sceneMotionModel.data(), SLOT(markAsNew()));
     connect(m_sceneWidget.data(), SIGNAL(handleDidGrab()), m_boneMotionModel.data(), SLOT(saveTransform()));
@@ -1979,6 +1994,41 @@ void MainWindow::resetSceneToModels()
     const Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
     m_boneMotionModel->setSceneRef(scene);
     m_morphMotionModel->setSceneRef(scene);
+}
+
+void MainWindow::openProgress(const QString &title, bool cancellable)
+{
+    if (m_nestProgressCount == 0) {
+        m_progress.reset(new QProgressDialog());
+        m_progress->setWindowModality(Qt::WindowModal);
+        if (!cancellable)
+            m_progress->setCancelButton(0);
+    }
+    if (cancellable)
+        connect(m_progress.data(), SIGNAL(canceled()), sender(), SLOT(cancel()));
+    updateProgressTitle(title);
+    m_nestProgressCount++;
+}
+
+void MainWindow::updateProgress(int value, int max, const QString &text)
+{
+    m_progress->setRange(0, max);
+    m_progress->setValue(value);
+    m_progress->setLabelText(text);
+}
+
+void MainWindow::updateProgressTitle(const QString &title)
+{
+    if (!title.isEmpty())
+        m_progress->setWindowTitle(title);
+}
+
+void MainWindow::closeProgress()
+{
+    if (--m_nestProgressCount <= 0) {
+        m_progress.reset(0);
+        m_nestProgressCount = 0;
+    }
 }
 
 } /* namespace vpvm */

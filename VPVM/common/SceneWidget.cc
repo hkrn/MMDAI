@@ -231,15 +231,6 @@ void SceneWidget::stopAutomaticRendering()
 
 void SceneWidget::loadProject(const QString &filename)
 {
-    QScopedPointer<QProgressDialog> dialog(new QProgressDialog());
-    QProgressDialog *ptr = dialog.data();
-    /* プロジェクトの読み込みが完了したらダイアログを閉じるようにする */
-    connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), ptr, SLOT(close()));
-    connect(m_loader.data(), SIGNAL(projectDidCount(int)), ptr, SLOT(setMaximum(int)));
-    connect(m_loader.data(), SIGNAL(projectDidProceed(int)), ptr, SLOT(setValue(int)));
-    dialog->setLabelText(tr("Loading a project %1...").arg(QFileInfo(filename).fileName()));
-    dialog->setWindowModality(Qt::WindowModal);
-    dialog->setCancelButton(0);
     /* ぶら下がりポインタを残さないために選択状態のボーンを全てクリアする */
     clearSelectedBones();
     stopAutomaticRendering();
@@ -402,6 +393,8 @@ void SceneWidget::loadModel(const QString &path, IModelPtr &modelPtr, bool skipD
         if (m_loader->loadModel(path, modelPtr)) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
                 QUuid uuid;
+                emit fileDidOpenProgress(tr("Loading %1").arg(fi.baseName()), false);
+                emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(fi.baseName()));
                 m_handles->loadModelHandles();
                 m_loader->addModel(modelPtr.data(), fi.fileName(), fi.dir(), uuid);
                 emit fileDidLoad(path);
@@ -433,15 +426,16 @@ void SceneWidget::loadMotionToAllModels(const QString &path, IMotionPtr &motionP
 {
     if (QFile::exists(path)) {
         QList<IModel *> models;
-        if (m_loader->loadModelMotion(path, models, motionPtr)) {
-            UIAlertMVDMotion(motionPtr.data(), this);
-            seekMotion(0, false, true);
-            emit fileDidLoad(path);
-        }
-        else {
-            warning(this, tr("Loading model motion error"),
-                    tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
-        }
+        UIAlertMVDMotion(motionPtr.data(), this);
+        emit fileDidOpenProgress(tr("Loading %1").arg(path), false);
+        emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(path));
+        m_loader->loadModelMotion(path, models, motionPtr);
+        seekMotion(0, false, true);
+        emit fileDidLoad(path);
+    }
+    else {
+        warning(this, tr("Loading model motion error"),
+                tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
     }
 }
 
@@ -486,12 +480,11 @@ void SceneWidget::loadMotionToModel(const QString &path, IModel *model, IMotionP
                                       "",
                                       QMessageBox::Yes|QMessageBox::No);
                     if (ret == QMessageBox::Yes) {
-                        UIAlertMVDMotion(motionPtr.data(), this);
-                        m_loader->setModelMotion(motionPtr.data(), model);
+                        loadModelMotion(motionPtr, path, model);
                     }
                 }
                 else {
-                    m_loader->setModelMotion(motionPtr.data(), model);
+                    loadModelMotion(motionPtr, path, model);
                 }
                 seekMotion(0, false, true);
                 emit fileDidLoad(path);
@@ -1578,6 +1571,15 @@ void SceneWidget::clearSelectedMorphs()
 {
     m_selectedMorphRefs.clear();
     m_info->setMorphs(m_selectedMorphRefs, "");
+}
+
+void SceneWidget::loadModelMotion(const QScopedPointer<IMotion> &motionPtr, const QString &path, IModel *model)
+{
+    const QFileInfo fi(path);
+    UIAlertMVDMotion(motionPtr.data(), this);
+    emit fileDidOpenProgress(tr("Loading %1").arg(fi.baseName()), false);
+    emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(fi.baseName()));
+    m_loader->setModelMotion(motionPtr.data(), model);
 }
 
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)

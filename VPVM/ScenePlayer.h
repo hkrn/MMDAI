@@ -84,9 +84,14 @@ signals:
     void renderFrameDidStopAndRestoreState();
     /* motionDidSeek は int 型な点に注意 (他は float 型) */
     void motionDidSeek(int frameIndex);
+    void playerDidPlay(const QString &title, bool cancellable);
+    void playerDidUpdate(int value, int max, const QString &text);
+    void playerDidUpdateTitle(const QString &title);
+    void playerDidStop();
 
 private slots:
     void advanceAudioFrame(qreal step);
+    void cancel();
 
 private:
     void renderScene(qreal step);
@@ -94,7 +99,6 @@ private:
 
     const PlaySettingDialog *m_dialogRef;
     QScopedPointer<AudioPlayer> m_player;
-    QScopedPointer<QProgressDialog> m_progress;
     SceneWidget *m_sceneWidgetRef;
     IModel *m_selectedModelRef;
     QElapsedTimer m_countFPSTimer;
@@ -110,6 +114,7 @@ private:
     qreal m_prevAudioTimeIndex;
     int m_counterForFPS;
     bool m_restoreState;
+    bool m_cancelled;
 };
 
 } /* namespace vpvm */
