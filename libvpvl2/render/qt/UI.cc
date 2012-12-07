@@ -690,7 +690,7 @@ void UI::paintGL()
 {
     if (!m_delegate) {
         glViewport(0, 0, width(), height());
-        glClearColor(0, 0, 1, 1);
+        glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         return;
     }
@@ -763,13 +763,9 @@ void UI::renderOffscreen()
 
 void UI::renderWindow()
 {
-    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
-    const int nengines = engines.count();
     glViewport(0, 0, width(), height());
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-    glClearColor(1, 1, 1, 1);
-    glClearDepth(1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;
@@ -834,23 +830,25 @@ bool UI::loadScene()
     for (int i = 0; i < nmodels; i++) {
         m_settings->setArrayIndex(i);
         const QString &path = m_settings->value("path").toString();
-        IModel *model = addModel(path, dialog);
-        if (model)
-            addMotion(modelMotionPath, model);
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        if (!path.isNull()) {
+            if (IModel *model = addModel(path, dialog))
+                addMotion(modelMotionPath, model);
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
     }
     m_settings->endArray();
     int nassets = m_settings->beginReadArray("assets");
     for (int i = 0; i < nassets; i++) {
         m_settings->setArrayIndex(i);
         const QString &path = m_settings->value("path").toString();
-        IModel *model = addModel(path, dialog);
-        Q_UNUSED(model)
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        if (!path.isNull()) {
+            IModel *model = addModel(path, dialog);
+            Q_UNUSED(model)
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
     }
     m_settings->endArray();
-    IMotion *cameraMotion = loadMotion(cameraMotionPath, 0);
-    if (cameraMotion)
+    if (IMotion *cameraMotion = loadMotion(cameraMotionPath, 0))
         m_scene->camera()->setMotion(cameraMotion);
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
@@ -945,8 +943,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         return 0;
     }
 #if 0
-    pmx::Model *pmx = dynamic_cast<pmx::Model*>(model);
-    if (pmx) {
+    if (pmx::Model *pmx = dynamic_cast<pmx::Model*>(model)) {
         const Array<pmx::Material *> &materials = pmx->materials();
         const int nmaterials = materials.count();
         for (int i = 0; i < nmaterials; i++)
