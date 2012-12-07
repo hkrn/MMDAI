@@ -64,11 +64,6 @@ namespace
 
 typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
 
-static const QRegExp &kAssetLoadable = QRegExp(".(bmp|dds|jpe?g|png|sp[ah]|tga|x)$");
-static const QRegExp &kAssetExtensions = QRegExp(".x$");
-static const QRegExp &kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|sp[ah]|tga)$");
-static const QRegExp &kModelExtensions = QRegExp(".pm[dx]$");
-
 /* 文字列を解析して Vector3 を構築する */
 static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
 {
@@ -190,45 +185,15 @@ void UISetModelType(const QString &filename, IModel::Type &type)
         type = IModel::kAsset;
 }
 
-const QByteArray UILoadFile(const QString &filename,
-                            const QRegExp &loadable,
-                            const QRegExp &extensions,
-                            IModel::Type &type,
-                            RenderContext *renderContext)
-{
-    QByteArray bytes;
-    if (filename.endsWith(".zip")) {
-        QStringList files;
-        Archive *archive = new Archive();
-        if (archive->open(filename, files)) {
-            const QStringList &filtered = files.filter(loadable);
-            if (!filtered.isEmpty() && archive->uncompress(filtered)) {
-                const QStringList &target = files.filter(extensions);
-                if (!target.isEmpty()) {
-                    /* ここではパスを置換して uploadTexture で読み込めるようにする */
-                    const QString &filenameToLoad = target.first();
-                    bytes = archive->data(filenameToLoad);
-                    QFileInfo fileToLoadInfo(filenameToLoad), fileInfo(filename);
-                    archive->replaceFilePath(fileToLoadInfo.path(), fileInfo.path() + "/");
-                    renderContext->setArchive(archive);
-                    UISetModelType(filenameToLoad, type);
-                }
-            }
-        }
-    }
-    else {
-        QFile file(filename);
-        if (file.open(QFile::ReadOnly))
-            bytes = file.readAll();
-        UISetModelType(filename, type);
-    }
-    return bytes;
-}
-
 }
 
 namespace vpvm
 {
+
+const QRegExp SceneLoader::kAssetLoadable = QRegExp(".(bmp|dds|jpe?g|png|sp[ah]|tga|x)$");
+const QRegExp SceneLoader::kAssetExtensions = QRegExp(".x$");
+const QRegExp SceneLoader::kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|sp[ah]|tga)$");
+const QRegExp SceneLoader::kModelExtensions = QRegExp(".pm[dx]$");
 
 SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderContext *renderContextRef)
     : QObject(),
@@ -249,7 +214,7 @@ SceneLoader::~SceneLoader()
     releaseProject();
 }
 
-void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid)
+void SceneLoader::addModel(IModel *model, const QString &path, const QDir &dir, QUuid &uuid)
 {
     /* モデル名が空っぽの場合はファイル名から補完しておく */
     const QString &key = toQStringFromModel(model).trimmed();
@@ -257,7 +222,6 @@ void SceneLoader::addModel(IModel *model, const QString &baseName, const QDir &d
         CString s(key);
         model->setName(&s);
     }
-    const QString &path = dir.absoluteFilePath(baseName);
     m_renderContextRef->addModelPath(model, path);
     IRenderEnginePtr enginePtr;
     if (createModelEngine(model, dir, enginePtr)) {
@@ -310,10 +274,43 @@ bool SceneLoader::createModelEngine(IModel *model, const QDir &dir, IRenderEngin
         /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &d);
         m_renderContextRef->parseOffscreenSemantic(effect, dir);
-        m_renderContextRef->setArchive(0);
         return true;
     }
     return false;
+}
+
+QByteArray SceneLoader::loadFile(const QString &filename,
+                                 const QRegExp &loadable,
+                                 const QRegExp &extensions,
+                                 IModel::Type &type)
+{
+    QByteArray bytes;
+    if (filename.endsWith(".zip")) {
+        QStringList files;
+        QScopedPointer<Archive> archive(new Archive());
+        if (archive->open(filename, files)) {
+            const QSet<QString> &filtered = files.filter(loadable).toSet();
+            if (!filtered.isEmpty() && archive->uncompress(filtered)) {
+                const QStringList &target = files.filter(extensions);
+                if (!target.isEmpty()) {
+                    /* ここではパスを置換して uploadTexture で読み込めるようにする */
+                    const QString &filenameToLoad = target.first();
+                    bytes = archive->data(filenameToLoad);
+                    QFileInfo fileToLoadInfo(filenameToLoad), fileInfo(filename);
+                    archive->replaceFilePath(fileToLoadInfo.path(), fileInfo.path() + "/");
+                    m_renderContextRef->setArchive(archive.take());
+                    UISetModelType(filenameToLoad, type);
+                }
+            }
+        }
+    }
+    else {
+        QFile file(filename);
+        if (file.open(QFile::ReadOnly))
+            bytes = file.readAll();
+        UISetModelType(filename, type);
+    }
+    return bytes;
 }
 
 QList<IModel *> SceneLoader::allModels() const
@@ -469,8 +466,25 @@ bool SceneLoader::isProjectModified() const
 
 bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr)
 {
-    IModel::Type type; /* unused */
-    const QByteArray &bytes = UILoadFile(filename, kAssetLoadable, kAssetExtensions, type, m_renderContextRef);
+    IModel::Type type;
+    const QByteArray &bytes = loadFile(filename, kAssetLoadable, kAssetExtensions, type);
+    QFileInfo fileInfo(filename);
+    bool ok = loadAsset(bytes, fileInfo, uuid, assetPtr);
+    if (ok) {
+        /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
+        CString name(fileInfo.completeBaseName());
+        assetPtr->setName(&name);
+        m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, fileInfo.completeBaseName().toStdString());
+        m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, filename.toStdString());
+        m_renderContextRef->addModelPath(assetPtr.data(), filename);
+        emit modelDidAdd(assetPtr.data(), uuid);
+    }
+    m_renderContextRef->clearArchive();
+    return ok;
+}
+
+bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, QUuid &uuid, IModelPtr &assetPtr)
+{
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
@@ -478,17 +492,12 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &ass
     if (!isNullData) {
         assetPtr.reset(m_factoryRef->createModel(IModel::kAsset));
         if (assetPtr->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
-            /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
-            QFileInfo fileInfo(filename);
-            CString name(fileInfo.completeBaseName());
-            assetPtr->setName(&name);
-            m_renderContextRef->addModelPath(assetPtr.data(), filename);
             IRenderEnginePtr enginePtr;
-            if (createModelEngine(assetPtr.data(), fileInfo.dir(), enginePtr)) {
+            if (createModelEngine(assetPtr.data(), finfo.dir(), enginePtr)) {
                 uuid = QUuid::createUuid();
+                CString name(finfo.baseName());
+                assetPtr->setName(&name);
                 m_project->addModel(assetPtr.data(), enginePtr.take(), uuid.toString().toStdString());
-                m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, fileInfo.completeBaseName().toStdString());
-                m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, filename.toStdString());
                 m_project->setModelSetting(assetPtr.data(), "selected", "false");
                 m_renderOrderList.add(uuid);
                 setAssetPosition(assetPtr.data(), assetPtr->worldPosition());
@@ -584,23 +593,27 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionPtr &motionPtr)
 
 bool SceneLoader::loadModel(const QString &filename, IModelPtr &modelPtr)
 {
-    /*
-     * モデルをファイルから読み込む。レンダリングエンジンに送るには addModel を呼び出す必要がある
-     * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
-     */
     IModel::Type type;
-    const QByteArray &bytes = UILoadFile(filename, kModelLoadable, kModelExtensions, type, m_renderContextRef);
-    bool isNullData = bytes.isNull();
-    if (!isNullData) {
+    const QByteArray &bytes = loadFile(filename, kModelLoadable, kModelExtensions, type);
+    bool ok = loadModel(bytes, type, modelPtr);
+    m_renderContextRef->clearArchive();
+    return ok;
+}
+
+bool SceneLoader::loadModel(const QByteArray &bytes, IModel::Type type, IModelPtr &modelPtr)
+{
+    if (!bytes.isNull()) {
+        /*
+         * モデルをファイルから読み込む。レンダリングエンジンに送るには addModel を呼び出す必要がある
+         * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
+         */
         if (modelPtr.isNull())
             modelPtr.reset(m_factoryRef->createModel(type));
         const uint8_t *dataPtr = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        if (!modelPtr->load(dataPtr, size)) {
-            m_renderContextRef->setArchive(0);
-        }
+        return modelPtr->load(dataPtr, size);
     }
-    return !isNullData && modelPtr;
+    return false;
 }
 
 bool SceneLoader::loadModelMotion(const QString &path, IMotionPtr &motionPtr)
@@ -1895,6 +1908,11 @@ Scene::AccelerationType SceneLoader::modelAccelerationType(const IModel *model) 
 Scene *SceneLoader::sceneRef() const
 {
     return m_project.data();
+}
+
+qt::RenderContext *SceneLoader::renderContextRef() const
+{
+    return m_renderContextRef;
 }
 
 qt::World *SceneLoader::worldRef() const

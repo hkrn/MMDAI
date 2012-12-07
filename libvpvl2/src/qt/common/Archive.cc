@@ -111,7 +111,7 @@ bool Archive::close()
     return unzClose(m_file) == Z_OK;
 }
 
-bool Archive::uncompress(const QStringList &entries)
+bool Archive::uncompress(const QSet<QString> &entries)
 {
     if (m_file == 0)
         return false;
@@ -142,7 +142,7 @@ bool Archive::uncompress(const QStringList &entries)
                         m_error = kCloseCurrentFileError;
                         break;
                     }
-                    m_entries.insert(name, data);
+                    m_originalEntries.insert(name, data);
                 }
             }
             else {
@@ -164,8 +164,12 @@ bool Archive::uncompress(const QStringList &entries)
     }
     if (err == Z_OK) {
         err = unzGoToFirstFile(m_file);
-        if (err != Z_OK)
+        if (err != Z_OK) {
             m_error = kGoToFirstFileError;
+        }
+        else {
+            m_entries = m_originalEntries;
+        }
     }
     return err == Z_OK;
 }
@@ -190,6 +194,11 @@ void Archive::replaceFilePath(const QString &from, const QString &to)
         }
     }
     m_entries = newEntries;
+}
+
+void Archive::restoreOriginalEntries()
+{
+    m_entries = m_originalEntries;
 }
 
 Archive::ErrorType Archive::error() const

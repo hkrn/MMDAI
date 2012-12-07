@@ -69,8 +69,9 @@ public:
     void setTextCodec(QTextCodec *value);
     bool open(const QString &filename, QStringList &entryNames);
     bool close();
-    bool uncompress(const QStringList &entryNames);
+    bool uncompress(const QSet<QString> &entryNames);
     void replaceFilePath(const QString &from, const QString &to);
+    void restoreOriginalEntries();
     ErrorType error() const;
     const QStringList entryNames() const;
     const QByteArray data(const QString &name) const;
@@ -80,6 +81,7 @@ private:
     unz_global_info64 m_header;
     ErrorType m_error;
     QTextCodec *m_codecRef;
+    QHash<QString, QByteArray> m_originalEntries;
     QHash<QString, QByteArray> m_entries;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)

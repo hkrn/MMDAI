@@ -49,15 +49,16 @@
 #include "VPDFile.h"
 
 #include <vpvl2/IEffect.h>
+#include <vpvl2/IModel.h>
 #include <vpvl2/Common.h>
 #include <vpvl2/Project.h>
 
 namespace vpvl2 {
-class IModel;
 class IMotion;
 class IRenderContext;
 class Project;
 namespace qt {
+class Archive;
 class RenderContext;
 class World;
 }
@@ -78,6 +79,11 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
+    static const QRegExp kAssetLoadable;
+    static const QRegExp kAssetExtensions;
+    static const QRegExp kModelLoadable;
+    static const QRegExp kModelExtensions;
+
     explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
     ~SceneLoader();
 
@@ -92,9 +98,11 @@ public:
     void getCameraMatrices(QMatrix4x4 &worldRef, QMatrix4x4 &view, QMatrix4x4 &projection) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr);
+    bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, QUuid &uuid, IModelPtr &assetPtr);
     bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelPtr &modelPtr);
     bool loadCameraMotion(const QString &path, IMotionPtr &motionPtr);
     bool loadModel(const QString &filename, IModelPtr &modelPtr);
+    bool loadModel(const QByteArray &bytes, IModel::Type type, IModelPtr &modelPtr);
     bool loadModelMotion(const QString &path, IMotionPtr &motionPtr);
     bool loadModelMotion(const QString &path, QList<IModel *> &models, IMotionPtr &motionPtr);
     bool loadModelMotion(const QString &path, IModel *model, IMotionPtr &motionPtr);
@@ -174,11 +182,12 @@ public:
     void setAssetParentBone(const IModel *asset, IBone *bone);
 
     Scene *sceneRef() const;
+    qt::RenderContext *renderContextRef() const;
     qt::World *worldRef() const;
     int maxFrameIndex() const;
 
 public slots:
-    void addModel(IModel *model, const QString &baseName, const QDir &dir, QUuid &uuid);
+    void addModel(IModel *model, const QString &path, const QDir &dir, QUuid &uuid);
     void createProject();
     void deleteCameraMotion();
     void deleteMotion(IMotion *&motion);
@@ -257,6 +266,8 @@ private:
     int globalSetting(const char *key, int def) const;
     Scene::AccelerationType globalAccelerationType() const;
     Scene::AccelerationType modelAccelerationType(const IModel *model) const;
+    QByteArray loadFile(const QString &filename,  const QRegExp &loadable,
+                        const QRegExp &extensions, IModel::Type &type);
 
     QScopedPointer<QGLFramebufferObject> m_depthBuffer;
     QScopedPointer<qt::World> m_world;

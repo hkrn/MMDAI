@@ -103,7 +103,7 @@ private:
 
     QScopedPointer<QSettings> m_settings;
     QScopedPointer<World> m_world;
-    QScopedPointer<RenderContext> m_delegate;
+    QScopedPointer<RenderContext> m_renderContext;
     QScopedPointer<Scene> m_scene;
     QScopedPointer<Factory> m_factory;
     QScopedPointer<ShadowMap> m_sm;

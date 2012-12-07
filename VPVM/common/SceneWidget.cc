@@ -38,6 +38,7 @@
 
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/Archive.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
@@ -377,32 +378,73 @@ void SceneWidget::addFile()
 void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
-    IModelPtr modelPtr;
     loadModel(openFileDialog("sceneWidget/lastModelDirectory",
                              tr("Open PMD/PMX file"),
                              tr("Model file (*.pmd *.pmx *.zip)"),
-                             m_settingsRef),
-              modelPtr);
-    setEmptyMotion(modelPtr.take(), true);
+                             m_settingsRef));
 }
 
-void SceneWidget::loadModel(const QString &path, IModelPtr &modelPtr, bool skipDialog)
+void SceneWidget::loadModel(const QString &path, bool skipDialog)
 {
-    QFileInfo fi(path);
-    if (fi.exists()) {
-        if (m_loader->loadModel(path, modelPtr)) {
-            if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
+    QFileInfo finfo(path);
+    if (finfo.exists()) {
+        QScopedPointer<IModel> modelPtr;
+        Archive archive;
+        QStringList allFilesInArchive;
+        /* zip を解凍 */
+        if (archive.open(path, allFilesInArchive)) {
+            const QStringList &modelsInArchive = allFilesInArchive.filter(SceneLoader::kModelExtensions);
+            /* zip 内に pmd/pmx ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
+            if (!modelsInArchive.isEmpty() && archive.uncompress(allFilesInArchive.filter(SceneLoader::kModelLoadable).toSet())) {
                 QUuid uuid;
-                emit fileDidOpenProgress(tr("Loading %1").arg(fi.baseName()), false);
-                emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(fi.baseName()));
-                m_handles->loadModelHandles();
-                m_loader->addModel(modelPtr.data(), fi.fileName(), fi.dir(), uuid);
+                IModelPtr modelPtr;
+                IModel::Type type;
+                QFileInfo modelFileInfoInArchive;
+                int nmodels = modelsInArchive.size(), i = 0;
+                m_loader->renderContextRef()->setArchive(&archive);
+                emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
+                emit fileDidUpdateProgress(0, nmodels, tr("Loading %1...").arg(modelFileInfoInArchive.baseName()));
+                foreach (const QString &modelInArchive, modelsInArchive) {
+                    const QByteArray &bytes = archive.data(modelInArchive);
+                    modelFileInfoInArchive.setFile(modelInArchive);
+                    /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
+                    archive.replaceFilePath(modelFileInfoInArchive.path(), finfo.path() + "/");
+                    type = modelFileInfoInArchive.suffix() == "pmx" ? IModel::kPMX : IModel::kPMD;
+                    if (m_loader->loadModel(bytes, type, modelPtr)) {
+                        m_handles->loadModelHandles();
+                        /*
+                         * モデルのは zip のパスに zip 内のパスを加えて固有のパスを作成する (実在する必要はない)。
+                         * また、ディレクトリはパス置換処理を行った後に zip までのディレクトリパスを使う
+                         */
+                        const QString &modelInArchivePath = path + "/" + modelFileInfoInArchive.filePath();
+                        m_loader->addModel(modelPtr.data(), modelInArchivePath, finfo.dir(), uuid);
+                        setEmptyMotion(modelPtr.take(), false);
+                    }
+                    emit fileDidUpdateProgress(++i, nmodels, tr("Loading %1...").arg(modelFileInfoInArchive.baseName()));
+                    /* 元の zip 内のファイルパスに戻して再度置換できるようにする */
+                    archive.restoreOriginalEntries();
+                }
+                m_loader->renderContextRef()->clearArchive();
                 emit fileDidLoad(path);
             }
         }
         else {
-            warning(this, tr("Loading model error"),
-                    tr("%1 cannot be loaded").arg(fi.fileName()));
+            /* 通常のモデル読み込み処理 */
+            if (m_loader->loadModel(path, modelPtr)) {
+                if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
+                    QUuid uuid;
+                    emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
+                    emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
+                    m_handles->loadModelHandles();
+                    m_loader->addModel(modelPtr.data(), finfo.filePath(), finfo.dir(), uuid);
+                    setEmptyMotion(modelPtr.take(), false);
+                    emit fileDidLoad(path);
+                }
+            }
+            else {
+                warning(this, tr("Loading model error"),
+                        tr("%1 cannot be loaded").arg(finfo.fileName()));
+            }
         }
     }
 }
@@ -519,26 +561,56 @@ void SceneWidget::setEmptyMotion(IModel *model, bool skipWarning)
 
 void SceneWidget::addAsset()
 {
-    IModelPtr asset;
     loadAsset(openFileDialog("sceneWidget/lastAssetDirectory",
                              tr("Open accessory file"),
                              tr("Accessory file (*.x *.zip)"),
-                             m_settingsRef),
-              asset);
-    setEmptyMotion(asset.take(), true);
+                             m_settingsRef));
 }
 
-void SceneWidget::loadAsset(const QString &path, QScopedPointer<IModel> &modelPtr)
+void SceneWidget::loadAsset(const QString &path)
 {
-    QFileInfo fi(path);
-    if (fi.exists()) {
-        QUuid uuid;
-        if (m_loader->loadAsset(path, uuid, modelPtr)) {
-            emit fileDidLoad(path);
+    QFileInfo finfo(path);
+    if (finfo.exists()) {
+        Archive archive;
+        QStringList allFilesInArchive;
+        /* zip を解凍 */
+        if (archive.open(path, allFilesInArchive)) {
+            const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
+            /* zip 内に x ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
+            if (!assetsInArchive.isEmpty() && archive.uncompress(allFilesInArchive.filter(SceneLoader::kAssetLoadable).toSet())) {
+                QUuid uuid;
+                IModelPtr assetPtr;
+                QFileInfo assetFileInfoInArchive, archiveFileInfo(path);
+                int nmodels = assetsInArchive.size(), i = 0;
+                m_loader->renderContextRef()->setArchive(&archive);
+                emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
+                emit fileDidUpdateProgress(0, nmodels, tr("Loading %1...").arg(finfo.baseName()));
+                foreach (const QString &assetInArchive, assetsInArchive) {
+                    const QByteArray &bytes = archive.data(assetInArchive);
+                    assetFileInfoInArchive.setFile(assetInArchive);
+                    /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
+                    archive.replaceFilePath(assetFileInfoInArchive.path(), archiveFileInfo.path() + "/");
+                    if (m_loader->loadAsset(bytes, assetFileInfoInArchive, uuid, assetPtr)) {
+                        setEmptyMotion(assetPtr.take(), false);
+                    }
+                    emit fileDidUpdateProgress(++i, nmodels, tr("Loading %1...").arg(assetFileInfoInArchive.baseName()));
+                    archive.restoreOriginalEntries();
+                }
+                m_loader->renderContextRef()->clearArchive();
+                emit fileDidLoad(path);
+            }
         }
         else {
-            warning(this, tr("Loading asset error"),
-                    tr("%1 cannot be loaded").arg(fi.fileName()));
+            QUuid uuid;
+            QScopedPointer<IModel> assetPtr;
+            if (m_loader->loadAsset(path, uuid, assetPtr)) {
+                setEmptyMotion(assetPtr.take(), false);
+                emit fileDidLoad(path);
+            }
+            else {
+                warning(this, tr("Loading asset error"),
+                        tr("%1 cannot be loaded").arg(finfo.fileName()));
+            }
         }
     }
 }
@@ -906,9 +978,7 @@ void SceneWidget::loadFile(const QString &path)
     }
     /* アクセサリファイル */
     else if (extension == "x") {
-        IModelPtr assetPtr;
-        loadAsset(path, assetPtr);
-        setEmptyMotion(assetPtr.take(), false);
+        loadAsset(path);
     }
     /* ポーズファイル */
     else if (extension == "vpd") {
@@ -1018,7 +1088,7 @@ void SceneWidget::initializeGL()
     settings.insert("dir.system.shaders", ":shaders");
     settings.insert("dir.system.toon", ":textures");
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
-    m_renderContext.reset(new RenderContext(settings, 0, this));
+    m_renderContext.reset(new RenderContext(settings, 0));
     m_renderContext->initialize(true);
     m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));

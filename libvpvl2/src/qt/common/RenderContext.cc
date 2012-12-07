@@ -208,11 +208,10 @@ QString RenderContext::readAllAsync(const QString &path)
     return UISlurpFile(path, bytes) ? bytes : QString();
 }
 
-RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context)
-    : m_settings(settings),
+RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *scene)
+    : m_sceneRef(scene),
+      m_settings(settings),
       m_systemDir(m_settings.value("dir.system.toon", "../../VPVM/resources/images")),
-      m_scene(scene),
-      m_context(context),
       m_archive(0),
       m_msaaSamples(0),
       m_frameBufferObjectBound(false)
@@ -227,7 +226,6 @@ RenderContext::~RenderContext()
     setSceneRef(0);
     qDeleteAll(m_renderTargets);
     m_renderTargets.clear();
-    delete m_archive;
     m_lightWorldMatrix.setToIdentity();
     m_lightViewMatrix.setToIdentity();
     m_lightProjectionMatrix.setToIdentity();
@@ -238,8 +236,6 @@ RenderContext::~RenderContext()
     m_mouseLeftPressPosition.setZero();
     m_mouseMiddlePressPosition.setZero();
     m_mouseRightPressPosition.setZero();
-    m_context = 0;
-    m_archive = 0;
     m_msaaSamples = 0;
 }
 
@@ -340,7 +336,7 @@ void RenderContext::getMatrix(float value[], const IModel *model, int flags) con
             m *= m_cameraViewMatrix;
         if (flags & IRenderContext::kWorldMatrix) {
             static const Vector3 plane(0.0f, 1.0f, 0.0f);
-            const ILight *light = m_scene->light();
+            const ILight *light = m_sceneRef->light();
             const Vector3 &direction = light->direction();
             const Scalar dot = plane.dot(-direction);
             QMatrix4x4 shadowMatrix;
@@ -593,8 +589,13 @@ void RenderContext::stopProfileSession(ProfileType type, const void *arg)
 
 void RenderContext::setArchive(Archive *value)
 {
-    delete m_archive;
-    m_archive = value;
+    Q_ASSERT(value);
+    m_archive.reset(value);
+}
+
+void RenderContext::clearArchive()
+{
+    m_archive.take();
 }
 
 void RenderContext::setSceneRef(Scene *value)
@@ -608,13 +609,13 @@ void RenderContext::setSceneRef(Scene *value)
     qDeleteAll(m_effectCaches);
     m_texture2Movies.clear();
     m_effectCaches.clear();
-    m_scene = value;
+    m_sceneRef = value;
 }
 
 void RenderContext::updateMatrices(const QSizeF &size)
 {
     float matrix[16];
-    ICamera *camera = m_scene->camera();
+    ICamera *camera = m_sceneRef->camera();
     camera->modelViewTransform().getOpenGLMatrix(matrix);
     for (int i = 0; i < 16; i++)
         m_cameraViewMatrix.data()[i] = matrix[i];
@@ -838,10 +839,11 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
 {
     if (!image.isNull()) {
         size_t width = image.width(), height = image.height();
-        GLuint textureID = m_context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
-                                                  GL_TEXTURE_2D,
-                                                  GL_RGBA,
-                                                  UIGetTextureBindOptions(internalTexture.mipmap));
+        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
+        GLuint textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
+                                                GL_TEXTURE_2D,
+                                                GL_RGBA,
+                                                UIGetTextureBindOptions(internalTexture.mipmap));
         TextureCache cache(width, height, textureID, GL_RGBA);
         m_texture2Paths.insert(textureID, path);
         internalTexture.assign(cache);
@@ -889,7 +891,7 @@ void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Col
 
 IModel *RenderContext::findModel(const IString *name) const
 {
-    IModel *model = m_scene->findModel(name);
+    IModel *model = m_sceneRef->findModel(name);
     if (!model) {
         const QString &s = static_cast<const CString *>(name)->value();
         model = m_filename2Models[s];
@@ -1026,7 +1028,7 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 
 void RenderContext::renderOffscreen(const QSize &size)
 {
-    const Array<IRenderEngine *> &engines = m_scene->renderEngines();
+    const Array<IRenderEngine *> &engines = m_sceneRef->renderEngines();
     const int nengines = engines.count();
     QSize s;
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
@@ -1107,7 +1109,7 @@ IEffect *RenderContext::createEffectAsync(const IString *path)
     }
     else if (QFile::exists(key)) {
         locker.unlock();
-        effect = m_scene->createEffect(path, this);
+        effect = m_sceneRef->createEffect(path, this);
         qDebug("Loading an effect: %s", qPrintable(key));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(key));
@@ -1134,7 +1136,7 @@ IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
     }
     else if (QFile::exists(key)) {
         locker.unlock();
-        effect = m_scene->createEffect(dir, model, this);
+        effect = m_sceneRef->createEffect(dir, model, this);
         qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(key)) ;

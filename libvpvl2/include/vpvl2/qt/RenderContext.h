@@ -130,7 +130,7 @@ public:
     static QString readAllAsync(const QString &path);
     static QImage loadImageAsync(const QString &path);
 
-    RenderContext(const QHash<QString, QString> &settings, Scene *scene, QGLWidget *context);
+    RenderContext(const QHash<QString, QString> &settings, Scene *scene);
     ~RenderContext();
 
     void allocateUserData(const IModel *model, void *&context);
@@ -154,6 +154,7 @@ public:
     void stopProfileSession(ProfileType type, const void *arg);
 
     void setArchive(Archive *value);
+    void clearArchive();
     void setSceneRef(Scene *value);
     void updateMatrices(const QSizeF &size);
     void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
@@ -216,16 +217,15 @@ private:
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA);
 
+    Scene *m_sceneRef;
     const QHash<QString, QString> m_settings;
     const QDir m_systemDir;
-    Scene *m_scene;
     mutable QMutex m_model2PathLock;
     mutable QMutex m_effectOwnersLock;
     mutable QMutex m_effect2modelsLock;
     mutable QMutex m_effectCachesLock;
-    QGLWidget *m_context;
-    Archive *m_archive;
     QSizeF m_viewport;
+    QScopedPointer<Archive> m_archive;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<const QString, IModel *> m_filename2Models;
     QHash<GLuint, QString> m_texture2Paths;

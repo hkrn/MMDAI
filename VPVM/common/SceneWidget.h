@@ -110,11 +110,11 @@ public:
     void loadProject(const QString &filename);
     void saveProject(const QString &filename);
 
-    void loadModel(const QString &path, IModelPtr &model, bool skipDialog = false);
+    void loadModel(const QString &path, bool skipDialog = false);
     void loadMotionToAllModels(const QString &path, IMotionPtr &motionPtr);
     void loadMotionToSelectedModel(const QString &path, IMotionPtr &motionPtr);
     void loadMotionToModel(const QString &path, IModel *model, IMotionPtr &motionPtr);
-    void loadAsset(const QString &path, QScopedPointer<IModel> &modelPtr);
+    void loadAsset(const QString &path);
     void loadAssetFromMetadata(const QString &path);
     VPDFilePtr insertPoseToSelectedModel(const QString &filename, IModel *model);
     IMotion *setCamera(const QString &path);

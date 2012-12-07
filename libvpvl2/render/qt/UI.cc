@@ -539,9 +539,9 @@ void UI::load(const QString &filename)
     move((margin / 2).width(), (margin / 2).height());
     resize(s);
     setMinimumSize(640, 480);
-    m_delegate.reset(new RenderContext(settings, m_scene.data(), this));
-    m_delegate->initialize(m_settings->value("effect.msaa", true).toBool());
-    m_delegate->updateMatrices(size());
+    m_renderContext.reset(new RenderContext(settings, m_scene.data()));
+    m_renderContext->initialize(m_settings->value("effect.msaa", true).toBool());
+    m_renderContext->updateMatrices(size());
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
     if (m_settings->value("enable.opencl", false).toBool())
         m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
@@ -628,7 +628,7 @@ void UI::timerEvent(QTimerEvent *)
         }
     }
     m_world->stepSimulation(delta);
-    m_delegate->updateMatrices(size());
+    m_renderContext->updateMatrices(size());
     m_scene->update(Scene::kUpdateAll);
     updateGL();
 }
@@ -688,7 +688,7 @@ void UI::resizeGL(int w, int h)
 
 void UI::paintGL()
 {
-    if (!m_delegate) {
+    if (!m_renderContext) {
         glViewport(0, 0, width(), height());
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -744,7 +744,7 @@ void UI::renderDepth()
                                QVector3D(target.x(), target.y(), target.z()),
                                QVector3D(0, 1, 0));
         lightProjectionMatrix.perspective(angle, aspectRatio, 1, 10000);
-        m_delegate->setLightMatrices(QMatrix4x4(), lightViewMatrix, lightProjectionMatrix);
+        m_renderContext->setLightMatrices(QMatrix4x4(), lightViewMatrix, lightProjectionMatrix);
         glViewport(0, 0, size.x(), size.y());
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -758,7 +758,7 @@ void UI::renderDepth()
 
 void UI::renderOffscreen()
 {
-    m_delegate->renderOffscreen(size());
+    m_renderContext->renderOffscreen(size());
 }
 
 void UI::renderWindow()
@@ -805,10 +805,10 @@ void UI::setMousePositions(QMouseEvent *event)
     const qreal w = size.width(), h = size.height();
     const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);
     Qt::MouseButtons buttons = event->buttons();
-    m_delegate->setMousePosition(value, buttons & Qt::LeftButton, IRenderContext::kMouseLeftPressPosition);
-    m_delegate->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
-    m_delegate->setMousePosition(value, buttons & Qt::RightButton, IRenderContext::kMouseRightPressPosition);
-    m_delegate->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
+    m_renderContext->setMousePosition(value, buttons & Qt::LeftButton, IRenderContext::kMouseLeftPressPosition);
+    m_renderContext->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
+    m_renderContext->setMousePosition(value, buttons & Qt::RightButton, IRenderContext::kMouseRightPressPosition);
+    m_renderContext->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
 }
 
 bool UI::loadScene()
@@ -899,9 +899,9 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         qWarning("Failed parsing the model: %d", modelPtr->error());
         return 0;
     }
-    m_delegate->addModelPath(modelPtr.data(), info.fileName());
+    m_renderContext->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_delegate.data(),
+    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_renderContext.data(),
                                                           &RenderContext::createEffectAsync, modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -909,7 +909,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     int flags = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effect) {
-        qWarning() << "Effect" <<  m_delegate->effectFilePath(modelPtr.data(), &s1) << "does not exists";
+        qWarning() << "Effect" <<  m_renderContext->effectFilePath(modelPtr.data(), &s1) << "does not exists";
     }
     else if (!effect->internalPointer()) {
         CGcontext c = static_cast<CGcontext>(effect->internalContext());
@@ -922,7 +922,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     Q_UNUSED(effect)
 #endif
     IModel *model = 0;
-    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_delegate.data(), modelPtr.data(), flags));
+    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(), modelPtr.data(), flags));
     if (enginePtr->upload(&s1)) {
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         if (m_settings->value("enable.physics", true).toBool())
@@ -934,7 +934,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         m_scene->addModel(modelPtr.data(), enginePtr.data());
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
-        m_delegate->parseOffscreenSemantic(effect, info.absoluteDir());
+        m_renderContext->parseOffscreenSemantic(effect, info.absoluteDir());
 #endif
         model = modelPtr.take();
         enginePtr.take();
