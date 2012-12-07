@@ -886,12 +886,13 @@ void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
     if (model == m_modelRef) {
         const int nkeyframes = motion->countKeyframes(IKeyframe::kBone);
         const Keys &keys = this->keys();
-        const QString &loadingProgressText = tr("Loading bone keyframes %1 of %2");
+        const QString &modelName = toQStringFromModel(model),
+                &loadingProgressText = tr("Loading bone keyframes %1 of %2 to %3");
         QScopedPointer<IBoneKeyframe> newKeyframe;
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setFrameIndexColumnMax(motion);
         resetModel();
-        emit motionDidOpenProgress(QString(), false);
+        emit motionDidOpenProgress(tr("Loading a bone motion"), false);
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
@@ -917,7 +918,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
                 /* キーフレームのバイナリデータが QModelIndex の QVariant に登録される。この方が管理が楽になる */
                 setData(modelIndex, bytes);
             }
-            emit motionDidUpdateProgress(i, nkeyframes, loadingProgressText.arg(i).arg(nkeyframes));
+            emit motionDidUpdateProgress(i, nkeyframes, loadingProgressText.arg(i).arg(nkeyframes).arg(modelName));
         }
         /* 読み込まれたモーションを現在のモーションとして登録する。あとは LoadCommand#undo と同じ */
         m_motionRef = motion;
