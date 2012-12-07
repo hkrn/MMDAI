@@ -724,7 +724,7 @@ void SceneLoader::loadProject(const QString &path)
                     sceneObject->setAccelerationType(modelAccelerationType(model));
                     IModel::Type type = model->type();
                     if (type == IModel::kPMD || type == IModel::kPMX) {
-                        m_renderContextRef->setArchive(0);
+                        m_renderContextRef->clearArchive();
                         /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
                         const Vector3 &color = UIGetVector3(m_project->modelSetting(model, "edge.color"), kZeroV3);
                         model->setEdgeColor(color);
