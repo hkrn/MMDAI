@@ -45,7 +45,7 @@ TEST(ArchiveTest, UncompressAllEntries)
     Archive archive;
     QStringList entries;
     UncompressArchive(archive, entries);
-    ASSERT_TRUE(archive.uncompress(entries));
+    ASSERT_TRUE(archive.uncompress(entries.toSet()));
     entries.sort();
     QStringList actualEntries = archive.entryNames();
     actualEntries.sort();
@@ -62,7 +62,7 @@ TEST(ArchiveTest, UncompressEntriesPartially)
     QStringList entries, extractEntries;
     UncompressArchive(archive, entries);
     extractEntries << "foo.txt";
-    ASSERT_TRUE(archive.uncompress(extractEntries));
+    ASSERT_TRUE(archive.uncompress(extractEntries.toSet()));
     ASSERT_TRUE(archive.entryNames() == extractEntries);
     ASSERT_STREQ("foo\n", archive.data("foo.txt").constData());
     ASSERT_TRUE(archive.data("bar.txt").isEmpty());
@@ -76,7 +76,7 @@ TEST(ArchiveTest, UncompressWithReplaceIfMatch)
     QStringList entries, extractEntries;
     UncompressArchive(archive, entries);
     extractEntries << "path/to/entry.txt";
-    ASSERT_TRUE(archive.uncompress(extractEntries));
+    ASSERT_TRUE(archive.uncompress(extractEntries.toSet()));
     archive.replaceFilePath("path/to", "/PATH/TO/");
     extractEntries.clear(); extractEntries << "/PATH/TO/entry.txt";
     ASSERT_TRUE(archive.entryNames() == extractEntries);
@@ -89,7 +89,7 @@ TEST(ArchiveTest, UncompressWithReplaceIfNotMatch)
     QStringList entries, extractEntries;
     UncompressArchive(archive, entries);
     extractEntries << "foo.txt" << "bar.txt";
-    ASSERT_TRUE(archive.uncompress(extractEntries));
+    ASSERT_TRUE(archive.uncompress(extractEntries.toSet()));
     archive.replaceFilePath("test", "/path/to/");
     extractEntries.clear();
     extractEntries << "/path/to/foo.txt" << "/path/to/bar.txt";
