@@ -171,7 +171,7 @@ public slots:
 
 signals:
     void initailizeGLContextDidDone();
-    void fileDidLoad(const QString &filename);
+    void fileDidLoad(const QString &filename, bool succeeded);
     void newMotionDidSet(IModel *model);
     void modelDidMove(const Vector3 &lastPosition);
     void modelDidRotate(const Quaternion &lastRotation);

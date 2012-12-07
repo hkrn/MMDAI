@@ -387,11 +387,14 @@ void SceneWidget::addModel()
 void SceneWidget::loadModel(const QString &path, bool skipDialog)
 {
     QFileInfo finfo(path);
+    bool didLoad = true;
     if (finfo.exists()) {
         QScopedPointer<IModel> modelPtr;
         Archive archive;
         QStringList allFilesInArchive;
         /* zip を解凍 */
+        emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
+        emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
         if (archive.open(path, allFilesInArchive)) {
             const QStringList &modelsInArchive = allFilesInArchive.filter(SceneLoader::kModelExtensions);
             /* zip 内に pmd/pmx ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
@@ -402,8 +405,7 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                 QFileInfo modelFileInfoInArchive;
                 int nmodels = modelsInArchive.size(), i = 0;
                 m_loader->renderContextRef()->setArchive(&archive);
-                emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
-                emit fileDidUpdateProgress(0, nmodels, tr("Loading %1...").arg(modelFileInfoInArchive.baseName()));
+                emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(0).arg(nmodels));
                 foreach (const QString &modelInArchive, modelsInArchive) {
                     const QByteArray &bytes = archive.data(modelInArchive);
                     modelFileInfoInArchive.setFile(modelInArchive);
@@ -420,32 +422,30 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                         m_loader->addModel(modelPtr.data(), modelInArchivePath, finfo.dir(), uuid);
                         setEmptyMotion(modelPtr.take(), false);
                     }
-                    emit fileDidUpdateProgress(++i, nmodels, tr("Loading %1...").arg(modelFileInfoInArchive.baseName()));
+                    ++i;
+                    emit fileDidUpdateProgress(i, nmodels, tr("Loading %1 (%2 of %3)...")
+                                               .arg(modelFileInfoInArchive.baseName()).arg(i).arg(nmodels));
                     /* 元の zip 内のファイルパスに戻して再度置換できるようにする */
                     archive.restoreOriginalEntries();
                 }
                 m_loader->renderContextRef()->clearArchive();
-                emit fileDidLoad(path);
+            }
+        }
+        /* 通常のモデル読み込み処理 */
+        else if (m_loader->loadModel(path, modelPtr)) {
+            if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
+                QUuid uuid;
+                m_handles->loadModelHandles();
+                m_loader->addModel(modelPtr.data(), finfo.filePath(), finfo.dir(), uuid);
+                setEmptyMotion(modelPtr.take(), false);
             }
         }
         else {
-            /* 通常のモデル読み込み処理 */
-            if (m_loader->loadModel(path, modelPtr)) {
-                if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
-                    QUuid uuid;
-                    emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
-                    emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
-                    m_handles->loadModelHandles();
-                    m_loader->addModel(modelPtr.data(), finfo.filePath(), finfo.dir(), uuid);
-                    setEmptyMotion(modelPtr.take(), false);
-                    emit fileDidLoad(path);
-                }
-            }
-            else {
-                warning(this, tr("Loading model error"),
-                        tr("%1 cannot be loaded").arg(finfo.fileName()));
-            }
+            warning(this, tr("Loading model error"),
+                    tr("%1 cannot be loaded").arg(finfo.fileName()));
+            didLoad = false;
         }
+        emit fileDidLoad(path, didLoad);
     }
 }
 
@@ -473,7 +473,7 @@ void SceneWidget::loadMotionToAllModels(const QString &path, IMotionPtr &motionP
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(path));
         m_loader->loadModelMotion(path, models, motionPtr);
         seekMotion(0, false, true);
-        emit fileDidLoad(path);
+        emit fileDidLoad(path, true);
     }
     else {
         warning(this, tr("Loading model motion error"),
@@ -529,7 +529,7 @@ void SceneWidget::loadMotionToModel(const QString &path, IModel *model, IMotionP
                     loadModelMotion(motionPtr, path, model);
                 }
                 seekMotion(0, false, true);
-                emit fileDidLoad(path);
+                emit fileDidLoad(path, true);
             }
             else {
                 warning(this, tr("Loading model motion error"),
@@ -570,21 +570,23 @@ void SceneWidget::addAsset()
 void SceneWidget::loadAsset(const QString &path)
 {
     QFileInfo finfo(path);
+    bool didLoad = true;
     if (finfo.exists()) {
         Archive archive;
+        QUuid uuid;
+        IModelPtr assetPtr;
         QStringList allFilesInArchive;
         /* zip を解凍 */
+        emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
+        emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
         if (archive.open(path, allFilesInArchive)) {
             const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
             /* zip 内に x ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
             if (!assetsInArchive.isEmpty() && archive.uncompress(allFilesInArchive.filter(SceneLoader::kAssetLoadable).toSet())) {
-                QUuid uuid;
-                IModelPtr assetPtr;
                 QFileInfo assetFileInfoInArchive, archiveFileInfo(path);
                 int nmodels = assetsInArchive.size(), i = 0;
                 m_loader->renderContextRef()->setArchive(&archive);
-                emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
-                emit fileDidUpdateProgress(0, nmodels, tr("Loading %1...").arg(finfo.baseName()));
+                emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(0).arg(nmodels));
                 foreach (const QString &assetInArchive, assetsInArchive) {
                     const QByteArray &bytes = archive.data(assetInArchive);
                     assetFileInfoInArchive.setFile(assetInArchive);
@@ -593,25 +595,22 @@ void SceneWidget::loadAsset(const QString &path)
                     if (m_loader->loadAsset(bytes, assetFileInfoInArchive, uuid, assetPtr)) {
                         setEmptyMotion(assetPtr.take(), false);
                     }
-                    emit fileDidUpdateProgress(++i, nmodels, tr("Loading %1...").arg(assetFileInfoInArchive.baseName()));
+                    ++i;
+                    emit fileDidUpdateProgress(i, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(i).arg(nmodels));
                     archive.restoreOriginalEntries();
                 }
                 m_loader->renderContextRef()->clearArchive();
-                emit fileDidLoad(path);
             }
+        }
+        else if (m_loader->loadAsset(path, uuid, assetPtr)) {
+            setEmptyMotion(assetPtr.take(), false);
         }
         else {
-            QUuid uuid;
-            QScopedPointer<IModel> assetPtr;
-            if (m_loader->loadAsset(path, uuid, assetPtr)) {
-                setEmptyMotion(assetPtr.take(), false);
-                emit fileDidLoad(path);
-            }
-            else {
-                warning(this, tr("Loading asset error"),
-                        tr("%1 cannot be loaded").arg(finfo.fileName()));
-            }
+            warning(this, tr("Loading asset error"),
+                    tr("%1 cannot be loaded").arg(finfo.fileName()));
+            didLoad = false;
         }
+        emit fileDidLoad(path, didLoad);
     }
 }
 
@@ -784,7 +783,7 @@ IMotion *SceneWidget::setCamera(const QString &path)
         IMotionPtr motionPtr;
         if (m_loader->loadCameraMotion(path, motionPtr)) {
             motion = motionPtr.take();
-            emit fileDidLoad(path);
+            emit fileDidLoad(path, true);
         }
         else {
             warning(this, tr("Loading camera motion error"),
