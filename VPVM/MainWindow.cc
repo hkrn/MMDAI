@@ -498,15 +498,17 @@ void MainWindow::openRecentFile()
         m_sceneWidget->loadFile(action->data().toString());
 }
 
-void MainWindow::addRecentFile(const QString &filename)
+void MainWindow::addRecentFile(const QString &filename, bool didLoad)
 {
-    QStringList files = m_settings.value("mainWindow/recentFiles").toStringList();
-    files.removeAll(filename);
-    files.prepend(filename);
-    while (files.size() > kMaxRecentFiles)
-        files.removeLast();
-    m_settings.setValue("mainWindow/recentFiles", files);
-    updateRecentFiles();
+    if (didLoad) {
+        QStringList files = m_settings.value("mainWindow/recentFiles").toStringList();
+        files.removeAll(filename);
+        files.prepend(filename);
+        while (files.size() > kMaxRecentFiles)
+            files.removeLast();
+        m_settings.setValue("mainWindow/recentFiles", files);
+        updateRecentFiles();
+    }
 }
 
 void MainWindow::updateRecentFiles()
@@ -1475,7 +1477,7 @@ void MainWindow::bindWidgets()
 {
     connect(m_timelineTabWidget.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),  m_sceneWidget.data(), SLOT(seekMotion(IKeyframe::TimeIndex,bool,bool)));
     connect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), SLOT(bindSceneLoader()));
-    connect(m_sceneWidget.data(), SIGNAL(fileDidLoad(QString)), SLOT(addRecentFile(QString)));
+    connect(m_sceneWidget.data(), SIGNAL(fileDidLoad(QString,bool)), SLOT(addRecentFile(QString,bool)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveAbsolute(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateTo(Vector3,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveRelative(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateDelta(Vector3,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidRotate(Scalar,IBone*,int)), m_boneMotionModel.data(), SLOT(rotateAngle(Scalar,IBone*,int)));
@@ -2000,9 +2002,11 @@ void MainWindow::openProgress(const QString &title, bool cancellable)
 {
     if (m_nestProgressCount == 0) {
         m_progress.reset(new QProgressDialog());
-        m_progress->setWindowModality(Qt::WindowModal);
+        m_progress->setMinimumDuration(0);
+        m_progress->setWindowModality(Qt::ApplicationModal);
         if (!cancellable)
             m_progress->setCancelButton(0);
+        m_progress->show();
     }
     if (cancellable)
         connect(m_progress.data(), SIGNAL(canceled()), sender(), SLOT(cancel()));
@@ -2014,7 +2018,8 @@ void MainWindow::updateProgress(int value, int max, const QString &text)
 {
     m_progress->setRange(0, max);
     m_progress->setValue(value);
-    m_progress->setLabelText(text);
+    if (!text.isEmpty())
+        m_progress->setLabelText(text);
 }
 
 void MainWindow::updateProgressTitle(const QString &title)

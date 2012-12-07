@@ -122,7 +122,7 @@ private slots:
     void setCurrentModel(IModel *model);
     void revertSelectedModel();
     void openRecentFile();
-    void addRecentFile(const QString &filename);
+    void addRecentFile(const QString &filename, bool didLoad);
     void updateRecentFiles();
     void clearRecentFiles();
     void addModel(IModel *model, const QUuid &uuid);
