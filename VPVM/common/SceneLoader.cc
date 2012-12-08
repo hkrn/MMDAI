@@ -241,7 +241,7 @@ SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderCont
       m_selectedAssetRef(0),
       m_depthBufferID(0)
 {
-    createProject();
+    newProject();
 }
 
 SceneLoader::~SceneLoader()
@@ -341,21 +341,34 @@ void SceneLoader::commitAssetProperties()
     }
 }
 
-void SceneLoader::createProject()
+void SceneLoader::newProject()
 {
     if (!m_project) {
-        m_project.reset(new Project(m_projectDelegate.data(), m_factoryRef));
-        /*
-         * デフォルトではグリッド表示と物理演算とソフトシャドウを有効にするため、設定後強制的に dirty フラグを無効にする
-         * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
-         */
-        m_project->setGlobalSetting("grid.visible", "true");
-        m_project->setGlobalSetting("physics.enabled", "true");
-        m_project->setGlobalSetting("shadow.texture.soft", "true");
+        ProjectPtr projectPtr;
+        newProject(projectPtr);
+        m_renderContextRef->setSceneRef(projectPtr.data());
+        /* m_project に上で作成したインスタンスを設定する。これは (new|set)CameraMotion が参照するため */
+        m_project.reset(projectPtr.take());
+        /* 空のカメラモーションを登録を行った後は setDirty(false) で何もしていないのにダイアログが出るのを防ぐ */
+        IMotionPtr cameraMotion;
+        newCameraMotion(cameraMotion);
+        setCameraMotion(cameraMotion.take());
         m_project->setDirty(false);
-        m_renderContextRef->setSceneRef(m_project.data());
         emit projectDidInitialized();
     }
+}
+
+void SceneLoader::newProject(ProjectPtr &projectPtr)
+{
+    /*
+     * デフォルトではグリッド表示と物理演算とソフトシャドウを有効にするため、設定後強制的に dirty フラグを無効にする
+     * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
+     */
+    projectPtr.reset(new Project(m_projectDelegate.data(), m_factoryRef));
+    projectPtr->setGlobalSetting("grid.visible", "true");
+    projectPtr->setGlobalSetting("physics.enabled", "true");
+    projectPtr->setGlobalSetting("shadow.texture.soft", "true");
+    projectPtr->setDirty(false);
 }
 
 void SceneLoader::deleteCameraMotion()
@@ -666,7 +679,7 @@ VPDFilePtr SceneLoader::loadModelPose(const QString &path, IModel *model)
 void SceneLoader::loadProject(const QString &path)
 {
     releaseProject();
-    createProject();
+    newProject();
     bool ret = m_project->load(path.toLocal8Bit().constData());
     if (ret) {
         /* 光源設定 */
@@ -804,7 +817,7 @@ void SceneLoader::loadProject(const QString &path)
     }
     else {
         qDebug("Failed loading project %s", qPrintable(path));
-        createProject();
+        newProject();
         emit projectDidLoad(false);
     }
 }
