@@ -113,8 +113,8 @@ public:
     virtual void pasteKeyframesByTimeIndex(int timeIndex) = 0;
     virtual int maxTimeIndex() const = 0;
     virtual bool forceCameraUpdate() const = 0;
+    virtual IMotion *currentMotionRef() const { return m_motionRef; }
 
-    IMotion *currentMotionRef() const { return m_motionRef; }
     void setTimeIndex(const IKeyframe::TimeIndex &newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }

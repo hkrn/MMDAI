@@ -258,22 +258,36 @@ void PMDMotionModel::refreshModel(IModel *model)
     }
 }
 
-void PMDMotionModel::setActiveUndoStack()
+void PMDMotionModel::activateUndoStack()
 {
-    if (m_stacks.contains(m_modelRef))
-        m_undoRef->setActiveStack(m_stacks[m_modelRef].data());
-    else
+    activateUndoStack(m_modelRef);
+}
+
+void PMDMotionModel::activateUndoStack(const IModel *model)
+{
+    if (m_stacks.contains(model)) {
+        QUndoStack *stack = m_stacks[model].data();
+        m_undoRef->setActiveStack(stack);
+    }
+    else {
         m_undoRef->setActiveStack(0);
+    }
 }
 
 int PMDMotionModel::maxTimeIndex() const
 {
-    return m_motionRef ? m_motionRef->maxTimeIndex() : 0;
+    IMotion *motionRef = currentMotionRef();
+    return motionRef ? motionRef->maxTimeIndex() : 0;
 }
 
 bool PMDMotionModel::forceCameraUpdate() const
 {
     return false;
+}
+
+IMotion *PMDMotionModel::currentMotionRef() const
+{
+    return m_motionRefs.contains(m_modelRef) ? m_motionRefs[m_modelRef] : 0;
 }
 
 void PMDMotionModel::setSceneRef(const Scene *value)
@@ -305,13 +319,19 @@ void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys 
     setTimeIndexColumnMax(0);
 }
 
+void PMDMotionModel::addPMDModelMotion(const IModel *model, IMotion *motion)
+{
+    m_motionRefs.insert(model, motion);
+    activateUndoStack(model);
+}
+
 void PMDMotionModel::removePMDModel(IModel *model)
 {
     qDebug("Removing a model from PMDMotionModel: %s", qPrintable(toQStringFromModel(m_modelRef)));
+    /* モーションのポインタを残すとダングリングポインタと化してクラッシュするので、ゼロクリアする */
+    m_motionRefs.remove(m_modelRef);
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
     m_modelRef = 0;
-    /* モーションのポインタを残すとダングリングポインタと化してクラッシュするので、ゼロクリアする */
-    m_motionRef = 0;
     m_undoRef->setActiveStack(0);
     m_values.remove(model);
     m_keys.remove(model);
@@ -322,12 +342,13 @@ void PMDMotionModel::removePMDModel(IModel *model)
 
 void PMDMotionModel::removePMDMotion(IModel *model)
 {
-    qDebug("Removing a motion from PMDMotionModel: %s", qPrintable(toQStringFromMotion(m_motionRef)));
+    const IMotion *motion = m_motionRefs.contains(model) ? m_motionRefs[model] : 0;
+    qDebug("Removing a motion from PMDMotionModel: %s", qPrintable(toQStringFromMotion(motion)));
+    m_motionRefs.remove(model);
     /* テーブルのモデルのデータの破棄と巻き戻しスタックの破棄を行う。モーションは削除されない */
     if (m_values.contains(model))
         m_values[model].clear();
-    QUndoStack *stack = m_undoRef->activeStack();
-    if (stack)
+    if (QUndoStack *stack = m_undoRef->activeStack())
         stack->clear();
 }
 

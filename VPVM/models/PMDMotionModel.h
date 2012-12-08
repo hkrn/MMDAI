@@ -107,9 +107,10 @@ public:
 
     void updateModel(IModel *model, bool seek);
     void refreshModel(IModel *model);
-    void setActiveUndoStack();
+    void activateUndoStack();
     int maxTimeIndex() const;
     bool forceCameraUpdate() const;
+    virtual IMotion *currentMotionRef() const;
     virtual void setSceneRef(const Scene *value);
 
     IModel *selectedModel() const { return m_modelRef; }
@@ -130,6 +131,7 @@ protected:
     void removePMDModel(IModel *model);
     void removePMDMotion(IModel *model);
     void addPMDModel(IModel *model, const RootPtr &rootRef, const Keys &keys);
+    void addPMDModelMotion(const IModel *model, IMotion *motion);
     bool hasPMDModel(IModel *model) const { return m_roots.contains(model); }
     const Values values() const { return m_values[m_modelRef]; }
     RootPtr rootPtr() const { return rootPtr(m_modelRef); }
@@ -141,10 +143,13 @@ protected:
     Vector3 m_lightDirection;
 
 private:
-    QHash<IModel *, Keys> m_keys;
-    QHash<IModel *, Values> m_values;
-    QHash<IModel *, RootPtr> m_roots;
-    QHash<IModel *, UndoStackPtr> m_stacks;
+    void activateUndoStack(const IModel *model);
+
+    QHash<const IModel *, IMotion *> m_motionRefs;
+    QHash<const IModel *, Keys> m_keys;
+    QHash<const IModel *, Values> m_values;
+    QHash<const IModel *, RootPtr> m_roots;
+    QHash<const IModel *, UndoStackPtr> m_stacks;
 
     Q_DISABLE_COPY(PMDMotionModel)
 };

@@ -346,13 +346,13 @@ void TimelineTabWidget::setCurrentTabIndex(int index)
     case kBoneTabIndex: {
         PMDMotionModel *model = static_cast<PMDMotionModel *>(m_boneTimeline->treeViewRef()->model());
         mode = m_lastEditMode;
-        model->setActiveUndoStack();
+        model->activateUndoStack();
         lastSelectedModel = m_lastSelectedModelRef;
         break;
     }
     case kMorphTabIndex: {
         PMDMotionModel *model = static_cast<PMDMotionModel *>(m_morphTimeline->treeViewRef()->model());
-        model->setActiveUndoStack();
+        model->activateUndoStack();
         lastSelectedModel = m_lastSelectedModelRef;
         break;
     }
