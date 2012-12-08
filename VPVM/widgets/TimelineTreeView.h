@@ -116,7 +116,7 @@ public:
     virtual ~TimelineHeaderView();
 
 signals:
-    void frameIndexDidSelect(int frameIndex);
+    void timeIndexDidSelect(int timeIndex);
 
 protected:
     void mousePressEvent(QMouseEvent *e);

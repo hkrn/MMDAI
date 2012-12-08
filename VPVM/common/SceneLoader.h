@@ -127,11 +127,11 @@ public:
     const Vector3 worldGravity() const;
     unsigned long worldRandSeed() const;
     const QColor screenColor() const;
-    int frameIndexPlayFrom() const;
-    int frameIndexPlayTo() const;
+    int timeIndexPlayFrom() const;
+    int timeIndexPlayTo() const;
     int sceneFPSForPlay() const;
-    int frameIndexEncodeVideoFrom() const;
-    int frameIndexEncodeVideoTo() const;
+    int timeIndexEncodeVideoFrom() const;
+    int timeIndexEncodeVideoTo() const;
     int sceneFPSForEncodeVideo() const;
     int sceneWidth() const;
     int sceneHeight() const;
@@ -184,7 +184,7 @@ public:
     Scene *sceneRef() const;
     qt::RenderContext *renderContextRef() const;
     qt::World *worldRef() const;
-    int maxFrameIndex() const;
+    int maxTimeIndex() const;
 
 public slots:
     void addModel(IModel *model, const QString &path, const QDir &dir, QUuid &uuid);
@@ -207,11 +207,11 @@ public slots:
 
     void setGridVisible(bool value);
     void setPhysicsEnabled(bool value);
-    void setFrameIndexPlayFrom(int value);
-    void setFrameIndexPlayTo(int value);
+    void setTimeIndexPlayFrom(int value);
+    void setTimeIndexPlayTo(int value);
     void setSceneFPSForPlay(int value);
-    void setFrameIndexEncodeVideoFrom(int value);
-    void setFrameIndexEncodeVideoTo(int value);
+    void setTimeIndexEncodeVideoFrom(int value);
+    void setTimeIndexEncodeVideoTo(int value);
     void setSceneFPSForEncodeVideo(int value);
     void setSceneWidth(int value);
     void setSceneHeight(int value);

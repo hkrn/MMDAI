@@ -83,7 +83,7 @@ signals:
     void renderFrameDidStop();
     void renderFrameDidStopAndRestoreState();
     /* motionDidSeek は int 型な点に注意 (他は float 型) */
-    void motionDidSeek(int frameIndex);
+    void motionDidSeek(int timeIndex);
     void playerDidPlay(const QString &title, bool cancellable);
     void playerDidUpdate(int value, int max, const QString &text);
     void playerDidUpdateTitle(const QString &title);

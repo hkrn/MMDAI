@@ -119,7 +119,7 @@ static inline void UICreateScenePlayer(MainWindow *mainWindow,
         player.reset(new ScenePlayer(sceneWidget.data(), dialog.data()));
         QObject::connect(dialog.data(), SIGNAL(playingDidStart()), dialog.data(), SLOT(hide()));
         QObject::connect(dialog.data(), SIGNAL(playingDidStart()), player.data(), SLOT(setRestoreState()));
-        QObject::connect(player.data(), SIGNAL(motionDidSeek(int)), timeline.data(), SLOT(setCurrentFrameIndex(int)));
+        QObject::connect(player.data(), SIGNAL(motionDidSeek(int)), timeline.data(), SLOT(setCurrentTimeIndex(int)));
         QObject::connect(player.data(), SIGNAL(renderFrameDidStop()), mainWindow, SLOT(enableSelectingBonesAndMorphs()));
         QObject::connect(player.data(), SIGNAL(renderFrameDidStopAndRestoreState()), dialog.data(), SLOT(show()));
         QObject::connect(player.data(), SIGNAL(playerDidPlay(QString,bool)), mainWindow, SLOT(openProgress(QString,bool)));
@@ -1485,7 +1485,7 @@ void MainWindow::bindWidgets()
     connect(m_sceneWidget.data(), SIGNAL(morphsDidSelect(QList<IMorph*>)), m_timelineTabWidget.data(), SLOT(selectMorphs(QList<IMorph*>)));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_boneMotionModel.data(), SLOT(markAsNew(IModel*)));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_morphMotionModel.data(), SLOT(markAsNew(IModel*)));
-    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_timelineTabWidget.data(), SLOT(setCurrentFrameIndexZero()));
+    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_timelineTabWidget.data(), SLOT(setCurrentTimeIndexZero()));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
@@ -1496,7 +1496,7 @@ void MainWindow::bindWidgets()
     connect(m_morphMotionModel.data(), SIGNAL(motionDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidLoad()), SLOT(closeProgress()));
-    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentFrameIndex(IMorph*)));
+    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentTimeIndex(IMorph*)));
     connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_sceneMotionModel.data(), SLOT(markAsNew()));
     connect(m_sceneWidget.data(), SIGNAL(handleDidGrab()), m_boneMotionModel.data(), SLOT(saveTransform()));
     connect(m_sceneWidget.data(), SIGNAL(handleDidRelease()), m_boneMotionModel.data(), SLOT(commitTransform()));

@@ -63,7 +63,7 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
       m_widthBox(createSpinBox(min.width(), max.width())),
       m_heightLabel(new QLabel()),
       m_heightBox(createSpinBox(min.height(), max.height())),
-      m_frameIndexGroup(new QGroupBox()),
+      m_timeIndexGroup(new QGroupBox()),
       m_fromIndexLabel(new QLabel()),
       m_fromIndexBox(createSpinBox(0, loader->sceneRef()->maxTimeIndex())),
       m_toIndexLabel(new QLabel()),
@@ -108,9 +108,9 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
     rowLayout->addWidget(m_toIndexLabel.data());
     rowLayout->addWidget(m_toIndexBox.data());
     columnLayout->addLayout(rowLayout.take());
-    m_frameIndexGroup->setLayout(columnLayout.take());
+    m_timeIndexGroup->setLayout(columnLayout.take());
     columnLayout.reset(new QVBoxLayout());
-    mainLayout->addWidget(m_frameIndexGroup.data());
+    mainLayout->addWidget(m_timeIndexGroup.data());
     rowLayout.reset(new QHBoxLayout());
     rowLayout->addWidget(m_videoBitrateLabel.data());
     rowLayout->addWidget(m_videoBitrateBox.data());
@@ -140,7 +140,7 @@ void ExportVideoDialog::retranslate()
     m_sceneSizeGroup->setTitle(vpvm::ExportVideoDialog::tr("Scene Size Setting"));
     m_widthLabel->setText(vpvm::ExportVideoDialog::tr("Width (px): "));
     m_heightLabel->setText(vpvm::ExportVideoDialog::tr("Height (px): "));
-    m_frameIndexGroup->setTitle(vpvm::ExportVideoDialog::tr("Frame Index Setting"));
+    m_timeIndexGroup->setTitle(vpvm::ExportVideoDialog::tr("Frame Index Setting"));
     m_fromIndexLabel->setText(vpvm::ExportVideoDialog::tr("Keyframe from: "));
     m_toIndexLabel->setText(vpvm::ExportVideoDialog::tr("Keyframe to: "));
     m_encodingSettingGroup->setTitle(vpvm::ExportVideoDialog::tr("Encoding Setting"));
@@ -164,8 +164,8 @@ void ExportVideoDialog::saveSettings()
     m_loaderRef->setBackgroundAudioPath(backgroundAudio());
     m_loaderRef->setSceneWidth(sceneWidth());
     m_loaderRef->setSceneHeight(sceneHeight());
-    m_loaderRef->setFrameIndexEncodeVideoFrom(fromIndex());
-    m_loaderRef->setFrameIndexEncodeVideoTo(toIndex());
+    m_loaderRef->setTimeIndexEncodeVideoFrom(fromIndex());
+    m_loaderRef->setTimeIndexEncodeVideoTo(toIndex());
     m_loaderRef->setSceneFPSForEncodeVideo(sceneFPS());
     m_loaderRef->setGridIncluded(includesGrid());
     emit settingsDidSave();
@@ -223,14 +223,14 @@ bool ExportVideoDialog::includesGrid() const
 
 void ExportVideoDialog::showEvent(QShowEvent * /* event */)
 {
-    int maxFrameIndex = m_loaderRef->sceneRef()->maxTimeIndex();
+    int maxTimeIndex = m_loaderRef->sceneRef()->maxTimeIndex();
     m_pathEdit->setText(m_loaderRef->backgroundAudio());
     m_widthBox->setValue(m_loaderRef->sceneWidth());
     m_heightBox->setValue(m_loaderRef->sceneHeight());
-    m_fromIndexBox->setMaximum(maxFrameIndex);
-    m_fromIndexBox->setValue(qBound(0, m_loaderRef->frameIndexEncodeVideoFrom(), maxFrameIndex));
-    m_toIndexBox->setMaximum(maxFrameIndex);
-    m_toIndexBox->setValue(maxFrameIndex);
+    m_fromIndexBox->setMaximum(maxTimeIndex);
+    m_fromIndexBox->setValue(qBound(0, m_loaderRef->timeIndexEncodeVideoFrom(), maxTimeIndex));
+    m_toIndexBox->setMaximum(maxTimeIndex);
+    m_toIndexBox->setValue(maxTimeIndex);
     switch (m_loaderRef->sceneFPSForEncodeVideo()) {
     case 120:
         m_sceneFPSBox->setCurrentIndex(2);

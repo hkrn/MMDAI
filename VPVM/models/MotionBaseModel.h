@@ -89,8 +89,8 @@ public:
         kNameRole = 0x1000,
         kBinaryDataRole
     };
-    static const int kFrameIndexColumnStep = 5;
-    static const int kFrameIndexColumnMinimum = 31; /* 1 for header */
+    static const int kTimeIndexColumnStep = 5;
+    static const int kTimeIndexColumnMinimum = 31; /* 1 for header */
 
     static int toTimeIndex(const QModelIndex &index);
     static int toTimeIndex(int modelColumnIndex);
@@ -106,26 +106,26 @@ public:
     void cutKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
     QItemSelection selectKeyframesFromItemSelection(const QItemSelection &selection);
 
-    virtual const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const = 0;
+    virtual const QModelIndex timeIndexToModelIndex(ITreeItem *item, int timeIndex) const = 0;
     virtual const QString nameFromModelIndex(const QModelIndex &index) const = 0;
     virtual void saveMotion(IMotion *motion) = 0;
     virtual void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex) = 0;
     virtual void pasteKeyframesByTimeIndex(int timeIndex) = 0;
-    virtual int maxFrameIndex() const = 0;
+    virtual int maxTimeIndex() const = 0;
     virtual bool forceCameraUpdate() const = 0;
 
     IMotion *currentMotionRef() const { return m_motionRef; }
     void setTimeIndex(const IKeyframe::TimeIndex &newIndex);
     void setModified(bool value);
     bool isModified() const { return m_modified; }
-    int maxFrameCount() const { return m_frameIndexColumnOffset; }
+    int maxFrameCount() const { return m_timeIndexColumnOffset; }
     const IKeyframe::TimeIndex &timeIndex() const { return m_timeIndex; }
     bool canFetchMore(const QModelIndex & /* parent */) const;
     void fetchMore(const QModelIndex &parent);
-    int frameIndexColumnMax() const;
-    void setFrameIndexColumnMax(int newValue);
-    void setFrameIndexColumnMax(const IMotion *motion);
-    void updateFrameIndexColumnMax();
+    int timeIndexColumnMax() const;
+    void setTimeIndexColumnMax(int newValue);
+    void setTimeIndexColumnMax(const IMotion *motion);
+    void updateTimeIndexColumnMax();
 
 public slots:
     virtual void removeMotion() = 0;
@@ -134,8 +134,8 @@ public slots:
 
 signals:
     void motionDidModify(bool value);
-    void timeIndexDidChange(const IKeyframe::TimeIndex &newFrameIndex, const IKeyframe::TimeIndex &oldFrameIndex);
-    void frameIndexColumnMaxDidChange(int newValue, int oldValue);
+    void timeIndexDidChange(const IKeyframe::TimeIndex &newTimeIndex, const IKeyframe::TimeIndex &oldTimeIndex);
+    void timeIndexColumnMaxDidChange(int newValue, int oldValue);
     void motionDidOpenProgress(const QString &title, bool value);
     void motionDidUpdateProgress(int value, int max, const QString &text);
     void motionDidLoad();
@@ -148,12 +148,12 @@ protected:
     IMotion *m_motionRef;
     QUndoGroup *m_undoRef;
     IKeyframe::TimeIndex m_timeIndex;
-    int m_frameIndexColumnMax;
-    int m_frameIndexColumnOffset;
+    int m_timeIndexColumnMax;
+    int m_timeIndexColumnOffset;
     bool m_modified;
 
 private:
-    void setFrameIndexColumnMax0(int newValue);
+    void setTimeIndexColumnMax0(int newValue);
 
     Q_DISABLE_COPY(MotionBaseModel)
 };

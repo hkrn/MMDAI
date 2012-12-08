@@ -104,15 +104,15 @@ public slots:
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
-    void motionDidSeek(const IKeyframe::TimeIndex &frameIndex, bool forceCameraUpdate, bool forceEvenSame);
+    void motionDidSeek(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame);
     void currentModelDidChange(IModel *model, SceneWidget::EditMode mode);
     void editModeDidSet(SceneWidget::EditMode mode);
 
 private slots:
     void retranslate();
-    void addMorphKeyframesAtCurrentFrameIndex(IMorph *morph);
-    void setCurrentFrameIndex(int value);
-    void setCurrentFrameIndexZero();
+    void addMorphKeyframesAtCurrentTimeIndex(IMorph *morph);
+    void setCurrentTimeIndex(int value);
+    void setCurrentTimeIndexZero();
     void insertKeyframesBySelectedIndices();
     void deleteKeyframesBySelectedIndices();
     void copyKeyframes();
@@ -144,7 +144,7 @@ private slots:
     void updateMorphValue(double value);
 
 private:
-    void seekFrameIndexFromCurrentFrameIndex(int frameIndex);
+    void seekTimeIndexFromCurrentTimeIndex(int timeIndex);
     TimelineWidget *currentSelectedTimelineWidgetRef() const;
 
     QScopedPointer<QTabWidget> m_tabWidget;

@@ -164,9 +164,9 @@ void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool r
         /* 現在のキーフレームのインデックスから全てのボーンまたは頂点モーフを選択する処理 */
         QSet<QModelIndex> categories;
         foreach (PMDMotionModel::ITreeItem *item, pmm->keys().values()) {
-            foreach (int frameIndex, frameIndices) {
+            foreach (int timeIndex, frameIndices) {
                 /* モデルインデックス(登録済みのキーフレームのみ取得するように指定されている場合はデータがあるかを確認してなかったらスキップする) */
-                const QModelIndex &index = pmm->frameIndexToModelIndex(item, frameIndex);
+                const QModelIndex &index = pmm->timeIndexToModelIndex(item, timeIndex);
                 if (registeredOnly) {
                     const QVariant &variant = index.data(MotionBaseModel::kBinaryDataRole);
                     if (!variant.canConvert(QVariant::ByteArray))
@@ -174,7 +174,7 @@ void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool r
                 }
                 selection.append(QItemSelectionRange(index));
                 /* カテゴリを追加 */
-                const QModelIndex &category = pmm->index(item->parent()->rowIndex(), MotionBaseModel::toModelIndex(frameIndex));
+                const QModelIndex &category = pmm->index(item->parent()->rowIndex(), MotionBaseModel::toModelIndex(timeIndex));
                 categories.insert(category);
             }
         }
@@ -185,8 +185,8 @@ void TimelineTreeView::selectFrameIndices(const QList<int> &frameIndices, bool r
     }
     else if (SceneMotionModel *smm = qobject_cast<SceneMotionModel *>(model())) {
         /* 現在のキーフレームのインデックスから現時点ではカメラフレームのみを選択する処理 */
-        foreach (int frameIndex, frameIndices) {
-            const QModelIndex &index = smm->index(0, MotionBaseModel::toModelIndex(frameIndex));
+        foreach (int timeIndex, frameIndices) {
+            const QModelIndex &index = smm->index(0, MotionBaseModel::toModelIndex(timeIndex));
             if (registeredOnly && !index.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray))
                 continue;
             selection.append(QItemSelectionRange(index));
@@ -336,8 +336,8 @@ void TimelineTreeView::selectModelIndices(const QItemSelection &selected, const 
                             sm->select(child, QItemSelectionModel::Select);
                         }
                         else {
-                            int frameIndex = PMDMotionModel::toTimeIndex(column);
-                            const QModelIndex &child = pmm->frameIndexToModelIndex(item->child(i), frameIndex);
+                            int timeIndex = PMDMotionModel::toTimeIndex(column);
+                            const QModelIndex &child = pmm->timeIndexToModelIndex(item->child(i), timeIndex);
                             indices.append(child);
                             sm->select(child, QItemSelectionModel::Select);
                         }
@@ -390,7 +390,7 @@ void TimelineHeaderView::mousePressEvent(QMouseEvent *e)
 {
     /* setMovable(false) にすると何故か sectionPressed が効かなくなるので mousePressEvent でシグナルを発行する */
     int modelIndex = logicalIndexAt(e->pos());
-    emit frameIndexDidSelect(MotionBaseModel::toTimeIndex(modelIndex));
+    emit timeIndexDidSelect(MotionBaseModel::toTimeIndex(modelIndex));
     QHeaderView::mousePressEvent(e);
 }
 

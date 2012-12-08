@@ -60,7 +60,7 @@ public:
     FrameSelectionDialog(QWidget *parent);
     ~FrameSelectionDialog();
 
-    void setMaxFrameIndex(int value);
+    void setMaxTimeIndex(int value);
 
 signals:
     void frameIndicesDidSelect(int fromIndex, int toIndex);

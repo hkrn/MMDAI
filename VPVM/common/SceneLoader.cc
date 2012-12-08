@@ -1429,25 +1429,25 @@ void SceneLoader::setPhysicsEnabled(bool value)
 }
 
 /* 再生設定及びエンコード設定の場合は同値チェックを行わない。こちらは値を確実に保存させる必要があるため */
-int SceneLoader::frameIndexPlayFrom() const
+int SceneLoader::timeIndexPlayFrom() const
 {
     int value = globalSetting("play.frame_index.from", 0);
     return value;
 }
 
-void SceneLoader::setFrameIndexPlayFrom(int value)
+void SceneLoader::setTimeIndexPlayFrom(int value)
 {
     if (m_project)
         m_project->setGlobalSetting("play.frame_index.from", QVariant(value).toString().toStdString());
 }
 
-int SceneLoader::frameIndexPlayTo() const
+int SceneLoader::timeIndexPlayTo() const
 {
     int value = globalSetting("play.frame_index.to", int(m_project->maxTimeIndex()));
     return value;
 }
 
-void SceneLoader::setFrameIndexPlayTo(int value)
+void SceneLoader::setTimeIndexPlayTo(int value)
 {
     if (m_project)
         m_project->setGlobalSetting("play.frame_index.to", QVariant(value).toString().toStdString());
@@ -1465,25 +1465,25 @@ void SceneLoader::setSceneFPSForPlay(int value)
         m_project->setGlobalSetting("play.fps", QVariant(value).toString().toStdString());
 }
 
-int SceneLoader::frameIndexEncodeVideoFrom() const
+int SceneLoader::timeIndexEncodeVideoFrom() const
 {
     int value = globalSetting("video.frame_index.from", 0);
     return value;
 }
 
-void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
+void SceneLoader::setTimeIndexEncodeVideoFrom(int value)
 {
     if (m_project)
         m_project->setGlobalSetting("video.frame_index.from", QVariant(value).toString().toStdString());
 }
 
-int SceneLoader::frameIndexEncodeVideoTo() const
+int SceneLoader::timeIndexEncodeVideoTo() const
 {
     int value = globalSetting("video.frame_index.to", int(m_project->maxTimeIndex()));
     return value;
 }
 
-void SceneLoader::setFrameIndexEncodeVideoTo(int value)
+void SceneLoader::setTimeIndexEncodeVideoTo(int value)
 {
     if (m_project)
         m_project->setGlobalSetting("video.frame_index.to", QVariant(value).toString().toStdString());

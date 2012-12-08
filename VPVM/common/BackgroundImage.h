@@ -95,10 +95,10 @@ public:
         if (m_uniformImage)
             resize(QSize());
     }
-    void setFrameIndex(int value) {
+    void setTimeIndex(int value) {
         if (m_movie.isValid()) {
-            int frameIndex = qBound(0, value, m_movie.frameCount() - 1);
-            if (m_movie.jumpToFrame(frameIndex)) {
+            int timeIndex = qBound(0, value, m_movie.frameCount() - 1);
+            if (m_movie.jumpToFrame(timeIndex)) {
                 QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
                 context->deleteTexture(m_backgroundTexture);
                 generateTextureFromImage(m_movie.currentImage(), context);

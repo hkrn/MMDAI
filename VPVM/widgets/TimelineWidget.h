@@ -64,16 +64,16 @@ class TimelineWidget : public QWidget
     Q_OBJECT
 
 public:
-    static const int kFrameIndexColumnMax = 2592000; /* 30frame * 3600sec * 24h */
+    static const int kTimeIndexColumnMax = 2592000; /* 30frame * 3600sec * 24h */
 
     explicit TimelineWidget(MotionBaseModel *base,
                             bool stretchLastSection,
                             QWidget *parent = 0);
     ~TimelineWidget();
 
-    int currentFrameIndex() const;
-    int selectedFrameIndex() const;
-    void setFrameIndexSpinBoxEnable(bool value);
+    int currentTimeIndex() const;
+    int selectedTimeIndex() const;
+    void setTimeIndexSpinBoxEnable(bool value);
 
     TimelineTreeView *treeViewRef() const { return m_treeView.data(); }
 
@@ -88,7 +88,7 @@ private slots:
     void retranslate();
     void setCurrentTimeIndexBySpinBox();
     void setCurrentTimeIndexAndExpandBySpinBox();
-    void setCurrentTimeIndexAndSelect(int frameIndex);
+    void setCurrentTimeIndexAndSelect(int timeIndex);
     void setCurrentTimeIndex(const QModelIndex &index, bool forceSeek = false);
     void adjustFrameColumnSize(int value);
 

@@ -99,7 +99,7 @@ public:
 
     QVariant data(const QModelIndex &index, int role) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const;
+    const QModelIndex timeIndexToModelIndex(ITreeItem *item, int timeIndex) const;
 
     virtual void saveTransform() = 0;
     virtual void commitTransform() = 0;
@@ -108,7 +108,7 @@ public:
     void updateModel(IModel *model, bool seek);
     void refreshModel(IModel *model);
     void setActiveUndoStack();
-    int maxFrameIndex() const;
+    int maxTimeIndex() const;
     bool forceCameraUpdate() const;
     virtual void setSceneRef(const Scene *value);
 

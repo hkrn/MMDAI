@@ -68,7 +68,7 @@ FrameSelectionDialog::~FrameSelectionDialog()
 {
 }
 
-void FrameSelectionDialog::setMaxFrameIndex(int value)
+void FrameSelectionDialog::setMaxTimeIndex(int value)
 {
     m_fromIndexBox->setRange(0, value);
     m_toIndexBox->setRange(0, value);

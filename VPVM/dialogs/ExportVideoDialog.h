@@ -106,7 +106,7 @@ private:
     QScopedPointer<QSpinBox> m_widthBox;
     QScopedPointer<QLabel> m_heightLabel;
     QScopedPointer<QSpinBox> m_heightBox;
-    QScopedPointer<QGroupBox> m_frameIndexGroup;
+    QScopedPointer<QGroupBox> m_timeIndexGroup;
     QScopedPointer<QLabel> m_fromIndexLabel;
     QScopedPointer<QSpinBox> m_fromIndexBox;
     QScopedPointer<QLabel> m_toIndexLabel;

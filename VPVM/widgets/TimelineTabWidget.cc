@@ -79,7 +79,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
       m_lastSelectedModelRef(0),
       m_lastEditMode(SceneWidget::kSelect)
 {
-    m_boneTimeline->setFrameIndexSpinBoxEnable(false);
+    m_boneTimeline->setTimeIndexSpinBoxEnable(false);
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(false);
     m_boneRotateButton->setEnabled(false);
@@ -111,7 +111,7 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
     subLayout->setAlignment(Qt::AlignCenter);
     /* hack bone timeline layout */
     reinterpret_cast<QVBoxLayout *>(m_morphTimeline->layout())->addLayout(subLayout.take());
-    m_morphTimeline->setFrameIndexSpinBoxEnable(false);
+    m_morphTimeline->setTimeIndexSpinBoxEnable(false);
     m_tabWidget->insertTab(kMorphTabIndex, m_morphTimeline.data(), "");
     m_tabWidget->insertTab(kSceneTabIndex, m_sceneTimeline.data(), "");
     connect(m_tabWidget.data(), SIGNAL(currentChanged(int)), this, SLOT(setCurrentTabIndex(int)));
@@ -166,7 +166,7 @@ void TimelineTabWidget::addKeyframesFromSelectedIndices()
 void TimelineTabWidget::loadPose(VPDFilePtr pose, IModel *model)
 {
     BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
-    bmm->loadPose(pose, model, m_boneTimeline->selectedFrameIndex());
+    bmm->loadPose(pose, model, m_boneTimeline->selectedTimeIndex());
 }
 
 void TimelineTabWidget::retranslate()
@@ -183,29 +183,29 @@ void TimelineTabWidget::retranslate()
 void TimelineTabWidget::savePose(VPDFile *pose, IModel *model)
 {
     BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
-    m->savePose(pose, model, m_boneTimeline->selectedFrameIndex());
+    m->savePose(pose, model, m_boneTimeline->selectedTimeIndex());
 }
 
-void TimelineTabWidget::addMorphKeyframesAtCurrentFrameIndex(IMorph *morph)
+void TimelineTabWidget::addMorphKeyframesAtCurrentTimeIndex(IMorph *morph)
 {
     /*
      * 渡された頂点モーフの名前と重み係数を元に新しい頂点モーフのキーフレームとして登録する処理
-     * (FaceKeyframe#setFrameIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
+     * (FaceKeyframe#setTimeIndex は KeyFramePair の第一引数を元に SetFramesCommand で行ってる)
      */
     if (morph) {
         MorphMotionModel *model = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
         MorphMotionModel::KeyFramePairList keyframes;
         QScopedPointer<IMorphKeyframe> keyframe;
-        int frameIndex = m_morphTimeline->selectedFrameIndex();
+        int timeIndex = m_morphTimeline->selectedTimeIndex();
         keyframe.reset(model->factoryRef()->createMorphKeyframe(model->currentMotionRef()));
         keyframe->setName(morph->name());
         keyframe->setWeight(morph->weight());
-        keyframes.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
+        keyframes.append(MorphMotionModel::KeyFramePair(timeIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
         model->setKeyframes(keyframes);
     }
 }
 
-void TimelineTabWidget::setCurrentFrameIndex(int value)
+void TimelineTabWidget::setCurrentTimeIndex(int value)
 {
     /* 二重呼出になってしまうため、一時的に motionDidSeek シグナルを止める */
     disconnect(m_boneTimeline.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),
@@ -225,9 +225,9 @@ void TimelineTabWidget::setCurrentFrameIndex(int value)
             SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)));
 }
 
-void TimelineTabWidget::setCurrentFrameIndexZero()
+void TimelineTabWidget::setCurrentTimeIndexZero()
 {
-    setCurrentFrameIndex(0);
+    setCurrentTimeIndex(0);
 }
 
 void TimelineTabWidget::insertKeyframesBySelectedIndices()
@@ -244,12 +244,12 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         QScopedPointer<IBoneKeyframe> frame;
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
-            int frameIndex = MotionBaseModel::toTimeIndex(index);
+            int timeIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
             frame.reset(factory->createBoneKeyframe(model->currentMotionRef()));
             frame->setName(&s);
             frame->setDefaultInterpolationParameter();
-            boneFrames.append(BoneMotionModel::KeyFramePair(frameIndex, BoneMotionModel::KeyFramePtr(frame.take())));
+            boneFrames.append(BoneMotionModel::KeyFramePair(timeIndex, BoneMotionModel::KeyFramePtr(frame.take())));
         }
         model->setKeyframes(boneFrames);
         break;
@@ -265,12 +265,12 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         QScopedPointer<IMorphKeyframe> frame;
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
-            int frameIndex = MotionBaseModel::toTimeIndex(index);
+            int timeIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
             frame.reset(factory->createMorphKeyframe(model->currentMotionRef()));
             frame->setName(&s);
             frame->setWeight(0);
-            faceFrames.append(MorphMotionModel::KeyFramePair(frameIndex, MorphMotionModel::KeyFramePtr(frame.take())));
+            faceFrames.append(MorphMotionModel::KeyFramePair(timeIndex, MorphMotionModel::KeyFramePtr(frame.take())));
         }
         model->setKeyframes(faceFrames);
         break;
@@ -291,7 +291,7 @@ void TimelineTabWidget::copyKeyframes()
     TimelineWidget *widget = currentSelectedTimelineWidgetRef();
     TimelineTreeView *treeView = widget->treeViewRef();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
-    model->copyKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->selectedFrameIndex());
+    model->copyKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->selectedTimeIndex());
 }
 
 void TimelineTabWidget::cutKeyframes()
@@ -300,7 +300,7 @@ void TimelineTabWidget::cutKeyframes()
     TimelineWidget *widget = currentSelectedTimelineWidgetRef();
     TimelineTreeView *treeView = widget->treeViewRef();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
-    model->cutKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->selectedFrameIndex());
+    model->cutKeyframesByModelIndices(treeView->selectionModel()->selectedIndexes(), widget->selectedTimeIndex());
 }
 
 void TimelineTabWidget::pasteKeyframes()
@@ -309,7 +309,7 @@ void TimelineTabWidget::pasteKeyframes()
     TimelineWidget *widget = currentSelectedTimelineWidgetRef();
     TimelineTreeView *treeView = widget->treeViewRef();
     MotionBaseModel *model = static_cast<MotionBaseModel *>(treeView->model());
-    model->pasteKeyframesByTimeIndex(widget->selectedFrameIndex());
+    model->pasteKeyframesByTimeIndex(widget->selectedTimeIndex());
 }
 
 void TimelineTabWidget::pasteKeyframesWithReverse()
@@ -321,7 +321,7 @@ void TimelineTabWidget::pasteKeyframesWithReverse()
     case kBoneTabIndex:
         treeView = m_boneTimeline->treeViewRef();
         model = static_cast<BoneMotionModel *>(treeView->model());
-        model->pasteReversedFrame(m_boneTimeline->selectedFrameIndex());
+        model->pasteReversedFrame(m_boneTimeline->selectedTimeIndex());
         break;
     default:
         pasteKeyframes();
@@ -330,12 +330,12 @@ void TimelineTabWidget::pasteKeyframesWithReverse()
 
 void TimelineTabWidget::nextFrame()
 {
-    seekFrameIndexFromCurrentFrameIndex(1);
+    seekTimeIndexFromCurrentTimeIndex(1);
 }
 
 void TimelineTabWidget::previousFrame()
 {
-    seekFrameIndexFromCurrentFrameIndex(-1);
+    seekTimeIndexFromCurrentTimeIndex(-1);
 }
 
 void TimelineTabWidget::setCurrentTabIndex(int index)
@@ -386,7 +386,7 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
 {
     bool value = model ? true : false;
     m_boneTimeline->treeViewRef()->updateFrozenTreeView();
-    m_boneTimeline->setFrameIndexSpinBoxEnable(value);
+    m_boneTimeline->setTimeIndexSpinBoxEnable(value);
     /* デフォルトは「選択」ボタンが有効になる */
     m_boneSelectButton->setChecked(true);
     m_boneSelectButton->setEnabled(value);
@@ -398,7 +398,7 @@ void TimelineTabWidget::toggleMorphEnable(IModel *model)
 {
     bool value = model ? true : false;
     m_morphTimeline->treeViewRef()->updateFrozenTreeView();
-    m_morphTimeline->setFrameIndexSpinBoxEnable(value);
+    m_morphTimeline->setTimeIndexSpinBoxEnable(value);
 }
 
 void TimelineTabWidget::toggleBoneButtonsByBones(const QList<IBone *> &bones)
@@ -438,7 +438,7 @@ void TimelineTabWidget::selectAllRegisteredKeyframes()
 {
     /* 登録済みのすべてのキーフレームを選択状態にする */
     MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidgetRef()->treeViewRef()->model());
-    selectFrameIndices(0, model->maxFrameIndex());
+    selectFrameIndices(0, model->maxTimeIndex());
 }
 
 void TimelineTabWidget::openFrameSelectionDialog()
@@ -450,7 +450,7 @@ void TimelineTabWidget::openFrameSelectionDialog()
                 this, SLOT(selectFrameIndices(int,int)));
     }
     MotionBaseModel *model = static_cast<MotionBaseModel *>(currentSelectedTimelineWidgetRef()->treeViewRef()->model());
-    m_frameSelectionDialog->setMaxFrameIndex(model->maxFrameIndex());
+    m_frameSelectionDialog->setMaxTimeIndex(model->maxTimeIndex());
     m_frameSelectionDialog->show();
 }
 
@@ -525,8 +525,8 @@ void TimelineTabWidget::selectBones(const QList<IBone *> &bones)
     BoneMotionModel *bmm = static_cast<BoneMotionModel *>(boneTreeView->model());
     if (!bmm->isSelectionIdentical(bones)) {
         QItemSelectionModel *selectionModel = boneTreeView->selectionModel();
-        int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
-        const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, currentFrameIndex);
+        int currentTimeIndex = m_boneTimeline->selectedTimeIndex();
+        const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, currentTimeIndex);
         selectionModel->clearSelection();
         foreach (const QModelIndex &index, indices)
             selectionModel->select(index, QItemSelectionModel::Select);
@@ -541,8 +541,8 @@ void TimelineTabWidget::selectMorphs(const QList<IMorph *> &morphs)
     MorphMotionModel *mmm = static_cast<MorphMotionModel *>(morphTreeView->model());
     if (!mmm->isSelectionIdentical(morphs)) {
         QItemSelectionModel *selectionModel = morphTreeView->selectionModel();
-        int currentFrameIndex = m_boneTimeline->selectedFrameIndex();
-        const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, currentFrameIndex);
+        int currentTimeIndex = m_boneTimeline->selectedTimeIndex();
+        const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, currentTimeIndex);
         selectionModel->clearSelection();
         foreach (const QModelIndex &index, indices)
             selectionModel->select(index, QItemSelectionModel::Select);
@@ -573,7 +573,7 @@ void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selecti
              */
             CString s(bmm->nameFromModelIndex(index));
             QList<IBone *> bones; bones.append(bmm->selectedModel()->findBone(&s));
-            const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, m_boneTimeline->currentFrameIndex());
+            const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, m_boneTimeline->currentTimeIndex());
             foreach (const QModelIndex &index, indices)
                 newSelection.append(QItemSelectionRange(index));
             treeViewRef->selectionModel()->select(newSelection, QItemSelectionModel::ClearAndSelect);
@@ -600,7 +600,7 @@ void TimelineTabWidget::selectMorphsByItemSelection(const QItemSelection &select
              */
             CString s(mmm->nameFromModelIndex(index));
             QList<IMorph *> morphs; morphs.append(mmm->selectedModel()->findMorph(&s));
-            const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, m_morphTimeline->currentFrameIndex());
+            const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, m_morphTimeline->currentTimeIndex());
             foreach (const QModelIndex &index, indices)
                 newSelection.append(QItemSelectionRange(index));
             treeViewRef->selectionModel()->select(newSelection, QItemSelectionModel::ClearAndSelect);
@@ -653,11 +653,11 @@ void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)
     treeView->selectFrameIndices(frameIndices, true);
 }
 
-void TimelineTabWidget::seekFrameIndexFromCurrentFrameIndex(int frameIndex)
+void TimelineTabWidget::seekTimeIndexFromCurrentTimeIndex(int timeIndex)
 {
     /* 指定されたフレームの位置にシークする */
     TimelineWidget *timeline = currentSelectedTimelineWidgetRef();
-    timeline->setCurrentTimeIndex(timeline->selectedFrameIndex() + frameIndex);
+    timeline->setCurrentTimeIndex(timeline->selectedTimeIndex() + timeIndex);
 }
 
 TimelineWidget *TimelineTabWidget::currentSelectedTimelineWidgetRef() const

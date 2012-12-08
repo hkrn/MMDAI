@@ -72,11 +72,11 @@ public:
         const PMDMotionModel *m = qobject_cast<const PMDMotionModel *>(index.model());
         bool isCategory = item->isCategory(), hasCategoryData = false;
         if (m && isCategory) {
-            int nchildren = item->countChildren(), frameIndex = MotionBaseModel::toTimeIndex(index.column());
+            int nchildren = item->countChildren(), timeIndex = MotionBaseModel::toTimeIndex(index.column());
             bool dataFound = false;
             /* カテゴリ内の登録済みのキーフレームを探す */
             for (int i = 0; i < nchildren; i++) {
-                const QModelIndex &mi = m->frameIndexToModelIndex(item->child(i), frameIndex);
+                const QModelIndex &mi = m->timeIndexToModelIndex(item->child(i), timeIndex);
                 if (mi.data(MotionBaseModel::kBinaryDataRole).canConvert(QVariant::ByteArray)) {
                     dataFound = true;
                     break;
@@ -150,7 +150,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
 {
     /* 専用の選択処理を行うようにスロットを追加する */
     connect(m_treeView->horizontalScrollBar(), SIGNAL(actionTriggered(int)), SLOT(adjustFrameColumnSize(int)));
-    connect(m_headerView.data(), SIGNAL(frameIndexDidSelect(int)), SLOT(setCurrentTimeIndexAndSelect(int)));
+    connect(m_headerView.data(), SIGNAL(timeIndexDidSelect(int)), SLOT(setCurrentTimeIndexAndSelect(int)));
     m_treeView->setHeader(m_headerView.data());
     // TODO: alternative of setResizeMode
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -160,7 +160,7 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     m_spinBox->setAlignment(Qt::AlignRight);
     connect(m_spinBox.data(), SIGNAL(valueChanged(int)), SLOT(setCurrentTimeIndex(int)));
     connect(m_spinBox.data(), SIGNAL(editingFinished()), SLOT(setCurrentTimeIndexAndExpandBySpinBox()));
-    m_spinBox->setRange(0, kFrameIndexColumnMax);
+    m_spinBox->setRange(0, kTimeIndexColumnMax);
     m_spinBox->setWrapping(false);
     /* フレームインデックスの移動と共に SceneWidget にシークを実行する(例外あり) */
     /* キーフレームの登録処理 */
@@ -193,12 +193,12 @@ void TimelineWidget::retranslate()
     m_button->setText(vpvm::TimelineWidget::tr("Register"));
 }
 
-int TimelineWidget::currentFrameIndex() const
+int TimelineWidget::currentTimeIndex() const
 {
     return m_spinBox->value();
 }
 
-int TimelineWidget::selectedFrameIndex() const
+int TimelineWidget::selectedTimeIndex() const
 {
     /* 選択状態のモデルインデックスの最初のインデックスからキーフレームのインデックスを求める */
     const QModelIndexList &indices = m_treeView->selectionModel()->selectedIndexes();
@@ -208,10 +208,10 @@ int TimelineWidget::selectedFrameIndex() const
             return MotionBaseModel::toTimeIndex(index);
     }
     /* 選択状態のモデルインデックスがない場合はスピンボックス上の現在のフレーム位置を返すようにする */
-    return currentFrameIndex();
+    return currentTimeIndex();
 }
 
-void TimelineWidget::setFrameIndexSpinBoxEnable(bool value)
+void TimelineWidget::setTimeIndexSpinBoxEnable(bool value)
 {
     m_spinBox->setEnabled(value);
     m_button->setEnabled(value);
@@ -230,25 +230,25 @@ void TimelineWidget::setCurrentTimeIndex(int timeIndex, bool forceSeek)
 
 void TimelineWidget::setCurrentTimeIndexBySpinBox()
 {
-    int frameIndex = m_spinBox->value();
-    setCurrentTimeIndex(frameIndex);
+    int timeIndex = m_spinBox->value();
+    setCurrentTimeIndex(timeIndex);
 }
 
 void TimelineWidget::setCurrentTimeIndexAndExpandBySpinBox()
 {
     /* タイムラインを伸縮した上で現在のフレーム位置を選択指定 */
     MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
-    int frameIndex = m_spinBox->value();
-    m->setFrameIndexColumnMax(frameIndex);
+    int timeIndex = m_spinBox->value();
+    m->setTimeIndexColumnMax(timeIndex);
     m_treeView->header()->reset();
     m_treeView->restoreExpandState();
-    setCurrentTimeIndexAndSelect(frameIndex);
+    setCurrentTimeIndexAndSelect(timeIndex);
 }
 
-void TimelineWidget::setCurrentTimeIndexAndSelect(int frameIndex)
+void TimelineWidget::setCurrentTimeIndexAndSelect(int timeIndex)
 {
-    setCurrentTimeIndex(frameIndex);
-    QList<int> frameIndices; frameIndices.append(frameIndex);
+    setCurrentTimeIndex(timeIndex);
+    QList<int> frameIndices; frameIndices.append(timeIndex);
     m_treeView->selectFrameIndices(frameIndices, false);
 }
 
@@ -258,12 +258,12 @@ void TimelineWidget::setCurrentTimeIndex(const QModelIndex &index, bool forceSee
         return;
     /* キーフレームのインデックスを現在の位置として設定し、フレームの列を全て選択状態にした上でスクロールを行う */
     MotionBaseModel *model = qobject_cast<MotionBaseModel *>(m_treeView->model());
-    int frameIndex = MotionBaseModel::toTimeIndex(index);
-    model->setTimeIndex(frameIndex);
+    int timeIndex = MotionBaseModel::toTimeIndex(index);
+    model->setTimeIndex(timeIndex);
     m_treeView->scrollTo(index);
-    m_spinBox->setValue(frameIndex);
+    m_spinBox->setValue(timeIndex);
     /* モーション移動を行わせるようにシグナルを発行する */
-    emit motionDidSeek(frameIndex, model->forceCameraUpdate(), forceSeek);
+    emit motionDidSeek(timeIndex, model->forceCameraUpdate(), forceSeek);
 }
 
 void TimelineWidget::adjustFrameColumnSize(int value)
@@ -271,22 +271,22 @@ void TimelineWidget::adjustFrameColumnSize(int value)
     QAbstractSlider *slider = qobject_cast<QAbstractSlider *>(sender());
     MotionBaseModel *m = static_cast<MotionBaseModel *>(m_treeView->model());
     int sliderPosition = slider->sliderPosition();
-    int frameIndexColumnMax = m->frameIndexColumnMax();
-    int frameIndexColumnMin = MotionBaseModel::kFrameIndexColumnMinimum;
-    int maxFrameIndex = qMax(m->maxFrameIndex(), frameIndexColumnMin);
+    int timeIndexColumnMax = m->timeIndexColumnMax();
+    int timeIndexColumnMin = MotionBaseModel::kTimeIndexColumnMinimum;
+    int maxTimeIndex = qMax(m->maxTimeIndex(), timeIndexColumnMin);
     switch (value) {
     case QAbstractSlider::SliderMove:
         if (sliderPosition >= slider->maximum()) {
             /* 列とツリーテーブルの拡張を行う */
-            m->setFrameIndexColumnMax(frameIndexColumnMax + MotionBaseModel::kFrameIndexColumnStep);
+            m->setTimeIndexColumnMax(timeIndexColumnMax + MotionBaseModel::kTimeIndexColumnStep);
             slider->setSliderPosition(sliderPosition);
             /* リセットを行うと開閉状態もリセットされるのでリセット前の状態に戻す */
             m_treeView->restoreExpandState();
         }
         /* 列数がモーションの最大値より大きい場合のみ切り詰めを行うようにする */
-        else if (sliderPosition <= slider->minimum() && frameIndexColumnMax > maxFrameIndex) {
-            /* setFrameIndexColumnMax の値が最大値未満の場合自動的に列が切り詰められるように処理される */
-            m->setFrameIndexColumnMax(frameIndexColumnMax - MotionBaseModel::kFrameIndexColumnMinimum);
+        else if (sliderPosition <= slider->minimum() && timeIndexColumnMax > maxTimeIndex) {
+            /* setTimeIndexColumnMax の値が最大値未満の場合自動的に列が切り詰められるように処理される */
+            m->setTimeIndexColumnMax(timeIndexColumnMax - MotionBaseModel::kTimeIndexColumnMinimum);
             /* リセットを行わないと空白部分がヘッダーの方で残ったままになる */
             m_treeView->header()->reset();
             /* リセットを行うと開閉状態もリセットされるのでリセット前の状態に戻す */

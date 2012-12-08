@@ -76,9 +76,9 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    int maxFrameIndex() const;
+    int maxTimeIndex() const;
     bool forceCameraUpdate() const;
-    const QModelIndex frameIndexToModelIndex(ITreeItem *item, int timeIndex) const;
+    const QModelIndex timeIndexToModelIndex(ITreeItem *item, int timeIndex) const;
 
     void saveMotion(IMotion *motion);
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);

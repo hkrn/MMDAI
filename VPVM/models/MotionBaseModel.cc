@@ -54,10 +54,10 @@ int MotionBaseModel::toTimeIndex(int modelColumnIndex)
     return qMax(modelColumnIndex - 1, 0);
 }
 
-int MotionBaseModel::toModelIndex(int frameIndex)
+int MotionBaseModel::toModelIndex(int timeIndex)
 {
     // column index 0 is row header
-    return qMax(frameIndex + 1, 0);
+    return qMax(timeIndex + 1, 0);
 }
 
 MotionBaseModel::MotionBaseModel(QUndoGroup *undoRef, QObject *parent)
@@ -65,8 +65,8 @@ MotionBaseModel::MotionBaseModel(QUndoGroup *undoRef, QObject *parent)
       m_motionRef(0),
       m_undoRef(undoRef),
       m_timeIndex(0),
-      m_frameIndexColumnMax(kFrameIndexColumnMinimum),
-      m_frameIndexColumnOffset(kFrameIndexColumnMinimum),
+      m_timeIndexColumnMax(kTimeIndexColumnMinimum),
+      m_timeIndexColumnOffset(kTimeIndexColumnMinimum),
       m_modified(false)
 {
 }
@@ -118,9 +118,9 @@ int MotionBaseModel::rowCount(const QModelIndex &parent) const
     return parentItem->countChildren();
 }
 
-void MotionBaseModel::cutKeyframesByModelIndices(const QModelIndexList &indices, int frameIndex)
+void MotionBaseModel::cutKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex)
 {
-    copyKeyframesByModelIndices(indices, frameIndex);
+    copyKeyframesByModelIndices(indices, timeIndex);
     deleteKeyframesByModelIndices(indices);
 }
 
@@ -153,37 +153,37 @@ void MotionBaseModel::setModified(bool value)
 
 bool MotionBaseModel::canFetchMore(const QModelIndex & /* parent */) const
 {
-    return m_frameIndexColumnOffset < m_frameIndexColumnMax;
+    return m_timeIndexColumnOffset < m_timeIndexColumnMax;
 }
 
 void MotionBaseModel::fetchMore(const QModelIndex &parent)
 {
-    int remain = m_frameIndexColumnMax - m_frameIndexColumnOffset;
-    int step = kFrameIndexColumnStep;
+    int remain = m_timeIndexColumnMax - m_timeIndexColumnOffset;
+    int step = kTimeIndexColumnStep;
     int itemsToFetch = qMin(step, remain);
     if (itemsToFetch > 0) {
-        beginInsertColumns(parent, m_frameIndexColumnOffset, m_frameIndexColumnOffset + itemsToFetch - 1);
-        m_frameIndexColumnOffset += itemsToFetch;
+        beginInsertColumns(parent, m_timeIndexColumnOffset, m_timeIndexColumnOffset + itemsToFetch - 1);
+        m_timeIndexColumnOffset += itemsToFetch;
         endInsertColumns();
     }
 }
 
-int MotionBaseModel::frameIndexColumnMax() const
+int MotionBaseModel::timeIndexColumnMax() const
 {
-    return m_frameIndexColumnMax;
+    return m_timeIndexColumnMax;
 }
 
-void MotionBaseModel::setFrameIndexColumnMax(int newValue)
+void MotionBaseModel::setTimeIndexColumnMax(int newValue)
 {
     /* 最小値はモーションの最大フレーム値を優先する (ない場合は0) */
-    if (newValue < maxFrameIndex())
-        newValue = maxFrameIndex();
-    setFrameIndexColumnMax0(newValue);
+    if (newValue < maxTimeIndex())
+        newValue = maxTimeIndex();
+    setTimeIndexColumnMax0(newValue);
 }
 
-void MotionBaseModel::setFrameIndexColumnMax(const vpvl2::IMotion *motion)
+void MotionBaseModel::setTimeIndexColumnMax(const vpvl2::IMotion *motion)
 {
-    setFrameIndexColumnMax0(motion->maxTimeIndex());
+    setTimeIndexColumnMax0(motion->maxTimeIndex());
 }
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)
@@ -203,21 +203,21 @@ void MotionBaseModel::resetModel()
 #endif
 }
 
-void MotionBaseModel::setFrameIndexColumnMax0(int newValue)
+void MotionBaseModel::setTimeIndexColumnMax0(int newValue)
 {
-    int oldValue = m_frameIndexColumnMax;
-    /* 下限は kFrameIndexColumnMinimum (=30) を採用する */
-    if (newValue < kFrameIndexColumnMinimum)
-        newValue = kFrameIndexColumnMinimum;
+    int oldValue = m_timeIndexColumnMax;
+    /* 下限は kTimeIndexColumnMinimum (=30) を採用する */
+    if (newValue < kTimeIndexColumnMinimum)
+        newValue = kTimeIndexColumnMinimum;
     /* 元の値より小さい場合は余剰分のカラムの削除を実行 */
-    if (m_frameIndexColumnMax > newValue) {
-        removeColumns(newValue, m_frameIndexColumnMax - newValue);
-        m_frameIndexColumnOffset = newValue;
+    if (m_timeIndexColumnMax > newValue) {
+        removeColumns(newValue, m_timeIndexColumnMax - newValue);
+        m_timeIndexColumnOffset = newValue;
     }
-    m_frameIndexColumnMax = newValue;
-    m_frameIndexColumnOffset = newValue;
+    m_timeIndexColumnMax = newValue;
+    m_timeIndexColumnOffset = newValue;
     resetModel();
-    emit frameIndexColumnMaxDidChange(newValue, oldValue);
+    emit timeIndexColumnMaxDidChange(newValue, oldValue);
 }
 
 } /* namespace vpvm */

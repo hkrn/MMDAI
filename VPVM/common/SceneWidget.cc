@@ -742,7 +742,7 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
     scene->seek(timeIndex, flags);
     scene->update(flags);
     m_timeIndex = timeIndex;
-    m_background->setFrameIndex(timeIndex);
+    m_background->setTimeIndex(timeIndex);
     emit motionDidSeek(timeIndex);
     updateScene();
 }
@@ -757,7 +757,7 @@ void SceneWidget::resetMotion()
         motion->reset();
     }
     m_timeIndex = 0;
-    m_background->setFrameIndex(0);
+    m_background->setTimeIndex(0);
     scene->seek(0, Scene::kUpdateAll);
     scene->update(Scene::kUpdateAll);
     emit motionDidSeek(0.0f);

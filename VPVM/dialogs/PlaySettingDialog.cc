@@ -67,10 +67,10 @@ PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, Q
       m_boneWireFramesBox(new QCheckBox()),
       m_playButton(new QPushButton())
 {
-    int maxFrameIndex = m_loaderRef->sceneRef()->maxTimeIndex();
+    int maxTimeIndex = m_loaderRef->sceneRef()->maxTimeIndex();
     connect(m_openFileButton.data(), SIGNAL(clicked()), SLOT(openFileDialog()));
-    m_fromIndexBox->setRange(0, maxFrameIndex);
-    m_toIndexBox->setRange(0, maxFrameIndex);
+    m_fromIndexBox->setRange(0, maxTimeIndex);
+    m_toIndexBox->setRange(0, maxTimeIndex);
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
@@ -131,8 +131,8 @@ void PlaySettingDialog::openFileDialog()
 void PlaySettingDialog::saveSettings()
 {
     m_loaderRef->setBackgroundAudioPath(backgroundAudio());
-    m_loaderRef->setFrameIndexPlayFrom(fromIndex());
-    m_loaderRef->setFrameIndexPlayTo(toIndex());
+    m_loaderRef->setTimeIndexPlayFrom(fromIndex());
+    m_loaderRef->setTimeIndexPlayTo(toIndex());
     m_loaderRef->setSceneFPSForPlay(sceneFPS());
     m_loaderRef->setLoop(isLoopEnabled());
     emit settingsDidSave();
@@ -178,9 +178,9 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
     int maxIndex = m_loaderRef->sceneRef()->maxTimeIndex();
     m_pathEdit->setText(m_loaderRef->backgroundAudio());
     m_fromIndexBox->setMaximum(maxIndex);
-    m_fromIndexBox->setValue(m_loaderRef->frameIndexPlayFrom());
+    m_fromIndexBox->setValue(m_loaderRef->timeIndexPlayFrom());
     m_toIndexBox->setMaximum(maxIndex);
-    m_toIndexBox->setValue(m_loaderRef->frameIndexPlayTo());
+    m_toIndexBox->setValue(m_loaderRef->timeIndexPlayTo());
     switch (m_loaderRef->sceneFPSForPlay()) {
     case 120:
         m_sceneFPSBox->setCurrentIndex(2);
