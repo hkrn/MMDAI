@@ -188,8 +188,7 @@ void MotionBaseModel::setFrameIndexColumnMax(const vpvl2::IMotion *motion)
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)
 {
-    QUndoStack *activeStack = m_undoRef->activeStack();
-    if (activeStack)
+    if (QUndoStack *activeStack = m_undoRef->activeStack())
         activeStack->push(command);
 }
 
