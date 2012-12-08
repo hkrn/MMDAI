@@ -73,6 +73,7 @@ using namespace vpvl2;
 typedef QScopedPointer<IModel> IModelPtr;
 typedef QScopedPointer<IMotion> IMotionPtr;
 typedef QScopedPointer<IRenderEngine> IRenderEnginePtr;
+typedef QScopedPointer<Project> ProjectPtr;
 
 class SceneLoader : public QObject
 {
@@ -109,6 +110,7 @@ public:
     VPDFilePtr loadModelPose(const QString &path, IModel *model);
     void newCameraMotion(IMotionPtr &motionPtr) const;
     void newModelMotion(const IModel *model, IMotionPtr &motionPtr) const;
+    void newProject(ProjectPtr &projectPtr);
     void releaseProject();
     void releaseDepthTexture();
     void renderWindow();
@@ -188,7 +190,7 @@ public:
 
 public slots:
     void addModel(IModel *model, const QString &path, const QDir &dir, QUuid &uuid);
-    void createProject();
+    void newProject();
     void deleteCameraMotion();
     void deleteMotion(IMotion *&motion);
     void loadProject(const QString &path);

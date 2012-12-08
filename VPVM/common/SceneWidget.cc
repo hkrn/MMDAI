@@ -213,7 +213,7 @@ void SceneWidget::clear()
     clearSelectedBones();
     revertSelectedModel();
     m_loader->releaseProject();
-    m_loader->createProject();
+    m_loader->newProject();
 }
 
 void SceneWidget::startAutomaticRendering()
