@@ -769,11 +769,12 @@ void SceneLoader::loadProject(const QString &path)
         }
         sceneObject->setAccelerationType(accelerationType);
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
-        Array<IMotion *> motionsToDelete;
-        motionsToDelete.copy(motions);
+        Array<IMotion *> motionsToRetain;
+        motionsToRetain.copy(motions);
         for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = motionsToDelete[i];
-            if (!motion->parentModel() && motion->countKeyframes(IKeyframe::kCamera) > 0) {
+            IMotion *motion = motionsToRetain[i];
+            /* カメラモーションは最低でも２つ以上のキーフレームが必要 */
+            if (!motion->parentModel() && motion->countKeyframes(IKeyframe::kCamera) > 1) {
                 const QUuid uuid(m_project->motionUUID(motion).c_str());
                 deleteCameraMotion();
                 m_camera.reset(motion);
@@ -782,10 +783,10 @@ void SceneLoader::loadProject(const QString &path)
             }
         }
         /* 読み込みに失敗したモデルに従属するモーションを Project から削除する */
-        motionsToDelete.clear();
-        motionsToDelete.copy(m_project->motions());
+        motionsToRetain.clear();
+        motionsToRetain.copy(m_project->motions());
         for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = motionsToDelete[i];
+            IMotion *motion = motionsToRetain[i];
             if (lostModels.contains(motion->parentModel())) {
                 m_project->removeMotion(motion);
             }
