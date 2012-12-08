@@ -102,7 +102,7 @@ public:
                                        Hash<HashPtr, IEffect *> &nextPostEffects) const;
     void setPreferredFPS(const Scalar &value);
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
-    IKeyframe::TimeIndex maxFrameIndex() const;
+    IKeyframe::TimeIndex maxTimeIndex() const;
     const Array<IModel *> &models() const;
     const Array<IMotion *> &motions() const;
     const Array<IRenderEngine *> &renderEngines() const;

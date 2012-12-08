@@ -1584,7 +1584,7 @@ void MainWindow::exportVideo()
 {
     if (VideoEncoder::isSupported()) {
         SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        if (loader->sceneRef()->maxFrameIndex() > 0) {
+        if (loader->sceneRef()->maxTimeIndex() > 0) {
             if (!m_exportingVideoDialog) {
                 const QSize min(160, 160);
                 const QSize &max = m_sceneWidget->maximumSize();
@@ -1839,7 +1839,7 @@ void MainWindow::addNewMotion()
 
 void MainWindow::invokePlayer()
 {
-    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         /*
@@ -1857,7 +1857,7 @@ void MainWindow::invokePlayer()
 
 void MainWindow::openPlaySettingDialog()
 {
-    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxFrameIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
         UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
         UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
         m_playSettingDialog->show();

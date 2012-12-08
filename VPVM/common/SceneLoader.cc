@@ -1443,7 +1443,7 @@ void SceneLoader::setFrameIndexPlayFrom(int value)
 
 int SceneLoader::frameIndexPlayTo() const
 {
-    int value = globalSetting("play.frame_index.to", int(m_project->maxFrameIndex()));
+    int value = globalSetting("play.frame_index.to", int(m_project->maxTimeIndex()));
     return value;
 }
 
@@ -1479,7 +1479,7 @@ void SceneLoader::setFrameIndexEncodeVideoFrom(int value)
 
 int SceneLoader::frameIndexEncodeVideoTo() const
 {
-    int value = globalSetting("video.frame_index.to", int(m_project->maxFrameIndex()));
+    int value = globalSetting("video.frame_index.to", int(m_project->maxTimeIndex()));
     return value;
 }
 

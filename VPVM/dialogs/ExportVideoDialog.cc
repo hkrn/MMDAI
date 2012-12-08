@@ -65,9 +65,9 @@ ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
       m_heightBox(createSpinBox(min.height(), max.height())),
       m_frameIndexGroup(new QGroupBox()),
       m_fromIndexLabel(new QLabel()),
-      m_fromIndexBox(createSpinBox(0, loader->sceneRef()->maxFrameIndex())),
+      m_fromIndexBox(createSpinBox(0, loader->sceneRef()->maxTimeIndex())),
       m_toIndexLabel(new QLabel()),
-      m_toIndexBox(createSpinBox(0, loader->sceneRef()->maxFrameIndex())),
+      m_toIndexBox(createSpinBox(0, loader->sceneRef()->maxTimeIndex())),
       m_encodingSettingGroup(new QGroupBox()),
       m_videoBitrateLabel(new QLabel()),
       m_videoBitrateBox(createSpinBox(1, 100000)),
@@ -223,7 +223,7 @@ bool ExportVideoDialog::includesGrid() const
 
 void ExportVideoDialog::showEvent(QShowEvent * /* event */)
 {
-    int maxFrameIndex = m_loaderRef->sceneRef()->maxFrameIndex();
+    int maxFrameIndex = m_loaderRef->sceneRef()->maxTimeIndex();
     m_pathEdit->setText(m_loaderRef->backgroundAudio());
     m_widthBox->setValue(m_loaderRef->sceneWidth());
     m_heightBox->setValue(m_loaderRef->sceneHeight());

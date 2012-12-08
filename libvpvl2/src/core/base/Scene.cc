@@ -618,16 +618,16 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
     return true;
 }
 
-IKeyframe::TimeIndex Scene::maxFrameIndex() const
+IKeyframe::TimeIndex Scene::maxTimeIndex() const
 {
     const Array<IMotion *> &motions = m_context->motions;
     const int nmotions = motions.count();
-    IKeyframe::TimeIndex maxFrameIndex = 0;
+    IKeyframe::TimeIndex maxTimeIndex = 0;
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
-        btSetMax(maxFrameIndex, motion->maxTimeIndex());
+        btSetMax(maxTimeIndex, motion->maxTimeIndex());
     }
-    return maxFrameIndex;
+    return maxTimeIndex;
 }
 
 const Array<IModel *> &Scene::models() const

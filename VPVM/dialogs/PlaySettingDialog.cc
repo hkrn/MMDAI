@@ -67,7 +67,7 @@ PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, Q
       m_boneWireFramesBox(new QCheckBox()),
       m_playButton(new QPushButton())
 {
-    int maxFrameIndex = m_loaderRef->sceneRef()->maxFrameIndex();
+    int maxFrameIndex = m_loaderRef->sceneRef()->maxTimeIndex();
     connect(m_openFileButton.data(), SIGNAL(clicked()), SLOT(openFileDialog()));
     m_fromIndexBox->setRange(0, maxFrameIndex);
     m_toIndexBox->setRange(0, maxFrameIndex);
@@ -175,7 +175,7 @@ bool PlaySettingDialog::isBoneWireframesVisible() const
 
 void PlaySettingDialog::showEvent(QShowEvent * /* event */)
 {
-    int maxIndex = m_loaderRef->sceneRef()->maxFrameIndex();
+    int maxIndex = m_loaderRef->sceneRef()->maxTimeIndex();
     m_pathEdit->setText(m_loaderRef->backgroundAudio());
     m_fromIndexBox->setMaximum(maxIndex);
     m_fromIndexBox->setValue(m_loaderRef->frameIndexPlayFrom());
