@@ -412,12 +412,13 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                     /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
                     archive.replaceFilePath(modelFileInfoInArchive.path(), finfo.path() + "/");
                     type = modelFileInfoInArchive.suffix() == "pmx" ? IModel::kPMX : IModel::kPMD;
-                    if (m_loader->loadModel(bytes, type, modelPtr)) {
+                    if (m_loader->loadModel(bytes, type, modelPtr) &&
+                            (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data())))) {
                         m_handles->loadModelHandles();
                         /*
-                         * モデルのは zip のパスに zip 内のパスを加えて固有のパスを作成する (実在する必要はない)。
-                         * また、ディレクトリはパス置換処理を行った後に zip までのディレクトリパスを使う
-                         */
+                             * モデルのは zip のパスに zip 内のパスを加えて固有のパスを作成する (実在する必要はない)。
+                             * また、ディレクトリはパス置換処理を行った後に zip までのディレクトリパスを使う
+                             */
                         const QString &modelInArchivePath = path + "/" + modelFileInfoInArchive.filePath();
                         m_loader->addModel(modelPtr.data(), modelInArchivePath, finfo.dir(), uuid);
                         setEmptyMotion(modelPtr.take(), false);
@@ -441,11 +442,12 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
             }
         }
         else {
-            warning(this, tr("Loading model error"),
-                    tr("%1 cannot be loaded").arg(finfo.fileName()));
             didLoad = false;
         }
         emit fileDidLoad(path, didLoad);
+        if (!didLoad) {
+            warning(this, tr("Loading model error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
+        }
     }
 }
 
@@ -602,15 +604,18 @@ void SceneWidget::loadAsset(const QString &path)
                 m_loader->renderContextRef()->clearArchive();
             }
         }
+        /* 通常のファイル読み込み */
         else if (m_loader->loadAsset(path, uuid, assetPtr)) {
             setEmptyMotion(assetPtr.take(), false);
         }
+        /* 読み込み失敗 */
         else {
-            warning(this, tr("Loading asset error"),
-                    tr("%1 cannot be loaded").arg(finfo.fileName()));
             didLoad = false;
         }
         emit fileDidLoad(path, didLoad);
+        if (!didLoad) {
+            warning(this, tr("Loading asset error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
+        }
     }
 }
 

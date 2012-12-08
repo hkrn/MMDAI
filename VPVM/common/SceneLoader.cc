@@ -175,11 +175,11 @@ public:
  * ZIP またはファイルを読み込む。複数のファイルが入る ZIP の場合 extensions に
  * 該当するもので一番先に見つかったファイルのみを読み込む
  */
-void UISetModelType(const QString &filename, IModel::Type &type)
+void UISetModelType(const QFileInfo &finfo, IModel::Type &type)
 {
-    if (filename.endsWith(".pmx"))
+    if (finfo.suffix() == "pmx")
         type = IModel::kPMX;
-    else if (filename.endsWith(".pmd"))
+    else if (finfo.suffix() == "pmd")
         type = IModel::kPMD;
     else
         type = IModel::kAsset;
@@ -212,6 +212,21 @@ SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderCont
 SceneLoader::~SceneLoader()
 {
     releaseProject();
+}
+
+void SceneLoader::addAsset(const IModelPtr &assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid)
+{
+    uuid = QUuid::createUuid();
+    /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
+    CString name(finfo.baseName());
+    assetPtr->setName(&name);
+    m_project->addModel(assetPtr.data(), enginePtr.take(), uuid.toString().toStdString());
+    m_project->setModelSetting(assetPtr.data(), "selected", "false");
+    m_renderOrderList.add(uuid);
+    setAssetPosition(assetPtr.data(), assetPtr->worldPosition());
+    setAssetRotation(assetPtr.data(), assetPtr->worldRotation());
+    setAssetOpacity(assetPtr.data(), assetPtr->opacity());
+    setAssetScaleFactor(assetPtr.data(), assetPtr->scaleFactor());
 }
 
 void SceneLoader::addModel(IModel *model, const QString &path, const QDir &dir, QUuid &uuid)
@@ -279,13 +294,30 @@ bool SceneLoader::createModelEngine(IModel *model, const QDir &dir, IRenderEngin
     return false;
 }
 
-QByteArray SceneLoader::loadFile(const QString &filename,
-                                 const QRegExp &loadable,
-                                 const QRegExp &extensions,
-                                 IModel::Type &type)
+bool SceneLoader::handleFuture(const QFuture<IModel *> &future, IModelPtr &modelPtr) const
+{
+    while (!future.isResultReadyAt(0))
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    modelPtr.reset(future.result());
+    return modelPtr;
+}
+
+IModel *SceneLoader::loadBytesAsync(const QByteArray &bytes, IModel::Type type)
+{
+    if (!bytes.isEmpty()) {
+        QScopedPointer<IModel> modelPtr(m_factoryRef->createModel(type));
+        if (!modelPtr->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
+            modelPtr.reset();
+        return modelPtr.take();
+    }
+    return 0;
+}
+
+QByteArray SceneLoader::loadFile(const QString &filename, const QRegExp &loadable, const QRegExp &extensions, IModel::Type &type)
 {
     QByteArray bytes;
-    if (filename.endsWith(".zip")) {
+    QFileInfo finfo(filename);
+    if (finfo.suffix() == "zip") {
         QStringList files;
         QScopedPointer<Archive> archive(new Archive());
         if (archive->open(filename, files)) {
@@ -296,10 +328,10 @@ QByteArray SceneLoader::loadFile(const QString &filename,
                     /* ここではパスを置換して uploadTexture で読み込めるようにする */
                     const QString &filenameToLoad = target.first();
                     bytes = archive->data(filenameToLoad);
-                    QFileInfo fileToLoadInfo(filenameToLoad), fileInfo(filename);
-                    archive->replaceFilePath(fileToLoadInfo.path(), fileInfo.path() + "/");
+                    QFileInfo fileToLoadInfo(filenameToLoad);
+                    archive->replaceFilePath(fileToLoadInfo.path(), finfo.path() + "/");
                     m_renderContextRef->setArchive(archive.take());
-                    UISetModelType(filenameToLoad, type);
+                    UISetModelType(fileToLoadInfo, type);
                 }
             }
         }
@@ -308,9 +340,23 @@ QByteArray SceneLoader::loadFile(const QString &filename,
         QFile file(filename);
         if (file.open(QFile::ReadOnly))
             bytes = file.readAll();
-        UISetModelType(filename, type);
+        UISetModelType(finfo, type);
     }
     return bytes;
+}
+
+IModel *SceneLoader::loadFileAsync(const QString &filename, const QRegExp &loadable, const QRegExp &extensions)
+{
+    IModel::Type type;
+    const QByteArray &bytes = loadFile(filename, loadable, extensions, type);
+    return loadBytesAsync(bytes, type);
+}
+
+bool SceneLoader::loadFileDirectAsync(const QString &filename, const QRegExp &loadable, const QRegExp &extensions, IModel *model)
+{
+    IModel::Type type; /* unused */
+    const QByteArray &bytes = loadFile(filename, loadable, extensions, type);
+    return model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
 }
 
 QList<IModel *> SceneLoader::allModels() const
@@ -466,21 +512,20 @@ bool SceneLoader::isProjectModified() const
 
 bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr)
 {
-    IModel::Type type;
-    const QByteArray &bytes = loadFile(filename, kAssetLoadable, kAssetExtensions, type);
-    QFileInfo fileInfo(filename);
-    bool ok = loadAsset(bytes, fileInfo, uuid, assetPtr);
-    if (ok) {
-        /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
-        CString name(fileInfo.completeBaseName());
-        assetPtr->setName(&name);
-        m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, fileInfo.completeBaseName().toStdString());
-        m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, filename.toStdString());
-        m_renderContextRef->addModelPath(assetPtr.data(), filename);
-        emit modelDidAdd(assetPtr.data(), uuid);
+    const QFuture<IModel *> &future = QtConcurrent::run(this, &SceneLoader::loadFileAsync,
+                                                        filename, kAssetLoadable, kAssetExtensions);
+    if (handleFuture(future, assetPtr)) {
+        const QFileInfo finfo(filename);
+        IRenderEnginePtr enginePtr;
+        if (createModelEngine(assetPtr.data(), finfo.dir(), enginePtr)) {
+            addAsset(assetPtr, finfo, enginePtr, uuid);
+            m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, finfo.completeBaseName().toStdString());
+            m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, filename.toStdString());
+            emit modelDidAdd(assetPtr.data(), uuid);
+            return true;
+        }
     }
-    m_renderContextRef->clearArchive();
-    return ok;
+    return false;
 }
 
 bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, QUuid &uuid, IModelPtr &assetPtr)
@@ -488,30 +533,19 @@ bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, QUu
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
-    bool isNullData = bytes.isNull();
-    if (!isNullData) {
-        assetPtr.reset(m_factoryRef->createModel(IModel::kAsset));
-        if (assetPtr->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size())) {
-            IRenderEnginePtr enginePtr;
-            if (createModelEngine(assetPtr.data(), finfo.dir(), enginePtr)) {
-                uuid = QUuid::createUuid();
-                CString name(finfo.baseName());
-                assetPtr->setName(&name);
-                m_project->addModel(assetPtr.data(), enginePtr.take(), uuid.toString().toStdString());
-                m_project->setModelSetting(assetPtr.data(), "selected", "false");
-                m_renderOrderList.add(uuid);
-                setAssetPosition(assetPtr.data(), assetPtr->worldPosition());
-                setAssetRotation(assetPtr.data(), assetPtr->worldRotation());
-                setAssetOpacity(assetPtr.data(), assetPtr->opacity());
-                setAssetScaleFactor(assetPtr.data(), assetPtr->scaleFactor());
-                emit modelDidAdd(assetPtr.data(), uuid);
-            }
+    const QFuture<IModel *> &future = QtConcurrent::run(this, &SceneLoader::loadBytesAsync, bytes, IModel::kAsset);
+    if (handleFuture(future, assetPtr)) {
+        IRenderEnginePtr enginePtr;
+        if (createModelEngine(assetPtr.data(), finfo.dir(), enginePtr)) {
+            addAsset(assetPtr, finfo, enginePtr, uuid);
+            emit modelDidAdd(assetPtr.data(), uuid);
+            return true;
         }
     }
-    return !isNullData && assetPtr;
+    return false;
 }
 
-bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelPtr &modelPtr)
+bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelPtr &assetPtr)
 {
     QFile file(dir.absoluteFilePath(baseName));
     /* VAC 形式からアクセサリを読み込む。VAC は Shift_JIS で読み込む必要がある */
@@ -532,33 +566,32 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
         const QString &bone = stream.readLine();
         /* 7行目: 影をつけるかどうか(未実装) */
         bool enableShadow = stream.readLine().toInt() == 1;
-        modelPtr.reset(m_factoryRef->createModel(IModel::kAsset));
-        if (loadAsset(dir.absoluteFilePath(filename), uuid, modelPtr)) {
+        if (loadAsset(dir.absoluteFilePath(filename), uuid, assetPtr)) {
             if (!name.isEmpty()) {
                 CString s(name);
-                modelPtr->setName(&s);
+                assetPtr->setName(&s);
             }
             if (!filename.isEmpty()) {
-                m_name2assets.insert(filename, modelPtr.data());
+                m_name2assets.insert(filename, assetPtr.data());
             }
             if (scaleFactor > 0)
-                modelPtr->setScaleFactor(scaleFactor);
+                assetPtr->setScaleFactor(scaleFactor);
             if (position.count() == 3) {
                 float x = position.at(0).toFloat();
                 float y = position.at(1).toFloat();
                 float z = position.at(2).toFloat();
-                modelPtr->setWorldPosition(Vector3(x, y, z));
+                assetPtr->setWorldPosition(Vector3(x, y, z));
             }
             if (rotation.count() == 3) {
                 float x = rotation.at(0).toFloat();
                 float y = rotation.at(1).toFloat();
                 float z = rotation.at(2).toFloat();
-                modelPtr->setWorldRotation(Quaternion(x, y, z));
+                assetPtr->setWorldRotation(Quaternion(x, y, z));
             }
             if (!bone.isEmpty() && m_selectedModelRef) {
                 CString s(name);
                 IBone *bone = m_selectedModelRef->findBone(&s);
-                modelPtr->setParentBone(bone);
+                assetPtr->setParentBone(bone);
             }
             Q_UNUSED(enableShadow);
         }
@@ -593,27 +626,19 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionPtr &motionPtr)
 
 bool SceneLoader::loadModel(const QString &filename, IModelPtr &modelPtr)
 {
-    IModel::Type type;
-    const QByteArray &bytes = loadFile(filename, kModelLoadable, kModelExtensions, type);
-    bool ok = loadModel(bytes, type, modelPtr);
-    m_renderContextRef->clearArchive();
-    return ok;
+    const QFuture<IModel *> &future = QtConcurrent::run(this, &SceneLoader::loadFileAsync,
+                                                        filename, kModelLoadable, kModelExtensions);
+    return handleFuture(future, modelPtr);
 }
 
 bool SceneLoader::loadModel(const QByteArray &bytes, IModel::Type type, IModelPtr &modelPtr)
 {
-    if (!bytes.isNull()) {
-        /*
-         * モデルをファイルから読み込む。レンダリングエンジンに送るには addModel を呼び出す必要がある
-         * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
-         */
-        if (modelPtr.isNull())
-            modelPtr.reset(m_factoryRef->createModel(type));
-        const uint8_t *dataPtr = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
-        return modelPtr->load(dataPtr, size);
-    }
-    return false;
+    /*
+     * モデルをファイルから読み込む。レンダリングエンジンに送るには SceneLoader::addModel を呼び出す必要がある
+     * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
+     */
+    const QFuture<IModel *> &future = QtConcurrent::run(this, &SceneLoader::loadBytesAsync, bytes, type);
+    return handleFuture(future, modelPtr);
 }
 
 bool SceneLoader::loadModelMotion(const QString &path, IMotionPtr &motionPtr)
@@ -679,8 +704,7 @@ void SceneLoader::loadProject(const QString &path)
 {
     releaseProject();
     createProject();
-    bool ret = m_project->load(path.toLocal8Bit().constData());
-    if (ret) {
+    if (m_project->load(path.toLocal8Bit().constData())) {
         /* 光源設定 */
         const Vector3 &color = UIGetVector3(m_project->globalSetting("light.color"), Vector3(0.6, 0.6, 0.6));
         const Vector3 &position = UIGetVector3(m_project->globalSetting("light.direction"), Vector3(-0.5, -1.0, -0.5));
@@ -705,13 +729,16 @@ void SceneLoader::loadProject(const QString &path)
         sceneObject->setAccelerationType(accelerationType);
         for (int i = 0; i < nmodels; i++) {
             const Project::UUID &modelUUIDString = modelUUIDs[i];
-            IModelPtr modelPtr(m_project->findModel(modelUUIDString));
-            const std::string &name = m_project->modelSetting(modelPtr.data(), Project::kSettingNameKey);
-            const std::string &uri = m_project->modelSetting(modelPtr.data(), Project::kSettingURIKey);
+            IModel *model = m_project->findModel(modelUUIDString);
+            const std::string &name = m_project->modelSetting(model, Project::kSettingNameKey);
+            const std::string &uri = m_project->modelSetting(model, Project::kSettingURIKey);
             const QString &filename = QString::fromStdString(uri);
-            if (loadModel(filename, modelPtr)) {
+            const QFuture<bool> &future = QtConcurrent::run(this, &SceneLoader::loadFileDirectAsync,
+                                                            filename, kModelLoadable, kModelExtensions, model);
+            while (!future.isResultReadyAt(0))
+                qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+            if (future.result()) {
                 const QFileInfo fileInfo(filename);
-                IModel *model = modelPtr.take();
                 m_renderContextRef->addModelPath(model, filename);
                 IRenderEnginePtr enginePtr;
                 if (createModelEngine(model, fileInfo.absoluteDir(), enginePtr)) {
@@ -749,7 +776,7 @@ void SceneLoader::loadProject(const QString &path)
                     else if (type == IModel::kAsset) {
                         CString s(fileInfo.completeBaseName().toUtf8());
                         model->setName(&s);
-                        m_renderContextRef->setArchive(0);
+                        m_renderContextRef->clearArchive();
                         m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
                         assets.append(model);
                         /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
@@ -765,7 +792,7 @@ void SceneLoader::loadProject(const QString &path)
                      modelUUIDString.c_str(),
                      name.c_str(),
                      qPrintable(filename));
-            lostModels.insert(modelPtr.take());
+            lostModels.insert(model);
             emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
         }
         sceneObject->setAccelerationType(accelerationType);

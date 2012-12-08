@@ -258,6 +258,9 @@ private slots:
 
 private:
     bool createModelEngine(IModel *model, const QDir &dir, IRenderEnginePtr &enginePtr);
+    bool loadModelFromProject(const QString &path, IModel *model);
+    bool handleFuture(const QFuture<IModel *> &future, IModelPtr &modelPtr) const;
+    void addAsset(const IModelPtr &assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
     void emitMotionDidAdd(const Array<IMotion *> &motions, IModel *model);
     void insertModel(IModel *model, const QString &name);
     void insertMotion(IMotion *motion, IModel *model);
@@ -266,8 +269,10 @@ private:
     int globalSetting(const char *key, int def) const;
     Scene::AccelerationType globalAccelerationType() const;
     Scene::AccelerationType modelAccelerationType(const IModel *model) const;
-    QByteArray loadFile(const QString &filename,  const QRegExp &loadable,
-                        const QRegExp &extensions, IModel::Type &type);
+    IModel *loadBytesAsync(const QByteArray &bytes, IModel::Type type);
+    QByteArray loadFile(const QString &filename, const QRegExp &loadable, const QRegExp &extensions, IModel::Type &type);
+    IModel *loadFileAsync(const QString &filename, const QRegExp &loadable, const QRegExp &extensions);
+    bool loadFileDirectAsync(const QString &filename, const QRegExp &loadable, const QRegExp &extensions, IModel *model);
 
     QScopedPointer<QGLFramebufferObject> m_depthBuffer;
     QScopedPointer<qt::World> m_world;

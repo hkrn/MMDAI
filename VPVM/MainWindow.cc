@@ -1477,6 +1477,9 @@ void MainWindow::bindWidgets()
 {
     connect(m_timelineTabWidget.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex,bool,bool)),  m_sceneWidget.data(), SLOT(seekMotion(IKeyframe::TimeIndex,bool,bool)));
     connect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), SLOT(bindSceneLoader()));
+    connect(m_sceneWidget.data(), SIGNAL(fileDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
+    connect(m_sceneWidget.data(), SIGNAL(fileDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
+    connect(m_sceneWidget.data(), SIGNAL(fileDidLoad(QString,bool)), SLOT(closeProgress()));
     connect(m_sceneWidget.data(), SIGNAL(fileDidLoad(QString,bool)), SLOT(addRecentFile(QString,bool)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveAbsolute(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateTo(Vector3,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(handleDidMoveRelative(Vector3,IBone*,int)), m_boneMotionModel.data(), SLOT(translateDelta(Vector3,IBone*,int)));
