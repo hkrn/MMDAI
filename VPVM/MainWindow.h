@@ -151,7 +151,7 @@ private slots:
     void openUndoView();
     void enableSelectingBonesAndMorphs();
     void disconnectInitialSlots();
-    void resetSceneToModels();
+    void resetSceneToMotionModels();
 
 private:
     struct WindowState;

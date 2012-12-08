@@ -284,7 +284,7 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_menuRecentFiles(new QMenu()),
       m_menuHelp(new QMenu()),
       m_menuAcceleration(new QMenu()),
-      m_loggerWidgetRef(0),
+      m_loggerWidgetRef(LoggerWidget::sharedInstance(&m_settings)),
       m_modelRef(0),
       m_boneRef(0),
       m_position(0.0f, 0.0f, 0.0f),
@@ -294,9 +294,11 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_currentFPS(-1)
 {
     m_actionRecentFiles.reserve(kMaxRecentFiles);
-    m_loggerWidgetRef = LoggerWidget::sharedInstance(&m_settings);
     createActionsAndMenus();
+    bindActions();
     bindWidgets();
+    updateRecentFiles();
+    retranslate();
     restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
     restoreState(m_settings.value("mainWindow/state").toByteArray());
     updateWindowTitle();
@@ -325,6 +327,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
         m_settings.setValue("mainWindow/timelineDockWidgetGeometry", m_timelineDockWidget->saveGeometry());
         m_settings.setValue("mainWindow/sceneDockWidgetGeometry", m_sceneDockWidget->saveGeometry());
         m_settings.setValue("mainWindow/modelDockWidgetGeometry", m_modelDockWidget->saveGeometry());
+        if (m_videoEncoder)
+            m_videoEncoder->stopSession();
+        QThreadPool *pool = QThreadPool::globalInstance();
+        if (pool->activeThreadCount() > 0)
+            pool->waitForDone();
         qApp->sendEvent(m_sceneWidget.data(), event);
         event->accept();
     }
@@ -716,6 +723,7 @@ bool MainWindow::confirmSave(bool condition, bool &cancel)
 
 void MainWindow::createActionsAndMenus()
 {
+    /* ドックの初期化 */
     m_timelineDockWidget->setWidget(m_timelineTabWidget.data());
     m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/timelineDockWidgetGeometry").toByteArray());
     addDockWidget(Qt::LeftDockWidgetArea, m_timelineDockWidget.data());
@@ -727,7 +735,7 @@ void MainWindow::createActionsAndMenus()
     addDockWidget(Qt::LeftDockWidgetArea, m_modelDockWidget.data());
     tabifyDockWidget(m_timelineDockWidget.data(), m_sceneDockWidget.data());
     tabifyDockWidget(m_sceneDockWidget.data(), m_modelDockWidget.data());
-
+    /* 「ファイル」メニューにあるアクションの初期化 */
     connect(m_actionNewProject.data(), SIGNAL(triggered()), SLOT(newProjectFile()));
     connect(m_actionNewMotion.data(), SIGNAL(triggered()), SLOT(addNewMotion()));
     connect(m_actionLoadProject.data(), SIGNAL(triggered()), SLOT(loadProject()));
@@ -749,7 +757,7 @@ void MainWindow::createActionsAndMenus()
     connect(m_actionExportVideo.data(), SIGNAL(triggered()), SLOT(exportVideo()));
     m_actionExit->setMenuRole(QAction::QuitRole);
     connect(m_actionExit.data(), SIGNAL(triggered()), qApp, SLOT(closeAllWindows()));
-
+    /* 「編集」メニューにあるアクションの初期化 */
     connect(m_actionRegisterKeyframe.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(addKeyframesFromSelectedIndices()));
     connect(m_actionInsertEmptyFrame.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(insertKeyframesBySelectedIndices()));
     connect(m_actionDeleteSelectedKeyframe.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(deleteKeyframesBySelectedIndices()));
@@ -767,7 +775,7 @@ void MainWindow::createActionsAndMenus()
     connect(m_actionBoneResetAll.data(), SIGNAL(triggered()), m_boneUIDelegate.data(), SLOT(resetAllBones()));
     connect(m_actionBoneDialog.data(), SIGNAL(triggered()), m_boneUIDelegate.data(), SLOT(openBoneDialog()));
     connect(m_actionDeleteSelectedModel.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(deleteSelectedModel()));
-
+    /* 「プロジェクト」メニューにあるアクションの初期化 */
     connect(m_actionPlay.data(), SIGNAL(triggered()), SLOT(invokePlayer()));
     connect(m_actionPlaySettings.data(), SIGNAL(triggered()), SLOT(openPlaySettingDialog()));
     connect(m_actionOpenGravitySettingsDialog.data(), SIGNAL(triggered()), SLOT(openGravitySettingDialog()));
@@ -776,13 +784,12 @@ void MainWindow::createActionsAndMenus()
     connect(m_actionOpenShadowMapDialog.data(), SIGNAL(triggered()), SLOT(openShadowMapDialog()));
     m_actionEnablePhysics->setCheckable(true);
     m_actionEnablePhysics->setChecked(true);
-
     m_actionShowGrid->setCheckable(true);
     m_actionShowGrid->setChecked(true);
     connect(m_actionSetBackgroundImage.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(setBackgroundImage()));
     connect(m_actionClearBackgroundImage.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(clearBackgroundImage()));
     connect(m_actionOpenBackgroundImageDialog.data(), SIGNAL(triggered()), SLOT(openBackgroundImageDialog()));
-
+    /* 「場面」メニューにあるアクションの初期化 */
     connect(m_actionZoomIn.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(zoomIn()));
     connect(m_actionZoomOut.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(zoomOut()));
     connect(m_actionRotateUp.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(rotateUp()));
@@ -794,7 +801,7 @@ void MainWindow::createActionsAndMenus()
     connect(m_actionTranslateLeft.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(translateLeft()));
     connect(m_actionTranslateRight.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(translateRight()));
     connect(m_actionResetCamera.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(resetCamera()));
-
+    /* 「モデル」メニューにあるアクションの初期化 */
     connect(m_actionSelectNextModel.data(), SIGNAL(triggered()), SLOT(selectNextModel()));
     connect(m_actionSelectPreviousModel.data(), SIGNAL(triggered()), SLOT(selectPreviousModel()));
     connect(m_actionRevertSelectedModel.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(revertSelectedModel()));
@@ -803,17 +810,17 @@ void MainWindow::createActionsAndMenus()
     connect(m_actionTranslateModelLeft.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(translateModelLeft()));
     connect(m_actionTranslateModelRight.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(translateModelRight()));
     connect(m_actionResetModelPosition.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(resetModelPosition()));
-
+    /* 「キーフレーム」メニューにあるアクションの初期化 */
     connect(m_actionSelectAllKeyframes.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(selectAllRegisteredKeyframes()));
     connect(m_actionSelectKeyframeDialog.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(openFrameSelectionDialog()));
     connect(m_actionKeyframeWeightDialog.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(openFrameWeightDialog()));
     connect(m_actionInterpolationDialog.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(openInterpolationDialogBySelectedIndices()));
     connect(m_actionNextFrame.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(nextFrame()));
     connect(m_actionPreviousFrame.data(), SIGNAL(triggered()), m_timelineTabWidget.data(), SLOT(previousFrame()));
-
+    /* エフェクトアクションの初期化 */
     m_actionEnableEffect->setCheckable(true);
     m_actionEnableEffect->setChecked(false);
-
+    /* 「ウィンドウ」メニューにあるアクションの初期化 */
     connect(m_actionViewLogMessage.data(), SIGNAL(triggered()), m_loggerWidgetRef, SLOT(show()));
     m_actionEnableGestures->setCheckable(true);
     m_actionEnableGestures->setChecked(m_sceneWidget->isGesturesEnabled());
@@ -836,12 +843,13 @@ void MainWindow::createActionsAndMenus()
     m_actionShowModelDialog->setCheckable(true);
     m_actionShowModelDialog->setChecked(m_sceneWidget->showModelDialog());
     connect(m_actionShowModelDialog.data(), SIGNAL(triggered(bool)), m_sceneWidget.data(), SLOT(setShowModelDialog(bool)));
-
+    /* その他のアクション初期化 */
     connect(m_actionClearRecentFiles.data(), SIGNAL(triggered()), SLOT(clearRecentFiles()));
     connect(m_actionAbout.data(), SIGNAL(triggered()), SLOT(showLicenseWidget()));
     m_actionAbout->setMenuRole(QAction::AboutRole);
     connect(m_actionAboutQt.data(), SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     m_actionAboutQt->setMenuRole(QAction::AboutQtRole);
+    /* アクセラレーションメニューのアクション初期化 */
     QActionGroup *accelerationGroup = new QActionGroup(this);
     bool hasAcceleration = Scene::isAcceleratorSupported();
     accelerationGroup->setExclusive(true);
@@ -857,7 +865,7 @@ void MainWindow::createActionsAndMenus()
     m_menuAcceleration->addAction(m_actionSetOpenCLSkinningType1.data());
     m_menuAcceleration->addAction(m_actionSetOpenCLSkinningType2.data());
     m_menuAcceleration->addAction(m_actionSetVertexShaderSkinningType1.data());
-
+    /* メニューの設定 */
 #ifndef Q_OS_MACX
     m_menuBar.reset(menuBar());
 #endif
@@ -885,7 +893,7 @@ void MainWindow::createActionsAndMenus()
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExportImage.data());
     m_menuFile->addAction(m_actionExportVideo.data());
-
+    /* 「最近開いたファイル履歴」メニューの初期化 */
     m_actionRecentFiles.clear();
     for (int i = 0; i < kMaxRecentFiles; i++) {
         QAction *action = new QAction(this);
@@ -900,7 +908,7 @@ void MainWindow::createActionsAndMenus()
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionExit.data());
     m_menuBar->addMenu(m_menuFile.data());
-
+    /* 「編集」メニュー */
     m_menuEdit->addAction(m_actionUndo.data());
     m_menuEdit->addAction(m_actionRedo.data());
     m_menuEdit->addSeparator();
@@ -911,7 +919,7 @@ void MainWindow::createActionsAndMenus()
     m_menuEdit->addSeparator();
     m_menuEdit->addAction(m_actionOpenUndoView.data());
     m_menuBar->addMenu(m_menuEdit.data());
-
+    /* 「プロジェクト」メニュー */
     m_menuProject->addAction(m_actionPlay.data());
     m_menuProject->addAction(m_actionPlaySettings.data());
     m_menuProject->addSeparator();
@@ -928,7 +936,7 @@ void MainWindow::createActionsAndMenus()
     m_menuProject->addAction(m_actionClearBackgroundImage.data());
     m_menuProject->addAction(m_actionOpenBackgroundImageDialog.data());
     m_menuBar->addMenu(m_menuProject.data());
-
+    /* 「場面」メニューの初期化 */
     m_menuScene->addAction(m_actionZoomIn.data());
     m_menuScene->addAction(m_actionZoomOut.data());
     m_menuScene->addSeparator();
@@ -944,10 +952,7 @@ void MainWindow::createActionsAndMenus()
     m_menuScene->addSeparator();
     m_menuScene->addAction(m_actionResetCamera.data());
     m_menuBar->addMenu(m_menuScene.data());
-
-
     m_menuModel->addMenu(m_menuRetainModels.data());
-
     m_menuScene->addMenu(m_menuRetainAssets.data());
     m_menuModel->addAction(m_actionSelectNextModel.data());
     m_menuModel->addAction(m_actionSelectPreviousModel.data());
@@ -962,7 +967,7 @@ void MainWindow::createActionsAndMenus()
     m_menuModel->addSeparator();
     m_menuModel->addAction(m_actionDeleteSelectedModel.data());
     m_menuBar->addMenu(m_menuModel.data());
-
+    /* 「キーフレーム」メニューの初期化 */
     m_menuKeyframe->addAction(m_actionRegisterKeyframe.data());
     m_menuKeyframe->addAction(m_actionInsertEmptyFrame.data());
     m_menuKeyframe->addAction(m_actionDeleteSelectedKeyframe.data());
@@ -981,10 +986,10 @@ void MainWindow::createActionsAndMenus()
     m_menuKeyframe->addAction(m_actionBoneResetAll.data());
     m_menuKeyframe->addAction(m_actionBoneDialog.data());
     m_menuBar->addMenu(m_menuKeyframe.data());
-
+    /* 「エフェクト」 */
     m_menuEffect->addAction(m_actionEnableEffect.data());
     m_menuBar->addMenu(m_menuEffect.data());
-
+    /* 「ウィンドウ」メニュー */
     m_menuView->addAction(m_actionViewLogMessage.data());
     m_menuView->addSeparator();
     m_menuView->addAction(m_actionShowTimelineDock.data());
@@ -1003,8 +1008,7 @@ void MainWindow::createActionsAndMenus()
     m_menuHelp->addAction(m_actionAboutQt.data());
     m_menuBar->addMenu(m_menuHelp.data());
     setCentralWidget(m_sceneWidget.data());
-    updateRecentFiles();
-
+    /* ツールバーの初期化 */
     m_mainToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     m_mainToolBar->setMovable(true);
     m_actionRegisterKeyframeOnToolBar.reset(m_mainToolBar->addAction("", m_timelineTabWidget.data(), SLOT(addKeyframesFromSelectedIndices())));
@@ -1022,9 +1026,6 @@ void MainWindow::createActionsAndMenus()
     m_actionExportVideoOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(exportVideo())));
     m_actionExportImageOnToolBar.reset(m_mainToolBar->addAction("", this, SLOT(exportImage())));
     addToolBar(m_mainToolBar.data());
-
-    retranslate();
-    bindActions();
 }
 
 void MainWindow::bindActions()
@@ -1384,7 +1385,7 @@ void MainWindow::bindSceneLoader()
     connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), m_timelineTabWidget.data(), SLOT(notifyCurrentTabIndex()));
     connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_sceneMotionModel.data(), SLOT(loadMotion(IMotion*)));
     connect(loader, SIGNAL(cameraMotionDidSet(IMotion*,QUuid)), m_sceneMotionModel.data(), SLOT(loadMotion(IMotion*)));
-    connect(loader, SIGNAL(projectDidInitialized()), this, SLOT(resetSceneToModels()));
+    connect(loader, SIGNAL(projectDidInitialized()), this, SLOT(resetSceneToMotionModels()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget.data(), SLOT(refreshScene()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel.data(), SLOT(markAsNew()));
     connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setCurrentModel(IModel*)));
@@ -1979,7 +1980,7 @@ void MainWindow::disconnectInitialSlots()
     disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSlots()));
 }
 
-void MainWindow::resetSceneToModels()
+void MainWindow::resetSceneToMotionModels()
 {
     const Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
     m_boneMotionModel->setSceneRef(scene);
