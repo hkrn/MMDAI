@@ -53,10 +53,23 @@
 #endif
 
 #ifdef VPVL2_LINK_NVTT
+#include <nvcore/Debug.h>
 #include <nvcore/Stream.h>
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
+namespace {
+struct MessageHandler : public nv::MessageHandler, public nv::AssertHandler {
+    int assertion(const char *exp, const char *file, int line, const char *func) {
+        qFatal("Assertion error: %s (%s in %s at %d)", exp, func, file, line);
+        return 0;
+    }
+    void log(const char *str, va_list arg) {
+        fprintf(stderr, str, arg);
+    }
+};
+MessageHandler s_messageHandler;
+}
 #else
 namespace nv {
 class Stream {
@@ -219,6 +232,10 @@ RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *sce
     for (int i = 0; i < 4; i++)
         m_previousFrameBufferPtrs.insert(i, 0);
     m_timer.start();
+#ifdef VPVL2_LINK_NVTT
+    nv::debug::setAssertHandler(&s_messageHandler);
+    nv::debug::setMessageHandler(&s_messageHandler);
+#endif
 }
 
 RenderContext::~RenderContext()
