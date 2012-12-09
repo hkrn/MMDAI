@@ -338,7 +338,12 @@ system 'svn', 'checkout', '-r', $NVTT_REVISION, $NVTT_CHECKOUT_URI, $NVTT_DIRECT
 # build directory should be same as configure does
 $path = File::Spec->catdir($base_directory, $NVTT_DIRECTORY, $BUILD_DIRECTORY, 'lib');
 # append LIBRARY_OUTPUT_PATH dynamically
-@$CMAKE_NVTT_ARGS = ( @$CMAKE_NVTT_ARGS, '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=' . $path );
+if ($opt_static) {
+    @$CMAKE_NVTT_ARGS = ( @$CMAKE_NVTT_ARGS, '-DLIBRARY_OUTPUT_PATH:PATH=' . $path );
+}
+else {
+    @$CMAKE_NVTT_ARGS = ( @$CMAKE_NVTT_ARGS, '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=' . $path );
+}
 build_with_cmake $NVTT_DIRECTORY, $CMAKE_NVTT_ARGS;
 chdir $base_directory;
 
