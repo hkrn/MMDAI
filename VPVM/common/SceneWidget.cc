@@ -541,6 +541,7 @@ void SceneWidget::loadAsset(const QString &path, QScopedPointer<IModel> &modelPt
     if (fi.exists()) {
         QUuid uuid;
         if (m_loader->loadAsset(path, uuid, modelPtr)) {
+            m_handles->loadModelHandles();
             emit fileDidLoad(path);
         }
         else {
@@ -565,6 +566,7 @@ void SceneWidget::loadAssetFromMetadata(const QString &path)
         QUuid uuid;
         IModelPtr asset;
         if (m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid, asset)) {
+            m_handles->loadModelHandles();
             asset.take();
             setFocus();
         }
