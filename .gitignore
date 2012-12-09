@@ -1,7 +1,6 @@
-*-debug*
-*-release*
 AppData
 assimp-*
+build-*
 bullet-*
 Cg
 CMakeCache.txt
@@ -10,8 +9,8 @@ CMakeLists.txt.user*
 CMakeScripts
 cmake_install.cmake*
 config.h
-debug*
 *.dir
+*.diff
 glew-*
 glm-*
 gmock-*
@@ -29,7 +28,6 @@ nacl
 nvtt-*
 open_jtalk-*
 portaudio-src
-release*
 SDLMain.*
 SDL-*
 SDL_image-*
@@ -39,7 +37,7 @@ _UpgradeReport_Files
 Win32
 *.a
 *.build
-*-*-desktop
+*-*-desktop*
 *.cbp
 *.dll*
 *.dylib*
