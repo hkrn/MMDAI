@@ -1662,8 +1662,8 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
             }
             else {
                 m_frameBufferObjectRef->resize(width, height);
-                m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
                 m_frameBufferObjectRef->transferMSAABuffer(index);
+                m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             }
             glViewport(0, 0, width, height);
         }
