@@ -65,7 +65,12 @@ Material::Material(IModel *modelRef,
       m_toonTextureIndex(-1),
       m_index(index)
 {
-    if (m_materialRef->isMainSphereModulate()) {
+    if (m_materialRef->isMainSphereAdd()) {
+        m_sphereTexture = m_encodingRef->toString(m_materialRef->mainTextureName(),
+                                                  IString::kShiftJIS, vpvl::Material::kNameSize);
+        m_sphereTextureRenderMode = kAddTexture;
+    }
+    else if (m_materialRef->isMainSphereModulate()) {
         m_sphereTexture = m_encodingRef->toString(m_materialRef->mainTextureName(),
                                                   IString::kShiftJIS, vpvl::Material::kNameSize);
         m_sphereTextureRenderMode = kMultTexture;
