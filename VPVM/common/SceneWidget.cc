@@ -414,11 +414,12 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                     type = modelFileInfoInArchive.suffix() == "pmx" ? IModel::kPMX : IModel::kPMD;
                     if (m_loader->loadModel(bytes, type, modelPtr) &&
                             (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data())))) {
+                        /* ハンドルの遅延読み込み */
                         m_handles->loadModelHandles();
                         /*
-                             * モデルのは zip のパスに zip 内のパスを加えて固有のパスを作成する (実在する必要はない)。
-                             * また、ディレクトリはパス置換処理を行った後に zip までのディレクトリパスを使う
-                             */
+                         * モデルのは zip のパスに zip 内のパスを加えて固有のパスを作成する (実在する必要はない)。
+                         * また、ディレクトリはパス置換処理を行った後に zip までのディレクトリパスを使う
+                         */
                         const QString &modelInArchivePath = path + "/" + modelFileInfoInArchive.filePath();
                         m_loader->addModel(modelPtr.data(), modelInArchivePath, finfo.dir(), uuid);
                         setEmptyMotion(modelPtr.take(), false);
@@ -436,6 +437,7 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
         else if (m_loader->loadModel(path, modelPtr)) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
                 QUuid uuid;
+                /* ハンドルの遅延読み込み */
                 m_handles->loadModelHandles();
                 m_loader->addModel(modelPtr.data(), finfo.filePath(), finfo.dir(), uuid);
                 setEmptyMotion(modelPtr.take(), false);
@@ -595,6 +597,8 @@ void SceneWidget::loadAsset(const QString &path)
                     /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
                     archive.replaceFilePath(assetFileInfoInArchive.path(), archiveFileInfo.path() + "/");
                     if (m_loader->loadAsset(bytes, assetFileInfoInArchive, uuid, assetPtr)) {
+                        /* ハンドルの遅延読み込み */
+                        m_handles->loadModelHandles();
                         setEmptyMotion(assetPtr.take(), false);
                     }
                     ++i;
@@ -606,6 +610,8 @@ void SceneWidget::loadAsset(const QString &path)
         }
         /* 通常のファイル読み込み */
         else if (m_loader->loadAsset(path, uuid, assetPtr)) {
+            /* ハンドルの遅延読み込み */
+            m_handles->loadModelHandles();
             setEmptyMotion(assetPtr.take(), false);
         }
         /* 読み込み失敗 */
@@ -634,6 +640,8 @@ void SceneWidget::loadAssetFromMetadata(const QString &path)
         QUuid uuid;
         IModelPtr asset;
         if (m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid, asset)) {
+            /* ハンドルの遅延読み込み */
+            m_handles->loadModelHandles();
             asset.take();
             setFocus();
         }
