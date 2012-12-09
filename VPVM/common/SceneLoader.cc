@@ -530,6 +530,7 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelPtr &ass
     if (handleFuture(future, assetPtr)) {
         const QFileInfo finfo(filename);
         IRenderEnginePtr enginePtr;
+        m_renderContextRef->addModelPath(assetPtr.data(), filename);
         if (createModelEngine(assetPtr.data(), finfo.dir(), enginePtr)) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, finfo.completeBaseName().toStdString());
@@ -549,6 +550,7 @@ bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, QUu
     const QFuture<IModel *> &future = QtConcurrent::run(this, &SceneLoader::loadBytesAsync, bytes, IModel::kAsset);
     if (handleFuture(future, assetPtr)) {
         IRenderEnginePtr enginePtr;
+        m_renderContextRef->addModelPath(assetPtr.data(), finfo.path());
         if (createModelEngine(assetPtr.data(), finfo.dir(), enginePtr)) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             emit modelDidAdd(assetPtr.data(), uuid);
