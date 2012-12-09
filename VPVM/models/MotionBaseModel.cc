@@ -175,9 +175,13 @@ int MotionBaseModel::frameIndexColumnMax() const
 
 void MotionBaseModel::setFrameIndexColumnMax(int newValue)
 {
-    /* 最小値はモーションの最大フレーム値を優先する (ない場合は0) */
-    if (newValue < maxFrameIndex())
-        newValue = maxFrameIndex();
+    /*
+     * 最小値はモーションの最大フレーム値を優先し(ない場合は0)、
+     * さらに登録時意図しないスクロールを避けるため追加値 (現在は固定値の+10) を入れる
+     */
+    int maxTimeIndex = maxFrameIndex() + 10;
+    if (newValue < maxTimeIndex)
+        newValue = maxTimeIndex;
     setFrameIndexColumnMax0(newValue);
 }
 
