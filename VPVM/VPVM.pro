@@ -23,12 +23,33 @@ exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L "$$(CMAKE_PREFIX_PATH)/lib"
 exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
 exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
+# configuration by build type
+CONFIG(debug, debug|release) {
+  BUILD_DIRECTORY   = build-debug
+  # should not change link order because of static library link order
+  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
+}
+CONFIG(release, debug|release) {
+  BUILD_DIRECTORY   = build-release
+  # should not change link order because of static library link order
+  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
+}
+
 # VPVL and others configuration
-INCLUDEPATH +=  $${VPVL2_PATH}/include \
-                $${ASSIMP_PATH}/include \
-                $${PORTAUDIO_PATH}/include \
-                $${BULLET_PATH}/src \
-                $${NVTT_PATH}/src
+LIBS             += -L$${ASSIMP_PATH}/$${BUILD_DIRECTORY}/lib \
+                    -L$${BULLET_PATH}/$${BUILD_DIRECTORY}/lib \
+                    -L$${VPVL1_PATH}/$${BUILD_DIRECTORY}/lib \
+                    -L$${VPVL2_PATH}/$${BUILD_DIRECTORY}/lib \
+                    -L$${PORTAUDIO_PATH}/$${BUILD_DIRECTORY}-native/lib \
+                    -L$${LIBAV_PATH}/$${BUILD_DIRECTORY}-native/lib \
+                    -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/lib
+INCLUDEPATH      += $${VPVL2_PATH}/include \
+                    $${ASSIMP_PATH}/include \
+                    $${PORTAUDIO_PATH}/include \
+                    $${BULLET_PATH}/src \
+                    $${NVTT_PATH}/src \
+                    $${LIBAV_PATH}/$${BUILD_DIRECTORY}-native/include \
+                    $${PORTAUDIO_PATH}/$${BUILD_DIRECTORY}-native/include
 
 win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
                      $${MMDA_PATH} \
@@ -36,37 +57,8 @@ win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
                      $${MMDA_PATH}/Library_Open_JTalk/include \
                      $${MMDA_PATH}/Library_hts_engine_API/include \
                      $${MMDA_PATH}/Library_PortAudio/include
-
-# configuration by build type
-CONFIG(debug, debug|release) {
-  unix:LIBS        += -L$${ASSIMP_PATH}/debug/lib \
-                      -L$${BULLET_PATH}/debug/lib \
-                      -L$${VPVL1_PATH}/debug/lib \
-                      -L$${VPVL2_PATH}/debug/lib \
-                      -L$${PORTAUDIO_PATH}/debug_native/lib \
-                      -L$${LIBAV_PATH}/debug_native/lib \
-                      -L$${NVTT_PATH}/build-debug/lib
-  unix:INCLUDEPATH += $${VPVL2_PATH}/debug/include \
-                      $${PORTAUDIO_PATH}/debug_native/include
-  # should not change link order because of static library link order
-  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
-  INCLUDEPATH      += $${LIBAV_PATH}/debug_native/include \
-                      $${PORTAUDIO_PATH}/debug_native/include
-}
-CONFIG(release, debug|release) {
-  unix:LIBS        += -L$${ASSIMP_PATH}/release/code \
-                      -L$${BULLET_PATH}/release/lib \
-                      -L$${VPVL1_PATH}/release/lib \
-                      -L$${VPVL2_PATH}/release/lib \
-                      -L$${PORTAUDIO_PATH}/release_native/lib \
-                      -L$${LIBAV_PATH}/release_native/lib \
-                      -L$${NVTT_PATH}/build-release/lib
-  unix:INCLUDEPATH += $${VPVL2_PATH}/release/include
-  # should not change link order because of static library link order
-  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
-  INCLUDEPATH      += $${LIBAV_PATH}/release_native/include \
-                      $${PORTAUDIO_PATH}/release_native/include
-}
+unix:INCLUDEPATH += $${VPVL2_PATH}/$${BUILD_DIRECTORY}/include \
+                    $${PORTAUDIO_PATH}/build-debug-native/include
 
 # Required libraries
 LIBS += -lassimp \

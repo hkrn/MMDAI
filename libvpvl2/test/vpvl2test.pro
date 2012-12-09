@@ -7,15 +7,15 @@ TEMPLATE = app
 
 QMAKE_CXXFLAGS = -W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings
 
-LIBS += -L../../libvpvl/debug/lib -lvpvl_debug \
-        -L../debug/lib -lvpvl2_debug -lvpvl2qtcommon_debug -licuuc -licui18n \
-        -L../../bullet-src/debug/lib -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+LIBS += -L../../libvpvl/build-debug/lib -L../build-debug/lib -lvpvl2_debug -L../../bullet-src/build-debug/lib \
+         -lvpvl2qtcommon_debug -lvpvl_debug -licuuc -licui18n \
+         -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 macx:LIBS += -framework Cg
 linux-*:LIBS += -lCg -lCgGL
 
 INCLUDEPATH += ../test/gtest-1.6.0 ../test/gmock-1.6.0 \
                ../test/gtest-1.6.0/include ../test/gmock-1.6.0/include \
-               ../include ../debug/include ../../libvpvl/include ../../libvpvl/debug/include \
+               ../include ../build-debug/include ../../libvpvl/include ../../libvpvl/build-debug/include \
                ../../bullet-src/src ../../assimp-src/include
 
 linux-* {

@@ -66,7 +66,7 @@ my $LIBAV_CHECKOUT_URI = 'git://git.libav.org/libav.git';
 my $LIBAV_DIRECTORY = 'libav' . $SOURCE_DIRECTORY_SUFFIX;
 my $LIBAV_TAG = 'v0.8.3';
 my $BUILD_TYPE = $opt_prod ? 'Release' : 'Debug';
-my $BUILD_DIRECTORY = lcfirst $BUILD_TYPE;
+my $BUILD_DIRECTORY = 'build-' . lcfirst $BUILD_TYPE;
 my $CMAKE_BULLET_ARGS = [
     '-DBUILD_DEMOS:BOOL=OFF',
     '-DBUILD_EXTRAS:BOOL=OFF',
@@ -239,8 +239,8 @@ sub make_library {
     my $orig_cxxflags = $ENV{'CXXFLAGS'} || '';
     my $orig_ldflags = $ENV{'LDFLAGS'} || '';
     if ($opt_march) {
-        my $path_i386 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_i386');
-        my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_native');
+        my $path_i386 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '-i386');
+        my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '-native');
         make_path $path_i386 unless -d $path_i386;
         $ENV{'CFLAGS'} = ($ENV{'CFLAGS32'} || '') . ' -arch i386';
         $ENV{'CXXFLAGS'} = ($ENV{'CXXFLAGS32'} || '') . ' -arch i386';
@@ -262,7 +262,7 @@ sub make_library {
         $ENV{'CFLAGS'} = $ENV{'CFLAGS64'} || '';
         $ENV{'CXXFLAGS'} = $ENV{'CXXFLAGS64'} || '';
         $ENV{'LDFLAGS'} = $ENV{'LDFLAGS64'} || '';
-        my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '_native');
+        my $path_x86_64 = File::Spec->catdir($base_directory, $directory, $BUILD_DIRECTORY . '-native');
         make_path $path_x86_64 unless -d $path_x86_64;
         build_with_configure $directory, [ '--prefix=' . $path_x86_64, @$configure_args ], 1, 1;
         chdir $base_directory;
@@ -273,10 +273,11 @@ sub make_library {
 }
 
 if ($opt_print_flags) {
-    my $output = ' -DLIBRARY_OUTPUT_PATH=`pwd`/lib';
+    my $output = ' -DLIBRARY_OUTPUT_PATH:PATH=`pwd`/lib';
+    my $output2 = ' -DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=`pwd`/lib';
     print '[bullet]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_BULLET_ARGS)), $output, "\n\n";
-    print '[assimp]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_ASSIMP_ARGS)), "\n\n";
-    print '[nvtt]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_NVTT_ARGS)), $output, "\n\n";
+    print '[assimp]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_ASSIMP_ARGS)), $output, "\n\n";
+    print '[nvtt]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_NVTT_ARGS)), $output2, "\n\n";
     print '[vpvl]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL_ARGS)), "\n\n";
     print '[vpvl2]', "\n", 'cmake ', join(' ', rewrite_cmake_flags($CMAKE_VPVL2_ARGS)), "\n\n";
     print '[portaudio]', "\n", 'scons ', join(' ', rewrite_scons_flags($SCONS_PORTAUDIO_ARGS)), "\n\n";
@@ -308,8 +309,17 @@ chdir $base_directory;
 
 # checkout assimp source
 system 'svn', 'checkout', $ASSIMP_CHECKOUT_URI, $ASSIMP_DIRECTORY unless -d $ASSIMP_DIRECTORY;
-my $regex = $opt_static ? 's/ADD_LIBRARY\(\s*assimp\s+SHARED/ADD_LIBRARY(assimp STATIC/gxms'
-                        : 's/ADD_LIBRARY\(\s*assimp\s+STATIC/ADD_LIBRARY(assimp SHARED/gxms';
+my $regex;
+$path = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_DIRECTORY, 'lib');
+# to prevent unused variable warning
+if ($opt_static) {
+    @$CMAKE_ASSIMP_ARGS = ( @$CMAKE_ASSIMP_ARGS, '-DLIBRARY_OUTPUT_PATH:PATH=' . $path );
+	$regex = 's/ADD_LIBRARY\(\s*assimp\s+SHARED/ADD_LIBRARY(assimp STATIC/gxms';
+}
+else {
+    @$CMAKE_ASSIMP_ARGS = ( @$CMAKE_ASSIMP_ARGS, '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=' . $path );
+	$regex = 's/ADD_LIBRARY\(\s*assimp\s+STATIC/ADD_LIBRARY(assimp SHARED/gxms';
+}
 system 'perl', '-pi', '-e', $regex, File::Spec->catfile($ASSIMP_DIRECTORY, 'code', 'CMakeLists.txt');
 build_with_cmake $ASSIMP_DIRECTORY, $CMAKE_ASSIMP_ARGS;
 my $assimp_dir = File::Spec->catdir($base_directory, $ASSIMP_DIRECTORY, $BUILD_DIRECTORY);
@@ -326,11 +336,10 @@ chdir $base_directory;
 # checkout nvidia texture tools sources
 system 'svn', 'checkout', '-r', $NVTT_REVISION, $NVTT_CHECKOUT_URI, $NVTT_DIRECTORY unless -d $NVTT_DIRECTORY;
 # build directory should be same as configure does
-my $build_directory_nvtt = 'build-' . $BUILD_DIRECTORY;
-$path = File::Spec->catdir($base_directory, $NVTT_DIRECTORY, $build_directory_nvtt, 'lib');
+$path = File::Spec->catdir($base_directory, $NVTT_DIRECTORY, $BUILD_DIRECTORY, 'lib');
 # append LIBRARY_OUTPUT_PATH dynamically
-@$CMAKE_NVTT_ARGS = ( @$CMAKE_NVTT_ARGS, '-DLIBRARY_OUTPUT_PATH=' . $path );
-build_with_cmake $NVTT_DIRECTORY, $CMAKE_NVTT_ARGS, $build_directory_nvtt;
+@$CMAKE_NVTT_ARGS = ( @$CMAKE_NVTT_ARGS, '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=' . $path );
+build_with_cmake $NVTT_DIRECTORY, $CMAKE_NVTT_ARGS;
 chdir $base_directory;
 
 # checkout portaudio
@@ -350,7 +359,7 @@ chdir $base_directory;
 if ($opt_march) {
     # build libav for i386
     my @i386_args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_i386 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY . '_i386');
+    my $path_i386 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY . '-i386');
     push @i386_args, (
         '--prefix=' . $path_i386,
         '--arch=i386',
@@ -362,7 +371,7 @@ if ($opt_march) {
     chdir $base_directory;
     # build libav for x86_64
     my @x86_64_args = @$CONFIGURE_LIBAV_ARGS;
-    my $path_x86_64 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY . '_native');
+    my $path_x86_64 = File::Spec->catdir($base_directory, $LIBAV_DIRECTORY, $BUILD_DIRECTORY . '-native');
     push @x86_64_args, (
         '--prefix=' . $path_x86_64,
         '--arch=x86_64',
