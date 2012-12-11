@@ -235,7 +235,8 @@ private slots:
     void renderBackgroundObjects();
     void setGesturesEnable(bool value);
     void zoom(bool up, const Qt::KeyboardModifiers &modifiers);
-    void openErrorDialogIfFailed(bool loadingProjectFailed);
+    void openErrorDialogIfLoadingProjectFailed(bool ok);
+    void openErrorDialogIfSavingProjectFailed(bool ok);
     void zoomIn() { zoom(true, Qt::NoModifier); }
     void zoomOut() { zoom(false, Qt::NoModifier); }
     void rotateUp() { rotateScene(Vector3(10.0f, 0.0f, 0.0f)); }

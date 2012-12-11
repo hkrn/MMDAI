@@ -232,7 +232,7 @@ signals:
     void projectDidCount(int value);
     void projectDidProceed(int value);
     void projectDidLoad(bool loaded);
-    void projectDidSave();
+    void projectDidSave(bool saved);
     void modelDidSelect(IModel *model, SceneLoader *loader);
     void modelDidAdd(IModel *model, const QUuid &uuid);
     void modelWillDelete(IModel *model, const QUuid &uuid);
