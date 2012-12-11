@@ -71,7 +71,9 @@ namespace qt
 {
 
 using namespace extensions::gl;
+
 class Archive;
+typedef QSharedPointer<Archive> ArchiveSharedPtr;
 
 class RenderContext : public IRenderContext, protected QGLFunctions
 {
@@ -153,8 +155,7 @@ public:
     void startProfileSession(ProfileType type, const void *arg);
     void stopProfileSession(ProfileType type, const void *arg);
 
-    void setArchive(Archive *value);
-    void clearArchive();
+    void setArchive(ArchiveSharedPtr value);
     void setSceneRef(Scene *value);
     void updateMatrices(const QSizeF &size);
     void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
@@ -225,7 +226,7 @@ private:
     mutable QMutex m_effect2modelsLock;
     mutable QMutex m_effectCachesLock;
     QSizeF m_viewport;
-    QScopedPointer<Archive> m_archive;
+    ArchiveSharedPtr m_archive;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<const QString, IModel *> m_filename2Models;
     QHash<GLuint, QString> m_texture2Paths;

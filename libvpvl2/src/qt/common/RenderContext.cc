@@ -225,7 +225,6 @@ RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *sce
     : m_sceneRef(scene),
       m_settings(settings),
       m_systemDir(m_settings.value("dir.system.toon", "../../VPVM/resources/images")),
-      m_archive(0),
       m_msaaSamples(0),
       m_frameBufferObjectBound(false)
 {
@@ -604,15 +603,9 @@ void RenderContext::stopProfileSession(ProfileType type, const void *arg)
     m_profilerTimers[ProfilerKey(type, arg)].elapsed();
 }
 
-void RenderContext::setArchive(Archive *value)
+void RenderContext::setArchive(ArchiveSharedPtr value)
 {
-    Q_ASSERT(value);
-    m_archive.reset(value);
-}
-
-void RenderContext::clearArchive()
-{
-    m_archive.take();
+    m_archive = value;
 }
 
 void RenderContext::setSceneRef(Scene *value)
