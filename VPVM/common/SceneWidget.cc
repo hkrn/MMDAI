@@ -1103,7 +1103,8 @@ void SceneWidget::initializeGL()
     m_renderContext.reset(new RenderContext(settings, 0));
     m_renderContext->initialize(true);
     m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
-    connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfFailed(bool)));
+    connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfLoadingProjectFailed(bool)));
+    connect(m_loader.data(), SIGNAL(projectDidSave(bool)), SLOT(openErrorDialogIfSavingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
     connect(m_loader.data(), SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setSelectedModel(IModel*)));
     /* 背面カリングを有効にする */
@@ -1589,12 +1590,21 @@ void SceneWidget::swipeTriggered(QSwipeGesture *event)
     }
 }
 
-void SceneWidget::openErrorDialogIfFailed(bool loadingProjectFailed)
+void SceneWidget::openErrorDialogIfLoadingProjectFailed(bool ok)
 {
-    if (!loadingProjectFailed) {
+    if (!ok) {
         warning(this,
                 tr("Failed loading the project"),
                 tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
+    }
+}
+
+void SceneWidget::openErrorDialogIfSavingProjectFailed(bool ok)
+{
+    if (!ok) {
+        warning(this,
+                tr("Failed saving the project"),
+                tr("Failed saving the project. Retry saving the project again after seconds."));
     }
 }
 

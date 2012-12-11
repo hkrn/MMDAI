@@ -241,7 +241,7 @@ signals:
     void projectDidOpenProgress(const QString &title, bool cancellable);
     void projectDidUpdateProgress(int value, int max, const QString &text);
     void projectDidLoad(bool loaded);
-    void projectDidSave();
+    void projectDidSave(bool saved);
     void modelDidSelect(IModel *model, SceneLoader *loader);
     void modelDidAdd(IModel *model, const QUuid &uuid);
     void modelWillDelete(IModel *model, const QUuid &uuid);

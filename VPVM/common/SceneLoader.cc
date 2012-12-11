@@ -1161,9 +1161,18 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModel *asset)
 
 void SceneLoader::saveProject(const QString &path)
 {
-    commitAssetProperties();
-    m_project->save(path.toLocal8Bit().constData());
-    emit projectDidSave();
+    QTemporaryFile file;
+    if (file.open()) {
+        const QByteArray &bytes = file.fileName().toLocal8Bit();
+        commitAssetProperties();
+        m_project->save(bytes.constData());
+        // TODO: windows
+        int ret = rename(bytes.constData(), path.toLocal8Bit().constData());
+        emit projectDidSave(ret == 0);
+    }
+    else {
+        emit projectDidSave(false);
+    }
 }
 
 void SceneLoader::setCameraMotion(IMotion *motion)
