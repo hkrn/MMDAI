@@ -80,6 +80,8 @@ class SceneLoader : public QObject
     Q_OBJECT
 
 public:
+    static const QRegExp kAllLoadable;
+    static const QRegExp kAllExtensions;
     static const QRegExp kAssetLoadable;
     static const QRegExp kAssetExtensions;
     static const QRegExp kModelLoadable;
@@ -89,6 +91,7 @@ public:
     ~SceneLoader();
 
     QList<IModel *> allModels() const;
+    void addModel(IModel *model,  const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid);
     void bindDepthTexture();
     void deleteModel(IModel *&model);
     IModel *findAsset(const QUuid &uuid) const;
@@ -99,7 +102,7 @@ public:
     void getCameraMatrices(QMatrix4x4 &worldRef, QMatrix4x4 &view, QMatrix4x4 &projection) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr);
-    bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, QUuid &uuid, IModelPtr &assetPtr);
+    bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelPtr &assetPtr);
     bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelPtr &modelPtr);
     bool loadCameraMotion(const QString &path, IMotionPtr &motionPtr);
     bool loadModel(const QString &filename, IModelPtr &modelPtr);
@@ -189,7 +192,6 @@ public:
     int maxTimeIndex() const;
 
 public slots:
-    void addModel(IModel *model, const QString &path, const QDir &dir, QUuid &uuid);
     void newProject();
     void deleteCameraMotion();
     void deleteMotion(IMotion *&motion);
@@ -259,6 +261,7 @@ private slots:
     void deleteModelSlot(IModel *model);
 
 private:
+    typedef QPair<QString, QString> FilePathPair;
     bool createModelEngine(IModel *model, const QDir &dir, IRenderEnginePtr &enginePtr);
     bool loadModelFromProject(const QString &path, IModel *model);
     bool handleFuture(const QFuture<IModel *> &future, IModelPtr &modelPtr) const;
@@ -272,9 +275,9 @@ private:
     Scene::AccelerationType globalAccelerationType() const;
     Scene::AccelerationType modelAccelerationType(const IModel *model) const;
     IModel *loadBytesAsync(const QByteArray &bytes, IModel::Type type);
-    QByteArray loadFile(const QString &filename, const QRegExp &loadable, const QRegExp &extensions, IModel::Type &type);
-    IModel *loadFileAsync(const QString &filename, const QRegExp &loadable, const QRegExp &extensions);
-    bool loadFileDirectAsync(const QString &filename, const QRegExp &loadable, const QRegExp &extensions, IModel *model);
+    QByteArray loadFile(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModel::Type &type);
+    IModel *loadFileAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions);
+    bool loadFileDirectAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModel *model);
 
     QScopedPointer<QGLFramebufferObject> m_depthBuffer;
     QScopedPointer<qt::World> m_world;
