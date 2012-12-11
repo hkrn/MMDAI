@@ -466,10 +466,10 @@ void SceneWidget::loadMotionToAllModels(const QString &path, IMotionPtr &motionP
 {
     if (QFile::exists(path)) {
         QList<IModel *> models;
-        UIAlertMVDMotion(motionPtr.data(), this);
         emit fileDidOpenProgress(tr("Loading %1").arg(path), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(path));
         m_loader->loadModelMotion(path, models, motionPtr);
+        UIAlertMVDMotion(motionPtr.data(), this);
         seekMotion(0, false, true);
         emit fileDidLoad(path, true);
     }
