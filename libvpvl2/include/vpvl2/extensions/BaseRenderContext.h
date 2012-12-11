@@ -545,6 +545,16 @@ public:
             break;
         }
     }
+    void updateCameraMatrix(const glm::vec2 &size) {
+        const ICamera *camera = m_sceneRef->camera();
+        Scalar matrix[16];
+        camera->modelViewTransform().getOpenGLMatrix(matrix);
+        const glm::mediump_float &aspect = size.x / size.y;
+        const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
+                &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
+        setCameraMatrix(world, view, projection);
+        setViewport(size);
+    }
 
     virtual bool loadFile(const UnicodeString &path, std::string &bytes) = 0;
 

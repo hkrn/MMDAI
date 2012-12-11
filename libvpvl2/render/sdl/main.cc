@@ -161,17 +161,6 @@ static void UIHandleMouseWheel(const SDL_MouseWheelEvent &event, UIContext &cont
 }
 #endif
 
-static void UIUpdateCamera(UIContext &context)
-{
-    const ICamera *camera = context.sceneRef->camera();
-    Scalar matrix[16];
-    camera->modelViewTransform().getOpenGLMatrix(matrix);
-    const float &aspect = context.width / float(context.height);
-    const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
-            &projection = glm::perspective(camera->fov(), aspect, camera->znear(), camera->zfar());
-    context.renderContextRef->setCameraMatrix(world, view, projection);
-}
-
 static void UIDrawScreen(const UIContext &context)
 {
     glViewport(0, 0, context.width, context.height);
@@ -236,7 +225,8 @@ static void UIProceedEvents(UIContext &context)
             break;
         }
     }
-    UIUpdateCamera(context);
+    glm::vec2 size(context.width, context.height);
+    context.renderContextRef->updateCameraMatrix(size);
 }
 
 } /* namespace anonymous */
@@ -409,6 +399,7 @@ int main(int /* argc */, char ** /* argv[] */)
 
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_CLAMP);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
