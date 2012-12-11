@@ -80,6 +80,7 @@ public:
     static const UUID kNullUUID;
     static const std::string kSettingNameKey;
     static const std::string kSettingURIKey;
+    static const std::string kSettingArchiveURIKey;
 
     static float formatVersion();
     static bool isReservedSettingKey(const std::string &key);

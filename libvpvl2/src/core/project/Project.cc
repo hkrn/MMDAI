@@ -975,7 +975,8 @@ struct Project::PrivateContext {
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            if (self->settingKey == kSettingURIKey && value.find(".pmx") != std::string::npos) {
+            if ((self->settingKey == kSettingURIKey && value.find(".pmx") != std::string::npos) ||
+                    (self->settingKey == kSettingArchiveURIKey && value.find(".pmx") != std::string::npos)) {
                 StringMap values = self->localModelSettings[self->currentModel];
                 self->localModelSettings.erase(self->currentModel);
                 delete self->currentModel;
@@ -1768,6 +1769,7 @@ const std::string Project::PrivateContext::kEmpty = "";
 const Project::UUID Project::kNullUUID = "{00000000-0000-0000-0000-000000000000}";
 const std::string Project::kSettingNameKey = "name";
 const std::string Project::kSettingURIKey = "uri";
+const std::string Project::kSettingArchiveURIKey = "uri.archive";
 
 float Project::formatVersion()
 {
