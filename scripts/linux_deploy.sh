@@ -22,17 +22,15 @@ strip ${app_name}
 mkdir ${package_name}
 rm -rf lib
 mkdir lib
-ldd ${app_name} | grep libavcodec.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
-ldd ${app_name} | grep libavformat.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
-ldd ${app_name} | grep libavutil.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
-ldd ${app_name} | grep libswscale.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/libav_release/lib/% lib
-ldd ${app_name} | grep libportaudio.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../portaudio-src/release_native/lib/% lib
-ldd ${app_name} | grep libIL | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../devil-src/release_native/lib/% lib
-ldd ${app_name} | grep libILU | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp % ../devil-src/release_native/lib/% lib
-ldd ${app_name} | grep libILUT | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp % ../devil-src/release_native/lib/% lib
+ldd ${app_name} | grep libavcodec.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/build-release-native/lib/% lib
+ldd ${app_name} | grep libavformat.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/build-release-native/lib/% lib
+ldd ${app_name} | grep libavutil.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/build-release-native/lib/% lib
+ldd ${app_name} | grep libswscale.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../libav-src/build-release-native/lib/% lib
+ldd ${app_name} | grep libportaudio.so | perl -ne 'print [split(/\s+/, $_)]->[1], "\n"' | xargs -i% cp ../portaudio-src/build-release-native/lib/% lib
 ldd ${app_name} | grep libQt | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
 ldd ${app_name} | grep libCg | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
 ldd ${app_name} | grep libCgGL | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
+ldd ${app_name} | grep libtbb | perl -ne 'print [split(/\s+/, $_)]->[3], "\n"' | xargs -i% cp % lib
 strip lib/*
 rm -rf plugins
 cp -r `qmake -query QT_INSTALL_PLUGINS` plugins
