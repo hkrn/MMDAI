@@ -58,22 +58,22 @@
 #endif /* __APPLE__ */
 #endif
 
-#ifdef __APPLE__
-#define glBlitFramebufferPROC glBlitFramebuffer
-#define glDrawBuffersPROC glDrawBuffers
-#define glRenderbufferStorageMultisamplePROC glRenderbufferStorageMultisample
-#else
-PFNGLBLITFRAMEBUFFERPROC glBlitFramebufferPROC;
-PFNGLDRAWBUFFERSPROC glDrawBuffersPROC;
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
-#endif
-
 namespace vpvl2
 {
 namespace extensions
 {
 namespace gl
 {
+
+#ifdef __APPLE__
+#define glBlitFramebufferPROC glBlitFramebuffer
+#define glDrawBuffersPROC glDrawBuffers
+#define glRenderbufferStorageMultisamplePROC glRenderbufferStorageMultisample
+#else
+static PFNGLBLITFRAMEBUFFERPROC glBlitFramebufferPROC;
+static PFNGLDRAWBUFFERSPROC glDrawBuffersPROC;
+static PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
+#endif
 
 class FrameBufferObject
         #ifdef VPVL2_LINK_QT
