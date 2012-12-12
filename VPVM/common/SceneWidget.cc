@@ -57,6 +57,7 @@
 
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 #ifdef Q_OS_DARWIN
 #include <OpenGL/glu.h>
@@ -473,7 +474,7 @@ void SceneWidget::loadMotionToAllModels(const QString &path, IMotionPtr &motionP
         seekMotion(0, false, true);
         emit fileDidLoad(path, true);
     }
-    else {
+    else if (!path.isEmpty()) {
         warning(this, tr("Loading model motion error"),
                 tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
     }
@@ -835,20 +836,17 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 {
     // This implementation based on the below page.
     // http://softwareprodigy.blogspot.com/2009/08/gluunproject-for-iphone-opengl-es.html
-    GLdouble modelviewMatrixd[16], projectionMatrixd[16];
-    const GLint viewport[4] = { 0, 0, width(), height() };
-    QMatrix4x4 world, view, projection;
+    glm::mat4 world, view, projection;
+    glm::vec2 win(input.x(), height() - input.y());
     m_loader->getCameraMatrices(world, view, projection);
-    const QMatrix4x4 worldview = view * world;
-    for (int i = 0; i < 16; i++) {
-        modelviewMatrixd[i] = worldview.constData()[i];
-        projectionMatrixd[i] = projection.constData()[i];
-    }
-    GLdouble wx = input.x(), wy = height() - input.y(), cx, cy, cz, fx, fy, fz;
-    gluUnProject(wx, wy, 0, modelviewMatrixd, projectionMatrixd, viewport, &cx, &cy, &cz);
-    gluUnProject(wx, wy, 1, modelviewMatrixd, projectionMatrixd, viewport, &fx, &fy, &fz);
-    rayFrom.setValue(cx, cy, cz);
-    rayTo.setValue(fx, fy, fz);
+    const glm::vec4 viewport(0, 0, width(), height());
+    ICamera *camera = m_loader->sceneRef()->camera();
+    /* projection の値は無限望遠で rayTo の値が inf になってしまうので、上書きする */
+    projection = glm::perspective(camera->fov(), width() / glm::mediump_float(height()), 0.1f, 10000.0f);
+    const glm::vec3 &cnear = glm::unProject(glm::vec3(win, 0), view * world, projection, viewport);
+    rayFrom.setValue(cnear.x, cnear.y, cnear.z);
+    const glm::vec3 &cfar = glm::unProject(glm::vec3(win, 1), view * world, projection, viewport);
+    rayTo.setValue(cfar.x, cfar.y, cfar.z);
 }
 
 void SceneWidget::selectBones(const QList<IBone *> &bones)
@@ -1639,7 +1637,7 @@ void SceneWidget::updateFPS()
 
 void SceneWidget::updateScene()
 {
-    m_loader->updateMatrices(QSizeF(size()));
+    m_loader->updateCameraMatrices(QSizeF(size()));
     if (m_enableUpdateGL)
         updateGL();
     emit cameraPerspectiveDidSet(m_loader->sceneRef()->camera());

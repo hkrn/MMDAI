@@ -53,6 +53,8 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/Project.h>
 
+#include <glm/glm.hpp>
+
 namespace vpvl2 {
 class IMotion;
 class IRenderContext;
@@ -99,7 +101,7 @@ public:
     IMotion *findMotion(const QUuid &uuid) const;
     const QUuid findUUID(const IModel *model) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    void getCameraMatrices(QMatrix4x4 &worldRef, QMatrix4x4 &view, QMatrix4x4 &projection) const;
+    void getCameraMatrices(glm::mat4 &worldRef, glm::mat4 &view, glm::mat4 &projection) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr);
     bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelPtr &assetPtr);
@@ -122,7 +124,7 @@ public:
     void renderZPlotToTexture();
     void setLightViewProjectionMatrix();
     void setMousePosition(const QMouseEvent *event, const QRect &geometry);
-    void updateMatrices(const QSizeF &size);
+    void updateCameraMatrices(const QSizeF &size);
     void updateDepthBuffer(const QSize &value);
     const QList<QUuid> renderOrderList() const;
     const QMatrix4x4 &projectionMatrix() const { return m_projection; }

@@ -100,6 +100,7 @@ LicenseWidget::LicenseWidget(QWidget *parent)
     resize(600, 450);
     setLayout(layout.take());
 
+    addLibrary("GLM", "MIT", "http://glm.g-truc.net/", "GLM");
     addLibrary("Glyph Icons", "CC 3.0", "http://glyphicons.com/", "GlyphIcons");
 #ifdef VPVL2_LINK_INTEL_TBB
     addLibrary("TBB", "GPL", "http://threadingbuildingblocks.org/", "TBB");

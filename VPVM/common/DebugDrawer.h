@@ -40,6 +40,10 @@
 #include <vpvl2/qt/CString.h>
 #include <vpvl2/qt/VertexBundle.h>
 
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "SceneLoader.h"
 #include "SceneWidget.h"
 #include "util.h"
@@ -219,11 +223,12 @@ public:
             /* モデルビュー行列を元に軸表示 */
             const Transform &transform = bone->worldTransform();
             const Vector3 &origin = bone->worldTransform().getOrigin();
-            QMatrix4x4 world, view, projection;
+            glm::mat4 world, view, projection;
             loader->getCameraMatrices(world, view, projection);
-            drawLine(origin, transform * (vec2vec(view.row(0)) * kLength), kRed);
-            drawLine(origin, transform * (vec2vec(view.row(1)) * kLength), kGreen);
-            drawLine(origin, transform * (vec2vec(view.row(2)) * kLength), kBlue);
+            const glm::vec4 &x = glm::row(view, 0), &y = glm::row(view, 1), &z = glm::row(view, 2);
+            drawLine(origin, transform * (Vector3(x.x, x.y, x.z) * kLength), kRed);
+            drawLine(origin, transform * (Vector3(y.x, y.y, y.z) * kLength), kGreen);
+            drawLine(origin, transform * (Vector3(z.x, z.y, z.z) * kLength), kBlue);
         }
         else if (mode == 'L') {
             if (bone->hasLocalAxes()) {
@@ -324,16 +329,22 @@ private:
         }
     }
     void beginDrawing(const SceneLoader *loader, const IModel *model) {
-        QMatrix4x4 world, view, projection;
+        glm::mat4 world, view, projection;
         loader->getCameraMatrices(world, view, projection);
         if (model) {
             const Vector3 &position = model->worldPosition();
             const Quaternion &rotation = model->worldRotation();
-            world.translate(position.x(), position.y(), position.z());
-            world.rotate(QQuaternion(rotation.w(), rotation.x(), rotation.y(), rotation.z()));
+            Transform transform(rotation, position);
+            Scalar m[16];
+            transform.getOpenGLMatrix(m);
+            world = glm::make_mat4(m);
         }
         m_program.bind();
-        m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
+        QMatrix4x4 matrix;
+        const float *v = glm::value_ptr(projection * view * world);
+        for (int i = 0; i < 16; i++)
+            matrix.data()[i] = v[i];
+        m_program.setUniformValue("modelViewProjectionMatrix", matrix);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
         bindVertexBundle(false); // XXX: VAO doesn't work

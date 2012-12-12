@@ -45,6 +45,8 @@
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
 
+#include <glm/glm.hpp>
+
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
@@ -157,11 +159,11 @@ public:
 
     void setArchive(ArchiveSharedPtr value);
     void setSceneRef(Scene *value);
-    void updateMatrices(const QSizeF &size);
-    void getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
-    void setCameraModelMatrix(const QMatrix4x4 &value);
-    void getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection);
-    void setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection);
+    void updateCameraMatrices(const QSizeF &size);
+    void getCameraMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection);
+    void setCameraModelMatrix(const glm::mat4 &value);
+    void getLightMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection);
+    void setLightMatrices(const glm::mat4 &world, const glm::mat4 &view, const glm::mat4 &projection);
     void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type);
     void addModelPath(IModel *model, const QString &filename);
     const QString findModelPath(const IModel *model) const;
@@ -225,7 +227,6 @@ private:
     mutable QMutex m_effectOwnersLock;
     mutable QMutex m_effect2modelsLock;
     mutable QMutex m_effectCachesLock;
-    QSizeF m_viewport;
     ArchiveSharedPtr m_archive;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<const QString, IModel *> m_filename2Models;
@@ -236,22 +237,23 @@ private:
     QHash<const IEffect *, QString> m_effectOwners;
     QHash<const IEffect *, IModel *> m_effect2models;
     QList<FrameBufferObject *> m_previousFrameBufferPtrs;
-    QMatrix4x4 m_lightWorldMatrix;
-    QMatrix4x4 m_lightViewMatrix;
-    QMatrix4x4 m_lightProjectionMatrix;
-    QMatrix4x4 m_cameraModelMatrix;
-    QMatrix4x4 m_cameraViewMatrix;
-    QMatrix4x4 m_cameraProjectionMatrix;
     QElapsedTimer m_timer;
     QSet<QString> m_loadableExtensions;
     QSet<QString> m_extensions;
     typedef QPair<IRenderContext::ProfileType, const void *> ProfilerKey;
     QHash<ProfilerKey, QElapsedTimer> m_profilerTimers;
     QString m_shaderSourcePrefix;
-    Vector4 m_mouseCursorPosition;
-    Vector4 m_mouseLeftPressPosition;
-    Vector4 m_mouseMiddlePressPosition;
-    Vector4 m_mouseRightPressPosition;
+    glm::mat4 m_lightWorldMatrix;
+    glm::mat4 m_lightViewMatrix;
+    glm::mat4 m_lightProjectionMatrix;
+    glm::mat4 m_cameraWorldMatrix;
+    glm::mat4 m_cameraViewMatrix;
+    glm::mat4 m_cameraProjectionMatrix;
+    glm::vec4 m_mouseCursorPosition;
+    glm::vec4 m_mouseLeftPressPosition;
+    glm::vec4 m_mouseMiddlePressPosition;
+    glm::vec4 m_mouseRightPressPosition;
+    glm::vec2 m_viewport;
     int m_msaaSamples;
     bool m_frameBufferObjectBound;
 

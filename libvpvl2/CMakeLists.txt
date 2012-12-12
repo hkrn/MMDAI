@@ -347,6 +347,9 @@ if(VPVL2_LINK_INTEL_TBB)
   target_link_libraries(vpvl2 ${TBB_LIBRARIES})
 endif()
 
+find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../glm-src)
+include_directories(${GLM_INCLUDE_DIR})
+
 # extra renderer program with SDL
 if(VPVL2_OPENGL_RENDERER AND (VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2))
   if(VPVL2_LINK_SDL2)
@@ -367,8 +370,6 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2))
       list(APPEND vpvl2_sdl_sources render/sdl/SDLMain.m render/sdl/SDLMain.h)
     endif()
   endif()
-  find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../glm-src)
-  include_directories(${GLM_INCLUDE_DIR})
   set(vpvl2_sdl_sources render/sdl/main.cc)
   add_executable(vpvl2_sdl ${vpvl2_sdl_sources} ${vpvl2_public_headers})
   target_link_libraries(vpvl2_sdl vpvl2 ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})

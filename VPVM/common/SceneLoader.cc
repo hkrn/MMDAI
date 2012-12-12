@@ -50,6 +50,8 @@
 #endif
 #include <vpvl2/vpvl2.h>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 /* to cast IEffect#internalPointer and IEffect#internalContext */
 #include <Cg/cg.h>
@@ -528,7 +530,7 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
     }
 }
 
-void SceneLoader::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection) const
+void SceneLoader::getCameraMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection) const
 {
     m_renderContextRef->getCameraMatrices(world, view, projection);
 }
@@ -1060,11 +1062,11 @@ void SceneLoader::setLightViewProjectionMatrix()
     const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
     const Scalar &margin = 50;
     const Vector3 &eye = -m_project->light()->direction() * radius * 2 + center;
-    QMatrix4x4 world, view, projection;
-    projection.perspective(angle, 1, 1, distance + radius + margin);
-    view.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
-                QVector3D(center.x(), center.y(), center.z()),
-                QVector3D(0, 1, 0));
+    glm::mat4 world(1);
+    glm::mat4 projection = glm::perspective(angle, 1.0f, 1.0f, distance + radius + margin);
+    glm::mat4 view = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
+                                 glm::vec3(center.x(), center.y(), center.z()),
+                                 glm::vec3(0, 1, 0));
     m_renderContextRef->setLightMatrices(world, view, projection);
 }
 
@@ -1120,10 +1122,10 @@ void SceneLoader::renderZPlotToTexture()
     bindDepthTexture();
     renderZPlot();
     releaseDepthTexture();
-    QMatrix4x4 world, view, projection;
+    glm::mat4 world, view, projection;
     m_renderContextRef->getLightMatrices(world, view, projection);
-    world.scale(0.5);
-    world.translate(1, 1, 1);
+    world = glm::scale(world, glm::vec3(0.5f, 0.5f, 0.5f));
+    world = glm::translate(world, glm::vec3(1.0f, 1.0f, 1.0f));
     m_renderContextRef->setLightMatrices(world, view, projection);
 }
 
@@ -1146,9 +1148,9 @@ void SceneLoader::updateDepthBuffer(const QSize &value)
     m_depthBufferID = m_depthBuffer->texture();
 }
 
-void SceneLoader::updateMatrices(const QSizeF &size)
+void SceneLoader::updateCameraMatrices(const QSizeF &size)
 {
-    m_renderContextRef->updateMatrices(size);
+    m_renderContextRef->updateCameraMatrices(size);
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const

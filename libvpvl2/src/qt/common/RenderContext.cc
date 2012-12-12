@@ -46,6 +46,10 @@
 #include <QtConcurrent/QtConcurrent>
 #endif
 
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 /* to cast IEffect#internalPointer and IEffect#internalContext */
 #include <Cg/cg.h>
@@ -242,16 +246,6 @@ RenderContext::~RenderContext()
     setSceneRef(0);
     qDeleteAll(m_renderTargets);
     m_renderTargets.clear();
-    m_lightWorldMatrix.setToIdentity();
-    m_lightViewMatrix.setToIdentity();
-    m_lightProjectionMatrix.setToIdentity();
-    m_cameraModelMatrix.setToIdentity();
-    m_cameraViewMatrix.setToIdentity();
-    m_cameraProjectionMatrix.setToIdentity();
-    m_mouseCursorPosition.setZero();
-    m_mouseLeftPressPosition.setZero();
-    m_mouseMiddlePressPosition.setZero();
-    m_mouseRightPressPosition.setZero();
     m_msaaSamples = 0;
 }
 
@@ -344,7 +338,7 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
 
 void RenderContext::getMatrix(float value[], const IModel *model, int flags) const
 {
-    QMatrix4x4 m;
+    glm::mat4x4 m(1);
     if (flags & IRenderContext::kShadowMatrix) {
         if (flags & IRenderContext::kProjectionMatrix)
             m *= m_cameraProjectionMatrix;
@@ -355,20 +349,19 @@ void RenderContext::getMatrix(float value[], const IModel *model, int flags) con
             const ILight *light = m_sceneRef->light();
             const Vector3 &direction = light->direction();
             const Scalar dot = plane.dot(-direction);
-            QMatrix4x4 shadowMatrix;
+            float matrix[16];
             for (int i = 0; i < 4; i++) {
                 int offset = i * 4;
                 for (int j = 0; j < 4; j++) {
                     int index = offset + j;
-                    shadowMatrix.data()[index] = plane[i] * direction[j];
+                    matrix[index] = plane[i] * direction[j];
                     if (i == j)
-                        shadowMatrix.data()[index] += dot;
+                        matrix[index] += dot;
                 }
             }
-            UIConcatModelTransformMatrix(model, m);
-            m *= shadowMatrix;
-            m *= m_cameraModelMatrix;
-            m.scale(model->scaleFactor());
+            m *= glm::make_mat4x4(matrix);
+            m *= m_cameraWorldMatrix;
+            m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
     else if (flags & IRenderContext::kCameraMatrix) {
@@ -377,33 +370,42 @@ void RenderContext::getMatrix(float value[], const IModel *model, int flags) con
         if (flags & IRenderContext::kViewMatrix)
             m *= m_cameraViewMatrix;
         if (flags & IRenderContext::kWorldMatrix) {
-            UIConcatModelTransformMatrix(model, m);
-            m *= m_cameraModelMatrix;
-            m.scale(model->scaleFactor());
+            const IBone *bone = model->parentBone();
+            Transform transform;
+            transform.setOrigin(model->worldPosition());
+            transform.setRotation(model->worldRotation());
+            Scalar matrix[16];
+            transform.getOpenGLMatrix(matrix);
+            m *= glm::make_mat4x4(matrix);
+            if (bone) {
+                transform = bone->worldTransform();
+                transform.getOpenGLMatrix(matrix);
+                m *= glm::make_mat4x4(matrix);
+            }
+            m *= m_cameraWorldMatrix;
+            m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
     else if (flags & IRenderContext::kLightMatrix) {
+        if (flags & IRenderContext::kWorldMatrix) {
+            m *= m_lightWorldMatrix;
+            m = glm::scale(m, glm::vec3(model->scaleFactor()));
+        }
         if (flags & IRenderContext::kProjectionMatrix)
             m *= m_lightProjectionMatrix;
         if (flags & IRenderContext::kViewMatrix)
             m *= m_lightViewMatrix;
-        if (flags & IRenderContext::kWorldMatrix) {
-            m *= m_lightWorldMatrix;
-            m.scale(model->scaleFactor());
-        }
     }
     if (flags & IRenderContext::kInverseMatrix)
-        m = m.inverted();
+        m = glm::inverse(m);
     if (flags & IRenderContext::kTransposeMatrix)
-        m = m.transposed();
-    for (int i = 0; i < 16; i++) {
-        value[i] = float(m.constData()[i]);
-    }
+        m = glm::transpose(m);
+    memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
 
 void RenderContext::getViewport(Vector3 &value) const
 {
-    value.setValue(m_viewport.width(), m_viewport.height(), 0);
+    value.setValue(m_viewport.x, m_viewport.y, 0);
 }
 
 void RenderContext::getTime(float &value, bool sync) const
@@ -420,28 +422,28 @@ void RenderContext::getMousePosition(Vector4 &value, MousePositionType type) con
 {
     switch (type) {
     case kMouseLeftPressPosition:
-        value.setValue(m_mouseLeftPressPosition.x(),
-                       m_mouseLeftPressPosition.y(),
-                       m_mouseLeftPressPosition.z(),
-                       m_mouseLeftPressPosition.w());
+        value.setValue(m_mouseLeftPressPosition.x,
+                       m_mouseLeftPressPosition.y,
+                       m_mouseLeftPressPosition.z,
+                       m_mouseLeftPressPosition.w);
         break;
     case kMouseMiddlePressPosition:
-        value.setValue(m_mouseMiddlePressPosition.x(),
-                       m_mouseMiddlePressPosition.y(),
-                       m_mouseMiddlePressPosition.z(),
-                       m_mouseMiddlePressPosition.w());
+        value.setValue(m_mouseMiddlePressPosition.x,
+                       m_mouseMiddlePressPosition.y,
+                       m_mouseMiddlePressPosition.z,
+                       m_mouseMiddlePressPosition.w);
         break;
     case kMouseRightPressPosition:
-        value.setValue(m_mouseRightPressPosition.x(),
-                       m_mouseRightPressPosition.y(),
-                       m_mouseRightPressPosition.z(),
-                       m_mouseRightPressPosition.w());
+        value.setValue(m_mouseRightPressPosition.x,
+                       m_mouseRightPressPosition.y,
+                       m_mouseRightPressPosition.z,
+                       m_mouseRightPressPosition.w);
         break;
     case kMouseCursorPosition:
-        value.setValue(m_mouseCursorPosition.x(),
-                       m_mouseCursorPosition.y(),
-                       m_mouseCursorPosition.z(),
-                       m_mouseCursorPosition.w());
+        value.setValue(m_mouseCursorPosition.x,
+                       m_mouseCursorPosition.y,
+                       m_mouseCursorPosition.z,
+                       m_mouseCursorPosition.w);
         break;
     default:
         break;
@@ -622,38 +624,40 @@ void RenderContext::setSceneRef(Scene *value)
     m_sceneRef = value;
 }
 
-void RenderContext::updateMatrices(const QSizeF &size)
+void RenderContext::updateCameraMatrices(const QSizeF &size)
 {
-    float matrix[16];
-    ICamera *camera = m_sceneRef->camera();
+    const ICamera *camera = m_sceneRef->camera();
+    Scalar matrix[16];
+    glm::vec2 s(size.width(), size.height());
     camera->modelViewTransform().getOpenGLMatrix(matrix);
-    for (int i = 0; i < 16; i++)
-        m_cameraViewMatrix.data()[i] = matrix[i];
-    m_cameraProjectionMatrix.setToIdentity();
-    m_cameraProjectionMatrix.perspective(camera->fov(), size.width() / size.height(), camera->znear(), camera->zfar());
-    m_viewport = size;
+    const glm::mediump_float &aspect = s.x / s.y;
+    const glm::mat4x4 &view = glm::make_mat4x4(matrix),
+            &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
+    m_cameraViewMatrix = view;
+    m_cameraProjectionMatrix = projection;
+    m_viewport = s;
 }
 
-void RenderContext::getCameraMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+void RenderContext::getCameraMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection)
 {
-    world = m_cameraModelMatrix;
+    world = m_cameraWorldMatrix;
     view = m_cameraViewMatrix;
     projection = m_cameraProjectionMatrix;
 }
 
-void RenderContext::setCameraModelMatrix(const QMatrix4x4 &value)
+void RenderContext::setCameraModelMatrix(const glm::mat4 &value)
 {
-    m_cameraModelMatrix = value;
+    m_cameraWorldMatrix = value;
 }
 
-void RenderContext::getLightMatrices(QMatrix4x4 &world, QMatrix4x4 &view, QMatrix4x4 &projection)
+void RenderContext::getLightMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection)
 {
     world = m_lightWorldMatrix;
     view = m_lightViewMatrix;
     projection = m_lightProjectionMatrix;
 }
 
-void RenderContext::setLightMatrices(const QMatrix4x4 &world, const QMatrix4x4 &view, const QMatrix4x4 &projection)
+void RenderContext::setLightMatrices(const glm::mat4 &world, const glm::mat4 &view, const glm::mat4 &projection)
 {
     m_lightWorldMatrix = world;
     m_lightViewMatrix = view;
@@ -664,16 +668,16 @@ void RenderContext::setMousePosition(const Vector3 &value, bool pressed, MousePo
 {
     switch (type) {
     case kMouseLeftPressPosition:
-        m_mouseLeftPressPosition.setValue(value.x(), value.y(), pressed, 0);
+        m_mouseLeftPressPosition = glm::vec4(value.x(), value.y(), pressed, 0);
         break;
     case kMouseMiddlePressPosition:
-        m_mouseMiddlePressPosition.setValue(value.x(), value.y(), pressed, 0);
+        m_mouseMiddlePressPosition = glm::vec4(value.x(), value.y(), pressed, 0);
         break;
     case kMouseRightPressPosition:
-        m_mouseRightPressPosition.setValue(value.x(), value.y(), pressed, 0);
+        m_mouseRightPressPosition = glm::vec4(value.x(), value.y(), pressed, 0);
         break;
     case kMouseCursorPosition:
-        m_mouseCursorPosition.setValue(value.x(), value.y(), 0, 0);
+        m_mouseCursorPosition = glm::vec4(value.x(), value.y(), 0, 0);
         break;
     default:
         break;
@@ -964,7 +968,7 @@ void RenderContext::setRenderColorTargets(const void *targets, const int ntarget
 
 FrameBufferObject *RenderContext::createFrameBufferObject()
 {
-    return new FrameBufferObject(m_viewport.width(), m_viewport.height(), m_msaaSamples);
+    return new FrameBufferObject(m_viewport.x, m_viewport.y, m_msaaSamples);
 }
 
 bool RenderContext::hasFrameBufferObjectBound() const
@@ -1058,7 +1062,7 @@ void RenderContext::renderOffscreen(const QSize &size)
         size_t width = renderTarget.width, height = renderTarget.height;
         s.setWidth(width);
         s.setHeight(height);
-        updateMatrices(s);
+        updateCameraMatrices(s);
         glViewport(0, 0, width, height);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_STENCIL_TEST);
@@ -1105,7 +1109,7 @@ void RenderContext::renderOffscreen(const QSize &size)
         }
         releaseOffscreenRenderTarget(offscreen, enableAA);
     }
-    updateMatrices(size);
+    updateCameraMatrices(size);
 }
 
 IEffect *RenderContext::createEffectAsync(const IString *path)

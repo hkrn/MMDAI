@@ -44,6 +44,7 @@
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
 #include <vpvl2/qt/VertexBundle.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "SceneLoader.h"
 
@@ -117,9 +118,13 @@ public:
     void draw(const SceneLoader *loader, bool visible) {
         if (visible && m_program.isLinked()) {
             m_program.bind();
-            QMatrix4x4 world, view, projection;
+            glm::mat4 world, view, projection;
             loader->getCameraMatrices(world, view, projection);
-            m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world);
+            const float *v = glm::value_ptr(projection * view * world);
+            QMatrix4x4 matrix;
+            for (int i = 0; i < 16; i++)
+                matrix.data()[i] = v[i];
+            m_program.setUniformValue("modelViewProjectionMatrix", matrix);
             bindVertexBundle(true);
             glDrawElements(GL_LINES, m_nindices, GL_UNSIGNED_BYTE, 0);
             releaseVertexBundle(true);

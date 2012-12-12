@@ -39,6 +39,7 @@
 #include <vpvl2/qt/World.h>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "SceneLoader.h"
 #include "Handles.h"
@@ -798,15 +799,18 @@ void Handles::drawModel(Handles::Model *model,
 
 void Handles::beginDrawing()
 {
-    QMatrix4x4 world, view, projection, trans;
+    glm::mat4 world, view, projection, trans;
     m_loaderRef->getCameraMatrices(world, view, projection);
-    float matrix[16];
-    modelHandleTransform().getOpenGLMatrix(matrix);
-    for (int i = 0; i < 16; i++)
-        trans.data()[i] = matrix[i];
+    Scalar m[16];
+    modelHandleTransform().getOpenGLMatrix(m);
+    trans = glm::make_mat4(m);
     glDisable(GL_DEPTH_TEST);
+    QMatrix4x4 matrix;
+    const float *v2 = glm::value_ptr(projection * view * world * trans);
+    for (int i = 0; i < 16; i++)
+        matrix.data()[i] = v2[i];
     m_program.bind();
-    m_program.setUniformValue("modelViewProjectionMatrix", projection * view * world * trans);
+    m_program.setUniformValue("modelViewProjectionMatrix", matrix);
 }
 
 void Handles::flushDrawing()

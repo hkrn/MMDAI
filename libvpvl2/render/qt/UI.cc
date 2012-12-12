@@ -50,6 +50,8 @@
 #include <QtConcurrent/QtConcurrent>
 #endif
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #ifdef VPVL2_LINK_ASSIMP
 #include <assimp.hpp>
 #include <DefaultLogger.h>
@@ -541,7 +543,7 @@ void UI::load(const QString &filename)
     setMinimumSize(640, 480);
     m_renderContext.reset(new RenderContext(settings, m_scene.data()));
     m_renderContext->initialize(m_settings->value("effect.msaa", true).toBool());
-    m_renderContext->updateMatrices(size());
+    m_renderContext->updateCameraMatrices(size());
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
     if (m_settings->value("enable.opencl", false).toBool())
         m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
@@ -628,7 +630,7 @@ void UI::timerEvent(QTimerEvent *)
         }
     }
     m_world->stepSimulation(delta);
-    m_renderContext->updateMatrices(size());
+    m_renderContext->updateCameraMatrices(size());
     m_scene->update(Scene::kUpdateAll);
     updateGL();
 }
@@ -739,12 +741,11 @@ void UI::renderDepth()
         const Scalar &angle = 45;
         const Scalar &aspectRatio = size.x() / size.y();
         const Vector3 &eye = -m_scene->light()->direction().normalized() * maxRadius + target;
-        QMatrix4x4 lightViewMatrix, lightProjectionMatrix;
-        lightViewMatrix.lookAt(QVector3D(eye.x(), eye.y(), eye.z()),
-                               QVector3D(target.x(), target.y(), target.z()),
-                               QVector3D(0, 1, 0));
-        lightProjectionMatrix.perspective(angle, aspectRatio, 1, 10000);
-        m_renderContext->setLightMatrices(QMatrix4x4(), lightViewMatrix, lightProjectionMatrix);
+        glm::mat4 lightViewMatrix = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
+                                                glm::vec3(target.x(), target.y(), target.z()),
+                                                glm::vec3(0, 1, 0));
+        glm::mat4 lightProjectionMatrix = glm::perspective(angle, aspectRatio, 1.0f, 10000.0f);
+        m_renderContext->setLightMatrices(glm::mat4(1), lightViewMatrix, lightProjectionMatrix);
         glViewport(0, 0, size.x(), size.y());
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -766,6 +767,7 @@ void UI::renderWindow()
     glViewport(0, 0, width(), height());
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_CLAMP);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;

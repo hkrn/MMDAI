@@ -13,6 +13,7 @@ VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 LIBAV_PATH = ../libav-src
 NVTT_PATH = ../nvtt-src
+GLM_PATH = ../glm-src
 PORTAUDIO_PATH = ../portaudio-src
 
 # CMake prefix path (mainly for win32)
@@ -48,6 +49,7 @@ INCLUDEPATH      += $${VPVL2_PATH}/include \
                     $${PORTAUDIO_PATH}/include \
                     $${BULLET_PATH}/src \
                     $${NVTT_PATH}/src \
+                    $${GLM_PATH} \
                     $${LIBAV_PATH}/$${BUILD_DIRECTORY}-native/include \
                     $${PORTAUDIO_PATH}/$${BUILD_DIRECTORY}-native/include
 
@@ -83,7 +85,7 @@ macx:LIBS += -framework OpenCL \
              -framework CoreAudio \
              -framework AudioToolbox \
              -framework AudioUnit
-linux-*:LIBS += -lGLU -lCg -lCgGL
+linux-*:LIBS += -lCg -lCgGL
 
 # based on QtCreator's qmake spec
 DEFINES += QT_NO_CAST_TO_ASCII
@@ -236,6 +238,7 @@ HEADERS  += \
     widgets/ModelSettingWidget.h \
     dialogs/ShadowMapSettingDialog.h \
     common/BackgroundImage.h \
+    common/DebugDrawer.h \
     dialogs/BackgroundImageSettingDialog.h
 
 CODECFORTR = UTF-8
