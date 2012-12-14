@@ -558,6 +558,7 @@ TEST_F(EffectTest, FindTechniques)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, 0, ptr.data(), &renderContextRef);
+    ASSERT_EQ(0, engine.findTechnique("no_such_object_type", 0, 42, false, false, false));
     ASSERT_STREQ("MainTec7",   cgGetTechniqueName(engine.findTechnique("object",     1, 42, true,  true,  true)));
     ASSERT_STREQ("MainTec6",   cgGetTechniqueName(engine.findTechnique("object",     2, 42, false, true,  true)));
     ASSERT_STREQ("MainTec5",   cgGetTechniqueName(engine.findTechnique("object",     3, 42, true,  false, true)));
