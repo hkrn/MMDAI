@@ -1365,9 +1365,11 @@ CGtechnique EffectEngine::findTechnique(const char *pass,
     CGtechnique technique = 0;
     const int ntechniques = m_techniques.size();
     for (int i = 0; i < ntechniques; i++) {
-        technique = m_techniques[i];
-        if (testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon))
+        CGtechnique t = m_techniques[i];
+        if (testTechnique(t, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon)) {
+            technique = t;
             break;
+        }
     }
     return technique;
 }

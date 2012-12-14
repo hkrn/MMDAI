@@ -707,9 +707,9 @@ const QString RenderContext::effectFilePath(const IModel *model, const IString *
     const QString &path = findModelPath(model);
     if (!path.isEmpty()) {
         const QString &s = QFileInfo(path).completeBaseName();
-        const QRegExp regexp("^.+\\[([^\\\\.]+)(?:\\.(?:cg)?fx)?\\]$");
-        const QString &basename = regexp.exactMatch(s) ? regexp.capturedTexts().at(1) : s;
-        const QString &cgfx = d.absoluteFilePath(basename + ".cgfx");
+        const QRegExp regexp("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$");
+        const QFileInfo &finfo(regexp.exactMatch(s) ? regexp.capturedTexts().at(1) : s);
+        const QString &cgfx = d.absoluteFilePath(finfo.completeBaseName() + ".cgfx");
         if (QFile::exists(cgfx))
             return cgfx;
     }
