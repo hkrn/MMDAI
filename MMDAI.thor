@@ -1,15 +1,23 @@
+require "rbconfig"
+
 module Mmdai
 
   module VCS
-    # included class must implement get_uri and get_directory_name
+
+    # included class must implement below methods
+    # * get_uri
+    # * get_directory_name
     module SVN
       include Thor::Actions
       def checkout
         run "svn checkout " + get_uri + " " + get_directory_name
       end
-    end
+    end # end of module SVN
 
-    # included class must implement get_uri and get_directory_name and get_tag_name
+    # included class must implement below methods
+    # * get_uri
+    # * get_directory_name
+    # * get_tag_name
     module Git
       include Thor::Actions
       def checkout
@@ -18,10 +26,12 @@ module Mmdai
           run "git checkout " + get_tag_name
         end
       end
-    end
+    end # end of module Git
+
   end # end of module VCS
 
   module Build
+
     module Base
       include Thor::Actions
       def build_debug
@@ -39,39 +49,87 @@ module Mmdai
       def make
         run "make -j4"
       end
-    end
+      def make_install
+        run "make install"
+      end
+      def is_darwin?
+        return /^darwin/.match RbConfig::CONFIG["target_os"]
+      end
+    end # end of module Base
 
-    # included class must implement get_build_options and get_directory_name
+    # included class must implement below methods
+    # * get_build_options
+    # * get_directory_name
+    # * get_arch_flag_for_configure
+    # * get_debug_flag_for_configure
     module Configure
       include Base
     protected
       def invoke_build_system(build_options, build_type, directory)
+        configure = get_configure build_options, build_type
+        if build_type === :release and is_darwin? then
+          [:i386, :x86_64].each do |arch|
+            arch_directory = directory + "_" + arch.to_s
+            arch_configure = configure
+            arch_configure += get_arch_flag_for_configure(arch)
+            arch_configure += " --prefix=" + File::expand_path(arch_directory)
+            inside arch_directory do
+              run arch_configure
+              make
+              make_install
+            end
+          end
+        else
+          configure += "--prefix=" + File::expand_path(directory + "_native")
+          inside directory do
+            run configure
+            make
+            make_install
+          end
+        end
+      end
+      def get_configure(build_options, build_type)
         configure = "../configure "
+        if build_type === :debug then
+          configure += get_debug_flag_for_configure
+          configure += " "
+        end
         build_options.each do |key, value|
           if value.nil? then
             configure += "--"
-            configure += key.to_s.gsub /_/, "-"
+            configure += key.to_s.gsub(/_/, "-")
             configure += " "
           else
             value.each do |item|
               configure += "--"
-              configure += key.to_s.gsub /_/, "-"
+              configure += key.to_s.gsub(/_/, "-")
               configure += "="
               configure += item
               configure += " "
             end
           end
         end
-        configure += "--prefix=" + File::expand_path(directory)
-        inside directory do
-          run configure
-          make
-          run "make install"
+        return configure
+      end
+      def make_universal_binaries(build_type)
+        base_path = File::expand_path(get_directory_name)
+        i386_directory = base_path + "/" + build_type.to_s + "_i386/lib"
+        x86_64_directory = base_path + "/" + build_type.to_s + "_x86_64/lib"
+        native_directory = base_path + "/" + build_type.to_s + "_native/lib"
+        empty_directory native_directory
+        Dir.glob i386_directory + "/*.dylib" do |library_path|
+          library = File.basename(library_path)
+          i386_library = i386_directory + "/" + library
+          x86_64_library = x86_64_directory + "/" + library
+          univ_library = native_directory + "/" + library
+          run "lipo -create -output " + univ_library + " -arch i386 " + i386_library + " -arch x86_64 " + x86_64_library
         end
       end
-    end
+    end # end of module Configure
 
-    # included class must implement get_build_options and get_directory_name
+    # included class must implement below methods
+    # * get_build_options
+    # * get_directory_name
     module CMake
       include Base
     protected
@@ -86,6 +144,13 @@ module Mmdai
         else
           build_options[:build_shared_libs] = true
         end
+        cmake = get_cmake build_options
+        inside directory do
+          run cmake
+          make
+        end
+      end
+      def get_cmake(build_options)
         cmake = "cmake "
         build_options.each do |key, value|
           cmake += "-D"
@@ -101,12 +166,9 @@ module Mmdai
           cmake += " "
         end
         cmake += ".."
-        inside directory do
-          run cmake
-          make
-        end
       end
-    end
+    end # end of module CMake
+
   end # end of module Build
 
   class Bullet < Thor
@@ -137,7 +199,7 @@ module Mmdai
         :build_cpu_demos => false
       }
     end
-  end
+  end # end of Bullet
 
   class Assimp < Thor
     include Build::CMake
@@ -165,7 +227,7 @@ module Mmdai
         :enable_boost_workaround => true,
       }
     end
-  end
+  end # end of Assimp
 
   class Nvtt < Thor
     include Build::CMake
@@ -177,6 +239,7 @@ module Mmdai
     end
     desc "release", "build NVTT for release"
     def release
+      checkout
       build_release
     end
   protected
@@ -189,12 +252,35 @@ module Mmdai
     def get_directory_name
       return "nvtt-src"
     end
-  end
+  end # end of Nvtt
 
   class Glew < Thor
     include VCS::Git
-
-  end
+    desc "debug", "build GLEW for debug"
+    def debug
+      checkout
+      inside get_directory_name do
+        run "make debug"
+      end
+    end
+    desc "release", "build GLEW for release"
+    def release
+      checkout
+      inside get_directory_name do
+        run "make"
+      end
+    end
+  protected
+    def get_uri
+      return "git://glew.git.sourceforge.net/gitroot/glew/glew"
+    end
+    def get_directory_name
+      return "glew-src"
+    end
+    def get_tag_name
+      return "glew-1.9.0"
+    end
+  end # end of Glew
 
   class Glm < Thor
     include VCS::Git
@@ -216,7 +302,7 @@ module Mmdai
     def get_tag_name
       return "0.9.3.4"
     end
-  end
+  end # end of Glm
 
   class Libav < Thor
     include Build::Configure
@@ -230,6 +316,7 @@ module Mmdai
     def release
       checkout
       build_release
+      make_universal_binaries :release
     end
   protected
     def get_uri
@@ -240,6 +327,18 @@ module Mmdai
     end
     def get_tag_name
       return "v0.8.3"
+    end
+    def get_arch_flag_for_configure(arch)
+      if arch === :i386
+        return "--arch=i386 --cc='clang -m32'"
+      elsif arch === :x86_64
+        return "--arch=x86_64 --cc=clang"
+      else
+        return ""
+      end
+    end
+    def get_debug_flag_for_configure
+      return "--enable-debug=3 --disable-optimizations"
     end
     def get_build_options
       return {
@@ -273,7 +372,7 @@ module Mmdai
         :enable_zlib => nil
       }
     end
-  end
+  end # end of Libav
 
   class Vpvl < Thor
     include Build::CMake
@@ -301,7 +400,7 @@ module Mmdai
     def get_directory_name
       return "libvpvl"
     end
-  end
+  end # end of Vpvl
 
   class Vpvl2 < Thor
     include Build::CMake
@@ -310,7 +409,9 @@ module Mmdai
       invoke "mmdai:bullet:debug"
       invoke "mmdai:assimp:debug"
       invoke "mmdai:nvtt:debug"
+      invoke "mmdai:glew:debug"
       invoke "mmdai:glm:debug"
+      invoke "mmdai:libav:debug"
       invoke "mmdai:vpvl:debug"
       build_debug
     end
@@ -319,7 +420,9 @@ module Mmdai
       invoke "mmdai:bullet:release"
       invoke "mmdai:assimp:release"
       invoke "mmdai:nvtt:release"
+      invoke "mmdai:glew:release"
       invoke "mmdai:glm:release"
+      invoke "mmdai:libav:release"
       invoke "mmdai:vpvl:release"
       build_release
     end
@@ -344,6 +447,6 @@ module Mmdai
     def get_directory_name
       return "libvpvl2"
     end
-  end
+  end # end of Vpvl2
 
-end
+end # end of Mmdai
