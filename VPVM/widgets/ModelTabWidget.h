@@ -56,6 +56,7 @@ class MorphMotionModel;
 class MorphWidget;
 class ModelInfoWidget;
 class ModelSettingWidget;
+class SceneLoader;
 class SceneMotionModel;
 
 class ModelTabWidget : public QWidget
@@ -63,8 +64,9 @@ class ModelTabWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ModelTabWidget(QSettings *settingsRef,
+    explicit ModelTabWidget(SceneLoader *sceneLoaderRef,
                             MorphMotionModel *mmm,
+                            QSettings *settingsRef,
                             QWidget *parent = 0);
     ~ModelTabWidget();
 

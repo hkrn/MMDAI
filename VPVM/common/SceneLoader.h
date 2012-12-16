@@ -246,7 +246,7 @@ signals:
     void projectDidUpdateProgress(int value, int max, const QString &text);
     void projectDidLoad(bool loaded);
     void projectDidSave(bool saved);
-    void modelDidSelect(IModelSharedPtr model, SceneLoader *loader);
+    void modelDidSelect(IModelSharedPtr model);
     void modelDidAdd(IModelSharedPtr model, const QUuid &uuid);
     void modelWillDelete(IModelSharedPtr model, const QUuid &uuid);
     void modelDidMakePose(VPDFilePtr pose, IModelSharedPtr model);

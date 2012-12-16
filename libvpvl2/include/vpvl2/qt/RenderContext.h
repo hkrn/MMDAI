@@ -40,6 +40,8 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
+#include "vpvl2/IModel.h"
+#include "vpvl2/IMotion.h"
 #include "vpvl2/IRenderContext.h"
 
 #include <QtCore/QtCore>

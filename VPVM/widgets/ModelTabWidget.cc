@@ -39,6 +39,7 @@
 #include "MorphWidget.h"
 #include "ModelInfoWidget.h"
 #include "ModelSettingWidget.h"
+#include "common/SceneLoader.h"
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
@@ -51,14 +52,15 @@
 namespace vpvm
 {
 
-ModelTabWidget::ModelTabWidget(QSettings *settingsRef,
+ModelTabWidget::ModelTabWidget(SceneLoader *sceneLoaderRef,
                                MorphMotionModel *mmm,
+                               QSettings *settingsRef,
                                QWidget *parent)
     : QWidget(parent),
       m_tabWidget(new QTabWidget()),
       m_morphWidget(new MorphWidget(mmm)),
       m_modelInfoWidget(new ModelInfoWidget()),
-      m_modelSettingWidget(new ModelSettingWidget()),
+      m_modelSettingWidget(new ModelSettingWidget(sceneLoaderRef)),
       m_settingsRef(settingsRef)
 {
     m_tabWidget->addTab(m_modelInfoWidget.data(), "");

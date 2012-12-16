@@ -48,8 +48,9 @@ static const Scalar kZfar = 10000;
 
 using namespace vpvl2;
 
-ModelSettingWidget::ModelSettingWidget(QWidget *parent)
+ModelSettingWidget::ModelSettingWidget(SceneLoader *sceneLoaderRef, QWidget *parent)
     : QWidget(parent),
+      m_sceneLoaderRef(sceneLoaderRef),
       m_edgeGroup(new QGroupBox()),
       m_edgeOffsetSpinBox(new QDoubleSpinBox()),
       m_opacityGroup(new QGroupBox()),
@@ -124,7 +125,7 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     mainLayout->addStretch();
     setLayout(mainLayout.take());
     retranslate();
-    setModel(IModelSharedPtr(), 0);
+    setModel(IModelSharedPtr());
 }
 
 ModelSettingWidget::~ModelSettingWidget()
@@ -143,39 +144,25 @@ void ModelSettingWidget::retranslate()
     m_rotationGroup->setTitle(tr("Rotation Offset"));
 }
 
-void ModelSettingWidget::setModel(IModelSharedPtr model, SceneLoader *loader)
+void ModelSettingWidget::setModel(IModelSharedPtr model)
 {
     /* 予期せぬ値変更を伴うシグナル発行防止のため、一時的に無効にする */
     disableSignals();
     if (model) {
         m_edgeOffsetSpinBox->setValue(model->edgeWidth());
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
-        if (loader) {
-            m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model.data()));
-            m_selfShadowCheckbox->setChecked(loader->isSelfShadowEnabled(model.data()));
-            bool noShadow = !m_projectiveShadowCheckbox->isChecked() && !m_selfShadowCheckbox->isChecked();
-            m_noShadowCheckbox->setChecked(noShadow);
-        }
-        else {
-            m_projectiveShadowCheckbox->setChecked(false);
-            m_selfShadowCheckbox->setChecked(false);
-            m_noShadowCheckbox->setChecked(true);
-        }
+        m_projectiveShadowCheckbox->setChecked(m_sceneLoaderRef->isProjectiveShadowEnabled(model.data()));
+        m_selfShadowCheckbox->setChecked(m_sceneLoaderRef->isSelfShadowEnabled(model.data()));
+        bool noShadow = !m_projectiveShadowCheckbox->isChecked() && !m_selfShadowCheckbox->isChecked();
+        m_noShadowCheckbox->setChecked(noShadow);
         const Vector3 &position = model->worldPosition();
         m_px->setValue(position.x());
         m_py->setValue(position.y());
         m_pz->setValue(position.z());
-        if (loader) {
-            const Vector3 &angle = loader->modelRotation(model);
-            m_rx->setValue(angle.x());
-            m_ry->setValue(angle.y());
-            m_rz->setValue(angle.z());
-        }
-        else {
-            m_rx->setValue(0.0);
-            m_ry->setValue(0.0);
-            m_rz->setValue(0.0);
-        }
+        const Vector3 &angle = m_sceneLoaderRef->modelRotation(model);
+        m_rx->setValue(angle.x());
+        m_ry->setValue(angle.y());
+        m_rz->setValue(angle.z());
         setEnabled(true);
         qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model.data())));
     }

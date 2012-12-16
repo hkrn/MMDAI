@@ -41,6 +41,7 @@
 #include <QtWidgets/QtWidgets>
 #endif
 #include <vpvl2/vpvl2.h>
+#include <common/SceneLoader.h>
 
 /* lupdate cannot parse tr() syntax correctly */
 
@@ -52,8 +53,9 @@ using namespace vpvl2;
 static const Scalar kMaxFar = 10000;
 static const Scalar kMaxAngle = 360;
 
-CameraPerspectiveWidget::CameraPerspectiveWidget(QWidget *parent)
+CameraPerspectiveWidget::CameraPerspectiveWidget(SceneLoader *sceneLoaderRef, QWidget *parent)
     : QWidget(parent),
+      m_sceneLoaderRef(sceneLoaderRef),
       m_currentPosition(0.0f, 0.0f, 0.0f),
       m_currentAngle(0.0f, 0.0f, 0.0f),
       m_presetGroup(new QGroupBox()),
@@ -291,9 +293,9 @@ void CameraPerspectiveWidget::updateDistance(double value)
     emit cameraPerspectiveDidChange(createCamera());
 }
 
-void CameraPerspectiveWidget::initializeCamera()
+void CameraPerspectiveWidget::initializeCamera(Scene *scene)
 {
-    QScopedPointer<ICamera> camera(Scene::createCamera());
+    QScopedPointer<ICamera> camera(scene->createCamera());
     m_currentAngle = camera->angle();
     m_currentPosition = camera->lookAt();
     m_currentFovy = camera->fov();
@@ -336,7 +338,7 @@ QDoubleSpinBox *CameraPerspectiveWidget::createSpinBox(double step, double min, 
 
 QSharedPointer<ICamera> CameraPerspectiveWidget::createCamera() const
 {
-    QSharedPointer<ICamera> camera(Scene::createCamera());
+    QSharedPointer<ICamera> camera(m_sceneLoaderRef->sceneRef()->createCamera());
     camera->setAngle(m_currentAngle);
     camera->setLookAt(m_currentPosition);
     camera->setFov(m_currentFovy);

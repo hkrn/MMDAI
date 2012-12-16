@@ -174,11 +174,9 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_settings(QSettings::IniFormat, QSettings::UserScope, qApp->organizationName(), qAppName()),
       m_undo(new QUndoGroup()),
       m_sceneWidget(new SceneWidget(UIGetQGLFormat(), m_encoding.data(), m_factory.data(), &m_settings)),
-      m_sceneTabWidget(new TabWidget(&m_settings)),
       m_boneMotionModel(new BoneMotionModel(m_factory.data(), m_undo.data())),
       m_morphMotionModel(new MorphMotionModel(m_factory.data(), m_undo.data())),
       m_sceneMotionModel(new SceneMotionModel(m_factory.data(), m_undo.data(), m_sceneWidget.data())),
-      m_modelTabWidget(new ModelTabWidget(&m_settings, m_morphMotionModel.data())),
       m_timelineTabWidget(new TimelineTabWidget(&m_settings, m_boneMotionModel.data(), m_morphMotionModel.data(), m_sceneMotionModel.data())),
       m_boneUIDelegate(new BoneUIDelegate(m_boneMotionModel.data(), &m_settings, this)),
       m_timelineDockWidget(new QDockWidget(this)),
@@ -1384,6 +1382,8 @@ void MainWindow::bindSceneLoader()
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
     disconnect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), this, SLOT(bindSceneLoader()));
+    m_sceneTabWidget.reset(new TabWidget(loader, &m_settings));
+    m_modelTabWidget.reset(new ModelTabWidget(loader, m_morphMotionModel.data(), &m_settings));
     connect(loader, SIGNAL(modelDidAdd(IModelSharedPtr,QUuid)), SLOT(addModel(IModelSharedPtr,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), SLOT(deleteModel(IModelSharedPtr,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), m_boneMotionModel.data(), SLOT(removeModel()));
@@ -1400,13 +1400,13 @@ void MainWindow::bindSceneLoader()
     connect(loader, SIGNAL(projectDidInitialized()), this, SLOT(resetSceneToMotionModels()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget.data(), SLOT(refreshScene()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel.data(), SLOT(markAsNew()));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), SLOT(setCurrentModel(IModelSharedPtr)));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_boneMotionModel.data(), SLOT(setPMDModel(IModelSharedPtr)));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_morphMotionModel.data(), SLOT(setPMDModel(IModelSharedPtr)));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModelSharedPtr)));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModelSharedPtr,SceneLoader*)));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModelSharedPtr)));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModelSharedPtr,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), SLOT(setCurrentModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_boneMotionModel.data(), SLOT(setPMDModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_morphMotionModel.data(), SLOT(setPMDModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), assetWidget, SLOT(setAssetProperties(IModelSharedPtr,SceneLoader*)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
     connect(loader, SIGNAL(projectDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));

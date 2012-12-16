@@ -43,7 +43,6 @@
 #else
 #include <QtGui/QTabWidget>
 #endif
-#include <vpvl2/Scene.h>
 
 class QSettings;
 
@@ -53,13 +52,14 @@ namespace vpvm
 class AssetWidget;
 class CameraPerspectiveWidget;
 class SceneLightWidget;
+class SceneLoader;
 
 class TabWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit TabWidget(QSettings *settingsRef, QWidget *parent = 0);
+    explicit TabWidget(SceneLoader *sceneLoaderRef, QSettings *settingsRef, QWidget *parent = 0);
     ~TabWidget();
 
     AssetWidget *assetWidgetRef() const { return m_asset.data(); }

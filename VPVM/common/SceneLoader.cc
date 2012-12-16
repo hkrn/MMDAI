@@ -1438,7 +1438,7 @@ void SceneLoader::setSelectedModel(IModelSharedPtr value)
         }
         m_selectedModelRef = value;
         m_project->setModelSetting(value.data(), "selected", "true");
-        emit modelDidSelect(value, this);
+        emit modelDidSelect(value);
     }
 }
 
@@ -1785,7 +1785,7 @@ void SceneLoader::setSelectedAsset(IModelSharedPtr value)
         }
         m_selectedAssetRef = value;
         m_project->setModelSetting(value.data(), "selected", "true");
-        emit modelDidSelect(value, this);
+        emit modelDidSelect(value);
     }
 }
 

@@ -72,7 +72,7 @@ class ModelSettingWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ModelSettingWidget(QWidget *parent = 0);
+    explicit ModelSettingWidget(SceneLoader *sceneLoaderRef, QWidget *parent = 0);
     ~ModelSettingWidget();
 
 signals:
@@ -85,7 +85,7 @@ signals:
 
 private slots:
     void retranslate();
-    void setModel(IModelSharedPtr model, SceneLoader *loader);
+    void setModel(IModelSharedPtr model);
     void setPositionOffset(const Vector3 &position);
     void updatePosition();
     void updateRotation();
@@ -96,6 +96,7 @@ private:
     void enableSignals();
     QDoubleSpinBox *createSpinBox(const char *slot, double min, double max, double step = 0.1) const;
 
+    SceneLoader *m_sceneLoaderRef;
     QPointer<QGroupBox> m_edgeGroup;
     QPointer<QDoubleSpinBox> m_edgeOffsetSpinBox;
     QPointer<QGroupBox> m_opacityGroup;

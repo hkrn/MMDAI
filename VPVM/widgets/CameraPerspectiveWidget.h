@@ -64,13 +64,14 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+class SceneLoader;
 
 class CameraPerspectiveWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit CameraPerspectiveWidget(QWidget *parent = 0);
+    explicit CameraPerspectiveWidget(SceneLoader *sceneLoaderRef, QWidget *parent = 0);
 
 public slots:
     void setCameraPerspective(const ICamera *camera);
@@ -95,7 +96,7 @@ private slots:
     void updateRotationZ(double value);
     void updateFovy(double value);
     void updateDistance(double value);
-    void initializeCamera();
+    void initializeCamera(Scene *scene);
     void setPositionFromModel(const Vector3 &value);
     void setPositionFromBone(const Vector3 &value);
     void setPositionFromBone(const QList<IBone *> &bones);
@@ -104,6 +105,7 @@ private:
     static QDoubleSpinBox *createSpinBox(double step, double min, double max);
     QSharedPointer<ICamera> createCamera() const;
 
+    SceneLoader *m_sceneLoaderRef;
     Vector3 m_currentPosition;
     Vector3 m_currentAngle;
     QScopedPointer<QGroupBox> m_presetGroup;
