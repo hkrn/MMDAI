@@ -79,6 +79,8 @@ public:
 
     static bool isAcceleratorSupported();
     static Scalar defaultFPS();
+    static void deleteModelUnlessReferred(IModel *model);
+    static void deleteMotionUnlessReferred(IMotion *motion);
 
     Scene();
     virtual ~Scene();

@@ -404,6 +404,26 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     scene.deleteModel(m);
 }
 
+TEST_P(SceneModelTest, DeleteModelUnlessReferred)
+{
+    {
+        // should be freed and no memory leak warning
+        QSharedPointer<MockIModel> modelPtr(new MockIModel(), &Scene::deleteModelUnlessReferred);
+        EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(static_cast<Scene *>(0)));
+        Q_UNUSED(modelPtr)
+    }
+    {
+        // should be freed and no memory leak warning
+        Scene scene;
+        QSharedPointer<MockIModel> modelPtr(new MockIModel(), &Scene::deleteModelUnlessReferred);
+        EXPECT_CALL(*modelPtr, name()).WillRepeatedly(Return(static_cast<IString *>(0)));
+        EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
+        EXPECT_CALL(*modelPtr, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        QScopedPointer<IRenderEngine> enginePtr(new MockIRenderEngine());
+        scene.addModel(modelPtr.data(), enginePtr.take());
+    }
+}
+
 class SceneMotionTest : public TestWithParam<IMotion::Type> {};
 
 TEST_P(SceneMotionTest, SetParentSceneRefForScene)
@@ -435,6 +455,24 @@ TEST_P(SceneMotionTest, SetParentSceneRefForModel)
     ASSERT_EQ(&scene, motion->parentSceneRef());
     scene.removeMotion(motion.data());
     ASSERT_EQ(static_cast<Scene *>(0), motion->parentSceneRef());
+}
+
+TEST_P(SceneMotionTest, DeleteMotionUnlessReferred)
+{
+    {
+        // should be freed and no memory leak warning
+        QSharedPointer<MockIMotion> motionPtr(new MockIMotion(), &Scene::deleteMotionUnlessReferred);
+        EXPECT_CALL(*motionPtr, parentSceneRef()).WillRepeatedly(Return(static_cast<Scene *>(0)));
+        Q_UNUSED(motionPtr)
+    }
+    {
+        // should be freed and no memory leak warning
+        Scene scene;
+        QSharedPointer<MockIMotion> motionPtr(new MockIMotion(), &Scene::deleteMotionUnlessReferred);
+        EXPECT_CALL(*motionPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
+        EXPECT_CALL(*motionPtr, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
+        scene.addMotion(motionPtr.data());
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelTest, Values(IModel::kAsset, IModel::kPMD, IModel::kPMX));

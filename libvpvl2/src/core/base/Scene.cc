@@ -411,6 +411,18 @@ Scalar Scene::defaultFPS()
     return kDefaultFPS;
 }
 
+void Scene::deleteModelUnlessReferred(IModel *model)
+{
+    if (model && !model->parentSceneRef())
+        delete model;
+}
+
+void Scene::deleteMotionUnlessReferred(IMotion *motion)
+{
+    if (motion && !motion->parentSceneRef())
+        delete motion;
+}
+
 Scene::Scene()
     : m_context(0)
 {
