@@ -35,11 +35,13 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/qt/World.h"
+#include "vpvl2/vpvl2.h"
 
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btSimulationIslandManager.h>
 
+#define __BT_SKIP_UINT64_H
 #include <BulletMultiThreaded/PlatformDefinitions.h>
 #include <BulletMultiThreaded/SpuGatheringCollisionDispatcher.h>
 #include <BulletMultiThreaded/SpuNarrowPhaseCollisionTask/SpuGatheringCollisionTask.h>
@@ -50,6 +52,7 @@
 #endif
 #include <BulletMultiThreaded/SequentialThreadSupport.h>
 #include <BulletMultiThreaded/btParallelConstraintSolver.h>
+#undef __BT_SKIP_UINT64_H
 
 namespace {
 
@@ -66,7 +69,7 @@ static btThreadSupportInterface *CreateThreadSupportInstance(bool sequential)
 #ifdef WIN32
         Win32ThreadSupport::Win32ThreadConstructionInfo info("Win32ThreadSupport::solverThreads",
                                                              SolverThreadFunc, SolverlsMemoryFunc, 8);
-        QScopedPointer<Win32ThreadSupport> thread(new PosixThreadSupport(info));
+        QScopedPointer<Win32ThreadSupport> thread(new Win32ThreadSupport(info));
         thread->startSPU();
 #else
         PosixThreadSupport::ThreadConstructionInfo info("PosixThreadSupport::solverThreads",

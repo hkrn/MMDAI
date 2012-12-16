@@ -79,7 +79,7 @@
   #if defined(vpvl2_EXPORTS)
     #define VPVL2_API __declspec(dllexport)
   #else
-    #define VPVL2_API //__declspec(dllimport)
+    #define VPVL2_API __declspec(dllimport)
   #endif /* defined(vpvl2_EXPORTS) */
 #else /* defined (_WIN32) */
  #if defined(__GNUC__) && __GNUC__ >= 4

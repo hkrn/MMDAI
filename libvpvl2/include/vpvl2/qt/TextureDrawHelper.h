@@ -41,8 +41,8 @@
 #include <QtOpenGL/QGLBuffer>
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
-#include <vpvl2/IModel.h>
 
+#include "vpvl2/qt/Common.h"
 #include "vpvl2/qt/VertexBundle.h"
 
 namespace vpvl2
@@ -53,8 +53,9 @@ namespace qt
 class TextureDrawHelper : protected QGLFunctions
 {
 public:
-    TextureDrawHelper(const QSize &size)
+    TextureDrawHelper(IRenderContext *renderContextRef, const QSize &size)
         : QGLFunctions(),
+          m_bundle(renderContextRef),
           m_dvbo(QGLBuffer::VertexBuffer),
           m_svbo(QGLBuffer::VertexBuffer),
           m_size(size)

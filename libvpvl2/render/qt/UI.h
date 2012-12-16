@@ -34,13 +34,14 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
 #ifndef VPVL2_RENDER_QT_UI_H_
 #define VPVL2_RENDER_QT_UI_H_
 
 #include "vpvl2/IEffect.h"
 #include "vpvl2/qt/Encoding.h"
 #include "vpvl2/qt/RenderContext.h"
-#include "World.h"
+#include "vpvl2/qt/World.h"
 
 #include <QtGui/QtGui>
 #include <QtOpenGL/QtOpenGL>
@@ -49,8 +50,6 @@ namespace vpvl2
 {
 class Factory;
 class Scene;
-class IModel;
-class IMotion;
 
 namespace qt
 {
@@ -93,8 +92,8 @@ private:
     void renderWindow();
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
-    IModelSharedPtr createModelAsync(const QString &path) const;
-    IMotionSharedPtr createMotionAsync(const QString &path, IModel *model) const;
+    IModelSharedPtr createModelAsync(const QString &path);
+    IMotionSharedPtr createMotionAsync(const QString &path, IModel *model);
     IModel *addModel(const QString &path, QProgressDialog &dialog);
     IMotion *addMotion(const QString &path, IModel *model);
     IMotion *loadMotion(const QString &path, IModel *model);

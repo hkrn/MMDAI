@@ -51,6 +51,14 @@
 #endif
 
 #include <glm/gtc/matrix_transform.hpp>
+#ifndef _MSC_VER
+#include <GL/glext.h>
+#else
+#pragma warning(push)
+#pragma warning(disable:4005)
+#include <vpvl2/extensions/gl/khronos/glext.h>
+#pragma warning(pop)
+#endif /* _MSC_VER */
 
 #ifdef VPVL2_LINK_ASSIMP
 #include <assimp.hpp>
@@ -556,7 +564,7 @@ void UI::load(const QString &filename)
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
     m_sm.reset(new ShadowMap(1024, 1024));
-    m_helper.reset(new TextureDrawHelper(size()));
+    m_helper.reset(new TextureDrawHelper(m_renderContext.data(), size()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
     if (m_settings->value("enable.sm", false).toBool()) {
@@ -859,38 +867,41 @@ bool UI::loadScene()
     return true;
 }
 
-IModelSharedPtr UI::createModelAsync(const QString &path) const
+IModelSharedPtr UI::createModelAsync(const QString &path)
 {
     QByteArray bytes;
-    if (!UISlurpFile(path, bytes)) {
-        qWarning("Failed loading the model");
-        return QSharedPointer<IModel>();
-    }
-    bool ok = true;
-    const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-    return QSharedPointer<IModel>(m_factory->createModel(data, bytes.size(), ok), &Scene::deleteModelUnlessReferred);
-}
-
-IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model) const
-{
-    QByteArray bytes;
+    IModelSharedPtr model;
     if (UISlurpFile(path, bytes)) {
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        QSharedPointer<IMotion> motion(m_factory->createMotion(data, bytes.size(), model, ok), &Scene::deleteMotionUnlessReferred);
+        model = IModelSharedPtr(m_factory->createModel(data, bytes.size(), ok), &Scene::deleteModelUnlessReferred);
+	}
+	else {
+        qWarning("Failed loading the model");
+    }
+    return model;
+}
+
+IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model)
+{
+    QByteArray bytes;
+    IMotionSharedPtr motion;
+	if (UISlurpFile(path, bytes)) {
+        bool ok = true;
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        motion = IMotionSharedPtr(m_factory->createMotion(data, bytes.size(), model, ok), &Scene::deleteMotionUnlessReferred);
         motion->seek(0);
-        return motion;
     }
     else {
         qWarning("Failed parsing the model motion, skipped...");
     }
-    return QSharedPointer<IMotion>();
+    return motion;
 }
 
 IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
 {
     const QFileInfo info(path);
-    const QFuture<IModelSharedPtr> &future = QtConcurrent::run(this, &UI::createModelAsync, path);
+    QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &UI::createModelAsync, path);
     dialog.setLabelText(QString("Loading %1...").arg(info.fileName()));
     dialog.setRange(0, 0);
     while (!future.isResultReadyAt(0))
@@ -990,7 +1001,7 @@ IMotion *UI::addMotion(const QString &path, IModel *model)
 
 IMotion *UI::loadMotion(const QString &path, IModel *model)
 {
-    const QFuture<IMotionSharedPtr> &future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
+    QFuture<IMotionSharedPtr> future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
     while (!future.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IMotionSharedPtr motionPtr = future.result();

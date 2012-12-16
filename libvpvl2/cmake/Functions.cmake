@@ -1,9 +1,4 @@
 # declaration of function
-function(get_build_type var)
-  string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_TOLOWER)
-  set(${var} "build-${CMAKE_BUILD_TYPE_TOLOWER}" PARENT_SCOPE)
-endfunction()
-
 function(link_bullet target)
   if(BUILD_SHARED_LIBS OR MSVC)
     if(VPVL2_NO_BULLET)
@@ -183,6 +178,28 @@ function(link_icu_or_iconv target)
     endif()
   endif()
 endfunction()
+
+function(get_build_type var)
+  string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_TOLOWER)
+  set(${var} "build-${CMAKE_BUILD_TYPE_TOLOWER}" PARENT_SCOPE)
+endfunction()
+
+function(set_dll_properties target)
+  if(WIN32 AND BUILD_SHARED_LIBS)
+    set_target_properties(${target} PROPERTIES PREFIX "" SUFFIX .dll IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  endif()
+endfunction()
+
+function(create_osx_framework target public_headers)
+  # create as a framework if build on darwin environment
+  if(APPLE)
+    if(BUILD_SHARED_LIBS AND FRAMEWORK)
+      install(TARGETS vpvl2 DESTINATION .)
+      set_target_properties(${target} PROPERTIES FRAMEWORK true PROPERTIES PUBLIC_HEADER "${public_headers}")
+    endif()
+    set_target_properties(vpvl2 PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+  endif()
+endfunction()
 # end of functions
 
 # imported functions from Allegro5's cmake
@@ -191,15 +208,5 @@ function(append_lib_type_suffix var)
   if(CMAKE_BUILD_TYPE_TOLOWER STREQUAL "debug")
     set(${var} "${${var}}_debug" PARENT_SCOPE)
   endif()
-  if(CMAKE_BUILD_TYPE_TOLOWER MATCHES "profile")
-    set(${var} "${${var}}_profile" PARENT_SCOPE)
-  endif()
-endfunction()
-
-function(append_lib_linkage_suffix var)
-  if(NOT BUILD_SHARED_LIBS)
-    #set(${var} "${${var}}_static" PARENT_SCOPE)
-  endif()
 endfunction()
 # end of imported
-

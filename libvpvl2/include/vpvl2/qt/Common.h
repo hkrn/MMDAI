@@ -35,61 +35,23 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_QT_WORLD_H_
-#define VPVL2_QT_WORLD_H_
+#ifndef VPVL2_QT_COMMON_H_
+#define VPVL2_QT_COMMON_H_
 
-#include "vpvl2/qt/Common.h"
-#include "vpvl2/Scene.h"
+#include "vpvl2/Common.h"
 
-#include <QtCore/QScopedPointer>
-#include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
+#if defined(WIN32)
+  #if defined(vpvl2qtcommon_EXPORTS)
+    #define VPVL2QTCOMMON_API __declspec(dllexport)
+  #else
+    #define VPVL2QTCOMMON_API __declspec(dllimport)
+  #endif /* defined(vpvl2_EXPORTS) */
+#else /* defined (_WIN32) */
+ #if defined(__GNUC__) && __GNUC__ >= 4
+  #define VPVL2QTCOMMON_API __attribute__ ((visibility("default")))
+ #else
+  #define VPVL2QTCOMMON_API
+ #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
+#endif
 
-class btCollisionDispatcher;
-class btDiscreteDynamicsWorld;
-class btRigidBody;
-class btSequentialImpulseConstraintSolver;
-struct btDbvtBroadphase;
-
-namespace vpvl2
-{
-namespace qt
-{
-
-class VPVL2QTCOMMON_API World
-{
-public:
-    static const Vector3 kAabbSize;
-    static const Vector3 kDefaultGravity;
-
-    World();
-    ~World();
-
-    const Vector3 gravity() const;
-    void setGravity(const Vector3 &value);
-    unsigned long randSeed() const;
-    void setRandSeed(unsigned long value);
-    void setMotionFPS(const Scalar &value);
-    void addModel(vpvl2::IModel *value);
-    void removeModel(vpvl2::IModel *value);
-    void addRigidBody(btRigidBody *value);
-    void removeRigidBody(btRigidBody *value);
-    void stepSimulation(const Scalar &delta);
-    btDiscreteDynamicsWorld *dynamicWorldRef() const;
-
-private:
-    btDefaultCollisionConfiguration m_config;
-    QScopedPointer<btCollisionDispatcher> m_dispatcher;
-    QScopedPointer<btDbvtBroadphase> m_broadphase;
-    QScopedPointer<btSequentialImpulseConstraintSolver> m_solver;
-    QScopedPointer<btDiscreteDynamicsWorld> m_world;
-    Scalar m_motionFPS;
-    Scalar m_maxSubSteps;
-    Scalar m_fixedTimeStep;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(World)
-};
-
-} /* namespace qt */
-} /* namespace vpvl2 */
-
-#endif // WORLD_H
+#endif

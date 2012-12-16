@@ -38,13 +38,12 @@
 #ifndef VPVL2_QT_RENDERCONTEXT_H_
 #define VPVL2_QT_RENDERCONTEXT_H_
 
-#include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMotion.h"
+#include "vpvl2/qt/Common.h"
 #include "vpvl2/IRenderContext.h"
 
-#include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>
 
 #include <glm/glm.hpp>
@@ -84,7 +83,7 @@ typedef QSharedPointer<IEffect> IEffectSharedPtr;
 typedef QSharedPointer<IModel> IModelSharedPtr;
 typedef QSharedPointer<IMotion> IMotionSharedPtr;
 
-class RenderContext : public IRenderContext, protected QGLFunctions
+class VPVL2QTCOMMON_API RenderContext : public IRenderContext, protected QGLFunctions
 {
 public:
     struct TextureCache {

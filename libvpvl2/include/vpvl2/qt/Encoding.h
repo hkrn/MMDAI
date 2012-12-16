@@ -38,6 +38,7 @@
 #ifndef VPVL2_QT_ENCODING_H_
 #define VPVL2_QT_ENCODING_H_
 
+#include "vpvl2/qt/Common.h"
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IString.h"
 
@@ -53,7 +54,7 @@ namespace qt
 
 class CString;
 
-class Encoding : public IEncoding
+class VPVL2QTCOMMON_API Encoding : public IEncoding
 {
 public:
     typedef QHash<ConstantType, const CString *> Dictionary;

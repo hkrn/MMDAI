@@ -38,7 +38,7 @@
 #ifndef VPVL2_QT_ARCHIVE_H_
 #define VPVL2_QT_ARCHIVE_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/qt/Common.h"
 #include "vpvl2/qt/unzip.h"
 
 #include <QtCore/QByteArray>
@@ -50,7 +50,7 @@ namespace vpvl2
 namespace qt
 {
 
-class Archive
+class VPVL2QTCOMMON_API Archive
 {
 public:
     enum ErrorType {

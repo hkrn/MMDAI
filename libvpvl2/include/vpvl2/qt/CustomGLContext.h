@@ -38,6 +38,7 @@
 #ifndef VPVL2_QT_CUSTOMGLCONTEXT_H_
 #define VPVL2_QT_CUSTOMGLCONTEXT_H_
 
+#include "vpvl2/qt/Common.h"
 #include <QtOpenGL/QGLContext>
 
 namespace vpvl2
@@ -45,15 +46,21 @@ namespace vpvl2
 namespace qt
 {
 
+#ifdef QT_MAC_USE_COCOA
+class VPVL2QTCOMMON_API CustomGLContext : public QGLContext {
+public:
+    CustomGLContext(const QGLFormat &format) : QGLContext(format) {}
+    CustomGLContext(const QGLFormat &format, QPaintDevice *device) : QGLContext(format, device) {}
+protected:
+    void *chooseMacVisual(GDHandle handle);
+};
+#else
 class CustomGLContext : public QGLContext {
 public:
     CustomGLContext(const QGLFormat &format) : QGLContext(format) {}
     CustomGLContext(const QGLFormat &format, QPaintDevice *device) : QGLContext(format, device) {}
-#ifdef QT_MAC_USE_COCOA
-protected:
-    void *chooseMacVisual(GDHandle handle);
-#endif
 };
+#endif
 
 } /* namespace qt */
 } /* namespace vpvl2 */

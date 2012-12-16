@@ -66,6 +66,11 @@
     #include <GL/gl.h>
 #ifndef _MSC_VER
     #include <GL/glext.h>
+#else
+    #pragma warning(push)
+    #pragma warning(disable:4005)
+    #include <vpvl2/extensions/gl/khronos/glext.h>
+    #pragma warning(pop)
 #endif
   #endif /* __APPLE__ */
 #endif /* VPVL2_ENABLE_GLES2 */

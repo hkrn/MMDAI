@@ -855,7 +855,7 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
     GLenum internal, format, type;
     getTextureFormat(parameter, internal, format, type);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage3D(GL_TEXTURE_2D, 0, internal, width, height, depth, 0, format, type, 0);
+    //glTexImage3D(GL_TEXTURE_2D, 0, internal, width, height, depth, 0, format, type, 0);
     if (isMimapEnabled(parameter))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);

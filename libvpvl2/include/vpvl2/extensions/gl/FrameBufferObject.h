@@ -40,7 +40,7 @@
 
 #include "vpvl2/Common.h"
 
-#if defined(VPVL2_LINK_QT)
+#ifdef VPVL2_LINK_QT
 #include <QtOpenGL/QtOpenGL>
 #include <QtOpenGL/QGLFunctions>
 //#define DEBUG_OUTPUT_TEXTURE
@@ -48,15 +48,22 @@
 #include <GL/glew.h>
 #endif /* VPVL_LINK_QT */
 
-#if !defined(VPVL2_LINK_GLEW)
+#ifndef VPVL2_LINK_GLEW
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
 #else /* __APPLE__ */
 #include <GL/gl.h>
+#ifndef _MSC_VER
 #include <GL/glext.h>
+#else
+#pragma warning(push)
+#pragma warning(disable:4005)
+#include <vpvl2/extensions/gl/khronos/glext.h>
+#pragma warning(pop)
+#endif /* _MSC_VER */
 #endif /* __APPLE__ */
-#endif
+#endif /* VPVL2_LINK_GLEW */
 
 namespace vpvl2
 {

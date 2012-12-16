@@ -1,8 +1,34 @@
 cmake_minimum_required(VERSION 2.8)
 
+# include external cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Functions.cmake)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Functions.cmake")
 
+# options
+option(BUILD_SHARED_LIBS "Build Shared Libraries (default is OFF)" OFF)
+option(VPVL2_LINK_QT "Link against Qt 4.8 (enabling VPVL2_OPENGL_RENDERER required, default is OFF)" OFF)
+option(VPVL2_LINK_QT_WITH_OPENCV "Build a renderer program with recording feature using OpenCV (default is OFF)" OFF)
+option(VPVL2_BUILD_QT_RENDERER "Build a renderer program using Qt 4.8 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+option(VPVL2_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
+option(VPVL2_COORDINATE_OPENGL "Use OpenGL coordinate system (default is ON)" ON)
+option(VPVL2_NO_BULLET "Build libvpvl2 without BulletPhysics except LinearMath (default is OFF)" OFF)
+option(VPVL2_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
+option(VPVL2_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (default is OFF)" OFF)
+option(VPVL2_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
+option(VPVL2_ENABLE_OPENMP "Enable OpenMP acceleration (default is OFF)" OFF)
+option(VPVL2_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
+option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (enabling VPVL2_OPENGL_RENDERER is required default is OFF)" OFF)
+option(VPVL2_LINK_SDL1 "Enable linking against SDL 1.2 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+option(VPVL2_LINK_SDL2 "Enable linking against SDL 2.0 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+option(VPVL2_LINK_ASSIMP "link against Open Asset Import Library (default is OFF)" OFF)
+option(VPVL2_LINK_DEVIL "link against DevIL (default is OFF)" OFF)
+option(VPVL2_LINK_GLEW "link against GLEW (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+option(VPVL2_LINK_NVTT "link against NVIDIA Texture Tools a.k.a nvtt (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+option(VPVL2_LINK_VPVL "link against libvpvl (default is ON)" ON)
+option(VPVL2_LINK_INTEL_TBB "link against Intel Threading Building Blocks (default is OFF)" OFF)
+option(VPVL2_LINK_SFML "Enable linking against SFML 2.0 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+
+# library version setting
 set(VPVL2_VERSION_MAJOR 0)
 set(VPVL2_VERSION_COMPAT 9)
 set(VPVL2_VERSION_MINOR 0)
@@ -13,15 +39,15 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 
 # project configuration
 project(libvpvl2)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/asset vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/base vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/internal vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd vpvl2_sources)
-#aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2 vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx vpvl2_sources)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core" vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/asset" vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/base" vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/internal" vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd" vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd" vpvl2_sources)
+#aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2" vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx" vpvl2_sources)
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd" vpvl2_sources)
 set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Common.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Factory.h
@@ -102,34 +128,10 @@ set(vpvl2_internal_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/Motion.h
 )
 
+# dynamic library or static library
 if(NOT CMAKE_BUILD_TYPE)
  set(CMAKE_BUILD_TYPE "Release")
 endif()
-
-# options
-option(BUILD_SHARED_LIBS "Build Shared Libraries (default is OFF)" OFF)
-option(VPVL2_LINK_QT "Link against Qt 4.8 (enabling VPVL2_OPENGL_RENDERER required, default is OFF)" OFF)
-option(VPVL2_LINK_QT_WITH_OPENCV "Build a renderer program with recording feature using OpenCV (default is OFF)" OFF)
-option(VPVL2_BUILD_QT_RENDERER "Build a renderer program using Qt 4.8 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
-option(VPVL2_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
-option(VPVL2_COORDINATE_OPENGL "Use OpenGL coordinate system (default is ON)" ON)
-option(VPVL2_NO_BULLET "Build libvpvl2 without BulletPhysics except LinearMath (default is OFF)" OFF)
-option(VPVL2_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
-option(VPVL2_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (default is OFF)" OFF)
-option(VPVL2_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
-option(VPVL2_ENABLE_OPENMP "Enable OpenMP acceleration (default is OFF)" OFF)
-option(VPVL2_ENABLE_PROJECT "Include the class of loading and saving project files (default is OFF)" OFF)
-option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (enabling VPVL2_OPENGL_RENDERER is required default is OFF)" OFF)
-option(VPVL2_LINK_SDL1 "Enable linking against SDL 1.2 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
-option(VPVL2_LINK_SDL2 "Enable linking against SDL 2.0 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
-option(VPVL2_LINK_ASSIMP "link against Open Asset Import Library (default is OFF)" OFF)
-option(VPVL2_LINK_DEVIL "link against DevIL (default is OFF)" OFF)
-option(VPVL2_LINK_GLEW "link against GLEW (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
-option(VPVL2_LINK_NVTT "link against NVIDIA Texture Tools a.k.a nvtt (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
-option(VPVL2_LINK_VPVL "link against libvpvl (default is ON)" ON)
-option(VPVL2_LINK_INTEL_TBB "link against Intel Threading Building Blocks (default is OFF)" OFF)
-option(VPVL2_LINK_SFML "Enable linking against SFML 2.0 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
-
 if(BUILD_SHARED_LIBS)
   set(VPVL2_LIB_TYPE SHARED)
 else()
@@ -138,76 +140,76 @@ endif()
 
 # intercept to add source (OpenGL)
 if(VPVL2_OPENGL_RENDERER)
-  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2 vpvl2_gl_sources)
+  aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2" vpvl2_gl_sources)
   list(APPEND vpvl2_internal_headers
-      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseRenderEngine.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/AssetRenderEngine.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMDRenderEngine.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMXRenderEngine.h
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseRenderEngine.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/AssetRenderEngine.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMDRenderEngine.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMXRenderEngine.h"
   )
   if(VPVL2_ENABLE_NVIDIA_CG)
-    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg vpvl2_gl_sources)
+    aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg" vpvl2_gl_sources)
     list(APPEND vpvl2_internal_headers
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/AssetRenderEngine.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/Effect.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/EffectEngine.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/PMDRenderEngine.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/PMXRenderEngine.h
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/AssetRenderEngine.h"
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/Effect.h"
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/EffectEngine.h"
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/PMDRenderEngine.h"
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cg/PMXRenderEngine.h"
     )
   endif()
   if(VPVL2_ENABLE_OPENCL)
-    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cl vpvl2_gl_sources)
+    aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cl" vpvl2_gl_sources)
     list(APPEND vpvl2_internal_headers
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/Context.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/PMDAccelerator.h
-         ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/PMXAccelerator.h
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/Context.h"
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/PMDAccelerator.h"
+         "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/cl/PMXAccelerator.h"
      )
   endif()
   list(APPEND vpvl2_sources ${vpvl2_gl_sources})
   set(VPVL2_COORDINATE_OPENGL ON BOOL)
 endif()
 
-# intercept to add source (libvpvl)
+# intercept to add source (libvpvl2)
 if(VPVL2_LINK_VPVL)
   list(APPEND vpvl2_internal_headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Material.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Vertex.h
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Bone.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Label.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Material.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Model.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Morph.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/Vertex.h"
   )
 else()
   list(APPEND vpvl2_internal_headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Bone.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Joint.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Label.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Material.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Model.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Morph.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/RigidBody.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Vertex.h
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Bone.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Joint.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Label.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Material.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Model.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Morph.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/RigidBody.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/Vertex.h"
   )
 endif()
 
 # intercept to add source (Project)
 if(VPVL2_ENABLE_PROJECT)
-  list(APPEND vpvl2_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/core/project/Project.cc)
-  list(APPEND vpvl2_public_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Project.h)
+  list(APPEND vpvl2_sources "${CMAKE_CURRENT_SOURCE_DIR}/src/core/project/Project.cc")
+  list(APPEND vpvl2_public_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Project.h")
 endif()
 
 # generate configuration file
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
-set(vpvl2_public_headers ${vpvl2_public_headers} ${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h)
+set(vpvl2_public_headers ${vpvl2_public_headers} "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
 
 # create libvpvl2 project
 add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers} ${vpvl2_internal_headers})
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 
 # project include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 
 # find libvpvl
 find_bullet(vpvl2)
@@ -218,26 +220,11 @@ find_vpvl(vpvl2)
 find_openmp()
 
 set(VPVL2_OUTPUT_NAME "vpvl2")
-set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
+set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
 append_lib_type_suffix(VPVL2_OUTPUT_NAME)
-append_lib_linkage_suffix(VPVL2_OUTPUT_NAME)
+set_dll_properties(vpvl2)
+create_osx_framework(vpvl2 ${vpvl2_public_headers})
 set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
-
-if(WIN32 AND BUILD_SHARED_LIBS)
-  set_target_properties(vpvl2
-      PROPERTIES PREFIX "" SUFFIX .${VPVL2_VERSION}.dll
-      IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
-endif()
-
-# create as a framework if build on darwin environment
-if(APPLE)
-  if(BUILD_SHARED_LIBS AND FRAMEWORK)
-    install(TARGETS vpvl2 DESTINATION .)
-    set_target_properties(vpvl2 PROPERTIES FRAMEWORK true)
-    set_target_properties(vpvl2 PROPERTIES PUBLIC_HEADER "${vpvl2_public_headers}")
-  endif()
-  set_target_properties(vpvl2 PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-endif()
 
 # link against Qt
 if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
@@ -249,34 +236,40 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
     include(${QT_USE_FILE})
     target_link_libraries(vpvl2 ${QT_LIBRARIES})
   endif()
-  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common vpvl2qtcommon_sources)
-  aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip vpvl2qtcommon_sources)
-  set(vpvl2qtcommon_headers ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Archive.h
-                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h
-                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h
-                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h
-                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h
-                                                        ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/TextureDrawHelper.h
-                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/VertexBundle.h
-                            ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h)
-  set(vpvl2_qt_sources ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc
-                       ${CMAKE_CURRENT_SOURCE_DIR}/render/qt/UI.cc)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/render/qt
-                      ${CMAKE_CURRENT_SOURCE_DIR}/render/qt
-                      ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt)
+  aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common" vpvl2qtcommon_sources)
+  aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip" vpvl2qtcommon_sources)
+  set(vpvl2qtcommon_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Archive.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CString.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Common.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/TextureDrawHelper.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/VertexBundle.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h")
+  set(vpvl2_qt_sources "${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc"
+                       "${CMAKE_CURRENT_SOURCE_DIR}/render/qt/UI.cc")
+  include_directories("${CMAKE_CURRENT_SOURCE_DIR}/render/qt"
+                      "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt")
   if(APPLE)
     add_definitions(-DUSE_FILE32API)
     if (NOT Qt5Core_FOUND)
       find_library(COCOA_LIBRARY Cocoa)
       find_path(COCOA_INCLUDE_DIR Cocoa/Cocoa.h)
       include_directories(${COCOA_INCLUDE_DIR})
-      aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/qt/osx vpvl2qtcommon_sources)
+      aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/qt/osx" vpvl2qtcommon_sources)
     endif()
   endif()
-  add_library(vpvl2qtcommon ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
+  add_library(vpvl2qtcommon ${VPVL2_LIB_TYPE} ${vpvl2qtcommon_sources} ${vpvl2qtcommon_headers})
+  set_dll_properties(vpvl2qtcommon)
+  create_osx_framework(vpvl2qtcommon ${vpvl2qtcommon_headers})
   link_nvtt(vpvl2qtcommon)
   if(APPLE)
     target_link_libraries(vpvl2qtcommon ${COCOA_LIBRARY})
+  elseif(MSVC)
+    find_package(ZLIB)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    target_link_libraries(vpvl2qtcommon ${ZLIB_LIBRARIES})
   endif()
   target_link_libraries(vpvl2qtcommon vpvl2)
   if (Qt5Core_FOUND)
@@ -286,7 +279,6 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
   endif()
   set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
   append_lib_type_suffix(VPVL2QTCOMMON_OUTPUT_NAME)
-  append_lib_linkage_suffix(VPVL2QTCOMMON_OUTPUT_NAME)
   set_target_properties(vpvl2qtcommon PROPERTIES OUTPUT_NAME ${VPVL2QTCOMMON_OUTPUT_NAME}
                                                  VERSION ${VPVL2_VERSION}
                                                  SOVERSION ${VPVL2_VERSION_COMPATIBLE})
@@ -305,7 +297,7 @@ endif()
 if(VPVL2_OPENGL_RENDERER)
   if(VPVL2_PLATFORM_NACL)
     find_library(OPENGL_gl_LIBRARY ppapi_gles2)
-    find_path(OPENGL_INCLUDE_DIR GLES2/gl2.h)
+    find_path(OPENGL_INCLUDE_DIR "GLES2/gl2.h")
   else()
     find_package(OpenGL REQUIRED)
   endif()
@@ -315,18 +307,18 @@ if(VPVL2_OPENGL_RENDERER)
     find_package(Cg REQUIRED)
     target_link_libraries(vpvl2 ${CG_LIBRARY} ${CG_GL_LIBRARY})
     # workaround for framework include path
-        if(APPLE)
-      find_path(CG_INCLUDE_DIR_APPLE Cg/cg.h STRING CACHE)
-          set(CG_INCLUDE_DIR ${CG_INCLUDE_DIR_APPLE})
-        endif()
+    if(APPLE)
+      find_path(CG_INCLUDE_DIR_APPLE "Cg/cg.h" STRING CACHE)
+      set(CG_INCLUDE_DIR ${CG_INCLUDE_DIR_APPLE})
+    endif()
     include_directories(${CG_INCLUDE_DIR})
   endif()
   if(VPVL2_ENABLE_OPENCL)
     find_library(OPENCL_LIBRARY OpenCL)
     if(APPLE)
-      find_path(OPENCL_INCLUDE_DIR OpenCL/cl.h)
+      find_path(OPENCL_INCLUDE_DIR "OpenCL/cl.h")
     else()
-      find_path(OPENCL_INCLUDE_DIR CL/cl.h)
+      find_path(OPENCL_INCLUDE_DIR "CL/cl.h")
     endif()
     target_link_libraries(vpvl2 ${OPENCL_LIBRARY})
     include_directories(${OPENCL_INCLUDE_DIR})
@@ -347,7 +339,7 @@ if(VPVL2_LINK_INTEL_TBB)
   target_link_libraries(vpvl2 ${TBB_LIBRARIES})
 endif()
 
-find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../glm-src)
+find_path(GLM_INCLUDE_DIR "glm/glm.hpp" PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../glm-src")
 include_directories(${GLM_INCLUDE_DIR})
 
 # extra renderer program with SDL
@@ -367,10 +359,10 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2))
     find_package(SDL_image REQUIRED)
     include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR})
     if(APPLE)
-      list(APPEND vpvl2_sdl_sources render/sdl/SDLMain.m render/sdl/SDLMain.h)
+      list(APPEND vpvl2_sdl_sources "render/sdl/SDLMain.m" "render/sdl/SDLMain.h")
     endif()
   endif()
-  set(vpvl2_sdl_sources render/sdl/main.cc)
+  set(vpvl2_sdl_sources "render/sdl/main.cc")
   add_executable(vpvl2_sdl ${vpvl2_sdl_sources} ${vpvl2_public_headers})
   target_link_libraries(vpvl2_sdl vpvl2 ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY})
   link_assimp(vpvl2_sdl)
@@ -380,9 +372,8 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2))
   link_nvtt(vpvl2_sdl)
 elseif(VPVL2_OPENGL_RENDERER AND VPVL2_LINK_SFML)
   find_sfml()
-  find_path(GLM_INCLUDE_DIR glm/glm.hpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/../glm-src)
   include_directories(${GLM_INCLUDE_DIR})
-  set(vpvl2_sfml_sources render/sfml/main.cc)
+  set(vpvl2_sfml_sources "render/sfml/main.cc")
   add_executable(vpvl2_sfml ${vpvl2_sfml_sources} ${vpvl2_public_headers})
   target_link_libraries(vpvl2_sfml vpvl2 ${SFML_GRAPHICS_LIBRARY}
                                          ${SFML_WINDOW_LIBRARY}
@@ -395,22 +386,24 @@ elseif(VPVL2_OPENGL_RENDERER AND VPVL2_LINK_SFML)
   link_nvtt(vpvl2_sfml)
   if(APPLE AND NOT VPVL2_LINK_GLEW)
     find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
-    find_path(COREFOUNDATION_INCLUDE_PATH CoreFoundation/CoreFoundation.h)
+    find_path(COREFOUNDATION_INCLUDE_PATH "CoreFoundation/CoreFoundation.h")
     target_link_libraries(vpvl2_sfml ${COREFOUNDATION_FRAMEWORK})
     include_directories(${COREFOUNDATION_INCLUDE_PATH})
   endif()
 endif()
 
-# generate configuration
+# generate pkg-config
 if(NOT WIN32)
-  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING "Base directory for pkgconfig files")
+  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING
+      "Base directory for pkgconfig files")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
 endif()
 
 # install configuration
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4250 /wd4251 /wd4819" CACHE STRING "disable warnings wd4250, wd4251, wd4819" FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4250 /wd4251 /wd4819" CACHE STRING
+      "disable warnings wd4250, wd4251, wd4819" FORCE)
   # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 else()
@@ -432,7 +425,7 @@ else()
           PATTERN "gl2" EXCLUDE
           PATTERN "qt" EXCLUDE)
   if(VPVL2_LINK_QT)
-    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt" DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt"
+            DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")
   endif()
 endif()
-

@@ -584,6 +584,8 @@ void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
     while (candidate) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         void *address = reinterpret_cast<void *>(context->getProcAddress(candidate));
+#elif defined(WIN32)
+        void *address = wglGetProcAddress(candidate);
 #else
         void *address = context->getProcAddress(candidate);
 #endif

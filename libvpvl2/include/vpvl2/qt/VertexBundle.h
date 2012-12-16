@@ -40,6 +40,9 @@
 
 #include <QtOpenGL/QtOpenGL>
 
+#include "vpvl2/qt/Common.h"
+#include "vpvl2\IRenderContext.h"
+
 namespace vpvl2
 {
 namespace qt
@@ -47,10 +50,11 @@ namespace qt
 
 class VertexBundle {
 public:
-    VertexBundle()
+	explicit VertexBundle(IRenderContext *renderContextRef)
         : glBindVertexArrayProcPtrRef(0),
           glDeleteVertexArraysProcPtrRef(0),
           glGenVertexArraysProcPtrRef(0),
+		  m_renderContextRef(renderContextRef),
           m_name(0)
     {
     }
@@ -59,42 +63,43 @@ public:
             glDeleteVertexArraysProcPtrRef(1, &m_name);
             m_name = 0;
         }
+		m_renderContextRef = 0;
     }
 
     void initialize(const QGLContext *context) {
 #ifdef __APPLE__
-        static const char *kBindVertexArray[] = {
+        static const void *kBindVertexArray[] = {
             "glBindVertexArrayAPPLE",
             0
         };
-        static const char *kDeleteVertexArrays[] = {
+        static const void *kDeleteVertexArrays[] = {
             "glDeleteVertexArraysAPPLE",
             0
         };
-        static const char *kGenVertexArrays[] = {
+        static const void *kGenVertexArrays[] = {
             "glGenVertexArraysAPPLE",
             0
         };
-#else
-        static const char *kBindVertexArray[] = {
+#else /**/
+        static const void *kBindVertexArray[] = {
             "glBindVertexArray",
             0
         };
-        static const char *kDeleteVertexArrays[] = {
+        static const void *kDeleteVertexArrays[] = {
             "glDeleteVertexArrays",
             0
         };
-        static const char *kGenVertexArrays[] = {
+        static const void *kGenVertexArrays[] = {
             "glGenVertexArrays",
             0
         };
-#endif
+#endif /* __APPLE__ */
         glBindVertexArrayProcPtrRef = reinterpret_cast<glBindVertexArrayProcPtr>(
-                    findProcAddress(context, kBindVertexArray));
+                    m_renderContextRef->findProcedureAddress(kBindVertexArray));
         glDeleteVertexArraysProcPtrRef = reinterpret_cast<glDeleteVertexArraysProcPtr>(
-                    findProcAddress(context, kDeleteVertexArrays));
+                    m_renderContextRef->findProcedureAddress(kDeleteVertexArrays));
         glGenVertexArraysProcPtrRef = reinterpret_cast<glGenVertexArraysProcPtr>(
-                    findProcAddress(context, kGenVertexArrays));
+                    m_renderContextRef->findProcedureAddress(kGenVertexArrays));
     }
 
     bool bind() {
@@ -120,30 +125,16 @@ public:
     }
 
 private:
-    void *findProcAddress(const QGLContext *context, const char **candidates) const {
-        const char *candidate = candidates[0];
-        int i = 0;
-        while (candidate) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-            void *address = reinterpret_cast<void *>(context->getProcAddress(candidate));
-#else
-            void *address = context->getProcAddress(candidate);
-#endif
-            if (address) {
-                return address;
-            }
-            candidate = candidates[++i];
-        }
-        return 0;
-    }
-
     typedef void (*glBindVertexArrayProcPtr)(GLuint id);
     typedef void (*glDeleteVertexArraysProcPtr)(GLsizei n, const GLuint *ids);
     typedef void (*glGenVertexArraysProcPtr)(GLsizei n, GLuint *ids);
     glBindVertexArrayProcPtr glBindVertexArrayProcPtrRef;
     glDeleteVertexArraysProcPtr glDeleteVertexArraysProcPtrRef;
     glGenVertexArraysProcPtr glGenVertexArraysProcPtrRef;
+	IRenderContext *m_renderContextRef;
     GLuint m_name;
+	
+    VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
 };
 
 } /* namespace qt */

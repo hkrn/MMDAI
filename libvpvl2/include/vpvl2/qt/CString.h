@@ -38,7 +38,7 @@
 #ifndef VPVL2_QT_CSTRING_H_
 #define VPVL2_QT_CSTRING_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/qt/Common.h"
 #include "vpvl2/IString.h"
 
 #include <QtCore/QString>
@@ -48,7 +48,7 @@ namespace vpvl2
 namespace qt
 {
 
-class CString : public IString
+class VPVL2QTCOMMON_API CString : public IString
 {
 public:
     CString(const QString &s);
