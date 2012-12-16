@@ -8,9 +8,9 @@ class MockIMotion : public IMotion {
       void(uint8_t *data));
   MOCK_CONST_METHOD0(estimateSize,
       size_t());
-  MOCK_CONST_METHOD0(parentModel,
+  MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
-  MOCK_METHOD1(setParentModel,
+  MOCK_METHOD1(setParentModelRef,
       void(IModel *model));
   MOCK_METHOD1(seek,
       void(const IKeyframe::TimeIndex &timeIndex));
@@ -74,6 +74,8 @@ class MockIMotion : public IMotion {
       bool());
   MOCK_METHOD1(setNullFrameEnable,
       void(bool value));
+  MOCK_CONST_METHOD0(parentSceneRef,
+      Scene*());
   MOCK_CONST_METHOD0(name,
       const IString*());
   MOCK_CONST_METHOD0(type,

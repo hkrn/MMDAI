@@ -120,7 +120,7 @@ public:
      * @return IModel
      * @sa setParentModel
      */
-    virtual IModel *parentModel() const = 0;
+    virtual IModel *parentModelRef() const = 0;
 
     /**
      * モーションが依存するモデルを設定します.
@@ -130,7 +130,7 @@ public:
      * @param IModel
      * @sa parentModel
      */
-    virtual void setParentModel(IModel *model) = 0;
+    virtual void setParentModelRef(IModel *model) = 0;
 
     /**
      * モーションを指定されたフレームの位置に移動します.
@@ -416,6 +416,14 @@ public:
      * @sa isNullFrameEnabled
      */
     virtual void setNullFrameEnable(bool value) = 0;
+
+    /**
+     * 親の場面インスタンスの参照を返します.
+     *
+     * @brief parentSceneRef
+     * @return
+     */
+    virtual Scene *parentSceneRef() const = 0;
 
     /**
      * モーション名を返します.

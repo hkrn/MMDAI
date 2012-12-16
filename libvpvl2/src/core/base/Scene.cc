@@ -38,6 +38,7 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/asset/Model.h"
+#include "vpvl2/mvd/Motion.h"
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
@@ -71,9 +72,43 @@ namespace
 
 using namespace vpvl2;
 
+static void SetParentSceneRef(IModel *model, Scene *scene) {
+    if (model) {
+        switch (model->type()) {
+        case IModel::kAsset:
+            static_cast<asset::Model *>(model)->setParentSceneRef(scene);
+            break;
+        case IModel::kPMD:
+            static_cast<pmd::Model *>(model)->setParentSceneRef(scene);
+            break;
+        case IModel::kPMX:
+            static_cast<pmx::Model *>(model)->setParentSceneRef(scene);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+static void SetParentSceneRef(IMotion *motion, Scene *scene) {
+    if (motion) {
+        switch (motion->type()) {
+        case IMotion::kMVD:
+            static_cast<mvd::Motion *>(motion)->setParentSceneRef(scene);
+            break;
+        case IMotion::kVMD:
+            static_cast<vmd::Motion *>(motion)->setParentSceneRef(scene);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 class Light : public ILight {
 public:
-    Light() :
+    Light(Scene *sceneRef) :
+        m_sceneRef(sceneRef),
         m_motion(0),
         m_color(kZeroV3),
         m_direction(kZeroV3),
@@ -109,7 +144,6 @@ public:
     void setDirection(const Vector3 &value) { m_direction = value; }
     void setDepthTextureSize(const Vector3 &value) { m_depthTextureSize = value; }
     void setHasFloatTexture(bool value) { m_hasFloatTexture = value; }
-    void setMotion(IMotion *value) { m_motion = value; }
     void setDepthTexture(void *value) { m_depthTexture = value; }
     void setToonEnable(bool value) { m_enableToon = value; }
     void setSoftShadowEnable(bool value) { m_enableSoftShadow = value; }
@@ -121,8 +155,14 @@ public:
         setColor(Vector3(0.6f, 0.6f, 0.6f));
         setDirection(Vector3(-0.5f, -1.0f, -0.5f));
     }
+    void setMotion(IMotion *value) {
+        SetParentSceneRef(m_motion, 0);
+        m_motion = value;
+        SetParentSceneRef(value, m_sceneRef);
+    }
 
 private:
+    Scene *m_sceneRef;
     IMotion *m_motion;
     Vector3 m_color;
     Vector3 m_direction;
@@ -135,8 +175,9 @@ private:
 
 class Camera : public ICamera {
 public:
-    Camera()
-        : m_motion(0),
+    Camera(Scene *sceneRef)
+        : m_sceneRef(sceneRef),
+          m_motion(0),
           m_transform(Transform::getIdentity()),
           m_lookAt(kZeroV3),
           m_position(kZeroV3),
@@ -176,7 +217,6 @@ public:
     void setFov(Scalar value) { m_fov = value; }
     void setZNear(Scalar value) { m_znear = value; }
     void setZFar(Scalar value) { m_zfar = value; }
-    void setMotion(IMotion *value) { m_motion = value; }
     void setDistance(Scalar value) {
         m_distance.setZ(value);
         m_position = m_lookAt + m_distance;
@@ -195,6 +235,11 @@ public:
         setDistance(50);
         updateTransform();
     }
+    void setMotion(IMotion *value) {
+        SetParentSceneRef(m_motion, 0);
+        m_motion = value;
+        SetParentSceneRef(value, m_sceneRef);
+    }
 
     void updateTransform() {
         static const Vector3 kUnitX(1, 0, 0), kUnitY(0, 1, 0), kUnitZ(0, 0, 1);
@@ -207,6 +252,7 @@ public:
     }
 
 private:
+    Scene *m_sceneRef;
     IMotion *m_motion;
     Transform m_transform;
     Quaternion m_rotation;
@@ -225,10 +271,12 @@ namespace vpvl2
 {
 
 struct Scene::PrivateContext {
-    PrivateContext()
+    PrivateContext(Scene *sceneRef)
         : computeContext(0),
           accelerationType(Scene::kSoftwareFallback),
           effectContext(0),
+          light(sceneRef),
+          camera(sceneRef),
           preferredFPS(Scene::defaultFPS())
     {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -345,19 +393,8 @@ struct Scene::PrivateContext {
     Array<IRenderEngine *> engines;
     Light light;
     Camera camera;
-    Color lightColor;
     Scalar preferredFPS;
 };
-
-ICamera *Scene::createCamera()
-{
-    return new Camera();
-}
-
-ILight *Scene::createLight()
-{
-    return new Light();
-}
 
 bool Scene::isAcceleratorSupported()
 {
@@ -377,7 +414,7 @@ Scalar Scene::defaultFPS()
 Scene::Scene()
     : m_context(0)
 {
-    m_context = new Scene::PrivateContext();
+    m_context = new Scene::PrivateContext(this);
 }
 
 Scene::~Scene()
@@ -434,19 +471,7 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
         m_context->models.add(model);
         m_context->engines.add(engine);
         m_context->model2engineRef.insert(model, engine);
-        switch (model->type()) {
-        case IModel::kAsset:
-            static_cast<asset::Model *>(model)->setParentSceneRef(this);
-            break;
-        case IModel::kPMD:
-            static_cast<pmd::Model *>(model)->setParentSceneRef(this);
-            break;
-        case IModel::kPMX:
-            static_cast<pmx::Model *>(model)->setParentSceneRef(this);
-            break;
-        default:
-            break;
-        }
+        SetParentSceneRef(model, this);
         if (const IString *name = model->name())
             m_context->name2modelRef.insert(name->toHashString(), model);
     }
@@ -454,8 +479,20 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
 
 void Scene::addMotion(IMotion *motion)
 {
-    if (motion)
+    if (motion) {
         m_context->motions.add(motion);
+        SetParentSceneRef(motion, this);
+    }
+}
+
+ICamera *Scene::createCamera()
+{
+    return new Camera(this);
+}
+
+ILight *Scene::createLight()
+{
+    return new Light(this);
 }
 
 IEffect *Scene::createEffect(const IString *path, IRenderContext *renderContext)
@@ -485,18 +522,8 @@ IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderCon
 
 void Scene::removeModel(IModel *model)
 {
-    switch (model->type()) {
-    case IModel::kAsset:
-        static_cast<asset::Model *>(model)->setParentSceneRef(0);
-        break;
-    case IModel::kPMD:
-        static_cast<pmd::Model *>(model)->setParentSceneRef(0);
-        break;
-    case IModel::kPMX:
-        static_cast<pmx::Model *>(model)->setParentSceneRef(0);
-        break;
-    default:
-        break;
+    if (model) {
+        SetParentSceneRef(model, 0);
     }
 }
 
@@ -517,8 +544,10 @@ void Scene::deleteModel(IModel *&model)
 
 void Scene::removeMotion(IMotion *motion)
 {
-    if (motion)
+    if (motion) {
         m_context->motions.remove(motion);
+        SetParentSceneRef(motion, 0);
+    }
 }
 
 void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)

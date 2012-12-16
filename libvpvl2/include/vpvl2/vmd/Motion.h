@@ -112,7 +112,8 @@ public:
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
     size_t estimateSize() const;
-    void setParentModel(IModel *model);
+    void setParentSceneRef(Scene *value);
+    void setParentModelRef(IModel *value);
     void seek(const IKeyframe::TimeIndex &timeIndex);
     void seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene);
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
@@ -165,8 +166,11 @@ public:
     const IString *name() const {
         return m_name;
     }
-    IModel *parentModel() const {
-        return m_modelRef;
+    Scene *parentSceneRef() const {
+        return m_parentSceneRef;
+    }
+    IModel *parentModelRef() const {
+        return m_parentModelRef;
     }
     Error error() const {
         return m_error;
@@ -215,7 +219,8 @@ private:
     void release();
 
     mutable IMotion *m_motionPtr;
-    IModel *m_modelRef;
+    Scene *m_parentSceneRef;
+    IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     DataInfo m_result;

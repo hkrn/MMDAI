@@ -202,7 +202,8 @@ public:
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
     size_t estimateSize() const;
-    void setParentModel(IModel *model);
+    void setParentSceneRef(Scene *value);
+    void setParentModelRef(IModel *value);
     void seek(const IKeyframe::TimeIndex &timeIndex);
     void seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene);
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
@@ -253,7 +254,8 @@ public:
     IMotion *clone() const;
 
     const IString *name() const { return m_name; }
-    IModel *parentModel() const { return m_parentModelRef; }
+    Scene *parentSceneRef() const { return m_parentSceneRef; }
+    IModel *parentModelRef() const { return m_parentModelRef; }
     Error error() const { return m_error; }
     const DataInfo &result() const { return m_info; }
     NameListSection *nameListSection() const { return m_nameListSection; }
@@ -282,6 +284,7 @@ private:
     MorphSection *m_morphSection;
     NameListSection *m_nameListSection;
     ProjectSection *m_projectSection;
+    Scene *m_parentSceneRef;
     IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
     IString *m_name;

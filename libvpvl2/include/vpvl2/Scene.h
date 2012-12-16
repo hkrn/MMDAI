@@ -77,8 +77,6 @@ public:
         kMaxUpdateTypeFlags  = 0x20
     };
 
-    static ICamera *createCamera();
-    static ILight *createLight();
     static bool isAcceleratorSupported();
     static Scalar defaultFPS();
 
@@ -88,6 +86,8 @@ public:
     IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags) const;
     void addModel(IModel *model, IRenderEngine *engine);
     void addMotion(IMotion *motion);
+    ICamera *createCamera();
+    ILight *createLight();
     IEffect *createEffect(const IString *path, IRenderContext *renderContext);
     IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext);
     void removeModel(IModel *model);

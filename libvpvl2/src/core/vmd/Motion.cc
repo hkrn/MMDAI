@@ -58,7 +58,8 @@ const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid 
 
 Motion::Motion(IModel *model, IEncoding *encoding)
     : m_motionPtr(0),
-      m_modelRef(model),
+      m_parentSceneRef(0),
+      m_parentModelRef(model),
       m_encodingRef(encoding),
       m_name(0),
       m_boneMotion(encoding),
@@ -227,13 +228,18 @@ size_t Motion::estimateSize() const
             + m_lightMotion.countKeyframes() * LightKeyframe::strideSize();
 }
 
-void Motion::setParentModel(IModel *model)
+void Motion::setParentSceneRef(Scene *value)
 {
-    m_boneMotion.setParentModel(model);
-    m_morphMotion.setParentModel(model);
-    m_modelRef = model;
-    if (model) {
-        const IString *name = model->name();
+    m_parentSceneRef = value;
+}
+
+void Motion::setParentModelRef(IModel *value)
+{
+    m_boneMotion.setParentModel(value);
+    m_morphMotion.setParentModel(value);
+    m_parentModelRef = value;
+    if (value) {
+        const IString *name = value->name();
         if (name)
             internal::setString(name, m_name);
     }
@@ -302,8 +308,8 @@ void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *sce
 void Motion::reload()
 {
     /* rebuild internal keyframe nodes */
-    m_boneMotion.setParentModel(m_modelRef);
-    m_morphMotion.setParentModel(m_modelRef);
+    m_boneMotion.setParentModel(m_parentModelRef);
+    m_morphMotion.setParentModel(m_parentModelRef);
     reset();
 }
 
@@ -564,7 +570,7 @@ void Motion::update(IKeyframe::Type type)
 {
     switch (type) {
     case IKeyframe::kBone:
-        m_boneMotion.setParentModel(m_modelRef);
+        m_boneMotion.setParentModel(m_parentModelRef);
         break;
     case IKeyframe::kCamera:
         m_cameraMotion.update();
@@ -573,7 +579,7 @@ void Motion::update(IKeyframe::Type type)
         m_lightMotion.update();
         break;
     case IKeyframe::kMorph:
-        m_morphMotion.setParentModel(m_modelRef);
+        m_morphMotion.setParentModel(m_parentModelRef);
         break;
     default:
         break;
@@ -582,7 +588,7 @@ void Motion::update(IKeyframe::Type type)
 
 IMotion *Motion::clone() const
 {
-    IMotion *dest = m_motionPtr = new Motion(m_modelRef, m_encodingRef);
+    IMotion *dest = m_motionPtr = new Motion(m_parentModelRef, m_encodingRef);
     const int nbkeyframes = m_boneMotion.countKeyframes();
     for (int i = 0; i < nbkeyframes; i++) {
         BoneKeyframe *keyframe = m_boneMotion.keyframeAt(i);
@@ -615,13 +621,13 @@ void Motion::parseHeader(const DataInfo &info)
 void Motion::parseBoneFrames(const DataInfo &info)
 {
     m_boneMotion.read(info.boneKeyframePtr, info.boneKeyframeCount);
-    m_boneMotion.setParentModel(m_modelRef);
+    m_boneMotion.setParentModel(m_parentModelRef);
 }
 
 void Motion::parseMorphFrames(const DataInfo &info)
 {
     m_morphMotion.read(info.morphKeyframePtr, info.morphKeyframeCount);
-    m_morphMotion.setParentModel(m_modelRef);
+    m_morphMotion.setParentModel(m_parentModelRef);
 }
 
 void Motion::parseCameraFrames(const DataInfo &info)
@@ -643,6 +649,7 @@ void Motion::release()
     delete m_name;
     m_name = 0;
     delete m_motionPtr;
+    m_parentSceneRef = 0;
     m_motionPtr = 0;
     m_error = kNoError;
     m_active = false;

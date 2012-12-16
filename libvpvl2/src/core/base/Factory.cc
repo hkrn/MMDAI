@@ -104,7 +104,7 @@ struct Factory::PrivateContext
     }
 
     mvd::Motion *createMVDFromVMD(vmd::Motion *source) const {
-        mvd::Motion *motion = mvdPtr = new mvd::Motion(source->parentModel(), encoding);
+        mvd::Motion *motion = mvdPtr = new mvd::Motion(source->parentModelRef(), encoding);
         mvd::NameListSection *nameList = motion->nameListSection();
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBone);
         QuadWord value;
@@ -175,7 +175,7 @@ struct Factory::PrivateContext
         return motion;
     }
     vmd::Motion *createVMDFromMVD(mvd::Motion *source) const {
-        vmd::Motion *motion = vmdPtr = new vmd::Motion(source->parentModel(), encoding);
+        vmd::Motion *motion = vmdPtr = new vmd::Motion(source->parentModelRef(), encoding);
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBone);
         QuadWord value;
         for (int i = 0; i < nBoneKeyframes; i++) {

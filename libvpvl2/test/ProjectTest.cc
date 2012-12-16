@@ -331,7 +331,7 @@ TEST(ProjectTest, Load)
     /* VMD motion for model */
     IMotion *motion = project.findMotion(kMotion1UUID);
     ASSERT_EQ(IMotion::kVMD, motion->type());
-    ASSERT_EQ(project.findModel(kModel1UUID), motion->parentModel());
+    ASSERT_EQ(project.findModel(kModel1UUID), motion->parentModelRef());
     TestBoneMotion(motion, false);
     TestMorphMotion(motion);
     TestCameraMotion(motion, false);
@@ -342,7 +342,7 @@ TEST(ProjectTest, Load)
     /* MVD motion */
     IMotion *motion2 = project.findMotion(kMotion2UUID);
     ASSERT_EQ(IMotion::kMVD, motion2->type());
-    ASSERT_EQ(project.findModel(kModel2UUID), motion2->parentModel());
+    ASSERT_EQ(project.findModel(kModel2UUID), motion2->parentModelRef());
     TestBoneMotion(motion2, true);
     TestMorphMotion(motion2);
     TestCameraMotion(motion2, true);
@@ -353,7 +353,7 @@ TEST(ProjectTest, Load)
     /* VMD motion for asset */
     IMotion *motion3 = project.findMotion(kMotion3UUID);
     ASSERT_EQ(IMotion::kVMD, motion3->type());
-    ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModel());
+    ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModelRef());
     TestBoneMotion(motion3, false);
     TestMorphMotion(motion3);
 }
@@ -382,7 +382,7 @@ TEST(ProjectTest, Save)
     TestLocalSettings(project2);
     /* VMD motion for model */
     IMotion *motion = project2.findMotion(kMotion1UUID);
-    ASSERT_EQ(project2.findModel(kModel1UUID), motion->parentModel());
+    ASSERT_EQ(project2.findModel(kModel1UUID), motion->parentModelRef());
     ASSERT_EQ(IMotion::kVMD, motion->type());
     TestBoneMotion(motion, false);
     TestMorphMotion(motion);
@@ -394,7 +394,7 @@ TEST(ProjectTest, Save)
     /* MVD motion */
     IMotion *motion2 = project2.findMotion(kMotion2UUID);
     ASSERT_EQ(IMotion::kMVD, motion2->type());
-    ASSERT_EQ(project2.findModel(kModel2UUID), motion2->parentModel());
+    ASSERT_EQ(project2.findModel(kModel2UUID), motion2->parentModelRef());
     TestBoneMotion(motion2, true);
     TestMorphMotion(motion2);
     TestCameraMotion(motion2, true);
@@ -405,7 +405,7 @@ TEST(ProjectTest, Save)
     /* VMD motion for asset */
     IMotion *motion3 = project.findMotion(kMotion3UUID);
     ASSERT_EQ(IMotion::kVMD, motion3->type());
-    ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModel());
+    ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModelRef());
     TestBoneMotion(motion3, false);
     TestMorphMotion(motion3);
 }

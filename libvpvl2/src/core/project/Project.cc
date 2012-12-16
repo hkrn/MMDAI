@@ -421,7 +421,7 @@ struct Project::PrivateContext {
                 const vmd::Motion *motion = static_cast<const vmd::Motion *>(motionPtr);
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("vmd")));
-                const std::string &modelUUID = findModelUUID(motion->parentModel());
+                const std::string &modelUUID = findModelUUID(motion->parentModelRef());
                 if (modelUUID != Project::kNullUUID)
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
@@ -439,7 +439,7 @@ struct Project::PrivateContext {
                 const mvd::Motion *motion = static_cast<const mvd::Motion *>(motionPtr);
                 VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("mvd")));
-                const std::string &modelUUID = findModelUUID(motion->parentModel());
+                const std::string &modelUUID = findModelUUID(motion->parentModelRef());
                 if (modelUUID != Project::kNullUUID)
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
                 VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
@@ -1160,12 +1160,12 @@ struct Project::PrivateContext {
         if (!parentModel.empty()) {
             ModelMap::const_iterator it = models.find(parentModel);
             if (it != models.end()) {
-                currentMotion->setParentModel(it->second);
+                currentMotion->setParentModelRef(it->second);
             }
             else {
                 ModelMap::const_iterator it2 = assets.find(parentModel);
                 if (it2 != assets.end()) {
-                    currentMotion->setParentModel(it2->second);
+                    currentMotion->setParentModelRef(it2->second);
                 }
             }
         }
@@ -1704,7 +1704,7 @@ struct Project::PrivateContext {
                 if (!parentModel.empty()) {
                     ModelMap::const_iterator it2 = models.find(parentModel);
                     if (it2 != models.end()) {
-                        currentMotion->setParentModel(it2->second);
+                        currentMotion->setParentModelRef(it2->second);
                     }
                 }
                 motions.insert(std::make_pair(uuid, currentMotion));

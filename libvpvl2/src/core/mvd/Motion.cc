@@ -143,6 +143,7 @@ Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
       m_morphSection(0),
       m_nameListSection(0),
       m_projectSection(0),
+      m_parentSceneRef(0),
       m_parentModelRef(modelRef),
       m_encodingRef(encodingRef),
       m_name(0),
@@ -392,12 +393,17 @@ size_t Motion::estimateSize() const
     return size;
 }
 
-void Motion::setParentModel(IModel *model)
+void Motion::setParentSceneRef(Scene *value)
 {
-    m_parentModelRef = model;
-    m_boneSection->setParentModel(model);
-    m_modelSection->setParentModel(model);
-    m_morphSection->setParentModel(model);
+    m_parentSceneRef = value;
+}
+
+void Motion::setParentModelRef(IModel *value)
+{
+    m_parentModelRef = value;
+    m_boneSection->setParentModel(value);
+    m_modelSection->setParentModel(value);
+    m_morphSection->setParentModel(value);
 }
 
 void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -956,6 +962,7 @@ void Motion::release()
     m_name2 = 0;
     delete m_reserved;
     m_reserved = 0;
+    m_parentSceneRef = 0;
     m_error = kNoError;
     m_active = false;
 }
