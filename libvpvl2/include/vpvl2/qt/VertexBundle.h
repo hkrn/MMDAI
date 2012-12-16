@@ -41,7 +41,14 @@
 #include <QtOpenGL/QtOpenGL>
 
 #include "vpvl2/qt/Common.h"
-#include "vpvl2\IRenderContext.h"
+#include "vpvl2/IRenderContext.h"
+
+#ifdef WIN32
+#pragma warning(push)
+#pragma warning(disable:4005)
+#include <vpvl2/extensions/gl/khronos/glext.h>
+#pragma warning(pop)
+#endif
 
 namespace vpvl2
 {
@@ -94,12 +101,21 @@ public:
             0
         };
 #endif /* __APPLE__ */
+#ifdef WIN32
+        glBindVertexArrayProcPtrRef = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(
+                    m_renderContextRef->findProcedureAddress(kBindVertexArray));
+        glDeleteVertexArraysProcPtrRef = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(
+                    m_renderContextRef->findProcedureAddress(kDeleteVertexArrays));
+        glGenVertexArraysProcPtrRef = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(
+                    m_renderContextRef->findProcedureAddress(kGenVertexArrays));
+#else
         glBindVertexArrayProcPtrRef = reinterpret_cast<glBindVertexArrayProcPtr>(
                     m_renderContextRef->findProcedureAddress(kBindVertexArray));
         glDeleteVertexArraysProcPtrRef = reinterpret_cast<glDeleteVertexArraysProcPtr>(
                     m_renderContextRef->findProcedureAddress(kDeleteVertexArrays));
         glGenVertexArraysProcPtrRef = reinterpret_cast<glGenVertexArraysProcPtr>(
                     m_renderContextRef->findProcedureAddress(kGenVertexArrays));
+#endif
     }
 
     bool bind() {
@@ -125,12 +141,18 @@ public:
     }
 
 private:
+#ifdef WIN32
+	PFNGLBINDVERTEXARRAYPROC glBindVertexArrayProcPtrRef;
+	PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArraysProcPtrRef;
+	PFNGLGENVERTEXARRAYSPROC glGenVertexArraysProcPtrRef;
+#else
     typedef void (*glBindVertexArrayProcPtr)(GLuint id);
     typedef void (*glDeleteVertexArraysProcPtr)(GLsizei n, const GLuint *ids);
     typedef void (*glGenVertexArraysProcPtr)(GLsizei n, GLuint *ids);
     glBindVertexArrayProcPtr glBindVertexArrayProcPtrRef;
     glDeleteVertexArraysProcPtr glDeleteVertexArraysProcPtrRef;
     glGenVertexArraysProcPtr glGenVertexArraysProcPtrRef;
+#endif
 	IRenderContext *m_renderContextRef;
     GLuint m_name;
 	

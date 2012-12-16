@@ -43,8 +43,10 @@
 #if defined(WIN32)
   #if defined(vpvl2qtcommon_EXPORTS)
     #define VPVL2QTCOMMON_API __declspec(dllexport)
-  #else
+  #elif defined(BUILD_SHARED_LIBS)
     #define VPVL2QTCOMMON_API __declspec(dllimport)
+  #else
+    #define VPVL2QTCOMMON_API
   #endif /* defined(vpvl2_EXPORTS) */
 #else /* defined (_WIN32) */
  #if defined(__GNUC__) && __GNUC__ >= 4

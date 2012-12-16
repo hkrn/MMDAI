@@ -89,6 +89,9 @@
 /* Platform is NativeClient PPAPI */
 #cmakedefine VPVL2_PLATFORM_NACL
 
+/* Build library as dynamic library */
+#cmakedefine BUILD_SHARED_LIBS
+
 /* version */
 #define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
 #define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
