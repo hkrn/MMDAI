@@ -185,7 +185,7 @@ void MotionBaseModel::setTimeIndexColumnMax(int newValue)
     setTimeIndexColumnMax0(newValue);
 }
 
-void MotionBaseModel::setTimeIndexColumnMax(const vpvl2::IMotion *motion)
+void MotionBaseModel::setTimeIndexColumnMax(const IMotionSharedPtr motion)
 {
     setTimeIndexColumnMax0(motion->maxTimeIndex());
 }

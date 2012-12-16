@@ -52,6 +52,7 @@
 #include <vpvl2/IModel.h>
 #include <vpvl2/Common.h>
 #include <vpvl2/Project.h>
+#include <vpvl2/qt/RenderContext.h>
 
 #include <glm/glm.hpp>
 
@@ -61,7 +62,6 @@ class IRenderContext;
 class Project;
 namespace qt {
 class Archive;
-class RenderContext;
 class World;
 }
 }
@@ -72,8 +72,8 @@ namespace vpvm
 {
 
 using namespace vpvl2;
-typedef QScopedPointer<IModel> IModelPtr;
-typedef QScopedPointer<IMotion> IMotionPtr;
+using namespace vpvl2::qt;
+
 typedef QScopedPointer<IRenderEngine> IRenderEnginePtr;
 typedef QScopedPointer<Project> ProjectPtr;
 
@@ -92,29 +92,29 @@ public:
     explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
     ~SceneLoader();
 
-    QList<IModel *> allModels() const;
-    void addModel(IModel *model,  const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid);
+    QList<IModelSharedPtr> allModels() const;
+    void addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid);
     void bindDepthTexture();
-    void deleteModel(IModel *&model);
-    IModel *findAsset(const QUuid &uuid) const;
-    IModel *findModel(const QUuid &uuid) const;
-    IMotion *findMotion(const QUuid &uuid) const;
+    void deleteModel(IModelSharedPtr model);
+    IModelSharedPtr findAsset(const QUuid &uuid) const;
+    IModelSharedPtr findModel(const QUuid &uuid) const;
+    IMotionSharedPtr findMotion(const QUuid &uuid) const;
     const QUuid findUUID(const IModel *model) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     void getCameraMatrices(glm::mat4 &worldRef, glm::mat4 &view, glm::mat4 &projection) const;
     bool isProjectModified() const;
-    bool loadAsset(const QString &filename, QUuid &uuid, IModelPtr &assetPtr);
-    bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelPtr &assetPtr);
-    bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelPtr &modelPtr);
-    bool loadCameraMotion(const QString &path, IMotionPtr &motionPtr);
-    bool loadModel(const QString &filename, IModelPtr &modelPtr);
-    bool loadModel(const QByteArray &bytes, IModel::Type type, IModelPtr &modelPtr);
-    bool loadModelMotion(const QString &path, IMotionPtr &motionPtr);
-    bool loadModelMotion(const QString &path, QList<IModel *> &models, IMotionPtr &motionPtr);
-    bool loadModelMotion(const QString &path, IModel *model, IMotionPtr &motionPtr);
-    VPDFilePtr loadModelPose(const QString &path, IModel *model);
-    void newCameraMotion(IMotionPtr &motionPtr) const;
-    void newModelMotion(const IModel *model, IMotionPtr &motionPtr) const;
+    bool loadAsset(const QString &filename, QUuid &uuid, IModelSharedPtr assetPtr);
+    bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelSharedPtr assetPtr);
+    bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelSharedPtr modelPtr);
+    bool loadCameraMotion(const QString &path, IMotionSharedPtr motionPtr);
+    bool loadModel(const QString &filename, IModelSharedPtr modelPtr);
+    bool loadModel(const QByteArray &bytes, IModel::Type type, IModelSharedPtr modelPtr);
+    bool loadModelMotion(const QString &path, IMotionSharedPtr motionPtr);
+    bool loadModelMotion(const QString &path, QList<IModelSharedPtr> &models, IMotionSharedPtr motionPtr);
+    bool loadModelMotion(const QString &path, IModelSharedPtr model, IMotionSharedPtr motionPtr);
+    VPDFilePtr loadModelPose(const QString &path, IModelSharedPtr model);
+    void newCameraMotion(IMotionSharedPtr motionPtr) const;
+    void newModelMotion(IModelSharedPtr model, IMotionSharedPtr motionPtr) const;
     void newProject(ProjectPtr &projectPtr);
     void releaseProject();
     void releaseDepthTexture();
@@ -164,14 +164,14 @@ public:
     void setOpenCLSkinningEnableType1(const IModel *model, bool value);
     bool isVertexShaderSkinningType1Enabled(const IModel *model) const;
     void setVertexShaderSkinningType1Enable(const IModel *model, bool value);
-    IModel *selectedModelRef() const;
+    IModelSharedPtr selectedModelRef() const;
     bool isModelSelected(const IModel *value) const;
-    void setModelEdgeColor(IModel *model, const QColor &value);
-    void setModelEdgeOffset(IModel *model, float value);
-    void setModelOpacity(IModel *model, const Scalar &value);
-    void setModelPosition(IModel *model, const Vector3 &value);
-    const Vector3 modelRotation(IModel *value) const;
-    void setModelRotation(IModel *model, const Vector3 &value);
+    void setModelEdgeColor(IModelSharedPtr model, const QColor &value);
+    void setModelEdgeOffset(IModelSharedPtr model, float value);
+    void setModelOpacity(IModelSharedPtr model, const Scalar &value);
+    void setModelPosition(IModelSharedPtr model, const Vector3 &value);
+    const Vector3 modelRotation(IModelSharedPtr value) const;
+    void setModelRotation(IModelSharedPtr model, const Vector3 &value);
 
     const Vector3 assetPosition(const IModel *asset);
     void setAssetPosition(const IModel *asset, const Vector3 &value);
@@ -181,10 +181,10 @@ public:
     void setAssetOpacity(const IModel *asset, float value);
     float assetScaleFactor(const IModel *asset);
     void setAssetScaleFactor(const IModel *asset, float value);
-    IModel *selectedAsset() const;
+    IModelSharedPtr selectedAsset() const;
     bool isAssetSelected(const IModel *value) const;
-    IModel *assetParentModel(const IModel *asset) const;
-    void setAssetParentModel(const IModel *asset, IModel *model);
+    IModelSharedPtr assetParentModel(const IModel *asset) const;
+    void setAssetParentModel(const IModel *asset, IModelSharedPtr model);
     IBone *assetParentBone(const IModel *asset) const;
     void setAssetParentBone(const IModel *asset, IBone *bone);
 
@@ -196,14 +196,14 @@ public:
 public slots:
     void newProject();
     void deleteCameraMotion();
-    void deleteMotion(IMotion *&motion);
+    void deleteMotion(IMotionSharedPtr motion);
     void loadProject(const QString &path);
-    void saveMetadataFromAsset(const QString &path, IModel *asset);
+    void saveMetadataFromAsset(const QString &path, IModelSharedPtr asset);
     void saveProject(const QString &path);
-    void setCameraMotion(IMotion *motion);
+    void setCameraMotion(IMotionSharedPtr motion);
     void setLightColor(const Vector3 &color);
     void setLightDirection(const Vector3 &value);
-    void setModelMotion(IMotion *motion, IModel *model);
+    void setModelMotion(IMotionSharedPtr motion, IModelSharedPtr model);
     void setRenderOrderList(const QList<QUuid> &value);
     void setWorldGravity(const Vector3 &value);
     void setWorldRandSeed(unsigned long value);
@@ -223,8 +223,8 @@ public slots:
     void setSceneHeight(int value);
     void setLoop(bool value);
     void setGridIncluded(bool value);
-    void setSelectedModel(IModel *value);
-    void setSelectedAsset(IModel *value);
+    void setSelectedModel(IModelSharedPtr value);
+    void setSelectedAsset(IModelSharedPtr value);
     void setBackgroundAudioPath(const QString &value);
     void setPreferredFPS(int value);
     void setScreenColor(const QColor &value);
@@ -246,13 +246,13 @@ signals:
     void projectDidUpdateProgress(int value, int max, const QString &text);
     void projectDidLoad(bool loaded);
     void projectDidSave(bool saved);
-    void modelDidSelect(IModel *model, SceneLoader *loader);
-    void modelDidAdd(IModel *model, const QUuid &uuid);
-    void modelWillDelete(IModel *model, const QUuid &uuid);
-    void modelDidMakePose(VPDFilePtr pose, IModel *model);
-    void motionDidAdd(IMotion *motion, const IModel *model, const QUuid &uuid);
-    void motionWillDelete(IMotion *motion, const QUuid &uuid);
-    void cameraMotionDidSet(IMotion *motion, const QUuid &uuid);
+    void modelDidSelect(IModelSharedPtr model, SceneLoader *loader);
+    void modelDidAdd(IModelSharedPtr model, const QUuid &uuid);
+    void modelWillDelete(IModelSharedPtr model, const QUuid &uuid);
+    void modelDidMakePose(VPDFilePtr pose, IModelSharedPtr model);
+    void motionDidAdd(IMotionSharedPtr motion, IModelSharedPtr model, const QUuid &uuid);
+    void motionWillDelete(IMotionSharedPtr motion, const QUuid &uuid);
+    void cameraMotionDidSet(IMotionSharedPtr motion, const QUuid &uuid);
     void lightColorDidSet(const Vector3 &color);
     void lightDirectionDidSet(const Vector3 &position);
     void preprocessDidPerform();
@@ -260,39 +260,39 @@ signals:
 
 private slots:
     void setProjectDirtyFalse();
-    void deleteModelSlot(IModel *model);
+    void deleteModelSlot(IModelSharedPtr model);
 
 private:
     typedef QPair<QString, QString> FilePathPair;
-    bool createModelEngine(IModel *model, const QDir &dir, IRenderEnginePtr &enginePtr);
-    bool loadModelFromProject(const QString &path, IModel *model);
-    bool handleFuture(const QFuture<IModel *> &future, IModelPtr &modelPtr) const;
-    void addAsset(const IModelPtr &assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
-    void emitMotionDidAdd(const Array<IMotion *> &motions, IModel *model);
-    void insertModel(IModel *model, const QString &name);
-    void insertMotion(IMotion *motion, IModel *model);
+    bool createModelEngine(IModelSharedPtr model, const QDir &dir, IRenderEnginePtr &enginePtr);
+    bool loadModelFromProject(const QString &path, IModelSharedPtr model);
+    bool handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr modelPtr) const;
+    void addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
+    void emitMotionDidAdd(const Array<IMotion *> &motions, IModelSharedPtr model);
+    void insertModel(IModelSharedPtr model, const QString &name);
+    void insertMotion(IMotionSharedPtr motion, IModelSharedPtr model);
     void commitAssetProperties();
     bool globalSetting(const char *key, bool def) const;
     int globalSetting(const char *key, int def) const;
     Scene::AccelerationType globalAccelerationType() const;
     Scene::AccelerationType modelAccelerationType(const IModel *model) const;
-    IModel *loadBytesAsync(const QByteArray &bytes, IModel::Type type);
     QByteArray loadFile(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModel::Type &type);
-    IModel *loadFileAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions);
-    bool loadFileDirectAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModel *model);
+    IModelSharedPtr loadModelFromBytesAsync(const QByteArray &bytes, IModel::Type type);
+    IModelSharedPtr loadModelFromFileAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions);
+    bool loadModelFromFileDirectAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModelSharedPtr model);
 
     QScopedPointer<QGLFramebufferObject> m_depthBuffer;
     QScopedPointer<qt::World> m_world;
     QScopedPointer<Project::IDelegate> m_projectDelegate;
     QScopedPointer<Project> m_project;
-    QScopedPointer<IMotion> m_camera;
-    qt::RenderContext *m_renderContextRef;
+    IMotionSharedPtr m_camera;
+    RenderContext *m_renderContextRef;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;
     QMap<QString, IModel*> m_name2assets;
     QMatrix4x4 m_projection;
-    IModel *m_selectedModelRef;
-    IModel *m_selectedAssetRef;
+    IModelSharedPtr m_selectedModelRef;
+    IModelSharedPtr m_selectedAssetRef;
     Array<QUuid> m_renderOrderList;
     GLuint m_depthBufferID;
 

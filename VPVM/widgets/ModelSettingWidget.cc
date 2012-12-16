@@ -124,7 +124,7 @@ ModelSettingWidget::ModelSettingWidget(QWidget *parent)
     mainLayout->addStretch();
     setLayout(mainLayout.take());
     retranslate();
-    setModel(0, 0);
+    setModel(IModelSharedPtr(), 0);
 }
 
 ModelSettingWidget::~ModelSettingWidget()
@@ -143,7 +143,7 @@ void ModelSettingWidget::retranslate()
     m_rotationGroup->setTitle(tr("Rotation Offset"));
 }
 
-void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
+void ModelSettingWidget::setModel(IModelSharedPtr model, SceneLoader *loader)
 {
     /* 予期せぬ値変更を伴うシグナル発行防止のため、一時的に無効にする */
     disableSignals();
@@ -151,8 +151,8 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
         m_edgeOffsetSpinBox->setValue(model->edgeWidth());
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
         if (loader) {
-            m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model));
-            m_selfShadowCheckbox->setChecked(loader->isSelfShadowEnabled(model));
+            m_projectiveShadowCheckbox->setChecked(loader->isProjectiveShadowEnabled(model.data()));
+            m_selfShadowCheckbox->setChecked(loader->isSelfShadowEnabled(model.data()));
             bool noShadow = !m_projectiveShadowCheckbox->isChecked() && !m_selfShadowCheckbox->isChecked();
             m_noShadowCheckbox->setChecked(noShadow);
         }
@@ -177,7 +177,7 @@ void ModelSettingWidget::setModel(IModel *model, SceneLoader *loader)
             m_rz->setValue(0.0);
         }
         setEnabled(true);
-        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model)));
+        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model.data())));
     }
     else {
         m_edgeOffsetSpinBox->setValue(0.0f);

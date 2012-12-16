@@ -46,7 +46,7 @@ namespace vpvm
 
 using namespace vpvl2;
 
-PMDMotionModel::State::State(const Scene *scene, IModel *model)
+PMDMotionModel::State::State(const Scene *scene, IModelSharedPtr model)
     : m_sceneRef(scene),
       m_modelRef(model)
 {
@@ -55,7 +55,6 @@ PMDMotionModel::State::State(const Scene *scene, IModel *model)
 PMDMotionModel::State::~State()
 {
     m_sceneRef = 0;
-    m_modelRef = 0;
 }
 
 void PMDMotionModel::State::restore() const
@@ -71,7 +70,7 @@ void PMDMotionModel::State::restore() const
         IMorph *m = morph.first;
         m->setWeight(morph.second);
     }
-    m_sceneRef->updateModel(m_modelRef);
+    m_sceneRef->updateModel(m_modelRef.data());
 }
 
 void PMDMotionModel::State::save()
@@ -143,7 +142,7 @@ void PMDMotionModel::State::resetBones()
         bone->setLocalPosition(kZeroV3);
         bone->setLocalRotation(Quaternion::getIdentity());
     }
-    m_sceneRef->updateModel(m_modelRef);
+    m_sceneRef->updateModel(m_modelRef.data());
 }
 
 void PMDMotionModel::State::resetMorphs()
@@ -156,7 +155,7 @@ void PMDMotionModel::State::resetMorphs()
         IMorph *morph = morphs[i];
         morph->setWeight(0);
     }
-    m_sceneRef->updateModel(m_modelRef);
+    m_sceneRef->updateModel(m_modelRef.data());
 }
 
 PMDMotionModel::PMDMotionModel(QUndoGroup *undoRef, QObject *parent) :
@@ -166,9 +165,10 @@ PMDMotionModel::PMDMotionModel(QUndoGroup *undoRef, QObject *parent) :
     m_lightDirection(kZeroV3)
 {
     /* 空のモデルのデータを予め入れておく */
-    m_roots.insert(0, RootPtr(0));
-    m_keys.insert(0, Keys());
-    m_values.insert(0, Values());
+    IModelSharedPtr empty;
+    m_roots.insert(empty, RootPtr(0));
+    m_keys.insert(empty, Keys());
+    m_values.insert(empty, Values());
 }
 
 PMDMotionModel::~PMDMotionModel()
@@ -229,20 +229,20 @@ int PMDMotionModel::columnCount(const QModelIndex & /* parent */) const
     return m_modelRef ? maxFrameCount() + 1 : 1;
 }
 
-void PMDMotionModel::markAsNew(IModel *model)
+void PMDMotionModel::markAsNew(IModelSharedPtr model)
 {
     if (model == m_modelRef)
         setModified(false);
 }
 
-void PMDMotionModel::updateModel(IModel *model, bool seek)
+void PMDMotionModel::updateModel(IModelSharedPtr model, bool seek)
 {
-    m_sceneRef->updateModel(model ? model : m_modelRef);
+    m_sceneRef->updateModel(model ? model.data() : m_modelRef.data());
     if (seek)
         emit timeIndexDidChange(m_timeIndex, m_timeIndex);
 }
 
-void PMDMotionModel::refreshModel(IModel *model)
+void PMDMotionModel::refreshModel(IModelSharedPtr model)
 {
     if (model) {
         /* モデルのフレーム移動なしの更新とテーブルモデルの更新両方を含む */
@@ -263,7 +263,7 @@ void PMDMotionModel::activateUndoStack()
     activateUndoStack(m_modelRef);
 }
 
-void PMDMotionModel::activateUndoStack(const IModel *model)
+void PMDMotionModel::activateUndoStack(const IModelSharedPtr model)
 {
     if (m_stacks.contains(model)) {
         QUndoStack *stack = m_stacks[model].data();
@@ -276,7 +276,7 @@ void PMDMotionModel::activateUndoStack(const IModel *model)
 
 int PMDMotionModel::maxTimeIndex() const
 {
-    IMotion *motionRef = currentMotionRef();
+    IMotionSharedPtr motionRef = currentMotionRef();
     return motionRef ? motionRef->maxTimeIndex() : 0;
 }
 
@@ -285,9 +285,9 @@ bool PMDMotionModel::forceCameraUpdate() const
     return false;
 }
 
-IMotion *PMDMotionModel::currentMotionRef() const
+IMotionSharedPtr PMDMotionModel::currentMotionRef() const
 {
-    return m_motionRefs.contains(m_modelRef) ? m_motionRefs[m_modelRef] : 0;
+    return m_motionRefs.contains(m_modelRef) ? m_motionRefs[m_modelRef] : IMotionSharedPtr();
 }
 
 void PMDMotionModel::setSceneRef(const Scene *value)
@@ -295,7 +295,7 @@ void PMDMotionModel::setSceneRef(const Scene *value)
     m_sceneRef = value;
 }
 
-void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys &keys)
+void PMDMotionModel::addPMDModel(IModelSharedPtr model, const RootPtr &root, const Keys &keys)
 {
     /* モデルが新規の場合はそのモデルの巻き戻しスタックを作成し、そうでない場合は該当のモデルの巻戻しスタックを有効にする */
     if (!m_stacks.contains(model)) {
@@ -319,19 +319,19 @@ void PMDMotionModel::addPMDModel(IModel *model, const RootPtr &root, const Keys 
     setTimeIndexColumnMax(0);
 }
 
-void PMDMotionModel::addPMDModelMotion(const IModel *model, IMotion *motion)
+void PMDMotionModel::addPMDModelMotion(const IModelSharedPtr model, IMotionSharedPtr motion)
 {
     m_motionRefs.insert(model, motion);
     activateUndoStack(model);
 }
 
-void PMDMotionModel::removePMDModel(IModel *model)
+void PMDMotionModel::removePMDModel(IModelSharedPtr model)
 {
-    qDebug("Removing a model from PMDMotionModel: %s", qPrintable(toQStringFromModel(m_modelRef)));
+    qDebug("Removing a model from PMDMotionModel: %s", qPrintable(toQStringFromModel(m_modelRef.data())));
     /* モーションのポインタを残すとダングリングポインタと化してクラッシュするので、ゼロクリアする */
-    m_motionRefs.remove(m_modelRef);
+    m_motionRefs.remove(model);
     /* PMD 追加で作成されたテーブルのモデルのデータと巻き戻しスタックの破棄を行う。モデルは削除されない */
-    m_modelRef = 0;
+    model.clear();
     m_undoRef->setActiveStack(0);
     m_values.remove(model);
     m_keys.remove(model);
@@ -340,10 +340,10 @@ void PMDMotionModel::removePMDModel(IModel *model)
     setTimeIndexColumnMax(0);
 }
 
-void PMDMotionModel::removePMDMotion(IModel *model)
+void PMDMotionModel::removePMDMotion(IModelSharedPtr model)
 {
-    const IMotion *motion = m_motionRefs.contains(model) ? m_motionRefs[model] : 0;
-    qDebug("Removing a motion from PMDMotionModel: %s", qPrintable(toQStringFromMotion(motion)));
+    const IMotionSharedPtr motion = m_motionRefs.contains(model) ? m_motionRefs[model] : IMotionSharedPtr();
+    qDebug("Removing a motion from PMDMotionModel: %s", qPrintable(toQStringFromMotion(motion.data())));
     m_motionRefs.remove(model);
     /* テーブルのモデルのデータの破棄と巻き戻しスタックの破棄を行う。モーションは削除されない */
     if (m_values.contains(model))

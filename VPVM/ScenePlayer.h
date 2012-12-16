@@ -46,6 +46,7 @@
 #endif
 
 #include <vpvl2/Common.h>
+#include <vpvl2/qt/RenderContext.h>
 
 namespace vpvl2 {
 class IModel;
@@ -55,6 +56,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 class AudioPlayer;
 class SceneWidget;
 class PlaySettingDialog;
@@ -100,7 +102,7 @@ private:
     const PlaySettingDialog *m_dialogRef;
     QScopedPointer<AudioPlayer> m_player;
     SceneWidget *m_sceneWidgetRef;
-    IModel *m_selectedModelRef;
+    IModelSharedPtr m_selectedModelRef;
     QElapsedTimer m_countFPSTimer;
     QElapsedTimer m_refreshTimer;
     QBasicTimer m_updateTimer;

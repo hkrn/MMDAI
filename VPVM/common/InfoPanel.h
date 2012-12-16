@@ -55,9 +55,9 @@ public:
           m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),
           m_fontMetrics(m_font),
-          m_selectedModelName(toQStringFromModel(static_cast<IModel *>(0))),
-          m_selectedBoneName(toQStringFromBone(static_cast<IBone *>(0))),
-          m_selectedMorphName(toQStringFromMorph(static_cast<IMorph *>(0))),
+          m_selectedModelName(toQStringFromModel(static_cast<const IModel *>(0))),
+          m_selectedBoneName(toQStringFromBone(static_cast<const IBone *>(0))),
+          m_selectedMorphName(toQStringFromMorph(static_cast<const IMorph *>(0))),
           m_textureID(0),
           m_fps(0.0f),
           m_visible(true)
@@ -115,7 +115,7 @@ public:
         glEnable(GL_DEPTH_TEST);
     }
 
-    void setModel(IModel *model) {
+    void setModel(const IModel *model) {
         m_selectedModelName = toQStringFromModel(model);
     }
     void setBones(const QList<IBone *> &bones, const QString &alterTextOnMultiple) {

@@ -44,6 +44,7 @@
 #include <QtGui/QWidget>
 #endif
 #include <vpvl2/Common.h>
+#include <vpvl2/qt/RenderContext.h>
 
 namespace vpvl2 {
 class IModel;
@@ -63,6 +64,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 class SceneLoader;
 
 class ModelSettingWidget : public QWidget
@@ -83,7 +85,7 @@ signals:
 
 private slots:
     void retranslate();
-    void setModel(IModel *model, SceneLoader *loader);
+    void setModel(IModelSharedPtr model, SceneLoader *loader);
     void setPositionOffset(const Vector3 &position);
     void updatePosition();
     void updateRotation();

@@ -177,8 +177,8 @@ TimelineWidget::TimelineWidget(MotionBaseModel *base,
     QItemSelectionModel *sm = m_treeView->selectionModel();
     connect(sm, SIGNAL(currentColumnChanged(QModelIndex,QModelIndex)), SLOT(setCurrentTimeIndex(QModelIndex)));
     /* 開閉状態を保持するためのスロットを追加。フレーム移動時に保持した開閉状態を適用する仕組み */
-    connect(base, SIGNAL(motionDidUpdate(IModel*)), m_treeView.data(), SLOT(restoreExpandState()));
-    connect(base, SIGNAL(motionDidUpdate(IModel*)), SLOT(setCurrentTimeIndexBySpinBox()));
+    connect(base, SIGNAL(motionDidUpdate(IModelSharedPtr)), m_treeView.data(), SLOT(restoreExpandState()));
+    connect(base, SIGNAL(motionDidUpdate(IModelSharedPtr)), SLOT(setCurrentTimeIndexBySpinBox()));
     retranslate();
     setLayout(mainLayout.take());
 }

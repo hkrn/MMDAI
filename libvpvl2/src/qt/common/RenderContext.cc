@@ -1137,11 +1137,11 @@ IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)
     return effect;
 }
 
-IEffectSharedPtr RenderContext::createEffectAsync(IModel *model, const IString *dir)
+IEffectSharedPtr RenderContext::createEffectAsync(IModelSharedPtr model, const IString *dir)
 {
     IEffectSharedPtr effect;
     const IString *name = model->name();
-    const QString &key = effectFilePath(model, dir);
+    const QString &key = effectFilePath(model.data(), dir);
     QMutexLocker locker(&m_effectCachesLock);
     if (m_effectCaches.contains(key)) {
         qDebug("Fetched an effect from cache: %s", qPrintable(key));
@@ -1149,7 +1149,7 @@ IEffectSharedPtr RenderContext::createEffectAsync(IModel *model, const IString *
     }
     else if (QFile::exists(key)) {
         locker.unlock();
-        effect = IEffectSharedPtr(m_sceneRef->createEffect(dir, model, this));
+        effect = IEffectSharedPtr(m_sceneRef->createEffect(dir, model.data(), this));
         qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(key)) ;
@@ -1157,7 +1157,7 @@ IEffectSharedPtr RenderContext::createEffectAsync(IModel *model, const IString *
         }
         locker.relock();
         m_effectCaches.insert(key, effect);
-        setEffectOwner(effect, model);
+        setEffectOwner(effect, model.data());
     }
     else {
         qDebug("Cannot load an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));

@@ -87,8 +87,8 @@ public slots:
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();
-    void setPMDModel(IModel *model);
-    void loadMotion(IMotion *motion, const IModel *model);
+    void setPMDModel(IModelSharedPtr model);
+    void loadMotion(IMotionSharedPtr motion, const IModelSharedPtr model);
     void selectMorphs(const QList<IMorph *> &morphs);
     void saveTransform();
     void commitTransform();

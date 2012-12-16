@@ -39,6 +39,7 @@
 
 #include "vpvl2/IEffect.h"
 #include "vpvl2/qt/Encoding.h"
+#include "vpvl2/qt/RenderContext.h"
 #include "World.h"
 
 #include <QtGui/QtGui>
@@ -53,7 +54,6 @@ class IMotion;
 
 namespace qt
 {
-class RenderContext;
 class TextureDrawHelper;
 }
 
@@ -63,8 +63,6 @@ namespace qt
 {
 
 using namespace vpvl2::qt;
-typedef QSharedPointer<IModel> IModelSharedPtr;
-typedef QSharedPointer<IMotion> IMotionSharedPtr;
 
 class UI : public QGLWidget, protected QGLFunctions
 {

@@ -59,6 +59,8 @@ class Stream;
 namespace vpvl2
 {
 
+class IMotion;
+
 namespace extensions
 {
 namespace gl
@@ -77,6 +79,8 @@ using namespace extensions::gl;
 class Archive;
 typedef QSharedPointer<Archive> ArchiveSharedPtr;
 typedef QSharedPointer<IEffect> IEffectSharedPtr;
+typedef QSharedPointer<IModel> IModelSharedPtr;
+typedef QSharedPointer<IMotion> IMotionSharedPtr;
 
 class RenderContext : public IRenderContext, protected QGLFunctions
 {
@@ -200,7 +204,7 @@ public:
     void renderOffscreen(const QSize &size);
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     IEffectSharedPtr createEffectAsync(const IString *path);
-    IEffectSharedPtr createEffectAsync(IModel *model, const IString *dir);
+    IEffectSharedPtr createEffectAsync(IModelSharedPtr model, const IString *dir);
     const QList<OffscreenTexture> &offscreenTextures() const { return m_offscreenTextures; }
 #endif
 

@@ -48,7 +48,10 @@
 #include <QtGui/QUndoStack>
 #include <QtGui/QUndoGroup>
 #endif
-#include "vpvl2/IKeyframe.h"
+#include <vpvl2/IKeyframe.h>
+#include <vpvl2/IModel.h>
+#include <vpvl2/IMotion.h>
+#include <vpvl2/qt/RenderContext.h> /* for IMotionSharedPtr */
 
 namespace vpvl2 {
 class IMotion;
@@ -58,6 +61,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 class MotionBaseModel : public QAbstractTableModel
 {
@@ -113,7 +117,7 @@ public:
     virtual void pasteKeyframesByTimeIndex(int timeIndex) = 0;
     virtual int maxTimeIndex() const = 0;
     virtual bool forceCameraUpdate() const = 0;
-    virtual IMotion *currentMotionRef() const { return m_motionRef; }
+    virtual IMotionSharedPtr currentMotionRef() const { return m_motionRef; }
 
     void setTimeIndex(const IKeyframe::TimeIndex &newIndex);
     void setModified(bool value);
@@ -124,7 +128,7 @@ public:
     void fetchMore(const QModelIndex &parent);
     int timeIndexColumnMax() const;
     void setTimeIndexColumnMax(int newValue);
-    void setTimeIndexColumnMax(const IMotion *motion);
+    void setTimeIndexColumnMax(const IMotionSharedPtr motion);
     void updateTimeIndexColumnMax();
 
 public slots:
@@ -145,7 +149,7 @@ protected:
     void addUndoCommand(QUndoCommand *command);
     void resetModel();
 
-    IMotion *m_motionRef;
+    IMotionSharedPtr m_motionRef;
     QUndoGroup *m_undoRef;
     IKeyframe::TimeIndex m_timeIndex;
     int m_timeIndexColumnMax;

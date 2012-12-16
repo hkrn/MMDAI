@@ -99,13 +99,13 @@ public:
 
 public slots:
     void addKeyframesFromSelectedIndices();
-    void loadPose(VPDFilePtr pose, IModel *model);
-    void savePose(VPDFile *pose, IModel *model);
+    void loadPose(VPDFilePtr pose, IModelSharedPtr model);
+    void savePose(VPDFilePtr pose, IModelSharedPtr model);
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:
     void motionDidSeek(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame);
-    void currentModelDidChange(IModel *model, SceneWidget::EditMode mode);
+    void currentModelDidChange(IModelSharedPtr model, SceneWidget::EditMode mode);
     void editModeDidSet(SceneWidget::EditMode mode);
 
 private slots:
@@ -123,8 +123,8 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
-    void toggleBoneEnable(IModel *model);
-    void toggleMorphEnable(IModel *model);
+    void toggleBoneEnable(const IModel *model);
+    void toggleMorphEnable(const IModel *model);
     void toggleBoneButtonsByBones(const QList<IBone *> &bones);
     void toggleMorphByMorph(const QList<IMorph *> &morphs);
     void selectAllRegisteredKeyframes();
@@ -137,7 +137,7 @@ private slots:
     void selectBonesByItemSelection(const QItemSelection &selection);
     void selectMorphsByItemSelection(const QItemSelection &selection);
     void selectButton(QAbstractButton *button);
-    void setLastSelectedModel(IModel *model);
+    void setLastSelectedModel(IModelSharedPtr model);
     void clearLastSelectedModel();
     void updateMorphValue();
     void updateMorphValue(int value);
@@ -161,7 +161,7 @@ private:
     QScopedPointer<FrameWeightDialog> m_frameWeightDialog;
     QScopedPointer<InterpolationDialog> m_interpolationDialog;
     QSettings *m_settingsRef;
-    IModel *m_lastSelectedModelRef;
+    IModelSharedPtr m_lastSelectedModelRef;
     SceneWidget::EditMode m_lastEditMode;
 
     Q_DISABLE_COPY(TimelineTabWidget)

@@ -83,9 +83,9 @@ using namespace vpvl2::qt;
 
 namespace {
 
-static int UIFindIndexOfActions(IModel *model, const QList<QAction *> &actions)
+static int UIFindIndexOfActions(IModelSharedPtr model, const QList<QAction *> &actions)
 {
-    const QString &name = toQStringFromModel(model);
+    const QString &name = toQStringFromModel(model.data());
     int i = 0, found = -1;
     foreach (QAction *action, actions) {
         if (action->text() == name) {
@@ -315,7 +315,11 @@ MainWindow::~MainWindow()
 {
     /* null アクセスが発生してしまうため、先に以下のシグナルを解除しておく */
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-    disconnect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), this, SLOT(deleteModel(IModel*,QUuid)));
+    disconnect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), this, SLOT(deleteModel(IModelSharedPtr,QUuid)));
+    /* メモリ解放処理の関係で IModelSharedPtr/IMotionSharedPtr がプロジェクトから外れる前に明示的に解放する */
+    m_boneMotionModel.take();
+    m_morphMotionModel.take();
+    m_sceneMotionModel.take();
     /* 所有権が移動しているため、事前に take で所有権を放棄してメモリ解放しないようにする */
     m_modelTabWidget.take();
     m_sceneTabWidget.take();
@@ -400,12 +404,12 @@ void MainWindow::selectModel()
     QAction *action = qobject_cast<QAction *>(sender());
     if (action) {
         const QUuid uuid(action->data().toString());
-        IModel *model = m_sceneWidget->sceneLoaderRef()->findModel(uuid);
+        IModelSharedPtr model = m_sceneWidget->sceneLoaderRef()->findModel(uuid);
         m_sceneWidget->setSelectedModel(model, SceneWidget::kSelect);
     }
 }
 
-void MainWindow::setCurrentModel(IModel *model)
+void MainWindow::setCurrentModel(IModelSharedPtr model)
 {
     m_modelRef = model;
 }
@@ -540,10 +544,10 @@ void MainWindow::clearRecentFiles()
     updateRecentFiles();
 }
 
-void MainWindow::addModel(IModel *model, const QUuid &uuid)
+void MainWindow::addModel(IModelSharedPtr model, const QUuid &uuid)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
-    QString name = toQStringFromModel(model);
+    QString name = toQStringFromModel(model.data());
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select a model %1").arg(name));
@@ -552,7 +556,7 @@ void MainWindow::addModel(IModel *model, const QUuid &uuid)
     m_sceneWidget->setSelectedModel(model, SceneWidget::kSelect);
 }
 
-void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
+void MainWindow::deleteModel(IModelSharedPtr model, const QUuid &uuid)
 {
     /* 削除されるモデルが選択中のモデルと同じなら選択状態を解除しておく(残すと不正アクセスの原因になるので) */
     if (model == m_sceneWidget->sceneLoaderRef()->selectedModelRef())
@@ -570,10 +574,10 @@ void MainWindow::deleteModel(IModel *model, const QUuid &uuid)
         m_menuRetainModels->removeAction(actionToRemove);
 }
 
-void MainWindow::addAsset(IModel *asset, const QUuid &uuid)
+void MainWindow::addAsset(IModelSharedPtr asset, const QUuid &uuid)
 {
     /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
-    QString name = toQStringFromModel(asset);
+    QString name = toQStringFromModel(asset.data());
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select an asset %1").arg(name));
@@ -581,7 +585,7 @@ void MainWindow::addAsset(IModel *asset, const QUuid &uuid)
     m_menuRetainAssets->addAction(action);
 }
 
-void MainWindow::deleteAsset(IModel * /* asset */, const QUuid &uuid)
+void MainWindow::deleteAsset(IModelSharedPtr /* asset */, const QUuid &uuid)
 {
     /* 削除されたアクセサリをアクセサリ選択のメニューから削除する */
     QAction *actionToRemove = 0;
@@ -630,7 +634,7 @@ bool MainWindow::saveMotionFile(const QString &filename)
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
     QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
     IMotion *motionPtr = motion.data();
-    motionPtr->setParentModel(m_sceneWidget->sceneLoaderRef()->selectedModelRef());
+    motionPtr->setParentModelRef(m_sceneWidget->sceneLoaderRef()->selectedModelRef().data());
     m_boneMotionModel->saveMotion(motionPtr);
     m_morphMotionModel->saveMotion(motionPtr);
     return saveMotionFile(filename, motionPtr);
@@ -1380,29 +1384,29 @@ void MainWindow::bindSceneLoader()
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
     disconnect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), this, SLOT(bindSceneLoader()));
-    connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), SLOT(addModel(IModel*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), SLOT(deleteModel(IModel*,QUuid)));
-    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_boneMotionModel.data(), SLOT(removeModel()));
-    connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_boneMotionModel.data(), SLOT(loadMotion(IMotion*,const IModel*)));
-    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,IModel*)), m_timelineTabWidget.data(), SLOT(loadPose(VPDFilePtr,IModel*)));
-    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_morphMotionModel.data(), SLOT(removeModel()));
-    connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_morphMotionModel.data(), SLOT(loadMotion(IMotion*,const IModel*)));
-    connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), assetWidget, SLOT(addModel(IModel*)));
-    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), assetWidget, SLOT(removeModel(IModel*)));
-    connect(loader, SIGNAL(modelWillDelete(IModel*,QUuid)), m_timelineTabWidget.data(), SLOT(clearLastSelectedModel()));
-    connect(loader, SIGNAL(modelDidAdd(IModel*,QUuid)), m_timelineTabWidget.data(), SLOT(notifyCurrentTabIndex()));
-    connect(loader, SIGNAL(motionDidAdd(IMotion*,const IModel*,QUuid)), m_sceneMotionModel.data(), SLOT(loadMotion(IMotion*)));
-    connect(loader, SIGNAL(cameraMotionDidSet(IMotion*,QUuid)), m_sceneMotionModel.data(), SLOT(loadMotion(IMotion*)));
+    connect(loader, SIGNAL(modelDidAdd(IModelSharedPtr,QUuid)), SLOT(addModel(IModelSharedPtr,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), SLOT(deleteModel(IModelSharedPtr,QUuid)));
+    connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), m_boneMotionModel.data(), SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(IMotionSharedPtr,const IModelSharedPtr,QUuid)), m_boneMotionModel.data(), SLOT(loadMotion(IMotionSharedPtr,const IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,IModelSharedPtr)), m_timelineTabWidget.data(), SLOT(loadPose(VPDFilePtr,IModelSharedPtr)));
+    connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), m_morphMotionModel.data(), SLOT(removeModel()));
+    connect(loader, SIGNAL(motionDidAdd(IMotionSharedPtr,const IModelSharedPtr,QUuid)), m_morphMotionModel.data(), SLOT(loadMotion(IMotionSharedPtr,const IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidAdd(IModelSharedPtr,QUuid)), assetWidget, SLOT(addModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), assetWidget, SLOT(removeModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), m_timelineTabWidget.data(), SLOT(clearLastSelectedModel()));
+    connect(loader, SIGNAL(modelDidAdd(IModelSharedPtr,QUuid)), m_timelineTabWidget.data(), SLOT(notifyCurrentTabIndex()));
+    connect(loader, SIGNAL(motionDidAdd(IMotionSharedPtr,const IModelSharedPtr,QUuid)), m_sceneMotionModel.data(), SLOT(loadMotion(IMotionSharedPtr)));
+    connect(loader, SIGNAL(cameraMotionDidSet(IMotionSharedPtr,QUuid)), m_sceneMotionModel.data(), SLOT(loadMotion(IMotionSharedPtr)));
     connect(loader, SIGNAL(projectDidInitialized()), this, SLOT(resetSceneToMotionModels()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneWidget.data(), SLOT(refreshScene()));
     connect(loader, SIGNAL(projectDidLoad(bool)), m_sceneMotionModel.data(), SLOT(markAsNew()));
-    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setCurrentModel(IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_boneMotionModel.data(), SLOT(setPMDModel(IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_morphMotionModel.data(), SLOT(setPMDModel(IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModel*,SceneLoader*)));
-    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModel*)));
-    connect(loader, SIGNAL(modelDidSelect(IModel*,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModel*,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), SLOT(setCurrentModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_boneMotionModel.data(), SLOT(setPMDModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_morphMotionModel.data(), SLOT(setPMDModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModelSharedPtr,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), assetWidget, SLOT(setAssetProperties(IModelSharedPtr,SceneLoader*)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
     connect(loader, SIGNAL(projectDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
@@ -1418,14 +1422,14 @@ void MainWindow::bindSceneLoader()
     connect(m_actionSetOpenCLSkinningType2.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType2(bool)));
     connect(m_actionSetVertexShaderSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));
     connect(m_actionShowGrid.data(), SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
-    connect(assetWidget, SIGNAL(assetDidRemove(IModel*)), loader, SLOT(deleteModelSlot(IModel*)));
-    connect(assetWidget, SIGNAL(assetDidSelect(IModel*)), loader, SLOT(setSelectedModel(IModel*)));
+    connect(assetWidget, SIGNAL(assetDidRemove(IModelSharedPtr)), loader, SLOT(deleteModelSlot(IModelSharedPtr)));
+    connect(assetWidget, SIGNAL(assetDidSelect(IModelSharedPtr)), loader, SLOT(setSelectedModel(IModelSharedPtr)));
     Handles *handles = m_sceneWidget->handlesRef();
     connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateHandleModel()));
     connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateHandleModel()));
     connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateHandleModel()));
-    connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModel*,SceneWidget::EditMode)),
-            m_sceneWidget.data(), SLOT(setSelectedModel(IModel*,SceneWidget::EditMode)));
+    connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModelSharedPtr,SceneWidget::EditMode)),
+            m_sceneWidget.data(), SLOT(setSelectedModel(IModelSharedPtr,SceneWidget::EditMode)));
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidgetRef();
     Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
@@ -1469,9 +1473,9 @@ void MainWindow::bindSceneLoader()
      * アクセラレーションの設定の後にやるのは setDirtyFalse の後に アクセラレーションの設定変更によって
      * プロジェクト更新がかかり、何もしていないのに終了時に確認ダイアログが出てしまうことを防ぐため
      */
-    IMotionPtr cameraMotionPtr;
+    IMotionSharedPtr cameraMotionPtr;
     loader->newCameraMotion(cameraMotionPtr);
-    loader->setCameraMotion(cameraMotionPtr.take());
+    loader->setCameraMotion(cameraMotionPtr);
 }
 
 void MainWindow::bindWidgets()
@@ -1487,21 +1491,21 @@ void MainWindow::bindWidgets()
     connect(m_sceneWidget.data(), SIGNAL(handleDidRotate(Scalar,IBone*,int)), m_boneMotionModel.data(), SLOT(rotateAngle(Scalar,IBone*,int)));
     connect(m_sceneWidget.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), m_timelineTabWidget.data(), SLOT(selectBones(QList<IBone*>)));
     connect(m_sceneWidget.data(), SIGNAL(morphsDidSelect(QList<IMorph*>)), m_timelineTabWidget.data(), SLOT(selectMorphs(QList<IMorph*>)));
-    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_boneMotionModel.data(), SLOT(markAsNew(IModel*)));
-    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_morphMotionModel.data(), SLOT(markAsNew(IModel*)));
-    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_timelineTabWidget.data(), SLOT(setCurrentTimeIndexZero()));
-    connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
+    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModelSharedPtr)), m_boneMotionModel.data(), SLOT(markAsNew(IModelSharedPtr)));
+    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModelSharedPtr)), m_morphMotionModel.data(), SLOT(markAsNew(IModelSharedPtr)));
+    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModelSharedPtr)), m_timelineTabWidget.data(), SLOT(setCurrentTimeIndexZero()));
+    connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdate(IModelSharedPtr)), m_sceneWidget.data(), SLOT(refreshMotions()));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
     connect(m_boneMotionModel.data(), SIGNAL(motionDidLoad()), SLOT(closeProgress()));
-    connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdate(IModel*)), m_sceneWidget.data(), SLOT(refreshMotions()));
+    connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdate(IModelSharedPtr)), m_sceneWidget.data(), SLOT(refreshMotions()));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidModify(bool)), SLOT(setWindowModified(bool)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidLoad()), SLOT(closeProgress()));
     connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentTimeIndex(IMorph*)));
-    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModel*)), m_sceneMotionModel.data(), SLOT(markAsNew()));
+    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModelSharedPtr)), m_sceneMotionModel.data(), SLOT(markAsNew()));
     connect(m_sceneWidget.data(), SIGNAL(handleDidGrab()), m_boneMotionModel.data(), SLOT(saveTransform()));
     connect(m_sceneWidget.data(), SIGNAL(handleDidRelease()), m_boneMotionModel.data(), SLOT(commitTransform()));
     connect(m_sceneWidget.data(), SIGNAL(cameraPerspectiveDidSet(const ICamera*)), m_boneMotionModel.data(), SLOT(setCamera(const ICamera*)));
@@ -1552,10 +1556,10 @@ void MainWindow::saveModelPose()
     if (!filename.isEmpty()) {
         QFile file(filename);
         if (file.open(QFile::WriteOnly)) {
-            VPDFile pose;
+            VPDFilePtr pose(new VPDFile());
             QTextStream stream(&file);
-            m_timelineTabWidget->savePose(&pose, m_sceneWidget->sceneLoaderRef()->selectedModelRef());
-            pose.save(stream);
+            m_timelineTabWidget->savePose(pose, m_sceneWidget->sceneLoaderRef()->selectedModelRef());
+            pose->save(stream);
             file.close();
             qDebug("Saved a pose: %s", qPrintable(filename));
         }
@@ -1827,8 +1831,8 @@ void MainWindow::restoreWindowState(const WindowState &state)
 void MainWindow::addNewMotion()
 {
     if (maybeSaveMotion()) {
-        IModel *model = m_sceneWidget->sceneLoaderRef()->selectedModelRef();
-        IMotion *motion = m_boneMotionModel->currentMotionRef();
+        IModelSharedPtr model = m_sceneWidget->sceneLoaderRef()->selectedModelRef();
+        IMotionSharedPtr motion = m_boneMotionModel->currentMotionRef();
         if (model && motion) {
             m_boneMotionModel->removeMotion();
             m_morphMotionModel->removeMotion();
@@ -1878,7 +1882,7 @@ void MainWindow::selectNextModel()
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
         int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModelRef(), actions);
-        IModel *model = 0;
+        IModelSharedPtr model;
         if (index == -1 || index == actions.length() - 1) {
             model = loader->findModel(actions.first()->text());
         }
@@ -1895,7 +1899,7 @@ void MainWindow::selectPreviousModel()
     if (!actions.isEmpty()) {
         const SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
         int index = UIFindIndexOfActions(m_sceneWidget->sceneLoaderRef()->selectedModelRef(), actions);
-        IModel *model = 0;
+        IModelSharedPtr model;
         if (index == -1 || index == 0) {
             model = loader->findModel(actions.last()->text());
         }

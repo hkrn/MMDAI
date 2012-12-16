@@ -129,15 +129,15 @@ TimelineTabWidget::TimelineTabWidget(QSettings *settingsRef,
     connect(m_boneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     connect(m_sceneTimeline->treeViewRef(), SIGNAL(modelIndexDidSelect(QModelIndexList)), SLOT(openInterpolationDialog(QModelIndexList)));
     /* モデルが選択された時タイムライン上のボタンなどの有効無効を切り替える */
-    connect(bmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleBoneEnable(IModel*)));
-    connect(mmm, SIGNAL(modelDidChange(IModel*)), SLOT(toggleMorphEnable(IModel*)));
+    connect(bmm, SIGNAL(modelDidChange(IModelSharedPtr)), SLOT(toggleBoneEnable(IModelSharedPtr)));
+    connect(mmm, SIGNAL(modelDidChange(IModelSharedPtr)), SLOT(toggleMorphEnable(IModelSharedPtr)));
     /* ボーンまたはモーフが選択された時のタイムライン上のボタンなどの有効無効を切り替える */
     connect(bmm, SIGNAL(bonesDidSelect(QList<IBone*>)), SLOT(toggleBoneButtonsByBones(QList<IBone*>)));
     connect(mmm, SIGNAL(morphsDidSelect(QList<IMorph*>)), SLOT(toggleMorphByMorph(QList<IMorph*>)));
     /* モーションを読み込んだらフローズンビューを忘れずに更新しておく(フローズンビューが勢い良くスクロール出来てしまうことを防ぐ) */
-    connect(bmm, SIGNAL(motionDidUpdate(IModel*)), m_boneTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
-    connect(mmm, SIGNAL(motionDidUpdate(IModel*)), m_morphTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
-    connect(smm, SIGNAL(motionDidUpdate(IModel*)), m_sceneTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
+    connect(bmm, SIGNAL(motionDidUpdate(IModelSharedPtr)), m_boneTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
+    connect(mmm, SIGNAL(motionDidUpdate(IModelSharedPtr)), m_morphTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
+    connect(smm, SIGNAL(motionDidUpdate(IModelSharedPtr)), m_sceneTimeline->treeViewRef(), SLOT(updateFrozenTreeView()));
     /* フレームが切り替わったら現在のフレーム位置を設定し直す */
     connect(bmm, SIGNAL(timeIndexDidChange(IKeyframe::TimeIndex,IKeyframe::TimeIndex)),
             m_boneTimeline.data(), SLOT(setCurrentTimeIndex(IKeyframe::TimeIndex)));
@@ -163,7 +163,7 @@ void TimelineTabWidget::addKeyframesFromSelectedIndices()
     treeView->addKeyframesBySelectedIndices();
 }
 
-void TimelineTabWidget::loadPose(VPDFilePtr pose, IModel *model)
+void TimelineTabWidget::loadPose(VPDFilePtr pose, IModelSharedPtr model)
 {
     BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
     bmm->loadPose(pose, model, m_boneTimeline->selectedTimeIndex());
@@ -180,7 +180,7 @@ void TimelineTabWidget::retranslate()
     setWindowTitle(vpvm::TimelineTabWidget::tr("Motion Timeline"));
 }
 
-void TimelineTabWidget::savePose(VPDFile *pose, IModel *model)
+void TimelineTabWidget::savePose(VPDFilePtr pose, IModelSharedPtr model)
 {
     BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
     m->savePose(pose, model, m_boneTimeline->selectedTimeIndex());
@@ -197,7 +197,7 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentTimeIndex(IMorph *morph)
         MorphMotionModel::KeyFramePairList keyframes;
         QScopedPointer<IMorphKeyframe> keyframe;
         int timeIndex = m_morphTimeline->selectedTimeIndex();
-        keyframe.reset(model->factoryRef()->createMorphKeyframe(model->currentMotionRef()));
+        keyframe.reset(model->factoryRef()->createMorphKeyframe(model->currentMotionRef().data()));
         keyframe->setName(morph->name());
         keyframe->setWeight(morph->weight());
         keyframes.append(MorphMotionModel::KeyFramePair(timeIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
@@ -239,6 +239,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         TimelineTreeView *view = m_boneTimeline->treeViewRef();
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         BoneMotionModel *model = static_cast<BoneMotionModel *>(view->model());
+        IMotionSharedPtr motion = model->currentMotionRef();
         Factory *factory = model->factoryRef();
         BoneMotionModel::KeyFramePairList boneFrames;
         QScopedPointer<IBoneKeyframe> frame;
@@ -246,7 +247,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
             const QString &name = model->nameFromModelIndex(index);
             int timeIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
-            frame.reset(factory->createBoneKeyframe(model->currentMotionRef()));
+            frame.reset(factory->createBoneKeyframe(motion.data()));
             frame->setName(&s);
             frame->setDefaultInterpolationParameter();
             boneFrames.append(BoneMotionModel::KeyFramePair(timeIndex, BoneMotionModel::KeyFramePtr(frame.take())));
@@ -260,6 +261,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         TimelineTreeView *view = m_morphTimeline->treeViewRef();
         const QModelIndexList &indices = view->selectionModel()->selectedIndexes();
         MorphMotionModel *model = static_cast<MorphMotionModel *>(view->model());
+        IMotionSharedPtr motion = model->currentMotionRef();
         Factory *factory = model->factoryRef();
         MorphMotionModel::KeyFramePairList faceFrames;
         QScopedPointer<IMorphKeyframe> frame;
@@ -267,7 +269,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
             const QString &name = model->nameFromModelIndex(index);
             int timeIndex = MotionBaseModel::toTimeIndex(index);
             CString s(name);
-            frame.reset(factory->createMorphKeyframe(model->currentMotionRef()));
+            frame.reset(factory->createMorphKeyframe(motion.data()));
             frame->setName(&s);
             frame->setWeight(0);
             faceFrames.append(MorphMotionModel::KeyFramePair(timeIndex, MorphMotionModel::KeyFramePtr(frame.take())));
@@ -340,7 +342,7 @@ void TimelineTabWidget::previousFrame()
 
 void TimelineTabWidget::setCurrentTabIndex(int index)
 {
-    IModel *lastSelectedModel = 0;
+    IModelSharedPtr lastSelectedModel;
     SceneWidget::EditMode mode = SceneWidget::kNone;
     switch (index) {
     case kBoneTabIndex: {
@@ -382,7 +384,7 @@ void TimelineTabWidget::notifyCurrentTabIndex()
     }
 }
 
-void TimelineTabWidget::toggleBoneEnable(IModel *model)
+void TimelineTabWidget::toggleBoneEnable(const IModel *model)
 {
     bool value = model ? true : false;
     m_boneTimeline->treeViewRef()->updateFrozenTreeView();
@@ -394,7 +396,7 @@ void TimelineTabWidget::toggleBoneEnable(IModel *model)
     m_boneMoveButton->setEnabled(false);
 }
 
-void TimelineTabWidget::toggleMorphEnable(IModel *model)
+void TimelineTabWidget::toggleMorphEnable(const IModel *model)
 {
     bool value = model ? true : false;
     m_morphTimeline->treeViewRef()->updateFrozenTreeView();
@@ -622,7 +624,7 @@ void TimelineTabWidget::selectButton(QAbstractButton *button)
     emit editModeDidSet(m_lastEditMode);
 }
 
-void TimelineTabWidget::setLastSelectedModel(IModel *model)
+void TimelineTabWidget::setLastSelectedModel(IModelSharedPtr model)
 {
     /* タブ移動時でモデル選択を切り替えるため最後に選択したモデルのポインタを保存する処理。NULL はスキップする */
     if (model)
@@ -638,7 +640,7 @@ void TimelineTabWidget::setLastSelectedModel(IModel *model)
 
 void TimelineTabWidget::clearLastSelectedModel()
 {
-    m_lastSelectedModelRef = 0;
+    m_lastSelectedModelRef.clear();
 }
 
 void TimelineTabWidget::selectFrameIndices(int fromIndex, int toIndex)

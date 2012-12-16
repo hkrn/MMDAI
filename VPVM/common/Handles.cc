@@ -620,7 +620,7 @@ const Transform Handles::modelHandleTransform() const
             transform.setBasis(newBasis);
         }
     }
-    if (IModel *model = m_loaderRef->selectedModelRef()) {
+    if (IModelSharedPtr model = m_loaderRef->selectedModelRef()) {
         transform.setOrigin(transform.getOrigin() + model->worldPosition());
     }
     return transform;

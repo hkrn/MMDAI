@@ -71,7 +71,7 @@ class PMDMotionModel : public MotionBaseModel
 public:
     class State {
     public:
-        State(const Scene *scene, IModel *model);
+        State(const Scene *scene, IModelSharedPtr model);
         ~State();
         void restore() const;
         void save();
@@ -80,15 +80,15 @@ public:
         void copyFrom(const State &value);
         void resetBones();
         void resetMorphs();
-        IModel *model() const { return m_modelRef; }
-        void setModelRef(IModel *value) { m_modelRef = value; }
+        IModelSharedPtr model() const { return m_modelRef; }
+        void setModelRef(IModelSharedPtr value) { m_modelRef = value; }
         void setSceneRef(const Scene *value) { m_sceneRef = value; }
     private:
         typedef QPair<Vector3, Quaternion> Transform;
         typedef QPair<IBone *, Transform> Bone;
         typedef QPair<IMorph *, Scalar> Morph;
         const Scene *m_sceneRef;
-        IModel *m_modelRef;
+        IModelSharedPtr m_modelRef;
         QList<Bone> m_bones;
         QList<Morph> m_morphs;
         Q_DISABLE_COPY(State)
@@ -105,51 +105,51 @@ public:
     virtual void commitTransform() = 0;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    void updateModel(IModel *model, bool seek);
-    void refreshModel(IModel *model);
+    void updateModel(IModelSharedPtr model, bool seek);
+    void refreshModel(IModelSharedPtr model);
     void activateUndoStack();
     int maxTimeIndex() const;
     bool forceCameraUpdate() const;
-    virtual IMotion *currentMotionRef() const;
+    virtual IMotionSharedPtr currentMotionRef() const;
     virtual void setSceneRef(const Scene *value);
 
-    IModel *selectedModel() const { return m_modelRef; }
+    IModelSharedPtr selectedModel() const { return m_modelRef; }
     const Keys keys() const { return m_keys[m_modelRef]; }
     const Scene *scene() const { return m_sceneRef; }
 
 public slots:
-    virtual void loadMotion(IMotion *motion, const IModel *model) = 0;
-    virtual void setPMDModel(IModel *model) = 0;
+    virtual void loadMotion(IMotionSharedPtr motion, const IModelSharedPtr model) = 0;
+    virtual void setPMDModel(IModelSharedPtr model) = 0;
     virtual void removeModel() = 0;
-    void markAsNew(IModel *model);
+    void markAsNew(IModelSharedPtr model);
 
 signals:
-    void modelDidChange(IModel *model);
-    void motionDidUpdate(IModel *model);
+    void modelDidChange(IModelSharedPtr model);
+    void motionDidUpdate(IModelSharedPtr model);
 
 protected:
-    void removePMDModel(IModel *model);
-    void removePMDMotion(IModel *model);
-    void addPMDModel(IModel *model, const RootPtr &rootRef, const Keys &keys);
-    void addPMDModelMotion(const IModel *model, IMotion *motion);
-    bool hasPMDModel(IModel *model) const { return m_roots.contains(model); }
+    void removePMDModel(IModelSharedPtr model);
+    void removePMDMotion(IModelSharedPtr model);
+    void addPMDModel(IModelSharedPtr model, const RootPtr &rootRef, const Keys &keys);
+    void addPMDModelMotion(const IModelSharedPtr model, IMotionSharedPtr motion);
+    bool hasPMDModel(IModelSharedPtr model) const { return m_roots.contains(model); }
     const Values values() const { return m_values[m_modelRef]; }
     RootPtr rootPtr() const { return rootPtr(m_modelRef); }
-    RootPtr rootPtr(IModel *model) const { return m_roots[model]; }
+    RootPtr rootPtr(IModelSharedPtr model) const { return m_roots[model]; }
     ITreeItem *rootRef() const { return rootPtr().data(); }
 
     const Scene *m_sceneRef;
-    IModel *m_modelRef;
+    IModelSharedPtr m_modelRef;
     Vector3 m_lightDirection;
 
 private:
-    void activateUndoStack(const IModel *model);
+    void activateUndoStack(const IModelSharedPtr model);
 
-    QHash<const IModel *, IMotion *> m_motionRefs;
-    QHash<const IModel *, Keys> m_keys;
-    QHash<const IModel *, Values> m_values;
-    QHash<const IModel *, RootPtr> m_roots;
-    QHash<const IModel *, UndoStackPtr> m_stacks;
+    QHash<const IModelSharedPtr, IMotionSharedPtr> m_motionRefs;
+    QHash<const IModelSharedPtr, Keys> m_keys;
+    QHash<const IModelSharedPtr, Values> m_values;
+    QHash<const IModelSharedPtr, RootPtr> m_roots;
+    QHash<const IModelSharedPtr, UndoStackPtr> m_stacks;
 
     Q_DISABLE_COPY(PMDMotionModel)
 };

@@ -78,7 +78,7 @@ namespace vpvm
 
 using namespace vpvl2;
 
-static inline void dumpBones(IModel *model)
+static inline void dumpBones(const IModel *model)
 {
     Array<IBone *> bones;
     model->getBoneRefs(bones);

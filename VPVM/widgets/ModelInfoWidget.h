@@ -43,6 +43,7 @@
 #else
 #include <QtGui/QDialog>
 #endif
+#include <vpvl2/qt/RenderContext.h>
 
 namespace vpvl2 {
 class IModel;
@@ -56,6 +57,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 class SceneLoader;
 
 class ModelInfoWidget : public QWidget
@@ -68,7 +70,7 @@ public:
 
 private slots:
     void retranslate();
-    void setModel(IModel *model);
+    void setModel(IModelSharedPtr model);
 
 private:
     QScopedPointer<QLabel> m_nameLabel;

@@ -48,6 +48,7 @@
 #endif
 #include <vpvl2/Common.h>
 #include <vpvl2/qt/Encoding.h>
+#include <vpvl2/qt/RenderContext.h>
 
 class QCheckBox;
 class QDoubleSpinBox;
@@ -119,16 +120,16 @@ private slots:
     void saveProject();
     void saveProjectAs();
     void selectModel();
-    void setCurrentModel(IModel *model);
+    void setCurrentModel(IModelSharedPtr model);
     void revertSelectedModel();
     void openRecentFile();
     void addRecentFile(const QString &filename, bool didLoad);
     void updateRecentFiles();
     void clearRecentFiles();
-    void addModel(IModel *model, const QUuid &uuid);
-    void deleteModel(IModel *model, const QUuid &uuid);
-    void addAsset(IModel *asset, const QUuid &uuid);
-    void deleteAsset(IModel *asset, const QUuid &uuid);
+    void addModel(IModelSharedPtr model, const QUuid &uuid);
+    void deleteModel(IModelSharedPtr model, const QUuid &uuid);
+    void addAsset(IModelSharedPtr asset, const QUuid &uuid);
+    void deleteAsset(IModelSharedPtr asset, const QUuid &uuid);
     void insertMotionToAllModels();
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
@@ -320,7 +321,7 @@ private:
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
     LoggerWidget *m_loggerWidgetRef;
-    IModel *m_modelRef;
+    IModelSharedPtr m_modelRef;
     IBone *m_boneRef;
     Vector3 m_position;
     Vector3 m_angle;

@@ -868,7 +868,7 @@ IModelSharedPtr UI::createModelAsync(const QString &path) const
     }
     bool ok = true;
     const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-    return QSharedPointer<IModel>(m_factory->createModel(data, bytes.size(), ok));
+    return QSharedPointer<IModel>(m_factory->createModel(data, bytes.size(), ok), &Scene::deleteModelUnlessReferred);
 }
 
 IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model) const
@@ -877,7 +877,7 @@ IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model) const
     if (UISlurpFile(path, bytes)) {
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        QSharedPointer<IMotion> motion(m_factory->createMotion(data, bytes.size(), model, ok));
+        QSharedPointer<IMotion> motion(m_factory->createMotion(data, bytes.size(), model, ok), &Scene::deleteMotionUnlessReferred);
         motion->seek(0);
         return motion;
     }
@@ -905,9 +905,9 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     }
     m_renderContext->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
-    const QFuture<IEffectSharedPtr> &future2 = QtConcurrent::run(m_renderContext.data(),
-                                                                 &RenderContext::createEffectAsync,
-                                                                 modelPtr.data(), &s1);
+    QFuture<IEffectSharedPtr> future2 = QtConcurrent::run(m_renderContext.data(),
+                                                          &RenderContext::createEffectAsync,
+                                                          modelPtr, &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     while (!future2.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -943,7 +943,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
         m_renderContext->parseOffscreenSemantic(effect, info.absoluteDir());
 #endif
-        model = modelPtr.take();
+        model = modelPtr.data();
         enginePtr.take();
     }
     else {

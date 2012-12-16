@@ -169,7 +169,7 @@ void MorphWidget::retranslate()
     m_resetAllButton->setText(vpvm::MorphWidget::tr("Reset All Morphs"));
 }
 
-void MorphWidget::setPMDModel(IModel *model)
+void MorphWidget::setPMDModel(const IModel *model)
 {
     QStringList eyes, lips, eyeblows, others;
     m_eyes->clear();
@@ -259,7 +259,7 @@ void MorphWidget::registerOther()
 
 void MorphWidget::registerBase(const QComboBox *comboBox)
 {
-    IModel *model = m_morphMotionModelRef->selectedModel();
+    IModelSharedPtr model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const CString s(comboBox->itemText(index));
@@ -279,7 +279,7 @@ void MorphWidget::updateMorphWeightValues()
 
 void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 {
-    IModel *model = m_morphMotionModelRef->selectedModel();
+    IModelSharedPtr model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const CString s(comboBox->itemText(index));
@@ -291,7 +291,7 @@ void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
 
 void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
 {
-    IModel *model = m_morphMotionModelRef->selectedModel();
+    IModelSharedPtr model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const CString s(comboBox->itemText(index));

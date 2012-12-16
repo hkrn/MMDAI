@@ -124,7 +124,6 @@ ModelInfoWidget::ModelInfoWidget(QWidget *parent)
     mainLayout->addStretch();
     setLayout(mainLayout.take());
     retranslate();
-    setModel(0);
 }
 
 ModelInfoWidget::~ModelInfoWidget()
@@ -145,10 +144,10 @@ void ModelInfoWidget::retranslate()
     m_constrantsCountLabel->setText(tr("Number of Joints:"));
 }
 
-void ModelInfoWidget::setModel(IModel *model)
+void ModelInfoWidget::setModel(IModelSharedPtr model)
 {
     if (model) {
-        m_nameValueLabel->setText(toQStringFromModel(model));
+        m_nameValueLabel->setText(toQStringFromModel(model.data()));
         m_commentValueLabel->setText(toQStringFromString(model->comment()));
         m_verticesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kVertex)));
         m_indicesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kIndex)));
@@ -158,7 +157,7 @@ void ModelInfoWidget::setModel(IModel *model)
         m_morphsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMorph)));
         m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kRigidBody)));
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kJoint)));
-        qDebug("Set a model to ModelInfoWidget: %s", qPrintable(toQStringFromModel(model)));
+        qDebug("Set a model to ModelInfoWidget: %s", qPrintable(toQStringFromModel(model.data())));
     }
     else {
         m_nameValueLabel->setText("N/A");

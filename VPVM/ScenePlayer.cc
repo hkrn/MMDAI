@@ -53,7 +53,6 @@ ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dial
       m_dialogRef(dialog),
       m_player(new AudioPlayer()),
       m_sceneWidgetRef(sceneWidget),
-      m_selectedModelRef(0),
       m_format(QApplication::tr("Playing scene frame %1 of %2...")),
       m_currentFPS(0),
       m_prevSceneFPS(0),

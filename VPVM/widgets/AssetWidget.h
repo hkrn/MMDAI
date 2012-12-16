@@ -46,6 +46,7 @@
 #include <QtGui/QStringListModel>
 #include <QtGui/QWidget>
 #endif
+#include <vpvl2/qt/RenderContext.h>
 
 namespace vpvl2 {
 class IBone;
@@ -62,6 +63,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 class SceneLoader;
 
 class AssetWidget : public QWidget
@@ -72,24 +74,24 @@ public:
     explicit AssetWidget(QWidget *parent = 0);
     ~AssetWidget();
 
-    IModel *currentAsset() const { return m_currentAssetRef; }
-    IModel *currentModel() const { return m_currentModelRef; }
+    IModelSharedPtr currentAsset() const { return m_currentAssetRef; }
+    IModelSharedPtr currentModel() const { return m_currentModelRef; }
 
 public slots:
-    void addAsset(IModel *asset);
-    void removeAsset(IModel *asset);
-    void addModel(IModel *model);
-    void removeModel(IModel *model);
+    void addAsset(IModelSharedPtr asset);
+    void removeAsset(IModelSharedPtr asset);
+    void addModel(IModelSharedPtr model);
+    void removeModel(IModelSharedPtr model);
     void retranslate();
 
 signals:
-    void assetDidSelect(IModel *asset);
-    void assetDidRemove(IModel *asset);
+    void assetDidSelect(IModelSharedPtr asset);
+    void assetDidRemove(IModelSharedPtr asset);
 
 private slots:
     void deleteCurrentAsset();
     void changeCurrentAsset(int index);
-    void changeCurrentAsset(IModel *asset);
+    void changeCurrentAsset(IModelSharedPtr asset);
     void changeCurrentModel(int index);
     void changeParentBone(int index);
     void updatePositionX(double value);
@@ -98,13 +100,13 @@ private slots:
     void updateRotation();
     void updateScaleFactor(double value);
     void updateOpacity(double value);
-    void setAssetProperties(IModel *asset, SceneLoader *loader);
+    void setAssetProperties(IModelSharedPtr asset, SceneLoader *loader);
 
 private:
     static QDoubleSpinBox *createSpinBox(double step, double min, double max);
     void setEnable(bool value);
-    void updateModelBoneComboBox(IModel *model);
-    int modelIndexOf(IModel *model);
+    void updateModelBoneComboBox(IModelSharedPtr model);
+    int modelIndexOf(IModelSharedPtr model);
 
     QScopedPointer<QGroupBox> m_assetGroup;
     QScopedPointer<QGroupBox> m_assignGroup;
@@ -125,10 +127,10 @@ private:
     QScopedPointer<QStringListModel> m_assetCompleterModel;
     QScopedPointer<QLabel> m_scaleLabel;
     QScopedPointer<QLabel> m_opacityLabel;
-    QList<IModel *> m_assets;
-    QList<IModel *> m_models;
-    IModel *m_currentAssetRef;
-    IModel *m_currentModelRef;
+    QList<IModelSharedPtr> m_assets;
+    QList<IModelSharedPtr> m_models;
+    IModelSharedPtr m_currentAssetRef;
+    IModelSharedPtr m_currentModelRef;
 
     Q_DISABLE_COPY(AssetWidget)
 };

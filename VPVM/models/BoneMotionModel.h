@@ -54,6 +54,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 class BoneMotionModel : public PMDMotionModel
 {
@@ -84,8 +85,8 @@ public:
     const QModelIndexList modelIndicesFromBones(const QList<IBone *> &bones, int timeIndex) const;
     KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
-    void loadPose(VPDFilePtr pose, IModel *model, int timeIndex);
-    void savePose(VPDFile *pose, IModel *model, int timeIndex);
+    void loadPose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex);
+    void savePose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex);
     void setKeyframes(const KeyFramePairList &keyframes);
     void resetBone(ResetType type);
     void resetAllBones();
@@ -104,8 +105,8 @@ public slots:
     void selectBonesByModelIndices(const QModelIndexList &indices);
     void removeModel();
     void removeMotion();
-    void setPMDModel(IModel *model);
-    void loadMotion(IMotion *motion, const IModel *model);
+    void setPMDModel(IModelSharedPtr model);
+    void loadMotion(IMotionSharedPtr motion, const IModelSharedPtr model);
     void rotateAngle(const Scalar &value, IBone *bone, int flags);
     void translateDelta(const Vector3 &delta, IBone *bone, int flags);
     void translateTo(const Vector3 &position, IBone *bone, int flags);

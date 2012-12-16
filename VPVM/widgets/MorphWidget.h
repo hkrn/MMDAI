@@ -87,7 +87,7 @@ signals:
 
 private slots:
     void retranslate();
-    void setPMDModel(IModel *model);
+    void setPMDModel(const IModel *model);
     void setEyeWeight(int value);
     void setLipWeight(int value);
     void setEyeblowWeight(int value);

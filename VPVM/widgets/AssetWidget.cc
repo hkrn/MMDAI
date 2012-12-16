@@ -154,10 +154,10 @@ void AssetWidget::retranslate()
     m_modelComboBox->setItemText(0, vpvm::AssetWidget::tr("Ground"));
 }
 
-void AssetWidget::addAsset(IModel *asset)
+void AssetWidget::addAsset(IModelSharedPtr asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
-    const QString &name = toQStringFromModel(asset);
+    const QString &name = toQStringFromModel(asset.data());
     qDebug("Added an asset to AssetWidget: %s", qPrintable(name));
     m_assets.append(asset);
     m_assetComboBox->addItem(name);
@@ -167,7 +167,7 @@ void AssetWidget::addAsset(IModel *asset)
     setEnable(true);
 }
 
-void AssetWidget::removeAsset(IModel *asset)
+void AssetWidget::removeAsset(IModelSharedPtr asset)
 {
     int index = m_assets.indexOf(asset);
     if (index >= 0) {
@@ -179,24 +179,24 @@ void AssetWidget::removeAsset(IModel *asset)
         m_assetCompleterModel->setStringList(assetNames);
         if (m_assets.count() == 0)
             setEnable(false);
-        qDebug("Removed an asset from AssetWidget: %s", qPrintable(toQStringFromModel(asset)));
+        qDebug("Removed an asset from AssetWidget: %s", qPrintable(toQStringFromModel(asset.data())));
     }
 }
 
-void AssetWidget::addModel(IModel *model)
+void AssetWidget::addModel(IModelSharedPtr model)
 {
     /*
      * アセットがモデルの特定ボーンに対して選択できるようにするための処理
      * モデルは SceneLoader が管理するのでポインタのみ。解放してはいけない
      */
     m_models.append(model);
-    m_modelComboBox->addItem(toQStringFromModel(model));
+    m_modelComboBox->addItem(toQStringFromModel(model.data()));
     if (model->type() == IModel::kAsset)
         addAsset(model);
-    qDebug("Added a model to AssetWidget: %s", qPrintable(toQStringFromModel(model)));
+    qDebug("Added a model to AssetWidget: %s", qPrintable(toQStringFromModel(model.data())));
 }
 
-void AssetWidget::removeModel(IModel *model)
+void AssetWidget::removeModel(IModelSharedPtr model)
 {
     int index = modelIndexOf(model);
     if (index >= 0) {
@@ -208,7 +208,7 @@ void AssetWidget::removeModel(IModel *model)
     }
     if (model->type() == IModel::kAsset)
         removeAsset(model);
-    qDebug("Removed a model from AssetWidget: %s", qPrintable(toQStringFromModel(model)));
+    qDebug("Removed a model from AssetWidget: %s", qPrintable(toQStringFromModel(model.data())));
 }
 
 void AssetWidget::deleteCurrentAsset()
@@ -218,7 +218,7 @@ void AssetWidget::deleteCurrentAsset()
      * また、削除過程で m_currentAssetRef が変更されてしまうため削除するモデルのポインタを保存しておく
      * (そのまま m_currentAssetRef を渡してしまうと m_currentAssetRef が別の値に変わり別のアクセサリも削除されてしまう)
      */
-    IModel *currentAssetRef = m_currentAssetRef;
+    IModelSharedPtr currentAssetRef = m_currentAssetRef;
     removeAsset(currentAssetRef);
     emit assetDidRemove(currentAssetRef);
 }
@@ -229,7 +229,7 @@ void AssetWidget::changeCurrentAsset(int index)
         changeCurrentAsset(m_assets[index]);
 }
 
-void AssetWidget::changeCurrentAsset(IModel *asset)
+void AssetWidget::changeCurrentAsset(IModelSharedPtr asset)
 {
     /* 現在のアセットの情報を更新する。回転の値はラジアン値から度数に変換しておく */
     const Vector3 &position = asset ? asset->worldPosition() : kZeroV3;
@@ -253,7 +253,7 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
     m_opacity->setValue(asset ? asset->opacity() : 1);
     if (isAssetChanged) {
         /* コンボボックスの更新によるシグナル発行でボーン情報が更新されてしまうため、事前にボーンを保存して再設定する */
-        IModel *model = asset->parentModelRef();
+        IModelSharedPtr model(asset->parentModelRef(), &Scene::deleteModelUnlessReferred);
         updateModelBoneComboBox(model);
         int index = modelIndexOf(model);
         m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
@@ -272,9 +272,9 @@ void AssetWidget::changeCurrentModel(int index)
 {
     if (index > 0) {
         /* モデルのボーンリストを一旦空にして対象のモデルのボーンリストに更新しておく */
-        IModel *model = m_models[index - 1];
+        IModelSharedPtr model = m_models[index - 1];
         m_currentModelRef = model;
-        m_currentAssetRef->setParentModelRef(model);
+        m_currentAssetRef->setParentModelRef(model.data());
         updateModelBoneComboBox(model);
     }
     else if (m_currentAssetRef) {
@@ -347,16 +347,17 @@ void AssetWidget::updateOpacity(double value)
         m_currentAssetRef->setOpacity(static_cast<float>(value));
 }
 
-void AssetWidget::setAssetProperties(IModel *asset, SceneLoader *loader)
+void AssetWidget::setAssetProperties(IModelSharedPtr asset, SceneLoader *loader)
 {
     if (asset && asset->type() == IModel::kAsset) {
         if (loader) {
-            asset->setWorldPosition(loader->assetPosition(asset));
-            asset->setWorldRotation(loader->assetRotation(asset));
-            asset->setScaleFactor(loader->assetScaleFactor(asset));
-            asset->setOpacity(loader->assetOpacity(asset));
-            asset->setParentModelRef(loader->assetParentModel(asset));
-            asset->setParentBoneRef(loader->assetParentBone(asset));
+            IModel *assetRef = asset.data();
+            asset->setWorldPosition(loader->assetPosition(assetRef));
+            asset->setWorldRotation(loader->assetRotation(assetRef));
+            asset->setScaleFactor(loader->assetScaleFactor(assetRef));
+            asset->setOpacity(loader->assetOpacity(assetRef));
+            asset->setParentModelRef(loader->assetParentModel(assetRef).data());
+            asset->setParentBoneRef(loader->assetParentBone(assetRef));
         }
         changeCurrentAsset(asset);
     }
@@ -386,7 +387,7 @@ void AssetWidget::setEnable(bool value)
     m_opacity->setEnabled(value);
 }
 
-void AssetWidget::updateModelBoneComboBox(IModel *model)
+void AssetWidget::updateModelBoneComboBox(IModelSharedPtr model)
 {
     /* changeParentBone が呼ばれてしまうので一時的に signal を切る */
     disconnect(m_modelBonesComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
@@ -403,7 +404,7 @@ void AssetWidget::updateModelBoneComboBox(IModel *model)
     connect(m_modelBonesComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));
 }
 
-int AssetWidget::modelIndexOf(IModel *model)
+int AssetWidget::modelIndexOf(IModelSharedPtr model)
 {
     int index = m_models.indexOf(model);
     /* 最初の要素が地面で、特別枠なため削除してはいけない。そのためインデックスをひとつかさ上げする */

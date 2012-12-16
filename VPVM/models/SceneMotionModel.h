@@ -96,12 +96,12 @@ public slots:
     void deleteKeyframesByModelIndices(const QModelIndexList &indices);
     void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
     void removeMotion();
-    void loadMotion(IMotion *motion);
+    void loadMotion(IMotionSharedPtr motion);
     void markAsNew() { setModified(false); }
 
 signals:
     void cameraMotionDidLoad();
-    void motionDidUpdate(IModel *model);
+    void motionDidUpdate(IModelSharedPtr model);
 
 protected:
     ITreeItem *rootRef() const { return m_rootTreeItem.data(); }

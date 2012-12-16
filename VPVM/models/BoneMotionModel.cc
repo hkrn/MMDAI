@@ -161,7 +161,7 @@ public:
         foreach (const ModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.second;
             m_bmmRef->setData(index.first, bytes, Qt::EditRole);
-            boneKeyframe.reset(factory->createBoneKeyframe(m_motionRef));
+            boneKeyframe.reset(factory->createBoneKeyframe(m_motionRef.data()));
             boneKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             m_motionRef->replaceKeyframe(boneKeyframe.take());
         }
@@ -189,7 +189,7 @@ public:
                 const QModelIndex &modelIndex = m_bmmRef->timeIndexToModelIndex(m_keys[key], m_timeIndex);
                 CString s(key);
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
-                newBoneKeyframe.reset(factory->createBoneKeyframe(m_motionRef));
+                newBoneKeyframe.reset(factory->createBoneKeyframe(m_motionRef.data()));
                 newBoneKeyframe->setDefaultInterpolationParameter();
                 newBoneKeyframe->setName(&s);
                 newBoneKeyframe->setLocalPosition(bone->position);
@@ -211,8 +211,8 @@ private:
     QList<ModelIndex> m_modelIndices;
     QScopedPointer<VPDFile> m_pose;
     BoneMotionModel *m_bmmRef;
-    IModel *m_modelRef;
-    IMotion *m_motionRef;
+    IModelSharedPtr m_modelRef;
+    IMotionSharedPtr m_motionRef;
     int m_timeIndex;
 };
 
@@ -223,7 +223,9 @@ public:
      * BoneMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
      * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
      */
-    SetKeyframesCommand(const BoneMotionModel::KeyFramePairList &keyframes, IMotion *motionRef, BoneMotionModel *bmm)
+    SetKeyframesCommand(const BoneMotionModel::KeyFramePairList &keyframes,
+                        IMotionSharedPtr motionRef,
+                        BoneMotionModel *bmm)
         : QUndoCommand(),
           m_keys(bmm->keys()),
           m_bmmRef(bmm),
@@ -251,7 +253,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
-        setText(QApplication::tr("Register bone keyframes of %1").arg(toQStringFromModel(m_modelRef)));
+        setText(QApplication::tr("Register bone keyframes of %1").arg(toQStringFromModel(m_modelRef.data())));
     }
     virtual ~SetKeyframesCommand() {
     }
@@ -281,7 +283,7 @@ public:
         foreach (const ModelIndex &index, m_modelIndices) {
             const QByteArray &bytes = index.second;
             m_bmmRef->setData(index.first, bytes, Qt::EditRole);
-            frame.reset(factory->createBoneKeyframe(m_motionRef));
+            frame.reset(factory->createBoneKeyframe(m_motionRef.data()));
             frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             m_motionRef->replaceKeyframe(frame.take());
         }
@@ -351,21 +353,21 @@ private:
     /* 実際に登録する用のキーフレームの集合 */
     BoneMotionModel::KeyFramePairList m_keyframes;
     BoneMotionModel *m_bmmRef;
-    IModel *m_modelRef;
-    IMotion *m_motionRef;
+    IModelSharedPtr m_modelRef;
+    IMotionSharedPtr m_motionRef;
     IBone *m_boneRef;
 };
 
 class ResetAllCommand : public QUndoCommand
 {
 public:
-    ResetAllCommand(const vpvl2::Scene *scene, IModel *model)
+    ResetAllCommand(const vpvl2::Scene *scene, IModelSharedPtr model)
         : QUndoCommand(),
           m_state(scene, model)
     {
         /* 全てのボーンの情報を保存しておく */
         m_state.save();
-        setText(QApplication::tr("Reset all bones of %1").arg(toQStringFromModel(model)));
+        setText(QApplication::tr("Reset all bones of %1").arg(toQStringFromModel(model.data())));
     }
     virtual ~ResetAllCommand() {
     }
@@ -386,15 +388,15 @@ private:
 class SetBoneCommand : public QUndoCommand
 {
 public:
-    SetBoneCommand(const vpvl2::Scene *scene, IModel *model, const PMDMotionModel::State &state)
+    SetBoneCommand(const vpvl2::Scene *scene, IModelSharedPtr model, const PMDMotionModel::State &state)
         : QUndoCommand(),
-          m_oldState(scene, 0),
+          m_oldState(scene, IModelSharedPtr()),
           m_newState(scene, model)
     {
         m_oldState.copyFrom(state);
         /* 前と後の全てのボーンの情報を保存しておく */
         m_newState.save();
-        setText(QApplication::tr("Set bones of %1").arg(toQStringFromModel(model)));
+        setText(QApplication::tr("Set bones of %1").arg(toQStringFromModel(model.data())));
     }
 
     void undo() {
@@ -525,7 +527,7 @@ namespace vpvm
 
 BoneMotionModel::BoneMotionModel(Factory *factoryRef, QUndoGroup *undoRef, QObject *parent) :
     PMDMotionModel(undoRef, parent),
-    m_state(0, 0),
+    m_state(0, IModelSharedPtr()),
     m_factoryRef(factoryRef),
     m_viewTransform(Transform::getIdentity())
 {
@@ -558,9 +560,9 @@ void BoneMotionModel::saveMotion(IMotion *motion)
 
 void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    if (IMotion *motionRef = currentMotionRef()) {
+    if (IMotionSharedPtr motionRef = currentMotionRef()) {
         KeyFramePairList boneKeyframes;
-        IModel *model = selectedModel();
+        IModelSharedPtr model = selectedModel();
         /* モデルのインデックスを参照し、存在するボーンに対してボーンの現在の値からボーンのキーフレームにコピーする */
         foreach (const QModelIndex &index, indices) {
             int timeIndex = toTimeIndex(index);
@@ -570,7 +572,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
                 IBone *bone = model->findBone(&s);
                 if (bone) {
                     /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
-                    KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(motionRef));
+                    KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
                     newKeyframe->setDefaultInterpolationParameter();
                     newKeyframe->setName(bone->name());
                     newKeyframe->setLocalPosition(bone->localPosition());
@@ -585,7 +587,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
 
 void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex)
 {
-    IMotion *motionRef = currentMotionRef();
+    IMotionSharedPtr motionRef = currentMotionRef();
     if (motionRef) {
         /* 前回呼ばれた copyFrames で作成したデータを破棄しておく */
         m_copiedKeyframes.clear();
@@ -595,7 +597,7 @@ void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices
                 const QVariant &variant = index.data(kBinaryDataRole);
                 if (variant.canConvert(QVariant::ByteArray)) {
                     const QByteArray &bytes = variant.toByteArray();
-                    KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(motionRef));
+                    KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
                     newKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                     /* 予め差分をとっておき、pasteKeyframes でペースト先の差分をたすようにする */
                     int diff = newKeyframe->timeIndex() - timeIndex;
@@ -609,7 +611,7 @@ void BoneMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indices
 void BoneMotionModel::pasteKeyframesByTimeIndex(int timeIndex)
 {
     /* m_frames が #copyFrames でコピーされていること前提 */
-    IMotion *motionRef = currentMotionRef();
+    IMotionSharedPtr motionRef = currentMotionRef();
     if (motionRef && !m_copiedKeyframes.isEmpty()) {
         /*
          * m_frames のデータを引数のフレームインデックスと一緒に積ませて SetFramesCommand として作成する
@@ -632,7 +634,7 @@ void BoneMotionModel::pasteReversedFrame(int timeIndex)
     const QString &left = "左";
     QSet<QString> registered;
     /* m_frames が #copyFrames でコピーされていること前提 */
-    IMotion *motionRef = currentMotionRef();
+    IMotionSharedPtr motionRef = currentMotionRef();
     if (motionRef && !m_copiedKeyframes.isEmpty()) {
         KeyFramePairList keyframes;
         KeyFramePtr newKeyframe;
@@ -726,7 +728,7 @@ const QModelIndexList BoneMotionModel::modelIndicesFromBones(const QList<IBone *
 BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(const QModelIndexList &indices) const
 {
     KeyFramePairList keyframes;
-    if (IMotion *motionRef = currentMotionRef()) {
+    if (IMotionSharedPtr motionRef = currentMotionRef()) {
         foreach (const QModelIndex &index, indices) {
             int timeIndex = toTimeIndex(index);
             TreeItem *treeItem = static_cast<TreeItem *>(index.internalPointer());
@@ -740,7 +742,7 @@ BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(con
                     const QModelIndex childIndex = timeIndexToModelIndex(childTreeItem, timeIndex);
                     const QVariant &variant = childIndex.data(BoneMotionModel::kBinaryDataRole);
                     if (variant.canConvert(QVariant::ByteArray)) {
-                        KeyFramePtr keyframe(m_factoryRef->createBoneKeyframe(motionRef));
+                        KeyFramePtr keyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
                         keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
                         keyframes.append(KeyFramePair(timeIndex, keyframe));
                     }
@@ -749,7 +751,7 @@ BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(con
             else {
                 const QVariant &variant = index.data(BoneMotionModel::kBinaryDataRole);
                 if (variant.canConvert(QVariant::ByteArray)) {
-                    KeyFramePtr keyframe(m_factoryRef->createBoneKeyframe(motionRef));
+                    KeyFramePtr keyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
                     keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
                     keyframes.append(KeyFramePair(timeIndex, keyframe));
                 }
@@ -759,21 +761,21 @@ BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(con
     return keyframes;
 }
 
-void BoneMotionModel::loadPose(VPDFilePtr pose, IModel *model, int timeIndex)
+void BoneMotionModel::loadPose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex)
 {
-    IMotion *motionRef = currentMotionRef();
+    IMotionSharedPtr motionRef = currentMotionRef();
     if (model == m_modelRef && motionRef) {
         addUndoCommand(new LoadPoseCommand(this, pose, timeIndex));
-        qDebug("Loaded a pose to the model: %s", qPrintable(toQStringFromModel(model)));
+        qDebug("Loaded a pose to the model: %s", qPrintable(toQStringFromModel(model.data())));
     }
     else {
-        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model)));
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model.data())));
     }
 }
 
-void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int timeIndex)
+void BoneMotionModel::savePose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex)
 {
-    IMotion *motionRef = currentMotionRef();
+    IMotionSharedPtr motionRef = currentMotionRef();
     if (model == m_modelRef && motionRef) {
         VPDFile::BoneList bones;
         QScopedPointer<IBoneKeyframe> keyframe;
@@ -783,7 +785,7 @@ void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int timeIndex)
             const QVariant &variant = modelIndex.data(BoneMotionModel::kBinaryDataRole);
             if (variant.canConvert(QVariant::ByteArray)) {
                 VPDFile::Bone *bone = new VPDFile::Bone();
-                keyframe.reset(m_factoryRef->createBoneKeyframe(motionRef));
+                keyframe.reset(m_factoryRef->createBoneKeyframe(motionRef.data()));
                 keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
                 const Quaternion &q = keyframe->localRotation();
                 bone->name = toQStringFromBoneKeyframe(keyframe.data());
@@ -795,19 +797,19 @@ void BoneMotionModel::savePose(VPDFile *pose, IModel *model, int timeIndex)
         pose->setBones(bones);
     }
     else {
-        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model)));
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model.data())));
     }
 }
 
 void BoneMotionModel::setKeyframes(const KeyFramePairList &keyframes)
 {
-    if (IMotion *motionRef = currentMotionRef())
+    if (IMotionSharedPtr motionRef = currentMotionRef())
         addUndoCommand(new SetKeyframesCommand(keyframes, motionRef, this));
     else
         qWarning("No model or motion to register bone frames.");
 }
 
-void BoneMotionModel::setPMDModel(IModel *model)
+void BoneMotionModel::setPMDModel(IModelSharedPtr model)
 {
     /* 引数のモデルが現在選択中のものであれば二重処理になってしまうので、スキップする */
     if (m_modelRef == model)
@@ -876,24 +878,24 @@ void BoneMotionModel::setPMDModel(IModel *model)
             selectedBones.append(bones[0]);
             selectBones(selectedBones);
         }
-        qDebug("Set a model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model)));
+        qDebug("Set a model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model.data())));
     }
     else {
-        m_modelRef = 0;
+        m_modelRef.clear();
         selectBones(QList<IBone *>());
-        emit modelDidChange(0);
+        emit modelDidChange(m_modelRef);
     }
     /* テーブルモデルを更新 */
     resetModel();
 }
 
-void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
+void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr model)
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_modelRef) {
         const int nkeyframes = motion->countKeyframes(IKeyframe::kBone);
         const Keys &keys = this->keys();
-        const QString &modelName = toQStringFromModel(model),
+        const QString &modelName = toQStringFromModel(model.data()),
                 &loadingProgressText = tr("Loading bone keyframes %1 of %2 to %3");
         QScopedPointer<IBoneKeyframe> newKeyframe;
         /* フレーム列の最大数をモーションのフレーム数に更新する */
@@ -910,7 +912,7 @@ void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
                 ITreeItem *item = keys[key];
                 /* この時点で新しい QModelIndex が作成される */
                 const QModelIndex &modelIndex = timeIndexToModelIndex(item, timeIndex);
-                newKeyframe.reset(m_factoryRef->createBoneKeyframe(motion));
+                newKeyframe.reset(m_factoryRef->createBoneKeyframe(motion.data()));
                 newKeyframe->setName(keyframe->name());
                 newKeyframe->setLocalPosition(keyframe->localPosition());
                 newKeyframe->setLocalRotation(keyframe->localRotation());
@@ -932,10 +934,10 @@ void BoneMotionModel::loadMotion(IMotion *motion, const IModel *model)
         refreshModel(m_modelRef);
         setModified(false);
         emit motionDidLoad();
-        qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model)));
+        qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model.data())));
     }
     else {
-        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(toQStringFromModel(model)));
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(toQStringFromModel(model.data())));
     }
 }
 
@@ -959,12 +961,12 @@ void BoneMotionModel::removeModel()
     removePMDModel(m_modelRef);
     resetModel();
     m_boneTransformStates.clear();
-    emit modelDidChange(0);
+    emit modelDidChange(m_modelRef);
 }
 
 void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indices)
 {
-    if (IMotion *motionRef = currentMotionRef()) {
+    if (IMotionSharedPtr motionRef = currentMotionRef()) {
         KeyFramePairList keyframes;
         /* ここでは削除するキーフレームを決定するのみ。実際に削除するのは SetFramesCommand である点に注意 */
         foreach (const QModelIndex &index, indices) {
@@ -989,7 +991,7 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
                                                         const Vector3 &position,
                                                         const Vector3 &rotation)
 {
-    if (IMotion *motionRef = currentMotionRef()) {
+    if (IMotionSharedPtr motionRef = currentMotionRef()) {
         KeyFramePairList keyframes;
         Quaternion newRotation;
         foreach (const QModelIndex &index, indices) {
@@ -998,7 +1000,7 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
                 const QVariant &variant = index.data(kBinaryDataRole);
                 if (variant.canConvert(QVariant::ByteArray)) {
                     const QByteArray &bytes = variant.toByteArray();
-                    KeyFramePtr keyframe(m_factoryRef->createBoneKeyframe(motionRef));
+                    KeyFramePtr keyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
                     keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
                     const Quaternion &oldRotation = keyframe->localRotation();
                     newRotation.setX(oldRotation.x() * rotation.x());
@@ -1109,7 +1111,7 @@ void BoneMotionModel::setPosition(int coordinate, float value)
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
         selected->setLocalPosition(position);
-        m_sceneRef->updateModel(m_modelRef);
+        m_sceneRef->updateModel(m_modelRef.data());
         emit positionDidChange(selected, lastPosition);
     }
 }
@@ -1138,7 +1140,7 @@ void BoneMotionModel::setRotation(int coordinate, float value)
         qFatal("Unexpected coordinate value: %c", coordinate);
     }
     selected->setLocalRotation(rotation);
-    m_sceneRef->updateModel(m_modelRef);
+    m_sceneRef->updateModel(m_modelRef.data());
     emit rotationDidChange(selected, lastRotation);
 }
 
@@ -1198,7 +1200,7 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
-    m_sceneRef->updateModel(m_modelRef);
+    m_sceneRef->updateModel(m_modelRef.data());
     emit rotationDidChange(bone, lastRotation);
 }
 
@@ -1232,7 +1234,7 @@ void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
-    m_sceneRef->updateModel(m_modelRef);
+    m_sceneRef->updateModel(m_modelRef.data());
     emit positionDidChange(bone, position);
 }
 

@@ -111,13 +111,13 @@ public:
     void saveProject(const QString &filename);
 
     void loadModel(const QString &path, bool skipDialog = false);
-    void loadMotionToAllModels(const QString &path, IMotionPtr &motionPtr);
-    void loadMotionToSelectedModel(const QString &path, IMotionPtr &motionPtr);
-    void loadMotionToModel(const QString &path, IModel *model, IMotionPtr &motionPtr);
+    void loadMotionToAllModels(const QString &path, IMotionSharedPtr motionPtr);
+    void loadMotionToSelectedModel(const QString &path, IMotionSharedPtr motionPtr);
+    void loadMotionToModel(const QString &path, IModelSharedPtr model, IMotionSharedPtr motionPtr);
     void loadAsset(const QString &path);
     void loadAssetFromMetadata(const QString &path);
-    VPDFilePtr insertPoseToSelectedModel(const QString &filename, IModel *model);
-    IMotion *setCamera(const QString &path);
+    VPDFilePtr insertPoseToSelectedModel(const QString &filename, IModelSharedPtr model);
+    IMotionSharedPtr setCamera(const QString &path);
     void makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo) const;
     Handles *handlesRef() const { return m_handles.data(); }
     EditMode editMode() const { return m_editMode; }
@@ -141,14 +141,14 @@ public slots:
     void insertMotionToSelectedModel();
     void deleteSelectedModel();
     void loadFile(const QString &file);
-    void setEmptyMotion(IModel *model, bool skipWarning);
-    void saveMetadataFromAsset(IModel *asset);
+    void setEmptyMotion(IModelSharedPtr model, bool skipWarning);
+    void saveMetadataFromAsset(IModelSharedPtr asset);
     void rotateScene(const Vector3 &delta);
     void rotateModel(const Quaternion &delta);
-    void rotateModel(IModel *model, const Quaternion &delta);
+    void rotateModel(IModelSharedPtr model, const Quaternion &delta);
     void translateScene(const Vector3 &delta);
     void translateModel(const Vector3 &delta);
-    void translateModel(IModel *model, const Vector3 &delta);
+    void translateModel(IModelSharedPtr model, const Vector3 &delta);
     void advanceMotion(const IKeyframe::TimeIndex &delta);
     void seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame);
     void resetMotion();
@@ -164,15 +164,15 @@ public slots:
     void selectBones(const QList<IBone *> &bones);
     void selectMorphs(const QList<IMorph *> &morphs);
     void setEditMode(SceneWidget::EditMode value);
-    void setSelectedModel(IModel *value) { setSelectedModel(value, kNone); }
-    void setSelectedModel(IModel *value, SceneWidget::EditMode mode);
+    void setSelectedModel(IModelSharedPtr value) { setSelectedModel(value, kNone); }
+    void setSelectedModel(IModelSharedPtr value, SceneWidget::EditMode mode);
     void setBackgroundImage(const QString &filename);
-    void revertSelectedModel() { setSelectedModel(0, kNone); }
+    void revertSelectedModel() { setSelectedModel(IModelSharedPtr(), kNone); }
 
 signals:
     void initailizeGLContextDidDone();
     void fileDidLoad(const QString &filename, bool succeeded);
-    void newMotionDidSet(IModel *model);
+    void newMotionDidSet(IModelSharedPtr model);
     void modelDidMove(const Vector3 &lastPosition);
     void modelDidRotate(const Quaternion &lastRotation);
     void cameraPerspectiveDidSet(const ICamera *camera);
@@ -265,10 +265,10 @@ private:
     void clearSelectedBones();
     void clearSelectedMorphs();
     void updateScene();
-    bool acceptAddingModel(IModel *model);
+    bool acceptAddingModel(const IModel *model);
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();
-    void loadModelMotion(const QScopedPointer<IMotion> &motionPtr, const QString &path, IModel *model);
+    void loadModelMotion(IMotionSharedPtr motion, const QString &path, IModelSharedPtr model);
     void grabImageHandle(const Scalar &deltaValue);
     void grabModelHandleByRaycast(const QPointF &pos,
                                   const QPointF &diff,

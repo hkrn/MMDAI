@@ -70,7 +70,7 @@ namespace vpvm
 
 using namespace vpvl2;
 
-static void UIAlertMVDMotion(const IMotion *motion, SceneWidget *parent)
+static void UIAlertMVDMotion(const IMotionSharedPtr motion, SceneWidget *parent)
 {
     /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
     if (motion->type() == IMotion::kMVD) {
@@ -273,7 +273,7 @@ void SceneWidget::setPreferredFPS(int value)
     }
 }
 
-void SceneWidget::setSelectedModel(IModel *value, EditMode mode)
+void SceneWidget::setSelectedModel(IModelSharedPtr value, EditMode mode)
 {
     if (!value) {
         clearSelectedBones();
@@ -281,7 +281,7 @@ void SceneWidget::setSelectedModel(IModel *value, EditMode mode)
     }
     /* 情報パネルに選択されたモデルの名前を更新する */
     m_loader->setSelectedModel(value);
-    m_info->setModel(value);
+    m_info->setModel(value.data());
     m_info->update();
     setEditMode(mode);
 }
@@ -293,59 +293,74 @@ void SceneWidget::setBackgroundImage(const QString &filename)
 
 void SceneWidget::setModelEdgeOffset(double value)
 {
-    if (IModel *model = m_loader->selectedModelRef()) {
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
         m_loader->setModelEdgeOffset(model, static_cast<float>(value));
-        m_loader->sceneRef()->updateModel(model);
+        m_loader->sceneRef()->updateModel(model.data());
     }
     refreshMotions();
 }
 
 void SceneWidget::setModelOpacity(const Scalar &value)
 {
-    if (IModel *model = m_loader->selectedModelRef())
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
         m_loader->setModelOpacity(model, value);
+    }
     refreshMotions();
 }
 
 void SceneWidget::setModelPositionOffset(const Vector3 &value)
 {
-    if (IModel *model = m_loader->selectedModelRef())
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
         m_loader->setModelPosition(model, value);
+    }
     refreshMotions();
 }
 
 void SceneWidget::setModelRotationOffset(const Vector3 &value)
 {
-    if (IModel *model = m_loader->selectedModelRef())
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
         m_loader->setModelRotation(model, value);
+    }
     refreshMotions();
 }
 
 void SceneWidget::setModelProjectiveShadowEnable(bool value)
 {
-    if (IModel *model = m_loader->selectedModelRef())
-        m_loader->setProjectiveShadowEnable(model, value);
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
+        m_loader->setProjectiveShadowEnable(model.data(), value);
+    }
     refreshMotions();
 }
 
 void SceneWidget::setModelSelfShadowEnable(bool value)
 {
-    if (IModel *model = m_loader->selectedModelRef())
-        m_loader->setSelfShadowEnable(model, value);
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
+        m_loader->setSelfShadowEnable(model.data(), value);
+    }
     refreshMotions();
 }
 
 void SceneWidget::setModelOpenSkinningEnable(bool value)
 {
-    if (IModel *model = m_loader->selectedModelRef())
-        m_loader->setSelfShadowEnable(model, value);
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
+        m_loader->setSelfShadowEnable(model.data(), value);
+    }
     refreshMotions();
 }
 
 void SceneWidget::setModelVertexShaderSkinningType1Enable(bool value)
 {
-    if (IModel *model = m_loader->selectedModelRef())
-        m_loader->setSelfShadowEnable(model, value);
+    IModelSharedPtr model = m_loader->selectedModelRef();
+    if (model) {
+        m_loader->setSelfShadowEnable(model.data(), value);
+    }
     refreshMotions();
 }
 
@@ -390,7 +405,7 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
     QFileInfo finfo(path);
     bool didLoad = true;
     if (finfo.exists()) {
-        QScopedPointer<IModel> modelPtr;
+        IModelSharedPtr modelPtr;
         ArchiveSharedPtr archive(new Archive());
         QStringList allFilesInArchive;
         /* zip を解凍 */
@@ -401,7 +416,6 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
             /* zip 内に pmd/pmx ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
             if (!modelsInArchive.isEmpty() && archive->uncompress(allFilesInArchive.filter(SceneLoader::kModelLoadable).toSet())) {
                 QUuid uuid;
-                IModelPtr modelPtr;
                 IModel::Type type;
                 QFileInfo modelFileInfoInArchive;
                 int nmodels = modelsInArchive.size(), i = 0;
@@ -417,8 +431,8 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                             (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data())))) {
                         /* ハンドルの遅延読み込み */
                         m_handles->loadModelHandles();
-                        m_loader->addModel(modelPtr.data(), finfo, modelFileInfoInArchive, uuid);
-                        setEmptyMotion(modelPtr.take(), false);
+                        m_loader->addModel(modelPtr, finfo, modelFileInfoInArchive, uuid);
+                        setEmptyMotion(modelPtr, false);
                     }
                     ++i;
                     emit fileDidUpdateProgress(i, nmodels, tr("Loading %1 (%2 of %3)...")
@@ -434,8 +448,8 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                 QUuid uuid;
                 /* ハンドルの遅延読み込み */
                 m_handles->loadModelHandles();
-                m_loader->addModel(modelPtr.data(), finfo, QFileInfo(), uuid);
-                setEmptyMotion(modelPtr.take(), false);
+                m_loader->addModel(modelPtr, finfo, QFileInfo(), uuid);
+                setEmptyMotion(modelPtr, false);
             }
         }
         else {
@@ -451,26 +465,25 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
 void SceneWidget::insertMotionToAllModels()
 {
     /* モーションを追加したら即座に反映させるために updateMotion を呼んでおく */
-    IMotionPtr motionPtr;
+    IMotionSharedPtr motionPtr;
     loadMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                          tr("Load model motion from a VMD/MVD file"),
                                          tr("Model motion file (*.vmd *.mvd)"),
                                          m_settingsRef),
                           motionPtr);
     if (motionPtr) {
-        motionPtr.take();
         refreshMotions();
     }
 }
 
-void SceneWidget::loadMotionToAllModels(const QString &path, IMotionPtr &motionPtr)
+void SceneWidget::loadMotionToAllModels(const QString &path, IMotionSharedPtr motionPtr)
 {
     if (QFile::exists(path)) {
-        QList<IModel *> models;
+        QList<IModelSharedPtr> models;
         emit fileDidOpenProgress(tr("Loading %1").arg(path), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(path));
         m_loader->loadModelMotion(path, models, motionPtr);
-        UIAlertMVDMotion(motionPtr.data(), this);
+        UIAlertMVDMotion(motionPtr, this);
         seekMotion(0, false, true);
         emit fileDidLoad(path, true);
     }
@@ -482,16 +495,15 @@ void SceneWidget::loadMotionToAllModels(const QString &path, IMotionPtr &motionP
 
 void SceneWidget::insertMotionToSelectedModel()
 {
-    IModel *model = m_loader->selectedModelRef();
-    if (model) {
-        IMotionPtr motionPtr;
+    if (m_loader->selectedModelRef()) {
+        IMotionSharedPtr motionPtr;
         loadMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
                                                  tr("Load model motion from a VMD/MVD file"),
                                                  tr("Model motion file (*.vmd *.mvd)"),
                                                  m_settingsRef),
                                   motionPtr);
         if (motionPtr) {
-            UIAlertMVDMotion(motionPtr.take(), this);
+            UIAlertMVDMotion(motionPtr, this);
             refreshMotions();
         }
     }
@@ -501,12 +513,12 @@ void SceneWidget::insertMotionToSelectedModel()
     }
 }
 
-void SceneWidget::loadMotionToSelectedModel(const QString &path, IMotionPtr &motionPtr)
+void SceneWidget::loadMotionToSelectedModel(const QString &path, IMotionSharedPtr motionPtr)
 {
     loadMotionToModel(path, m_loader->selectedModelRef(), motionPtr);
 }
 
-void SceneWidget::loadMotionToModel(const QString &path, IModel *model, IMotionPtr &motionPtr)
+void SceneWidget::loadMotionToModel(const QString &path, IModelSharedPtr model, IMotionSharedPtr motionPtr)
 {
     if (model) {
         if (QFile::exists(path)) {
@@ -517,7 +529,7 @@ void SceneWidget::loadMotionToModel(const QString &path, IModel *model, IMotionP
                                       tr("Applying this motion to the different model"),
                                       tr("This motion is created for %1. Do you apply this motion to %2?")
                                       .arg(toQStringFromMotion(motionPtr.data()))
-                                      .arg(toQStringFromModel(model)),
+                                      .arg(toQStringFromModel(model.data())),
                                       "",
                                       QMessageBox::Yes|QMessageBox::No);
                     if (ret == QMessageBox::Yes) {
@@ -543,12 +555,12 @@ void SceneWidget::setEmptyMotion()
     setEmptyMotion(m_loader->selectedModelRef(), false);
 }
 
-void SceneWidget::setEmptyMotion(IModel *model, bool skipWarning)
+void SceneWidget::setEmptyMotion(IModelSharedPtr model, bool skipWarning)
 {
     if (model && !m_playing) {
-        IMotionPtr motion;
+        IMotionSharedPtr motion;
         m_loader->newModelMotion(model, motion);
-        m_loader->setModelMotion(motion.take(), model);
+        m_loader->setModelMotion(motion, model);
         emit newMotionDidSet(model);
     }
     else if (!skipWarning) {
@@ -573,7 +585,7 @@ void SceneWidget::loadAsset(const QString &path)
     if (finfo.exists()) {
         ArchiveSharedPtr archive(new Archive());
         QUuid uuid;
-        IModelPtr assetPtr;
+        IModelSharedPtr assetPtr;
         QStringList allFilesInArchive;
         /* zip を解凍 */
         emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
@@ -594,7 +606,7 @@ void SceneWidget::loadAsset(const QString &path)
                     if (m_loader->loadAsset(bytes, finfo, assetFileInfoInArchive, uuid, assetPtr)) {
                         /* ハンドルの遅延読み込み */
                         m_handles->loadModelHandles();
-                        setEmptyMotion(assetPtr.take(), false);
+                        setEmptyMotion(assetPtr, false);
                     }
                     ++i;
                     emit fileDidUpdateProgress(i, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(i).arg(nmodels));
@@ -606,7 +618,7 @@ void SceneWidget::loadAsset(const QString &path)
         else if (m_loader->loadAsset(path, uuid, assetPtr)) {
             /* ハンドルの遅延読み込み */
             m_handles->loadModelHandles();
-            setEmptyMotion(assetPtr.take(), false);
+            setEmptyMotion(assetPtr, false);
         }
         /* 読み込み失敗 */
         else {
@@ -632,11 +644,10 @@ void SceneWidget::loadAssetFromMetadata(const QString &path)
     QFileInfo fi(path);
     if (fi.exists()) {
         QUuid uuid;
-        IModelPtr asset;
+        IModelSharedPtr asset;
         if (m_loader->loadAssetFromMetadata(fi.fileName(), fi.dir(), uuid, asset)) {
             /* ハンドルの遅延読み込み */
             m_handles->loadModelHandles();
-            asset.take();
             setFocus();
         }
         else {
@@ -646,11 +657,11 @@ void SceneWidget::loadAssetFromMetadata(const QString &path)
     }
 }
 
-void SceneWidget::saveMetadataFromAsset(IModel *asset)
+void SceneWidget::saveMetadataFromAsset(IModelSharedPtr asset)
 {
     if (asset) {
         QString filename = QFileDialog::getSaveFileName(this, tr("Save %1 as VAC file")
-                                                        .arg(toQStringFromModel(asset)), "",
+                                                        .arg(toQStringFromModel(asset.data())), "",
                                                         tr("MMD accessory metadata (*.vac)"));
         m_loader->saveMetadataFromAsset(filename, asset);
     }
@@ -658,14 +669,14 @@ void SceneWidget::saveMetadataFromAsset(IModel *asset)
 
 void SceneWidget::insertPoseToSelectedModel()
 {
-    IModel *model = m_loader->selectedModelRef();
+    IModelSharedPtr model = m_loader->selectedModelRef();
     VPDFilePtr ptr = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
                                                               tr("Open VPD file"),
                                                               tr("VPD file (*.vpd)"),
                                                               m_settingsRef),
                                                model);
     if (!ptr.isNull())
-        m_loader->sceneRef()->updateModel(model);
+        m_loader->sceneRef()->updateModel(model.data());
 }
 
 void SceneWidget::setBackgroundImage()
@@ -701,7 +712,7 @@ void SceneWidget::clearBackgroundImage()
     setBackgroundImage("");
 }
 
-VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModel *model)
+VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModelSharedPtr model)
 {
     VPDFilePtr ptr;
     if (model) {
@@ -773,23 +784,21 @@ void SceneWidget::resetMotion()
 
 void SceneWidget::setCamera()
 {
-    IMotion *motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
-                                               tr("Load camera motion from a VMD/MVD file"),
-                                               tr("Camera motion file (*.vmd *.mvd)"),
-                                               m_settingsRef));
+    IMotionSharedPtr motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
+                                                       tr("Load camera motion from a VMD/MVD file"),
+                                                       tr("Camera motion file (*.vmd *.mvd)"),
+                                                       m_settingsRef));
     if (motion) {
         UIAlertMVDMotion(motion, this);
         refreshScene();
     }
 }
 
-IMotion *SceneWidget::setCamera(const QString &path)
+IMotionSharedPtr SceneWidget::setCamera(const QString &path)
 {
-    IMotion *motion = 0;
+    IMotionSharedPtr motionPtr;
     if (QFile::exists(path)) {
-        IMotionPtr motionPtr;
         if (m_loader->loadCameraMotion(path, motionPtr)) {
-            motion = motionPtr.take();
             emit fileDidLoad(path, true);
         }
         else {
@@ -797,17 +806,17 @@ IMotion *SceneWidget::setCamera(const QString &path)
                     tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
-    return motion;
+    return motionPtr;
 }
 
 void SceneWidget::deleteSelectedModel()
 {
-    IModel *selected = m_loader->selectedModelRef();
+    IModelSharedPtr selected = m_loader->selectedModelRef();
     if (selected) {
         int ret = warning(0,
                           tr("Confirm"),
                           tr("Do you want to delete the model \"%1\"? This cannot undo.")
-                          .arg(toQStringFromModel(selected)),
+                          .arg(toQStringFromModel(selected.data())),
                           "",
                           QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::Yes) {
@@ -884,7 +893,7 @@ void SceneWidget::rotateModel(const Quaternion &delta)
     rotateModel(m_loader->selectedModelRef(), delta);
 }
 
-void SceneWidget::rotateModel(IModel *model, const Quaternion &delta)
+void SceneWidget::rotateModel(IModelSharedPtr model, const Quaternion &delta)
 {
     if (model) {
         const Quaternion &rotation = model->worldRotation();
@@ -905,7 +914,7 @@ void SceneWidget::translateModel(const Vector3 &delta)
     translateModel(m_loader->selectedModelRef(), delta);
 }
 
-void SceneWidget::translateModel(IModel *model, const Vector3 &delta)
+void SceneWidget::translateModel(IModelSharedPtr model, const Vector3 &delta)
 {
     if (model) {
         const Vector3 &position = model->worldPosition();
@@ -916,7 +925,7 @@ void SceneWidget::translateModel(IModel *model, const Vector3 &delta)
 
 void SceneWidget::resetModelPosition()
 {
-    IModel *model = m_loader->selectedModelRef();
+    IModelSharedPtr model = m_loader->selectedModelRef();
     if (model) {
         const Vector3 &position = model->worldPosition();
         model->setWorldPosition(kZeroV3);
@@ -966,18 +975,16 @@ void SceneWidget::loadFile(const QString &path)
     QFileInfo fileInfo(path);
     const QString &extension = fileInfo.suffix().toLower();
     if (extension == "pmd" || extension == "pmx" || extension == "zip") {
-        IModelPtr modelPtr;
+        IModelSharedPtr modelPtr;
         loadModel(path, modelPtr);
-        setEmptyMotion(modelPtr.take(), false);
+        setEmptyMotion(modelPtr, false);
     }
     /* モーションファイル */
     else if (extension == "vmd" || extension == "mvd") {
-        IMotionPtr motionPtr;
+        IMotionSharedPtr motionPtr;
         loadMotionToModel(path, m_loader->selectedModelRef(), motionPtr);
-        if (motionPtr) {
+        if (motionPtr)
             refreshMotions();
-            motionPtr.take();
-        }
     }
     /* アクセサリファイル */
     else if (extension == "x") {
@@ -985,10 +992,10 @@ void SceneWidget::loadFile(const QString &path)
     }
     /* ポーズファイル */
     else if (extension == "vpd") {
-        IModel *model = m_loader->selectedModelRef();
+        IModelSharedPtr model = m_loader->selectedModelRef();
         VPDFilePtr ptr = insertPoseToSelectedModel(path, model);
         if (!ptr.isNull())
-            m_loader->sceneRef()->updateModel(model);
+            m_loader->sceneRef()->updateModel(model.data());
     }
     /* アクセサリ情報ファイル */
     else if (extension == "vac") {
@@ -1097,7 +1104,7 @@ void SceneWidget::initializeGL()
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfLoadingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(projectDidSave(bool)), SLOT(openErrorDialogIfSavingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
-    connect(m_loader.data(), SIGNAL(modelDidSelect(IModel*,SceneLoader*)), SLOT(setSelectedModel(IModel*)));
+    connect(m_loader.data(), SIGNAL(modelDidSelect(IModelSharedPtr,SceneLoader*)), SLOT(setSelectedModel(IModelSharedPtr)));
     /* 背面カリングを有効にする */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -1199,7 +1206,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     Q_UNUSED(hit)
 #endif
     /* モデルが選択状態にある */
-    if (IModel *model = m_loader->selectedModelRef()) {
+    if (const IModel *model = m_loader->selectedModelRef().data()) {
         /* ボーン選択モードである */
         if (m_editMode == kSelect) {
             IBone *nearestBone = findNearestBone(model, znear, zfar, 0.1);
@@ -1383,7 +1390,7 @@ void SceneWidget::paintGL()
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;
-    IModel *model = m_loader->selectedModelRef();
+    const IModel *model = m_loader->selectedModelRef().data();
     if (!m_selectedBoneRefs.isEmpty())
         bone = m_selectedBoneRefs.first();
     switch (m_editMode) {
@@ -1509,7 +1516,7 @@ void SceneWidget::panTriggered(QPanGesture *event)
             break;
         }
     }
-    else if (IModel *model = m_loader->selectedModelRef())
+    else if (IModelSharedPtr model = m_loader->selectedModelRef())
         translateModel(model, newDelta);
     else
         translateScene(newDelta);
@@ -1543,7 +1550,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
             }
         }
         /* 四元数を使う場合回転が時計回りになるよう符号を反転させる必要がある */
-        else if (IModel *model = m_loader->selectedModelRef()) {
+        else if (IModelSharedPtr model = m_loader->selectedModelRef()) {
             Quaternion rotation(0.0f, 0.0f, 0.0f, 1.0f);
             rotation.setEulerZYX(0.0f, -radian, 0.0f);
             rotateModel(model, rotation);
@@ -1599,7 +1606,7 @@ void SceneWidget::openErrorDialogIfSavingProjectFailed(bool ok)
     }
 }
 
-bool SceneWidget::acceptAddingModel(IModel *model)
+bool SceneWidget::acceptAddingModel(const IModel *model)
 {
     /* モデルを追加する前にモデルの名前とコメントを出すダイアログを表示 */
     QMessageBox mbox;
@@ -1656,13 +1663,13 @@ void SceneWidget::clearSelectedMorphs()
     m_info->setMorphs(m_selectedMorphRefs, "");
 }
 
-void SceneWidget::loadModelMotion(const QScopedPointer<IMotion> &motionPtr, const QString &path, IModel *model)
+void SceneWidget::loadModelMotion(IMotionSharedPtr motion, const QString &path, IModelSharedPtr model)
 {
     const QFileInfo fi(path);
-    UIAlertMVDMotion(motionPtr.data(), this);
+    UIAlertMVDMotion(motion, this);
     emit fileDidOpenProgress(tr("Loading %1").arg(fi.baseName()), false);
     emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(fi.baseName()));
-    m_loader->setModelMotion(motionPtr.data(), model);
+    m_loader->setModelMotion(motion, model);
 }
 
 void SceneWidget::grabImageHandle(const Scalar &deltaValue)
