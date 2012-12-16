@@ -143,7 +143,7 @@ bool Material::isSharedToonTextureUsed() const
 
 bool Material::isCullFaceDisabled() const
 {
-    return !btFuzzyZero(m_materialRef->opacity() - 1);
+    return m_materialRef->opacity() - 0.98f >= 0.0f;
 }
 
 bool Material::hasShadow() const
