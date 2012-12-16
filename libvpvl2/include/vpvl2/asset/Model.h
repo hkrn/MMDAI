@@ -95,8 +95,9 @@ public:
     Scalar scaleFactor() const { return m_scaleFactor; }
     Vector3 edgeColor() const { return kZeroV3; }
     Scalar edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
-    IModel *parentModel() const { return m_parentModelRef; }
-    IBone *parentBone() const { return m_parentBoneRef; }
+    Scene *parentSceneRef() const { return m_parentSceneRef; }
+    IModel *parentModelRef() const { return m_parentModelRef; }
+    IBone *parentBoneRef() const { return m_parentBoneRef; }
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setComment(const IString *value);
@@ -107,8 +108,9 @@ public:
     void setScaleFactor(const Scalar &value);
     void setEdgeColor(const Vector3 & /* value */) {}
     void setEdgeWidth(const Scalar & /* value */) {}
-    void setParentModel(IModel *value);
-    void setParentBone(IBone *value);
+    void setParentSceneRef(Scene *value);
+    void setParentModelRef(IModel *value);
+    void setParentBoneRef(IBone *value);
     void setVisible(bool value);
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
@@ -138,6 +140,7 @@ private:
     IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_comment;
+    Scene *m_parentSceneRef;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
     mutable Array<IBone *> m_bones;

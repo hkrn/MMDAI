@@ -137,8 +137,8 @@ public:
     Scalar scaleFactor() const { return m_scaleFactor; }
     Vector3 edgeColor() const { return m_edgeColor; }
     Scalar edgeWidth() const { return m_edgeWidth; }
-    IModel *parentModel() const { return 0; }
-    IBone *parentBone() const { return 0; }
+    IModel *parentModelRef() const { return 0; }
+    IBone *parentBoneRef() const { return 0; }
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setComment(const IString *value);
@@ -149,8 +149,8 @@ public:
     void setScaleFactor(const Scalar &value);
     void setEdgeColor(const Vector3 &value);
     void setEdgeWidth(const Scalar &value);
-    void setParentModel(IModel * /* value */) {}
-    void setParentBone(IBone * /* value */) {}
+    void setParentModelRef(IModel * /* value */) {}
+    void setParentBoneRef(IBone * /* value */) {}
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);

@@ -62,9 +62,11 @@ class MockIModel : public IModel {
       Vector3());
   MOCK_CONST_METHOD0(edgeWidth,
       Scalar());
-  MOCK_CONST_METHOD0(parentModel,
+  MOCK_CONST_METHOD0(parentSceneRef,
+      Scene*());
+  MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
-  MOCK_CONST_METHOD0(parentBone,
+  MOCK_CONST_METHOD0(parentBoneRef,
       IBone*());
   MOCK_METHOD1(setName,
       void(const IString *value));
@@ -86,9 +88,9 @@ class MockIModel : public IModel {
       void(const Vector3 &value));
   MOCK_METHOD1(setEdgeWidth,
       void(const Scalar &value));
-  MOCK_METHOD1(setParentModel,
+  MOCK_METHOD1(setParentModelRef,
       void(IModel *value));
-  MOCK_METHOD1(setParentBone,
+  MOCK_METHOD1(setParentBoneRef,
       void(IBone *value));
   MOCK_METHOD1(setVisible,
       void(bool value));

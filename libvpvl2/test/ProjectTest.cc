@@ -418,32 +418,35 @@ TEST(ProjectTest, HandleAssets)
     Factory factory(&encoding);
     Project project(&delegate, &factory);
     QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
-    IModel *ptr = asset.data();
+    IModel *model = asset.data();
     /* before adding an asset to the project */
-    ASSERT_FALSE(project.containsModel(ptr));
+    ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
-    project.addModel(ptr, 0, uuid.toStdString());
+    project.addModel(model, 0, uuid.toStdString());
     /* after adding an asset to the project */
     ASSERT_TRUE(project.isDirty());
-    ASSERT_TRUE(project.containsModel(ptr));
+    ASSERT_TRUE(project.containsModel(model));
+    /* reference will be null because render engine instance is not passed */
+    ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
-    ASSERT_EQ(uuid.toStdString(), project.modelUUID(ptr));
-    ASSERT_EQ(ptr, project.findModel(uuid.toStdString()));
+    ASSERT_EQ(uuid.toStdString(), project.modelUUID(model));
+    ASSERT_EQ(model, project.findModel(uuid.toStdString()));
     /* finding inexists asset should returns null */
     ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
-    project.removeModel(ptr);
+    project.removeModel(model);
+    ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     /* finding removed asset should returns null */
-    ASSERT_FALSE(project.containsModel(ptr));
+    ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
     ASSERT_TRUE(project.isDirty());
     project.setDirty(false);
     /* removing removed asset should not be dirty */
-    project.removeModel(ptr);
+    project.removeModel(model);
     ASSERT_FALSE(project.isDirty());
-    ptr = asset.take();
+    model = asset.take();
     /* deleting removed asset should do nothing */
-    project.deleteModel(ptr);
-    ASSERT_FALSE(ptr);
+    project.deleteModel(model);
+    ASSERT_FALSE(model);
 }
 
 TEST(ProjectTest, HandleModels)
@@ -453,33 +456,36 @@ TEST(ProjectTest, HandleModels)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
-    QScopedPointer<IModel> model(factory.createModel(IModel::kPMD));
-    IModel *ptr = model.data();
+    QScopedPointer<IModel> modelPtr(factory.createModel(IModel::kPMD));
+    IModel *model = modelPtr.data();
     /* before adding a model to the project */
-    ASSERT_FALSE(project.containsModel(ptr));
+    ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
-    project.addModel(ptr, 0, uuid.toStdString());
+    project.addModel(model, 0, uuid.toStdString());
     /* before adding a model to the project */
     ASSERT_TRUE(project.isDirty());
-    ASSERT_TRUE(project.containsModel(ptr));
+    ASSERT_TRUE(project.containsModel(model));
+    /* reference will be null because render engine instance is not passed */
+    ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
-    ASSERT_EQ(uuid.toStdString(), project.modelUUID(ptr));
-    ASSERT_EQ(ptr, project.findModel(uuid.toStdString()));
+    ASSERT_EQ(uuid.toStdString(), project.modelUUID(model));
+    ASSERT_EQ(model, project.findModel(uuid.toStdString()));
     /* finding inexists model should returns null */
     ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
-    project.removeModel(ptr);
+    project.removeModel(model);
+    ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     /* finding removed model should returns null */
-    ASSERT_FALSE(project.containsModel(ptr));
+    ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
     ASSERT_TRUE(project.isDirty());
     project.setDirty(false);
     /* removing removed model should not be dirty */
-    project.removeModel(ptr);
+    project.removeModel(model);
     ASSERT_FALSE(project.isDirty());
-    ptr = model.take();
+    model = modelPtr.take();
     /* deleting removed model should do nothing */
-    project.deleteModel(ptr);
-    ASSERT_FALSE(ptr);
+    project.deleteModel(model);
+    ASSERT_FALSE(model);
 }
 
 TEST(ProjectTest, HandleMotions)
@@ -489,26 +495,26 @@ TEST(ProjectTest, HandleMotions)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory);
-    QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
-    IMotion *ptr = motion.data();
+    QScopedPointer<IMotion> motionPtr(factory.createMotion(IMotion::kVMD, 0));
+    IMotion *motion = motionPtr.data();
     /* before adding a motion to the project */
-    ASSERT_FALSE(project.containsMotion(ptr));
+    ASSERT_FALSE(project.containsMotion(motion));
     ASSERT_EQ(Project::kNullUUID, project.motionUUID(0));
-    project.addMotion(ptr, uuid.toStdString());
+    project.addMotion(motion, uuid.toStdString());
     /* after adding a motion to the project */
     ASSERT_TRUE(project.isDirty());
-    ASSERT_TRUE(project.containsMotion(ptr));
-    ASSERT_EQ(ptr, project.findMotion(uuid.toStdString()));
+    ASSERT_TRUE(project.containsMotion(motion));
+    ASSERT_EQ(motion, project.findMotion(uuid.toStdString()));
     /* finding inexists motion should returns null */
     ASSERT_EQ(static_cast<IMotion*>(0), project.findMotion(Project::kNullUUID));
     project.setDirty(false);
     /* finding removed motion should returns null */
-    project.removeMotion(ptr);
-    ASSERT_FALSE(project.containsMotion(ptr));
+    project.removeMotion(motion);
+    ASSERT_FALSE(project.containsMotion(motion));
     ASSERT_TRUE(project.isDirty());
     project.setDirty(false);
     /* removing removed motion should not be dirty */
-    project.removeMotion(ptr);
+    project.removeMotion(motion);
     ASSERT_FALSE(project.isDirty());
 }
 
@@ -519,46 +525,50 @@ TEST(ProjectTest, HandleNullUUID)
     Factory factory(&encoding);
     Project project(&delegate, &factory);
     QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
-    IModel *ptr = asset.data();
+    IModel *model = asset.data();
     /* null model can be added */
-    project.addModel(ptr, 0, Project::kNullUUID);
+    project.addModel(model, 0, Project::kNullUUID);
+    /* reference will be null because render engine instance is not passed */
+    ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
     /* and null model can be removed */
-    project.removeModel(ptr);
+    project.removeModel(model);
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
-    ptr = asset.take();
-    project.deleteModel(ptr);
-    ASSERT_FALSE(ptr);
-    QScopedPointer<IModel> model(factory.createModel(IModel::kPMD));
-    ptr = model.data();
+    model = asset.take();
+    project.deleteModel(model);
+    ASSERT_FALSE(model);
+    QScopedPointer<IModel> modelPtr(factory.createModel(IModel::kPMD));
+    model = modelPtr.data();
     /* null model can be added */
-    project.addModel(ptr, 0, Project::kNullUUID);
+    project.addModel(model, 0, Project::kNullUUID);
+    /* reference will be null because render engine instance is not passed */
+    ASSERT_EQ(0, model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
     /* and null model can be removed */
-    project.removeModel(ptr);
+    project.removeModel(model);
     ASSERT_EQ(size_t(0), project.modelUUIDs().size());
-    ptr = model.take();
-    project.deleteModel(ptr);
-    ASSERT_FALSE(ptr);
-    QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
-    IMotion *ptr2 = motion.data();
+    model = modelPtr.take();
+    project.deleteModel(model);
+    ASSERT_FALSE(model);
+    QScopedPointer<IMotion> motionPtr(factory.createMotion(IMotion::kVMD, 0));
+    IMotion *motion = motionPtr.data();
     /* null motion can be added */
-    project.addMotion(ptr2, Project::kNullUUID);
+    project.addMotion(motion, Project::kNullUUID);
     ASSERT_EQ(size_t(1), project.motionUUIDs().size());
     /* and null motion can be removed */
-    project.removeMotion(ptr2);
+    project.removeMotion(motion);
     ASSERT_EQ(size_t(0), project.motionUUIDs().size());
-    model.reset(factory.createModel(IModel::kPMD));
-    ptr = model.data();
-    motion.reset(factory.createMotion(IMotion::kVMD, 0));
-    ptr2 = motion.data();
+    modelPtr.reset(factory.createModel(IModel::kPMD));
+    model = modelPtr.data();
+    motionPtr.reset(factory.createMotion(IMotion::kVMD, 0));
+    motion = motionPtr.data();
     /* duplicated null motion should be integrated into one */
-    project.addModel(ptr, 0, Project::kNullUUID);
-    project.addMotion(ptr2, Project::kNullUUID);
-    project.removeMotion(ptr2);
+    project.addModel(model, 0, Project::kNullUUID);
+    project.addMotion(motion, Project::kNullUUID);
+    project.removeMotion(motion);
     ASSERT_EQ(size_t(0), project.motionUUIDs().size());
-    project.removeModel(ptr);
-    ptr = model.take();
-    project.deleteModel(ptr);
-    ASSERT_FALSE(ptr);
+    project.removeModel(model);
+    model = modelPtr.take();
+    project.deleteModel(model);
+    ASSERT_FALSE(model);
 }

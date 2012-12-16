@@ -63,6 +63,8 @@ namespace qt
 {
 
 using namespace vpvl2::qt;
+typedef QSharedPointer<IModel> IModelSharedPtr;
+typedef QSharedPointer<IMotion> IMotionSharedPtr;
 
 class UI : public QGLWidget, protected QGLFunctions
 {
@@ -93,10 +95,8 @@ private:
     void renderWindow();
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
-    IModel *createModelAsync(const QString &path) const;
-    IEffect *createEffectAsync(const IString *path);
-    IEffect *createEffectAsync(IModel *model, const IString *dir);
-    IMotion *createMotionAsync(const QString &path, IModel *model) const;
+    IModelSharedPtr createModelAsync(const QString &path) const;
+    IMotionSharedPtr createMotionAsync(const QString &path, IModel *model) const;
     IModel *addModel(const QString &path, QProgressDialog &dialog);
     IMotion *addMotion(const QString &path, IModel *model);
     IMotion *loadMotion(const QString &path, IModel *model);

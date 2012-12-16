@@ -51,6 +51,7 @@ class IMaterial;
 class IMorph;
 class IString;
 class IVertex;
+class Scene;
 
 /**
  * モデルをあらわすインターフェースです。
@@ -160,49 +161,49 @@ public:
     virtual ~IModel() {}
 
     /**
-     * モデルの型を返します。
+     * モデルの型を返します.
      *
      * @return Type
      */
     virtual Type type() const = 0;
 
     /**
-     * モデル名(日本語)を返します。
+     * モデル名(日本語)を返します.
      *
      * @return IString
      */
     virtual const IString *name() const = 0;
 
     /**
-     * モデル名(英語)を返します。
+     * モデル名(英語)を返します.
      *
      * @return IString
      */
     virtual const IString *englishName() const = 0;
 
     /**
-     * モデルの説明(日本語)を返します。
+     * モデルの説明(日本語)を返します.
      *
      * @return IString
      */
     virtual const IString *comment() const = 0;
 
     /**
-     * モデルの説明(英語)を返します。
+     * モデルの説明(英語)を返します.
      *
      * @return IString
      */
     virtual const IString *englishComment() const = 0;
 
     /**
-     * モデルが可視であるかどうかを返します。
+     * モデルが可視であるかどうかを返します.
      *
      * @return bool
      */
     virtual bool isVisible() const = 0;
 
     /**
-     * エラーを返します。
+     * エラーを返します.
      *
      * IModel::load(data, size) が false を返した場合、error は kNoError 以外の値を返します。
      * true を返した場合は常に error は kNoError を返します。
@@ -212,7 +213,7 @@ public:
     virtual ErrorType error() const = 0;
 
     /**
-     * オンメモリ上にある data とその長さ size に基づいてモデルを構築します。
+     * オンメモリ上にある data とその長さ size に基づいてモデルを構築します.
      *
      * モデルの読み込みに成功した場合は true を、失敗した場合は false を返し、
      * IModel::error() が kNoError 以外の値を返すようになります。
@@ -227,7 +228,7 @@ public:
     virtual bool load(const uint8_t *data, size_t size) = 0;
 
     /**
-     * オンメモリ上にある data に IModel のインスタンスに基づいてデータを書き込みます。
+     * オンメモリ上にある data に IModel のインスタンスに基づいてデータを書き込みます.
      *
      * data の長さは IModel::estimateSize() が返す値を利用してください。
      * type が kPMD または kPMX の場合は完全なモデルデータを構築します。kAsset の場合は何もしません。
@@ -237,7 +238,7 @@ public:
     virtual void save(uint8_t *data) const = 0;
 
     /**
-     * IModel::save(data) に必要なデータの長さを返します。
+     * IModel::save(data) に必要なデータの長さを返します.
      *
      * これは save を呼ぶ前に save に渡すデータをメモリ上に確保する量を求めるときに使います。
      * save と併せて使用する必要があります。
@@ -247,7 +248,7 @@ public:
     virtual size_t estimateSize() const = 0;
 
     /**
-     * モデルの全ての頂点の位置を初期状態にリセットします。
+     * モデルの全ての頂点の位置を初期状態にリセットします.
      *
      */
     virtual void resetVertices() = 0;
@@ -255,14 +256,14 @@ public:
     virtual void resetMotionState() = 0;
 
     /**
-     * モデルの変形を実行します。
+     * モデルの変形を実行します.
      *
      * @param Vector3
      */
     virtual void performUpdate() = 0;
 
     /**
-     * モデルの物理演算を有効にします。
+     * モデルの物理演算を有効にします.
      *
      * すでに joinWorld が呼ばれていて leaveWorld していない場合は何もしません。
      *
@@ -271,7 +272,7 @@ public:
     virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
 
     /**
-     * モデルの物理演算を無効にします。
+     * モデルの物理演算を無効にします.
      *
      * モデルインスタンスの破壊前に leaveWorld を呼ばなかった場合は自動的に leaveWorld が呼ばれます。
      * そのため、モデルインスタンスを破壊する前に btDiscreteDynamicsWorld のインスタンスを解放し、
@@ -284,10 +285,10 @@ public:
     virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
 
     /**
-     * ボーン名から IBone のインスタンスを返します。
+     * ボーン名から IBone のインスタンスを返します.
      *
      * 該当するボーン名の IBone インスタンスが見つかった場合はそれを返します。
-     * 見つからなかった場合は null を返します。
+     * 見つからなかった場合または value が null の場合は null を返します。
      *
      * @param IString
      * @return IBone
@@ -295,10 +296,10 @@ public:
     virtual IBone *findBone(const IString *value) const = 0;
 
     /**
-     * ボーン名から IMorph のインスタンスを返します。
+     * ボーン名から IMorph のインスタンスを返します.
      *
      * 該当するボーン名の IMorph インスタンスが見つかった場合はそれを返します。
-     * 見つからなかった場合は null を返します。
+     * 見つからなかった場合または value が null の場合は null を返します。
      *
      * @param IString
      * @return IMorph
@@ -378,46 +379,182 @@ public:
      */
     virtual float edgeScaleFactor(const Vector3 &cameraPosition) const = 0;
 
+    /**
+     * ワールド座標系におけるモデルの補正位置を返します.
+     *
+     * @brief worldPosition
+     * @return
+     */
     virtual Vector3 worldPosition() const = 0;
 
+    /**
+     * ワールド座標系におけるモデルの補正回転量を返します.
+     *
+     * @brief worldRotation
+     * @return
+     */
     virtual Quaternion worldRotation() const = 0;
 
+    /**
+     * モデルの不透明度を返します.
+     *
+     * @brief opacity
+     * @return
+     */
     virtual Scalar opacity() const = 0;
 
+    /**
+     * モデルの拡大率を返します.
+     *
+     * 通常 PMD/PMX の場合は 1.0 を、アクセサリの場合は 10.0 を返します。
+     *
+     * @brief scaleFactor
+     * @return
+     */
     virtual Scalar scaleFactor() const = 0;
 
+    /**
+     * モデルのエッジ色を返します.
+     *
+     * @brief edgeColor
+     * @return
+     */
     virtual Vector3 edgeColor() const = 0;
 
+    /**
+     * モデルのエッジ幅を返します.
+     *
+     * @brief edgeWidth
+     * @return
+     */
     virtual Scalar edgeWidth() const = 0;
 
-    virtual IModel *parentModel() const = 0;
+    /**
+     * 親の Scene インスタンス参照先を返します.
+     *
+     * @brief parentSceneRef
+     * @return
+     */
+    virtual Scene *parentSceneRef() const = 0;
 
-    virtual IBone *parentBone() const = 0;
+    /**
+     * 親のモデルのインスタンス参照を返します.
+     *
+     * @brief parentModelRef
+     * @return
+     */
+    virtual IModel *parentModelRef() const = 0;
 
+    /**
+     * 親のボーンのインスタンス参照を返します.
+     *
+     * @brief parentBoneRef
+     * @return
+     */
+    virtual IBone *parentBoneRef() const = 0;
+
+    /**
+     * モデル名の日本語名設定します.
+     *
+     * @brief setName
+     * @param value
+     */
     virtual void setName(const IString *value) = 0;
 
+    /**
+     * モデル名の英語名を設定します.
+     *
+     * @brief setEnglishName
+     * @param value
+     */
     virtual void setEnglishName(const IString *value) = 0;
 
+    /**
+     * モデルの日本語でのコメントを設定します.
+     *
+     * @brief setComment
+     * @param value
+     */
     virtual void setComment(const IString *value) = 0;
 
+    /**
+     * モデルの英語でのコメントを設定します.
+     *
+     * @brief setEnglishComment
+     * @param value
+     */
     virtual void setEnglishComment(const IString *value) = 0;
 
+    /**
+     * ワールド座標系におけるモデルの補正位置を設定します.
+     *
+     * @brief setWorldPosition
+     * @param value
+     */
     virtual void setWorldPosition(const Vector3 &value) = 0;
 
+    /**
+     * ワールド座標系におけるモデルの補正回転量を設定します.
+     *
+     * @brief setWorldRotation
+     * @param value
+     */
     virtual void setWorldRotation(const Quaternion &value) = 0;
 
+    /**
+     * モデルの不透明度を設定します.
+     *
+     * @brief setOpacity
+     * @param value
+     */
     virtual void setOpacity(const Scalar &value) = 0;
 
+    /**
+     * モデルの拡大率を設定します.
+     *
+     * @brief setScaleFactor
+     * @param value
+     */
     virtual void setScaleFactor(const Scalar &value) = 0;
 
+    /**
+     * モデルのエッジ色を設定します.
+     *
+     * @brief setEdgeColor
+     * @param value
+     */
     virtual void setEdgeColor(const Vector3 &value) = 0;
 
+    /**
+     * モデルのエッジ幅を設定します.
+     *
+     * @brief setEdgeWidth
+     * @param value
+     */
     virtual void setEdgeWidth(const Scalar &value) = 0;
 
-    virtual void setParentModel(IModel *value) = 0;
+    /**
+     * モデルの親のモデルインスタンス参照を設定します.
+     *
+     * @brief setParentModelRef
+     * @param value
+     */
+    virtual void setParentModelRef(IModel *value) = 0;
 
-    virtual void setParentBone(IBone *value) = 0;
+    /**
+     * モデルの親のボーンインスタンス参照を設定します.
+     *
+     * @brief setParentBoneRef
+     * @param value
+     */
+    virtual void setParentBoneRef(IBone *value) = 0;
 
+    /**
+     * モデルが可視かどうかを設定します.
+     *
+     * @brief setVisible
+     * @param value
+     */
     virtual void setVisible(bool value) = 0;
 
     /**

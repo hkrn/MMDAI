@@ -38,7 +38,7 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/pmd2/Model.h"
+#include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
 #ifdef VPVL2_OPENGL_RENDERER
@@ -434,6 +434,19 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
         m_context->models.add(model);
         m_context->engines.add(engine);
         m_context->model2engineRef.insert(model, engine);
+        switch (model->type()) {
+        case IModel::kAsset:
+            static_cast<asset::Model *>(model)->setParentSceneRef(this);
+            break;
+        case IModel::kPMD:
+            static_cast<pmd::Model *>(model)->setParentSceneRef(this);
+            break;
+        case IModel::kPMX:
+            static_cast<pmx::Model *>(model)->setParentSceneRef(this);
+            break;
+        default:
+            break;
+        }
         if (const IString *name = model->name())
             m_context->name2modelRef.insert(name->toHashString(), model);
     }
@@ -468,6 +481,23 @@ IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderCon
     (void) renderContext;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
+}
+
+void Scene::removeModel(IModel *model)
+{
+    switch (model->type()) {
+    case IModel::kAsset:
+        static_cast<asset::Model *>(model)->setParentSceneRef(0);
+        break;
+    case IModel::kPMD:
+        static_cast<pmd::Model *>(model)->setParentSceneRef(0);
+        break;
+    case IModel::kPMX:
+        static_cast<pmx::Model *>(model)->setParentSceneRef(0);
+        break;
+    default:
+        break;
+    }
 }
 
 void Scene::deleteModel(IModel *&model)

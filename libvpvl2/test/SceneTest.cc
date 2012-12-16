@@ -1,9 +1,11 @@
 #include "Common.h"
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/IRenderContext.h"
 #include "vpvl2/extensions/icu/Encoding.h"
 #include "mock/Model.h"
 #include "mock/Motion.h"
+#include "mock/RenderContext.h"
 #include "mock/RenderEngine.h"
 
 using namespace ::testing;
@@ -18,6 +20,8 @@ TEST(SceneTest, AddModel)
     ASSERT_EQ(0, scene.models().count());
     ASSERT_EQ(0, scene.renderEngines().count());
     QScopedPointer<MockIModel> model(new MockIModel());
+    /* ignore setting setParentSceneRef */
+    EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     /* adding a model but no rendering engine should not be added */
@@ -56,6 +60,8 @@ TEST(SceneTest, FindModel)
     scene.findModel(0);
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     QScopedPointer<MockIModel> model(new MockIModel());
+    /* ignore setting setParentSceneRef */
+    EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("foo_bar_baz")), s2(s.value());
     EXPECT_CALL(*model, name()).WillOnce(Return(&s));
     scene.addModel(model.data(), engine.take());
@@ -66,6 +72,8 @@ TEST(SceneTest, FindRenderEngine)
 {
     Scene scene;
     QScopedPointer<MockIModel> model(new MockIModel());
+    /* ignore setting setParentSceneRef */
+    EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
@@ -77,6 +85,8 @@ TEST(SceneTest, DeleteModel)
 {
     Scene scene;
     QScopedPointer<MockIModel> model(new MockIModel());
+    /* ignore setting setParentSceneRef */
+    EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
@@ -100,6 +110,8 @@ TEST(SceneTest, Update)
         QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
         QScopedPointer<MockIModel> model(new MockIModel());
         EXPECT_CALL(*engine, update()).WillOnce(Return());
+        /* ignore setting setParentSceneRef */
+        EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene;
@@ -110,6 +122,8 @@ TEST(SceneTest, Update)
         QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
         QScopedPointer<MockIModel> model(new MockIModel());
         EXPECT_CALL(*engine, update()).WillOnce(Return());
+        /* ignore setting setParentSceneRef */
+        EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene;
@@ -120,6 +134,8 @@ TEST(SceneTest, Update)
         QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
         QScopedPointer<MockIModel> model(new MockIModel());
         EXPECT_CALL(*engine, update()).Times(0);
+        /* ignore setting setParentSceneRef */
+        EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene;
@@ -301,3 +317,25 @@ TEST(SceneTest, SeekSceneLight)
     }
     scene.light()->setMotion(0);
 }
+
+class SceneModelTest : public TestWithParam<IModel::Type> {};
+
+TEST_P(SceneModelTest, SetParentSceneRef)
+{
+    Encoding encoding;
+    Factory factory(&encoding);
+    MockIRenderContext renderContext;
+    EXPECT_CALL(renderContext, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
+    Scene scene;
+    IModel::Type type = GetParam();
+    QScopedPointer<IModel> modelPtr(factory.createModel(type));
+    QScopedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), 0));
+    scene.addModel(modelPtr.data(), enginePtr.take());
+    ASSERT_EQ(&scene, modelPtr->parentSceneRef());
+    scene.removeModel(modelPtr.data());
+    ASSERT_EQ(static_cast<Scene *>(0), modelPtr->parentSceneRef());
+    IModel *m = modelPtr.take();
+    scene.deleteModel(m);
+}
+
+INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelTest, Values(IModel::kAsset, IModel::kPMD, IModel::kPMX));

@@ -90,6 +90,7 @@ public:
     void addMotion(IMotion *motion);
     IEffect *createEffect(const IString *path, IRenderContext *renderContext);
     IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext);
+    void removeModel(IModel *model);
     void deleteModel(IModel *&model);
     void removeMotion(IMotion *motion);
     void advance(const IKeyframe::TimeIndex &delta, int flags);

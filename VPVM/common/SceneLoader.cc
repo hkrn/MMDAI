@@ -395,8 +395,8 @@ void SceneLoader::commitAssetProperties()
         setAssetRotation(m_selectedAssetRef, m_selectedAssetRef->worldRotation());
         setAssetOpacity(m_selectedAssetRef, m_selectedAssetRef->opacity());
         setAssetScaleFactor(m_selectedAssetRef, m_selectedAssetRef->scaleFactor());
-        setAssetParentModel(m_selectedAssetRef, m_selectedAssetRef->parentModel());
-        setAssetParentBone(m_selectedAssetRef, m_selectedAssetRef->parentBone());
+        setAssetParentModel(m_selectedAssetRef, m_selectedAssetRef->parentModelRef());
+        setAssetParentBone(m_selectedAssetRef, m_selectedAssetRef->parentBoneRef());
     }
 }
 
@@ -629,7 +629,7 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
             if (!bone.isEmpty() && m_selectedModelRef) {
                 CString s(name);
                 IBone *bone = m_selectedModelRef->findBone(&s);
-                assetPtr->setParentBone(bone);
+                assetPtr->setParentBoneRef(bone);
             }
             Q_UNUSED(enableShadow);
         }
@@ -876,8 +876,8 @@ void SceneLoader::loadProject(const QString &path)
             model->setWorldRotation(assetRotation(model));
             model->setScaleFactor(assetScaleFactor(model));
             model->setOpacity(assetOpacity(model));
-            model->setParentModel(assetParentModel(model));
-            model->setParentBone(assetParentBone(model));
+            model->setParentModelRef(assetParentModel(model));
+            model->setParentBoneRef(assetParentBone(model));
             emit modelDidAdd(model, assetUUID);
             emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
         }
@@ -1179,7 +1179,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModel *asset)
         const Quaternion &rotation = asset->worldRotation();
         stream << QString("%1,%2,%3").arg(rotation.x(), 0, 'f', 1)
                   .arg(rotation.y(), 0, 'f', 1).arg(rotation.z(), 0, 'f', 1) << lineSeparator;
-        const IBone *bone = asset->parentBone();
+        const IBone *bone = asset->parentBoneRef();
         stream << (bone ? toQStringFromBone(bone) : "地面") << lineSeparator;
         stream << 1 << lineSeparator;
     }

@@ -370,16 +370,18 @@ struct Project::PrivateContext {
         }
         return Project::kNullUUID;
     }
-    bool removeModel(const IModel *model) {
+    bool removeModel(IModel *model) {
         for (ModelMap::iterator it = assets.begin(); it != assets.end(); it++) {
             if (it->second == model) {
                 assets.erase(it);
+                sceneRef->removeModel(model);
                 return true;
             }
         }
         for (ModelMap::iterator it = models.begin(); it != models.end(); it++) {
             if (it->second == model) {
                 models.erase(it);
+                sceneRef->removeModel(model);
                 return true;
             }
         }

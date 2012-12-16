@@ -230,8 +230,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderContext *context, const Scene *scene
 AssetRenderEngine::~AssetRenderEngine()
 {
     if (m_modelRef) {
-        const aiScene *scene = m_modelRef->aiScenePtr();
-        if (scene) {
+        if (const aiScene *scene = m_modelRef->aiScenePtr()) {
             const unsigned int nmaterials = scene->mNumMaterials;
             std::string texture, mainTexture, subTexture;
             aiString texturePath;

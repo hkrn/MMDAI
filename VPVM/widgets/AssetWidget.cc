@@ -253,11 +253,11 @@ void AssetWidget::changeCurrentAsset(IModel *asset)
     m_opacity->setValue(asset ? asset->opacity() : 1);
     if (isAssetChanged) {
         /* コンボボックスの更新によるシグナル発行でボーン情報が更新されてしまうため、事前にボーンを保存して再設定する */
-        IModel *model = asset->parentModel();
+        IModel *model = asset->parentModelRef();
         updateModelBoneComboBox(model);
         int index = modelIndexOf(model);
         m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
-        IBone *bone = asset->parentBone();
+        IBone *bone = asset->parentBoneRef();
         if (bone) {
             const QString &name = toQStringFromBone(bone);
             index = m_modelBonesComboBox->findText(name);
@@ -274,14 +274,14 @@ void AssetWidget::changeCurrentModel(int index)
         /* モデルのボーンリストを一旦空にして対象のモデルのボーンリストに更新しておく */
         IModel *model = m_models[index - 1];
         m_currentModelRef = model;
-        m_currentAssetRef->setParentModel(model);
+        m_currentAssetRef->setParentModelRef(model);
         updateModelBoneComboBox(model);
     }
     else if (m_currentAssetRef) {
         /* 「地面」用。こちらは全くボーンを持たないのでボーンリストを削除した上でアセットの親ボーンを無効にしておく */
         m_modelBonesComboBox->clear();
-        m_currentAssetRef->setParentModel(0);
-        m_currentAssetRef->setParentBone(0);
+        m_currentAssetRef->setParentModelRef(0);
+        m_currentAssetRef->setParentBoneRef(0);
     }
 }
 
@@ -291,10 +291,10 @@ void AssetWidget::changeParentBone(int index)
         Array<IBone *> bones;
         m_currentModelRef->getBoneRefs(bones);
         IBone *bone = bones.at(index);
-        m_currentAssetRef->setParentBone(bone);
+        m_currentAssetRef->setParentBoneRef(bone);
     }
     else {
-        m_currentAssetRef->setParentBone(0);
+        m_currentAssetRef->setParentBoneRef(0);
     }
 }
 
@@ -355,8 +355,8 @@ void AssetWidget::setAssetProperties(IModel *asset, SceneLoader *loader)
             asset->setWorldRotation(loader->assetRotation(asset));
             asset->setScaleFactor(loader->assetScaleFactor(asset));
             asset->setOpacity(loader->assetOpacity(asset));
-            asset->setParentModel(loader->assetParentModel(asset));
-            asset->setParentBone(loader->assetParentBone(asset));
+            asset->setParentModelRef(loader->assetParentModel(asset));
+            asset->setParentBoneRef(loader->assetParentBone(asset));
         }
         changeCurrentAsset(asset);
     }

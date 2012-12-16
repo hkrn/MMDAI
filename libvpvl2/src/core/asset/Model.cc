@@ -431,9 +431,14 @@ namespace asset
 {
 
 Model::Model(IEncoding *encoding)
-    : m_encodingRef(encoding),
+    :
+      #ifdef VPVL2_LINK_ASSIMP
+      m_scene(0),
+      #endif
+      m_encodingRef(encoding),
       m_name(0),
       m_comment(0),
+      m_parentSceneRef(0),
       m_parentModelRef(0),
       m_parentBoneRef(0),
       m_aabbMax(kZeroV3),
@@ -452,6 +457,7 @@ Model::~Model()
     m_comment = 0;
     delete m_name;
     m_name = 0;
+    m_parentSceneRef = 0;
     m_parentBoneRef = 0;
     m_parentModelRef = 0;
     m_encodingRef = 0;
@@ -464,6 +470,9 @@ Model::~Model()
     m_opacity = 0;
     m_scaleFactor = 0;
     m_visible = false;
+#ifdef VPVL2_LINK_ASSIMP
+    m_scene = 0;
+#endif
 }
 
 bool Model::load(const uint8_t *data, size_t size)
@@ -603,12 +612,17 @@ void Model::setScaleFactor(const Scalar &value)
     m_scaleFactor = value;
 }
 
-void Model::setParentModel(IModel *value)
+void Model::setParentSceneRef(Scene *value)
+{
+    m_parentSceneRef = value;
+}
+
+void Model::setParentModelRef(IModel *value)
 {
     m_parentModelRef = value;
 }
 
-void Model::setParentBone(IBone *value)
+void Model::setParentBoneRef(IBone *value)
 {
     m_parentBoneRef = value;
 }

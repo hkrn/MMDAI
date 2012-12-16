@@ -188,16 +188,18 @@ public:
     Scalar scaleFactor() const { return m_scaleFactor; }
     Vector3 edgeColor() const { return kZeroV3; }
     Scalar edgeWidth() const { return m_edgeWidth; }
-    IModel *parentModel() const { return 0; }
-    IBone *parentBone() const { return 0; }
+    Scene *parentSceneRef() const { return m_parentSceneRef; }
+    IModel *parentModelRef() const { return m_parentModelRef; }
+    IBone *parentBoneRef() const { return m_parentBoneRef; }
     void setWorldPosition(const Vector3 &value) { m_position = value; }
     void setWorldRotation(const Quaternion &value) { m_rotation = value; }
     void setOpacity(const Scalar &value) { m_opacity = value; }
     void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
     void setEdgeColor(const Vector3 & /* value */) {}
     void setEdgeWidth(const Scalar &value) { m_edgeWidth = value; }
-    void setParentModel(IModel * /* value */) {}
-    void setParentBone(IBone * /* value */) {}
+    void setParentSceneRef(Scene *value) { m_parentSceneRef = value; }
+    void setParentModelRef(IModel *value) { m_parentModelRef = value; }
+    void setParentBoneRef(IBone *value) { m_parentBoneRef = value; }
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
@@ -224,6 +226,9 @@ private:
 
     btDiscreteDynamicsWorld *m_worldRef;
     IEncoding *m_encodingRef;
+    Scene *m_parentSceneRef;
+    IModel *m_parentModelRef;
+    IBone *m_parentBoneRef;
     Array<Vertex *> m_vertices;
     Array<int> m_indices;
     Array<IString *> m_textures;

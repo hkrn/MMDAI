@@ -859,41 +859,43 @@ bool UI::loadScene()
     return true;
 }
 
-IModel *UI::createModelAsync(const QString &path) const
+IModelSharedPtr UI::createModelAsync(const QString &path) const
 {
     QByteArray bytes;
     if (!UISlurpFile(path, bytes)) {
         qWarning("Failed loading the model");
-        return 0;
+        return QSharedPointer<IModel>();
     }
     bool ok = true;
     const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-    return m_factory->createModel(data, bytes.size(), ok);
+    return QSharedPointer<IModel>(m_factory->createModel(data, bytes.size(), ok));
 }
 
-IMotion *UI::createMotionAsync(const QString &path, IModel *model) const
+IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model) const
 {
     QByteArray bytes;
     if (UISlurpFile(path, bytes)) {
         bool ok = true;
-        IMotion *motion = m_factory->createMotion(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size(), model, ok);
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        QSharedPointer<IMotion> motion(m_factory->createMotion(data, bytes.size(), model, ok));
         motion->seek(0);
         return motion;
     }
     else {
         qWarning("Failed parsing the model motion, skipped...");
     }
-    return 0;
+    return QSharedPointer<IMotion>();
 }
 
 IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
 {
     const QFileInfo info(path);
-    const QFuture<IModel *> &future = QtConcurrent::run(this, &UI::createModelAsync, path);
+    const QFuture<IModelSharedPtr> &future = QtConcurrent::run(this, &UI::createModelAsync, path);
     dialog.setLabelText(QString("Loading %1...").arg(info.fileName()));
-    qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    QScopedPointer<IModel> modelPtr(future.result());
-    dialog.setValue(dialog.value() + 1);
+    dialog.setRange(0, 0);
+    while (!future.isResultReadyAt(0))
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    IModelSharedPtr modelPtr = future.result();
     if (!modelPtr || future.isCanceled()) {
         return 0;
     }
@@ -903,11 +905,13 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     }
     m_renderContext->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
-    const QFuture<IEffect *> &future2 = QtConcurrent::run(m_renderContext.data(),
-                                                          &RenderContext::createEffectAsync, modelPtr.data(), &s1);
+    const QFuture<IEffectSharedPtr> &future2 = QtConcurrent::run(m_renderContext.data(),
+                                                                 &RenderContext::createEffectAsync,
+                                                                 modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
-    qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    IEffect *effect = future2.result();
+    while (!future2.isResultReadyAt(0))
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    IEffect *effect = future2.result().data();
     int flags = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effect) {
@@ -924,7 +928,8 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     Q_UNUSED(effect)
 #endif
     IModel *model = 0;
-    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(), modelPtr.data(), flags));
+    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(),
+                                                                        modelPtr.data(), flags));
     if (enginePtr->upload(&s1)) {
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         if (m_settings->value("enable.physics", true).toBool())
@@ -985,13 +990,14 @@ IMotion *UI::addMotion(const QString &path, IModel *model)
 
 IMotion *UI::loadMotion(const QString &path, IModel *model)
 {
-    const QFuture<IMotion *> &future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
-    IMotion *motion = future.result();
-    if (!motion || future.isCanceled()) {
-        delete motion;
+    const QFuture<IMotionSharedPtr> &future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
+    while (!future.isResultReadyAt(0))
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    IMotionSharedPtr motionPtr = future.result();
+    if (!motionPtr || future.isCanceled()) {
         return 0;
     }
-    return motion;
+    return motionPtr.data();
 }
 
 }

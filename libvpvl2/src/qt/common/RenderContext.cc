@@ -159,7 +159,7 @@ static void UIConcatModelTransformMatrix(const IModel *model, QMatrix4x4 &m)
     for (int i = 0; i < 16; i++)
         worldMatrix.data()[i] = matrix[i];
     m *= worldMatrix;
-    const IBone *bone = model->parentBone();
+    const IBone *bone = model->parentBoneRef();
     if (bone) {
         transform = bone->worldTransform();
         transform.getOpenGLMatrix(matrix);
@@ -370,7 +370,7 @@ void RenderContext::getMatrix(float value[], const IModel *model, int flags) con
         if (flags & IRenderContext::kViewMatrix)
             m *= m_cameraViewMatrix;
         if (flags & IRenderContext::kWorldMatrix) {
-            const IBone *bone = model->parentBone();
+            const IBone *bone = model->parentBoneRef();
             Transform transform;
             transform.setOrigin(model->worldPosition());
             transform.setRotation(model->worldRotation());
@@ -618,7 +618,6 @@ void RenderContext::setSceneRef(Scene *value)
     m_model2Paths.clear();
     QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker);
     qDeleteAll(m_texture2Movies);
-    qDeleteAll(m_effectCaches);
     m_texture2Movies.clear();
     m_effectCaches.clear();
     m_sceneRef = value;
@@ -927,17 +926,17 @@ const QString RenderContext::effectOwnerName(const IEffect *effect) const
     return name;
 }
 
-void RenderContext::setEffectOwner(const IEffect *effect, IModel *model)
+void RenderContext::setEffectOwner(const IEffectSharedPtr &effect, IModel *model)
 {
     const CString *name = static_cast<const CString *>(model->name());
     const QString &n = name ? name->value() : findModelPath(model);
     {
         QMutexLocker locker(&m_effectOwnersLock); Q_UNUSED(locker);
-        m_effectOwners.insert(effect, n);
+        m_effectOwners.insert(effect.data(), n);
     }
     {
         QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
-        m_effect2models.insert(effect, model);
+        m_effect2models.insert(effect.data(), model);
     }
 }
 
@@ -1025,8 +1024,8 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
                         QString path = dir.absoluteFilePath(value);
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
                         CString s2(path);
-                        const QFuture<IEffect *> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
-                        IEffect *offscreenEffect = future.result();
+                        const QFuture<IEffectSharedPtr> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
+                        IEffect *offscreenEffect = future.result().data();
                         offscreenEffect->setParentEffect(effect);
                         attachments.append(EffectAttachment(regexp, offscreenEffect));
                     }
@@ -1112,9 +1111,9 @@ void RenderContext::renderOffscreen(const QSize &size)
     updateCameraMatrices(size);
 }
 
-IEffect *RenderContext::createEffectAsync(const IString *path)
+IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)
 {
-    IEffect *effect = 0;
+    IEffectSharedPtr effect;
     const QString &key = static_cast<const CString *>(path)->value();
     QMutexLocker locker(&m_effectCachesLock);
     if (m_effectCaches.contains(key)) {
@@ -1123,7 +1122,7 @@ IEffect *RenderContext::createEffectAsync(const IString *path)
     }
     else if (QFile::exists(key)) {
         locker.unlock();
-        effect = m_sceneRef->createEffect(path, this);
+        effect = IEffectSharedPtr(m_sceneRef->createEffect(path, this));
         qDebug("Loading an effect: %s", qPrintable(key));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(key));
@@ -1138,9 +1137,9 @@ IEffect *RenderContext::createEffectAsync(const IString *path)
     return effect;
 }
 
-IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
+IEffectSharedPtr RenderContext::createEffectAsync(IModel *model, const IString *dir)
 {
-    IEffect *effect = 0;
+    IEffectSharedPtr effect;
     const IString *name = model->name();
     const QString &key = effectFilePath(model, dir);
     QMutexLocker locker(&m_effectCachesLock);
@@ -1150,7 +1149,7 @@ IEffect *RenderContext::createEffectAsync(IModel *model, const IString *dir)
     }
     else if (QFile::exists(key)) {
         locker.unlock();
-        effect = m_sceneRef->createEffect(dir, model, this);
+        effect = IEffectSharedPtr(m_sceneRef->createEffect(dir, model, this));
         qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(key)) ;

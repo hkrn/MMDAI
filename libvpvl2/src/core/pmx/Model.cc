@@ -623,6 +623,9 @@ namespace pmx
 Model::Model(IEncoding *encoding)
     : m_worldRef(0),
       m_encodingRef(encoding),
+      m_parentSceneRef(0),
+      m_parentModelRef(0),
+      m_parentBoneRef(0),
       m_name(0),
       m_englishName(0),
       m_comment(0),
@@ -1125,6 +1128,9 @@ void Model::release()
     m_comment = 0;
     delete m_englishComment;
     m_englishComment = 0;
+    m_parentSceneRef = 0;
+    m_parentModelRef = 0;
+    m_parentBoneRef = 0;
     m_position.setZero();
     m_rotation.setValue(0, 0, 0, 1);
     m_opacity = 1;

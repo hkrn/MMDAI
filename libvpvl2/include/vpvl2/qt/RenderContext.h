@@ -76,6 +76,7 @@ using namespace extensions::gl;
 
 class Archive;
 typedef QSharedPointer<Archive> ArchiveSharedPtr;
+typedef QSharedPointer<IEffect> IEffectSharedPtr;
 
 class RenderContext : public IRenderContext, protected QGLFunctions
 {
@@ -169,7 +170,7 @@ public:
     const QString findModelPath(const IModel *model) const;
     const QString effectFilePath(const IModel *model, const IString *dir) const;
     const QString effectOwnerName(const IEffect *effect) const;
-    void setEffectOwner(const IEffect *effect, IModel *model);
+    void setEffectOwner(const IEffectSharedPtr &effect, IModel *model);
     void removeModel(IModel *model);
     void initialize(bool enableMSAA);
 
@@ -198,8 +199,8 @@ public:
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
     void renderOffscreen(const QSize &size);
     IModel *offscreenEffectOwner(const IEffect *effect) const;
-    IEffect *createEffectAsync(const IString *path);
-    IEffect *createEffectAsync(IModel *model, const IString *dir);
+    IEffectSharedPtr createEffectAsync(const IString *path);
+    IEffectSharedPtr createEffectAsync(IModel *model, const IString *dir);
     const QList<OffscreenTexture> &offscreenTextures() const { return m_offscreenTextures; }
 #endif
 
@@ -233,7 +234,7 @@ private:
     QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QMovie *> m_texture2Movies;
     QHash<GLuint, FrameBufferObject *> m_renderTargets;
-    QHash<const QString, IEffect *> m_effectCaches;
+    QHash<const QString, IEffectSharedPtr> m_effectCaches;
     QHash<const IEffect *, QString> m_effectOwners;
     QHash<const IEffect *, IModel *> m_effect2models;
     QList<FrameBufferObject *> m_previousFrameBufferPtrs;

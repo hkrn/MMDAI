@@ -446,6 +446,9 @@ Model::Model(IEncoding *encoding)
       m_englishName(0),
       m_comment(0),
       m_englishComment(0),
+      m_parentSceneRef(0),
+      m_parentModelRef(0),
+      m_parentBoneRef(0),
       m_aabbMax(kZeroV3),
       m_aabbMin(kZeroV3),
       m_position(kZeroV3),
@@ -474,6 +477,9 @@ Model::~Model()
     m_comment = 0;
     delete m_englishComment;
     m_englishComment = 0;
+    m_parentSceneRef = 0;
+    m_parentModelRef = 0;
+    m_parentBoneRef = 0;
     m_position.setZero();
     m_rotation.setValue(0, 0, 0, 1);
     m_opacity = 0;
@@ -717,6 +723,21 @@ void Model::setEdgeWidth(const Scalar &value)
 {
     m_model.setEdgeOffset(value);
     m_edgeWidth = value;
+}
+
+void Model::setParentSceneRef(Scene *value)
+{
+    m_parentSceneRef = value;
+}
+
+void Model::setParentModelRef(IModel *value)
+{
+    m_parentModelRef = value;
+}
+
+void Model::setParentBoneRef(IBone *value)
+{
+    m_parentBoneRef = value;
 }
 
 void Model::setVisible(bool value)

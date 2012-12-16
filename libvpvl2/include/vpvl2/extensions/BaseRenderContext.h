@@ -321,7 +321,7 @@ public:
             if (flags & IRenderContext::kViewMatrix)
                 m *= m_cameraViewMatrix;
             if (flags & IRenderContext::kWorldMatrix) {
-                const IBone *bone = model->parentBone();
+                const IBone *bone = model->parentBoneRef();
                 Transform transform;
                 transform.setOrigin(model->worldPosition());
                 transform.setRotation(model->worldRotation());
