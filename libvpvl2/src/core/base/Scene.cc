@@ -439,36 +439,38 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
-    switch (model->type()) {
-    case IModel::kAsset: {
+    if (model) {
+        switch (model->type()) {
+        case IModel::kAsset: {
 #ifdef VPVL2_LINK_ASSIMP
-        asset::Model *m = static_cast<asset::Model *>(model);
+            asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (flags & kEffectCapable)
-            engine = new cg::AssetRenderEngine(renderContext, this, m);
-        else
+            if (flags & kEffectCapable)
+                engine = new cg::AssetRenderEngine(renderContext, this, m);
+            else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::AssetRenderEngine(renderContext, this, m);
+                engine = new gl2::AssetRenderEngine(renderContext, this, m);
 #endif /* VPVL2_LINK_ASSIMP */
-        break;
-    }
-    case IModel::kPMD:
-    case IModel::kPMX: {
-        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(renderContext, model);
+            break;
+        }
+        case IModel::kPMD:
+        case IModel::kPMX: {
+            cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(renderContext, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (flags & kEffectCapable)
-            engine = new cg::PMXRenderEngine(renderContext, this, accelerator, model);
-        else
+            if (flags & kEffectCapable)
+                engine = new cg::PMXRenderEngine(renderContext, this, accelerator, model);
+            else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::PMXRenderEngine(renderContext, this, accelerator, model);
-        break;
-    }
-    default:
-        break;
-    }
+                engine = new gl2::PMXRenderEngine(renderContext, this, accelerator, model);
+            break;
+        }
+        default:
+            break;
+        }
 #ifndef VPVL2_ENABLE_NVIDIA_CG
-    (void) flags;
+        (void) flags;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+    }
 #else
     (void) renderContext;
     (void) model;

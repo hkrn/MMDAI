@@ -8,6 +8,11 @@
 #include "mock/RenderContext.h"
 #include "mock/RenderEngine.h"
 
+#include "vpvl2/cg/AssetRenderEngine.h"
+#include "vpvl2/cg/PMXRenderEngine.h"
+#include "vpvl2/gl2/AssetRenderEngine.h"
+#include "vpvl2/gl2/PMXRenderEngine.h"
+
 using namespace ::testing;
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu;
@@ -382,6 +387,69 @@ TEST(SceneTest, SeekSceneLight)
         scene.light()->setMotion(0);
     }
     scene.light()->setMotion(0);
+}
+
+class MockIIndexBuffer : public IModel::IIndexBuffer {
+public:
+    MOCK_CONST_METHOD0(size, size_t());
+    MOCK_CONST_METHOD1(strideOffset, size_t(IModel::IIndexBuffer::StrideType));
+    MOCK_CONST_METHOD0(strideSize, size_t());
+    MOCK_CONST_METHOD0(ident, const void*());
+    MOCK_CONST_METHOD0(bytes, const void*());
+    MOCK_CONST_METHOD1(indexAt, int(int));
+    MOCK_CONST_METHOD0(type, IModel::IIndexBuffer::Type());
+};
+
+TEST(SceneTest, CreateRenderEngine)
+{
+    Scene scene;
+    MockIRenderContext context;
+    EXPECT_CALL(context, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
+    {
+        /* asset */
+        MockIModel model;
+        EXPECT_CALL(model, type()).Times(2).WillRepeatedly(Return(IModel::kAsset));
+        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
+        ASSERT_TRUE(dynamic_cast<gl2::AssetRenderEngine *>(engine.data()));
+        engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
+        ASSERT_TRUE(dynamic_cast<cg::AssetRenderEngine *>(engine.data()));
+    }
+    {
+        /* pmd */
+        MockIModel model;
+        QScopedPointer<MockIIndexBuffer> indexBuffer(new MockIIndexBuffer()), indexBuffer2(new MockIIndexBuffer());
+        EXPECT_CALL(*indexBuffer, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
+        EXPECT_CALL(*indexBuffer2, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
+        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer.take())).RetiresOnSaturation();
+        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer2.take())).RetiresOnSaturation();
+        EXPECT_CALL(model, type()).Times(2).WillRepeatedly(Return(IModel::kPMD));
+        EXPECT_CALL(model, getStaticVertexBuffer(_)).Times(2);
+        EXPECT_CALL(model, getDynamicVertexBuffer(_, _)).Times(2);
+        EXPECT_CALL(model, getMaterialRefs(_)).Times(1); /* calls at cg::PMXRenderEngine */
+        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
+        ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
+        engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
+        ASSERT_TRUE(dynamic_cast<cg::PMXRenderEngine *>(engine.data()));
+    }
+    {
+        /* pmx */
+        MockIModel model;
+        QScopedPointer<MockIIndexBuffer> indexBuffer(new MockIIndexBuffer()), indexBuffer2(new MockIIndexBuffer());
+        EXPECT_CALL(*indexBuffer, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
+        EXPECT_CALL(*indexBuffer2, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
+        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer.take())).RetiresOnSaturation();
+        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer2.take())).RetiresOnSaturation();
+        EXPECT_CALL(model, type()).Times(2).WillRepeatedly(Return(IModel::kPMX));
+        EXPECT_CALL(model, getStaticVertexBuffer(_)).Times(2);
+        EXPECT_CALL(model, getDynamicVertexBuffer(_, _)).Times(2);
+        EXPECT_CALL(model, getMaterialRefs(_)).Times(1); /* calls at cg::PMXRenderEngine */
+        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
+        ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
+        engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
+        ASSERT_TRUE(dynamic_cast<cg::PMXRenderEngine *>(engine.data()));
+    }
+    /* should not be crashed */
+    ASSERT_EQ(static_cast<IRenderEngine *>(0), scene.createRenderEngine(0, 0, 0));
 }
 
 class SceneModelTest : public TestWithParam<IModel::Type> {};

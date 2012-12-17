@@ -409,7 +409,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    const unsigned int nChildNodes = node->mNumChildren;
+    const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], userData);
         if (!ret)
@@ -427,7 +427,7 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
         glDeleteBuffers(1, &m_ibo[mesh]);
         glDeleteBuffers(1, &m_vbo[mesh]);
     }
-    const unsigned int nChildNodes = node->mNumChildren;
+    const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++)
         deleteRecurse(scene, node->mChildren[i]);
 }
@@ -450,7 +450,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         }
     }
     unbindVertexBundle();
-    const unsigned int nChildNodes = node->mNumChildren;
+    const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++)
         renderRecurse(scene, node->mChildren[i], hasShadowMap);
 }
@@ -475,7 +475,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         }
     }
     unbindVertexBundle();
-    const unsigned int nChildNodes = node->mNumChildren;
+    const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++)
         renderZPlotRecurse(scene, node->mChildren[i]);
 }
