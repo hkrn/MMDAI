@@ -94,7 +94,7 @@ public:
 
     static bool isToggleButton(int value);
 
-    Handles(SceneLoader *loaderRef, const QSize &size);
+    Handles(SceneLoader *loaderRef, IRenderContext *renderContextRef, const QSize &size);
     ~Handles();
 
     void loadImageHandles();
@@ -174,6 +174,7 @@ private:
 
     QScopedPointer<TextureDrawHelper> m_helper;
     QScopedPointer<StaticWorld> m_world;
+    IRenderContext *m_renderContextRef;
     IBone *m_boneRef;
     SceneLoader *m_loaderRef;
     QGLShaderProgram m_program;

@@ -51,7 +51,7 @@
 #endif
 
 #include <glm/gtc/matrix_transform.hpp>
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__APPLE__)
 #include <GL/glext.h>
 #else
 #pragma warning(push)
@@ -564,7 +564,7 @@ void UI::load(const QString &filename)
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
     m_sm.reset(new ShadowMap(1024, 1024));
-    m_helper.reset(new TextureDrawHelper(m_renderContext.data(), size()));
+    m_helper.reset(new TextureDrawHelper(size(), m_renderContext.data()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
     if (m_settings->value("enable.sm", false).toBool()) {
@@ -875,8 +875,8 @@ IModelSharedPtr UI::createModelAsync(const QString &path)
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         model = IModelSharedPtr(m_factory->createModel(data, bytes.size(), ok), &Scene::deleteModelUnlessReferred);
-	}
-	else {
+    }
+    else {
         qWarning("Failed loading the model");
     }
     return model;
@@ -886,7 +886,7 @@ IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model)
 {
     QByteArray bytes;
     IMotionSharedPtr motion;
-	if (UISlurpFile(path, bytes)) {
+    if (UISlurpFile(path, bytes)) {
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         motion = IMotionSharedPtr(m_factory->createMotion(data, bytes.size(), model, ok), &Scene::deleteMotionUnlessReferred);

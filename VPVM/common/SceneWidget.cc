@@ -137,7 +137,6 @@ SceneWidget::SceneWidget(const QGLFormat format,
                          QWidget *parent)
     : QGLWidget(new qt::CustomGLContext(format), parent),
       m_settingsRef(settings),
-      m_grid(new Grid()),
       m_plane(new PlaneWorld()),
       m_encodingRef(encoding),
       m_factoryRef(factory),
@@ -1110,19 +1109,20 @@ void SceneWidget::initializeGL()
     glCullFace(GL_BACK);
 #ifdef IS_VPVM
     const QSize &s = size();
-    m_handles.reset(new Handles(m_loader.data(), s));
+    m_handles.reset(new Handles(m_loader.data(), m_renderContext.data(), s));
     connect(this, SIGNAL(modelDidMove(Vector3)), m_handles.data(), SLOT(updateHandleModel()));
     connect(this, SIGNAL(modelDidRotate(Quaternion)), m_handles.data(), SLOT(updateHandleModel()));
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->loadImageHandles();
-    m_info.reset(new InfoPanel(s));
+    m_info.reset(new InfoPanel(s, m_renderContext.data()));
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();
-    m_debugDrawer.reset(new DebugDrawer());
+    m_debugDrawer.reset(new DebugDrawer(m_renderContext.data()));
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
-    m_background.reset(new BackgroundImage(s));
+    m_background.reset(new BackgroundImage(s, m_renderContext.data()));
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
+    m_grid.reset(new Grid(m_renderContext.data()));
     m_grid->load();
     m_loader->updateDepthBuffer(QSize());
     m_info->setModel(0);

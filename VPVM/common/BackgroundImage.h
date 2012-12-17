@@ -39,16 +39,18 @@
 
 #include <QtGui/QImage>
 #include <QtOpenGL/QtOpenGL>
+#include <vpvl2/IRenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 
 namespace vpvm {
 
+using namespace vpvl2;
 using namespace vpvl2::qt;
 
 class BackgroundImage {
 public:
-    BackgroundImage(const QSize &size)
-        : m_backgroundDrawer(new TextureDrawHelper(size)),
+    BackgroundImage(const QSize &size, IRenderContext *renderContextRef)
+        : m_backgroundDrawer(new TextureDrawHelper(size, renderContextRef)),
           m_backgroundTexture(0),
           m_uniformImage(false)
     {

@@ -67,8 +67,9 @@ public:
     static const Vector3 kGreen;
     static const Vector3 kBlue;
 
-    DebugDrawer()
-        : m_vbo(QGLBuffer::VertexBuffer),
+    DebugDrawer(IRenderContext *renderContextRef)
+        : m_bundle(renderContextRef),
+          m_vbo(QGLBuffer::VertexBuffer),
           m_ibo(QGLBuffer::IndexBuffer),
           m_flags(0),
           m_index(0),
@@ -124,7 +125,7 @@ public:
             m_vbo.create();
             m_ibo.setUsagePattern(QGLBuffer::DynamicDraw);
             m_ibo.create();
-            m_bundle.initialize(QGLContext::currentContext());
+            m_bundle.initialize();
             m_bundle.create();
             m_bundle.bind();
             bindVertexBundle(false);

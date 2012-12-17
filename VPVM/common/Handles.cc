@@ -159,8 +159,9 @@ void Handles::Texture::load(const QString &path, QGLContext *context)
 
 class Handles::Model {
 public:
-    Model(QGLShaderProgram *program)
+    Model(IRenderContext *renderContextRef, QGLShaderProgram *program)
         : m_program(program),
+          m_bundle(renderContextRef),
           m_vbo(QGLBuffer::VertexBuffer),
           m_ibo(QGLBuffer::IndexBuffer),
           m_body(0),
@@ -259,7 +260,7 @@ private:
         memcpy(indexBufferPtr, &indices[0], m_ibo.size());
         m_ibo.unmap();
         m_ibo.release();
-        m_bundle.initialize(QGLContext::currentContext());
+        m_bundle.initialize();
         m_bundle.create();
         m_bundle.bind();
         bindVertexBundle(false);
@@ -278,10 +279,11 @@ private:
     int m_nindices;
 };
 
-Handles::Handles(SceneLoader *loaderRef, const QSize &size)
+Handles::Handles(SceneLoader *loaderRef, IRenderContext *renderContextRef, const QSize &size)
     : QObject(),
-      m_helper(new TextureDrawHelper(size)),
+      m_helper(new TextureDrawHelper(size, renderContextRef)),
       m_world(new Handles::StaticWorld()),
+      m_renderContextRef(renderContextRef),
       m_boneRef(0),
       m_loaderRef(loaderRef),
       m_trackedHandleRef(0),
@@ -355,11 +357,11 @@ void Handles::loadModelHandles()
                 size_t size =  rotationHandleBytes.size();
                 const aiScene *scene = m_rotationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
                 aiMesh **meshes = scene->mMeshes;
-                m_rotationHandle.x.reset(new Model(&m_program));
+                m_rotationHandle.x.reset(new Model(m_renderContextRef, &m_program));
                 m_rotationHandle.x->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
-                m_rotationHandle.y.reset(new Model(&m_program));
+                m_rotationHandle.y.reset(new Model(m_renderContextRef, &m_program));
                 m_rotationHandle.y->load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
-                m_rotationHandle.z.reset(new Model(&m_program));
+                m_rotationHandle.z.reset(new Model(m_renderContextRef, &m_program));
                 m_rotationHandle.z->load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
             }
             /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
@@ -370,19 +372,19 @@ void Handles::loadModelHandles()
                 size_t size =  translationHandleBytes.size();
                 const aiScene *scene = m_translationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
                 aiMesh **meshes = scene->mMeshes;
-                m_translationHandle.x.reset(new Model(&m_program));
+                m_translationHandle.x.reset(new Model(m_renderContextRef, &m_program));
                 m_translationHandle.x->load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
-                m_translationHandle.y.reset(new Model(&m_program));
+                m_translationHandle.y.reset(new Model(m_renderContextRef, &m_program));
                 m_translationHandle.y->load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
-                m_translationHandle.z.reset(new Model(&m_program));
+                m_translationHandle.z.reset(new Model(m_renderContextRef, &m_program));
                 m_translationHandle.z->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
                 Array<Vertex> vertices;
                 Array<int> indices;
-                m_translationHandle.axisX.reset(new Model(&m_program));
+                m_translationHandle.axisX.reset(new Model(m_renderContextRef, &m_program));
                 m_translationHandle.axisX->load(meshes[3], vertices, indices);
-                m_translationHandle.axisY.reset(new Model(&m_program));
+                m_translationHandle.axisY.reset(new Model(m_renderContextRef, &m_program));
                 m_translationHandle.axisY->load(meshes[5], vertices, indices);
-                m_translationHandle.axisZ.reset(new Model(&m_program));
+                m_translationHandle.axisZ.reset(new Model(m_renderContextRef, &m_program));
                 m_translationHandle.axisZ->load(meshes[4], vertices, indices);
             }
         }

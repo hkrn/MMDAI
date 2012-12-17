@@ -57,11 +57,11 @@ namespace qt
 
 class VertexBundle {
 public:
-	explicit VertexBundle(IRenderContext *renderContextRef)
+    explicit VertexBundle(IRenderContext *renderContextRef)
         : glBindVertexArrayProcPtrRef(0),
           glDeleteVertexArraysProcPtrRef(0),
           glGenVertexArraysProcPtrRef(0),
-		  m_renderContextRef(renderContextRef),
+          m_renderContextRef(renderContextRef),
           m_name(0)
     {
     }
@@ -70,10 +70,10 @@ public:
             glDeleteVertexArraysProcPtrRef(1, &m_name);
             m_name = 0;
         }
-		m_renderContextRef = 0;
+        m_renderContextRef = 0;
     }
 
-    void initialize(const QGLContext *context) {
+    void initialize() {
 #ifdef __APPLE__
         static const void *kBindVertexArray[] = {
             "glBindVertexArrayAPPLE",
@@ -142,9 +142,9 @@ public:
 
 private:
 #ifdef WIN32
-	PFNGLBINDVERTEXARRAYPROC glBindVertexArrayProcPtrRef;
-	PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArraysProcPtrRef;
-	PFNGLGENVERTEXARRAYSPROC glGenVertexArraysProcPtrRef;
+    PFNGLBINDVERTEXARRAYPROC glBindVertexArrayProcPtrRef;
+    PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArraysProcPtrRef;
+    PFNGLGENVERTEXARRAYSPROC glGenVertexArraysProcPtrRef;
 #else
     typedef void (*glBindVertexArrayProcPtr)(GLuint id);
     typedef void (*glDeleteVertexArraysProcPtr)(GLsizei n, const GLuint *ids);
@@ -153,9 +153,9 @@ private:
     glDeleteVertexArraysProcPtr glDeleteVertexArraysProcPtrRef;
     glGenVertexArraysProcPtr glGenVertexArraysProcPtrRef;
 #endif
-	IRenderContext *m_renderContextRef;
+    IRenderContext *m_renderContextRef;
     GLuint m_name;
-	
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
 };
 

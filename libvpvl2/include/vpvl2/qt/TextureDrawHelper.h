@@ -42,8 +42,9 @@
 #include <QtOpenGL/QGLFunctions>
 #include <QtOpenGL/QGLShaderProgram>
 
-#include "vpvl2/qt/Common.h"
-#include "vpvl2/qt/VertexBundle.h"
+#include <vpvl2/IModel.h>
+#include <vpvl2/qt/Common.h>
+#include <vpvl2/qt/VertexBundle.h>
 
 namespace vpvl2
 {
@@ -53,7 +54,7 @@ namespace qt
 class TextureDrawHelper : protected QGLFunctions
 {
 public:
-    TextureDrawHelper(IRenderContext *renderContextRef, const QSize &size)
+    TextureDrawHelper(const QSize &size, IRenderContext *renderContextRef)
         : QGLFunctions(),
           m_bundle(renderContextRef),
           m_dvbo(QGLBuffer::VertexBuffer),
@@ -66,7 +67,7 @@ public:
 
     void load(const QDir &dir, const QRectF &baseTexCoord = QRectF(0.0, 0.0, 1.0, -1.0)) {
         initializeGLFunctions();
-        m_bundle.initialize(QGLContext::currentContext());
+        m_bundle.initialize();
         m_program.addShaderFromSourceFile(QGLShader::Vertex, dir.absoluteFilePath("texture.vsh"));
         m_program.addShaderFromSourceFile(QGLShader::Fragment, dir.absoluteFilePath("texture.fsh"));
         m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);

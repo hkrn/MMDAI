@@ -55,8 +55,9 @@ using namespace vpvl2::qt;
 
 class Grid {
 public:
-    Grid()
-        : m_size(50.0, 50.0, 50.0, 5.0),
+    Grid(IRenderContext *renderContextRef)
+        : m_bundle(renderContextRef),
+          m_size(50.0, 50.0, 50.0, 5.0),
           m_lineColor(0.5, 0.5, 0.5),
           m_axisXColor(1.0, 0.0, 0.0),
           m_axisYColor(0.0, 1.0, 0.0),
@@ -104,7 +105,7 @@ public:
         m_ibo.bind();
         m_ibo.allocate(&indices[0], sizeof(uint8_t) * indices.count());
         m_ibo.release();
-        m_bundle.initialize(QGLContext::currentContext());
+        m_bundle.initialize();
         m_bundle.create();
         m_bundle.bind();
         bindVertexBundle(false);
