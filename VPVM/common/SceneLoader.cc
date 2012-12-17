@@ -308,13 +308,11 @@ bool SceneLoader::createModelEngine(IModelSharedPtr model, const QDir &dir, IRen
     return false;
 }
 
-bool SceneLoader::handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr modelPtr) const
+void SceneLoader::handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const
 {
     while (!future.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    IModelSharedPtr newModelPtr = future.result();
-    modelPtr.swap(newModelPtr);
-    return modelPtr;
+    future.result().swap(modelPtr);
 }
 
 QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModel::Type &type)
@@ -551,14 +549,15 @@ bool SceneLoader::isProjectModified() const
     return m_project->isDirty();
 }
 
-bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPtr assetPtr)
+bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPtr &assetPtr)
 {
     const QFuture<IModelSharedPtr> future = QtConcurrent::run(this,
                                                               &SceneLoader::loadModelFromFileAsync,
                                                               FilePathPair(filename, QString()),
                                                               kAssetLoadable,
                                                               kAssetExtensions);
-    if (handleFuture(future, assetPtr)) {
+    handleFuture(future, assetPtr);
+    if (assetPtr) {
         const QFileInfo finfo(filename);
         IRenderEnginePtr enginePtr;
         m_renderContextRef->addModelPath(assetPtr.data(), filename);
@@ -573,13 +572,14 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPt
     return false;
 }
 
-bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelSharedPtr assetPtr)
+bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelSharedPtr &assetPtr)
 {
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
     const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, bytes, IModel::kAsset);
-    if (handleFuture(future, assetPtr)) {
+    handleFuture(future, assetPtr);
+    if (assetPtr) {
         IRenderEnginePtr enginePtr;
         m_renderContextRef->addModelPath(assetPtr.data(), finfo.path());
         if (createModelEngine(assetPtr, finfo.dir(), enginePtr)) {
@@ -594,7 +594,7 @@ bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, con
     return false;
 }
 
-bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelSharedPtr assetPtr)
+bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelSharedPtr &assetPtr)
 {
     QFile file(dir.absoluteFilePath(baseName));
     /* VAC 形式からアクセサリを読み込む。VAC は Shift_JIS で読み込む必要がある */
@@ -652,7 +652,7 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
     }
 }
 
-bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr motionPtr)
+bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motionPtr)
 {
     /* カメラモーションをファイルから読み込み、場面オブジェクトに設定する */
     QFile file(path);
@@ -675,27 +675,29 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr motionP
     return false;
 }
 
-bool SceneLoader::loadModel(const QString &filename, IModelSharedPtr modelPtr)
+bool SceneLoader::loadModel(const QString &filename, IModelSharedPtr &modelPtr)
 {
     const QFuture<IModelSharedPtr> future = QtConcurrent::run(this,
                                                               &SceneLoader::loadModelFromFileAsync,
                                                               FilePathPair(filename, QString()),
                                                               kModelLoadable,
                                                               kModelExtensions);
-    return handleFuture(future, modelPtr);
+    handleFuture(future, modelPtr);
+    return modelPtr;
 }
 
-bool SceneLoader::loadModel(const QByteArray &bytes, IModel::Type type, IModelSharedPtr modelPtr)
+bool SceneLoader::loadModel(const QByteArray &bytes, IModel::Type type, IModelSharedPtr &modelPtr)
 {
     /*
      * モデルをファイルから読み込む。レンダリングエンジンに送るには SceneLoader::addModel を呼び出す必要がある
      * (確認ダイアログを出す必要があるので、読み込みとレンダリングエンジンへの追加は別処理)
      */
     const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, bytes, type);
-    return handleFuture(future, modelPtr);
+    handleFuture(future, modelPtr);
+    return modelPtr;
 }
 
-bool SceneLoader::loadModelMotion(const QString &path, IMotionSharedPtr motionPtr)
+bool SceneLoader::loadModelMotion(const QString &path, IMotionSharedPtr &motionPtr)
 {
     /* モーションをファイルから読み込む。モデルへの追加は setModelMotion を使う必要がある */
     QFile file(path);
@@ -714,7 +716,7 @@ bool SceneLoader::loadModelMotion(const QString &path, IMotionSharedPtr motionPt
     return false;
 }
 
-bool SceneLoader::loadModelMotion(const QString &path, QList<IModelSharedPtr> &models, IMotionSharedPtr motionPtr)
+bool SceneLoader::loadModelMotion(const QString &path, QList<IModelSharedPtr> &models, IMotionSharedPtr &motionPtr)
 {
     /* モーションをファイルから読み込み、対象の全てのモデルに対してモーションを適用する */
     if (loadModelMotion(path, IModelSharedPtr(), motionPtr)) {
@@ -729,7 +731,7 @@ bool SceneLoader::loadModelMotion(const QString &path, QList<IModelSharedPtr> &m
     return motionPtr;
 }
 
-bool SceneLoader::loadModelMotion(const QString &path, IModelSharedPtr model, IMotionSharedPtr motionPtr)
+bool SceneLoader::loadModelMotion(const QString &path, IModelSharedPtr model, IMotionSharedPtr &motionPtr)
 {
     /* loadModelMotion に setModelMotion の追加が入ったショートカット的なメソッド */
     if (loadModelMotion(path, motionPtr)) {
@@ -911,7 +913,7 @@ void SceneLoader::loadProject(const QString &path)
     }
 }
 
-void SceneLoader::newCameraMotion(IMotionSharedPtr motionPtr) const
+void SceneLoader::newCameraMotion(IMotionSharedPtr &motionPtr) const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
     IMotionSharedPtr newCameraMotionPtr(m_factoryRef->createMotion(IMotion::kVMD, 0), &Scene::deleteMotionUnlessReferred);
@@ -933,7 +935,7 @@ void SceneLoader::newCameraMotion(IMotionSharedPtr motionPtr) const
     motionPtr->update(IKeyframe::kLight);
 }
 
-void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr motionPtr) const
+void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motionPtr) const
 {
     /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
     if (model) {
