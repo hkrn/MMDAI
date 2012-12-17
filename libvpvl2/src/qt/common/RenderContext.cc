@@ -1167,10 +1167,6 @@ IEffectSharedPtr RenderContext::createEffectAsync(IModelSharedPtr model, const I
     return effect;
 }
 
-template class QSharedPointer<IEffect *>;
-template class QSharedPointer<IModel *>;
-template class QSharedPointer<IMotion *>;
-
 #endif
 
 }
