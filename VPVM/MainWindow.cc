@@ -83,6 +83,8 @@ using namespace vpvl2::qt;
 
 namespace {
 
+static const QString &kPrefix = "keyboardBindings/";
+
 static int UIFindIndexOfActions(IModelSharedPtr model, const QList<QAction *> &actions)
 {
     const QString &name = toQStringFromModel(model.data());
@@ -1039,7 +1041,6 @@ void MainWindow::createActionsAndMenus()
 
 void MainWindow::bindActions()
 {
-    static const QString &kPrefix = "keyboardBindings/";
     m_actionNewProject->setShortcut(m_settings.value(kPrefix + "newProject", QKeySequence(QKeySequence::New).toString()).toString());
     m_actionNewMotion->setShortcut(m_settings.value(kPrefix + "newMotion", "Ctrl+Shift+N").toString());
     m_actionLoadProject->setShortcut(m_settings.value(kPrefix + "loadProject", QKeySequence(QKeySequence::Open).toString()).toString());
@@ -1131,18 +1132,6 @@ void MainWindow::bindActions()
     m_actionSetOpenCLSkinningType2->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinningType2").toString());
     m_actionSetVertexShaderSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
     m_actionEnableEffect->setShortcut(m_settings.value(kPrefix + "enableEffect").toString());
-    QShortcut *cameraFront = new QShortcut(m_settings.value(kPrefix + "cameraFront", QKeySequence(Qt::Key_2)).toString(), this);
-    connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveFront()));
-    QShortcut *cameraBack = new QShortcut(m_settings.value(kPrefix + "cameraBack", QKeySequence(Qt::Key_8)).toString(), this);
-    connect(cameraBack, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveBack()));
-    QShortcut *cameraLeft = new QShortcut(m_settings.value(kPrefix + "cameraLeft", QKeySequence(Qt::Key_4)).toString(), this);
-    connect(cameraLeft, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveLeft()));
-    QShortcut *cameraRight = new QShortcut(m_settings.value(kPrefix + "cameraRight", QKeySequence(Qt::Key_6)).toString(), this);
-    connect(cameraRight, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveRight()));
-    QShortcut *cameraTop = new QShortcut(m_settings.value(kPrefix + "cameraTop", QKeySequence(Qt::Key_5)).toString(), this);
-    connect(cameraTop, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveTop()));
-    QShortcut *cameraBottom = new QShortcut(m_settings.value(kPrefix + "cameraBottom", QKeySequence(Qt::Key_0)).toString(), this);
-    connect(cameraBottom, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveBottom()));
 }
 
 void MainWindow::retranslate()
@@ -1380,10 +1369,24 @@ void MainWindow::retranslate()
 void MainWindow::bindSceneLoader()
 {
     SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-    AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
     disconnect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), this, SLOT(bindSceneLoader()));
     m_sceneTabWidget.reset(new TabWidget(loader, &m_settings));
     m_modelTabWidget.reset(new ModelTabWidget(loader, m_morphMotionModel.data(), &m_settings));
+    /* m_sceneTabWidget が遅延初期化される関係でカメラのショートカットをここで生成する */
+    QShortcut *cameraFront = new QShortcut(m_settings.value(kPrefix + "cameraFront", QKeySequence(Qt::Key_2)).toString(), this);
+    connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveFront()));
+    QShortcut *cameraBack = new QShortcut(m_settings.value(kPrefix + "cameraBack", QKeySequence(Qt::Key_8)).toString(), this);
+    connect(cameraBack, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveBack()));
+    QShortcut *cameraLeft = new QShortcut(m_settings.value(kPrefix + "cameraLeft", QKeySequence(Qt::Key_4)).toString(), this);
+    connect(cameraLeft, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveLeft()));
+    QShortcut *cameraRight = new QShortcut(m_settings.value(kPrefix + "cameraRight", QKeySequence(Qt::Key_6)).toString(), this);
+    connect(cameraRight, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveRight()));
+    QShortcut *cameraTop = new QShortcut(m_settings.value(kPrefix + "cameraTop", QKeySequence(Qt::Key_5)).toString(), this);
+    connect(cameraTop, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveTop()));
+    QShortcut *cameraBottom = new QShortcut(m_settings.value(kPrefix + "cameraBottom", QKeySequence(Qt::Key_0)).toString(), this);
+    connect(cameraBottom, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveBottom()));
+    /* SceneLoader に依存するシグナル設定 */
+    AssetWidget *assetWidget = m_sceneTabWidget->assetWidgetRef();
     connect(loader, SIGNAL(modelDidAdd(IModelSharedPtr,QUuid)), SLOT(addModel(IModelSharedPtr,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), SLOT(deleteModel(IModelSharedPtr,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), m_boneMotionModel.data(), SLOT(removeModel()));
@@ -1424,12 +1427,36 @@ void MainWindow::bindSceneLoader()
     connect(m_actionShowGrid.data(), SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
     connect(assetWidget, SIGNAL(assetDidRemove(IModelSharedPtr)), loader, SLOT(deleteModelSlot(IModelSharedPtr)));
     connect(assetWidget, SIGNAL(assetDidSelect(IModelSharedPtr)), loader, SLOT(setSelectedModel(IModelSharedPtr)));
+    /* 遅延初期化のためあとでシグナル設定を行う */
+    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentTimeIndex(IMorph*)));
+    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModelSharedPtr)), m_sceneMotionModel.data(), SLOT(markAsNew()));
+    connect(m_sceneWidget.data(), SIGNAL(handleDidGrab()), m_boneMotionModel.data(), SLOT(saveTransform()));
+    connect(m_sceneWidget.data(), SIGNAL(handleDidRelease()), m_boneMotionModel.data(), SLOT(commitTransform()));
+    connect(m_sceneWidget.data(), SIGNAL(cameraPerspectiveDidSet(const ICamera*)), m_boneMotionModel.data(), SLOT(setCamera(const ICamera*)));
+    connect(m_sceneWidget.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
+    connect(m_sceneWidget.data(), SIGNAL(undoDidRequest()), m_undo.data(), SLOT(undo()));
+    connect(m_sceneWidget.data(), SIGNAL(redoDidRequest()), m_undo.data(), SLOT(redo()));
+    /* ハンドル関係のシグナル設定 */
     Handles *handles = m_sceneWidget->handlesRef();
     connect(m_boneMotionModel.data(), SIGNAL(positionDidChange(IBone*,Vector3)), handles, SLOT(updateHandleModel()));
     connect(m_boneMotionModel.data(), SIGNAL(rotationDidChange(IBone*,Quaternion)), handles, SLOT(updateHandleModel()));
     connect(m_undo.data(), SIGNAL(indexChanged(int)), handles, SLOT(updateHandleModel()));
     connect(m_timelineTabWidget.data(), SIGNAL(currentModelDidChange(IModelSharedPtr,SceneWidget::EditMode)),
             m_sceneWidget.data(), SLOT(setSelectedModel(IModelSharedPtr,SceneWidget::EditMode)));
+    /* モデル設定タブのシグナル設定 */
+    ModelSettingWidget *modelSettingWidget = m_modelTabWidget->modelSettingWidget();
+    connect(modelSettingWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget.data(), SLOT(setModelEdgeOffset(double)));
+    connect(modelSettingWidget, SIGNAL(opacityDidChange(Scalar)), m_sceneWidget.data(), SLOT(setModelOpacity(Scalar)));
+    connect(modelSettingWidget, SIGNAL(projectiveShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelProjectiveShadowEnable(bool)));
+    connect(modelSettingWidget, SIGNAL(selfShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelSelfShadowEnable(bool)));
+    connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelPositionOffset(Vector3)));
+    connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelRotationOffset(Vector3)));
+    connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), modelSettingWidget, SLOT(setPositionOffset(Vector3)));
+    /* モーフタブのシグナル設定 */
+    MorphWidget *morphWidget = m_modelTabWidget->morphWidget();
+    connect(morphWidget, SIGNAL(morphWillChange()), m_morphMotionModel.data(), SLOT(saveTransform()));
+    connect(morphWidget, SIGNAL(morphDidChange()), m_morphMotionModel.data(), SLOT(commitTransform()));
+    connect(m_undo.data(), SIGNAL(indexChanged(int)), morphWidget, SLOT(updateMorphWeightValues()));
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidgetRef();
     Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
@@ -1504,27 +1531,7 @@ void MainWindow::bindWidgets()
     connect(m_morphMotionModel.data(), SIGNAL(motionDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidUpdateProgress(int,int,QString)), SLOT(updateProgress(int,int,QString)));
     connect(m_morphMotionModel.data(), SIGNAL(motionDidLoad()), SLOT(closeProgress()));
-    connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentTimeIndex(IMorph*)));
-    connect(m_sceneWidget.data(), SIGNAL(newMotionDidSet(IModelSharedPtr)), m_sceneMotionModel.data(), SLOT(markAsNew()));
-    connect(m_sceneWidget.data(), SIGNAL(handleDidGrab()), m_boneMotionModel.data(), SLOT(saveTransform()));
-    connect(m_sceneWidget.data(), SIGNAL(handleDidRelease()), m_boneMotionModel.data(), SLOT(commitTransform()));
-    connect(m_sceneWidget.data(), SIGNAL(cameraPerspectiveDidSet(const ICamera*)), m_boneMotionModel.data(), SLOT(setCamera(const ICamera*)));
-    connect(m_sceneWidget.data(), SIGNAL(motionDidSeek(IKeyframe::TimeIndex)), m_modelTabWidget->morphWidget(), SLOT(updateMorphWeightValues()));
-    connect(m_sceneWidget.data(), SIGNAL(undoDidRequest()), m_undo.data(), SLOT(undo()));
-    connect(m_sceneWidget.data(), SIGNAL(redoDidRequest()), m_undo.data(), SLOT(redo()));
     connect(m_timelineTabWidget.data(), SIGNAL(editModeDidSet(SceneWidget::EditMode)), m_sceneWidget.data(), SLOT(setEditMode(SceneWidget::EditMode)));
-    ModelSettingWidget *modelSettingWidget = m_modelTabWidget->modelSettingWidget();
-    connect(modelSettingWidget, SIGNAL(edgeOffsetDidChange(double)), m_sceneWidget.data(), SLOT(setModelEdgeOffset(double)));
-    connect(modelSettingWidget, SIGNAL(opacityDidChange(Scalar)), m_sceneWidget.data(), SLOT(setModelOpacity(Scalar)));
-    connect(modelSettingWidget, SIGNAL(projectiveShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelProjectiveShadowEnable(bool)));
-    connect(modelSettingWidget, SIGNAL(selfShadowDidEnable(bool)), m_sceneWidget.data(), SLOT(setModelSelfShadowEnable(bool)));
-    connect(modelSettingWidget, SIGNAL(positionOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelPositionOffset(Vector3)));
-    connect(modelSettingWidget, SIGNAL(rotationOffsetDidChange(Vector3)), m_sceneWidget.data(), SLOT(setModelRotationOffset(Vector3)));
-    connect(m_sceneWidget.data(), SIGNAL(modelDidMove(Vector3)), modelSettingWidget, SLOT(setPositionOffset(Vector3)));
-    MorphWidget *morphWidget = m_modelTabWidget->morphWidget();
-    connect(morphWidget, SIGNAL(morphWillChange()), m_morphMotionModel.data(), SLOT(saveTransform()));
-    connect(morphWidget, SIGNAL(morphDidChange()), m_morphMotionModel.data(), SLOT(commitTransform()));
-    connect(m_undo.data(), SIGNAL(indexChanged(int)), morphWidget, SLOT(updateMorphWeightValues()));
     enableSelectingBonesAndMorphs();
 }
 
