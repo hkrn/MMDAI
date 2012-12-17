@@ -51,8 +51,9 @@ using namespace vpvl2;
 static const Scalar kMaxFar = 10000;
 static const Scalar kMaxAngle = 360;
 
-AssetWidget::AssetWidget(QWidget *parent)
+AssetWidget::AssetWidget(SceneLoader *loaderRef, QWidget *parent)
     : QWidget(parent),
+      m_sceneLoaderRef(loaderRef),
       m_assetGroup(new QGroupBox()),
       m_assignGroup(new QGroupBox()),
       m_positionGroup(new QGroupBox()),
@@ -347,18 +348,16 @@ void AssetWidget::updateOpacity(double value)
         m_currentAssetRef->setOpacity(static_cast<float>(value));
 }
 
-void AssetWidget::setAssetProperties(IModelSharedPtr asset, SceneLoader *loader)
+void AssetWidget::setAssetProperties(IModelSharedPtr asset)
 {
     if (asset && asset->type() == IModel::kAsset) {
-        if (loader) {
-            IModel *assetRef = asset.data();
-            asset->setWorldPosition(loader->assetPosition(assetRef));
-            asset->setWorldRotation(loader->assetRotation(assetRef));
-            asset->setScaleFactor(loader->assetScaleFactor(assetRef));
-            asset->setOpacity(loader->assetOpacity(assetRef));
-            asset->setParentModelRef(loader->assetParentModel(assetRef).data());
-            asset->setParentBoneRef(loader->assetParentBone(assetRef));
-        }
+        const IModel *assetRef = asset.data();
+        asset->setWorldPosition(m_sceneLoaderRef->assetPosition(assetRef));
+        asset->setWorldRotation(m_sceneLoaderRef->assetRotation(assetRef));
+        asset->setScaleFactor(m_sceneLoaderRef->assetScaleFactor(assetRef));
+        asset->setOpacity(m_sceneLoaderRef->assetOpacity(assetRef));
+        asset->setParentModelRef(m_sceneLoaderRef->assetParentModel(assetRef).data());
+        asset->setParentBoneRef(m_sceneLoaderRef->assetParentBone(assetRef));
         changeCurrentAsset(asset);
     }
 }

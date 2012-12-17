@@ -71,7 +71,7 @@ class AssetWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit AssetWidget(QWidget *parent = 0);
+    explicit AssetWidget(SceneLoader *loaderRef, QWidget *parent = 0);
     ~AssetWidget();
 
     IModelSharedPtr currentAsset() const { return m_currentAssetRef; }
@@ -100,7 +100,7 @@ private slots:
     void updateRotation();
     void updateScaleFactor(double value);
     void updateOpacity(double value);
-    void setAssetProperties(IModelSharedPtr asset, SceneLoader *loader);
+    void setAssetProperties(IModelSharedPtr asset);
 
 private:
     static QDoubleSpinBox *createSpinBox(double step, double min, double max);
@@ -108,6 +108,7 @@ private:
     void updateModelBoneComboBox(IModelSharedPtr model);
     int modelIndexOf(IModelSharedPtr model);
 
+    SceneLoader *m_sceneLoaderRef;
     QScopedPointer<QGroupBox> m_assetGroup;
     QScopedPointer<QGroupBox> m_assignGroup;
     QScopedPointer<QGroupBox> m_positionGroup;

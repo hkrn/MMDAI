@@ -148,7 +148,7 @@ MorphWidget::MorphWidget(MorphMotionModel *mmm, QWidget *parent) :
     retranslate();
     setLayout(mainLayout.take());
     setEnabled(false);
-    connect(m_morphMotionModelRef, SIGNAL(modelDidChange(IModel*)), SLOT(setPMDModel(IModel*)));
+    connect(m_morphMotionModelRef, SIGNAL(modelDidChange(IModelSharedPtr)), SLOT(setPMDModel(IModelSharedPtr)));
 }
 
 MorphWidget::~MorphWidget()
@@ -169,7 +169,7 @@ void MorphWidget::retranslate()
     m_resetAllButton->setText(vpvm::MorphWidget::tr("Reset All Morphs"));
 }
 
-void MorphWidget::setPMDModel(const IModel *model)
+void MorphWidget::setPMDModel(const IModelSharedPtr model)
 {
     QStringList eyes, lips, eyeblows, others;
     m_eyes->clear();
@@ -205,7 +205,7 @@ void MorphWidget::setPMDModel(const IModel *model)
             }
         }
         setEnabled(true);
-        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model)));
+        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model.data())));
     }
     else {
         setEnabled(false);

@@ -58,6 +58,7 @@
 #include <QtGui/QWidget>
 #endif
 #include <vpvl2/Common.h>
+#include <vpvl2/qt/RenderContext.h>
 
 namespace vpvl2 {
 class IModel;
@@ -68,6 +69,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 class MorphMotionModel;
 
 class MorphWidget : public QWidget
@@ -87,7 +89,7 @@ signals:
 
 private slots:
     void retranslate();
-    void setPMDModel(const IModel *model);
+    void setPMDModel(const IModelSharedPtr model);
     void setEyeWeight(int value);
     void setLipWeight(int value);
     void setEyeblowWeight(int value);

@@ -96,7 +96,7 @@ private slots:
     void updateRotationZ(double value);
     void updateFovy(double value);
     void updateDistance(double value);
-    void initializeCamera(Scene *scene);
+    void initializeCamera();
     void setPositionFromModel(const Vector3 &value);
     void setPositionFromBone(const Vector3 &value);
     void setPositionFromBone(const QList<IBone *> &bones);

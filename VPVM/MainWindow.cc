@@ -1409,7 +1409,7 @@ void MainWindow::bindSceneLoader()
     connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_modelTabWidget->modelInfoWidget(), SLOT(setModel(IModelSharedPtr)));
     connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_modelTabWidget->modelSettingWidget(), SLOT(setModel(IModelSharedPtr)));
     connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), m_timelineTabWidget.data(), SLOT(setLastSelectedModel(IModelSharedPtr)));
-    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), assetWidget, SLOT(setAssetProperties(IModelSharedPtr,SceneLoader*)));
+    connect(loader, SIGNAL(modelDidSelect(IModelSharedPtr)), assetWidget, SLOT(setAssetProperties(IModelSharedPtr)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
     connect(loader, SIGNAL(effectDidEnable(bool)), m_actionEnableEffectOnToolBar.data(), SLOT(setChecked(bool)));
     connect(loader, SIGNAL(projectDidOpenProgress(QString,bool)), SLOT(openProgress(QString,bool)));

@@ -55,7 +55,7 @@ using namespace vpvl2;
 TabWidget::TabWidget(SceneLoader *sceneLoaderRef, QSettings *settingsRef, QWidget *parent)
     : QWidget(parent),
       m_tabWidget(new QTabWidget()),
-      m_asset(new AssetWidget()),
+      m_asset(new AssetWidget(sceneLoaderRef)),
       m_camera(new CameraPerspectiveWidget(sceneLoaderRef)),
       m_light(new SceneLightWidget()),
       m_settingsRef(settingsRef)
