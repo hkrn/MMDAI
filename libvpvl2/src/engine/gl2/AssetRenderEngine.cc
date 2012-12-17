@@ -511,7 +511,7 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
     }
     delete m_context->assetPrograms[node];
     delete m_context->zplotPrograms[node];
-    const unsigned int nChildNodes = node->mNumChildren;
+    const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++)
         deleteRecurse(scene, node->mChildren[i]);
 }

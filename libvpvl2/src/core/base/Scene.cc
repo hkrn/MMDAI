@@ -388,36 +388,38 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *delegate, IModel *model
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
-    switch (model->type()) {
-    case IModel::kAsset: {
+    if (model) {
+        switch (model->type()) {
+        case IModel::kAsset: {
 #ifdef VPVL2_LINK_ASSIMP
-        asset::Model *m = static_cast<asset::Model *>(model);
+            asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (flags & kEffectCapable)
-            engine = new cg::AssetRenderEngine(delegate, this, m);
-        else
+            if (flags & kEffectCapable)
+                engine = new cg::AssetRenderEngine(delegate, this, m);
+            else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::AssetRenderEngine(delegate, this, m);
+                engine = new gl2::AssetRenderEngine(delegate, this, m);
 #endif /* VPVL2_LINK_ASSIMP */
-        break;
-    }
-    case IModel::kPMD:
-    case IModel::kPMX: {
-        cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
+            break;
+        }
+        case IModel::kPMD:
+        case IModel::kPMX: {
+            cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(delegate, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (flags & kEffectCapable)
-            engine = new cg::PMXRenderEngine(delegate, this, accelerator, model);
-        else
+            if (flags & kEffectCapable)
+                engine = new cg::PMXRenderEngine(delegate, this, accelerator, model);
+            else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-            engine = new gl2::PMXRenderEngine(delegate, this, accelerator, model);
-        break;
-    }
-    default:
-        break;
-    }
+                engine = new gl2::PMXRenderEngine(delegate, this, accelerator, model);
+            break;
+        }
+        default:
+            break;
+        }
 #ifndef VPVL2_ENABLE_NVIDIA_CG
-    (void) flags;
+        (void) flags;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+    }
 #else
     (void) delegate;
     (void) model;
