@@ -59,7 +59,7 @@ class LoggerWidget : public QWidget
 
 public:
     static LoggerWidget *sharedInstance(QSettings *settings);
-    static void quietLogMessages();
+    static void quietLogMessages(bool value);
 
     ~LoggerWidget();
 

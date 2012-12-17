@@ -1965,17 +1965,6 @@ void SceneLoader::setEffectEnable(bool value)
     }
 }
 
-void SceneLoader::setProjectDirtyFalse()
-{
-    m_project->setDirty(false);
-}
-
-void SceneLoader::deleteModelSlot(IModelSharedPtr model)
-{
-    IModelSharedPtr modelPtr = model;
-    deleteModel(modelPtr);
-}
-
 bool SceneLoader::globalSetting(const char *key, bool def) const
 {
     return m_project ? m_project->globalSetting(key) == "true" : def;

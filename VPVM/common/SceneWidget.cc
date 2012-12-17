@@ -52,6 +52,7 @@
 #include "Grid.h"
 #include "Handles.h"
 #include "InfoPanel.h"
+#include "LoggerWidget.h"
 #include "SceneLoader.h"
 #include "util.h"
 
@@ -1088,10 +1089,13 @@ void SceneWidget::dropEvent(QDropEvent *event)
 void SceneWidget::initializeGL()
 {
     initializeGLFunctions(context());
+    /* 一時的にログ出力を抑制し、そのあと MainWindow::bindSceneLoader までログ出力を抑制する */
+    LoggerWidget::quietLogMessages(false);
     qDebug("VPVL2 version: %s (%d)", VPVL2_VERSION_STRING, VPVL2_VERSION);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
+    LoggerWidget::quietLogMessages(true);
     QHash<QString, QString> settings;
     settings.insert("dir.system.kernels", ":kernels");
     settings.insert("dir.system.shaders", ":shaders");

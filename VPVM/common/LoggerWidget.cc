@@ -79,13 +79,22 @@ LoggerWidget *LoggerWidget::sharedInstance(QSettings *settings)
     return g_instance.data();
 }
 
-void LoggerWidget::quietLogMessages()
+void LoggerWidget::quietLogMessages(bool value)
 {
+    if (value) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    qInstallMessageHandler(LoggerWidgetHandleMessageNULL);
+        qInstallMessageHandler(LoggerWidgetHandleMessageNULL);
 #else
-    qInstallMsgHandler(LoggerWidgetHandleMessageNULL);
+        qInstallMsgHandler(LoggerWidgetHandleMessageNULL);
 #endif
+    }
+    else {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        qInstallMessageHandler(LoggerWidgetHandleMessage);
+#else
+        qInstallMsgHandler(LoggerWidgetHandleMessage);
+#endif
+    }
 }
 
 LoggerWidget::LoggerWidget(QSettings *settings, QWidget *parent)
@@ -111,11 +120,6 @@ LoggerWidget::LoggerWidget(QSettings *settings, QWidget *parent)
     setLayout(layout);
     setWindowTitle(tr("Log Window"));
     resize(QSize(640, 480));
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    qInstallMessageHandler(LoggerWidgetHandleMessage);
-#else
-    qInstallMsgHandler(LoggerWidgetHandleMessage);
-#endif
     connect(this, SIGNAL(messageDidAdd(QString)), m_textEdit, SLOT(append(QString)));
 }
 

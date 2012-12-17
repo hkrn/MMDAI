@@ -1425,7 +1425,7 @@ void MainWindow::bindSceneLoader()
     connect(m_actionSetOpenCLSkinningType2.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType2(bool)));
     connect(m_actionSetVertexShaderSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));
     connect(m_actionShowGrid.data(), SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
-    connect(assetWidget, SIGNAL(assetDidRemove(IModelSharedPtr)), loader, SLOT(deleteModelSlot(IModelSharedPtr)));
+    connect(assetWidget, SIGNAL(assetDidRemove(IModelSharedPtr)), loader, SLOT(deleteModel(IModelSharedPtr)));
     connect(assetWidget, SIGNAL(assetDidSelect(IModelSharedPtr)), loader, SLOT(setSelectedModel(IModelSharedPtr)));
     /* 遅延初期化のためあとでシグナル設定を行う */
     connect(m_modelTabWidget->morphWidget(), SIGNAL(morphDidRegister(IMorph*)), m_timelineTabWidget.data(), SLOT(addMorphKeyframesAtCurrentTimeIndex(IMorph*)));
@@ -1480,9 +1480,6 @@ void MainWindow::bindSceneLoader()
     connect(loader, SIGNAL(lightDirectionDidSet(Vector3)), lightWidget, SLOT(setDirection(Vector3)));
     connect(lightWidget, SIGNAL(lightColorDidSet(Vector3)), loader, SLOT(setLightColor(Vector3)));
     connect(lightWidget, SIGNAL(lightDirectionDidSet(Vector3)), loader, SLOT(setLightDirection(Vector3)));
-    connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), loader, SLOT(setProjectDirtyFalse()));
-    connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel.data(), SLOT(markAsNew()));
-    connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), SLOT(disconnectInitialSlots()));
     /* アクセラレーションの状態を設定 */
     m_actionSetSoftwareSkinningFallback->setChecked(false);
     if (loader->isOpenCLSkinningType1Enabled()) {
@@ -1495,14 +1492,8 @@ void MainWindow::bindSceneLoader()
         m_actionSetVertexShaderSkinningType1->setChecked(true);
     }
     m_actionSetSoftwareSkinningFallback->setChecked(true);
-    /*
-     * 空のカメラモーションを登録
-     * アクセラレーションの設定の後にやるのは setDirtyFalse の後に アクセラレーションの設定変更によって
-     * プロジェクト更新がかかり、何もしていないのに終了時に確認ダイアログが出てしまうことを防ぐため
-     */
-    IMotionSharedPtr cameraMotionPtr;
-    loader->newCameraMotion(cameraMotionPtr);
-    loader->setCameraMotion(cameraMotionPtr);
+    /* ログ出力抑制を切る */
+    LoggerWidget::quietLogMessages(false);
 }
 
 void MainWindow::bindWidgets()
@@ -1996,14 +1987,6 @@ void MainWindow::enableSelectingBonesAndMorphs()
 {
     connect(m_boneMotionModel.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), m_sceneWidget.data(), SLOT(selectBones(QList<IBone*>)));
     connect(m_morphMotionModel.data(), SIGNAL(morphsDidSelect(QList<IMorph*>)), m_sceneWidget.data(), SLOT(selectMorphs(QList<IMorph*>)));
-}
-
-void MainWindow::disconnectInitialSlots()
-{
-    /* モデルを読み込んだ後の初期化順序の関係でカメラモーションを読み込んだ後にプロジェクトを無更新に設定する処理を外す */
-    disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoaderRef(), SLOT(setProjectDirtyFalse()));
-    disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneMotionModel.data(), SLOT(markAsNew()));
-    disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSlots()));
 }
 
 void MainWindow::resetSceneToMotionModels()

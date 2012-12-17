@@ -152,7 +152,6 @@ private slots:
     void openBackgroundImageDialog();
     void openUndoView();
     void enableSelectingBonesAndMorphs();
-    void disconnectInitialSlots();
     void resetSceneToMotionModels();
     void openProgress(const QString &title, bool cancellable);
     void updateProgress(int value, int max, const QString &text);

@@ -95,7 +95,6 @@ public:
     QList<IModelSharedPtr> allModels() const;
     void addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid);
     void bindDepthTexture();
-    void deleteModel(IModelSharedPtr model);
     IModelSharedPtr findAsset(const QUuid &uuid) const;
     IModelSharedPtr findModel(const QUuid &uuid) const;
     IMotionSharedPtr findMotion(const QUuid &uuid) const;
@@ -196,6 +195,7 @@ public:
 public slots:
     void newProject();
     void deleteCameraMotion();
+    void deleteModel(IModelSharedPtr model);
     void deleteMotion(IMotionSharedPtr motion);
     void loadProject(const QString &path);
     void saveMetadataFromAsset(const QString &path, IModelSharedPtr asset);
@@ -257,10 +257,6 @@ signals:
     void lightDirectionDidSet(const Vector3 &position);
     void preprocessDidPerform();
     void effectDidEnable(bool value);
-
-private slots:
-    void setProjectDirtyFalse();
-    void deleteModelSlot(IModelSharedPtr model);
 
 private:
     typedef QPair<QString, QString> FilePathPair;

@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     xmlInitParser();
 
     vpvm::Application a(argc, argv);
-    vpvm::LoggerWidget::quietLogMessages();
+    vpvm::LoggerWidget::quietLogMessages(true);
     QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
     a.setApplicationVersion("0.27.3");
