@@ -8,6 +8,9 @@
 #include "mock/RenderContext.h"
 #include "mock/RenderEngine.h"
 
+#include "vpvl2/asset/Model.h"
+#include "vpvl2/pmd/Model.h"
+#include "vpvl2/pmx/Model.h"
 #include "vpvl2/cg/AssetRenderEngine.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
 #include "vpvl2/gl2/AssetRenderEngine.h"
@@ -406,43 +409,21 @@ TEST(SceneTest, CreateRenderEngine)
     MockIRenderContext context;
     EXPECT_CALL(context, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     {
-        /* asset */
-        MockIModel model;
-        EXPECT_CALL(model, type()).Times(2).WillRepeatedly(Return(IModel::kAsset));
+        asset::Model model(0); /* no IEncoding instance will be referred */
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::AssetRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<cg::AssetRenderEngine *>(engine.data()));
     }
     {
-        /* pmd */
-        MockIModel model;
-        QScopedPointer<MockIIndexBuffer> indexBuffer(new MockIIndexBuffer()), indexBuffer2(new MockIIndexBuffer());
-        EXPECT_CALL(*indexBuffer, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
-        EXPECT_CALL(*indexBuffer2, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
-        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer.take())).RetiresOnSaturation();
-        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer2.take())).RetiresOnSaturation();
-        EXPECT_CALL(model, type()).Times(2).WillRepeatedly(Return(IModel::kPMD));
-        EXPECT_CALL(model, getStaticVertexBuffer(_)).Times(2);
-        EXPECT_CALL(model, getDynamicVertexBuffer(_, _)).Times(2);
-        EXPECT_CALL(model, getMaterialRefs(_)).Times(1); /* calls at cg::PMXRenderEngine */
+        pmd::Model model(0); /* no IEncoding instance will be referred */
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<cg::PMXRenderEngine *>(engine.data()));
     }
     {
-        /* pmx */
-        MockIModel model;
-        QScopedPointer<MockIIndexBuffer> indexBuffer(new MockIIndexBuffer()), indexBuffer2(new MockIIndexBuffer());
-        EXPECT_CALL(*indexBuffer, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
-        EXPECT_CALL(*indexBuffer2, type()).WillRepeatedly(Return(IModel::IIndexBuffer::kIndex16));
-        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer.take())).RetiresOnSaturation();
-        EXPECT_CALL(model, getIndexBuffer(_)).WillOnce(SetArgReferee<0>(indexBuffer2.take())).RetiresOnSaturation();
-        EXPECT_CALL(model, type()).Times(2).WillRepeatedly(Return(IModel::kPMX));
-        EXPECT_CALL(model, getStaticVertexBuffer(_)).Times(2);
-        EXPECT_CALL(model, getDynamicVertexBuffer(_, _)).Times(2);
-        EXPECT_CALL(model, getMaterialRefs(_)).Times(1); /* calls at cg::PMXRenderEngine */
+        pmx::Model model(0); /* no IEncoding instance will be referred */
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
