@@ -1265,9 +1265,9 @@ void SceneLoader::setModelMotion(IMotionSharedPtr motion, IModelSharedPtr model)
         motions.copy(m_project->motions());
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
-            IMotionSharedPtr m(motions[i], &Scene::deleteMotionUnlessReferred);
+            IMotion *m = motions[i];
             if (m->parentModelRef() == model) {
-                m_project->removeMotion(m.data());
+                m_project->removeMotion(m);
             }
         }
 #endif
