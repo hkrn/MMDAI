@@ -267,8 +267,8 @@ void RenderContext::releaseUserData(const IModel *model, void *&context)
 
 bool RenderContext::uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context)
 {
-    bool mipmap = flags & IRenderContext::kGenerateTextureMipmap;
-    bool isToon = flags & IRenderContext::kToonTexture;
+    bool mipmap = (flags & IRenderContext::kGenerateTextureMipmap) != 0;
+    bool isToon = (flags & IRenderContext::kToonTexture) != 0;
     InternalTexture t(&texture, mipmap, isToon);
     if (flags & IRenderContext::kTexture2D) {
         const QString &path = UICreatePath(dir, name);
