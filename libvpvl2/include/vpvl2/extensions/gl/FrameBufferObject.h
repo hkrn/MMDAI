@@ -291,6 +291,9 @@ public:
 
 private:
     void release() {
+#if defined(VPVL2_LINK_QT)
+        initializeGLFunctions(QGLContext::currentContext());
+#endif
         const int nbuffers = m_colorMSAA.count();
         for (int i = 0; i < nbuffers; i++) {
             const GLuint *buffer = m_colorMSAA.value(i);

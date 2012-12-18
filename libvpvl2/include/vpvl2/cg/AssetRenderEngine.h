@@ -79,7 +79,7 @@ class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::i
 public:
     class Program;
 
-    AssetRenderEngine(IRenderContext *renderContext, const Scene *scene, asset::Model *model);
+    AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model);
     virtual ~AssetRenderEngine();
 
     IModel *model() const;

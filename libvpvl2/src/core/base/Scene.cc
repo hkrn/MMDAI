@@ -273,6 +273,7 @@ namespace vpvl2
 struct Scene::PrivateContext {
     PrivateContext(Scene *sceneRef)
         : computeContext(0),
+          defaultStandardEffect(0),
           accelerationType(Scene::kSoftwareFallback),
           effectContext(0),
           light(sceneRef),
@@ -296,8 +297,11 @@ struct Scene::PrivateContext {
         computeContext = 0;
 #endif /* VPVL2_ENABLE_OPENCL */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+        delete defaultStandardEffect;
+        defaultStandardEffect = 0;
         cgDestroyContext(effectContext);
         effectContext = 0;
+        effectCompilerArguments.releaseAll();
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
@@ -366,14 +370,22 @@ struct Scene::PrivateContext {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         CGeffect effect = 0;
         if (source) {
-            static const char *kCompilerArguments[] = {
-                "-DVPVM",
-                "-DVPVL2_VERSION=" VPVL2_VERSION_STRING,
-                0
-            };
+            Array<const char *> arguments;
+            effectCompilerArguments.releaseAll();
+            renderContext->getEffectCompilerArguments(effectCompilerArguments);
+            const int narguments = arguments.count();
+            for (int i = 0; i < narguments; i++) {
+                if (IString *s = effectCompilerArguments[i])
+                    arguments.add(reinterpret_cast<const char *>(s->toByteArray()));
+            }
+            const char constVPVM[] = "-DVPVM";
+            arguments.add(constVPVM);
+            static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
+            arguments.add(constVersion);
+            arguments.add(0);
             effect = cgCreateEffect(effectContext,
                                     reinterpret_cast<const char *>(source->toByteArray()),
-                                    kCompilerArguments);
+                                    &arguments[0]);
         }
         delete source;
         return new cg::Effect(renderContext, effectContext, cgIsEffect(effect) ? effect : 0);
@@ -384,8 +396,10 @@ struct Scene::PrivateContext {
     }
 
     cl::Context *computeContext;
+    IEffect *defaultStandardEffect;
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
+    Array<IString *> effectCompilerArguments;
     Hash<HashPtr, IRenderEngine *> model2engineRef;
     Hash<HashString, IModel *> name2modelRef;
     Array<IModel *> models;
@@ -435,7 +449,7 @@ Scene::~Scene()
     m_context = 0;
 }
 
-IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *model, int flags) const
+IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *model, int flags)
 {
     IRenderEngine *engine = 0;
 #ifdef VPVL2_OPENGL_RENDERER
@@ -512,8 +526,20 @@ ILight *Scene::createLight()
 IEffect *Scene::createEffect(const IString *path, IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
-    return m_context->compileEffect(renderContext, source);
+    if (!path) {
+        if (IEffect *effect = m_context->defaultStandardEffect) {
+            return effect;
+        }
+        else {
+            IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
+            m_context->defaultStandardEffect = m_context->compileEffect(renderContext, source);
+            return m_context->defaultStandardEffect;
+        }
+    }
+    else {
+        IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
+        return m_context->compileEffect(renderContext, source);
+    }
 #else
     (void) path;
     (void) renderContext;

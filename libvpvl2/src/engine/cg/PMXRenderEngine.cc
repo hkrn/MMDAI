@@ -51,7 +51,7 @@ namespace cg
 
 class PMXEffectEngine : public EffectEngine {
 public:
-    PMXEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef)
+    PMXEffectEngine(Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef)
         : EffectEngine(scene, dir, effect, renderContextRef)
     {
     }
@@ -66,7 +66,7 @@ private:
 };
 
 PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
-                                 const Scene *scene,
+                                 Scene *scene,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
 
@@ -409,11 +409,12 @@ IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const
 
 void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir)
 {
+    static const IString *nullPath = 0;
     Effect *einstance = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
-        EffectEngine *ee;
+        EffectEngine *ee = 0;
         for (int i = 0; i < neffects; i++) {
             ee = m_oseffects[i];
             if (ee->effect() == einstance) {
@@ -441,9 +442,19 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         if (ee) {
             m_currentRef = *ee;
         }
-        else if (einstance) {
+        else {
+            /* set default standard effect if effect is null */
+            bool wasEffectNull = false;
+            if (!einstance) {
+                einstance = static_cast<Effect *>(m_sceneRef->createEffect(nullPath, m_renderContextRef));
+                wasEffectNull = true;
+            }
             m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_renderContextRef);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
+            /* set default standard effect as secondary effect */
+            if (!wasEffectNull && m_currentRef->scriptOrder() == IEffect::kStandard) {
+                m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createEffect(nullPath, m_renderContextRef));
+            }
         }
     }
     if (m_currentRef) {

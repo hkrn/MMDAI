@@ -85,7 +85,7 @@ public:
     Scene();
     virtual ~Scene();
 
-    IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags) const;
+    IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags);
     void addModel(IModel *model, IRenderEngine *engine);
     void addMotion(IMotion *motion);
     ICamera *createCamera();

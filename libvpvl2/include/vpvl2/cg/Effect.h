@@ -41,6 +41,7 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
 #include "vpvl2/IRenderContext.h"
+#include "vpvl2/extensions/gl/FrameBufferObject.h"
 
 #if defined(VPVL2_LINK_GLEW)
 #include <GL/glew.h>
@@ -70,6 +71,7 @@ public:
     {
     }
     ~Effect() {
+        delete m_parentFrameBufferObject;
         cgDestroyEffect(m_effect);
         m_contextRef = 0;
         m_parentEffectRef = 0;

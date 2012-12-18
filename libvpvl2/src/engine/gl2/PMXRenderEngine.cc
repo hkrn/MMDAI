@@ -494,7 +494,7 @@ public:
 };
 
 PMXRenderEngine::PMXRenderEngine(IRenderContext *context,
-                                 const Scene *scene,
+                                 Scene *scene,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
     : BaseRenderEngine(scene, context),

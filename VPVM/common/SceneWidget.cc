@@ -1100,6 +1100,7 @@ void SceneWidget::initializeGL()
     settings.insert("dir.system.kernels", ":kernels");
     settings.insert("dir.system.shaders", ":shaders");
     settings.insert("dir.system.toon", ":textures");
+    settings.insert("dir.system.effects", ":effects");
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
     m_renderContext.reset(new RenderContext(settings, 0));
     m_renderContext->initialize(true);

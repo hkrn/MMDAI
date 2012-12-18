@@ -923,7 +923,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     while (!future2.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IEffect *effect = future2.result().data();
-    int flags = 0;
+    int flags = Scene::kEffectCapable;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effect) {
         qWarning() << "Effect" <<  m_renderContext->effectFilePath(modelPtr.data(), &s1) << "does not exists";
@@ -931,9 +931,6 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
     else if (!effect->internalPointer()) {
         CGcontext c = static_cast<CGcontext>(effect->internalContext());
         qWarning() << cgGetLastListing(c);
-    }
-    else {
-        flags = Scene::kEffectCapable;
     }
 #else
     Q_UNUSED(effect)

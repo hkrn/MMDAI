@@ -85,7 +85,7 @@ namespace internal
 
 class BaseRenderEngine {
 public:
-    BaseRenderEngine(const Scene *sceneRef, IRenderContext *context)
+    BaseRenderEngine(Scene *sceneRef, IRenderContext *context)
         : m_sceneRef(sceneRef),
           m_renderContextRef(context),
           glBindVertexArrayProcPtrRef(0),
@@ -221,7 +221,7 @@ protected:
 #endif /* GL_CHROMIUM_map_sub */
     }
 
-    const Scene *m_sceneRef;
+    Scene *m_sceneRef;
     IRenderContext *m_renderContextRef;
 
 private:

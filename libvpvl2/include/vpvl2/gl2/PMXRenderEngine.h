@@ -60,16 +60,16 @@ namespace gl2
 
 class BaseShaderProgram;
 
-class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
+class VPVL2_API PMXRenderEngine : public IRenderEngine, public internal::BaseRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
 {
 public:
     PMXRenderEngine(IRenderContext *context,
-                    const Scene *scene,
+                    Scene *scene,
                     cl::PMXAccelerator *accelerator,
-                    vpvl2::IModel *modelRef);
+                    IModel *modelRef);
     virtual ~PMXRenderEngine();
 
     IModel *model() const;

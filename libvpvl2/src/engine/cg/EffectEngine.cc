@@ -1106,7 +1106,7 @@ class EffectEngine::RectRenderEngine : public internal::BaseRenderEngine
         #endif
 {
 public:
-    RectRenderEngine(const Scene *sceneRef, IRenderContext *renderContext)
+    RectRenderEngine(Scene *sceneRef, IRenderContext *renderContext)
         : BaseRenderEngine(sceneRef, renderContext)
     {
 #ifdef VPVL2_LINK_QT
@@ -1158,10 +1158,7 @@ private:
 };
 
 /* EffectEngine */
-EffectEngine::EffectEngine(const Scene *scene,
-                           const IString *dir,
-                           Effect *effect,
-                           IRenderContext *renderContextRef)
+EffectEngine::EffectEngine(Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef)
     : world(renderContextRef, IRenderContext::kWorldMatrix),
       view(renderContextRef, IRenderContext::kViewMatrix),
       projection(renderContextRef, IRenderContext::kProjectionMatrix),
@@ -1177,6 +1174,7 @@ EffectEngine::EffectEngine(const Scene *scene,
       offscreenRenderTarget(effect, renderContextRef),
       index(0),
       m_effectRef(0),
+      m_defaultStandardEffect(0),
       m_renderContextRef(renderContextRef),
       m_frameBufferObjectRef(effect ? effect->parentFrameBufferObject() : 0),
       m_rectRenderEngine(0),
@@ -1441,6 +1439,17 @@ void EffectEngine::setModelMatrixParameters(const IModel *model,
     worldView.setMatrices(model, extraCameraFlags, extraLightFlags);
     viewProjection.setMatrices(model, extraCameraFlags, extraLightFlags);
     worldViewProjection.setMatrices(model, extraCameraFlags, extraLightFlags);
+}
+
+void EffectEngine::setDefaultStandardEffectRef(IEffect *effectRef)
+{
+    CGeffect effect = static_cast<CGeffect>(effectRef->internalPointer());
+    CGtechnique technique = cgGetFirstTechnique(effect);
+    while (technique) {
+        addTechniquePasses(technique);
+        technique = cgGetNextTechnique(technique);
+    }
+    m_defaultStandardEffect = effectRef;
 }
 
 void EffectEngine::setZeroGeometryParameters(const IModel *model)

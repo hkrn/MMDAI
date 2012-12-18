@@ -283,16 +283,14 @@ bool SceneLoader::createModelEngine(IModelSharedPtr model, const QDir &dir, IRen
         effect = future.result();
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (!effect) {
-            qWarning("Loaded effect pointer seems null");
+            qWarning("Loaded effect pointer seems null, using default fallback effect.");
         }
         else if (!effect->internalPointer()) {
             CGcontext c = static_cast<CGcontext>(effect->internalContext());
             qWarning("Loading an effect failed: %s", cgGetLastListing(c));
         }
-        else {
-            flags = Scene::kEffectCapable;
-        }
 #endif
+        flags = Scene::kEffectCapable;
     }
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする

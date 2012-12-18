@@ -199,6 +199,7 @@ public:
     void setRenderColorTargets(const void *targets, const int ntargets);
     FrameBufferObject *createFrameBufferObject();
     bool hasFrameBufferObjectBound() const;
+    void getEffectCompilerArguments(Array<IString *> &arguments);
     void bindOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
@@ -224,6 +225,7 @@ private:
                                   InternalTexture &internalTexture,
                                   InternalContext *internalContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
+    QByteArray loadEffectSource(const QString &effectFilePath);
     FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA);
 
     Scene *m_sceneRef;

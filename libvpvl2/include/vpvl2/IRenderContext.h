@@ -222,7 +222,10 @@ public:
      *
      * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
      * model の type メソッドを用いて読み込むシェーダの切り替えを行います。
+     * path に 0 が渡された場合は IEffect::kStandard のフォールバックパスとなるソースを返す必要があります。
+     *
      * 処理中は例外を投げないように処理を行う必要があります。
+     *
      * このメソッドは Cg 専用でオフスクリーンに割り当てられたエフェクトの読み込みに利用します。
      *
      * @param type
@@ -440,6 +443,8 @@ public:
     virtual FrameBufferObject *createFrameBufferObject() = 0;
 
     virtual bool hasFrameBufferObjectBound() const = 0;
+
+    virtual void getEffectCompilerArguments(Array<IString *> &arguments) = 0;
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };

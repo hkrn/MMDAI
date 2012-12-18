@@ -212,7 +212,7 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
     }
 }
 
-AssetRenderEngine::AssetRenderEngine(IRenderContext *context, const Scene *scene, asset::Model *model)
+AssetRenderEngine::AssetRenderEngine(IRenderContext *context, Scene *scene, asset::Model *model)
     : BaseRenderEngine(scene, context),
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),

@@ -100,4 +100,7 @@
     <qresource prefix="/kernels">
         <file alias="skinning.cl">kernels/skinning.cl</file>
     </qresource>
+    <qresource prefix="/effects">
+        <file alias="base.cgfx">effects/base.cgfx</file>
+    </qresource>
 </RCC>

@@ -75,7 +75,7 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
 
 class AssetEffectEngine : public EffectEngine {
 public:
-    AssetEffectEngine(const Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContext)
+    AssetEffectEngine(Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContext)
         : EffectEngine(scene, dir, effect, renderContext)
     {
     }
@@ -89,9 +89,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetEffectEngine)
 };
 
-AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext,
-                                     const Scene *scene,
-                                     asset::Model *model)
+AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
     : BaseRenderEngine(scene, renderContext),
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),
@@ -310,11 +308,12 @@ IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType type) const
 
 void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir)
 {
+    static const IString *nullPath = 0;
     Effect *einstance = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
-        EffectEngine *ee;
+        EffectEngine *ee = 0;
         for (int i = 0; i < neffects; i++) {
             ee = m_oseffects[i];
             if (ee->effect() == einstance) {
@@ -342,9 +341,19 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
         if (ee) {
             m_currentRef = *ee;
         }
-        else if (einstance) {
+        else {
+            /* set default standard effect if effect is null */
+            bool wasEffectNull = false;
+            if (!einstance) {
+                einstance = static_cast<Effect *>(m_sceneRef->createEffect(nullPath, m_renderContextRef));
+                wasEffectNull = true;
+            }
             m_currentRef = new AssetEffectEngine(m_sceneRef, dir, einstance, m_renderContextRef);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
+            /* set default standard effect as secondary effect */
+            if (!wasEffectNull && m_currentRef->scriptOrder() == IEffect::kStandard) {
+                m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createEffect(nullPath, m_renderContextRef));
+            }
         }
     }
     if (m_currentRef) {

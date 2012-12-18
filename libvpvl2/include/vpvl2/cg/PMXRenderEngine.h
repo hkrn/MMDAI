@@ -68,7 +68,7 @@ public:
     class PrivateContext;
 
     PMXRenderEngine(IRenderContext *renderContextRef,
-                    const Scene *scene,
+                    Scene *scene,
                     cl::PMXAccelerator *accelerator,
                     IModel *modelRef);
     virtual ~PMXRenderEngine();

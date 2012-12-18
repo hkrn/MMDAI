@@ -496,10 +496,7 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
 
-    EffectEngine(const Scene *scene,
-                 const IString *dir,
-                 Effect *effect,
-                 IRenderContext *renderContextRef);
+    EffectEngine(Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef);
     virtual ~EffectEngine();
 
     bool attachEffect(IEffect *e, const IString *dir);
@@ -523,6 +520,7 @@ public:
     void setModelMatrixParameters(const IModel *model,
                                   int extraCameraFlags = 0,
                                   int extraLightFlags = 0);
+    void setDefaultStandardEffectRef(IEffect *effectRef);
     void setZeroGeometryParameters(const IModel *model);
     void updateModelGeometryParameters(const Scene *scene, const IModel *model);
     void updateSceneParameters();
@@ -630,6 +628,7 @@ private:
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
 
     Effect *m_effectRef;
+    IEffect *m_defaultStandardEffect;
     IRenderContext *m_renderContextRef;
     RectRenderEngine *m_rectRenderEngine;
     FrameBufferObject *m_frameBufferObjectRef;

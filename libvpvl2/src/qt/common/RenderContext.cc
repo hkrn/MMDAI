@@ -482,9 +482,16 @@ IString *RenderContext::loadKernelSource(KernelType type, void * /* context */)
 IString *RenderContext::loadShaderSource(ShaderType type, const IString *path)
 {
     if (type == kModelEffectTechniques) {
-        const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, static_cast<const CString *>(path)->value());
-        const QString &source = future.result();
-        return !source.isNull() ? new (std::nothrow) CString(source) : 0;
+        QByteArray source;
+        if (path) {
+            source = loadEffectSource(static_cast<const CString *>(path)->value());
+        }
+        else {
+            const QDir dir(m_settings.value("dir.system.effects", "../../VPVM/resources/effects"));
+            const QString &baseEffectPath = dir.absoluteFilePath("base.cgfx");
+            UISlurpFile(baseEffectPath, source);
+        }
+        return source.isEmpty() ? 0 : new (std::nothrow) CString(source);
     }
     return 0;
 }
@@ -493,10 +500,8 @@ IString *RenderContext::loadShaderSource(ShaderType type, const IModel *model, c
 {
     QString file;
     if (type == kModelEffectTechniques) {
-        const QString &filename = effectFilePath(model, dir);
-        const QFuture<QString> &future = QtConcurrent::run(&RenderContext::readAllAsync, filename);
-        const QString &source = future.result();
-        return !source.isNull() ? new (std::nothrow) CString(source) : 0;
+        const QByteArray &source = loadEffectSource(effectFilePath(model, dir));
+        return source.isEmpty() ? 0 : new (std::nothrow) CString(source);
     }
     switch (model->type()) {
     case IModel::kAsset:
@@ -942,6 +947,15 @@ void RenderContext::setEffectOwner(const IEffectSharedPtr &effect, IModel *model
     }
 }
 
+QByteArray RenderContext::loadEffectSource(const QString &effectFilePath)
+{
+    QByteArray source;
+    if (!UISlurpFile(effectFilePath, source)) {
+        qDebug("Cannot load an effect: %s", qPrintable(effectFilePath));
+    }
+    return source;
+}
+
 FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA)
 {
     FrameBufferObject *buffer = 0;
@@ -975,6 +989,10 @@ FrameBufferObject *RenderContext::createFrameBufferObject()
 bool RenderContext::hasFrameBufferObjectBound() const
 {
     return m_frameBufferObjectBound;
+}
+
+void RenderContext::getEffectCompilerArguments(Array<IString *> & /* arguments */)
+{
 }
 
 void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
@@ -1116,25 +1134,22 @@ void RenderContext::renderOffscreen(const QSize &size)
 IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)
 {
     IEffectSharedPtr effect;
-    const QString &key = static_cast<const CString *>(path)->value();
+    const QString &pathForKey = static_cast<const CString *>(path)->value();
     QMutexLocker locker(&m_effectCachesLock);
-    if (m_effectCaches.contains(key)) {
-        qDebug("Fetched an effect from cache: %s", qPrintable(key));
-        effect = m_effectCaches[key];
+    if (m_effectCaches.contains(pathForKey)) {
+        qDebug("Fetched an effect from cache: %s", qPrintable(pathForKey));
+        effect = m_effectCaches[pathForKey];
     }
-    else if (QFile::exists(key)) {
+    else if (QFile::exists(pathForKey)) {
         locker.unlock();
         effect = IEffectSharedPtr(m_sceneRef->createEffect(path, this));
-        qDebug("Loading an effect: %s", qPrintable(key));
+        qDebug("Loading an effect: %s", qPrintable(pathForKey));
         if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(key));
+            qWarning("%s cannot be compiled", qPrintable(pathForKey));
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
         }
         locker.relock();
-        m_effectCaches.insert(key, effect);
-    }
-    else {
-        qDebug("Cannot load an effect: %s", qPrintable(key));
+        m_effectCaches.insert(pathForKey, effect);
     }
     return effect;
 }
@@ -1143,26 +1158,23 @@ IEffectSharedPtr RenderContext::createEffectAsync(IModelSharedPtr model, const I
 {
     IEffectSharedPtr effect;
     const IString *name = model->name();
-    const QString &key = effectFilePath(model.data(), dir);
+    const QString &pathForKey = effectFilePath(model.data(), dir);
     QMutexLocker locker(&m_effectCachesLock);
-    if (m_effectCaches.contains(key)) {
-        qDebug("Fetched an effect from cache: %s", qPrintable(key));
-        effect = m_effectCaches[key];
+    if (m_effectCaches.contains(pathForKey)) {
+        qDebug("Fetched an effect from cache: %s", qPrintable(pathForKey));
+        effect = m_effectCaches[pathForKey];
     }
-    else if (QFile::exists(key)) {
+    else if (QFile::exists(pathForKey)) {
         locker.unlock();
         effect = IEffectSharedPtr(m_sceneRef->createEffect(dir, model.data(), this));
-        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
+        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(pathForKey));
         if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(key)) ;
+            qWarning("%s cannot be compiled", qPrintable(pathForKey)) ;
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
         }
         locker.relock();
-        m_effectCaches.insert(key, effect);
+        m_effectCaches.insert(pathForKey, effect);
         setEffectOwner(effect, model.data());
-    }
-    else {
-        qDebug("Cannot load an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(key));
     }
     return effect;
 }
