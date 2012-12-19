@@ -318,6 +318,9 @@ bool AssetRenderEngine::upload(const IString *dir)
 {
     if (!m_modelRef)
         return false;
+    const aiScene *scene = m_modelRef->aiScenePtr();
+    if (!scene)
+        return false;
     bool ret = true;
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions(QGLContext::currentContext());
@@ -325,7 +328,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     void *userData = 0;
     m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    const aiScene *scene = m_modelRef->aiScenePtr();
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;

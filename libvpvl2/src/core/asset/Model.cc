@@ -494,12 +494,13 @@ bool Model::load(const uint8_t *data, size_t size)
         IMorph *morph = m_morphs[i];
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
     }
-    setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
-    setVertexRefsRecurse(m_scene, m_scene->mRootNode);
-    return m_scene != 0;
-#else
-    return false;
+    if (m_scene) {
+        setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
+        setVertexRefsRecurse(m_scene, m_scene->mRootNode);
+        return true;
+    }
 #endif
+    return false;
 }
 
 IBone *Model::findBone(const IString *value) const
