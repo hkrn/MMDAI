@@ -1109,6 +1109,8 @@ public:
     RectRenderEngine(IRenderContext *renderContext)
 #ifdef VPVL2_LINK_QT
         : QGLFunctions(),
+      #else
+        :
       #endif
           m_bundle(renderContext)
     {

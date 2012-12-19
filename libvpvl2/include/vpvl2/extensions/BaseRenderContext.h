@@ -518,6 +518,11 @@ public:
     bool hasFrameBufferObjectBound() const {
         return false;
     }
+    void getEffectCompilerArguments(Array<IString *> & /* arguments */) const {
+    }
+    const IString *effectFilePath(const IModel * /* model */, const IString * /* dir */) const {
+        return 0;
+    }
 
     void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
         m_cameraWorldMatrix = world;
