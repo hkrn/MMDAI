@@ -50,6 +50,10 @@ class MockIRenderContext : public IRenderContext {
       FrameBufferObject*());
   MOCK_CONST_METHOD0(hasFrameBufferObjectBound,
       bool());
+  MOCK_CONST_METHOD1(getEffectCompilerArguments,
+      void(Array<IString *> &arguments));
+  MOCK_CONST_METHOD2(effectFilePath,
+      const IString*(const IModel *model, const IString *dir));
 };
 
 }  // namespace vpvl2
