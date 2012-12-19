@@ -368,6 +368,7 @@ struct Scene::PrivateContext
         return accelerator;
     }
     void getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
         effectCompilerArguments.releaseAll();
         renderContext->getEffectCompilerArguments(effectCompilerArguments);
         arguments.clear();
@@ -381,6 +382,7 @@ struct Scene::PrivateContext
         static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
         arguments.add(constVersion);
         arguments.add(0);
+#endif
     }
     IEffect *compileEffectFromFile(const IString *pathRef, IRenderContext *renderContextRef) {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -583,7 +585,7 @@ IEffect *Scene::createDefaultStandardEffectRef(IRenderContext *renderContext)
 
 IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, IRenderContext *renderContext)
 {
-#ifdef VPVL2_OPENGL_RENDERER
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     const IString *pathRef = renderContext->effectFilePath(model, dir);
     return m_context->compileEffectFromFile(pathRef, renderContext);
 #else
