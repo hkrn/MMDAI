@@ -468,7 +468,7 @@ bool Model::load(const uint8_t *data, size_t size)
 {
 #ifdef VPVL2_LINK_ASSIMP
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
-    m_scene = m_importer.ReadFileFromMemory(data, size, flags);
+    m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
     m_bones.add(new RootBone(this, m_encodingRef));
     m_bones.add(new ScaleBone(this, m_encodingRef));
     m_labels.add(new Label(this, m_bones, m_encodingRef));
@@ -483,12 +483,13 @@ bool Model::load(const uint8_t *data, size_t size)
         IMorph *morph = m_morphs[i];
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
     }
-    setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
-    setVertexRefsRecurse(m_scene, m_scene->mRootNode);
-    return m_scene != 0;
-#else
-    return false;
+    if (m_scene) {
+        setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
+        setVertexRefsRecurse(m_scene, m_scene->mRootNode);
+        return true;
+    }
 #endif
+    return false;
 }
 
 IBone *Model::findBone(const IString *value) const
