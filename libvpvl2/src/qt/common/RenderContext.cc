@@ -1146,7 +1146,7 @@ IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)
     }
     else if (QFile::exists(pathForKey)) {
         locker.unlock();
-        effect = IEffectSharedPtr(m_sceneRef->createEffect(path, this));
+        effect = IEffectSharedPtr(m_sceneRef->createEffectFromFile(path, this));
         qDebug("Loading an effect: %s", qPrintable(pathForKey));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(pathForKey));
@@ -1170,7 +1170,7 @@ IEffectSharedPtr RenderContext::createEffectAsync(IModelSharedPtr model, const I
     }
     else if (QFile::exists(pathForKey)) {
         locker.unlock();
-        effect = IEffectSharedPtr(m_sceneRef->createEffect(dir, model.data(), this));
+        effect = IEffectSharedPtr(m_sceneRef->createEffectFromModel(model.data(), dir, this));
         qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(pathForKey));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(pathForKey)) ;

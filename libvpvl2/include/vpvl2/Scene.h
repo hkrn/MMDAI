@@ -90,8 +90,9 @@ public:
     void addMotion(IMotion *motion);
     ICamera *createCamera();
     ILight *createLight();
-    IEffect *createEffect(const IString *path, IRenderContext *renderContext);
-    IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext);
+    IEffect *createEffectFromSource(const IString *source, IRenderContext *renderContext);
+    IEffect *createEffectFromFile(const IString *path, IRenderContext *renderContext);
+    IEffect *createEffectFromModel(const IModel *model, const IString *dir, IRenderContext *renderContext);
     IEffect *createDefaultStandardEffectRef(IRenderContext *renderContext);
     void removeModel(IModel *model);
     void deleteModel(IModel *&model);

@@ -397,7 +397,7 @@ struct Scene::PrivateContext
         return 0;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
-    IEffect *compileEffectFromSource(IString *source, IRenderContext *renderContextRef) {
+    IEffect *compileEffectFromSource(const IString *source, IRenderContext *renderContextRef) {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         CGeffect effect = 0;
         if (source) {
@@ -407,10 +407,8 @@ struct Scene::PrivateContext
                                     reinterpret_cast<const char *>(source->toByteArray()),
                                     &arguments[0]);
         }
-        delete source;
         return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
 #else
-        delete source;
         return 0;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
@@ -543,7 +541,18 @@ ILight *Scene::createLight()
     return new Light(this);
 }
 
-IEffect *Scene::createEffect(const IString *path, IRenderContext *renderContext)
+IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *renderContext)
+{
+#ifdef VPVL2_OPENGL_RENDERER
+    return m_context->compileEffectFromSource(source, renderContext);
+#else
+    (void) path;
+    (void) renderContext;
+    return 0;
+#endif /* VPVL2_OPENGL_RENDERER */
+}
+
+IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
     return m_context->compileEffectFromFile(path, renderContext);
@@ -563,6 +572,7 @@ IEffect *Scene::createDefaultStandardEffectRef(IRenderContext *renderContext)
     else {
         IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
         m_context->defaultStandardEffect = m_context->compileEffectFromSource(source, renderContext);
+        delete source;
         return m_context->defaultStandardEffect;
     }
 #else
@@ -571,7 +581,7 @@ IEffect *Scene::createDefaultStandardEffectRef(IRenderContext *renderContext)
 #endif
 }
 
-IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext)
+IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
     const IString *pathRef = renderContext->effectFilePath(model, dir);
