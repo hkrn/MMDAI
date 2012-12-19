@@ -493,17 +493,20 @@ public:
     bool updateEven;
 };
 
-PMXRenderEngine::PMXRenderEngine(IRenderContext *context,
+PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContext,
                                  Scene *scene,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
-    : BaseRenderEngine(scene, context),
+    :
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),
       #endif /* VPVL2_LINK_QT */
       m_accelerator(accelerator),
+      m_renderContextRef(renderContext),
+      m_sceneRef(scene),
       m_modelRef(modelRef),
       m_context(0),
+      m_bundle(renderContext),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
       m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY)
 {
@@ -516,7 +519,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *context,
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif
-    initializeExtensions();
+    m_bundle.initialize();
 }
 
 PMXRenderEngine::~PMXRenderEngine()
@@ -528,7 +531,7 @@ PMXRenderEngine::~PMXRenderEngine()
     delete m_accelerator;
 #endif
     if (m_context) {
-        releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
+        m_bundle.releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
         delete m_context;
         m_context = 0;
     }
@@ -610,9 +613,9 @@ bool PMXRenderEngine::upload(const IString *dir)
     GLuint svbo = m_context->vertexBufferObjects[kModelStaticVertexBuffer];
     glBindBuffer(GL_ARRAY_BUFFER, svbo);
     glBufferData(GL_ARRAY_BUFFER, staticBuffer->size(), 0, GL_STATIC_DRAW);
-    void *address = mapBuffer(GL_ARRAY_BUFFER, 0, staticBuffer->size());
+    void *address = m_bundle.mapBuffer(GL_ARRAY_BUFFER, 0, staticBuffer->size());
     staticBuffer->update(address);
-    unmapBuffer(GL_ARRAY_BUFFER, address);
+    m_bundle.unmapBuffer(GL_ARRAY_BUFFER, address);
     log0(userData, IRenderContext::kLogInfo,
          "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
 
@@ -624,24 +627,24 @@ bool PMXRenderEngine::upload(const IString *dir)
          "Binding indices to the vertex buffer object (ID=%d)",
          m_context->vertexBufferObjects[kModelIndexBuffer]);
 
-    allocateVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
+    m_bundle.allocateVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
     GLuint vao = m_context->vertexArrayObjects[kVertexArrayObjectEven];
-    if (bindVertexArrayObject(vao)) {
+    if (m_bundle.bindVertexArrayObject(vao)) {
         log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
     }
     createVertexBundle(dvbo0, svbo, ibo, vss);
     vao = m_context->vertexArrayObjects[kVertexArrayObjectOdd];
-    if (bindVertexArrayObject(vao)) {
+    if (m_bundle.bindVertexArrayObject(vao)) {
         log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
         createVertexBundle(dvbo1, svbo, ibo, vss);
     }
     vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectEven];
-    if (bindVertexArrayObject(vao)) {
+    if (m_bundle.bindVertexArrayObject(vao)) {
         log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
     }
     createEdgeBundle(dvbo0, svbo, ibo, vss);
     vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectOdd];
-    if (bindVertexArrayObject(vao)) {
+    if (m_bundle.bindVertexArrayObject(vao)) {
         log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
         createEdgeBundle(dvbo1, svbo, ibo, vss);
     }
@@ -677,7 +680,7 @@ void PMXRenderEngine::update()
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    void *address = mapBuffer(GL_ARRAY_BUFFER, 0, dynamicBuffer->size());
+    void *address = m_bundle.mapBuffer(GL_ARRAY_BUFFER, 0, dynamicBuffer->size());
     m_modelRef->performUpdate();
     if (m_context->isVertexShaderSkinning) {
         m_context->matrixBuffer->update(address);
@@ -686,7 +689,7 @@ void PMXRenderEngine::update()
         const ICamera *camera = m_sceneRef->camera();
         dynamicBuffer->update(address, camera->position(), m_aabbMin, m_aabbMax);
     }
-    unmapBuffer(GL_ARRAY_BUFFER, address);
+    m_bundle.unmapBuffer(GL_ARRAY_BUFFER, address);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
@@ -708,21 +711,21 @@ void PMXRenderEngine::renderModel()
     modelProgram->bind();
     float matrix4x4[16];
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kCameraMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kCameraMatrix);
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kCameraMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kLightMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     void *texture = light->depthTexture();
@@ -801,10 +804,10 @@ void PMXRenderEngine::renderShadow()
     shadowProgram->bind();
     float matrix4x4[16];
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kShadowMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     shadowProgram->setLightColor(light->color());
@@ -846,10 +849,10 @@ void PMXRenderEngine::renderEdge()
     float matrix4x4[16];
     const Scalar &opacity = m_modelRef->opacity();
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kCameraMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kCameraMatrix);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
@@ -900,10 +903,10 @@ void PMXRenderEngine::renderZPlot()
     zplotProgram->bind();
     float matrix4x4[16];
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kLightMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kLightMatrix);
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -1069,7 +1072,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
 bool PMXRenderEngine::releaseUserData0(void *userData)
 {
     if (m_context) {
-        releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
+        m_bundle.releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
         delete m_context;
         m_context = 0;
     }
@@ -1093,7 +1096,7 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo, b
         glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
         glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
     }
-    unbindVertexArrayObject();
+    m_bundle.unbindVertexArrayObject();
 }
 
 void PMXRenderEngine::createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss)
@@ -1110,7 +1113,7 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, boo
         glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
         glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
     }
-    unbindVertexArrayObject();
+   m_bundle.unbindVertexArrayObject();
 }
 
 void PMXRenderEngine::bindVertexBundle()
@@ -1118,7 +1121,7 @@ void PMXRenderEngine::bindVertexBundle()
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
     m_context->getVertexBundleType(vao, vbo);
-    if (!bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
+    if (!m_bundle.bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
         bindDynamicVertexAttributePointers();
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
@@ -1132,7 +1135,7 @@ void PMXRenderEngine::bindEdgeBundle()
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
     m_context->getEdgeBundleType(vao, vbo);
-    if (!bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
+    if (!m_bundle.bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
         bindEdgeVertexAttributePointers();
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
@@ -1143,7 +1146,7 @@ void PMXRenderEngine::bindEdgeBundle()
 
 void PMXRenderEngine::unbindVertexBundle()
 {
-    if (!unbindVertexArrayObject()) {
+    if (!m_bundle.unbindVertexArrayObject()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }

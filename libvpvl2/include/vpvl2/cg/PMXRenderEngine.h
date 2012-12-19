@@ -41,7 +41,7 @@
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/EffectEngine.h"
-#include "vpvl2/internal/BaseRenderEngine.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
 
 #ifdef VPVL2_ENABLE_OPENCL
 #include "vpvl2/cl/PMXAccelerator.h"
@@ -59,7 +59,7 @@ class Scene;
 namespace cg
 {
 
-class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
+class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
@@ -134,6 +134,8 @@ private:
 #ifdef VPVL2_ENABLE_OPENCL
     cl::PMXAccelerator::Buffers m_accelerationBuffers;
 #endif
+    IRenderContext *m_renderContextRef;
+    Scene *m_sceneRef;
     IModel *m_modelRef;
     IModel::IStaticVertexBuffer *m_staticBuffer;
     IModel::IDynamicVertexBuffer *m_dynamicBuffer;
@@ -144,6 +146,7 @@ private:
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
     Array<IMaterial *> m_materials;
+    VertexBundle m_bundle;
     GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;

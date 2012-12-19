@@ -41,7 +41,7 @@
 #define VPVL2_GL2_PMXRENDERENGINE_H_
 
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/internal/BaseRenderEngine.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
 
 namespace vpvl2
 {
@@ -58,15 +58,16 @@ class Model;
 namespace gl2
 {
 
+using namespace vpvl2::extensions::gl;
 class BaseShaderProgram;
 
-class VPVL2_API PMXRenderEngine : public IRenderEngine, public internal::BaseRenderEngine
+class VPVL2_API PMXRenderEngine : public IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
 {
 public:
-    PMXRenderEngine(IRenderContext *context,
+    PMXRenderEngine(IRenderContext *renderContext,
                     Scene *scene,
                     cl::PMXAccelerator *accelerator,
                     IModel *modelRef);
@@ -108,8 +109,11 @@ private:
     void bindStaticVertexAttributePointers();
 
     cl::PMXAccelerator *m_accelerator;
+    IRenderContext *m_renderContextRef;
+    Scene *m_sceneRef;
     IModel *m_modelRef;
     PrivateContext *m_context;
+    VertexBundle m_bundle;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
 

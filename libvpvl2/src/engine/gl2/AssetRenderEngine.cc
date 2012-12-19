@@ -212,19 +212,21 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
     }
 }
 
-AssetRenderEngine::AssetRenderEngine(IRenderContext *context, Scene *scene, asset::Model *model)
-    : BaseRenderEngine(scene, context),
+AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
+    :
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),
       #endif /* VPVL2_LINK_QT */
+      m_renderContextRef(renderContext),
+      m_sceneRef(scene),
       m_modelRef(model),
-      m_context(0)
+      m_context(0),
+      m_bundle(renderContext)
 {
     m_context = new PrivateContext();
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif /* VPVL2_LINK_QT */
-    initializeExtensions();
 }
 
 AssetRenderEngine::~AssetRenderEngine()
@@ -504,7 +506,7 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        releaseVertexArrayObjects(&m_context->vao[mesh], 1);
+        m_bundle.releaseVertexArrayObjects(&m_context->vao[mesh], 1);
         glDeleteBuffers(1, &m_context->ibo[mesh]);
         glDeleteBuffers(1, &m_context->vbo[mesh]);
     }
@@ -598,19 +600,19 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     Program *program = m_context->assetPrograms[node];
     program->bind();
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kCameraMatrix);
+                                  IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kCameraMatrix);
     program->setViewProjectionMatrix(matrix4x4);
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kLightMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kLightMatrix);
     program->setLightViewProjectionMatrix(matrix4x4);
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kCameraMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kCameraMatrix);
     program->setModelMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     program->setLightColor(light->color());
@@ -641,10 +643,10 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     Program *program = m_context->assetPrograms[node];
     program->bind();
     m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                             IRenderContext::kWorldMatrix
-                             | IRenderContext::kViewMatrix
-                             | IRenderContext::kProjectionMatrix
-                             | IRenderContext::kCameraMatrix);
+                                  IRenderContext::kWorldMatrix
+                                  | IRenderContext::kViewMatrix
+                                  | IRenderContext::kProjectionMatrix
+                                  | IRenderContext::kCameraMatrix);
     program->setModelViewProjectionMatrix(matrix4x4);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -711,8 +713,8 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     log0(userData, IRenderContext::kLogInfo,
          "Binding asset vertex buffer to the vertex buffer object (ID=%d)", vbo);
     GLuint &vao = m_context->vao[mesh];
-    allocateVertexArrayObjects(&vao, 1);
-    if (bindVertexArrayObject(vao)) {
+    m_bundle.allocateVertexArrayObjects(&vao, 1);
+    if (m_bundle.bindVertexArrayObject(vao)) {
         log0(userData, IRenderContext::kLogInfo, "Created an vertex array object (ID=%d)", vao);
     }
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -721,13 +723,13 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
     glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
     glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
-    unbindVertexArrayObject();
+    m_bundle.unbindVertexArrayObject();
     m_context->indices[mesh] = indices.count();
 }
 
 void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 {
-    if (!bindVertexArrayObject(m_context->vao[mesh])) {
+    if (!m_bundle.bindVertexArrayObject(m_context->vao[mesh])) {
         glBindBuffer(GL_ARRAY_BUFFER, m_context->vbo[mesh]);
         bindStaticVertexAttributePointers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->ibo[mesh]);
@@ -736,7 +738,7 @@ void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 
 void AssetRenderEngine::unbindVertexBundle()
 {
-    if (!unbindVertexArrayObject()) {
+    if (!m_bundle.unbindVertexArrayObject()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }

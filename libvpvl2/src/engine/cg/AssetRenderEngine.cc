@@ -90,12 +90,15 @@ private:
 };
 
 AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
-    : BaseRenderEngine(scene, renderContext),
+    :
       #ifdef VPVL2_LINK_QT
       QGLFunctions(),
       #endif /* VPVL2_LINK_QT */
       m_currentRef(0),
+      m_renderContextRef(renderContext),
+      m_sceneRef(scene),
       m_modelRef(model),
+      m_bundle(renderContext),
       m_nvertices(0),
       m_nmeshes(0),
       m_cullFaceState(true)
@@ -103,7 +106,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif /* VPVL2_LINK_QT */
-    initializeExtensions();
+    m_bundle.initialize();
 }
 
 AssetRenderEngine::~AssetRenderEngine()
@@ -432,7 +435,7 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        releaseVertexArrayObjects(&m_vao[mesh], 1);
+        m_bundle.releaseVertexArrayObjects(&m_vao[mesh], 1);
         glDeleteBuffers(1, &m_ibo[mesh]);
         glDeleteBuffers(1, &m_vbo[mesh]);
     }
@@ -591,8 +594,8 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     log0(userData, IRenderContext::kLogInfo,
          "Binding asset vertex buffer to the vertex buffer object (ID=%d)", vbo);
     GLuint &vao = m_vao[mesh];
-    allocateVertexArrayObjects(&vao, 1);
-    if (bindVertexArrayObject(vao)) {
+    m_bundle.allocateVertexArrayObjects(&vao, 1);
+    if (m_bundle.bindVertexArrayObject(vao)) {
         log0(userData, IRenderContext::kLogInfo, "Created an vertex array object (ID=%d)", vao);
     }
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -601,13 +604,13 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    unbindVertexArrayObject();
+    m_bundle.unbindVertexArrayObject();
     m_indices[mesh] = indices.count();
 }
 
 void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 {
-    if (!bindVertexArrayObject(m_vao[mesh])) {
+    if (!m_bundle.bindVertexArrayObject(m_vao[mesh])) {
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo[mesh]);
         bindStaticVertexAttributePointers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo[mesh]);
@@ -616,7 +619,7 @@ void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 
 void AssetRenderEngine::unbindVertexBundle()
 {
-    if (!unbindVertexArrayObject()) {
+    if (!m_bundle.unbindVertexArrayObject()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }

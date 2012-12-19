@@ -77,6 +77,7 @@ set(vpvl2_public_headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/Scene.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/BaseRenderContext.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/gl/FrameBufferObject.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/gl/VertexBundle.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/String.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/Encoding.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/sdl/RenderContext.h
@@ -142,7 +143,6 @@ endif()
 if(VPVL2_OPENGL_RENDERER)
   aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/engine/gl2" vpvl2_gl_sources)
   list(APPEND vpvl2_internal_headers
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/BaseRenderEngine.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/AssetRenderEngine.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMDRenderEngine.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/gl2/PMXRenderEngine.h"

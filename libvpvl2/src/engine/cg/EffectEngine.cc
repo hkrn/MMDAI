@@ -38,7 +38,7 @@
 #include "vpvl2/cg/EffectEngine.h"
 
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
-#include "vpvl2/internal/BaseRenderEngine.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
 
 #include <string>
 #include <sstream>
@@ -1100,19 +1100,22 @@ void TextureValueSemantic::update()
 }
 
 /* Effect::RectRenderEngine */
-class EffectEngine::RectRenderEngine : public internal::BaseRenderEngine
+class EffectEngine::RectRenderEngine
         #ifdef VPVL2_LINK_QT
-        , protected QGLFunctions
+        : protected QGLFunctions
         #endif
 {
 public:
-    RectRenderEngine(Scene *sceneRef, IRenderContext *renderContext)
-        : BaseRenderEngine(sceneRef, renderContext)
+    RectRenderEngine(IRenderContext *renderContext)
+#ifdef VPVL2_LINK_QT
+        : QGLFunctions(),
+      #endif
+          m_bundle(renderContext)
     {
 #ifdef VPVL2_LINK_QT
         initializeGLFunctions();
 #endif
-        initializeExtensions();
+        m_bundle.initialize();
     }
     ~RectRenderEngine() {
         glDeleteBuffers(1, &m_verticesBuffer);
@@ -1128,16 +1131,16 @@ public:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        allocateVertexArrayObjects(&m_vertexBundle, 1);
-        bindVertexArrayObject(m_vertexBundle);
+        m_bundle.allocateVertexArrayObjects(&m_vertexBundle, 1);
+        m_bundle.bindVertexArrayObject(m_vertexBundle);
         bindVertexBundle(false);
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        unbindVertexArrayObject();
+        m_bundle.unbindVertexArrayObject();
         unbindVertexBundle(false);
     }
     void bindVertexBundle(bool bundle) {
-        if (!bundle || !bindVertexArrayObject(m_vertexBundle)) {
+        if (!bundle || !m_bundle.bindVertexArrayObject(m_vertexBundle)) {
             glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
             glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
@@ -1145,13 +1148,14 @@ public:
         }
     }
     void unbindVertexBundle(bool bundle) {
-        if (!bundle || !unbindVertexArrayObject()) {
+        if (!bundle || !m_bundle.unbindVertexArrayObject()) {
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
     }
 
 private:
+    VertexBundle m_bundle;
     GLuint m_vertexBundle;
     GLuint m_verticesBuffer;
     GLuint m_indicesBuffer;
@@ -1185,7 +1189,7 @@ EffectEngine::EffectEngine(Scene *scene, const IString *dir, Effect *effect, IRe
 #ifdef VPVL2_LINK_QT
     initializeGLFunctions();
 #endif
-    m_rectRenderEngine = new RectRenderEngine(scene, renderContextRef);
+    m_rectRenderEngine = new RectRenderEngine(renderContextRef);
     if (m_frameBufferObjectRef)
         m_frameBufferObjectRef->create(true);
     attachEffect(effect, dir);

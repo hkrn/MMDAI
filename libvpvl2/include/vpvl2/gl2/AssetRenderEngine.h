@@ -44,7 +44,7 @@
 #ifdef VPVL2_LINK_ASSIMP
 
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/internal/BaseRenderEngine.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
 
 #include <assimp.h>
 #include <aiScene.h>
@@ -62,6 +62,7 @@ class Scene;
 namespace gl2
 {
 
+using namespace extensions::gl;
 class BaseShaderProgram;
 
 /**
@@ -74,7 +75,7 @@ class BaseShaderProgram;
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
+class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
@@ -82,7 +83,7 @@ class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::i
 public:
     class Program;
 
-    AssetRenderEngine(IRenderContext *context, Scene *scene, asset::Model *model);
+    AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model);
     virtual ~AssetRenderEngine();
 
     IModel *model() const;
@@ -129,8 +130,11 @@ private:
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 
+    IRenderContext *m_renderContextRef;
+    Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PrivateContext *m_context;
+    VertexBundle m_bundle;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };

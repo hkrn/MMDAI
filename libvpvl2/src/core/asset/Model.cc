@@ -479,7 +479,7 @@ bool Model::load(const uint8_t *data, size_t size)
 {
 #ifdef VPVL2_LINK_ASSIMP
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
-    m_scene = m_importer.ReadFileFromMemory(data, size, flags);
+    m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
     m_bones.add(new RootBone(this, m_encodingRef));
     m_bones.add(new ScaleBone(this, m_encodingRef));
     m_labels.add(new Label(this, m_bones, m_encodingRef));

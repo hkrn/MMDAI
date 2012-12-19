@@ -42,7 +42,7 @@
 #ifdef VPVL2_LINK_ASSIMP
 
 #include "vpvl2/cg/EffectEngine.h"
-#include "vpvl2/internal/BaseRenderEngine.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
 
 #include <assimp.h>
 #include <aiScene.h>
@@ -71,7 +71,7 @@ namespace cg
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine, public vpvl2::internal::BaseRenderEngine
+class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
         #ifdef VPVL2_LINK_QT
         , protected QGLFunctions
         #endif
@@ -121,9 +121,12 @@ private:
     void bindStaticVertexAttributePointers();
 
     EffectEngine *m_currentRef;
+    IRenderContext *m_renderContextRef;
+    Scene *m_sceneRef;
     asset::Model *m_modelRef;
     Hash<btHashInt, EffectEngine *> m_effects;
     Array<EffectEngine *> m_oseffects;
+    VertexBundle m_bundle;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, int> m_indices;
     std::map<const struct aiMesh *, GLuint> m_ibo;

@@ -500,7 +500,8 @@ IString *RenderContext::loadShaderSource(ShaderType type, const IModel *model, c
 {
     QString file;
     if (type == kModelEffectTechniques) {
-        const QByteArray &source = loadEffectSource(effectFilePath(model, dir));
+        const IString *s = effectFilePath(model, dir);
+        const QByteArray &source = loadEffectSource(static_cast<const CString *>(s)->value());
         return source.isEmpty() ? 0 : new (std::nothrow) CString(source);
     }
     switch (model->type()) {
@@ -705,21 +706,6 @@ const QString RenderContext::findModelPath(const IModel *model) const
     QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
     const QString s = m_model2Paths[model];
     return s;
-}
-
-const QString RenderContext::effectFilePath(const IModel *model, const IString *dir) const
-{
-    QDir d(static_cast<const CString *>(dir)->value());
-    const QString &path = findModelPath(model);
-    if (!path.isEmpty()) {
-        const QString &s = QFileInfo(path).completeBaseName();
-        const QRegExp regexp("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$");
-        const QFileInfo &finfo(regexp.exactMatch(s) ? regexp.capturedTexts().at(1) : s);
-        const QString &cgfx = d.absoluteFilePath(finfo.completeBaseName() + ".cgfx");
-        if (QFile::exists(cgfx))
-            return cgfx;
-    }
-    return d.absoluteFilePath("default.cgfx");
 }
 
 void RenderContext::removeModel(IModel *model)
@@ -991,8 +977,26 @@ bool RenderContext::hasFrameBufferObjectBound() const
     return m_frameBufferObjectBound;
 }
 
-void RenderContext::getEffectCompilerArguments(Array<IString *> & /* arguments */)
+void RenderContext::getEffectCompilerArguments(Array<IString *> & /* arguments */) const
 {
+}
+
+const IString *RenderContext::effectFilePath(const IModel *model, const IString *dir) const
+{
+    QDir d(static_cast<const CString *>(dir)->value());
+    const QString &path = findModelPath(model);
+    if (!path.isEmpty()) {
+        const QString &s = QFileInfo(path).completeBaseName();
+        const QRegExp regexp("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$");
+        const QFileInfo &finfo(regexp.exactMatch(s) ? regexp.capturedTexts().at(1) : s);
+        const QString &cgfx = d.absoluteFilePath(finfo.completeBaseName() + ".cgfx");
+        if (QFile::exists(cgfx)) {
+            m_effectPathRef = CStringSharedPtr(new CString(cgfx));
+            return m_effectPathRef.data();
+        }
+    }
+    m_effectPathRef = CStringSharedPtr(new CString(d.absoluteFilePath("default.cgfx")));
+    return m_effectPathRef.data();
 }
 
 void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
@@ -1158,7 +1162,7 @@ IEffectSharedPtr RenderContext::createEffectAsync(IModelSharedPtr model, const I
 {
     IEffectSharedPtr effect;
     const IString *name = model->name();
-    const QString &pathForKey = effectFilePath(model.data(), dir);
+    const QString &pathForKey = static_cast<const CString *>(effectFilePath(model.data(), dir))->value();
     QMutexLocker locker(&m_effectCachesLock);
     if (m_effectCaches.contains(pathForKey)) {
         qDebug("Fetched an effect from cache: %s", qPrintable(pathForKey));

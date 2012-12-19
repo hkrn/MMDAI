@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_INTERNAL_BASERENDERENGINE_H_
-#define VPVL2_INTERNAL_BASERENDERENGINE_H_
+#ifndef VPVL2_EXTENSIONS_GL_BASERENDERENGINE_H_
+#define VPVL2_EXTENSIONS_GL_BASERENDERENGINE_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IRenderContext.h"
@@ -77,29 +77,25 @@
 
 namespace vpvl2
 {
-
-class Scene;
-
-namespace internal
+namespace extensions
+{
+namespace gl
 {
 
-class BaseRenderEngine {
+class VertexBundle {
 public:
-    BaseRenderEngine(Scene *sceneRef, IRenderContext *context)
-        : m_sceneRef(sceneRef),
-          m_renderContextRef(context),
+    VertexBundle(IRenderContext *context)
+        : m_renderContextRef(context),
           glBindVertexArrayProcPtrRef(0),
           glDeleteVertexArraysProcPtrRef(0),
           glGenVertexArraysProcPtrRef(0)
     {
     }
-    virtual ~BaseRenderEngine() {
-        m_sceneRef = 0;
+    virtual ~VertexBundle() {
         m_renderContextRef = 0;
     }
 
-protected:
-    void initializeExtensions() {
+    void initialize() {
 #ifdef VPVL2_LINK_GLEW
         static bool g_initialized = false;
         if (!g_initialized) {
@@ -178,26 +174,26 @@ protected:
             glGenVertexArraysProcPtrRef(size, vao);
         }
     }
-    inline void releaseVertexArrayObjects(GLuint *vao, size_t size) {
+    void releaseVertexArrayObjects(GLuint *vao, size_t size) {
         if (glDeleteVertexArraysProcPtrRef) {
             glDeleteVertexArraysProcPtrRef(size, vao);
         }
     }
-    inline bool bindVertexArrayObject(GLuint vao) {
+    bool bindVertexArrayObject(GLuint vao) {
         if (glBindVertexArrayProcPtrRef) {
             glBindVertexArrayProcPtrRef(vao);
             return true;
         }
         return false;
     }
-    inline bool unbindVertexArrayObject() {
+    bool unbindVertexArrayObject() {
         if (glBindVertexArrayProcPtrRef) {
             glBindVertexArrayProcPtrRef(0);
             return true;
         }
         return false;
     }
-    inline void *mapBuffer(GLenum target, size_t offset, size_t size) {
+    void *mapBuffer(GLenum target, size_t offset, size_t size) {
 #ifdef GL_CHROMIUM_map_sub
         return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
 #else /* GL_CHROMIUM_map_sub */
@@ -209,7 +205,7 @@ protected:
         return 0;
 #endif /* GL_CHROMIUM_map_sub */
     }
-    inline void unmapBuffer(GLenum target, void *address) {
+    void unmapBuffer(GLenum target, void *address) {
 #ifdef GL_CHROMIUM_map_sub
         (void) target;
         glUnmapBufferSubDataCHROMIUM(address);
@@ -220,9 +216,6 @@ protected:
         }
 #endif /* GL_CHROMIUM_map_sub */
     }
-
-    Scene *m_sceneRef;
-    IRenderContext *m_renderContextRef;
 
 private:
     typedef void (*glBindVertexArrayProcPtr)(GLuint id);
@@ -235,11 +228,13 @@ private:
     glGenVertexArraysProcPtr glGenVertexArraysProcPtrRef;
     glMapBufferProcPtr glMapBufferProcPtrRef;
     glUnmapBufferProcPtr glUnmapBufferProcPtrRef;
+    IRenderContext *m_renderContextRef;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRenderEngine)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
 };
 
-} /* namespace common */
+} /* namespace gl */
+} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif

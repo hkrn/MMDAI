@@ -78,7 +78,9 @@ namespace qt
 using namespace extensions::gl;
 
 class Archive;
+class CString;
 typedef QSharedPointer<Archive> ArchiveSharedPtr;
+typedef QSharedPointer<CString> CStringSharedPtr;
 typedef QSharedPointer<IEffect> IEffectSharedPtr;
 typedef QSharedPointer<IModel> IModelSharedPtr;
 typedef QSharedPointer<IMotion> IMotionSharedPtr;
@@ -173,7 +175,6 @@ public:
     void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type);
     void addModelPath(IModel *model, const QString &filename);
     const QString findModelPath(const IModel *model) const;
-    const QString effectFilePath(const IModel *model, const IString *dir) const;
     const QString effectOwnerName(const IEffect *effect) const;
     void setEffectOwner(const IEffectSharedPtr &effect, IModel *model);
     void removeModel(IModel *model);
@@ -199,7 +200,8 @@ public:
     void setRenderColorTargets(const void *targets, const int ntargets);
     FrameBufferObject *createFrameBufferObject();
     bool hasFrameBufferObjectBound() const;
-    void getEffectCompilerArguments(Array<IString *> &arguments);
+    void getEffectCompilerArguments(Array<IString *> &arguments) const;
+    const IString *effectFilePath(const IModel *model, const IString *dir) const;
     void bindOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
@@ -235,6 +237,7 @@ private:
     mutable QMutex m_effectOwnersLock;
     mutable QMutex m_effect2modelsLock;
     mutable QMutex m_effectCachesLock;
+    mutable CStringSharedPtr m_effectPathRef;
     ArchiveSharedPtr m_archive;
     QHash<const IModel *, QString> m_model2Paths;
     QHash<const QString, IModel *> m_filename2Models;

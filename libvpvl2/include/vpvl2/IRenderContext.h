@@ -442,9 +442,42 @@ public:
      */
     virtual FrameBufferObject *createFrameBufferObject() = 0;
 
+    /**
+     * フレームバッファがバインド済みかどうかを返します.
+     *
+     * このメソッドは Cg 専用です。
+     *
+     * @brief hasFrameBufferObjectBound
+     * @return
+     */
     virtual bool hasFrameBufferObjectBound() const = 0;
 
-    virtual void getEffectCompilerArguments(Array<IString *> &arguments) = 0;
+    /**
+     * CgFX のコンパイラに渡す引数を設定します.
+     *
+     * 引数には予めヒープに確保した IString のインスタンスを渡す必要があります。
+     * 呼び出し側でメモリを解放するため、スタック上のメモリを返してはいけません。
+     * 渡すことが可能な引数の一覧は cgc のヘルプを参照してください。
+     *
+     * このメソッドは Cg 専用です。
+     *
+     * @brief getEffectCompilerArguments
+     * @param arguments
+     */
+    virtual void getEffectCompilerArguments(Array<IString *> &arguments) const = 0;
+
+    /**
+     * モデルに紐付けられたエフェクトのファイルの絶対パスを返します.
+     *
+     * 呼び出し側ではメモリを解放しないため、実装する側はヒープでメモリを返してはいけません。
+     * std::shared_ptr などを使って実装する側がエフェクトのパスを保持する必要があります。
+     *
+     * @brief effectFilePath
+     * @param model
+     * @param dir
+     * @return
+     */
+    virtual const IString *effectFilePath(const IModel *model, const IString *dir) const = 0;
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };

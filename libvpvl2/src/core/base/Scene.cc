@@ -270,7 +270,8 @@ private:
 namespace vpvl2
 {
 
-struct Scene::PrivateContext {
+struct Scene::PrivateContext
+{
     PrivateContext(Scene *sceneRef)
         : computeContext(0),
           defaultStandardEffect(0),
@@ -366,29 +367,48 @@ struct Scene::PrivateContext {
 #endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
-    IEffect *compileEffect(IRenderContext *renderContext, IString *source) {
+    void getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments) {
+        effectCompilerArguments.releaseAll();
+        renderContext->getEffectCompilerArguments(effectCompilerArguments);
+        arguments.clear();
+        const int narguments = effectCompilerArguments.count();
+        for (int i = 0; i < narguments; i++) {
+            if (IString *s = effectCompilerArguments[i])
+                arguments.add(reinterpret_cast<const char *>(s->toByteArray()));
+        }
+        const char constVPVM[] = "-DVPVM";
+        arguments.add(constVPVM);
+        static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
+        arguments.add(constVersion);
+        arguments.add(0);
+    }
+    IEffect *compileEffectFromFile(const IString *pathRef, IRenderContext *renderContextRef) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        CGeffect effect = 0;
+        if (pathRef) {
+            Array<const char *> arguments;
+            getEffectArguments(renderContextRef, arguments);
+            effect = cgCreateEffectFromFile(effectContext,
+                                            reinterpret_cast<const char *>(pathRef->toByteArray()),
+                                            &arguments[0]);
+        }
+        return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
+#else
+        return 0;
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+    }
+    IEffect *compileEffectFromSource(IString *source, IRenderContext *renderContextRef) {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         CGeffect effect = 0;
         if (source) {
             Array<const char *> arguments;
-            effectCompilerArguments.releaseAll();
-            renderContext->getEffectCompilerArguments(effectCompilerArguments);
-            const int narguments = arguments.count();
-            for (int i = 0; i < narguments; i++) {
-                if (IString *s = effectCompilerArguments[i])
-                    arguments.add(reinterpret_cast<const char *>(s->toByteArray()));
-            }
-            const char constVPVM[] = "-DVPVM";
-            arguments.add(constVPVM);
-            static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
-            arguments.add(constVersion);
-            arguments.add(0);
+            getEffectArguments(renderContextRef, arguments);
             effect = cgCreateEffect(effectContext,
                                     reinterpret_cast<const char *>(source->toByteArray()),
                                     &arguments[0]);
         }
         delete source;
-        return new cg::Effect(renderContext, effectContext, cgIsEffect(effect) ? effect : 0);
+        return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
 #else
         delete source;
         return 0;
@@ -532,13 +552,12 @@ IEffect *Scene::createEffect(const IString *path, IRenderContext *renderContext)
         }
         else {
             IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
-            m_context->defaultStandardEffect = m_context->compileEffect(renderContext, source);
+            m_context->defaultStandardEffect = m_context->compileEffectFromSource(source, renderContext);
             return m_context->defaultStandardEffect;
         }
     }
     else {
-        IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
-        return m_context->compileEffect(renderContext, source);
+        return m_context->compileEffectFromFile(path, renderContext);
     }
 #else
     (void) path;
@@ -550,8 +569,8 @@ IEffect *Scene::createEffect(const IString *path, IRenderContext *renderContext)
 IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, model, dir, 0);
-    return m_context->compileEffect(renderContext, source);
+    const IString *pathRef = renderContext->effectFilePath(model, dir);
+    return m_context->compileEffectFromFile(pathRef, renderContext);
 #else
     (void) dir;
     (void) model;
