@@ -265,7 +265,7 @@ void PMXRenderEngine::renderModel()
             glDisable(GL_CULL_FACE);
             m_cullFaceState = false;
         }
-        else if (!m_cullFaceState) {
+        else if (!m_cullFaceState && !material->isCullFaceDisabled()) {
             glEnable(GL_CULL_FACE);
             m_cullFaceState = true;
         }
