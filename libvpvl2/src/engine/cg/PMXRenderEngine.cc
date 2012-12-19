@@ -51,8 +51,8 @@ namespace cg
 
 class PMXEffectEngine : public EffectEngine {
 public:
-    PMXEffectEngine(Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef)
-        : EffectEngine(scene, dir, effect, renderContextRef)
+    PMXEffectEngine(Scene *scene, Effect *effect, IRenderContext *renderContextRef, const IString *dir)
+        : EffectEngine(scene, effect, renderContextRef, dir)
     {
     }
 
@@ -412,15 +412,14 @@ IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const
 
 void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir)
 {
-    static const IString *nullPath = 0;
-    Effect *einstance = static_cast<Effect *>(effect);
+    Effect *effectRef = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
         EffectEngine *ee = 0;
         for (int i = 0; i < neffects; i++) {
             ee = m_oseffects[i];
-            if (ee->effect() == einstance) {
+            if (ee->effect() == effectRef) {
                 found = true;
                 break;
             }
@@ -428,9 +427,9 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         if (found) {
             m_currentRef = ee;
         }
-        else if (einstance) {
+        else if (effectRef) {
             EffectEngine *previous = m_currentRef;
-            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_renderContextRef);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir);
             if (m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_currentRef);
             }
@@ -446,17 +445,17 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             m_currentRef = *ee;
         }
         else {
-            /* set default standard effect if effect is null */
+            /* set default standard effect (reference) if effect is null */
             bool wasEffectNull = false;
-            if (!einstance) {
-                einstance = static_cast<Effect *>(m_sceneRef->createEffect(nullPath, m_renderContextRef));
+            if (!effectRef) {
+                effectRef = static_cast<Effect *>(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
                 wasEffectNull = true;
             }
-            m_currentRef = new PMXEffectEngine(m_sceneRef, dir, einstance, m_renderContextRef);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentRef->scriptOrder() == IEffect::kStandard) {
-                m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createEffect(nullPath, m_renderContextRef));
+                m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
             }
         }
     }

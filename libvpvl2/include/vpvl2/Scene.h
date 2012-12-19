@@ -92,6 +92,7 @@ public:
     ILight *createLight();
     IEffect *createEffect(const IString *path, IRenderContext *renderContext);
     IEffect *createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext);
+    IEffect *createDefaultStandardEffectRef(IRenderContext *renderContext);
     void removeModel(IModel *model);
     void deleteModel(IModel *&model);
     void removeMotion(IMotion *motion);

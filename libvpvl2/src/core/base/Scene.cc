@@ -546,24 +546,29 @@ ILight *Scene::createLight()
 IEffect *Scene::createEffect(const IString *path, IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    if (!path) {
-        if (IEffect *effect = m_context->defaultStandardEffect) {
-            return effect;
-        }
-        else {
-            IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, path);
-            m_context->defaultStandardEffect = m_context->compileEffectFromSource(source, renderContext);
-            return m_context->defaultStandardEffect;
-        }
-    }
-    else {
-        return m_context->compileEffectFromFile(path, renderContext);
-    }
+    return m_context->compileEffectFromFile(path, renderContext);
 #else
     (void) path;
     (void) renderContext;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
+}
+
+IEffect *Scene::createDefaultStandardEffectRef(IRenderContext *renderContext)
+{
+#ifdef VPVL2_OPENGL_RENDERER
+    if (IEffect *effect = m_context->defaultStandardEffect) {
+        return effect;
+    }
+    else {
+        IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
+        m_context->defaultStandardEffect = m_context->compileEffectFromSource(source, renderContext);
+        return m_context->defaultStandardEffect;
+    }
+#else
+    (void) renderContext;
+    return 0;
+#endif
 }
 
 IEffect *Scene::createEffect(const IString *dir, const IModel *model, IRenderContext *renderContext)

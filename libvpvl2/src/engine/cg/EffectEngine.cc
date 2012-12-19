@@ -1162,7 +1162,7 @@ private:
 };
 
 /* EffectEngine */
-EffectEngine::EffectEngine(Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef)
+EffectEngine::EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *renderContextRef, const IString *dir)
     : world(renderContextRef, IRenderContext::kWorldMatrix),
       view(renderContextRef, IRenderContext::kViewMatrix),
       projection(renderContextRef, IRenderContext::kProjectionMatrix),
@@ -1171,16 +1171,16 @@ EffectEngine::EffectEngine(Scene *scene, const IString *dir, Effect *effect, IRe
       worldViewProjection(renderContextRef, IRenderContext::kWorldMatrix | IRenderContext::kViewMatrix | IRenderContext::kProjectionMatrix),
       time(renderContextRef),
       elapsedTime(renderContextRef),
-      controlObject(effect, scene, renderContextRef),
+      controlObject(effectRef, sceneRef, renderContextRef),
       renderColorTarget(renderContextRef),
       renderDepthStencilTarget(renderContextRef),
       animatedTexture(renderContextRef),
-      offscreenRenderTarget(effect, renderContextRef),
+      offscreenRenderTarget(effectRef, renderContextRef),
       index(0),
       m_effectRef(0),
       m_defaultStandardEffect(0),
       m_renderContextRef(renderContextRef),
-      m_frameBufferObjectRef(effect ? effect->parentFrameBufferObject() : 0),
+      m_frameBufferObjectRef(effectRef ? effectRef->parentFrameBufferObject() : 0),
       m_rectRenderEngine(0),
       m_scriptOutput(kColor),
       m_scriptClass(kObject),
@@ -1192,7 +1192,7 @@ EffectEngine::EffectEngine(Scene *scene, const IString *dir, Effect *effect, IRe
     m_rectRenderEngine = new RectRenderEngine(renderContextRef);
     if (m_frameBufferObjectRef)
         m_frameBufferObjectRef->create(true);
-    attachEffect(effect, dir);
+    attachEffect(effectRef, dir);
 }
 
 EffectEngine::~EffectEngine()

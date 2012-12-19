@@ -496,7 +496,7 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
 
-    EffectEngine(Scene *scene, const IString *dir, Effect *effect, IRenderContext *renderContextRef);
+    EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *renderContextRef, const IString *dir);
     virtual ~EffectEngine();
 
     bool attachEffect(IEffect *e, const IString *dir);
