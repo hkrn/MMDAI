@@ -110,63 +110,76 @@ public:
 #else /* VPVL2_LINK_GLEW */
         /* TODO: finding extension process */
 #ifdef __APPLE__
-        static const char *kBindVertexArray[] = {
+        static const void *kBindVertexArray[] = {
             "glBindVertexArrayAPPLE",
             "glBindVertexArrayOES",
             0
         };
-        static const char *kDeleteVertexArrays[] = {
+        static const void *kDeleteVertexArrays[] = {
             "glDeleteVertexArraysAPPLE",
             "glDeleteVertexArraysOES",
             0
         };
-        static const char *kGenVertexArrays[] = {
+        static const void *kGenVertexArrays[] = {
             "glGenVertexArraysAPPLE",
             "glGenVertexArraysOES",
             0
         };
 #else /* __APPLE__ */
-        static const char *kBindVertexArray[] = {
+        static const void *kBindVertexArray[] = {
             "glBindVertexArray",
             "glBindVertexArrayOES",
             "glBindVertexArrayEXT",
             0
         };
-        static const char *kDeleteVertexArrays[] = {
+        static const void *kDeleteVertexArrays[] = {
             "glDeleteVertexArrays",
             "glDeleteVertexArraysOES",
             "glDeleteVertexArraysEXT",
             0
         };
-        static const char *kGenVertexArrays[] = {
+        static const void *kGenVertexArrays[] = {
             "glGenVertexArrays",
             "glGenVertexArraysEXT",
             "glGenVertexArraysOES",
             0
         };
 #endif /* __APPLE__ */
-        static const char *kMapBuffer[] = {
+        static const void *kMapBuffer[] = {
             "glMapBuffer",
             "glMapBufferOES",
             "glMapBufferARB",
             0
         };
-        static const char *kUnmapBuffer[] = {
+        static const void *kUnmapBuffer[] = {
             "glUnmapBuffer",
             "glUnmapBufferOES",
             "glUnmapBufferARB",
             0
         };
+#ifdef WIN32
+        glBindVertexArrayProcPtrRef = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(
+                    m_renderContextRef->findProcedureAddress(kBindVertexArray));
+        glDeleteVertexArraysProcPtrRef = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(
+                    m_renderContextRef->findProcedureAddress(kDeleteVertexArrays));
+        glGenVertexArraysProcPtrRef = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(
+                    m_renderContextRef->findProcedureAddress(kGenVertexArrays));
+        glMapBufferProcPtrRef = reinterpret_cast<PFNGLMAPBUFFERPROC>(
+                    m_renderContextRef->findProcedureAddress(kMapBuffer));
+        glUnmapBufferProcPtrRef = reinterpret_cast<PFNGLUNMAPBUFFERPROC>(
+                    m_renderContextRef->findProcedureAddress(kUnmapBuffer));
+#else
         glBindVertexArrayProcPtrRef = reinterpret_cast<glBindVertexArrayProcPtr>(
-                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kBindVertexArray)));
+                    m_renderContextRef->findProcedureAddress(kBindVertexArray));
         glDeleteVertexArraysProcPtrRef = reinterpret_cast<glDeleteVertexArraysProcPtr>(
-                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kDeleteVertexArrays)));
+                    m_renderContextRef->findProcedureAddress(kDeleteVertexArrays));
         glGenVertexArraysProcPtrRef = reinterpret_cast<glGenVertexArraysProcPtr>(
-                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kGenVertexArrays)));
+                    m_renderContextRef->findProcedureAddress(kGenVertexArrays));
         glMapBufferProcPtrRef = reinterpret_cast<glMapBufferProcPtr>(
-                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kMapBuffer)));
+                    m_renderContextRef->findProcedureAddress(kMapBuffer));
         glUnmapBufferProcPtrRef = reinterpret_cast<glUnmapBufferProcPtr>(
-                    m_renderContextRef->findProcedureAddress(reinterpret_cast<const void **>(kUnmapBuffer)));
+                    m_renderContextRef->findProcedureAddress(kUnmapBuffer));
+#endif
 #endif /* VPVL2_LINK_GLEW */
     }
     inline void allocateVertexArrayObjects(GLuint *vao, size_t size) {
@@ -218,6 +231,13 @@ public:
     }
 
 private:
+#ifdef WIN32
+	PFNGLBINDVERTEXARRAYPROC glBindVertexArrayProcPtrRef;
+	PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArraysProcPtrRef;
+	PFNGLGENVERTEXARRAYSPROC glGenVertexArraysProcPtrRef;
+    PFNGLMAPBUFFERPROC glMapBufferProcPtrRef;
+    PFNGLUNMAPBUFFERPROC glUnmapBufferProcPtrRef;
+#else
     typedef void (*glBindVertexArrayProcPtr)(GLuint id);
     typedef void (*glDeleteVertexArraysProcPtr)(GLsizei n, const GLuint *ids);
     typedef void (*glGenVertexArraysProcPtr)(GLsizei n, GLuint *ids);
@@ -228,6 +248,7 @@ private:
     glGenVertexArraysProcPtr glGenVertexArraysProcPtrRef;
     glMapBufferProcPtr glMapBufferProcPtrRef;
     glUnmapBufferProcPtr glUnmapBufferProcPtrRef;
+#endif
     IRenderContext *m_renderContextRef;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
