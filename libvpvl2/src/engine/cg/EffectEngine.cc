@@ -1227,8 +1227,8 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
     if (!cgIsEffect(value))
         return false;
     m_rectRenderEngine->initializeVertexBundle();
-    CGparameter parameter = cgGetFirstEffectParameter(value);
-    bool ownTechniques = false, foundSAS = false;
+    CGparameter parameter = cgGetFirstEffectParameter(value), standardsGlobal = 0;
+    bool ownTechniques = false;
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
         const size_t slen = strlen(semantic);
@@ -1310,9 +1310,8 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
             renderDepthStencilTarget.addParameter(parameter);
         }
-        else if (!foundSAS && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
-            setStandardsGlobal(parameter, ownTechniques);
-            foundSAS = true;
+        else if (!standardsGlobal && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
+            standardsGlobal = parameter;
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
         }
@@ -1356,6 +1355,13 @@ bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
         if (Effect::isInteractiveParameter(parameter))
             m_effectRef->addInteractiveParameter(parameter);
         parameter = cgGetNextParameter(parameter);
+    }
+    /*
+     * parse STANDARDSGLOBAL semantic parameter at last to resolve parameters in
+     * script process dependencies correctly
+     */
+    if (standardsGlobal) {
+        setStandardsGlobal(standardsGlobal, ownTechniques);
     }
     if (!ownTechniques) {
         CGtechnique technique = cgGetFirstTechnique(value);
