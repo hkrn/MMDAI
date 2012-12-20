@@ -166,7 +166,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     bool ret = true;
     const aiScene *scene = m_modelRef->aiScenePtr();
     if (!scene)
-        return false;
+        return true;
     void *userData = 0;
     m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);

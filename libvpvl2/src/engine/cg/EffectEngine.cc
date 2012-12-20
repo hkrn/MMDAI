@@ -126,6 +126,14 @@ const std::string Util::trim(const std::string &value)
     return (stringTo - stringFrom >= 0) ? std::string(stringFrom, ++stringTo) : "";
 }
 
+const std::string Util::trimLastSemicolon(const std::string &value)
+{
+    std::string s = trim(value);
+    if (s[s.length() - 1] == ';')
+        s.erase(s.end() - 1);
+    return Util::trim(s);
+}
+
 /* BasicParameter */
 
 BaseParameter::BaseParameter()
@@ -1854,7 +1862,7 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
         m_techniques.clear();
         CGeffect effect = static_cast<CGeffect>(m_effectRef->internalPointer());
         if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniques)) {
-            const std::string s(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
+            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
             std::istringstream stream(s);
             std::string segment;
             while (std::getline(stream, segment, ':')) {
@@ -1864,7 +1872,8 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
             ownTechniques = true;
         }
         else if (VPVL2_CG_STREQ_SUFFIX(value, len, kSingleTechnique)) {
-            CGtechnique technique = cgGetNamedTechnique(effect, VPVL2_CG_GET_SUFFIX(value, kSingleTechnique));
+            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kSingleTechnique));
+            CGtechnique technique = cgGetNamedTechnique(effect, s.c_str());
             addTechniquePasses(technique);
             ownTechniques = true;
         }

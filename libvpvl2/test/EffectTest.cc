@@ -168,6 +168,18 @@ TEST_F(EffectTest, IsPassEquals)
     ASSERT_TRUE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "StringValue"), target));
 }
 
+TEST_F(EffectTest, Trim)
+{
+    ASSERT_EQ("spaces_before_this_string_should_be_trimmed", Util::trim("    spaces_before_this_string_should_be_trimmed"));
+    ASSERT_EQ("spaces_after_this_string_should_be_trimmed", Util::trim("spaces_after_this_string_should_be_trimmed     "));
+    ASSERT_EQ("spaces inside this string should not be trimmed", Util::trim("spaces inside this string should not be trimmed"));
+    ASSERT_EQ("", Util::trim(""));
+    ASSERT_EQ("semicolon_should_be_trimmed", Util::trimLastSemicolon("semicolon_should_be_trimmed;"));
+    ASSERT_EQ("semicolon_and_after_spaces_should_be_trimmed", Util::trimLastSemicolon("   semicolon_and_after_spaces_should_be_trimmed;       "));
+    ASSERT_EQ("spaces_and_inside_semicolon_spaces_should_be_trimmed", Util::trimLastSemicolon("    spaces_and_inside_semicolon_spaces_should_be_trimmed    ;       "));
+    ASSERT_EQ("", Util::trimLastSemicolon(""));
+}
+
 TEST_F(EffectTest, IsIntegerParameter)
 {
     struct Expect {

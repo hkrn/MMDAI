@@ -79,6 +79,7 @@ public:
     static bool isPassEquals(const CGannotation annotation, const char *target);
     static bool isIntegerParameter(const CGparameter parameter);
     static const std::string trim(const std::string &value);
+    static const std::string trimLastSemicolon(const std::string &value);
 
 private:
     Util() {}
